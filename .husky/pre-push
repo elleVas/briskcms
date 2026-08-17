@@ -1,0 +1,4 @@
+set -e
+
+pnpm exec nx run-many -t lint
+pnpm exec nx run-many -t test --coverage --parallel=1
