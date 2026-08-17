@@ -16,5 +16,11 @@ export function generateOpaqueToken(): string {
  * don't yield usable tokens.
  */
 export function hashOpaqueToken(token: string): string {
+  // codeql[js/insufficient-password-hash]: not a password — CodeQL's taint
+  // tracking flags this because callers are named createToken/createSession,
+  // but the input is a generateOpaqueToken() output: 256 bits of
+  // node:crypto randomness, not a low-entropy user-chosen secret. There is
+  // no dictionary/rainbow-table attack to defend against here, so a slow
+  // hash (argon2/bcrypt) would only add latency with no security benefit.
   return createHash('sha256').update(token).digest('hex');
 }

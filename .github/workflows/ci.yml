@@ -21,6 +21,18 @@ jobs:
       # be consistent across the seed step and the test run.
       DEFAULT_TENANT_ID: 31329174-2ede-4151-be9d-a3e765d21e1f
       DEFAULT_SITE_ID: 568b7d6a-3483-45f2-83f1-3b31b433c5eb
+      # Same reasoning: this seeds a throwaway CI-only database destroyed at
+      # the end of the run, so a fixed dev-only value (matching
+      # .env.example, already public) carries no real risk.
+      DEFAULT_USER_EMAIL: admin@example.com
+      DEFAULT_USER_PASSWORD: changeme_dev_password
+      # Needed for AuthModule to compile in apps/api's unit tests (see
+      # app.module.spec.ts/auth.module.spec.ts) — the SMTP values point at
+      # the Mailpit container started below, no real provider needed.
+      EDITOR_APP_URL: http://localhost:4200
+      SMTP_HOST: localhost
+      SMTP_PORT: 1025
+      SMTP_FROM_ADDRESS: noreply@brisk.local
       # apps/editor-app (Vite) only reads VITE_-prefixed vars — same value as
       # DEFAULT_SITE_ID above, see .env.example.
       VITE_DEFAULT_SITE_ID: 568b7d6a-3483-45f2-83f1-3b31b433c5eb
@@ -71,6 +83,16 @@ jobs:
           # command. Wait for the *second* "ready to accept connections" in
           # the logs, which only appears once the real server is up.
           until [ "$(docker logs postgres 2>&1 | grep -c 'database system is ready to accept connections')" -ge 2 ]; do
+            sleep 1
+          done
+
+      # No auth required (matches .env.example) — smtp-email-adapter's
+      # integration test sends a real email through this and checks
+      # Mailpit's HTTP API for it, see docs/adr/0011.
+      - name: Start Mailpit
+        run: |
+          docker run -d --name mailpit -p 1025:1025 -p 8025:8025 axllent/mailpit
+          until curl -sf http://localhost:8025/api/v1/info > /dev/null; do
             sleep 1
           done
 
