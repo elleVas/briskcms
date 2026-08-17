@@ -21,6 +21,10 @@ jobs:
       # be consistent across the seed step and the test run.
       DEFAULT_TENANT_ID: 31329174-2ede-4151-be9d-a3e765d21e1f
       DEFAULT_SITE_ID: 568b7d6a-3483-45f2-83f1-3b31b433c5eb
+      # apps/editor-app (Vite) only reads VITE_-prefixed vars — same value as
+      # DEFAULT_SITE_ID above, see .env.example.
+      VITE_DEFAULT_SITE_ID: 568b7d6a-3483-45f2-83f1-3b31b433c5eb
+      VITE_API_URL: http://localhost:3000/api
 
     steps:
       - uses: actions/checkout@v7
