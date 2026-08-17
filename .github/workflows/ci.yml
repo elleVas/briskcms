@@ -89,6 +89,14 @@ jobs:
           POSTGRES_HOST: localhost
 
       - run: pnpm exec nx format:check --base=origin/main
-      - run: pnpm exec nx run-many -t lint test build typecheck
+      - run: pnpm exec nx run-many -t lint build typecheck
+        env:
+          POSTGRES_HOST: localhost
+
+      # Coverage runs as its own step (not bundled into the line above) so
+      # --coverage — a flag only the test executors understand — is never
+      # passed to lint/build/typecheck. Sequential, not --parallel: see
+      # docs/adr/0009-enforced-coverage-thresholds.md.
+      - run: pnpm exec nx run-many -t test --coverage --parallel=1
         env:
           POSTGRES_HOST: localhost

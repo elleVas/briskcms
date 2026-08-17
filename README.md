@@ -1,5 +1,7 @@
 # Brisk
 
+[![Coverage](https://img.shields.io/badge/coverage-%E2%89%A580%25%20domain%2Fapp%20%C2%B7%20%E2%89%A560%25%20infra-brightgreen.svg)](https://github.com/elleVas/briskcms/actions/workflows/ci.yml)
+
 Self-hosted visual CMS for brochure/showcase websites, built on Astro. Drag-and-drop
 editor (React + Puck), backend with its own database (Postgres, multi-tenant-ready
 via Row Level Security), public rendering via Astro.

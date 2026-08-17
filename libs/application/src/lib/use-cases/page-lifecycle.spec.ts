@@ -1,78 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import type { Page, PageVersion } from '@brisk/domain-core';
-import type {
-  PageRepositoryPort,
-  PageVersionRepositoryPort,
-} from '@brisk/ports';
 import { createPage } from './create-page.use-case.js';
 import { saveDraft } from './save-draft.use-case.js';
 import { publishPage } from './publish-page.use-case.js';
 import { listPageVersions } from './list-page-versions.use-case.js';
 import { rollbackToVersion } from './rollback-to-version.use-case.js';
-
-class InMemoryPageRepository implements PageRepositoryPort {
-  private pages = new Map<string, Page>();
-
-  async save(page: Page): Promise<void> {
-    this.pages.set(page.id, page);
-  }
-
-  async findById(tenantId: string, pageId: string): Promise<Page | null> {
-    const page = this.pages.get(pageId);
-    return page && page.tenantId === tenantId ? page : null;
-  }
-
-  async findBySlug(
-    tenantId: string,
-    siteId: string,
-    locale: string,
-    slug: string,
-  ): Promise<Page | null> {
-    for (const page of this.pages.values()) {
-      if (
-        page.tenantId === tenantId &&
-        page.siteId === siteId &&
-        page.locale === locale &&
-        page.slug === slug
-      ) {
-        return page;
-      }
-    }
-    return null;
-  }
-
-  async delete(tenantId: string, pageId: string): Promise<void> {
-    const page = this.pages.get(pageId);
-    if (page && page.tenantId === tenantId) {
-      this.pages.delete(pageId);
-    }
-  }
-}
-
-class InMemoryPageVersionRepository implements PageVersionRepositoryPort {
-  private versions: PageVersion[] = [];
-
-  async save(version: PageVersion): Promise<void> {
-    this.versions.push(version);
-  }
-
-  async findById(
-    tenantId: string,
-    versionId: string,
-  ): Promise<PageVersion | null> {
-    return (
-      this.versions.find(
-        (v) => v.tenantId === tenantId && v.id === versionId,
-      ) ?? null
-    );
-  }
-
-  async listByPage(tenantId: string, pageId: string): Promise<PageVersion[]> {
-    return this.versions.filter(
-      (v) => v.tenantId === tenantId && v.pageId === pageId,
-    );
-  }
-}
+import {
+  InMemoryPageRepository,
+  InMemoryPageVersionRepository,
+} from './in-memory-repositories.test-fixture.js';
 
 describe('page lifecycle: create -> draft -> publish -> rollback', () => {
   const tenantId = 'tenant-1';

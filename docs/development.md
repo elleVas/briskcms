@@ -14,6 +14,22 @@ docker compose up -d postgres
 pnpm install
 ```
 
+`pnpm install` also wires up two Husky hooks:
+
+- **pre-commit** (Husky + lint-staged): runs `eslint --fix` + `prettier
+--write` on the files you staged, so a formatting-only failure in CI's
+  `nx format:check` step shouldn't happen. Fast — only touches staged files.
+- **pre-push**: runs the full `nx run-many -t lint` and `nx run-many -t test
+--coverage` (same coverage thresholds as CI, see
+  [ADR-0009](adr/0009-enforced-coverage-thresholds.md)) across the whole
+  workspace, blocking the push if either fails. Slower than pre-commit by
+  design — it runs once per push, not once per commit, so it's the same
+  full check CI runs, just caught locally first.
+
+Neither hook runs `build`/`typecheck` — run `nx run-many -t build typecheck`
+yourself before opening a PR if you want the exact same gate CI runs end to
+end.
+
 `docker compose up -d postgres` automatically runs `db/init/000_roles.sh` (only
 the first time the volume is created): it creates the `brisk_app` application
 role. The schema itself (tables, RLS policies, grants) is managed by Drizzle —
@@ -55,6 +71,8 @@ pnpm --filter @brisk/postgres-db run db:seed
 
 ```sh
 pnpm exec nx run-many -t build typecheck test lint   # whole workspace
+pnpm exec nx run-many -t test --coverage             # coverage report; enforces the
+                                                      # thresholds from ADR-0009
 pnpm exec nx run @brisk/api:serve                     # NestJS API in watch mode
 pnpm exec nx run @brisk/editor-app:dev                 # React editor (Vite)
 pnpm exec nx run @brisk/public-site:dev                 # Astro public site
