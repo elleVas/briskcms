@@ -232,13 +232,40 @@ importers:
 
   libs/adapters/s3-media-storage: {}
 
-  libs/domain-core: {}
+  libs/application:
+    dependencies:
+      '@brisk/domain-core':
+        specifier: workspace:*
+        version: link:../domain-core
+      '@brisk/ports':
+        specifier: workspace:*
+        version: link:../ports
+      '@brisk/shared-types':
+        specifier: workspace:*
+        version: link:../shared-types
 
-  libs/ports: {}
+  libs/domain-core:
+    dependencies:
+      '@brisk/shared-types':
+        specifier: workspace:*
+        version: link:../shared-types
+      zod:
+        specifier: ^4.4.3
+        version: 4.4.3
+
+  libs/ports:
+    dependencies:
+      '@brisk/domain-core':
+        specifier: workspace:*
+        version: link:../domain-core
 
   libs/puck-config: {}
 
-  libs/shared-types: {}
+  libs/shared-types:
+    dependencies:
+      zod:
+        specifier: ^4.4.3
+        version: 4.4.3
 
 packages:
 

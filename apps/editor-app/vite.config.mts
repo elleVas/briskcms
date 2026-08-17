@@ -27,7 +27,7 @@ export default defineConfig(() => ({
     },
   },
   test: {
-    name: '@org/editor-app',
+    name: '@brisk/editor-app',
     watch: false,
     globals: true,
     environment: 'jsdom',
