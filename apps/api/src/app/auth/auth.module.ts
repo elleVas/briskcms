@@ -4,12 +4,17 @@ import { requireEnv } from '@brisk/env-config';
 import { type BriskDb } from '@brisk/postgres-db';
 import { DrizzleUserRepository } from '@brisk/postgres-user-repository';
 import { SessionAuthAdapter } from '@brisk/session-auth-adapter';
+import { VerificationTokenAdapter } from '@brisk/verification-token-adapter';
+import { SmtpEmailAdapter } from '@brisk/smtp-email-adapter';
 import { DATABASE, DatabaseModule } from '../database.module.js';
 import { AuthController } from './auth.controller.js';
 import {
   AUTH_PORT,
   DEFAULT_TENANT_ID,
+  EDITOR_APP_URL,
+  EMAIL_PORT,
   USER_REPOSITORY,
+  VERIFICATION_TOKEN_PORT,
 } from './auth.tokens.js';
 import { SessionAuthGuard } from './session-auth.guard.js';
 import { SessionTenantContextAdapter } from './session-tenant-context.adapter.js';
@@ -17,8 +22,8 @@ import { SessionTenantContextAdapter } from './session-tenant-context.adapter.js
 @Module({
   imports: [
     DatabaseModule,
-    // Only applied to POST /auth/login (via @UseGuards(ThrottlerGuard)
-    // there) — not registered as a global guard, so the rest of the API is
+    // Only applied to specific routes (via @UseGuards(ThrottlerGuard))
+    // — not registered as a global guard, so the rest of the API is
     // unaffected.
     ThrottlerModule.forRoot({ throttlers: [{ ttl: 60000, limit: 5 }] }),
   ],
@@ -27,6 +32,10 @@ import { SessionTenantContextAdapter } from './session-tenant-context.adapter.js
     {
       provide: DEFAULT_TENANT_ID,
       useFactory: (): string => requireEnv('DEFAULT_TENANT_ID'),
+    },
+    {
+      provide: EDITOR_APP_URL,
+      useFactory: (): string => requireEnv('EDITOR_APP_URL'),
     },
     {
       provide: USER_REPOSITORY,
@@ -38,6 +47,25 @@ import { SessionTenantContextAdapter } from './session-tenant-context.adapter.js
       useFactory: (db: BriskDb, tenantId: string) =>
         new SessionAuthAdapter(db, tenantId),
       inject: [DATABASE, DEFAULT_TENANT_ID],
+    },
+    {
+      provide: VERIFICATION_TOKEN_PORT,
+      useFactory: (db: BriskDb, tenantId: string) =>
+        new VerificationTokenAdapter(db, tenantId),
+      inject: [DATABASE, DEFAULT_TENANT_ID],
+    },
+    {
+      provide: EMAIL_PORT,
+      // SMTP_USER/SMTP_PASSWORD are optional — Mailpit (local dev) needs
+      // neither, see docs/development.md.
+      useFactory: () =>
+        new SmtpEmailAdapter({
+          host: requireEnv('SMTP_HOST'),
+          port: Number(requireEnv('SMTP_PORT')),
+          fromAddress: requireEnv('SMTP_FROM_ADDRESS'),
+          user: process.env['SMTP_USER'] || undefined,
+          password: process.env['SMTP_PASSWORD'] || undefined,
+        }),
     },
     SessionAuthGuard,
     SessionTenantContextAdapter,

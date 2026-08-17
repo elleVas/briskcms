@@ -9,13 +9,13 @@ function fillAndSubmit(email: string, password: string) {
   fireEvent.change(screen.getByLabelText('Password'), {
     target: { value: password },
   });
-  fireEvent.click(screen.getByRole('button', { name: /accedi/i }));
+  fireEvent.click(screen.getByRole('button', { name: /^accedi$/i }));
 }
 
 describe('LoginForm', () => {
   it('calls onLogin with the entered credentials', async () => {
     const onLogin = vi.fn().mockResolvedValue(undefined);
-    render(<LoginForm onLogin={onLogin} />);
+    render(<LoginForm onLogin={onLogin} onForgotPassword={vi.fn()} />);
 
     fillAndSubmit('lele@example.com', 'correct-horse-battery');
 
@@ -29,7 +29,7 @@ describe('LoginForm', () => {
 
   it('shows an error message when onLogin rejects', async () => {
     const onLogin = vi.fn().mockRejectedValue(new Error('Unauthorized'));
-    render(<LoginForm onLogin={onLogin} />);
+    render(<LoginForm onLogin={onLogin} onForgotPassword={vi.fn()} />);
 
     fillAndSubmit('lele@example.com', 'wrong-password');
 
@@ -45,18 +45,31 @@ describe('LoginForm', () => {
           resolveLogin = resolve;
         }),
     );
-    render(<LoginForm onLogin={onLogin} />);
+    render(<LoginForm onLogin={onLogin} onForgotPassword={vi.fn()} />);
 
     fillAndSubmit('lele@example.com', 'correct-horse-battery');
-    expect((screen.getByRole('button') as HTMLButtonElement).disabled).toBe(
-      true,
-    );
+    const submitButton = screen.getByRole('button', {
+      name: /accesso in corso/i,
+    }) as HTMLButtonElement;
+    expect(submitButton.disabled).toBe(true);
 
     resolveLogin();
     await waitFor(() =>
-      expect((screen.getByRole('button') as HTMLButtonElement).disabled).toBe(
-        false,
-      ),
+      expect(
+        (screen.getByRole('button', { name: /^accedi$/i }) as HTMLButtonElement)
+          .disabled,
+      ).toBe(false),
     );
+  });
+
+  it('calls onForgotPassword when the link is clicked', () => {
+    const onForgotPassword = vi.fn();
+    render(<LoginForm onLogin={vi.fn()} onForgotPassword={onForgotPassword} />);
+
+    fireEvent.click(
+      screen.getByRole('button', { name: /password dimenticata/i }),
+    );
+
+    expect(onForgotPassword).toHaveBeenCalled();
   });
 });

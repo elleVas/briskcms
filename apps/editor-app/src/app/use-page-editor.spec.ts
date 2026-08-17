@@ -121,6 +121,37 @@ describe('usePageEditor', () => {
     ).rejects.toThrow();
   });
 
+  it('handleLogout logs out and returns to the login screen', async () => {
+    vi.mocked(api.createPage).mockResolvedValue(samplePage);
+    vi.mocked(api.logout).mockResolvedValue({ success: true });
+
+    const { result } = renderHook(() => usePageEditor());
+    await waitFor(() => expect(result.current.page).toEqual(samplePage));
+
+    await act(async () => {
+      await result.current.handleLogout();
+    });
+
+    expect(api.logout).toHaveBeenCalled();
+    expect(result.current.needsLogin).toBe(true);
+    expect(result.current.page).toBeNull();
+  });
+
+  it('handleLogout still returns to the login screen even if the server call fails', async () => {
+    vi.mocked(api.createPage).mockResolvedValue(samplePage);
+    vi.mocked(api.logout).mockRejectedValue(new Error('network error'));
+
+    const { result } = renderHook(() => usePageEditor());
+    await waitFor(() => expect(result.current.page).toEqual(samplePage));
+
+    await act(async () => {
+      await result.current.handleLogout();
+    });
+
+    expect(result.current.needsLogin).toBe(true);
+    expect(result.current.page).toBeNull();
+  });
+
   it('loads the existing page when the URL has a pageId', async () => {
     setSearch('?pageId=page-1');
     vi.mocked(api.getPage).mockResolvedValue(samplePage);

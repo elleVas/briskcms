@@ -10,9 +10,13 @@
 
 ```sh
 cp .env.example .env
-docker compose up -d postgres
+docker compose up -d postgres mailpit
 pnpm install
 ```
+
+`mailpit` is a local SMTP catcher — it receives every email Brisk sends in
+dev (verification, password reset) without a real provider. Web UI at
+<http://localhost:8025>.
 
 `pnpm install` also wires up two Husky hooks:
 
@@ -104,6 +108,16 @@ redirects to it. Puck stays isolated inside `apps/editor-app` —
 `src/lib/puck-data-mapper.ts` is the only place that translates between
 Puck's own data format and Brisk's own `Block[]` (see
 [ADR-0007](adr/0007-nested-block-content-model-independent-of-puck.md)).
+
+The login screen's "Password dimenticata?" link leads to a password-reset
+request form; the actual reset link Brisk emails opens
+`http://localhost:4200?resetToken=...`, and a verification email opens
+`?verifyToken=...` — both read straight from Mailpit at
+<http://localhost:8025>, there's no need for a real inbox in dev. See
+[ADR-0011](adr/0011-email-verification-password-reset.md) for the full
+design (why login isn't gated on verification yet, anti-enumeration on the
+reset-request endpoint, and why a password reset invalidates all of that
+user's existing sessions).
 
 ## Connecting to Postgres
 

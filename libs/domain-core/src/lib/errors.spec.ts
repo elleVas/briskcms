@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   InvalidCredentialsError,
+  InvalidOrExpiredTokenError,
   PageNotFoundError,
   PageVersionNotFoundError,
 } from './errors.js';
@@ -32,5 +33,15 @@ describe('InvalidCredentialsError', () => {
     expect(error).toBeInstanceOf(Error);
     expect(error.name).toBe('InvalidCredentialsError');
     expect(error.message).toBe('Invalid email or password');
+  });
+});
+
+describe('InvalidOrExpiredTokenError', () => {
+  it('is a real Error with a generic message', () => {
+    const error = new InvalidOrExpiredTokenError();
+
+    expect(error).toBeInstanceOf(Error);
+    expect(error.name).toBe('InvalidOrExpiredTokenError');
+    expect(error.message).toBe('Invalid or expired token');
   });
 });

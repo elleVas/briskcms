@@ -1,11 +1,20 @@
-import { UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, UnauthorizedException } from '@nestjs/common';
 import type { Request, Response } from 'express';
 import { User } from '@brisk/domain-core';
-import type { AuthPort, Session, UserRepositoryPort } from '@brisk/ports';
+import type {
+  AuthPort,
+  EmailPort,
+  Session,
+  UserRepositoryPort,
+  VerificationToken,
+  VerificationTokenPort,
+} from '@brisk/ports';
 import { AuthController } from './auth.controller.js';
 import { SESSION_COOKIE_NAME } from './session-cookie.constants.js';
+import type { AuthenticatedRequest } from './session-auth.guard.js';
 
 const tenantId = 'tenant-1';
+const editorAppUrl = 'https://editor.example.com';
 
 function buildResponse() {
   return {
@@ -21,9 +30,18 @@ function fakeRequest(cookies: Record<string, string | undefined>): Request {
   return { cookies } as unknown as Request;
 }
 
+function fakeAuthenticatedRequest(): AuthenticatedRequest {
+  return {
+    tenantId,
+    userId: 'user-1',
+  } as unknown as AuthenticatedRequest;
+}
+
 describe('AuthController', () => {
   let userRepository: jest.Mocked<UserRepositoryPort>;
   let authPort: jest.Mocked<AuthPort>;
+  let verificationTokenPort: jest.Mocked<VerificationTokenPort>;
+  let emailPort: jest.Mocked<EmailPort>;
   let controller: AuthController;
 
   beforeEach(() => {
@@ -38,8 +56,23 @@ describe('AuthController', () => {
       createSession: jest.fn(),
       validateSession: jest.fn(),
       invalidateSession: jest.fn(),
+      invalidateAllSessionsForUser: jest.fn(),
     };
-    controller = new AuthController(userRepository, authPort, tenantId);
+    verificationTokenPort = {
+      createToken: jest.fn(),
+      consumeToken: jest.fn(),
+    };
+    emailPort = {
+      sendEmail: jest.fn(),
+    };
+    controller = new AuthController(
+      userRepository,
+      authPort,
+      verificationTokenPort,
+      emailPort,
+      tenantId,
+      editorAppUrl,
+    );
   });
 
   describe('login', () => {
@@ -131,6 +164,149 @@ describe('AuthController', () => {
 
       expect(authPort.invalidateSession).not.toHaveBeenCalled();
       expect(response.clearCookie).toHaveBeenCalledWith(SESSION_COOKIE_NAME);
+    });
+  });
+
+  describe('resendVerificationEmail', () => {
+    it('sends a verification email for the authenticated user', async () => {
+      const user = User.create({
+        id: 'user-1',
+        tenantId,
+        email: 'lele@example.com',
+        passwordHash: 'hashed',
+        role: 'admin',
+      });
+      userRepository.findById.mockResolvedValue(user);
+      const token: VerificationToken = {
+        token: 'a-token',
+        userId: 'user-1',
+        tenantId,
+        purpose: 'email-verification',
+        expiresAt: new Date(),
+      };
+      verificationTokenPort.createToken.mockResolvedValue(token);
+
+      const result = await controller.resendVerificationEmail(
+        fakeAuthenticatedRequest(),
+      );
+
+      expect(emailPort.sendEmail).toHaveBeenCalledWith(
+        expect.objectContaining({ to: 'lele@example.com' }),
+      );
+      expect(result).toEqual({ success: true });
+    });
+  });
+
+  describe('confirmEmailVerification', () => {
+    it('returns success when the token is valid', async () => {
+      const user = User.create({
+        id: 'user-1',
+        tenantId,
+        email: 'lele@example.com',
+        passwordHash: 'hashed',
+        role: 'admin',
+      });
+      verificationTokenPort.consumeToken.mockResolvedValue({
+        token: 'a-token',
+        userId: 'user-1',
+        tenantId,
+        purpose: 'email-verification',
+        expiresAt: new Date(),
+      });
+      userRepository.findById.mockResolvedValue(user);
+
+      const result = await controller.confirmEmailVerification({
+        token: 'a-token',
+      });
+
+      expect(result).toEqual({ success: true });
+    });
+
+    it('maps InvalidOrExpiredTokenError to a 400', async () => {
+      verificationTokenPort.consumeToken.mockResolvedValue(null);
+
+      await expect(
+        controller.confirmEmailVerification({ token: 'bad-token' }),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('lets unexpected errors propagate unchanged', async () => {
+      verificationTokenPort.consumeToken.mockRejectedValue(
+        new Error('db exploded'),
+      );
+
+      await expect(
+        controller.confirmEmailVerification({ token: 'a-token' }),
+      ).rejects.toThrow('db exploded');
+    });
+  });
+
+  describe('requestPasswordReset', () => {
+    it('always returns success, whether or not the email matches a user', async () => {
+      userRepository.findByEmail.mockResolvedValue(null);
+
+      const result = await controller.requestPasswordReset({
+        email: 'nobody@example.com',
+      });
+
+      expect(result).toEqual({ success: true });
+      expect(emailPort.sendEmail).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('confirmPasswordReset', () => {
+    it('returns success when the token is valid', async () => {
+      const user = User.create({
+        id: 'user-1',
+        tenantId,
+        email: 'lele@example.com',
+        passwordHash: 'old-hash',
+        role: 'admin',
+      });
+      verificationTokenPort.consumeToken.mockResolvedValue({
+        token: 'a-token',
+        userId: 'user-1',
+        tenantId,
+        purpose: 'password-reset',
+        expiresAt: new Date(),
+      });
+      userRepository.findById.mockResolvedValue(user);
+      authPort.hashPassword.mockResolvedValue('new-hash');
+
+      const result = await controller.confirmPasswordReset({
+        token: 'a-token',
+        newPassword: 'new-password',
+      });
+
+      expect(authPort.invalidateAllSessionsForUser).toHaveBeenCalledWith(
+        'user-1',
+        tenantId,
+      );
+      expect(result).toEqual({ success: true });
+    });
+
+    it('maps InvalidOrExpiredTokenError to a 400', async () => {
+      verificationTokenPort.consumeToken.mockResolvedValue(null);
+
+      await expect(
+        controller.confirmPasswordReset({
+          token: 'bad-token',
+          newPassword: 'new-password',
+        }),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('lets unexpected errors propagate unchanged', async () => {
+      verificationTokenPort.consumeToken.mockRejectedValue(
+        new Error('db exploded'),
+      );
+
+      await expect(
+        controller.confirmPasswordReset({
+          token: 'a-token',
+          newPassword: 'new-password',
+        }),
+      ).rejects.toThrow('db exploded');
     });
   });
 });

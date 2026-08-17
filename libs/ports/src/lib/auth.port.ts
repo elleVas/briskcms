@@ -16,4 +16,6 @@ export interface AuthPort {
   createSession(userId: string, tenantId: string): Promise<Session>;
   validateSession(token: string): Promise<Session | null>;
   invalidateSession(token: string): Promise<void>;
+  /** Used by password reset: a reset should end any already-open sessions. */
+  invalidateAllSessionsForUser(userId: string, tenantId: string): Promise<void>;
 }
