@@ -14,14 +14,32 @@ docker compose up -d postgres
 pnpm install
 ```
 
-`docker compose up -d postgres` automatically runs the scripts in `db/init/`
-(only the first time the volume is created): it creates the `brisk_app`
-application role, the initial schema, the RLS policies and the grants. To start
-fresh:
+`docker compose up -d postgres` automatically runs `db/init/000_roles.sh` (only
+the first time the volume is created): it creates the `brisk_app` application
+role. The schema itself (tables, RLS policies, grants) is managed by Drizzle —
+see [ADR-0004](adr/0004-drizzle-as-schema-source-of-truth.md) — and applied
+separately:
 
 ```sh
-docker compose down -v   # also removes the volume, the next up reruns init/
+pnpm --filter @brisk/postgres-db run db:migrate
+```
+
+To start fresh:
+
+```sh
+docker compose down -v   # also removes the volume, the next up reruns db/init/000_roles.sh
 docker compose up -d postgres
+pnpm --filter @brisk/postgres-db run db:migrate
+```
+
+After changing `libs/adapters/postgres-db/src/lib/schema.ts`, generate a new
+migration (review the generated SQL before committing it — Drizzle can't see
+RLS policies or grants, those stay hand-written in
+`libs/adapters/postgres-db/drizzle/0001_rls_and_grants.sql` and any future
+custom migration needs the same treatment):
+
+```sh
+pnpm --filter @brisk/postgres-db run db:generate
 ```
 
 ## Main commands

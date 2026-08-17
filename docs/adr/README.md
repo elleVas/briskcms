@@ -16,3 +16,4 @@ explicitly supersedes it (status `Superseded by ADR-000X`).
 | [0001](0001-public-repository-for-branch-protection.md)  | Public repository to enable branch protection     | Accepted |
 | [0002](0002-non-superuser-role-for-rls-enforcement.md)   | Dedicated non-superuser Postgres role for the app | Accepted |
 | [0003](0003-separate-application-layer-for-use-cases.md) | Separate `application` layer for use cases        | Accepted |
+| [0004](0004-drizzle-as-schema-source-of-truth.md)        | Drizzle as the schema source of truth             | Accepted |

@@ -12,6 +12,28 @@ permissions:
 jobs:
   main:
     runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: brisk
+          POSTGRES_PASSWORD: changeme
+          POSTGRES_DB: brisk
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U brisk"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      POSTGRES_USER: brisk
+      POSTGRES_PASSWORD: changeme
+      POSTGRES_DB: brisk
+      POSTGRES_APP_PASSWORD: changeme_app
+
     steps:
       - uses: actions/checkout@v5
         with:
@@ -26,5 +48,21 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
+      - run: cp .env.example .env
+
+      # brisk_app needs a secret (POSTGRES_APP_PASSWORD), so it can't be baked
+      # into a checked-in migration — same script used for local dev.
+      - name: Bootstrap brisk_app role
+        env:
+          PGHOST: localhost
+          PGPASSWORD: ${{ env.POSTGRES_PASSWORD }}
+        run: bash db/init/000_roles.sh
+
+      - run: pnpm --filter @brisk/postgres-db run db:migrate
+        env:
+          POSTGRES_HOST: localhost
+
       - run: pnpm exec nx format:check --base=origin/main
       - run: pnpm exec nx run-many -t lint test build typecheck
+        env:
+          POSTGRES_HOST: localhost
