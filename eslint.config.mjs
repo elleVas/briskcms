@@ -19,7 +19,15 @@ export default [
       '@nx/enforce-module-boundaries': [
         'error',
         {
-          enforceBuildableLibDependency: true,
+          // Every lib in this workspace is generated with --bundler=none on
+          // purpose: none of them are published/consumed as pre-built
+          // packages, they're TS source consumed directly by whichever
+          // app's own bundler builds it (Vite, webpack, tsc, Astro). This
+          // rule's premise (a "buildable" lib losing its non-buildable
+          // dependency's source at publish time) doesn't apply here, and it
+          // only fires inconsistently depending on which bundler an app
+          // happens to use — see docs/adr/0008.
+          enforceBuildableLibDependency: false,
           allow: ['^.*/eslint(\\.base)?\\.config\\.[cm]?[jt]s$'],
           depConstraints: [
             {

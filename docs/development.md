@@ -67,6 +67,20 @@ reports "workspace out of sync":
 pnpm exec nx sync
 ```
 
+To use the Puck editor against real data, run the API and the editor
+together (Postgres migrated and seeded first, see above):
+
+```sh
+pnpm exec nx run @brisk/api:serve      # http://localhost:3000/api
+pnpm exec nx run @brisk/editor-app:dev  # http://localhost:4200
+```
+
+Opening `http://localhost:4200` with no `?pageId=` creates a new page
+against `VITE_DEFAULT_SITE_ID` and redirects to it. Puck stays isolated
+inside `apps/editor-app` — `src/lib/puck-data-mapper.ts` is the only place
+that translates between Puck's own data format and Brisk's own `Block[]`
+(see [ADR-0007](adr/0007-nested-block-content-model-independent-of-puck.md)).
+
 ## Connecting to Postgres
 
 Two distinct roles (see [ADR-0002](adr/0002-non-superuser-role-for-rls-enforcement.md)):

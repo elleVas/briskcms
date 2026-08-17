@@ -4,6 +4,8 @@ import react from '@vitejs/plugin-react';
 
 export default defineConfig(() => ({
   root: import.meta.dirname,
+  // VITE_-prefixed vars live in the repo-root .env, same as everywhere else.
+  envDir: '../../',
   cacheDir: '../../node_modules/.vite/apps/editor-app',
   server: {
     port: 4200,
@@ -31,6 +33,7 @@ export default defineConfig(() => ({
     watch: false,
     globals: true,
     environment: 'jsdom',
+    setupFiles: ['src/test-setup.ts'],
     include: ['{src,tests}/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
     reporters: ['default'],
     coverage: {
