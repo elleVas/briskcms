@@ -1,0 +1,39 @@
+---
+import page from '../content/example-page.json';
+
+type Block =
+	| { type: 'Hero'; props: { title: string; subtitle: string } }
+	| { type: 'Text'; props: { body: string } };
+
+const blocks = page.content as Block[];
+---
+
+<html lang={page.locale}>
+	<head>
+		<meta charset="utf-8" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="icon" href="/favicon.ico" />
+		<meta name="viewport" content="width=device-width" />
+		<meta name="generator" content={Astro.generator} />
+		<title>{page.seo_meta.title}</title>
+		<meta name="description" content={page.seo_meta.description} />
+	</head>
+	<body>
+		{
+			blocks.map((block) => {
+				if (block.type === 'Hero') {
+					return (
+						<header>
+							<h1>{block.props.title}</h1>
+							<p>{block.props.subtitle}</p>
+						</header>
+					);
+				}
+				if (block.type === 'Text') {
+					return <p>{block.props.body}</p>;
+				}
+				return null;
+			})
+		}
+	</body>
+</html>
