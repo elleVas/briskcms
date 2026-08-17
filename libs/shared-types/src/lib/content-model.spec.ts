@@ -1,9 +1,16 @@
 import { describe, expect, it } from 'vitest';
-import { blockSchema, pageContentSchema, seoMetaSchema } from './content-model.js';
+import {
+  blockSchema,
+  pageContentSchema,
+  seoMetaSchema,
+} from './content-model.js';
 
 describe('content-model schemas', () => {
   it('accepts a valid block', () => {
-    const result = blockSchema.safeParse({ type: 'Hero', props: { title: 'Brisk' } });
+    const result = blockSchema.safeParse({
+      type: 'Hero',
+      props: { title: 'Brisk' },
+    });
     expect(result.success).toBe(true);
   });
 
@@ -21,7 +28,9 @@ describe('content-model schemas', () => {
   });
 
   it('requires title and description on seo meta', () => {
-    expect(seoMetaSchema.safeParse({ title: 'x', description: 'y' }).success).toBe(true);
+    expect(
+      seoMetaSchema.safeParse({ title: 'x', description: 'y' }).success,
+    ).toBe(true);
     expect(seoMetaSchema.safeParse({ title: 'x' }).success).toBe(false);
   });
 });

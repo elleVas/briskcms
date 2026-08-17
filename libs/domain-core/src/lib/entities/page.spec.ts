@@ -31,7 +31,9 @@ describe('Page entity', () => {
     page.saveDraft([{ type: 'Hero', props: { title: 'Ciao' } }]);
     page.publish();
     expect(page.status).toBe('published');
-    expect(page.publishedContent).toEqual([{ type: 'Hero', props: { title: 'Ciao' } }]);
+    expect(page.publishedContent).toEqual([
+      { type: 'Hero', props: { title: 'Ciao' } },
+    ]);
   });
 
   it('restoreContent changes the draft but never the already-published content', () => {
@@ -42,7 +44,9 @@ describe('Page entity', () => {
     page.restoreContent([{ type: 'Hero', props: { title: 'v0' } }]);
 
     expect(page.content).toEqual([{ type: 'Hero', props: { title: 'v0' } }]);
-    expect(page.publishedContent).toEqual([{ type: 'Hero', props: { title: 'v1' } }]);
+    expect(page.publishedContent).toEqual([
+      { type: 'Hero', props: { title: 'v1' } },
+    ]);
     expect(page.status).toBe('published');
   });
 });

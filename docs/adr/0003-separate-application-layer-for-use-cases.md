@@ -18,6 +18,7 @@ must import entity types from `domain-core` (e.g. `Page` as the return type of
 each other.
 
 Options considered:
+
 1. New `libs/application` library (use cases), depends on `domain-core` + `ports`.
 2. Use cases as NestJS services inside `apps/api`, no new library.
 3. The Ports the domain needs (`PageRepositoryPort`, `PageVersionRepositoryPort`)

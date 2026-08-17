@@ -1,7 +1,10 @@
 import { randomUUID } from 'node:crypto';
 import { Page } from '@brisk/domain-core';
 import type { PageContent, SeoMeta } from '@brisk/shared-types';
-import type { PageRepositoryPort, PageVersionRepositoryPort } from '@brisk/ports';
+import type {
+  PageRepositoryPort,
+  PageVersionRepositoryPort,
+} from '@brisk/ports';
 
 export interface CreatePageDeps {
   pageRepository: PageRepositoryPort;
@@ -19,7 +22,10 @@ export interface CreatePageInput {
   createdBy: string | null;
 }
 
-export async function createPage(deps: CreatePageDeps, input: CreatePageInput): Promise<Page> {
+export async function createPage(
+  deps: CreatePageDeps,
+  input: CreatePageInput,
+): Promise<Page> {
   const page = Page.create({
     id: randomUUID(),
     tenantId: input.tenantId,

@@ -10,7 +10,10 @@ export interface PublishPageInput {
   pageId: string;
 }
 
-export async function publishPage(deps: PublishPageDeps, input: PublishPageInput): Promise<Page> {
+export async function publishPage(
+  deps: PublishPageDeps,
+  input: PublishPageInput,
+): Promise<Page> {
   const page = await deps.pageRepository.findById(input.tenantId, input.pageId);
   if (!page) {
     throw new PageNotFoundError(input.pageId);

@@ -20,7 +20,7 @@ Examples: `feature/page-draft-publish-flow`, `fix/rls-tenant-scoping-media`,
 ## What requires explicit sign-off before implementing
 
 At the author's explicit request, these kinds of changes must be discussed
-*before* writing code, not after:
+_before_ writing code, not after:
 
 - new dependencies/libraries not already planned
 - changes to the content model or database schema

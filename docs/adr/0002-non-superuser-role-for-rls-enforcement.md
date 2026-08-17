@@ -13,7 +13,7 @@ wasn't working.
 
 Cause: that user is a Postgres superuser. Superusers always bypass Row Level
 Security, regardless of `FORCE ROW LEVEL SECURITY` — that clause only applies to
-the table owner when it's *not* a superuser.
+the table owner when it's _not_ a superuser.
 
 ## Decision
 

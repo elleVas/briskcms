@@ -11,8 +11,8 @@ Format: [Michael Nygard](https://cognitect.com/blog/2011/11/15/documenting-archi
 An accepted ADR is never edited: if a decision changes, a new one is written that
 explicitly supersedes it (status `Superseded by ADR-000X`).
 
-| ADR | Title | Status |
-|---|---|---|
-| [0001](0001-public-repository-for-branch-protection.md) | Public repository to enable branch protection | Accepted |
-| [0002](0002-non-superuser-role-for-rls-enforcement.md) | Dedicated non-superuser Postgres role for the app | Accepted |
-| [0003](0003-separate-application-layer-for-use-cases.md) | Separate `application` layer for use cases | Accepted |
+| ADR                                                      | Title                                             | Status   |
+| -------------------------------------------------------- | ------------------------------------------------- | -------- |
+| [0001](0001-public-repository-for-branch-protection.md)  | Public repository to enable branch protection     | Accepted |
+| [0002](0002-non-superuser-role-for-rls-enforcement.md)   | Dedicated non-superuser Postgres role for the app | Accepted |
+| [0003](0003-separate-application-layer-for-use-cases.md) | Separate `application` layer for use cases        | Accepted |

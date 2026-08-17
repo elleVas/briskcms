@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import type { Page, PageVersion } from '@brisk/domain-core';
-import type { PageRepositoryPort, PageVersionRepositoryPort } from '@brisk/ports';
+import type {
+  PageRepositoryPort,
+  PageVersionRepositoryPort,
+} from '@brisk/ports';
 import { createPage } from './create-page.use-case.js';
 import { saveDraft } from './save-draft.use-case.js';
 import { publishPage } from './publish-page.use-case.js';
@@ -19,7 +22,12 @@ class InMemoryPageRepository implements PageRepositoryPort {
     return page && page.tenantId === tenantId ? page : null;
   }
 
-  async findBySlug(tenantId: string, siteId: string, locale: string, slug: string): Promise<Page | null> {
+  async findBySlug(
+    tenantId: string,
+    siteId: string,
+    locale: string,
+    slug: string,
+  ): Promise<Page | null> {
     for (const page of this.pages.values()) {
       if (
         page.tenantId === tenantId &&
@@ -48,12 +56,21 @@ class InMemoryPageVersionRepository implements PageVersionRepositoryPort {
     this.versions.push(version);
   }
 
-  async findById(tenantId: string, versionId: string): Promise<PageVersion | null> {
-    return this.versions.find((v) => v.tenantId === tenantId && v.id === versionId) ?? null;
+  async findById(
+    tenantId: string,
+    versionId: string,
+  ): Promise<PageVersion | null> {
+    return (
+      this.versions.find(
+        (v) => v.tenantId === tenantId && v.id === versionId,
+      ) ?? null
+    );
   }
 
   async listByPage(tenantId: string, pageId: string): Promise<PageVersion[]> {
-    return this.versions.filter((v) => v.tenantId === tenantId && v.pageId === pageId);
+    return this.versions.filter(
+      (v) => v.tenantId === tenantId && v.pageId === pageId,
+    );
   }
 }
 
@@ -89,11 +106,15 @@ describe('page lifecycle: create -> draft -> publish -> rollback', () => {
       content: [{ type: 'Hero', props: { title: 'Versione 1' } }],
       actorUserId: 'user-1',
     });
-    expect(afterFirstDraft.content).toEqual([{ type: 'Hero', props: { title: 'Versione 1' } }]);
+    expect(afterFirstDraft.content).toEqual([
+      { type: 'Hero', props: { title: 'Versione 1' } },
+    ]);
 
     const published = await publishPage(deps, { tenantId, pageId: page.id });
     expect(published.status).toBe('published');
-    expect(published.publishedContent).toEqual([{ type: 'Hero', props: { title: 'Versione 1' } }]);
+    expect(published.publishedContent).toEqual([
+      { type: 'Hero', props: { title: 'Versione 1' } },
+    ]);
 
     // un ulteriore salvataggio draft NON deve toccare il contenuto già pubblicato
     const afterSecondDraft = await saveDraft(deps, {
@@ -102,10 +123,17 @@ describe('page lifecycle: create -> draft -> publish -> rollback', () => {
       content: [{ type: 'Hero', props: { title: 'Versione 2 (bozza)' } }],
       actorUserId: 'user-1',
     });
-    expect(afterSecondDraft.content).toEqual([{ type: 'Hero', props: { title: 'Versione 2 (bozza)' } }]);
-    expect(afterSecondDraft.publishedContent).toEqual([{ type: 'Hero', props: { title: 'Versione 1' } }]);
+    expect(afterSecondDraft.content).toEqual([
+      { type: 'Hero', props: { title: 'Versione 2 (bozza)' } },
+    ]);
+    expect(afterSecondDraft.publishedContent).toEqual([
+      { type: 'Hero', props: { title: 'Versione 1' } },
+    ]);
 
-    const versions = await listPageVersions(deps, { tenantId, pageId: page.id });
+    const versions = await listPageVersions(deps, {
+      tenantId,
+      pageId: page.id,
+    });
     expect(versions).toHaveLength(3); // create, draft v1, draft v2
     const firstVersion = versions[0];
 
@@ -118,10 +146,15 @@ describe('page lifecycle: create -> draft -> publish -> rollback', () => {
 
     // il rollback ripristina il draft alla versione scelta ma non tocca il pubblicato
     expect(afterRollback.content).toEqual(firstVersion.content);
-    expect(afterRollback.publishedContent).toEqual([{ type: 'Hero', props: { title: 'Versione 1' } }]);
+    expect(afterRollback.publishedContent).toEqual([
+      { type: 'Hero', props: { title: 'Versione 1' } },
+    ]);
     expect(afterRollback.status).toBe('published');
 
-    const versionsAfterRollback = await listPageVersions(deps, { tenantId, pageId: page.id });
+    const versionsAfterRollback = await listPageVersions(deps, {
+      tenantId,
+      pageId: page.id,
+    });
     expect(versionsAfterRollback).toHaveLength(4); // il rollback stesso crea una nuova versione
   });
 
@@ -148,7 +181,10 @@ describe('page lifecycle: create -> draft -> publish -> rollback', () => {
       createdBy: null,
     });
 
-    const foundFromOtherTenant = await deps.pageRepository.findById(otherTenantId, pageA.id);
+    const foundFromOtherTenant = await deps.pageRepository.findById(
+      otherTenantId,
+      pageA.id,
+    );
     expect(foundFromOtherTenant).toBeNull();
 
     const versionsFromOtherTenant = await listPageVersions(deps, {

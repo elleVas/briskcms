@@ -8,6 +8,11 @@ import type { Page } from '@brisk/domain-core';
 export interface PageRepositoryPort {
   save(page: Page): Promise<void>;
   findById(tenantId: string, pageId: string): Promise<Page | null>;
-  findBySlug(tenantId: string, siteId: string, locale: string, slug: string): Promise<Page | null>;
+  findBySlug(
+    tenantId: string,
+    siteId: string,
+    locale: string,
+    slug: string,
+  ): Promise<Page | null>;
   delete(tenantId: string, pageId: string): Promise<void>;
 }

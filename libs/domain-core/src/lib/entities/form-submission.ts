@@ -10,7 +10,9 @@ export interface FormSubmissionProps {
 export class FormSubmission {
   private constructor(private props: FormSubmissionProps) {}
 
-  static create(input: Omit<FormSubmissionProps, 'createdAt'> & { now?: Date }): FormSubmission {
+  static create(
+    input: Omit<FormSubmissionProps, 'createdAt'> & { now?: Date },
+  ): FormSubmission {
     const { now, ...rest } = input;
     return new FormSubmission({ ...rest, createdAt: now ?? new Date() });
   }

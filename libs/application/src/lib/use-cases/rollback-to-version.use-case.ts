@@ -1,6 +1,13 @@
 import { randomUUID } from 'node:crypto';
-import { Page, PageNotFoundError, PageVersionNotFoundError } from '@brisk/domain-core';
-import type { PageRepositoryPort, PageVersionRepositoryPort } from '@brisk/ports';
+import {
+  Page,
+  PageNotFoundError,
+  PageVersionNotFoundError,
+} from '@brisk/domain-core';
+import type {
+  PageRepositoryPort,
+  PageVersionRepositoryPort,
+} from '@brisk/ports';
 
 export interface RollbackToVersionDeps {
   pageRepository: PageRepositoryPort;
@@ -28,7 +35,10 @@ export async function rollbackToVersion(
     throw new PageNotFoundError(input.pageId);
   }
 
-  const version = await deps.pageVersionRepository.findById(input.tenantId, input.versionId);
+  const version = await deps.pageVersionRepository.findById(
+    input.tenantId,
+    input.versionId,
+  );
   if (!version || version.pageId !== page.id) {
     throw new PageVersionNotFoundError(input.versionId);
   }
