@@ -20,5 +20,25 @@
     "eslint.config.js",
     "eslint.config.cjs",
     "eslint.config.mjs"
+  ],
+  "references": [
+    {
+      "path": "../../libs/shared-types/tsconfig.lib.json"
+    },
+    {
+      "path": "../../libs/adapters/postgres-page-repository/tsconfig.lib.json"
+    },
+    {
+      "path": "../../libs/adapters/postgres-db/tsconfig.lib.json"
+    },
+    {
+      "path": "../../libs/ports/tsconfig.lib.json"
+    },
+    {
+      "path": "../../libs/domain-core/tsconfig.lib.json"
+    },
+    {
+      "path": "../../libs/application/tsconfig.lib.json"
+    }
   ]
 }
