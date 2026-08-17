@@ -1,5 +1,5 @@
 {
-  "name": "@brisk/shared-types",
+  "name": "@brisk/application",
   "version": "0.0.1",
   "private": true,
   "type": "module",
@@ -14,6 +14,8 @@
     "./package.json": "./package.json"
   },
   "dependencies": {
-    "zod": "^4.4.3"
+    "@brisk/domain-core": "workspace:*",
+    "@brisk/ports": "workspace:*",
+    "@brisk/shared-types": "workspace:*"
   }
 }

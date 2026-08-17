@@ -13,5 +13,8 @@
     },
     "./package.json": "./package.json"
   },
-  "dependencies": {}
+  "dependencies": {
+    "@brisk/shared-types": "workspace:*",
+    "zod": "^4.4.3"
+  }
 }

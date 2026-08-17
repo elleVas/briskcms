@@ -2,13 +2,12 @@ import { defineConfig } from 'vitest/config';
 
 export default defineConfig(() => ({
   root: __dirname,
-  cacheDir: '../../node_modules/.vite/libs/ports',
+  cacheDir: '../../node_modules/.vite/libs/application',
   test: {
-    name: '@brisk/ports',
+    name: '@brisk/application',
     watch: false,
     globals: true,
     environment: 'node',
-    passWithNoTests: true,
     include: ['{src,tests}/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
     reporters: ['default'],
     coverage: {
