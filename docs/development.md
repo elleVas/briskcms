@@ -30,6 +30,7 @@ To start fresh:
 docker compose down -v   # also removes the volume, the next up reruns db/init/000_roles.sh
 docker compose up -d postgres
 pnpm --filter @brisk/postgres-db run db:migrate
+pnpm --filter @brisk/postgres-db run db:seed
 ```
 
 After changing `libs/adapters/postgres-db/src/lib/schema.ts`, generate a new
@@ -40,6 +41,14 @@ custom migration needs the same treatment):
 
 ```sh
 pnpm --filter @brisk/postgres-db run db:generate
+```
+
+Every request currently runs as one fixed tenant/site (real auth is Phase 3 —
+see [ADR-0006](adr/0006-temporary-fixed-tenant-resolution-pre-auth.md)). Seed
+it once per fresh database:
+
+```sh
+pnpm --filter @brisk/postgres-db run db:seed
 ```
 
 ## Main commands
