@@ -61,9 +61,14 @@ always use at runtime. Schema and RLS policies are Drizzle-managed — see
 ## Content model
 
 A page's "content" is an array of blocks (`PageContent = Block[]`,
-`libs/shared-types`), the same format the Puck editor will produce from Phase 2
-onward and that `apps/public-site` consumes for server-side rendering. Every page
-always has two copies of the content model:
+`libs/shared-types`), each optionally holding nested `children: Block[]` for
+container-style blocks (e.g. columns) — Brisk's own nesting vocabulary, not
+Puck's `zones`. Puck stays isolated inside `apps/editor-app`: a mapping layer
+there converts Puck's own `Data` format (root/content/zones) to/from
+`Block[]`, so the domain, the Postgres schema, and `apps/public-site`'s
+renderer never need to know Puck's data format exists — see
+[ADR-0007](adr/0007-nested-block-content-model-independent-of-puck.md). Every
+page always has two copies of the content model:
 
 - `content` — the latest draft, editable.
 - `publishedContent` — the last version actually published, immutable until the

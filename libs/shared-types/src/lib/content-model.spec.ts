@@ -27,6 +27,31 @@ describe('content-model schemas', () => {
     expect(result.success).toBe(true);
   });
 
+  it('accepts nested children on a block', () => {
+    const result = blockSchema.safeParse({
+      type: 'Columns',
+      props: {},
+      children: [
+        { type: 'Text', props: { body: 'colonna 1' } },
+        {
+          type: 'Columns',
+          props: {},
+          children: [{ type: 'Text', props: { body: 'annidato due livelli' } }],
+        },
+      ],
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it('rejects a malformed nested child', () => {
+    const result = blockSchema.safeParse({
+      type: 'Columns',
+      props: {},
+      children: [{ props: {} }],
+    });
+    expect(result.success).toBe(false);
+  });
+
   it('requires title and description on seo meta', () => {
     expect(
       seoMetaSchema.safeParse({ title: 'x', description: 'y' }).success,
