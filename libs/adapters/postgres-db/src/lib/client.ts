@@ -11,6 +11,44 @@ export function createDb(connectionString: string) {
 export type BriskDb = ReturnType<typeof createDb>;
 export type BriskTx = Parameters<Parameters<BriskDb['transaction']>[0]>[0];
 
+// No password ever gets a literal fallback below: a missing credential must
+// fail loudly and immediately, not silently connect with a guessed value.
+function requireEnv(name: string): string {
+  const value = process.env[name];
+  if (!value) {
+    throw new Error(
+      `Missing required environment variable: ${name}. Copy .env.example to ` +
+        `.env and set it (see docs/development.md), or export it directly.`,
+    );
+  }
+  return value;
+}
+
+/**
+ * Admin/superuser connection string, for drizzle-kit migrations only — never
+ * for runtime queries (bypasses RLS). See
+ * docs/adr/0002-non-superuser-role-for-rls-enforcement.md.
+ */
+export function adminConnectionString(): string {
+  const host = process.env.POSTGRES_HOST ?? 'localhost';
+  const port = process.env.POSTGRES_PORT ?? '5432';
+  const database = process.env.POSTGRES_DB ?? 'brisk';
+  const user = process.env.POSTGRES_USER ?? 'brisk';
+  const password = requireEnv('POSTGRES_PASSWORD');
+  return `postgres://${user}:${password}@${host}:${port}/${database}`;
+}
+
+/** brisk_app connection — what every runtime query must use, respects RLS. */
+export function createAppDb(): BriskDb {
+  const host = process.env.POSTGRES_HOST ?? 'localhost';
+  const port = process.env.POSTGRES_PORT ?? '5432';
+  const database = process.env.POSTGRES_DB ?? 'brisk';
+  const password = requireEnv('POSTGRES_APP_PASSWORD');
+  return createDb(
+    `postgres://brisk_app:${password}@${host}:${port}/${database}`,
+  );
+}
+
 /**
  * Every Postgres adapter must go through this: RLS only filters rows once
  * `app.current_tenant_id` is set for the session (see db/init/000_roles.sh and

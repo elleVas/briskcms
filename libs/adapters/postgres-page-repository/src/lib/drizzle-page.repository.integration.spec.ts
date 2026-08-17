@@ -3,7 +3,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { Page } from '@brisk/domain-core';
 import {
   type BriskDb,
-  createDb,
+  createAppDb,
   sites,
   tenants,
   withTenant,
@@ -18,12 +18,6 @@ import { DrizzlePageVersionRepository } from './drizzle-page-version.repository.
  * accidentally weakens tenant isolation should fail here, not in production.
  */
 describe('DrizzlePageRepository (integration)', () => {
-  const host = process.env.POSTGRES_HOST ?? 'localhost';
-  const port = process.env.POSTGRES_PORT ?? '5432';
-  const database = process.env.POSTGRES_DB ?? 'brisk';
-  const appPassword = process.env.POSTGRES_APP_PASSWORD ?? 'changeme_app';
-  const connectionString = `postgres://brisk_app:${appPassword}@${host}:${port}/${database}`;
-
   let db: BriskDb;
   let pageRepository: DrizzlePageRepository;
   let pageVersionRepository: DrizzlePageVersionRepository;
@@ -32,7 +26,7 @@ describe('DrizzlePageRepository (integration)', () => {
   let siteAId: string;
 
   beforeAll(async () => {
-    db = createDb(connectionString);
+    db = createAppDb();
     pageRepository = new DrizzlePageRepository(db);
     pageVersionRepository = new DrizzlePageVersionRepository(db);
 
