@@ -44,6 +44,15 @@
     },
     {
       "path": "./libs/env-config"
+    },
+    {
+      "path": "./libs/opaque-token"
+    },
+    {
+      "path": "./libs/adapters/verification-token-adapter"
+    },
+    {
+      "path": "./libs/adapters/smtp-email-adapter"
     }
   ],
   "compilerOptions": {}

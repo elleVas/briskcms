@@ -74,6 +74,17 @@ hashing via `@node-rs/argon2`, opaque DB-backed sessions — never a JWT).
 There is no public registration endpoint; the dev/test user comes from
 `pnpm --filter @brisk/postgres-db run db:seed`.
 
+Email verification and password reset (see
+[ADR-0011](adr/0011-email-verification-password-reset.md)) use a second,
+separate opaque-token mechanism (`libs/adapters/verification-token-adapter`,
+single-use via an atomic `DELETE ... RETURNING`) rather than reusing
+sessions — both share their random-token generation/hashing through
+`libs/opaque-token`. `libs/adapters/smtp-email-adapter` implements
+`EmailPort` via `nodemailer`; Brisk's own HTML email templates live in
+`libs/application/src/lib/emails/`. Login is not currently gated on email
+verification — an explicitly tracked future decision, not an oversight (see
+ADR-0011).
+
 ## Content model
 
 A page's "content" is an array of blocks (`PageContent = Block[]`,
@@ -112,10 +123,15 @@ libs/
     postgres-page-repository/  PageRepositoryPort + PageVersionRepositoryPort
     postgres-user-repository/  UserRepositoryPort
     session-auth-adapter/      AuthPort — argon2id hashing, DB-backed sessions
+    verification-token-adapter/ VerificationTokenPort — single-use email
+                                verification/password-reset tokens
+    smtp-email-adapter/        EmailPort via nodemailer
   puck-config/    editor block definitions (Phase 2)
   shared-types/   shared content model (Block, PageContent, SeoMeta)
   env-config/     requireEnv() — fail loudly on a missing required env var,
                    shared by every adapter/app/script that needs one
+  opaque-token/   generateOpaqueToken()/hashOpaqueToken() — shared by
+                   session-auth-adapter and verification-token-adapter
 
 db/
   init/           brisk_app role bootstrap (see docs/development.md);

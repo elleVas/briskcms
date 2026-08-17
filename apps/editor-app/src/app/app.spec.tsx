@@ -1,4 +1,10 @@
-import { cleanup, render, screen, waitFor } from '@testing-library/react';
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from '@testing-library/react';
 import { afterEach, beforeEach, vi } from 'vitest';
 import App from './app';
 import * as api from '../lib/pages-api-client.js';
@@ -17,6 +23,7 @@ vi.mock('../lib/pages-api-client.js', async (importOriginal) => {
     publishPage: vi.fn(),
     login: vi.fn(),
     logout: vi.fn(),
+    verifyEmail: vi.fn(),
   };
 });
 
@@ -69,6 +76,21 @@ describe('App', () => {
     );
   });
 
+  it('logs out from the editor view and returns to the login form', async () => {
+    vi.mocked(api.createPage).mockResolvedValue(samplePage);
+    vi.mocked(api.logout).mockResolvedValue({ success: true });
+
+    render(<App />);
+    await waitFor(() =>
+      expect(screen.queryByText('Caricamento...')).toBeNull(),
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /^esci$/i }));
+
+    expect(await screen.findByRole('heading', { name: 'Accedi' })).toBeTruthy();
+    expect(api.logout).toHaveBeenCalled();
+  });
+
   it('shows the login form when the initial load is unauthorized', async () => {
     vi.mocked(api.createPage).mockRejectedValue(
       new api.ApiError(401, { message: 'Unauthorized' }),
@@ -77,5 +99,52 @@ describe('App', () => {
     render(<App />);
 
     expect(await screen.findByRole('heading', { name: 'Accedi' })).toBeTruthy();
+  });
+
+  it('shows the reset password form when the URL has a resetToken, regardless of auth state', () => {
+    // Never resolves — the resetToken branch must render before (and
+    // independently of) whatever the page-load call eventually does.
+    vi.mocked(api.createPage).mockReturnValue(new Promise(() => undefined));
+    window.history.pushState({}, '', '/?resetToken=abc123');
+
+    render(<App />);
+
+    expect(
+      screen.getByRole('heading', { name: 'Reimposta la password' }),
+    ).toBeTruthy();
+  });
+
+  it('shows the verify email view when the URL has a verifyToken', () => {
+    // Never resolve either call — this test only checks the initial
+    // synchronous render, not what happens once either settles.
+    vi.mocked(api.createPage).mockReturnValue(new Promise(() => undefined));
+    vi.mocked(api.verifyEmail).mockReturnValue(new Promise(() => undefined));
+    window.history.pushState({}, '', '/?verifyToken=xyz789');
+
+    render(<App />);
+
+    expect(
+      screen.getByRole('heading', { name: 'Verifica email' }),
+    ).toBeTruthy();
+  });
+
+  it('toggles between the login and forgot-password views', async () => {
+    vi.mocked(api.createPage).mockRejectedValue(
+      new api.ApiError(401, { message: 'Unauthorized' }),
+    );
+
+    render(<App />);
+
+    expect(await screen.findByRole('heading', { name: 'Accedi' })).toBeTruthy();
+
+    fireEvent.click(
+      screen.getByRole('button', { name: /password dimenticata/i }),
+    );
+    expect(
+      screen.getByRole('heading', { name: 'Password dimenticata' }),
+    ).toBeTruthy();
+
+    fireEvent.click(screen.getByRole('button', { name: /torna al login/i }));
+    expect(screen.getByRole('heading', { name: 'Accedi' })).toBeTruthy();
   });
 });

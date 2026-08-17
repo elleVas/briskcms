@@ -6,6 +6,7 @@ import {
   createPage,
   getPage,
   login as apiLogin,
+  logout as apiLogout,
   publishPage,
   saveDraft,
   type PageDto,
@@ -79,6 +80,23 @@ export function usePageEditor() {
     [loadOrCreatePage],
   );
 
+  // Best-effort: even if the server call fails (e.g. the session already
+  // expired), the user still gets kicked back to the login screen locally —
+  // the `catch` here is what actually makes it best-effort; a bare
+  // `finally` would still leave the rejection unhandled.
+  const handleLogout = useCallback(async () => {
+    window.clearTimeout(saveTimeoutRef.current);
+    try {
+      await apiLogout();
+    } catch {
+      // ignored on purpose, see comment above
+    } finally {
+      setPage(null);
+      setNeedsLogin(true);
+      setStatus('');
+    }
+  }, []);
+
   const handleChange = useCallback(
     (data: Data) => {
       if (!page) return;
@@ -103,5 +121,13 @@ export function usePageEditor() {
     [page],
   );
 
-  return { page, status, needsLogin, handleLogin, handleChange, handlePublish };
+  return {
+    page,
+    status,
+    needsLogin,
+    handleLogin,
+    handleLogout,
+    handleChange,
+    handlePublish,
+  };
 }

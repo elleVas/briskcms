@@ -5,3 +5,7 @@ export * from './lib/use-cases/list-page-versions.use-case.js';
 export * from './lib/use-cases/rollback-to-version.use-case.js';
 export * from './lib/use-cases/login-user.use-case.js';
 export * from './lib/use-cases/logout-user.use-case.js';
+export * from './lib/use-cases/request-email-verification.use-case.js';
+export * from './lib/use-cases/verify-email.use-case.js';
+export * from './lib/use-cases/request-password-reset.use-case.js';
+export * from './lib/use-cases/reset-password.use-case.js';

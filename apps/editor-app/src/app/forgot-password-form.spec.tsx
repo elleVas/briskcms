@@ -1,0 +1,60 @@
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import * as api from '../lib/pages-api-client.js';
+import { ForgotPasswordForm } from './forgot-password-form.js';
+
+vi.mock('../lib/pages-api-client.js', async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import('../lib/pages-api-client.js')>();
+  return { ...actual, requestPasswordReset: vi.fn() };
+});
+
+describe('ForgotPasswordForm', () => {
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('shows the same confirmation whether or not the email matched an account', async () => {
+    vi.mocked(api.requestPasswordReset).mockResolvedValue({ success: true });
+    render(<ForgotPasswordForm onBackToLogin={vi.fn()} />);
+
+    fireEvent.change(screen.getByLabelText('Email'), {
+      target: { value: 'lele@example.com' },
+    });
+    fireEvent.click(
+      screen.getByRole('button', { name: /invia link di reset/i }),
+    );
+
+    await waitFor(() =>
+      expect(screen.getByText(/se l'indirizzo esiste/i)).toBeTruthy(),
+    );
+    expect(api.requestPasswordReset).toHaveBeenCalledWith('lele@example.com');
+  });
+
+  it('shows the confirmation even when the request itself fails', async () => {
+    vi.mocked(api.requestPasswordReset).mockRejectedValue(
+      new Error('network error'),
+    );
+    render(<ForgotPasswordForm onBackToLogin={vi.fn()} />);
+
+    fireEvent.change(screen.getByLabelText('Email'), {
+      target: { value: 'lele@example.com' },
+    });
+    fireEvent.click(
+      screen.getByRole('button', { name: /invia link di reset/i }),
+    );
+
+    await waitFor(() =>
+      expect(screen.getByText(/se l'indirizzo esiste/i)).toBeTruthy(),
+    );
+  });
+
+  it('calls onBackToLogin when the link is clicked', () => {
+    const onBackToLogin = vi.fn();
+    render(<ForgotPasswordForm onBackToLogin={onBackToLogin} />);
+
+    fireEvent.click(screen.getByRole('button', { name: /torna al login/i }));
+
+    expect(onBackToLogin).toHaveBeenCalled();
+  });
+});

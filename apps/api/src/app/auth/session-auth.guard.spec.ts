@@ -33,6 +33,7 @@ describe('SessionAuthGuard', () => {
       createSession: jest.fn(),
       validateSession: jest.fn(),
       invalidateSession: jest.fn(),
+      invalidateAllSessionsForUser: jest.fn(),
     };
     guard = new SessionAuthGuard(authPort);
   });

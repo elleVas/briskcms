@@ -12,7 +12,12 @@ import {
   uuid,
 } from 'drizzle-orm/pg-core';
 import type { PageContent, SeoMeta } from '@brisk/shared-types';
-import type { PageStatus, StorageProvider, UserRole } from '@brisk/domain-core';
+import type {
+  PageStatus,
+  StorageProvider,
+  UserRole,
+  VerificationTokenPurpose,
+} from '@brisk/domain-core';
 
 export const tenants = pgTable('tenants', {
   id: uuid('id').primaryKey().defaultRandom(),
@@ -167,6 +172,36 @@ export const sessions = pgTable(
       .defaultNow(),
   },
   (table) => [index('sessions_user_idx').on(table.userId)],
+);
+
+export const verificationTokens = pgTable(
+  'verification_tokens',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    tenantId: uuid('tenant_id')
+      .notNull()
+      .references(() => tenants.id, { onDelete: 'cascade' }),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    // one table, not two: both purposes share the exact same shape and
+    // single-use/expiring lifecycle. See
+    // docs/adr/0011-email-verification-password-reset.md.
+    purpose: text('purpose').notNull().$type<VerificationTokenPurpose>(),
+    // SHA-256 of the token — same reasoning as `sessions.token_hash`.
+    tokenHash: text('token_hash').notNull().unique(),
+    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    check(
+      'verification_tokens_purpose_check',
+      sql`${table.purpose} in ('email-verification', 'password-reset')`,
+    ),
+    index('verification_tokens_user_idx').on(table.userId),
+  ],
 );
 
 export const formSubmissions = pgTable(
