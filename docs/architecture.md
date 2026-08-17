@@ -1,90 +1,91 @@
-# Architettura
+# Architecture
 
-Brisk segue Ports & Adapters (hexagonal architecture): il dominio non conosce
-dettagli di infrastruttura, l'infrastruttura vive solo negli adapter. Vedi anche
-[docs/adr](adr/) per le decisioni che hanno un trade-off reale dietro.
+Brisk follows Ports & Adapters (hexagonal architecture): the domain knows nothing
+about infrastructure details, infrastructure lives only in the adapters. See also
+[docs/adr](adr/) for decisions with a real trade-off behind them.
 
-## Grafo delle dipendenze
+## Dependency graph
 
 ```
-domain-core   (entità pure, zero dipendenze)
+domain-core   (pure entities, zero dependencies)
     ^
     |
-  ports       (interfacce: PageRepositoryPort, MediaStoragePort, AuthPort, ...)
+  ports       (interfaces: PageRepositoryPort, MediaStoragePort, AuthPort, ...)
     ^
     |
-application   (use case: createPage, saveDraft, publishPage, listPageVersions,
-               rollbackToVersion — dipende da domain-core + ports)
+application   (use cases: createPage, saveDraft, publishPage, listPageVersions,
+               rollbackToVersion — depends on domain-core + ports)
     ^
     |
-adapters/*    (implementazioni concrete dei Port: Postgres, storage locale/S3, auth)
+adapters/*    (concrete Port implementations: Postgres, local/S3 storage, auth)
     ^
     |
- apps/api     (NestJS — wiring DI: inietta gli adapter concreti dietro alle
-               interfacce Port, espone REST/tRPC)
+ apps/api     (NestJS — DI wiring: injects concrete adapters behind the Port
+               interfaces, exposes REST/tRPC)
 ```
 
-`shared-types` è trasversale: definisce il content model (`Block`, `PageContent`,
-`SeoMeta`) condiviso tra `domain-core`, `apps/editor-app` e `apps/public-site`, cosà
-che editor, API e rendering non possano disallinearsi su cosa significa un blocco.
+`shared-types` is cross-cutting: it defines the content model (`Block`,
+`PageContent`, `SeoMeta`) shared between `domain-core`, `apps/editor-app` and
+`apps/public-site`, so the editor, API and rendering can never drift on what a
+block means.
 
-Regola pratica per capire dove va un nuovo pezzo di codice:
+Rule of thumb for where a new piece of code belongs:
 
-- **Cambia solo le regole di business di un'entità** (es. "una pagina pubblicata non
-  può tornare draft senza un nuovo publish") → `domain-core`.
-- **Serve un nuovo modo per il dominio di parlare col mondo esterno** (nuovo tipo di
-  repository, nuovo storage) → nuova interfaccia in `ports`.
-- **Orchestra più chiamate a un Port per completare un'azione utente** → nuovo use
-  case in `application`.
-- **Implementa concretamente un Port** (query SQL, chiamata S3, hashing password) →
-  nuovo adapter in `libs/adapters/`.
+- **Changes only an entity's business rules** (e.g. "a published page can't go back
+  to draft without a new publish") → `domain-core`.
+- **The domain needs a new way to talk to the outside world** (new kind of
+  repository, new storage) → new interface in `ports`.
+- **Orchestrates several Port calls to complete a user action** → new use case in
+  `application`.
+- **Concretely implements a Port** (SQL query, S3 call, password hashing) → new
+  adapter in `libs/adapters/`.
 
-## Multi-tenant e Row Level Security
+## Multi-tenancy and Row Level Security
 
-Ogni tabella con dati per-tenant ha `tenant_id` fin dal giorno 1 (anche in
-single-tenant) e Row Level Security attiva con policy `tenant_id = current_tenant()`
-(vedi `db/init/002_rls.sql`). `current_tenant()` legge la session variable Postgres
-`app.current_tenant_id`, che l'adapter imposta a inizio richiesta a partire dal
-`TenantContextPort`.
+Every table with per-tenant data has `tenant_id` from day one (even in
+single-tenant mode) and Row Level Security enabled with a
+`tenant_id = current_tenant()` policy (see `db/init/002_rls.sql`).
+`current_tenant()` reads the Postgres session variable `app.current_tenant_id`,
+which the adapter sets at the start of a request from the `TenantContextPort`.
 
-**Punto critico**: RLS protegge solo se la connessione applicativa NON è superuser
-— vedi [ADR-0002](adr/0002-non-superuser-role-for-rls-enforcement.md). Il ruolo
-`brisk_app` (creato in `db/init/000_roles.sh`) è quello che il backend deve sempre
-usare a runtime.
+**Critical point**: RLS only protects if the application connection is NOT a
+superuser — see [ADR-0002](adr/0002-non-superuser-role-for-rls-enforcement.md).
+The `brisk_app` role (created in `db/init/000_roles.sh`) is what the backend must
+always use at runtime.
 
 ## Content model
 
-Il "contenuto" di una pagina è un array di blocchi (`PageContent = Block[]`,
-`libs/shared-types`), lo stesso formato che dalla Fase 2 in poi produrrà l'editor
-Puck e che `apps/public-site` consuma per il rendering server-side. Ogni pagina ha
-sempre due copie del content model:
+A page's "content" is an array of blocks (`PageContent = Block[]`,
+`libs/shared-types`), the same format the Puck editor will produce from Phase 2
+onward and that `apps/public-site` consumes for server-side rendering. Every page
+always has two copies of the content model:
 
-- `content` — l'ultimo draft, modificabile.
-- `publishedContent` — l'ultima versione effettivamente pubblicata, immutabile fino
-  al prossimo `publish()`.
+- `content` — the latest draft, editable.
+- `publishedContent` — the last version actually published, immutable until the
+  next `publish()`.
 
-Ogni salvataggio (creazione, draft, rollback) crea una riga in `page_versions`
-(mai un overwrite distruttivo) — vedi `Page` in `libs/domain-core` e gli use case
-in `libs/application/src/lib/use-cases/`.
+Every save (creation, draft, rollback) creates a row in `page_versions` (never a
+destructive overwrite) — see `Page` in `libs/domain-core` and the use cases in
+`libs/application/src/lib/use-cases/`.
 
 ## Monorepo
 
 ```
 apps/
-  api/            NestJS — REST/tRPC, wiring DI, guard TenantContext/auth
-  editor-app/     React + Puck (Fase 2) — editor drag-and-drop
-  public-site/    Astro — rendering pubblico dei siti
+  api/            NestJS — REST/tRPC, DI wiring, TenantContext/auth guards
+  editor-app/     React + Puck (Phase 2) — drag-and-drop editor
+  public-site/    Astro — public rendering of the sites
 
 libs/
-  domain-core/    entità pure: Page, PageVersion, User, Media, FormSubmission
-  ports/          interfacce che gli adapter implementano
-  application/    use case (orchestrazione, zero infrastruttura)
-  adapters/       implementazioni concrete dei Port
-  puck-config/    definizione dei blocchi editor (Fase 2)
-  shared-types/   content model condiviso (Block, PageContent, SeoMeta)
+  domain-core/    pure entities: Page, PageVersion, User, Media, FormSubmission
+  ports/          interfaces implemented by the adapters
+  application/    use cases (orchestration, zero infrastructure)
+  adapters/       concrete Port implementations
+  puck-config/    editor block definitions (Phase 2)
+  shared-types/   shared content model (Block, PageContent, SeoMeta)
 
 db/
-  init/           schema Postgres iniziale, ruoli, RLS (vedi docs/development.md)
+  init/           initial Postgres schema, roles, RLS (see docs/development.md)
 
 docs/
   adr/            Architecture Decision Records

@@ -1,56 +1,56 @@
-# 0003 — Layer `application` separato per gli use case
+# 0003 — Separate `application` layer for use cases
 
-**Stato**: Accettata — 2026-08-17
+**Status**: Accepted — 2026-08-17
 
-## Contesto
+## Context
 
-Il piano descrive `libs/domain-core` come "entità pure... zero dipendenze da
-Postgres/Express/Puck", e `libs/ports` come le interfacce che gli adapter
-implementano (`PageRepositoryPort`, `MediaStoragePort`, ...). Non elenca però dove
-vivono gli **use case** (`crea pagina`, `salva draft`, `pubblica pagina`, `elenca
-versioni`, `rollback a versione`), che per forza di cose devono dipendere sia dalle
-entità di dominio sia dai Port che orchestrano.
+The plan describes `libs/domain-core` as "pure entities... zero dependencies on
+Postgres/Express/Puck", and `libs/ports` as the interfaces the adapters implement
+(`PageRepositoryPort`, `MediaStoragePort`, ...). It doesn't say, however, where the
+**use cases** live (`create page`, `save draft`, `publish page`, `list versions`,
+`rollback to version`), which necessarily depend on both the domain entities and
+the Ports they orchestrate.
 
-Mettere gli use case dentro `domain-core` crea una dipendenza circolare:
-`ports` deve importare i tipi entità da `domain-core` (es. `Page` come tipo di
-ritorno di `PageRepositoryPort.findById`), ma se `domain-core` a sua volta importa
-`PageRepositoryPort` da `ports` per i suoi use case, i due package si dipendono a
-vicenda.
+Putting the use cases inside `domain-core` creates a circular dependency: `ports`
+must import entity types from `domain-core` (e.g. `Page` as the return type of
+`PageRepositoryPort.findById`), but if `domain-core` in turn imports
+`PageRepositoryPort` from `ports` for its use cases, the two packages depend on
+each other.
 
-Opzioni considerate:
-1. Nuova libreria `libs/application` (use case), dipende da `domain-core` + `ports`.
-2. Use case come service NestJS dentro `apps/api`, niente libreria nuova.
-3. I Port di cui il dominio ha bisogno (`PageRepositoryPort`, `PageVersionRepositoryPort`)
-   co-locati dentro `domain-core` stesso (schema classico dell'hexagonal architecture,
-   dove il dominio possiede i port che consuma); `libs/ports` diventa un re-export di
-   quelli più i port che il dominio non orchestra mai direttamente (`MediaStoragePort`,
-   `AuthPort`).
+Options considered:
+1. New `libs/application` library (use cases), depends on `domain-core` + `ports`.
+2. Use cases as NestJS services inside `apps/api`, no new library.
+3. The Ports the domain needs (`PageRepositoryPort`, `PageVersionRepositoryPort`)
+   co-located inside `domain-core` itself (the classic hexagonal architecture
+   layout, where the domain owns the ports it consumes); `libs/ports` becomes a
+   re-export of those plus the ports the domain never orchestrates directly
+   (`MediaStoragePort`, `AuthPort`).
 
-## Decisione
+## Decision
 
-Opzione 1: nuova libreria `libs/application`.
+Option 1: new `libs/application` library.
 
-- `domain-core`: solo entità pure (`Page`, `PageVersion`, `User`, `Media`,
-  `FormSubmission`) ed errori di dominio. Zero dipendenze da `ports`.
-- `ports`: dipende da `domain-core` per i tipi usati nelle firme, definisce
-  `PageRepositoryPort`, `PageVersionRepositoryPort`, `MediaStoragePort`, `AuthPort`,
-  `TenantContextPort`.
-- `application`: dipende da `domain-core` + `ports`, contiene gli use case come
-  funzioni pure `(deps, input) => Promise<Output>` — testabili in isolamento con
-  repository in-memory, senza NestJS.
-- `apps/api`: dipende da `application` + `ports` + gli adapter concreti, fa il
-  wiring DI (Nest inietta le implementazioni concrete dietro alle interfacce Port).
+- `domain-core`: pure entities only (`Page`, `PageVersion`, `User`, `Media`,
+  `FormSubmission`) and domain errors. Zero dependency on `ports`.
+- `ports`: depends on `domain-core` for the types used in its signatures, defines
+  `PageRepositoryPort`, `PageVersionRepositoryPort`, `MediaStoragePort`,
+  `AuthPort`, `TenantContextPort`.
+- `application`: depends on `domain-core` + `ports`, contains the use cases as
+  plain functions `(deps, input) => Promise<Output>` — testable in isolation with
+  in-memory repositories, no NestJS involved.
+- `apps/api`: depends on `application` + `ports` + the concrete adapters, does the
+  DI wiring (Nest injects the concrete implementations behind the Port
+  interfaces).
 
-## Conseguenze
+## Consequences
 
-- Nessuna dipendenza circolare tra librerie.
-- Gli use case restano testabili senza framework (vedi
-  `libs/application/src/lib/use-cases/page-lifecycle.spec.ts`, il test end-to-end
-  draft → publish → rollback con repository fake).
-- Aggiunge una libreria non elencata esplicitamente nell'albero "indicativo" del
-  piano originale — accettato perché il piano stesso descrive `domain-core` come
-  "entità pure", quindi gli use case non erano comunque pensati per starci dentro;
-  `application` nomina semplicemente il layer applicativo che l'hexagonal
-  architecture prevede sempre.
-- Le fasi successive (media, form, auth, multilingua) aggiungeranno i loro use case
-  qui, non dentro `domain-core` né dentro `apps/api` direttamente.
+- No circular dependency between libraries.
+- Use cases stay testable without a framework (see
+  `libs/application/src/lib/use-cases/page-lifecycle.spec.ts`, the end-to-end
+  draft → publish → rollback test with a fake repository).
+- Adds a library not explicitly listed in the original plan's "indicative" tree —
+  accepted because the plan itself describes `domain-core` as "pure entities", so
+  the use cases were never meant to live there anyway; `application` simply names
+  the application layer that hexagonal architecture always has.
+- Later phases (media, forms, auth, i18n) will add their use cases here, not
+  inside `domain-core` or directly inside `apps/api`.

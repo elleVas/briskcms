@@ -1,30 +1,31 @@
-# 0001 — Repository pubblico per abilitare branch protection
+# 0001 — Public repository to enable branch protection
 
-**Stato**: Accettata — 2026-08-17
+**Status**: Accepted — 2026-08-17
 
-## Contesto
+## Context
 
-Il workflow non negoziabile del progetto richiede `main` protetto fin dal primo
-commit: nessun push diretto, ogni modifica solo via Pull Request. Il piano iniziale
-prevedeva un repository GitHub privato.
+The project's non-negotiable workflow requires `main` to be protected from the
+first commit: no direct pushes, every change only via Pull Request. The initial
+plan called for a private GitHub repository.
 
-Alla creazione della ruleset di protezione su `main`, l'API GitHub ha risposto con
+When creating the protection ruleset on `main`, the GitHub API responded with
 `403 Upgrade to GitHub Pro or make this repository public to enable this feature`:
-i repository privati sugli account personali free non supportano branch protection
-(classica o ruleset).
+private repositories on free personal accounts don't support branch protection
+(classic or ruleset).
 
-## Decisione
+## Decision
 
-Il repository `elleVas/briskcms` è pubblico. Il documento di piano/business
-(`piano-progetto-astro-cms.md`, analisi di mercato, licenza, posizionamento) resta
-locale e gitignored — non finisce mai nel repository pubblico. Solo il codice
-diventa pubblico.
+The `elleVas/briskcms` repository is public. The plan/business document
+(`piano-progetto-astro-cms.md`, market analysis, licensing, positioning) stays
+local and gitignored — it never ends up in the public repository. Only the code
+becomes public.
 
-## Conseguenze
+## Consequences
 
-- Branch protection attiva gratuitamente, coerente col workflow non negoziabile.
-- Il codice è visibile a chiunque prima ancora del primo rilascio pubblico — accettabile
-  perché la licenza FSL prevede comunque un'eventuale pubblicazione, e "self-hosted
-  open source" è uno dei pilastri del prodotto.
-- Se in futuro serve tornare privati (es. prima di aver formalizzato la licenza FSL),
-  serve un upgrade a GitHub Pro per mantenere la branch protection.
+- Branch protection is active for free, consistent with the non-negotiable
+  workflow.
+- The code is visible to anyone even before the first public release — acceptable
+  because the FSL license already anticipates an eventual publication, and
+  "self-hosted open source" is one of the product's pillars.
+- If it's ever necessary to go private again (e.g. before the FSL license is
+  formalized), a GitHub Pro upgrade will be needed to keep branch protection.

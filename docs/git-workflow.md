@@ -1,33 +1,33 @@
-# Workflow Git
+# Git workflow
 
-`main` è protetto: nessun push diretto, nessuna eccezione (nemmeno per il
-proprietario del repo — vedi [ADR-0001](adr/0001-public-repository-for-branch-protection.md)).
-Ogni modifica entra solo tramite Pull Request mergiabile.
+`main` is protected: no direct pushes, no exceptions (not even for the repo owner
+— see [ADR-0001](adr/0001-public-repository-for-branch-protection.md)). Every
+change lands only through a mergeable Pull Request.
 
-## Branch
+## Branches
 
-`<tipo>/<breve-descrizione-kebab-case>`, tipi ammessi:
+`<type>/<short-kebab-case-description>`, allowed types:
 
-- `feature/` — nuova funzionalità
+- `feature/` — new functionality
 - `fix/` — bugfix
-- `chore/` — manutenzione, dipendenze, config
-- `docs/` — solo documentazione
-- `refactor/` — refactoring senza cambio di comportamento
+- `chore/` — maintenance, dependencies, config
+- `docs/` — documentation only
+- `refactor/` — refactoring with no behavior change
 
-Esempi: `feature/page-draft-publish-flow`, `fix/rls-tenant-scoping-media`,
+Examples: `feature/page-draft-publish-flow`, `fix/rls-tenant-scoping-media`,
 `chore/docker-compose-caddy`.
 
-## Cosa richiede un via libera esplicito prima di implementare
+## What requires explicit sign-off before implementing
 
-Per esplicita richiesta dell'autore, questi tipi di cambiamento vanno discussi
-*prima* di scrivere codice, non dopo:
+At the author's explicit request, these kinds of changes must be discussed
+*before* writing code, not after:
 
-- nuove dipendenze/librerie non già previste
-- modifiche allo schema del content model o del database
-- cambi al pattern Ports & Adapters (nuovi Port, spostamento di responsabilità tra
-  `domain-core`/`ports`/`application`/adapter)
-- decisioni di sicurezza (auth, RLS, gestione sessioni)
-- qualunque deviazione dalle fasi/decisioni già definite
+- new dependencies/libraries not already planned
+- changes to the content model or database schema
+- changes to the Ports & Adapters pattern (new Ports, moving responsibility
+  between `domain-core`/`ports`/`application`/adapters)
+- security decisions (auth, RLS, session handling)
+- any deviation from already-defined phases/decisions
 
-Le decisioni prese vengono registrate in [docs/adr](adr/) quando comportano un
-trade-off reale, così la motivazione resta leggibile anche mesi dopo.
+Decisions made are recorded in [docs/adr](adr/) when they involve a real
+trade-off, so the reasoning stays legible months later.

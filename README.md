@@ -1,10 +1,10 @@
 # Brisk
 
-CMS visuale self-hosted per siti vetrina, basato su Astro. Editor drag-and-drop
-(React + Puck), backend con database proprio (Postgres, multi-tenant-ready via
-Row Level Security), rendering pubblico via Astro.
+Self-hosted visual CMS for brochure/showcase websites, built on Astro. Drag-and-drop
+editor (React + Puck), backend with its own database (Postgres, multi-tenant-ready
+via Row Level Security), public rendering via Astro.
 
-Monorepo Nx, package manager pnpm, architettura Ports & Adapters.
+Nx monorepo, pnpm package manager, Ports & Adapters architecture.
 
 ## Quickstart
 
@@ -15,12 +15,12 @@ pnpm install
 pnpm exec nx run-many -t build typecheck test lint
 ```
 
-## Documentazione
+## Documentation
 
-- [docs/architecture.md](docs/architecture.md) — Ports & Adapters, struttura del
-  monorepo, multi-tenant/RLS, content model
-- [docs/development.md](docs/development.md) — setup locale, comandi, connessione
-  al DB
-- [docs/git-workflow.md](docs/git-workflow.md) — branch, PR, cosa richiede via
-  libera prima di implementare
+- [docs/architecture.md](docs/architecture.md) — Ports & Adapters, monorepo
+  structure, multi-tenant/RLS, content model
+- [docs/development.md](docs/development.md) — local setup, commands, DB
+  connection
+- [docs/git-workflow.md](docs/git-workflow.md) — branches, PRs, what requires
+  sign-off before implementing
 - [docs/adr/](docs/adr/) — Architecture Decision Records
