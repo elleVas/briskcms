@@ -11,3 +11,14 @@ export class PageVersionNotFoundError extends Error {
     this.name = 'PageVersionNotFoundError';
   }
 }
+
+/**
+ * Deliberately generic: never reveals whether the email exists or the
+ * password was wrong (prevents user enumeration via the login endpoint).
+ */
+export class InvalidCredentialsError extends Error {
+  constructor() {
+    super('Invalid email or password');
+    this.name = 'InvalidCredentialsError';
+  }
+}

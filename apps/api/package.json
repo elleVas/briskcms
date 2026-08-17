@@ -85,13 +85,19 @@
   "dependencies": {
     "@brisk/application": "workspace:*",
     "@brisk/domain-core": "workspace:*",
+    "@brisk/env-config": "workspace:*",
     "@brisk/ports": "workspace:*",
     "@brisk/postgres-db": "workspace:*",
     "@brisk/postgres-page-repository": "workspace:*",
+    "@brisk/postgres-user-repository": "workspace:*",
+    "@brisk/session-auth-adapter": "workspace:*",
     "@brisk/shared-types": "workspace:*",
     "@nestjs/common": "^11.0.0",
     "@nestjs/core": "^11.0.0",
     "@nestjs/platform-express": "^11.0.0",
+    "@nestjs/throttler": "^6.5.0",
+    "cookie-parser": "^1.4.7",
+    "express": "^5.2.1",
     "reflect-metadata": "^0.2.0",
     "rxjs": "^7.8.2",
     "tslib": "^2.3.0",
@@ -99,6 +105,8 @@
   },
   "devDependencies": {
     "@nestjs/testing": "^11.0.0",
+    "@types/cookie-parser": "^1.4.10",
+    "@types/express": "^5.0.6",
     "@types/supertest": "^7.2.1",
     "dotenv": "^17.4.2",
     "supertest": "^7.2.2"

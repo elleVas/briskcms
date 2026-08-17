@@ -31,13 +31,19 @@
       "path": "./libs/adapters/s3-media-storage"
     },
     {
-      "path": "./libs/adapters/lucia-auth-adapter"
+      "path": "./libs/adapters/session-auth-adapter"
     },
     {
       "path": "./libs/application"
     },
     {
       "path": "./libs/adapters/postgres-db"
+    },
+    {
+      "path": "./libs/adapters/postgres-user-repository"
+    },
+    {
+      "path": "./libs/env-config"
     }
   ],
   "compilerOptions": {}

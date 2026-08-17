@@ -2,7 +2,7 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "outDir": "dist",
-    "types": ["node"],
+    "types": ["node", "express", "cookie-parser"],
     "rootDir": "src",
     "tsBuildInfoFile": "dist/tsconfig.app.tsbuildinfo",
     "experimentalDecorators": true,
@@ -26,6 +26,12 @@
       "path": "../../libs/shared-types/tsconfig.lib.json"
     },
     {
+      "path": "../../libs/adapters/session-auth-adapter/tsconfig.lib.json"
+    },
+    {
+      "path": "../../libs/adapters/postgres-user-repository/tsconfig.lib.json"
+    },
+    {
       "path": "../../libs/adapters/postgres-page-repository/tsconfig.lib.json"
     },
     {
@@ -33,6 +39,9 @@
     },
     {
       "path": "../../libs/ports/tsconfig.lib.json"
+    },
+    {
+      "path": "../../libs/env-config/tsconfig.lib.json"
     },
     {
       "path": "../../libs/domain-core/tsconfig.lib.json"

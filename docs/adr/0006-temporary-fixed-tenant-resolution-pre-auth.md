@@ -1,6 +1,9 @@
 # 0006 — Temporary fixed-tenant resolution before auth exists
 
-**Status**: Accepted — 2026-08-17
+**Status**: Accepted — 2026-08-17. `StaticTenantContextAdapter` retired as
+planned once auth landed — see
+[ADR-0010](0010-session-based-auth-foundations.md), which also documents
+why `DEFAULT_TENANT_ID` itself survives with a narrower job than "consequences" below assumed.
 
 ## Context
 

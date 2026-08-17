@@ -1,5 +1,5 @@
 {
-  "name": "@brisk/lucia-auth-adapter",
+  "name": "@brisk/postgres-user-repository",
   "version": "0.0.1",
   "private": true,
   "type": "module",
@@ -13,5 +13,13 @@
     },
     "./package.json": "./package.json"
   },
-  "dependencies": {}
+  "dependencies": {
+    "@brisk/domain-core": "workspace:*",
+    "@brisk/ports": "workspace:*",
+    "@brisk/postgres-db": "workspace:*",
+    "drizzle-orm": "^0.45.2"
+  },
+  "devDependencies": {
+    "dotenv": "^17.4.2"
+  }
 }

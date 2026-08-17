@@ -2,10 +2,16 @@ import { Puck } from '@puckeditor/core';
 import '@puckeditor/core/puck.css';
 import { puckConfig } from '@brisk/puck-config';
 import { toPuckData } from '../lib/puck-data-mapper.js';
+import { LoginForm } from './login-form.js';
 import { usePageEditor } from './use-page-editor.js';
 
 export function App() {
-  const { page, status, handleChange, handlePublish } = usePageEditor();
+  const { page, status, needsLogin, handleLogin, handleChange, handlePublish } =
+    usePageEditor();
+
+  if (needsLogin) {
+    return <LoginForm onLogin={handleLogin} />;
+  }
 
   if (!page) {
     return <p>{status}</p>;

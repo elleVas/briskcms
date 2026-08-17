@@ -8,7 +8,9 @@
   "scripts": {
     "db:generate": "dotenv -e ../../../.env -- drizzle-kit generate",
     "db:migrate": "dotenv -e ../../../.env -- drizzle-kit migrate",
-    "db:seed": "dotenv -e ../../../.env -- tsx scripts/seed-default-tenant.ts"
+    "db:seed-tenant": "dotenv -e ../../../.env -- tsx scripts/seed-default-tenant.ts",
+    "db:seed-user": "dotenv -e ../../../.env -- tsx scripts/seed-default-user.ts",
+    "db:seed": "pnpm run db:seed-tenant && pnpm run db:seed-user"
   },
   "exports": {
     ".": {
@@ -20,11 +22,13 @@
   },
   "dependencies": {
     "@brisk/domain-core": "workspace:*",
+    "@brisk/env-config": "workspace:*",
     "@brisk/shared-types": "workspace:*",
     "drizzle-orm": "^0.45.2",
     "postgres": "^3.4.9"
   },
   "devDependencies": {
+    "@node-rs/argon2": "^2.1.0",
     "dotenv": "^17.4.2",
     "dotenv-cli": "^11.0.0",
     "drizzle-kit": "^0.31.10",

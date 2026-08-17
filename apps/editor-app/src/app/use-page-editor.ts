@@ -2,8 +2,10 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Data } from '@puckeditor/core';
 import { fromPuckData } from '../lib/puck-data-mapper.js';
 import {
+  ApiError,
   createPage,
   getPage,
+  login as apiLogin,
   publishPage,
   saveDraft,
   type PageDto,
@@ -19,38 +21,63 @@ const DRAFT_SAVE_DEBOUNCE_MS = 1000;
 export function usePageEditor() {
   const [page, setPage] = useState<PageDto | null>(null);
   const [status, setStatus] = useState('Caricamento...');
+  const [needsLogin, setNeedsLogin] = useState(false);
   const saveTimeoutRef = useRef<number | undefined>(undefined);
 
-  useEffect(() => {
+  // No synchronous setState at the top here on purpose (react-hooks/set-
+  // state-in-effect flags that when a function is called straight from an
+  // effect body, see the mount effect below) — resetting needsLogin/status
+  // before a *re*-load only matters for the handleLogin caller, which does
+  // it itself; on mount the defaults already match.
+  const loadOrCreatePage = useCallback(() => {
     const params = new URLSearchParams(window.location.search);
     const pageId = params.get('pageId');
 
-    if (pageId) {
-      getPage(pageId)
-        .then((loaded) => {
-          setPage(loaded);
-          setStatus('');
-        })
-        .catch((error: unknown) => setStatus(String(error)));
-      return;
-    }
+    const loaded = pageId
+      ? getPage(pageId)
+      : createPage({
+          siteId: DEFAULT_SITE_ID,
+          groupId: crypto.randomUUID(),
+          locale: 'it',
+          slug: `pagina-${Date.now()}`,
+          seoMeta: { title: 'Nuova pagina', description: '' },
+        });
 
-    createPage({
-      siteId: DEFAULT_SITE_ID,
-      groupId: crypto.randomUUID(),
-      locale: 'it',
-      slug: `pagina-${Date.now()}`,
-      seoMeta: { title: 'Nuova pagina', description: '' },
-    })
-      .then((created) => {
-        const url = new URL(window.location.href);
-        url.searchParams.set('pageId', created.id);
-        window.history.replaceState({}, '', url);
-        setPage(created);
+    loaded
+      .then((result) => {
+        if (!pageId) {
+          const url = new URL(window.location.href);
+          url.searchParams.set('pageId', result.id);
+          window.history.replaceState({}, '', url);
+        }
+        setPage(result);
         setStatus('');
       })
-      .catch((error: unknown) => setStatus(String(error)));
+      .catch((error: unknown) => {
+        if (error instanceof ApiError && error.status === 401) {
+          setNeedsLogin(true);
+          setStatus('');
+          return;
+        }
+        setStatus(String(error));
+      });
   }, []);
+
+  useEffect(() => {
+    loadOrCreatePage();
+  }, [loadOrCreatePage]);
+
+  // Errors intentionally propagate to the caller (LoginForm shows them) —
+  // this hook only re-triggers the page load once login actually succeeds.
+  const handleLogin = useCallback(
+    async (email: string, password: string) => {
+      await apiLogin(email, password);
+      setNeedsLogin(false);
+      setStatus('Caricamento...');
+      loadOrCreatePage();
+    },
+    [loadOrCreatePage],
+  );
 
   const handleChange = useCallback(
     (data: Data) => {
@@ -76,5 +103,5 @@ export function usePageEditor() {
     [page],
   );
 
-  return { page, status, handleChange, handlePublish };
+  return { page, status, needsLogin, handleLogin, handleChange, handlePublish };
 }

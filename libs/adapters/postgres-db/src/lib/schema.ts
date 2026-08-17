@@ -147,6 +147,28 @@ export const media = pgTable(
   ],
 );
 
+export const sessions = pgTable(
+  'sessions',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    tenantId: uuid('tenant_id')
+      .notNull()
+      .references(() => tenants.id, { onDelete: 'cascade' }),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    // SHA-256 of the session token — the plaintext token is never persisted,
+    // only ever held by the client cookie and checked in-flight. See
+    // docs/adr/0010-session-based-auth-foundations.md.
+    tokenHash: text('token_hash').notNull().unique(),
+    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [index('sessions_user_idx').on(table.userId)],
+);
+
 export const formSubmissions = pgTable(
   'form_submissions',
   {

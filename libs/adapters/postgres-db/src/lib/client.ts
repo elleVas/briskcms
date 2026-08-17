@@ -1,6 +1,7 @@
 import { sql } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
+import { requireEnv } from '@brisk/env-config';
 import * as schema from './schema.js';
 
 export function createDb(connectionString: string) {
@@ -10,19 +11,6 @@ export function createDb(connectionString: string) {
 
 export type BriskDb = ReturnType<typeof createDb>;
 export type BriskTx = Parameters<Parameters<BriskDb['transaction']>[0]>[0];
-
-// No password ever gets a literal fallback below: a missing credential must
-// fail loudly and immediately, not silently connect with a guessed value.
-function requireEnv(name: string): string {
-  const value = process.env[name];
-  if (!value) {
-    throw new Error(
-      `Missing required environment variable: ${name}. Copy .env.example to ` +
-        `.env and set it (see docs/development.md), or export it directly.`,
-    );
-  }
-  return value;
-}
 
 /**
  * Admin/superuser connection string, for drizzle-kit migrations only — never

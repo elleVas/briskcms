@@ -4,7 +4,22 @@ import type { Data } from '@puckeditor/core';
 import * as api from '../lib/pages-api-client.js';
 import { usePageEditor } from './use-page-editor.js';
 
-vi.mock('../lib/pages-api-client.js');
+// A bare automock stubs out ApiError's constructor body too (it would
+// silently drop the `status` field the 401 check below depends on) — keep
+// the real class, mock only the network-calling functions.
+vi.mock('../lib/pages-api-client.js', async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import('../lib/pages-api-client.js')>();
+  return {
+    ...actual,
+    createPage: vi.fn(),
+    getPage: vi.fn(),
+    saveDraft: vi.fn(),
+    publishPage: vi.fn(),
+    login: vi.fn(),
+    logout: vi.fn(),
+  };
+});
 
 const samplePage: api.PageDto = {
   id: 'page-1',
@@ -59,6 +74,51 @@ describe('usePageEditor', () => {
 
     await waitFor(() => expect(result.current.status).toContain('boom'));
     expect(result.current.page).toBeNull();
+  });
+
+  it('sets needsLogin when the initial load is rejected with a 401', async () => {
+    vi.mocked(api.createPage).mockRejectedValue(
+      new api.ApiError(401, { message: 'Unauthorized' }),
+    );
+
+    const { result } = renderHook(() => usePageEditor());
+
+    await waitFor(() => expect(result.current.needsLogin).toBe(true));
+    expect(result.current.status).toBe('');
+    expect(result.current.page).toBeNull();
+  });
+
+  it('handleLogin logs in and reloads the page', async () => {
+    vi.mocked(api.createPage).mockRejectedValueOnce(
+      new api.ApiError(401, { message: 'Unauthorized' }),
+    );
+    vi.mocked(api.login).mockResolvedValue({ userId: 'user-1' });
+
+    const { result } = renderHook(() => usePageEditor());
+    await waitFor(() => expect(result.current.needsLogin).toBe(true));
+
+    vi.mocked(api.createPage).mockResolvedValue(samplePage);
+    await act(async () => {
+      await result.current.handleLogin('lele@example.com', 'correct');
+    });
+
+    expect(api.login).toHaveBeenCalledWith('lele@example.com', 'correct');
+    expect(result.current.needsLogin).toBe(false);
+    expect(result.current.page).toEqual(samplePage);
+  });
+
+  it('handleLogin propagates the error when login itself fails', async () => {
+    vi.mocked(api.createPage).mockResolvedValue(samplePage);
+    vi.mocked(api.login).mockRejectedValue(
+      new api.ApiError(401, { message: 'Invalid credentials' }),
+    );
+
+    const { result } = renderHook(() => usePageEditor());
+    await waitFor(() => expect(result.current.page).toEqual(samplePage));
+
+    await expect(
+      result.current.handleLogin('lele@example.com', 'wrong'),
+    ).rejects.toThrow();
   });
 
   it('loads the existing page when the URL has a pageId', async () => {

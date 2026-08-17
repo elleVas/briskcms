@@ -58,6 +58,22 @@ The `brisk_app` role (created in `db/init/000_roles.sh`) is what the backend mus
 always use at runtime. Schema and RLS policies are Drizzle-managed — see
 [ADR-0004](adr/0004-drizzle-as-schema-source-of-truth.md).
 
+## Auth
+
+Session-based, roll-your-own (Lucia Auth was deprecated in March 2025 — see
+[ADR-0010](adr/0010-session-based-auth-foundations.md) for the full
+rationale, including why `DEFAULT_TENANT_ID` still exists after auth
+landed). `SessionAuthGuard` (`apps/api/src/app/auth/`) validates the
+`brisk_session` cookie on every `PagesController` route and attaches the
+resolved tenant/user to the request; `SessionTenantContextAdapter` reads it
+back out as the `TenantContextPort` for that request — replacing the
+temporary `StaticTenantContextAdapter` from
+[ADR-0006](adr/0006-temporary-fixed-tenant-resolution-pre-auth.md).
+`libs/adapters/session-auth-adapter` implements `AuthPort` (argon2id
+hashing via `@node-rs/argon2`, opaque DB-backed sessions — never a JWT).
+There is no public registration endpoint; the dev/test user comes from
+`pnpm --filter @brisk/postgres-db run db:seed`.
+
 ## Content model
 
 A page's "content" is an array of blocks (`PageContent = Block[]`,
@@ -94,8 +110,12 @@ libs/
     postgres-db/               Drizzle schema, client, tenant-scoping helper —
                                 shared by every Postgres adapter
     postgres-page-repository/  PageRepositoryPort + PageVersionRepositoryPort
+    postgres-user-repository/  UserRepositoryPort
+    session-auth-adapter/      AuthPort — argon2id hashing, DB-backed sessions
   puck-config/    editor block definitions (Phase 2)
   shared-types/   shared content model (Block, PageContent, SeoMeta)
+  env-config/     requireEnv() — fail loudly on a missing required env var,
+                   shared by every adapter/app/script that needs one
 
 db/
   init/           brisk_app role bootstrap (see docs/development.md);
