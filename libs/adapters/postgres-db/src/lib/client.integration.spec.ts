@@ -25,7 +25,9 @@ describe('withTenant (integration)', () => {
     const tenantId = randomUUID();
 
     const [{ value }] = await withTenant(db, tenantId, (tx) =>
-      tx.execute(sql`select current_setting('app.current_tenant_id', true) as value`),
+      tx.execute(
+        sql`select current_setting('app.current_tenant_id', true) as value`,
+      ),
     );
     expect(value).toBe(tenantId);
 
@@ -56,12 +58,18 @@ describe('withTenant (integration)', () => {
     );
 
     const visibleToA = await withTenant(db, tenantA.id, (tx) =>
-      tx.select().from(sites).where(sql`${sites.tenantId} = ${tenantA.id}`),
+      tx
+        .select()
+        .from(sites)
+        .where(sql`${sites.tenantId} = ${tenantA.id}`),
     );
     expect(visibleToA).toHaveLength(1);
 
     const visibleToB = await withTenant(db, tenantB.id, (tx) =>
-      tx.select().from(sites).where(sql`${sites.tenantId} = ${tenantA.id}`),
+      tx
+        .select()
+        .from(sites)
+        .where(sql`${sites.tenantId} = ${tenantA.id}`),
     );
     expect(visibleToB).toHaveLength(0);
   });

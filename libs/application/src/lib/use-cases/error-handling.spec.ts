@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { PageNotFoundError, PageVersionNotFoundError } from '@brisk/domain-core';
+import {
+  PageNotFoundError,
+  PageVersionNotFoundError,
+} from '@brisk/domain-core';
 import { createPage } from './create-page.use-case.js';
 import { saveDraft } from './save-draft.use-case.js';
 import { publishPage } from './publish-page.use-case.js';

@@ -14,7 +14,9 @@ describe('createDb', () => {
   it('builds a BriskDb without opening a connection', () => {
     // postgres.js connects lazily on first query, so this is safe without a
     // real database — constructing the client must not throw.
-    expect(() => createDb('postgres://user:pass@localhost:5432/db')).not.toThrow();
+    expect(() =>
+      createDb('postgres://user:pass@localhost:5432/db'),
+    ).not.toThrow();
   });
 });
 

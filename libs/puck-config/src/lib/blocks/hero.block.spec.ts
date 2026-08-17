@@ -36,7 +36,9 @@ describe('heroConfig.render', () => {
       }),
     );
 
-    expect(screen.getByRole('heading', { level: 1, name: 'Ciao' })).toBeTruthy();
+    expect(
+      screen.getByRole('heading', { level: 1, name: 'Ciao' }),
+    ).toBeTruthy();
     expect(screen.getByText('Sottotitolo')).toBeTruthy();
   });
 });

@@ -15,7 +15,9 @@ describe('FormSubmission entity', () => {
     const submission = FormSubmission.create(baseInput);
     const after = new Date();
 
-    expect(submission.createdAt.getTime()).toBeGreaterThanOrEqual(before.getTime());
+    expect(submission.createdAt.getTime()).toBeGreaterThanOrEqual(
+      before.getTime(),
+    );
     expect(submission.createdAt.getTime()).toBeLessThanOrEqual(after.getTime());
   });
 
@@ -27,7 +29,10 @@ describe('FormSubmission entity', () => {
     expect(submission.tenantId).toBe('tenant-1');
     expect(submission.siteId).toBe('site-1');
     expect(submission.pageId).toBe('page-1');
-    expect(submission.payload).toEqual({ name: 'Mario Rossi', email: 'mario@example.com' });
+    expect(submission.payload).toEqual({
+      name: 'Mario Rossi',
+      email: 'mario@example.com',
+    });
     expect(submission.createdAt).toEqual(now);
   });
 

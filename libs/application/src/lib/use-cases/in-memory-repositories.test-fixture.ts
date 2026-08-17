@@ -1,5 +1,8 @@
 import type { Page, PageVersion } from '@brisk/domain-core';
-import type { PageRepositoryPort, PageVersionRepositoryPort } from '@brisk/ports';
+import type {
+  PageRepositoryPort,
+  PageVersionRepositoryPort,
+} from '@brisk/ports';
 
 export class InMemoryPageRepository implements PageRepositoryPort {
   private pages = new Map<string, Page>();
@@ -47,11 +50,20 @@ export class InMemoryPageVersionRepository implements PageVersionRepositoryPort 
     this.versions.push(version);
   }
 
-  async findById(tenantId: string, versionId: string): Promise<PageVersion | null> {
-    return this.versions.find((v) => v.tenantId === tenantId && v.id === versionId) ?? null;
+  async findById(
+    tenantId: string,
+    versionId: string,
+  ): Promise<PageVersion | null> {
+    return (
+      this.versions.find(
+        (v) => v.tenantId === tenantId && v.id === versionId,
+      ) ?? null
+    );
   }
 
   async listByPage(tenantId: string, pageId: string): Promise<PageVersion[]> {
-    return this.versions.filter((v) => v.tenantId === tenantId && v.pageId === pageId);
+    return this.versions.filter(
+      (v) => v.tenantId === tenantId && v.pageId === pageId,
+    );
   }
 }

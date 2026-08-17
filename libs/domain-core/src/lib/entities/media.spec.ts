@@ -42,7 +42,12 @@ describe('Media entity', () => {
   });
 
   it('allows null width/height (e.g. non-image files)', () => {
-    const media = Media.create({ ...baseInput, width: null, height: null, mimeType: 'application/pdf' });
+    const media = Media.create({
+      ...baseInput,
+      width: null,
+      height: null,
+      mimeType: 'application/pdf',
+    });
 
     expect(media.width).toBeNull();
     expect(media.height).toBeNull();

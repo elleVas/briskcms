@@ -47,7 +47,9 @@ describe('pages-api-client', () => {
     expect(fetch).toHaveBeenCalledWith(
       expect.stringContaining('/pages/page-1'),
       expect.objectContaining({
-        headers: expect.objectContaining({ 'Content-Type': 'application/json' }),
+        headers: expect.objectContaining({
+          'Content-Type': 'application/json',
+        }),
       }),
     );
     expect(result).toEqual(samplePage);
@@ -80,7 +82,9 @@ describe('pages-api-client', () => {
       expect.stringContaining('/pages/page-1/draft'),
       expect.objectContaining({
         method: 'PATCH',
-        body: JSON.stringify({ content: [{ type: 'Text', props: { body: 'hi' } }] }),
+        body: JSON.stringify({
+          content: [{ type: 'Text', props: { body: 'hi' } }],
+        }),
       }),
     );
   });
@@ -101,9 +105,7 @@ describe('pages-api-client', () => {
       jsonResponse({ message: 'Not found' }, false, 404),
     );
 
-    await expect(getPage('missing')).rejects.toThrow(
-      /API 404.*Not found/,
-    );
+    await expect(getPage('missing')).rejects.toThrow(/API 404.*Not found/);
   });
 
   it('throws even when the error body cannot be parsed as JSON', async () => {
