@@ -1,0 +1,29 @@
+// jsdom doesn't implement ResizeObserver — Puck's drag-and-drop (@dnd-kit)
+// needs it just to be importable, even in tests that never actually drag
+// anything.
+class ResizeObserverStub {
+  observe(): void {
+    /* no-op */
+  }
+  unobserve(): void {
+    /* no-op */
+  }
+  disconnect(): void {
+    /* no-op */
+  }
+}
+
+globalThis.ResizeObserver ??= ResizeObserverStub;
+
+// jsdom doesn't implement matchMedia either — Puck uses it for viewport
+// detection.
+window.matchMedia ??= ((query: string) => ({
+  matches: false,
+  media: query,
+  onchange: null,
+  addListener: () => undefined,
+  removeListener: () => undefined,
+  addEventListener: () => undefined,
+  removeEventListener: () => undefined,
+  dispatchEvent: () => false,
+})) as typeof window.matchMedia;

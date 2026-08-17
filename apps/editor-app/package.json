@@ -1,5 +1,10 @@
 {
   "name": "@brisk/editor-app",
   "version": "0.0.1",
-  "private": true
+  "private": true,
+  "dependencies": {
+    "@brisk/puck-config": "workspace:*",
+    "@brisk/shared-types": "workspace:*",
+    "@puckeditor/core": "^0.23.0"
+  }
 }
