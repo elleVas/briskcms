@@ -1,7 +1,8 @@
-import type { Page, PageVersion } from '@brisk/domain-core';
+import type { Page, PageVersion, User } from '@brisk/domain-core';
 import type {
   PageRepositoryPort,
   PageVersionRepositoryPort,
+  UserRepositoryPort,
 } from '@brisk/ports';
 
 export class InMemoryPageRepository implements PageRepositoryPort {
@@ -65,5 +66,27 @@ export class InMemoryPageVersionRepository implements PageVersionRepositoryPort 
     return this.versions.filter(
       (v) => v.tenantId === tenantId && v.pageId === pageId,
     );
+  }
+}
+
+export class InMemoryUserRepository implements UserRepositoryPort {
+  private users = new Map<string, User>();
+
+  async save(user: User): Promise<void> {
+    this.users.set(user.id, user);
+  }
+
+  async findById(tenantId: string, userId: string): Promise<User | null> {
+    const user = this.users.get(userId);
+    return user && user.tenantId === tenantId ? user : null;
+  }
+
+  async findByEmail(tenantId: string, email: string): Promise<User | null> {
+    for (const user of this.users.values()) {
+      if (user.tenantId === tenantId && user.email === email) {
+        return user;
+      }
+    }
+    return null;
   }
 }

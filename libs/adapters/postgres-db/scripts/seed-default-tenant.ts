@@ -1,18 +1,13 @@
 /**
- * TEMPORARY — creates the single fixed tenant + site that every request runs
- * as until Phase 3 (auth) exists (see apps/api's StaticTenantContextAdapter).
+ * Creates the single tenant + site this self-hosted instance serves — see
+ * docs/adr/0010-session-based-auth-foundations.md for why DEFAULT_TENANT_ID
+ * survives auth (Phase 3) as the bootstrap constant login uses before a
+ * session exists, in this single-tenant-per-deployment MVP model.
  * Idempotent: safe to run on every deploy/dev startup.
  */
+import { requireEnv } from '@brisk/env-config';
 import { createAppDb, withTenant } from '../src/lib/client.js';
 import { sites, tenants } from '../src/lib/schema.js';
-
-function requireEnv(name: string): string {
-  const value = process.env[name];
-  if (!value) {
-    throw new Error(`Missing required environment variable: ${name}`);
-  }
-  return value;
-}
 
 async function main() {
   const tenantId = requireEnv('DEFAULT_TENANT_ID');

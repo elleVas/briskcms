@@ -1,14 +1,19 @@
 export interface Session {
   token: string;
   userId: string;
+  tenantId: string;
   expiresAt: Date;
 }
 
-/** Implementata dall'adapter Lucia/Better-Auth in Fase 3 — argon2id, sessioni via cookie. */
+/**
+ * Implementata da @brisk/session-auth-adapter — argon2id per l'hashing,
+ * sessioni opache (token casuale, hash SHA-256 persistito) via cookie.
+ * Vedi docs/adr/0010-session-based-auth-foundations.md.
+ */
 export interface AuthPort {
   hashPassword(plainText: string): Promise<string>;
   verifyPassword(plainText: string, passwordHash: string): Promise<boolean>;
-  createSession(userId: string): Promise<Session>;
+  createSession(userId: string, tenantId: string): Promise<Session>;
   validateSession(token: string): Promise<Session | null>;
   invalidateSession(token: string): Promise<void>;
 }

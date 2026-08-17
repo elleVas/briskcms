@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { PageNotFoundError, PageVersionNotFoundError } from './errors.js';
+import {
+  InvalidCredentialsError,
+  PageNotFoundError,
+  PageVersionNotFoundError,
+} from './errors.js';
 
 describe('PageNotFoundError', () => {
   it('carries the missing page id in its message and is a real Error', () => {
@@ -18,5 +22,15 @@ describe('PageVersionNotFoundError', () => {
     expect(error).toBeInstanceOf(Error);
     expect(error.name).toBe('PageVersionNotFoundError');
     expect(error.message).toBe('Page version not found: version-1');
+  });
+});
+
+describe('InvalidCredentialsError', () => {
+  it('carries a generic message that never reveals which part was wrong', () => {
+    const error = new InvalidCredentialsError();
+
+    expect(error).toBeInstanceOf(Error);
+    expect(error.name).toBe('InvalidCredentialsError');
+    expect(error.message).toBe('Invalid email or password');
   });
 });

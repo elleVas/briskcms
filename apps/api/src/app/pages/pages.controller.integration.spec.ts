@@ -1,19 +1,23 @@
 import { randomUUID } from 'node:crypto';
 import { type INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
+import cookieParser from 'cookie-parser';
 import request from 'supertest';
 import type { BriskDb } from '@brisk/postgres-db';
+import { DATABASE } from '../database.module.js';
 import { PagesModule } from './pages.module.js';
-import { DATABASE } from './pages.tokens.js';
 
 /**
  * Runs against a real Postgres, through the real HTTP stack — see
  * docs/development.md ("docker compose up -d postgres", run migrations,
  * then `pnpm --filter @brisk/postgres-db run db:seed` so DEFAULT_TENANT_ID/
- * DEFAULT_SITE_ID exist).
+ * DEFAULT_SITE_ID/DEFAULT_USER_EMAIL/DEFAULT_USER_PASSWORD all exist).
+ * Every route requires a session (see docs/adr/0010) — logs in once via a
+ * cookie-persisting supertest agent, shared across every test below.
  */
 describe('PagesController (integration)', () => {
   let app: INestApplication;
+  let agent: ReturnType<typeof request.agent>;
   const siteId = process.env.DEFAULT_SITE_ID as string;
 
   beforeAll(async () => {
@@ -22,7 +26,17 @@ describe('PagesController (integration)', () => {
     }).compile();
 
     app = moduleRef.createNestApplication();
+    app.use(cookieParser());
     await app.init();
+
+    agent = request.agent(app.getHttpServer());
+    await agent
+      .post('/auth/login')
+      .send({
+        email: process.env.DEFAULT_USER_EMAIL,
+        password: process.env.DEFAULT_USER_PASSWORD,
+      })
+      .expect(200);
   });
 
   afterAll(async () => {
@@ -43,7 +57,7 @@ describe('PagesController (integration)', () => {
   }
 
   it('runs the full create -> draft -> publish -> rollback cycle over HTTP', async () => {
-    const createRes = await request(app.getHttpServer())
+    const createRes = await agent
       .post('/pages')
       .send(createPageBody())
       .expect(201);
@@ -52,7 +66,7 @@ describe('PagesController (integration)', () => {
     expect(createRes.body.publishedContent).toBeNull();
     const pageId = createRes.body.id;
 
-    const draftRes = await request(app.getHttpServer())
+    const draftRes = await agent
       .patch(`/pages/${pageId}/draft`)
       .send({ content: [{ type: 'Hero', props: { title: 'v1' } }] })
       .expect(200);
@@ -60,21 +74,19 @@ describe('PagesController (integration)', () => {
       { type: 'Hero', props: { title: 'v1' } },
     ]);
 
-    const publishRes = await request(app.getHttpServer())
-      .post(`/pages/${pageId}/publish`)
-      .expect(201);
+    const publishRes = await agent.post(`/pages/${pageId}/publish`).expect(201);
     expect(publishRes.body.status).toBe('published');
     expect(publishRes.body.publishedContent).toEqual([
       { type: 'Hero', props: { title: 'v1' } },
     ]);
 
-    const versionsRes = await request(app.getHttpServer())
+    const versionsRes = await agent
       .get(`/pages/${pageId}/versions`)
       .expect(200);
     expect(versionsRes.body).toHaveLength(2); // create, draft v1
     const firstVersionId = versionsRes.body[0].id;
 
-    const rollbackRes = await request(app.getHttpServer())
+    const rollbackRes = await agent
       .post(`/pages/${pageId}/rollback`)
       .send({ versionId: firstVersionId })
       .expect(201);
@@ -87,15 +99,10 @@ describe('PagesController (integration)', () => {
 
   it('findBySlug and findById return the same page', async () => {
     const body = createPageBody();
-    const createRes = await request(app.getHttpServer())
-      .post('/pages')
-      .send(body)
-      .expect(201);
+    const createRes = await agent.post('/pages').send(body).expect(201);
 
-    const byId = await request(app.getHttpServer())
-      .get(`/pages/${createRes.body.id}`)
-      .expect(200);
-    const bySlug = await request(app.getHttpServer())
+    const byId = await agent.get(`/pages/${createRes.body.id}`).expect(200);
+    const bySlug = await agent
       .get('/pages/by-slug')
       .query({ siteId, locale: body.locale, slug: body.slug })
       .expect(200);
@@ -105,17 +112,21 @@ describe('PagesController (integration)', () => {
   });
 
   it('404s on a page that does not exist', async () => {
-    await request(app.getHttpServer())
-      .get(`/pages/${randomUUID()}`)
-      .expect(404);
+    await agent.get(`/pages/${randomUUID()}`).expect(404);
   });
 
   it('400s on an invalid create body instead of hitting the database', async () => {
-    const res = await request(app.getHttpServer())
+    const res = await agent
       .post('/pages')
       .send({ siteId: 'not-a-uuid' })
       .expect(400);
 
     expect(res.body.fieldErrors.siteId).toBeDefined();
+  });
+
+  it('401s without a session cookie', async () => {
+    await request(app.getHttpServer())
+      .get(`/pages/${randomUUID()}`)
+      .expect(401);
   });
 });

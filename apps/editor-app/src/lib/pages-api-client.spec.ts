@@ -1,7 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
+  ApiError,
   createPage,
   getPage,
+  login,
+  logout,
   publishPage,
   saveDraft,
   type PageDto,
@@ -47,6 +50,7 @@ describe('pages-api-client', () => {
     expect(fetch).toHaveBeenCalledWith(
       expect.stringContaining('/pages/page-1'),
       expect.objectContaining({
+        credentials: 'include',
         headers: expect.objectContaining({
           'Content-Type': 'application/json',
         }),
@@ -100,12 +104,15 @@ describe('pages-api-client', () => {
     );
   });
 
-  it('throws with the parsed error body when the response is not ok', async () => {
+  it('throws an ApiError carrying the status and the parsed error body', async () => {
     vi.mocked(fetch).mockResolvedValue(
       jsonResponse({ message: 'Not found' }, false, 404),
     );
 
     await expect(getPage('missing')).rejects.toThrow(/API 404.*Not found/);
+    const error = await getPage('missing').catch((e: unknown) => e);
+    expect(error).toBeInstanceOf(ApiError);
+    expect((error as ApiError).status).toBe(404);
   });
 
   it('throws even when the error body cannot be parsed as JSON', async () => {
@@ -116,5 +123,35 @@ describe('pages-api-client', () => {
     } as unknown as Response);
 
     await expect(getPage('page-1')).rejects.toThrow(/API 500/);
+  });
+
+  it('login posts credentials to the login endpoint', async () => {
+    vi.mocked(fetch).mockResolvedValue(jsonResponse({ userId: 'user-1' }));
+
+    const result = await login('lele@example.com', 'correct-horse-battery');
+
+    expect(fetch).toHaveBeenCalledWith(
+      expect.stringContaining('/auth/login'),
+      expect.objectContaining({
+        method: 'POST',
+        credentials: 'include',
+        body: JSON.stringify({
+          email: 'lele@example.com',
+          password: 'correct-horse-battery',
+        }),
+      }),
+    );
+    expect(result).toEqual({ userId: 'user-1' });
+  });
+
+  it('logout posts to the logout endpoint', async () => {
+    vi.mocked(fetch).mockResolvedValue(jsonResponse({ success: true }));
+
+    await logout();
+
+    expect(fetch).toHaveBeenCalledWith(
+      expect.stringContaining('/auth/logout'),
+      expect.objectContaining({ method: 'POST', credentials: 'include' }),
+    );
   });
 });

@@ -8,6 +8,7 @@ import {
   Post,
   Patch,
   Query,
+  UseGuards,
 } from '@nestjs/common';
 import {
   createPage,
@@ -25,6 +26,7 @@ import type {
   PageVersionRepositoryPort,
   TenantContextPort,
 } from '@brisk/ports';
+import { SessionAuthGuard } from '../auth/session-auth.guard.js';
 import { ZodValidationPipe } from '../zod-validation.pipe.js';
 import {
   PAGE_REPOSITORY,
@@ -41,6 +43,7 @@ import {
 } from './pages.schemas.js';
 
 @Controller('pages')
+@UseGuards(SessionAuthGuard)
 export class PagesController {
   constructor(
     @Inject(PAGE_REPOSITORY)

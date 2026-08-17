@@ -59,9 +59,12 @@ custom migration needs the same treatment):
 pnpm --filter @brisk/postgres-db run db:generate
 ```
 
-Every request currently runs as one fixed tenant/site (real auth is Phase 3 —
-see [ADR-0006](adr/0006-temporary-fixed-tenant-resolution-pre-auth.md)). Seed
-it once per fresh database:
+Every self-hosted instance runs as one fixed tenant/site (see
+[ADR-0006](adr/0006-temporary-fixed-tenant-resolution-pre-auth.md)). Auth
+now exists (see [ADR-0010](adr/0010-session-based-auth-foundations.md)) —
+there's no public registration, so seeding also creates a fixed dev/test
+user (`DEFAULT_USER_EMAIL`/`DEFAULT_USER_PASSWORD` in `.env`). Seed once
+per fresh database:
 
 ```sh
 pnpm --filter @brisk/postgres-db run db:seed
@@ -93,11 +96,14 @@ pnpm exec nx run @brisk/api:serve      # http://localhost:3000/api
 pnpm exec nx run @brisk/editor-app:dev  # http://localhost:4200
 ```
 
-Opening `http://localhost:4200` with no `?pageId=` creates a new page
-against `VITE_DEFAULT_SITE_ID` and redirects to it. Puck stays isolated
-inside `apps/editor-app` — `src/lib/puck-data-mapper.ts` is the only place
-that translates between Puck's own data format and Brisk's own `Block[]`
-(see [ADR-0007](adr/0007-nested-block-content-model-independent-of-puck.md)).
+Opening `http://localhost:4200` prompts for login first (the dev user from
+`db:seed` above) — every Pages route requires a session, see
+[ADR-0010](adr/0010-session-based-auth-foundations.md). Once logged in,
+with no `?pageId=` it creates a new page against `VITE_DEFAULT_SITE_ID` and
+redirects to it. Puck stays isolated inside `apps/editor-app` —
+`src/lib/puck-data-mapper.ts` is the only place that translates between
+Puck's own data format and Brisk's own `Block[]` (see
+[ADR-0007](adr/0007-nested-block-content-model-independent-of-puck.md)).
 
 ## Connecting to Postgres
 

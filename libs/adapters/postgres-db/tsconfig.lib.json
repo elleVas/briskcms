@@ -14,6 +14,9 @@
       "path": "../../shared-types/tsconfig.lib.json"
     },
     {
+      "path": "../../env-config/tsconfig.lib.json"
+    },
+    {
       "path": "../../domain-core/tsconfig.lib.json"
     }
   ],
