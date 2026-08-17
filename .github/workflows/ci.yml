@@ -54,7 +54,14 @@ jobs:
             -p 5432:5432 \
             postgres:16-alpine
 
-          until docker exec postgres pg_isready -U "$POSTGRES_USER" >/dev/null 2>&1; do
+          # The official image starts Postgres twice: once internally to run
+          # initdb, then for real. pg_isready can report ready during that
+          # first, transient instance, right before it shuts down to restart
+          # — a bare "until pg_isready" loop can catch that window and then
+          # get "server closed the connection unexpectedly" on the very next
+          # command. Wait for the *second* "ready to accept connections" in
+          # the logs, which only appears once the real server is up.
+          until [ "$(docker logs postgres 2>&1 | grep -c 'database system is ready to accept connections')" -ge 2 ]; do
             sleep 1
           done
 
