@@ -15,6 +15,7 @@
   },
   "dependencies": {
     "@brisk/domain-core": "workspace:*",
+    "@brisk/opaque-token": "workspace:*",
     "@brisk/ports": "workspace:*",
     "@brisk/postgres-db": "workspace:*",
     "@node-rs/argon2": "^2.1.0",

@@ -6,7 +6,10 @@ import {
   login,
   logout,
   publishPage,
+  requestPasswordReset,
+  resetPassword,
   saveDraft,
+  verifyEmail,
   type PageDto,
 } from './pages-api-client.js';
 
@@ -152,6 +155,48 @@ describe('pages-api-client', () => {
     expect(fetch).toHaveBeenCalledWith(
       expect.stringContaining('/auth/logout'),
       expect.objectContaining({ method: 'POST', credentials: 'include' }),
+    );
+  });
+
+  it('requestPasswordReset posts the email to the request-password-reset endpoint', async () => {
+    vi.mocked(fetch).mockResolvedValue(jsonResponse({ success: true }));
+
+    await requestPasswordReset('lele@example.com');
+
+    expect(fetch).toHaveBeenCalledWith(
+      expect.stringContaining('/auth/request-password-reset'),
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({ email: 'lele@example.com' }),
+      }),
+    );
+  });
+
+  it('resetPassword posts the token and new password to the reset-password endpoint', async () => {
+    vi.mocked(fetch).mockResolvedValue(jsonResponse({ success: true }));
+
+    await resetPassword('a-token', 'new-password');
+
+    expect(fetch).toHaveBeenCalledWith(
+      expect.stringContaining('/auth/reset-password'),
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({ token: 'a-token', newPassword: 'new-password' }),
+      }),
+    );
+  });
+
+  it('verifyEmail posts the token to the verify-email endpoint', async () => {
+    vi.mocked(fetch).mockResolvedValue(jsonResponse({ success: true }));
+
+    await verifyEmail('a-token');
+
+    expect(fetch).toHaveBeenCalledWith(
+      expect.stringContaining('/auth/verify-email'),
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({ token: 'a-token' }),
+      }),
     );
   });
 });

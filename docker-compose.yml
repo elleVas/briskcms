@@ -18,5 +18,16 @@ services:
       timeout: 5s
       retries: 10
 
+  # SMTP catcher for local dev — verification/reset emails land here
+  # instead of a real inbox. Web UI to view them at localhost:8025. Point
+  # SMTP_HOST/SMTP_PORT at a real provider for anything deployed — see
+  # docs/adr/0011-email-verification-password-reset.md.
+  mailpit:
+    image: axllent/mailpit
+    restart: unless-stopped
+    ports:
+      - '${SMTP_PORT:-1025}:1025'
+      - '${MAILPIT_UI_PORT:-8025}:8025'
+
 volumes:
   postgres-data:

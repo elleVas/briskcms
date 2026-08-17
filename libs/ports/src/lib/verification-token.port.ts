@@ -1,0 +1,32 @@
+import type { VerificationTokenPurpose } from '@brisk/domain-core';
+
+export interface VerificationToken {
+  token: string;
+  userId: string;
+  tenantId: string;
+  purpose: VerificationTokenPurpose;
+  expiresAt: Date;
+}
+
+/**
+ * Same opaque-token mechanic as AuthPort's sessions (@brisk/opaque-token),
+ * for one-time tokens instead of multi-use sessions — email verification
+ * and password reset. See docs/adr/0011-email-verification-password-reset.md.
+ */
+export interface VerificationTokenPort {
+  /** ttlMs is a policy decision (how long a token stays valid) — the
+   * caller (application layer) decides it, the adapter just enforces it. */
+  createToken(
+    userId: string,
+    tenantId: string,
+    purpose: VerificationTokenPurpose,
+    ttlMs: number,
+  ): Promise<VerificationToken>;
+
+  /** Single-use: a token that validates is also deleted atomically, so a
+   * concurrent second consume of the same token always fails. */
+  consumeToken(
+    token: string,
+    purpose: VerificationTokenPurpose,
+  ): Promise<VerificationToken | null>;
+}

@@ -23,3 +23,4 @@ explicitly supersedes it (status `Superseded by ADR-000X`).
 | [0008](0008-disable-enforce-buildable-lib-dependency.md)       | Disable `enforceBuildableLibDependency`                                    | Accepted |
 | [0009](0009-enforced-coverage-thresholds.md)                   | Enforced test coverage thresholds                                          | Accepted |
 | [0010](0010-session-based-auth-foundations.md)                 | Session-based auth foundations, roll-your-own instead of Lucia/Better-Auth | Accepted |
+| [0011](0011-email-verification-password-reset.md)              | Email verification, password reset, and the editor-app design system       | Accepted |

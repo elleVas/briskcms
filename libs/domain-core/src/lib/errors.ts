@@ -22,3 +22,11 @@ export class InvalidCredentialsError extends Error {
     this.name = 'InvalidCredentialsError';
   }
 }
+
+/** Covers both an unknown token and one that has expired — same handling either way. */
+export class InvalidOrExpiredTokenError extends Error {
+  constructor() {
+    super('Invalid or expired token');
+    this.name = 'InvalidOrExpiredTokenError';
+  }
+}

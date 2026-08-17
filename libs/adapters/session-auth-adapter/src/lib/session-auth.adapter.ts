@@ -1,6 +1,6 @@
-import { createHash, randomBytes } from 'node:crypto';
 import { hash, verify } from '@node-rs/argon2';
 import { eq } from 'drizzle-orm';
+import { generateOpaqueToken, hashOpaqueToken } from '@brisk/opaque-token';
 import type { AuthPort, Session } from '@brisk/ports';
 import { type BriskDb, sessions, withTenant } from '@brisk/postgres-db';
 
@@ -9,10 +9,6 @@ import { type BriskDb, sessions, withTenant } from '@brisk/postgres-db';
 // against `sessions.expires_at`), but there's no reason to let it drift.
 export const SESSION_DURATION_MS = 1000 * 60 * 60 * 24 * 30; // 30 days
 const SESSION_RENEWAL_THRESHOLD_MS = SESSION_DURATION_MS / 2;
-
-function hashToken(token: string): string {
-  return createHash('sha256').update(token).digest('hex');
-}
 
 function toSession(row: typeof sessions.$inferSelect, token: string): Session {
   return {
@@ -54,14 +50,14 @@ export class SessionAuthAdapter implements AuthPort {
   }
 
   async createSession(userId: string, tenantId: string): Promise<Session> {
-    const token = randomBytes(32).toString('base64url');
+    const token = generateOpaqueToken();
     const expiresAt = new Date(Date.now() + SESSION_DURATION_MS);
 
     await withTenant(this.db, tenantId, (tx) =>
       tx.insert(sessions).values({
         tenantId,
         userId,
-        tokenHash: hashToken(token),
+        tokenHash: hashOpaqueToken(token),
         expiresAt,
       }),
     );
@@ -70,7 +66,7 @@ export class SessionAuthAdapter implements AuthPort {
   }
 
   async validateSession(token: string): Promise<Session | null> {
-    const tokenHash = hashToken(token);
+    const tokenHash = hashOpaqueToken(token);
 
     const rows = await withTenant(this.db, this.bootstrapTenantId, (tx) =>
       tx
@@ -104,9 +100,18 @@ export class SessionAuthAdapter implements AuthPort {
   }
 
   async invalidateSession(token: string): Promise<void> {
-    const tokenHash = hashToken(token);
+    const tokenHash = hashOpaqueToken(token);
     await withTenant(this.db, this.bootstrapTenantId, (tx) =>
       tx.delete(sessions).where(eq(sessions.tokenHash, tokenHash)),
+    );
+  }
+
+  async invalidateAllSessionsForUser(
+    userId: string,
+    tenantId: string,
+  ): Promise<void> {
+    await withTenant(this.db, tenantId, (tx) =>
+      tx.delete(sessions).where(eq(sessions.userId, userId)),
     );
   }
 }

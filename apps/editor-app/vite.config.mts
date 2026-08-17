@@ -1,12 +1,18 @@
 /// <reference types='vitest' />
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
+import tailwindcss from '@tailwindcss/vite';
 
 export default defineConfig(() => ({
   root: import.meta.dirname,
   // VITE_-prefixed vars live in the repo-root .env, same as everywhere else.
   envDir: '../../',
   cacheDir: '../../node_modules/.vite/apps/editor-app',
+  resolve: {
+    alias: {
+      '@': `${import.meta.dirname}/src`,
+    },
+  },
   server: {
     port: 4200,
     host: 'localhost',
@@ -15,7 +21,7 @@ export default defineConfig(() => ({
     port: 4200,
     host: 'localhost',
   },
-  plugins: [react()],
+  plugins: [react(), tailwindcss()],
   // Uncomment this if you are using workers.
   // worker: {
   //  plugins: [],

@@ -38,4 +38,12 @@ export class FakeAuthPort implements AuthPort {
   async invalidateSession(token: string): Promise<void> {
     this.sessions.delete(token);
   }
+
+  async invalidateAllSessionsForUser(userId: string): Promise<void> {
+    for (const [token, session] of this.sessions) {
+      if (session.userId === userId) {
+        this.sessions.delete(token);
+      }
+    }
+  }
 }

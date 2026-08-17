@@ -105,6 +105,20 @@ describe('SessionAuthAdapter (integration)', () => {
     expect(remaining).toHaveLength(0);
   });
 
+  it('invalidateAllSessionsForUser removes every session for that user, but not others', async () => {
+    const userId = await createTestUser();
+    const otherUserId = await createTestUser();
+    const created1 = await adapter.createSession(userId, tenantId);
+    const created2 = await adapter.createSession(userId, tenantId);
+    const otherCreated = await adapter.createSession(otherUserId, tenantId);
+
+    await adapter.invalidateAllSessionsForUser(userId, tenantId);
+
+    expect(await adapter.validateSession(created1.token)).toBeNull();
+    expect(await adapter.validateSession(created2.token)).toBeNull();
+    expect(await adapter.validateSession(otherCreated.token)).not.toBeNull();
+  });
+
   it('renews a session that is past the halfway point of its lifetime', async () => {
     const userId = await createTestUser();
     const created = await adapter.createSession(userId, tenantId);
