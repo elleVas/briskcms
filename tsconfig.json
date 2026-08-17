@@ -35,6 +35,9 @@
     },
     {
       "path": "./libs/application"
+    },
+    {
+      "path": "./libs/adapters/postgres-db"
     }
   ],
   "compilerOptions": {}

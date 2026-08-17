@@ -44,14 +44,19 @@ Rule of thumb for where a new piece of code belongs:
 
 Every table with per-tenant data has `tenant_id` from day one (even in
 single-tenant mode) and Row Level Security enabled with a
-`tenant_id = current_tenant()` policy (see `db/init/002_rls.sql`).
-`current_tenant()` reads the Postgres session variable `app.current_tenant_id`,
-which the adapter sets at the start of a request from the `TenantContextPort`.
+`tenant_id = current_tenant()` policy (see
+`libs/adapters/postgres-db/drizzle/0001_rls_and_grants.sql`).
+`current_tenant()` reads the Postgres session variable `app.current_tenant_id`.
+Every Postgres adapter must set it via `withTenant()` (`libs/adapters/postgres-db`)
+before running a query — it sets the variable inside a transaction
+(`is_local = true`), not for the whole session, because connections are pooled
+and reused across requests for different tenants.
 
 **Critical point**: RLS only protects if the application connection is NOT a
 superuser — see [ADR-0002](adr/0002-non-superuser-role-for-rls-enforcement.md).
 The `brisk_app` role (created in `db/init/000_roles.sh`) is what the backend must
-always use at runtime.
+always use at runtime. Schema and RLS policies are Drizzle-managed — see
+[ADR-0004](adr/0004-drizzle-as-schema-source-of-truth.md).
 
 ## Content model
 
@@ -80,12 +85,16 @@ libs/
   domain-core/    pure entities: Page, PageVersion, User, Media, FormSubmission
   ports/          interfaces implemented by the adapters
   application/    use cases (orchestration, zero infrastructure)
-  adapters/       concrete Port implementations
+  adapters/
+    postgres-db/               Drizzle schema, client, tenant-scoping helper —
+                                shared by every Postgres adapter
+    postgres-page-repository/  PageRepositoryPort + PageVersionRepositoryPort
   puck-config/    editor block definitions (Phase 2)
   shared-types/   shared content model (Block, PageContent, SeoMeta)
 
 db/
-  init/           initial Postgres schema, roles, RLS (see docs/development.md)
+  init/           brisk_app role bootstrap (see docs/development.md);
+                   schema/RLS/grants live in libs/adapters/postgres-db/drizzle/
 
 docs/
   adr/            Architecture Decision Records
