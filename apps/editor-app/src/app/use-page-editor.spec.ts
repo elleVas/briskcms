@@ -1,0 +1,156 @@
+import { act, renderHook, waitFor } from '@testing-library/react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import type { Data } from '@puckeditor/core';
+import * as api from '../lib/pages-api-client.js';
+import { usePageEditor } from './use-page-editor.js';
+
+vi.mock('../lib/pages-api-client.js');
+
+const samplePage: api.PageDto = {
+  id: 'page-1',
+  tenantId: 'tenant-1',
+  siteId: 'site-1',
+  groupId: 'group-1',
+  locale: 'it',
+  slug: 'test-page',
+  status: 'draft',
+  content: [],
+  publishedContent: null,
+  seoMeta: { title: 'Test', description: 'desc' },
+  createdAt: '',
+  updatedAt: '',
+};
+
+const emptyData: Data = { root: {}, content: [], zones: {} };
+
+function setSearch(search: string) {
+  window.history.pushState({}, '', search);
+}
+
+describe('usePageEditor', () => {
+  beforeEach(() => {
+    setSearch('/');
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.clearAllMocks();
+  });
+
+  it('starts in a loading state and creates a page when the URL has no pageId', async () => {
+    vi.mocked(api.createPage).mockResolvedValue(samplePage);
+
+    const { result } = renderHook(() => usePageEditor());
+
+    expect(result.current.status).toBe('Caricamento...');
+    expect(result.current.page).toBeNull();
+
+    await waitFor(() => expect(result.current.page).toEqual(samplePage));
+    expect(result.current.status).toBe('');
+    expect(api.createPage).toHaveBeenCalledWith(
+      expect.objectContaining({ siteId: expect.any(String) }),
+    );
+  });
+
+  it('sets an error status when creating the initial page fails', async () => {
+    vi.mocked(api.createPage).mockRejectedValue(new Error('boom'));
+
+    const { result } = renderHook(() => usePageEditor());
+
+    await waitFor(() => expect(result.current.status).toContain('boom'));
+    expect(result.current.page).toBeNull();
+  });
+
+  it('loads the existing page when the URL has a pageId', async () => {
+    setSearch('?pageId=page-1');
+    vi.mocked(api.getPage).mockResolvedValue(samplePage);
+
+    const { result } = renderHook(() => usePageEditor());
+
+    await waitFor(() => expect(result.current.page).toEqual(samplePage));
+    expect(api.getPage).toHaveBeenCalledWith('page-1');
+    expect(api.createPage).not.toHaveBeenCalled();
+  });
+
+  it('sets an error status when loading the existing page fails', async () => {
+    setSearch('?pageId=page-1');
+    vi.mocked(api.getPage).mockRejectedValue(new Error('not found'));
+
+    const { result } = renderHook(() => usePageEditor());
+
+    await waitFor(() => expect(result.current.status).toContain('not found'));
+  });
+
+  it('handleChange does nothing before a page has loaded', () => {
+    vi.mocked(api.createPage).mockReturnValue(new Promise(() => undefined));
+
+    const { result } = renderHook(() => usePageEditor());
+    act(() => result.current.handleChange(emptyData));
+
+    expect(api.saveDraft).not.toHaveBeenCalled();
+  });
+
+  it('handleChange debounces and saves the draft', async () => {
+    vi.useFakeTimers();
+    vi.mocked(api.createPage).mockResolvedValue(samplePage);
+    vi.mocked(api.saveDraft).mockResolvedValue(samplePage);
+
+    const { result } = renderHook(() => usePageEditor());
+    await vi.waitFor(() => expect(result.current.page).toEqual(samplePage));
+
+    act(() => result.current.handleChange(emptyData));
+    expect(api.saveDraft).not.toHaveBeenCalled();
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1000);
+    });
+
+    expect(api.saveDraft).toHaveBeenCalledWith(samplePage.id, []);
+    expect(result.current.status).toBe('Bozza salvata');
+  });
+
+  it('handleChange sets an error status when the debounced save fails', async () => {
+    vi.useFakeTimers();
+    vi.mocked(api.createPage).mockResolvedValue(samplePage);
+    vi.mocked(api.saveDraft).mockRejectedValue(new Error('save failed'));
+
+    const { result } = renderHook(() => usePageEditor());
+    await vi.waitFor(() => expect(result.current.page).toEqual(samplePage));
+
+    act(() => result.current.handleChange(emptyData));
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1000);
+    });
+
+    expect(result.current.status).toContain('save failed');
+  });
+
+  it('handlePublish does nothing before a page has loaded', async () => {
+    vi.mocked(api.createPage).mockReturnValue(new Promise(() => undefined));
+
+    const { result } = renderHook(() => usePageEditor());
+    await act(async () => {
+      await result.current.handlePublish(emptyData);
+    });
+
+    expect(api.saveDraft).not.toHaveBeenCalled();
+    expect(api.publishPage).not.toHaveBeenCalled();
+  });
+
+  it('handlePublish saves the draft then publishes', async () => {
+    vi.mocked(api.createPage).mockResolvedValue(samplePage);
+    vi.mocked(api.saveDraft).mockResolvedValue(samplePage);
+    vi.mocked(api.publishPage).mockResolvedValue(samplePage);
+
+    const { result } = renderHook(() => usePageEditor());
+    await waitFor(() => expect(result.current.page).toEqual(samplePage));
+
+    await act(async () => {
+      await result.current.handlePublish(emptyData);
+    });
+
+    expect(api.saveDraft).toHaveBeenCalledWith(samplePage.id, []);
+    expect(api.publishPage).toHaveBeenCalledWith(samplePage.id);
+    expect(result.current.status).toBe('Pubblicato');
+  });
+});

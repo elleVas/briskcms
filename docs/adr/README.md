@@ -21,3 +21,4 @@ explicitly supersedes it (status `Superseded by ADR-000X`).
 | [0006](0006-temporary-fixed-tenant-resolution-pre-auth.md)     | Temporary fixed-tenant resolution before auth exists            | Accepted |
 | [0007](0007-nested-block-content-model-independent-of-puck.md) | Nested `Block` content model, independent of Puck's data format | Accepted |
 | [0008](0008-disable-enforce-buildable-lib-dependency.md)       | Disable `enforceBuildableLibDependency`                         | Accepted |
+| [0009](0009-enforced-coverage-thresholds.md)                   | Enforced test coverage thresholds                               | Accepted |

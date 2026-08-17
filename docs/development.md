@@ -55,6 +55,8 @@ pnpm --filter @brisk/postgres-db run db:seed
 
 ```sh
 pnpm exec nx run-many -t build typecheck test lint   # whole workspace
+pnpm exec nx run-many -t test --coverage             # coverage report; enforces the
+                                                      # thresholds from ADR-0009
 pnpm exec nx run @brisk/api:serve                     # NestJS API in watch mode
 pnpm exec nx run @brisk/editor-app:dev                 # React editor (Vite)
 pnpm exec nx run @brisk/public-site:dev                 # Astro public site

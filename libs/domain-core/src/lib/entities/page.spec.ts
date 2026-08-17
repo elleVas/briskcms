@@ -49,4 +49,34 @@ describe('Page entity', () => {
     ]);
     expect(page.status).toBe('published');
   });
+
+  it('create() exposes every prop via its getters', () => {
+    const now = new Date('2026-01-01T00:00:00Z');
+    const page = Page.create({ ...baseInput, now });
+
+    expect(page.id).toBe('page-1');
+    expect(page.tenantId).toBe('tenant-1');
+    expect(page.siteId).toBe('site-1');
+    expect(page.groupId).toBe('group-1');
+    expect(page.locale).toBe('it');
+    expect(page.slug).toBe('home');
+    expect(page.seoMeta).toEqual({ title: 'Home', description: 'La home' });
+    expect(page.createdAt).toEqual(now);
+    expect(page.updatedAt).toEqual(now);
+  });
+
+  it('fromProps/toProps round-trip without loss', () => {
+    const props = {
+      ...baseInput,
+      status: 'published' as const,
+      content: [{ type: 'Hero', props: { title: 'v1' } }],
+      publishedContent: [{ type: 'Hero', props: { title: 'v1' } }],
+      createdAt: new Date('2025-12-01T00:00:00Z'),
+      updatedAt: new Date('2026-01-01T00:00:00Z'),
+    };
+
+    const page = Page.fromProps(props);
+
+    expect(page.toProps()).toEqual(props);
+  });
 });

@@ -1,5 +1,14 @@
+import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
-import { textPropsSchema } from './text.block.js';
+import type { PuckContext } from '@puckeditor/core';
+import { textConfig, textPropsSchema } from './text.block.js';
+
+const puckContext: PuckContext = {
+  renderDropZone: () => null,
+  metadata: {},
+  isEditing: false,
+  dragRef: null,
+};
 
 describe('textPropsSchema', () => {
   it('accepts valid Text props', () => {
@@ -10,5 +19,19 @@ describe('textPropsSchema', () => {
   it('rejects Text props without a body', () => {
     const result = textPropsSchema.safeParse({});
     expect(result.success).toBe(false);
+  });
+});
+
+describe('textConfig.render', () => {
+  it('renders the body text', () => {
+    render(
+      textConfig.render({
+        id: 'test-id',
+        body: 'Un paragrafo di prova.',
+        puck: puckContext,
+      }),
+    );
+
+    expect(screen.getByText('Un paragrafo di prova.')).toBeTruthy();
   });
 });
