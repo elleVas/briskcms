@@ -17,3 +17,10 @@ export const publicPageBySlugQuerySchema = z.object({
   slug: pageSlugSchema,
 });
 export type PublicPageBySlugQuery = z.infer<typeof publicPageBySlugQuerySchema>;
+
+export const publicPagesSitemapQuerySchema = z.object({
+  domain: domainSchema,
+});
+export type PublicPagesSitemapQuery = z.infer<
+  typeof publicPagesSitemapQuerySchema
+>;

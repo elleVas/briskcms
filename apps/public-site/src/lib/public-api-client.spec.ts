@@ -1,11 +1,22 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { PublishedPageDto } from './public-api-client.js';
-import { getPublishedPageBySlug } from './public-api-client.js';
+import {
+  getPublishedPageBySlug,
+  listPublishedPagesForSitemap,
+} from './public-api-client.js';
 
 const samplePage: PublishedPageDto = {
   content: [{ type: 'Hero', props: { title: 'Ciao', subtitle: 'Sub' } }],
   seoMeta: { title: 'Chi siamo', description: 'La nostra storia' },
   locale: 'it',
+  site: {
+    name: 'Sito di prova',
+    domain: 'example.com',
+    businessAddress: null,
+    businessPhone: null,
+    businessType: null,
+    openingHours: null,
+  },
 };
 
 function jsonResponse(body: unknown, status = 200) {
@@ -54,5 +65,25 @@ describe('public-api-client', () => {
     await expect(
       getPublishedPageBySlug('example.com', 'chi-siamo'),
     ).rejects.toThrow('Public pages API error: 500');
+  });
+
+  it('fetches the sitemap entries for a domain', async () => {
+    const items = [{ slug: 'chi-siamo', updatedAt: '2026-01-01T00:00:00Z' }];
+    vi.mocked(fetch).mockResolvedValue(jsonResponse({ items }));
+
+    const result = await listPublishedPagesForSitemap('example.com');
+
+    expect(fetch).toHaveBeenCalledWith(
+      expect.stringContaining('/public/pages?domain=example.com'),
+    );
+    expect(result).toEqual(items);
+  });
+
+  it('throws when the sitemap request fails', async () => {
+    vi.mocked(fetch).mockResolvedValue(jsonResponse({ message: 'boom' }, 500));
+
+    await expect(listPublishedPagesForSitemap('example.com')).rejects.toThrow(
+      'Public pages API error: 500',
+    );
   });
 });

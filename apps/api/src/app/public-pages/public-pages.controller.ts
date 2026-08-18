@@ -7,12 +7,17 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ThrottlerGuard } from '@nestjs/throttler';
-import { getPublishedPageBySlug } from '@brisk/application';
+import {
+  getPublishedPageBySlug,
+  listPublishedPagesForSitemap,
+} from '@brisk/application';
 import type { PageRepositoryPort, SiteRepositoryPort } from '@brisk/ports';
 import { ZodValidationPipe } from '../zod-validation.pipe.js';
 import {
   type PublicPageBySlugQuery,
   publicPageBySlugQuerySchema,
+  type PublicPagesSitemapQuery,
+  publicPagesSitemapQuerySchema,
 } from './public-pages.schemas.js';
 import {
   DEFAULT_TENANT_ID,
@@ -58,5 +63,22 @@ export class PublicPagesController {
       throw new NotFoundException();
     }
     return result;
+  }
+
+  @Get()
+  async listForSitemap(
+    @Query(new ZodValidationPipe(publicPagesSitemapQuerySchema))
+    query: PublicPagesSitemapQuery,
+  ) {
+    const items = await listPublishedPagesForSitemap(
+      {
+        siteRepository: this.siteRepository,
+        pageRepository: this.pageRepository,
+      },
+      { tenantId: this.defaultTenantId, domain: query.domain },
+    );
+    // An unrecognized domain renders as an empty sitemap, not a 404 — see
+    // listPublishedPagesForSitemap's own comment on why.
+    return { items: items ?? [] };
   }
 }
