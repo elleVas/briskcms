@@ -36,6 +36,12 @@ export class InMemoryPageRepository implements PageRepositoryPort {
     return null;
   }
 
+  async listBySite(tenantId: string, siteId: string): Promise<Page[]> {
+    return [...this.pages.values()].filter(
+      (page) => page.tenantId === tenantId && page.siteId === siteId,
+    );
+  }
+
   async delete(tenantId: string, pageId: string): Promise<void> {
     const page = this.pages.get(pageId);
     if (page && page.tenantId === tenantId) {

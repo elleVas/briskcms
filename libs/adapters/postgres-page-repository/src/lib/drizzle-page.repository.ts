@@ -1,4 +1,4 @@
-import { and, eq } from 'drizzle-orm';
+import { and, desc, eq } from 'drizzle-orm';
 import { Page, type PageProps } from '@brisk/domain-core';
 import type { PageRepositoryPort } from '@brisk/ports';
 import { type BriskDb, pages, withTenant } from '@brisk/postgres-db';
@@ -70,6 +70,18 @@ export class DrizzlePageRepository implements PageRepositoryPort {
         .limit(1),
     );
     return rows[0] ? fromRow(rows[0]) : null;
+  }
+
+  /** Most recently updated first — matches "wp-admin style" page list usage. */
+  async listBySite(tenantId: string, siteId: string): Promise<Page[]> {
+    const rows = await withTenant(this.db, tenantId, (tx) =>
+      tx
+        .select()
+        .from(pages)
+        .where(and(eq(pages.tenantId, tenantId), eq(pages.siteId, siteId)))
+        .orderBy(desc(pages.updatedAt)),
+    );
+    return rows.map(fromRow);
   }
 
   async delete(tenantId: string, pageId: string): Promise<void> {

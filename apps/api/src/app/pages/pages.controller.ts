@@ -12,6 +12,7 @@ import {
 } from '@nestjs/common';
 import {
   createPage,
+  listPages,
   listPageVersions,
   publishPage,
   rollbackToVersion,
@@ -36,6 +37,8 @@ import {
 import {
   type CreatePageBody,
   createPageBodySchema,
+  type ListPagesQuery,
+  listPagesQuerySchema,
   type RollbackBody,
   rollbackBodySchema,
   type SaveDraftBody,
@@ -69,6 +72,20 @@ export class PagesController {
       },
     );
     return page.toProps();
+  }
+
+  @Get()
+  async list(
+    @Query(new ZodValidationPipe(listPagesQuerySchema)) query: ListPagesQuery,
+  ) {
+    const pages = await listPages(
+      { pageRepository: this.pageRepository },
+      {
+        tenantId: this.tenantContext.getCurrentTenantId(),
+        siteId: query.siteId,
+      },
+    );
+    return pages.map((page) => page.toProps());
   }
 
   @Get('by-slug')

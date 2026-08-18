@@ -31,6 +31,7 @@ describe('PagesController (unit)', () => {
       save: jest.fn(),
       findById: jest.fn(),
       findBySlug: jest.fn(),
+      listBySite: jest.fn(),
       delete: jest.fn(),
     };
     pageVersionRepository = {

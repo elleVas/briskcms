@@ -11,6 +11,11 @@ export const createPageBodySchema = z.object({
 });
 export type CreatePageBody = z.infer<typeof createPageBodySchema>;
 
+export const listPagesQuerySchema = z.object({
+  siteId: z.string().uuid(),
+});
+export type ListPagesQuery = z.infer<typeof listPagesQuerySchema>;
+
 export const saveDraftBodySchema = z.object({
   content: pageContentSchema,
 });

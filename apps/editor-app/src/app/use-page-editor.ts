@@ -2,11 +2,13 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Data } from '@puckeditor/core';
 import { fromPuckData } from '../lib/puck-data-mapper.js';
 import {
-  ApiError,
-  createPage,
-  getPage,
   login as apiLogin,
   logout as apiLogout,
+} from '../lib/auth-api-client.js';
+import { ApiError } from '../lib/http-client.js';
+import {
+  createPage,
+  getPage,
   publishPage,
   saveDraft,
   type PageDto,

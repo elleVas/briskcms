@@ -14,5 +14,6 @@ export interface PageRepositoryPort {
     locale: string,
     slug: string,
   ): Promise<Page | null>;
+  listBySite(tenantId: string, siteId: string): Promise<Page[]>;
   delete(tenantId: string, pageId: string): Promise<void>;
 }

@@ -3,6 +3,7 @@ import { createPage } from './create-page.use-case.js';
 import { saveDraft } from './save-draft.use-case.js';
 import { publishPage } from './publish-page.use-case.js';
 import { listPageVersions } from './list-page-versions.use-case.js';
+import { listPages } from './list-pages.use-case.js';
 import { rollbackToVersion } from './rollback-to-version.use-case.js';
 import {
   InMemoryPageRepository,
@@ -127,5 +128,17 @@ describe('page lifecycle: create -> draft -> publish -> rollback', () => {
       pageId: pageA.id,
     });
     expect(versionsFromOtherTenant).toHaveLength(0);
+
+    const pagesForTenantA = await listPages(deps, {
+      tenantId,
+      siteId: 'site-1',
+    });
+    expect(pagesForTenantA.map((page) => page.id)).toEqual([pageA.id]);
+
+    const pagesFromOtherTenant = await listPages(deps, {
+      tenantId: otherTenantId,
+      siteId: 'site-1',
+    });
+    expect(pagesFromOtherTenant).toHaveLength(0);
   });
 });

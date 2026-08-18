@@ -1,12 +1,15 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Data } from '@puckeditor/core';
+import * as authApi from '../lib/auth-api-client.js';
+import { ApiError } from '../lib/http-client.js';
 import * as api from '../lib/pages-api-client.js';
 import { usePageEditor } from './use-page-editor.js';
 
 // A bare automock stubs out ApiError's constructor body too (it would
 // silently drop the `status` field the 401 check below depends on) — keep
-// the real class, mock only the network-calling functions.
+// the real class (imported directly above, from http-client.js, so it's
+// never touched by either mock), mock only the network-calling functions.
 vi.mock('../lib/pages-api-client.js', async (importOriginal) => {
   const actual =
     await importOriginal<typeof import('../lib/pages-api-client.js')>();
@@ -16,6 +19,14 @@ vi.mock('../lib/pages-api-client.js', async (importOriginal) => {
     getPage: vi.fn(),
     saveDraft: vi.fn(),
     publishPage: vi.fn(),
+  };
+});
+
+vi.mock('../lib/auth-api-client.js', async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import('../lib/auth-api-client.js')>();
+  return {
+    ...actual,
     login: vi.fn(),
     logout: vi.fn(),
   };
@@ -78,7 +89,7 @@ describe('usePageEditor', () => {
 
   it('sets needsLogin when the initial load is rejected with a 401', async () => {
     vi.mocked(api.createPage).mockRejectedValue(
-      new api.ApiError(401, { message: 'Unauthorized' }),
+      new ApiError(401, { message: 'Unauthorized' }),
     );
 
     const { result } = renderHook(() => usePageEditor());
@@ -90,9 +101,9 @@ describe('usePageEditor', () => {
 
   it('handleLogin logs in and reloads the page', async () => {
     vi.mocked(api.createPage).mockRejectedValueOnce(
-      new api.ApiError(401, { message: 'Unauthorized' }),
+      new ApiError(401, { message: 'Unauthorized' }),
     );
-    vi.mocked(api.login).mockResolvedValue({ userId: 'user-1' });
+    vi.mocked(authApi.login).mockResolvedValue({ userId: 'user-1' });
 
     const { result } = renderHook(() => usePageEditor());
     await waitFor(() => expect(result.current.needsLogin).toBe(true));
@@ -102,15 +113,15 @@ describe('usePageEditor', () => {
       await result.current.handleLogin('lele@example.com', 'correct');
     });
 
-    expect(api.login).toHaveBeenCalledWith('lele@example.com', 'correct');
+    expect(authApi.login).toHaveBeenCalledWith('lele@example.com', 'correct');
     expect(result.current.needsLogin).toBe(false);
     expect(result.current.page).toEqual(samplePage);
   });
 
   it('handleLogin propagates the error when login itself fails', async () => {
     vi.mocked(api.createPage).mockResolvedValue(samplePage);
-    vi.mocked(api.login).mockRejectedValue(
-      new api.ApiError(401, { message: 'Invalid credentials' }),
+    vi.mocked(authApi.login).mockRejectedValue(
+      new ApiError(401, { message: 'Invalid credentials' }),
     );
 
     const { result } = renderHook(() => usePageEditor());
@@ -123,7 +134,7 @@ describe('usePageEditor', () => {
 
   it('handleLogout logs out and returns to the login screen', async () => {
     vi.mocked(api.createPage).mockResolvedValue(samplePage);
-    vi.mocked(api.logout).mockResolvedValue({ success: true });
+    vi.mocked(authApi.logout).mockResolvedValue({ success: true });
 
     const { result } = renderHook(() => usePageEditor());
     await waitFor(() => expect(result.current.page).toEqual(samplePage));
@@ -132,14 +143,14 @@ describe('usePageEditor', () => {
       await result.current.handleLogout();
     });
 
-    expect(api.logout).toHaveBeenCalled();
+    expect(authApi.logout).toHaveBeenCalled();
     expect(result.current.needsLogin).toBe(true);
     expect(result.current.page).toBeNull();
   });
 
   it('handleLogout still returns to the login screen even if the server call fails', async () => {
     vi.mocked(api.createPage).mockResolvedValue(samplePage);
-    vi.mocked(api.logout).mockRejectedValue(new Error('network error'));
+    vi.mocked(authApi.logout).mockRejectedValue(new Error('network error'));
 
     const { result } = renderHook(() => usePageEditor());
     await waitFor(() => expect(result.current.page).toEqual(samplePage));
