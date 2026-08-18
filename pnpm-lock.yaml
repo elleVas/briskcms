@@ -270,6 +270,9 @@ importers:
       rxjs:
         specifier: ^7.8.2
         version: 7.8.2
+      sharp:
+        specifier: ^0.35.3
+        version: 0.35.3(@types/node@26.2.0)
       tslib:
         specifier: ^2.3.0
         version: 2.8.1
@@ -295,9 +298,6 @@ importers:
       dotenv:
         specifier: ^17.4.2
         version: 17.4.2
-      sharp:
-        specifier: ^0.35.3
-        version: 0.35.3(@types/node@26.2.0)
       supertest:
         specifier: ^7.2.2
         version: 7.2.2
