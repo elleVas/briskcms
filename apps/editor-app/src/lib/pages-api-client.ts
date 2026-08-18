@@ -61,6 +61,13 @@ export function publishPage(id: string): Promise<PageDto> {
   return request(`/pages/${id}/publish`, { method: 'POST' });
 }
 
+export function updateSeoMeta(id: string, seoMeta: SeoMeta): Promise<PageDto> {
+  return request(`/pages/${id}/seo`, {
+    method: 'PATCH',
+    body: JSON.stringify({ seoMeta }),
+  });
+}
+
 export function deletePage(id: string): Promise<void> {
   return request(`/pages/${id}`, { method: 'DELETE' });
 }

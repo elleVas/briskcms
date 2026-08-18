@@ -3,12 +3,13 @@ import { useTranslation } from 'react-i18next';
 import { Link } from '@tanstack/react-router';
 import { Puck } from '@puckeditor/core';
 import '@puckeditor/core/puck.css';
-import { ExternalLink, History } from 'lucide-react';
+import { ExternalLink, History, Search } from 'lucide-react';
 import { puckConfig } from '@brisk/puck-config';
 import { toPuckData } from '../lib/puck-data-mapper.js';
 import { IconButton } from './icon-button.js';
 import { LogoutButton } from './logout-button.js';
 import { MediaPickerProvider } from './media-picker-provider.js';
+import { SeoPanelDialog } from './seo-panel-dialog.js';
 import { usePageEditor, type SaveStatus } from './use-page-editor.js';
 import { VersionHistoryDialog } from './version-history-dialog.js';
 
@@ -42,48 +43,61 @@ export function PageEditorView({ pageId }: PageEditorViewProps) {
   const { page, status, handleChange, handlePublish } = usePageEditor(pageId);
   const statusText = useStatusText(status);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+  const [isSeoOpen, setIsSeoOpen] = useState(false);
   // Bumped only on an explicit rollback, never on ordinary autosave — see
   // the comment on <Puck key={...}> below for why it can't be page.updatedAt.
   const [restoredAt, setRestoredAt] = useState(0);
 
   return (
-    <div style={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
-      <div className="flex items-center justify-between border-b px-3 py-1 text-xs text-muted-foreground">
-        <div className="flex items-center gap-3">
-          <Link to="/pages" className="hover:underline">
-            ← {t('pages.editor.backToList')}
-          </Link>
-          <span>{statusText}</span>
-          <IconButton
-            label={t('pages.versionHistory.open')}
-            onClick={() => setIsHistoryOpen(true)}
-          >
-            <History />
-          </IconButton>
-          {/* Only once there's something live to see — a draft-only page
-              would just 404 on the public site (see get-published-page-by-
-              slug.use-case.ts: unpublished and nonexistent are the same). */}
-          {page.status === 'published' && (
-            <IconButton label={t('pages.editor.viewPage')} asChild>
-              <a
-                href={`${PUBLIC_SITE_URL}/${page.slug}`}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <ExternalLink />
-              </a>
+    // The whole view (not just <Puck>) is wrapped in MediaPickerProvider:
+    // SeoPanelDialog's OG-image field reuses the same media picker as the
+    // Image/Gallery Puck blocks, and it lives in the top bar, outside the
+    // canvas.
+    <MediaPickerProvider siteId={page.siteId}>
+      <div
+        style={{ height: '100vh', display: 'flex', flexDirection: 'column' }}
+      >
+        <div className="flex items-center justify-between border-b px-3 py-1 text-xs text-muted-foreground">
+          <div className="flex items-center gap-3">
+            <Link to="/pages" className="hover:underline">
+              ← {t('pages.editor.backToList')}
+            </Link>
+            <span>{statusText}</span>
+            <IconButton
+              label={t('pages.seo.open')}
+              onClick={() => setIsSeoOpen(true)}
+            >
+              <Search />
             </IconButton>
-          )}
+            <IconButton
+              label={t('pages.versionHistory.open')}
+              onClick={() => setIsHistoryOpen(true)}
+            >
+              <History />
+            </IconButton>
+            {/* Only once there's something live to see — a draft-only page
+                would just 404 on the public site (see get-published-page-by-
+                slug.use-case.ts: unpublished and nonexistent are the same). */}
+            {page.status === 'published' && (
+              <IconButton label={t('pages.editor.viewPage')} asChild>
+                <a
+                  href={`${PUBLIC_SITE_URL}/${page.slug}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <ExternalLink />
+                </a>
+              </IconButton>
+            )}
+          </div>
+          <LogoutButton />
         </div>
-        <LogoutButton />
-      </div>
-      <div style={{ flex: 1, minHeight: 0 }}>
-        {/* Keyed on restoredAt, NOT page.updatedAt: every autosave also
-            bumps page.updatedAt (saveDraft's onSuccess writes the fresh
-            page into the query cache), and keying on that remounted Puck
-            on every save — wiping in-progress edits, e.g. a block mid-drag
-            — instead of only after a rollback like intended. */}
-        <MediaPickerProvider siteId={page.siteId}>
+        <div style={{ flex: 1, minHeight: 0 }}>
+          {/* Keyed on restoredAt, NOT page.updatedAt: every autosave also
+              bumps page.updatedAt (saveDraft's onSuccess writes the fresh
+              page into the query cache), and keying on that remounted Puck
+              on every save — wiping in-progress edits, e.g. a block
+              mid-drag — instead of only after a rollback like intended. */}
           <Puck
             key={restoredAt}
             config={puckConfig}
@@ -91,14 +105,20 @@ export function PageEditorView({ pageId }: PageEditorViewProps) {
             onChange={handleChange}
             onPublish={handlePublish}
           />
-        </MediaPickerProvider>
+        </div>
+        <VersionHistoryDialog
+          pageId={pageId}
+          open={isHistoryOpen}
+          onOpenChange={setIsHistoryOpen}
+          onRestored={() => setRestoredAt((n) => n + 1)}
+        />
+        <SeoPanelDialog
+          pageId={pageId}
+          seoMeta={page.seoMeta}
+          open={isSeoOpen}
+          onOpenChange={setIsSeoOpen}
+        />
       </div>
-      <VersionHistoryDialog
-        pageId={pageId}
-        open={isHistoryOpen}
-        onOpenChange={setIsHistoryOpen}
-        onRestored={() => setRestoredAt((n) => n + 1)}
-      />
-    </div>
+    </MediaPickerProvider>
   );
 }

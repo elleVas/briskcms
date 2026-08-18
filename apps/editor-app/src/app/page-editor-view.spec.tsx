@@ -85,6 +85,15 @@ describe('PageEditorView', () => {
     expect(screen.getByRole('button', { name: /^esci$/i })).toBeTruthy();
   });
 
+  it('opens the SEO panel with the current seoMeta pre-filled', () => {
+    vi.mocked(router.useNavigate).mockReturnValue(vi.fn());
+
+    renderView();
+    fireEvent.click(screen.getByRole('button', { name: /^seo$/i }));
+
+    expect(screen.getByDisplayValue('Test')).toBeTruthy();
+  });
+
   it('opens the version history dialog and lists past versions newest-first', async () => {
     vi.mocked(router.useNavigate).mockReturnValue(vi.fn());
     vi.mocked(api.listPageVersions).mockResolvedValue([
