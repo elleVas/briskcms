@@ -1,12 +1,23 @@
 ---
 import type { SeoMeta } from '@brisk/shared-types';
+import type { PublishedSiteDto } from '../lib/public-api-client.js';
+import { buildSchemaOrgGraph } from '../lib/schema-org.js';
 
 interface Props {
-  seoMeta: SeoMeta;
-  locale: string;
+	seoMeta: SeoMeta;
+	locale: string;
+	site: PublishedSiteDto;
 }
 
-const { seoMeta, locale } = Astro.props;
+const { seoMeta, locale, site } = Astro.props;
+
+// seoMeta.canonical is the source of truth when set (docs/adr/0014's SEO
+// panel lets an editor override it) — Astro.url.href is the fallback, not
+// the default, so a site behind a different public hostname than the
+// request's own Host header doesn't get a wrong canonical baked in.
+const pageUrl = seoMeta.canonical || Astro.url.href;
+const ogImage = seoMeta.ogTags?.['image'];
+const schemaOrgGraph = buildSchemaOrgGraph({ site, seoMeta, pageUrl });
 ---
 
 <html lang={locale}>
@@ -19,6 +30,26 @@ const { seoMeta, locale } = Astro.props;
 		<title>{seoMeta.title}</title>
 		<meta name="description" content={seoMeta.description} />
 		{seoMeta.canonical && <link rel="canonical" href={seoMeta.canonical} />}
+
+		<meta property="og:type" content="website" />
+		<meta property="og:title" content={seoMeta.title} />
+		<meta property="og:description" content={seoMeta.description} />
+		<meta property="og:url" content={pageUrl} />
+		{ogImage && <meta property="og:image" content={ogImage} />}
+
+		<meta
+			name="twitter:card"
+			content={ogImage ? 'summary_large_image' : 'summary'}
+		/>
+		<meta name="twitter:title" content={seoMeta.title} />
+		<meta name="twitter:description" content={seoMeta.description} />
+		{ogImage && <meta name="twitter:image" content={ogImage} />}
+
+		<script
+			is:inline
+			type="application/ld+json"
+			set:html={JSON.stringify(schemaOrgGraph)}
+		/>
 	</head>
 	<body>
 		<slot />

@@ -17,3 +17,4 @@ export * from './lib/use-cases/request-password-reset.use-case.js';
 export * from './lib/use-cases/reset-password.use-case.js';
 export * from './lib/use-cases/update-seo-meta.use-case.js';
 export * from './lib/use-cases/update-site-business-info.use-case.js';
+export * from './lib/use-cases/list-published-pages-for-sitemap.use-case.js';

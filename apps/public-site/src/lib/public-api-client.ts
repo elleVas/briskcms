@@ -1,9 +1,24 @@
-import type { Block, SeoMeta } from '@brisk/shared-types';
+import type { Block, OpeningHoursDay, SeoMeta } from '@brisk/shared-types';
+
+export interface PublishedSiteDto {
+  name: string;
+  domain: string | null;
+  businessAddress: string | null;
+  businessPhone: string | null;
+  businessType: string | null;
+  openingHours: OpeningHoursDay[] | null;
+}
 
 export interface PublishedPageDto {
   content: Block[];
   seoMeta: SeoMeta;
   locale: string;
+  site: PublishedSiteDto;
+}
+
+export interface SitemapEntryDto {
+  slug: string;
+  updatedAt: string;
 }
 
 // process.env, not import.meta.env: this must read the real deployment's
@@ -36,4 +51,17 @@ export async function getPublishedPageBySlug(
     throw new Error(`Public pages API error: ${res.status}`);
   }
   return res.json();
+}
+
+export async function listPublishedPagesForSitemap(
+  domain: string,
+): Promise<SitemapEntryDto[]> {
+  const params = new URLSearchParams({ domain });
+  const res = await fetch(`${apiUrl()}/public/pages?${params.toString()}`);
+
+  if (!res.ok) {
+    throw new Error(`Public pages API error: ${res.status}`);
+  }
+  const body = (await res.json()) as { items: SitemapEntryDto[] };
+  return body.items;
 }
