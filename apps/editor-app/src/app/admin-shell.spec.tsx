@@ -43,7 +43,7 @@ describe('AdminShell', () => {
     vi.clearAllMocks();
   });
 
-  it('renders a link to Pagine, disabled placeholders for Media/Utenti, and a logout control', () => {
+  it('renders a link to Pagine, disabled placeholders for Media/Utenti, and an account menu', () => {
     vi.mocked(router.useNavigate).mockReturnValue(vi.fn());
 
     renderShell();
@@ -54,17 +54,22 @@ describe('AdminShell', () => {
     expect(screen.getByText('Media')).toBeTruthy();
     expect(screen.getByText('Utenti')).toBeTruthy();
     expect(screen.getAllByText('In arrivo')).toHaveLength(2);
-    expect(screen.getByRole('button', { name: /^esci$/i })).toBeTruthy();
     expect(screen.getByText('content')).toBeTruthy();
+    expect(
+      screen.getByRole('button', { name: /impostazioni account/i }),
+    ).toBeTruthy();
   });
 
-  it('switches the UI language when EN is picked', () => {
+  it('exposes logout and the language/theme toggles inside the account menu', () => {
     vi.mocked(router.useNavigate).mockReturnValue(vi.fn());
 
     renderShell();
-    fireEvent.click(screen.getByRole('button', { name: 'EN' }));
+    fireEvent.click(
+      screen.getByRole('button', { name: /impostazioni account/i }),
+    );
 
-    expect(screen.getByRole('link', { name: 'Pages' })).toBeTruthy();
-    expect(screen.getByRole('button', { name: /^log out$/i })).toBeTruthy();
+    expect(screen.getByRole('button', { name: /^esci$/i })).toBeTruthy();
+    expect(screen.getByRole('switch', { name: /lingua/i })).toBeTruthy();
+    expect(screen.getByRole('switch', { name: /tema scuro/i })).toBeTruthy();
   });
 });

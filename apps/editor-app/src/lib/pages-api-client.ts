@@ -16,12 +16,26 @@ export interface PageDto {
   updatedAt: string;
 }
 
+export interface PaginatedPages {
+  items: PageDto[];
+  total: number;
+}
+
 export function getPage(id: string): Promise<PageDto> {
   return request(`/pages/${id}`);
 }
 
-export function listPages(siteId: string): Promise<PageDto[]> {
-  return request(`/pages?siteId=${encodeURIComponent(siteId)}`);
+export function listPages(
+  siteId: string,
+  page: number,
+  pageSize: number,
+): Promise<PaginatedPages> {
+  const params = new URLSearchParams({
+    siteId,
+    page: String(page),
+    pageSize: String(pageSize),
+  });
+  return request(`/pages?${params.toString()}`);
 }
 
 export interface CreatePageInput {
@@ -49,4 +63,27 @@ export function publishPage(id: string): Promise<PageDto> {
 
 export function deletePage(id: string): Promise<void> {
   return request(`/pages/${id}`, { method: 'DELETE' });
+}
+
+export interface PageVersionDto {
+  id: string;
+  tenantId: string;
+  pageId: string;
+  content: Block[];
+  createdBy: string | null;
+  createdAt: string;
+}
+
+export function listPageVersions(pageId: string): Promise<PageVersionDto[]> {
+  return request(`/pages/${pageId}/versions`);
+}
+
+export function rollbackToVersion(
+  pageId: string,
+  versionId: string,
+): Promise<PageDto> {
+  return request(`/pages/${pageId}/rollback`, {
+    method: 'POST',
+    body: JSON.stringify({ versionId }),
+  });
 }

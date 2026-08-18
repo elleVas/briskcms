@@ -1,10 +1,16 @@
 import { queryOptions } from '@tanstack/react-query';
-import { getPage, listPages } from '../lib/pages-api-client.js';
+import {
+  getPage,
+  listPages,
+  listPageVersions,
+} from '../lib/pages-api-client.js';
 
-export function pagesQueryOptions(siteId: string) {
+export const PAGES_PAGE_SIZE = 20;
+
+export function pagesQueryOptions(siteId: string, page: number) {
   return queryOptions({
-    queryKey: ['pages', siteId] as const,
-    queryFn: () => listPages(siteId),
+    queryKey: ['pages', siteId, page, PAGES_PAGE_SIZE] as const,
+    queryFn: () => listPages(siteId, page, PAGES_PAGE_SIZE),
   });
 }
 
@@ -12,5 +18,12 @@ export function pageQueryOptions(pageId: string) {
   return queryOptions({
     queryKey: ['pages', 'detail', pageId] as const,
     queryFn: () => getPage(pageId),
+  });
+}
+
+export function pageVersionsQueryOptions(pageId: string) {
+  return queryOptions({
+    queryKey: ['pages', 'versions', pageId] as const,
+    queryFn: () => listPageVersions(pageId),
   });
 }

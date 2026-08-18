@@ -7,7 +7,6 @@ import {
   deletePage as apiDeletePage,
   publishPage as apiPublishPage,
 } from '../lib/pages-api-client.js';
-import { pagesQueryOptions } from './pages-queries.js';
 
 // Fetching the list itself is the route loader's job (see
 // routes/_shell.pages.index.tsx) so the auth guard (redirect to /login on a
@@ -17,11 +16,12 @@ export function usePagesList(siteId: string) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
+  // A partial key ('pages', siteId) invalidates every cached page of
+  // results for this site (see pages-queries.ts — the full key also
+  // includes the page number), not just whichever page is on screen right
+  // now.
   const invalidateList = useCallback(
-    () =>
-      queryClient.invalidateQueries({
-        queryKey: pagesQueryOptions(siteId).queryKey,
-      }),
+    () => queryClient.invalidateQueries({ queryKey: ['pages', siteId] }),
     [queryClient, siteId],
   );
 

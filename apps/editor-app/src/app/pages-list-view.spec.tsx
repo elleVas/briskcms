@@ -40,11 +40,19 @@ const pageOne: PageDto = {
   updatedAt: '2026-01-01T00:00:00.000Z',
 };
 
-function renderView(pages: PageDto[]) {
+function renderView(
+  pages: PageDto[],
+  options: { page?: number; total?: number } = {},
+) {
   return render(
     <QueryClientProvider client={createTestQueryClient()}>
       <TooltipProvider>
-        <PagesListView siteId="site-1" pages={pages} />
+        <PagesListView
+          siteId="site-1"
+          pages={pages}
+          page={options.page ?? 1}
+          total={options.total ?? pages.length}
+        />
       </TooltipProvider>
     </QueryClientProvider>,
   );
@@ -63,14 +71,68 @@ describe('PagesListView', () => {
     expect(screen.getByText(/nessuna pagina/i)).toBeTruthy();
   });
 
-  it('lists pages without per-row action buttons', () => {
+  it('lists pages without per-row action buttons, showing the name and the slug', () => {
     vi.mocked(router.useNavigate).mockReturnValue(vi.fn());
 
     renderView([pageOne]);
 
+    expect(screen.getByText('Home')).toBeTruthy();
     expect(screen.getByText('home')).toBeTruthy();
     expect(screen.getByText('Pubblicata')).toBeTruthy();
     expect(screen.queryByRole('button', { name: /elimina/i })).toBeNull();
+  });
+
+  it('flags a published page whose draft has diverged from what is live', () => {
+    vi.mocked(router.useNavigate).mockReturnValue(vi.fn());
+    const pageWithPendingChanges: PageDto = {
+      ...pageOne,
+      content: [{ type: 'Text', props: { body: 'draft edit' } }],
+    };
+
+    renderView([pageWithPendingChanges]);
+
+    expect(screen.getByText('Modifiche non pubblicate')).toBeTruthy();
+  });
+
+  it('does not flag a published page whose draft matches what is live', () => {
+    vi.mocked(router.useNavigate).mockReturnValue(vi.fn());
+
+    renderView([pageOne]);
+
+    expect(screen.queryByText('Modifiche non pubblicate')).toBeNull();
+  });
+
+  it('has no pagination controls when everything fits on one page', () => {
+    vi.mocked(router.useNavigate).mockReturnValue(vi.fn());
+
+    renderView([pageOne], { total: 1 });
+
+    expect(screen.queryByText(/pagina 1 di/i)).toBeNull();
+  });
+
+  it('navigates to the next/previous page', async () => {
+    const navigate = vi.fn();
+    vi.mocked(router.useNavigate).mockReturnValue(navigate);
+
+    renderView([pageOne], { page: 2, total: 45 });
+
+    expect(screen.getByText('Pagina 2 di 3')).toBeTruthy();
+
+    fireEvent.click(screen.getByRole('button', { name: /pagina successiva/i }));
+    await waitFor(() =>
+      expect(navigate).toHaveBeenCalledWith({
+        to: '/pages',
+        search: { page: 3 },
+      }),
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /pagina precedente/i }));
+    await waitFor(() =>
+      expect(navigate).toHaveBeenCalledWith({
+        to: '/pages',
+        search: { page: 1 },
+      }),
+    );
   });
 
   it('selecting a row reveals the action toolbar, selecting it again hides it', () => {

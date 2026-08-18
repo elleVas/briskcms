@@ -7,6 +7,12 @@ import './styles.css';
 import { TooltipProvider } from './components/ui/tooltip.js';
 import { ApiError } from './lib/http-client.js';
 import { routeTree } from './routeTree.gen';
+import { applyTheme, getInitialTheme } from './theme.js';
+
+// Applied before the first render, not inside a component — otherwise the
+// page would flash the light theme for a frame before a dark preference
+// (see app/use-theme.ts, app/account-menu.tsx) took effect.
+applyTheme(getInitialTheme());
 
 // Retrying a 4xx can't succeed — "you're not logged in" (401) or "this name
 // is already taken" (409) aren't transient network hiccups, retrying just

@@ -7,7 +7,7 @@ import {
 import type { Data } from '@puckeditor/core';
 import { fromPuckData } from '../lib/puck-data-mapper.js';
 import { publishPage, saveDraft } from '../lib/pages-api-client.js';
-import { pageQueryOptions, pagesQueryOptions } from './pages-queries.js';
+import { pageQueryOptions } from './pages-queries.js';
 
 // Draft autosave is debounced: Puck's onChange fires on every keystroke, and
 // every draft save creates a page_versions row (see domain-core Page) — no
@@ -52,9 +52,9 @@ export function usePageEditor(pageId: string) {
     },
     onSuccess: (updated) => {
       queryClient.setQueryData(pageQueryOptions(pageId).queryKey, updated);
-      queryClient.invalidateQueries({
-        queryKey: pagesQueryOptions(updated.siteId).queryKey,
-      });
+      // Partial key: invalidates every cached page of list results for
+      // this site (see pages-queries.ts), not just one page number.
+      queryClient.invalidateQueries({ queryKey: ['pages', updated.siteId] });
       setStatus({ kind: 'published' });
     },
     onError: (error: unknown) =>

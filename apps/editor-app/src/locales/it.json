@@ -47,6 +47,11 @@
       "media": "Media",
       "users": "Utenti",
       "comingSoon": "In arrivo"
+    },
+    "account": {
+      "settings": "Impostazioni account",
+      "language": "Lingua",
+      "theme": "Tema scuro"
     }
   },
   "pages": {
@@ -56,6 +61,10 @@
       "empty": "Nessuna pagina ancora.",
       "statusPublished": "Pubblicata",
       "statusDraft": "Bozza",
+      "pendingChanges": "Modifiche non pubblicate",
+      "pageIndicator": "Pagina {{page}} di {{totalPages}}",
+      "previousPage": "Pagina precedente",
+      "nextPage": "Pagina successiva",
       "actions": {
         "edit": "Apri editor",
         "publish": "Pubblica",
@@ -81,6 +90,14 @@
       "backToList": "Pagine",
       "draftSaved": "Bozza salvata",
       "published": "Pubblicato"
+    },
+    "versionHistory": {
+      "open": "Cronologia versioni",
+      "title": "Cronologia versioni",
+      "description": "Ripristina il contenuto di una versione precedente come bozza. Non pubblica automaticamente.",
+      "empty": "Nessuna versione salvata.",
+      "current": "Versione attuale",
+      "restore": "Ripristina"
     }
   }
 }

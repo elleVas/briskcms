@@ -1,5 +1,15 @@
 import type { Page } from '@brisk/domain-core';
 
+export interface Pagination {
+  page: number;
+  pageSize: number;
+}
+
+export interface PaginatedResult<T> {
+  items: T[];
+  total: number;
+}
+
 /**
  * Ogni metodo richiede esplicitamente tenantId: nessuna query può
  * "dimenticare" lo scoping per tenant a livello di firma del Port,
@@ -14,6 +24,10 @@ export interface PageRepositoryPort {
     locale: string,
     slug: string,
   ): Promise<Page | null>;
-  listBySite(tenantId: string, siteId: string): Promise<Page[]>;
+  listBySite(
+    tenantId: string,
+    siteId: string,
+    pagination: Pagination,
+  ): Promise<PaginatedResult<Page>>;
   delete(tenantId: string, pageId: string): Promise<void>;
 }

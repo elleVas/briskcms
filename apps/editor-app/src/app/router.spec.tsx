@@ -78,7 +78,10 @@ describe('router', () => {
   });
 
   it('renders the pages list inside the shell when authenticated', async () => {
-    vi.mocked(api.listPages).mockResolvedValue([samplePage]);
+    vi.mocked(api.listPages).mockResolvedValue({
+      items: [samplePage],
+      total: 1,
+    });
 
     renderApp('/pages');
 
@@ -98,7 +101,10 @@ describe('router', () => {
   });
 
   it('navigates from the pages list to the editor and back', async () => {
-    vi.mocked(api.listPages).mockResolvedValue([samplePage]);
+    vi.mocked(api.listPages).mockResolvedValue({
+      items: [samplePage],
+      total: 1,
+    });
     vi.mocked(api.getPage).mockResolvedValue(samplePage);
 
     renderApp('/pages');
@@ -134,7 +140,7 @@ describe('router', () => {
 
   it('logs in and lands on the pages list', async () => {
     vi.mocked(authApi.login).mockResolvedValue({ userId: 'user-1' });
-    vi.mocked(api.listPages).mockResolvedValue([]);
+    vi.mocked(api.listPages).mockResolvedValue({ items: [], total: 0 });
 
     renderApp('/login');
 
@@ -154,10 +160,13 @@ describe('router', () => {
   });
 
   it('logs out from the shell and returns to /login', async () => {
-    vi.mocked(api.listPages).mockResolvedValue([]);
+    vi.mocked(api.listPages).mockResolvedValue({ items: [], total: 0 });
     vi.mocked(authApi.logout).mockResolvedValue({ success: true });
 
     renderApp('/pages');
+    fireEvent.click(
+      await screen.findByRole('button', { name: /impostazioni account/i }),
+    );
     fireEvent.click(await screen.findByRole('button', { name: /^esci$/i }));
 
     expect(await screen.findByRole('heading', { name: 'Accedi' })).toBeTruthy();

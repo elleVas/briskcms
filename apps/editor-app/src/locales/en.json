@@ -47,6 +47,11 @@
       "media": "Media",
       "users": "Users",
       "comingSoon": "Coming soon"
+    },
+    "account": {
+      "settings": "Account settings",
+      "language": "Language",
+      "theme": "Dark theme"
     }
   },
   "pages": {
@@ -56,6 +61,10 @@
       "empty": "No pages yet.",
       "statusPublished": "Published",
       "statusDraft": "Draft",
+      "pendingChanges": "Unpublished changes",
+      "pageIndicator": "Page {{page}} of {{totalPages}}",
+      "previousPage": "Previous page",
+      "nextPage": "Next page",
       "actions": {
         "edit": "Open editor",
         "publish": "Publish",
@@ -81,6 +90,14 @@
       "backToList": "Pages",
       "draftSaved": "Draft saved",
       "published": "Published"
+    },
+    "versionHistory": {
+      "open": "Version history",
+      "title": "Version history",
+      "description": "Restore a previous version's content as the draft. This does not publish automatically.",
+      "empty": "No saved versions.",
+      "current": "Current version",
+      "restore": "Restore"
     }
   }
 }

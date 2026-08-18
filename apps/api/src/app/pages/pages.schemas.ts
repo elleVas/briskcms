@@ -25,6 +25,8 @@ export type CreatePageBody = z.infer<typeof createPageBodySchema>;
 
 export const listPagesQuerySchema = z.object({
   siteId: z.string().uuid(),
+  page: z.coerce.number().int().min(1).default(1),
+  pageSize: z.coerce.number().int().min(1).max(100).default(20),
 });
 export type ListPagesQuery = z.infer<typeof listPagesQuerySchema>;
 

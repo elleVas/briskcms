@@ -1,6 +1,10 @@
-import { and, desc, eq } from 'drizzle-orm';
+import { and, count, desc, eq } from 'drizzle-orm';
 import { Page, type PageProps } from '@brisk/domain-core';
-import type { PageRepositoryPort } from '@brisk/ports';
+import type {
+  PaginatedResult,
+  Pagination,
+  PageRepositoryPort,
+} from '@brisk/ports';
 import { type BriskDb, pages, withTenant } from '@brisk/postgres-db';
 
 function toRow(props: PageProps) {
@@ -73,15 +77,28 @@ export class DrizzlePageRepository implements PageRepositoryPort {
   }
 
   /** Most recently updated first — matches "wp-admin style" page list usage. */
-  async listBySite(tenantId: string, siteId: string): Promise<Page[]> {
-    const rows = await withTenant(this.db, tenantId, (tx) =>
-      tx
-        .select()
-        .from(pages)
-        .where(and(eq(pages.tenantId, tenantId), eq(pages.siteId, siteId)))
-        .orderBy(desc(pages.updatedAt)),
+  async listBySite(
+    tenantId: string,
+    siteId: string,
+    pagination: Pagination,
+  ): Promise<PaginatedResult<Page>> {
+    const siteScope = and(
+      eq(pages.tenantId, tenantId),
+      eq(pages.siteId, siteId),
     );
-    return rows.map(fromRow);
+    const [rows, [{ total }]] = await withTenant(this.db, tenantId, (tx) =>
+      Promise.all([
+        tx
+          .select()
+          .from(pages)
+          .where(siteScope)
+          .orderBy(desc(pages.updatedAt))
+          .limit(pagination.pageSize)
+          .offset((pagination.page - 1) * pagination.pageSize),
+        tx.select({ total: count() }).from(pages).where(siteScope),
+      ]),
+    );
+    return { items: rows.map(fromRow), total };
   }
 
   async delete(tenantId: string, pageId: string): Promise<void> {

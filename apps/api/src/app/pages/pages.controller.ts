@@ -85,14 +85,19 @@ export class PagesController {
   async list(
     @Query(new ZodValidationPipe(listPagesQuerySchema)) query: ListPagesQuery,
   ) {
-    const pages = await listPages(
+    const result = await listPages(
       { pageRepository: this.pageRepository },
       {
         tenantId: this.tenantContext.getCurrentTenantId(),
         siteId: query.siteId,
+        page: query.page,
+        pageSize: query.pageSize,
       },
     );
-    return pages.map((page) => page.toProps());
+    return {
+      items: result.items.map((page) => page.toProps()),
+      total: result.total,
+    };
   }
 
   @Get('by-slug')

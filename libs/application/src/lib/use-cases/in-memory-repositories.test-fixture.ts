@@ -1,5 +1,7 @@
 import type { Page, PageVersion, User } from '@brisk/domain-core';
 import type {
+  PaginatedResult,
+  Pagination,
   PageRepositoryPort,
   PageVersionRepositoryPort,
   UserRepositoryPort,
@@ -36,10 +38,19 @@ export class InMemoryPageRepository implements PageRepositoryPort {
     return null;
   }
 
-  async listBySite(tenantId: string, siteId: string): Promise<Page[]> {
-    return [...this.pages.values()].filter(
+  async listBySite(
+    tenantId: string,
+    siteId: string,
+    pagination: Pagination,
+  ): Promise<PaginatedResult<Page>> {
+    const matching = [...this.pages.values()].filter(
       (page) => page.tenantId === tenantId && page.siteId === siteId,
     );
+    const start = (pagination.page - 1) * pagination.pageSize;
+    return {
+      items: matching.slice(start, start + pagination.pageSize),
+      total: matching.length,
+    };
   }
 
   async delete(tenantId: string, pageId: string): Promise<void> {
