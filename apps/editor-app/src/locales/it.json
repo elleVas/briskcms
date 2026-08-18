@@ -103,5 +103,28 @@
       "current": "Versione attuale",
       "restore": "Ripristina"
     }
+  },
+  "media": {
+    "list": {
+      "title": "Media"
+    },
+    "grid": {
+      "upload": "Carica immagine",
+      "uploading": "Caricamento in corso...",
+      "empty": "Nessun file ancora.",
+      "delete": "Elimina",
+      "previousPage": "Pagina precedente",
+      "nextPage": "Pagina successiva",
+      "pageIndicator": "Pagina {{page}} di {{totalPages}}"
+    },
+    "deleteDialog": {
+      "title": "Eliminare questo file?",
+      "description": "\"{{name}}\" verrà eliminato definitivamente. L'azione non può essere annullata.",
+      "cancel": "Annulla",
+      "confirm": "Elimina"
+    },
+    "picker": {
+      "title": "Scegli un'immagine"
+    }
   }
 }

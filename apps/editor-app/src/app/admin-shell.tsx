@@ -47,8 +47,14 @@ export function AdminShell({ children }: AdminShellProps) {
               <FileText className="size-4" />
               {t('shell.nav.pages')}
             </Link>
+            <Link
+              to="/media"
+              className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm font-medium hover:bg-muted"
+            >
+              <Image className="size-4" />
+              {t('shell.nav.media')}
+            </Link>
             <Separator className="my-2" />
-            <DisabledNavItem label={t('shell.nav.media')} icon={Image} />
             <DisabledNavItem label={t('shell.nav.users')} icon={Users} />
           </div>
           <div className="flex flex-col gap-1">

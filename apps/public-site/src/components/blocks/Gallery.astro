@@ -1,0 +1,29 @@
+---
+import type { GalleryProps } from '@brisk/shared-types';
+
+type Props = GalleryProps;
+
+const { images } = Astro.props;
+---
+
+<div class="gallery">
+  {
+    images.map(
+      (image) =>
+        image.media && <img src={image.media.url} alt={image.alt} />,
+    )
+  }
+</div>
+
+<style>
+  .gallery {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 0.5rem;
+  }
+  .gallery img {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    object-fit: cover;
+  }
+</style>

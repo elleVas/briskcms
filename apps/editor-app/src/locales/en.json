@@ -103,5 +103,28 @@
       "current": "Current version",
       "restore": "Restore"
     }
+  },
+  "media": {
+    "list": {
+      "title": "Media"
+    },
+    "grid": {
+      "upload": "Upload image",
+      "uploading": "Uploading...",
+      "empty": "No files yet.",
+      "delete": "Delete",
+      "previousPage": "Previous page",
+      "nextPage": "Next page",
+      "pageIndicator": "Page {{page}} of {{totalPages}}"
+    },
+    "deleteDialog": {
+      "title": "Delete this file?",
+      "description": "\"{{name}}\" will be permanently deleted. This action cannot be undone.",
+      "cancel": "Cancel",
+      "confirm": "Delete"
+    },
+    "picker": {
+      "title": "Choose an image"
+    }
   }
 }
