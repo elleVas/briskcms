@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import * as api from '../lib/public-api-client.js';
 import { GET } from './robots.txt.js';
 
