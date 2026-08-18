@@ -1,0 +1,31 @@
+---
+import {
+  heroPropsSchema,
+  textPropsSchema,
+  type Block,
+} from '@brisk/shared-types';
+import Hero from './blocks/Hero.astro';
+import Text from './blocks/Text.astro';
+
+// Walks `Block[]`/`children` directly — no dependency on Puck's own data
+// format here, by design (see docs/adr/0007: "any consumer of page content
+// that isn't the editor... can walk children directly without knowing
+// anything about Puck"). Each block's own Zod schema (shared with
+// @brisk/puck-config, same source of truth) validates `props` at this
+// boundary instead of an `as` cast — content comes from the API as
+// unvalidated JSON as far as this component is concerned.
+
+interface Props {
+  block: Block;
+}
+
+const { block } = Astro.props;
+---
+
+{block.type === 'Hero' && <Hero {...heroPropsSchema.parse(block.props)} />}
+{block.type === 'Text' && <Text {...textPropsSchema.parse(block.props)} />}
+{
+  block.children?.map((child) => (
+    <Astro.self block={child} />
+  ))
+}

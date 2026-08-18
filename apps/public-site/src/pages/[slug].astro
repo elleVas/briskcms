@@ -1,0 +1,15 @@
+---
+import { getPublishedPageBySlug } from '../lib/public-api-client.js';
+import PublicPageContent from '../components/PublicPageContent.astro';
+
+const { slug } = Astro.params;
+const page = slug
+  ? await getPublishedPageBySlug(Astro.url.hostname, slug)
+  : null;
+
+if (!page) {
+  Astro.response.status = 404;
+}
+---
+
+<PublicPageContent page={page} />

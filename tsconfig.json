@@ -53,6 +53,9 @@
     },
     {
       "path": "./libs/adapters/smtp-email-adapter"
+    },
+    {
+      "path": "./libs/adapters/postgres-site-repository"
     }
   ],
   "compilerOptions": {}

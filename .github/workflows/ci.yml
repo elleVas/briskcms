@@ -37,6 +37,10 @@ jobs:
       # DEFAULT_SITE_ID above, see .env.example.
       VITE_DEFAULT_SITE_ID: 568b7d6a-3483-45f2-83f1-3b31b433c5eb
       VITE_API_URL: http://localhost:3000/api
+      # Needed for page-editor-view.spec.tsx's "Visualizza pagina" link
+      # tests — see ADR-0012. Never followed in CI (no browser/e2e step),
+      # just has to be set for the link to render.
+      VITE_PUBLIC_SITE_URL: http://localhost:4321
 
     steps:
       - uses: actions/checkout@v7

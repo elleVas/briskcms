@@ -1,39 +1,16 @@
 ---
-import page from '../content/example-page.json';
+import { getPublishedPageBySlug } from '../lib/public-api-client.js';
+import PublicPageContent from '../components/PublicPageContent.astro';
 
-type Block =
-	| { type: 'Hero'; props: { title: string; subtitle: string } }
-	| { type: 'Text'; props: { body: string } };
+// Astro's own native routing for "/" (src/pages/index.astro) — the only
+// CMS-specific decision here is which page's content answers it: the one
+// slugged "home", by convention, same as any other page otherwise. Not a
+// routing hack, just what index.astro fetches.
+const page = await getPublishedPageBySlug(Astro.url.hostname, 'home');
 
-const blocks = page.content as Block[];
+if (!page) {
+  Astro.response.status = 404;
+}
 ---
 
-<html lang={page.locale}>
-	<head>
-		<meta charset="utf-8" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<link rel="icon" href="/favicon.ico" />
-		<meta name="viewport" content="width=device-width" />
-		<meta name="generator" content={Astro.generator} />
-		<title>{page.seo_meta.title}</title>
-		<meta name="description" content={page.seo_meta.description} />
-	</head>
-	<body>
-		{
-			blocks.map((block) => {
-				if (block.type === 'Hero') {
-					return (
-						<header>
-							<h1>{block.props.title}</h1>
-							<p>{block.props.subtitle}</p>
-						</header>
-					);
-				}
-				if (block.type === 'Text') {
-					return <p>{block.props.body}</p>;
-				}
-				return null;
-			})
-		}
-	</body>
-</html>
+<PublicPageContent page={page} />

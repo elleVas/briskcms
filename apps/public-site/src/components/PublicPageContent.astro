@@ -1,0 +1,27 @@
+---
+import type { PublishedPageDto } from '../lib/public-api-client.js';
+import PageLayout from '../layouts/PageLayout.astro';
+import BlockRenderer from './BlockRenderer.astro';
+import NotFound from './NotFound.astro';
+
+// Purely presentational — the 404 status itself must be set by the calling
+// page route (src/pages/index.astro, src/pages/[slug].astro), not here:
+// Astro.response.status only takes effect when set in a top-level page
+// component, not a nested one (verified directly — a version of this that
+// set it here rendered the right NotFound markup but still answered 200).
+interface Props {
+  page: PublishedPageDto | null;
+}
+
+const { page } = Astro.props;
+---
+
+{
+  page ? (
+    <PageLayout seoMeta={page.seoMeta} locale={page.locale}>
+      {page.content.map((block) => <BlockRenderer block={block} />)}
+    </PageLayout>
+  ) : (
+    <NotFound />
+  )
+}

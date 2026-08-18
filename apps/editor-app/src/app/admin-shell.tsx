@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Link } from '@tanstack/react-router';
 import { FileText, Image, Users } from 'lucide-react';
 import { AccountMenu } from './account-menu.js';
+import { SettingsMenu } from './settings-menu.js';
 import { Badge } from '../components/ui/badge.js';
 import { Separator } from '../components/ui/separator.js';
 
@@ -50,7 +51,10 @@ export function AdminShell({ children }: AdminShellProps) {
             <DisabledNavItem label={t('shell.nav.media')} icon={Image} />
             <DisabledNavItem label={t('shell.nav.users')} icon={Users} />
           </div>
-          <AccountMenu />
+          <div className="flex flex-col gap-1">
+            <SettingsMenu />
+            <AccountMenu />
+          </div>
         </nav>
         <main className="flex-1 overflow-auto p-6">{children}</main>
       </div>

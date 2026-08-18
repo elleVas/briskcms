@@ -35,3 +35,24 @@ export const seoMetaSchema = z.object({
   canonical: z.string().optional(),
 });
 export type SeoMeta = z.infer<typeof seoMetaSchema>;
+
+/**
+ * Per-block-type prop schemas, one per concrete block (Hero, Text, ...).
+ * Kept here rather than in `@brisk/puck-config` so apps/public-site can
+ * import them without pulling in Puck/React at all (see docs/adr/0007 —
+ * "any consumer of page content that isn't the editor... can walk children
+ * directly without knowing anything about Puck"). `@brisk/puck-config`
+ * imports these same schemas and wraps them in Puck's `ComponentConfig` for
+ * the editor; this file is the single source of truth for each block's
+ * shape either way.
+ */
+export const heroPropsSchema = z.object({
+  title: z.string(),
+  subtitle: z.string(),
+});
+export type HeroProps = z.infer<typeof heroPropsSchema>;
+
+export const textPropsSchema = z.object({
+  body: z.string(),
+});
+export type TextProps = z.infer<typeof textPropsSchema>;

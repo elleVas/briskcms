@@ -5,7 +5,7 @@ import { pageContentSchema, seoMetaSchema, slugify } from '@brisk/shared-types';
 // the frontend uses for its live preview, and reject anything that isn't
 // already in that canonical form — one source of truth for "valid slug"
 // instead of a regex that could drift out of sync with slugify's rules.
-const pageSlugSchema = z
+export const pageSlugSchema = z
   .string()
   .min(1)
   .max(200)

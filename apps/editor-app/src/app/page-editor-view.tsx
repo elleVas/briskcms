@@ -3,13 +3,20 @@ import { useTranslation } from 'react-i18next';
 import { Link } from '@tanstack/react-router';
 import { Puck } from '@puckeditor/core';
 import '@puckeditor/core/puck.css';
-import { History } from 'lucide-react';
+import { ExternalLink, History } from 'lucide-react';
 import { puckConfig } from '@brisk/puck-config';
 import { toPuckData } from '../lib/puck-data-mapper.js';
 import { IconButton } from './icon-button.js';
 import { LogoutButton } from './logout-button.js';
 import { usePageEditor, type SaveStatus } from './use-page-editor.js';
 import { VersionHistoryDialog } from './version-history-dialog.js';
+
+// Not VITE_API_URL: this is the public site's own origin (apps/public-site).
+// Same fallback pattern as VITE_API_URL in http-client.ts — a sane local-dev
+// default, always overridden by a real domain outside dev.
+const PUBLIC_SITE_URL =
+  (import.meta.env['VITE_PUBLIC_SITE_URL'] as string | undefined) ??
+  'http://localhost:4321';
 
 export interface PageEditorViewProps {
   pageId: string;
@@ -52,6 +59,20 @@ export function PageEditorView({ pageId }: PageEditorViewProps) {
           >
             <History />
           </IconButton>
+          {/* Only once there's something live to see — a draft-only page
+              would just 404 on the public site (see get-published-page-by-
+              slug.use-case.ts: unpublished and nonexistent are the same). */}
+          {page.status === 'published' && (
+            <IconButton label={t('pages.editor.viewPage')} asChild>
+              <a
+                href={`${PUBLIC_SITE_URL}/${page.slug}`}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <ExternalLink />
+              </a>
+            </IconButton>
+          )}
         </div>
         <LogoutButton />
       </div>

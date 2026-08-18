@@ -1,10 +1,7 @@
-import { z } from 'zod';
 import type { ComponentConfig } from '@puckeditor/core';
+import { textPropsSchema, type TextProps } from '@brisk/shared-types';
 
-export const textPropsSchema = z.object({
-  body: z.string(),
-});
-export type TextProps = z.infer<typeof textPropsSchema>;
+export { textPropsSchema, type TextProps };
 
 export const textConfig: ComponentConfig<TextProps> = {
   label: 'Testo',

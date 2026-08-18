@@ -48,10 +48,13 @@
       "users": "Utenti",
       "comingSoon": "In arrivo"
     },
-    "account": {
-      "settings": "Impostazioni account",
+    "settings": {
+      "label": "Impostazioni",
       "language": "Lingua",
       "theme": "Tema scuro"
+    },
+    "account": {
+      "label": "Account"
     }
   },
   "pages": {
@@ -89,7 +92,8 @@
     "editor": {
       "backToList": "Pagine",
       "draftSaved": "Bozza salvata",
-      "published": "Pubblicato"
+      "published": "Pubblicato",
+      "viewPage": "Visualizza pagina"
     },
     "versionHistory": {
       "open": "Cronologia versioni",

@@ -38,6 +38,9 @@
       "path": "../../libs/adapters/postgres-user-repository/tsconfig.lib.json"
     },
     {
+      "path": "../../libs/adapters/postgres-site-repository/tsconfig.lib.json"
+    },
+    {
       "path": "../../libs/adapters/postgres-page-repository/tsconfig.lib.json"
     },
     {

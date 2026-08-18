@@ -1,11 +1,7 @@
-import { z } from 'zod';
 import type { ComponentConfig } from '@puckeditor/core';
+import { heroPropsSchema, type HeroProps } from '@brisk/shared-types';
 
-export const heroPropsSchema = z.object({
-  title: z.string(),
-  subtitle: z.string(),
-});
-export type HeroProps = z.infer<typeof heroPropsSchema>;
+export { heroPropsSchema, type HeroProps };
 
 export const heroConfig: ComponentConfig<HeroProps> = {
   label: 'Hero',

@@ -1,43 +1,37 @@
-# Astro Starter Kit: Minimal
+# @brisk/public-site
+
+The public-facing site: server-rendered Astro, no Puck/React dependency —
+see [ADR-0012](../../docs/adr/0012-public-site-rendering-via-dedicated-api-endpoint.md)
+for why, and `docs/development.md` for how to run it locally alongside
+`apps/api`.
+
+## How a request is served
+
+1. `src/pages/[slug].astro` (or `src/pages/index.astro` for `/`, fetching
+   the page slugged `home` — Astro's own native routing for `/`, not a
+   custom convention) resolves the site from the request's `Host` header
+   and calls `apps/api`'s public, unauthenticated
+   `GET /public/pages/by-slug` (`src/lib/public-api-client.ts`).
+2. A page that isn't published, or doesn't exist, both 404 identically —
+   see `src/components/NotFound.astro` and `src/pages/404.astro`.
+3. A published page's `Block[]` content is walked directly by
+   `src/components/BlockRenderer.astro` and rendered with native `.astro`
+   components (`src/components/blocks/`) — never Puck's own `<Render>`,
+   see [ADR-0007](../../docs/adr/0007-nested-block-content-model-independent-of-puck.md).
+   Each block's prop shape is validated against the same Zod schema
+   `@brisk/puck-config` uses for the editor (`@brisk/shared-types`), so the
+   two can never silently drift apart.
+
+## Commands (via Nx from the repo root)
 
 ```sh
-pnpm create astro@latest -- --template minimal
+pnpm exec nx run @brisk/public-site:dev         # dev server, http://localhost:4321
+pnpm exec nx run @brisk/public-site:build       # production build (SSR, @astrojs/node)
+pnpm exec nx run @brisk/public-site:typecheck   # astro check
+pnpm exec nx run @brisk/public-site:test        # vitest
+pnpm exec nx run @brisk/public-site:lint        # eslint
 ```
 
-> 🧑‍🚀 **Seasoned astronaut?** Delete this file. Have fun!
-
-## 🚀 Project Structure
-
-Inside of your Astro project, you'll see the following folders and files:
-
-```text
-/
-├── public/
-├── src/
-│   └── pages/
-│       └── index.astro
-└── package.json
-```
-
-Astro looks for `.astro` or `.md` files in the `src/pages/` directory. Each page is exposed as a route based on its file name.
-
-There's nothing special about `src/components/`, but that's where we like to put any Astro/React/Vue/Svelte/Preact components.
-
-Any static assets, like images, can be placed in the `public/` directory.
-
-## 🧞 Commands
-
-All commands are run from the root of the project, from a terminal:
-
-| Command                   | Action                                           |
-| :------------------------ | :----------------------------------------------- |
-| `pnpm install`             | Installs dependencies                            |
-| `pnpm dev`             | Starts local dev server at `localhost:4321`      |
-| `pnpm build`           | Build your production site to `./dist/`          |
-| `pnpm preview`         | Preview your build locally, before deploying     |
-| `pnpm astro ...`       | Run CLI commands like `astro add`, `astro check` |
-| `pnpm astro -- --help` | Get help using the Astro CLI                     |
-
-## 👀 Want to learn more?
-
-Feel free to check [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).
+Needs `apps/api` running and `API_URL` pointing at it (see `.env.example`)
+— there is no build-time list of pages to prerender, content is fetched
+per-request.

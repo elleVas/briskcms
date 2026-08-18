@@ -1,0 +1,26 @@
+---
+import type { SeoMeta } from '@brisk/shared-types';
+
+interface Props {
+  seoMeta: SeoMeta;
+  locale: string;
+}
+
+const { seoMeta, locale } = Astro.props;
+---
+
+<html lang={locale}>
+	<head>
+		<meta charset="utf-8" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="icon" href="/favicon.ico" />
+		<meta name="viewport" content="width=device-width" />
+		<meta name="generator" content={Astro.generator} />
+		<title>{seoMeta.title}</title>
+		<meta name="description" content={seoMeta.description} />
+		{seoMeta.canonical && <link rel="canonical" href={seoMeta.canonical} />}
+	</head>
+	<body>
+		<slot />
+	</body>
+</html>
