@@ -111,6 +111,25 @@ describe('PagesController (integration)', () => {
     expect(bySlug.body.id).toBe(createRes.body.id);
   });
 
+  it('lists pages for a site', async () => {
+    const first = await agent.post('/pages').send(createPageBody()).expect(201);
+    const second = await agent
+      .post('/pages')
+      .send(createPageBody())
+      .expect(201);
+
+    const res = await agent.get('/pages').query({ siteId }).expect(200);
+
+    const ids = res.body.map((page: { id: string }) => page.id);
+    expect(ids).toEqual(
+      expect.arrayContaining([first.body.id, second.body.id]),
+    );
+  });
+
+  it('400s on an invalid siteId query param instead of hitting the database', async () => {
+    await agent.get('/pages').query({ siteId: 'not-a-uuid' }).expect(400);
+  });
+
   it('404s on a page that does not exist', async () => {
     await agent.get(`/pages/${randomUUID()}`).expect(404);
   });

@@ -1,0 +1,58 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { ApiError, request } from './http-client.js';
+
+function jsonResponse(body: unknown, ok = true, status = 200) {
+  return {
+    ok,
+    status,
+    json: () => Promise.resolve(body),
+  } as Response;
+}
+
+describe('http-client', () => {
+  beforeEach(() => {
+    vi.stubGlobal('fetch', vi.fn());
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('resolves with the parsed JSON body on success', async () => {
+    vi.mocked(fetch).mockResolvedValue(jsonResponse({ hello: 'world' }));
+
+    const result = await request('/anything');
+
+    expect(fetch).toHaveBeenCalledWith(
+      expect.stringContaining('/anything'),
+      expect.objectContaining({
+        credentials: 'include',
+        headers: expect.objectContaining({
+          'Content-Type': 'application/json',
+        }),
+      }),
+    );
+    expect(result).toEqual({ hello: 'world' });
+  });
+
+  it('throws an ApiError carrying the status and the parsed error body', async () => {
+    vi.mocked(fetch).mockResolvedValue(
+      jsonResponse({ message: 'Not found' }, false, 404),
+    );
+
+    await expect(request('/missing')).rejects.toThrow(/API 404.*Not found/);
+    const error = await request('/missing').catch((e: unknown) => e);
+    expect(error).toBeInstanceOf(ApiError);
+    expect((error as ApiError).status).toBe(404);
+  });
+
+  it('throws even when the error body cannot be parsed as JSON', async () => {
+    vi.mocked(fetch).mockResolvedValue({
+      ok: false,
+      status: 500,
+      json: () => Promise.reject(new Error('not json')),
+    } as unknown as Response);
+
+    await expect(request('/broken')).rejects.toThrow(/API 500/);
+  });
+});

@@ -1,11 +1,11 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import * as api from '../lib/pages-api-client.js';
+import * as api from '../lib/auth-api-client.js';
 import { ForgotPasswordForm } from './forgot-password-form.js';
 
-vi.mock('../lib/pages-api-client.js', async (importOriginal) => {
+vi.mock('../lib/auth-api-client.js', async (importOriginal) => {
   const actual =
-    await importOriginal<typeof import('../lib/pages-api-client.js')>();
+    await importOriginal<typeof import('../lib/auth-api-client.js')>();
   return { ...actual, requestPasswordReset: vi.fn() };
 });
 

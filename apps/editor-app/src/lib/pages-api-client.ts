@@ -1,7 +1,5 @@
 import type { Block, SeoMeta } from '@brisk/shared-types';
-
-const API_BASE_URL =
-  import.meta.env['VITE_API_URL'] ?? 'http://localhost:3000/api';
+import { request } from './http-client.js';
 
 export interface PageDto {
   id: string;
@@ -18,31 +16,12 @@ export interface PageDto {
   updatedAt: string;
 }
 
-export class ApiError extends Error {
-  constructor(
-    public readonly status: number,
-    body: unknown,
-  ) {
-    super(`API ${status}: ${JSON.stringify(body)}`);
-    this.name = 'ApiError';
-  }
-}
-
-async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(`${API_BASE_URL}${path}`, {
-    ...init,
-    credentials: 'include',
-    headers: { 'Content-Type': 'application/json', ...init?.headers },
-  });
-  if (!res.ok) {
-    const body = await res.json().catch(() => null);
-    throw new ApiError(res.status, body);
-  }
-  return res.json();
-}
-
 export function getPage(id: string): Promise<PageDto> {
   return request(`/pages/${id}`);
+}
+
+export function listPages(siteId: string): Promise<PageDto[]> {
+  return request(`/pages?siteId=${encodeURIComponent(siteId)}`);
 }
 
 export interface CreatePageInput {
@@ -66,44 +45,4 @@ export function saveDraft(id: string, content: Block[]): Promise<PageDto> {
 
 export function publishPage(id: string): Promise<PageDto> {
   return request(`/pages/${id}/publish`, { method: 'POST' });
-}
-
-export function login(
-  email: string,
-  password: string,
-): Promise<{ userId: string }> {
-  return request('/auth/login', {
-    method: 'POST',
-    body: JSON.stringify({ email, password }),
-  });
-}
-
-export function logout(): Promise<{ success: boolean }> {
-  return request('/auth/logout', { method: 'POST' });
-}
-
-export function requestPasswordReset(
-  email: string,
-): Promise<{ success: boolean }> {
-  return request('/auth/request-password-reset', {
-    method: 'POST',
-    body: JSON.stringify({ email }),
-  });
-}
-
-export function resetPassword(
-  token: string,
-  newPassword: string,
-): Promise<{ success: boolean }> {
-  return request('/auth/reset-password', {
-    method: 'POST',
-    body: JSON.stringify({ token, newPassword }),
-  });
-}
-
-export function verifyEmail(token: string): Promise<{ success: boolean }> {
-  return request('/auth/verify-email', {
-    method: 'POST',
-    body: JSON.stringify({ token }),
-  });
 }

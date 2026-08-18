@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { verifyEmail } from '../lib/pages-api-client.js';
+import { verifyEmail } from '../lib/auth-api-client.js';
 import {
   Card,
   CardContent,

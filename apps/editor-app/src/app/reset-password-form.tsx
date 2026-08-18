@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react';
-import { resetPassword } from '../lib/pages-api-client.js';
+import { resetPassword } from '../lib/auth-api-client.js';
 import { Button } from '../components/ui/button.js';
 import {
   Card,

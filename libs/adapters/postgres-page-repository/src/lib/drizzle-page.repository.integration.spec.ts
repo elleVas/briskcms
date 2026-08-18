@@ -109,6 +109,23 @@ describe('DrizzlePageRepository (integration)', () => {
     expect(foundFromOtherTenant).toBeNull();
   });
 
+  it('listBySite scopes by tenant and site, most recently updated first', async () => {
+    const older = buildPage({ now: new Date(Date.now() - 1000) });
+    const newer = buildPage({ now: new Date() });
+    await pageRepository.save(older);
+    await pageRepository.save(newer);
+
+    const found = await pageRepository.listBySite(tenantAId, siteAId);
+    const foundIds = found.map((page) => page.id);
+    expect(foundIds.indexOf(newer.id)).toBeLessThan(foundIds.indexOf(older.id));
+
+    const foundFromOtherTenant = await pageRepository.listBySite(
+      tenantBId,
+      siteAId,
+    );
+    expect(foundFromOtherTenant).toHaveLength(0);
+  });
+
   it('save() upserts: a second save updates the same row instead of inserting a new one', async () => {
     const page = buildPage();
     await pageRepository.save(page);

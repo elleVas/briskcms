@@ -7,11 +7,14 @@ import {
 } from '@testing-library/react';
 import { afterEach, beforeEach, vi } from 'vitest';
 import App from './app';
+import * as authApi from '../lib/auth-api-client.js';
+import { ApiError } from '../lib/http-client.js';
 import * as api from '../lib/pages-api-client.js';
 
 // A bare automock stubs out ApiError's constructor body too (it would
 // silently drop the `status` field the 401 check depends on) — keep the
-// real class, mock only the network-calling functions.
+// real class (imported directly above, from http-client.js, so it's never
+// touched by either mock), mock only the network-calling functions.
 vi.mock('../lib/pages-api-client.js', async (importOriginal) => {
   const actual =
     await importOriginal<typeof import('../lib/pages-api-client.js')>();
@@ -21,6 +24,14 @@ vi.mock('../lib/pages-api-client.js', async (importOriginal) => {
     getPage: vi.fn(),
     saveDraft: vi.fn(),
     publishPage: vi.fn(),
+  };
+});
+
+vi.mock('../lib/auth-api-client.js', async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import('../lib/auth-api-client.js')>();
+  return {
+    ...actual,
     login: vi.fn(),
     logout: vi.fn(),
     verifyEmail: vi.fn(),
@@ -78,7 +89,7 @@ describe('App', () => {
 
   it('logs out from the editor view and returns to the login form', async () => {
     vi.mocked(api.createPage).mockResolvedValue(samplePage);
-    vi.mocked(api.logout).mockResolvedValue({ success: true });
+    vi.mocked(authApi.logout).mockResolvedValue({ success: true });
 
     render(<App />);
     await waitFor(() =>
@@ -88,12 +99,12 @@ describe('App', () => {
     fireEvent.click(screen.getByRole('button', { name: /^esci$/i }));
 
     expect(await screen.findByRole('heading', { name: 'Accedi' })).toBeTruthy();
-    expect(api.logout).toHaveBeenCalled();
+    expect(authApi.logout).toHaveBeenCalled();
   });
 
   it('shows the login form when the initial load is unauthorized', async () => {
     vi.mocked(api.createPage).mockRejectedValue(
-      new api.ApiError(401, { message: 'Unauthorized' }),
+      new ApiError(401, { message: 'Unauthorized' }),
     );
 
     render(<App />);
@@ -118,7 +129,9 @@ describe('App', () => {
     // Never resolve either call — this test only checks the initial
     // synchronous render, not what happens once either settles.
     vi.mocked(api.createPage).mockReturnValue(new Promise(() => undefined));
-    vi.mocked(api.verifyEmail).mockReturnValue(new Promise(() => undefined));
+    vi.mocked(authApi.verifyEmail).mockReturnValue(
+      new Promise(() => undefined),
+    );
     window.history.pushState({}, '', '/?verifyToken=xyz789');
 
     render(<App />);
@@ -130,7 +143,7 @@ describe('App', () => {
 
   it('toggles between the login and forgot-password views', async () => {
     vi.mocked(api.createPage).mockRejectedValue(
-      new api.ApiError(401, { message: 'Unauthorized' }),
+      new ApiError(401, { message: 'Unauthorized' }),
     );
 
     render(<App />);
