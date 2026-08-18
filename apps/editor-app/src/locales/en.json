@@ -48,10 +48,13 @@
       "users": "Users",
       "comingSoon": "Coming soon"
     },
-    "account": {
-      "settings": "Account settings",
+    "settings": {
+      "label": "Settings",
       "language": "Language",
       "theme": "Dark theme"
+    },
+    "account": {
+      "label": "Account"
     }
   },
   "pages": {
@@ -89,7 +92,8 @@
     "editor": {
       "backToList": "Pages",
       "draftSaved": "Draft saved",
-      "published": "Published"
+      "published": "Published",
+      "viewPage": "View page"
     },
     "versionHistory": {
       "open": "Version history",

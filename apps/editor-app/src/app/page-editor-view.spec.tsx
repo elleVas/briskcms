@@ -57,16 +57,13 @@ const samplePage: PageDto = {
   updatedAt: '',
 };
 
-function renderView() {
+function renderView(page: PageDto = samplePage) {
   const queryClient = createTestQueryClient();
-  queryClient.setQueryData(
-    pageQueryOptions(samplePage.id).queryKey,
-    samplePage,
-  );
+  queryClient.setQueryData(pageQueryOptions(page.id).queryKey, page);
   return render(
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <PageEditorView pageId={samplePage.id} />
+        <PageEditorView pageId={page.id} />
       </TooltipProvider>
     </QueryClientProvider>,
   );
@@ -163,5 +160,25 @@ describe('PageEditorView', () => {
     await waitFor(() =>
       expect(screen.queryByText(/versione attuale/i)).toBeNull(),
     );
+  });
+
+  it('links to the public page when it is published', () => {
+    vi.mocked(router.useNavigate).mockReturnValue(vi.fn());
+
+    renderView({ ...samplePage, status: 'published', slug: 'chi-siamo' });
+
+    const link = screen.getByRole('link', { name: /visualizza pagina/i });
+    expect(link.getAttribute('href')).toMatch(/\/chi-siamo$/);
+    expect(link.getAttribute('target')).toBe('_blank');
+  });
+
+  it('has no public-page link for a page that is still a draft', () => {
+    vi.mocked(router.useNavigate).mockReturnValue(vi.fn());
+
+    renderView({ ...samplePage, status: 'draft' });
+
+    expect(
+      screen.queryByRole('link', { name: /visualizza pagina/i }),
+    ).toBeNull();
   });
 });

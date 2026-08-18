@@ -89,6 +89,7 @@
     "@brisk/ports": "workspace:*",
     "@brisk/postgres-db": "workspace:*",
     "@brisk/postgres-page-repository": "workspace:*",
+    "@brisk/postgres-site-repository": "workspace:*",
     "@brisk/postgres-user-repository": "workspace:*",
     "@brisk/session-auth-adapter": "workspace:*",
     "@brisk/shared-types": "workspace:*",

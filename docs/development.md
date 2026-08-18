@@ -122,6 +122,38 @@ design (why login isn't gated on verification yet, anti-enumeration on the
 reset-request endpoint, and why a password reset invalidates all of that
 user's existing sessions).
 
+To see a published page rendered on the public site, run the API and
+public-site together:
+
+```sh
+pnpm exec nx run @brisk/api:serve         # http://localhost:3000/api
+pnpm exec nx run @brisk/public-site:dev    # http://localhost:4321
+```
+
+`apps/public-site` calls `apps/api`'s public, unauthenticated endpoint
+(`GET /public/pages/by-slug`, see `apps/api/src/app/public-pages`) — never
+the authenticated CRUD one editor-app uses. It resolves which site to
+render from the request's `Host` header, matched against a site's `domain`
+column, so a page only ever appears at the domain it's actually configured
+for. `db:seed` sets the seeded default site's domain to `localhost`
+specifically so this resolves out of the box in local dev
+(`http://localhost:4321/...`); a real deployment sets each site's `domain`
+to what it's actually served on. `API_URL` (plain server env var, not
+`VITE_`/`PUBLIC_`-prefixed — read from `process.env` at request time, not
+baked in at build time, see `src/lib/public-api-client.ts`) points
+public-site at the API.
+
+A page's slug becomes its path (`/chi-siamo`); `/` is Astro's own
+`src/pages/index.astro`, which — by content convention, not a routing
+special-case — renders whichever page is slugged `home`. Only
+`status: 'published'` pages are ever reachable this way; a draft page and
+a nonexistent slug both 404 identically, on purpose (see that use case's
+own comments on why). Block rendering here is Astro-native (`Hero.astro`,
+`Text.astro`, `BlockRenderer.astro`) and walks `Block[]`/`children`
+directly — same isolation principle as `puck-data-mapper.ts`, just from the
+other side: apps/public-site never depends on Puck at all (see
+[ADR-0007](adr/0007-nested-block-content-model-independent-of-puck.md)).
+
 ## Connecting to Postgres
 
 Two distinct roles (see [ADR-0002](adr/0002-non-superuser-role-for-rls-enforcement.md)):

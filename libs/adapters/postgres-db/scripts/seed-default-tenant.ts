@@ -26,6 +26,11 @@ async function main() {
         id: siteId,
         tenantId,
         name: 'Default site',
+        // apps/public-site resolves which site to render from the request's
+        // Host header (see public-pages.use-case.ts) — 'localhost' lets
+        // `pnpm nx dev public-site` work against this seeded site out of
+        // the box. Real deployments update this to their actual domain.
+        domain: 'localhost',
         defaultLocale: 'it',
       })
       .onConflictDoNothing(),

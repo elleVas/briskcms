@@ -43,7 +43,7 @@ describe('AdminShell', () => {
     vi.clearAllMocks();
   });
 
-  it('renders a link to Pagine, disabled placeholders for Media/Utenti, and an account menu', () => {
+  it('renders a link to Pagine, disabled placeholders for Media/Utenti, and separate Impostazioni/Account menus', () => {
     vi.mocked(router.useNavigate).mockReturnValue(vi.fn());
 
     renderShell();
@@ -56,20 +56,29 @@ describe('AdminShell', () => {
     expect(screen.getAllByText('In arrivo')).toHaveLength(2);
     expect(screen.getByText('content')).toBeTruthy();
     expect(
-      screen.getByRole('button', { name: /impostazioni account/i }),
+      screen.getByRole('button', { name: /^impostazioni$/i }),
     ).toBeTruthy();
+    expect(screen.getByRole('button', { name: /^account$/i })).toBeTruthy();
   });
 
-  it('exposes logout and the language/theme toggles inside the account menu', () => {
+  it('exposes the language/theme toggles inside Impostazioni', () => {
     vi.mocked(router.useNavigate).mockReturnValue(vi.fn());
 
     renderShell();
-    fireEvent.click(
-      screen.getByRole('button', { name: /impostazioni account/i }),
-    );
+    fireEvent.click(screen.getByRole('button', { name: /^impostazioni$/i }));
 
-    expect(screen.getByRole('button', { name: /^esci$/i })).toBeTruthy();
     expect(screen.getByRole('switch', { name: /lingua/i })).toBeTruthy();
     expect(screen.getByRole('switch', { name: /tema scuro/i })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: /^esci$/i })).toBeNull();
+  });
+
+  it('exposes logout inside Account', () => {
+    vi.mocked(router.useNavigate).mockReturnValue(vi.fn());
+
+    renderShell();
+    fireEvent.click(screen.getByRole('button', { name: /^account$/i }));
+
+    expect(screen.getByRole('button', { name: /^esci$/i })).toBeTruthy();
+    expect(screen.queryByRole('switch', { name: /lingua/i })).toBeNull();
   });
 });

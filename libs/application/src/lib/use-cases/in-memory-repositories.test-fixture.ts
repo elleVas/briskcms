@@ -1,9 +1,10 @@
-import type { Page, PageVersion, User } from '@brisk/domain-core';
+import type { Page, PageVersion, Site, User } from '@brisk/domain-core';
 import type {
   PaginatedResult,
   Pagination,
   PageRepositoryPort,
   PageVersionRepositoryPort,
+  SiteRepositoryPort,
   UserRepositoryPort,
 } from '@brisk/ports';
 
@@ -102,6 +103,23 @@ export class InMemoryUserRepository implements UserRepositoryPort {
     for (const user of this.users.values()) {
       if (user.tenantId === tenantId && user.email === email) {
         return user;
+      }
+    }
+    return null;
+  }
+}
+
+export class InMemorySiteRepository implements SiteRepositoryPort {
+  private sites = new Map<string, Site>();
+
+  async save(site: Site): Promise<void> {
+    this.sites.set(site.id, site);
+  }
+
+  async findByDomain(tenantId: string, domain: string): Promise<Site | null> {
+    for (const site of this.sites.values()) {
+      if (site.tenantId === tenantId && site.domain === domain) {
+        return site;
       }
     }
     return null;

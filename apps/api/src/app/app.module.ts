@@ -3,9 +3,10 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module.js';
 import { PagesModule } from './pages/pages.module.js';
+import { PublicPagesModule } from './public-pages/public-pages.module.js';
 
 @Module({
-  imports: [AuthModule, PagesModule],
+  imports: [AuthModule, PagesModule, PublicPagesModule],
   controllers: [AppController],
   providers: [AppService],
 })

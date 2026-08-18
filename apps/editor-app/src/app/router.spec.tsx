@@ -164,9 +164,7 @@ describe('router', () => {
     vi.mocked(authApi.logout).mockResolvedValue({ success: true });
 
     renderApp('/pages');
-    fireEvent.click(
-      await screen.findByRole('button', { name: /impostazioni account/i }),
-    );
+    fireEvent.click(await screen.findByRole('button', { name: /^account$/i }));
     fireEvent.click(await screen.findByRole('button', { name: /^esci$/i }));
 
     expect(await screen.findByRole('heading', { name: 'Accedi' })).toBeTruthy();

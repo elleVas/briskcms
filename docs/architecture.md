@@ -105,22 +105,53 @@ Every save (creation, draft, rollback) creates a row in `page_versions` (never a
 destructive overwrite) — see `Page` in `libs/domain-core` and the use cases in
 `libs/application/src/lib/use-cases/`.
 
+## Public rendering
+
+`apps/public-site` (Astro, `output: 'server'`, `@astrojs/node`) is a
+separate, unauthenticated consumer of content — never `apps/editor-app`'s
+authenticated CRUD API, and never Postgres directly. It calls a dedicated
+`PublicPagesController` (`apps/api/src/app/public-pages`, no
+`SessionAuthGuard`, no write routes at all) that only ever returns
+`publishedContent` for a `status: 'published'` page; a draft page and a
+nonexistent slug 404 identically. See
+[ADR-0012](adr/0012-public-site-rendering-via-dedicated-api-endpoint.md)
+for the full reasoning, including why this isn't a Postgres-direct read
+the way it might first seem simpler to build.
+
+The site to render is resolved from the request's `Host` header against
+`sites.domain` (`SiteRepositoryPort`/`postgres-site-repository`, new in
+this decision — previously `siteId` only ever existed as a foreign key,
+never a first-class read model) — never a client-supplied ID. Like the
+bootstrap lookups in [ADR-0010](adr/0010-session-based-auth-foundations.md),
+this has no session to derive a tenant from, so it reuses
+`DEFAULT_TENANT_ID` (single-tenant-per-deployment, same caveat as
+everywhere else that constant appears).
+
+Block rendering is Astro-native (`src/components/BlockRenderer.astro`,
+`src/components/blocks/`), walking `Block[]`/`children` directly — the
+"Astro-native renderer" [ADR-0007](adr/0007-nested-block-content-model-independent-of-puck.md)
+already anticipated, not Puck's own `<Render>`. Each block's Zod prop
+schema (`heroPropsSchema`, `textPropsSchema`) lives in `shared-types`
+specifically so `apps/public-site` can validate against it without
+depending on Puck or React at all.
+
 ## Monorepo
 
 ```
 apps/
   api/            NestJS — REST/tRPC, DI wiring, TenantContext/auth guards
   editor-app/     React + Puck (Phase 2) — drag-and-drop editor
-  public-site/    Astro — public rendering of the sites
+  public-site/    Astro (SSR, @astrojs/node) — public rendering, no Puck/React
 
 libs/
-  domain-core/    pure entities: Page, PageVersion, User, Media, FormSubmission
+  domain-core/    pure entities: Page, PageVersion, Site, User, Media, FormSubmission
   ports/          interfaces implemented by the adapters
   application/    use cases (orchestration, zero infrastructure)
   adapters/
     postgres-db/               Drizzle schema, client, tenant-scoping helper —
                                 shared by every Postgres adapter
     postgres-page-repository/  PageRepositoryPort + PageVersionRepositoryPort
+    postgres-site-repository/  SiteRepositoryPort — domain lookup for public rendering
     postgres-user-repository/  UserRepositoryPort
     session-auth-adapter/      AuthPort — argon2id hashing, DB-backed sessions
     verification-token-adapter/ VerificationTokenPort — single-use email

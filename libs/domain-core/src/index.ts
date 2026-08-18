@@ -1,5 +1,6 @@
 export * from './lib/entities/page.js';
 export * from './lib/entities/page-version.js';
+export * from './lib/entities/site.js';
 export * from './lib/entities/user.js';
 export * from './lib/entities/media.js';
 export * from './lib/entities/form-submission.js';

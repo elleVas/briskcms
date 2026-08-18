@@ -131,7 +131,11 @@
    colors the canvas backdrop behind the page preview (and the floating
    viewport/zoom controls sitting on it) — that area reads as part of the
    light canvas, not the dark chrome, so it stays at Puck's own light
-   default. */
+   default. --puck-canvas-color-text follows from that: the viewport/zoom
+   icon buttons have no color of their own (IconButton.module.css falls
+   back to `currentColor`), so they inherit whatever text color is set on
+   the canvas wrapper — without this override that's --puck-color-text
+   above (near-white), making them unreadable on the light backdrop. */
 .dark {
   --puck-color-surface: var(--sidebar);
   --puck-color-surface-subtle: var(--muted);
@@ -146,6 +150,7 @@
   --puck-color-border-hover: var(--ring);
   --puck-color-border-inverse: var(--border);
   --puck-color-bg-disabled: var(--muted);
+  --puck-canvas-color-text: var(--puck-color-black);
 }
 
 /* The canvas itself (where blocks actually render) must NOT follow the
