@@ -1,7 +1,10 @@
-import { act, renderHook } from '@testing-library/react';
+import type { ReactNode } from 'react';
+import { renderHook, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { QueryClientProvider } from '@tanstack/react-query';
 import * as router from '@tanstack/react-router';
 import * as api from '../lib/pages-api-client.js';
+import { createTestQueryClient } from '../test-query-client.js';
 import { usePagesList } from './use-pages-list.js';
 
 vi.mock('@tanstack/react-router', async (importOriginal) => {
@@ -31,6 +34,14 @@ const samplePage: api.PageDto = {
   updatedAt: '',
 };
 
+function wrapper({ children }: { children: ReactNode }) {
+  return (
+    <QueryClientProvider client={createTestQueryClient()}>
+      {children}
+    </QueryClientProvider>
+  );
+}
+
 describe('usePagesList', () => {
   afterEach(() => {
     vi.clearAllMocks();
@@ -41,18 +52,18 @@ describe('usePagesList', () => {
     vi.mocked(router.useNavigate).mockReturnValue(navigate);
     vi.mocked(api.createPage).mockResolvedValue(samplePage);
 
-    const { result } = renderHook(() => usePagesList('site-1'));
+    const { result } = renderHook(() => usePagesList('site-1'), { wrapper });
 
-    await act(async () => {
-      await result.current.createPage();
-    });
+    result.current.createPage();
 
+    await waitFor(() =>
+      expect(navigate).toHaveBeenCalledWith({
+        to: '/pages/$pageId',
+        params: { pageId: samplePage.id },
+      }),
+    );
     expect(api.createPage).toHaveBeenCalledWith(
       expect.objectContaining({ siteId: 'site-1' }),
     );
-    expect(navigate).toHaveBeenCalledWith({
-      to: '/pages/$pageId',
-      params: { pageId: samplePage.id },
-    });
   });
 });

@@ -1,5 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { QueryClientProvider } from '@tanstack/react-query';
 import {
   createMemoryHistory,
   createRouter,
@@ -10,6 +11,7 @@ import * as api from '../lib/pages-api-client.js';
 import { ApiError } from '../lib/http-client.js';
 import type { PageDto } from '../lib/pages-api-client.js';
 import { routeTree } from '../routeTree.gen.js';
+import { createTestQueryClient } from '../test-query-client.js';
 
 vi.mock('../lib/auth-api-client.js', async (importOriginal) => {
   const actual =
@@ -44,11 +46,17 @@ const samplePage: PageDto = {
 };
 
 function renderApp(initialPath: string) {
+  const queryClient = createTestQueryClient();
   const router = createRouter({
     routeTree,
+    context: { queryClient },
     history: createMemoryHistory({ initialEntries: [initialPath] }),
   });
-  return render(<RouterProvider router={router} />);
+  return render(
+    <QueryClientProvider client={queryClient}>
+      <RouterProvider router={router} />
+    </QueryClientProvider>,
+  );
 }
 
 describe('router', () => {

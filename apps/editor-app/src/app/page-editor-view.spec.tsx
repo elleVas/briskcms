@@ -1,8 +1,11 @@
 import type { ReactNode } from 'react';
 import { render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { QueryClientProvider } from '@tanstack/react-query';
 import * as router from '@tanstack/react-router';
 import type { PageDto } from '../lib/pages-api-client.js';
+import { createTestQueryClient } from '../test-query-client.js';
+import { pageQueryOptions } from './pages-queries.js';
 import { PageEditorView } from './page-editor-view.js';
 
 vi.mock('@tanstack/react-router', async (importOriginal) => {
@@ -42,6 +45,19 @@ const samplePage: PageDto = {
   updatedAt: '',
 };
 
+function renderView() {
+  const queryClient = createTestQueryClient();
+  queryClient.setQueryData(
+    pageQueryOptions(samplePage.id).queryKey,
+    samplePage,
+  );
+  return render(
+    <QueryClientProvider client={queryClient}>
+      <PageEditorView pageId={samplePage.id} />
+    </QueryClientProvider>,
+  );
+}
+
 describe('PageEditorView', () => {
   afterEach(() => {
     vi.clearAllMocks();
@@ -50,7 +66,7 @@ describe('PageEditorView', () => {
   it('renders a link back to the pages list and a logout control', () => {
     vi.mocked(router.useNavigate).mockReturnValue(vi.fn());
 
-    render(<PageEditorView page={samplePage} />);
+    renderView();
 
     expect(
       screen.getByRole('link', { name: /pagine/i }).getAttribute('href'),

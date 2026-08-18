@@ -1,6 +1,8 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { QueryClientProvider } from '@tanstack/react-query';
 import * as api from '../lib/auth-api-client.js';
+import { createTestQueryClient } from '../test-query-client.js';
 import { ForgotPasswordForm } from './forgot-password-form.js';
 
 vi.mock('../lib/auth-api-client.js', async (importOriginal) => {
@@ -9,6 +11,14 @@ vi.mock('../lib/auth-api-client.js', async (importOriginal) => {
   return { ...actual, requestPasswordReset: vi.fn() };
 });
 
+function renderForm(onBackToLogin = vi.fn()) {
+  return render(
+    <QueryClientProvider client={createTestQueryClient()}>
+      <ForgotPasswordForm onBackToLogin={onBackToLogin} />
+    </QueryClientProvider>,
+  );
+}
+
 describe('ForgotPasswordForm', () => {
   afterEach(() => {
     vi.clearAllMocks();
@@ -16,7 +26,7 @@ describe('ForgotPasswordForm', () => {
 
   it('shows the same confirmation whether or not the email matched an account', async () => {
     vi.mocked(api.requestPasswordReset).mockResolvedValue({ success: true });
-    render(<ForgotPasswordForm onBackToLogin={vi.fn()} />);
+    renderForm();
 
     fireEvent.change(screen.getByLabelText('Email'), {
       target: { value: 'lele@example.com' },
@@ -35,7 +45,7 @@ describe('ForgotPasswordForm', () => {
     vi.mocked(api.requestPasswordReset).mockRejectedValue(
       new Error('network error'),
     );
-    render(<ForgotPasswordForm onBackToLogin={vi.fn()} />);
+    renderForm();
 
     fireEvent.change(screen.getByLabelText('Email'), {
       target: { value: 'lele@example.com' },
@@ -51,7 +61,7 @@ describe('ForgotPasswordForm', () => {
 
   it('calls onBackToLogin when the link is clicked', () => {
     const onBackToLogin = vi.fn();
-    render(<ForgotPasswordForm onBackToLogin={onBackToLogin} />);
+    renderForm(onBackToLogin);
 
     fireEvent.click(screen.getByRole('button', { name: /torna al login/i }));
 

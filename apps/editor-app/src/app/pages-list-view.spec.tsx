@@ -1,9 +1,11 @@
 import type { ReactNode } from 'react';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { QueryClientProvider } from '@tanstack/react-query';
 import * as router from '@tanstack/react-router';
 import * as api from '../lib/pages-api-client.js';
 import type { PageDto } from '../lib/pages-api-client.js';
+import { createTestQueryClient } from '../test-query-client.js';
 import { PagesListView } from './pages-list-view.js';
 
 vi.mock('@tanstack/react-router', async (importOriginal) => {
@@ -55,6 +57,14 @@ const pageOne: PageDto = {
   updatedAt: '2026-01-01T00:00:00.000Z',
 };
 
+function renderView(pages: PageDto[]) {
+  return render(
+    <QueryClientProvider client={createTestQueryClient()}>
+      <PagesListView siteId="site-1" pages={pages} />
+    </QueryClientProvider>,
+  );
+}
+
 describe('PagesListView', () => {
   afterEach(() => {
     vi.clearAllMocks();
@@ -63,7 +73,7 @@ describe('PagesListView', () => {
   it('shows an empty state when there are no pages', () => {
     vi.mocked(router.useNavigate).mockReturnValue(vi.fn());
 
-    render(<PagesListView siteId="site-1" pages={[]} />);
+    renderView([]);
 
     expect(screen.getByText(/nessuna pagina/i)).toBeTruthy();
   });
@@ -71,7 +81,7 @@ describe('PagesListView', () => {
   it('lists each page linking to its editor', () => {
     vi.mocked(router.useNavigate).mockReturnValue(vi.fn());
 
-    render(<PagesListView siteId="site-1" pages={[pageOne]} />);
+    renderView([pageOne]);
 
     const link = screen.getByRole('link', { name: /home/i });
     expect(link.getAttribute('href')).toBe('/pages/$pageId');
@@ -86,7 +96,7 @@ describe('PagesListView', () => {
     vi.mocked(router.useNavigate).mockReturnValue(navigate);
     vi.mocked(api.createPage).mockResolvedValue(pageOne);
 
-    render(<PagesListView siteId="site-1" pages={[]} />);
+    renderView([]);
     fireEvent.click(screen.getByRole('button', { name: /nuova pagina/i }));
 
     await waitFor(() =>
@@ -104,7 +114,7 @@ describe('PagesListView', () => {
     vi.mocked(router.useNavigate).mockReturnValue(vi.fn());
     vi.mocked(api.createPage).mockRejectedValue(new Error('boom'));
 
-    render(<PagesListView siteId="site-1" pages={[]} />);
+    renderView([]);
     fireEvent.click(screen.getByRole('button', { name: /nuova pagina/i }));
 
     await waitFor(() =>

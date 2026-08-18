@@ -1,0 +1,66 @@
+{
+  "common": {
+    "loading": "Caricamento...",
+    "error": "Si è verificato un errore.",
+    "retry": "Riprova"
+  },
+  "auth": {
+    "login": {
+      "title": "Accedi",
+      "description": "Accedi al tuo account Brisk",
+      "emailLabel": "Email",
+      "passwordLabel": "Password",
+      "submitIdle": "Accedi",
+      "submitPending": "Accesso in corso...",
+      "invalidCredentials": "Email o password non corretti.",
+      "forgotPassword": "Password dimenticata?"
+    },
+    "forgotPassword": {
+      "title": "Password dimenticata",
+      "description": "Inserisci la tua email per ricevere un link di reimpostazione",
+      "sentMessage": "Se l'indirizzo esiste, ti abbiamo inviato un'email con le istruzioni per reimpostare la password.",
+      "backToLogin": "Torna al login",
+      "submitIdle": "Invia link di reset",
+      "submitPending": "Invio in corso..."
+    },
+    "resetPassword": {
+      "title": "Reimposta la password",
+      "description": "Scegli una nuova password per il tuo account",
+      "doneMessage": "Password aggiornata. Puoi accedere di nuovo con la nuova password.",
+      "newPasswordLabel": "Nuova password",
+      "error": "Il link non è valido o è scaduto. Richiedi un nuovo link di reset.",
+      "submitIdle": "Reimposta password",
+      "submitPending": "Salvataggio..."
+    },
+    "verifyEmail": {
+      "title": "Verifica email",
+      "description": "Conferma del tuo indirizzo email",
+      "pending": "Verifica in corso...",
+      "success": "Email verificata con successo.",
+      "error": "Il link non è valido o è scaduto. Richiedi un nuovo link di verifica dal tuo account."
+    },
+    "logout": "Esci"
+  },
+  "shell": {
+    "nav": {
+      "pages": "Pagine",
+      "media": "Media",
+      "users": "Utenti",
+      "comingSoon": "In arrivo"
+    }
+  },
+  "pages": {
+    "list": {
+      "title": "Pagine",
+      "newPage": "Nuova pagina",
+      "empty": "Nessuna pagina ancora.",
+      "statusPublished": "Pubblicata",
+      "statusDraft": "Bozza"
+    },
+    "editor": {
+      "backToList": "Pagine",
+      "draftSaved": "Bozza salvata",
+      "published": "Pubblicato"
+    }
+  }
+}

@@ -1,7 +1,9 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { QueryClientProvider } from '@tanstack/react-query';
 import * as router from '@tanstack/react-router';
 import * as authApi from '../lib/auth-api-client.js';
+import { createTestQueryClient } from '../test-query-client.js';
 import { LogoutButton } from './logout-button.js';
 
 vi.mock('@tanstack/react-router', async (importOriginal) => {
@@ -16,6 +18,14 @@ vi.mock('../lib/auth-api-client.js', async (importOriginal) => {
   return { ...actual, logout: vi.fn() };
 });
 
+function renderButton() {
+  return render(
+    <QueryClientProvider client={createTestQueryClient()}>
+      <LogoutButton />
+    </QueryClientProvider>,
+  );
+}
+
 describe('LogoutButton', () => {
   afterEach(() => {
     vi.clearAllMocks();
@@ -26,7 +36,7 @@ describe('LogoutButton', () => {
     vi.mocked(router.useNavigate).mockReturnValue(navigate);
     vi.mocked(authApi.logout).mockResolvedValue({ success: true });
 
-    render(<LogoutButton />);
+    renderButton();
     fireEvent.click(screen.getByRole('button', { name: /^esci$/i }));
 
     await waitFor(() => expect(authApi.logout).toHaveBeenCalled());
