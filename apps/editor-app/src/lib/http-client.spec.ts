@@ -65,4 +65,18 @@ describe('http-client', () => {
 
     await expect(request('/pages/page-1')).resolves.toBeUndefined();
   });
+
+  it('does not set Content-Type: application/json for a FormData body', async () => {
+    vi.mocked(fetch).mockResolvedValue(jsonResponse({}));
+    const body = new FormData();
+    body.append('file', new File(['data'], 'a.png'));
+
+    await request('/media', { method: 'POST', body });
+
+    const headers = vi.mocked(fetch).mock.calls[0][1]?.headers as Record<
+      string,
+      string
+    >;
+    expect(headers['Content-Type']).toBeUndefined();
+  });
 });

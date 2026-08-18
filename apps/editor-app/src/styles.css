@@ -135,7 +135,15 @@
    icon buttons have no color of their own (IconButton.module.css falls
    back to `currentColor`), so they inherit whatever text color is set on
    the canvas wrapper — without this override that's --puck-color-text
-   above (near-white), making them unreadable on the light backdrop. */
+   above (near-white), making them unreadable on the light backdrop.
+   --puck-color-text-inverse is deliberately NOT remapped either, for the
+   same reason: it's what the block-level ActionBar (the duplicate/delete
+   toolbar that floats over a selected block) uses for its icon/label
+   color, meant to read against Puck's own fixed-dark pill background
+   (--puck-color-surface-inverse, also untouched) regardless of app theme.
+   Remapping it to follow the app's own dark background made it near-black
+   text on that already-dark pill — invisible except on :hover, which
+   switches to the (untouched) accent color instead. */
 .dark {
   --puck-color-surface: var(--sidebar);
   --puck-color-surface-subtle: var(--muted);
@@ -144,7 +152,6 @@
   --puck-color-text-muted: var(--muted-foreground);
   --puck-color-text-subtle: var(--muted-foreground);
   --puck-color-text-disabled: var(--muted-foreground);
-  --puck-color-text-inverse: var(--background);
   --puck-color-border: var(--border);
   --puck-color-border-muted: var(--border);
   --puck-color-border-hover: var(--ring);

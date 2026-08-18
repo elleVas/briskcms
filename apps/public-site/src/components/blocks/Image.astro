@@ -1,0 +1,16 @@
+---
+import type { ImageProps } from '@brisk/shared-types';
+
+type Props = ImageProps;
+
+const { media, alt, caption } = Astro.props;
+---
+
+{
+  media && (
+    <figure>
+      <img src={media.url} alt={alt} />
+      {caption && <figcaption>{caption}</figcaption>}
+    </figure>
+  )
+}

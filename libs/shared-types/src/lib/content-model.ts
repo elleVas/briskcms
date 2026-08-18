@@ -56,3 +56,34 @@ export const textPropsSchema = z.object({
   body: z.string(),
 });
 export type TextProps = z.infer<typeof textPropsSchema>;
+
+/**
+ * The picked media's `url` is denormalized into the block props (not just
+ * `mediaId`) so rendering — both the editor canvas and apps/public-site —
+ * never needs a live call back to the media API to resolve an id to a URL.
+ * `mediaId` is kept alongside it so the editor's media picker can still
+ * highlight "this is the currently selected image" reliably, by id rather
+ * than by string-matching a URL.
+ */
+export const pickedMediaSchema = z.object({
+  mediaId: z.string(),
+  url: z.string(),
+});
+export type PickedMedia = z.infer<typeof pickedMediaSchema>;
+
+export const imagePropsSchema = z.object({
+  media: pickedMediaSchema.nullable(),
+  alt: z.string(),
+  caption: z.string(),
+});
+export type ImageProps = z.infer<typeof imagePropsSchema>;
+
+export const galleryPropsSchema = z.object({
+  images: z.array(
+    z.object({
+      media: pickedMediaSchema.nullable(),
+      alt: z.string(),
+    }),
+  ),
+});
+export type GalleryProps = z.infer<typeof galleryPropsSchema>;

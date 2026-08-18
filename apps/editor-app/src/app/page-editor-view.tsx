@@ -8,6 +8,7 @@ import { puckConfig } from '@brisk/puck-config';
 import { toPuckData } from '../lib/puck-data-mapper.js';
 import { IconButton } from './icon-button.js';
 import { LogoutButton } from './logout-button.js';
+import { MediaPickerProvider } from './media-picker-provider.js';
 import { usePageEditor, type SaveStatus } from './use-page-editor.js';
 import { VersionHistoryDialog } from './version-history-dialog.js';
 
@@ -82,13 +83,15 @@ export function PageEditorView({ pageId }: PageEditorViewProps) {
             page into the query cache), and keying on that remounted Puck
             on every save — wiping in-progress edits, e.g. a block mid-drag
             — instead of only after a rollback like intended. */}
-        <Puck
-          key={restoredAt}
-          config={puckConfig}
-          data={toPuckData(page.content)}
-          onChange={handleChange}
-          onPublish={handlePublish}
-        />
+        <MediaPickerProvider siteId={page.siteId}>
+          <Puck
+            key={restoredAt}
+            config={puckConfig}
+            data={toPuckData(page.content)}
+            onChange={handleChange}
+            onPublish={handlePublish}
+          />
+        </MediaPickerProvider>
       </div>
       <VersionHistoryDialog
         pageId={pageId}

@@ -8,6 +8,7 @@ import {
 } from '@tanstack/react-router';
 import { TooltipProvider } from '../components/ui/tooltip.js';
 import * as authApi from '../lib/auth-api-client.js';
+import * as mediaApi from '../lib/media-api-client.js';
 import * as api from '../lib/pages-api-client.js';
 import { ApiError } from '../lib/http-client.js';
 import type { PageDto } from '../lib/pages-api-client.js';
@@ -29,6 +30,12 @@ vi.mock('../lib/pages-api-client.js', async (importOriginal) => {
     getPage: vi.fn(),
     createPage: vi.fn(),
   };
+});
+
+vi.mock('../lib/media-api-client.js', async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import('../lib/media-api-client.js')>();
+  return { ...actual, listMedia: vi.fn() };
 });
 
 const samplePage: PageDto = {
@@ -88,6 +95,14 @@ describe('router', () => {
     expect(await screen.findByRole('link', { name: 'Pagine' })).toBeTruthy();
     expect(screen.getByText('home')).toBeTruthy();
     expect(screen.getByText('Media')).toBeTruthy();
+  });
+
+  it('renders the media library inside the shell when authenticated', async () => {
+    vi.mocked(mediaApi.listMedia).mockResolvedValue({ items: [], total: 0 });
+
+    renderApp('/media');
+
+    expect(await screen.findByRole('heading', { name: 'Media' })).toBeTruthy();
   });
 
   it('redirects to /login when opening a page editor while unauthenticated', async () => {
