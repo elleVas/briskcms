@@ -55,7 +55,27 @@
       "newPage": "Nuova pagina",
       "empty": "Nessuna pagina ancora.",
       "statusPublished": "Pubblicata",
-      "statusDraft": "Bozza"
+      "statusDraft": "Bozza",
+      "actions": {
+        "edit": "Apri editor",
+        "publish": "Pubblica",
+        "delete": "Elimina"
+      }
+    },
+    "newPageDialog": {
+      "title": "Nuova pagina",
+      "nameLabel": "Nome pagina",
+      "slugPreview": "URL: {{slug}}",
+      "cancel": "Annulla",
+      "create": "Crea",
+      "creating": "Creazione in corso...",
+      "slugTaken": "Esiste già una pagina con questo nome in questo sito."
+    },
+    "deleteDialog": {
+      "title": "Eliminare questa pagina?",
+      "description": "\"{{name}}\" e tutte le sue versioni verranno eliminate definitivamente. L'azione non può essere annullata.",
+      "cancel": "Annulla",
+      "confirm": "Elimina"
     },
     "editor": {
       "backToList": "Pagine",

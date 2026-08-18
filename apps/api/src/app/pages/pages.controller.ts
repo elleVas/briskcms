@@ -1,7 +1,10 @@
 import {
   Body,
+  ConflictException,
   Controller,
+  Delete,
   Get,
+  HttpCode,
   Inject,
   NotFoundException,
   Param,
@@ -12,6 +15,7 @@ import {
 } from '@nestjs/common';
 import {
   createPage,
+  deletePage,
   listPages,
   listPageVersions,
   publishPage,
@@ -20,6 +24,7 @@ import {
 } from '@brisk/application';
 import {
   PageNotFoundError,
+  PageSlugAlreadyExistsError,
   PageVersionNotFoundError,
 } from '@brisk/domain-core';
 import type {
@@ -60,18 +65,20 @@ export class PagesController {
   async create(
     @Body(new ZodValidationPipe(createPageBodySchema)) body: CreatePageBody,
   ) {
-    const page = await createPage(
-      {
-        pageRepository: this.pageRepository,
-        pageVersionRepository: this.pageVersionRepository,
-      },
-      {
-        ...body,
-        createdBy: null,
-        tenantId: this.tenantContext.getCurrentTenantId(),
-      },
-    );
-    return page.toProps();
+    return this.handleDomainErrors(async () => {
+      const page = await createPage(
+        {
+          pageRepository: this.pageRepository,
+          pageVersionRepository: this.pageVersionRepository,
+        },
+        {
+          ...body,
+          createdBy: null,
+          tenantId: this.tenantContext.getCurrentTenantId(),
+        },
+      );
+      return page.toProps();
+    });
   }
 
   @Get()
@@ -125,7 +132,7 @@ export class PagesController {
     @Param('id') id: string,
     @Body(new ZodValidationPipe(saveDraftBodySchema)) body: SaveDraftBody,
   ) {
-    return this.handleNotFound(async () => {
+    return this.handleDomainErrors(async () => {
       const page = await saveDraft(
         {
           pageRepository: this.pageRepository,
@@ -144,7 +151,7 @@ export class PagesController {
 
   @Post(':id/publish')
   async publish(@Param('id') id: string) {
-    return this.handleNotFound(async () => {
+    return this.handleDomainErrors(async () => {
       const page = await publishPage(
         { pageRepository: this.pageRepository },
         { tenantId: this.tenantContext.getCurrentTenantId(), pageId: id },
@@ -167,7 +174,7 @@ export class PagesController {
     @Param('id') id: string,
     @Body(new ZodValidationPipe(rollbackBodySchema)) body: RollbackBody,
   ) {
-    return this.handleNotFound(async () => {
+    return this.handleDomainErrors(async () => {
       const page = await rollbackToVersion(
         {
           pageRepository: this.pageRepository,
@@ -184,7 +191,18 @@ export class PagesController {
     });
   }
 
-  private async handleNotFound<T>(fn: () => Promise<T>): Promise<T> {
+  @Delete(':id')
+  @HttpCode(204)
+  async delete(@Param('id') id: string): Promise<void> {
+    return this.handleDomainErrors(() =>
+      deletePage(
+        { pageRepository: this.pageRepository },
+        { tenantId: this.tenantContext.getCurrentTenantId(), pageId: id },
+      ),
+    );
+  }
+
+  private async handleDomainErrors<T>(fn: () => Promise<T>): Promise<T> {
     try {
       return await fn();
     } catch (error) {
@@ -193,6 +211,9 @@ export class PagesController {
         error instanceof PageVersionNotFoundError
       ) {
         throw new NotFoundException(error.message);
+      }
+      if (error instanceof PageSlugAlreadyExistsError) {
+        throw new ConflictException(error.message);
       }
       throw error;
     }

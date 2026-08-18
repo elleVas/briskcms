@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   createPage,
+  deletePage,
   getPage,
   listPages,
   publishPage,
@@ -111,6 +112,21 @@ describe('pages-api-client', () => {
     expect(fetch).toHaveBeenCalledWith(
       expect.stringContaining('/pages/page-1/publish'),
       expect.objectContaining({ method: 'POST' }),
+    );
+  });
+
+  it('deletePage sends a DELETE to the page endpoint', async () => {
+    vi.mocked(fetch).mockResolvedValue({
+      ok: true,
+      status: 204,
+      json: () => Promise.reject(new Error('should not be called')),
+    } as unknown as Response);
+
+    await deletePage('page-1');
+
+    expect(fetch).toHaveBeenCalledWith(
+      expect.stringContaining('/pages/page-1'),
+      expect.objectContaining({ method: 'DELETE' }),
     );
   });
 });

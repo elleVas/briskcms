@@ -46,3 +46,7 @@ export function saveDraft(id: string, content: Block[]): Promise<PageDto> {
 export function publishPage(id: string): Promise<PageDto> {
   return request(`/pages/${id}/publish`, { method: 'POST' });
 }
+
+export function deletePage(id: string): Promise<void> {
+  return request(`/pages/${id}`, { method: 'DELETE' });
+}

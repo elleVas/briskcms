@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { createPage } from './create-page.use-case.js';
+import { deletePage } from './delete-page.use-case.js';
 import { saveDraft } from './save-draft.use-case.js';
 import { publishPage } from './publish-page.use-case.js';
 import { listPageVersions } from './list-page-versions.use-case.js';
@@ -140,5 +141,24 @@ describe('page lifecycle: create -> draft -> publish -> rollback', () => {
       siteId: 'site-1',
     });
     expect(pagesFromOtherTenant).toHaveLength(0);
+  });
+
+  it('deletePage removes the page from a tenant-scoped list', async () => {
+    const deps = setup();
+    const page = await createPage(deps, {
+      tenantId,
+      siteId: 'site-1',
+      groupId: 'group-1',
+      locale: 'it',
+      slug: 'da-eliminare',
+      seoMeta: { title: 'Da eliminare', description: '...' },
+      createdBy: 'user-1',
+    });
+
+    await deletePage(deps, { tenantId, pageId: page.id });
+
+    expect(await deps.pageRepository.findById(tenantId, page.id)).toBeNull();
+    const pages = await listPages(deps, { tenantId, siteId: 'site-1' });
+    expect(pages.map((p) => p.id)).not.toContain(page.id);
   });
 });

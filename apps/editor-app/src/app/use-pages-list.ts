@@ -1,40 +1,64 @@
+import { useCallback } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
-import { createPage as apiCreatePage } from '../lib/pages-api-client.js';
+import { slugify } from '@brisk/shared-types';
+import {
+  createPage as apiCreatePage,
+  deletePage as apiDeletePage,
+  publishPage as apiPublishPage,
+} from '../lib/pages-api-client.js';
 import { pagesQueryOptions } from './pages-queries.js';
 
 // Fetching the list itself is the route loader's job (see
 // routes/_shell.pages.index.tsx) so the auth guard (redirect to /login on a
-// 401) lives in one place — this hook only owns the "new page" action,
-// which the loader can't express: an explicit click, not page-load data.
+// 401) lives in one place — this hook only owns the actions available from
+// the pages list screen: create, delete, publish.
 export function usePagesList(siteId: string) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
+  const invalidateList = useCallback(
+    () =>
+      queryClient.invalidateQueries({
+        queryKey: pagesQueryOptions(siteId).queryKey,
+      }),
+    [queryClient, siteId],
+  );
+
   const createPageMutation = useMutation({
-    mutationFn: () =>
+    // `name` is what the user typed in NewPageDialog; the slug is always
+    // derived from it (see @brisk/shared-types#slugify), never chosen
+    // separately, so the URL and the display name can never disagree.
+    mutationFn: (name: string) =>
       apiCreatePage({
         siteId,
         groupId: crypto.randomUUID(),
         locale: 'it',
-        slug: `pagina-${Date.now()}`,
-        seoMeta: { title: 'Nuova pagina', description: '' },
+        slug: slugify(name),
+        seoMeta: { title: name, description: '' },
       }),
-    onSuccess: (page) => {
-      queryClient.invalidateQueries({
-        queryKey: pagesQueryOptions(siteId).queryKey,
-      });
-      return navigate({ to: '/pages/$pageId', params: { pageId: page.id } });
+    onSuccess: async (page) => {
+      await invalidateList();
+      await navigate({ to: '/pages/$pageId', params: { pageId: page.id } });
     },
   });
 
+  const deletePageMutation = useMutation({
+    mutationFn: (pageId: string) => apiDeletePage(pageId),
+    onSuccess: invalidateList,
+  });
+
+  const publishPageMutation = useMutation({
+    mutationFn: (pageId: string) => apiPublishPage(pageId),
+    onSuccess: invalidateList,
+  });
+
   return {
-    // .mutate, not .mutateAsync: the caller doesn't await this (see
-    // PagesListView) — the error is already surfaced reactively via
-    // createError below, so a rejected mutateAsync promise would just
-    // become an unhandled rejection nobody catches.
-    createPage: createPageMutation.mutate,
+    createPage: createPageMutation.mutateAsync,
     isCreating: createPageMutation.isPending,
-    createError: createPageMutation.error,
+    deletePage: deletePageMutation.mutateAsync,
+    isDeleting: deletePageMutation.isPending,
+    publishPage: publishPageMutation.mutateAsync,
+    isPublishing: publishPageMutation.isPending,
   };
 }

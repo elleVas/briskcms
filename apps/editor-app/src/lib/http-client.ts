@@ -21,5 +21,9 @@ export async function request<T>(path: string, init?: RequestInit): Promise<T> {
     const body = await res.json().catch(() => null);
     throw new ApiError(res.status, body);
   }
+  // 204 No Content (e.g. DELETE) has no body to parse.
+  if (res.status === 204) {
+    return undefined as T;
+  }
   return res.json();
 }

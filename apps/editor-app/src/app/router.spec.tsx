@@ -6,6 +6,7 @@ import {
   createRouter,
   RouterProvider,
 } from '@tanstack/react-router';
+import { TooltipProvider } from '../components/ui/tooltip.js';
 import * as authApi from '../lib/auth-api-client.js';
 import * as api from '../lib/pages-api-client.js';
 import { ApiError } from '../lib/http-client.js';
@@ -54,7 +55,9 @@ function renderApp(initialPath: string) {
   });
   return render(
     <QueryClientProvider client={queryClient}>
-      <RouterProvider router={router} />
+      <TooltipProvider>
+        <RouterProvider router={router} />
+      </TooltipProvider>
     </QueryClientProvider>,
   );
 }
@@ -99,7 +102,8 @@ describe('router', () => {
     vi.mocked(api.getPage).mockResolvedValue(samplePage);
 
     renderApp('/pages');
-    fireEvent.click(await screen.findByText('home'));
+    fireEvent.click(await screen.findByRole('button', { name: /home/i }));
+    fireEvent.click(screen.getByRole('button', { name: /apri editor/i }));
 
     expect(await screen.findByRole('link', { name: /pagine/i })).toBeTruthy();
 

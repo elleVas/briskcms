@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { renderHook, waitFor } from '@testing-library/react';
+import { act, renderHook, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { QueryClientProvider } from '@tanstack/react-query';
 import * as router from '@tanstack/react-router';
@@ -16,7 +16,12 @@ vi.mock('@tanstack/react-router', async (importOriginal) => {
 vi.mock('../lib/pages-api-client.js', async (importOriginal) => {
   const actual =
     await importOriginal<typeof import('../lib/pages-api-client.js')>();
-  return { ...actual, createPage: vi.fn() };
+  return {
+    ...actual,
+    createPage: vi.fn(),
+    deletePage: vi.fn(),
+    publishPage: vi.fn(),
+  };
 });
 
 const samplePage: api.PageDto = {
@@ -25,11 +30,11 @@ const samplePage: api.PageDto = {
   siteId: 'site-1',
   groupId: 'group-1',
   locale: 'it',
-  slug: 'pagina-1',
+  slug: 'chi-siamo',
   status: 'draft',
   content: [],
   publishedContent: null,
-  seoMeta: { title: 'Nuova pagina', description: '' },
+  seoMeta: { title: 'Chi siamo', description: '' },
   createdAt: '',
   updatedAt: '',
 };
@@ -47,23 +52,58 @@ describe('usePagesList', () => {
     vi.clearAllMocks();
   });
 
-  it('createPage posts a new page for the given site and navigates to its editor', async () => {
+  it('createPage slugifies the given name and navigates to the new editor', async () => {
     const navigate = vi.fn();
     vi.mocked(router.useNavigate).mockReturnValue(navigate);
     vi.mocked(api.createPage).mockResolvedValue(samplePage);
 
     const { result } = renderHook(() => usePagesList('site-1'), { wrapper });
 
-    result.current.createPage();
+    await act(async () => {
+      await result.current.createPage('Chi Siamo');
+    });
 
+    expect(api.createPage).toHaveBeenCalledWith(
+      expect.objectContaining({
+        siteId: 'site-1',
+        slug: 'chi-siamo',
+        seoMeta: { title: 'Chi Siamo', description: '' },
+      }),
+    );
     await waitFor(() =>
       expect(navigate).toHaveBeenCalledWith({
         to: '/pages/$pageId',
         params: { pageId: samplePage.id },
       }),
     );
-    expect(api.createPage).toHaveBeenCalledWith(
-      expect.objectContaining({ siteId: 'site-1' }),
-    );
+  });
+
+  it('deletePage removes the page', async () => {
+    vi.mocked(router.useNavigate).mockReturnValue(vi.fn());
+    vi.mocked(api.deletePage).mockResolvedValue(undefined);
+
+    const { result } = renderHook(() => usePagesList('site-1'), { wrapper });
+
+    await act(async () => {
+      await result.current.deletePage(samplePage.id);
+    });
+
+    expect(api.deletePage).toHaveBeenCalledWith(samplePage.id);
+  });
+
+  it('publishPage publishes the page', async () => {
+    vi.mocked(router.useNavigate).mockReturnValue(vi.fn());
+    vi.mocked(api.publishPage).mockResolvedValue({
+      ...samplePage,
+      status: 'published',
+    });
+
+    const { result } = renderHook(() => usePagesList('site-1'), { wrapper });
+
+    await act(async () => {
+      await result.current.publishPage(samplePage.id);
+    });
+
+    expect(api.publishPage).toHaveBeenCalledWith(samplePage.id);
   });
 });

@@ -12,6 +12,14 @@ export class PageVersionNotFoundError extends Error {
   }
 }
 
+/** A page's (tenant, site, locale, slug) must be unique — see pages_tenant_site_idx sibling constraint in schema.ts. */
+export class PageSlugAlreadyExistsError extends Error {
+  constructor(slug: string) {
+    super(`A page with slug "${slug}" already exists for this site`);
+    this.name = 'PageSlugAlreadyExistsError';
+  }
+}
+
 /**
  * Deliberately generic: never reveals whether the email exists or the
  * password was wrong (prevents user enumeration via the login endpoint).

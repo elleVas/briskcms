@@ -143,6 +143,39 @@ describe('PagesController (integration)', () => {
     expect(res.body.fieldErrors.siteId).toBeDefined();
   });
 
+  it('400s on a slug that is not already in canonical (lowercase, hyphenated) form', async () => {
+    const res = await agent
+      .post('/pages')
+      .send(createPageBody({ slug: 'Not A Valid Slug!' }))
+      .expect(400);
+
+    expect(res.body.fieldErrors.slug).toBeDefined();
+  });
+
+  it('409s creating a page whose slug is already used on that site/locale', async () => {
+    const body = createPageBody({ slug: `taken-${randomUUID()}` });
+    await agent.post('/pages').send(body).expect(201);
+
+    await agent
+      .post('/pages')
+      .send(createPageBody({ slug: body.slug }))
+      .expect(409);
+  });
+
+  it('deletes a page', async () => {
+    const createRes = await agent
+      .post('/pages')
+      .send(createPageBody())
+      .expect(201);
+
+    await agent.delete(`/pages/${createRes.body.id}`).expect(204);
+    await agent.get(`/pages/${createRes.body.id}`).expect(404);
+  });
+
+  it('404s deleting a page that does not exist', async () => {
+    await agent.delete(`/pages/${randomUUID()}`).expect(404);
+  });
+
   it('401s without a session cookie', async () => {
     await request(app.getHttpServer())
       .get(`/pages/${randomUUID()}`)

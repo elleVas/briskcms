@@ -55,7 +55,27 @@
       "newPage": "New page",
       "empty": "No pages yet.",
       "statusPublished": "Published",
-      "statusDraft": "Draft"
+      "statusDraft": "Draft",
+      "actions": {
+        "edit": "Open editor",
+        "publish": "Publish",
+        "delete": "Delete"
+      }
+    },
+    "newPageDialog": {
+      "title": "New page",
+      "nameLabel": "Page name",
+      "slugPreview": "URL: {{slug}}",
+      "cancel": "Cancel",
+      "create": "Create",
+      "creating": "Creating...",
+      "slugTaken": "A page with this name already exists on this site."
+    },
+    "deleteDialog": {
+      "title": "Delete this page?",
+      "description": "\"{{name}}\" and all of its versions will be permanently deleted. This action cannot be undone.",
+      "cancel": "Cancel",
+      "confirm": "Delete"
     },
     "editor": {
       "backToList": "Pages",
