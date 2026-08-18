@@ -2,6 +2,7 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
+import { tanstackRouter } from '@tanstack/router-plugin/vite';
 
 export default defineConfig(() => ({
   root: import.meta.dirname,
@@ -21,7 +22,11 @@ export default defineConfig(() => ({
     port: 4200,
     host: 'localhost',
   },
-  plugins: [react(), tailwindcss()],
+  plugins: [
+    tanstackRouter({ target: 'react', autoCodeSplitting: true }),
+    react(),
+    tailwindcss(),
+  ],
   // Uncomment this if you are using workers.
   // worker: {
   //  plugins: [],
@@ -46,7 +51,12 @@ export default defineConfig(() => ({
       reportsDirectory: './test-output/vitest/coverage',
       provider: 'v8' as const,
       include: ['src/**/*.{ts,tsx}'],
-      exclude: ['src/**/*.spec.{ts,tsx}', 'src/main.tsx', 'src/test-setup.ts'],
+      exclude: [
+        'src/**/*.spec.{ts,tsx}',
+        'src/main.tsx',
+        'src/test-setup.ts',
+        'src/routeTree.gen.ts',
+      ],
       thresholds: {
         statements: 60,
         branches: 60,

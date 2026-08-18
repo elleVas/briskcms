@@ -37,7 +37,7 @@ describe('requestPasswordReset', () => {
 
     expect(deps.emailPort.sentEmails).toHaveLength(1);
     expect(deps.emailPort.sentEmails[0].html).toContain(
-      'https://editor.example.com/?resetToken=',
+      'https://editor.example.com/reset-password?resetToken=',
     );
   });
 

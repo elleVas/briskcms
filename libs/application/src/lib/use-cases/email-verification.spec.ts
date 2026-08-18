@@ -39,7 +39,7 @@ describe('requestEmailVerification', () => {
     expect(deps.emailPort.sentEmails).toHaveLength(1);
     expect(deps.emailPort.sentEmails[0].to).toBe('lele@example.com');
     expect(deps.emailPort.sentEmails[0].html).toContain(
-      'https://editor.example.com/?verifyToken=',
+      'https://editor.example.com/verify-email?verifyToken=',
     );
   });
 
