@@ -1,7 +1,7 @@
 import type { ComponentType, ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from '@tanstack/react-router';
-import { FileText, Image, Users } from 'lucide-react';
+import { FileText, FormInput, Image, Users } from 'lucide-react';
 import { AccountMenu } from './account-menu.js';
 import { SettingsMenu } from './settings-menu.js';
 import { Badge } from '../components/ui/badge.js';
@@ -53,6 +53,13 @@ export function AdminShell({ children }: AdminShellProps) {
             >
               <Image className="size-4" />
               {t('shell.nav.media')}
+            </Link>
+            <Link
+              to="/forms"
+              className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm font-medium hover:bg-muted"
+            >
+              <FormInput className="size-4" />
+              {t('shell.nav.forms')}
             </Link>
             <Separator className="my-2" />
             <DisabledNavItem label={t('shell.nav.users')} icon={Users} />

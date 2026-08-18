@@ -23,6 +23,9 @@
   ],
   "references": [
     {
+      "path": "../../libs/adapters/postgres-form-repository/tsconfig.lib.json"
+    },
+    {
       "path": "../../libs/adapters/verification-token-adapter/tsconfig.lib.json"
     },
     {

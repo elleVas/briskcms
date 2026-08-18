@@ -73,6 +73,59 @@ describe('getPublishedPageBySlug', () => {
       content: [{ type: 'Hero', props: { title: 'v1', subtitle: 'sub' } }],
       seoMeta: { title: 'Chi siamo', description: 'La nostra storia' },
       locale: 'it',
+      site: {
+        name: 'Sito di prova',
+        domain: 'example.com',
+        businessAddress: null,
+        businessPhone: null,
+        businessType: null,
+        openingHours: null,
+      },
+    });
+  });
+
+  it("includes the site's business info when set, for schema.org LocalBusiness", async () => {
+    const deps = setup();
+    await seedSite(deps.siteRepository, {
+      businessAddress: 'Via Roma 1, Milano',
+      businessPhone: '+39 02 1234567',
+      businessType: 'ProfessionalService',
+      openingHours: [
+        { dayOfWeek: 'monday', ranges: [{ opens: '09:00', closes: '18:00' }] },
+      ],
+    });
+    const page = await createPage(deps, {
+      tenantId,
+      siteId: 'site-1',
+      groupId: 'group-1',
+      locale: 'it',
+      slug: 'chi-siamo',
+      seoMeta: { title: 'Chi siamo', description: '' },
+      createdBy: 'user-1',
+    });
+    await saveDraft(deps, {
+      tenantId,
+      pageId: page.id,
+      content: [],
+      actorUserId: 'user-1',
+    });
+    await publishPage(deps, { tenantId, pageId: page.id });
+
+    const result = await getPublishedPageBySlug(deps, {
+      tenantId,
+      domain: 'example.com',
+      slug: 'chi-siamo',
+    });
+
+    expect(result?.site).toEqual({
+      name: 'Sito di prova',
+      domain: 'example.com',
+      businessAddress: 'Via Roma 1, Milano',
+      businessPhone: '+39 02 1234567',
+      businessType: 'ProfessionalService',
+      openingHours: [
+        { dayOfWeek: 'monday', ranges: [{ opens: '09:00', closes: '18:00' }] },
+      ],
     });
   });
 

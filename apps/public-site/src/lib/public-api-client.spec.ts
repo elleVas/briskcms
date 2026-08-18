@@ -1,11 +1,24 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { PublishedPageDto } from './public-api-client.js';
-import { getPublishedPageBySlug } from './public-api-client.js';
+import {
+  getPublicForm,
+  getPublishedPageBySlug,
+  listPublishedPages,
+  submitPublicForm,
+} from './public-api-client.js';
 
 const samplePage: PublishedPageDto = {
   content: [{ type: 'Hero', props: { title: 'Ciao', subtitle: 'Sub' } }],
   seoMeta: { title: 'Chi siamo', description: 'La nostra storia' },
   locale: 'it',
+  site: {
+    name: 'Sito di prova',
+    domain: 'example.com',
+    businessAddress: null,
+    businessPhone: null,
+    businessType: null,
+    openingHours: null,
+  },
 };
 
 function jsonResponse(body: unknown, status = 200) {
@@ -54,5 +67,84 @@ describe('public-api-client', () => {
     await expect(
       getPublishedPageBySlug('example.com', 'chi-siamo'),
     ).rejects.toThrow('Public pages API error: 500');
+  });
+
+  it('lists published pages for a domain, for the sitemap', async () => {
+    vi.mocked(fetch).mockResolvedValue(
+      jsonResponse({
+        items: [{ slug: 'chi-siamo', updatedAt: '2026-01-01T00:00:00.000Z' }],
+      }),
+    );
+
+    const result = await listPublishedPages('example.com');
+
+    expect(fetch).toHaveBeenCalledWith(
+      expect.stringContaining('/public/pages?domain=example.com'),
+    );
+    expect(result).toEqual([
+      { slug: 'chi-siamo', updatedAt: '2026-01-01T00:00:00.000Z' },
+    ]);
+  });
+
+  it('returns null when no site matches the domain', async () => {
+    vi.mocked(fetch).mockResolvedValue(
+      jsonResponse({ message: 'Not Found' }, 404),
+    );
+
+    const result = await listPublishedPages('nobody-has-this.test');
+
+    expect(result).toBeNull();
+  });
+
+  it('fetches a public form by id', async () => {
+    const form = { id: 'form-1', name: 'Contatti', fields: [] };
+    vi.mocked(fetch).mockResolvedValue(jsonResponse(form));
+
+    const result = await getPublicForm('form-1');
+
+    expect(fetch).toHaveBeenCalledWith(
+      expect.stringContaining('/public/forms/form-1'),
+    );
+    expect(result).toEqual(form);
+  });
+
+  it('getPublicForm returns null when the form does not exist', async () => {
+    vi.mocked(fetch).mockResolvedValue(
+      jsonResponse({ message: 'Not Found' }, 404),
+    );
+
+    const result = await getPublicForm('does-not-exist');
+
+    expect(result).toBeNull();
+  });
+
+  it('submitPublicForm posts the submission and reports success', async () => {
+    vi.mocked(fetch).mockResolvedValue(jsonResponse(undefined, 204));
+
+    const result = await submitPublicForm('form-1', {
+      pageId: null,
+      values: { email: 'visitor@example.com' },
+      honeypot: '',
+    });
+
+    expect(fetch).toHaveBeenCalledWith(
+      expect.stringContaining('/public/forms/form-1/submissions'),
+      expect.objectContaining({ method: 'POST' }),
+    );
+    expect(result).toEqual({ ok: true });
+  });
+
+  it('submitPublicForm reports failure with the status code, without throwing', async () => {
+    vi.mocked(fetch).mockResolvedValue(
+      jsonResponse({ message: 'Missing required field' }, 400),
+    );
+
+    const result = await submitPublicForm('form-1', {
+      pageId: null,
+      values: {},
+      honeypot: '',
+    });
+
+    expect(result).toEqual({ ok: false, status: 400 });
   });
 });

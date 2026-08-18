@@ -6,6 +6,7 @@ import '@puckeditor/core/puck.css';
 import { ExternalLink, History, Search } from 'lucide-react';
 import { puckConfig } from '@brisk/puck-config';
 import { toPuckData } from '../lib/puck-data-mapper.js';
+import { FormListProvider } from './form-list-provider.js';
 import { IconButton } from './icon-button.js';
 import { LogoutButton } from './logout-button.js';
 import { MediaPickerProvider } from './media-picker-provider.js';
@@ -52,73 +53,77 @@ export function PageEditorView({ pageId }: PageEditorViewProps) {
     // The whole view (not just <Puck>) is wrapped in MediaPickerProvider:
     // SeoPanelDialog's OG-image field reuses the same media picker as the
     // Image/Gallery Puck blocks, and it lives in the top bar, outside the
-    // canvas.
+    // canvas. FormListProvider only backs the Form block inside <Puck>, but
+    // nesting it here too keeps both providers alongside each other rather
+    // than splitting the wrapping between two different levels.
     <MediaPickerProvider siteId={page.siteId}>
-      <div
-        style={{ height: '100vh', display: 'flex', flexDirection: 'column' }}
-      >
-        <div className="flex items-center justify-between border-b px-3 py-1 text-xs text-muted-foreground">
-          <div className="flex items-center gap-3">
-            <Link to="/pages" className="hover:underline">
-              ← {t('pages.editor.backToList')}
-            </Link>
-            <span>{statusText}</span>
-            <IconButton
-              label={t('pages.seo.open')}
-              onClick={() => setIsSeoOpen(true)}
-            >
-              <Search />
-            </IconButton>
-            <IconButton
-              label={t('pages.versionHistory.open')}
-              onClick={() => setIsHistoryOpen(true)}
-            >
-              <History />
-            </IconButton>
-            {/* Only once there's something live to see — a draft-only page
-                would just 404 on the public site (see get-published-page-by-
-                slug.use-case.ts: unpublished and nonexistent are the same). */}
-            {page.status === 'published' && (
-              <IconButton label={t('pages.editor.viewPage')} asChild>
-                <a
-                  href={`${PUBLIC_SITE_URL}/${page.slug}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  <ExternalLink />
-                </a>
+      <FormListProvider siteId={page.siteId}>
+        <div
+          style={{ height: '100vh', display: 'flex', flexDirection: 'column' }}
+        >
+          <div className="flex items-center justify-between border-b px-3 py-1 text-xs text-muted-foreground">
+            <div className="flex items-center gap-3">
+              <Link to="/pages" className="hover:underline">
+                ← {t('pages.editor.backToList')}
+              </Link>
+              <span>{statusText}</span>
+              <IconButton
+                label={t('pages.seo.open')}
+                onClick={() => setIsSeoOpen(true)}
+              >
+                <Search />
               </IconButton>
-            )}
+              <IconButton
+                label={t('pages.versionHistory.open')}
+                onClick={() => setIsHistoryOpen(true)}
+              >
+                <History />
+              </IconButton>
+              {/* Only once there's something live to see — a draft-only page
+                  would just 404 on the public site (see get-published-page-by-
+                  slug.use-case.ts: unpublished and nonexistent are the same). */}
+              {page.status === 'published' && (
+                <IconButton label={t('pages.editor.viewPage')} asChild>
+                  <a
+                    href={`${PUBLIC_SITE_URL}/${page.slug}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <ExternalLink />
+                  </a>
+                </IconButton>
+              )}
+            </div>
+            <LogoutButton />
           </div>
-          <LogoutButton />
-        </div>
-        <div style={{ flex: 1, minHeight: 0 }}>
-          {/* Keyed on restoredAt, NOT page.updatedAt: every autosave also
-              bumps page.updatedAt (saveDraft's onSuccess writes the fresh
-              page into the query cache), and keying on that remounted Puck
-              on every save — wiping in-progress edits, e.g. a block
-              mid-drag — instead of only after a rollback like intended. */}
-          <Puck
-            key={restoredAt}
-            config={puckConfig}
-            data={toPuckData(page.content)}
-            onChange={handleChange}
-            onPublish={handlePublish}
+          <div style={{ flex: 1, minHeight: 0 }}>
+            {/* Keyed on restoredAt, NOT page.updatedAt: every autosave also
+                bumps page.updatedAt (saveDraft's onSuccess writes the fresh
+                page into the query cache), and keying on that remounted Puck
+                on every save — wiping in-progress edits, e.g. a block
+                mid-drag — instead of only after a rollback like intended. */}
+            <Puck
+              key={restoredAt}
+              config={puckConfig}
+              data={toPuckData(page.content)}
+              onChange={handleChange}
+              onPublish={handlePublish}
+            />
+          </div>
+          <VersionHistoryDialog
+            pageId={pageId}
+            open={isHistoryOpen}
+            onOpenChange={setIsHistoryOpen}
+            onRestored={() => setRestoredAt((n) => n + 1)}
+          />
+          <SeoPanelDialog
+            pageId={pageId}
+            seoMeta={page.seoMeta}
+            open={isSeoOpen}
+            onOpenChange={setIsSeoOpen}
           />
         </div>
-        <VersionHistoryDialog
-          pageId={pageId}
-          open={isHistoryOpen}
-          onOpenChange={setIsHistoryOpen}
-          onRestored={() => setRestoredAt((n) => n + 1)}
-        />
-        <SeoPanelDialog
-          pageId={pageId}
-          seoMeta={page.seoMeta}
-          open={isSeoOpen}
-          onOpenChange={setIsSeoOpen}
-        />
-      </div>
+      </FormListProvider>
     </MediaPickerProvider>
   );
 }

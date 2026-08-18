@@ -1,12 +1,29 @@
 ---
 import type { SeoMeta } from '@brisk/shared-types';
+import type { PublishedSiteDto } from '../lib/public-api-client.js';
+import { buildSchemaOrgGraph } from '../lib/schema-org.js';
 
 interface Props {
   seoMeta: SeoMeta;
   locale: string;
+  site: PublishedSiteDto;
 }
 
-const { seoMeta, locale } = Astro.props;
+const { seoMeta, locale, site } = Astro.props;
+
+// Astro.url reflects the actual request in any component, not just a
+// top-level page (verified in Form.astro too) — no need to thread this
+// down as a prop from every caller.
+const pageUrl = Astro.url.href;
+const ogImage = seoMeta.ogTags?.['image'];
+
+const schemaOrgGraph = buildSchemaOrgGraph({ site, seoMeta, pageUrl });
+// JSON.stringify doesn't escape "<" — a "</script>" inside any string value
+// (e.g. a site name an admin typed) would otherwise break out of this tag.
+// The safety concern is about embedding JSON.stringify's output as raw
+// script content, not the SEO/business data itself, so it lives here at the
+// embedding point rather than in schema-org.ts's own (pure, testable) logic.
+const schemaOrgJson = JSON.stringify(schemaOrgGraph).replace(/</g, '\\u003c');
 ---
 
 <html lang={locale}>
@@ -19,6 +36,21 @@ const { seoMeta, locale } = Astro.props;
 		<title>{seoMeta.title}</title>
 		<meta name="description" content={seoMeta.description} />
 		{seoMeta.canonical && <link rel="canonical" href={seoMeta.canonical} />}
+
+		<meta property="og:type" content="website" />
+		<meta property="og:title" content={seoMeta.title} />
+		<meta property="og:description" content={seoMeta.description} />
+		<meta property="og:url" content={pageUrl} />
+		{ogImage && <meta property="og:image" content={ogImage} />}
+		<meta
+			name="twitter:card"
+			content={ogImage ? 'summary_large_image' : 'summary'}
+		/>
+		<meta name="twitter:title" content={seoMeta.title} />
+		<meta name="twitter:description" content={seoMeta.description} />
+		{ogImage && <meta name="twitter:image" content={ogImage} />}
+
+		<script type="application/ld+json" set:html={schemaOrgJson} />
 	</head>
 	<body>
 		<slot />

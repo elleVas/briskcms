@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
+  FormNotFoundError,
   InvalidCredentialsError,
+  InvalidFormSubmissionError,
   InvalidOrExpiredTokenError,
   PageNotFoundError,
   PageVersionNotFoundError,
@@ -54,5 +56,27 @@ describe('SiteNotFoundError', () => {
     expect(error).toBeInstanceOf(Error);
     expect(error.name).toBe('SiteNotFoundError');
     expect(error.message).toBe('Site not found: site-1');
+  });
+});
+
+describe('FormNotFoundError', () => {
+  it('carries the missing form id in its message and is a real Error', () => {
+    const error = new FormNotFoundError('form-1');
+
+    expect(error).toBeInstanceOf(Error);
+    expect(error.name).toBe('FormNotFoundError');
+    expect(error.message).toBe('Form not found: form-1');
+  });
+});
+
+describe('InvalidFormSubmissionError', () => {
+  it('carries the given message and is a real Error', () => {
+    const error = new InvalidFormSubmissionError(
+      'Missing required field: email',
+    );
+
+    expect(error).toBeInstanceOf(Error);
+    expect(error.name).toBe('InvalidFormSubmissionError');
+    expect(error.message).toBe('Missing required field: email');
   });
 });

@@ -98,6 +98,14 @@ describe('PublicPagesController (integration)', () => {
       content: [{ type: 'Hero', props: { title: 'Ciao' } }],
       seoMeta: { title: 'Chi siamo', description: 'La nostra storia' },
       locale: 'it',
+      site: {
+        name: 'Public Test Site',
+        domain,
+        businessAddress: null,
+        businessPhone: null,
+        businessType: null,
+        openingHours: null,
+      },
     });
   });
 
@@ -138,5 +146,50 @@ describe('PublicPagesController (integration)', () => {
       .get('/public/pages/by-slug')
       .query({ domain: 'not a valid host!!', slug: 'chi-siamo' })
       .expect(400);
+  });
+
+  it('lists published pages for the domain, for the sitemap, without a session', async () => {
+    const publishedRes = await agent
+      .post('/pages')
+      .send({
+        siteId,
+        groupId: randomUUID(),
+        locale: 'it',
+        slug: 'servizi',
+        seoMeta: { title: 'Servizi', description: '' },
+      })
+      .expect(201);
+    await agent
+      .patch(`/pages/${publishedRes.body.id}/draft`)
+      .send({ content: [] })
+      .expect(200);
+    await agent.post(`/pages/${publishedRes.body.id}/publish`).expect(201);
+
+    await agent
+      .post('/pages')
+      .send({
+        siteId,
+        groupId: randomUUID(),
+        locale: 'it',
+        slug: 'mai-pubblicata',
+        seoMeta: { title: 'Mai pubblicata', description: '' },
+      })
+      .expect(201);
+
+    const res = await request(app.getHttpServer())
+      .get('/public/pages')
+      .query({ domain })
+      .expect(200);
+
+    const slugs = res.body.items.map((item: { slug: string }) => item.slug);
+    expect(slugs).toContain('servizi');
+    expect(slugs).not.toContain('mai-pubblicata');
+  });
+
+  it('404s listing pages for a domain that does not match any site', async () => {
+    await request(app.getHttpServer())
+      .get('/public/pages')
+      .query({ domain: 'nobody-owns-this-domain.test' })
+      .expect(404);
   });
 });

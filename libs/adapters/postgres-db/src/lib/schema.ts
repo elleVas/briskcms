@@ -12,6 +12,7 @@ import {
   uuid,
 } from 'drizzle-orm/pg-core';
 import type {
+  FormField,
   OpeningHoursDay,
   PageContent,
   SeoMeta,
@@ -214,6 +215,31 @@ export const verificationTokens = pgTable(
   ],
 );
 
+export const forms = pgTable(
+  'forms',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    tenantId: uuid('tenant_id')
+      .notNull()
+      .references(() => tenants.id, { onDelete: 'cascade' }),
+    siteId: uuid('site_id')
+      .notNull()
+      .references(() => sites.id, { onDelete: 'cascade' }),
+    name: text('name').notNull(),
+    // Sole source of truth for both public rendering and submission
+    // validation (docs/adr/0015) — no separate schema anywhere else.
+    fields: jsonb('fields').notNull().default([]).$type<FormField[]>(),
+    notificationEmail: text('notification_email'),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [index('forms_tenant_site_idx').on(table.tenantId, table.siteId)],
+);
+
 export const formSubmissions = pgTable(
   'form_submissions',
   {
@@ -226,6 +252,10 @@ export const formSubmissions = pgTable(
       .references(() => sites.id, { onDelete: 'cascade' }),
     // preserves history even if the page is later removed
     pageId: uuid('page_id').references(() => pages.id, {
+      onDelete: 'set null',
+    }),
+    // preserves history even if the form is later deleted (docs/adr/0015)
+    formId: uuid('form_id').references(() => forms.id, {
       onDelete: 'set null',
     }),
     payload: jsonb('payload').notNull().$type<Record<string, unknown>>(),

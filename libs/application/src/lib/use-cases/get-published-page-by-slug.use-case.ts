@@ -1,4 +1,4 @@
-import type { Block, SeoMeta } from '@brisk/shared-types';
+import type { Block, OpeningHoursDay, SeoMeta } from '@brisk/shared-types';
 import type { PageRepositoryPort, SiteRepositoryPort } from '@brisk/ports';
 
 export interface GetPublishedPageBySlugDeps {
@@ -12,10 +12,21 @@ export interface GetPublishedPageBySlugInput {
   slug: string;
 }
 
+/** Only what the public renderer needs for OG tags + schema.org (docs/adr/0014) — never the tenant id or anything else internal. */
+export interface PublishedSite {
+  name: string;
+  domain: string | null;
+  businessAddress: string | null;
+  businessPhone: string | null;
+  businessType: string | null;
+  openingHours: OpeningHoursDay[] | null;
+}
+
 export interface PublishedPage {
   content: Block[];
   seoMeta: SeoMeta;
   locale: string;
+  site: PublishedSite;
 }
 
 /**
@@ -54,5 +65,13 @@ export async function getPublishedPageBySlug(
     content: page.publishedContent,
     seoMeta: page.seoMeta,
     locale: page.locale,
+    site: {
+      name: site.name,
+      domain: site.domain,
+      businessAddress: site.businessAddress,
+      businessPhone: site.businessPhone,
+      businessType: site.businessType,
+      openingHours: site.openingHours,
+    },
   };
 }

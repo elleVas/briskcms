@@ -87,3 +87,20 @@ export const galleryPropsSchema = z.object({
   ),
 });
 export type GalleryProps = z.infer<typeof galleryPropsSchema>;
+
+/**
+ * `formName` is denormalized purely as the editor canvas label (docs/adr/0015)
+ * — unlike `PickedMedia.url`, it is never used for rendering on the public
+ * site, which live-fetches the form's current name/fields by `formId` on
+ * every render instead of trusting this snapshot.
+ */
+export const pickedFormSchema = z.object({
+  formId: z.string(),
+  formName: z.string(),
+});
+export type PickedForm = z.infer<typeof pickedFormSchema>;
+
+export const formBlockPropsSchema = z.object({
+  form: pickedFormSchema.nullable(),
+});
+export type FormBlockProps = z.infer<typeof formBlockPropsSchema>;

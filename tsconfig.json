@@ -59,6 +59,9 @@
     },
     {
       "path": "./libs/adapters/postgres-media-repository"
+    },
+    {
+      "path": "./libs/adapters/postgres-form-repository"
     }
   ],
   "compilerOptions": {}

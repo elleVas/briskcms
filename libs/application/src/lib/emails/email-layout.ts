@@ -13,6 +13,16 @@ export function ctaButtonHtml(url: string, label: string): string {
   return `<a href="${url}" style="display:inline-block;background:${ACCENT_COLOR};color:#ffffff;text-decoration:none;padding:12px 24px;border-radius:6px;font-weight:600;font-size:14px;margin-top:8px;">${label}</a>`;
 }
 
+/** The only email body built from untrusted (visitor-submitted) input — every other template's content is server-controlled. */
+export function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 export function renderEmailLayout(bodyHtml: string): string {
   return `<table role="presentation" width="100%" style="background:#f4f4f5;padding:32px 0;font-family:-apple-system,Helvetica,Arial,sans-serif;">
   <tr><td align="center">

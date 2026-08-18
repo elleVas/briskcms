@@ -8,10 +8,12 @@ describe('puckConfig', () => {
       'Text',
       'Image',
       'Gallery',
+      'Form',
     ]);
     expect(typeof puckConfig.components.Hero.render).toBe('function');
     expect(typeof puckConfig.components.Text.render).toBe('function');
     expect(typeof puckConfig.components.Image.render).toBe('function');
     expect(typeof puckConfig.components.Gallery.render).toBe('function');
+    expect(typeof puckConfig.components.Form.render).toBe('function');
   });
 });

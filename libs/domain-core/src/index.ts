@@ -3,6 +3,7 @@ export * from './lib/entities/page-version.js';
 export * from './lib/entities/site.js';
 export * from './lib/entities/user.js';
 export * from './lib/entities/media.js';
+export * from './lib/entities/form.js';
 export * from './lib/entities/form-submission.js';
 export * from './lib/errors.js';
 export * from './lib/verification-token-purpose.js';

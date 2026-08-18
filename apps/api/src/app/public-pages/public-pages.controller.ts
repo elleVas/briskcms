@@ -7,12 +7,17 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ThrottlerGuard } from '@nestjs/throttler';
-import { getPublishedPageBySlug } from '@brisk/application';
+import {
+  getPublishedPageBySlug,
+  listPublishedPagesForSitemap,
+} from '@brisk/application';
 import type { PageRepositoryPort, SiteRepositoryPort } from '@brisk/ports';
 import { ZodValidationPipe } from '../zod-validation.pipe.js';
 import {
   type PublicPageBySlugQuery,
   publicPageBySlugQuerySchema,
+  type PublicPagesListQuery,
+  publicPagesListQuerySchema,
 } from './public-pages.schemas.js';
 import {
   DEFAULT_TENANT_ID,
@@ -33,6 +38,27 @@ export class PublicPagesController {
     private readonly siteRepository: SiteRepositoryPort,
     @Inject(DEFAULT_TENANT_ID) private readonly defaultTenantId: string,
   ) {}
+
+  @Get()
+  async list(
+    @Query(new ZodValidationPipe(publicPagesListQuerySchema))
+    query: PublicPagesListQuery,
+  ) {
+    const items = await listPublishedPagesForSitemap(
+      {
+        siteRepository: this.siteRepository,
+        pageRepository: this.pageRepository,
+      },
+      { tenantId: this.defaultTenantId, domain: query.domain },
+    );
+    // Same "no oracle" reasoning as by-slug: an unmatched domain 404s
+    // instead of silently returning an empty list, so a caller can't use
+    // this to probe which domains exist.
+    if (items === null) {
+      throw new NotFoundException();
+    }
+    return { items };
+  }
 
   @Get('by-slug')
   async findBySlug(

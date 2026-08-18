@@ -219,6 +219,9 @@ importers:
       '@brisk/postgres-db':
         specifier: workspace:*
         version: link:../../libs/adapters/postgres-db
+      '@brisk/postgres-form-repository':
+        specifier: workspace:*
+        version: link:../../libs/adapters/postgres-form-repository
       '@brisk/postgres-media-repository':
         specifier: workspace:*
         version: link:../../libs/adapters/postgres-media-repository
@@ -430,6 +433,25 @@ importers:
       tsx:
         specifier: ^4.23.12
         version: 4.23.12
+
+  libs/adapters/postgres-form-repository:
+    dependencies:
+      '@brisk/domain-core':
+        specifier: workspace:*
+        version: link:../../domain-core
+      '@brisk/ports':
+        specifier: workspace:*
+        version: link:../../ports
+      '@brisk/postgres-db':
+        specifier: workspace:*
+        version: link:../postgres-db
+      drizzle-orm:
+        specifier: ^0.45.2
+        version: 0.45.2(postgres@3.4.9)
+    devDependencies:
+      dotenv:
+        specifier: ^17.4.2
+        version: 17.4.2
 
   libs/adapters/postgres-media-repository:
     dependencies:

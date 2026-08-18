@@ -1,11 +1,13 @@
 ---
 import {
+  formBlockPropsSchema,
   galleryPropsSchema,
   heroPropsSchema,
   imagePropsSchema,
   textPropsSchema,
   type Block,
 } from '@brisk/shared-types';
+import Form from './blocks/Form.astro';
 import Gallery from './blocks/Gallery.astro';
 import Hero from './blocks/Hero.astro';
 import Image from './blocks/Image.astro';
@@ -34,6 +36,7 @@ const { block } = Astro.props;
     <Gallery {...galleryPropsSchema.parse(block.props)} />
   )
 }
+{block.type === 'Form' && <Form {...formBlockPropsSchema.parse(block.props)} />}
 {
   block.children?.map((child) => (
     <Astro.self block={child} />
