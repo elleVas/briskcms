@@ -11,7 +11,11 @@ import {
   unique,
   uuid,
 } from 'drizzle-orm/pg-core';
-import type { PageContent, SeoMeta } from '@brisk/shared-types';
+import type {
+  OpeningHoursDay,
+  PageContent,
+  SeoMeta,
+} from '@brisk/shared-types';
 import type {
   PageStatus,
   StorageProvider,
@@ -57,6 +61,12 @@ export const sites = pgTable('sites', {
   domain: text('domain'),
   defaultLocale: text('default_locale').notNull(),
   enabledLocales: text('enabled_locales').array().notNull().default([]),
+  // schema.org LocalBusiness fields (docs/adr/0014) — all nullable, a site
+  // with none of them set renders plain WebSite/WebPage instead.
+  businessAddress: text('business_address'),
+  businessPhone: text('business_phone'),
+  businessType: text('business_type'),
+  openingHours: jsonb('opening_hours').$type<OpeningHoursDay[]>(),
   createdAt: timestamp('created_at', { withTimezone: true })
     .notNull()
     .defaultNow(),

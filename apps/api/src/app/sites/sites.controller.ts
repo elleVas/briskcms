@@ -1,0 +1,72 @@
+import {
+  Body,
+  Controller,
+  Get,
+  Inject,
+  NotFoundException,
+  Param,
+  Patch,
+  UseGuards,
+} from '@nestjs/common';
+import { updateSiteBusinessInfo } from '@brisk/application';
+import { SiteNotFoundError } from '@brisk/domain-core';
+import type { SiteRepositoryPort, TenantContextPort } from '@brisk/ports';
+import { SessionAuthGuard } from '../auth/session-auth.guard.js';
+import { ZodValidationPipe } from '../zod-validation.pipe.js';
+import {
+  type UpdateBusinessInfoBody,
+  updateBusinessInfoBodySchema,
+} from './sites.schemas.js';
+import { SITE_REPOSITORY, TENANT_CONTEXT } from './sites.tokens.js';
+
+@Controller('sites')
+@UseGuards(SessionAuthGuard)
+export class SitesController {
+  constructor(
+    @Inject(SITE_REPOSITORY)
+    private readonly siteRepository: SiteRepositoryPort,
+    @Inject(TENANT_CONTEXT) private readonly tenantContext: TenantContextPort,
+  ) {}
+
+  @Get(':id')
+  async findById(@Param('id') id: string) {
+    const site = await this.siteRepository.findById(
+      this.tenantContext.getCurrentTenantId(),
+      id,
+    );
+    if (!site) {
+      throw new NotFoundException(`Site not found: ${id}`);
+    }
+    return site.toProps();
+  }
+
+  @Patch(':id/business-info')
+  async updateBusinessInfo(
+    @Param('id') id: string,
+    @Body(new ZodValidationPipe(updateBusinessInfoBodySchema))
+    body: UpdateBusinessInfoBody,
+  ) {
+    return this.handleDomainErrors(async () => {
+      const site = await updateSiteBusinessInfo(
+        { siteRepository: this.siteRepository },
+        {
+          tenantId: this.tenantContext.getCurrentTenantId(),
+          siteId: id,
+          ...body,
+        },
+      );
+      return site.toProps();
+    });
+  }
+
+  private async handleDomainErrors<T>(fn: () => Promise<T>): Promise<T> {
+    try {
+      return await fn();
+    } catch (error) {
+      if (error instanceof SiteNotFoundError) {
+        throw new NotFoundException(error.message);
+      }
+      throw error;
+    }
+  }
+}

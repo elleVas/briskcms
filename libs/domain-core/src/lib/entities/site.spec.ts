@@ -9,6 +9,10 @@ describe('Site entity', () => {
     domain: 'example.com',
     defaultLocale: 'it',
     enabledLocales: ['it', 'en'],
+    businessAddress: null,
+    businessPhone: null,
+    businessType: null,
+    openingHours: null,
     createdAt: new Date('2026-01-01T00:00:00Z'),
   };
 
@@ -21,6 +25,10 @@ describe('Site entity', () => {
     expect(site.domain).toBe('example.com');
     expect(site.defaultLocale).toBe('it');
     expect(site.enabledLocales).toEqual(['it', 'en']);
+    expect(site.businessAddress).toBeNull();
+    expect(site.businessPhone).toBeNull();
+    expect(site.businessType).toBeNull();
+    expect(site.openingHours).toBeNull();
     expect(site.createdAt).toEqual(props.createdAt);
   });
 
@@ -34,5 +42,34 @@ describe('Site entity', () => {
     const site = Site.fromProps({ ...props, domain: null });
 
     expect(site.domain).toBeNull();
+  });
+
+  it('hasBusinessInfo is false when every business field is null', () => {
+    const site = Site.fromProps(props);
+
+    expect(site.hasBusinessInfo()).toBe(false);
+  });
+
+  it('hasBusinessInfo is true once any business field is set', () => {
+    const site = Site.fromProps({ ...props, businessPhone: '+39 02 123' });
+
+    expect(site.hasBusinessInfo()).toBe(true);
+  });
+
+  it('updateBusinessInfo replaces the business fields', () => {
+    const site = Site.fromProps(props);
+
+    site.updateBusinessInfo({
+      businessAddress: 'Via Roma 1, Milano',
+      businessPhone: '+39 02 1234567',
+      businessType: 'Restaurant',
+      openingHours: [{ dayOfWeek: 'monday', ranges: [] }],
+    });
+
+    expect(site.businessAddress).toBe('Via Roma 1, Milano');
+    expect(site.businessPhone).toBe('+39 02 1234567');
+    expect(site.businessType).toBe('Restaurant');
+    expect(site.openingHours).toEqual([{ dayOfWeek: 'monday', ranges: [] }]);
+    expect(site.hasBusinessInfo()).toBe(true);
   });
 });

@@ -118,6 +118,16 @@ export class Page {
     this.props.updatedAt = now;
   }
 
+  /**
+   * Aggiorna i metadati SEO, indipendentemente da draft/pubblicazione
+   * (vedi ADR-0014: non è block content, non passa dal formato dati di
+   * Puck né dal versioning di page_versions, che traccia solo `content`).
+   */
+  updateSeoMeta(seoMeta: SeoMeta, now: Date = new Date()): void {
+    this.props.seoMeta = seoMeta;
+    this.props.updatedAt = now;
+  }
+
   /** Promuove il draft corrente a versione pubblicata. */
   publish(now: Date = new Date()): void {
     this.props.publishedContent = this.props.content;

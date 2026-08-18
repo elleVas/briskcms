@@ -128,6 +128,11 @@ export class InMemorySiteRepository implements SiteRepositoryPort {
     }
     return null;
   }
+
+  async findById(tenantId: string, id: string): Promise<Site | null> {
+    const site = this.sites.get(id);
+    return site && site.tenantId === tenantId ? site : null;
+  }
 }
 
 export class InMemoryMediaRepository implements MediaRepositoryPort {

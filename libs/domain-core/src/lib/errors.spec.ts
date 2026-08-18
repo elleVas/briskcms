@@ -4,6 +4,7 @@ import {
   InvalidOrExpiredTokenError,
   PageNotFoundError,
   PageVersionNotFoundError,
+  SiteNotFoundError,
 } from './errors.js';
 
 describe('PageNotFoundError', () => {
@@ -43,5 +44,15 @@ describe('InvalidOrExpiredTokenError', () => {
     expect(error).toBeInstanceOf(Error);
     expect(error.name).toBe('InvalidOrExpiredTokenError');
     expect(error.message).toBe('Invalid or expired token');
+  });
+});
+
+describe('SiteNotFoundError', () => {
+  it('carries the missing site id in its message and is a real Error', () => {
+    const error = new SiteNotFoundError('site-1');
+
+    expect(error).toBeInstanceOf(Error);
+    expect(error.name).toBe('SiteNotFoundError');
+    expect(error.message).toBe('Site not found: site-1');
   });
 });

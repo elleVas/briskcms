@@ -21,6 +21,7 @@ import {
   publishPage,
   rollbackToVersion,
   saveDraft,
+  updateSeoMeta,
 } from '@brisk/application';
 import {
   PageNotFoundError,
@@ -48,6 +49,8 @@ import {
   rollbackBodySchema,
   type SaveDraftBody,
   saveDraftBodySchema,
+  type UpdateSeoMetaBody,
+  updateSeoMetaBodySchema,
 } from './pages.schemas.js';
 
 @Controller('pages')
@@ -148,6 +151,25 @@ export class PagesController {
           pageId: id,
           content: body.content,
           actorUserId: null,
+        },
+      );
+      return page.toProps();
+    });
+  }
+
+  @Patch(':id/seo')
+  async updateSeo(
+    @Param('id') id: string,
+    @Body(new ZodValidationPipe(updateSeoMetaBodySchema))
+    body: UpdateSeoMetaBody,
+  ) {
+    return this.handleDomainErrors(async () => {
+      const page = await updateSeoMeta(
+        { pageRepository: this.pageRepository },
+        {
+          tenantId: this.tenantContext.getCurrentTenantId(),
+          pageId: id,
+          seoMeta: body.seoMeta,
         },
       );
       return page.toProps();

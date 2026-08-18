@@ -126,6 +126,45 @@ describe('PagesController (integration)', () => {
     ]);
   });
 
+  it('updates seoMeta without touching content', async () => {
+    const createRes = await agent
+      .post('/pages')
+      .send(createPageBody())
+      .expect(201);
+    const pageId = createRes.body.id;
+    await agent
+      .patch(`/pages/${pageId}/draft`)
+      .send({ content: [{ type: 'Text', props: { body: 'ciao' } }] })
+      .expect(200);
+
+    const seoRes = await agent
+      .patch(`/pages/${pageId}/seo`)
+      .send({
+        seoMeta: {
+          title: 'Nuovo titolo SEO',
+          description: 'Nuova descrizione',
+          canonical: 'https://example.com/pagina',
+        },
+      })
+      .expect(200);
+
+    expect(seoRes.body.seoMeta).toEqual({
+      title: 'Nuovo titolo SEO',
+      description: 'Nuova descrizione',
+      canonical: 'https://example.com/pagina',
+    });
+    expect(seoRes.body.content).toEqual([
+      { type: 'Text', props: { body: 'ciao' } },
+    ]);
+  });
+
+  it('404s updating seo for a page that does not exist', async () => {
+    await agent
+      .patch(`/pages/${randomUUID()}/seo`)
+      .send({ seoMeta: { title: 'x', description: '' } })
+      .expect(404);
+  });
+
   it('findBySlug and findById return the same page', async () => {
     const body = createPageBody();
     const createRes = await agent.post('/pages').send(body).expect(201);

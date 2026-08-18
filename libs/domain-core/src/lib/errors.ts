@@ -39,6 +39,13 @@ export class InvalidOrExpiredTokenError extends Error {
   }
 }
 
+export class SiteNotFoundError extends Error {
+  constructor(siteId: string) {
+    super(`Site not found: ${siteId}`);
+    this.name = 'SiteNotFoundError';
+  }
+}
+
 export class MediaNotFoundError extends Error {
   constructor(mediaId: string) {
     super(`Media not found: ${mediaId}`);

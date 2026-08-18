@@ -7,4 +7,6 @@ import type { Site } from '@brisk/domain-core';
  */
 export interface SiteRepositoryPort {
   findByDomain(tenantId: string, domain: string): Promise<Site | null>;
+  findById(tenantId: string, id: string): Promise<Site | null>;
+  save(site: Site): Promise<void>;
 }

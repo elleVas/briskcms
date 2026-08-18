@@ -39,3 +39,8 @@ export const rollbackBodySchema = z.object({
   versionId: z.string().uuid(),
 });
 export type RollbackBody = z.infer<typeof rollbackBodySchema>;
+
+export const updateSeoMetaBodySchema = z.object({
+  seoMeta: seoMetaSchema,
+});
+export type UpdateSeoMetaBody = z.infer<typeof updateSeoMetaBodySchema>;

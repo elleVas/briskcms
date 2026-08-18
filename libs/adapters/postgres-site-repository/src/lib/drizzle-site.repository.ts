@@ -20,4 +20,25 @@ export class DrizzleSiteRepository implements SiteRepositoryPort {
     );
     return rows[0] ? fromRow(rows[0]) : null;
   }
+
+  async findById(tenantId: string, id: string): Promise<Site | null> {
+    const rows = await withTenant(this.db, tenantId, (tx) =>
+      tx
+        .select()
+        .from(sites)
+        .where(and(eq(sites.tenantId, tenantId), eq(sites.id, id)))
+        .limit(1),
+    );
+    return rows[0] ? fromRow(rows[0]) : null;
+  }
+
+  async save(site: Site): Promise<void> {
+    const row = site.toProps();
+    await withTenant(this.db, row.tenantId, (tx) =>
+      tx
+        .insert(sites)
+        .values(row)
+        .onConflictDoUpdate({ target: sites.id, set: row }),
+    );
+  }
 }
