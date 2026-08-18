@@ -16,8 +16,8 @@ import { ZodValidationPipe } from '../zod-validation.pipe.js';
 import {
   type PublicPageBySlugQuery,
   publicPageBySlugQuerySchema,
-  type PublicPagesListQuery,
-  publicPagesListQuerySchema,
+  type PublicPagesSitemapQuery,
+  publicPagesSitemapQuerySchema,
 } from './public-pages.schemas.js';
 import {
   DEFAULT_TENANT_ID,
@@ -38,27 +38,6 @@ export class PublicPagesController {
     private readonly siteRepository: SiteRepositoryPort,
     @Inject(DEFAULT_TENANT_ID) private readonly defaultTenantId: string,
   ) {}
-
-  @Get()
-  async list(
-    @Query(new ZodValidationPipe(publicPagesListQuerySchema))
-    query: PublicPagesListQuery,
-  ) {
-    const result = await listPublishedPagesForSitemap(
-      {
-        siteRepository: this.siteRepository,
-        pageRepository: this.pageRepository,
-      },
-      { tenantId: this.defaultTenantId, domain: query.domain },
-    );
-    // Same "no oracle" reasoning as by-slug: an unmatched domain 404s
-    // instead of silently returning an empty list, so a caller can't use
-    // this to probe which domains exist.
-    if (result === null) {
-      throw new NotFoundException();
-    }
-    return result;
-  }
 
   @Get('by-slug')
   async findBySlug(
@@ -84,5 +63,23 @@ export class PublicPagesController {
       throw new NotFoundException();
     }
     return result;
+  }
+
+  @Get()
+  async listForSitemap(
+    @Query(new ZodValidationPipe(publicPagesSitemapQuerySchema))
+    query: PublicPagesSitemapQuery,
+  ) {
+    const result = await listPublishedPagesForSitemap(
+      {
+        siteRepository: this.siteRepository,
+        pageRepository: this.pageRepository,
+      },
+      { tenantId: this.defaultTenantId, domain: query.domain },
+    );
+    // An unrecognized domain renders as an empty, indexing-allowed
+    // sitemap/robots response, not a 404 — see listPublishedPagesForSitemap's
+    // own comment on why, and docs/adr/0016 for the indexing-allowed default.
+    return result ?? { items: [], searchEngineIndexingEnabled: true };
   }
 }

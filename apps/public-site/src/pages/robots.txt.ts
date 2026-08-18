@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro';
-import { listPublishedPages } from '../lib/public-api-client.js';
+import { listPublishedPagesForSitemap } from '../lib/public-api-client.js';
 
 export const prerender = false;
 
@@ -7,15 +7,16 @@ export const GET: APIRoute = async ({ url }) => {
   // A domain that matches no site is a deployment misconfiguration — falls
   // back to "allow" rather than blocking everything for a request that
   // shouldn't be reachable under this domain in the first place.
-  const listing = await listPublishedPages(url.hostname);
-  const indexingEnabled = listing?.searchEngineIndexingEnabled ?? true;
+  const { searchEngineIndexingEnabled } = await listPublishedPagesForSitemap(
+    url.hostname,
+  );
 
   // "Discourage search engines from indexing this site" (docs/adr/0016):
   // blocks crawling entirely here, and PageLayout.astro adds a per-page
   // <meta name="robots" content="noindex, nofollow"> on top — belt and
   // braces, since respecting either signal is up to the crawler, not
   // enforced by this server.
-  const body = indexingEnabled
+  const body = searchEngineIndexingEnabled
     ? `User-agent: *
 Allow: /
 
@@ -26,7 +27,6 @@ Disallow: /
 `;
 
   return new Response(body, {
-    status: 200,
-    headers: { 'Content-Type': 'text/plain' },
+    headers: { 'Content-Type': 'text/plain; charset=utf-8' },
   });
 };

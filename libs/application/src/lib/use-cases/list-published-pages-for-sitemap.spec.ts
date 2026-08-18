@@ -65,7 +65,7 @@ describe('listPublishedPagesForSitemap', () => {
     await publishPage(deps, { tenantId, pageId: page.id });
   }
 
-  it('lists only published pages for the domain', async () => {
+  it('lists only published pages for the domain, skipping drafts', async () => {
     const deps = setup();
     await seedSite(deps.siteRepository);
     await createAndPublish(deps, 'chi-siamo');
@@ -101,6 +101,18 @@ describe('listPublishedPagesForSitemap', () => {
     });
 
     expect(result).toBeNull();
+  });
+
+  it('returns an empty items array for a site with no published pages', async () => {
+    const deps = setup();
+    await seedSite(deps.siteRepository);
+
+    const result = await listPublishedPagesForSitemap(deps, {
+      tenantId,
+      domain: 'example.com',
+    });
+
+    expect(result?.items).toEqual([]);
   });
 
   it("includes the site's search engine indexing flag", async () => {

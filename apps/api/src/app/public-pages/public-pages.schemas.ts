@@ -3,6 +3,9 @@ import { pageSlugSchema } from '../pages/pages.schemas.js';
 
 // Rejects anything that isn't a plausible hostname before it ever reaches a
 // query — a malformed Host header shouldn't get as far as the database.
+// Exported: sites.schemas.ts reuses this for a site's own `domain` field
+// (see docs/adr/0016) — the identical validation, just checked at write
+// time there instead of read time here.
 export const domainSchema = z
   .string()
   .min(1)
@@ -18,7 +21,9 @@ export const publicPageBySlugQuerySchema = z.object({
 });
 export type PublicPageBySlugQuery = z.infer<typeof publicPageBySlugQuerySchema>;
 
-export const publicPagesListQuerySchema = z.object({
+export const publicPagesSitemapQuerySchema = z.object({
   domain: domainSchema,
 });
-export type PublicPagesListQuery = z.infer<typeof publicPagesListQuerySchema>;
+export type PublicPagesSitemapQuery = z.infer<
+  typeof publicPagesSitemapQuerySchema
+>;

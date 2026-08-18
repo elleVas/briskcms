@@ -149,33 +149,29 @@ describe('PublicPagesController (integration)', () => {
       .expect(400);
   });
 
-  it('lists published pages for the domain, for the sitemap, without a session', async () => {
+  it('lists only published pages for the sitemap, skipping drafts, without a session', async () => {
+    await agent
+      .post('/pages')
+      .send({
+        siteId,
+        groupId: randomUUID(),
+        locale: 'it',
+        slug: 'sitemap-bozza',
+        seoMeta: { title: 'Bozza', description: '' },
+      })
+      .expect(201);
+
     const publishedRes = await agent
       .post('/pages')
       .send({
         siteId,
         groupId: randomUUID(),
         locale: 'it',
-        slug: 'servizi',
-        seoMeta: { title: 'Servizi', description: '' },
+        slug: 'sitemap-pubblicata',
+        seoMeta: { title: 'Pubblicata', description: '' },
       })
       .expect(201);
-    await agent
-      .patch(`/pages/${publishedRes.body.id}/draft`)
-      .send({ content: [] })
-      .expect(200);
     await agent.post(`/pages/${publishedRes.body.id}/publish`).expect(201);
-
-    await agent
-      .post('/pages')
-      .send({
-        siteId,
-        groupId: randomUUID(),
-        locale: 'it',
-        slug: 'mai-pubblicata',
-        seoMeta: { title: 'Mai pubblicata', description: '' },
-      })
-      .expect(201);
 
     const res = await request(app.getHttpServer())
       .get('/public/pages')
@@ -183,15 +179,17 @@ describe('PublicPagesController (integration)', () => {
       .expect(200);
 
     const slugs = res.body.items.map((item: { slug: string }) => item.slug);
-    expect(slugs).toContain('servizi');
-    expect(slugs).not.toContain('mai-pubblicata');
+    expect(slugs).toContain('sitemap-pubblicata');
+    expect(slugs).not.toContain('sitemap-bozza');
     expect(res.body.searchEngineIndexingEnabled).toBe(false);
   });
 
-  it('404s listing pages for a domain that does not match any site', async () => {
-    await request(app.getHttpServer())
+  it('returns an empty, indexing-allowed list for a domain that matches no site', async () => {
+    const res = await request(app.getHttpServer())
       .get('/public/pages')
       .query({ domain: 'nobody-owns-this-domain.test' })
-      .expect(404);
+      .expect(200);
+
+    expect(res.body).toEqual({ items: [], searchEngineIndexingEnabled: true });
   });
 });

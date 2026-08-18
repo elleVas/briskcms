@@ -63,22 +63,20 @@ export interface SitemapEntryDto {
 export interface SitemapListingDto {
   items: SitemapEntryDto[];
   // Bundled with the page list rather than a separate lookup — both
-  // sitemap.xml and robots.txt need "what does this domain's site say
-  // about crawling", and both already need this same site resolved by
-  // domain (see the API's ListPublishedPagesForSitemap use case).
+  // sitemap.xml and robots.txt (docs/adr/0016) need "what does this
+  // domain's site say about crawling", and both already need this same
+  // site resolved by domain. An unmatched domain still resolves (never
+  // 404s, see the API's own comment) with an empty, indexing-allowed
+  // response, not an error.
   searchEngineIndexingEnabled: boolean;
 }
 
-/** Same "nothing to show" 404 handling as getPublishedPageBySlug — an unmatched domain returns null, not a thrown error. */
-export async function listPublishedPages(
+export async function listPublishedPagesForSitemap(
   domain: string,
-): Promise<SitemapListingDto | null> {
+): Promise<SitemapListingDto> {
   const params = new URLSearchParams({ domain });
   const res = await fetch(`${apiUrl()}/public/pages?${params.toString()}`);
 
-  if (res.status === 404) {
-    return null;
-  }
   if (!res.ok) {
     throw new Error(`Public pages API error: ${res.status}`);
   }

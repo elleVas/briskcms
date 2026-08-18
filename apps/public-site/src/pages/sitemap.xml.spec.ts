@@ -1,55 +1,79 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import * as api from '../lib/public-api-client.js';
 import { GET } from './sitemap.xml.js';
 
-function jsonResponse(body: unknown, status = 200) {
-  return {
-    ok: status < 400,
-    status,
-    json: () => Promise.resolve(body),
-  } as Response;
-}
+vi.mock('../lib/public-api-client.js', async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import('../lib/public-api-client.js')>();
+  return { ...actual, listPublishedPagesForSitemap: vi.fn() };
+});
 
 describe('GET /sitemap.xml', () => {
   beforeEach(() => {
-    vi.stubGlobal('fetch', vi.fn());
+    vi.mocked(api.listPublishedPagesForSitemap).mockResolvedValue({
+      items: [
+        { slug: 'home', updatedAt: '2026-01-01T00:00:00.000Z' },
+        { slug: 'chi-siamo', updatedAt: '2026-01-02T00:00:00.000Z' },
+      ],
+      searchEngineIndexingEnabled: true,
+    });
   });
 
   afterEach(() => {
-    vi.unstubAllGlobals();
+    vi.clearAllMocks();
   });
 
-  it('lists published pages as <url> entries, mapping the home slug to /', async () => {
-    vi.mocked(fetch).mockResolvedValue(
-      jsonResponse({
-        items: [
-          { slug: 'home', updatedAt: '2026-01-01T00:00:00.000Z' },
-          { slug: 'chi-siamo', updatedAt: '2026-01-02T00:00:00.000Z' },
-        ],
-      }),
-    );
-
-    // @ts-expect-error deliberately partial APIContext — only `url` is used by this route.
-    const res = await GET({ url: new URL('https://example.com/sitemap.xml') });
+  it('maps the "home" slug to "/" instead of a literal /home entry', async () => {
+    const url = new URL('https://example.com/sitemap.xml');
+    // @ts-expect-error -- only `url` is exercised by this handler
+    const res = await GET({ url });
     const body = await res.text();
 
-    expect(res.headers.get('Content-Type')).toBe('application/xml');
     expect(body).toContain('<loc>https://example.com/</loc>');
+    expect(body).not.toContain('/home<');
+  });
+
+  it('renders every other slug as its own path with a lastmod', async () => {
+    const url = new URL('https://example.com/sitemap.xml');
+    // @ts-expect-error -- only `url` is exercised by this handler
+    const res = await GET({ url });
+    const body = await res.text();
+
     expect(body).toContain('<loc>https://example.com/chi-siamo</loc>');
     expect(body).toContain('<lastmod>2026-01-02T00:00:00.000Z</lastmod>');
   });
 
-  it('falls back to an empty sitemap when no site matches the domain', async () => {
-    vi.mocked(fetch).mockResolvedValue(
-      jsonResponse({ message: 'Not Found' }, 404),
-    );
+  it('queries the API by the request hostname', async () => {
+    const url = new URL('https://mysite.example/sitemap.xml');
+    // @ts-expect-error -- only `url` is exercised by this handler
+    await GET({ url });
 
-    // @ts-expect-error deliberately partial APIContext
-    const res = await GET({
-      url: new URL('https://nobody.example/sitemap.xml'),
+    expect(api.listPublishedPagesForSitemap).toHaveBeenCalledWith(
+      'mysite.example',
+    );
+  });
+
+  it('serves valid XML with the right content type', async () => {
+    const url = new URL('https://example.com/sitemap.xml');
+    // @ts-expect-error -- only `url` is exercised by this handler
+    const res = await GET({ url });
+
+    expect(res.headers.get('Content-Type')).toContain('application/xml');
+    const body = await res.text();
+    expect(body.startsWith('<?xml version="1.0"')).toBe(true);
+  });
+
+  it('renders no <url> entries when the site has no published pages', async () => {
+    vi.mocked(api.listPublishedPagesForSitemap).mockResolvedValue({
+      items: [],
+      searchEngineIndexingEnabled: true,
     });
+
+    const url = new URL('https://example.com/sitemap.xml');
+    // @ts-expect-error -- only `url` is exercised by this handler
+    const res = await GET({ url });
     const body = await res.text();
 
-    expect(res.status).toBe(200);
     expect(body).not.toContain('<url>');
   });
 });

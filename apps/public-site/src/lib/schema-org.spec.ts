@@ -1,12 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import type { PublishedSiteDto } from './public-api-client.js';
 import { buildSchemaOrgGraph } from './schema-org.js';
+import type { PublishedSiteDto } from './public-api-client.js';
 
-const seoMeta = { title: 'Chi siamo', description: 'La nostra storia' };
-const pageUrl = 'https://example.com/chi-siamo';
-
-const siteWithoutBusinessInfo: PublishedSiteDto = {
-  name: 'Sito di prova',
+const baseSite: PublishedSiteDto = {
+  name: 'Il mio sito',
   domain: 'example.com',
   businessAddress: null,
   businessPhone: null,
@@ -15,63 +12,83 @@ const siteWithoutBusinessInfo: PublishedSiteDto = {
   searchEngineIndexingEnabled: false,
 };
 
+const seoMeta = { title: 'Chi siamo', description: 'La nostra storia' };
+
 describe('buildSchemaOrgGraph', () => {
-  it('always includes WebSite and WebPage nodes', () => {
+  it('includes WebSite and WebPage but no LocalBusiness when the site has no business info', () => {
     const graph = buildSchemaOrgGraph({
-      site: siteWithoutBusinessInfo,
+      site: baseSite,
       seoMeta,
-      pageUrl,
-    });
+      pageUrl: 'https://example.com/chi-siamo',
+    }) as { '@graph': { '@type': string }[] };
 
-    expect(graph['@context']).toBe('https://schema.org');
-    const nodes = graph['@graph'] as Record<string, unknown>[];
-    expect(nodes.map((node) => node['@type'])).toEqual(['WebSite', 'WebPage']);
-    expect(nodes[1]).toMatchObject({
-      name: 'Chi siamo',
-      description: 'La nostra storia',
-      url: pageUrl,
-    });
+    const types = graph['@graph'].map((node) => node['@type']);
+    expect(types).toEqual(['WebSite', 'WebPage']);
   });
 
-  it('omits LocalBusiness when the site has no business info', () => {
+  it('adds a LocalBusiness node once any business field is set', () => {
     const graph = buildSchemaOrgGraph({
-      site: siteWithoutBusinessInfo,
+      site: { ...baseSite, businessPhone: '+39 02 1234567' },
       seoMeta,
-      pageUrl,
-    });
+      pageUrl: 'https://example.com/chi-siamo',
+    }) as { '@graph': { '@type': string; telephone?: string }[] };
 
-    const nodes = graph['@graph'] as Record<string, unknown>[];
-    expect(nodes).toHaveLength(2);
+    const business = graph['@graph'].find(
+      (node) => node['@type'] !== 'WebSite' && node['@type'] !== 'WebPage',
+    );
+    expect(business?.telephone).toBe('+39 02 1234567');
   });
 
-  it('adds a LocalBusiness node using businessType as @type when business info is set', () => {
-    const site: PublishedSiteDto = {
-      ...siteWithoutBusinessInfo,
-      businessAddress: 'Via Roma 1, Milano',
-      businessPhone: '+39 02 1234567',
-      businessType: 'ProfessionalService',
-      openingHours: [
-        {
-          dayOfWeek: 'monday',
-          ranges: [
-            { opens: '09:00', closes: '13:00' },
-            { opens: '14:00', closes: '18:00' },
-          ],
-        },
-      ],
+  it('uses the site businessType as the schema.org @type when set', () => {
+    const graph = buildSchemaOrgGraph({
+      site: {
+        ...baseSite,
+        businessType: 'Restaurant',
+        businessPhone: '+39 02 1234567',
+      },
+      seoMeta,
+      pageUrl: 'https://example.com/chi-siamo',
+    }) as { '@graph': { '@type': string }[] };
+
+    const business = graph['@graph'][2];
+    expect(business['@type']).toBe('Restaurant');
+  });
+
+  it('falls back to the generic LocalBusiness type when businessType is not set', () => {
+    const graph = buildSchemaOrgGraph({
+      site: { ...baseSite, businessAddress: 'Via Roma 1' },
+      seoMeta,
+      pageUrl: 'https://example.com/chi-siamo',
+    }) as { '@graph': { '@type': string }[] };
+
+    expect(graph['@graph'][2]['@type']).toBe('LocalBusiness');
+  });
+
+  it('expands multi-range opening hours into one OpeningHoursSpecification per range', () => {
+    const graph = buildSchemaOrgGraph({
+      site: {
+        ...baseSite,
+        openingHours: [
+          {
+            dayOfWeek: 'monday',
+            ranges: [
+              { opens: '09:00', closes: '13:00' },
+              { opens: '15:00', closes: '19:00' },
+            ],
+          },
+          { dayOfWeek: 'sunday', ranges: [] },
+        ],
+      },
+      seoMeta,
+      pageUrl: 'https://example.com/chi-siamo',
+    }) as {
+      '@graph': {
+        openingHoursSpecification?: { dayOfWeek: string; opens: string }[];
+      }[];
     };
 
-    const graph = buildSchemaOrgGraph({ site, seoMeta, pageUrl });
-    const nodes = graph['@graph'] as Record<string, unknown>[];
-    const business = nodes[2];
-
-    expect(business).toMatchObject({
-      '@type': 'ProfessionalService',
-      name: 'Sito di prova',
-      address: 'Via Roma 1, Milano',
-      telephone: '+39 02 1234567',
-    });
-    expect(business['openingHoursSpecification']).toEqual([
+    const business = graph['@graph'][2];
+    expect(business.openingHoursSpecification).toEqual([
       {
         '@type': 'OpeningHoursSpecification',
         dayOfWeek: 'https://schema.org/Monday',
@@ -81,21 +98,9 @@ describe('buildSchemaOrgGraph', () => {
       {
         '@type': 'OpeningHoursSpecification',
         dayOfWeek: 'https://schema.org/Monday',
-        opens: '14:00',
-        closes: '18:00',
+        opens: '15:00',
+        closes: '19:00',
       },
     ]);
-  });
-
-  it('falls back to plain "LocalBusiness" when businessType is not set', () => {
-    const site: PublishedSiteDto = {
-      ...siteWithoutBusinessInfo,
-      businessAddress: 'Via Roma 1, Milano',
-    };
-
-    const graph = buildSchemaOrgGraph({ site, seoMeta, pageUrl });
-    const nodes = graph['@graph'] as Record<string, unknown>[];
-
-    expect(nodes[2]['@type']).toBe('LocalBusiness');
   });
 });

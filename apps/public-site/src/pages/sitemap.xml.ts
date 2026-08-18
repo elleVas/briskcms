@@ -1,26 +1,27 @@
 import type { APIRoute } from 'astro';
-import { listPublishedPages } from '../lib/public-api-client.js';
+import { listPublishedPagesForSitemap } from '../lib/public-api-client.js';
 
-// Dynamic (not known at build time) — same reasoning as [slug].astro.
+// Explicit even though this route has no dynamic [param] segment (see
+// [slug].astro's own comment on why a bracketed route needs it) — this
+// genuinely has to run per-request (a fresh page list every time, not a
+// once-at-build snapshot), so the intent is spelled out rather than
+// relying on output: 'server' alone to imply it for a static-looking path.
 export const prerender = false;
 
-// The public API's PublishedPage/sitemap listing has no notion of a
-// homepage slug of its own — 'home' is this app's own routing convention
-// (see src/pages/index.astro), so the mapping back to '/' lives here too.
+// index.astro's own convention: "/" answers whichever page is slugged
+// "home" — the sitemap has to mirror that mapping so <loc> matches the
+// real reachable URL, not a slug that 404s.
 function slugToPath(slug: string): string {
   return slug === 'home' ? '/' : `/${slug}`;
 }
 
 export const GET: APIRoute = async ({ url }) => {
-  // A domain that matches no site is a deployment misconfiguration, not a
-  // per-request error — an empty sitemap is more useful to a crawler than a
-  // 404 here, so this falls back to `[]` rather than erroring out. Listing
-  // pages here is independent of the site's indexing preference — robots.txt
-  // (not this route) is what actually tells a compliant crawler to stay away.
-  const listing = await listPublishedPages(url.hostname);
-  const entries = listing?.items ?? [];
+  // Listing pages here is independent of the site's indexing preference
+  // (docs/adr/0016) — robots.txt, not this route, is what actually tells a
+  // compliant crawler to stay away when indexing is discouraged.
+  const { items } = await listPublishedPagesForSitemap(url.hostname);
 
-  const urlEntries = entries
+  const urlEntries = items
     .map(
       (entry) => `  <url>
     <loc>${url.origin}${slugToPath(entry.slug)}</loc>
@@ -36,7 +37,6 @@ ${urlEntries}
 `;
 
   return new Response(xml, {
-    status: 200,
-    headers: { 'Content-Type': 'application/xml' },
+    headers: { 'Content-Type': 'application/xml; charset=utf-8' },
   });
 };

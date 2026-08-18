@@ -3,7 +3,7 @@ import type { PublishedPageDto } from './public-api-client.js';
 import {
   getPublicForm,
   getPublishedPageBySlug,
-  listPublishedPages,
+  listPublishedPagesForSitemap,
   submitPublicForm,
 } from './public-api-client.js';
 
@@ -70,33 +70,26 @@ describe('public-api-client', () => {
     ).rejects.toThrow('Public pages API error: 500');
   });
 
-  it('lists published pages for a domain, for the sitemap', async () => {
+  it('fetches the sitemap listing, bundled with the indexing flag, for a domain', async () => {
+    const items = [{ slug: 'chi-siamo', updatedAt: '2026-01-01T00:00:00Z' }];
     vi.mocked(fetch).mockResolvedValue(
-      jsonResponse({
-        items: [{ slug: 'chi-siamo', updatedAt: '2026-01-01T00:00:00.000Z' }],
-        searchEngineIndexingEnabled: true,
-      }),
+      jsonResponse({ items, searchEngineIndexingEnabled: true }),
     );
 
-    const result = await listPublishedPages('example.com');
+    const result = await listPublishedPagesForSitemap('example.com');
 
     expect(fetch).toHaveBeenCalledWith(
       expect.stringContaining('/public/pages?domain=example.com'),
     );
-    expect(result).toEqual({
-      items: [{ slug: 'chi-siamo', updatedAt: '2026-01-01T00:00:00.000Z' }],
-      searchEngineIndexingEnabled: true,
-    });
+    expect(result).toEqual({ items, searchEngineIndexingEnabled: true });
   });
 
-  it('returns null when no site matches the domain', async () => {
-    vi.mocked(fetch).mockResolvedValue(
-      jsonResponse({ message: 'Not Found' }, 404),
+  it('throws when the sitemap request fails', async () => {
+    vi.mocked(fetch).mockResolvedValue(jsonResponse({ message: 'boom' }, 500));
+
+    await expect(listPublishedPagesForSitemap('example.com')).rejects.toThrow(
+      'Public pages API error: 500',
     );
-
-    const result = await listPublishedPages('nobody-has-this.test');
-
-    expect(result).toBeNull();
   });
 
   it('fetches a public form by id', async () => {

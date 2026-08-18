@@ -18,23 +18,24 @@ export interface SitemapEntry {
 export interface SitemapListing {
   items: SitemapEntry[];
   // Bundled with the page list rather than a separate lookup: both
-  // sitemap.xml and robots.txt (apps/public-site) need "what does this
-  // domain's site say about crawling", and both already need this same
-  // site resolved by domain.
+  // sitemap.xml and robots.txt (apps/public-site, docs/adr/0016) need
+  // "what does this domain's site say about crawling", and both already
+  // need this same site resolved by domain.
   searchEngineIndexingEnabled: boolean;
 }
 
-// "Siti vetrina" scale (this product's stated target, see
-// piano-progetto-astro-cms.md) — a single page of results comfortably
-// covers a real site's page count without needing a dedicated unpaginated
-// repository method just for this.
+// Same "5-15 pagine, siti vetrina" scale assumption as everywhere else in
+// the product (piano-progetto-astro-cms.md) — one page of results is
+// always enough, no real pagination needed for a sitemap at this scale.
 const SITEMAP_PAGE_SIZE = 1000;
 
 /**
- * Public, unauthenticated (see apps/api's PublicPagesModule) — only ever
- * lists published pages, same "no oracle for drafts" rule as
- * getPublishedPageBySlug. Returns `null` when the domain matches no site,
- * so the controller can 404 the same way it does for a missing page.
+ * Public, unauthenticated — same domain-resolution pattern as
+ * getPublishedPageBySlug (never trusts a client-supplied siteId). Returns
+ * null when the domain matches no site at all; the controller renders that
+ * as an empty, indexing-allowed sitemap/robots response rather than an
+ * error, since a misconfigured domain producing a broken sitemap.xml is
+ * worse for SEO than a technically-empty-but-valid one.
  */
 export async function listPublishedPagesForSitemap(
   deps: ListPublishedPagesForSitemapDeps,
