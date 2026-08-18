@@ -45,6 +45,7 @@
     "nav": {
       "pages": "Pages",
       "media": "Media",
+      "forms": "Forms",
       "users": "Users",
       "comingSoon": "Coming soon"
     },
@@ -140,6 +141,26 @@
       "title": "Choose an image"
     }
   },
+  "generalSettings": {
+    "menuLabel": "General settings",
+    "title": "General settings",
+    "nameLabel": "Site name",
+    "domainLabel": "Domain",
+    "domainDescription": "The domain the site is served on (e.g. www.yoursite.com). Must exactly match the real one, otherwise pages won't be found.",
+    "cancel": "Cancel",
+    "save": "Save",
+    "saving": "Saving..."
+  },
+  "seoSettings": {
+    "menuLabel": "Site SEO",
+    "title": "Site SEO",
+    "indexingLabel": "Allow search engine indexing",
+    "indexingDescription": "When off, the site asks search engines not to index it (useful during development, before launch).",
+    "indexingDisclaimer": "Note: this is a request, not a guarantee — it depends on search engines respecting it.",
+    "cancel": "Cancel",
+    "save": "Save",
+    "saving": "Saving..."
+  },
   "businessInfo": {
     "menuLabel": "Business info",
     "title": "Business info",
@@ -152,6 +173,69 @@
     "cancel": "Cancel",
     "save": "Save",
     "saving": "Saving..."
+  },
+  "forms": {
+    "list": {
+      "title": "Forms",
+      "newForm": "New form",
+      "empty": "No forms yet.",
+      "fieldCount_one": "{{count}} field",
+      "fieldCount_other": "{{count}} fields",
+      "pageIndicator": "Page {{page}} of {{totalPages}}",
+      "previousPage": "Previous page",
+      "nextPage": "Next page",
+      "actions": {
+        "edit": "Edit form",
+        "delete": "Delete"
+      }
+    },
+    "newFormDialog": {
+      "title": "New form",
+      "nameLabel": "Form name",
+      "cancel": "Cancel",
+      "create": "Create",
+      "creating": "Creating..."
+    },
+    "deleteDialog": {
+      "title": "Delete this form?",
+      "description": "\"{{name}}\" will be permanently deleted. Pages using it will stop showing it. This action cannot be undone.",
+      "cancel": "Cancel",
+      "confirm": "Delete"
+    },
+    "picker": {
+      "title": "Choose a form",
+      "empty": "No forms yet. Create one from the Forms section.",
+      "fieldCount_one": "{{count}} field",
+      "fieldCount_other": "{{count}} fields"
+    },
+    "editor": {
+      "backToList": "Forms",
+      "save": "Save",
+      "saving": "Saving...",
+      "saved": "Form saved",
+      "nameLabel": "Form name",
+      "notificationEmailLabel": "Notification email",
+      "notificationEmailPlaceholder": "No notification if left empty",
+      "fieldsLabel": "Fields",
+      "addField": "Add field",
+      "noFields": "No fields yet.",
+      "fieldLabelLabel": "Label",
+      "fieldTypeLabel": "Type",
+      "fieldRequiredLabel": "Required",
+      "fieldOptionsLabel": "Options (one per line)",
+      "fieldOptionsPlaceholder": "Option 1\nOption 2",
+      "moveFieldUp": "Move up",
+      "moveFieldDown": "Move down",
+      "removeField": "Remove field",
+      "fieldTypes": {
+        "text": "Text",
+        "email": "Email",
+        "textarea": "Long text",
+        "tel": "Phone",
+        "checkbox": "Checkbox",
+        "select": "Select"
+      }
+    }
   },
   "openingHours": {
     "days": {

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { Site } from '@brisk/domain-core';
 import { createPage } from './create-page.use-case.js';
 import { publishPage } from './publish-page.use-case.js';
+import { saveDraft } from './save-draft.use-case.js';
 import { listPublishedPagesForSitemap } from './list-published-pages-for-sitemap.use-case.js';
 import {
   InMemoryPageRepository,
@@ -19,7 +20,10 @@ describe('listPublishedPagesForSitemap', () => {
     return { pageRepository, pageVersionRepository, siteRepository };
   }
 
-  async function seedSite(siteRepository: InMemorySiteRepository) {
+  async function seedSite(
+    siteRepository: InMemorySiteRepository,
+    overrides: Partial<Parameters<typeof Site.fromProps>[0]> = {},
+  ) {
     const site = Site.fromProps({
       id: 'site-1',
       tenantId,
@@ -31,31 +35,45 @@ describe('listPublishedPagesForSitemap', () => {
       businessPhone: null,
       businessType: null,
       openingHours: null,
+      searchEngineIndexingEnabled: false,
       createdAt: new Date(),
+      ...overrides,
     });
     await siteRepository.save(site);
     return site;
   }
 
-  it('lists only published pages, skipping drafts', async () => {
-    const deps = setup();
-    await seedSite(deps.siteRepository);
-
-    const published = await createPage(deps, {
+  async function createAndPublish(
+    deps: ReturnType<typeof setup>,
+    slug: string,
+  ) {
+    const page = await createPage(deps, {
       tenantId,
       siteId: 'site-1',
-      groupId: 'group-1',
+      groupId: `group-${slug}`,
       locale: 'it',
-      slug: 'chi-siamo',
-      seoMeta: { title: 'Chi siamo', description: '' },
+      slug,
+      seoMeta: { title: slug, description: '' },
       createdBy: 'user-1',
     });
-    await publishPage(deps, { tenantId, pageId: published.id });
+    await saveDraft(deps, {
+      tenantId,
+      pageId: page.id,
+      content: [],
+      actorUserId: 'user-1',
+    });
+    await publishPage(deps, { tenantId, pageId: page.id });
+  }
 
+  it('lists only published pages for the domain, skipping drafts', async () => {
+    const deps = setup();
+    await seedSite(deps.siteRepository);
+    await createAndPublish(deps, 'chi-siamo');
+    await createAndPublish(deps, 'contatti');
     await createPage(deps, {
       tenantId,
       siteId: 'site-1',
-      groupId: 'group-2',
+      groupId: 'group-bozza',
       locale: 'it',
       slug: 'bozza',
       seoMeta: { title: 'Bozza', description: '' },
@@ -67,8 +85,9 @@ describe('listPublishedPagesForSitemap', () => {
       domain: 'example.com',
     });
 
-    expect(result).toEqual([
-      { slug: 'chi-siamo', updatedAt: expect.any(Date) },
+    expect(result?.items.map((entry) => entry.slug).sort()).toEqual([
+      'chi-siamo',
+      'contatti',
     ]);
   });
 
@@ -84,7 +103,7 @@ describe('listPublishedPagesForSitemap', () => {
     expect(result).toBeNull();
   });
 
-  it('returns an empty array for a site with no published pages', async () => {
+  it('returns an empty items array for a site with no published pages', async () => {
     const deps = setup();
     await seedSite(deps.siteRepository);
 
@@ -93,6 +112,18 @@ describe('listPublishedPagesForSitemap', () => {
       domain: 'example.com',
     });
 
-    expect(result).toEqual([]);
+    expect(result?.items).toEqual([]);
+  });
+
+  it("includes the site's search engine indexing flag", async () => {
+    const deps = setup();
+    await seedSite(deps.siteRepository, { searchEngineIndexingEnabled: true });
+
+    const result = await listPublishedPagesForSitemap(deps, {
+      tenantId,
+      domain: 'example.com',
+    });
+
+    expect(result?.searchEngineIndexingEnabled).toBe(true);
   });
 });

@@ -126,6 +126,52 @@ describe('SitesController (integration)', () => {
       .expect(404);
   });
 
+  it('updates general settings (name and domain)', async () => {
+    const res = await agent
+      .patch(`/sites/${siteId}/general-settings`)
+      .send({ name: 'Il mio ristorante', domain: 'ilmioristorante.it' })
+      .expect(200);
+
+    expect(res.body.name).toBe('Il mio ristorante');
+    expect(res.body.domain).toBe('ilmioristorante.it');
+
+    const getRes = await agent.get(`/sites/${siteId}`).expect(200);
+    expect(getRes.body.domain).toBe('ilmioristorante.it');
+  });
+
+  it('400s a domain that is not a valid hostname', async () => {
+    await agent
+      .patch(`/sites/${siteId}/general-settings`)
+      .send({ name: 'x', domain: 'not a valid host!!' })
+      .expect(400);
+  });
+
+  it('404s updating general settings for a site that does not exist', async () => {
+    await agent
+      .patch(`/sites/${randomUUID()}/general-settings`)
+      .send({ name: 'x', domain: null })
+      .expect(404);
+  });
+
+  it('defaults search engine indexing to disabled, and can be enabled', async () => {
+    const getRes = await agent.get(`/sites/${siteId}`).expect(200);
+    expect(getRes.body.searchEngineIndexingEnabled).toBe(false);
+
+    const res = await agent
+      .patch(`/sites/${siteId}/seo-settings`)
+      .send({ searchEngineIndexingEnabled: true })
+      .expect(200);
+
+    expect(res.body.searchEngineIndexingEnabled).toBe(true);
+  });
+
+  it('404s updating SEO settings for a site that does not exist', async () => {
+    await agent
+      .patch(`/sites/${randomUUID()}/seo-settings`)
+      .send({ searchEngineIndexingEnabled: true })
+      .expect(404);
+  });
+
   it('401s without a session cookie', async () => {
     await request(app.getHttpServer()).get(`/sites/${siteId}`).expect(401);
   });

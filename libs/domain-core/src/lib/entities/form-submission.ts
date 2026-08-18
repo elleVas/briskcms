@@ -3,6 +3,9 @@ export interface FormSubmissionProps {
   tenantId: string;
   siteId: string;
   pageId: string | null;
+  // Nullable, onDelete: set null (docs/adr/0015) — deleting a form must
+  // never destroy the historical record that someone submitted it.
+  formId: string | null;
   payload: Record<string, unknown>;
   createdAt: Date;
 }
@@ -39,6 +42,10 @@ export class FormSubmission {
 
   get pageId(): string | null {
     return this.props.pageId;
+  }
+
+  get formId(): string | null {
+    return this.props.formId;
   }
 
   get payload(): Record<string, unknown> {

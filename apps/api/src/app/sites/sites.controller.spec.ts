@@ -17,6 +17,7 @@ function buildSite(
     businessPhone: null,
     businessType: null,
     openingHours: null,
+    searchEngineIndexingEnabled: false,
     createdAt: new Date(),
     ...overrides,
   });
@@ -78,5 +79,50 @@ describe('SitesController (unit)', () => {
 
     expect(siteRepository.save).toHaveBeenCalled();
     expect(result.businessAddress).toBe('Via Roma 1');
+  });
+
+  it('updateGeneralSettings maps a SiteNotFoundError to a NotFoundException', async () => {
+    siteRepository.findById.mockResolvedValue(null);
+
+    await expect(
+      controller.updateGeneralSettings('missing', {
+        name: 'x',
+        domain: null,
+      }),
+    ).rejects.toThrow(NotFoundException);
+  });
+
+  it('updateGeneralSettings saves the updated site', async () => {
+    siteRepository.findById.mockResolvedValue(buildSite());
+
+    const result = await controller.updateGeneralSettings('site-1', {
+      name: 'Il mio ristorante',
+      domain: 'ilmioristorante.it',
+    });
+
+    expect(siteRepository.save).toHaveBeenCalled();
+    expect(result.name).toBe('Il mio ristorante');
+    expect(result.domain).toBe('ilmioristorante.it');
+  });
+
+  it('updateSeoSettings maps a SiteNotFoundError to a NotFoundException', async () => {
+    siteRepository.findById.mockResolvedValue(null);
+
+    await expect(
+      controller.updateSeoSettings('missing', {
+        searchEngineIndexingEnabled: true,
+      }),
+    ).rejects.toThrow(NotFoundException);
+  });
+
+  it('updateSeoSettings saves the updated site', async () => {
+    siteRepository.findById.mockResolvedValue(buildSite());
+
+    const result = await controller.updateSeoSettings('site-1', {
+      searchEngineIndexingEnabled: true,
+    });
+
+    expect(siteRepository.save).toHaveBeenCalled();
+    expect(result.searchEngineIndexingEnabled).toBe(true);
   });
 });

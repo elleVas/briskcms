@@ -12,10 +12,7 @@ export interface GetPublishedPageBySlugInput {
   slug: string;
 }
 
-// Business fields for schema.org LocalBusiness markup (docs/adr/0014) —
-// the public rendering path needs these alongside the page itself, not
-// just seoMeta, so apps/public-site can build the JSON-LD without a
-// second round-trip.
+/** Only what the public renderer needs for OG tags + schema.org (docs/adr/0014) — never the tenant id or anything else internal. */
 export interface PublishedSite {
   name: string;
   domain: string | null;
@@ -23,6 +20,7 @@ export interface PublishedSite {
   businessPhone: string | null;
   businessType: string | null;
   openingHours: OpeningHoursDay[] | null;
+  searchEngineIndexingEnabled: boolean;
 }
 
 export interface PublishedPage {
@@ -75,6 +73,7 @@ export async function getPublishedPageBySlug(
       businessPhone: site.businessPhone,
       businessType: site.businessType,
       openingHours: site.openingHours,
+      searchEngineIndexingEnabled: site.searchEngineIndexingEnabled,
     },
   };
 }

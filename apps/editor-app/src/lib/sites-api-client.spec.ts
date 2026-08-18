@@ -2,6 +2,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   getSite,
   updateBusinessInfo,
+  updateGeneralSettings,
+  updateSeoSettings,
   type SiteDto,
 } from './sites-api-client.js';
 
@@ -16,6 +18,7 @@ const sampleSite: SiteDto = {
   businessPhone: null,
   businessType: null,
   openingHours: null,
+  searchEngineIndexingEnabled: false,
   createdAt: '',
 };
 
@@ -68,6 +71,40 @@ describe('sites-api-client', () => {
           businessType: 'Restaurant',
           openingHours: [{ dayOfWeek: 'monday', ranges: [] }],
         }),
+      }),
+    );
+  });
+
+  it('updateGeneralSettings patches the general-settings endpoint', async () => {
+    vi.mocked(fetch).mockResolvedValue(jsonResponse(sampleSite));
+
+    await updateGeneralSettings('site-1', {
+      name: 'Il mio ristorante',
+      domain: 'ilmioristorante.it',
+    });
+
+    expect(fetch).toHaveBeenCalledWith(
+      expect.stringContaining('/sites/site-1/general-settings'),
+      expect.objectContaining({
+        method: 'PATCH',
+        body: JSON.stringify({
+          name: 'Il mio ristorante',
+          domain: 'ilmioristorante.it',
+        }),
+      }),
+    );
+  });
+
+  it('updateSeoSettings patches the seo-settings endpoint', async () => {
+    vi.mocked(fetch).mockResolvedValue(jsonResponse(sampleSite));
+
+    await updateSeoSettings('site-1', { searchEngineIndexingEnabled: true });
+
+    expect(fetch).toHaveBeenCalledWith(
+      expect.stringContaining('/sites/site-1/seo-settings'),
+      expect.objectContaining({
+        method: 'PATCH',
+        body: JSON.stringify({ searchEngineIndexingEnabled: true }),
       }),
     );
   });

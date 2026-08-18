@@ -45,6 +45,7 @@
     "nav": {
       "pages": "Pagine",
       "media": "Media",
+      "forms": "Moduli",
       "users": "Utenti",
       "comingSoon": "In arrivo"
     },
@@ -140,6 +141,26 @@
       "title": "Scegli un'immagine"
     }
   },
+  "generalSettings": {
+    "menuLabel": "Impostazioni generali",
+    "title": "Impostazioni generali",
+    "nameLabel": "Nome sito",
+    "domainLabel": "Dominio",
+    "domainDescription": "Il dominio su cui è servito il sito (es. www.iltuosito.it). Deve corrispondere esattamente a quello reale, altrimenti le pagine non verranno trovate.",
+    "cancel": "Annulla",
+    "save": "Salva",
+    "saving": "Salvataggio in corso..."
+  },
+  "seoSettings": {
+    "menuLabel": "SEO sito",
+    "title": "SEO sito",
+    "indexingLabel": "Consenti l'indicizzazione",
+    "indexingDescription": "Se disattivato, il sito chiede ai motori di ricerca di non indicizzarlo (utile durante lo sviluppo, prima del lancio).",
+    "indexingDisclaimer": "Nota: è una richiesta, non una garanzia — dipende dal rispetto di questa indicazione da parte dei motori di ricerca.",
+    "cancel": "Annulla",
+    "save": "Salva",
+    "saving": "Salvataggio in corso..."
+  },
   "businessInfo": {
     "menuLabel": "Dati attività",
     "title": "Dati attività",
@@ -152,6 +173,69 @@
     "cancel": "Annulla",
     "save": "Salva",
     "saving": "Salvataggio in corso..."
+  },
+  "forms": {
+    "list": {
+      "title": "Moduli",
+      "newForm": "Nuovo modulo",
+      "empty": "Nessun modulo ancora.",
+      "fieldCount_one": "{{count}} campo",
+      "fieldCount_other": "{{count}} campi",
+      "pageIndicator": "Pagina {{page}} di {{totalPages}}",
+      "previousPage": "Pagina precedente",
+      "nextPage": "Pagina successiva",
+      "actions": {
+        "edit": "Modifica modulo",
+        "delete": "Elimina"
+      }
+    },
+    "newFormDialog": {
+      "title": "Nuovo modulo",
+      "nameLabel": "Nome modulo",
+      "cancel": "Annulla",
+      "create": "Crea",
+      "creating": "Creazione in corso..."
+    },
+    "deleteDialog": {
+      "title": "Eliminare questo modulo?",
+      "description": "\"{{name}}\" verrà eliminato definitivamente. Le pagine che lo usano smetteranno di mostrarlo. L'azione non può essere annullata.",
+      "cancel": "Annulla",
+      "confirm": "Elimina"
+    },
+    "picker": {
+      "title": "Scegli un modulo",
+      "empty": "Nessun modulo ancora. Creane uno dalla sezione Moduli.",
+      "fieldCount_one": "{{count}} campo",
+      "fieldCount_other": "{{count}} campi"
+    },
+    "editor": {
+      "backToList": "Moduli",
+      "save": "Salva",
+      "saving": "Salvataggio in corso...",
+      "saved": "Modulo salvato",
+      "nameLabel": "Nome modulo",
+      "notificationEmailLabel": "Email di notifica",
+      "notificationEmailPlaceholder": "Nessuna notifica se lasciato vuoto",
+      "fieldsLabel": "Campi",
+      "addField": "Aggiungi campo",
+      "noFields": "Nessun campo ancora.",
+      "fieldLabelLabel": "Etichetta",
+      "fieldTypeLabel": "Tipo",
+      "fieldRequiredLabel": "Obbligatorio",
+      "fieldOptionsLabel": "Opzioni (una per riga)",
+      "fieldOptionsPlaceholder": "Opzione 1\nOpzione 2",
+      "moveFieldUp": "Sposta su",
+      "moveFieldDown": "Sposta giù",
+      "removeField": "Rimuovi campo",
+      "fieldTypes": {
+        "text": "Testo",
+        "email": "Email",
+        "textarea": "Testo lungo",
+        "tel": "Telefono",
+        "checkbox": "Checkbox",
+        "select": "Selezione"
+      }
+    }
   },
   "openingHours": {
     "days": {

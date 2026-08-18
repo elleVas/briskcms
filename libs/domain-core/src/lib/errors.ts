@@ -46,6 +46,23 @@ export class SiteNotFoundError extends Error {
   }
 }
 
+export class FormNotFoundError extends Error {
+  constructor(formId: string) {
+    super(`Form not found: ${formId}`);
+    this.name = 'FormNotFoundError';
+  }
+}
+
+/** A submission whose payload doesn't match the form's own field
+ * definitions (missing required field, wrong type) — never a 500, the
+ * public submission endpoint maps this to a 400. */
+export class InvalidFormSubmissionError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'InvalidFormSubmissionError';
+  }
+}
+
 export class MediaNotFoundError extends Error {
   constructor(mediaId: string) {
     super(`Media not found: ${mediaId}`);

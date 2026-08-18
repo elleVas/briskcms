@@ -9,6 +9,7 @@ const baseSite: PublishedSiteDto = {
   businessPhone: null,
   businessType: null,
   openingHours: null,
+  searchEngineIndexingEnabled: false,
 };
 
 const seoMeta = { title: 'Chi siamo', description: 'La nostra storia' };

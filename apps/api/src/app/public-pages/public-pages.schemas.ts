@@ -3,7 +3,10 @@ import { pageSlugSchema } from '../pages/pages.schemas.js';
 
 // Rejects anything that isn't a plausible hostname before it ever reaches a
 // query — a malformed Host header shouldn't get as far as the database.
-const domainSchema = z
+// Exported: sites.schemas.ts reuses this for a site's own `domain` field
+// (see docs/adr/0016) — the identical validation, just checked at write
+// time there instead of read time here.
+export const domainSchema = z
   .string()
   .min(1)
   .max(253)

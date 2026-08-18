@@ -35,6 +35,7 @@ describe('getPublishedPageBySlug', () => {
       businessPhone: null,
       businessType: null,
       openingHours: null,
+      searchEngineIndexingEnabled: false,
       createdAt: new Date(),
       ...overrides,
     });
@@ -80,17 +81,20 @@ describe('getPublishedPageBySlug', () => {
         businessPhone: null,
         businessType: null,
         openingHours: null,
+        searchEngineIndexingEnabled: false,
       },
     });
   });
 
-  it('includes the site business info for LocalBusiness schema.org markup', async () => {
+  it("includes the site's business info when set, for schema.org LocalBusiness", async () => {
     const deps = setup();
     await seedSite(deps.siteRepository, {
       businessAddress: 'Via Roma 1, Milano',
       businessPhone: '+39 02 1234567',
-      businessType: 'Restaurant',
-      openingHours: [{ dayOfWeek: 'monday', ranges: [] }],
+      businessType: 'ProfessionalService',
+      openingHours: [
+        { dayOfWeek: 'monday', ranges: [{ opens: '09:00', closes: '18:00' }] },
+      ],
     });
     const page = await createPage(deps, {
       tenantId,
@@ -100,6 +104,12 @@ describe('getPublishedPageBySlug', () => {
       slug: 'chi-siamo',
       seoMeta: { title: 'Chi siamo', description: '' },
       createdBy: 'user-1',
+    });
+    await saveDraft(deps, {
+      tenantId,
+      pageId: page.id,
+      content: [],
+      actorUserId: 'user-1',
     });
     await publishPage(deps, { tenantId, pageId: page.id });
 
@@ -114,9 +124,41 @@ describe('getPublishedPageBySlug', () => {
       domain: 'example.com',
       businessAddress: 'Via Roma 1, Milano',
       businessPhone: '+39 02 1234567',
-      businessType: 'Restaurant',
-      openingHours: [{ dayOfWeek: 'monday', ranges: [] }],
+      businessType: 'ProfessionalService',
+      openingHours: [
+        { dayOfWeek: 'monday', ranges: [{ opens: '09:00', closes: '18:00' }] },
+      ],
+      searchEngineIndexingEnabled: false,
     });
+  });
+
+  it("propagates the site's search engine indexing flag", async () => {
+    const deps = setup();
+    await seedSite(deps.siteRepository, { searchEngineIndexingEnabled: true });
+    const page = await createPage(deps, {
+      tenantId,
+      siteId: 'site-1',
+      groupId: 'group-1',
+      locale: 'it',
+      slug: 'chi-siamo',
+      seoMeta: { title: 'Chi siamo', description: '' },
+      createdBy: 'user-1',
+    });
+    await saveDraft(deps, {
+      tenantId,
+      pageId: page.id,
+      content: [],
+      actorUserId: 'user-1',
+    });
+    await publishPage(deps, { tenantId, pageId: page.id });
+
+    const result = await getPublishedPageBySlug(deps, {
+      tenantId,
+      domain: 'example.com',
+      slug: 'chi-siamo',
+    });
+
+    expect(result?.site.searchEngineIndexingEnabled).toBe(true);
   });
 
   it('never leaks draft content newer than the last publish', async () => {

@@ -70,15 +70,16 @@ export class PublicPagesController {
     @Query(new ZodValidationPipe(publicPagesSitemapQuerySchema))
     query: PublicPagesSitemapQuery,
   ) {
-    const items = await listPublishedPagesForSitemap(
+    const result = await listPublishedPagesForSitemap(
       {
         siteRepository: this.siteRepository,
         pageRepository: this.pageRepository,
       },
       { tenantId: this.defaultTenantId, domain: query.domain },
     );
-    // An unrecognized domain renders as an empty sitemap, not a 404 — see
-    // listPublishedPagesForSitemap's own comment on why.
-    return { items: items ?? [] };
+    // An unrecognized domain renders as an empty, indexing-allowed
+    // sitemap/robots response, not a 404 — see listPublishedPagesForSitemap's
+    // own comment on why, and docs/adr/0016 for the indexing-allowed default.
+    return result ?? { items: [], searchEngineIndexingEnabled: true };
   }
 }

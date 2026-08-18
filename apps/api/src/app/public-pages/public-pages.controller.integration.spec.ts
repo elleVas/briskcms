@@ -105,6 +105,7 @@ describe('PublicPagesController (integration)', () => {
         businessPhone: null,
         businessType: null,
         openingHours: null,
+        searchEngineIndexingEnabled: false,
       },
     });
   });
@@ -148,7 +149,7 @@ describe('PublicPagesController (integration)', () => {
       .expect(400);
   });
 
-  it('lists only published pages for the sitemap, skipping drafts', async () => {
+  it('lists only published pages for the sitemap, skipping drafts, without a session', async () => {
     await agent
       .post('/pages')
       .send({
@@ -159,6 +160,7 @@ describe('PublicPagesController (integration)', () => {
         seoMeta: { title: 'Bozza', description: '' },
       })
       .expect(201);
+
     const publishedRes = await agent
       .post('/pages')
       .send({
@@ -179,14 +181,15 @@ describe('PublicPagesController (integration)', () => {
     const slugs = res.body.items.map((item: { slug: string }) => item.slug);
     expect(slugs).toContain('sitemap-pubblicata');
     expect(slugs).not.toContain('sitemap-bozza');
+    expect(res.body.searchEngineIndexingEnabled).toBe(false);
   });
 
-  it('returns an empty list for a domain that matches no site', async () => {
+  it('returns an empty, indexing-allowed list for a domain that matches no site', async () => {
     const res = await request(app.getHttpServer())
       .get('/public/pages')
       .query({ domain: 'nobody-owns-this-domain.test' })
       .expect(200);
 
-    expect(res.body).toEqual({ items: [] });
+    expect(res.body).toEqual({ items: [], searchEngineIndexingEnabled: true });
   });
 });

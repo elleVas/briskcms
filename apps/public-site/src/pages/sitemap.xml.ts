@@ -16,9 +16,12 @@ function slugToPath(slug: string): string {
 }
 
 export const GET: APIRoute = async ({ url }) => {
-  const entries = await listPublishedPagesForSitemap(url.hostname);
+  // Listing pages here is independent of the site's indexing preference
+  // (docs/adr/0016) — robots.txt, not this route, is what actually tells a
+  // compliant crawler to stay away when indexing is discouraged.
+  const { items } = await listPublishedPagesForSitemap(url.hostname);
 
-  const urlEntries = entries
+  const urlEntries = items
     .map(
       (entry) => `  <url>
     <loc>${url.origin}${slugToPath(entry.slug)}</loc>

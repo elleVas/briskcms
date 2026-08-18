@@ -24,6 +24,7 @@ const sampleSite: SiteDto = {
   businessPhone: '+39 02 1234567',
   businessType: 'Restaurant',
   openingHours: null,
+  searchEngineIndexingEnabled: false,
   createdAt: '',
 };
 

@@ -11,6 +11,7 @@ export interface SiteProps {
   businessPhone: string | null;
   businessType: string | null;
   openingHours: OpeningHoursDay[] | null;
+  searchEngineIndexingEnabled: boolean;
   createdAt: Date;
 }
 
@@ -19,6 +20,15 @@ export interface UpdateBusinessInfoInput {
   businessPhone: string | null;
   businessType: string | null;
   openingHours: OpeningHoursDay[] | null;
+}
+
+export interface UpdateGeneralSettingsInput {
+  name: string;
+  domain: string | null;
+}
+
+export interface UpdateSeoSettingsInput {
+  searchEngineIndexingEnabled: boolean;
 }
 
 export class Site {
@@ -72,6 +82,15 @@ export class Site {
     return this.props.openingHours;
   }
 
+  /**
+   * Defaults to `false` (opt-in) at the DB column level for every site,
+   * new or already seeded — a site mid-build shouldn't be indexed until its
+   * owner deliberately decides it's ready, not the other way around.
+   */
+  get searchEngineIndexingEnabled(): boolean {
+    return this.props.searchEngineIndexingEnabled;
+  }
+
   get createdAt(): Date {
     return this.props.createdAt;
   }
@@ -95,5 +114,14 @@ export class Site {
     this.props.businessPhone = input.businessPhone;
     this.props.businessType = input.businessType;
     this.props.openingHours = input.openingHours;
+  }
+
+  updateGeneralSettings(input: UpdateGeneralSettingsInput): void {
+    this.props.name = input.name;
+    this.props.domain = input.domain;
+  }
+
+  updateSeoSettings(input: UpdateSeoSettingsInput): void {
+    this.props.searchEngineIndexingEnabled = input.searchEngineIndexingEnabled;
   }
 }

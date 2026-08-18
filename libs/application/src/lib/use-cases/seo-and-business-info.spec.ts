@@ -3,6 +3,8 @@ import { PageNotFoundError, SiteNotFoundError, Site } from '@brisk/domain-core';
 import { createPage } from './create-page.use-case.js';
 import { updateSeoMeta } from './update-seo-meta.use-case.js';
 import { updateSiteBusinessInfo } from './update-site-business-info.use-case.js';
+import { updateSiteGeneralSettings } from './update-site-general-settings.use-case.js';
+import { updateSiteSeoSettings } from './update-site-seo-settings.use-case.js';
 import {
   InMemoryPageRepository,
   InMemoryPageVersionRepository,
@@ -85,6 +87,7 @@ describe('updateSiteBusinessInfo', () => {
       businessPhone: null,
       businessType: null,
       openingHours: null,
+      searchEngineIndexingEnabled: false,
       createdAt: new Date(),
     });
     await siteRepository.save(site);
@@ -140,6 +143,144 @@ describe('updateSiteBusinessInfo', () => {
         businessPhone: null,
         businessType: null,
         openingHours: null,
+      }),
+    ).rejects.toThrow(SiteNotFoundError);
+  });
+});
+
+describe('updateSiteGeneralSettings', () => {
+  const tenantId = 'tenant-1';
+  const otherTenantId = 'tenant-2';
+
+  function setup() {
+    const siteRepository = new InMemorySiteRepository();
+    return { siteRepository };
+  }
+
+  async function seedSite(siteRepository: InMemorySiteRepository) {
+    const site = Site.fromProps({
+      id: 'site-1',
+      tenantId,
+      name: 'Il mio sito',
+      domain: 'localhost',
+      defaultLocale: 'it',
+      enabledLocales: ['it'],
+      businessAddress: null,
+      businessPhone: null,
+      businessType: null,
+      openingHours: null,
+      searchEngineIndexingEnabled: false,
+      createdAt: new Date(),
+    });
+    await siteRepository.save(site);
+    return site;
+  }
+
+  it('sets the name and domain', async () => {
+    const deps = setup();
+    await seedSite(deps.siteRepository);
+
+    const updated = await updateSiteGeneralSettings(deps, {
+      tenantId,
+      siteId: 'site-1',
+      name: 'Il mio ristorante',
+      domain: 'ilmioristorante.it',
+    });
+
+    expect(updated.name).toBe('Il mio ristorante');
+    expect(updated.domain).toBe('ilmioristorante.it');
+  });
+
+  it('throws SiteNotFoundError for a nonexistent site', async () => {
+    const deps = setup();
+
+    await expect(
+      updateSiteGeneralSettings(deps, {
+        tenantId,
+        siteId: 'does-not-exist',
+        name: 'x',
+        domain: null,
+      }),
+    ).rejects.toThrow(SiteNotFoundError);
+  });
+
+  it('does not update a site belonging to a different tenant', async () => {
+    const deps = setup();
+    await seedSite(deps.siteRepository);
+
+    await expect(
+      updateSiteGeneralSettings(deps, {
+        tenantId: otherTenantId,
+        siteId: 'site-1',
+        name: 'hijacked',
+        domain: 'hijacked.example.com',
+      }),
+    ).rejects.toThrow(SiteNotFoundError);
+  });
+});
+
+describe('updateSiteSeoSettings', () => {
+  const tenantId = 'tenant-1';
+  const otherTenantId = 'tenant-2';
+
+  function setup() {
+    const siteRepository = new InMemorySiteRepository();
+    return { siteRepository };
+  }
+
+  async function seedSite(siteRepository: InMemorySiteRepository) {
+    const site = Site.fromProps({
+      id: 'site-1',
+      tenantId,
+      name: 'Il mio sito',
+      domain: 'localhost',
+      defaultLocale: 'it',
+      enabledLocales: ['it'],
+      businessAddress: null,
+      businessPhone: null,
+      businessType: null,
+      openingHours: null,
+      searchEngineIndexingEnabled: false,
+      createdAt: new Date(),
+    });
+    await siteRepository.save(site);
+    return site;
+  }
+
+  it('enables search engine indexing', async () => {
+    const deps = setup();
+    await seedSite(deps.siteRepository);
+
+    const updated = await updateSiteSeoSettings(deps, {
+      tenantId,
+      siteId: 'site-1',
+      searchEngineIndexingEnabled: true,
+    });
+
+    expect(updated.searchEngineIndexingEnabled).toBe(true);
+  });
+
+  it('throws SiteNotFoundError for a nonexistent site', async () => {
+    const deps = setup();
+
+    await expect(
+      updateSiteSeoSettings(deps, {
+        tenantId,
+        siteId: 'does-not-exist',
+        searchEngineIndexingEnabled: true,
+      }),
+    ).rejects.toThrow(SiteNotFoundError);
+  });
+
+  it('does not update a site belonging to a different tenant', async () => {
+    const deps = setup();
+    await seedSite(deps.siteRepository);
+
+    await expect(
+      updateSiteSeoSettings(deps, {
+        tenantId: otherTenantId,
+        siteId: 'site-1',
+        searchEngineIndexingEnabled: true,
       }),
     ).rejects.toThrow(SiteNotFoundError);
   });

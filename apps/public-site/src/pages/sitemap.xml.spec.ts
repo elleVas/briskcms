@@ -10,10 +10,13 @@ vi.mock('../lib/public-api-client.js', async (importOriginal) => {
 
 describe('GET /sitemap.xml', () => {
   beforeEach(() => {
-    vi.mocked(api.listPublishedPagesForSitemap).mockResolvedValue([
-      { slug: 'home', updatedAt: '2026-01-01T00:00:00.000Z' },
-      { slug: 'chi-siamo', updatedAt: '2026-01-02T00:00:00.000Z' },
-    ]);
+    vi.mocked(api.listPublishedPagesForSitemap).mockResolvedValue({
+      items: [
+        { slug: 'home', updatedAt: '2026-01-01T00:00:00.000Z' },
+        { slug: 'chi-siamo', updatedAt: '2026-01-02T00:00:00.000Z' },
+      ],
+      searchEngineIndexingEnabled: true,
+    });
   });
 
   afterEach(() => {
@@ -58,5 +61,19 @@ describe('GET /sitemap.xml', () => {
     expect(res.headers.get('Content-Type')).toContain('application/xml');
     const body = await res.text();
     expect(body.startsWith('<?xml version="1.0"')).toBe(true);
+  });
+
+  it('renders no <url> entries when the site has no published pages', async () => {
+    vi.mocked(api.listPublishedPagesForSitemap).mockResolvedValue({
+      items: [],
+      searchEngineIndexingEnabled: true,
+    });
+
+    const url = new URL('https://example.com/sitemap.xml');
+    // @ts-expect-error -- only `url` is exercised by this handler
+    const res = await GET({ url });
+    const body = await res.text();
+
+    expect(body).not.toContain('<url>');
   });
 });

@@ -7,6 +7,7 @@ describe('FormSubmission entity', () => {
     tenantId: 'tenant-1',
     siteId: 'site-1',
     pageId: 'page-1',
+    formId: 'form-1',
     payload: { name: 'Mario Rossi', email: 'mario@example.com' },
   };
 
@@ -29,6 +30,7 @@ describe('FormSubmission entity', () => {
     expect(submission.tenantId).toBe('tenant-1');
     expect(submission.siteId).toBe('site-1');
     expect(submission.pageId).toBe('page-1');
+    expect(submission.formId).toBe('form-1');
     expect(submission.payload).toEqual({
       name: 'Mario Rossi',
       email: 'mario@example.com',
@@ -40,6 +42,12 @@ describe('FormSubmission entity', () => {
     const submission = FormSubmission.create({ ...baseInput, pageId: null });
 
     expect(submission.pageId).toBeNull();
+  });
+
+  it('allows a null formId (the form was deleted after this submission)', () => {
+    const submission = FormSubmission.create({ ...baseInput, formId: null });
+
+    expect(submission.formId).toBeNull();
   });
 
   it('fromProps/toProps round-trip without loss', () => {

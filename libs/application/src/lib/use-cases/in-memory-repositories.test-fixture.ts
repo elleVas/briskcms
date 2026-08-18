@@ -1,5 +1,15 @@
-import type { Media, Page, PageVersion, Site, User } from '@brisk/domain-core';
 import type {
+  Form,
+  FormSubmission,
+  Media,
+  Page,
+  PageVersion,
+  Site,
+  User,
+} from '@brisk/domain-core';
+import type {
+  FormRepositoryPort,
+  FormSubmissionRepositoryPort,
   MediaRepositoryPort,
   MediaStoragePort,
   PaginatedResult,
@@ -167,6 +177,49 @@ export class InMemoryMediaRepository implements MediaRepositoryPort {
     if (media && media.tenantId === tenantId) {
       this.media.delete(mediaId);
     }
+  }
+}
+
+export class InMemoryFormRepository implements FormRepositoryPort {
+  private forms = new Map<string, Form>();
+
+  async save(form: Form): Promise<void> {
+    this.forms.set(form.id, form);
+  }
+
+  async findById(tenantId: string, formId: string): Promise<Form | null> {
+    const form = this.forms.get(formId);
+    return form && form.tenantId === tenantId ? form : null;
+  }
+
+  async listBySite(
+    tenantId: string,
+    siteId: string,
+    pagination: Pagination,
+  ): Promise<PaginatedResult<Form>> {
+    const matching = [...this.forms.values()]
+      .filter((f) => f.tenantId === tenantId && f.siteId === siteId)
+      .sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
+    const start = (pagination.page - 1) * pagination.pageSize;
+    return {
+      items: matching.slice(start, start + pagination.pageSize),
+      total: matching.length,
+    };
+  }
+
+  async delete(tenantId: string, formId: string): Promise<void> {
+    const form = this.forms.get(formId);
+    if (form && form.tenantId === tenantId) {
+      this.forms.delete(formId);
+    }
+  }
+}
+
+export class InMemoryFormSubmissionRepository implements FormSubmissionRepositoryPort {
+  readonly submissions: FormSubmission[] = [];
+
+  async save(submission: FormSubmission): Promise<void> {
+    this.submissions.push(submission);
   }
 }
 
