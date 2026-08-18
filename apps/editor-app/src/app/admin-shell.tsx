@@ -1,30 +1,19 @@
 import type { ReactNode } from 'react';
-import { Link, useNavigate } from '@tanstack/react-router';
+import { Link } from '@tanstack/react-router';
 import { Badge } from '../components/ui/badge.js';
-import { Button } from '../components/ui/button.js';
 import { Separator } from '../components/ui/separator.js';
-import { useSession } from './use-session.js';
+import { LogoutButton } from './logout-button.js';
 
 export interface AdminShellProps {
   children: ReactNode;
 }
 
 export function AdminShell({ children }: AdminShellProps) {
-  const { handleLogout } = useSession();
-  const navigate = useNavigate();
-
-  async function onLogout() {
-    await handleLogout();
-    await navigate({ to: '/login' });
-  }
-
   return (
     <div className="flex h-screen flex-col">
       <header className="flex items-center justify-between border-b px-4 py-2">
         <span className="text-sm font-semibold">Brisk</span>
-        <Button variant="ghost" size="sm" onClick={onLogout}>
-          Esci
-        </Button>
+        <LogoutButton />
       </header>
       <div className="flex min-h-0 flex-1">
         <nav className="flex w-48 shrink-0 flex-col gap-1 border-r p-3">

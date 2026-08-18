@@ -1,8 +1,7 @@
 import type { ReactNode } from 'react';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import * as router from '@tanstack/react-router';
-import * as authApi from '../lib/auth-api-client.js';
 import { AdminShell } from './admin-shell.js';
 
 vi.mock('@tanstack/react-router', async (importOriginal) => {
@@ -27,18 +26,12 @@ vi.mock('@tanstack/react-router', async (importOriginal) => {
   };
 });
 
-vi.mock('../lib/auth-api-client.js', async (importOriginal) => {
-  const actual =
-    await importOriginal<typeof import('../lib/auth-api-client.js')>();
-  return { ...actual, logout: vi.fn() };
-});
-
 describe('AdminShell', () => {
   afterEach(() => {
     vi.clearAllMocks();
   });
 
-  it('renders a link to Pagine and disabled placeholders for Media/Utenti', () => {
+  it('renders a link to Pagine, disabled placeholders for Media/Utenti, and a logout control', () => {
     vi.mocked(router.useNavigate).mockReturnValue(vi.fn());
 
     render(
@@ -53,22 +46,7 @@ describe('AdminShell', () => {
     expect(screen.getByText('Media')).toBeTruthy();
     expect(screen.getByText('Utenti')).toBeTruthy();
     expect(screen.getAllByText('In arrivo')).toHaveLength(2);
+    expect(screen.getByRole('button', { name: /^esci$/i })).toBeTruthy();
     expect(screen.getByText('content')).toBeTruthy();
-  });
-
-  it('logs out and navigates to /login when Esci is clicked', async () => {
-    const navigate = vi.fn();
-    vi.mocked(router.useNavigate).mockReturnValue(navigate);
-    vi.mocked(authApi.logout).mockResolvedValue({ success: true });
-
-    render(
-      <AdminShell>
-        <p>content</p>
-      </AdminShell>,
-    );
-    fireEvent.click(screen.getByRole('button', { name: /^esci$/i }));
-
-    await waitFor(() => expect(authApi.logout).toHaveBeenCalled());
-    expect(navigate).toHaveBeenCalledWith({ to: '/login' });
   });
 });

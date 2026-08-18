@@ -1,12 +1,11 @@
-import { Link, useNavigate } from '@tanstack/react-router';
+import { Link } from '@tanstack/react-router';
 import { Puck } from '@puckeditor/core';
 import '@puckeditor/core/puck.css';
 import { puckConfig } from '@brisk/puck-config';
 import { toPuckData } from '../lib/puck-data-mapper.js';
-import { Button } from '../components/ui/button.js';
 import type { PageDto } from '../lib/pages-api-client.js';
+import { LogoutButton } from './logout-button.js';
 import { usePageEditor } from './use-page-editor.js';
-import { useSession } from './use-session.js';
 
 export interface PageEditorViewProps {
   page: PageDto;
@@ -15,13 +14,6 @@ export interface PageEditorViewProps {
 export function PageEditorView({ page: initialPage }: PageEditorViewProps) {
   const { page, status, handleChange, handlePublish } =
     usePageEditor(initialPage);
-  const { handleLogout } = useSession();
-  const navigate = useNavigate();
-
-  async function onLogout() {
-    await handleLogout();
-    await navigate({ to: '/login' });
-  }
 
   return (
     <div style={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
@@ -32,9 +24,7 @@ export function PageEditorView({ page: initialPage }: PageEditorViewProps) {
           </Link>
           <span>{status}</span>
         </div>
-        <Button variant="ghost" size="sm" onClick={() => void onLogout()}>
-          Esci
-        </Button>
+        <LogoutButton />
       </div>
       <div style={{ flex: 1, minHeight: 0 }}>
         <Puck
