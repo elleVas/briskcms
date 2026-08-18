@@ -20,6 +20,7 @@ export interface PublishedSite {
   businessPhone: string | null;
   businessType: string | null;
   openingHours: OpeningHoursDay[] | null;
+  searchEngineIndexingEnabled: boolean;
 }
 
 export interface PublishedPage {
@@ -72,6 +73,7 @@ export async function getPublishedPageBySlug(
       businessPhone: site.businessPhone,
       businessType: site.businessType,
       openingHours: site.openingHours,
+      searchEngineIndexingEnabled: site.searchEngineIndexingEnabled,
     },
   };
 }

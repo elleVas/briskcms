@@ -13,6 +13,7 @@ export interface PublishedSiteDto {
   businessPhone: string | null;
   businessType: string | null;
   openingHours: OpeningHoursDay[] | null;
+  searchEngineIndexingEnabled: boolean;
 }
 
 export interface PublishedPageDto {
@@ -59,10 +60,19 @@ export interface SitemapEntryDto {
   updatedAt: string;
 }
 
+export interface SitemapListingDto {
+  items: SitemapEntryDto[];
+  // Bundled with the page list rather than a separate lookup — both
+  // sitemap.xml and robots.txt need "what does this domain's site say
+  // about crawling", and both already need this same site resolved by
+  // domain (see the API's ListPublishedPagesForSitemap use case).
+  searchEngineIndexingEnabled: boolean;
+}
+
 /** Same "nothing to show" 404 handling as getPublishedPageBySlug — an unmatched domain returns null, not a thrown error. */
 export async function listPublishedPages(
   domain: string,
-): Promise<SitemapEntryDto[] | null> {
+): Promise<SitemapListingDto | null> {
   const params = new URLSearchParams({ domain });
   const res = await fetch(`${apiUrl()}/public/pages?${params.toString()}`);
 
@@ -72,8 +82,7 @@ export async function listPublishedPages(
   if (!res.ok) {
     throw new Error(`Public pages API error: ${res.status}`);
   }
-  const body = (await res.json()) as { items: SitemapEntryDto[] };
-  return body.items;
+  return res.json();
 }
 
 export interface PublicFormDto {

@@ -141,6 +141,26 @@
       "title": "Choose an image"
     }
   },
+  "generalSettings": {
+    "menuLabel": "General settings",
+    "title": "General settings",
+    "nameLabel": "Site name",
+    "domainLabel": "Domain",
+    "domainDescription": "The domain the site is served on (e.g. www.yoursite.com). Must exactly match the real one, otherwise pages won't be found.",
+    "cancel": "Cancel",
+    "save": "Save",
+    "saving": "Saving..."
+  },
+  "seoSettings": {
+    "menuLabel": "Site SEO",
+    "title": "Site SEO",
+    "indexingLabel": "Allow search engine indexing",
+    "indexingDescription": "When off, the site asks search engines not to index it (useful during development, before launch).",
+    "indexingDisclaimer": "Note: this is a request, not a guarantee — it depends on search engines respecting it.",
+    "cancel": "Cancel",
+    "save": "Save",
+    "saving": "Saving..."
+  },
   "businessInfo": {
     "menuLabel": "Business info",
     "title": "Business info",

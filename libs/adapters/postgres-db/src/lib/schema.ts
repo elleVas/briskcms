@@ -1,6 +1,7 @@
 import { sql } from 'drizzle-orm';
 import {
   bigint,
+  boolean,
   check,
   index,
   integer,
@@ -68,6 +69,11 @@ export const sites = pgTable('sites', {
   businessPhone: text('business_phone'),
   businessType: text('business_type'),
   openingHours: jsonb('opening_hours').$type<OpeningHoursDay[]>(),
+  // Defaults to false (opt-in): a site mid-build shouldn't be indexed until
+  // its owner deliberately decides it's ready — see Site.searchEngineIndexingEnabled.
+  searchEngineIndexingEnabled: boolean('search_engine_indexing_enabled')
+    .notNull()
+    .default(false),
   createdAt: timestamp('created_at', { withTimezone: true })
     .notNull()
     .defaultNow(),

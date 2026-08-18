@@ -28,3 +28,4 @@ explicitly supersedes it (status `Superseded by ADR-000X`).
 | [0013](0013-media-pipeline-local-serving-upload-time-resize.md)  | Media pipeline: API-served local storage, resize at upload time            | Accepted |
 | [0014](0014-seo-metadata-editing-and-schema-org-scope.md)        | SEO metadata editing surface, and schema.org scope                         | Accepted |
 | [0015](0015-form-builder-architecture.md)                        | Form builder: entity, field propagation, and scope                         | Accepted |
+| [0016](0016-site-general-and-seo-settings.md)                    | Site general settings and search engine indexing control                   | Accepted |

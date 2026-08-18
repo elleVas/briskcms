@@ -13,6 +13,7 @@ describe('Site entity', () => {
     businessPhone: null,
     businessType: null,
     openingHours: null,
+    searchEngineIndexingEnabled: false,
     createdAt: new Date('2026-01-01T00:00:00Z'),
   };
 
@@ -29,6 +30,7 @@ describe('Site entity', () => {
     expect(site.businessPhone).toBeNull();
     expect(site.businessType).toBeNull();
     expect(site.openingHours).toBeNull();
+    expect(site.searchEngineIndexingEnabled).toBe(false);
     expect(site.createdAt).toEqual(props.createdAt);
   });
 
@@ -71,5 +73,33 @@ describe('Site entity', () => {
     expect(site.businessType).toBe('Restaurant');
     expect(site.openingHours).toEqual([{ dayOfWeek: 'monday', ranges: [] }]);
     expect(site.hasBusinessInfo()).toBe(true);
+  });
+
+  it('updateGeneralSettings replaces the name and domain', () => {
+    const site = Site.fromProps(props);
+
+    site.updateGeneralSettings({
+      name: 'Nuovo nome',
+      domain: 'nuovo.example.com',
+    });
+
+    expect(site.name).toBe('Nuovo nome');
+    expect(site.domain).toBe('nuovo.example.com');
+  });
+
+  it('updateGeneralSettings supports clearing the domain back to null', () => {
+    const site = Site.fromProps(props);
+
+    site.updateGeneralSettings({ name: props.name, domain: null });
+
+    expect(site.domain).toBeNull();
+  });
+
+  it('updateSeoSettings replaces the search engine indexing flag', () => {
+    const site = Site.fromProps(props);
+
+    site.updateSeoSettings({ searchEngineIndexingEnabled: true });
+
+    expect(site.searchEngineIndexingEnabled).toBe(true);
   });
 });

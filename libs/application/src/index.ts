@@ -18,6 +18,8 @@ export * from './lib/use-cases/request-password-reset.use-case.js';
 export * from './lib/use-cases/reset-password.use-case.js';
 export * from './lib/use-cases/update-seo-meta.use-case.js';
 export * from './lib/use-cases/update-site-business-info.use-case.js';
+export * from './lib/use-cases/update-site-general-settings.use-case.js';
+export * from './lib/use-cases/update-site-seo-settings.use-case.js';
 export * from './lib/use-cases/create-form.use-case.js';
 export * from './lib/use-cases/update-form.use-case.js';
 export * from './lib/use-cases/list-forms.use-case.js';

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Building2, Moon, Settings, Sun } from 'lucide-react';
+import { Building2, Globe, Moon, Search, Settings, Sun } from 'lucide-react';
 import { Button } from '../components/ui/button.js';
 import {
   Popover,
@@ -10,6 +10,8 @@ import {
 import { Separator } from '../components/ui/separator.js';
 import { Switch } from '../components/ui/switch.js';
 import { BusinessInfoDialog } from './business-info-dialog.js';
+import { GeneralSettingsDialog } from './general-settings-dialog.js';
+import { SeoSettingsDialog } from './seo-settings-dialog.js';
 import { useTheme } from './use-theme.js';
 
 const DEFAULT_SITE_ID = import.meta.env['VITE_DEFAULT_SITE_ID'] as string;
@@ -18,6 +20,8 @@ export function SettingsMenu() {
   const { t, i18n } = useTranslation();
   const { theme, setTheme } = useTheme();
   const [isBusinessInfoOpen, setIsBusinessInfoOpen] = useState(false);
+  const [isGeneralSettingsOpen, setIsGeneralSettingsOpen] = useState(false);
+  const [isSeoSettingsOpen, setIsSeoSettingsOpen] = useState(false);
 
   return (
     <>
@@ -70,6 +74,22 @@ export function SettingsMenu() {
           <Button
             variant="ghost"
             className="w-full justify-start gap-2 px-1 py-1.5 text-sm"
+            onClick={() => setIsGeneralSettingsOpen(true)}
+          >
+            <Globe className="size-4" />
+            {t('generalSettings.menuLabel')}
+          </Button>
+          <Button
+            variant="ghost"
+            className="w-full justify-start gap-2 px-1 py-1.5 text-sm"
+            onClick={() => setIsSeoSettingsOpen(true)}
+          >
+            <Search className="size-4" />
+            {t('seoSettings.menuLabel')}
+          </Button>
+          <Button
+            variant="ghost"
+            className="w-full justify-start gap-2 px-1 py-1.5 text-sm"
             onClick={() => setIsBusinessInfoOpen(true)}
           >
             <Building2 className="size-4" />
@@ -77,6 +97,16 @@ export function SettingsMenu() {
           </Button>
         </PopoverContent>
       </Popover>
+      <GeneralSettingsDialog
+        siteId={DEFAULT_SITE_ID}
+        open={isGeneralSettingsOpen}
+        onOpenChange={setIsGeneralSettingsOpen}
+      />
+      <SeoSettingsDialog
+        siteId={DEFAULT_SITE_ID}
+        open={isSeoSettingsOpen}
+        onOpenChange={setIsSeoSettingsOpen}
+      />
       <BusinessInfoDialog
         siteId={DEFAULT_SITE_ID}
         open={isBusinessInfoOpen}

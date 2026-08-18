@@ -1,0 +1,1 @@
+ALTER TABLE "sites" ADD COLUMN "search_engine_indexing_enabled" boolean DEFAULT false NOT NULL;

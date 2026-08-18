@@ -12,6 +12,7 @@ const siteWithoutBusinessInfo: PublishedSiteDto = {
   businessPhone: null,
   businessType: null,
   openingHours: null,
+  searchEngineIndexingEnabled: false,
 };
 
 describe('buildSchemaOrgGraph', () => {

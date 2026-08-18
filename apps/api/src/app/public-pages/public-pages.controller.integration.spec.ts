@@ -105,6 +105,7 @@ describe('PublicPagesController (integration)', () => {
         businessPhone: null,
         businessType: null,
         openingHours: null,
+        searchEngineIndexingEnabled: false,
       },
     });
   });
@@ -184,6 +185,7 @@ describe('PublicPagesController (integration)', () => {
     const slugs = res.body.items.map((item: { slug: string }) => item.slug);
     expect(slugs).toContain('servizi');
     expect(slugs).not.toContain('mai-pubblicata');
+    expect(res.body.searchEngineIndexingEnabled).toBe(false);
   });
 
   it('404s listing pages for a domain that does not match any site', async () => {

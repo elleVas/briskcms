@@ -20,7 +20,10 @@ describe('listPublishedPagesForSitemap', () => {
     return { pageRepository, pageVersionRepository, siteRepository };
   }
 
-  async function seedSite(siteRepository: InMemorySiteRepository) {
+  async function seedSite(
+    siteRepository: InMemorySiteRepository,
+    overrides: Partial<Parameters<typeof Site.fromProps>[0]> = {},
+  ) {
     const site = Site.fromProps({
       id: 'site-1',
       tenantId,
@@ -32,7 +35,9 @@ describe('listPublishedPagesForSitemap', () => {
       businessPhone: null,
       businessType: null,
       openingHours: null,
+      searchEngineIndexingEnabled: false,
       createdAt: new Date(),
+      ...overrides,
     });
     await siteRepository.save(site);
     return site;
@@ -80,7 +85,7 @@ describe('listPublishedPagesForSitemap', () => {
       domain: 'example.com',
     });
 
-    expect(result?.map((entry) => entry.slug).sort()).toEqual([
+    expect(result?.items.map((entry) => entry.slug).sort()).toEqual([
       'chi-siamo',
       'contatti',
     ]);
@@ -96,5 +101,17 @@ describe('listPublishedPagesForSitemap', () => {
     });
 
     expect(result).toBeNull();
+  });
+
+  it("includes the site's search engine indexing flag", async () => {
+    const deps = setup();
+    await seedSite(deps.siteRepository, { searchEngineIndexingEnabled: true });
+
+    const result = await listPublishedPagesForSitemap(deps, {
+      tenantId,
+      domain: 'example.com',
+    });
+
+    expect(result?.searchEngineIndexingEnabled).toBe(true);
   });
 });

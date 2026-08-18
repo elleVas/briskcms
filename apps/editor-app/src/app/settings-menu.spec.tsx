@@ -27,8 +27,8 @@ describe('SettingsMenu', () => {
     vi.clearAllMocks();
   });
 
-  it('opens the business info dialog from the settings popover', async () => {
-    vi.mocked(api.getSite).mockResolvedValue({
+  function mockSite(overrides: Partial<api.SiteDto> = {}): api.SiteDto {
+    return {
       id: 'site-1',
       tenantId: 'tenant-1',
       name: 'Il mio sito',
@@ -39,8 +39,14 @@ describe('SettingsMenu', () => {
       businessPhone: null,
       businessType: null,
       openingHours: null,
+      searchEngineIndexingEnabled: false,
       createdAt: '',
-    });
+      ...overrides,
+    };
+  }
+
+  it('opens the business info dialog from the settings popover', async () => {
+    vi.mocked(api.getSite).mockResolvedValue(mockSite());
 
     renderMenu();
     fireEvent.click(screen.getByRole('button', { name: /^impostazioni$/i }));
@@ -48,6 +54,32 @@ describe('SettingsMenu', () => {
 
     expect(
       await screen.findByRole('heading', { name: /dati attività/i }),
+    ).toBeTruthy();
+  });
+
+  it('opens the general settings dialog from the settings popover', async () => {
+    vi.mocked(api.getSite).mockResolvedValue(mockSite());
+
+    renderMenu();
+    fireEvent.click(screen.getByRole('button', { name: /^impostazioni$/i }));
+    fireEvent.click(
+      screen.getByRole('button', { name: /impostazioni generali/i }),
+    );
+
+    expect(
+      await screen.findByRole('heading', { name: /impostazioni generali/i }),
+    ).toBeTruthy();
+  });
+
+  it('opens the SEO settings dialog from the settings popover', async () => {
+    vi.mocked(api.getSite).mockResolvedValue(mockSite());
+
+    renderMenu();
+    fireEvent.click(screen.getByRole('button', { name: /^impostazioni$/i }));
+    fireEvent.click(screen.getByRole('button', { name: /^seo sito$/i }));
+
+    expect(
+      await screen.findByRole('heading', { name: /^seo sito$/i }),
     ).toBeTruthy();
   });
 });

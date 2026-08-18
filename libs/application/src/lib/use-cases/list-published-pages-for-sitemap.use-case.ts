@@ -15,6 +15,15 @@ export interface SitemapEntry {
   updatedAt: Date;
 }
 
+export interface SitemapListing {
+  items: SitemapEntry[];
+  // Bundled with the page list rather than a separate lookup: both
+  // sitemap.xml and robots.txt (apps/public-site) need "what does this
+  // domain's site say about crawling", and both already need this same
+  // site resolved by domain.
+  searchEngineIndexingEnabled: boolean;
+}
+
 // "Siti vetrina" scale (this product's stated target, see
 // piano-progetto-astro-cms.md) — a single page of results comfortably
 // covers a real site's page count without needing a dedicated unpaginated
@@ -30,7 +39,7 @@ const SITEMAP_PAGE_SIZE = 1000;
 export async function listPublishedPagesForSitemap(
   deps: ListPublishedPagesForSitemapDeps,
   input: ListPublishedPagesForSitemapInput,
-): Promise<SitemapEntry[] | null> {
+): Promise<SitemapListing | null> {
   const site = await deps.siteRepository.findByDomain(
     input.tenantId,
     input.domain,
@@ -45,7 +54,10 @@ export async function listPublishedPagesForSitemap(
     { page: 1, pageSize: SITEMAP_PAGE_SIZE },
   );
 
-  return items
-    .filter((page) => page.status === 'published')
-    .map((page) => ({ slug: page.slug, updatedAt: page.updatedAt }));
+  return {
+    items: items
+      .filter((page) => page.status === 'published')
+      .map((page) => ({ slug: page.slug, updatedAt: page.updatedAt })),
+    searchEngineIndexingEnabled: site.searchEngineIndexingEnabled,
+  };
 }

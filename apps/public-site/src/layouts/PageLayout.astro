@@ -36,6 +36,11 @@ const schemaOrgJson = JSON.stringify(schemaOrgGraph).replace(/</g, '\\u003c');
 		<title>{seoMeta.title}</title>
 		<meta name="description" content={seoMeta.description} />
 		{seoMeta.canonical && <link rel="canonical" href={seoMeta.canonical} />}
+		{
+			!site.searchEngineIndexingEnabled && (
+				<meta name="robots" content="noindex, nofollow" />
+			)
+		}
 
 		<meta property="og:type" content="website" />
 		<meta property="og:title" content={seoMeta.title} />

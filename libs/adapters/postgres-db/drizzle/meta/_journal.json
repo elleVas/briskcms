@@ -64,6 +64,13 @@
       "when": 1787088764480,
       "tag": "0008_forms_rls",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1787094135781,
+      "tag": "0009_sites_search_engine_indexing",
+      "breakpoints": true
     }
   ]
 }

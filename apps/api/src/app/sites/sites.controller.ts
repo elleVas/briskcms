@@ -8,7 +8,11 @@ import {
   Patch,
   UseGuards,
 } from '@nestjs/common';
-import { updateSiteBusinessInfo } from '@brisk/application';
+import {
+  updateSiteBusinessInfo,
+  updateSiteGeneralSettings,
+  updateSiteSeoSettings,
+} from '@brisk/application';
 import { SiteNotFoundError } from '@brisk/domain-core';
 import type { SiteRepositoryPort, TenantContextPort } from '@brisk/ports';
 import { SessionAuthGuard } from '../auth/session-auth.guard.js';
@@ -16,6 +20,10 @@ import { ZodValidationPipe } from '../zod-validation.pipe.js';
 import {
   type UpdateBusinessInfoBody,
   updateBusinessInfoBodySchema,
+  type UpdateGeneralSettingsBody,
+  updateGeneralSettingsBodySchema,
+  type UpdateSeoSettingsBody,
+  updateSeoSettingsBodySchema,
 } from './sites.schemas.js';
 import { SITE_REPOSITORY, TENANT_CONTEXT } from './sites.tokens.js';
 
@@ -48,6 +56,44 @@ export class SitesController {
   ) {
     return this.handleDomainErrors(async () => {
       const site = await updateSiteBusinessInfo(
+        { siteRepository: this.siteRepository },
+        {
+          tenantId: this.tenantContext.getCurrentTenantId(),
+          siteId: id,
+          ...body,
+        },
+      );
+      return site.toProps();
+    });
+  }
+
+  @Patch(':id/general-settings')
+  async updateGeneralSettings(
+    @Param('id') id: string,
+    @Body(new ZodValidationPipe(updateGeneralSettingsBodySchema))
+    body: UpdateGeneralSettingsBody,
+  ) {
+    return this.handleDomainErrors(async () => {
+      const site = await updateSiteGeneralSettings(
+        { siteRepository: this.siteRepository },
+        {
+          tenantId: this.tenantContext.getCurrentTenantId(),
+          siteId: id,
+          ...body,
+        },
+      );
+      return site.toProps();
+    });
+  }
+
+  @Patch(':id/seo-settings')
+  async updateSeoSettings(
+    @Param('id') id: string,
+    @Body(new ZodValidationPipe(updateSeoSettingsBodySchema))
+    body: UpdateSeoSettingsBody,
+  ) {
+    return this.handleDomainErrors(async () => {
+      const site = await updateSiteSeoSettings(
         { siteRepository: this.siteRepository },
         {
           tenantId: this.tenantContext.getCurrentTenantId(),

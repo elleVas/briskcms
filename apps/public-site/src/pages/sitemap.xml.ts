@@ -14,8 +14,11 @@ function slugToPath(slug: string): string {
 export const GET: APIRoute = async ({ url }) => {
   // A domain that matches no site is a deployment misconfiguration, not a
   // per-request error — an empty sitemap is more useful to a crawler than a
-  // 404 here, so this falls back to `[]` rather than erroring out.
-  const entries = (await listPublishedPages(url.hostname)) ?? [];
+  // 404 here, so this falls back to `[]` rather than erroring out. Listing
+  // pages here is independent of the site's indexing preference — robots.txt
+  // (not this route) is what actually tells a compliant crawler to stay away.
+  const listing = await listPublishedPages(url.hostname);
+  const entries = listing?.items ?? [];
 
   const urlEntries = entries
     .map(

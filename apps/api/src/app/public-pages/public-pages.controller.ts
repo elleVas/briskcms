@@ -44,7 +44,7 @@ export class PublicPagesController {
     @Query(new ZodValidationPipe(publicPagesListQuerySchema))
     query: PublicPagesListQuery,
   ) {
-    const items = await listPublishedPagesForSitemap(
+    const result = await listPublishedPagesForSitemap(
       {
         siteRepository: this.siteRepository,
         pageRepository: this.pageRepository,
@@ -54,10 +54,10 @@ export class PublicPagesController {
     // Same "no oracle" reasoning as by-slug: an unmatched domain 404s
     // instead of silently returning an empty list, so a caller can't use
     // this to probe which domains exist.
-    if (items === null) {
+    if (result === null) {
       throw new NotFoundException();
     }
-    return { items };
+    return result;
   }
 
   @Get('by-slug')
