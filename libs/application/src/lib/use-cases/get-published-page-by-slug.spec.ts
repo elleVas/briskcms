@@ -31,6 +31,10 @@ describe('getPublishedPageBySlug', () => {
       domain: 'example.com',
       defaultLocale: 'it',
       enabledLocales: ['it'],
+      businessAddress: null,
+      businessPhone: null,
+      businessType: null,
+      openingHours: null,
       createdAt: new Date(),
       ...overrides,
     });

@@ -69,4 +69,56 @@ describe('DrizzleSiteRepository (integration)', () => {
       await siteRepository.findByDomain(tenantAId, 'nobody-has-this.test'),
     ).toBeNull();
   });
+
+  it('finds a site by id, scoped to its tenant', async () => {
+    const [row] = await withTenant(db, tenantAId, (tx) =>
+      tx
+        .insert(sites)
+        .values({
+          tenantId: tenantAId,
+          name: 'Site by id',
+          defaultLocale: 'it',
+        })
+        .returning({ id: sites.id }),
+    );
+
+    const found = await siteRepository.findById(tenantAId, row.id);
+    expect(found?.name).toBe('Site by id');
+
+    expect(await siteRepository.findById(tenantBId, row.id)).toBeNull();
+  });
+
+  it('save() persists business info and upserts on a second call', async () => {
+    const [row] = await withTenant(db, tenantAId, (tx) =>
+      tx
+        .insert(sites)
+        .values({
+          tenantId: tenantAId,
+          name: 'Site to update',
+          defaultLocale: 'it',
+        })
+        .returning({ id: sites.id }),
+    );
+
+    const site = await siteRepository.findById(tenantAId, row.id);
+    if (!site) throw new Error('expected the just-inserted site to be found');
+    site.updateBusinessInfo({
+      businessAddress: 'Via Roma 1, Milano',
+      businessPhone: '+39 02 1234567',
+      businessType: 'Restaurant',
+      openingHours: [
+        {
+          dayOfWeek: 'monday',
+          ranges: [{ opens: '12:00', closes: '15:00' }],
+        },
+      ],
+    });
+    await siteRepository.save(site);
+
+    const updated = await siteRepository.findById(tenantAId, row.id);
+    expect(updated?.businessAddress).toBe('Via Roma 1, Milano');
+    expect(updated?.openingHours).toEqual([
+      { dayOfWeek: 'monday', ranges: [{ opens: '12:00', closes: '15:00' }] },
+    ]);
+  });
 });
