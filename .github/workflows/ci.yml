@@ -41,6 +41,11 @@ jobs:
       # tests — see ADR-0012. Never followed in CI (no browser/e2e step),
       # just has to be set for the link to render.
       VITE_PUBLIC_SITE_URL: http://localhost:4321
+      # Needed for MediaModule to compile in apps/api's unit tests (see
+      # app.module.spec.ts) — see ADR-0013. No upload actually happens in
+      # CI, so MEDIA_UPLOAD_DIR is never written to.
+      MEDIA_UPLOAD_DIR: /tmp/brisk-ci-uploads
+      API_PUBLIC_URL: http://localhost:3000/api
 
     steps:
       - uses: actions/checkout@v7

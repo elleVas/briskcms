@@ -1,3 +1,5 @@
+import type { StorageProvider } from '@brisk/domain-core';
+
 export interface UploadMediaInput {
   tenantId: string;
   siteId: string;
@@ -8,6 +10,10 @@ export interface UploadMediaInput {
 
 export interface UploadMediaResult {
   storageKey: string;
+  // Not necessarily UploadMediaInput.mimeType echoed back — every adapter
+  // processes uploads through a conversion step (see ADR-0013, WebP), so
+  // this is the actual stored representation's type.
+  mimeType: string;
   size: number;
   width: number | null;
   height: number | null;
@@ -15,6 +21,9 @@ export interface UploadMediaResult {
 
 /** Implementata da LocalDiskAdapter (default) e S3CompatibleAdapter — vedi libs/adapters. */
 export interface MediaStoragePort {
+  /** Which concrete backend this is — lets a caller (e.g. uploadMedia) fill
+   * in Media.storageProvider without needing its own separate config. */
+  readonly provider: StorageProvider;
   upload(input: UploadMediaInput): Promise<UploadMediaResult>;
   getUrl(storageKey: string): string;
   delete(storageKey: string): Promise<void>;

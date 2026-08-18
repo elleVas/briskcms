@@ -11,6 +11,9 @@
   "include": ["src/**/*.ts"],
   "references": [
     {
+      "path": "../postgres-db/tsconfig.lib.json"
+    },
+    {
       "path": "../../ports/tsconfig.lib.json"
     },
     {

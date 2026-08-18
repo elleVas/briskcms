@@ -86,8 +86,10 @@
     "@brisk/application": "workspace:*",
     "@brisk/domain-core": "workspace:*",
     "@brisk/env-config": "workspace:*",
+    "@brisk/local-disk-media-storage": "workspace:*",
     "@brisk/ports": "workspace:*",
     "@brisk/postgres-db": "workspace:*",
+    "@brisk/postgres-media-repository": "workspace:*",
     "@brisk/postgres-page-repository": "workspace:*",
     "@brisk/postgres-site-repository": "workspace:*",
     "@brisk/postgres-user-repository": "workspace:*",
@@ -101,6 +103,7 @@
     "@nestjs/throttler": "^6.5.0",
     "cookie-parser": "^1.4.7",
     "express": "^5.2.1",
+    "multer": "^2.2.0",
     "reflect-metadata": "^0.2.0",
     "rxjs": "^7.8.2",
     "tslib": "^2.3.0",
@@ -110,8 +113,10 @@
     "@nestjs/testing": "^11.0.0",
     "@types/cookie-parser": "^1.4.10",
     "@types/express": "^5.0.6",
+    "@types/multer": "^2.2.0",
     "@types/supertest": "^7.2.1",
     "dotenv": "^17.4.2",
+    "sharp": "^0.35.3",
     "supertest": "^7.2.2"
   }
 }

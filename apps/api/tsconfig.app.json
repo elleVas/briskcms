@@ -44,10 +44,16 @@
       "path": "../../libs/adapters/postgres-page-repository/tsconfig.lib.json"
     },
     {
+      "path": "../../libs/adapters/postgres-media-repository/tsconfig.lib.json"
+    },
+    {
       "path": "../../libs/adapters/postgres-db/tsconfig.lib.json"
     },
     {
       "path": "../../libs/ports/tsconfig.lib.json"
+    },
+    {
+      "path": "../../libs/adapters/local-disk-media-storage/tsconfig.lib.json"
     },
     {
       "path": "../../libs/env-config/tsconfig.lib.json"

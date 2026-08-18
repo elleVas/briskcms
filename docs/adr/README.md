@@ -25,3 +25,4 @@ explicitly supersedes it (status `Superseded by ADR-000X`).
 | [0010](0010-session-based-auth-foundations.md)                   | Session-based auth foundations, roll-your-own instead of Lucia/Better-Auth | Accepted |
 | [0011](0011-email-verification-password-reset.md)                | Email verification, password reset, and the editor-app design system       | Accepted |
 | [0012](0012-public-site-rendering-via-dedicated-api-endpoint.md) | Public site rendering via a dedicated unauthenticated API endpoint         | Accepted |
+| [0013](0013-media-pipeline-local-serving-upload-time-resize.md)  | Media pipeline: API-served local storage, resize at upload time            | Accepted |

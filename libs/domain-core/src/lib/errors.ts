@@ -38,3 +38,19 @@ export class InvalidOrExpiredTokenError extends Error {
     this.name = 'InvalidOrExpiredTokenError';
   }
 }
+
+export class MediaNotFoundError extends Error {
+  constructor(mediaId: string) {
+    super(`Media not found: ${mediaId}`);
+    this.name = 'MediaNotFoundError';
+  }
+}
+
+/** MediaStoragePort adapters process every upload through sharp (resize +
+ * WebP conversion, see ADR-0013) — not a generic file store, images only. */
+export class UnsupportedMediaTypeError extends Error {
+  constructor(mimeType: string) {
+    super(`Unsupported media type: ${mimeType}`);
+    this.name = 'UnsupportedMediaTypeError';
+  }
+}
