@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Button } from '../components/ui/button.js';
 import {
   Card,
@@ -16,6 +17,7 @@ export interface LoginFormProps {
 }
 
 export function LoginForm({ onLogin, onForgotPassword }: LoginFormProps) {
+  const { t } = useTranslation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -28,7 +30,7 @@ export function LoginForm({ onLogin, onForgotPassword }: LoginFormProps) {
     try {
       await onLogin(email, password);
     } catch {
-      setError('Email o password non corretti.');
+      setError(t('auth.login.invalidCredentials'));
     } finally {
       setSubmitting(false);
     }
@@ -38,13 +40,13 @@ export function LoginForm({ onLogin, onForgotPassword }: LoginFormProps) {
     <div className="flex min-h-screen items-center justify-center bg-muted/30 p-4">
       <Card className="w-full max-w-sm">
         <CardHeader>
-          <CardTitle className="text-xl">Accedi</CardTitle>
-          <CardDescription>Accedi al tuo account Brisk</CardDescription>
+          <CardTitle className="text-xl">{t('auth.login.title')}</CardTitle>
+          <CardDescription>{t('auth.login.description')}</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
             <div className="flex flex-col gap-2">
-              <Label htmlFor="login-email">Email</Label>
+              <Label htmlFor="login-email">{t('auth.login.emailLabel')}</Label>
               <Input
                 id="login-email"
                 type="email"
@@ -54,7 +56,9 @@ export function LoginForm({ onLogin, onForgotPassword }: LoginFormProps) {
               />
             </div>
             <div className="flex flex-col gap-2">
-              <Label htmlFor="login-password">Password</Label>
+              <Label htmlFor="login-password">
+                {t('auth.login.passwordLabel')}
+              </Label>
               <Input
                 id="login-password"
                 type="password"
@@ -69,7 +73,9 @@ export function LoginForm({ onLogin, onForgotPassword }: LoginFormProps) {
               </p>
             )}
             <Button type="submit" disabled={submitting} className="w-full">
-              {submitting ? 'Accesso in corso...' : 'Accedi'}
+              {submitting
+                ? t('auth.login.submitPending')
+                : t('auth.login.submitIdle')}
             </Button>
             <Button
               type="button"
@@ -77,7 +83,7 @@ export function LoginForm({ onLogin, onForgotPassword }: LoginFormProps) {
               className="self-center px-0"
               onClick={onForgotPassword}
             >
-              Password dimenticata?
+              {t('auth.login.forgotPassword')}
             </Button>
           </form>
         </CardContent>

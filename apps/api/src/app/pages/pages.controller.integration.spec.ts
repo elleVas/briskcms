@@ -3,22 +3,35 @@ import { type INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import cookieParser from 'cookie-parser';
 import request from 'supertest';
-import type { BriskDb } from '@brisk/postgres-db';
+import type { AuthPort } from '@brisk/ports';
+import { type BriskDb, sites, users, withTenant } from '@brisk/postgres-db';
+import { AUTH_PORT } from '../auth/auth.tokens.js';
 import { DATABASE } from '../database.module.js';
 import { PagesModule } from './pages.module.js';
 
 /**
  * Runs against a real Postgres, through the real HTTP stack — see
  * docs/development.md ("docker compose up -d postgres", run migrations,
- * then `pnpm --filter @brisk/postgres-db run db:seed` so DEFAULT_TENANT_ID/
- * DEFAULT_SITE_ID/DEFAULT_USER_EMAIL/DEFAULT_USER_PASSWORD all exist).
- * Every route requires a session (see docs/adr/0010) — logs in once via a
- * cookie-persisting supertest agent, shared across every test below.
+ * then `pnpm --filter @brisk/postgres-db run db:seed` so DEFAULT_TENANT_ID
+ * exists). Every route requires a session (see docs/adr/0010) — logs in
+ * once via a cookie-persisting supertest agent, shared across every test
+ * below.
+ *
+ * Creates its own throwaway site + user under DEFAULT_TENANT_ID in
+ * beforeAll, instead of reusing DEFAULT_SITE_ID/DEFAULT_USER_EMAIL. Can't
+ * use a separate tenant like drizzle-page.repository.integration.spec.ts
+ * does: this is a single-tenant-per-deployment product, and /auth/login
+ * always resolves the user within DEFAULT_TENANT_ID (see AuthController) —
+ * but the site has no such constraint. Reusing the shared dev seed meant
+ * every test run left several "Title" pages behind in the exact site the
+ * dev editor-app displays, since most of these tests create pages but
+ * never delete them.
  */
 describe('PagesController (integration)', () => {
   let app: INestApplication;
+  let db: BriskDb;
   let agent: ReturnType<typeof request.agent>;
-  const siteId = process.env.DEFAULT_SITE_ID as string;
+  let siteId: string;
 
   beforeAll(async () => {
     const moduleRef = await Test.createTestingModule({
@@ -28,19 +41,35 @@ describe('PagesController (integration)', () => {
     app = moduleRef.createNestApplication();
     app.use(cookieParser());
     await app.init();
+    db = app.get<BriskDb>(DATABASE);
+
+    const tenantId = process.env.DEFAULT_TENANT_ID as string;
+
+    const [site] = await withTenant(db, tenantId, (tx) =>
+      tx
+        .insert(sites)
+        .values({
+          tenantId,
+          name: `Integration Site ${randomUUID()}`,
+          defaultLocale: 'it',
+        })
+        .returning({ id: sites.id }),
+    );
+    siteId = site.id;
+
+    const authPort = app.get<AuthPort>(AUTH_PORT);
+    const email = `integration-${randomUUID()}@example.test`;
+    const password = randomUUID();
+    const passwordHash = await authPort.hashPassword(password);
+    await withTenant(db, tenantId, (tx) =>
+      tx.insert(users).values({ tenantId, email, passwordHash, role: 'admin' }),
+    );
 
     agent = request.agent(app.getHttpServer());
-    await agent
-      .post('/auth/login')
-      .send({
-        email: process.env.DEFAULT_USER_EMAIL,
-        password: process.env.DEFAULT_USER_PASSWORD,
-      })
-      .expect(200);
+    await agent.post('/auth/login').send({ email, password }).expect(200);
   });
 
   afterAll(async () => {
-    const db = app.get<BriskDb>(DATABASE);
     await app.close();
     await db.$client.end();
   });
@@ -118,12 +147,54 @@ describe('PagesController (integration)', () => {
       .send(createPageBody())
       .expect(201);
 
-    const res = await agent.get('/pages').query({ siteId }).expect(200);
+    const res = await agent
+      .get('/pages')
+      .query({ siteId, pageSize: 100 })
+      .expect(200);
 
-    const ids = res.body.map((page: { id: string }) => page.id);
+    const ids = res.body.items.map((page: { id: string }) => page.id);
     expect(ids).toEqual(
       expect.arrayContaining([first.body.id, second.body.id]),
     );
+    expect(res.body.total).toBeGreaterThanOrEqual(2);
+  });
+
+  it('paginates the results', async () => {
+    const uniquePrefix = `paginate-${randomUUID()}`;
+    for (let i = 0; i < 3; i++) {
+      await agent
+        .post('/pages')
+        .send(createPageBody({ slug: `${uniquePrefix}-${i}` }))
+        .expect(201);
+    }
+
+    const firstPage = await agent
+      .get('/pages')
+      .query({ siteId, page: 1, pageSize: 2 })
+      .expect(200);
+    expect(firstPage.body.items).toHaveLength(2);
+    expect(firstPage.body.total).toBeGreaterThanOrEqual(3);
+
+    const secondPage = await agent
+      .get('/pages')
+      .query({ siteId, page: 2, pageSize: 2 })
+      .expect(200);
+    expect(secondPage.body.items).toHaveLength(2);
+
+    const firstIds = firstPage.body.items.map((p: { id: string }) => p.id);
+    const secondIds = secondPage.body.items.map((p: { id: string }) => p.id);
+    expect(firstIds.some((id: string) => secondIds.includes(id))).toBe(false);
+  });
+
+  it('defaults to page 1 with a pageSize of 20 when not specified', async () => {
+    const res = await agent.get('/pages').query({ siteId }).expect(200);
+
+    expect(res.body.items.length).toBeLessThanOrEqual(20);
+    expect(typeof res.body.total).toBe('number');
+  });
+
+  it('400s on a pageSize above the allowed maximum', async () => {
+    await agent.get('/pages').query({ siteId, pageSize: 1000 }).expect(400);
   });
 
   it('400s on an invalid siteId query param instead of hitting the database', async () => {
@@ -141,6 +212,39 @@ describe('PagesController (integration)', () => {
       .expect(400);
 
     expect(res.body.fieldErrors.siteId).toBeDefined();
+  });
+
+  it('400s on a slug that is not already in canonical (lowercase, hyphenated) form', async () => {
+    const res = await agent
+      .post('/pages')
+      .send(createPageBody({ slug: 'Not A Valid Slug!' }))
+      .expect(400);
+
+    expect(res.body.fieldErrors.slug).toBeDefined();
+  });
+
+  it('409s creating a page whose slug is already used on that site/locale', async () => {
+    const body = createPageBody({ slug: `taken-${randomUUID()}` });
+    await agent.post('/pages').send(body).expect(201);
+
+    await agent
+      .post('/pages')
+      .send(createPageBody({ slug: body.slug }))
+      .expect(409);
+  });
+
+  it('deletes a page', async () => {
+    const createRes = await agent
+      .post('/pages')
+      .send(createPageBody())
+      .expect(201);
+
+    await agent.delete(`/pages/${createRes.body.id}`).expect(204);
+    await agent.get(`/pages/${createRes.body.id}`).expect(404);
+  });
+
+  it('404s deleting a page that does not exist', async () => {
+    await agent.delete(`/pages/${randomUUID()}`).expect(404);
   });
 
   it('401s without a session cookie', async () => {

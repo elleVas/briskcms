@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import type { ComponentData } from '@puckeditor/core';
 import type { Block } from '@brisk/shared-types';
 import { fromPuckData, toPuckData } from './puck-data-mapper.js';
 
@@ -23,7 +24,7 @@ describe('puck-data-mapper', () => {
     ];
 
     const ids = toPuckData(blocks).content.map(
-      (c) => (c.props as { id: string }).id,
+      (c: ComponentData) => (c.props as { id: string }).id,
     );
 
     expect(new Set(ids).size).toBe(2);

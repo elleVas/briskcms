@@ -90,8 +90,11 @@
   --card-foreground: oklch(0.985 0 0);
   --popover: oklch(0.205 0 0);
   --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
+  /* Indigo/periwinkle accent, sampled from ellevas.dev's dark theme
+     (rgb(165 180 252) on rgb(28 28 30)) — the neutral shadcn default had
+     no color of its own here, this is the only deliberate brand accent. */
+  --primary: oklch(0.809 0.105 251.813);
+  --primary-foreground: oklch(0.145 0 0);
   --secondary: oklch(0.269 0 0);
   --secondary-foreground: oklch(0.985 0 0);
   --muted: oklch(0.269 0 0);
@@ -101,7 +104,7 @@
   --destructive: oklch(0.704 0.191 22.216);
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
+  --ring: oklch(0.809 0.105 251.813);
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
@@ -109,12 +112,62 @@
   --chart-5: oklch(0.269 0 0);
   --sidebar: oklch(0.205 0 0);
   --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-primary: oklch(0.809 0.105 251.813);
+  --sidebar-primary-foreground: oklch(0.145 0 0);
   --sidebar-accent: oklch(0.269 0 0);
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --sidebar-ring: oklch(0.809 0.105 251.813);
+}
+
+/* Bridges Puck's own token system (--puck-color-*, from @puckeditor/core's
+   puck.css) to ours, so the editor chrome (Blocks/Outline panels, top
+   toolbar, Page settings panel) follows the app theme instead of always
+   being light. Puck ships no dark theme of its own — these are the tokens
+   that drive its panel/toolbar surfaces and text; the accent-scale tokens
+   (interactive/focus/selection states) are left at Puck's defaults, which
+   read fine on dark surfaces without remapping.
+   --puck-color-surface-muted is deliberately NOT remapped here: it's what
+   colors the canvas backdrop behind the page preview (and the floating
+   viewport/zoom controls sitting on it) — that area reads as part of the
+   light canvas, not the dark chrome, so it stays at Puck's own light
+   default. */
+.dark {
+  --puck-color-surface: var(--sidebar);
+  --puck-color-surface-subtle: var(--muted);
+  --puck-color-text: var(--foreground);
+  --puck-color-text-secondary: var(--foreground);
+  --puck-color-text-muted: var(--muted-foreground);
+  --puck-color-text-subtle: var(--muted-foreground);
+  --puck-color-text-disabled: var(--muted-foreground);
+  --puck-color-text-inverse: var(--background);
+  --puck-color-border: var(--border);
+  --puck-color-border-muted: var(--border);
+  --puck-color-border-hover: var(--ring);
+  --puck-color-border-inverse: var(--border);
+  --puck-color-bg-disabled: var(--muted);
+}
+
+/* The canvas itself (where blocks actually render) must NOT follow the
+   admin's theme preference: it's a preview of the public page, which is
+   still light-only (see apps/public-site). Puck's AutoFrame clones our
+   stylesheet into the preview iframe including the `.dark` class on
+   <html>, so without this the canvas goes dark right along with the app
+   chrome. [data-puck-entry] is Puck's own mount point for the iframe body
+   — targeting it (rather than the iframe some other way) keeps this rule
+   working regardless of dark mode, iframe/no-iframe, etc. Keep this in
+   sync with :root's light values above if blocks start using more tokens. */
+body:has([data-puck-entry]) {
+  color-scheme: light;
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.145 0 0);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.145 0 0);
+  --muted: oklch(0.97 0 0);
+  --muted-foreground: oklch(0.556 0 0);
+  --border: oklch(0.922 0 0);
+  --primary: oklch(0.205 0 0);
+  --primary-foreground: oklch(0.985 0 0);
 }
 
 @layer base {

@@ -1,7 +1,44 @@
 import { StrictMode } from 'react';
 import * as ReactDOM from 'react-dom/client';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { createRouter, RouterProvider } from '@tanstack/react-router';
+import './i18n';
 import './styles.css';
-import App from './app/app';
+import { TooltipProvider } from './components/ui/tooltip.js';
+import { ApiError } from './lib/http-client.js';
+import { routeTree } from './routeTree.gen';
+import { applyTheme, getInitialTheme } from './theme.js';
+
+// Applied before the first render, not inside a component — otherwise the
+// page would flash the light theme for a frame before a dark preference
+// (see app/use-theme.ts, app/account-menu.tsx) took effect.
+applyTheme(getInitialTheme());
+
+// Retrying a 4xx can't succeed — "you're not logged in" (401) or "this name
+// is already taken" (409) aren't transient network hiccups, retrying just
+// resends the same bad request. Every guarded route loader is also waiting
+// on a 401 to reject before it can redirect to /login (see
+// routes/-require-auth.ts), so retrying it would only delay that redirect.
+function shouldRetry(failureCount: number, error: unknown): boolean {
+  if (error instanceof ApiError && error.status >= 400 && error.status < 500) {
+    return false;
+  }
+  return failureCount < 3;
+}
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: { retry: shouldRetry },
+    mutations: { retry: shouldRetry },
+  },
+});
+const router = createRouter({ routeTree, context: { queryClient } });
+
+declare module '@tanstack/react-router' {
+  interface Register {
+    router: typeof router;
+  }
+}
 
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement,
@@ -9,6 +46,10 @@ const root = ReactDOM.createRoot(
 
 root.render(
   <StrictMode>
-    <App />
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <RouterProvider router={router} />
+      </TooltipProvider>
+    </QueryClientProvider>
   </StrictMode>,
 );

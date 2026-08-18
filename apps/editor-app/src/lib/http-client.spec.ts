@@ -55,4 +55,14 @@ describe('http-client', () => {
 
     await expect(request('/broken')).rejects.toThrow(/API 500/);
   });
+
+  it('resolves with undefined for a 204 No Content response', async () => {
+    vi.mocked(fetch).mockResolvedValue({
+      ok: true,
+      status: 204,
+      json: () => Promise.reject(new Error('should not be called')),
+    } as unknown as Response);
+
+    await expect(request('/pages/page-1')).resolves.toBeUndefined();
+  });
 });

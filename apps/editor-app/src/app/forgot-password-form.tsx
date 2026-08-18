@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react';
-import { requestPasswordReset } from '../lib/auth-api-client.js';
+import { useTranslation } from 'react-i18next';
 import { Button } from '../components/ui/button.js';
 import {
   Card,
@@ -10,60 +10,55 @@ import {
 } from '../components/ui/card.js';
 import { Input } from '../components/ui/input.js';
 import { Label } from '../components/ui/label.js';
+import { useForgotPasswordRequest } from './use-forgot-password-request.js';
 
 export interface ForgotPasswordFormProps {
   onBackToLogin: () => void;
 }
 
 export function ForgotPasswordForm({ onBackToLogin }: ForgotPasswordFormProps) {
+  const { t } = useTranslation();
+  const { requestReset, isSubmitting } = useForgotPasswordRequest();
   const [email, setEmail] = useState('');
-  const [submitting, setSubmitting] = useState(false);
   const [sent, setSent] = useState(false);
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
-    setSubmitting(true);
-    try {
-      await requestPasswordReset(email);
-    } catch {
-      // Ignored on purpose: always show the same confirmation, whether
-      // the request succeeded, the email didn't match an account, or the
-      // call itself failed — same anti-enumeration principle the backend
-      // already enforces (see requestPasswordReset use-case).
-    } finally {
-      setSubmitting(false);
-      setSent(true);
-    }
+    await requestReset(email);
+    setSent(true);
   }
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-muted/30 p-4">
       <Card className="w-full max-w-sm">
         <CardHeader>
-          <CardTitle className="text-xl">Password dimenticata</CardTitle>
+          <CardTitle className="text-xl">
+            {t('auth.forgotPassword.title')}
+          </CardTitle>
           <CardDescription>
-            Inserisci la tua email per ricevere un link di reimpostazione
+            {t('auth.forgotPassword.description')}
           </CardDescription>
         </CardHeader>
         <CardContent>
           {sent ? (
             <div className="flex flex-col gap-4">
               <p className="text-sm text-muted-foreground">
-                Se l&apos;indirizzo esiste, ti abbiamo inviato un&apos;email con
-                le istruzioni per reimpostare la password.
+                {t('auth.forgotPassword.sentMessage')}
               </p>
               <Button
                 variant="link"
                 className="self-start px-0"
                 onClick={onBackToLogin}
               >
-                Torna al login
+                {t('auth.forgotPassword.backToLogin')}
               </Button>
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="flex flex-col gap-4">
               <div className="flex flex-col gap-2">
-                <Label htmlFor="forgot-email">Email</Label>
+                <Label htmlFor="forgot-email">
+                  {t('auth.login.emailLabel')}
+                </Label>
                 <Input
                   id="forgot-email"
                   type="email"
@@ -72,8 +67,10 @@ export function ForgotPasswordForm({ onBackToLogin }: ForgotPasswordFormProps) {
                   required
                 />
               </div>
-              <Button type="submit" disabled={submitting} className="w-full">
-                {submitting ? 'Invio in corso...' : 'Invia link di reset'}
+              <Button type="submit" disabled={isSubmitting} className="w-full">
+                {isSubmitting
+                  ? t('auth.forgotPassword.submitPending')
+                  : t('auth.forgotPassword.submitIdle')}
               </Button>
               <Button
                 type="button"
@@ -81,7 +78,7 @@ export function ForgotPasswordForm({ onBackToLogin }: ForgotPasswordFormProps) {
                 className="self-center px-0"
                 onClick={onBackToLogin}
               >
-                Torna al login
+                {t('auth.forgotPassword.backToLogin')}
               </Button>
             </form>
           )}

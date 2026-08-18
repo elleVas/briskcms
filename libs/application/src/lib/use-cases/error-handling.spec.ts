@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import {
   PageNotFoundError,
+  PageSlugAlreadyExistsError,
   PageVersionNotFoundError,
 } from '@brisk/domain-core';
 import { createPage } from './create-page.use-case.js';
+import { deletePage } from './delete-page.use-case.js';
 import { saveDraft } from './save-draft.use-case.js';
 import { publishPage } from './publish-page.use-case.js';
 import { rollbackToVersion } from './rollback-to-version.use-case.js';
@@ -110,5 +112,38 @@ describe('use-case error paths', () => {
         actorUserId: 'user-1',
       }),
     ).rejects.toThrow(PageVersionNotFoundError);
+  });
+
+  it('createPage throws PageSlugAlreadyExistsError for a slug already used on that site/locale', async () => {
+    const deps = setup();
+    await createPage(deps, {
+      tenantId,
+      siteId: 'site-1',
+      groupId: 'group-1',
+      locale: 'it',
+      slug: 'chi-siamo',
+      seoMeta: { title: 'Chi siamo', description: '...' },
+      createdBy: 'user-1',
+    });
+
+    await expect(
+      createPage(deps, {
+        tenantId,
+        siteId: 'site-1',
+        groupId: 'group-2',
+        locale: 'it',
+        slug: 'chi-siamo',
+        seoMeta: { title: 'Chi siamo di nuovo', description: '...' },
+        createdBy: 'user-1',
+      }),
+    ).rejects.toThrow(PageSlugAlreadyExistsError);
+  });
+
+  it('deletePage throws PageNotFoundError for a nonexistent page', async () => {
+    const deps = setup();
+
+    await expect(
+      deletePage(deps, { tenantId, pageId: 'does-not-exist' }),
+    ).rejects.toThrow(PageNotFoundError);
   });
 });

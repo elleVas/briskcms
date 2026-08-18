@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   createPage,
+  deletePage,
   getPage,
   listPages,
   publishPage,
@@ -57,16 +58,17 @@ describe('pages-api-client', () => {
     expect(result).toEqual(samplePage);
   });
 
-  it('listPages fetches the pages for a site', async () => {
-    vi.mocked(fetch).mockResolvedValue(jsonResponse([samplePage]));
+  it('listPages fetches a page of results for a site', async () => {
+    const paginated = { items: [samplePage], total: 1 };
+    vi.mocked(fetch).mockResolvedValue(jsonResponse(paginated));
 
-    const result = await listPages('site-1');
+    const result = await listPages('site-1', 1, 20);
 
     expect(fetch).toHaveBeenCalledWith(
-      expect.stringContaining('/pages?siteId=site-1'),
+      expect.stringContaining('/pages?siteId=site-1&page=1&pageSize=20'),
       expect.objectContaining({ credentials: 'include' }),
     );
-    expect(result).toEqual([samplePage]);
+    expect(result).toEqual(paginated);
   });
 
   it('createPage posts the input and returns the created page', async () => {
@@ -111,6 +113,21 @@ describe('pages-api-client', () => {
     expect(fetch).toHaveBeenCalledWith(
       expect.stringContaining('/pages/page-1/publish'),
       expect.objectContaining({ method: 'POST' }),
+    );
+  });
+
+  it('deletePage sends a DELETE to the page endpoint', async () => {
+    vi.mocked(fetch).mockResolvedValue({
+      ok: true,
+      status: 204,
+      json: () => Promise.reject(new Error('should not be called')),
+    } as unknown as Response);
+
+    await deletePage('page-1');
+
+    expect(fetch).toHaveBeenCalledWith(
+      expect.stringContaining('/pages/page-1'),
+      expect.objectContaining({ method: 'DELETE' }),
     );
   });
 });

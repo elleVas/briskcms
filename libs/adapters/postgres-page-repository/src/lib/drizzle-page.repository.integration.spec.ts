@@ -115,15 +115,43 @@ describe('DrizzlePageRepository (integration)', () => {
     await pageRepository.save(older);
     await pageRepository.save(newer);
 
-    const found = await pageRepository.listBySite(tenantAId, siteAId);
-    const foundIds = found.map((page) => page.id);
+    const found = await pageRepository.listBySite(tenantAId, siteAId, {
+      page: 1,
+      pageSize: 100,
+    });
+    const foundIds = found.items.map((page) => page.id);
     expect(foundIds.indexOf(newer.id)).toBeLessThan(foundIds.indexOf(older.id));
 
     const foundFromOtherTenant = await pageRepository.listBySite(
       tenantBId,
       siteAId,
+      { page: 1, pageSize: 100 },
     );
-    expect(foundFromOtherTenant).toHaveLength(0);
+    expect(foundFromOtherTenant.items).toHaveLength(0);
+    expect(foundFromOtherTenant.total).toBe(0);
+  });
+
+  it('listBySite paginates with limit/offset and reports the total', async () => {
+    for (let i = 0; i < 3; i++) {
+      await pageRepository.save(
+        buildPage({ now: new Date(Date.now() - i * 1000) }),
+      );
+    }
+
+    const firstPage = await pageRepository.listBySite(tenantAId, siteAId, {
+      page: 1,
+      pageSize: 2,
+    });
+    expect(firstPage.items).toHaveLength(2);
+    expect(firstPage.total).toBeGreaterThanOrEqual(3);
+
+    const secondPage = await pageRepository.listBySite(tenantAId, siteAId, {
+      page: 2,
+      pageSize: 2,
+    });
+    const firstIds = firstPage.items.map((page) => page.id);
+    const secondIds = secondPage.items.map((page) => page.id);
+    expect(firstIds.some((id) => secondIds.includes(id))).toBe(false);
   });
 
   it('save() upserts: a second save updates the same row instead of inserting a new one', async () => {

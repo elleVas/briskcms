@@ -16,7 +16,7 @@ export interface RequestEmailVerificationDeps {
 export interface RequestEmailVerificationInput {
   tenantId: string;
   userId: string;
-  /** e.g. EDITOR_APP_URL — the use-case appends `?verifyToken=<token>`. */
+  /** e.g. EDITOR_APP_URL — the use-case appends `/verify-email?verifyToken=<token>`. */
   verifyUrlBase: string;
 }
 
@@ -41,7 +41,8 @@ export async function requestEmailVerification(
     'email-verification',
     EMAIL_VERIFICATION_TTL_MS,
   );
-  const verifyUrl = `${input.verifyUrlBase}?verifyToken=${verificationToken.token}`;
+  const verifyUrlBase = input.verifyUrlBase.replace(/\/$/, '');
+  const verifyUrl = `${verifyUrlBase}/verify-email?verifyToken=${verificationToken.token}`;
 
   await deps.emailPort.sendEmail({
     to: user.email,

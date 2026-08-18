@@ -16,7 +16,7 @@ export interface RequestPasswordResetDeps {
 export interface RequestPasswordResetInput {
   tenantId: string;
   email: string;
-  /** e.g. EDITOR_APP_URL — the use-case appends `?resetToken=<token>`. */
+  /** e.g. EDITOR_APP_URL — the use-case appends `/reset-password?resetToken=<token>`. */
   resetUrlBase: string;
 }
 
@@ -44,7 +44,8 @@ export async function requestPasswordReset(
     'password-reset',
     PASSWORD_RESET_TTL_MS,
   );
-  const resetUrl = `${input.resetUrlBase}?resetToken=${resetToken.token}`;
+  const resetUrlBase = input.resetUrlBase.replace(/\/$/, '');
+  const resetUrl = `${resetUrlBase}/reset-password?resetToken=${resetToken.token}`;
 
   await deps.emailPort.sendEmail({
     to: user.email,

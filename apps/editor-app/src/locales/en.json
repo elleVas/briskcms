@@ -1,0 +1,103 @@
+{
+  "common": {
+    "loading": "Loading...",
+    "error": "Something went wrong.",
+    "retry": "Retry"
+  },
+  "auth": {
+    "login": {
+      "title": "Log in",
+      "description": "Log in to your Brisk account",
+      "emailLabel": "Email",
+      "passwordLabel": "Password",
+      "submitIdle": "Log in",
+      "submitPending": "Logging in...",
+      "invalidCredentials": "Incorrect email or password.",
+      "forgotPassword": "Forgot your password?"
+    },
+    "forgotPassword": {
+      "title": "Forgot password",
+      "description": "Enter your email to receive a reset link",
+      "sentMessage": "If that address exists, we've sent you an email with instructions to reset your password.",
+      "backToLogin": "Back to login",
+      "submitIdle": "Send reset link",
+      "submitPending": "Sending..."
+    },
+    "resetPassword": {
+      "title": "Reset your password",
+      "description": "Choose a new password for your account",
+      "doneMessage": "Password updated. You can log in again with the new password.",
+      "newPasswordLabel": "New password",
+      "error": "This link is invalid or has expired. Request a new reset link.",
+      "submitIdle": "Reset password",
+      "submitPending": "Saving..."
+    },
+    "verifyEmail": {
+      "title": "Verify email",
+      "description": "Confirming your email address",
+      "pending": "Verifying...",
+      "success": "Email verified successfully.",
+      "error": "This link is invalid or has expired. Request a new verification link from your account."
+    },
+    "logout": "Log out"
+  },
+  "shell": {
+    "nav": {
+      "pages": "Pages",
+      "media": "Media",
+      "users": "Users",
+      "comingSoon": "Coming soon"
+    },
+    "account": {
+      "settings": "Account settings",
+      "language": "Language",
+      "theme": "Dark theme"
+    }
+  },
+  "pages": {
+    "list": {
+      "title": "Pages",
+      "newPage": "New page",
+      "empty": "No pages yet.",
+      "statusPublished": "Published",
+      "statusDraft": "Draft",
+      "pendingChanges": "Unpublished changes",
+      "pageIndicator": "Page {{page}} of {{totalPages}}",
+      "previousPage": "Previous page",
+      "nextPage": "Next page",
+      "actions": {
+        "edit": "Open editor",
+        "publish": "Publish",
+        "delete": "Delete"
+      }
+    },
+    "newPageDialog": {
+      "title": "New page",
+      "nameLabel": "Page name",
+      "slugPreview": "URL: {{slug}}",
+      "cancel": "Cancel",
+      "create": "Create",
+      "creating": "Creating...",
+      "slugTaken": "A page with this name already exists on this site."
+    },
+    "deleteDialog": {
+      "title": "Delete this page?",
+      "description": "\"{{name}}\" and all of its versions will be permanently deleted. This action cannot be undone.",
+      "cancel": "Cancel",
+      "confirm": "Delete"
+    },
+    "editor": {
+      "backToList": "Pages",
+      "draftSaved": "Draft saved",
+      "published": "Published"
+    },
+    "versionHistory": {
+      "open": "Version history",
+      "title": "Version history",
+      "description": "Restore a previous version's content as the draft. This does not publish automatically.",
+      "empty": "No saved versions.",
+      "current": "Current version",
+      "restore": "Restore"
+    }
+  }
+}

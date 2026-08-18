@@ -1,4 +1,4 @@
-import { NotFoundException } from '@nestjs/common';
+import { ConflictException, NotFoundException } from '@nestjs/common';
 import { Page } from '@brisk/domain-core';
 import type {
   PageRepositoryPort,
@@ -73,7 +73,7 @@ describe('PagesController (unit)', () => {
     ).rejects.toThrow(NotFoundException);
   });
 
-  it('lets unexpected errors from handleNotFound-wrapped actions propagate unchanged', async () => {
+  it('lets unexpected errors from handleDomainErrors-wrapped actions propagate unchanged', async () => {
     const page = buildPage();
     pageRepository.findById.mockResolvedValue(page);
     pageRepository.save.mockRejectedValue(new Error('db exploded'));
@@ -81,5 +81,27 @@ describe('PagesController (unit)', () => {
     await expect(
       controller.saveDraft(page.id, { content: [] }),
     ).rejects.toThrow('db exploded');
+  });
+
+  it('delete maps a PageNotFoundError to a NotFoundException', async () => {
+    pageRepository.findById.mockResolvedValue(null);
+
+    await expect(controller.delete('missing-id')).rejects.toThrow(
+      NotFoundException,
+    );
+  });
+
+  it('create maps a PageSlugAlreadyExistsError to a ConflictException', async () => {
+    pageRepository.findBySlug.mockResolvedValue(buildPage());
+
+    await expect(
+      controller.create({
+        siteId: 'site-1',
+        groupId: 'group-2',
+        locale: 'it',
+        slug: 'home',
+        seoMeta: { title: 'Home again', description: '...' },
+      }),
+    ).rejects.toThrow(ConflictException);
   });
 });

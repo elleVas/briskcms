@@ -102,18 +102,21 @@ pnpm exec nx run @brisk/editor-app:dev  # http://localhost:4200
 
 Opening `http://localhost:4200` prompts for login first (the dev user from
 `db:seed` above) — every Pages route requires a session, see
-[ADR-0010](adr/0010-session-based-auth-foundations.md). Once logged in,
-with no `?pageId=` it creates a new page against `VITE_DEFAULT_SITE_ID` and
-redirects to it. Puck stays isolated inside `apps/editor-app` —
+[ADR-0010](adr/0010-session-based-auth-foundations.md). Once logged in, it
+lands on `/pages`, the admin shell's list of pages for
+`VITE_DEFAULT_SITE_ID`; "Nuova pagina" creates one and opens it in the
+fullscreen Puck editor at `/pages/:id`. Puck stays isolated inside
+`apps/editor-app` —
 `src/lib/puck-data-mapper.ts` is the only place that translates between
 Puck's own data format and Brisk's own `Block[]` (see
 [ADR-0007](adr/0007-nested-block-content-model-independent-of-puck.md)).
 
 The login screen's "Password dimenticata?" link leads to a password-reset
 request form; the actual reset link Brisk emails opens
-`http://localhost:4200?resetToken=...`, and a verification email opens
-`?verifyToken=...` — both read straight from Mailpit at
-<http://localhost:8025>, there's no need for a real inbox in dev. See
+`http://localhost:4200/reset-password?resetToken=...`, and a verification
+email opens `/verify-email?verifyToken=...` — both read straight from
+Mailpit at <http://localhost:8025>, there's no need for a real inbox in
+dev. See
 [ADR-0011](adr/0011-email-verification-password-reset.md) for the full
 design (why login isn't gated on verification yet, anti-enumeration on the
 reset-request endpoint, and why a password reset invalidates all of that

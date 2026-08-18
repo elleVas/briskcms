@@ -3,6 +3,7 @@
   "compilerOptions": {
     "outDir": "./out-tsc/vitest",
     "lib": ["dom", "es2022"],
+    "resolveJsonModule": true,
     "types": [
       "vitest/globals",
       "vitest/importMeta",
