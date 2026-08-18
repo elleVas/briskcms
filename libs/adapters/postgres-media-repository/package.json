@@ -1,5 +1,5 @@
 {
-  "name": "@brisk/local-disk-media-storage",
+  "name": "@brisk/postgres-media-repository",
   "version": "0.0.1",
   "private": true,
   "type": "module",
@@ -16,6 +16,10 @@
   "dependencies": {
     "@brisk/domain-core": "workspace:*",
     "@brisk/ports": "workspace:*",
-    "sharp": "^0.35.3"
+    "@brisk/postgres-db": "workspace:*",
+    "drizzle-orm": "^0.45.2"
+  },
+  "devDependencies": {
+    "dotenv": "^17.4.2"
   }
 }

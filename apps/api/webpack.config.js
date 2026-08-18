@@ -18,6 +18,17 @@ module.exports = {
   module: {
     rules: [{ test: /\.node$/, loader: 'node-loader' }],
   },
+  // NxAppWebpackPlugin's default externalDependencies:'all' externalizes
+  // bare-specifier requires it finds in the *workspace root* node_modules,
+  // but sharp is a project-local dependency of apps/api (only symlinked
+  // under apps/api/node_modules, not hoisted to the root) so it's missed
+  // and gets bundled instead. Bundled, its platform-detection code makes
+  // webpack try to parse libvips's compiled .so as JavaScript and fail —
+  // and even if that parsed, a native addon's dlopen of its shared lib
+  // depends on the real on-disk relative layout, which bundling breaks.
+  // sharp must never be bundled; force it external and let Node resolve
+  // it from node_modules at runtime, same as it does unbundled.
+  externals: [{ sharp: 'commonjs sharp' }],
   plugins: [
     new NxAppWebpackPlugin({
       target: 'node',
@@ -29,6 +40,7 @@ module.exports = {
       outputHashing: 'none',
       generatePackageJson: false,
       sourceMap: true,
+      mergeExternals: true,
     }),
   ],
 };

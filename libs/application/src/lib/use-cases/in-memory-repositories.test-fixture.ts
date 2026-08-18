@@ -1,10 +1,14 @@
-import type { Page, PageVersion, Site, User } from '@brisk/domain-core';
+import type { Media, Page, PageVersion, Site, User } from '@brisk/domain-core';
 import type {
+  MediaRepositoryPort,
+  MediaStoragePort,
   PaginatedResult,
   Pagination,
   PageRepositoryPort,
   PageVersionRepositoryPort,
   SiteRepositoryPort,
+  UploadMediaInput,
+  UploadMediaResult,
   UserRepositoryPort,
 } from '@brisk/ports';
 
@@ -123,5 +127,67 @@ export class InMemorySiteRepository implements SiteRepositoryPort {
       }
     }
     return null;
+  }
+}
+
+export class InMemoryMediaRepository implements MediaRepositoryPort {
+  private media = new Map<string, Media>();
+
+  async save(media: Media): Promise<void> {
+    this.media.set(media.id, media);
+  }
+
+  async findById(tenantId: string, mediaId: string): Promise<Media | null> {
+    const media = this.media.get(mediaId);
+    return media && media.tenantId === tenantId ? media : null;
+  }
+
+  async listBySite(
+    tenantId: string,
+    siteId: string,
+    pagination: Pagination,
+  ): Promise<PaginatedResult<Media>> {
+    const matching = [...this.media.values()]
+      .filter((m) => m.tenantId === tenantId && m.siteId === siteId)
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+    const start = (pagination.page - 1) * pagination.pageSize;
+    return {
+      items: matching.slice(start, start + pagination.pageSize),
+      total: matching.length,
+    };
+  }
+
+  async delete(tenantId: string, mediaId: string): Promise<void> {
+    const media = this.media.get(mediaId);
+    if (media && media.tenantId === tenantId) {
+      this.media.delete(mediaId);
+    }
+  }
+}
+
+/** Fake, not a real storage backend — records what was uploaded/deleted so
+ * use-case tests can assert on the interaction without touching disk/S3. */
+export class InMemoryMediaStorage implements MediaStoragePort {
+  readonly provider = 'local' as const;
+  uploads: UploadMediaInput[] = [];
+  deletedKeys: string[] = [];
+
+  async upload(input: UploadMediaInput): Promise<UploadMediaResult> {
+    this.uploads.push(input);
+    return {
+      storageKey: `fake-${this.uploads.length}.webp`,
+      mimeType: 'image/webp',
+      size: input.data.byteLength,
+      width: 800,
+      height: 600,
+    };
+  }
+
+  getUrl(storageKey: string): string {
+    return `https://fake-storage.test/${storageKey}`;
+  }
+
+  async delete(storageKey: string): Promise<void> {
+    this.deletedKeys.push(storageKey);
   }
 }

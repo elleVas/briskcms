@@ -62,6 +62,13 @@ vitest.config.*.timestamp*
 # astro
 apps/*/.astro
 
+# local media uploads (MEDIA_UPLOAD_DIR, see docs/adr/0013) — dev-only,
+# never the actual storage in a real deployment (that's a mounted volume).
+# No leading slash: relative-path resolution depends on which tool runs
+# the api (Jest vs nx serve), so this can land at the repo root or under
+# apps/api/ depending on cwd.
+uploads/
+
 # TanStack Router — generated from apps/*/src/routes/, never edited by hand
 apps/*/src/routeTree.gen.ts
 
