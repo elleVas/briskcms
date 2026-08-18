@@ -1,0 +1,124 @@
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { QueryClientProvider } from '@tanstack/react-query';
+import { MediaPickerContext } from '@brisk/puck-config';
+import type { PickedMedia } from '@brisk/shared-types';
+import { TooltipProvider } from '../components/ui/tooltip.js';
+import * as api from '../lib/pages-api-client.js';
+import type { PageDto } from '../lib/pages-api-client.js';
+import { createTestQueryClient } from '../test-query-client.js';
+import { SeoPanelDialog } from './seo-panel-dialog.js';
+
+vi.mock('../lib/pages-api-client.js', async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import('../lib/pages-api-client.js')>();
+  return { ...actual, updateSeoMeta: vi.fn() };
+});
+
+const samplePage: PageDto = {
+  id: 'page-1',
+  tenantId: 'tenant-1',
+  siteId: 'site-1',
+  groupId: 'group-1',
+  locale: 'it',
+  slug: 'chi-siamo',
+  status: 'draft',
+  content: [],
+  publishedContent: null,
+  seoMeta: {
+    title: 'Chi siamo',
+    description: 'La nostra storia',
+    canonical: 'https://example.com/chi-siamo',
+  },
+  createdAt: '',
+  updatedAt: '',
+};
+
+function renderDialog(
+  pick: () => Promise<PickedMedia | null> = vi.fn(),
+  open = true,
+  onOpenChange = vi.fn(),
+) {
+  return render(
+    <QueryClientProvider client={createTestQueryClient()}>
+      <TooltipProvider>
+        <MediaPickerContext.Provider value={{ pick }}>
+          <SeoPanelDialog
+            pageId="page-1"
+            seoMeta={samplePage.seoMeta}
+            open={open}
+            onOpenChange={onOpenChange}
+          />
+        </MediaPickerContext.Provider>
+      </TooltipProvider>
+    </QueryClientProvider>,
+  );
+}
+
+describe('SeoPanelDialog', () => {
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('pre-fills the form with the current seoMeta', () => {
+    renderDialog();
+
+    expect(screen.getByDisplayValue('Chi siamo')).toBeTruthy();
+    expect(screen.getByDisplayValue('La nostra storia')).toBeTruthy();
+    expect(
+      screen.getByDisplayValue('https://example.com/chi-siamo'),
+    ).toBeTruthy();
+  });
+
+  it('saves the edited title and description', async () => {
+    vi.mocked(api.updateSeoMeta).mockResolvedValue(samplePage);
+
+    renderDialog();
+    fireEvent.change(screen.getByDisplayValue('Chi siamo'), {
+      target: { value: 'Chi siamo - La nostra storia' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: /^salva$/i }));
+
+    await waitFor(() =>
+      expect(api.updateSeoMeta).toHaveBeenCalledWith(
+        'page-1',
+        expect.objectContaining({ title: 'Chi siamo - La nostra storia' }),
+      ),
+    );
+  });
+
+  it('picks an OG image via the media picker and includes it in ogTags', async () => {
+    const pick = vi.fn().mockResolvedValue({
+      mediaId: 'media-1',
+      url: 'http://localhost/uploads/a.webp',
+    });
+    vi.mocked(api.updateSeoMeta).mockResolvedValue(samplePage);
+
+    renderDialog(pick);
+    fireEvent.click(screen.getByRole('button', { name: /scegli immagine/i }));
+    await waitFor(() => expect(pick).toHaveBeenCalled());
+    fireEvent.click(screen.getByRole('button', { name: /^salva$/i }));
+
+    await waitFor(() =>
+      expect(api.updateSeoMeta).toHaveBeenCalledWith(
+        'page-1',
+        expect.objectContaining({
+          ogTags: { image: 'http://localhost/uploads/a.webp' },
+        }),
+      ),
+    );
+  });
+
+  it('disables save when the title is blank', () => {
+    renderDialog();
+
+    fireEvent.change(screen.getByDisplayValue('Chi siamo'), {
+      target: { value: '' },
+    });
+
+    const saveButton = screen.getByRole('button', {
+      name: /^salva$/i,
+    }) as HTMLButtonElement;
+    expect(saveButton.disabled).toBe(true);
+  });
+});

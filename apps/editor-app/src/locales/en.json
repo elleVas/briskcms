@@ -102,6 +102,19 @@
       "empty": "No saved versions.",
       "current": "Current version",
       "restore": "Restore"
+    },
+    "seo": {
+      "open": "SEO",
+      "title": "SEO settings",
+      "titleLabel": "SEO title",
+      "descriptionLabel": "Description",
+      "ogImageLabel": "Social image (OG)",
+      "chooseOgImage": "Choose image",
+      "changeOgImage": "Change image",
+      "canonicalLabel": "Canonical URL",
+      "cancel": "Cancel",
+      "save": "Save",
+      "saving": "Saving..."
     }
   },
   "media": {
@@ -126,5 +139,32 @@
     "picker": {
       "title": "Choose an image"
     }
+  },
+  "businessInfo": {
+    "menuLabel": "Business info",
+    "title": "Business info",
+    "description": "Used to generate the site's structured data (schema.org LocalBusiness) — helps with rich results on Google.",
+    "addressLabel": "Address",
+    "phoneLabel": "Phone",
+    "typeLabel": "Business type",
+    "typePlaceholder": "E.g. Restaurant, ProfessionalService, Store...",
+    "hoursLabel": "Opening hours",
+    "cancel": "Cancel",
+    "save": "Save",
+    "saving": "Saving..."
+  },
+  "openingHours": {
+    "days": {
+      "monday": "Monday",
+      "tuesday": "Tuesday",
+      "wednesday": "Wednesday",
+      "thursday": "Thursday",
+      "friday": "Friday",
+      "saturday": "Saturday",
+      "sunday": "Sunday"
+    },
+    "addRange": "Add range",
+    "removeRange": "Remove range",
+    "closed": "Closed"
   }
 }

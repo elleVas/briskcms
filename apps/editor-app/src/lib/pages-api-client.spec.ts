@@ -6,6 +6,7 @@ import {
   listPages,
   publishPage,
   saveDraft,
+  updateSeoMeta,
   type PageDto,
 } from './pages-api-client.js';
 
@@ -113,6 +114,25 @@ describe('pages-api-client', () => {
     expect(fetch).toHaveBeenCalledWith(
       expect.stringContaining('/pages/page-1/publish'),
       expect.objectContaining({ method: 'POST' }),
+    );
+  });
+
+  it('updateSeoMeta patches the seoMeta', async () => {
+    vi.mocked(fetch).mockResolvedValue(jsonResponse(samplePage));
+
+    await updateSeoMeta('page-1', {
+      title: 'Nuovo titolo',
+      description: 'Nuova descrizione',
+    });
+
+    expect(fetch).toHaveBeenCalledWith(
+      expect.stringContaining('/pages/page-1/seo'),
+      expect.objectContaining({
+        method: 'PATCH',
+        body: JSON.stringify({
+          seoMeta: { title: 'Nuovo titolo', description: 'Nuova descrizione' },
+        }),
+      }),
     );
   });
 

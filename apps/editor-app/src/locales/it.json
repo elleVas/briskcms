@@ -102,6 +102,19 @@
       "empty": "Nessuna versione salvata.",
       "current": "Versione attuale",
       "restore": "Ripristina"
+    },
+    "seo": {
+      "open": "SEO",
+      "title": "Impostazioni SEO",
+      "titleLabel": "Titolo SEO",
+      "descriptionLabel": "Descrizione",
+      "ogImageLabel": "Immagine social (OG)",
+      "chooseOgImage": "Scegli immagine",
+      "changeOgImage": "Cambia immagine",
+      "canonicalLabel": "URL canonico",
+      "cancel": "Annulla",
+      "save": "Salva",
+      "saving": "Salvataggio in corso..."
     }
   },
   "media": {
@@ -126,5 +139,32 @@
     "picker": {
       "title": "Scegli un'immagine"
     }
+  },
+  "businessInfo": {
+    "menuLabel": "Dati attività",
+    "title": "Dati attività",
+    "description": "Usati per generare i dati strutturati (schema.org LocalBusiness) del sito — utili per i risultati arricchiti su Google.",
+    "addressLabel": "Indirizzo",
+    "phoneLabel": "Telefono",
+    "typeLabel": "Tipo di attività",
+    "typePlaceholder": "Es. Restaurant, ProfessionalService, Store...",
+    "hoursLabel": "Orari di apertura",
+    "cancel": "Annulla",
+    "save": "Salva",
+    "saving": "Salvataggio in corso..."
+  },
+  "openingHours": {
+    "days": {
+      "monday": "Lunedì",
+      "tuesday": "Martedì",
+      "wednesday": "Mercoledì",
+      "thursday": "Giovedì",
+      "friday": "Venerdì",
+      "saturday": "Sabato",
+      "sunday": "Domenica"
+    },
+    "addRange": "Aggiungi fascia",
+    "removeRange": "Rimuovi fascia",
+    "closed": "Chiuso"
   }
 }

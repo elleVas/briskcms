@@ -148,10 +148,21 @@ describe('PagesListView', () => {
     expect(screen.getByRole('button', { name: /^elimina$/i })).toBeTruthy();
     expect(screen.getByRole('button', { name: /^pubblica$/i })).toBeTruthy();
     expect(screen.getByRole('button', { name: /apri editor/i })).toBeTruthy();
+    expect(screen.getByRole('button', { name: /^seo$/i })).toBeTruthy();
 
     fireEvent.click(row);
     expect(row.getAttribute('aria-pressed')).toBe('false');
     expect(screen.queryByRole('button', { name: /^elimina$/i })).toBeNull();
+  });
+
+  it('opens the SEO panel for the selected page without opening the full editor', () => {
+    vi.mocked(router.useNavigate).mockReturnValue(vi.fn());
+
+    renderView([pageOne]);
+    fireEvent.click(screen.getByRole('button', { name: /home/i }));
+    fireEvent.click(screen.getByRole('button', { name: /^seo$/i }));
+
+    expect(screen.getByDisplayValue('Home')).toBeTruthy();
   });
 
   it('opens the editor for the selected page', async () => {
