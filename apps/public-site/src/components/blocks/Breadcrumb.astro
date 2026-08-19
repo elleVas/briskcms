@@ -1,0 +1,88 @@
+---
+import type { BreadcrumbProps } from '@brisk/shared-types';
+import type { PublishedPageAncestorDto } from '../../lib/public-api-client.js';
+import { localePath, localePathFromAncestors } from '../../lib/locale-path.js';
+
+interface Props extends BreadcrumbProps {
+  locale: string;
+  ancestors: PublishedPageAncestorDto[];
+  currentPageTitle: string;
+}
+
+const { homeLabel, visibility, locale, ancestors, currentPageTitle } =
+  Astro.props;
+
+interface Crumb {
+  title: string;
+  href: string | null;
+}
+
+// Each ancestor's own href is built from the slugs of the ancestors before
+// it in the chain (root-to-parent order) — the same nesting rule the
+// catch-all route uses to compute a page's own canonical URL
+// (locale-path.ts). The current page itself is never a link.
+const crumbs: Crumb[] = [
+  { title: homeLabel, href: localePath(locale, 'home') },
+  ...ancestors.map((ancestor, index) => ({
+    title: ancestor.title,
+    href: localePathFromAncestors(
+      locale,
+      ancestors.slice(0, index).map((a) => a.slug),
+      ancestor.slug,
+    ),
+  })),
+  { title: currentPageTitle, href: null },
+];
+---
+
+<nav
+  class:list={[
+    'brisk-breadcrumb',
+    { 'brisk-visibility-desktop-only': visibility === 'desktop-only' },
+    { 'brisk-visibility-mobile-only': visibility === 'mobile-only' },
+  ]}
+  aria-label="Breadcrumb"
+>
+  <ol>
+    {
+      crumbs.map((crumb) => (
+        <li>
+          {crumb.href ? (
+            <a href={crumb.href}>{crumb.title}</a>
+          ) : (
+            <span aria-current="page">{crumb.title}</span>
+          )}
+        </li>
+      ))
+    }
+  </ol>
+</nav>
+
+<style>
+  .brisk-breadcrumb ol {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.4rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    font-size: 0.875rem;
+  }
+  .brisk-breadcrumb li {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+  .brisk-breadcrumb li:not(:first-child)::before {
+    content: '›';
+    color: #a1a1aa;
+  }
+  .brisk-breadcrumb a {
+    color: inherit;
+    text-decoration: underline;
+  }
+  .brisk-breadcrumb span[aria-current='page'] {
+    color: #71717a;
+  }
+</style>

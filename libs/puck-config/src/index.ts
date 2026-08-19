@@ -18,6 +18,7 @@ export * from './lib/blocks/countdown.block.js';
 export * from './lib/blocks/embed-html.block.js';
 export * from './lib/blocks/table.block.js';
 export * from './lib/blocks/back-to-top.block.js';
+export * from './lib/blocks/breadcrumb.block.js';
 export * from './lib/blocks/whatsapp-button.block.js';
 export * from './lib/blocks/promo-bar.block.js';
 export * from './lib/blocks/search-box.block.js';
