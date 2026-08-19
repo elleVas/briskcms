@@ -15,8 +15,8 @@ function SlotContent() {
 }
 
 describe('navPropsSchema', () => {
-  it('accepts an empty object — Nav has no props of its own', () => {
-    expect(navPropsSchema.safeParse({}).success).toBe(true);
+  it('defaults visibility to always when omitted', () => {
+    expect(navPropsSchema.parse({}).visibility).toBe('always');
   });
 });
 
@@ -25,6 +25,7 @@ describe('navConfig.render', () => {
     render(
       navConfig.render({
         id: 'test-id',
+        visibility: 'always',
         children: SlotContent,
         puck: puckContext,
       }),
@@ -38,6 +39,7 @@ describe('navConfig.render', () => {
     render(
       navConfig.render({
         id: 'test-id',
+        visibility: 'always',
         children: SlotContent,
         puck: puckContext,
       }),
@@ -52,6 +54,7 @@ describe('navConfig.render', () => {
     render(
       navConfig.render({
         id: 'test-id',
+        visibility: 'always',
         children: slotSpy,
         puck: puckContext,
       }),

@@ -18,8 +18,10 @@ function SlotContent() {
 }
 
 describe('hamburgerMenuPropsSchema', () => {
-  it('accepts an empty object — HamburgerMenu has no props of its own', () => {
-    expect(hamburgerMenuPropsSchema.safeParse({}).success).toBe(true);
+  it('defaults position to left and visibility to mobile-only when omitted', () => {
+    const result = hamburgerMenuPropsSchema.parse({});
+    expect(result.position).toBe('left');
+    expect(result.visibility).toBe('mobile-only');
   });
 });
 
@@ -28,6 +30,8 @@ describe('hamburgerMenuConfig.render', () => {
     render(
       hamburgerMenuConfig.render({
         id: 'test-id',
+        position: 'left',
+        visibility: 'mobile-only',
         children: SlotContent,
         puck: puckContext,
       }),
@@ -40,6 +44,8 @@ describe('hamburgerMenuConfig.render', () => {
     render(
       hamburgerMenuConfig.render({
         id: 'test-id',
+        position: 'left',
+        visibility: 'mobile-only',
         children: SlotContent,
         puck: puckContext,
       }),

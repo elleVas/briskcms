@@ -1,7 +1,18 @@
 ---
+import type { NavProps } from '@brisk/shared-types';
+
+type Props = NavProps;
+
+const { visibility } = Astro.props;
 ---
 
-<nav class="brisk-nav">
+<nav
+  class:list={[
+    'brisk-nav',
+    { 'brisk-visibility-desktop-only': visibility === 'desktop-only' },
+    { 'brisk-visibility-mobile-only': visibility === 'mobile-only' },
+  ]}
+>
   <slot />
 </nav>
 

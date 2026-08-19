@@ -1,7 +1,19 @@
 ---
+import type { HamburgerMenuProps } from '@brisk/shared-types';
+
+type Props = HamburgerMenuProps;
+
+const { position, visibility } = Astro.props;
 ---
 
-<div class="brisk-hamburger">
+<div
+  class:list={[
+    'brisk-hamburger',
+    { 'brisk-hamburger--right': position === 'right' },
+    { 'brisk-visibility-desktop-only': visibility === 'desktop-only' },
+    { 'brisk-visibility-mobile-only': visibility === 'mobile-only' },
+  ]}
+>
   <button
     type="button"
     class="brisk-hamburger__toggle"
@@ -35,15 +47,16 @@
 </script>
 
 <style>
+  /* Visible by default at every width — which breakpoints (if any) hide
+     it entirely is the `visibility` prop's job now (the
+     brisk-visibility-desktop-only/mobile-only utility classes,
+     src/styles/visibility.css), not something hardcoded here. */
   .brisk-hamburger {
     position: relative;
-    display: none;
+    display: block;
   }
-
-  @media (max-width: 640px) {
-    .brisk-hamburger {
-      display: block;
-    }
+  .brisk-hamburger--right {
+    margin-left: auto;
   }
 
   .brisk-hamburger__toggle {

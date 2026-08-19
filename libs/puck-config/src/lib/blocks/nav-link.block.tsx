@@ -2,6 +2,7 @@ import type { ComponentConfig, Fields } from '@puckeditor/core';
 import { navLinkPropsSchema, type NavLinkProps } from '@brisk/shared-types';
 import { PagePickerField } from '../fields/page-picker-field.js';
 import { positionField } from '../fields/position-field.js';
+import { visibilityField } from '../fields/visibility-field.js';
 
 export { navLinkPropsSchema, type NavLinkProps };
 
@@ -26,6 +27,7 @@ const fields: Fields<NavLinkProps> = {
   },
   url: { type: 'text' },
   position: positionField,
+  visibility: visibilityField,
 };
 
 export const navLinkConfig: ComponentConfig<NavLinkProps> = {
@@ -37,6 +39,7 @@ export const navLinkConfig: ComponentConfig<NavLinkProps> = {
     page: null,
     url: '',
     position: 'left',
+    visibility: 'always',
   },
   // `marginLeft: auto` on itself (not a container-level layout prop) is
   // what actually pushes a "right"-positioned item across the Nav's flex
