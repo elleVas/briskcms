@@ -125,4 +125,48 @@ describe('puck-data-mapper', () => {
       blocks,
     );
   });
+
+  it('round-trips a HamburgerMenu (sibling of Nav, not nested inside it)', () => {
+    const blocks: Block[] = [
+      {
+        type: 'Nav',
+        props: {},
+        children: [
+          {
+            type: 'NavLink',
+            props: {
+              label: 'Home',
+              linkType: 'url',
+              page: null,
+              url: '/',
+              position: 'left',
+            },
+          },
+        ],
+      },
+      {
+        type: 'HamburgerMenu',
+        props: {},
+        children: [
+          {
+            type: 'NavLink',
+            props: {
+              label: 'Home',
+              linkType: 'url',
+              page: null,
+              url: '/',
+              position: 'left',
+            },
+          },
+        ],
+      },
+    ];
+
+    expect(
+      fromPuckData(
+        toPuckData(blocks, headerFooterPuckConfig),
+        headerFooterPuckConfig,
+      ),
+    ).toEqual(blocks);
+  });
 });

@@ -1,5 +1,9 @@
 import type { Config } from '@puckeditor/core';
 import {
+  hamburgerMenuConfig,
+  type HamburgerMenuPuckProps,
+} from './blocks/hamburger-menu.block.js';
+import {
   languageSwitcherConfig,
   type LanguageSwitcherProps,
 } from './blocks/language-switcher.block.js';
@@ -12,6 +16,7 @@ export interface BriskLayoutComponentProps {
   Nav: NavPuckProps;
   NavLink: NavLinkProps;
   LanguageSwitcher: LanguageSwitcherProps;
+  HamburgerMenu: HamburgerMenuPuckProps;
   Text: TextProps;
   Image: ImageProps;
 }
@@ -34,6 +39,7 @@ export const headerFooterPuckConfig: Config<BriskLayoutComponentProps> = {
     Nav: navConfig,
     NavLink: navLinkConfig,
     LanguageSwitcher: languageSwitcherConfig,
+    HamburgerMenu: hamburgerMenuConfig,
     Text: textConfig,
     Image: imageConfig,
   },

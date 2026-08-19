@@ -10,6 +10,7 @@ export * from './lib/blocks/column.block.js';
 export * from './lib/blocks/nav.block.js';
 export * from './lib/blocks/nav-link.block.js';
 export * from './lib/blocks/language-switcher.block.js';
+export * from './lib/blocks/hamburger-menu.block.js';
 export * from './lib/media-picker-context.js';
 export * from './lib/form-list-context.js';
 export * from './lib/page-list-context.js';
