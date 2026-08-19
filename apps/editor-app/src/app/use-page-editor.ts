@@ -5,6 +5,7 @@ import {
   useSuspenseQuery,
 } from '@tanstack/react-query';
 import type { Data } from '@puckeditor/core';
+import { puckConfig } from '@brisk/puck-config';
 import { fromPuckData } from '../lib/puck-data-mapper.js';
 import { publishPage, saveDraft } from '../lib/pages-api-client.js';
 import { pageQueryOptions } from './pages-queries.js';
@@ -65,7 +66,7 @@ export function usePageEditor(pageId: string) {
     (data: Data) => {
       window.clearTimeout(saveTimeoutRef.current);
       saveTimeoutRef.current = window.setTimeout(() => {
-        saveDraftMutation.mutate(fromPuckData(data));
+        saveDraftMutation.mutate(fromPuckData(data, puckConfig));
       }, DRAFT_SAVE_DEBOUNCE_MS);
     },
     [saveDraftMutation],
@@ -74,7 +75,7 @@ export function usePageEditor(pageId: string) {
   const handlePublish = useCallback(
     (data: Data) => {
       window.clearTimeout(saveTimeoutRef.current);
-      return publishMutation.mutateAsync(fromPuckData(data));
+      return publishMutation.mutateAsync(fromPuckData(data, puckConfig));
     },
     [publishMutation],
   );

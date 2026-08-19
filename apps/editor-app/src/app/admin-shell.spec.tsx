@@ -54,6 +54,9 @@ describe('AdminShell', () => {
     expect(
       screen.getByRole('link', { name: 'Media' }).getAttribute('href'),
     ).toBe('/media');
+    expect(
+      screen.getByRole('link', { name: 'Aspetto' }).getAttribute('href'),
+    ).toBe('/appearance');
     expect(screen.getByText('Utenti')).toBeTruthy();
     expect(screen.getAllByText('In arrivo')).toHaveLength(1);
     expect(screen.getByText('content')).toBeTruthy();

@@ -46,6 +46,7 @@
       "pages": "Pages",
       "media": "Media",
       "forms": "Forms",
+      "appearance": "Appearance",
       "users": "Users",
       "comingSoon": "Coming soon"
     },
@@ -128,6 +129,23 @@
       "create": "Create translation",
       "creating": "Creating...",
       "conflict": "A translation in this language already exists for this page."
+    },
+    "picker": {
+      "title": "Choose a page",
+      "empty": "No pages in this language."
+    }
+  },
+  "appearance": {
+    "title": "Appearance",
+    "localeLabel": "Language",
+    "editHeader": "Edit Header",
+    "editHeaderDescription": "Logo, navigation menu, and language switcher.",
+    "editFooter": "Edit Footer",
+    "editFooterDescription": "Content and links at the bottom of every page.",
+    "editor": {
+      "backToList": "Appearance",
+      "draftSaved": "Draft saved",
+      "published": "Published"
     }
   },
   "media": {

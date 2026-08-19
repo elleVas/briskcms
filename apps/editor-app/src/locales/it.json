@@ -46,6 +46,7 @@
       "pages": "Pagine",
       "media": "Media",
       "forms": "Moduli",
+      "appearance": "Aspetto",
       "users": "Utenti",
       "comingSoon": "In arrivo"
     },
@@ -128,6 +129,23 @@
       "create": "Crea traduzione",
       "creating": "Creazione in corso...",
       "conflict": "Esiste già una traduzione in questa lingua per questa pagina."
+    },
+    "picker": {
+      "title": "Scegli una pagina",
+      "empty": "Nessuna pagina in questa lingua."
+    }
+  },
+  "appearance": {
+    "title": "Aspetto",
+    "localeLabel": "Lingua",
+    "editHeader": "Modifica Header",
+    "editHeaderDescription": "Logo, menu di navigazione e selettore lingua.",
+    "editFooter": "Modifica Footer",
+    "editFooterDescription": "Contenuto e link in fondo a ogni pagina.",
+    "editor": {
+      "backToList": "Aspetto",
+      "draftSaved": "Bozza salvata",
+      "published": "Pubblicato"
     }
   },
   "media": {
