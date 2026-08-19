@@ -14,9 +14,10 @@ const puckContext: PuckContext = {
 };
 
 describe('languageSwitcherPropsSchema', () => {
-  it('defaults position to left when omitted', () => {
+  it('defaults position to left and visibility to always when omitted', () => {
     const result = languageSwitcherPropsSchema.parse({});
     expect(result.position).toBe('left');
+    expect(result.visibility).toBe('always');
   });
 
   it('accepts an explicit position', () => {
@@ -33,6 +34,7 @@ describe('languageSwitcherConfig.render', () => {
       languageSwitcherConfig.render({
         id: 'test-id',
         position: 'left',
+        visibility: 'always',
         puck: puckContext,
       }),
     );
@@ -45,6 +47,7 @@ describe('languageSwitcherConfig.render', () => {
       languageSwitcherConfig.render({
         id: 'test-id',
         position: 'right',
+        visibility: 'always',
         puck: puckContext,
       }),
     );

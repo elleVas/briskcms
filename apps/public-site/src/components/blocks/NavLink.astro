@@ -4,13 +4,18 @@ import { localePath } from '../../lib/locale-path.js';
 
 type Props = NavLinkProps;
 
-const { label, linkType, page, url, position } = Astro.props;
+const { label, linkType, page, url, position, visibility } = Astro.props;
 const href = linkType === 'page' && page ? localePath(page.locale, page.slug) : url;
 ---
 
 <a
   href={href}
-  class:list={['brisk-nav-link', { 'brisk-nav-link--right': position === 'right' }]}
+  class:list={[
+    'brisk-nav-link',
+    { 'brisk-nav-link--right': position === 'right' },
+    { 'brisk-visibility-desktop-only': visibility === 'desktop-only' },
+    { 'brisk-visibility-mobile-only': visibility === 'mobile-only' },
+  ]}
 >
   {label}
 </a>

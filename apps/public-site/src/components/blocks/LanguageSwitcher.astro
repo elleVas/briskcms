@@ -12,7 +12,7 @@ interface Props extends LanguageSwitcherProps {
   site: PublishedSiteDto;
 }
 
-const { position, locale, translations, site } = Astro.props;
+const { position, visibility, locale, translations, site } = Astro.props;
 
 // The default locale's translation doubles as the redirect target for
 // 'redirect-to-default' (docs/adr/0017's fallback setting) — same
@@ -58,6 +58,8 @@ const links = site.enabledLocales
       class:list={[
         'brisk-language-switcher',
         { 'brisk-language-switcher--right': position === 'right' },
+        { 'brisk-visibility-desktop-only': visibility === 'desktop-only' },
+        { 'brisk-visibility-mobile-only': visibility === 'mobile-only' },
       ]}
       aria-label="Selettore lingua"
     >

@@ -106,14 +106,27 @@ export const formBlockPropsSchema = z.object({
 export type FormBlockProps = z.infer<typeof formBlockPropsSchema>;
 
 /**
- * Nav has no props of its own (docs/adr/0018) — it's a pure semantic
- * wrapper around a flex row of links, its content lives entirely in
- * `Block.children` via a Puck slot field. `strictObject` (not `object`,
- * and not `z.record`) so the inferred TS type is the literal empty type
- * `{}` — `z.object({})` infers with an implicit string index instead,
- * which breaks Puck's own mapped-type props (`{[K in keyof Props]: ...}`
- * collapses to `{[x: string]: never}`). A future prop (e.g. "sticky:
- * boolean" on Nav) is still a typed change, not a silent `any`.
+ * Shared by every site-chrome block that can be scoped to a breakpoint
+ * (Nav, HamburgerMenu, NavLink, LanguageSwitcher) — apps/public-site maps
+ * this to the `brisk-visibility-desktop-only`/`brisk-visibility-mobile-only`
+ * utility classes (src/styles/visibility.css); `'always'` applies neither.
+ * A bare enum, not a wrapper object with its own fixed default, because
+ * the sensible default differs per block — each block's own schema below
+ * picks its own `.default(...)`.
+ */
+export const visibilitySchema = z.enum([
+  'always',
+  'desktop-only',
+  'mobile-only',
+]);
+export type Visibility = z.infer<typeof visibilitySchema>;
+
+/**
+ * Nav's only prop today is `visibility` (docs/adr/0018 follow-up,
+ * 2026-08-19): defaults to `'always'` because that was its behavior
+ * before this field existed (a horizontal row that just wraps on narrow
+ * screens) — existing content keeps rendering identically. Its content
+ * lives entirely in `Block.children` via a Puck slot field.
  *
  * There is no Header/Footer block anymore (docs/adr/0018 follow-up,
  * 2026-08-19): a site_layout_section's `content` for kind='header'/'footer'
@@ -123,40 +136,50 @@ export type FormBlockProps = z.infer<typeof formBlockPropsSchema>;
  * structurally impossible to drop a "footer" into the header editor (or
  * vice versa): there is nothing named that to drop.
  */
-export const navPropsSchema = z.strictObject({});
+export const navPropsSchema = z.object({
+  visibility: visibilitySchema.default('always'),
+});
 export type NavProps = z.infer<typeof navPropsSchema>;
 
 /**
- * A distinct block from Nav, not a responsive behavior bolted onto it
- * (explicit user request, 2026-08-19): Nav is the always-visible desktop
- * link row; HamburgerMenu is a separately placed block with its own icon
- * and its own NavLink/LanguageSwitcher children, so an editor can give
- * mobile visitors different content than desktop (e.g. a "call us" link
- * that isn't in the desktop Nav at all) — not just a collapsed copy of
- * the same links. Renders as a toggle that reveals a dropdown panel
- * directly under itself (apps/public-site's HamburgerMenu.astro), no
- * side/direction to configure — same reasoning as Nav's own empty
- * `strictObject` above for why not `object`.
- */
-export const hamburgerMenuPropsSchema = z.strictObject({});
-export type HamburgerMenuProps = z.infer<typeof hamburgerMenuPropsSchema>;
-
-/**
  * Shared by every block that can land inside a Nav's flex row (NavLink,
- * LanguageSwitcher): "left" leaves it in normal flow, "right" applies a
- * margin-left:auto push in nav.block.tsx's render — the standard CSS trick
- * for splitting a flex row without a separate alignment control on the Nav
- * container itself. Per-item, not per-container, by explicit user request:
- * the concrete case is "links on the left, language switcher on the right,
- * or vice versa" within the same Nav.
+ * LanguageSwitcher, and now HamburgerMenu): "left" leaves it in normal
+ * flow, "right" applies a margin-left:auto push in nav.block.tsx's
+ * render — the standard CSS trick for splitting a flex row without a
+ * separate alignment control on the Nav container itself. Per-item, not
+ * per-container, by explicit user request: the concrete case is "links
+ * on the left, language switcher on the right, or vice versa" within the
+ * same Nav.
  */
 export const navItemPositionSchema = z.object({
   position: z.enum(['left', 'right']).default('left'),
 });
 export type NavItemPosition = z.infer<typeof navItemPositionSchema>;
 
+/**
+ * A distinct block from Nav, not a responsive behavior bolted onto it
+ * (explicit user request, 2026-08-19): Nav is the desktop link row;
+ * HamburgerMenu is a separately placed block with its own icon and its
+ * own NavLink/LanguageSwitcher children, so an editor can give mobile
+ * visitors different content than desktop (e.g. a "call us" link that
+ * isn't in the desktop Nav at all) — not just a collapsed copy of the
+ * same links. Renders as a toggle that reveals a dropdown panel directly
+ * under itself (apps/public-site's HamburgerMenu.astro). Carries both
+ * `navItemPositionSchema` (it can now be placed *inside* Nav's own row,
+ * left or right of the links — nav.block.tsx's slot allows it) and its
+ * own `visibility`, defaulting to `'mobile-only'`: that was its hardcoded
+ * behavior before this field existed, kept as the default so a
+ * HamburgerMenu placed before this change keeps behaving the same way.
+ */
+export const hamburgerMenuPropsSchema = navItemPositionSchema.extend({
+  visibility: visibilitySchema.default('mobile-only'),
+});
+export type HamburgerMenuProps = z.infer<typeof hamburgerMenuPropsSchema>;
+
 /** No other editor-time config: the real links depend on which page the visitor is looking at (site.enabledLocales/translations of THAT page), a runtime fact the editor canvas doesn't have — see LanguageSwitcher.astro. */
-export const languageSwitcherPropsSchema = navItemPositionSchema;
+export const languageSwitcherPropsSchema = navItemPositionSchema.extend({
+  visibility: visibilitySchema.default('always'),
+});
 export type LanguageSwitcherProps = z.infer<typeof languageSwitcherPropsSchema>;
 
 /**
@@ -179,6 +202,7 @@ export const navLinkPropsSchema = navItemPositionSchema.extend({
   linkType: z.enum(['page', 'url']),
   page: pickedPageSchema.nullable(),
   url: z.string(),
+  visibility: visibilitySchema.default('always'),
 });
 export type NavLinkProps = z.infer<typeof navLinkPropsSchema>;
 

@@ -4,17 +4,19 @@ import {
   type LanguageSwitcherProps,
 } from '@brisk/shared-types';
 import { positionField } from '../fields/position-field.js';
+import { visibilityField } from '../fields/visibility-field.js';
 
 export { languageSwitcherPropsSchema, type LanguageSwitcherProps };
 
 const fields: Fields<LanguageSwitcherProps> = {
   position: positionField,
+  visibility: visibilityField,
 };
 
 export const languageSwitcherConfig: ComponentConfig<LanguageSwitcherProps> = {
   label: 'Selettore lingua',
   fields,
-  defaultProps: { position: 'left' },
+  defaultProps: { position: 'left', visibility: 'always' },
   // Canvas-only placeholder — the real links depend on which page a
   // visitor is looking at (site.enabledLocales/translations of THAT
   // page), a runtime fact never known in the editor canvas. Same

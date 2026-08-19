@@ -72,6 +72,7 @@ describe('navLinkConfig.render', () => {
         page: null,
         url: '',
         position: 'left',
+        visibility: 'always',
         puck: puckContext,
       }),
     );
@@ -93,6 +94,7 @@ describe('navLinkConfig.render', () => {
         },
         url: '',
         position: 'left',
+        visibility: 'always',
         puck: puckContext,
       }),
     );
@@ -109,6 +111,7 @@ describe('navLinkConfig.render', () => {
         page: null,
         url: 'https://example.com',
         position: 'left',
+        visibility: 'always',
         puck: puckContext,
       }),
     );
@@ -125,6 +128,7 @@ describe('navLinkConfig.render', () => {
         page: null,
         url: '/contatti',
         position: 'right',
+        visibility: 'always',
         puck: puckContext,
       }),
     );

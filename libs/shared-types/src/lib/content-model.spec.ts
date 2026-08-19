@@ -2,6 +2,10 @@ import { describe, expect, it } from 'vitest';
 import {
   blockSchema,
   columnsGridTemplate,
+  hamburgerMenuPropsSchema,
+  languageSwitcherPropsSchema,
+  navLinkPropsSchema,
+  navPropsSchema,
   pageContentSchema,
   seoMetaSchema,
 } from './content-model.js';
@@ -68,5 +72,36 @@ describe('columnsGridTemplate', () => {
     ['three-equal', '1fr 1fr 1fr'],
   ] as const)('maps %s to %s', (layout, expected) => {
     expect(columnsGridTemplate(layout)).toBe(expected);
+  });
+});
+
+describe('per-block visibility defaults', () => {
+  it('Nav defaults to always (its behavior before this field existed)', () => {
+    expect(navPropsSchema.parse({}).visibility).toBe('always');
+  });
+
+  it('HamburgerMenu defaults to mobile-only (its hardcoded behavior before this field existed)', () => {
+    expect(hamburgerMenuPropsSchema.parse({}).visibility).toBe('mobile-only');
+  });
+
+  it('NavLink defaults to always', () => {
+    expect(
+      navLinkPropsSchema.parse({
+        label: 'x',
+        linkType: 'url',
+        page: null,
+        url: '',
+      }).visibility,
+    ).toBe('always');
+  });
+
+  it('LanguageSwitcher defaults to always', () => {
+    expect(languageSwitcherPropsSchema.parse({}).visibility).toBe('always');
+  });
+
+  it('rejects an unknown visibility value', () => {
+    expect(
+      navPropsSchema.safeParse({ visibility: 'tablet-only' }).success,
+    ).toBe(false);
   });
 });
