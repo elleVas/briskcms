@@ -10,9 +10,11 @@ import { TooltipProvider } from '../components/ui/tooltip.js';
 import * as authApi from '../lib/auth-api-client.js';
 import * as mediaApi from '../lib/media-api-client.js';
 import * as api from '../lib/pages-api-client.js';
+import * as sectionsApi from '../lib/site-layout-sections-api-client.js';
 import * as sitesApi from '../lib/sites-api-client.js';
 import { ApiError } from '../lib/http-client.js';
 import type { PageDto } from '../lib/pages-api-client.js';
+import type { SiteLayoutSectionDto } from '../lib/site-layout-sections-api-client.js';
 import type { SiteDto } from '../lib/sites-api-client.js';
 import { routeTree } from '../routeTree.gen.js';
 import { createTestQueryClient } from '../test-query-client.js';
@@ -46,6 +48,14 @@ vi.mock('../lib/sites-api-client.js', async (importOriginal) => {
   return { ...actual, getSite: vi.fn() };
 });
 
+vi.mock('../lib/site-layout-sections-api-client.js', async (importOriginal) => {
+  const actual =
+    await importOriginal<
+      typeof import('../lib/site-layout-sections-api-client.js')
+    >();
+  return { ...actual, getOrCreateSiteLayoutSection: vi.fn() };
+});
+
 const sampleSite: SiteDto = {
   id: 'site-1',
   tenantId: 'tenant-1',
@@ -75,6 +85,19 @@ const samplePage: PageDto = {
   seoMeta: { title: 'Home', description: '' },
   createdAt: '',
   updatedAt: '2026-01-01T00:00:00.000Z',
+};
+
+const sampleHeaderSection: SiteLayoutSectionDto = {
+  id: 'section-1',
+  tenantId: 'tenant-1',
+  siteId: 'site-1',
+  locale: 'it',
+  kind: 'header',
+  status: 'draft',
+  content: [],
+  publishedContent: null,
+  createdAt: '',
+  updatedAt: '',
 };
 
 function renderApp(initialPath: string) {
@@ -200,6 +223,32 @@ describe('router', () => {
       'lele@example.com',
       'correct-horse',
     );
+  });
+
+  it('navigates from Aspetto to the Header editor and back', async () => {
+    vi.mocked(api.listPages).mockResolvedValue({ items: [], total: 0 });
+    vi.mocked(sectionsApi.getOrCreateSiteLayoutSection).mockResolvedValue(
+      sampleHeaderSection,
+    );
+
+    renderApp('/appearance');
+    expect(
+      await screen.findByRole('heading', { name: 'Aspetto' }),
+    ).toBeTruthy();
+
+    fireEvent.click(screen.getByRole('link', { name: /modifica header/i }));
+
+    expect(await screen.findByRole('link', { name: /aspetto/i })).toBeTruthy();
+    expect(sectionsApi.getOrCreateSiteLayoutSection).toHaveBeenCalledWith(
+      expect.any(String),
+      'it',
+      'header',
+    );
+
+    fireEvent.click(screen.getByRole('link', { name: /aspetto/i }));
+    expect(
+      await screen.findByRole('heading', { name: 'Aspetto' }),
+    ).toBeTruthy();
   });
 
   it('logs out from the shell and returns to /login', async () => {

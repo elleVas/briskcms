@@ -7,27 +7,35 @@ import {
   DialogHeader,
   DialogTitle,
 } from '../components/ui/dialog.js';
-import { usePageVersions } from './use-page-versions.js';
+
+// Minimal shape shared by PageVersionDto and SiteLayoutSectionVersionDto —
+// this dialog is presentational only (docs/adr/0018): it doesn't know or
+// care which entity's versions it's showing, that's the caller's own hook
+// (usePageVersions / useSiteLayoutSectionVersions) to fetch and pass in.
+export interface VersionSummary {
+  id: string;
+  createdAt: string;
+}
 
 export interface VersionHistoryDialogProps {
-  pageId: string;
+  versions: VersionSummary[];
+  isLoading: boolean;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onRestored: () => void;
+  onRollback: (versionId: string) => Promise<unknown>;
 }
 
 export function VersionHistoryDialog({
-  pageId,
+  versions,
+  isLoading,
   open,
   onOpenChange,
-  onRestored,
+  onRollback,
 }: VersionHistoryDialogProps) {
   const { t, i18n } = useTranslation();
-  const { versions, isLoading, rollback } = usePageVersions(pageId, open);
 
   async function handleRollback(versionId: string) {
-    await rollback(versionId);
-    onRestored();
+    await onRollback(versionId);
     onOpenChange(false);
   }
 

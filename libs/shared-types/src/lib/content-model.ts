@@ -104,3 +104,49 @@ export const formBlockPropsSchema = z.object({
   form: pickedFormSchema.nullable(),
 });
 export type FormBlockProps = z.infer<typeof formBlockPropsSchema>;
+
+/**
+ * Header/Nav/Footer have no props of their own today (docs/adr/0018) —
+ * they're pure semantic wrappers, their content lives entirely in
+ * `Block.children` via a Puck slot field. `strictObject` (not `object`,
+ * and not `z.record`) so the inferred TS type is the literal empty type
+ * `{}` — `z.object({})` infers with an implicit string index instead,
+ * which breaks Puck's own mapped-type props (`{[K in keyof Props]: ...}`
+ * collapses to `{[x: string]: never}`). A future prop (e.g. "sticky:
+ * boolean" on Header) is still a typed change, not a silent `any`.
+ */
+export const headerPropsSchema = z.strictObject({});
+export type HeaderProps = z.infer<typeof headerPropsSchema>;
+
+export const navPropsSchema = z.strictObject({});
+export type NavProps = z.infer<typeof navPropsSchema>;
+
+export const footerPropsSchema = z.strictObject({});
+export type FooterProps = z.infer<typeof footerPropsSchema>;
+
+/** No config: the real links depend on which page the visitor is looking at (site.enabledLocales/translations of THAT page), a runtime fact the editor canvas doesn't have — see LanguageSwitcher.astro. */
+export const languageSwitcherPropsSchema = z.strictObject({});
+export type LanguageSwitcherProps = z.infer<typeof languageSwitcherPropsSchema>;
+
+/**
+ * `locale`/`slug` are denormalized so a NavLink never needs a live lookup
+ * to resolve where it points (same reasoning as PickedMedia's `url`) —
+ * apps/public-site builds the href directly via localePath(locale, slug).
+ * `title` is denormalized purely for the editor canvas/picker label (same
+ * reasoning as PickedForm's `formName`), never used for rendering.
+ */
+export const pickedPageSchema = z.object({
+  pageId: z.string(),
+  locale: z.string(),
+  slug: z.string(),
+  title: z.string(),
+});
+export type PickedPage = z.infer<typeof pickedPageSchema>;
+
+export const navLinkPropsSchema = z.object({
+  label: z.string(),
+  linkType: z.enum(['page', 'url']),
+  page: pickedPageSchema.nullable(),
+  url: z.string(),
+});
+export type NavLinkProps = z.infer<typeof navLinkPropsSchema>;

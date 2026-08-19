@@ -1,18 +1,17 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from '@tanstack/react-router';
-import { Puck } from '@puckeditor/core';
-import '@puckeditor/core/puck.css';
 import { ExternalLink, History, Languages, Search } from 'lucide-react';
 import { puckConfig } from '@brisk/puck-config';
 import { toPuckData } from '../lib/puck-data-mapper.js';
+import { BlockEditorShell } from './block-editor-shell.js';
 import { FormListProvider } from './form-list-provider.js';
 import { IconButton } from './icon-button.js';
-import { LogoutButton } from './logout-button.js';
 import { MediaPickerProvider } from './media-picker-provider.js';
 import { PageTranslationsDialog } from './page-translations-dialog.js';
 import { SeoPanelDialog } from './seo-panel-dialog.js';
 import { usePageEditor, type SaveStatus } from './use-page-editor.js';
+import { usePageVersions } from './use-page-versions.js';
 import { VersionHistoryDialog } from './version-history-dialog.js';
 
 // Not VITE_API_URL: this is the public site's own origin (apps/public-site).
@@ -54,28 +53,36 @@ export function PageEditorView({ pageId }: PageEditorViewProps) {
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [isSeoOpen, setIsSeoOpen] = useState(false);
   const [isTranslationsOpen, setIsTranslationsOpen] = useState(false);
-  // Bumped only on an explicit rollback, never on ordinary autosave — see
-  // the comment on <Puck key={...}> below for why it can't be page.updatedAt.
   const [restoredAt, setRestoredAt] = useState(0);
+  const {
+    versions,
+    isLoading: isLoadingVersions,
+    rollback,
+  } = usePageVersions(pageId, isHistoryOpen);
+
+  async function handleRollback(versionId: string) {
+    await rollback(versionId);
+    setRestoredAt((n) => n + 1);
+  }
 
   return (
-    // The whole view (not just <Puck>) is wrapped in MediaPickerProvider:
+    // The whole view (not just the canvas) is wrapped in MediaPickerProvider:
     // SeoPanelDialog's OG-image field reuses the same media picker as the
     // Image/Gallery Puck blocks, and it lives in the top bar, outside the
-    // canvas. FormListProvider only backs the Form block inside <Puck>, but
-    // nesting it here too keeps both providers alongside each other rather
-    // than splitting the wrapping between two different levels.
+    // canvas. FormListProvider only backs the Form block inside the canvas,
+    // but nesting it here too keeps both providers alongside each other
+    // rather than splitting the wrapping between two different levels.
     <MediaPickerProvider siteId={page.siteId}>
       <FormListProvider siteId={page.siteId}>
-        <div
-          style={{ height: '100vh', display: 'flex', flexDirection: 'column' }}
-        >
-          <div className="flex items-center justify-between border-b px-3 py-1 text-xs text-muted-foreground">
-            <div className="flex items-center gap-3">
-              <Link to="/pages" className="hover:underline">
-                ← {t('pages.editor.backToList')}
-              </Link>
-              <span>{statusText}</span>
+        <BlockEditorShell
+          backLink={
+            <Link to="/pages" className="hover:underline">
+              ← {t('pages.editor.backToList')}
+            </Link>
+          }
+          statusText={statusText}
+          actions={
+            <>
               <IconButton
                 label={t('pages.seo.open')}
                 onClick={() => setIsSeoOpen(true)}
@@ -108,28 +115,20 @@ export function PageEditorView({ pageId }: PageEditorViewProps) {
                   </a>
                 </IconButton>
               )}
-            </div>
-            <LogoutButton />
-          </div>
-          <div style={{ flex: 1, minHeight: 0 }}>
-            {/* Keyed on restoredAt, NOT page.updatedAt: every autosave also
-                bumps page.updatedAt (saveDraft's onSuccess writes the fresh
-                page into the query cache), and keying on that remounted Puck
-                on every save — wiping in-progress edits, e.g. a block
-                mid-drag — instead of only after a rollback like intended. */}
-            <Puck
-              key={restoredAt}
-              config={puckConfig}
-              data={toPuckData(page.content)}
-              onChange={handleChange}
-              onPublish={handlePublish}
-            />
-          </div>
+            </>
+          }
+          config={puckConfig}
+          data={toPuckData(page.content, puckConfig)}
+          onChange={handleChange}
+          onPublish={handlePublish}
+          restoredAt={restoredAt}
+        >
           <VersionHistoryDialog
-            pageId={pageId}
+            versions={versions}
+            isLoading={isLoadingVersions}
             open={isHistoryOpen}
             onOpenChange={setIsHistoryOpen}
-            onRestored={() => setRestoredAt((n) => n + 1)}
+            onRollback={handleRollback}
           />
           <SeoPanelDialog
             pageId={pageId}
@@ -144,7 +143,7 @@ export function PageEditorView({ pageId }: PageEditorViewProps) {
             open={isTranslationsOpen}
             onOpenChange={setIsTranslationsOpen}
           />
-        </div>
+        </BlockEditorShell>
       </FormListProvider>
     </MediaPickerProvider>
   );
