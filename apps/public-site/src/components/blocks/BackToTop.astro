@@ -1,0 +1,73 @@
+---
+import type { BackToTopProps } from '@brisk/shared-types';
+
+type Props = BackToTopProps;
+
+const { visibility } = Astro.props;
+---
+
+<button
+  type="button"
+  class:list={[
+    'brisk-back-to-top',
+    { 'brisk-visibility-desktop-only': visibility === 'desktop-only' },
+    { 'brisk-visibility-mobile-only': visibility === 'mobile-only' },
+  ]}
+  aria-label="Torna su"
+>
+  <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+    <path
+      d="M12 5l-7 7h4v7h6v-7h4z"
+      fill="currentColor"
+    />
+  </svg>
+</button>
+
+<script>
+  // No framework here on purpose (docs/adr/0007) — a plain scroll listener
+  // toggling one class is all a show/hide button needs.
+  const SCROLL_THRESHOLD = 300;
+
+  document.querySelectorAll<HTMLButtonElement>('.brisk-back-to-top').forEach((button) => {
+    const updateVisibility = () => {
+      button.classList.toggle('brisk-back-to-top--visible', window.scrollY > SCROLL_THRESHOLD);
+    };
+
+    updateVisibility();
+    window.addEventListener('scroll', updateVisibility, { passive: true });
+
+    button.addEventListener('click', () => {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+  });
+</script>
+
+<style>
+  /* Hidden by default (display: none) regardless of scroll position — the
+     script above adds --visible once window.scrollY crosses the
+     threshold. bottom-LEFT, not bottom-right: when a WhatsAppButton is
+     also placed (the common case), it sits bottom-right, so the two
+     independent, mutually-unaware blocks never overlap — see
+     WhatsAppButton.astro's own comment. */
+  .brisk-back-to-top {
+    position: fixed;
+    left: 1.5rem;
+    bottom: 1.5rem;
+    z-index: 30;
+    width: 2.75rem;
+    height: 2.75rem;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    background: #18181b;
+    color: #fff;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgb(0 0 0 / 20%);
+  }
+  .brisk-back-to-top--visible {
+    display: flex;
+  }
+</style>

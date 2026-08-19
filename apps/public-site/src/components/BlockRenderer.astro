@@ -1,5 +1,6 @@
 ---
 import {
+  backToTopPropsSchema,
   columnsPropsSchema,
   formBlockPropsSchema,
   galleryPropsSchema,
@@ -10,13 +11,16 @@ import {
   navDropdownPropsSchema,
   navLinkPropsSchema,
   navPropsSchema,
+  promoBarPropsSchema,
   textPropsSchema,
+  whatsAppButtonPropsSchema,
   type Block,
 } from '@brisk/shared-types';
 import type {
   PublishedPageTranslationDto,
   PublishedSiteDto,
 } from '../lib/public-api-client.js';
+import BackToTop from './blocks/BackToTop.astro';
 import Column from './blocks/Column.astro';
 import Columns from './blocks/Columns.astro';
 import Form from './blocks/Form.astro';
@@ -28,7 +32,9 @@ import LanguageSwitcher from './blocks/LanguageSwitcher.astro';
 import Nav from './blocks/Nav.astro';
 import NavDropdown from './blocks/NavDropdown.astro';
 import NavLink from './blocks/NavLink.astro';
+import PromoBar from './blocks/PromoBar.astro';
 import Text from './blocks/Text.astro';
+import WhatsAppButton from './blocks/WhatsAppButton.astro';
 
 // Walks `Block[]`/`children` directly — no dependency on Puck's own data
 // format here, by design (see docs/adr/0007: "any consumer of page content
@@ -145,5 +151,20 @@ const { block, locale, translations, site } = Astro.props;
         />
       ))}
     </Column>
+  )
+}
+{
+  block.type === 'PromoBar' && (
+    <PromoBar {...promoBarPropsSchema.parse(block.props)} />
+  )
+}
+{
+  block.type === 'BackToTop' && (
+    <BackToTop {...backToTopPropsSchema.parse(block.props)} />
+  )
+}
+{
+  block.type === 'WhatsAppButton' && (
+    <WhatsAppButton {...whatsAppButtonPropsSchema.parse(block.props)} />
   )
 }

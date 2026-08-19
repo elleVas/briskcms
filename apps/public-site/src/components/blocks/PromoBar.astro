@@ -1,0 +1,87 @@
+---
+import type { PromoBarProps } from '@brisk/shared-types';
+import { localePath } from '../../lib/locale-path.js';
+
+type Props = PromoBarProps;
+
+const { message, linkType, page, url, visibility } = Astro.props;
+const href = linkType === 'page' && page ? localePath(page.locale, page.slug) : url;
+const hasLink = linkType === 'page' ? Boolean(page) : Boolean(url);
+---
+
+<div
+  class:list={[
+    'brisk-promo-bar',
+    { 'brisk-visibility-desktop-only': visibility === 'desktop-only' },
+    { 'brisk-visibility-mobile-only': visibility === 'mobile-only' },
+  ]}
+>
+  {
+    /* is:inline, not the bundled/deferred <script> below: this one must run
+       synchronously, before the browser paints the bar, or a visitor who
+       already dismissed it sees a flash of it anyway. Reads
+       `document.currentScript.parentElement` rather than an id so it still
+       finds the right bar if this component is ever placed twice on the
+       same page (header + footer), matching HamburgerMenu/NavLink's own
+       querySelectorAll-over-id convention. */
+  }
+  <script is:inline>
+    (function () {
+      var bar = document.currentScript.parentElement;
+      if (localStorage.getItem('brisk-promo-bar-dismissed') === 'true') {
+        bar.style.display = 'none';
+      }
+    })();
+  </script>
+  <p class="brisk-promo-bar__message">
+    {hasLink ? <a href={href}>{message}</a> : message}
+  </p>
+  <button type="button" class="brisk-promo-bar__close" aria-label="Chiudi">×</button>
+</div>
+
+<script>
+  // No framework here on purpose (docs/adr/0007) — a plain click listener
+  // is all a dismiss button needs. Single fixed key, no per-message
+  // versioning (see promoBarPropsSchema's own comment for the trade-off).
+  document.querySelectorAll<HTMLElement>('.brisk-promo-bar').forEach((bar) => {
+    const closeButton = bar.querySelector<HTMLButtonElement>('.brisk-promo-bar__close');
+    closeButton?.addEventListener('click', () => {
+      localStorage.setItem('brisk-promo-bar-dismissed', 'true');
+      bar.style.display = 'none';
+    });
+  });
+</script>
+
+<style>
+  .brisk-promo-bar {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.75rem 2.5rem;
+    background: #18181b;
+    color: #fff;
+    text-align: center;
+  }
+  .brisk-promo-bar__message {
+    margin: 0;
+  }
+  .brisk-promo-bar__message a {
+    color: inherit;
+    text-decoration: underline;
+  }
+  .brisk-promo-bar__close {
+    position: absolute;
+    right: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    padding: 0.25rem;
+    border: none;
+    background: none;
+    color: inherit;
+    font-size: 1.25rem;
+    line-height: 1;
+    cursor: pointer;
+  }
+</style>
