@@ -207,6 +207,23 @@ export const navLinkPropsSchema = navItemPositionSchema.extend({
 export type NavLinkProps = z.infer<typeof navLinkPropsSchema>;
 
 /**
+ * A dropdown trigger for a one-level submenu (Nav > NavDropdown > NavLink)
+ * — deliberately not a link itself: combining "click opens the submenu"
+ * and "click navigates" on the same element is the classic mega-menu UX
+ * conflict, so `label` is just the toggle text, with no linkType/page/url
+ * of its own (unlike NavLink). Deliberately capped at one level of
+ * nesting (its own slot only allows NavLink, not another NavDropdown) —
+ * arbitrarily deep mega menus are hard to use on touch devices, one
+ * level covers the common case (e.g. "Prodotti" revealing a handful of
+ * category links).
+ */
+export const navDropdownPropsSchema = navItemPositionSchema.extend({
+  label: z.string(),
+  visibility: visibilitySchema.default('always'),
+});
+export type NavDropdownProps = z.infer<typeof navDropdownPropsSchema>;
+
+/**
  * A finite set of presets (not a free "number of columns" field) — every
  * layout maps to one explicit `grid-template-columns` value in
  * `columnsGridTemplate` below, in both the editor canvas and

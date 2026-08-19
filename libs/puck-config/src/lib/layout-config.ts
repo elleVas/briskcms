@@ -7,6 +7,10 @@ import {
   languageSwitcherConfig,
   type LanguageSwitcherProps,
 } from './blocks/language-switcher.block.js';
+import {
+  navDropdownConfig,
+  type NavDropdownPuckProps,
+} from './blocks/nav-dropdown.block.js';
 import { navConfig, type NavPuckProps } from './blocks/nav.block.js';
 import { navLinkConfig, type NavLinkProps } from './blocks/nav-link.block.js';
 import { imageConfig, type ImageProps } from './blocks/image.block.js';
@@ -17,6 +21,7 @@ export interface BriskLayoutComponentProps {
   NavLink: NavLinkProps;
   LanguageSwitcher: LanguageSwitcherProps;
   HamburgerMenu: HamburgerMenuPuckProps;
+  NavDropdown: NavDropdownPuckProps;
   Text: TextProps;
   Image: ImageProps;
 }
@@ -40,6 +45,7 @@ export const headerFooterPuckConfig: Config<BriskLayoutComponentProps> = {
     NavLink: navLinkConfig,
     LanguageSwitcher: languageSwitcherConfig,
     HamburgerMenu: hamburgerMenuConfig,
+    NavDropdown: navDropdownConfig,
     Text: textConfig,
     Image: imageConfig,
   },

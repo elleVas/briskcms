@@ -7,6 +7,7 @@ import {
   heroPropsSchema,
   imagePropsSchema,
   languageSwitcherPropsSchema,
+  navDropdownPropsSchema,
   navLinkPropsSchema,
   navPropsSchema,
   textPropsSchema,
@@ -25,6 +26,7 @@ import Hero from './blocks/Hero.astro';
 import Image from './blocks/Image.astro';
 import LanguageSwitcher from './blocks/LanguageSwitcher.astro';
 import Nav from './blocks/Nav.astro';
+import NavDropdown from './blocks/NavDropdown.astro';
 import NavLink from './blocks/NavLink.astro';
 import Text from './blocks/Text.astro';
 
@@ -101,6 +103,20 @@ const { block, locale, translations, site } = Astro.props;
         />
       ))}
     </HamburgerMenu>
+  )
+}
+{
+  block.type === 'NavDropdown' && (
+    <NavDropdown {...navDropdownPropsSchema.parse(block.props)}>
+      {block.children?.map((child) => (
+        <Astro.self
+          block={child}
+          locale={locale}
+          translations={translations}
+          site={site}
+        />
+      ))}
+    </NavDropdown>
   )
 }
 {

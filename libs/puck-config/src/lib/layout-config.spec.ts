@@ -8,6 +8,7 @@ describe('headerFooterPuckConfig', () => {
       'NavLink',
       'LanguageSwitcher',
       'HamburgerMenu',
+      'NavDropdown',
       'Text',
       'Image',
     ]);

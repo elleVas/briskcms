@@ -4,6 +4,7 @@ import {
   columnsGridTemplate,
   hamburgerMenuPropsSchema,
   languageSwitcherPropsSchema,
+  navDropdownPropsSchema,
   navLinkPropsSchema,
   navPropsSchema,
   pageContentSchema,
@@ -97,6 +98,12 @@ describe('per-block visibility defaults', () => {
 
   it('LanguageSwitcher defaults to always', () => {
     expect(languageSwitcherPropsSchema.parse({}).visibility).toBe('always');
+  });
+
+  it('NavDropdown defaults to always', () => {
+    expect(navDropdownPropsSchema.parse({ label: 'Prodotti' }).visibility).toBe(
+      'always',
+    );
   });
 
   it('rejects an unknown visibility value', () => {
