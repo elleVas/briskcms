@@ -127,6 +127,21 @@ export const navPropsSchema = z.strictObject({});
 export type NavProps = z.infer<typeof navPropsSchema>;
 
 /**
+ * A distinct block from Nav, not a responsive behavior bolted onto it
+ * (explicit user request, 2026-08-19): Nav is the always-visible desktop
+ * link row; HamburgerMenu is a separately placed block with its own icon
+ * and its own NavLink/LanguageSwitcher children, so an editor can give
+ * mobile visitors different content than desktop (e.g. a "call us" link
+ * that isn't in the desktop Nav at all) — not just a collapsed copy of
+ * the same links. Renders as a toggle that reveals a dropdown panel
+ * directly under itself (apps/public-site's HamburgerMenu.astro), no
+ * side/direction to configure — same reasoning as Nav's own empty
+ * `strictObject` above for why not `object`.
+ */
+export const hamburgerMenuPropsSchema = z.strictObject({});
+export type HamburgerMenuProps = z.infer<typeof hamburgerMenuPropsSchema>;
+
+/**
  * Shared by every block that can land inside a Nav's flex row (NavLink,
  * LanguageSwitcher): "left" leaves it in normal flow, "right" applies a
  * margin-left:auto push in nav.block.tsx's render — the standard CSS trick

@@ -18,6 +18,7 @@ import Column from './blocks/Column.astro';
 import Columns from './blocks/Columns.astro';
 import Form from './blocks/Form.astro';
 import Gallery from './blocks/Gallery.astro';
+import HamburgerMenu from './blocks/HamburgerMenu.astro';
 import Hero from './blocks/Hero.astro';
 import Image from './blocks/Image.astro';
 import LanguageSwitcher from './blocks/LanguageSwitcher.astro';
@@ -84,6 +85,20 @@ const { block, locale, translations, site } = Astro.props;
         />
       ))}
     </Nav>
+  )
+}
+{
+  block.type === 'HamburgerMenu' && (
+    <HamburgerMenu>
+      {block.children?.map((child) => (
+        <Astro.self
+          block={child}
+          locale={locale}
+          translations={translations}
+          site={site}
+        />
+      ))}
+    </HamburgerMenu>
   )
 }
 {
