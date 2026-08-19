@@ -5,6 +5,8 @@ export * from './lib/blocks/text.block.js';
 export * from './lib/blocks/image.block.js';
 export * from './lib/blocks/gallery.block.js';
 export * from './lib/blocks/form.block.js';
+export * from './lib/blocks/columns.block.js';
+export * from './lib/blocks/column.block.js';
 export * from './lib/blocks/nav.block.js';
 export * from './lib/blocks/nav-link.block.js';
 export * from './lib/blocks/language-switcher.block.js';

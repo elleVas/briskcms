@@ -1,4 +1,9 @@
 import type { Config } from '@puckeditor/core';
+import { columnConfig, type ColumnPuckProps } from './blocks/column.block.js';
+import {
+  columnsConfig,
+  type ColumnsPuckProps,
+} from './blocks/columns.block.js';
 import { formConfig, type FormBlockProps } from './blocks/form.block.js';
 import { galleryConfig, type GalleryProps } from './blocks/gallery.block.js';
 import { heroConfig, type HeroProps } from './blocks/hero.block.js';
@@ -11,6 +16,8 @@ export interface BriskComponentProps {
   Image: ImageProps;
   Gallery: GalleryProps;
   Form: FormBlockProps;
+  Columns: ColumnsPuckProps;
+  Column: ColumnPuckProps;
 }
 
 export const puckConfig: Config<BriskComponentProps> = {
@@ -20,5 +27,7 @@ export const puckConfig: Config<BriskComponentProps> = {
     Image: imageConfig,
     Gallery: galleryConfig,
     Form: formConfig,
+    Columns: columnsConfig,
+    Column: columnConfig,
   },
 };

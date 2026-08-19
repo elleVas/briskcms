@@ -1,0 +1,23 @@
+---
+import { columnsGridTemplate, type ColumnsProps } from '@brisk/shared-types';
+
+type Props = ColumnsProps;
+
+const { layout } = Astro.props;
+---
+
+<div class="brisk-columns" style={`grid-template-columns: ${columnsGridTemplate(layout)}`}>
+  <slot />
+</div>
+
+<style>
+  .brisk-columns {
+    display: grid;
+    gap: 1.5rem;
+  }
+  @media (max-width: 640px) {
+    .brisk-columns {
+      grid-template-columns: 1fr !important;
+    }
+  }
+</style>
