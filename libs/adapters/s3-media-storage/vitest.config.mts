@@ -14,6 +14,19 @@ export default defineConfig(() => ({
     coverage: {
       reportsDirectory: './test-output/vitest/coverage',
       provider: 'v8' as const,
+      include: ['src/**/*.ts'],
+      exclude: ['src/**/*.spec.ts', 'src/index.ts'],
+      // Same 60% floor as @brisk/local-disk-media-storage (its own
+      // vitest.config.mts) — the sibling adapter this one mirrors, held to
+      // the same bar rather than the 80% used by pure-function libraries
+      // like @brisk/shared-types. The `?? 0` metadata fallbacks (mirrored
+      // from LocalDisk) keep branch coverage a bit below 100% in both.
+      thresholds: {
+        statements: 60,
+        branches: 60,
+        functions: 60,
+        lines: 60,
+      },
     },
   },
 }));

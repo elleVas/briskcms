@@ -95,6 +95,7 @@
     "@brisk/postgres-site-layout-section-repository": "workspace:*",
     "@brisk/postgres-site-repository": "workspace:*",
     "@brisk/postgres-user-repository": "workspace:*",
+    "@brisk/s3-media-storage": "workspace:*",
     "@brisk/session-auth-adapter": "workspace:*",
     "@brisk/shared-types": "workspace:*",
     "@brisk/smtp-email-adapter": "workspace:*",
