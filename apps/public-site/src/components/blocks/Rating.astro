@@ -1,0 +1,38 @@
+---
+import type { RatingProps } from '@brisk/shared-types';
+
+type Props = RatingProps;
+
+const { rating, label } = Astro.props;
+
+const STAR_PATH =
+  'M10 1.5l2.59 5.25 5.79.84-4.19 4.08.99 5.78L10 14.98l-5.18 2.47.99-5.78-4.19-4.08 5.79-.84L10 1.5z';
+const STAR_POSITIONS = [1, 2, 3, 4, 5];
+---
+
+<div class="brisk-rating">
+  {label && <p class="brisk-rating__label">{label}</p>}
+  <div
+    class="brisk-rating__stars"
+    role="img"
+    aria-label={`${rating} su 5 stelle`}
+  >
+    {
+      STAR_POSITIONS.map((position) => (
+        <svg viewBox="0 0 20 20" width="24" height="24" aria-hidden="true">
+          <path
+            d={STAR_PATH}
+            fill={position <= rating ? '#f59e0b' : '#d4d4d8'}
+          />
+        </svg>
+      ))
+    }
+  </div>
+</div>
+
+<style>
+  .brisk-rating__stars {
+    display: flex;
+    gap: 4px;
+  }
+</style>

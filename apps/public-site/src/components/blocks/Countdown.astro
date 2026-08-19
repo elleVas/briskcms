@@ -1,0 +1,109 @@
+---
+import type { CountdownProps } from '@brisk/shared-types';
+
+type Props = CountdownProps;
+
+const { targetDate, label } = Astro.props;
+---
+
+<div class="brisk-countdown" data-target-date={targetDate}>
+  {label && <p class="brisk-countdown__label">{label}</p>}
+  <div class="brisk-countdown__timer">
+    <div class="brisk-countdown__unit">
+      <span class="brisk-countdown__value" data-unit="days">00</span>
+      <span class="brisk-countdown__name">Giorni</span>
+    </div>
+    <div class="brisk-countdown__unit">
+      <span class="brisk-countdown__value" data-unit="hours">00</span>
+      <span class="brisk-countdown__name">Ore</span>
+    </div>
+    <div class="brisk-countdown__unit">
+      <span class="brisk-countdown__value" data-unit="minutes">00</span>
+      <span class="brisk-countdown__name">Minuti</span>
+    </div>
+    <div class="brisk-countdown__unit">
+      <span class="brisk-countdown__value" data-unit="seconds">00</span>
+      <span class="brisk-countdown__name">Secondi</span>
+    </div>
+  </div>
+  <p class="brisk-countdown__expired" hidden>Offerta scaduta</p>
+</div>
+
+<script>
+  // No framework here on purpose (docs/adr/0007, same reasoning as
+  // HamburgerMenu.astro) — the only difference from that block is that
+  // this one updates on a timer (setInterval) instead of a click listener,
+  // the first "tick" rather than "event" driven block in the public site.
+  document
+    .querySelectorAll<HTMLElement>('.brisk-countdown')
+    .forEach((root) => {
+      const targetDate = root.dataset.targetDate;
+      if (!targetDate) return;
+      const target = new Date(targetDate).getTime();
+      if (Number.isNaN(target)) return;
+
+      const timerEl = root.querySelector<HTMLElement>(
+        '.brisk-countdown__timer',
+      );
+      const expiredEl = root.querySelector<HTMLElement>(
+        '.brisk-countdown__expired',
+      );
+      const daysEl = root.querySelector<HTMLElement>('[data-unit="days"]');
+      const hoursEl = root.querySelector<HTMLElement>('[data-unit="hours"]');
+      const minutesEl = root.querySelector<HTMLElement>(
+        '[data-unit="minutes"]',
+      );
+      const secondsEl = root.querySelector<HTMLElement>(
+        '[data-unit="seconds"]',
+      );
+
+      function pad(value: number): string {
+        return String(value).padStart(2, '0');
+      }
+
+      // Returns true once the target has passed, so the caller knows when
+      // to stop ticking instead of the interval outliving its own timer.
+      function updateOrExpire(): boolean {
+        const remaining = target - Date.now();
+        if (remaining <= 0) {
+          if (timerEl) timerEl.hidden = true;
+          if (expiredEl) expiredEl.hidden = false;
+          return true;
+        }
+        const totalSeconds = Math.floor(remaining / 1000);
+        if (daysEl) daysEl.textContent = pad(Math.floor(totalSeconds / 86400));
+        if (hoursEl)
+          hoursEl.textContent = pad(Math.floor((totalSeconds % 86400) / 3600));
+        if (minutesEl)
+          minutesEl.textContent = pad(Math.floor((totalSeconds % 3600) / 60));
+        if (secondsEl) secondsEl.textContent = pad(totalSeconds % 60);
+        return false;
+      }
+
+      if (!updateOrExpire()) {
+        const intervalId = setInterval(() => {
+          if (updateOrExpire()) clearInterval(intervalId);
+        }, 1000);
+      }
+    });
+</script>
+
+<style>
+  .brisk-countdown__timer {
+    display: flex;
+    gap: 1rem;
+  }
+  .brisk-countdown__unit {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .brisk-countdown__value {
+    font-size: 1.5rem;
+    font-weight: 700;
+  }
+  .brisk-countdown__name {
+    font-size: 0.75rem;
+    color: #71717a;
+  }
+</style>

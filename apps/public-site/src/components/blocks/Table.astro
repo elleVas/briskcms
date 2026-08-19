@@ -1,0 +1,46 @@
+---
+import type { TableProps } from '@brisk/shared-types';
+
+type Props = TableProps;
+
+const { rows } = Astro.props;
+const [header, ...body] = rows;
+---
+
+{
+  header && (
+    <table class="brisk-table">
+      <thead>
+        <tr>
+          {header.map((cell) => <th>{cell}</th>)}
+        </tr>
+      </thead>
+      {body.length > 0 && (
+        <tbody>
+          {body.map((row) => (
+            <tr>
+              {row.map((cell) => <td>{cell}</td>)}
+            </tr>
+          ))}
+        </tbody>
+      )}
+    </table>
+  )
+}
+
+<style>
+  .brisk-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  .brisk-table th,
+  .brisk-table td {
+    border: 1px solid #e4e4e7;
+    padding: 0.5rem 0.75rem;
+    text-align: left;
+  }
+  .brisk-table th {
+    background: #f4f4f5;
+    font-weight: 600;
+  }
+</style>
