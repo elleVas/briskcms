@@ -12,10 +12,21 @@ describe('GET /sitemap.xml', () => {
   beforeEach(() => {
     vi.mocked(api.listPublishedPagesForSitemap).mockResolvedValue({
       items: [
-        { slug: 'home', updatedAt: '2026-01-01T00:00:00.000Z' },
-        { slug: 'chi-siamo', updatedAt: '2026-01-02T00:00:00.000Z' },
+        {
+          slug: 'home',
+          locale: 'it',
+          groupId: 'group-home',
+          updatedAt: '2026-01-01T00:00:00.000Z',
+        },
+        {
+          slug: 'chi-siamo',
+          locale: 'it',
+          groupId: 'group-about',
+          updatedAt: '2026-01-02T00:00:00.000Z',
+        },
       ],
       searchEngineIndexingEnabled: true,
+      defaultLocale: 'it',
     });
   });
 
@@ -23,24 +34,57 @@ describe('GET /sitemap.xml', () => {
     vi.clearAllMocks();
   });
 
-  it('maps the "home" slug to "/" instead of a literal /home entry', async () => {
+  it('maps the "home" slug to "/{locale}/" instead of a literal /home entry', async () => {
     const url = new URL('https://example.com/sitemap.xml');
     // @ts-expect-error -- only `url` is exercised by this handler
     const res = await GET({ url });
     const body = await res.text();
 
-    expect(body).toContain('<loc>https://example.com/</loc>');
+    expect(body).toContain('<loc>https://example.com/it/</loc>');
     expect(body).not.toContain('/home<');
   });
 
-  it('renders every other slug as its own path with a lastmod', async () => {
+  it('renders every other slug under its locale prefix with a lastmod', async () => {
     const url = new URL('https://example.com/sitemap.xml');
     // @ts-expect-error -- only `url` is exercised by this handler
     const res = await GET({ url });
     const body = await res.text();
 
-    expect(body).toContain('<loc>https://example.com/chi-siamo</loc>');
+    expect(body).toContain('<loc>https://example.com/it/chi-siamo</loc>');
     expect(body).toContain('<lastmod>2026-01-02T00:00:00.000Z</lastmod>');
+  });
+
+  it('lists every group sibling as a self-referential hreflang alternate', async () => {
+    vi.mocked(api.listPublishedPagesForSitemap).mockResolvedValue({
+      items: [
+        {
+          slug: 'chi-siamo',
+          locale: 'it',
+          groupId: 'group-about',
+          updatedAt: '2026-01-02T00:00:00.000Z',
+        },
+        {
+          slug: 'about-us',
+          locale: 'en',
+          groupId: 'group-about',
+          updatedAt: '2026-01-02T00:00:00.000Z',
+        },
+      ],
+      searchEngineIndexingEnabled: true,
+      defaultLocale: 'it',
+    });
+
+    const url = new URL('https://example.com/sitemap.xml');
+    // @ts-expect-error -- only `url` is exercised by this handler
+    const res = await GET({ url });
+    const body = await res.text();
+
+    expect(body).toContain(
+      '<xhtml:link rel="alternate" hreflang="it" href="https://example.com/it/chi-siamo" />',
+    );
+    expect(body).toContain(
+      '<xhtml:link rel="alternate" hreflang="en" href="https://example.com/en/about-us" />',
+    );
   });
 
   it('queries the API by the request hostname', async () => {
@@ -67,6 +111,7 @@ describe('GET /sitemap.xml', () => {
     vi.mocked(api.listPublishedPagesForSitemap).mockResolvedValue({
       items: [],
       searchEngineIndexingEnabled: true,
+      defaultLocale: 'it',
     });
 
     const url = new URL('https://example.com/sitemap.xml');

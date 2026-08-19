@@ -17,6 +17,7 @@ import type {
   OpeningHoursDay,
   PageContent,
   SeoMeta,
+  UntranslatedPageFallback,
 } from '@brisk/shared-types';
 import type {
   PageStatus,
@@ -54,30 +55,46 @@ export const users = pgTable(
   ],
 );
 
-export const sites = pgTable('sites', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  tenantId: uuid('tenant_id')
-    .notNull()
-    .references(() => tenants.id, { onDelete: 'cascade' }),
-  name: text('name').notNull(),
-  domain: text('domain'),
-  defaultLocale: text('default_locale').notNull(),
-  enabledLocales: text('enabled_locales').array().notNull().default([]),
-  // schema.org LocalBusiness fields (docs/adr/0014) — all nullable, a site
-  // with none of them set renders plain WebSite/WebPage instead.
-  businessAddress: text('business_address'),
-  businessPhone: text('business_phone'),
-  businessType: text('business_type'),
-  openingHours: jsonb('opening_hours').$type<OpeningHoursDay[]>(),
-  // Defaults to false (opt-in): a site mid-build shouldn't be indexed until
-  // its owner deliberately decides it's ready — see Site.searchEngineIndexingEnabled.
-  searchEngineIndexingEnabled: boolean('search_engine_indexing_enabled')
-    .notNull()
-    .default(false),
-  createdAt: timestamp('created_at', { withTimezone: true })
-    .notNull()
-    .defaultNow(),
-});
+export const sites = pgTable(
+  'sites',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    tenantId: uuid('tenant_id')
+      .notNull()
+      .references(() => tenants.id, { onDelete: 'cascade' }),
+    name: text('name').notNull(),
+    domain: text('domain'),
+    defaultLocale: text('default_locale').notNull(),
+    enabledLocales: text('enabled_locales').array().notNull().default([]),
+    // What a visitor sees for a page not translated into their locale
+    // (Fase 5b, docs/adr/0017) — 'redirect-to-default' is the friendlier
+    // default for a fresh site over silently 404ing.
+    untranslatedPageFallback: text('untranslated_page_fallback')
+      .notNull()
+      .default('redirect-to-default')
+      .$type<UntranslatedPageFallback>(),
+    // schema.org LocalBusiness fields (docs/adr/0014) — all nullable, a site
+    // with none of them set renders plain WebSite/WebPage instead.
+    businessAddress: text('business_address'),
+    businessPhone: text('business_phone'),
+    businessType: text('business_type'),
+    openingHours: jsonb('opening_hours').$type<OpeningHoursDay[]>(),
+    // Defaults to false (opt-in): a site mid-build shouldn't be indexed until
+    // its owner deliberately decides it's ready — see Site.searchEngineIndexingEnabled.
+    searchEngineIndexingEnabled: boolean('search_engine_indexing_enabled')
+      .notNull()
+      .default(false),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    check(
+      'sites_untranslated_page_fallback_check',
+      sql`${table.untranslatedPageFallback} in ('redirect-to-default', 'not-available')`,
+    ),
+  ],
+);
 
 export const pages = pgTable(
   'pages',

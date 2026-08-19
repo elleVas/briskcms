@@ -3,6 +3,7 @@ import {
   getPage,
   listPages,
   listPageVersions,
+  listTranslations,
 } from '../lib/pages-api-client.js';
 
 export const PAGES_PAGE_SIZE = 20;
@@ -25,5 +26,12 @@ export function pageVersionsQueryOptions(pageId: string) {
   return queryOptions({
     queryKey: ['pages', 'versions', pageId] as const,
     queryFn: () => listPageVersions(pageId),
+  });
+}
+
+export function pageTranslationsQueryOptions(pageId: string) {
+  return queryOptions({
+    queryKey: ['pages', 'translations', pageId] as const,
+    queryFn: () => listTranslations(pageId),
   });
 }

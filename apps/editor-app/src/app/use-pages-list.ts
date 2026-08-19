@@ -12,7 +12,7 @@ import {
 // routes/_shell.pages.index.tsx) so the auth guard (redirect to /login on a
 // 401) lives in one place — this hook only owns the actions available from
 // the pages list screen: create, delete, publish.
-export function usePagesList(siteId: string) {
+export function usePagesList(siteId: string, defaultLocale: string) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
@@ -28,12 +28,14 @@ export function usePagesList(siteId: string) {
   const createPageMutation = useMutation({
     // `name` is what the user typed in NewPageDialog; the slug is always
     // derived from it (see @brisk/shared-types#slugify), never chosen
-    // separately, so the URL and the display name can never disagree.
+    // separately, so the URL and the display name can never disagree. A
+    // brand-new page starts its own translation group of one (docs/adr/0017)
+    // — `createPageTranslation` is the only path that reuses a `groupId`.
     mutationFn: (name: string) =>
       apiCreatePage({
         siteId,
         groupId: crypto.randomUUID(),
-        locale: 'it',
+        locale: defaultLocale,
         slug: slugify(name),
         seoMeta: { title: name, description: '' },
       }),

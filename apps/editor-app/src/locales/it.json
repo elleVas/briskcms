@@ -116,6 +116,18 @@
       "cancel": "Annulla",
       "save": "Salva",
       "saving": "Salvataggio in corso..."
+    },
+    "translations": {
+      "open": "Traduzioni",
+      "title": "Traduzioni",
+      "current": "Questa pagina",
+      "edit": "Modifica",
+      "newLocaleLabel": "Crea traduzione",
+      "slugLabel": "URL",
+      "slugPreview": "URL: {{slug}}",
+      "create": "Crea traduzione",
+      "creating": "Creazione in corso...",
+      "conflict": "Esiste già una traduzione in questa lingua per questa pagina."
     }
   },
   "media": {
@@ -157,6 +169,22 @@
     "indexingLabel": "Consenti l'indicizzazione",
     "indexingDescription": "Se disattivato, il sito chiede ai motori di ricerca di non indicizzarlo (utile durante lo sviluppo, prima del lancio).",
     "indexingDisclaimer": "Nota: è una richiesta, non una garanzia — dipende dal rispetto di questa indicazione da parte dei motori di ricerca.",
+    "cancel": "Annulla",
+    "save": "Salva",
+    "saving": "Salvataggio in corso..."
+  },
+  "localeSettings": {
+    "menuLabel": "Lingue",
+    "title": "Lingue del sito",
+    "localesLabel": "Lingue attive",
+    "defaultBadge": "Predefinita",
+    "setDefault": "Imposta come predefinita",
+    "removeLocale": "Rimuovi lingua",
+    "newLocalePlaceholder": "es. en",
+    "addLocale": "Aggiungi",
+    "fallbackLabel": "Pagina non tradotta",
+    "fallbackRedirectDescription": "Reindirizza alla versione nella lingua predefinita.",
+    "fallbackNotAvailableDescription": "Mostra una pagina \"non disponibile in questa lingua\".",
     "cancel": "Annulla",
     "save": "Salva",
     "saving": "Salvataggio in corso..."

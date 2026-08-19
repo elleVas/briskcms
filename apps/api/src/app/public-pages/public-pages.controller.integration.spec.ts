@@ -50,6 +50,7 @@ describe('PublicPagesController (integration)', () => {
           name: 'Public Test Site',
           domain,
           defaultLocale: 'it',
+          enabledLocales: ['it'],
         })
         .returning({ id: sites.id }),
     );
@@ -91,16 +92,20 @@ describe('PublicPagesController (integration)', () => {
 
     const res = await request(app.getHttpServer())
       .get('/public/pages/by-slug')
-      .query({ domain, slug: 'chi-siamo' })
+      .query({ domain, locale: 'it', slug: 'chi-siamo' })
       .expect(200);
 
     expect(res.body).toEqual({
       content: [{ type: 'Hero', props: { title: 'Ciao' } }],
       seoMeta: { title: 'Chi siamo', description: 'La nostra storia' },
       locale: 'it',
+      translations: [{ locale: 'it', slug: 'chi-siamo' }],
       site: {
         name: 'Public Test Site',
         domain,
+        defaultLocale: 'it',
+        enabledLocales: ['it'],
+        untranslatedPageFallback: 'redirect-to-default',
         businessAddress: null,
         businessPhone: null,
         businessType: null,
@@ -124,28 +129,32 @@ describe('PublicPagesController (integration)', () => {
 
     await request(app.getHttpServer())
       .get('/public/pages/by-slug')
-      .query({ domain, slug: 'bozza-mai-pubblicata' })
+      .query({ domain, locale: 'it', slug: 'bozza-mai-pubblicata' })
       .expect(404);
   });
 
   it('404s for a slug that does not exist', async () => {
     await request(app.getHttpServer())
       .get('/public/pages/by-slug')
-      .query({ domain, slug: 'non-esiste-proprio' })
+      .query({ domain, locale: 'it', slug: 'non-esiste-proprio' })
       .expect(404);
   });
 
   it('404s for a domain that does not match any site', async () => {
     await request(app.getHttpServer())
       .get('/public/pages/by-slug')
-      .query({ domain: 'nobody-owns-this-domain.test', slug: 'chi-siamo' })
+      .query({
+        domain: 'nobody-owns-this-domain.test',
+        locale: 'it',
+        slug: 'chi-siamo',
+      })
       .expect(404);
   });
 
   it('400s on a malformed domain instead of hitting the database', async () => {
     await request(app.getHttpServer())
       .get('/public/pages/by-slug')
-      .query({ domain: 'not a valid host!!', slug: 'chi-siamo' })
+      .query({ domain: 'not a valid host!!', locale: 'it', slug: 'chi-siamo' })
       .expect(400);
   });
 
@@ -190,6 +199,10 @@ describe('PublicPagesController (integration)', () => {
       .query({ domain: 'nobody-owns-this-domain.test' })
       .expect(200);
 
-    expect(res.body).toEqual({ items: [], searchEngineIndexingEnabled: true });
+    expect(res.body).toEqual({
+      items: [],
+      searchEngineIndexingEnabled: true,
+      defaultLocale: 'it',
+    });
   });
 });

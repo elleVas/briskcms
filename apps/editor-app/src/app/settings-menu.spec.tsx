@@ -35,6 +35,7 @@ describe('SettingsMenu', () => {
       domain: null,
       defaultLocale: 'it',
       enabledLocales: ['it'],
+      untranslatedPageFallback: 'redirect-to-default',
       businessAddress: null,
       businessPhone: null,
       businessType: null,
@@ -80,6 +81,18 @@ describe('SettingsMenu', () => {
 
     expect(
       await screen.findByRole('heading', { name: /^seo sito$/i }),
+    ).toBeTruthy();
+  });
+
+  it('opens the locale settings dialog from the settings popover', async () => {
+    vi.mocked(api.getSite).mockResolvedValue(mockSite());
+
+    renderMenu();
+    fireEvent.click(screen.getByRole('button', { name: /^impostazioni$/i }));
+    fireEvent.click(screen.getByRole('button', { name: /lingue/i }));
+
+    expect(
+      await screen.findByRole('heading', { name: /lingue/i }),
     ).toBeTruthy();
   });
 });

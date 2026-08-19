@@ -1,4 +1,7 @@
-import type { OpeningHoursDay } from '@brisk/shared-types';
+import type {
+  OpeningHoursDay,
+  UntranslatedPageFallback,
+} from '@brisk/shared-types';
 
 export interface SiteProps {
   id: string;
@@ -7,6 +10,7 @@ export interface SiteProps {
   domain: string | null;
   defaultLocale: string;
   enabledLocales: string[];
+  untranslatedPageFallback: UntranslatedPageFallback;
   businessAddress: string | null;
   businessPhone: string | null;
   businessType: string | null;
@@ -29,6 +33,12 @@ export interface UpdateGeneralSettingsInput {
 
 export interface UpdateSeoSettingsInput {
   searchEngineIndexingEnabled: boolean;
+}
+
+export interface UpdateLocaleSettingsInput {
+  defaultLocale: string;
+  enabledLocales: string[];
+  untranslatedPageFallback: UntranslatedPageFallback;
 }
 
 export class Site {
@@ -64,6 +74,11 @@ export class Site {
 
   get enabledLocales(): string[] {
     return this.props.enabledLocales;
+  }
+
+  /** What a visitor sees for a page not translated into their locale (Fase 5b, docs/adr/0017). */
+  get untranslatedPageFallback(): UntranslatedPageFallback {
+    return this.props.untranslatedPageFallback;
   }
 
   get businessAddress(): string | null {
@@ -123,5 +138,11 @@ export class Site {
 
   updateSeoSettings(input: UpdateSeoSettingsInput): void {
     this.props.searchEngineIndexingEnabled = input.searchEngineIndexingEnabled;
+  }
+
+  updateLocaleSettings(input: UpdateLocaleSettingsInput): void {
+    this.props.defaultLocale = input.defaultLocale;
+    this.props.enabledLocales = input.enabledLocales;
+    this.props.untranslatedPageFallback = input.untranslatedPageFallback;
   }
 }

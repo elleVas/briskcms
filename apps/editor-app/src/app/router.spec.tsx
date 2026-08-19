@@ -1,5 +1,5 @@
 import { fireEvent, render, screen } from '@testing-library/react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { QueryClientProvider } from '@tanstack/react-query';
 import {
   createMemoryHistory,
@@ -10,8 +10,10 @@ import { TooltipProvider } from '../components/ui/tooltip.js';
 import * as authApi from '../lib/auth-api-client.js';
 import * as mediaApi from '../lib/media-api-client.js';
 import * as api from '../lib/pages-api-client.js';
+import * as sitesApi from '../lib/sites-api-client.js';
 import { ApiError } from '../lib/http-client.js';
 import type { PageDto } from '../lib/pages-api-client.js';
+import type { SiteDto } from '../lib/sites-api-client.js';
 import { routeTree } from '../routeTree.gen.js';
 import { createTestQueryClient } from '../test-query-client.js';
 
@@ -37,6 +39,28 @@ vi.mock('../lib/media-api-client.js', async (importOriginal) => {
     await importOriginal<typeof import('../lib/media-api-client.js')>();
   return { ...actual, listMedia: vi.fn() };
 });
+
+vi.mock('../lib/sites-api-client.js', async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import('../lib/sites-api-client.js')>();
+  return { ...actual, getSite: vi.fn() };
+});
+
+const sampleSite: SiteDto = {
+  id: 'site-1',
+  tenantId: 'tenant-1',
+  name: 'Il mio sito',
+  domain: null,
+  defaultLocale: 'it',
+  enabledLocales: ['it'],
+  untranslatedPageFallback: 'redirect-to-default',
+  businessAddress: null,
+  businessPhone: null,
+  businessType: null,
+  openingHours: null,
+  searchEngineIndexingEnabled: false,
+  createdAt: '',
+};
 
 const samplePage: PageDto = {
   id: 'page-1',
@@ -70,6 +94,10 @@ function renderApp(initialPath: string) {
 }
 
 describe('router', () => {
+  beforeEach(() => {
+    vi.mocked(sitesApi.getSite).mockResolvedValue(sampleSite);
+  });
+
   afterEach(() => {
     vi.clearAllMocks();
   });

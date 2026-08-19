@@ -3,12 +3,16 @@ import type {
   FormField,
   OpeningHoursDay,
   SeoMeta,
+  UntranslatedPageFallback,
 } from '@brisk/shared-types';
 
-/** Only what OG tags + schema.org rendering needs (docs/adr/0014), mirrors PublishedSite in the API. */
+/** Only what OG tags + schema.org rendering, and the language switcher (docs/adr/0017), need — mirrors PublishedSite in the API. */
 export interface PublishedSiteDto {
   name: string;
   domain: string | null;
+  defaultLocale: string;
+  enabledLocales: string[];
+  untranslatedPageFallback: UntranslatedPageFallback;
   businessAddress: string | null;
   businessPhone: string | null;
   businessType: string | null;
@@ -16,10 +20,17 @@ export interface PublishedSiteDto {
   searchEngineIndexingEnabled: boolean;
 }
 
+/** One entry per published locale-translation of this page (docs/adr/0017), including itself. */
+export interface PublishedPageTranslationDto {
+  locale: string;
+  slug: string;
+}
+
 export interface PublishedPageDto {
   content: Block[];
   seoMeta: SeoMeta;
   locale: string;
+  translations: PublishedPageTranslationDto[];
   site: PublishedSiteDto;
 }
 
@@ -39,9 +50,10 @@ function apiUrl(): string {
  */
 export async function getPublishedPageBySlug(
   domain: string,
+  locale: string,
   slug: string,
 ): Promise<PublishedPageDto | null> {
-  const params = new URLSearchParams({ domain, slug });
+  const params = new URLSearchParams({ domain, locale, slug });
   const res = await fetch(
     `${apiUrl()}/public/pages/by-slug?${params.toString()}`,
   );
@@ -57,6 +69,10 @@ export async function getPublishedPageBySlug(
 
 export interface SitemapEntryDto {
   slug: string;
+  locale: string;
+  // Links locale-siblings together (docs/adr/0017) so sitemap.xml can group
+  // entries into hreflang alternates instead of one flat <loc> per page.
+  groupId: string;
   updatedAt: string;
 }
 
@@ -69,6 +85,9 @@ export interface SitemapListingDto {
   // 404s, see the API's own comment) with an empty, indexing-allowed
   // response, not an error.
   searchEngineIndexingEnabled: boolean;
+  // The bare "/" route (docs/adr/0017) needs this to redirect to the
+  // site's locale-prefixed home before it knows any slug at all.
+  defaultLocale: string;
 }
 
 export async function listPublishedPagesForSitemap(

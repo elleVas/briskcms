@@ -116,6 +116,18 @@
       "cancel": "Cancel",
       "save": "Save",
       "saving": "Saving..."
+    },
+    "translations": {
+      "open": "Translations",
+      "title": "Translations",
+      "current": "This page",
+      "edit": "Edit",
+      "newLocaleLabel": "Create translation",
+      "slugLabel": "URL",
+      "slugPreview": "URL: {{slug}}",
+      "create": "Create translation",
+      "creating": "Creating...",
+      "conflict": "A translation in this language already exists for this page."
     }
   },
   "media": {
@@ -157,6 +169,22 @@
     "indexingLabel": "Allow search engine indexing",
     "indexingDescription": "When off, the site asks search engines not to index it (useful during development, before launch).",
     "indexingDisclaimer": "Note: this is a request, not a guarantee — it depends on search engines respecting it.",
+    "cancel": "Cancel",
+    "save": "Save",
+    "saving": "Saving..."
+  },
+  "localeSettings": {
+    "menuLabel": "Languages",
+    "title": "Site languages",
+    "localesLabel": "Active languages",
+    "defaultBadge": "Default",
+    "setDefault": "Set as default",
+    "removeLocale": "Remove language",
+    "newLocalePlaceholder": "e.g. en",
+    "addLocale": "Add",
+    "fallbackLabel": "Untranslated page",
+    "fallbackRedirectDescription": "Redirect to the default language's version.",
+    "fallbackNotAvailableDescription": "Show a \"not available in this language\" page.",
     "cancel": "Cancel",
     "save": "Save",
     "saving": "Saving..."

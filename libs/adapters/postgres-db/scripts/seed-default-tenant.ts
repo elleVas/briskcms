@@ -32,6 +32,11 @@ async function main() {
         // the box. Real deployments update this to their actual domain.
         domain: 'localhost',
         defaultLocale: 'it',
+        // Must include defaultLocale (see @brisk/shared-types'
+        // localeSettingsSchema) — a freshly seeded site starts with just
+        // its one default locale enabled, same as the DB column default
+        // would otherwise leave it inconsistent (`[]`).
+        enabledLocales: ['it'],
       })
       .onConflictDoNothing(),
   );

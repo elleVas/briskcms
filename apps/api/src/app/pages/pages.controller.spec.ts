@@ -32,6 +32,7 @@ describe('PagesController (unit)', () => {
       findById: jest.fn(),
       findBySlug: jest.fn(),
       listBySite: jest.fn(),
+      listByGroup: jest.fn(),
       delete: jest.fn(),
     };
     pageVersionRepository = {
@@ -102,6 +103,15 @@ describe('PagesController (unit)', () => {
         slug: 'home',
         seoMeta: { title: 'Home again', description: '...' },
       }),
+    ).rejects.toThrow(ConflictException);
+  });
+
+  it('createTranslation maps a PageTranslationAlreadyExistsError to a ConflictException', async () => {
+    pageRepository.findById.mockResolvedValue(buildPage());
+    pageRepository.listByGroup.mockResolvedValue([buildPage()]);
+
+    await expect(
+      controller.createTranslation('page-1', { locale: 'it', slug: 'home-en' }),
     ).rejects.toThrow(ConflictException);
   });
 });

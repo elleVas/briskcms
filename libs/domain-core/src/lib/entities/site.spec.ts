@@ -9,6 +9,7 @@ describe('Site entity', () => {
     domain: 'example.com',
     defaultLocale: 'it',
     enabledLocales: ['it', 'en'],
+    untranslatedPageFallback: 'redirect-to-default' as const,
     businessAddress: null,
     businessPhone: null,
     businessType: null,
@@ -26,6 +27,7 @@ describe('Site entity', () => {
     expect(site.domain).toBe('example.com');
     expect(site.defaultLocale).toBe('it');
     expect(site.enabledLocales).toEqual(['it', 'en']);
+    expect(site.untranslatedPageFallback).toBe('redirect-to-default');
     expect(site.businessAddress).toBeNull();
     expect(site.businessPhone).toBeNull();
     expect(site.businessType).toBeNull();
@@ -101,5 +103,19 @@ describe('Site entity', () => {
     site.updateSeoSettings({ searchEngineIndexingEnabled: true });
 
     expect(site.searchEngineIndexingEnabled).toBe(true);
+  });
+
+  it('updateLocaleSettings replaces default/enabled locales and the fallback', () => {
+    const site = Site.fromProps(props);
+
+    site.updateLocaleSettings({
+      defaultLocale: 'en',
+      enabledLocales: ['it', 'en', 'fr'],
+      untranslatedPageFallback: 'not-available',
+    });
+
+    expect(site.defaultLocale).toBe('en');
+    expect(site.enabledLocales).toEqual(['it', 'en', 'fr']);
+    expect(site.untranslatedPageFallback).toBe('not-available');
   });
 });

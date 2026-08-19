@@ -17,6 +17,9 @@ export const domainSchema = z
 
 export const publicPageBySlugQuerySchema = z.object({
   domain: domainSchema,
+  // Caller-supplied (from the URL's locale prefix, docs/adr/0017) rather
+  // than always resolved to the site's own defaultLocale.
+  locale: z.string().min(2),
   slug: pageSlugSchema,
 });
 export type PublicPageBySlugQuery = z.infer<typeof publicPageBySlugQuerySchema>;

@@ -30,7 +30,8 @@ describe('getPublishedPageBySlug', () => {
       name: 'Sito di prova',
       domain: 'example.com',
       defaultLocale: 'it',
-      enabledLocales: ['it'],
+      enabledLocales: ['it', 'en'],
+      untranslatedPageFallback: 'redirect-to-default',
       businessAddress: null,
       businessPhone: null,
       businessType: null,
@@ -43,40 +44,61 @@ describe('getPublishedPageBySlug', () => {
     return site;
   }
 
-  it('returns the published content for a published page on the matching domain', async () => {
-    const deps = setup();
-    await seedSite(deps.siteRepository);
-
+  async function createAndPublish(
+    deps: ReturnType<typeof setup>,
+    input: { groupId: string; locale: string; slug: string; title: string },
+  ) {
     const page = await createPage(deps, {
       tenantId,
       siteId: 'site-1',
-      groupId: 'group-1',
-      locale: 'it',
-      slug: 'chi-siamo',
-      seoMeta: { title: 'Chi siamo', description: 'La nostra storia' },
+      groupId: input.groupId,
+      locale: input.locale,
+      slug: input.slug,
+      seoMeta: { title: input.title, description: '' },
       createdBy: 'user-1',
     });
     await saveDraft(deps, {
       tenantId,
       pageId: page.id,
-      content: [{ type: 'Hero', props: { title: 'v1', subtitle: 'sub' } }],
+      content: [
+        { type: 'Hero', props: { title: input.title, subtitle: 'sub' } },
+      ],
       actorUserId: 'user-1',
     });
     await publishPage(deps, { tenantId, pageId: page.id });
+    return page;
+  }
+
+  it('returns the published content for a published page on the matching domain and locale', async () => {
+    const deps = setup();
+    await seedSite(deps.siteRepository);
+    await createAndPublish(deps, {
+      groupId: 'group-1',
+      locale: 'it',
+      slug: 'chi-siamo',
+      title: 'Chi siamo',
+    });
 
     const result = await getPublishedPageBySlug(deps, {
       tenantId,
       domain: 'example.com',
+      locale: 'it',
       slug: 'chi-siamo',
     });
 
     expect(result).toEqual({
-      content: [{ type: 'Hero', props: { title: 'v1', subtitle: 'sub' } }],
-      seoMeta: { title: 'Chi siamo', description: 'La nostra storia' },
+      content: [
+        { type: 'Hero', props: { title: 'Chi siamo', subtitle: 'sub' } },
+      ],
+      seoMeta: { title: 'Chi siamo', description: '' },
       locale: 'it',
+      translations: [{ locale: 'it', slug: 'chi-siamo' }],
       site: {
         name: 'Sito di prova',
         domain: 'example.com',
+        defaultLocale: 'it',
+        enabledLocales: ['it', 'en'],
+        untranslatedPageFallback: 'redirect-to-default',
         businessAddress: null,
         businessPhone: null,
         businessType: null,
@@ -84,6 +106,67 @@ describe('getPublishedPageBySlug', () => {
         searchEngineIndexingEnabled: false,
       },
     });
+  });
+
+  it('lists every published locale-translation of the page, keyed by group', async () => {
+    const deps = setup();
+    await seedSite(deps.siteRepository);
+    await createAndPublish(deps, {
+      groupId: 'group-1',
+      locale: 'it',
+      slug: 'chi-siamo',
+      title: 'Chi siamo',
+    });
+    await createAndPublish(deps, {
+      groupId: 'group-1',
+      locale: 'en',
+      slug: 'about-us',
+      title: 'About us',
+    });
+
+    const result = await getPublishedPageBySlug(deps, {
+      tenantId,
+      domain: 'example.com',
+      locale: 'it',
+      slug: 'chi-siamo',
+    });
+
+    expect(
+      result?.translations.sort((a, b) => a.locale.localeCompare(b.locale)),
+    ).toEqual([
+      { locale: 'en', slug: 'about-us' },
+      { locale: 'it', slug: 'chi-siamo' },
+    ]);
+  });
+
+  it('never lists an unpublished draft translation in the same group', async () => {
+    const deps = setup();
+    await seedSite(deps.siteRepository);
+    await createAndPublish(deps, {
+      groupId: 'group-1',
+      locale: 'it',
+      slug: 'chi-siamo',
+      title: 'Chi siamo',
+    });
+    // Draft-only English translation — never published.
+    await createPage(deps, {
+      tenantId,
+      siteId: 'site-1',
+      groupId: 'group-1',
+      locale: 'en',
+      slug: 'about-us',
+      seoMeta: { title: 'About us', description: '' },
+      createdBy: 'user-1',
+    });
+
+    const result = await getPublishedPageBySlug(deps, {
+      tenantId,
+      domain: 'example.com',
+      locale: 'it',
+      slug: 'chi-siamo',
+    });
+
+    expect(result?.translations).toEqual([{ locale: 'it', slug: 'chi-siamo' }]);
   });
 
   it("includes the site's business info when set, for schema.org LocalBusiness", async () => {
@@ -96,65 +179,44 @@ describe('getPublishedPageBySlug', () => {
         { dayOfWeek: 'monday', ranges: [{ opens: '09:00', closes: '18:00' }] },
       ],
     });
-    const page = await createPage(deps, {
-      tenantId,
-      siteId: 'site-1',
+    await createAndPublish(deps, {
       groupId: 'group-1',
       locale: 'it',
       slug: 'chi-siamo',
-      seoMeta: { title: 'Chi siamo', description: '' },
-      createdBy: 'user-1',
+      title: 'Chi siamo',
     });
-    await saveDraft(deps, {
-      tenantId,
-      pageId: page.id,
-      content: [],
-      actorUserId: 'user-1',
-    });
-    await publishPage(deps, { tenantId, pageId: page.id });
 
     const result = await getPublishedPageBySlug(deps, {
       tenantId,
       domain: 'example.com',
+      locale: 'it',
       slug: 'chi-siamo',
     });
 
-    expect(result?.site).toEqual({
-      name: 'Sito di prova',
-      domain: 'example.com',
+    expect(result?.site).toMatchObject({
       businessAddress: 'Via Roma 1, Milano',
       businessPhone: '+39 02 1234567',
       businessType: 'ProfessionalService',
       openingHours: [
         { dayOfWeek: 'monday', ranges: [{ opens: '09:00', closes: '18:00' }] },
       ],
-      searchEngineIndexingEnabled: false,
     });
   });
 
   it("propagates the site's search engine indexing flag", async () => {
     const deps = setup();
     await seedSite(deps.siteRepository, { searchEngineIndexingEnabled: true });
-    const page = await createPage(deps, {
-      tenantId,
-      siteId: 'site-1',
+    await createAndPublish(deps, {
       groupId: 'group-1',
       locale: 'it',
       slug: 'chi-siamo',
-      seoMeta: { title: 'Chi siamo', description: '' },
-      createdBy: 'user-1',
+      title: 'Chi siamo',
     });
-    await saveDraft(deps, {
-      tenantId,
-      pageId: page.id,
-      content: [],
-      actorUserId: 'user-1',
-    });
-    await publishPage(deps, { tenantId, pageId: page.id });
 
     const result = await getPublishedPageBySlug(deps, {
       tenantId,
       domain: 'example.com',
+      locale: 'it',
       slug: 'chi-siamo',
     });
 
@@ -193,6 +255,7 @@ describe('getPublishedPageBySlug', () => {
     const result = await getPublishedPageBySlug(deps, {
       tenantId,
       domain: 'example.com',
+      locale: 'it',
       slug: 'chi-siamo',
     });
 
@@ -217,6 +280,7 @@ describe('getPublishedPageBySlug', () => {
     const result = await getPublishedPageBySlug(deps, {
       tenantId,
       domain: 'example.com',
+      locale: 'it',
       slug: 'bozza',
     });
 
@@ -230,6 +294,7 @@ describe('getPublishedPageBySlug', () => {
     const result = await getPublishedPageBySlug(deps, {
       tenantId,
       domain: 'nobody-has-this.test',
+      locale: 'it',
       slug: 'chi-siamo',
     });
 
@@ -243,7 +308,31 @@ describe('getPublishedPageBySlug', () => {
     const result = await getPublishedPageBySlug(deps, {
       tenantId,
       domain: 'example.com',
+      locale: 'it',
       slug: 'non-esiste',
+    });
+
+    expect(result).toBeNull();
+  });
+
+  it('returns null for a locale that has no page at this slug, even if another locale does', async () => {
+    const deps = setup();
+    await seedSite(deps.siteRepository);
+    await createAndPublish(deps, {
+      groupId: 'group-1',
+      locale: 'it',
+      slug: 'chi-siamo',
+      title: 'Chi siamo',
+    });
+
+    // No 'en' translation exists at all — requesting it directly 404s,
+    // it does not fall back to the 'it' page (see the use case's own
+    // comment on why: there is no groupId to search from on a miss).
+    const result = await getPublishedPageBySlug(deps, {
+      tenantId,
+      domain: 'example.com',
+      locale: 'en',
+      slug: 'chi-siamo',
     });
 
     expect(result).toBeNull();

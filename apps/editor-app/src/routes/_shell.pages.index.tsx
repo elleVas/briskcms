@@ -3,6 +3,7 @@ import { useSuspenseQuery } from '@tanstack/react-query';
 import { z } from 'zod';
 import { pagesQueryOptions } from '../app/pages-queries.js';
 import { PagesListView } from '../app/pages-list-view.js';
+import { siteQueryOptions } from '../app/site-queries.js';
 import { requireAuth } from './-require-auth.js';
 
 const DEFAULT_SITE_ID = import.meta.env['VITE_DEFAULT_SITE_ID'] as string;
@@ -21,9 +22,12 @@ export const Route = createFileRoute('/_shell/pages/')({
   loaderDeps: ({ search }) => ({ page: search.page }),
   loader: ({ context, deps }) =>
     requireAuth(() =>
-      context.queryClient.ensureQueryData(
-        pagesQueryOptions(DEFAULT_SITE_ID, deps.page),
-      ),
+      Promise.all([
+        context.queryClient.ensureQueryData(
+          pagesQueryOptions(DEFAULT_SITE_ID, deps.page),
+        ),
+        context.queryClient.ensureQueryData(siteQueryOptions(DEFAULT_SITE_ID)),
+      ]),
     ),
   component: PagesListRoute,
 });
@@ -31,10 +35,12 @@ export const Route = createFileRoute('/_shell/pages/')({
 function PagesListRoute() {
   const { page } = Route.useSearch();
   const { data } = useSuspenseQuery(pagesQueryOptions(DEFAULT_SITE_ID, page));
+  const { data: site } = useSuspenseQuery(siteQueryOptions(DEFAULT_SITE_ID));
 
   return (
     <PagesListView
       siteId={DEFAULT_SITE_ID}
+      defaultLocale={site.defaultLocale}
       pages={data.items}
       page={page}
       total={data.total}

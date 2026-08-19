@@ -20,6 +20,14 @@ export class PageSlugAlreadyExistsError extends Error {
   }
 }
 
+/** A page group (Fase 5b) can only have one page per locale — see the (tenant, site, group, locale) unique constraint in schema.ts. */
+export class PageTranslationAlreadyExistsError extends Error {
+  constructor(locale: string) {
+    super(`This page already has a translation in "${locale}"`);
+    this.name = 'PageTranslationAlreadyExistsError';
+  }
+}
+
 /**
  * Deliberately generic: never reveals whether the email exists or the
  * password was wrong (prevents user enumeration via the login endpoint).

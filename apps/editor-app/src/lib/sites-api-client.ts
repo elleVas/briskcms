@@ -1,4 +1,4 @@
-import type { OpeningHoursDay } from '@brisk/shared-types';
+import type { LocaleSettings, OpeningHoursDay } from '@brisk/shared-types';
 import { request } from './http-client.js';
 
 export interface SiteDto {
@@ -8,6 +8,7 @@ export interface SiteDto {
   domain: string | null;
   defaultLocale: string;
   enabledLocales: string[];
+  untranslatedPageFallback: LocaleSettings['untranslatedPageFallback'];
   businessAddress: string | null;
   businessPhone: string | null;
   businessType: string | null;
@@ -61,6 +62,16 @@ export function updateSeoSettings(
   input: UpdateSeoSettingsInput,
 ): Promise<SiteDto> {
   return request(`/sites/${id}/seo-settings`, {
+    method: 'PATCH',
+    body: JSON.stringify(input),
+  });
+}
+
+export function updateLocaleSettings(
+  id: string,
+  input: LocaleSettings,
+): Promise<SiteDto> {
+  return request(`/sites/${id}/locale-settings`, {
     method: 'PATCH',
     body: JSON.stringify(input),
   });
