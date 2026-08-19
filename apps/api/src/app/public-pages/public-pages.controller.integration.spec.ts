@@ -8,6 +8,7 @@ import { type BriskDb, sites, users, withTenant } from '@brisk/postgres-db';
 import { AUTH_PORT } from '../auth/auth.tokens.js';
 import { DATABASE } from '../database.module.js';
 import { PagesModule } from '../pages/pages.module.js';
+import { SiteLayoutSectionsModule } from '../site-layout-sections/site-layout-sections.module.js';
 import { PublicPagesModule } from './public-pages.module.js';
 
 /**
@@ -31,7 +32,7 @@ describe('PublicPagesController (integration)', () => {
 
   beforeAll(async () => {
     const moduleRef = await Test.createTestingModule({
-      imports: [PagesModule, PublicPagesModule],
+      imports: [PagesModule, SiteLayoutSectionsModule, PublicPagesModule],
     }).compile();
 
     app = moduleRef.createNestApplication();
@@ -100,6 +101,8 @@ describe('PublicPagesController (integration)', () => {
       seoMeta: { title: 'Chi siamo', description: 'La nostra storia' },
       locale: 'it',
       translations: [{ locale: 'it', slug: 'chi-siamo' }],
+      header: null,
+      footer: null,
       site: {
         name: 'Public Test Site',
         domain,
@@ -113,6 +116,40 @@ describe('PublicPagesController (integration)', () => {
         searchEngineIndexingEnabled: false,
       },
     });
+  });
+
+  it("bundles the published header/footer for the page's (site, locale), without a session", async () => {
+    const createRes = await agent
+      .post('/pages')
+      .send({
+        siteId,
+        groupId: randomUUID(),
+        locale: 'it',
+        slug: 'con-header',
+        seoMeta: { title: 'Con header', description: '' },
+      })
+      .expect(201);
+    await agent.post(`/pages/${createRes.body.id}/publish`).expect(201);
+
+    const headerRes = await agent
+      .get('/site-layout-sections')
+      .query({ siteId, locale: 'it', kind: 'header' })
+      .expect(200);
+    await agent
+      .patch(`/site-layout-sections/${headerRes.body.id}/draft`)
+      .send({ content: [{ type: 'Header', props: {} }] })
+      .expect(200);
+    await agent
+      .post(`/site-layout-sections/${headerRes.body.id}/publish`)
+      .expect(201);
+
+    const res = await request(app.getHttpServer())
+      .get('/public/pages/by-slug')
+      .query({ domain, locale: 'it', slug: 'con-header' })
+      .expect(200);
+
+    expect(res.body.header).toEqual([{ type: 'Header', props: {} }]);
+    expect(res.body.footer).toBeNull();
   });
 
   it('404s for a page that has never been published, same as a nonexistent one', async () => {

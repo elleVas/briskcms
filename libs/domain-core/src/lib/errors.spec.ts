@@ -7,6 +7,8 @@ import {
   PageNotFoundError,
   PageTranslationAlreadyExistsError,
   PageVersionNotFoundError,
+  SiteLayoutSectionNotFoundError,
+  SiteLayoutSectionVersionNotFoundError,
   SiteNotFoundError,
 } from './errors.js';
 
@@ -89,5 +91,27 @@ describe('PageTranslationAlreadyExistsError', () => {
     expect(error).toBeInstanceOf(Error);
     expect(error.name).toBe('PageTranslationAlreadyExistsError');
     expect(error.message).toBe('This page already has a translation in "en"');
+  });
+});
+
+describe('SiteLayoutSectionNotFoundError', () => {
+  it('carries the missing section id in its message and is a real Error', () => {
+    const error = new SiteLayoutSectionNotFoundError('section-1');
+
+    expect(error).toBeInstanceOf(Error);
+    expect(error.name).toBe('SiteLayoutSectionNotFoundError');
+    expect(error.message).toBe('Site layout section not found: section-1');
+  });
+});
+
+describe('SiteLayoutSectionVersionNotFoundError', () => {
+  it('carries the missing version id in its message and is a real Error', () => {
+    const error = new SiteLayoutSectionVersionNotFoundError('version-1');
+
+    expect(error).toBeInstanceOf(Error);
+    expect(error.name).toBe('SiteLayoutSectionVersionNotFoundError');
+    expect(error.message).toBe(
+      'Site layout section version not found: version-1',
+    );
   });
 });

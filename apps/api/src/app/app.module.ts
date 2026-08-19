@@ -7,6 +7,7 @@ import { MediaModule } from './media/media.module.js';
 import { PagesModule } from './pages/pages.module.js';
 import { PublicFormsModule } from './public-forms/public-forms.module.js';
 import { PublicPagesModule } from './public-pages/public-pages.module.js';
+import { SiteLayoutSectionsModule } from './site-layout-sections/site-layout-sections.module.js';
 import { SitesModule } from './sites/sites.module.js';
 
 @Module({
@@ -18,6 +19,7 @@ import { SitesModule } from './sites/sites.module.js';
     SitesModule,
     FormsModule,
     PublicFormsModule,
+    SiteLayoutSectionsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

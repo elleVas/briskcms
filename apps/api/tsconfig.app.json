@@ -23,9 +23,6 @@
   ],
   "references": [
     {
-      "path": "../../libs/adapters/postgres-form-repository/tsconfig.lib.json"
-    },
-    {
       "path": "../../libs/adapters/verification-token-adapter/tsconfig.lib.json"
     },
     {
@@ -44,10 +41,16 @@
       "path": "../../libs/adapters/postgres-site-repository/tsconfig.lib.json"
     },
     {
+      "path": "../../libs/adapters/postgres-site-layout-section-repository/tsconfig.lib.json"
+    },
+    {
       "path": "../../libs/adapters/postgres-page-repository/tsconfig.lib.json"
     },
     {
       "path": "../../libs/adapters/postgres-media-repository/tsconfig.lib.json"
+    },
+    {
+      "path": "../../libs/adapters/postgres-form-repository/tsconfig.lib.json"
     },
     {
       "path": "../../libs/adapters/postgres-db/tsconfig.lib.json"

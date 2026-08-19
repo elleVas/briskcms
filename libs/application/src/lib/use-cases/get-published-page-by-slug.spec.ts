@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { Site } from '@brisk/domain-core';
+import { Site, SiteLayoutSection } from '@brisk/domain-core';
 import { createPage } from './create-page.use-case.js';
 import { publishPage } from './publish-page.use-case.js';
 import { saveDraft } from './save-draft.use-case.js';
@@ -7,6 +7,7 @@ import { getPublishedPageBySlug } from './get-published-page-by-slug.use-case.js
 import {
   InMemoryPageRepository,
   InMemoryPageVersionRepository,
+  InMemorySiteLayoutSectionRepository,
   InMemorySiteRepository,
 } from './in-memory-repositories.test-fixture.js';
 
@@ -17,7 +18,14 @@ describe('getPublishedPageBySlug', () => {
     const pageRepository = new InMemoryPageRepository();
     const pageVersionRepository = new InMemoryPageVersionRepository();
     const siteRepository = new InMemorySiteRepository();
-    return { pageRepository, pageVersionRepository, siteRepository };
+    const siteLayoutSectionRepository =
+      new InMemorySiteLayoutSectionRepository();
+    return {
+      pageRepository,
+      pageVersionRepository,
+      siteRepository,
+      siteLayoutSectionRepository,
+    };
   }
 
   async function seedSite(
@@ -93,6 +101,8 @@ describe('getPublishedPageBySlug', () => {
       seoMeta: { title: 'Chi siamo', description: '' },
       locale: 'it',
       translations: [{ locale: 'it', slug: 'chi-siamo' }],
+      header: null,
+      footer: null,
       site: {
         name: 'Sito di prova',
         domain: 'example.com',
@@ -336,5 +346,97 @@ describe('getPublishedPageBySlug', () => {
     });
 
     expect(result).toBeNull();
+  });
+
+  it('bundles the published header/footer for the same (site, locale)', async () => {
+    const deps = setup();
+    await seedSite(deps.siteRepository);
+    await createAndPublish(deps, {
+      groupId: 'group-1',
+      locale: 'it',
+      slug: 'chi-siamo',
+      title: 'Chi siamo',
+    });
+    const header = SiteLayoutSection.create({
+      id: 'header-1',
+      tenantId,
+      siteId: 'site-1',
+      locale: 'it',
+      kind: 'header',
+    });
+    header.saveDraft([{ type: 'Header', props: {} }]);
+    header.publish();
+    await deps.siteLayoutSectionRepository.save(header);
+    const footer = SiteLayoutSection.create({
+      id: 'footer-1',
+      tenantId,
+      siteId: 'site-1',
+      locale: 'it',
+      kind: 'footer',
+    });
+    footer.saveDraft([{ type: 'Footer', props: {} }]);
+    footer.publish();
+    await deps.siteLayoutSectionRepository.save(footer);
+
+    const result = await getPublishedPageBySlug(deps, {
+      tenantId,
+      domain: 'example.com',
+      locale: 'it',
+      slug: 'chi-siamo',
+    });
+
+    expect(result?.header).toEqual([{ type: 'Header', props: {} }]);
+    expect(result?.footer).toEqual([{ type: 'Footer', props: {} }]);
+  });
+
+  it('never leaks an unpublished header draft to the public site', async () => {
+    const deps = setup();
+    await seedSite(deps.siteRepository);
+    await createAndPublish(deps, {
+      groupId: 'group-1',
+      locale: 'it',
+      slug: 'chi-siamo',
+      title: 'Chi siamo',
+    });
+    const header = SiteLayoutSection.create({
+      id: 'header-1',
+      tenantId,
+      siteId: 'site-1',
+      locale: 'it',
+      kind: 'header',
+    });
+    header.saveDraft([{ type: 'Header', props: {} }]);
+    // Never published.
+    await deps.siteLayoutSectionRepository.save(header);
+
+    const result = await getPublishedPageBySlug(deps, {
+      tenantId,
+      domain: 'example.com',
+      locale: 'it',
+      slug: 'chi-siamo',
+    });
+
+    expect(result?.header).toBeNull();
+  });
+
+  it('returns null header/footer when none has ever been configured for this locale', async () => {
+    const deps = setup();
+    await seedSite(deps.siteRepository);
+    await createAndPublish(deps, {
+      groupId: 'group-1',
+      locale: 'it',
+      slug: 'chi-siamo',
+      title: 'Chi siamo',
+    });
+
+    const result = await getPublishedPageBySlug(deps, {
+      tenantId,
+      domain: 'example.com',
+      locale: 'it',
+      slug: 'chi-siamo',
+    });
+
+    expect(result?.header).toBeNull();
+    expect(result?.footer).toBeNull();
   });
 });

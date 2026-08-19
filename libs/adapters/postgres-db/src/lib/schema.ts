@@ -21,6 +21,8 @@ import type {
 } from '@brisk/shared-types';
 import type {
   PageStatus,
+  SiteLayoutSectionKind,
+  SiteLayoutSectionStatus,
   StorageProvider,
   UserRole,
   VerificationTokenPurpose,
@@ -152,6 +154,74 @@ export const pageVersions = pgTable(
     // every save creates a row here, never a destructive overwrite
   },
   (table) => [index('page_versions_page_idx').on(table.pageId)],
+);
+
+// One header and one footer per (site, locale) at most (docs/adr/0018) —
+// applied automatically around every page of that locale, never placed
+// by hand on individual pages like Hero/Text/Image.
+export const siteLayoutSections = pgTable(
+  'site_layout_sections',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    tenantId: uuid('tenant_id')
+      .notNull()
+      .references(() => tenants.id, { onDelete: 'cascade' }),
+    siteId: uuid('site_id')
+      .notNull()
+      .references(() => sites.id, { onDelete: 'cascade' }),
+    locale: text('locale').notNull(),
+    kind: text('kind').notNull().$type<SiteLayoutSectionKind>(),
+    status: text('status').notNull().$type<SiteLayoutSectionStatus>(),
+    content: jsonb('content').notNull().default([]).$type<PageContent>(),
+    publishedContent: jsonb('published_content').$type<PageContent>(),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    unique().on(table.tenantId, table.siteId, table.locale, table.kind),
+    check(
+      'site_layout_sections_kind_check',
+      sql`${table.kind} in ('header', 'footer')`,
+    ),
+    check(
+      'site_layout_sections_status_check',
+      sql`${table.status} in ('draft', 'published')`,
+    ),
+    index('site_layout_sections_tenant_site_idx').on(
+      table.tenantId,
+      table.siteId,
+    ),
+  ],
+);
+
+export const siteLayoutSectionVersions = pgTable(
+  'site_layout_section_versions',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    tenantId: uuid('tenant_id')
+      .notNull()
+      .references(() => tenants.id, { onDelete: 'cascade' }),
+    siteLayoutSectionId: uuid('site_layout_section_id')
+      .notNull()
+      .references(() => siteLayoutSections.id, { onDelete: 'cascade' }),
+    content: jsonb('content').notNull().$type<PageContent>(),
+    createdBy: uuid('created_by').references(() => users.id, {
+      onDelete: 'set null',
+    }),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    // every save creates a row here, never a destructive overwrite
+  },
+  (table) => [
+    index('site_layout_section_versions_section_idx').on(
+      table.siteLayoutSectionId,
+    ),
+  ],
 );
 
 export const media = pgTable(

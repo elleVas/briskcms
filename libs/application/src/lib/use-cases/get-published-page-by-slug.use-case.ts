@@ -4,11 +4,16 @@ import type {
   SeoMeta,
   UntranslatedPageFallback,
 } from '@brisk/shared-types';
-import type { PageRepositoryPort, SiteRepositoryPort } from '@brisk/ports';
+import type {
+  PageRepositoryPort,
+  SiteLayoutSectionRepositoryPort,
+  SiteRepositoryPort,
+} from '@brisk/ports';
 
 export interface GetPublishedPageBySlugDeps {
   siteRepository: SiteRepositoryPort;
   pageRepository: PageRepositoryPort;
+  siteLayoutSectionRepository: SiteLayoutSectionRepositoryPort;
 }
 
 export interface GetPublishedPageBySlugInput {
@@ -44,6 +49,12 @@ export interface PublishedPage {
   locale: string;
   translations: PublishedPageTranslation[];
   site: PublishedSite;
+  // Site-level, not page-level (docs/adr/0018) — resolved for (site, this
+  // page's locale) in the same call, `null` when never published (or
+  // never configured at all) for that locale, same collapse as
+  // page.publishedContent.
+  header: Block[] | null;
+  footer: Block[] | null;
 }
 
 /**
@@ -83,11 +94,21 @@ export async function getPublishedPageBySlug(
     return null;
   }
 
-  const siblings = await deps.pageRepository.listByGroup(
-    input.tenantId,
-    site.id,
-    page.groupId,
-  );
+  const [siblings, headerSection, footerSection] = await Promise.all([
+    deps.pageRepository.listByGroup(input.tenantId, site.id, page.groupId),
+    deps.siteLayoutSectionRepository.findBySiteLocaleKind(
+      input.tenantId,
+      site.id,
+      input.locale,
+      'header',
+    ),
+    deps.siteLayoutSectionRepository.findBySiteLocaleKind(
+      input.tenantId,
+      site.id,
+      input.locale,
+      'footer',
+    ),
+  ]);
   const translations = siblings
     .filter((sibling) => sibling.status === 'published')
     .map((sibling) => ({ locale: sibling.locale, slug: sibling.slug }));
@@ -97,6 +118,14 @@ export async function getPublishedPageBySlug(
     seoMeta: page.seoMeta,
     locale: page.locale,
     translations,
+    header:
+      headerSection?.status === 'published'
+        ? headerSection.publishedContent
+        : null,
+    footer:
+      footerSection?.status === 'published'
+        ? footerSection.publishedContent
+        : null,
     site: {
       name: site.name,
       domain: site.domain,

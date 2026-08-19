@@ -5,6 +5,9 @@ import type {
   Page,
   PageVersion,
   Site,
+  SiteLayoutSection,
+  SiteLayoutSectionKind,
+  SiteLayoutSectionVersion,
   User,
 } from '@brisk/domain-core';
 import type {
@@ -16,6 +19,8 @@ import type {
   Pagination,
   PageRepositoryPort,
   PageVersionRepositoryPort,
+  SiteLayoutSectionRepositoryPort,
+  SiteLayoutSectionVersionRepositoryPort,
   SiteRepositoryPort,
   UploadMediaInput,
   UploadMediaResult,
@@ -155,6 +160,71 @@ export class InMemorySiteRepository implements SiteRepositoryPort {
   async findById(tenantId: string, id: string): Promise<Site | null> {
     const site = this.sites.get(id);
     return site && site.tenantId === tenantId ? site : null;
+  }
+}
+
+export class InMemorySiteLayoutSectionRepository implements SiteLayoutSectionRepositoryPort {
+  private sections = new Map<string, SiteLayoutSection>();
+
+  async save(section: SiteLayoutSection): Promise<void> {
+    this.sections.set(section.id, section);
+  }
+
+  async findById(
+    tenantId: string,
+    id: string,
+  ): Promise<SiteLayoutSection | null> {
+    const section = this.sections.get(id);
+    return section && section.tenantId === tenantId ? section : null;
+  }
+
+  async findBySiteLocaleKind(
+    tenantId: string,
+    siteId: string,
+    locale: string,
+    kind: SiteLayoutSectionKind,
+  ): Promise<SiteLayoutSection | null> {
+    for (const section of this.sections.values()) {
+      if (
+        section.tenantId === tenantId &&
+        section.siteId === siteId &&
+        section.locale === locale &&
+        section.kind === kind
+      ) {
+        return section;
+      }
+    }
+    return null;
+  }
+}
+
+export class InMemorySiteLayoutSectionVersionRepository implements SiteLayoutSectionVersionRepositoryPort {
+  private versions: SiteLayoutSectionVersion[] = [];
+
+  async save(version: SiteLayoutSectionVersion): Promise<void> {
+    this.versions.push(version);
+  }
+
+  async findById(
+    tenantId: string,
+    versionId: string,
+  ): Promise<SiteLayoutSectionVersion | null> {
+    return (
+      this.versions.find(
+        (v) => v.tenantId === tenantId && v.id === versionId,
+      ) ?? null
+    );
+  }
+
+  async listBySection(
+    tenantId: string,
+    siteLayoutSectionId: string,
+  ): Promise<SiteLayoutSectionVersion[]> {
+    return this.versions.filter(
+      (v) =>
+        v.tenantId === tenantId &&
+        v.siteLayoutSectionId === siteLayoutSectionId,
+    );
   }
 }
 
