@@ -79,6 +79,7 @@
     "newPageDialog": {
       "title": "Nuova pagina",
       "nameLabel": "Nome pagina",
+      "parentLabel": "Pagina genitore (opzionale)",
       "slugPreview": "URL: {{slug}}",
       "cancel": "Annulla",
       "create": "Crea",
@@ -133,6 +134,10 @@
     "picker": {
       "title": "Scegli una pagina",
       "empty": "Nessuna pagina in questa lingua."
+    },
+    "parent": {
+      "label": "Pagina genitore",
+      "none": "— Nessuno (livello radice) —"
     }
   },
   "appearance": {

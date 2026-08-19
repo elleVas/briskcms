@@ -26,11 +26,18 @@ export interface PublishedPageTranslationDto {
   slug: string;
 }
 
+/** Root-to-parent order (does not include the page itself). Empty for a root-level page. */
+export interface PublishedPageAncestorDto {
+  slug: string;
+  title: string;
+}
+
 export interface PublishedPageDto {
   content: Block[];
   seoMeta: SeoMeta;
   locale: string;
   translations: PublishedPageTranslationDto[];
+  ancestors: PublishedPageAncestorDto[];
   site: PublishedSiteDto;
   header: Block[] | null;
   footer: Block[] | null;
@@ -76,6 +83,9 @@ export interface SitemapEntryDto {
   // Links locale-siblings together (docs/adr/0017) so sitemap.xml can group
   // entries into hreflang alternates instead of one flat <loc> per page.
   groupId: string;
+  // Root-to-parent slugs (page hierarchy) — the canonical nested URL is
+  // built from these, not the flat slug alone (see locale-path.ts).
+  ancestorSlugs: string[];
   updatedAt: string;
 }
 

@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   ConflictException,
   Controller,
@@ -23,9 +24,12 @@ import {
   publishPage,
   rollbackToVersion,
   saveDraft,
+  setPageParent,
   updateSeoMeta,
 } from '@brisk/application';
 import {
+  PageHierarchyCycleError,
+  PageHierarchyLocaleMismatchError,
   PageNotFoundError,
   PageSlugAlreadyExistsError,
   PageTranslationAlreadyExistsError,
@@ -54,6 +58,8 @@ import {
   rollbackBodySchema,
   type SaveDraftBody,
   saveDraftBodySchema,
+  type SetPageParentBody,
+  setPageParentBodySchema,
   type UpdateSeoMetaBody,
   updateSeoMetaBodySchema,
 } from './pages.schemas.js';
@@ -83,6 +89,25 @@ export class PagesController {
           ...body,
           createdBy: null,
           tenantId: this.tenantContext.getCurrentTenantId(),
+        },
+      );
+      return page.toProps();
+    });
+  }
+
+  @Patch(':id/parent')
+  async setParent(
+    @Param('id') id: string,
+    @Body(new ZodValidationPipe(setPageParentBodySchema))
+    body: SetPageParentBody,
+  ) {
+    return this.handleDomainErrors(async () => {
+      const page = await setPageParent(
+        { pageRepository: this.pageRepository },
+        {
+          tenantId: this.tenantContext.getCurrentTenantId(),
+          pageId: id,
+          parentId: body.parentId,
         },
       );
       return page.toProps();
@@ -284,6 +309,12 @@ export class PagesController {
         error instanceof PageTranslationAlreadyExistsError
       ) {
         throw new ConflictException(error.message);
+      }
+      if (
+        error instanceof PageHierarchyCycleError ||
+        error instanceof PageHierarchyLocaleMismatchError
+      ) {
+        throw new BadRequestException(error.message);
       }
       throw error;
     }

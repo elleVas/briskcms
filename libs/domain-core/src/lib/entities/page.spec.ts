@@ -65,9 +65,24 @@ describe('Page entity', () => {
     expect(page.updatedAt).toEqual(now);
   });
 
+  it('starts with no parent, and setParent() reassigns it without touching other fields', () => {
+    const page = Page.create(baseInput);
+    expect(page.parentId).toBeNull();
+
+    const now = new Date('2026-02-01T00:00:00Z');
+    page.setParent('parent-1', now);
+
+    expect(page.parentId).toBe('parent-1');
+    expect(page.updatedAt).toEqual(now);
+
+    page.setParent(null);
+    expect(page.parentId).toBeNull();
+  });
+
   it('fromProps/toProps round-trip without loss', () => {
     const props = {
       ...baseInput,
+      parentId: null,
       status: 'published' as const,
       content: [{ type: 'Hero', props: { title: 'v1' } }],
       publishedContent: [{ type: 'Hero', props: { title: 'v1' } }],

@@ -16,12 +16,14 @@ describe('GET /sitemap.xml', () => {
           slug: 'home',
           locale: 'it',
           groupId: 'group-home',
+          ancestorSlugs: [],
           updatedAt: '2026-01-01T00:00:00.000Z',
         },
         {
           slug: 'chi-siamo',
           locale: 'it',
           groupId: 'group-about',
+          ancestorSlugs: [],
           updatedAt: '2026-01-02T00:00:00.000Z',
         },
       ],
@@ -61,12 +63,14 @@ describe('GET /sitemap.xml', () => {
           slug: 'chi-siamo',
           locale: 'it',
           groupId: 'group-about',
+          ancestorSlugs: [],
           updatedAt: '2026-01-02T00:00:00.000Z',
         },
         {
           slug: 'about-us',
           locale: 'en',
           groupId: 'group-about',
+          ancestorSlugs: [],
           updatedAt: '2026-01-02T00:00:00.000Z',
         },
       ],
@@ -85,6 +89,32 @@ describe('GET /sitemap.xml', () => {
     expect(body).toContain(
       '<xhtml:link rel="alternate" hreflang="en" href="https://example.com/en/about-us" />',
     );
+  });
+
+  it('lists the canonical nested path for a page with ancestors', async () => {
+    vi.mocked(api.listPublishedPagesForSitemap).mockResolvedValue({
+      items: [
+        {
+          slug: 'idraulica',
+          locale: 'it',
+          groupId: 'group-idraulica',
+          ancestorSlugs: ['servizi'],
+          updatedAt: '2026-01-02T00:00:00.000Z',
+        },
+      ],
+      searchEngineIndexingEnabled: true,
+      defaultLocale: 'it',
+    });
+
+    const url = new URL('https://example.com/sitemap.xml');
+    // @ts-expect-error -- only `url` is exercised by this handler
+    const res = await GET({ url });
+    const body = await res.text();
+
+    expect(body).toContain(
+      '<loc>https://example.com/it/servizi/idraulica</loc>',
+    );
+    expect(body).not.toContain('<loc>https://example.com/it/idraulica</loc>');
   });
 
   it('queries the API by the request hostname', async () => {

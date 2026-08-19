@@ -18,10 +18,16 @@ export const createPageBodySchema = z.object({
   groupId: z.string().uuid(),
   locale: z.string().min(2),
   slug: pageSlugSchema,
+  parentId: z.string().uuid().nullable().optional(),
   seoMeta: seoMetaSchema,
   content: pageContentSchema.optional(),
 });
 export type CreatePageBody = z.infer<typeof createPageBodySchema>;
+
+export const setPageParentBodySchema = z.object({
+  parentId: z.string().uuid().nullable(),
+});
+export type SetPageParentBody = z.infer<typeof setPageParentBodySchema>;
 
 export const listPagesQuerySchema = z.object({
   siteId: z.string().uuid(),

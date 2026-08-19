@@ -1,14 +1,28 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
+import { QueryClientProvider } from '@tanstack/react-query';
 import { ApiError } from '../lib/http-client.js';
 import type { PageDto } from '../lib/pages-api-client.js';
-import { NewPageDialog } from './new-page-dialog.js';
+import { createTestQueryClient } from '../test-query-client.js';
+import { NewPageDialog, type NewPageDialogProps } from './new-page-dialog.js';
+
+vi.mock('../lib/pages-api-client.js', async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import('../lib/pages-api-client.js')>();
+  // ParentPageSelect queries listPages on its own — mocked so it resolves
+  // immediately instead of hitting the real fetch().
+  return {
+    ...actual,
+    listPages: vi.fn().mockResolvedValue({ items: [], total: 0 }),
+  };
+});
 
 const samplePage: PageDto = {
   id: 'page-1',
   tenantId: 'tenant-1',
   siteId: 'site-1',
   groupId: 'group-1',
+  parentId: null,
   locale: 'it',
   slug: 'chi-siamo',
   status: 'draft',
@@ -19,9 +33,17 @@ const samplePage: PageDto = {
   updatedAt: '',
 };
 
+function renderDialog(props: Omit<NewPageDialogProps, 'siteId' | 'locale'>) {
+  return render(
+    <QueryClientProvider client={createTestQueryClient()}>
+      <NewPageDialog siteId="site-1" locale="it" {...props} />
+    </QueryClientProvider>,
+  );
+}
+
 describe('NewPageDialog', () => {
   it('shows a live slug preview as the name is typed', () => {
-    render(<NewPageDialog open onOpenChange={vi.fn()} onCreate={vi.fn()} />);
+    renderDialog({ open: true, onOpenChange: vi.fn(), onCreate: vi.fn() });
 
     fireEvent.change(screen.getByLabelText('Nome pagina'), {
       target: { value: 'Chi Siamo' },
@@ -33,16 +55,16 @@ describe('NewPageDialog', () => {
   it('creates the page and closes the dialog on success', async () => {
     const onCreate = vi.fn().mockResolvedValue(samplePage);
     const onOpenChange = vi.fn();
-    render(
-      <NewPageDialog open onOpenChange={onOpenChange} onCreate={onCreate} />,
-    );
+    renderDialog({ open: true, onOpenChange, onCreate });
 
     fireEvent.change(screen.getByLabelText('Nome pagina'), {
       target: { value: 'Chi Siamo' },
     });
     fireEvent.click(screen.getByRole('button', { name: /^crea$/i }));
 
-    await waitFor(() => expect(onCreate).toHaveBeenCalledWith('Chi Siamo'));
+    await waitFor(() =>
+      expect(onCreate).toHaveBeenCalledWith('Chi Siamo', null),
+    );
     await waitFor(() => expect(onOpenChange).toHaveBeenCalledWith(false));
   });
 
@@ -50,7 +72,7 @@ describe('NewPageDialog', () => {
     const onCreate = vi
       .fn()
       .mockRejectedValue(new ApiError(409, { message: 'conflict' }));
-    render(<NewPageDialog open onOpenChange={vi.fn()} onCreate={onCreate} />);
+    renderDialog({ open: true, onOpenChange: vi.fn(), onCreate });
 
     fireEvent.change(screen.getByLabelText('Nome pagina'), {
       target: { value: 'Chi Siamo' },
@@ -65,9 +87,7 @@ describe('NewPageDialog', () => {
   it('calls onOpenChange without creating when cancelled', () => {
     const onCreate = vi.fn();
     const onOpenChange = vi.fn();
-    render(
-      <NewPageDialog open onOpenChange={onOpenChange} onCreate={onCreate} />,
-    );
+    renderDialog({ open: true, onOpenChange, onCreate });
 
     fireEvent.click(screen.getByRole('button', { name: /annulla/i }));
 

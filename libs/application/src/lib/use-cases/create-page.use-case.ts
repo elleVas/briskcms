@@ -17,6 +17,7 @@ export interface CreatePageInput {
   groupId: string;
   locale: string;
   slug: string;
+  parentId?: string | null;
   seoMeta: SeoMeta;
   content?: PageContent;
   createdBy: string | null;
@@ -43,6 +44,7 @@ export async function createPage(
     groupId: input.groupId,
     locale: input.locale,
     slug: input.slug,
+    parentId: input.parentId,
     seoMeta: input.seoMeta,
     content: input.content,
   });

@@ -19,6 +19,7 @@ const samplePage: api.PageDto = {
   tenantId: 'tenant-1',
   siteId: 'site-1',
   groupId: 'group-1',
+  parentId: null,
   locale: 'it',
   slug: 'test-page',
   status: 'draft',

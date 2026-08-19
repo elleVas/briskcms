@@ -1,4 +1,5 @@
 export * from './lib/use-cases/create-page.use-case.js';
+export * from './lib/use-cases/set-page-parent.use-case.js';
 export * from './lib/use-cases/delete-page.use-case.js';
 export * from './lib/use-cases/save-draft.use-case.js';
 export * from './lib/use-cases/publish-page.use-case.js';

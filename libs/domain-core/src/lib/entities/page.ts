@@ -9,6 +9,7 @@ export interface PageProps {
   groupId: string;
   locale: string;
   slug: string;
+  parentId: string | null;
   status: PageStatus;
   content: PageContent;
   publishedContent: PageContent | null;
@@ -24,6 +25,7 @@ export interface CreatePageProps {
   groupId: string;
   locale: string;
   slug: string;
+  parentId?: string | null;
   seoMeta: SeoMeta;
   content?: PageContent;
   now?: Date;
@@ -47,6 +49,7 @@ export class Page {
       groupId: input.groupId,
       locale: input.locale,
       slug: input.slug,
+      parentId: input.parentId ?? null,
       status: 'draft',
       content: input.content ?? [],
       publishedContent: null,
@@ -88,6 +91,10 @@ export class Page {
     return this.props.slug;
   }
 
+  get parentId(): string | null {
+    return this.props.parentId;
+  }
+
   get status(): PageStatus {
     return this.props.status;
   }
@@ -110,6 +117,19 @@ export class Page {
 
   get updatedAt(): Date {
     return this.props.updatedAt;
+  }
+
+  /**
+   * Riassegna il genitore nella gerarchia pagine. Operazione separata da
+   * draft/publish (come SiteLayoutSection.setSticky()): è una posizione
+   * nell'albero, non contenuto — prende effetto subito, nessuna riga di
+   * versione. Convalida del ciclo/stesso sito+lingua a carico del
+   * use-case (setPageParent), che ha accesso al repository; l'entità pura
+   * non può risalire la catena da sola.
+   */
+  setParent(parentId: string | null, now: Date = new Date()): void {
+    this.props.parentId = parentId;
+    this.props.updatedAt = now;
   }
 
   /** Aggiorna il draft. Non tocca la versione pubblicata. */

@@ -79,6 +79,7 @@
     "newPageDialog": {
       "title": "New page",
       "nameLabel": "Page name",
+      "parentLabel": "Parent page (optional)",
       "slugPreview": "URL: {{slug}}",
       "cancel": "Cancel",
       "create": "Create",
@@ -133,6 +134,10 @@
     "picker": {
       "title": "Choose a page",
       "empty": "No pages in this language."
+    },
+    "parent": {
+      "label": "Parent page",
+      "none": "— None (root level) —"
     }
   },
   "appearance": {

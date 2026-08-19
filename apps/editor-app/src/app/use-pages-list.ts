@@ -6,6 +6,7 @@ import {
   createPage as apiCreatePage,
   deletePage as apiDeletePage,
   publishPage as apiPublishPage,
+  setPageParent as apiSetPageParent,
 } from '../lib/pages-api-client.js';
 
 // Fetching the list itself is the route loader's job (see
@@ -31,12 +32,19 @@ export function usePagesList(siteId: string, defaultLocale: string) {
     // separately, so the URL and the display name can never disagree. A
     // brand-new page starts its own translation group of one (docs/adr/0017)
     // — `createPageTranslation` is the only path that reuses a `groupId`.
-    mutationFn: (name: string) =>
+    mutationFn: ({
+      name,
+      parentId,
+    }: {
+      name: string;
+      parentId: string | null;
+    }) =>
       apiCreatePage({
         siteId,
         groupId: crypto.randomUUID(),
         locale: defaultLocale,
         slug: slugify(name),
+        parentId,
         seoMeta: { title: name, description: '' },
       }),
     onSuccess: async (page) => {
@@ -55,12 +63,27 @@ export function usePagesList(siteId: string, defaultLocale: string) {
     onSuccess: invalidateList,
   });
 
+  const setPageParentMutation = useMutation({
+    mutationFn: ({
+      pageId,
+      parentId,
+    }: {
+      pageId: string;
+      parentId: string | null;
+    }) => apiSetPageParent(pageId, parentId),
+    onSuccess: invalidateList,
+  });
+
   return {
-    createPage: createPageMutation.mutateAsync,
+    createPage: (name: string, parentId: string | null) =>
+      createPageMutation.mutateAsync({ name, parentId }),
     isCreating: createPageMutation.isPending,
     deletePage: deletePageMutation.mutateAsync,
     isDeleting: deletePageMutation.isPending,
     publishPage: publishPageMutation.mutateAsync,
     isPublishing: publishPageMutation.isPending,
+    setPageParent: (pageId: string, parentId: string | null) =>
+      setPageParentMutation.mutateAsync({ pageId, parentId }),
+    isSettingParent: setPageParentMutation.isPending,
   };
 }

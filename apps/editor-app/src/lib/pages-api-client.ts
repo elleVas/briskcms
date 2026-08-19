@@ -8,6 +8,7 @@ export interface PageDto {
   groupId: string;
   locale: string;
   slug: string;
+  parentId: string | null;
   status: 'draft' | 'published';
   content: Block[];
   publishedContent: Block[] | null;
@@ -43,11 +44,22 @@ export interface CreatePageInput {
   groupId: string;
   locale: string;
   slug: string;
+  parentId?: string | null;
   seoMeta: SeoMeta;
 }
 
 export function createPage(input: CreatePageInput): Promise<PageDto> {
   return request('/pages', { method: 'POST', body: JSON.stringify(input) });
+}
+
+export function setPageParent(
+  id: string,
+  parentId: string | null,
+): Promise<PageDto> {
+  return request(`/pages/${id}/parent`, {
+    method: 'PATCH',
+    body: JSON.stringify({ parentId }),
+  });
 }
 
 export function saveDraft(id: string, content: Block[]): Promise<PageDto> {

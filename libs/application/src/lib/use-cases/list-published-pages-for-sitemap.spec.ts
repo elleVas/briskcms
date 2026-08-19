@@ -128,6 +128,52 @@ describe('listPublishedPagesForSitemap', () => {
     expect(result?.searchEngineIndexingEnabled).toBe(true);
   });
 
+  it('resolves ancestorSlugs for a nested page, even through an unpublished ancestor', async () => {
+    const deps = setup();
+    await seedSite(deps.siteRepository);
+    // "Servizi" stays a draft — its slug is still a structural fact for
+    // "Idraulica"'s canonical URL, independent of whether Servizi itself
+    // is published yet.
+    const servizi = await createPage(deps, {
+      tenantId,
+      siteId: 'site-1',
+      groupId: 'group-servizi',
+      locale: 'it',
+      slug: 'servizi',
+      seoMeta: { title: 'Servizi', description: '' },
+      createdBy: 'user-1',
+    });
+    const idraulica = await createPage(deps, {
+      tenantId,
+      siteId: 'site-1',
+      groupId: 'group-idraulica',
+      locale: 'it',
+      slug: 'idraulica',
+      parentId: servizi.id,
+      seoMeta: { title: 'Idraulica', description: '' },
+      createdBy: 'user-1',
+    });
+    await saveDraft(deps, {
+      tenantId,
+      pageId: idraulica.id,
+      content: [],
+      actorUserId: 'user-1',
+    });
+    await publishPage(deps, { tenantId, pageId: idraulica.id });
+
+    const result = await listPublishedPagesForSitemap(deps, {
+      tenantId,
+      domain: 'example.com',
+    });
+
+    expect(result?.items).toEqual([
+      expect.objectContaining({
+        slug: 'idraulica',
+        ancestorSlugs: ['servizi'],
+      }),
+    ]);
+  });
+
   it("includes the site's default locale, and each entry's locale/groupId", async () => {
     const deps = setup();
     await seedSite(deps.siteRepository, { defaultLocale: 'en' });

@@ -11,6 +11,7 @@ import {
   timestamp,
   unique,
   uuid,
+  type AnyPgColumn,
 } from 'drizzle-orm/pg-core';
 import type {
   FormField,
@@ -112,6 +113,13 @@ export const pages = pgTable(
     groupId: uuid('group_id').notNull(),
     locale: text('locale').notNull(),
     slug: text('slug').notNull(),
+    // Self-reference (page hierarchy, WP-style) — nullable, no cascade: a
+    // deleted parent orphans its children (parentId -> null) rather than
+    // deleting the whole subtree, matching how WordPress treats
+    // post_parent on delete.
+    parentId: uuid('parent_id').references((): AnyPgColumn => pages.id, {
+      onDelete: 'set null',
+    }),
     status: text('status').notNull().$type<PageStatus>(),
     // latest draft (Puck content format)
     content: jsonb('content').notNull().default([]).$type<PageContent>(),
