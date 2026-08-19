@@ -9,6 +9,7 @@ import { PublicFormsModule } from './public-forms/public-forms.module.js';
 import { PublicPagesModule } from './public-pages/public-pages.module.js';
 import { SiteLayoutSectionsModule } from './site-layout-sections/site-layout-sections.module.js';
 import { SitesModule } from './sites/sites.module.js';
+import { UsersModule } from './users/users.module.js';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { SitesModule } from './sites/sites.module.js';
     FormsModule,
     PublicFormsModule,
     SiteLayoutSectionsModule,
+    UsersModule,
   ],
   controllers: [AppController],
   providers: [AppService],

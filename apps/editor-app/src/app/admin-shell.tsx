@@ -1,32 +1,13 @@
-import type { ComponentType, ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from '@tanstack/react-router';
 import { FileText, FormInput, Image, Palette, Users } from 'lucide-react';
 import { AccountMenu } from './account-menu.js';
 import { SettingsMenu } from './settings-menu.js';
-import { Badge } from '../components/ui/badge.js';
 import { Separator } from '../components/ui/separator.js';
 
 export interface AdminShellProps {
   children: ReactNode;
-}
-
-interface DisabledNavItemProps {
-  label: string;
-  icon: ComponentType<{ className?: string }>;
-}
-
-function DisabledNavItem({ label, icon: Icon }: DisabledNavItemProps) {
-  const { t } = useTranslation();
-  return (
-    <span className="flex items-center justify-between rounded-md px-2 py-1.5 text-sm text-muted-foreground opacity-60">
-      <span className="flex items-center gap-2">
-        <Icon className="size-4" />
-        {label}
-      </span>
-      <Badge variant="secondary">{t('shell.nav.comingSoon')}</Badge>
-    </span>
-  );
 }
 
 export function AdminShell({ children }: AdminShellProps) {
@@ -69,7 +50,13 @@ export function AdminShell({ children }: AdminShellProps) {
               {t('shell.nav.appearance')}
             </Link>
             <Separator className="my-2" />
-            <DisabledNavItem label={t('shell.nav.users')} icon={Users} />
+            <Link
+              to="/users"
+              className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm font-medium hover:bg-muted"
+            >
+              <Users className="size-4" />
+              {t('shell.nav.users')}
+            </Link>
           </div>
           <div className="flex flex-col gap-1">
             <SettingsMenu />

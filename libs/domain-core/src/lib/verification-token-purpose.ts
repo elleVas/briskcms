@@ -1,1 +1,2 @@
-export type VerificationTokenPurpose = 'email-verification' | 'password-reset';
+export type VerificationTokenPurpose =
+  'email-verification' | 'password-reset' | 'user-invite';

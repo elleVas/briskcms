@@ -16,6 +16,7 @@ async function setup(overrides: { verified?: boolean } = {}) {
     id: 'user-1',
     tenantId,
     email: 'lele@example.com',
+    displayName: 'Lele',
     passwordHash: 'irrelevant',
     role: 'admin',
   });

@@ -23,3 +23,9 @@ export const resetPasswordBodySchema = z.object({
   newPassword: z.string().min(8, 'La password deve avere almeno 8 caratteri'),
 });
 export type ResetPasswordBody = z.infer<typeof resetPasswordBodySchema>;
+
+export const acceptInviteBodySchema = z.object({
+  token: z.string().min(1),
+  password: z.string().min(8, 'La password deve avere almeno 8 caratteri'),
+});
+export type AcceptInviteBody = z.infer<typeof acceptInviteBodySchema>;

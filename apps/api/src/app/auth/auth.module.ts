@@ -16,6 +16,7 @@ import {
   USER_REPOSITORY,
   VERIFICATION_TOKEN_PORT,
 } from './auth.tokens.js';
+import { RolesGuard } from './roles.guard.js';
 import { SessionAuthGuard } from './session-auth.guard.js';
 import { SessionTenantContextAdapter } from './session-tenant-context.adapter.js';
 
@@ -68,12 +69,17 @@ import { SessionTenantContextAdapter } from './session-tenant-context.adapter.js
         }),
     },
     SessionAuthGuard,
+    RolesGuard,
     SessionTenantContextAdapter,
   ],
   exports: [
     AUTH_PORT,
     USER_REPOSITORY,
+    VERIFICATION_TOKEN_PORT,
+    EMAIL_PORT,
+    EDITOR_APP_URL,
     SessionAuthGuard,
+    RolesGuard,
     SessionTenantContextAdapter,
   ],
 })

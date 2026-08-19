@@ -43,7 +43,7 @@ describe('AdminShell', () => {
     vi.clearAllMocks();
   });
 
-  it('renders links to Pagine and Media, a disabled placeholder for Utenti, and separate Impostazioni/Account menus', () => {
+  it('renders links to Pagine, Media, Aspetto and Utenti, and separate Impostazioni/Account menus', () => {
     vi.mocked(router.useNavigate).mockReturnValue(vi.fn());
 
     renderShell();
@@ -57,8 +57,9 @@ describe('AdminShell', () => {
     expect(
       screen.getByRole('link', { name: 'Aspetto' }).getAttribute('href'),
     ).toBe('/appearance');
-    expect(screen.getByText('Utenti')).toBeTruthy();
-    expect(screen.getAllByText('In arrivo')).toHaveLength(1);
+    expect(
+      screen.getByRole('link', { name: 'Utenti' }).getAttribute('href'),
+    ).toBe('/users');
     expect(screen.getByText('content')).toBeTruthy();
     expect(
       screen.getByRole('button', { name: /^impostazioni$/i }),

@@ -39,3 +39,13 @@ export function verifyEmail(token: string): Promise<{ success: boolean }> {
     body: JSON.stringify({ token }),
   });
 }
+
+export function acceptInvite(
+  token: string,
+  password: string,
+): Promise<{ success: boolean }> {
+  return request('/auth/accept-invite', {
+    method: 'POST',
+    body: JSON.stringify({ token, password }),
+  });
+}

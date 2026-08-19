@@ -139,6 +139,20 @@ export class InMemoryUserRepository implements UserRepositoryPort {
     }
     return null;
   }
+
+  async list(
+    tenantId: string,
+    pagination: Pagination,
+  ): Promise<PaginatedResult<User>> {
+    const matching = [...this.users.values()]
+      .filter((user) => user.tenantId === tenantId)
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+    const start = (pagination.page - 1) * pagination.pageSize;
+    return {
+      items: matching.slice(start, start + pagination.pageSize),
+      total: matching.length,
+    };
+  }
 }
 
 export class InMemorySiteRepository implements SiteRepositoryPort {

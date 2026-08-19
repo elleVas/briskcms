@@ -49,6 +49,7 @@ describe('AuthController', () => {
       save: jest.fn(),
       findById: jest.fn(),
       findByEmail: jest.fn(),
+      list: jest.fn(),
     };
     authPort = {
       hashPassword: jest.fn(),
@@ -81,6 +82,7 @@ describe('AuthController', () => {
         id: 'user-1',
         tenantId,
         email: 'lele@example.com',
+        displayName: 'Lele',
         passwordHash: 'hashed',
         role: 'admin',
       });
@@ -173,6 +175,7 @@ describe('AuthController', () => {
         id: 'user-1',
         tenantId,
         email: 'lele@example.com',
+        displayName: 'Lele',
         passwordHash: 'hashed',
         role: 'admin',
       });
@@ -203,6 +206,7 @@ describe('AuthController', () => {
         id: 'user-1',
         tenantId,
         email: 'lele@example.com',
+        displayName: 'Lele',
         passwordHash: 'hashed',
         role: 'admin',
       });
@@ -260,6 +264,7 @@ describe('AuthController', () => {
         id: 'user-1',
         tenantId,
         email: 'lele@example.com',
+        displayName: 'Lele',
         passwordHash: 'old-hash',
         role: 'admin',
       });

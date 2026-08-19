@@ -13,6 +13,7 @@ import {
 import { ThrottlerGuard } from '@nestjs/throttler';
 import type { Request, Response } from 'express';
 import {
+  acceptInvite,
   loginUser,
   logoutUser,
   requestEmailVerification,
@@ -40,6 +41,8 @@ import {
   VERIFICATION_TOKEN_PORT,
 } from './auth.tokens.js';
 import {
+  acceptInviteBodySchema,
+  type AcceptInviteBody,
   loginBodySchema,
   type LoginBody,
   requestPasswordResetBodySchema,
@@ -195,6 +198,30 @@ export class AuthController {
           authPort: this.authPort,
         },
         { token: body.token, newPassword: body.newPassword },
+      );
+    } catch (error) {
+      if (error instanceof InvalidOrExpiredTokenError) {
+        throw new BadRequestException(error.message);
+      }
+      throw error;
+    }
+    return { success: true };
+  }
+
+  @Post('accept-invite')
+  @HttpCode(200)
+  async acceptInvite(
+    @Body(new ZodValidationPipe(acceptInviteBodySchema))
+    body: AcceptInviteBody,
+  ) {
+    try {
+      await acceptInvite(
+        {
+          userRepository: this.userRepository,
+          verificationTokenPort: this.verificationTokenPort,
+          authPort: this.authPort,
+        },
+        { token: body.token, password: body.password },
       );
     } catch (error) {
       if (error instanceof InvalidOrExpiredTokenError) {

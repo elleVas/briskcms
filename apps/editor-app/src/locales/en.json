@@ -39,6 +39,15 @@
       "success": "Email verified successfully.",
       "error": "This link is invalid or has expired. Request a new verification link from your account."
     },
+    "acceptInvite": {
+      "title": "Complete your registration",
+      "description": "Choose a password to access your Brisk account",
+      "doneMessage": "Password set. You can log in now.",
+      "passwordLabel": "Password",
+      "error": "This link is invalid or has expired. Ask an admin to send you a new invite.",
+      "submitIdle": "Complete registration",
+      "submitPending": "Saving..."
+    },
     "logout": "Log out"
   },
   "shell": {
@@ -47,8 +56,7 @@
       "media": "Media",
       "forms": "Forms",
       "appearance": "Appearance",
-      "users": "Users",
-      "comingSoon": "Coming soon"
+      "users": "Users"
     },
     "settings": {
       "label": "Settings",
@@ -302,5 +310,35 @@
     "addRange": "Add range",
     "removeRange": "Remove range",
     "closed": "Closed"
+  },
+  "users": {
+    "list": {
+      "title": "Users",
+      "invite": "Invite user",
+      "empty": "No users yet.",
+      "roleLabel": "{{name}}'s role",
+      "statusActive": "Active",
+      "statusInactive": "Deactivated",
+      "deactivate": "Deactivate",
+      "reactivate": "Reactivate",
+      "pageIndicator": "Page {{page}} of {{totalPages}}",
+      "previousPage": "Previous page",
+      "nextPage": "Next page"
+    },
+    "inviteDialog": {
+      "title": "Invite user",
+      "emailLabel": "Email",
+      "displayNameLabel": "Name",
+      "roleLabel": "Role",
+      "cancel": "Cancel",
+      "invite": "Invite",
+      "inviting": "Inviting...",
+      "emailTaken": "A user with this email already exists."
+    },
+    "role": {
+      "admin": "Admin",
+      "publisher": "Publisher",
+      "editor": "Editor"
+    }
   }
 }

@@ -39,6 +39,15 @@
       "success": "Email verificata con successo.",
       "error": "Il link non è valido o è scaduto. Richiedi un nuovo link di verifica dal tuo account."
     },
+    "acceptInvite": {
+      "title": "Completa la registrazione",
+      "description": "Scegli una password per accedere al tuo account Brisk",
+      "doneMessage": "Password impostata. Puoi accedere ora.",
+      "passwordLabel": "Password",
+      "error": "Il link non è valido o è scaduto. Chiedi a un amministratore di inviarti un nuovo invito.",
+      "submitIdle": "Completa la registrazione",
+      "submitPending": "Salvataggio..."
+    },
     "logout": "Esci"
   },
   "shell": {
@@ -47,8 +56,7 @@
       "media": "Media",
       "forms": "Moduli",
       "appearance": "Aspetto",
-      "users": "Utenti",
-      "comingSoon": "In arrivo"
+      "users": "Utenti"
     },
     "settings": {
       "label": "Impostazioni",
@@ -302,5 +310,35 @@
     "addRange": "Aggiungi fascia",
     "removeRange": "Rimuovi fascia",
     "closed": "Chiuso"
+  },
+  "users": {
+    "list": {
+      "title": "Utenti",
+      "invite": "Invita utente",
+      "empty": "Nessun utente ancora.",
+      "roleLabel": "Ruolo di {{name}}",
+      "statusActive": "Attivo",
+      "statusInactive": "Disattivato",
+      "deactivate": "Disattiva",
+      "reactivate": "Riattiva",
+      "pageIndicator": "Pagina {{page}} di {{totalPages}}",
+      "previousPage": "Pagina precedente",
+      "nextPage": "Pagina successiva"
+    },
+    "inviteDialog": {
+      "title": "Invita utente",
+      "emailLabel": "Email",
+      "displayNameLabel": "Nome",
+      "roleLabel": "Ruolo",
+      "cancel": "Annulla",
+      "invite": "Invita",
+      "inviting": "Invio in corso...",
+      "emailTaken": "Esiste già un utente con questa email."
+    },
+    "role": {
+      "admin": "Admin",
+      "publisher": "Publisher",
+      "editor": "Editor"
+    }
   }
 }

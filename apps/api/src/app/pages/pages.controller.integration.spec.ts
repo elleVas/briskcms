@@ -3,9 +3,9 @@ import { type INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import cookieParser from 'cookie-parser';
 import request from 'supertest';
-import type { AuthPort } from '@brisk/ports';
+import type { AuthPort, UserRepositoryPort } from '@brisk/ports';
 import { type BriskDb, sites, users, withTenant } from '@brisk/postgres-db';
-import { AUTH_PORT } from '../auth/auth.tokens.js';
+import { AUTH_PORT, USER_REPOSITORY } from '../auth/auth.tokens.js';
 import { DATABASE } from '../database.module.js';
 import { PagesModule } from './pages.module.js';
 
@@ -344,5 +344,82 @@ describe('PagesController (integration)', () => {
     await request(app.getHttpServer())
       .get(`/pages/${randomUUID()}`)
       .expect(401);
+  });
+
+  describe('publish role gating (Fase 5c)', () => {
+    async function loginAs(role: 'admin' | 'publisher' | 'editor') {
+      const tenantId = process.env.DEFAULT_TENANT_ID as string;
+      const authPort = app.get<AuthPort>(AUTH_PORT);
+      const email = `integration-${role}-${randomUUID()}@example.test`;
+      const password = randomUUID();
+      const passwordHash = await authPort.hashPassword(password);
+      await withTenant(db, tenantId, (tx) =>
+        tx.insert(users).values({
+          tenantId,
+          email,
+          passwordHash,
+          role,
+          displayName: `Integration ${role}`,
+        }),
+      );
+      const roleAgent = request.agent(app.getHttpServer());
+      await roleAgent.post('/auth/login').send({ email, password }).expect(200);
+      return { agent: roleAgent, email };
+    }
+
+    it('403s an editor publishing a page, but draft/save stays open to them', async () => {
+      const created = await agent
+        .post('/pages')
+        .send(createPageBody())
+        .expect(201);
+      const pageId = created.body.id;
+      const { agent: editorAgent } = await loginAs('editor');
+
+      await editorAgent
+        .patch(`/pages/${pageId}/draft`)
+        .send({
+          content: [{ type: 'Hero', props: { title: 'editor can draft' } }],
+        })
+        .expect(200);
+      await editorAgent.post(`/pages/${pageId}/publish`).expect(403);
+    });
+
+    it('allows a publisher (not just admin) to publish', async () => {
+      const created = await agent
+        .post('/pages')
+        .send(createPageBody())
+        .expect(201);
+      const pageId = created.body.id;
+      const { agent: publisherAgent } = await loginAs('publisher');
+
+      await publisherAgent.post(`/pages/${pageId}/publish`).expect(201);
+    });
+
+    it('deactivating a user invalidates its existing session on the very next guarded request, not just at next login', async () => {
+      const created = await agent
+        .post('/pages')
+        .send(createPageBody())
+        .expect(201);
+      const pageId = created.body.id;
+      const { agent: publisherAgent, email } = await loginAs('publisher');
+      // sanity check: the session works before deactivation
+      await publisherAgent.post(`/pages/${pageId}/publish`).expect(201);
+
+      const tenantId = process.env.DEFAULT_TENANT_ID as string;
+      const userRepository = app.get<UserRepositoryPort>(USER_REPOSITORY);
+      const publisherUser = await userRepository.findByEmail(tenantId, email);
+      publisherUser?.deactivate();
+      if (publisherUser) {
+        await userRepository.save(publisherUser);
+      }
+
+      const secondPage = await agent
+        .post('/pages')
+        .send(createPageBody())
+        .expect(201);
+      await publisherAgent
+        .post(`/pages/${secondPage.body.id}/publish`)
+        .expect(401);
+    });
   });
 });
