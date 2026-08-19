@@ -272,6 +272,60 @@ describe('PagesController (integration)', () => {
       .expect(409);
   });
 
+  it('sets and clears a page parent over HTTP', async () => {
+    const parent = await agent
+      .post('/pages')
+      .send(createPageBody())
+      .expect(201);
+    const child = await agent.post('/pages').send(createPageBody()).expect(201);
+
+    const setRes = await agent
+      .patch(`/pages/${child.body.id}/parent`)
+      .send({ parentId: parent.body.id })
+      .expect(200);
+    expect(setRes.body.parentId).toBe(parent.body.id);
+
+    const clearRes = await agent
+      .patch(`/pages/${child.body.id}/parent`)
+      .send({ parentId: null })
+      .expect(200);
+    expect(clearRes.body.parentId).toBeNull();
+  });
+
+  it('400s setting a page as its own parent', async () => {
+    const page = await agent.post('/pages').send(createPageBody()).expect(201);
+
+    await agent
+      .patch(`/pages/${page.body.id}/parent`)
+      .send({ parentId: page.body.id })
+      .expect(400);
+  });
+
+  it('400s setting a parent from a different locale', async () => {
+    const enPage = await agent
+      .post('/pages')
+      .send(createPageBody({ locale: 'en', slug: `en-${randomUUID()}` }))
+      .expect(201);
+    const itPage = await agent
+      .post('/pages')
+      .send(createPageBody())
+      .expect(201);
+
+    await agent
+      .patch(`/pages/${itPage.body.id}/parent`)
+      .send({ parentId: enPage.body.id })
+      .expect(400);
+  });
+
+  it('404s setting a parent to a page that does not exist', async () => {
+    const page = await agent.post('/pages').send(createPageBody()).expect(201);
+
+    await agent
+      .patch(`/pages/${page.body.id}/parent`)
+      .send({ parentId: randomUUID() })
+      .expect(404);
+  });
+
   it('deletes a page', async () => {
     const createRes = await agent
       .post('/pages')

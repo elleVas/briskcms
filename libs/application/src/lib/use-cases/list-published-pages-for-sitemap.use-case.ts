@@ -1,4 +1,8 @@
 import type { PageRepositoryPort, SiteRepositoryPort } from '@brisk/ports';
+import {
+  resolveAncestorSlugs,
+  type PageHierarchyNode,
+} from '@brisk/shared-types';
 
 export interface ListPublishedPagesForSitemapDeps {
   siteRepository: SiteRepositoryPort;
@@ -17,6 +21,10 @@ export interface SitemapEntry {
   // group entries into one <url> block with hreflang alternates per group,
   // instead of one flat <loc> per page regardless of translation.
   groupId: string;
+  // Root-to-parent slugs (page hierarchy) — lets the sitemap list the
+  // canonical nested URL directly instead of a flat one that would just
+  // 301-redirect, see apps/public-site's [locale]/[...slug].astro.
+  ancestorSlugs: string[];
   updatedAt: Date;
 }
 
@@ -63,6 +71,16 @@ export async function listPublishedPagesForSitemap(
     { page: 1, pageSize: SITEMAP_PAGE_SIZE },
   );
 
+  // Built from every page (draft included) — a page's ancestors are a
+  // structural fact of the hierarchy, independent of whether an ancestor
+  // itself happens to be published yet.
+  const nodesById = new Map<string, PageHierarchyNode>(
+    items.map((page) => [
+      page.id,
+      { id: page.id, parentId: page.parentId, slug: page.slug },
+    ]),
+  );
+
   return {
     items: items
       .filter((page) => page.status === 'published')
@@ -70,6 +88,7 @@ export async function listPublishedPagesForSitemap(
         slug: page.slug,
         locale: page.locale,
         groupId: page.groupId,
+        ancestorSlugs: resolveAncestorSlugs(nodesById, page.id),
         updatedAt: page.updatedAt,
       })),
     searchEngineIndexingEnabled: site.searchEngineIndexingEnabled,

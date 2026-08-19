@@ -4,6 +4,8 @@ import {
   InvalidCredentialsError,
   InvalidFormSubmissionError,
   InvalidOrExpiredTokenError,
+  PageHierarchyCycleError,
+  PageHierarchyLocaleMismatchError,
   PageNotFoundError,
   PageTranslationAlreadyExistsError,
   PageVersionNotFoundError,
@@ -91,6 +93,30 @@ describe('PageTranslationAlreadyExistsError', () => {
     expect(error).toBeInstanceOf(Error);
     expect(error.name).toBe('PageTranslationAlreadyExistsError');
     expect(error.message).toBe('This page already has a translation in "en"');
+  });
+});
+
+describe('PageHierarchyCycleError', () => {
+  it('carries the page id in its message and is a real Error', () => {
+    const error = new PageHierarchyCycleError('page-1');
+
+    expect(error).toBeInstanceOf(Error);
+    expect(error.name).toBe('PageHierarchyCycleError');
+    expect(error.message).toBe(
+      'Setting this parent would create a cycle for page page-1',
+    );
+  });
+});
+
+describe('PageHierarchyLocaleMismatchError', () => {
+  it('carries both page ids in its message and is a real Error', () => {
+    const error = new PageHierarchyLocaleMismatchError('page-1', 'page-2');
+
+    expect(error).toBeInstanceOf(Error);
+    expect(error.name).toBe('PageHierarchyLocaleMismatchError');
+    expect(error.message).toBe(
+      'Page page-1 and proposed parent page-2 must share the same site and locale',
+    );
   });
 });
 

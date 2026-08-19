@@ -60,6 +60,29 @@ export async function createPageTranslation(
     throw new PageSlugAlreadyExistsError(input.slug);
   }
 
+  // Inherit the source page's position in the hierarchy when possible —
+  // same "copy from source, don't start blank" principle as content/SEO
+  // above. If the parent has no translation in the target locale yet, the
+  // new translation is created at the root rather than blocking creation
+  // (same graceful-degradation precedent as untranslatedPageFallback).
+  let parentId: string | null = null;
+  if (source.parentId) {
+    const parent = await deps.pageRepository.findById(
+      input.tenantId,
+      source.parentId,
+    );
+    if (parent) {
+      const parentSiblings = await deps.pageRepository.listByGroup(
+        input.tenantId,
+        source.siteId,
+        parent.groupId,
+      );
+      parentId =
+        parentSiblings.find((sibling) => sibling.locale === input.locale)?.id ??
+        null;
+    }
+  }
+
   const translation = Page.create({
     id: randomUUID(),
     tenantId: input.tenantId,
@@ -67,6 +90,7 @@ export async function createPageTranslation(
     groupId: source.groupId,
     locale: input.locale,
     slug: input.slug,
+    parentId,
     seoMeta: source.seoMeta,
     content: source.content,
   });

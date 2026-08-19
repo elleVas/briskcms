@@ -22,6 +22,11 @@ vi.mock('../lib/pages-api-client.js', async (importOriginal) => {
     createPage: vi.fn(),
     deletePage: vi.fn(),
     publishPage: vi.fn(),
+    // Every row (and NewPageDialog) renders a ParentPageSelect, which
+    // queries listPages on its own — mocked here so it resolves
+    // immediately instead of hitting the real fetch().
+    listPages: vi.fn().mockResolvedValue({ items: [], total: 0 }),
+    setPageParent: vi.fn(),
   };
 });
 
@@ -30,6 +35,7 @@ const pageOne: PageDto = {
   tenantId: 'tenant-1',
   siteId: 'site-1',
   groupId: 'group-1',
+  parentId: null,
   locale: 'it',
   slug: 'home',
   status: 'published',

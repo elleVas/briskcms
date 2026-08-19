@@ -15,6 +15,7 @@ function toRow(props: PageProps) {
     groupId: props.groupId,
     locale: props.locale,
     slug: props.slug,
+    parentId: props.parentId,
     status: props.status,
     content: props.content,
     publishedContent: props.publishedContent,

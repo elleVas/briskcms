@@ -101,6 +101,7 @@ describe('getPublishedPageBySlug', () => {
       seoMeta: { title: 'Chi siamo', description: '' },
       locale: 'it',
       translations: [{ locale: 'it', slug: 'chi-siamo' }],
+      ancestors: [],
       header: null,
       footer: null,
       headerSticky: false,
@@ -117,6 +118,50 @@ describe('getPublishedPageBySlug', () => {
         searchEngineIndexingEnabled: false,
       },
     });
+  });
+
+  it('resolves ancestors root-to-parent by walking parentId, and returns an empty list for a root page', async () => {
+    const deps = setup();
+    await seedSite(deps.siteRepository);
+    const servizi = await createAndPublish(deps, {
+      groupId: 'group-servizi',
+      locale: 'it',
+      slug: 'servizi',
+      title: 'Servizi',
+    });
+    const idraulica = await createPage(deps, {
+      tenantId,
+      siteId: 'site-1',
+      groupId: 'group-idraulica',
+      locale: 'it',
+      slug: 'idraulica',
+      parentId: servizi.id,
+      seoMeta: { title: 'Idraulica', description: '' },
+      createdBy: 'user-1',
+    });
+    await saveDraft(deps, {
+      tenantId,
+      pageId: idraulica.id,
+      content: [{ type: 'Text', props: { body: 'x' } }],
+      actorUserId: 'user-1',
+    });
+    await publishPage(deps, { tenantId, pageId: idraulica.id });
+
+    const child = await getPublishedPageBySlug(deps, {
+      tenantId,
+      domain: 'example.com',
+      locale: 'it',
+      slug: 'idraulica',
+    });
+    expect(child?.ancestors).toEqual([{ slug: 'servizi', title: 'Servizi' }]);
+
+    const root = await getPublishedPageBySlug(deps, {
+      tenantId,
+      domain: 'example.com',
+      locale: 'it',
+      slug: 'servizi',
+    });
+    expect(root?.ancestors).toEqual([]);
   });
 
   it('lists every published locale-translation of the page, keyed by group', async () => {

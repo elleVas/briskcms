@@ -28,6 +28,24 @@ export class PageTranslationAlreadyExistsError extends Error {
   }
 }
 
+/** The proposed parent is the page itself or one of its own descendants — would create a cycle in the page hierarchy. */
+export class PageHierarchyCycleError extends Error {
+  constructor(pageId: string) {
+    super(`Setting this parent would create a cycle for page ${pageId}`);
+    this.name = 'PageHierarchyCycleError';
+  }
+}
+
+/** A page's parent must live in the same site and locale — no cross-site/cross-language nesting. */
+export class PageHierarchyLocaleMismatchError extends Error {
+  constructor(pageId: string, parentId: string) {
+    super(
+      `Page ${pageId} and proposed parent ${parentId} must share the same site and locale`,
+    );
+    this.name = 'PageHierarchyLocaleMismatchError';
+  }
+}
+
 /**
  * Deliberately generic: never reveals whether the email exists or the
  * password was wrong (prevents user enumeration via the login endpoint).

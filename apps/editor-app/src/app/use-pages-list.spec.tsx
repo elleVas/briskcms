@@ -29,6 +29,7 @@ const samplePage: api.PageDto = {
   tenantId: 'tenant-1',
   siteId: 'site-1',
   groupId: 'group-1',
+  parentId: null,
   locale: 'it',
   slug: 'chi-siamo',
   status: 'draft',
@@ -62,13 +63,14 @@ describe('usePagesList', () => {
     });
 
     await act(async () => {
-      await result.current.createPage('Chi Siamo');
+      await result.current.createPage('Chi Siamo', null);
     });
 
     expect(api.createPage).toHaveBeenCalledWith(
       expect.objectContaining({
         siteId: 'site-1',
         slug: 'chi-siamo',
+        parentId: null,
         seoMeta: { title: 'Chi Siamo', description: '' },
       }),
     );

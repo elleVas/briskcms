@@ -68,6 +68,7 @@ describe('usePageVersions', () => {
       groupId: 'group-1',
       locale: 'it',
       slug: 'chi-siamo',
+      parentId: null,
       status: 'published',
       content: [],
       publishedContent: [],

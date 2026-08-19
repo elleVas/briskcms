@@ -17,6 +17,8 @@ import { DeletePageConfirmDialog } from './delete-page-confirm-dialog.js';
 import { IconButton } from './icon-button.js';
 import { MediaPickerProvider } from './media-picker-provider.js';
 import { NewPageDialog } from './new-page-dialog.js';
+import { ParentPageSelect } from './parent-page-select.js';
+import { buildPageTree } from './page-hierarchy.js';
 import { PAGES_PAGE_SIZE } from './pages-queries.js';
 import { SeoPanelDialog } from './seo-panel-dialog.js';
 import { usePagesList } from './use-pages-list.js';
@@ -45,10 +47,11 @@ export function PagesListView({
 }: PagesListViewProps) {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
-  const { createPage, deletePage, publishPage } = usePagesList(
+  const { createPage, deletePage, publishPage, setPageParent } = usePagesList(
     siteId,
     defaultLocale,
   );
+  const tree = buildPageTree(pages);
 
   const [selectedPageId, setSelectedPageId] = useState<string | null>(null);
   const [isNewPageDialogOpen, setIsNewPageDialogOpen] = useState(false);
@@ -147,16 +150,17 @@ export function PagesListView({
           </p>
         ) : (
           <ul className="divide-y rounded-md border">
-            {pages.map((p) => {
+            {tree.map(({ page: p, depth }) => {
               const isSelected = p.id === selectedPageId;
               return (
-                <li key={p.id}>
+                <li key={p.id} className="flex items-center gap-2 px-3">
                   <button
                     type="button"
                     onClick={() => toggleSelected(p.id)}
                     aria-pressed={isSelected}
+                    style={{ paddingLeft: depth * 20 }}
                     className={cn(
-                      'flex w-full items-center justify-between px-3 py-2 text-left text-sm hover:bg-muted',
+                      'flex flex-1 items-center justify-between py-2 text-left text-sm hover:bg-muted',
                       isSelected && 'bg-muted',
                     )}
                   >
@@ -207,6 +211,19 @@ export function PagesListView({
                       </span>
                     </span>
                   </button>
+                  <div className="w-40 shrink-0">
+                    <ParentPageSelect
+                      siteId={siteId}
+                      locale={p.locale}
+                      currentPageId={p.id}
+                      value={p.parentId}
+                      onChange={(parentId) =>
+                        void setPageParent(p.id, parentId).catch((err) =>
+                          setActionError(String(err)),
+                        )
+                      }
+                    />
+                  </div>
                 </li>
               );
             })}
@@ -234,6 +251,8 @@ export function PagesListView({
           </div>
         )}
         <NewPageDialog
+          siteId={siteId}
+          locale={defaultLocale}
           open={isNewPageDialogOpen}
           onOpenChange={setIsNewPageDialogOpen}
           onCreate={createPage}

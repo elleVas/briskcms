@@ -23,6 +23,36 @@ export interface GetPublishedPageBySlugInput {
   slug: string;
 }
 
+// Safety net only — real sites are 1-3 levels deep (see the "5-15 pagine
+// per sito" assumption used throughout this codebase), this guards
+// against an unexpected cycle looping forever rather than a realistic
+// depth.
+const MAX_ANCESTOR_WALK = 20;
+
+/** Walks parentId one hop at a time via findById — fine at this product's scale (a handful of hops at most), not worth fetching the whole site's page list just to resolve one page's ancestors. Root-to-parent order. */
+async function resolveAncestors(
+  pageRepository: PageRepositoryPort,
+  tenantId: string,
+  parentId: string | null,
+): Promise<PublishedPageAncestor[]> {
+  const ancestors: PublishedPageAncestor[] = [];
+  let currentId = parentId;
+  for (
+    let hops = 0;
+    currentId !== null && hops < MAX_ANCESTOR_WALK;
+    hops += 1
+  ) {
+    const current = await pageRepository.findById(tenantId, currentId);
+    if (!current) break;
+    ancestors.unshift({
+      slug: current.slug,
+      title: current.seoMeta.title || current.slug,
+    });
+    currentId = current.parentId;
+  }
+  return ancestors;
+}
+
 /** Only what the public renderer needs for OG tags + schema.org (docs/adr/0014) and the language switcher (docs/adr/0017) — never the tenant id or anything else internal. */
 export interface PublishedSite {
   name: string;
@@ -43,11 +73,18 @@ export interface PublishedPageTranslation {
   slug: string;
 }
 
+/** Root-to-parent order (does not include the page itself). Empty for a root-level page. */
+export interface PublishedPageAncestor {
+  slug: string;
+  title: string;
+}
+
 export interface PublishedPage {
   content: Block[];
   seoMeta: SeoMeta;
   locale: string;
   translations: PublishedPageTranslation[];
+  ancestors: PublishedPageAncestor[];
   site: PublishedSite;
   // Site-level, not page-level (docs/adr/0018) — resolved for (site, this
   // page's locale) in the same call, `null` when never published (or
@@ -98,21 +135,24 @@ export async function getPublishedPageBySlug(
     return null;
   }
 
-  const [siblings, headerSection, footerSection] = await Promise.all([
-    deps.pageRepository.listByGroup(input.tenantId, site.id, page.groupId),
-    deps.siteLayoutSectionRepository.findBySiteLocaleKind(
-      input.tenantId,
-      site.id,
-      input.locale,
-      'header',
-    ),
-    deps.siteLayoutSectionRepository.findBySiteLocaleKind(
-      input.tenantId,
-      site.id,
-      input.locale,
-      'footer',
-    ),
-  ]);
+  const [siblings, headerSection, footerSection, ancestors] = await Promise.all(
+    [
+      deps.pageRepository.listByGroup(input.tenantId, site.id, page.groupId),
+      deps.siteLayoutSectionRepository.findBySiteLocaleKind(
+        input.tenantId,
+        site.id,
+        input.locale,
+        'header',
+      ),
+      deps.siteLayoutSectionRepository.findBySiteLocaleKind(
+        input.tenantId,
+        site.id,
+        input.locale,
+        'footer',
+      ),
+      resolveAncestors(deps.pageRepository, input.tenantId, page.parentId),
+    ],
+  );
   const translations = siblings
     .filter((sibling) => sibling.status === 'published')
     .map((sibling) => ({ locale: sibling.locale, slug: sibling.slug }));
@@ -122,6 +162,7 @@ export async function getPublishedPageBySlug(
     seoMeta: page.seoMeta,
     locale: page.locale,
     translations,
+    ancestors,
     header:
       headerSection?.status === 'published'
         ? headerSection.publishedContent

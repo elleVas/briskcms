@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro';
-import { localePath } from '../lib/locale-path.js';
+import { localePathFromAncestors } from '../lib/locale-path.js';
 import {
   listPublishedPagesForSitemap,
   type SitemapEntryDto,
@@ -33,11 +33,11 @@ export const GET: APIRoute = async ({ url }) => {
       const alternates = (groups.get(entry.groupId) ?? [])
         .map(
           (sibling) =>
-            `    <xhtml:link rel="alternate" hreflang="${sibling.locale}" href="${url.origin}${localePath(sibling.locale, sibling.slug)}" />`,
+            `    <xhtml:link rel="alternate" hreflang="${sibling.locale}" href="${url.origin}${localePathFromAncestors(sibling.locale, sibling.ancestorSlugs, sibling.slug)}" />`,
         )
         .join('\n');
       return `  <url>
-    <loc>${url.origin}${localePath(entry.locale, entry.slug)}</loc>
+    <loc>${url.origin}${localePathFromAncestors(entry.locale, entry.ancestorSlugs, entry.slug)}</loc>
     <lastmod>${new Date(entry.updatedAt).toISOString()}</lastmod>
 ${alternates}
   </url>`;

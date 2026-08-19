@@ -101,6 +101,7 @@ describe('PublicPagesController (integration)', () => {
       seoMeta: { title: 'Chi siamo', description: 'La nostra storia' },
       locale: 'it',
       translations: [{ locale: 'it', slug: 'chi-siamo' }],
+      ancestors: [],
       header: null,
       footer: null,
       headerSticky: false,

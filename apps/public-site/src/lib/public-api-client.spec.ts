@@ -12,6 +12,7 @@ const samplePage: PublishedPageDto = {
   seoMeta: { title: 'Chi siamo', description: 'La nostra storia' },
   locale: 'it',
   translations: [{ locale: 'it', slug: 'chi-siamo' }],
+  ancestors: [],
   site: {
     name: 'Sito di prova',
     domain: 'example.com',

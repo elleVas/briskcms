@@ -13,20 +13,26 @@ import { Input } from '../components/ui/input.js';
 import { Label } from '../components/ui/label.js';
 import { ApiError } from '../lib/http-client.js';
 import type { PageDto } from '../lib/pages-api-client.js';
+import { ParentPageSelect } from './parent-page-select.js';
 
 export interface NewPageDialogProps {
+  siteId: string;
+  locale: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onCreate: (name: string) => Promise<PageDto>;
+  onCreate: (name: string, parentId: string | null) => Promise<PageDto>;
 }
 
 export function NewPageDialog({
+  siteId,
+  locale,
   open,
   onOpenChange,
   onCreate,
 }: NewPageDialogProps) {
   const { t } = useTranslation();
   const [name, setName] = useState('');
+  const [parentId, setParentId] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const slug = slugify(name);
@@ -39,6 +45,7 @@ export function NewPageDialog({
   function handleOpenChange(nextOpen: boolean) {
     if (!nextOpen) {
       setName('');
+      setParentId(null);
       setError('');
     }
     onOpenChange(nextOpen);
@@ -49,7 +56,7 @@ export function NewPageDialog({
     setError('');
     setSubmitting(true);
     try {
-      await onCreate(name);
+      await onCreate(name, parentId);
       handleOpenChange(false);
     } catch (err) {
       setError(
@@ -88,6 +95,18 @@ export function NewPageDialog({
                 {t('pages.newPageDialog.slugPreview', { slug })}
               </p>
             )}
+          </div>
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="new-page-parent">
+              {t('pages.newPageDialog.parentLabel')}
+            </Label>
+            <ParentPageSelect
+              id="new-page-parent"
+              siteId={siteId}
+              locale={locale}
+              value={parentId}
+              onChange={setParentId}
+            />
           </div>
           {error && (
             <p role="alert" className="text-sm text-destructive">
