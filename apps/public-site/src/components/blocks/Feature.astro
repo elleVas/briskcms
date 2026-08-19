@@ -1,0 +1,31 @@
+---
+import type { FeatureProps } from '@brisk/shared-types';
+
+type Props = FeatureProps;
+
+const { icon, title, text } = Astro.props;
+---
+
+<div class="brisk-feature">
+  <div class="brisk-feature__icon" aria-hidden="true">{icon}</div>
+  <h3 class="brisk-feature__title">{title}</h3>
+  <p class="brisk-feature__text">{text}</p>
+</div>
+
+<style>
+  .brisk-feature {
+    text-align: center;
+  }
+  .brisk-feature__icon {
+    font-size: 2rem;
+  }
+  .brisk-feature__title {
+    margin: 0.5rem 0 0;
+    font-size: 1rem;
+  }
+  .brisk-feature__text {
+    margin: 0.25rem 0 0;
+    color: #52525b;
+    font-size: 0.875rem;
+  }
+</style>
