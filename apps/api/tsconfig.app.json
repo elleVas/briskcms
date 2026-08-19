@@ -35,6 +35,9 @@
       "path": "../../libs/adapters/session-auth-adapter/tsconfig.lib.json"
     },
     {
+      "path": "../../libs/adapters/s3-media-storage/tsconfig.lib.json"
+    },
+    {
       "path": "../../libs/adapters/postgres-user-repository/tsconfig.lib.json"
     },
     {

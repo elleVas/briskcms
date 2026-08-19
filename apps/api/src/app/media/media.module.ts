@@ -3,30 +3,51 @@ import { requireEnv } from '@brisk/env-config';
 import { type BriskDb } from '@brisk/postgres-db';
 import { DrizzleMediaRepository } from '@brisk/postgres-media-repository';
 import { LocalDiskMediaStorageAdapter } from '@brisk/local-disk-media-storage';
+import { S3MediaStorageAdapter } from '@brisk/s3-media-storage';
+import type { MediaStoragePort } from '@brisk/ports';
 import { AuthModule } from '../auth/auth.module.js';
 import { DATABASE, DatabaseModule } from '../database.module.js';
 import { SessionTenantContextAdapter } from '../auth/session-tenant-context.adapter.js';
 import { MediaController } from './media.controller.js';
 import {
-  API_PUBLIC_URL,
   MEDIA_REPOSITORY,
   MEDIA_STORAGE,
-  MEDIA_UPLOAD_DIR,
   TENANT_CONTEXT,
 } from './media.tokens.js';
+
+/**
+ * 'local' unless MEDIA_STORAGE_PROVIDER is explicitly set to 's3' — every
+ * self-hosted deployment today has no such variable set at all and must
+ * keep working exactly as before, unchanged (ADR-0013's LocalDisk default).
+ * S3-specific variables are only required (requireEnv, fail loud) once the
+ * provider has actually been opted into — a LocalDisk-only deployment
+ * should never need to set S3 credentials just to boot.
+ */
+export function createMediaStorage(): MediaStoragePort {
+  const provider = process.env['MEDIA_STORAGE_PROVIDER'] ?? 'local';
+
+  if (provider === 's3') {
+    return new S3MediaStorageAdapter({
+      bucket: requireEnv('S3_MEDIA_BUCKET'),
+      region: requireEnv('S3_MEDIA_REGION'),
+      endpoint: process.env['S3_MEDIA_ENDPOINT'],
+      forcePathStyle: process.env['S3_MEDIA_FORCE_PATH_STYLE'] === 'true',
+      accessKeyId: requireEnv('S3_MEDIA_ACCESS_KEY_ID'),
+      secretAccessKey: requireEnv('S3_MEDIA_SECRET_ACCESS_KEY'),
+      publicBaseUrl: requireEnv('S3_MEDIA_PUBLIC_BASE_URL'),
+    });
+  }
+
+  return new LocalDiskMediaStorageAdapter({
+    uploadDir: requireEnv('MEDIA_UPLOAD_DIR'),
+    publicBaseUrl: requireEnv('API_PUBLIC_URL'),
+  });
+}
 
 @Module({
   imports: [DatabaseModule, AuthModule],
   controllers: [MediaController],
   providers: [
-    {
-      provide: MEDIA_UPLOAD_DIR,
-      useFactory: (): string => requireEnv('MEDIA_UPLOAD_DIR'),
-    },
-    {
-      provide: API_PUBLIC_URL,
-      useFactory: (): string => requireEnv('API_PUBLIC_URL'),
-    },
     {
       provide: MEDIA_REPOSITORY,
       useFactory: (db: BriskDb) => new DrizzleMediaRepository(db),
@@ -34,12 +55,7 @@ import {
     },
     {
       provide: MEDIA_STORAGE,
-      // LocalDisk is the only adapter wired in for now — see ADR-0013.
-      // S3CompatibleAdapter slots in here later behind the same
-      // MediaStoragePort, no controller/use-case changes needed.
-      useFactory: (uploadDir: string, publicBaseUrl: string) =>
-        new LocalDiskMediaStorageAdapter({ uploadDir, publicBaseUrl }),
-      inject: [MEDIA_UPLOAD_DIR, API_PUBLIC_URL],
+      useFactory: createMediaStorage,
     },
     { provide: TENANT_CONTEXT, useClass: SessionTenantContextAdapter },
   ],
