@@ -11,6 +11,9 @@ describe('headerFooterPuckConfig', () => {
       'NavDropdown',
       'Text',
       'Image',
+      'PromoBar',
+      'BackToTop',
+      'WhatsAppButton',
     ]);
   });
 

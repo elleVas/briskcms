@@ -265,3 +265,49 @@ export function columnsGridTemplate(layout: ColumnsLayout): string {
  */
 export const columnPropsSchema = z.strictObject({});
 export type ColumnProps = z.infer<typeof columnPropsSchema>;
+
+/**
+ * "Back to top" — no props beyond `visibility`. Its scroll-threshold
+ * show/hide and smooth-scroll-to-top behavior live entirely in
+ * apps/public-site's BackToTop.astro `<script>`, the same way
+ * HamburgerMenu's open/close toggle has no prop of its own either — this
+ * is display/interaction logic, not editor-configurable content.
+ */
+export const backToTopPropsSchema = z.object({
+  visibility: visibilitySchema.default('always'),
+});
+export type BackToTopProps = z.infer<typeof backToTopPropsSchema>;
+
+/**
+ * Floating "chat on WhatsApp" button. `phoneNumber`/`message` build the
+ * wa.me deep link directly in apps/public-site's WhatsAppButton.astro
+ * (`https://wa.me/<phoneNumber>?text=<encodeURIComponent(message)>`) — no
+ * format validation on `phoneNumber` here, same trade-off as NavLink's
+ * `url`: the editor is trusted to enter it correctly.
+ */
+export const whatsAppButtonPropsSchema = z.object({
+  phoneNumber: z.string(),
+  message: z.string(),
+  visibility: visibilitySchema.default('always'),
+});
+export type WhatsAppButtonProps = z.infer<typeof whatsAppButtonPropsSchema>;
+
+/**
+ * Dismissible announcement bar. Reuses NavLink's `linkType`/`page`/`url`
+ * shape for its optional link, but not `navItemPositionSchema` — unlike
+ * NavLink it never sits inside Nav's flex row, it's a standalone
+ * full-width bar, so "left"/"right" has no meaning here. Dismissal is a
+ * single fixed localStorage key ('brisk-promo-bar-dismissed',
+ * apps/public-site's PromoBar.astro) with no per-message versioning: a
+ * site owner who changes `message` after a visitor already dismissed the
+ * old one won't have it reappear until that visitor clears localStorage —
+ * an accepted limitation, not solved here.
+ */
+export const promoBarPropsSchema = z.object({
+  message: z.string(),
+  linkType: z.enum(['page', 'url']),
+  page: pickedPageSchema.nullable(),
+  url: z.string(),
+  visibility: visibilitySchema.default('always'),
+});
+export type PromoBarProps = z.infer<typeof promoBarPropsSchema>;
