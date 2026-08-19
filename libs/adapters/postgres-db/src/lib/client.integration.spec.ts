@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { sql } from 'drizzle-orm';
 import { type BriskDb, createAppDb, withTenant } from './client.js';
+import { deleteIntegrationTenants } from './integration-test-cleanup.js';
 import { sites, tenants } from './schema.js';
 
 /**
@@ -12,12 +13,14 @@ import { sites, tenants } from './schema.js';
  */
 describe('withTenant (integration)', () => {
   let db: BriskDb;
+  const createdTenantIds: string[] = [];
 
   beforeAll(() => {
     db = createAppDb();
   });
 
   afterAll(async () => {
+    await deleteIntegrationTenants(db, createdTenantIds);
     await db.$client.end();
   });
 
@@ -50,6 +53,7 @@ describe('withTenant (integration)', () => {
       .insert(tenants)
       .values({ name: `Tenant B ${randomUUID()}` })
       .returning({ id: tenants.id });
+    createdTenantIds.push(tenantA.id, tenantB.id);
 
     await withTenant(db, tenantA.id, (tx) =>
       tx

@@ -4,7 +4,13 @@ import { Test } from '@nestjs/testing';
 import cookieParser from 'cookie-parser';
 import request from 'supertest';
 import type { AuthPort, UserRepositoryPort } from '@brisk/ports';
-import { type BriskDb, sites, users, withTenant } from '@brisk/postgres-db';
+import {
+  type BriskDb,
+  deleteIntegrationFixtures,
+  sites,
+  users,
+  withTenant,
+} from '@brisk/postgres-db';
 import { AUTH_PORT, USER_REPOSITORY } from '../auth/auth.tokens.js';
 import { DATABASE } from '../database.module.js';
 import { PagesModule } from './pages.module.js';
@@ -32,6 +38,8 @@ describe('PagesController (integration)', () => {
   let db: BriskDb;
   let agent: ReturnType<typeof request.agent>;
   let siteId: string;
+  let tenantId: string;
+  const createdUserIds: string[] = [];
 
   beforeAll(async () => {
     const moduleRef = await Test.createTestingModule({
@@ -43,7 +51,7 @@ describe('PagesController (integration)', () => {
     await app.init();
     db = app.get<BriskDb>(DATABASE);
 
-    const tenantId = process.env.DEFAULT_TENANT_ID as string;
+    tenantId = process.env.DEFAULT_TENANT_ID as string;
 
     const [site] = await withTenant(db, tenantId, (tx) =>
       tx
@@ -61,15 +69,23 @@ describe('PagesController (integration)', () => {
     const email = `integration-${randomUUID()}@example.test`;
     const password = randomUUID();
     const passwordHash = await authPort.hashPassword(password);
-    await withTenant(db, tenantId, (tx) =>
-      tx.insert(users).values({ tenantId, email, passwordHash, role: 'admin' }),
+    const [user] = await withTenant(db, tenantId, (tx) =>
+      tx
+        .insert(users)
+        .values({ tenantId, email, passwordHash, role: 'admin' })
+        .returning({ id: users.id }),
     );
+    createdUserIds.push(user.id);
 
     agent = request.agent(app.getHttpServer());
     await agent.post('/auth/login').send({ email, password }).expect(200);
   });
 
   afterAll(async () => {
+    await deleteIntegrationFixtures(db, tenantId, {
+      siteIds: [siteId],
+      userIds: createdUserIds,
+    });
     await app.close();
     await db.$client.end();
   });
@@ -353,15 +369,19 @@ describe('PagesController (integration)', () => {
       const email = `integration-${role}-${randomUUID()}@example.test`;
       const password = randomUUID();
       const passwordHash = await authPort.hashPassword(password);
-      await withTenant(db, tenantId, (tx) =>
-        tx.insert(users).values({
-          tenantId,
-          email,
-          passwordHash,
-          role,
-          displayName: `Integration ${role}`,
-        }),
+      const [roleUser] = await withTenant(db, tenantId, (tx) =>
+        tx
+          .insert(users)
+          .values({
+            tenantId,
+            email,
+            passwordHash,
+            role,
+            displayName: `Integration ${role}`,
+          })
+          .returning({ id: users.id }),
       );
+      createdUserIds.push(roleUser.id);
       const roleAgent = request.agent(app.getHttpServer());
       await roleAgent.post('/auth/login').send({ email, password }).expect(200);
       return { agent: roleAgent, email };

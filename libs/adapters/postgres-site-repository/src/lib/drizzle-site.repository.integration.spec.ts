@@ -3,6 +3,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import {
   type BriskDb,
   createAppDb,
+  deleteIntegrationTenants,
   sites,
   tenants,
   withTenant,
@@ -39,6 +40,7 @@ describe('DrizzleSiteRepository (integration)', () => {
   });
 
   afterAll(async () => {
+    await deleteIntegrationTenants(db, [tenantAId, tenantBId]);
     await db.$client.end();
   });
 
