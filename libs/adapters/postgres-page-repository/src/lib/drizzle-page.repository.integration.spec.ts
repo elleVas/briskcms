@@ -4,6 +4,7 @@ import { Page } from '@brisk/domain-core';
 import {
   type BriskDb,
   createAppDb,
+  deleteIntegrationTenants,
   sites,
   tenants,
   withTenant,
@@ -51,6 +52,7 @@ describe('DrizzlePageRepository (integration)', () => {
   });
 
   afterAll(async () => {
+    await deleteIntegrationTenants(db, [tenantAId, tenantBId]);
     await db.$client.end();
   });
 

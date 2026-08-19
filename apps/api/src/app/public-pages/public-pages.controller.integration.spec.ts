@@ -4,7 +4,13 @@ import { Test } from '@nestjs/testing';
 import cookieParser from 'cookie-parser';
 import request from 'supertest';
 import type { AuthPort } from '@brisk/ports';
-import { type BriskDb, sites, users, withTenant } from '@brisk/postgres-db';
+import {
+  type BriskDb,
+  deleteIntegrationFixtures,
+  sites,
+  users,
+  withTenant,
+} from '@brisk/postgres-db';
 import { AUTH_PORT } from '../auth/auth.tokens.js';
 import { DATABASE } from '../database.module.js';
 import { PagesModule } from '../pages/pages.module.js';
@@ -29,6 +35,8 @@ describe('PublicPagesController (integration)', () => {
   let agent: ReturnType<typeof request.agent>;
   let siteId: string;
   let domain: string;
+  let tenantId: string;
+  let userId: string;
 
   beforeAll(async () => {
     const moduleRef = await Test.createTestingModule({
@@ -40,7 +48,7 @@ describe('PublicPagesController (integration)', () => {
     await app.init();
     db = app.get<BriskDb>(DATABASE);
 
-    const tenantId = process.env.DEFAULT_TENANT_ID as string;
+    tenantId = process.env.DEFAULT_TENANT_ID as string;
     domain = `public-test-${randomUUID()}.example.test`;
 
     const [site] = await withTenant(db, tenantId, (tx) =>
@@ -61,15 +69,23 @@ describe('PublicPagesController (integration)', () => {
     const email = `public-integration-${randomUUID()}@example.test`;
     const password = randomUUID();
     const passwordHash = await authPort.hashPassword(password);
-    await withTenant(db, tenantId, (tx) =>
-      tx.insert(users).values({ tenantId, email, passwordHash, role: 'admin' }),
+    const [user] = await withTenant(db, tenantId, (tx) =>
+      tx
+        .insert(users)
+        .values({ tenantId, email, passwordHash, role: 'admin' })
+        .returning({ id: users.id }),
     );
+    userId = user.id;
 
     agent = request.agent(app.getHttpServer());
     await agent.post('/auth/login').send({ email, password }).expect(200);
   });
 
   afterAll(async () => {
+    await deleteIntegrationFixtures(db, tenantId, {
+      siteIds: [siteId],
+      userIds: [userId],
+    });
     await app.close();
     await db.$client.end();
   });

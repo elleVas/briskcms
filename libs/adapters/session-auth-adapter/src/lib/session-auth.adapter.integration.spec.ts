@@ -4,6 +4,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import {
   type BriskDb,
   createAppDb,
+  deleteIntegrationTenants,
   sessions,
   tenants,
   users,
@@ -33,6 +34,7 @@ describe('SessionAuthAdapter (integration)', () => {
   });
 
   afterAll(async () => {
+    await deleteIntegrationTenants(db, [tenantId]);
     await db.$client.end();
   });
 
