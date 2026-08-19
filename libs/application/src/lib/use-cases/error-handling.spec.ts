@@ -18,6 +18,7 @@ import { rollbackSiteLayoutSectionToVersion } from './rollback-site-layout-secti
 import {
   InMemoryPageRepository,
   InMemoryPageVersionRepository,
+  InMemorySearchPort,
   InMemorySiteLayoutSectionRepository,
   InMemorySiteLayoutSectionVersionRepository,
 } from './in-memory-repositories.test-fixture.js';
@@ -27,7 +28,8 @@ const tenantId = 'tenant-1';
 function setup() {
   const pageRepository = new InMemoryPageRepository();
   const pageVersionRepository = new InMemoryPageVersionRepository();
-  return { pageRepository, pageVersionRepository };
+  const searchPort = new InMemorySearchPort();
+  return { pageRepository, pageVersionRepository, searchPort };
 }
 
 function setupSiteLayoutSection() {

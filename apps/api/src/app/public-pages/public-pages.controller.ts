@@ -10,9 +10,11 @@ import { ThrottlerGuard } from '@nestjs/throttler';
 import {
   getPublishedPageBySlug,
   listPublishedPagesForSitemap,
+  searchPages,
 } from '@brisk/application';
 import type {
   PageRepositoryPort,
+  SearchPort,
   SiteLayoutSectionRepositoryPort,
   SiteRepositoryPort,
 } from '@brisk/ports';
@@ -20,12 +22,15 @@ import { ZodValidationPipe } from '../zod-validation.pipe.js';
 import {
   type PublicPageBySlugQuery,
   publicPageBySlugQuerySchema,
+  type PublicPagesSearchQuery,
+  publicPagesSearchQuerySchema,
   type PublicPagesSitemapQuery,
   publicPagesSitemapQuerySchema,
 } from './public-pages.schemas.js';
 import {
   DEFAULT_TENANT_ID,
   PAGE_REPOSITORY,
+  SEARCH_REPOSITORY,
   SITE_LAYOUT_SECTION_REPOSITORY,
   SITE_REPOSITORY,
 } from './public-pages.tokens.js';
@@ -43,6 +48,8 @@ export class PublicPagesController {
     private readonly siteRepository: SiteRepositoryPort,
     @Inject(SITE_LAYOUT_SECTION_REPOSITORY)
     private readonly siteLayoutSectionRepository: SiteLayoutSectionRepositoryPort,
+    @Inject(SEARCH_REPOSITORY)
+    private readonly searchPort: SearchPort,
     @Inject(DEFAULT_TENANT_ID) private readonly defaultTenantId: string,
   ) {}
 
@@ -72,6 +79,26 @@ export class PublicPagesController {
       throw new NotFoundException();
     }
     return result;
+  }
+
+  @Get('search')
+  async search(
+    @Query(new ZodValidationPipe(publicPagesSearchQuerySchema))
+    query: PublicPagesSearchQuery,
+  ) {
+    const result = await searchPages(
+      { siteRepository: this.siteRepository, searchPort: this.searchPort },
+      {
+        tenantId: this.defaultTenantId,
+        domain: query.domain,
+        locale: query.locale,
+        query: query.q,
+      },
+    );
+    // An unrecognized domain returns an empty result list, not a 404 —
+    // same "nothing to show" collapse as listForSitemap below, and a
+    // search box has nowhere useful to send a 404 to anyway.
+    return { items: result ?? [] };
   }
 
   @Get()

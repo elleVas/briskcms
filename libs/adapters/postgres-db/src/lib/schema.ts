@@ -137,6 +137,15 @@ export const pages = pgTable(
     publishedContent: jsonb('published_content').$type<PageContent>(),
     // title, description, og tags, canonical
     seoMeta: jsonb('seo_meta').notNull().default({}).$type<SeoMeta>(),
+    // Plain extracted text (SearchPort's indexPage, see
+    // @brisk/postgres-search-repository) — never read/written by
+    // PageRepositoryPort itself, kept here only so it lives on the same
+    // row a page's other content does. `search_vector` (tsvector,
+    // generated from this column) isn't modeled here at all: Drizzle has
+    // no first-class generated-column DSL for it, and nothing in this
+    // package ever needs to read/write it directly — see
+    // drizzle/0016_pages_search_vector.sql.
+    searchText: text('search_text'),
     createdAt: timestamp('created_at', { withTimezone: true })
       .notNull()
       .defaultNow(),

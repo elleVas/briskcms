@@ -92,6 +92,7 @@
     "@brisk/postgres-form-repository": "workspace:*",
     "@brisk/postgres-media-repository": "workspace:*",
     "@brisk/postgres-page-repository": "workspace:*",
+    "@brisk/postgres-search-repository": "workspace:*",
     "@brisk/postgres-site-layout-section-repository": "workspace:*",
     "@brisk/postgres-site-repository": "workspace:*",
     "@brisk/postgres-user-repository": "workspace:*",

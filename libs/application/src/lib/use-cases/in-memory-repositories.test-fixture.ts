@@ -18,7 +18,9 @@ import type {
   PaginatedResult,
   Pagination,
   PageRepositoryPort,
+  PageSearchResult,
   PageVersionRepositoryPort,
+  SearchPort,
   SiteLayoutSectionRepositoryPort,
   SiteLayoutSectionVersionRepositoryPort,
   SiteRepositoryPort,
@@ -344,5 +346,18 @@ export class InMemoryMediaStorage implements MediaStoragePort {
 
   async delete(storageKey: string): Promise<void> {
     this.deletedKeys.push(storageKey);
+  }
+}
+
+export class InMemorySearchPort implements SearchPort {
+  indexed: { tenantId: string; siteId: string; page: Page }[] = [];
+  results: PageSearchResult[] = [];
+
+  async indexPage(tenantId: string, siteId: string, page: Page): Promise<void> {
+    this.indexed.push({ tenantId, siteId, page });
+  }
+
+  async search(): Promise<PageSearchResult[]> {
+    return this.results;
   }
 }

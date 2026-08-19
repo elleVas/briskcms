@@ -7,6 +7,7 @@ export * from './lib/use-cases/list-page-versions.use-case.js';
 export * from './lib/use-cases/list-pages.use-case.js';
 export * from './lib/use-cases/get-published-page-by-slug.use-case.js';
 export * from './lib/use-cases/list-published-pages-for-sitemap.use-case.js';
+export * from './lib/use-cases/search-pages.use-case.js';
 export * from './lib/use-cases/upload-media.use-case.js';
 export * from './lib/use-cases/list-media.use-case.js';
 export * from './lib/use-cases/delete-media.use-case.js';

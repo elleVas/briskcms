@@ -30,3 +30,14 @@ export const publicPagesSitemapQuerySchema = z.object({
 export type PublicPagesSitemapQuery = z.infer<
   typeof publicPagesSitemapQuerySchema
 >;
+
+export const publicPagesSearchQuerySchema = z.object({
+  domain: domainSchema,
+  locale: z.string().min(2),
+  // A whitespace-only query would reach plainto_tsquery as an effectively
+  // empty tsquery — reject it here rather than let the adapter special-case it.
+  q: z.string().trim().min(1),
+});
+export type PublicPagesSearchQuery = z.infer<
+  typeof publicPagesSearchQuerySchema
+>;
