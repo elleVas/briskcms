@@ -3,15 +3,23 @@ import {
   PageNotFoundError,
   PageSlugAlreadyExistsError,
   PageVersionNotFoundError,
+  SiteLayoutSection,
+  SiteLayoutSectionNotFoundError,
+  SiteLayoutSectionVersionNotFoundError,
 } from '@brisk/domain-core';
 import { createPage } from './create-page.use-case.js';
 import { deletePage } from './delete-page.use-case.js';
 import { saveDraft } from './save-draft.use-case.js';
 import { publishPage } from './publish-page.use-case.js';
 import { rollbackToVersion } from './rollback-to-version.use-case.js';
+import { saveSiteLayoutSectionDraft } from './save-site-layout-section-draft.use-case.js';
+import { publishSiteLayoutSection } from './publish-site-layout-section.use-case.js';
+import { rollbackSiteLayoutSectionToVersion } from './rollback-site-layout-section-to-version.use-case.js';
 import {
   InMemoryPageRepository,
   InMemoryPageVersionRepository,
+  InMemorySiteLayoutSectionRepository,
+  InMemorySiteLayoutSectionVersionRepository,
 } from './in-memory-repositories.test-fixture.js';
 
 const tenantId = 'tenant-1';
@@ -20,6 +28,13 @@ function setup() {
   const pageRepository = new InMemoryPageRepository();
   const pageVersionRepository = new InMemoryPageVersionRepository();
   return { pageRepository, pageVersionRepository };
+}
+
+function setupSiteLayoutSection() {
+  const siteLayoutSectionRepository = new InMemorySiteLayoutSectionRepository();
+  const siteLayoutSectionVersionRepository =
+    new InMemorySiteLayoutSectionVersionRepository();
+  return { siteLayoutSectionRepository, siteLayoutSectionVersionRepository };
 }
 
 describe('use-case error paths', () => {
@@ -145,5 +160,60 @@ describe('use-case error paths', () => {
     await expect(
       deletePage(deps, { tenantId, pageId: 'does-not-exist' }),
     ).rejects.toThrow(PageNotFoundError);
+  });
+
+  it('saveSiteLayoutSectionDraft throws SiteLayoutSectionNotFoundError for a nonexistent section', async () => {
+    const deps = setupSiteLayoutSection();
+
+    await expect(
+      saveSiteLayoutSectionDraft(deps, {
+        tenantId,
+        id: 'does-not-exist',
+        content: [],
+        actorUserId: 'user-1',
+      }),
+    ).rejects.toThrow(SiteLayoutSectionNotFoundError);
+  });
+
+  it('publishSiteLayoutSection throws SiteLayoutSectionNotFoundError for a nonexistent section', async () => {
+    const deps = setupSiteLayoutSection();
+
+    await expect(
+      publishSiteLayoutSection(deps, { tenantId, id: 'does-not-exist' }),
+    ).rejects.toThrow(SiteLayoutSectionNotFoundError);
+  });
+
+  it('rollbackSiteLayoutSectionToVersion throws SiteLayoutSectionNotFoundError for a nonexistent section', async () => {
+    const deps = setupSiteLayoutSection();
+
+    await expect(
+      rollbackSiteLayoutSectionToVersion(deps, {
+        tenantId,
+        id: 'does-not-exist',
+        versionId: 'irrelevant',
+        actorUserId: 'user-1',
+      }),
+    ).rejects.toThrow(SiteLayoutSectionNotFoundError);
+  });
+
+  it('rollbackSiteLayoutSectionToVersion throws SiteLayoutSectionVersionNotFoundError for a nonexistent version', async () => {
+    const deps = setupSiteLayoutSection();
+    const section = SiteLayoutSection.create({
+      id: 'section-1',
+      tenantId,
+      siteId: 'site-1',
+      locale: 'it',
+      kind: 'header',
+    });
+    await deps.siteLayoutSectionRepository.save(section);
+
+    await expect(
+      rollbackSiteLayoutSectionToVersion(deps, {
+        tenantId,
+        id: section.id,
+        versionId: 'does-not-exist',
+        actorUserId: 'user-1',
+      }),
+    ).rejects.toThrow(SiteLayoutSectionVersionNotFoundError);
   });
 });

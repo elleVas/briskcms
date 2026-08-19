@@ -11,7 +11,11 @@ import {
   getPublishedPageBySlug,
   listPublishedPagesForSitemap,
 } from '@brisk/application';
-import type { PageRepositoryPort, SiteRepositoryPort } from '@brisk/ports';
+import type {
+  PageRepositoryPort,
+  SiteLayoutSectionRepositoryPort,
+  SiteRepositoryPort,
+} from '@brisk/ports';
 import { ZodValidationPipe } from '../zod-validation.pipe.js';
 import {
   type PublicPageBySlugQuery,
@@ -22,6 +26,7 @@ import {
 import {
   DEFAULT_TENANT_ID,
   PAGE_REPOSITORY,
+  SITE_LAYOUT_SECTION_REPOSITORY,
   SITE_REPOSITORY,
 } from './public-pages.tokens.js';
 
@@ -36,6 +41,8 @@ export class PublicPagesController {
     private readonly pageRepository: PageRepositoryPort,
     @Inject(SITE_REPOSITORY)
     private readonly siteRepository: SiteRepositoryPort,
+    @Inject(SITE_LAYOUT_SECTION_REPOSITORY)
+    private readonly siteLayoutSectionRepository: SiteLayoutSectionRepositoryPort,
     @Inject(DEFAULT_TENANT_ID) private readonly defaultTenantId: string,
   ) {}
 
@@ -48,6 +55,7 @@ export class PublicPagesController {
       {
         siteRepository: this.siteRepository,
         pageRepository: this.pageRepository,
+        siteLayoutSectionRepository: this.siteLayoutSectionRepository,
       },
       {
         tenantId: this.defaultTenantId,

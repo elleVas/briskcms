@@ -54,6 +54,20 @@ export class SiteNotFoundError extends Error {
   }
 }
 
+export class SiteLayoutSectionNotFoundError extends Error {
+  constructor(id: string) {
+    super(`Site layout section not found: ${id}`);
+    this.name = 'SiteLayoutSectionNotFoundError';
+  }
+}
+
+export class SiteLayoutSectionVersionNotFoundError extends Error {
+  constructor(id: string) {
+    super(`Site layout section version not found: ${id}`);
+    this.name = 'SiteLayoutSectionVersionNotFoundError';
+  }
+}
+
 export class FormNotFoundError extends Error {
   constructor(formId: string) {
     super(`Form not found: ${formId}`);

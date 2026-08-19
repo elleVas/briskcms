@@ -30,3 +30,4 @@ explicitly supersedes it (status `Superseded by ADR-000X`).
 | [0015](0015-form-builder-architecture.md)                              | Form builder: entity, field propagation, and scope                         | Accepted |
 | [0016](0016-site-general-and-seo-settings.md)                          | Site general settings and search engine indexing control                   | Accepted |
 | [0017](0017-multilingua-locale-prefixed-urls-and-page-translations.md) | Multilingua: locale-prefixed URLs and page translations                    | Accepted |
+| [0018](0018-site-level-header-footer-layout-sections.md)               | Header/Nav/Footer as site-level layout sections                            | Accepted |

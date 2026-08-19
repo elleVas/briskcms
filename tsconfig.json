@@ -25,6 +25,9 @@
       "path": "./libs/adapters/postgres-page-repository"
     },
     {
+      "path": "./libs/adapters/postgres-site-layout-section-repository"
+    },
+    {
       "path": "./libs/adapters/local-disk-media-storage"
     },
     {
