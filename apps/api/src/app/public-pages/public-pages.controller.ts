@@ -9,6 +9,7 @@ import {
 import { ThrottlerGuard } from '@nestjs/throttler';
 import {
   getPublishedPageBySlug,
+  getPublishedSiteChrome,
   listPublishedPagesForSitemap,
   searchPages,
 } from '@brisk/application';
@@ -22,6 +23,8 @@ import { ZodValidationPipe } from '../zod-validation.pipe.js';
 import {
   type PublicPageBySlugQuery,
   publicPageBySlugQuerySchema,
+  type PublicPagesChromeQuery,
+  publicPagesChromeQuerySchema,
   type PublicPagesSearchQuery,
   publicPagesSearchQuerySchema,
   type PublicPagesSitemapQuery,
@@ -75,6 +78,33 @@ export class PublicPagesController {
     // getPublishedPageBySlug already collapses both cases into `null`, so
     // there's no way for this handler to tell them apart even if it wanted
     // to (see the use case's own comment on why that's deliberate).
+    if (!result) {
+      throw new NotFoundException();
+    }
+    return result;
+  }
+
+  @Get('chrome')
+  async chrome(
+    @Query(new ZodValidationPipe(publicPagesChromeQuerySchema))
+    query: PublicPagesChromeQuery,
+  ) {
+    const result = await getPublishedSiteChrome(
+      {
+        siteRepository: this.siteRepository,
+        siteLayoutSectionRepository: this.siteLayoutSectionRepository,
+      },
+      {
+        tenantId: this.defaultTenantId,
+        domain: query.domain,
+        locale: query.locale,
+      },
+    );
+    // Same "nothing to show" collapse as findBySlug: an unrecognized
+    // domain has no site to derive chrome from at all, 404 not a
+    // graceful empty default — unlike search/listForSitemap below, there
+    // is no sensible "chrome" a caller could render for a domain that
+    // doesn't exist.
     if (!result) {
       throw new NotFoundException();
     }

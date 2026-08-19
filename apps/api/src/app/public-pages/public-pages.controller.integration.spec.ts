@@ -208,6 +208,50 @@ describe('PublicPagesController (integration)', () => {
     expect(res.body.headerSticky).toBe(true);
   });
 
+  it('/public/pages/chrome bundles the published header/footer with no page in the picture', async () => {
+    // Fresh locale, not 'it' — a page-less route can't inherit header/
+    // footer state other tests in this file already published at 'it'.
+    const locale = `it-${randomUUID()}`;
+    const headerRes = await agent
+      .get('/site-layout-sections')
+      .query({ siteId, locale, kind: 'header' })
+      .expect(200);
+    await agent
+      .patch(`/site-layout-sections/${headerRes.body.id}/draft`)
+      .send({ content: [{ type: 'Header', props: {} }] })
+      .expect(200);
+    await agent
+      .post(`/site-layout-sections/${headerRes.body.id}/publish`)
+      .expect(201);
+
+    const res = await request(app.getHttpServer())
+      .get('/public/pages/chrome')
+      .query({ domain, locale })
+      .expect(200);
+
+    expect(res.body.header).toEqual([{ type: 'Header', props: {} }]);
+    expect(res.body.footer).toBeNull();
+    expect(res.body.site.name).toBe('Public Test Site');
+  });
+
+  it('/public/pages/chrome returns null header/footer for a locale with nothing configured', async () => {
+    const res = await request(app.getHttpServer())
+      .get('/public/pages/chrome')
+      .query({ domain, locale: `it-${randomUUID()}` })
+      .expect(200);
+
+    expect(res.body.header).toBeNull();
+    expect(res.body.footer).toBeNull();
+    expect(res.body.headerSticky).toBe(false);
+  });
+
+  it('/public/pages/chrome 404s for a domain that does not match any site', async () => {
+    await request(app.getHttpServer())
+      .get('/public/pages/chrome')
+      .query({ domain: 'nobody-has-this.example.test', locale: 'it' })
+      .expect(404);
+  });
+
   it('404s for a page that has never been published, same as a nonexistent one', async () => {
     await agent
       .post('/pages')

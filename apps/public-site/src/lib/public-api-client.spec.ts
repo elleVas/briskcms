@@ -1,8 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { PublishedPageDto } from './public-api-client.js';
+import type {
+  PublishedPageDto,
+  PublishedSiteChromeDto,
+} from './public-api-client.js';
 import {
   getPublicForm,
   getPublishedPageBySlug,
+  getPublishedSiteChrome,
   listPublishedPagesForSitemap,
   submitPublicForm,
 } from './public-api-client.js';
@@ -84,6 +88,43 @@ describe('public-api-client', () => {
     await expect(
       getPublishedPageBySlug('example.com', 'it', 'chi-siamo'),
     ).rejects.toThrow('Public pages API error: 500');
+  });
+
+  it('fetches the site chrome by domain and locale, with no slug in the picture', async () => {
+    const chrome: PublishedSiteChromeDto = {
+      site: samplePage.site,
+      header: [{ type: 'Header', props: {} }],
+      footer: null,
+      headerSticky: false,
+    };
+    vi.mocked(fetch).mockResolvedValue(jsonResponse(chrome));
+
+    const result = await getPublishedSiteChrome('example.com', 'it');
+
+    expect(fetch).toHaveBeenCalledWith(
+      expect.stringContaining(
+        '/public/pages/chrome?domain=example.com&locale=it',
+      ),
+    );
+    expect(result).toEqual(chrome);
+  });
+
+  it('getPublishedSiteChrome returns null on a 404 instead of throwing', async () => {
+    vi.mocked(fetch).mockResolvedValue(
+      jsonResponse({ message: 'Not Found' }, 404),
+    );
+
+    const result = await getPublishedSiteChrome('nobody-has-this.test', 'it');
+
+    expect(result).toBeNull();
+  });
+
+  it('getPublishedSiteChrome throws on any other non-ok response', async () => {
+    vi.mocked(fetch).mockResolvedValue(jsonResponse({ message: 'boom' }, 500));
+
+    await expect(getPublishedSiteChrome('example.com', 'it')).rejects.toThrow(
+      'Public pages API error: 500',
+    );
   });
 
   it('fetches the sitemap listing, bundled with the indexing flag, for a domain', async () => {

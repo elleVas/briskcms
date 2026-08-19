@@ -33,6 +33,10 @@ import { heroConfig, type HeroProps } from './blocks/hero.block.js';
 import { imageConfig, type ImageProps } from './blocks/image.block.js';
 import { quoteConfig, type QuoteProps } from './blocks/quote.block.js';
 import { ratingConfig, type RatingProps } from './blocks/rating.block.js';
+import {
+  searchBoxConfig,
+  type SearchBoxProps,
+} from './blocks/search-box.block.js';
 import { tabConfig, type TabPuckProps } from './blocks/tab.block.js';
 import { tabsConfig, type TabsPuckProps } from './blocks/tabs.block.js';
 import { tableConfig, type TableProps } from './blocks/table.block.js';
@@ -59,6 +63,7 @@ export interface BriskComponentProps {
   Button: ButtonProps;
   FeatureGrid: FeatureGridPuckProps;
   Feature: FeatureProps;
+  SearchBox: SearchBoxProps;
 }
 
 export const puckConfig: Config<BriskComponentProps> = {
@@ -83,5 +88,6 @@ export const puckConfig: Config<BriskComponentProps> = {
     Button: buttonConfig,
     FeatureGrid: featureGridConfig,
     Feature: featureConfig,
+    SearchBox: searchBoxConfig,
   },
 };
