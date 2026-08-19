@@ -14,15 +14,43 @@ const puckContext: PuckContext = {
 };
 
 describe('languageSwitcherPropsSchema', () => {
-  it('accepts an empty object — no editor-time config', () => {
-    expect(languageSwitcherPropsSchema.safeParse({}).success).toBe(true);
+  it('defaults position to left when omitted', () => {
+    const result = languageSwitcherPropsSchema.parse({});
+    expect(result.position).toBe('left');
+  });
+
+  it('accepts an explicit position', () => {
+    const result = languageSwitcherPropsSchema.safeParse({
+      position: 'right',
+    });
+    expect(result.success).toBe(true);
   });
 });
 
 describe('languageSwitcherConfig.render', () => {
   it('renders a canvas-only placeholder, never real links', () => {
-    render(languageSwitcherConfig.render({ id: 'test-id', puck: puckContext }));
+    render(
+      languageSwitcherConfig.render({
+        id: 'test-id',
+        position: 'left',
+        puck: puckContext,
+      }),
+    );
 
     expect(screen.getByText('IT · EN (selettore lingua)')).toBeTruthy();
+  });
+
+  it('pushes itself to the far side of the flex row when positioned right', () => {
+    render(
+      languageSwitcherConfig.render({
+        id: 'test-id',
+        position: 'right',
+        puck: puckContext,
+      }),
+    );
+
+    expect(
+      screen.getByText('IT · EN (selettore lingua)').style.marginLeft,
+    ).toBe('auto');
   });
 });

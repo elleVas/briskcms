@@ -1,9 +1,7 @@
 import type { Config } from '@puckeditor/core';
-import { footerConfig, type FooterPuckProps } from './blocks/footer.block.js';
-import { headerConfig, type HeaderPuckProps } from './blocks/header.block.js';
 import {
   languageSwitcherConfig,
-  type LanguageSwitcherPuckProps,
+  type LanguageSwitcherProps,
 } from './blocks/language-switcher.block.js';
 import { navConfig, type NavPuckProps } from './blocks/nav.block.js';
 import { navLinkConfig, type NavLinkProps } from './blocks/nav-link.block.js';
@@ -11,32 +9,31 @@ import { imageConfig, type ImageProps } from './blocks/image.block.js';
 import { textConfig, type TextProps } from './blocks/text.block.js';
 
 export interface BriskLayoutComponentProps {
-  Header: HeaderPuckProps;
   Nav: NavPuckProps;
   NavLink: NavLinkProps;
-  LanguageSwitcher: LanguageSwitcherPuckProps;
-  Footer: FooterPuckProps;
+  LanguageSwitcher: LanguageSwitcherProps;
   Text: TextProps;
   Image: ImageProps;
 }
 
 /**
- * A separate, restricted Config from `puckConfig` (config.ts) — shared by
- * both the Header and Footer editors (docs/adr/0018). Registers only what
- * belongs inside site chrome: Header/Nav/NavLink/LanguageSwitcher/Footer
- * plus the existing Text/Image (the same `textConfig`/`imageConfig`
- * objects `config.ts` uses, not reimplemented). A non-technical editor
- * structurally cannot drag a Hero/Gallery/Form into the header — it's
- * simply not in this component picker's list, no runtime validation to
- * keep in sync separately.
+ * Shared by both the Header and Footer editors (docs/adr/0018): a
+ * site_layout_section's `content` for kind='header'/'footer' is directly
+ * this list of blocks — there is no Header/Footer wrapper block, the
+ * <header>/<footer> tag itself is supplied by apps/public-site (PR3), not
+ * stored as a Block. One config, not two, because both editors offer the
+ * exact same building-block palette; what makes one "the header" and the
+ * other "the footer" is the `kind` on the entity being edited, not
+ * anything Puck-visible. A non-technical editor structurally cannot drag a
+ * Hero/Gallery/Form (or a "footer" — there is no such component) into
+ * either — it's simply not in this component picker's list, no runtime
+ * validation to keep in sync separately.
  */
 export const headerFooterPuckConfig: Config<BriskLayoutComponentProps> = {
   components: {
-    Header: headerConfig,
     Nav: navConfig,
     NavLink: navLinkConfig,
     LanguageSwitcher: languageSwitcherConfig,
-    Footer: footerConfig,
     Text: textConfig,
     Image: imageConfig,
   },

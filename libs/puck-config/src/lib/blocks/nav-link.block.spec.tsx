@@ -24,6 +24,7 @@ describe('navLinkPropsSchema', () => {
         title: 'Chi siamo',
       },
       url: '',
+      position: 'left',
     });
     expect(result.success).toBe(true);
   });
@@ -34,6 +35,7 @@ describe('navLinkPropsSchema', () => {
       linkType: 'url',
       page: null,
       url: 'https://example.com',
+      position: 'right',
     });
     expect(result.success).toBe(true);
   });
@@ -44,8 +46,19 @@ describe('navLinkPropsSchema', () => {
       linkType: 'email',
       page: null,
       url: '',
+      position: 'left',
     });
     expect(result.success).toBe(false);
+  });
+
+  it('defaults position to left when omitted', () => {
+    const result = navLinkPropsSchema.parse({
+      label: 'x',
+      linkType: 'url',
+      page: null,
+      url: '',
+    });
+    expect(result.position).toBe('left');
   });
 });
 
@@ -58,6 +71,7 @@ describe('navLinkConfig.render', () => {
         linkType: 'page',
         page: null,
         url: '',
+        position: 'left',
         puck: puckContext,
       }),
     );
@@ -78,6 +92,7 @@ describe('navLinkConfig.render', () => {
           title: 'Chi siamo',
         },
         url: '',
+        position: 'left',
         puck: puckContext,
       }),
     );
@@ -93,11 +108,28 @@ describe('navLinkConfig.render', () => {
         linkType: 'url',
         page: null,
         url: 'https://example.com',
+        position: 'left',
         puck: puckContext,
       }),
     );
 
     expect(screen.getByText('Sito partner')).toBeTruthy();
+  });
+
+  it('pushes itself to the far side of the flex row when positioned right', () => {
+    render(
+      navLinkConfig.render({
+        id: 'test-id',
+        label: 'Contatti',
+        linkType: 'url',
+        page: null,
+        url: '/contatti',
+        position: 'right',
+        puck: puckContext,
+      }),
+    );
+
+    expect(screen.getByText('Contatti').style.marginLeft).toBe('auto');
   });
 });
 

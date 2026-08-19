@@ -106,26 +106,42 @@ export const formBlockPropsSchema = z.object({
 export type FormBlockProps = z.infer<typeof formBlockPropsSchema>;
 
 /**
- * Header/Nav/Footer have no props of their own today (docs/adr/0018) —
- * they're pure semantic wrappers, their content lives entirely in
+ * Nav has no props of its own (docs/adr/0018) — it's a pure semantic
+ * wrapper around a flex row of links, its content lives entirely in
  * `Block.children` via a Puck slot field. `strictObject` (not `object`,
  * and not `z.record`) so the inferred TS type is the literal empty type
  * `{}` — `z.object({})` infers with an implicit string index instead,
  * which breaks Puck's own mapped-type props (`{[K in keyof Props]: ...}`
  * collapses to `{[x: string]: never}`). A future prop (e.g. "sticky:
- * boolean" on Header) is still a typed change, not a silent `any`.
+ * boolean" on Nav) is still a typed change, not a silent `any`.
+ *
+ * There is no Header/Footer block anymore (docs/adr/0018 follow-up,
+ * 2026-08-19): a site_layout_section's `content` for kind='header'/'footer'
+ * IS directly the list of Nav/Text/Image blocks that belongs inside the
+ * <header>/<footer> tag — apps/public-site (PR3) supplies that tag itself
+ * around the rendered list, it is never a Block. This also means it's
+ * structurally impossible to drop a "footer" into the header editor (or
+ * vice versa): there is nothing named that to drop.
  */
-export const headerPropsSchema = z.strictObject({});
-export type HeaderProps = z.infer<typeof headerPropsSchema>;
-
 export const navPropsSchema = z.strictObject({});
 export type NavProps = z.infer<typeof navPropsSchema>;
 
-export const footerPropsSchema = z.strictObject({});
-export type FooterProps = z.infer<typeof footerPropsSchema>;
+/**
+ * Shared by every block that can land inside a Nav's flex row (NavLink,
+ * LanguageSwitcher): "left" leaves it in normal flow, "right" applies a
+ * margin-left:auto push in nav.block.tsx's render — the standard CSS trick
+ * for splitting a flex row without a separate alignment control on the Nav
+ * container itself. Per-item, not per-container, by explicit user request:
+ * the concrete case is "links on the left, language switcher on the right,
+ * or vice versa" within the same Nav.
+ */
+export const navItemPositionSchema = z.object({
+  position: z.enum(['left', 'right']).default('left'),
+});
+export type NavItemPosition = z.infer<typeof navItemPositionSchema>;
 
-/** No config: the real links depend on which page the visitor is looking at (site.enabledLocales/translations of THAT page), a runtime fact the editor canvas doesn't have — see LanguageSwitcher.astro. */
-export const languageSwitcherPropsSchema = z.strictObject({});
+/** No other editor-time config: the real links depend on which page the visitor is looking at (site.enabledLocales/translations of THAT page), a runtime fact the editor canvas doesn't have — see LanguageSwitcher.astro. */
+export const languageSwitcherPropsSchema = navItemPositionSchema;
 export type LanguageSwitcherProps = z.infer<typeof languageSwitcherPropsSchema>;
 
 /**
@@ -143,7 +159,7 @@ export const pickedPageSchema = z.object({
 });
 export type PickedPage = z.infer<typeof pickedPageSchema>;
 
-export const navLinkPropsSchema = z.object({
+export const navLinkPropsSchema = navItemPositionSchema.extend({
   label: z.string(),
   linkType: z.enum(['page', 'url']),
   page: pickedPageSchema.nullable(),

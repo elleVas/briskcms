@@ -42,28 +42,23 @@ describe('puck-data-mapper', () => {
     expect(fromPuckData(data, puckConfig)[0].props).not.toHaveProperty('id');
   });
 
-  it('round-trips a 2-level-deep nested slot tree (Header > Nav > NavLink/LanguageSwitcher)', () => {
+  it('round-trips a nested slot tree (Nav > NavLink/LanguageSwitcher) — no Header wrapper block', () => {
     const blocks: Block[] = [
       {
-        type: 'Header',
+        type: 'Nav',
         props: {},
         children: [
           {
-            type: 'Nav',
-            props: {},
-            children: [
-              {
-                type: 'NavLink',
-                props: {
-                  label: 'Home',
-                  linkType: 'url',
-                  page: null,
-                  url: '/',
-                },
-              },
-              { type: 'LanguageSwitcher', props: {} },
-            ],
+            type: 'NavLink',
+            props: {
+              label: 'Home',
+              linkType: 'url',
+              page: null,
+              url: '/',
+              position: 'left',
+            },
           },
+          { type: 'LanguageSwitcher', props: { position: 'right' } },
         ],
       },
     ];
@@ -79,24 +74,24 @@ describe('puck-data-mapper', () => {
   it('gives every nested component its own unique id, including inside a slot', () => {
     const blocks: Block[] = [
       {
-        type: 'Header',
+        type: 'Nav',
         props: {},
-        children: [{ type: 'LanguageSwitcher', props: {} }],
+        children: [{ type: 'LanguageSwitcher', props: { position: 'left' } }],
       },
     ];
 
     const data = toPuckData(blocks, headerFooterPuckConfig);
-    const headerId = (data.content[0].props as { id: string }).id;
+    const navId = (data.content[0].props as { id: string }).id;
     const nestedId = (
       (data.content[0].props as { children: ComponentData[] }).children[0]
         .props as { id: string }
     ).id;
 
-    expect(headerId).not.toBe(nestedId);
+    expect(navId).not.toBe(nestedId);
   });
 
   it('a container block with an empty slot round-trips to an empty children array', () => {
-    const blocks: Block[] = [{ type: 'Header', props: {}, children: [] }];
+    const blocks: Block[] = [{ type: 'Nav', props: {}, children: [] }];
 
     expect(
       fromPuckData(
