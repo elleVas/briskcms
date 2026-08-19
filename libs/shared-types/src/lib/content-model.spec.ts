@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  backToTopPropsSchema,
   blockSchema,
   columnsGridTemplate,
   hamburgerMenuPropsSchema,
@@ -8,7 +9,9 @@ import {
   navLinkPropsSchema,
   navPropsSchema,
   pageContentSchema,
+  promoBarPropsSchema,
   seoMetaSchema,
+  whatsAppButtonPropsSchema,
 } from './content-model.js';
 
 describe('content-model schemas', () => {
@@ -104,6 +107,28 @@ describe('per-block visibility defaults', () => {
     expect(navDropdownPropsSchema.parse({ label: 'Prodotti' }).visibility).toBe(
       'always',
     );
+  });
+
+  it('BackToTop defaults to always', () => {
+    expect(backToTopPropsSchema.parse({}).visibility).toBe('always');
+  });
+
+  it('WhatsAppButton defaults to always', () => {
+    expect(
+      whatsAppButtonPropsSchema.parse({ phoneNumber: '', message: '' })
+        .visibility,
+    ).toBe('always');
+  });
+
+  it('PromoBar defaults to always', () => {
+    expect(
+      promoBarPropsSchema.parse({
+        message: 'x',
+        linkType: 'url',
+        page: null,
+        url: '',
+      }).visibility,
+    ).toBe('always');
   });
 
   it('rejects an unknown visibility value', () => {

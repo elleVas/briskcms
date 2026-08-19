@@ -15,6 +15,18 @@ import { navConfig, type NavPuckProps } from './blocks/nav.block.js';
 import { navLinkConfig, type NavLinkProps } from './blocks/nav-link.block.js';
 import { imageConfig, type ImageProps } from './blocks/image.block.js';
 import { textConfig, type TextProps } from './blocks/text.block.js';
+import {
+  backToTopConfig,
+  type BackToTopProps,
+} from './blocks/back-to-top.block.js';
+import {
+  whatsAppButtonConfig,
+  type WhatsAppButtonProps,
+} from './blocks/whatsapp-button.block.js';
+import {
+  promoBarConfig,
+  type PromoBarProps,
+} from './blocks/promo-bar.block.js';
 
 export interface BriskLayoutComponentProps {
   Nav: NavPuckProps;
@@ -24,6 +36,9 @@ export interface BriskLayoutComponentProps {
   NavDropdown: NavDropdownPuckProps;
   Text: TextProps;
   Image: ImageProps;
+  PromoBar: PromoBarProps;
+  BackToTop: BackToTopProps;
+  WhatsAppButton: WhatsAppButtonProps;
 }
 
 /**
@@ -48,5 +63,8 @@ export const headerFooterPuckConfig: Config<BriskLayoutComponentProps> = {
     NavDropdown: navDropdownConfig,
     Text: textConfig,
     Image: imageConfig,
+    PromoBar: promoBarConfig,
+    BackToTop: backToTopConfig,
+    WhatsAppButton: whatsAppButtonConfig,
   },
 };
