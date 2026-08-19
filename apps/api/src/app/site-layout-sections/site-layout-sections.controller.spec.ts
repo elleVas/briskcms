@@ -132,6 +132,26 @@ describe('SiteLayoutSectionsController (unit)', () => {
     ).rejects.toThrow('db exploded');
   });
 
+  it('updateSticky maps a SiteLayoutSectionNotFoundError to a NotFoundException', async () => {
+    siteLayoutSectionRepository.findById.mockResolvedValue(null);
+
+    await expect(
+      controller.updateSticky('missing-id', { sticky: true }),
+    ).rejects.toThrow(NotFoundException);
+  });
+
+  it('updateSticky flips the flag and persists it', async () => {
+    const section = buildSection();
+    siteLayoutSectionRepository.findById.mockResolvedValue(section);
+
+    const result = await controller.updateSticky(section.id, {
+      sticky: true,
+    });
+
+    expect(result.sticky).toBe(true);
+    expect(siteLayoutSectionRepository.save).toHaveBeenCalledWith(section);
+  });
+
   it('getOrCreate returns the existing section instead of creating a new one', async () => {
     siteRepository.findById.mockResolvedValue(buildSite());
     const existing = buildSection();

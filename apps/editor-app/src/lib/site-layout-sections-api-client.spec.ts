@@ -5,6 +5,7 @@ import {
   publishSiteLayoutSection,
   rollbackToVersion,
   saveDraft,
+  updateSticky,
   type SiteLayoutSectionDto,
 } from './site-layout-sections-api-client.js';
 
@@ -17,6 +18,7 @@ const sampleSection: SiteLayoutSectionDto = {
   status: 'draft',
   content: [],
   publishedContent: null,
+  sticky: false,
   createdAt: '',
   updatedAt: '',
 };
@@ -98,6 +100,22 @@ describe('site-layout-sections-api-client', () => {
       expect.objectContaining({
         method: 'POST',
         body: JSON.stringify({ versionId: 'version-1' }),
+      }),
+    );
+  });
+
+  it('updateSticky patches the sticky flag', async () => {
+    vi.mocked(fetch).mockResolvedValue(
+      jsonResponse({ ...sampleSection, sticky: true }),
+    );
+
+    await updateSticky('section-1', true);
+
+    expect(fetch).toHaveBeenCalledWith(
+      expect.stringContaining('/site-layout-sections/section-1/sticky'),
+      expect.objectContaining({
+        method: 'PATCH',
+        body: JSON.stringify({ sticky: true }),
       }),
     );
   });

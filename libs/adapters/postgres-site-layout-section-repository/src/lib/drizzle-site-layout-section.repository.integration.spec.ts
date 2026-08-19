@@ -126,6 +126,23 @@ describe('DrizzleSiteLayoutSectionRepository (integration)', () => {
     ).resolves.not.toThrow();
   });
 
+  it('persists sticky, defaulting to false and round-tripping true after setSticky', async () => {
+    const section = buildSection();
+    expect(section.sticky).toBe(false);
+    await sectionRepository.save(section);
+
+    const found = await sectionRepository.findById(tenantAId, section.id);
+    expect(found).not.toBeNull();
+    if (!found) return;
+    expect(found.sticky).toBe(false);
+
+    found.setSticky(true);
+    await sectionRepository.save(found);
+
+    const foundAgain = await sectionRepository.findById(tenantAId, section.id);
+    expect(foundAgain?.sticky).toBe(true);
+  });
+
   it('save() upserts: a second save updates the same row instead of inserting a new one', async () => {
     const section = buildSection();
     await sectionRepository.save(section);

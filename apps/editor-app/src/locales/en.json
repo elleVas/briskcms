@@ -145,7 +145,8 @@
     "editor": {
       "backToList": "Appearance",
       "draftSaved": "Draft saved",
-      "published": "Published"
+      "published": "Published",
+      "sticky": "Stick while scrolling"
     }
   },
   "media": {

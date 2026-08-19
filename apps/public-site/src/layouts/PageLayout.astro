@@ -16,9 +16,11 @@ interface Props {
 	site: PublishedSiteDto;
 	header: Block[] | null;
 	footer: Block[] | null;
+	headerSticky: boolean;
 }
 
-const { seoMeta, locale, translations, site, header, footer } = Astro.props;
+const { seoMeta, locale, translations, site, header, footer, headerSticky } =
+	Astro.props;
 // The default locale's translation, if published, doubles as the
 // x-default alternate (docs/adr/0017) — the version search engines should
 // offer a visitor whose browser locale matches none of the site's.
@@ -94,7 +96,7 @@ const schemaOrgJson = JSON.stringify(schemaOrgGraph).replace(/</g, '\\u003c');
 	<body>
 		{
 			header && (
-				<header>
+				<header class:list={[{ 'brisk-header--sticky': headerSticky }]}>
 					{header.map((block) => (
 						<BlockRenderer
 							block={block}
@@ -123,3 +125,15 @@ const schemaOrgJson = JSON.stringify(schemaOrgGraph).replace(/</g, '\\u003c');
 		}
 	</body>
 </html>
+
+<style>
+	/* Configurable per (site, locale) — editor-app's "Fisso durante lo
+	   scroll" toggle on the Header editor (docs/adr/0018 follow-up). A
+	   z-index high enough to sit above ordinary page content, but not
+	   fighting the hamburger dropdown/nav-dropdown panels, which use 10. */
+	.brisk-header--sticky {
+		position: sticky;
+		top: 0;
+		z-index: 40;
+	}
+</style>

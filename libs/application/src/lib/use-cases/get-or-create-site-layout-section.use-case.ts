@@ -57,6 +57,7 @@ export async function getOrCreateSiteLayoutSection(
   }
 
   let content;
+  let sticky;
   if (input.locale !== site.defaultLocale) {
     const defaultSection =
       await deps.siteLayoutSectionRepository.findBySiteLocaleKind(
@@ -66,6 +67,7 @@ export async function getOrCreateSiteLayoutSection(
         input.kind,
       );
     content = defaultSection?.content;
+    sticky = defaultSection?.sticky;
   }
 
   const section = SiteLayoutSection.create({
@@ -75,6 +77,7 @@ export async function getOrCreateSiteLayoutSection(
     locale: input.locale,
     kind: input.kind,
     content,
+    sticky,
   });
   await deps.siteLayoutSectionRepository.save(section);
   return section;

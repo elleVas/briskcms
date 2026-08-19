@@ -72,6 +72,7 @@ describe('SiteLayoutSectionsController (integration)', () => {
       .expect(200);
     expect(createRes.body.status).toBe('draft');
     expect(createRes.body.content).toEqual([]);
+    expect(createRes.body.sticky).toBe(false);
     const id = createRes.body.id;
 
     const reused = await agent
@@ -144,6 +145,45 @@ describe('SiteLayoutSectionsController (integration)', () => {
     expect(enRes.body.content).toEqual([
       { type: 'Footer', props: { text: 'Ciao' } },
     ]);
+  });
+
+  it('toggles sticky over HTTP, independent of content/draft-publish', async () => {
+    const locale = `it-${randomUUID()}`;
+    const createRes = await agent
+      .get('/site-layout-sections')
+      .query({ siteId, locale, kind: 'header' })
+      .expect(200);
+    const id = createRes.body.id;
+
+    const stickyRes = await agent
+      .patch(`/site-layout-sections/${id}/sticky`)
+      .send({ sticky: true })
+      .expect(200);
+    expect(stickyRes.body.sticky).toBe(true);
+    expect(stickyRes.body.status).toBe('draft'); // unaffected
+
+    const byId = await agent.get(`/site-layout-sections/${id}`).expect(200);
+    expect(byId.body.sticky).toBe(true);
+  });
+
+  it('404s updating sticky for a section that does not exist', async () => {
+    await agent
+      .patch(`/site-layout-sections/${randomUUID()}/sticky`)
+      .send({ sticky: true })
+      .expect(404);
+  });
+
+  it('400s on a non-boolean sticky value instead of hitting the database', async () => {
+    const locale = `it-${randomUUID()}`;
+    const createRes = await agent
+      .get('/site-layout-sections')
+      .query({ siteId, locale, kind: 'header' })
+      .expect(200);
+
+    await agent
+      .patch(`/site-layout-sections/${createRes.body.id}/sticky`)
+      .send({ sticky: 'yes' })
+      .expect(400);
   });
 
   it('404s on a section that does not exist', async () => {

@@ -10,11 +10,28 @@ describe('SiteLayoutSection entity', () => {
     kind: 'header' as const,
   };
 
-  it('starts as a draft with no published content', () => {
+  it('starts as a draft with no published content, not sticky', () => {
     const section = SiteLayoutSection.create(baseInput);
     expect(section.status).toBe('draft');
     expect(section.publishedContent).toBeNull();
     expect(section.content).toEqual([]);
+    expect(section.sticky).toBe(false);
+  });
+
+  it('create() can start sticky (copy-on-translate from an already-sticky default locale)', () => {
+    const section = SiteLayoutSection.create({ ...baseInput, sticky: true });
+    expect(section.sticky).toBe(true);
+  });
+
+  it('setSticky flips the flag and bumps updatedAt', () => {
+    const now = new Date('2026-01-01T00:00:00Z');
+    const section = SiteLayoutSection.create({ ...baseInput, now });
+
+    const later = new Date('2026-01-02T00:00:00Z');
+    section.setSticky(true, later);
+
+    expect(section.sticky).toBe(true);
+    expect(section.updatedAt).toEqual(later);
   });
 
   it('create() can start from a copied content instead of empty', () => {
@@ -73,6 +90,7 @@ describe('SiteLayoutSection entity', () => {
       status: 'published' as const,
       content: [{ type: 'Header', props: {} }],
       publishedContent: [{ type: 'Header', props: {} }],
+      sticky: true,
       createdAt: new Date('2025-12-01T00:00:00Z'),
       updatedAt: new Date('2026-01-01T00:00:00Z'),
     };

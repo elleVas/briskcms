@@ -19,3 +19,8 @@ export const rollbackBodySchema = z.object({
   versionId: z.string().uuid(),
 });
 export type RollbackBody = z.infer<typeof rollbackBodySchema>;
+
+export const stickyBodySchema = z.object({
+  sticky: z.boolean(),
+});
+export type StickyBody = z.infer<typeof stickyBodySchema>;

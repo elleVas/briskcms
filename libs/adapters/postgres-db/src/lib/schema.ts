@@ -174,6 +174,10 @@ export const siteLayoutSections = pgTable(
     status: text('status').notNull().$type<SiteLayoutSectionStatus>(),
     content: jsonb('content').notNull().default([]).$type<PageContent>(),
     publishedContent: jsonb('published_content').$type<PageContent>(),
+    // Meaningful for kind='header' only (stays pinned to the top of the
+    // viewport on scroll) — no DB-level constraint tying it to kind, same
+    // reasoning as the domain entity's own comment on SiteLayoutSection.sticky.
+    sticky: boolean('sticky').notNull().default(false),
     createdAt: timestamp('created_at', { withTimezone: true })
       .notNull()
       .defaultNow(),

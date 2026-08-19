@@ -96,6 +96,7 @@ const sampleHeaderSection: SiteLayoutSectionDto = {
   status: 'draft',
   content: [],
   publishedContent: null,
+  sticky: false,
   createdAt: '',
   updatedAt: '',
 };

@@ -103,6 +103,7 @@ describe('getPublishedPageBySlug', () => {
       translations: [{ locale: 'it', slug: 'chi-siamo' }],
       header: null,
       footer: null,
+      headerSticky: false,
       site: {
         name: 'Sito di prova',
         domain: 'example.com',
@@ -387,6 +388,38 @@ describe('getPublishedPageBySlug', () => {
 
     expect(result?.header).toEqual([{ type: 'Header', props: {} }]);
     expect(result?.footer).toEqual([{ type: 'Footer', props: {} }]);
+    expect(result?.headerSticky).toBe(false);
+  });
+
+  it('propagates a published sticky header, and gates it to false when the header is unpublished', async () => {
+    const deps = setup();
+    await seedSite(deps.siteRepository);
+    await createAndPublish(deps, {
+      groupId: 'group-1',
+      locale: 'it',
+      slug: 'chi-siamo',
+      title: 'Chi siamo',
+    });
+    const stickyHeader = SiteLayoutSection.create({
+      id: 'header-1',
+      tenantId,
+      siteId: 'site-1',
+      locale: 'it',
+      kind: 'header',
+      sticky: true,
+    });
+    stickyHeader.saveDraft([{ type: 'Header', props: {} }]);
+    stickyHeader.publish();
+    await deps.siteLayoutSectionRepository.save(stickyHeader);
+
+    const result = await getPublishedPageBySlug(deps, {
+      tenantId,
+      domain: 'example.com',
+      locale: 'it',
+      slug: 'chi-siamo',
+    });
+
+    expect(result?.headerSticky).toBe(true);
   });
 
   it('never leaks an unpublished header draft to the public site', async () => {

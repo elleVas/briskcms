@@ -1,10 +1,15 @@
 import { describe, expect, it } from 'vitest';
-import { Site, SiteNotFoundError } from '@brisk/domain-core';
+import {
+  Site,
+  SiteLayoutSectionNotFoundError,
+  SiteNotFoundError,
+} from '@brisk/domain-core';
 import { getOrCreateSiteLayoutSection } from './get-or-create-site-layout-section.use-case.js';
 import { saveSiteLayoutSectionDraft } from './save-site-layout-section-draft.use-case.js';
 import { publishSiteLayoutSection } from './publish-site-layout-section.use-case.js';
 import { listSiteLayoutSectionVersions } from './list-site-layout-section-versions.use-case.js';
 import { rollbackSiteLayoutSectionToVersion } from './rollback-site-layout-section-to-version.use-case.js';
+import { updateSiteLayoutSectionSticky } from './update-site-layout-section-sticky.use-case.js';
 import {
   InMemorySiteLayoutSectionRepository,
   InMemorySiteLayoutSectionVersionRepository,
@@ -193,6 +198,76 @@ describe('site layout section lifecycle: get-or-create -> draft -> publish -> ro
       id: section.id,
     });
     expect(versionsAfterRollback).toHaveLength(3);
+  });
+
+  it('updateSticky flips the flag immediately without creating a version or touching content', async () => {
+    const deps = setup();
+    await seedSite(deps.siteRepository);
+    const section = await getOrCreateSiteLayoutSection(deps, {
+      tenantId,
+      siteId: 'site-1',
+      locale: 'it',
+      kind: 'header',
+    });
+    expect(section.sticky).toBe(false);
+    await saveSiteLayoutSectionDraft(deps, {
+      tenantId,
+      id: section.id,
+      content: [{ type: 'Nav', props: {} }],
+      actorUserId: null,
+    });
+
+    const updated = await updateSiteLayoutSectionSticky(deps, {
+      tenantId,
+      id: section.id,
+      sticky: true,
+    });
+
+    expect(updated.sticky).toBe(true);
+    expect(updated.content).toEqual([{ type: 'Nav', props: {} }]);
+    expect(updated.status).toBe('draft');
+    const versions = await listSiteLayoutSectionVersions(deps, {
+      tenantId,
+      id: section.id,
+    });
+    expect(versions).toHaveLength(1); // only the draft save above, not the sticky update
+  });
+
+  it('updateSticky throws for a section that does not exist', async () => {
+    const deps = setup();
+
+    await expect(
+      updateSiteLayoutSectionSticky(deps, {
+        tenantId,
+        id: 'missing-section',
+        sticky: true,
+      }),
+    ).rejects.toThrow(SiteLayoutSectionNotFoundError);
+  });
+
+  it('getOrCreate copies sticky from the default locale section, same as content', async () => {
+    const deps = setup();
+    await seedSite(deps.siteRepository);
+    const defaultHeader = await getOrCreateSiteLayoutSection(deps, {
+      tenantId,
+      siteId: 'site-1',
+      locale: 'it',
+      kind: 'header',
+    });
+    await updateSiteLayoutSectionSticky(deps, {
+      tenantId,
+      id: defaultHeader.id,
+      sticky: true,
+    });
+
+    const enHeader = await getOrCreateSiteLayoutSection(deps, {
+      tenantId,
+      siteId: 'site-1',
+      locale: 'en',
+      kind: 'header',
+    });
+
+    expect(enHeader.sticky).toBe(true);
   });
 
   it('never leaks sections or versions across tenants', async () => {

@@ -17,6 +17,7 @@ vi.mock('../lib/site-layout-sections-api-client.js', async (importOriginal) => {
     ...actual,
     saveDraft: vi.fn(),
     publishSiteLayoutSection: vi.fn(),
+    updateSticky: vi.fn(),
   };
 });
 
@@ -29,6 +30,7 @@ const sampleSection: api.SiteLayoutSectionDto = {
   status: 'draft',
   content: [],
   publishedContent: null,
+  sticky: false,
   createdAt: '',
   updatedAt: '',
 };
@@ -117,5 +119,35 @@ describe('useSiteLayoutSectionEditor', () => {
     expect(api.saveDraft).toHaveBeenCalledWith(sampleSection.id, []);
     expect(api.publishSiteLayoutSection).toHaveBeenCalledWith(sampleSection.id);
     expect(result.current.status).toEqual({ kind: 'published' });
+  });
+
+  it('handleStickyChange calls updateSticky and refreshes the cached section', async () => {
+    vi.mocked(api.updateSticky).mockResolvedValue({
+      ...sampleSection,
+      sticky: true,
+    });
+
+    const { result } = renderEditor();
+
+    await act(async () => {
+      result.current.handleStickyChange(true);
+    });
+
+    expect(api.updateSticky).toHaveBeenCalledWith(sampleSection.id, true);
+  });
+
+  it('handleStickyChange sets an error status when the update fails', async () => {
+    vi.mocked(api.updateSticky).mockRejectedValue(new Error('sticky failed'));
+
+    const { result } = renderEditor();
+
+    await act(async () => {
+      result.current.handleStickyChange(true);
+    });
+
+    expect(result.current.status).toEqual({
+      kind: 'error',
+      message: expect.stringContaining('sticky failed'),
+    });
   });
 });

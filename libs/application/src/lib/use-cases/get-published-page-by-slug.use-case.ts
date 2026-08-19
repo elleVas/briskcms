@@ -55,6 +55,10 @@ export interface PublishedPage {
   // page.publishedContent.
   header: Block[] | null;
   footer: Block[] | null;
+  // Gated the same way as `header` (only meaningful once a header is
+  // actually published) — no footer equivalent, "sticky footer" wasn't
+  // asked for.
+  headerSticky: boolean;
 }
 
 /**
@@ -126,6 +130,8 @@ export async function getPublishedPageBySlug(
       footerSection?.status === 'published'
         ? footerSection.publishedContent
         : null,
+    headerSticky:
+      headerSection?.status === 'published' ? headerSection.sticky : false,
     site: {
       name: site.name,
       domain: site.domain,
