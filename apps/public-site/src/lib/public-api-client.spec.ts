@@ -24,6 +24,8 @@ const samplePage: PublishedPageDto = {
     openingHours: null,
     searchEngineIndexingEnabled: false,
   },
+  header: null,
+  footer: null,
 };
 
 function jsonResponse(body: unknown, status = 200) {

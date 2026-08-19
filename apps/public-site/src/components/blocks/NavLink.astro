@@ -1,0 +1,22 @@
+---
+import type { NavLinkProps } from '@brisk/shared-types';
+import { localePath } from '../../lib/locale-path.js';
+
+type Props = NavLinkProps;
+
+const { label, linkType, page, url, position } = Astro.props;
+const href = linkType === 'page' && page ? localePath(page.locale, page.slug) : url;
+---
+
+<a
+  href={href}
+  class:list={['brisk-nav-link', { 'brisk-nav-link--right': position === 'right' }]}
+>
+  {label}
+</a>
+
+<style>
+  .brisk-nav-link--right {
+    margin-left: auto;
+  }
+</style>

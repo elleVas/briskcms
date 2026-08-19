@@ -4,13 +4,22 @@ import {
   galleryPropsSchema,
   heroPropsSchema,
   imagePropsSchema,
+  languageSwitcherPropsSchema,
+  navLinkPropsSchema,
   textPropsSchema,
   type Block,
 } from '@brisk/shared-types';
+import type {
+  PublishedPageTranslationDto,
+  PublishedSiteDto,
+} from '../lib/public-api-client.js';
 import Form from './blocks/Form.astro';
 import Gallery from './blocks/Gallery.astro';
 import Hero from './blocks/Hero.astro';
 import Image from './blocks/Image.astro';
+import LanguageSwitcher from './blocks/LanguageSwitcher.astro';
+import Nav from './blocks/Nav.astro';
+import NavLink from './blocks/NavLink.astro';
 import Text from './blocks/Text.astro';
 
 // Walks `Block[]`/`children` directly — no dependency on Puck's own data
@@ -20,12 +29,20 @@ import Text from './blocks/Text.astro';
 // @brisk/puck-config, same source of truth) validates `props` at this
 // boundary instead of an `as` cast — content comes from the API as
 // unvalidated JSON as far as this component is concerned.
+//
+// `locale`/`translations`/`site` are only used by LanguageSwitcher, which
+// can be nested inside a Nav (docs/adr/0018) — threaded through every
+// recursive call rather than looked up again per block, since a leaf has
+// no way to reach back up to the page-level values otherwise.
 
 interface Props {
   block: Block;
+  locale: string;
+  translations: PublishedPageTranslationDto[];
+  site: PublishedSiteDto;
 }
 
-const { block } = Astro.props;
+const { block, locale, translations, site } = Astro.props;
 ---
 
 {block.type === 'Hero' && <Hero {...heroPropsSchema.parse(block.props)} />}
@@ -38,7 +55,31 @@ const { block } = Astro.props;
 }
 {block.type === 'Form' && <Form {...formBlockPropsSchema.parse(block.props)} />}
 {
-  block.children?.map((child) => (
-    <Astro.self block={child} />
-  ))
+  block.type === 'NavLink' && (
+    <NavLink {...navLinkPropsSchema.parse(block.props)} />
+  )
+}
+{
+  block.type === 'LanguageSwitcher' && (
+    <LanguageSwitcher
+      {...languageSwitcherPropsSchema.parse(block.props)}
+      locale={locale}
+      translations={translations}
+      site={site}
+    />
+  )
+}
+{
+  block.type === 'Nav' && (
+    <Nav>
+      {block.children?.map((child) => (
+        <Astro.self
+          block={child}
+          locale={locale}
+          translations={translations}
+          site={site}
+        />
+      ))}
+    </Nav>
+  )
 }
