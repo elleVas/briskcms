@@ -32,6 +32,8 @@ export interface PublishedPageDto {
   locale: string;
   translations: PublishedPageTranslationDto[];
   site: PublishedSiteDto;
+  header: Block[] | null;
+  footer: Block[] | null;
 }
 
 // process.env, not import.meta.env: this must read the real deployment's

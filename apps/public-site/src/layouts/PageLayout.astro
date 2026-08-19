@@ -1,9 +1,10 @@
 ---
-import type { SeoMeta } from '@brisk/shared-types';
+import type { Block, SeoMeta } from '@brisk/shared-types';
 import type {
 	PublishedPageTranslationDto,
 	PublishedSiteDto,
 } from '../lib/public-api-client.js';
+import BlockRenderer from '../components/BlockRenderer.astro';
 import { localePath } from '../lib/locale-path.js';
 import { buildSchemaOrgGraph } from '../lib/schema-org.js';
 
@@ -12,9 +13,11 @@ interface Props {
 	locale: string;
 	translations: PublishedPageTranslationDto[];
 	site: PublishedSiteDto;
+	header: Block[] | null;
+	footer: Block[] | null;
 }
 
-const { seoMeta, locale, translations, site } = Astro.props;
+const { seoMeta, locale, translations, site, header, footer } = Astro.props;
 // The default locale's translation, if published, doubles as the
 // x-default alternate (docs/adr/0017) — the version search engines should
 // offer a visitor whose browser locale matches none of the site's.
@@ -88,6 +91,34 @@ const schemaOrgJson = JSON.stringify(schemaOrgGraph).replace(/</g, '\\u003c');
 		<script is:inline type="application/ld+json" set:html={schemaOrgJson} />
 	</head>
 	<body>
+		{
+			header && (
+				<header>
+					{header.map((block) => (
+						<BlockRenderer
+							block={block}
+							locale={locale}
+							translations={translations}
+							site={site}
+						/>
+					))}
+				</header>
+			)
+		}
 		<slot />
+		{
+			footer && (
+				<footer>
+					{footer.map((block) => (
+						<BlockRenderer
+							block={block}
+							locale={locale}
+							translations={translations}
+							site={site}
+						/>
+					))}
+				</footer>
+			)
+		}
 	</body>
 </html>

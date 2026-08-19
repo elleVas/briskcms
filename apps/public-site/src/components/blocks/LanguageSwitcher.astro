@@ -1,0 +1,88 @@
+---
+import type { LanguageSwitcherProps } from '@brisk/shared-types';
+import type {
+  PublishedPageTranslationDto,
+  PublishedSiteDto,
+} from '../../lib/public-api-client.js';
+import { localePath } from '../../lib/locale-path.js';
+
+interface Props extends LanguageSwitcherProps {
+  locale: string;
+  translations: PublishedPageTranslationDto[];
+  site: PublishedSiteDto;
+}
+
+const { position, locale, translations, site } = Astro.props;
+
+// The default locale's translation doubles as the redirect target for
+// 'redirect-to-default' (docs/adr/0017's fallback setting) — same
+// resolution PageLayout.astro's hreflang x-default alternate uses.
+const defaultTranslation = translations.find(
+  (translation) => translation.locale === site.defaultLocale,
+);
+
+interface LocaleLink {
+  locale: string;
+  href: string;
+}
+
+// One entry per enabled locale that has somewhere to send the visitor:
+// its own translation if published, otherwise the default locale's page
+// when the site is configured to fall back to it — 'not-available'
+// locales are simply omitted, there is nothing to link to.
+const links = site.enabledLocales
+  .map((enabledLocale): LocaleLink | null => {
+    const translation = translations.find(
+      (candidate) => candidate.locale === enabledLocale,
+    );
+    if (translation) {
+      return {
+        locale: enabledLocale,
+        href: localePath(translation.locale, translation.slug),
+      };
+    }
+    if (site.untranslatedPageFallback === 'redirect-to-default' && defaultTranslation) {
+      return {
+        locale: enabledLocale,
+        href: localePath(defaultTranslation.locale, defaultTranslation.slug),
+      };
+    }
+    return null;
+  })
+  .filter((link): link is LocaleLink => link !== null);
+---
+
+{
+  links.length > 1 && (
+    <nav
+      class:list={[
+        'brisk-language-switcher',
+        { 'brisk-language-switcher--right': position === 'right' },
+      ]}
+      aria-label="Selettore lingua"
+    >
+      {links.map((link) => (
+        <a
+          href={link.href}
+          aria-current={link.locale === locale ? 'true' : undefined}
+        >
+          {link.locale.toUpperCase()}
+        </a>
+      ))}
+    </nav>
+  )
+}
+
+<style>
+  .brisk-language-switcher {
+    display: flex;
+    gap: 0.5rem;
+  }
+  .brisk-language-switcher--right {
+    margin-left: auto;
+  }
+  .brisk-language-switcher a[aria-current='true'] {
+    font-weight: 600;
+    text-decoration: underline;
+  }
+</style>
