@@ -1,14 +1,13 @@
-import type {
-  Block,
-  OpeningHoursDay,
-  SeoMeta,
-  UntranslatedPageFallback,
-} from '@brisk/shared-types';
+import type { Block, SeoMeta } from '@brisk/shared-types';
 import type {
   PageRepositoryPort,
   SiteLayoutSectionRepositoryPort,
   SiteRepositoryPort,
 } from '@brisk/ports';
+import {
+  resolveSiteChrome,
+  type PublishedSite,
+} from './resolve-site-chrome.js';
 
 export interface GetPublishedPageBySlugDeps {
   siteRepository: SiteRepositoryPort;
@@ -51,20 +50,6 @@ async function resolveAncestors(
     currentId = current.parentId;
   }
   return ancestors;
-}
-
-/** Only what the public renderer needs for OG tags + schema.org (docs/adr/0014) and the language switcher (docs/adr/0017) — never the tenant id or anything else internal. */
-export interface PublishedSite {
-  name: string;
-  domain: string | null;
-  defaultLocale: string;
-  enabledLocales: string[];
-  untranslatedPageFallback: UntranslatedPageFallback;
-  businessAddress: string | null;
-  businessPhone: string | null;
-  businessType: string | null;
-  openingHours: OpeningHoursDay[] | null;
-  searchEngineIndexingEnabled: boolean;
 }
 
 /** One entry per published locale-translation of this page (docs/adr/0017) — never includes an unpublished draft translation's slug. */
@@ -135,24 +120,11 @@ export async function getPublishedPageBySlug(
     return null;
   }
 
-  const [siblings, headerSection, footerSection, ancestors] = await Promise.all(
-    [
-      deps.pageRepository.listByGroup(input.tenantId, site.id, page.groupId),
-      deps.siteLayoutSectionRepository.findBySiteLocaleKind(
-        input.tenantId,
-        site.id,
-        input.locale,
-        'header',
-      ),
-      deps.siteLayoutSectionRepository.findBySiteLocaleKind(
-        input.tenantId,
-        site.id,
-        input.locale,
-        'footer',
-      ),
-      resolveAncestors(deps.pageRepository, input.tenantId, page.parentId),
-    ],
-  );
+  const [siblings, chrome, ancestors] = await Promise.all([
+    deps.pageRepository.listByGroup(input.tenantId, site.id, page.groupId),
+    resolveSiteChrome(deps, input.tenantId, site, input.locale),
+    resolveAncestors(deps.pageRepository, input.tenantId, page.parentId),
+  ]);
   const translations = siblings
     .filter((sibling) => sibling.status === 'published')
     .map((sibling) => ({ locale: sibling.locale, slug: sibling.slug }));
@@ -163,27 +135,9 @@ export async function getPublishedPageBySlug(
     locale: page.locale,
     translations,
     ancestors,
-    header:
-      headerSection?.status === 'published'
-        ? headerSection.publishedContent
-        : null,
-    footer:
-      footerSection?.status === 'published'
-        ? footerSection.publishedContent
-        : null,
-    headerSticky:
-      headerSection?.status === 'published' ? headerSection.sticky : false,
-    site: {
-      name: site.name,
-      domain: site.domain,
-      defaultLocale: site.defaultLocale,
-      enabledLocales: site.enabledLocales,
-      untranslatedPageFallback: site.untranslatedPageFallback,
-      businessAddress: site.businessAddress,
-      businessPhone: site.businessPhone,
-      businessType: site.businessType,
-      openingHours: site.openingHours,
-      searchEngineIndexingEnabled: site.searchEngineIndexingEnabled,
-    },
+    header: chrome.header,
+    footer: chrome.footer,
+    headerSticky: chrome.headerSticky,
+    site: chrome.site,
   };
 }

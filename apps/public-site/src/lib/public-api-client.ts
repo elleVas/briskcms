@@ -77,6 +77,37 @@ export async function getPublishedPageBySlug(
   return res.json();
 }
 
+export interface PublishedSiteChromeDto {
+  site: PublishedSiteDto;
+  header: Block[] | null;
+  footer: Block[] | null;
+  headerSticky: boolean;
+}
+
+/**
+ * Site-level header/footer with no specific page in the picture — for
+ * routes with no backing Page row (e.g. search.astro), so they can still
+ * render the site's normal chrome instead of a bare page. Same 404 ->
+ * null collapse as getPublishedPageBySlug.
+ */
+export async function getPublishedSiteChrome(
+  domain: string,
+  locale: string,
+): Promise<PublishedSiteChromeDto | null> {
+  const params = new URLSearchParams({ domain, locale });
+  const res = await fetch(
+    `${apiUrl()}/public/pages/chrome?${params.toString()}`,
+  );
+
+  if (res.status === 404) {
+    return null;
+  }
+  if (!res.ok) {
+    throw new Error(`Public pages API error: ${res.status}`);
+  }
+  return res.json();
+}
+
 export interface SitemapEntryDto {
   slug: string;
   locale: string;

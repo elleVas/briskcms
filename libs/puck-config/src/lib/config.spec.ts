@@ -24,6 +24,7 @@ describe('puckConfig', () => {
       'Button',
       'FeatureGrid',
       'Feature',
+      'SearchBox',
     ]);
     expect(typeof puckConfig.components.Hero.render).toBe('function');
     expect(typeof puckConfig.components.Text.render).toBe('function');
@@ -45,5 +46,6 @@ describe('puckConfig', () => {
     expect(typeof puckConfig.components.Button.render).toBe('function');
     expect(typeof puckConfig.components.FeatureGrid.render).toBe('function');
     expect(typeof puckConfig.components.Feature.render).toBe('function');
+    expect(typeof puckConfig.components.SearchBox.render).toBe('function');
   });
 });

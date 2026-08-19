@@ -41,3 +41,11 @@ export const publicPagesSearchQuerySchema = z.object({
 export type PublicPagesSearchQuery = z.infer<
   typeof publicPagesSearchQuerySchema
 >;
+
+export const publicPagesChromeQuerySchema = z.object({
+  domain: domainSchema,
+  locale: z.string().min(2),
+});
+export type PublicPagesChromeQuery = z.infer<
+  typeof publicPagesChromeQuerySchema
+>;
