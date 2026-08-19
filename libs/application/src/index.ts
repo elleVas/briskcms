@@ -34,3 +34,4 @@ export * from './lib/use-cases/save-site-layout-section-draft.use-case.js';
 export * from './lib/use-cases/publish-site-layout-section.use-case.js';
 export * from './lib/use-cases/list-site-layout-section-versions.use-case.js';
 export * from './lib/use-cases/rollback-site-layout-section-to-version.use-case.js';
+export * from './lib/use-cases/update-site-layout-section-sticky.use-case.js';

@@ -39,6 +39,7 @@ vi.mock('../lib/site-layout-sections-api-client.js', async (importOriginal) => {
     ...actual,
     listVersions: vi.fn(),
     rollbackToVersion: vi.fn(),
+    updateSticky: vi.fn(),
   };
 });
 
@@ -57,24 +58,21 @@ const sampleSection: SiteLayoutSectionDto = {
   status: 'draft',
   content: [],
   publishedContent: null,
+  sticky: false,
   createdAt: '',
   updatedAt: '',
 };
 
-function renderView() {
+function renderView(kind: SiteLayoutSectionDto['kind'] = 'header') {
   const queryClient = createTestQueryClient();
   queryClient.setQueryData(
-    siteLayoutSectionQueryOptions('site-1', 'it', 'header').queryKey,
-    sampleSection,
+    siteLayoutSectionQueryOptions('site-1', 'it', kind).queryKey,
+    { ...sampleSection, kind },
   );
   return render(
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <SiteLayoutSectionEditorView
-          siteId="site-1"
-          locale="it"
-          kind="header"
-        />
+        <SiteLayoutSectionEditorView siteId="site-1" locale="it" kind={kind} />
       </TooltipProvider>
     </QueryClientProvider>,
   );
@@ -126,5 +124,29 @@ describe('SiteLayoutSectionEditorView', () => {
     });
     expect(restoreButtons).toHaveLength(1);
     expect(screen.getByText(/versione attuale/i)).toBeTruthy();
+  });
+
+  it('shows the sticky toggle for a header and calls updateSticky when flipped', async () => {
+    vi.mocked(sectionsApi.updateSticky).mockResolvedValue({
+      ...sampleSection,
+      sticky: true,
+    });
+
+    renderView();
+
+    const toggle = screen.getByRole('switch');
+    expect(toggle.getAttribute('aria-checked')).toBe('false');
+
+    fireEvent.click(toggle);
+
+    await waitFor(() =>
+      expect(sectionsApi.updateSticky).toHaveBeenCalledWith('section-1', true),
+    );
+  });
+
+  it('hides the sticky toggle for a footer — sticky is a header-only concept', () => {
+    renderView('footer');
+
+    expect(screen.queryByRole('switch')).toBeNull();
   });
 });

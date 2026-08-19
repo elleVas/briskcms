@@ -9,6 +9,7 @@ import { headerFooterPuckConfig } from '@brisk/puck-config';
 import {
   publishSiteLayoutSection,
   saveDraft,
+  updateSticky,
   type SiteLayoutSectionKind,
 } from '../lib/site-layout-sections-api-client.js';
 import { fromPuckData } from '../lib/puck-data-mapper.js';
@@ -77,5 +78,28 @@ export function useSiteLayoutSectionEditor(
     [publishMutation],
   );
 
-  return { section, status, handleChange, handlePublish };
+  // Not part of saveDraftMutation on purpose (docs/adr/0018 follow-up):
+  // sticky takes effect immediately, it isn't "content" a debounced
+  // autosave should batch with Puck's own onChange.
+  const stickyMutation = useMutation({
+    mutationFn: (sticky: boolean) => updateSticky(section.id, sticky),
+    onSuccess: (updated) => {
+      queryClient.setQueryData(queryOptions.queryKey, updated);
+    },
+    onError: (error: unknown) =>
+      setStatus({ kind: 'error', message: String(error) }),
+  });
+
+  const handleStickyChange = useCallback(
+    (sticky: boolean) => stickyMutation.mutate(sticky),
+    [stickyMutation],
+  );
+
+  return {
+    section,
+    status,
+    handleChange,
+    handlePublish,
+    handleStickyChange,
+  };
 }

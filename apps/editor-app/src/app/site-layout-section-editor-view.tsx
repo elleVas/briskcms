@@ -10,6 +10,7 @@ import { IconButton } from './icon-button.js';
 import { MediaPickerProvider } from './media-picker-provider.js';
 import { PageListProvider } from './page-list-provider.js';
 import type { SiteLayoutSectionKind } from '../lib/site-layout-sections-api-client.js';
+import { Switch } from '../components/ui/switch.js';
 import { useSiteLayoutSectionEditor } from './use-site-layout-section-editor.js';
 import { useSiteLayoutSectionVersions } from './use-site-layout-section-versions.js';
 import { VersionHistoryDialog } from './version-history-dialog.js';
@@ -45,7 +46,7 @@ export function SiteLayoutSectionEditorView({
   kind,
 }: SiteLayoutSectionEditorViewProps) {
   const { t } = useTranslation();
-  const { section, status, handleChange, handlePublish } =
+  const { section, status, handleChange, handlePublish, handleStickyChange } =
     useSiteLayoutSectionEditor(siteId, locale, kind);
   const statusText = useStatusText(status);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
@@ -78,12 +79,24 @@ export function SiteLayoutSectionEditorView({
           }
           statusText={statusText}
           actions={
-            <IconButton
-              label={t('pages.versionHistory.open')}
-              onClick={() => setIsHistoryOpen(true)}
-            >
-              <History />
-            </IconButton>
+            <>
+              {kind === 'header' && (
+                <label className="flex items-center gap-1.5">
+                  <Switch
+                    size="sm"
+                    checked={section.sticky}
+                    onCheckedChange={handleStickyChange}
+                  />
+                  {t('appearance.editor.sticky')}
+                </label>
+              )}
+              <IconButton
+                label={t('pages.versionHistory.open')}
+                onClick={() => setIsHistoryOpen(true)}
+              >
+                <History />
+              </IconButton>
+            </>
           }
           config={headerFooterPuckConfig}
           data={toPuckData(section.content, headerFooterPuckConfig)}

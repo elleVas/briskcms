@@ -103,6 +103,7 @@ describe('PublicPagesController (integration)', () => {
       translations: [{ locale: 'it', slug: 'chi-siamo' }],
       header: null,
       footer: null,
+      headerSticky: false,
       site: {
         name: 'Public Test Site',
         domain,
@@ -150,6 +151,44 @@ describe('PublicPagesController (integration)', () => {
 
     expect(res.body.header).toEqual([{ type: 'Header', props: {} }]);
     expect(res.body.footer).toBeNull();
+    expect(res.body.headerSticky).toBe(false);
+  });
+
+  it('propagates a published sticky header over the public HTTP endpoint', async () => {
+    const createRes = await agent
+      .post('/pages')
+      .send({
+        siteId,
+        groupId: randomUUID(),
+        locale: 'it',
+        slug: 'con-header-sticky',
+        seoMeta: { title: 'Con header sticky', description: '' },
+      })
+      .expect(201);
+    await agent.post(`/pages/${createRes.body.id}/publish`).expect(201);
+
+    const headerRes = await agent
+      .get('/site-layout-sections')
+      .query({ siteId, locale: 'it', kind: 'header' })
+      .expect(200);
+    await agent
+      .patch(`/site-layout-sections/${headerRes.body.id}/draft`)
+      .send({ content: [{ type: 'Header', props: {} }] })
+      .expect(200);
+    await agent
+      .post(`/site-layout-sections/${headerRes.body.id}/publish`)
+      .expect(201);
+    await agent
+      .patch(`/site-layout-sections/${headerRes.body.id}/sticky`)
+      .send({ sticky: true })
+      .expect(200);
+
+    const res = await request(app.getHttpServer())
+      .get('/public/pages/by-slug')
+      .query({ domain, locale: 'it', slug: 'con-header-sticky' })
+      .expect(200);
+
+    expect(res.body.headerSticky).toBe(true);
   });
 
   it('404s for a page that has never been published, same as a nonexistent one', async () => {

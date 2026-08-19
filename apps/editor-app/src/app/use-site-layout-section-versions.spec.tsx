@@ -90,6 +90,7 @@ describe('useSiteLayoutSectionVersions', () => {
       status: 'published',
       content: [],
       publishedContent: [],
+      sticky: false,
       createdAt: '',
       updatedAt: '',
     });

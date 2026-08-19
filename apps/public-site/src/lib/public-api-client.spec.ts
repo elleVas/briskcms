@@ -26,6 +26,7 @@ const samplePage: PublishedPageDto = {
   },
   header: null,
   footer: null,
+  headerSticky: false,
 };
 
 function jsonResponse(body: unknown, status = 200) {

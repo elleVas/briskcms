@@ -25,6 +25,7 @@ const { page } = Astro.props;
       site={page.site}
       header={page.header}
       footer={page.footer}
+      headerSticky={page.headerSticky}
     >
       {page.content.map((block) => (
         <BlockRenderer

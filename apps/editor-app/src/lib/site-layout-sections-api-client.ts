@@ -12,6 +12,7 @@ export interface SiteLayoutSectionDto {
   status: 'draft' | 'published';
   content: Block[];
   publishedContent: Block[] | null;
+  sticky: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -42,6 +43,19 @@ export function publishSiteLayoutSection(
   id: string,
 ): Promise<SiteLayoutSectionDto> {
   return request(`/site-layout-sections/${id}/publish`, { method: 'POST' });
+}
+
+// Not part of content/draft-publish (docs/adr/0018 follow-up) — a display
+// setting that takes effect immediately, so it's its own endpoint rather
+// than folded into saveDraft's body.
+export function updateSticky(
+  id: string,
+  sticky: boolean,
+): Promise<SiteLayoutSectionDto> {
+  return request(`/site-layout-sections/${id}/sticky`, {
+    method: 'PATCH',
+    body: JSON.stringify({ sticky }),
+  });
 }
 
 export interface SiteLayoutSectionVersionDto {

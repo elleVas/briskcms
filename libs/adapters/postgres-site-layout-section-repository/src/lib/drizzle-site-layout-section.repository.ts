@@ -21,6 +21,7 @@ function toRow(props: SiteLayoutSectionProps) {
     status: props.status,
     content: props.content,
     publishedContent: props.publishedContent,
+    sticky: props.sticky,
     createdAt: props.createdAt,
     updatedAt: props.updatedAt,
   };

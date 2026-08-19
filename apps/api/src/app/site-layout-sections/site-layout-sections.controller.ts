@@ -16,6 +16,7 @@ import {
   publishSiteLayoutSection,
   rollbackSiteLayoutSectionToVersion,
   saveSiteLayoutSectionDraft,
+  updateSiteLayoutSectionSticky,
 } from '@brisk/application';
 import {
   SiteLayoutSectionNotFoundError,
@@ -37,6 +38,8 @@ import {
   rollbackBodySchema,
   type SaveDraftBody,
   saveDraftBodySchema,
+  type StickyBody,
+  stickyBodySchema,
 } from './site-layout-sections.schemas.js';
 import {
   SITE_LAYOUT_SECTION_REPOSITORY,
@@ -121,6 +124,24 @@ export class SiteLayoutSectionsController {
       const section = await publishSiteLayoutSection(
         { siteLayoutSectionRepository: this.siteLayoutSectionRepository },
         { tenantId: this.tenantContext.getCurrentTenantId(), id },
+      );
+      return section.toProps();
+    });
+  }
+
+  @Patch(':id/sticky')
+  async updateSticky(
+    @Param('id') id: string,
+    @Body(new ZodValidationPipe(stickyBodySchema)) body: StickyBody,
+  ) {
+    return this.handleDomainErrors(async () => {
+      const section = await updateSiteLayoutSectionSticky(
+        { siteLayoutSectionRepository: this.siteLayoutSectionRepository },
+        {
+          tenantId: this.tenantContext.getCurrentTenantId(),
+          id,
+          sticky: body.sticky,
+        },
       );
       return section.toProps();
     });
