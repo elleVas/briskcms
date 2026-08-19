@@ -100,4 +100,29 @@ describe('puck-data-mapper', () => {
       ),
     ).toEqual(blocks);
   });
+
+  it('round-trips Columns > Column nesting in the main page config', () => {
+    const blocks: Block[] = [
+      {
+        type: 'Columns',
+        props: { layout: 'three-equal' },
+        children: [
+          {
+            type: 'Column',
+            props: {},
+            children: [{ type: 'Text', props: { body: 'Sinistra' } }],
+          },
+          {
+            type: 'Column',
+            props: {},
+            children: [{ type: 'Text', props: { body: 'Destra' } }],
+          },
+        ],
+      },
+    ];
+
+    expect(fromPuckData(toPuckData(blocks, puckConfig), puckConfig)).toEqual(
+      blocks,
+    );
+  });
 });

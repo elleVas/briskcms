@@ -166,3 +166,46 @@ export const navLinkPropsSchema = navItemPositionSchema.extend({
   url: z.string(),
 });
 export type NavLinkProps = z.infer<typeof navLinkPropsSchema>;
+
+/**
+ * A finite set of presets (not a free "number of columns" field) — every
+ * layout maps to one explicit `grid-template-columns` value in
+ * `columnsGridTemplate` below, in both the editor canvas and
+ * apps/public-site. The editor doesn't enforce that a "2 uguali" Columns
+ * block actually contains exactly 2 `Column` children (Puck slots don't
+ * support that kind of cardinality check) — CSS Grid degrades gracefully
+ * with fewer or more, same trade-off as every other radio-guided field in
+ * this file (e.g. NavLink's `linkType`).
+ */
+export const columnsLayoutSchema = z.enum([
+  'two-equal',
+  'two-asymmetric',
+  'three-equal',
+]);
+export type ColumnsLayout = z.infer<typeof columnsLayoutSchema>;
+
+export const columnsPropsSchema = z.object({
+  layout: columnsLayoutSchema.default('two-equal'),
+});
+export type ColumnsProps = z.infer<typeof columnsPropsSchema>;
+
+/** One CSS value per `ColumnsLayout`, shared between the Puck editor render (libs/puck-config) and the public Astro render (apps/public-site) so the two never drift apart. */
+export function columnsGridTemplate(layout: ColumnsLayout): string {
+  switch (layout) {
+    case 'two-equal':
+      return '1fr 1fr';
+    case 'two-asymmetric':
+      return '3fr 7fr';
+    case 'three-equal':
+      return '1fr 1fr 1fr';
+  }
+}
+
+/**
+ * Pure layout wrapper, no props of its own — mirrors Nav's own reasoning
+ * (see above) for why `strictObject`, not `object`. Its content lives
+ * entirely in `Block.children`; which `ColumnsLayout` it renders under is
+ * the parent `Columns` block's concern, not this block's own.
+ */
+export const columnPropsSchema = z.strictObject({});
+export type ColumnProps = z.infer<typeof columnPropsSchema>;

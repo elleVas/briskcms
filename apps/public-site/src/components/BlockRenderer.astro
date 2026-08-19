@@ -1,5 +1,6 @@
 ---
 import {
+  columnsPropsSchema,
   formBlockPropsSchema,
   galleryPropsSchema,
   heroPropsSchema,
@@ -13,6 +14,8 @@ import type {
   PublishedPageTranslationDto,
   PublishedSiteDto,
 } from '../lib/public-api-client.js';
+import Column from './blocks/Column.astro';
+import Columns from './blocks/Columns.astro';
 import Form from './blocks/Form.astro';
 import Gallery from './blocks/Gallery.astro';
 import Hero from './blocks/Hero.astro';
@@ -81,5 +84,33 @@ const { block, locale, translations, site } = Astro.props;
         />
       ))}
     </Nav>
+  )
+}
+{
+  block.type === 'Columns' && (
+    <Columns {...columnsPropsSchema.parse(block.props)}>
+      {block.children?.map((child) => (
+        <Astro.self
+          block={child}
+          locale={locale}
+          translations={translations}
+          site={site}
+        />
+      ))}
+    </Columns>
+  )
+}
+{
+  block.type === 'Column' && (
+    <Column>
+      {block.children?.map((child) => (
+        <Astro.self
+          block={child}
+          locale={locale}
+          translations={translations}
+          site={site}
+        />
+      ))}
+    </Column>
   )
 }
