@@ -6,6 +6,7 @@ describe('User entity', () => {
     id: 'user-1',
     tenantId: 'tenant-1',
     email: 'lele@example.com',
+    displayName: 'Lele',
     passwordHash: 'hash-1',
     role: 'admin' as const,
   };
@@ -17,9 +18,36 @@ describe('User entity', () => {
     expect(user.id).toBe('user-1');
     expect(user.tenantId).toBe('tenant-1');
     expect(user.email).toBe('lele@example.com');
+    expect(user.displayName).toBe('Lele');
     expect(user.passwordHash).toBe('hash-1');
     expect(user.role).toBe('admin');
+    expect(user.isActive).toBe(true);
     expect(user.createdAt).toEqual(now);
+  });
+
+  it('create() defaults isActive to true, and to false when explicitly requested (invite flow)', () => {
+    expect(User.create(baseInput).isActive).toBe(true);
+    expect(User.create({ ...baseInput, isActive: false }).isActive).toBe(false);
+  });
+
+  it('changeRole/changeDisplayName replace the stored value', () => {
+    const user = User.create(baseInput);
+
+    user.changeRole('publisher');
+    user.changeDisplayName('Raffaele');
+
+    expect(user.role).toBe('publisher');
+    expect(user.displayName).toBe('Raffaele');
+  });
+
+  it('deactivate/reactivate toggle isActive', () => {
+    const user = User.create(baseInput);
+
+    user.deactivate();
+    expect(user.isActive).toBe(false);
+
+    user.reactivate();
+    expect(user.isActive).toBe(true);
   });
 
   it('starts unverified', () => {
@@ -49,6 +77,7 @@ describe('User entity', () => {
   it('fromProps/toProps round-trip without loss', () => {
     const props = {
       ...baseInput,
+      isActive: true,
       emailVerifiedAt: new Date('2026-01-01T00:00:00Z'),
       createdAt: new Date('2025-12-01T00:00:00Z'),
     };

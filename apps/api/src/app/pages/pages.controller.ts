@@ -40,6 +40,8 @@ import type {
   PageVersionRepositoryPort,
   TenantContextPort,
 } from '@brisk/ports';
+import { Roles } from '../auth/roles.decorator.js';
+import { RolesGuard } from '../auth/roles.guard.js';
 import { SessionAuthGuard } from '../auth/session-auth.guard.js';
 import { ZodValidationPipe } from '../zod-validation.pipe.js';
 import {
@@ -206,7 +208,12 @@ export class PagesController {
     });
   }
 
+  // Fase 5c: only admin/publisher can publish — draft/save stays open to
+  // every logged-in role (editor included), only this one action is
+  // gated.
   @Post(':id/publish')
+  @UseGuards(RolesGuard)
+  @Roles('admin', 'publisher')
   async publish(@Param('id') id: string) {
     return this.handleDomainErrors(async () => {
       const page = await publishPage(

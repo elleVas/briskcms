@@ -18,6 +18,7 @@ async function setup() {
     id: 'user-1',
     tenantId,
     email: 'lele@example.com',
+    displayName: 'Lele',
     passwordHash: await authPort.hashPassword('old-password'),
     role: 'admin',
   });

@@ -45,8 +45,15 @@ export const users = pgTable(
       .notNull()
       .references(() => tenants.id, { onDelete: 'cascade' }),
     email: text('email').notNull(),
+    // Nullable, not backfilled: existing users (incl. the dev seed admin)
+    // predate this column. UI falls back to `email` when null, same
+    // pattern as `seoMeta.title || slug` elsewhere in this codebase.
+    displayName: text('display_name'),
     passwordHash: text('password_hash').notNull(),
     role: text('role').notNull().$type<UserRole>(),
+    // False for a freshly-invited user who hasn't accepted yet, or an
+    // admin-deactivated one — see the domain entity's own doc comment.
+    isActive: boolean('is_active').notNull().default(true),
     emailVerifiedAt: timestamp('email_verified_at', { withTimezone: true }),
     createdAt: timestamp('created_at', { withTimezone: true })
       .notNull()
@@ -54,7 +61,10 @@ export const users = pgTable(
   },
   (table) => [
     unique().on(table.tenantId, table.email),
-    check('users_role_check', sql`${table.role} in ('admin', 'editor')`),
+    check(
+      'users_role_check',
+      sql`${table.role} in ('admin', 'publisher', 'editor')`,
+    ),
   ],
 );
 
@@ -314,7 +324,7 @@ export const verificationTokens = pgTable(
   (table) => [
     check(
       'verification_tokens_purpose_check',
-      sql`${table.purpose} in ('email-verification', 'password-reset')`,
+      sql`${table.purpose} in ('email-verification', 'password-reset', 'user-invite')`,
     ),
     index('verification_tokens_user_idx').on(table.userId),
   ],

@@ -103,6 +103,21 @@ export class InvalidFormSubmissionError extends Error {
   }
 }
 
+export class UserNotFoundError extends Error {
+  constructor(userId: string) {
+    super(`User not found: ${userId}`);
+    this.name = 'UserNotFoundError';
+  }
+}
+
+/** A tenant's (tenantId, email) must be unique — see the unique constraint in schema.ts. */
+export class UserEmailAlreadyExistsError extends Error {
+  constructor(email: string) {
+    super(`A user with email "${email}" already exists`);
+    this.name = 'UserEmailAlreadyExistsError';
+  }
+}
+
 export class MediaNotFoundError extends Error {
   constructor(mediaId: string) {
     super(`Media not found: ${mediaId}`);

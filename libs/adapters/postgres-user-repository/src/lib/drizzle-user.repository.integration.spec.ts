@@ -42,6 +42,7 @@ describe('DrizzleUserRepository (integration)', () => {
       id: randomUUID(),
       tenantId: tenantAId,
       email: `user-${randomUUID()}@example.com`,
+      displayName: 'Test User',
       passwordHash: 'irrelevant-for-this-suite',
       role: 'admin',
       ...overrides,

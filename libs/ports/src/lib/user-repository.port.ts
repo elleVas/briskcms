@@ -1,4 +1,5 @@
 import type { User } from '@brisk/domain-core';
+import type { PaginatedResult, Pagination } from './page-repository.port.js';
 
 /**
  * Ogni metodo richiede esplicitamente tenantId: nessuna query può
@@ -9,4 +10,9 @@ export interface UserRepositoryPort {
   save(user: User): Promise<void>;
   findById(tenantId: string, userId: string): Promise<User | null>;
   findByEmail(tenantId: string, email: string): Promise<User | null>;
+  /** Same Pagination/PaginatedResult shape as PageRepositoryPort.listBySite — the "Utenti" section (Fase 5c) needed a listing the same way Pages did before GET /pages existed. */
+  list(
+    tenantId: string,
+    pagination: Pagination,
+  ): Promise<PaginatedResult<User>>;
 }
