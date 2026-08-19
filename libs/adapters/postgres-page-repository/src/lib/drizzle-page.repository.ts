@@ -25,8 +25,27 @@ function toRow(props: PageProps) {
   };
 }
 
+// Explicit field list, not a spread of `row`: the `pages` table also
+// carries `searchText` (SearchPort's own concern, see
+// @brisk/postgres-search-repository) — a naive spread would leak it into
+// the domain entity's props and, from there, into every endpoint that
+// returns `page.toProps()`, none of which know or care that column exists.
 function fromRow(row: typeof pages.$inferSelect): Page {
-  return Page.fromProps(row);
+  return Page.fromProps({
+    id: row.id,
+    tenantId: row.tenantId,
+    siteId: row.siteId,
+    groupId: row.groupId,
+    locale: row.locale,
+    slug: row.slug,
+    parentId: row.parentId,
+    status: row.status,
+    content: row.content,
+    publishedContent: row.publishedContent,
+    seoMeta: row.seoMeta,
+    createdAt: row.createdAt,
+    updatedAt: row.updatedAt,
+  });
 }
 
 /** Connects as `brisk_app` — see docs/adr/0002-non-superuser-role-for-rls-enforcement.md. */

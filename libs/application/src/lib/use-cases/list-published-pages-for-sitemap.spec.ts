@@ -7,6 +7,7 @@ import { listPublishedPagesForSitemap } from './list-published-pages-for-sitemap
 import {
   InMemoryPageRepository,
   InMemoryPageVersionRepository,
+  InMemorySearchPort,
   InMemorySiteRepository,
 } from './in-memory-repositories.test-fixture.js';
 
@@ -17,7 +18,13 @@ describe('listPublishedPagesForSitemap', () => {
     const pageRepository = new InMemoryPageRepository();
     const pageVersionRepository = new InMemoryPageVersionRepository();
     const siteRepository = new InMemorySiteRepository();
-    return { pageRepository, pageVersionRepository, siteRepository };
+    const searchPort = new InMemorySearchPort();
+    return {
+      pageRepository,
+      pageVersionRepository,
+      siteRepository,
+      searchPort,
+    };
   }
 
   async function seedSite(

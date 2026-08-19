@@ -1,8 +1,9 @@
 import { Page, PageNotFoundError } from '@brisk/domain-core';
-import type { PageRepositoryPort } from '@brisk/ports';
+import type { PageRepositoryPort, SearchPort } from '@brisk/ports';
 
 export interface PublishPageDeps {
   pageRepository: PageRepositoryPort;
+  searchPort: SearchPort;
 }
 
 export interface PublishPageInput {
@@ -21,6 +22,7 @@ export async function publishPage(
 
   page.publish();
   await deps.pageRepository.save(page);
+  await deps.searchPort.indexPage(input.tenantId, page.siteId, page);
 
   return page;
 }

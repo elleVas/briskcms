@@ -27,6 +27,10 @@ import {
   promoBarConfig,
   type PromoBarProps,
 } from './blocks/promo-bar.block.js';
+import {
+  searchBoxConfig,
+  type SearchBoxProps,
+} from './blocks/search-box.block.js';
 
 export interface BriskLayoutComponentProps {
   Nav: NavPuckProps;
@@ -39,6 +43,7 @@ export interface BriskLayoutComponentProps {
   PromoBar: PromoBarProps;
   BackToTop: BackToTopProps;
   WhatsAppButton: WhatsAppButtonProps;
+  SearchBox: SearchBoxProps;
 }
 
 /**
@@ -66,5 +71,6 @@ export const headerFooterPuckConfig: Config<BriskLayoutComponentProps> = {
     PromoBar: promoBarConfig,
     BackToTop: backToTopConfig,
     WhatsAppButton: whatsAppButtonConfig,
+    SearchBox: searchBoxConfig,
   },
 };

@@ -21,6 +21,7 @@ import {
   navPropsSchema,
   quotePropsSchema,
   ratingPropsSchema,
+  searchBoxPropsSchema,
   tabPropsSchema,
   tabsPropsSchema,
   tablePropsSchema,
@@ -59,6 +60,7 @@ import Tab from './blocks/Tab.astro';
 import Tabs from './blocks/Tabs.astro';
 import Table from './blocks/Table.astro';
 import PromoBar from './blocks/PromoBar.astro';
+import SearchBox from './blocks/SearchBox.astro';
 import Text from './blocks/Text.astro';
 import WhatsAppButton from './blocks/WhatsAppButton.astro';
 
@@ -128,6 +130,11 @@ const { block, locale, translations, site } = Astro.props;
       translations={translations}
       site={site}
     />
+  )
+}
+{
+  block.type === 'SearchBox' && (
+    <SearchBox {...searchBoxPropsSchema.parse(block.props)} locale={locale} />
   )
 }
 {

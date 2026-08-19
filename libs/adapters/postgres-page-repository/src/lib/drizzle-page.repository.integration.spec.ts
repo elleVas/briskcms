@@ -88,6 +88,19 @@ describe('DrizzlePageRepository (integration)', () => {
     expect(foundFromOtherTenant).toBeNull();
   });
 
+  // Regression: `pages` also carries `search_text` (SearchPort's own
+  // column, see @brisk/postgres-search-repository) — fromRow() must not
+  // leak it into the domain entity via a naive row spread, or it ends up
+  // in every endpoint that returns page.toProps().
+  it('never leaks the search_text column into Page.toProps()', async () => {
+    const page = buildPage();
+    await pageRepository.save(page);
+
+    const found = await pageRepository.findById(tenantAId, page.id);
+
+    expect(found?.toProps()).not.toHaveProperty('searchText');
+  });
+
   it('findBySlug scopes by tenant, site, locale and slug', async () => {
     const page = buildPage();
     await pageRepository.save(page);

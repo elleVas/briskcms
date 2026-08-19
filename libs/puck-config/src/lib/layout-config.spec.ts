@@ -14,6 +14,7 @@ describe('headerFooterPuckConfig', () => {
       'PromoBar',
       'BackToTop',
       'WhatsAppButton',
+      'SearchBox',
     ]);
   });
 
