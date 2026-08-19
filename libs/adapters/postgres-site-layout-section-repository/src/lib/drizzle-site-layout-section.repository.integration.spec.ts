@@ -137,6 +137,29 @@ describe('DrizzleSiteLayoutSectionRepository (integration)', () => {
     expect(found?.content).toEqual([{ type: 'Nav', props: {} }]);
   });
 
+  it('findById on the version repository scopes by tenant', async () => {
+    const section = buildSection();
+    await sectionRepository.save(section);
+    const versionId = randomUUID();
+    await versionRepository.save({
+      id: versionId,
+      tenantId: tenantAId,
+      siteLayoutSectionId: section.id,
+      content: [{ type: 'Header', props: {} }],
+      createdBy: null,
+      createdAt: new Date(),
+    });
+
+    const found = await versionRepository.findById(tenantAId, versionId);
+    expect(found?.id).toBe(versionId);
+
+    const foundFromOtherTenant = await versionRepository.findById(
+      tenantBId,
+      versionId,
+    );
+    expect(foundFromOtherTenant).toBeNull();
+  });
+
   it('saves and lists section versions oldest-first, scoped to tenant', async () => {
     const section = buildSection();
     await sectionRepository.save(section);
