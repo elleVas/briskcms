@@ -20,6 +20,10 @@ import {
   type BackToTopProps,
 } from './blocks/back-to-top.block.js';
 import {
+  breadcrumbConfig,
+  type BreadcrumbProps,
+} from './blocks/breadcrumb.block.js';
+import {
   whatsAppButtonConfig,
   type WhatsAppButtonProps,
 } from './blocks/whatsapp-button.block.js';
@@ -39,6 +43,7 @@ export interface BriskLayoutComponentProps {
   PromoBar: PromoBarProps;
   BackToTop: BackToTopProps;
   WhatsAppButton: WhatsAppButtonProps;
+  Breadcrumb: BreadcrumbProps;
 }
 
 /**
@@ -66,5 +71,6 @@ export const headerFooterPuckConfig: Config<BriskLayoutComponentProps> = {
     PromoBar: promoBarConfig,
     BackToTop: backToTopConfig,
     WhatsAppButton: whatsAppButtonConfig,
+    Breadcrumb: breadcrumbConfig,
   },
 };

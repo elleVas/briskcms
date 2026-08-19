@@ -4,6 +4,7 @@ import {
   accordionPropsSchema,
   backToTopPropsSchema,
   bannerPropsSchema,
+  breadcrumbPropsSchema,
   buttonPropsSchema,
   columnsPropsSchema,
   countdownPropsSchema,
@@ -30,6 +31,7 @@ import {
   type Block,
 } from '@brisk/shared-types';
 import type {
+  PublishedPageAncestorDto,
   PublishedPageTranslationDto,
   PublishedSiteDto,
 } from '../lib/public-api-client.js';
@@ -37,6 +39,7 @@ import Accordion from './blocks/Accordion.astro';
 import AccordionItem from './blocks/AccordionItem.astro';
 import BackToTop from './blocks/BackToTop.astro';
 import Banner from './blocks/Banner.astro';
+import Breadcrumb from './blocks/Breadcrumb.astro';
 import Button from './blocks/Button.astro';
 import Column from './blocks/Column.astro';
 import Columns from './blocks/Columns.astro';
@@ -74,15 +77,19 @@ import WhatsAppButton from './blocks/WhatsAppButton.astro';
 // can be nested inside a Nav (docs/adr/0018) — threaded through every
 // recursive call rather than looked up again per block, since a leaf has
 // no way to reach back up to the page-level values otherwise.
+// `ancestors`/`currentPageTitle` follow the same reasoning for Breadcrumb.
 
 interface Props {
   block: Block;
   locale: string;
   translations: PublishedPageTranslationDto[];
   site: PublishedSiteDto;
+  ancestors: PublishedPageAncestorDto[];
+  currentPageTitle: string;
 }
 
-const { block, locale, translations, site } = Astro.props;
+const { block, locale, translations, site, ancestors, currentPageTitle } =
+  Astro.props;
 ---
 
 {block.type === 'Hero' && <Hero {...heroPropsSchema.parse(block.props)} />}
@@ -131,6 +138,16 @@ const { block, locale, translations, site } = Astro.props;
   )
 }
 {
+  block.type === 'Breadcrumb' && (
+    <Breadcrumb
+      {...breadcrumbPropsSchema.parse(block.props)}
+      locale={locale}
+      ancestors={ancestors}
+      currentPageTitle={currentPageTitle}
+    />
+  )
+}
+{
   block.type === 'Nav' && (
     <Nav {...navPropsSchema.parse(block.props)}>
       {block.children?.map((child) => (
@@ -139,6 +156,8 @@ const { block, locale, translations, site } = Astro.props;
           locale={locale}
           translations={translations}
           site={site}
+          ancestors={ancestors}
+          currentPageTitle={currentPageTitle}
         />
       ))}
     </Nav>
@@ -153,6 +172,8 @@ const { block, locale, translations, site } = Astro.props;
           locale={locale}
           translations={translations}
           site={site}
+          ancestors={ancestors}
+          currentPageTitle={currentPageTitle}
         />
       ))}
     </HamburgerMenu>
@@ -167,6 +188,8 @@ const { block, locale, translations, site } = Astro.props;
           locale={locale}
           translations={translations}
           site={site}
+          ancestors={ancestors}
+          currentPageTitle={currentPageTitle}
         />
       ))}
     </NavDropdown>
@@ -181,6 +204,8 @@ const { block, locale, translations, site } = Astro.props;
           locale={locale}
           translations={translations}
           site={site}
+          ancestors={ancestors}
+          currentPageTitle={currentPageTitle}
         />
       ))}
     </Columns>
@@ -195,6 +220,8 @@ const { block, locale, translations, site } = Astro.props;
           locale={locale}
           translations={translations}
           site={site}
+          ancestors={ancestors}
+          currentPageTitle={currentPageTitle}
         />
       ))}
     </Column>
@@ -224,6 +251,8 @@ const { block, locale, translations, site } = Astro.props;
           locale={locale}
           translations={translations}
           site={site}
+          ancestors={ancestors}
+          currentPageTitle={currentPageTitle}
         />
       ))}
     </Accordion>
@@ -243,6 +272,8 @@ const { block, locale, translations, site } = Astro.props;
           locale={locale}
           translations={translations}
           site={site}
+          ancestors={ancestors}
+          currentPageTitle={currentPageTitle}
         />
       ))}
     </Tabs>
@@ -257,6 +288,8 @@ const { block, locale, translations, site } = Astro.props;
           locale={locale}
           translations={translations}
           site={site}
+          ancestors={ancestors}
+          currentPageTitle={currentPageTitle}
         />
       ))}
     </Tab>
@@ -281,6 +314,8 @@ const { block, locale, translations, site } = Astro.props;
           locale={locale}
           translations={translations}
           site={site}
+          ancestors={ancestors}
+          currentPageTitle={currentPageTitle}
         />
       ))}
     </FeatureGrid>

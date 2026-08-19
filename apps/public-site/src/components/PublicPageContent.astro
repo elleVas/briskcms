@@ -26,6 +26,7 @@ const { page } = Astro.props;
       header={page.header}
       footer={page.footer}
       headerSticky={page.headerSticky}
+      ancestors={page.ancestors}
     >
       {page.content.map((block) => (
         <BlockRenderer
@@ -33,6 +34,8 @@ const { page } = Astro.props;
           locale={page.locale}
           translations={page.translations}
           site={page.site}
+          ancestors={page.ancestors}
+          currentPageTitle={page.seoMeta.title}
         />
       ))}
     </PageLayout>

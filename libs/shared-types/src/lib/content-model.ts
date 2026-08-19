@@ -354,6 +354,21 @@ export const whatsAppButtonPropsSchema = z.object({
 export type WhatsAppButtonProps = z.infer<typeof whatsAppButtonPropsSchema>;
 
 /**
+ * "Home > ancestor > ... > current page" trail. No `content` prop: the
+ * actual chain comes from the published page's own `ancestors` (page
+ * hierarchy, parentId) at render time, not from anything stored on the
+ * block — same "editor canvas can't show real data" trade-off as
+ * LanguageSwitcher. `homeLabel` is the only editor-configurable piece
+ * (the link target itself is always the locale root, computed from
+ * `locale` at render time, not stored here).
+ */
+export const breadcrumbPropsSchema = z.object({
+  homeLabel: z.string().default('Home'),
+  visibility: visibilitySchema.default('always'),
+});
+export type BreadcrumbProps = z.infer<typeof breadcrumbPropsSchema>;
+
+/**
  * Dismissible announcement bar. Reuses NavLink's `linkType`/`page`/`url`
  * shape for its optional link, but not `navItemPositionSchema` — unlike
  * NavLink it never sits inside Nav's flex row, it's a standalone

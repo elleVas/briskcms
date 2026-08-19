@@ -1,6 +1,7 @@
 ---
 import type { Block, SeoMeta } from '@brisk/shared-types';
 import type {
+	PublishedPageAncestorDto,
 	PublishedPageTranslationDto,
 	PublishedSiteDto,
 } from '../lib/public-api-client.js';
@@ -17,10 +18,19 @@ interface Props {
 	header: Block[] | null;
 	footer: Block[] | null;
 	headerSticky: boolean;
+	ancestors: PublishedPageAncestorDto[];
 }
 
-const { seoMeta, locale, translations, site, header, footer, headerSticky } =
-	Astro.props;
+const {
+	seoMeta,
+	locale,
+	translations,
+	site,
+	header,
+	footer,
+	headerSticky,
+	ancestors,
+} = Astro.props;
 // The default locale's translation, if published, doubles as the
 // x-default alternate (docs/adr/0017) — the version search engines should
 // offer a visitor whose browser locale matches none of the site's.
@@ -103,6 +113,8 @@ const schemaOrgJson = JSON.stringify(schemaOrgGraph).replace(/</g, '\\u003c');
 							locale={locale}
 							translations={translations}
 							site={site}
+							ancestors={ancestors}
+							currentPageTitle={seoMeta.title}
 						/>
 					))}
 				</header>
@@ -118,6 +130,8 @@ const schemaOrgJson = JSON.stringify(schemaOrgGraph).replace(/</g, '\\u003c');
 							locale={locale}
 							translations={translations}
 							site={site}
+							ancestors={ancestors}
+							currentPageTitle={seoMeta.title}
 						/>
 					))}
 				</footer>
