@@ -169,4 +169,42 @@ describe('puck-data-mapper', () => {
       ),
     ).toEqual(blocks);
   });
+
+  it('round-trips a NavDropdown nested inside Nav, one level deep (Nav > NavDropdown > NavLink)', () => {
+    const blocks: Block[] = [
+      {
+        type: 'Nav',
+        props: {},
+        children: [
+          {
+            type: 'NavDropdown',
+            props: {
+              label: 'Prodotti',
+              position: 'left',
+              visibility: 'always',
+            },
+            children: [
+              {
+                type: 'NavLink',
+                props: {
+                  label: 'Categoria A',
+                  linkType: 'url',
+                  page: null,
+                  url: '/categoria-a',
+                  position: 'left',
+                },
+              },
+            ],
+          },
+        ],
+      },
+    ];
+
+    expect(
+      fromPuckData(
+        toPuckData(blocks, headerFooterPuckConfig),
+        headerFooterPuckConfig,
+      ),
+    ).toEqual(blocks);
+  });
 });

@@ -26,7 +26,7 @@ const fields: Fields<NavPuckProps> = {
   visibility: visibilityField,
   children: {
     type: 'slot',
-    allow: ['NavLink', 'LanguageSwitcher', 'HamburgerMenu'],
+    allow: ['NavLink', 'LanguageSwitcher', 'HamburgerMenu', 'NavDropdown'],
   },
 };
 
