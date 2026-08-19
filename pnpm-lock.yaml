@@ -228,6 +228,9 @@ importers:
       '@brisk/postgres-page-repository':
         specifier: workspace:*
         version: link:../../libs/adapters/postgres-page-repository
+      '@brisk/postgres-search-repository':
+        specifier: workspace:*
+        version: link:../../libs/adapters/postgres-search-repository
       '@brisk/postgres-site-layout-section-repository':
         specifier: workspace:*
         version: link:../../libs/adapters/postgres-site-layout-section-repository
@@ -495,6 +498,28 @@ importers:
       '@brisk/postgres-db':
         specifier: workspace:*
         version: link:../postgres-db
+      drizzle-orm:
+        specifier: ^0.45.2
+        version: 0.45.2(postgres@3.4.9)
+    devDependencies:
+      dotenv:
+        specifier: ^17.4.2
+        version: 17.4.2
+
+  libs/adapters/postgres-search-repository:
+    dependencies:
+      '@brisk/domain-core':
+        specifier: workspace:*
+        version: link:../../domain-core
+      '@brisk/ports':
+        specifier: workspace:*
+        version: link:../../ports
+      '@brisk/postgres-db':
+        specifier: workspace:*
+        version: link:../postgres-db
+      '@brisk/shared-types':
+        specifier: workspace:*
+        version: link:../../shared-types
       drizzle-orm:
         specifier: ^0.45.2
         version: 0.45.2(postgres@3.4.9)

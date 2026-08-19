@@ -9,6 +9,7 @@ import { rollbackToVersion } from './rollback-to-version.use-case.js';
 import {
   InMemoryPageRepository,
   InMemoryPageVersionRepository,
+  InMemorySearchPort,
 } from './in-memory-repositories.test-fixture.js';
 
 describe('page lifecycle: create -> draft -> publish -> rollback', () => {
@@ -18,7 +19,8 @@ describe('page lifecycle: create -> draft -> publish -> rollback', () => {
   function setup() {
     const pageRepository = new InMemoryPageRepository();
     const pageVersionRepository = new InMemoryPageVersionRepository();
-    return { pageRepository, pageVersionRepository };
+    const searchPort = new InMemorySearchPort();
+    return { pageRepository, pageVersionRepository, searchPort };
   }
 
   it('runs the full draft -> publish -> rollback cycle without destructive overwrites', async () => {

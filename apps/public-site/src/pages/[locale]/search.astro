@@ -1,0 +1,106 @@
+---
+import { parseSearchExcerpt } from '@brisk/shared-types';
+import { searchPublishedPages } from '../../lib/public-api-client.js';
+import { localePath } from '../../lib/locale-path.js';
+
+// SSR (see astro.config.mjs) — content is fetched per-request, matching
+// every other public-site route (docs/adr for [...slug].astro).
+export const prerender = false;
+
+// A minimal standalone layout, not PageLayout.astro (same reasoning as
+// NotFound.astro): this route has no backing Page/site_layout_sections
+// data of its own — there is no "search results" Page row to derive a
+// header/footer from. Revisit if the site's chrome is ever needed here
+// too (would mean a new "site chrome by domain, no specific page"
+// endpoint — out of scope for this block's first version).
+const { locale } = Astro.params;
+const query = Astro.url.searchParams.get('q') ?? '';
+
+const results =
+  locale && query.trim().length > 0
+    ? await searchPublishedPages(Astro.url.hostname, locale, query)
+    : [];
+---
+
+<html lang={locale}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width" />
+    <meta name="robots" content="noindex" />
+    <title>Ricerca{query ? `: ${query}` : ''}</title>
+  </head>
+  <body>
+    <main class="brisk-search-results">
+      <a href={localePath(locale ?? 'it', 'home')} class="brisk-search-results__home-link">
+        ← Home
+      </a>
+      <h1>Ricerca</h1>
+      <form method="get" action={`/${locale}/search`} class="brisk-search-results__form">
+        <input type="search" name="q" value={query} aria-label="Cerca nel sito" />
+        <button type="submit">Cerca</button>
+      </form>
+
+      {
+        query.trim().length === 0 ? (
+          <p>Digita un termine di ricerca.</p>
+        ) : results.length === 0 ? (
+          <p>Nessun risultato per «{query}».</p>
+        ) : (
+          <ul class="brisk-search-results__list">
+            {results.map((result) => (
+              <li>
+                <a href={localePath(locale ?? 'it', result.slug)}>{result.title}</a>
+                <p>
+                  {parseSearchExcerpt(result.excerpt).map((segment) =>
+                    segment.matched ? <mark>{segment.text}</mark> : segment.text,
+                  )}
+                </p>
+              </li>
+            ))}
+          </ul>
+        )
+      }
+    </main>
+
+    <style>
+      .brisk-search-results {
+        max-width: 40rem;
+        margin: 0 auto;
+        padding: 2rem 1rem;
+      }
+      .brisk-search-results__home-link {
+        display: inline-block;
+        margin-bottom: 1rem;
+        color: inherit;
+      }
+      .brisk-search-results__form {
+        display: flex;
+        gap: 0.5rem;
+        margin-bottom: 1.5rem;
+      }
+      .brisk-search-results__form input {
+        flex: 1;
+        padding: 0.5rem;
+      }
+      .brisk-search-results__list {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 1.25rem;
+      }
+      .brisk-search-results__list a {
+        font-weight: 600;
+      }
+      .brisk-search-results__list p {
+        margin: 0.25rem 0 0;
+        color: #52525b;
+      }
+      .brisk-search-results__list mark {
+        background: #fde68a;
+        color: inherit;
+      }
+    </style>
+  </body>
+</html>

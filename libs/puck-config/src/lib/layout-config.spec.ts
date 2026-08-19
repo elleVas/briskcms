@@ -15,6 +15,7 @@ describe('headerFooterPuckConfig', () => {
       'BackToTop',
       'WhatsAppButton',
       'Breadcrumb',
+      'SearchBox',
     ]);
   });
 

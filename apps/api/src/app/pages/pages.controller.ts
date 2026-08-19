@@ -38,6 +38,7 @@ import {
 import type {
   PageRepositoryPort,
   PageVersionRepositoryPort,
+  SearchPort,
   TenantContextPort,
 } from '@brisk/ports';
 import { Roles } from '../auth/roles.decorator.js';
@@ -47,6 +48,7 @@ import { ZodValidationPipe } from '../zod-validation.pipe.js';
 import {
   PAGE_REPOSITORY,
   PAGE_VERSION_REPOSITORY,
+  SEARCH_REPOSITORY,
   TENANT_CONTEXT,
 } from './pages.tokens.js';
 import {
@@ -74,6 +76,8 @@ export class PagesController {
     private readonly pageRepository: PageRepositoryPort,
     @Inject(PAGE_VERSION_REPOSITORY)
     private readonly pageVersionRepository: PageVersionRepositoryPort,
+    @Inject(SEARCH_REPOSITORY)
+    private readonly searchPort: SearchPort,
     @Inject(TENANT_CONTEXT) private readonly tenantContext: TenantContextPort,
   ) {}
 
@@ -217,7 +221,7 @@ export class PagesController {
   async publish(@Param('id') id: string) {
     return this.handleDomainErrors(async () => {
       const page = await publishPage(
-        { pageRepository: this.pageRepository },
+        { pageRepository: this.pageRepository, searchPort: this.searchPort },
         { tenantId: this.tenantContext.getCurrentTenantId(), pageId: id },
       );
       return page.toProps();

@@ -12,3 +12,4 @@ export * from './lib/verification-token.port.js';
 export * from './lib/email.port.js';
 export * from './lib/form-repository.port.js';
 export * from './lib/form-submission-repository.port.js';
+export * from './lib/search.port.js';

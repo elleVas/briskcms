@@ -65,6 +65,9 @@
     },
     {
       "path": "./libs/adapters/postgres-form-repository"
+    },
+    {
+      "path": "./libs/adapters/postgres-search-repository"
     }
   ],
   "compilerOptions": {}

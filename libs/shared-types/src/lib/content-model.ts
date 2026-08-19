@@ -447,3 +447,17 @@ export type FeatureProps = z.infer<typeof featurePropsSchema>;
 /** Pure layout wrapper, no props of its own — same reasoning as `columnPropsSchema`. Its content lives entirely in `Block.children` (Feature only). */
 export const featureGridPropsSchema = z.strictObject({});
 export type FeatureGridProps = z.infer<typeof featureGridPropsSchema>;
+
+/**
+ * A plain `<form method="get">` submitting to `/{locale}/search` (see
+ * apps/public-site's search.astro) — no client-side fetch/dropdown, same
+ * "prefer native mechanisms" reasoning already applied elsewhere
+ * (NavDropdown's `<details>`, PromoBar's honeypot). `placeholder` is the
+ * only editor-configurable text; the actual results page is not itself a
+ * Block-composed page, it's a dedicated Astro route.
+ */
+export const searchBoxPropsSchema = z.object({
+  placeholder: z.string().default('Cerca nel sito...'),
+  visibility: visibilitySchema.default('always'),
+});
+export type SearchBoxProps = z.infer<typeof searchBoxPropsSchema>;

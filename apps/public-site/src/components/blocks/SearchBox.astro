@@ -1,0 +1,38 @@
+---
+import type { SearchBoxProps } from '@brisk/shared-types';
+import { localePath } from '../../lib/locale-path.js';
+
+interface Props extends SearchBoxProps {
+  locale: string;
+}
+
+const { placeholder, visibility, locale } = Astro.props;
+---
+
+<form
+  method="get"
+  action={localePath(locale, 'search')}
+  class:list={[
+    'brisk-search-box',
+    { 'brisk-visibility-desktop-only': visibility === 'desktop-only' },
+    { 'brisk-visibility-mobile-only': visibility === 'mobile-only' },
+  ]}
+  role="search"
+>
+  <input type="search" name="q" placeholder={placeholder} aria-label={placeholder} />
+  <button type="submit">Cerca</button>
+</form>
+
+<style>
+  .brisk-search-box {
+    display: flex;
+    gap: 0.5rem;
+  }
+  .brisk-search-box input {
+    padding: 0.4rem 0.6rem;
+  }
+  .brisk-search-box button {
+    padding: 0.4rem 0.75rem;
+    cursor: pointer;
+  }
+</style>

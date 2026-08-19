@@ -4,6 +4,7 @@ import { Media } from '@brisk/domain-core';
 import {
   type BriskDb,
   createAppDb,
+  deleteIntegrationTenants,
   sites,
   tenants,
   withTenant,
@@ -47,6 +48,7 @@ describe('DrizzleMediaRepository (integration)', () => {
   });
 
   afterAll(async () => {
+    await deleteIntegrationTenants(db, [tenantAId, tenantBId]);
     await db.$client.end();
   });
 

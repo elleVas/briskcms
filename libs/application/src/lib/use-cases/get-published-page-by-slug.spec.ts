@@ -7,6 +7,7 @@ import { getPublishedPageBySlug } from './get-published-page-by-slug.use-case.js
 import {
   InMemoryPageRepository,
   InMemoryPageVersionRepository,
+  InMemorySearchPort,
   InMemorySiteLayoutSectionRepository,
   InMemorySiteRepository,
 } from './in-memory-repositories.test-fixture.js';
@@ -20,11 +21,13 @@ describe('getPublishedPageBySlug', () => {
     const siteRepository = new InMemorySiteRepository();
     const siteLayoutSectionRepository =
       new InMemorySiteLayoutSectionRepository();
+    const searchPort = new InMemorySearchPort();
     return {
       pageRepository,
       pageVersionRepository,
       siteRepository,
       siteLayoutSectionRepository,
+      searchPort,
     };
   }
 

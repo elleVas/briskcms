@@ -115,6 +115,30 @@ export async function listPublishedPagesForSitemap(
   return res.json();
 }
 
+export interface SearchResultDto {
+  pageId: string;
+  slug: string;
+  title: string;
+  excerpt: string;
+}
+
+export async function searchPublishedPages(
+  domain: string,
+  locale: string,
+  query: string,
+): Promise<SearchResultDto[]> {
+  const params = new URLSearchParams({ domain, locale, q: query });
+  const res = await fetch(
+    `${apiUrl()}/public/pages/search?${params.toString()}`,
+  );
+
+  if (!res.ok) {
+    throw new Error(`Public pages API error: ${res.status}`);
+  }
+  const body = (await res.json()) as { items: SearchResultDto[] };
+  return body.items;
+}
+
 export interface PublicFormDto {
   id: string;
   name: string;

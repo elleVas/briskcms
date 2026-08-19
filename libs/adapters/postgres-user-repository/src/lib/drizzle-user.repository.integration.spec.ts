@@ -1,7 +1,12 @@
 import { randomUUID } from 'node:crypto';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { User } from '@brisk/domain-core';
-import { type BriskDb, createAppDb, tenants } from '@brisk/postgres-db';
+import {
+  type BriskDb,
+  createAppDb,
+  deleteIntegrationTenants,
+  tenants,
+} from '@brisk/postgres-db';
 import { DrizzleUserRepository } from './drizzle-user.repository.js';
 
 /**
@@ -32,6 +37,7 @@ describe('DrizzleUserRepository (integration)', () => {
   });
 
   afterAll(async () => {
+    await deleteIntegrationTenants(db, [tenantAId, tenantBId]);
     await db.$client.end();
   });
 

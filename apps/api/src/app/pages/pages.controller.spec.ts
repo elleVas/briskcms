@@ -3,6 +3,7 @@ import { Page } from '@brisk/domain-core';
 import type {
   PageRepositoryPort,
   PageVersionRepositoryPort,
+  SearchPort,
   TenantContextPort,
 } from '@brisk/ports';
 import { PagesController } from './pages.controller.js';
@@ -23,6 +24,7 @@ function buildPage(overrides: Partial<Parameters<typeof Page.create>[0]> = {}) {
 describe('PagesController (unit)', () => {
   let pageRepository: jest.Mocked<PageRepositoryPort>;
   let pageVersionRepository: jest.Mocked<PageVersionRepositoryPort>;
+  let searchPort: jest.Mocked<SearchPort>;
   let tenantContext: TenantContextPort;
   let controller: PagesController;
 
@@ -40,10 +42,15 @@ describe('PagesController (unit)', () => {
       findById: jest.fn(),
       listByPage: jest.fn(),
     };
+    searchPort = {
+      indexPage: jest.fn(),
+      search: jest.fn(),
+    };
     tenantContext = { getCurrentTenantId: () => 'tenant-1' };
     controller = new PagesController(
       pageRepository,
       pageVersionRepository,
+      searchPort,
       tenantContext,
     );
   });

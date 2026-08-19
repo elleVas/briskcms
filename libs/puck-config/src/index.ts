@@ -21,6 +21,7 @@ export * from './lib/blocks/back-to-top.block.js';
 export * from './lib/blocks/breadcrumb.block.js';
 export * from './lib/blocks/whatsapp-button.block.js';
 export * from './lib/blocks/promo-bar.block.js';
+export * from './lib/blocks/search-box.block.js';
 export * from './lib/blocks/accordion.block.js';
 export * from './lib/blocks/accordion-item.block.js';
 export * from './lib/blocks/tabs.block.js';
