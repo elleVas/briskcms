@@ -147,6 +147,9 @@ const { block, locale, translations, site, ancestors, currentPageTitle } =
       ancestors={ancestors}
       currentPageTitle={currentPageTitle}
     />
+  )
+}
+{
   block.type === 'SearchBox' && (
     <SearchBox {...searchBoxPropsSchema.parse(block.props)} locale={locale} />
   )
