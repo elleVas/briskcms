@@ -1,0 +1,89 @@
+---
+---
+
+<div class="brisk-tabs">
+  <slot />
+</div>
+
+<script>
+  // Builds the tab button bar from the panels actually present in the DOM,
+  // rather than requiring this component to know each Tab's label at
+  // compile time: Astro's <slot /> only ever gives a parent opaque
+  // rendered HTML from its children (see docs/adr/0007's Puck/render
+  // isolation), never their props, so the tablist has to be assembled
+  // client-side from what each Tab.astro already rendered
+  // (data-tab-label). No framework here on purpose — same vanilla DOM
+  // approach as HamburgerMenu.astro.
+  document.querySelectorAll<HTMLElement>('.brisk-tabs').forEach((root) => {
+    const panels = Array.from(
+      root.querySelectorAll<HTMLElement>(':scope > .brisk-tab-panel'),
+    );
+    if (panels.length === 0) return;
+
+    const tablist = document.createElement('div');
+    tablist.className = 'brisk-tabs__list';
+    tablist.setAttribute('role', 'tablist');
+
+    const buttons: HTMLButtonElement[] = [];
+
+    function activate(index: number) {
+      panels.forEach((panel, i) => {
+        panel.hidden = i !== index;
+      });
+      buttons.forEach((button, i) => {
+        button.setAttribute('aria-selected', String(i === index));
+        button.tabIndex = i === index ? 0 : -1;
+      });
+    }
+
+    panels.forEach((panel, index) => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.setAttribute('role', 'tab');
+      button.className = 'brisk-tabs__tab';
+      button.textContent = panel.dataset['tabLabel'] ?? '';
+      const id = `brisk-tab-${crypto.randomUUID()}`;
+      button.id = id;
+      panel.setAttribute('aria-labelledby', id);
+      button.addEventListener('click', () => activate(index));
+      button.addEventListener('keydown', (event) => {
+        if (event.key === 'ArrowRight') {
+          event.preventDefault();
+          const next = (index + 1) % panels.length;
+          activate(next);
+          buttons[next]?.focus();
+        } else if (event.key === 'ArrowLeft') {
+          event.preventDefault();
+          const prev = (index - 1 + panels.length) % panels.length;
+          activate(prev);
+          buttons[prev]?.focus();
+        }
+      });
+      buttons.push(button);
+      tablist.appendChild(button);
+    });
+
+    root.insertBefore(tablist, root.firstChild);
+    activate(0);
+  });
+</script>
+
+<style>
+  .brisk-tabs__list {
+    display: flex;
+    gap: 0.5rem;
+    border-bottom: 1px solid #e4e4e7;
+  }
+  .brisk-tabs__tab {
+    padding: 0.5rem 1rem;
+    border: none;
+    background: none;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    font: inherit;
+  }
+  .brisk-tabs__tab[aria-selected='true'] {
+    border-bottom-color: #18181b;
+    font-weight: 600;
+  }
+</style>

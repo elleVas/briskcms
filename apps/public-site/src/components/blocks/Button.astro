@@ -1,0 +1,36 @@
+---
+import type { ButtonProps } from '@brisk/shared-types';
+import { localePath } from '../../lib/locale-path.js';
+
+type Props = ButtonProps;
+
+const { label, linkType, page, url, variant } = Astro.props;
+const href =
+  linkType === 'page' && page ? localePath(page.locale, page.slug) : url;
+---
+
+<a
+  class:list={[
+    'brisk-button',
+    { 'brisk-button--secondary': variant === 'secondary' },
+  ]}
+  href={href}
+>
+  {label}
+</a>
+
+<style>
+  .brisk-button {
+    display: inline-block;
+    padding: 0.5rem 1.25rem;
+    border-radius: 6px;
+    background: #18181b;
+    color: #fff;
+    text-decoration: none;
+    border: 1px solid #18181b;
+  }
+  .brisk-button--secondary {
+    background: transparent;
+    color: #18181b;
+  }
+</style>

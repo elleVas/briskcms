@@ -372,3 +372,63 @@ export const promoBarPropsSchema = z.object({
   visibility: visibilitySchema.default('always'),
 });
 export type PromoBarProps = z.infer<typeof promoBarPropsSchema>;
+
+/** A single question/answer pair — always a child of Accordion, rendered as `<details>/<summary>` (Accordion.astro), no JS needed for the open/close behavior itself. */
+export const accordionItemPropsSchema = z.object({
+  question: z.string(),
+  answer: z.string(),
+});
+export type AccordionItemProps = z.infer<typeof accordionItemPropsSchema>;
+
+/** Pure layout wrapper, no props of its own — same reasoning as `columnPropsSchema`. Its content lives entirely in `Block.children` (AccordionItem only). */
+export const accordionPropsSchema = z.strictObject({});
+export type AccordionProps = z.infer<typeof accordionPropsSchema>;
+
+/** A single tab — its own `label` plus a nested slot of generic content (unlike AccordionItem, a tab panel can hold arbitrary blocks, not just text). Always a child of Tabs. */
+export const tabPropsSchema = z.object({
+  label: z.string(),
+});
+export type TabProps = z.infer<typeof tabPropsSchema>;
+
+/** Pure layout wrapper, no props of its own — same reasoning as `columnPropsSchema`. Its content lives entirely in `Block.children` (Tab only). */
+export const tabsPropsSchema = z.strictObject({});
+export type TabsProps = z.infer<typeof tabsPropsSchema>;
+
+/** Reuses NavLink/PromoBar's `linkType`/`page`/`url` shape for the button's destination. `backgroundColor` is a free CSS color value (hex/named), same "editor is trusted to enter it correctly" trade-off as NavLink's `url` — no color-picker field exists yet in this codebase. */
+export const bannerPropsSchema = z.object({
+  title: z.string(),
+  text: z.string(),
+  buttonLabel: z.string(),
+  linkType: z.enum(['page', 'url']),
+  page: pickedPageSchema.nullable(),
+  url: z.string(),
+  backgroundColor: z.string(),
+});
+export type BannerProps = z.infer<typeof bannerPropsSchema>;
+
+/** Standalone CTA button — same link shape as Banner/NavLink/PromoBar. `variant` picks between the two button styles Button.astro defines, nothing more elaborate than that. */
+export const buttonPropsSchema = z.object({
+  label: z.string(),
+  linkType: z.enum(['page', 'url']),
+  page: pickedPageSchema.nullable(),
+  url: z.string(),
+  variant: z.enum(['primary', 'secondary']).default('primary'),
+});
+export type ButtonProps = z.infer<typeof buttonPropsSchema>;
+
+/**
+ * `icon` is a plain free-text field (the editor pastes an emoji, e.g.
+ * "🚀") rather than picking from an icon library — apps/public-site has no
+ * icon dependency by design (docs/adr/0007 isolation), and adding one just
+ * for this would be a new dependency, not a detail worth making on its own.
+ */
+export const featurePropsSchema = z.object({
+  icon: z.string(),
+  title: z.string(),
+  text: z.string(),
+});
+export type FeatureProps = z.infer<typeof featurePropsSchema>;
+
+/** Pure layout wrapper, no props of its own — same reasoning as `columnPropsSchema`. Its content lives entirely in `Block.children` (Feature only). */
+export const featureGridPropsSchema = z.strictObject({});
+export type FeatureGridProps = z.infer<typeof featureGridPropsSchema>;

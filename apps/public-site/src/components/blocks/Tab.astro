@@ -1,0 +1,20 @@
+---
+import type { TabProps } from '@brisk/shared-types';
+
+type Props = TabProps;
+
+const { label } = Astro.props;
+---
+
+<div class="brisk-tab-panel" data-tab-label={label} role="tabpanel">
+  <slot />
+</div>
+
+<style>
+  .brisk-tab-panel {
+    padding: 1rem 0;
+  }
+  .brisk-tab-panel[hidden] {
+    display: none;
+  }
+</style>

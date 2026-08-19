@@ -1,9 +1,15 @@
 ---
 import {
+  accordionItemPropsSchema,
+  accordionPropsSchema,
   backToTopPropsSchema,
+  bannerPropsSchema,
+  buttonPropsSchema,
   columnsPropsSchema,
   countdownPropsSchema,
   embedHtmlPropsSchema,
+  featureGridPropsSchema,
+  featurePropsSchema,
   formBlockPropsSchema,
   galleryPropsSchema,
   hamburgerMenuPropsSchema,
@@ -15,6 +21,8 @@ import {
   navPropsSchema,
   quotePropsSchema,
   ratingPropsSchema,
+  tabPropsSchema,
+  tabsPropsSchema,
   tablePropsSchema,
   promoBarPropsSchema,
   textPropsSchema,
@@ -25,11 +33,17 @@ import type {
   PublishedPageTranslationDto,
   PublishedSiteDto,
 } from '../lib/public-api-client.js';
+import Accordion from './blocks/Accordion.astro';
+import AccordionItem from './blocks/AccordionItem.astro';
 import BackToTop from './blocks/BackToTop.astro';
+import Banner from './blocks/Banner.astro';
+import Button from './blocks/Button.astro';
 import Column from './blocks/Column.astro';
 import Columns from './blocks/Columns.astro';
 import Countdown from './blocks/Countdown.astro';
 import EmbedHtml from './blocks/EmbedHtml.astro';
+import Feature from './blocks/Feature.astro';
+import FeatureGrid from './blocks/FeatureGrid.astro';
 import Form from './blocks/Form.astro';
 import Gallery from './blocks/Gallery.astro';
 import HamburgerMenu from './blocks/HamburgerMenu.astro';
@@ -41,6 +55,8 @@ import NavDropdown from './blocks/NavDropdown.astro';
 import NavLink from './blocks/NavLink.astro';
 import Quote from './blocks/Quote.astro';
 import Rating from './blocks/Rating.astro';
+import Tab from './blocks/Tab.astro';
+import Tabs from './blocks/Tabs.astro';
 import Table from './blocks/Table.astro';
 import PromoBar from './blocks/PromoBar.astro';
 import Text from './blocks/Text.astro';
@@ -197,5 +213,81 @@ const { block, locale, translations, site } = Astro.props;
 {
   block.type === 'WhatsAppButton' && (
     <WhatsAppButton {...whatsAppButtonPropsSchema.parse(block.props)} />
+  )
+}
+{
+  block.type === 'Accordion' && (
+    <Accordion {...accordionPropsSchema.parse(block.props)}>
+      {block.children?.map((child) => (
+        <Astro.self
+          block={child}
+          locale={locale}
+          translations={translations}
+          site={site}
+        />
+      ))}
+    </Accordion>
+  )
+}
+{
+  block.type === 'AccordionItem' && (
+    <AccordionItem {...accordionItemPropsSchema.parse(block.props)} />
+  )
+}
+{
+  block.type === 'Tabs' && (
+    <Tabs {...tabsPropsSchema.parse(block.props)}>
+      {block.children?.map((child) => (
+        <Astro.self
+          block={child}
+          locale={locale}
+          translations={translations}
+          site={site}
+        />
+      ))}
+    </Tabs>
+  )
+}
+{
+  block.type === 'Tab' && (
+    <Tab {...tabPropsSchema.parse(block.props)}>
+      {block.children?.map((child) => (
+        <Astro.self
+          block={child}
+          locale={locale}
+          translations={translations}
+          site={site}
+        />
+      ))}
+    </Tab>
+  )
+}
+{
+  block.type === 'Banner' && (
+    <Banner {...bannerPropsSchema.parse(block.props)} />
+  )
+}
+{
+  block.type === 'Button' && (
+    <Button {...buttonPropsSchema.parse(block.props)} />
+  )
+}
+{
+  block.type === 'FeatureGrid' && (
+    <FeatureGrid {...featureGridPropsSchema.parse(block.props)}>
+      {block.children?.map((child) => (
+        <Astro.self
+          block={child}
+          locale={locale}
+          translations={translations}
+          site={site}
+        />
+      ))}
+    </FeatureGrid>
+  )
+}
+{
+  block.type === 'Feature' && (
+    <Feature {...featurePropsSchema.parse(block.props)} />
   )
 }

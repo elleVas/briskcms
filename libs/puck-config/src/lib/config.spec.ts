@@ -16,6 +16,14 @@ describe('puckConfig', () => {
       'Countdown',
       'EmbedHtml',
       'Table',
+      'Accordion',
+      'AccordionItem',
+      'Tabs',
+      'Tab',
+      'Banner',
+      'Button',
+      'FeatureGrid',
+      'Feature',
     ]);
     expect(typeof puckConfig.components.Hero.render).toBe('function');
     expect(typeof puckConfig.components.Text.render).toBe('function');
@@ -29,5 +37,13 @@ describe('puckConfig', () => {
     expect(typeof puckConfig.components.Countdown.render).toBe('function');
     expect(typeof puckConfig.components.EmbedHtml.render).toBe('function');
     expect(typeof puckConfig.components.Table.render).toBe('function');
+    expect(typeof puckConfig.components.Accordion.render).toBe('function');
+    expect(typeof puckConfig.components.AccordionItem.render).toBe('function');
+    expect(typeof puckConfig.components.Tabs.render).toBe('function');
+    expect(typeof puckConfig.components.Tab.render).toBe('function');
+    expect(typeof puckConfig.components.Banner.render).toBe('function');
+    expect(typeof puckConfig.components.Button.render).toBe('function');
+    expect(typeof puckConfig.components.FeatureGrid.render).toBe('function');
+    expect(typeof puckConfig.components.Feature.render).toBe('function');
   });
 });
