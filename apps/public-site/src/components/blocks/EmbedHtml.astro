@@ -1,0 +1,32 @@
+---
+import sanitizeHtml from 'sanitize-html';
+import type { EmbedHtmlProps } from '@brisk/shared-types';
+
+type Props = EmbedHtmlProps;
+
+const { html } = Astro.props;
+
+// Permissive policy (confirmed with the user, 2026-08-19): script/iframe
+// stay allowed — that's what a free-embed block is for (YouTube, Calendly,
+// chat widgets, analytics snippets) — but every `on*` inline event-handler
+// attribute is stripped, since those are the one XSS vector that survives
+// even this permissive a policy (e.g. a pasted `<img onerror=...>`).
+const stripEventHandlers: sanitizeHtml.Transformer = (tagName, attribs) => {
+  const safeAttribs: sanitizeHtml.Attributes = {};
+  for (const [name, value] of Object.entries(attribs)) {
+    if (!name.toLowerCase().startsWith('on')) {
+      safeAttribs[name] = value;
+    }
+  }
+  return { tagName, attribs: safeAttribs };
+};
+
+const safeHtml = sanitizeHtml(html, {
+  allowedTags: false,
+  allowedAttributes: false,
+  allowVulnerableTags: true,
+  transformTags: { '*': stripEventHandlers },
+});
+---
+
+<Fragment set:html={safeHtml} />

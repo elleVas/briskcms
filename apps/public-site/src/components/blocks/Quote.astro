@@ -1,0 +1,11 @@
+---
+import type { QuoteProps } from '@brisk/shared-types';
+
+type Props = QuoteProps;
+
+const { quote, author, role } = Astro.props;
+const citation = [author, role].filter(Boolean).join(' — ');
+---
+
+<blockquote>{quote}</blockquote>
+{citation && <cite>{citation}</cite>}

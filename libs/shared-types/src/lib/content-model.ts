@@ -266,6 +266,67 @@ export function columnsGridTemplate(layout: ColumnsLayout): string {
 export const columnPropsSchema = z.strictObject({});
 export type ColumnProps = z.infer<typeof columnPropsSchema>;
 
+export const quotePropsSchema = z.object({
+  quote: z.string(),
+  author: z.string(),
+  role: z.string(),
+});
+export type QuoteProps = z.infer<typeof quotePropsSchema>;
+
+/**
+ * `rating` is a plain 1-5 number, not a wrapper object — the Puck `number`
+ * field enforces the range in the editor UI (min/max/step in
+ * rating.block.tsx), so the schema only needs to describe the shape.
+ */
+export const ratingPropsSchema = z.object({
+  rating: z.number().min(1).max(5),
+  label: z.string(),
+});
+export type RatingProps = z.infer<typeof ratingPropsSchema>;
+
+/**
+ * `targetDate` is a free-form string (an ISO-ish datetime, e.g.
+ * "2026-12-31T23:59"), not a branded/refined type — same trade-off as
+ * NavLink's `url`: Puck has no native date-picker field, so this is a
+ * plain text field in the editor and the public-site countdown
+ * (Countdown.astro) parses it with `new Date(...)` at render time.
+ */
+export const countdownPropsSchema = z.object({
+  targetDate: z.string(),
+  label: z.string(),
+});
+export type CountdownProps = z.infer<typeof countdownPropsSchema>;
+
+/**
+ * `html` is sanitized before it ever reaches the DOM — confirmed with the
+ * user (2026-08-19), overriding the initial "site owner writes it, skip
+ * sanitization" assumption. apps/public-site's EmbedHtml.astro runs it
+ * through sanitize-html with a permissive policy (script/iframe kept,
+ * since that's the whole point of a free-embed block — YouTube/Calendly/
+ * chat widgets are all script- or iframe-based — but any `on*` inline
+ * event-handler attribute is stripped). The Puck editor canvas
+ * (embed-html.block.tsx) never executes this HTML at all, even
+ * sanitized — it only shows the raw code as escaped preview text.
+ */
+export const embedHtmlPropsSchema = z.object({
+  html: z.string(),
+});
+export type EmbedHtmlProps = z.infer<typeof embedHtmlPropsSchema>;
+
+/**
+ * `rows` is a plain matrix, first row always treated as the header
+ * (`<thead>`) by both renders (table.block.tsx and Table.astro) — no
+ * separate `headers` field or `hasHeader` toggle, keeping the shape as
+ * simple as the hand-built "aggiungi riga/colonna" editor
+ * (table-data-field.tsx) that produces it. Not required to stay
+ * rectangular by the schema itself — a ragged matrix just renders a
+ * ragged table (fewer `<td>`s on a short row), it can't crash the render,
+ * so there is nothing to validate for at this boundary.
+ */
+export const tablePropsSchema = z.object({
+  rows: z.array(z.array(z.string())),
+});
+export type TableProps = z.infer<typeof tablePropsSchema>;
 /**
  * "Back to top" — no props beyond `visibility`. Its scroll-threshold
  * show/hide and smooth-scroll-to-top behavior live entirely in

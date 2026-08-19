@@ -2,6 +2,8 @@
 import {
   backToTopPropsSchema,
   columnsPropsSchema,
+  countdownPropsSchema,
+  embedHtmlPropsSchema,
   formBlockPropsSchema,
   galleryPropsSchema,
   hamburgerMenuPropsSchema,
@@ -11,6 +13,9 @@ import {
   navDropdownPropsSchema,
   navLinkPropsSchema,
   navPropsSchema,
+  quotePropsSchema,
+  ratingPropsSchema,
+  tablePropsSchema,
   promoBarPropsSchema,
   textPropsSchema,
   whatsAppButtonPropsSchema,
@@ -23,6 +28,8 @@ import type {
 import BackToTop from './blocks/BackToTop.astro';
 import Column from './blocks/Column.astro';
 import Columns from './blocks/Columns.astro';
+import Countdown from './blocks/Countdown.astro';
+import EmbedHtml from './blocks/EmbedHtml.astro';
 import Form from './blocks/Form.astro';
 import Gallery from './blocks/Gallery.astro';
 import HamburgerMenu from './blocks/HamburgerMenu.astro';
@@ -32,6 +39,9 @@ import LanguageSwitcher from './blocks/LanguageSwitcher.astro';
 import Nav from './blocks/Nav.astro';
 import NavDropdown from './blocks/NavDropdown.astro';
 import NavLink from './blocks/NavLink.astro';
+import Quote from './blocks/Quote.astro';
+import Rating from './blocks/Rating.astro';
+import Table from './blocks/Table.astro';
 import PromoBar from './blocks/PromoBar.astro';
 import Text from './blocks/Text.astro';
 import WhatsAppButton from './blocks/WhatsAppButton.astro';
@@ -68,6 +78,27 @@ const { block, locale, translations, site } = Astro.props;
   )
 }
 {block.type === 'Form' && <Form {...formBlockPropsSchema.parse(block.props)} />}
+{block.type === 'Quote' && <Quote {...quotePropsSchema.parse(block.props)} />}
+{
+  block.type === 'Rating' && (
+    <Rating {...ratingPropsSchema.parse(block.props)} />
+  )
+}
+{
+  block.type === 'Countdown' && (
+    <Countdown {...countdownPropsSchema.parse(block.props)} />
+  )
+}
+{
+  block.type === 'EmbedHtml' && (
+    <EmbedHtml {...embedHtmlPropsSchema.parse(block.props)} />
+  )
+}
+{
+  block.type === 'Table' && (
+    <Table {...tablePropsSchema.parse(block.props)} />
+  )
+}
 {
   block.type === 'NavLink' && (
     <NavLink {...navLinkPropsSchema.parse(block.props)} />
