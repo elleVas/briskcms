@@ -1,5 +1,5 @@
 import { render, screen } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import type { PuckContext } from '@puckeditor/core';
 import { navConfig, navPropsSchema } from './nav.block.js';
 
@@ -32,5 +32,35 @@ describe('navConfig.render', () => {
 
     expect(screen.getByText('Contenuto annidato')).toBeTruthy();
     expect(screen.getByText('Contenuto annidato').closest('nav')).toBeTruthy();
+  });
+
+  it('shows an editor-only label so the nav reads as a distinct container', () => {
+    render(
+      navConfig.render({
+        id: 'test-id',
+        children: SlotContent,
+        puck: puckContext,
+      }),
+    );
+
+    expect(screen.getByText('Menu di navigazione')).toBeTruthy();
+  });
+
+  it('renders the slot as a flex row so a right-positioned child can push itself across', () => {
+    const slotSpy = vi.fn<(props?: { style?: unknown }) => null>(() => null);
+
+    render(
+      navConfig.render({
+        id: 'test-id',
+        children: slotSpy,
+        puck: puckContext,
+      }),
+    );
+
+    expect(slotSpy.mock.calls[0][0]).toEqual(
+      expect.objectContaining({
+        style: expect.objectContaining({ display: 'flex' }),
+      }),
+    );
   });
 });

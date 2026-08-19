@@ -1,6 +1,7 @@
 import type { ComponentConfig, Fields } from '@puckeditor/core';
 import { navLinkPropsSchema, type NavLinkProps } from '@brisk/shared-types';
 import { PagePickerField } from '../fields/page-picker-field.js';
+import { positionField } from '../fields/position-field.js';
 
 export { navLinkPropsSchema, type NavLinkProps };
 
@@ -24,6 +25,7 @@ const fields: Fields<NavLinkProps> = {
     ),
   },
   url: { type: 'text' },
+  position: positionField,
 };
 
 export const navLinkConfig: ComponentConfig<NavLinkProps> = {
@@ -34,9 +36,14 @@ export const navLinkConfig: ComponentConfig<NavLinkProps> = {
     linkType: 'page',
     page: null,
     url: '',
+    position: 'left',
   },
-  render: ({ label, linkType, page }) => (
-    <span>
+  // `marginLeft: auto` on itself (not a container-level layout prop) is
+  // what actually pushes a "right"-positioned item across the Nav's flex
+  // row (nav.block.tsx) — the standard CSS technique for splitting a flex
+  // row by individual item, not a whole-row alignment toggle.
+  render: ({ label, linkType, page, position }) => (
+    <span style={{ marginLeft: position === 'right' ? 'auto' : undefined }}>
       {label}
       {linkType === 'page' && page ? ` → ${page.title}` : ''}
     </span>

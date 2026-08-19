@@ -94,3 +94,35 @@ Block[] | null`, resolved in the same call (parallel query) rather than
   sibling for Header/Footer, sharing a `BlockEditorShell` extracted for
   that reason rather than duplicating the fullscreen editor scaffold a
   third time.
+
+## Amendment — 2026-08-19: no `Header`/`Footer` Puck block
+
+After the first pass shipped (above), real usage in the editor surfaced two
+problems: `headerFooterPuckConfig` registered `Header` AND `Footer` as
+top-level components in **both** the header-editing and footer-editing
+screens (Puck has no per-canvas "allow" restriction, only per-slot), so
+nothing structurally stopped dragging a `Footer` block into the header
+editor or vice versa; and dropping `Nav` inside an empty `Header` block gave
+no visual cue that it was now nested (`<header><Children/></header>` had no
+border/styling in the editor canvas).
+
+Fix: removed the `Header`/`Footer` wrapper blocks entirely. A
+`site_layout_section`'s `content` for `kind='header'`/`'footer'` **is**
+directly the list of `Nav`/`Text`/`Image` blocks that belongs inside the
+tag — `apps/public-site` (not yet built, PR3) supplies the `<header>`/
+`<footer>` tag itself around that list, it's never a `Block`. Both editing
+screens now share one `headerFooterPuckConfig` with components `Nav`,
+`NavLink`, `LanguageSwitcher`, `Text`, `Image` — no `Header`/`Footer`
+identity to accidentally cross-insert exists at all, in either screen.
+
+Also added, from the same usage feedback: a `position: 'left' | 'right'`
+field on `NavLink`/`LanguageSwitcher` (`navItemPositionSchema`, shared via
+`.extend()` so it isn't duplicated per block) — `'right'` applies a
+`margin-left: auto` push inside `Nav`'s flex-row render, the standard CSS
+technique for splitting a flex row by individual item without a
+container-level alignment control. `Nav`'s render also gained an
+editor-canvas-only colored dashed border + label (`EditorChrome`,
+`libs/puck-config/src/lib/editor-chrome.tsx`) so a nested child now reads
+as visibly "inside" the Nav — Gutenberg-style block chrome, never rendered
+on the public site (Puck stays isolated to `apps/editor-app`/
+`libs/puck-config` per ADR-0007).

@@ -4,11 +4,9 @@ import { headerFooterPuckConfig } from './layout-config.js';
 describe('headerFooterPuckConfig', () => {
   it('registers only the site-chrome blocks, never Hero/Gallery/Form', () => {
     expect(Object.keys(headerFooterPuckConfig.components)).toEqual([
-      'Header',
       'Nav',
       'NavLink',
       'LanguageSwitcher',
-      'Footer',
       'Text',
       'Image',
     ]);
