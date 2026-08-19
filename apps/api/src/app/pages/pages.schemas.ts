@@ -44,3 +44,9 @@ export const updateSeoMetaBodySchema = z.object({
   seoMeta: seoMetaSchema,
 });
 export type UpdateSeoMetaBody = z.infer<typeof updateSeoMetaBodySchema>;
+
+export const createTranslationBodySchema = z.object({
+  locale: z.string().min(2),
+  slug: pageSlugSchema,
+});
+export type CreateTranslationBody = z.infer<typeof createTranslationBodySchema>;

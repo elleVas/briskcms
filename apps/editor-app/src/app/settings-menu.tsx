@@ -1,6 +1,14 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Building2, Globe, Moon, Search, Settings, Sun } from 'lucide-react';
+import {
+  Building2,
+  Globe,
+  Languages,
+  Moon,
+  Search,
+  Settings,
+  Sun,
+} from 'lucide-react';
 import { Button } from '../components/ui/button.js';
 import {
   Popover,
@@ -11,6 +19,7 @@ import { Separator } from '../components/ui/separator.js';
 import { Switch } from '../components/ui/switch.js';
 import { BusinessInfoDialog } from './business-info-dialog.js';
 import { GeneralSettingsDialog } from './general-settings-dialog.js';
+import { LocaleSettingsDialog } from './locale-settings-dialog.js';
 import { SeoSettingsDialog } from './seo-settings-dialog.js';
 import { useTheme } from './use-theme.js';
 
@@ -22,6 +31,7 @@ export function SettingsMenu() {
   const [isBusinessInfoOpen, setIsBusinessInfoOpen] = useState(false);
   const [isGeneralSettingsOpen, setIsGeneralSettingsOpen] = useState(false);
   const [isSeoSettingsOpen, setIsSeoSettingsOpen] = useState(false);
+  const [isLocaleSettingsOpen, setIsLocaleSettingsOpen] = useState(false);
 
   return (
     <>
@@ -90,6 +100,14 @@ export function SettingsMenu() {
           <Button
             variant="ghost"
             className="w-full justify-start gap-2 px-1 py-1.5 text-sm"
+            onClick={() => setIsLocaleSettingsOpen(true)}
+          >
+            <Languages className="size-4" />
+            {t('localeSettings.menuLabel')}
+          </Button>
+          <Button
+            variant="ghost"
+            className="w-full justify-start gap-2 px-1 py-1.5 text-sm"
             onClick={() => setIsBusinessInfoOpen(true)}
           >
             <Building2 className="size-4" />
@@ -106,6 +124,11 @@ export function SettingsMenu() {
         siteId={DEFAULT_SITE_ID}
         open={isSeoSettingsOpen}
         onOpenChange={setIsSeoSettingsOpen}
+      />
+      <LocaleSettingsDialog
+        siteId={DEFAULT_SITE_ID}
+        open={isLocaleSettingsOpen}
+        onOpenChange={setIsLocaleSettingsOpen}
       />
       <BusinessInfoDialog
         siteId={DEFAULT_SITE_ID}

@@ -11,9 +11,13 @@ const samplePage: PublishedPageDto = {
   content: [{ type: 'Hero', props: { title: 'Ciao', subtitle: 'Sub' } }],
   seoMeta: { title: 'Chi siamo', description: 'La nostra storia' },
   locale: 'it',
+  translations: [{ locale: 'it', slug: 'chi-siamo' }],
   site: {
     name: 'Sito di prova',
     domain: 'example.com',
+    defaultLocale: 'it',
+    enabledLocales: ['it'],
+    untranslatedPageFallback: 'redirect-to-default',
     businessAddress: null,
     businessPhone: null,
     businessType: null,
@@ -39,14 +43,18 @@ describe('public-api-client', () => {
     vi.unstubAllGlobals();
   });
 
-  it('fetches the published page by domain and slug', async () => {
+  it('fetches the published page by domain, locale, and slug', async () => {
     vi.mocked(fetch).mockResolvedValue(jsonResponse(samplePage));
 
-    const result = await getPublishedPageBySlug('example.com', 'chi-siamo');
+    const result = await getPublishedPageBySlug(
+      'example.com',
+      'it',
+      'chi-siamo',
+    );
 
     expect(fetch).toHaveBeenCalledWith(
       expect.stringContaining(
-        '/public/pages/by-slug?domain=example.com&slug=chi-siamo',
+        '/public/pages/by-slug?domain=example.com&locale=it&slug=chi-siamo',
       ),
     );
     expect(result).toEqual(samplePage);
@@ -57,7 +65,11 @@ describe('public-api-client', () => {
       jsonResponse({ message: 'Not Found' }, 404),
     );
 
-    const result = await getPublishedPageBySlug('example.com', 'non-esiste');
+    const result = await getPublishedPageBySlug(
+      'example.com',
+      'it',
+      'non-esiste',
+    );
 
     expect(result).toBeNull();
   });
@@ -66,14 +78,25 @@ describe('public-api-client', () => {
     vi.mocked(fetch).mockResolvedValue(jsonResponse({ message: 'boom' }, 500));
 
     await expect(
-      getPublishedPageBySlug('example.com', 'chi-siamo'),
+      getPublishedPageBySlug('example.com', 'it', 'chi-siamo'),
     ).rejects.toThrow('Public pages API error: 500');
   });
 
   it('fetches the sitemap listing, bundled with the indexing flag, for a domain', async () => {
-    const items = [{ slug: 'chi-siamo', updatedAt: '2026-01-01T00:00:00Z' }];
+    const items = [
+      {
+        slug: 'chi-siamo',
+        locale: 'it',
+        groupId: 'group-1',
+        updatedAt: '2026-01-01T00:00:00Z',
+      },
+    ];
     vi.mocked(fetch).mockResolvedValue(
-      jsonResponse({ items, searchEngineIndexingEnabled: true }),
+      jsonResponse({
+        items,
+        searchEngineIndexingEnabled: true,
+        defaultLocale: 'it',
+      }),
     );
 
     const result = await listPublishedPagesForSitemap('example.com');
@@ -81,7 +104,11 @@ describe('public-api-client', () => {
     expect(fetch).toHaveBeenCalledWith(
       expect.stringContaining('/public/pages?domain=example.com'),
     );
-    expect(result).toEqual({ items, searchEngineIndexingEnabled: true });
+    expect(result).toEqual({
+      items,
+      searchEngineIndexingEnabled: true,
+      defaultLocale: 'it',
+    });
   });
 
   it('throws when the sitemap request fails', async () => {

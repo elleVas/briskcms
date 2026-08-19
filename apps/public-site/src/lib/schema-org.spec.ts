@@ -5,6 +5,9 @@ import type { PublishedSiteDto } from './public-api-client.js';
 const baseSite: PublishedSiteDto = {
   name: 'Il mio sito',
   domain: 'example.com',
+  defaultLocale: 'it',
+  enabledLocales: ['it'],
+  untranslatedPageFallback: 'redirect-to-default',
   businessAddress: null,
   businessPhone: null,
   businessType: null,

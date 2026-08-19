@@ -18,7 +18,12 @@ const { page } = Astro.props;
 
 {
   page ? (
-    <PageLayout seoMeta={page.seoMeta} locale={page.locale} site={page.site}>
+    <PageLayout
+      seoMeta={page.seoMeta}
+      locale={page.locale}
+      translations={page.translations}
+      site={page.site}
+    >
       {page.content.map((block) => <BlockRenderer block={block} />)}
     </PageLayout>
   ) : (

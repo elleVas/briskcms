@@ -3,6 +3,7 @@ import {
   getSite,
   updateBusinessInfo,
   updateGeneralSettings,
+  updateLocaleSettings,
   updateSeoSettings,
   type SiteDto,
 } from './sites-api-client.js';
@@ -14,6 +15,7 @@ const sampleSite: SiteDto = {
   domain: 'example.com',
   defaultLocale: 'it',
   enabledLocales: ['it'],
+  untranslatedPageFallback: 'redirect-to-default',
   businessAddress: null,
   businessPhone: null,
   businessType: null,
@@ -105,6 +107,28 @@ describe('sites-api-client', () => {
       expect.objectContaining({
         method: 'PATCH',
         body: JSON.stringify({ searchEngineIndexingEnabled: true }),
+      }),
+    );
+  });
+
+  it('updateLocaleSettings patches the locale-settings endpoint', async () => {
+    vi.mocked(fetch).mockResolvedValue(jsonResponse(sampleSite));
+
+    await updateLocaleSettings('site-1', {
+      enabledLocales: ['it', 'en'],
+      defaultLocale: 'it',
+      untranslatedPageFallback: 'not-available',
+    });
+
+    expect(fetch).toHaveBeenCalledWith(
+      expect.stringContaining('/sites/site-1/locale-settings'),
+      expect.objectContaining({
+        method: 'PATCH',
+        body: JSON.stringify({
+          enabledLocales: ['it', 'en'],
+          defaultLocale: 'it',
+          untranslatedPageFallback: 'not-available',
+        }),
       }),
     );
   });

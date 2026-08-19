@@ -94,3 +94,25 @@ export function rollbackToVersion(
     body: JSON.stringify({ versionId }),
   });
 }
+
+// Every group sibling, including the page itself (docs/adr/0017) — the
+// caller (PageTranslationsDialog) needs "am I already in the list" to
+// decide which of the site's enabledLocales still have no translation.
+export function listTranslations(pageId: string): Promise<PageDto[]> {
+  return request(`/pages/${pageId}/translations`);
+}
+
+export interface CreateTranslationInput {
+  locale: string;
+  slug: string;
+}
+
+export function createTranslation(
+  pageId: string,
+  input: CreateTranslationInput,
+): Promise<PageDto> {
+  return request(`/pages/${pageId}/translations`, {
+    method: 'POST',
+    body: JSON.stringify(input),
+  });
+}

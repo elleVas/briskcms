@@ -1,15 +1,26 @@
 ---
 import type { SeoMeta } from '@brisk/shared-types';
-import type { PublishedSiteDto } from '../lib/public-api-client.js';
+import type {
+	PublishedPageTranslationDto,
+	PublishedSiteDto,
+} from '../lib/public-api-client.js';
+import { localePath } from '../lib/locale-path.js';
 import { buildSchemaOrgGraph } from '../lib/schema-org.js';
 
 interface Props {
 	seoMeta: SeoMeta;
 	locale: string;
+	translations: PublishedPageTranslationDto[];
 	site: PublishedSiteDto;
 }
 
-const { seoMeta, locale, site } = Astro.props;
+const { seoMeta, locale, translations, site } = Astro.props;
+// The default locale's translation, if published, doubles as the
+// x-default alternate (docs/adr/0017) — the version search engines should
+// offer a visitor whose browser locale matches none of the site's.
+const defaultTranslation = translations.find(
+	(translation) => translation.locale === site.defaultLocale,
+);
 
 // seoMeta.canonical is the source of truth when set (docs/adr/0014's SEO
 // panel lets an editor override it) — Astro.url.href is the fallback, not
@@ -39,6 +50,24 @@ const schemaOrgJson = JSON.stringify(schemaOrgGraph).replace(/</g, '\\u003c');
 		{
 			!site.searchEngineIndexingEnabled && (
 				<meta name="robots" content="noindex, nofollow" />
+			)
+		}
+		{
+			translations.map((translation) => (
+				<link
+					rel="alternate"
+					hreflang={translation.locale}
+					href={`${Astro.url.origin}${localePath(translation.locale, translation.slug)}`}
+				/>
+			))
+		}
+		{
+			defaultTranslation && (
+				<link
+					rel="alternate"
+					hreflang="x-default"
+					href={`${Astro.url.origin}${localePath(defaultTranslation.locale, defaultTranslation.slug)}`}
+				/>
 			)
 		}
 

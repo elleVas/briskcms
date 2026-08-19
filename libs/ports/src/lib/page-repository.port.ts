@@ -29,5 +29,11 @@ export interface PageRepositoryPort {
     siteId: string,
     pagination: Pagination,
   ): Promise<PaginatedResult<Page>>;
+  /** Every locale-translation of the same page (Fase 5b) — `groupId` links them, see schema.ts's own comment on the column. */
+  listByGroup(
+    tenantId: string,
+    siteId: string,
+    groupId: string,
+  ): Promise<Page[]>;
   delete(tenantId: string, pageId: string): Promise<void>;
 }

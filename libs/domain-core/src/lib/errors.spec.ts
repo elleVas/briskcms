@@ -5,6 +5,7 @@ import {
   InvalidFormSubmissionError,
   InvalidOrExpiredTokenError,
   PageNotFoundError,
+  PageTranslationAlreadyExistsError,
   PageVersionNotFoundError,
   SiteNotFoundError,
 } from './errors.js';
@@ -78,5 +79,15 @@ describe('InvalidFormSubmissionError', () => {
     expect(error).toBeInstanceOf(Error);
     expect(error.name).toBe('InvalidFormSubmissionError');
     expect(error.message).toBe('Missing required field: email');
+  });
+});
+
+describe('PageTranslationAlreadyExistsError', () => {
+  it('carries the locale in its message and is a real Error', () => {
+    const error = new PageTranslationAlreadyExistsError('en');
+
+    expect(error).toBeInstanceOf(Error);
+    expect(error.name).toBe('PageTranslationAlreadyExistsError');
+    expect(error.message).toBe('This page already has a translation in "en"');
   });
 });

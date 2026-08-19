@@ -17,6 +17,7 @@ describe('GET /robots.txt', () => {
     vi.mocked(api.listPublishedPagesForSitemap).mockResolvedValue({
       items: [],
       searchEngineIndexingEnabled: true,
+      defaultLocale: 'it',
     });
 
     const url = new URL('https://example.com/robots.txt');
@@ -34,6 +35,7 @@ describe('GET /robots.txt', () => {
     vi.mocked(api.listPublishedPagesForSitemap).mockResolvedValue({
       items: [],
       searchEngineIndexingEnabled: false,
+      defaultLocale: 'it',
     });
 
     const url = new URL('https://example.com/robots.txt');

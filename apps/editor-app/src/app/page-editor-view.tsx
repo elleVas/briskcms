@@ -3,13 +3,14 @@ import { useTranslation } from 'react-i18next';
 import { Link } from '@tanstack/react-router';
 import { Puck } from '@puckeditor/core';
 import '@puckeditor/core/puck.css';
-import { ExternalLink, History, Search } from 'lucide-react';
+import { ExternalLink, History, Languages, Search } from 'lucide-react';
 import { puckConfig } from '@brisk/puck-config';
 import { toPuckData } from '../lib/puck-data-mapper.js';
 import { FormListProvider } from './form-list-provider.js';
 import { IconButton } from './icon-button.js';
 import { LogoutButton } from './logout-button.js';
 import { MediaPickerProvider } from './media-picker-provider.js';
+import { PageTranslationsDialog } from './page-translations-dialog.js';
 import { SeoPanelDialog } from './seo-panel-dialog.js';
 import { usePageEditor, type SaveStatus } from './use-page-editor.js';
 import { VersionHistoryDialog } from './version-history-dialog.js';
@@ -20,6 +21,13 @@ import { VersionHistoryDialog } from './version-history-dialog.js';
 const PUBLIC_SITE_URL =
   (import.meta.env['VITE_PUBLIC_SITE_URL'] as string | undefined) ??
   'http://localhost:4321';
+
+// Mirrors apps/public-site/src/lib/locale-path.ts's own convention (docs/adr/0017)
+// — every locale gets a URL prefix, and "home" collapses to the bare
+// locale root rather than a literal /home.
+function publicPagePath(locale: string, slug: string): string {
+  return slug === 'home' ? `/${locale}/` : `/${locale}/${slug}`;
+}
 
 export interface PageEditorViewProps {
   pageId: string;
@@ -45,6 +53,7 @@ export function PageEditorView({ pageId }: PageEditorViewProps) {
   const statusText = useStatusText(status);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [isSeoOpen, setIsSeoOpen] = useState(false);
+  const [isTranslationsOpen, setIsTranslationsOpen] = useState(false);
   // Bumped only on an explicit rollback, never on ordinary autosave — see
   // the comment on <Puck key={...}> below for why it can't be page.updatedAt.
   const [restoredAt, setRestoredAt] = useState(0);
@@ -79,13 +88,19 @@ export function PageEditorView({ pageId }: PageEditorViewProps) {
               >
                 <History />
               </IconButton>
+              <IconButton
+                label={t('pages.translations.open')}
+                onClick={() => setIsTranslationsOpen(true)}
+              >
+                <Languages />
+              </IconButton>
               {/* Only once there's something live to see — a draft-only page
                   would just 404 on the public site (see get-published-page-by-
                   slug.use-case.ts: unpublished and nonexistent are the same). */}
               {page.status === 'published' && (
                 <IconButton label={t('pages.editor.viewPage')} asChild>
                   <a
-                    href={`${PUBLIC_SITE_URL}/${page.slug}`}
+                    href={`${PUBLIC_SITE_URL}${publicPagePath(page.locale, page.slug)}`}
                     target="_blank"
                     rel="noopener noreferrer"
                   >
@@ -121,6 +136,13 @@ export function PageEditorView({ pageId }: PageEditorViewProps) {
             seoMeta={page.seoMeta}
             open={isSeoOpen}
             onOpenChange={setIsSeoOpen}
+          />
+          <PageTranslationsDialog
+            pageId={pageId}
+            siteId={page.siteId}
+            slug={page.slug}
+            open={isTranslationsOpen}
+            onOpenChange={setIsTranslationsOpen}
           />
         </div>
       </FormListProvider>

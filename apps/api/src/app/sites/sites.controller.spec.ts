@@ -13,6 +13,7 @@ function buildSite(
     domain: 'example.com',
     defaultLocale: 'it',
     enabledLocales: ['it'],
+    untranslatedPageFallback: 'redirect-to-default',
     businessAddress: null,
     businessPhone: null,
     businessType: null,

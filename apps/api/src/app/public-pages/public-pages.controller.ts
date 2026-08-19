@@ -52,6 +52,7 @@ export class PublicPagesController {
       {
         tenantId: this.defaultTenantId,
         domain: query.domain,
+        locale: query.locale,
         slug: query.slug,
       },
     );
@@ -80,6 +81,15 @@ export class PublicPagesController {
     // An unrecognized domain renders as an empty, indexing-allowed
     // sitemap/robots response, not a 404 — see listPublishedPagesForSitemap's
     // own comment on why, and docs/adr/0016 for the indexing-allowed default.
-    return result ?? { items: [], searchEngineIndexingEnabled: true };
+    // `defaultLocale` has no real answer here (there's no site to derive it
+    // from) — 'it' is a harmless placeholder since `items` is always empty
+    // in this branch, so nothing ever actually reads it as a locale prefix.
+    return (
+      result ?? {
+        items: [],
+        searchEngineIndexingEnabled: true,
+        defaultLocale: 'it',
+      }
+    );
   }
 }

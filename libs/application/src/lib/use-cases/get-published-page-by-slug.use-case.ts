@@ -1,4 +1,9 @@
-import type { Block, OpeningHoursDay, SeoMeta } from '@brisk/shared-types';
+import type {
+  Block,
+  OpeningHoursDay,
+  SeoMeta,
+  UntranslatedPageFallback,
+} from '@brisk/shared-types';
 import type { PageRepositoryPort, SiteRepositoryPort } from '@brisk/ports';
 
 export interface GetPublishedPageBySlugDeps {
@@ -9,13 +14,17 @@ export interface GetPublishedPageBySlugDeps {
 export interface GetPublishedPageBySlugInput {
   tenantId: string;
   domain: string;
+  locale: string;
   slug: string;
 }
 
-/** Only what the public renderer needs for OG tags + schema.org (docs/adr/0014) — never the tenant id or anything else internal. */
+/** Only what the public renderer needs for OG tags + schema.org (docs/adr/0014) and the language switcher (docs/adr/0017) — never the tenant id or anything else internal. */
 export interface PublishedSite {
   name: string;
   domain: string | null;
+  defaultLocale: string;
+  enabledLocales: string[];
+  untranslatedPageFallback: UntranslatedPageFallback;
   businessAddress: string | null;
   businessPhone: string | null;
   businessType: string | null;
@@ -23,10 +32,17 @@ export interface PublishedSite {
   searchEngineIndexingEnabled: boolean;
 }
 
+/** One entry per published locale-translation of this page (docs/adr/0017) — never includes an unpublished draft translation's slug. */
+export interface PublishedPageTranslation {
+  locale: string;
+  slug: string;
+}
+
 export interface PublishedPage {
   content: Block[];
   seoMeta: SeoMeta;
   locale: string;
+  translations: PublishedPageTranslation[];
   site: PublishedSite;
 }
 
@@ -36,9 +52,14 @@ export interface PublishedPage {
  * for a page whose status is actually 'published' — a page that exists but
  * is still a draft is indistinguishable from one that doesn't exist at all,
  * on purpose (no oracle for probing unpublished slugs). Resolves the site
- * from `domain` rather than trusting a client-supplied siteId/tenantId, and
- * always renders in the site's own `defaultLocale` — per-locale routing is
- * out of scope until multilingua (see piano-progetto-astro-cms.md, Fase 5b).
+ * from `domain` rather than trusting a client-supplied siteId/tenantId.
+ * `locale` is caller-supplied (from the URL's locale prefix, docs/adr/0017)
+ * rather than always the site's `defaultLocale` — if that exact
+ * (locale, slug) pair has no published page, this returns `null` just like
+ * any other not-found slug; it does NOT search sibling locales for the
+ * same content, since there is no way to know a not-found page's `groupId`.
+ * The language switcher (apps/public-site) instead uses `translations`
+ * below, computed only once a page IS found.
  */
 export async function getPublishedPageBySlug(
   deps: GetPublishedPageBySlugDeps,
@@ -55,20 +76,33 @@ export async function getPublishedPageBySlug(
   const page = await deps.pageRepository.findBySlug(
     input.tenantId,
     site.id,
-    site.defaultLocale,
+    input.locale,
     input.slug,
   );
   if (!page || page.status !== 'published' || !page.publishedContent) {
     return null;
   }
 
+  const siblings = await deps.pageRepository.listByGroup(
+    input.tenantId,
+    site.id,
+    page.groupId,
+  );
+  const translations = siblings
+    .filter((sibling) => sibling.status === 'published')
+    .map((sibling) => ({ locale: sibling.locale, slug: sibling.slug }));
+
   return {
     content: page.publishedContent,
     seoMeta: page.seoMeta,
     locale: page.locale,
+    translations,
     site: {
       name: site.name,
       domain: site.domain,
+      defaultLocale: site.defaultLocale,
+      enabledLocales: site.enabledLocales,
+      untranslatedPageFallback: site.untranslatedPageFallback,
       businessAddress: site.businessAddress,
       businessPhone: site.businessPhone,
       businessType: site.businessType,

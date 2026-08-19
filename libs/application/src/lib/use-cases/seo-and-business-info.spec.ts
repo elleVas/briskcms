@@ -5,6 +5,7 @@ import { updateSeoMeta } from './update-seo-meta.use-case.js';
 import { updateSiteBusinessInfo } from './update-site-business-info.use-case.js';
 import { updateSiteGeneralSettings } from './update-site-general-settings.use-case.js';
 import { updateSiteSeoSettings } from './update-site-seo-settings.use-case.js';
+import { updateSiteLocaleSettings } from './update-site-locale-settings.use-case.js';
 import {
   InMemoryPageRepository,
   InMemoryPageVersionRepository,
@@ -83,6 +84,7 @@ describe('updateSiteBusinessInfo', () => {
       domain: 'example.com',
       defaultLocale: 'it',
       enabledLocales: ['it'],
+      untranslatedPageFallback: 'redirect-to-default',
       businessAddress: null,
       businessPhone: null,
       businessType: null,
@@ -165,6 +167,7 @@ describe('updateSiteGeneralSettings', () => {
       domain: 'localhost',
       defaultLocale: 'it',
       enabledLocales: ['it'],
+      untranslatedPageFallback: 'redirect-to-default',
       businessAddress: null,
       businessPhone: null,
       businessType: null,
@@ -236,6 +239,7 @@ describe('updateSiteSeoSettings', () => {
       domain: 'localhost',
       defaultLocale: 'it',
       enabledLocales: ['it'],
+      untranslatedPageFallback: 'redirect-to-default',
       businessAddress: null,
       businessPhone: null,
       businessType: null,
@@ -281,6 +285,82 @@ describe('updateSiteSeoSettings', () => {
         tenantId: otherTenantId,
         siteId: 'site-1',
         searchEngineIndexingEnabled: true,
+      }),
+    ).rejects.toThrow(SiteNotFoundError);
+  });
+});
+
+describe('updateSiteLocaleSettings', () => {
+  const tenantId = 'tenant-1';
+  const otherTenantId = 'tenant-2';
+
+  function setup() {
+    const siteRepository = new InMemorySiteRepository();
+    return { siteRepository };
+  }
+
+  async function seedSite(siteRepository: InMemorySiteRepository) {
+    const site = Site.fromProps({
+      id: 'site-1',
+      tenantId,
+      name: 'Il mio sito',
+      domain: 'localhost',
+      defaultLocale: 'it',
+      enabledLocales: ['it'],
+      untranslatedPageFallback: 'redirect-to-default',
+      businessAddress: null,
+      businessPhone: null,
+      businessType: null,
+      openingHours: null,
+      searchEngineIndexingEnabled: false,
+      createdAt: new Date(),
+    });
+    await siteRepository.save(site);
+    return site;
+  }
+
+  it('sets the default/enabled locales and the untranslated-page fallback', async () => {
+    const deps = setup();
+    await seedSite(deps.siteRepository);
+
+    const updated = await updateSiteLocaleSettings(deps, {
+      tenantId,
+      siteId: 'site-1',
+      defaultLocale: 'en',
+      enabledLocales: ['it', 'en'],
+      untranslatedPageFallback: 'not-available',
+    });
+
+    expect(updated.defaultLocale).toBe('en');
+    expect(updated.enabledLocales).toEqual(['it', 'en']);
+    expect(updated.untranslatedPageFallback).toBe('not-available');
+  });
+
+  it('throws SiteNotFoundError for a nonexistent site', async () => {
+    const deps = setup();
+
+    await expect(
+      updateSiteLocaleSettings(deps, {
+        tenantId,
+        siteId: 'does-not-exist',
+        defaultLocale: 'it',
+        enabledLocales: ['it'],
+        untranslatedPageFallback: 'redirect-to-default',
+      }),
+    ).rejects.toThrow(SiteNotFoundError);
+  });
+
+  it('does not update a site belonging to a different tenant', async () => {
+    const deps = setup();
+    await seedSite(deps.siteRepository);
+
+    await expect(
+      updateSiteLocaleSettings(deps, {
+        tenantId: otherTenantId,
+        siteId: 'site-1',
+        defaultLocale: 'en',
+        enabledLocales: ['en'],
+        untranslatedPageFallback: 'not-available',
       }),
     ).rejects.toThrow(SiteNotFoundError);
   });

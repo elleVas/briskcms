@@ -1,0 +1,20 @@
+---
+import { getPublishedPageBySlug } from '../../lib/public-api-client.js';
+import PublicPageContent from '../../components/PublicPageContent.astro';
+
+export const prerender = false;
+
+// A locale's own root (e.g. "/it/") answers whichever page is slugged
+// "home" within that locale, by convention (docs/adr/0017) — same as the
+// pre-multilingua single-locale "/" did.
+const { locale } = Astro.params;
+const page = locale
+  ? await getPublishedPageBySlug(Astro.url.hostname, locale, 'home')
+  : null;
+
+if (!page) {
+  Astro.response.status = 404;
+}
+---
+
+<PublicPageContent page={page} />

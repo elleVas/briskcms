@@ -1,16 +1,18 @@
 ---
-import { getPublishedPageBySlug } from '../lib/public-api-client.js';
-import PublicPageContent from '../components/PublicPageContent.astro';
+import { listPublishedPagesForSitemap } from '../lib/public-api-client.js';
 
-// Astro's own native routing for "/" (src/pages/index.astro) — the only
-// CMS-specific decision here is which page's content answers it: the one
-// slugged "home", by convention, same as any other page otherwise. Not a
-// routing hack, just what index.astro fetches.
-const page = await getPublishedPageBySlug(Astro.url.hostname, 'home');
+// Every locale gets a URL prefix, including the default (docs/adr/0017) —
+// the bare root has no page of its own, it only ever redirects to the
+// site's default locale's own root ([locale]/index.astro). Reuses the
+// sitemap-listing endpoint purely for its bundled `defaultLocale` field
+// (ADR-0016's same reasoning: one lookup already resolves the site by
+// domain, no reason to add a second endpoint just for this).
+export const prerender = false;
 
-if (!page) {
-  Astro.response.status = 404;
-}
+// `astro check` flags `listing` as unused here — a known false positive
+// with its control-flow analysis of an early `return` in frontmatter
+// (everything after `return` looks unreachable to it); this is otherwise
+// the idiomatic Astro dynamic-redirect pattern and works correctly.
+const listing = await listPublishedPagesForSitemap(Astro.url.hostname);
+return Astro.redirect(`/${listing.defaultLocale}/`, 302);
 ---
-
-<PublicPageContent page={page} />

@@ -15,8 +15,10 @@ import {
 } from '@nestjs/common';
 import {
   createPage,
+  createPageTranslation,
   deletePage,
   listPages,
+  listPageTranslations,
   listPageVersions,
   publishPage,
   rollbackToVersion,
@@ -26,6 +28,7 @@ import {
 import {
   PageNotFoundError,
   PageSlugAlreadyExistsError,
+  PageTranslationAlreadyExistsError,
   PageVersionNotFoundError,
 } from '@brisk/domain-core';
 import type {
@@ -43,6 +46,8 @@ import {
 import {
   type CreatePageBody,
   createPageBodySchema,
+  type CreateTranslationBody,
+  createTranslationBodySchema,
   type ListPagesQuery,
   listPagesQuerySchema,
   type RollbackBody,
@@ -196,6 +201,41 @@ export class PagesController {
     return versions;
   }
 
+  @Get(':id/translations')
+  async listTranslations(@Param('id') id: string) {
+    return this.handleDomainErrors(async () => {
+      const translations = await listPageTranslations(
+        { pageRepository: this.pageRepository },
+        { tenantId: this.tenantContext.getCurrentTenantId(), pageId: id },
+      );
+      return translations.map((page) => page.toProps());
+    });
+  }
+
+  @Post(':id/translations')
+  async createTranslation(
+    @Param('id') id: string,
+    @Body(new ZodValidationPipe(createTranslationBodySchema))
+    body: CreateTranslationBody,
+  ) {
+    return this.handleDomainErrors(async () => {
+      const translation = await createPageTranslation(
+        {
+          pageRepository: this.pageRepository,
+          pageVersionRepository: this.pageVersionRepository,
+        },
+        {
+          tenantId: this.tenantContext.getCurrentTenantId(),
+          sourcePageId: id,
+          locale: body.locale,
+          slug: body.slug,
+          createdBy: null,
+        },
+      );
+      return translation.toProps();
+    });
+  }
+
   @Post(':id/rollback')
   async rollback(
     @Param('id') id: string,
@@ -239,7 +279,10 @@ export class PagesController {
       ) {
         throw new NotFoundException(error.message);
       }
-      if (error instanceof PageSlugAlreadyExistsError) {
+      if (
+        error instanceof PageSlugAlreadyExistsError ||
+        error instanceof PageTranslationAlreadyExistsError
+      ) {
         throw new ConflictException(error.message);
       }
       throw error;

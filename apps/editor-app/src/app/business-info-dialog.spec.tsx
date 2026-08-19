@@ -20,6 +20,7 @@ const sampleSite: SiteDto = {
   domain: 'example.com',
   defaultLocale: 'it',
   enabledLocales: ['it'],
+  untranslatedPageFallback: 'redirect-to-default',
   businessAddress: 'Via Roma 1, Milano',
   businessPhone: '+39 02 1234567',
   businessType: 'Restaurant',

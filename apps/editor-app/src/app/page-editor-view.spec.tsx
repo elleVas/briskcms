@@ -6,6 +6,8 @@ import * as router from '@tanstack/react-router';
 import { TooltipProvider } from '../components/ui/tooltip.js';
 import * as api from '../lib/pages-api-client.js';
 import type { PageDto } from '../lib/pages-api-client.js';
+import * as sitesApi from '../lib/sites-api-client.js';
+import type { SiteDto } from '../lib/sites-api-client.js';
 import { createTestQueryClient } from '../test-query-client.js';
 import { pageQueryOptions } from './pages-queries.js';
 import { PageEditorView } from './page-editor-view.js';
@@ -39,7 +41,15 @@ vi.mock('../lib/pages-api-client.js', async (importOriginal) => {
     ...actual,
     listPageVersions: vi.fn(),
     rollbackToVersion: vi.fn(),
+    listTranslations: vi.fn(),
+    createTranslation: vi.fn(),
   };
+});
+
+vi.mock('../lib/sites-api-client.js', async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import('../lib/sites-api-client.js')>();
+  return { ...actual, getSite: vi.fn() };
 });
 
 const samplePage: PageDto = {
@@ -55,6 +65,22 @@ const samplePage: PageDto = {
   seoMeta: { title: 'Test', description: 'desc' },
   createdAt: '',
   updatedAt: '',
+};
+
+const sampleSite: SiteDto = {
+  id: 'site-1',
+  tenantId: 'tenant-1',
+  name: 'Il mio sito',
+  domain: null,
+  defaultLocale: 'it',
+  enabledLocales: ['it', 'en'],
+  untranslatedPageFallback: 'redirect-to-default',
+  businessAddress: null,
+  businessPhone: null,
+  businessType: null,
+  openingHours: null,
+  searchEngineIndexingEnabled: false,
+  createdAt: '',
 };
 
 function renderView(page: PageDto = samplePage) {
@@ -174,10 +200,15 @@ describe('PageEditorView', () => {
   it('links to the public page when it is published', () => {
     vi.mocked(router.useNavigate).mockReturnValue(vi.fn());
 
-    renderView({ ...samplePage, status: 'published', slug: 'chi-siamo' });
+    renderView({
+      ...samplePage,
+      status: 'published',
+      locale: 'it',
+      slug: 'chi-siamo',
+    });
 
     const link = screen.getByRole('link', { name: /visualizza pagina/i });
-    expect(link.getAttribute('href')).toMatch(/\/chi-siamo$/);
+    expect(link.getAttribute('href')).toMatch(/\/it\/chi-siamo$/);
     expect(link.getAttribute('target')).toBe('_blank');
   });
 
@@ -189,5 +220,48 @@ describe('PageEditorView', () => {
     expect(
       screen.queryByRole('link', { name: /visualizza pagina/i }),
     ).toBeNull();
+  });
+
+  it('opens the translations dialog, listing this page and the missing locale', async () => {
+    vi.mocked(router.useNavigate).mockReturnValue(vi.fn());
+    vi.mocked(api.listTranslations).mockResolvedValue([samplePage]);
+    vi.mocked(sitesApi.getSite).mockResolvedValue(sampleSite);
+
+    renderView();
+    fireEvent.click(screen.getByRole('button', { name: /traduzioni/i }));
+
+    expect(await screen.findByText(/questa pagina/i)).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'EN' })).toBeTruthy();
+  });
+
+  it('creates a translation and navigates to its editor', async () => {
+    const navigate = vi.fn();
+    vi.mocked(router.useNavigate).mockReturnValue(navigate);
+    vi.mocked(api.listTranslations).mockResolvedValue([samplePage]);
+    vi.mocked(sitesApi.getSite).mockResolvedValue(sampleSite);
+    vi.mocked(api.createTranslation).mockResolvedValue({
+      ...samplePage,
+      id: 'page-2',
+      locale: 'en',
+      slug: 'test-page-en',
+    });
+
+    renderView();
+    fireEvent.click(screen.getByRole('button', { name: /traduzioni/i }));
+    fireEvent.click(await screen.findByRole('button', { name: 'EN' }));
+    fireEvent.click(screen.getByRole('button', { name: /crea traduzione/i }));
+
+    await waitFor(() =>
+      expect(api.createTranslation).toHaveBeenCalledWith(samplePage.id, {
+        locale: 'en',
+        slug: 'test-page',
+      }),
+    );
+    await waitFor(() =>
+      expect(navigate).toHaveBeenCalledWith({
+        to: '/pages/$pageId',
+        params: { pageId: 'page-2' },
+      }),
+    );
   });
 });

@@ -57,7 +57,9 @@ describe('usePagesList', () => {
     vi.mocked(router.useNavigate).mockReturnValue(navigate);
     vi.mocked(api.createPage).mockResolvedValue(samplePage);
 
-    const { result } = renderHook(() => usePagesList('site-1'), { wrapper });
+    const { result } = renderHook(() => usePagesList('site-1', 'it'), {
+      wrapper,
+    });
 
     await act(async () => {
       await result.current.createPage('Chi Siamo');
@@ -82,7 +84,9 @@ describe('usePagesList', () => {
     vi.mocked(router.useNavigate).mockReturnValue(vi.fn());
     vi.mocked(api.deletePage).mockResolvedValue(undefined);
 
-    const { result } = renderHook(() => usePagesList('site-1'), { wrapper });
+    const { result } = renderHook(() => usePagesList('site-1', 'it'), {
+      wrapper,
+    });
 
     await act(async () => {
       await result.current.deletePage(samplePage.id);
@@ -98,7 +102,9 @@ describe('usePagesList', () => {
       status: 'published',
     });
 
-    const { result } = renderHook(() => usePagesList('site-1'), { wrapper });
+    const { result } = renderHook(() => usePagesList('site-1', 'it'), {
+      wrapper,
+    });
 
     await act(async () => {
       await result.current.publishPage(samplePage.id);

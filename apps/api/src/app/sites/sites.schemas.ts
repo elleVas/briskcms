@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { openingHoursSchema } from '@brisk/shared-types';
+import { localeSettingsSchema, openingHoursSchema } from '@brisk/shared-types';
 import { domainSchema } from '../public-pages/public-pages.schemas.js';
 
 export const updateBusinessInfoBodySchema = z.object({
@@ -28,3 +28,11 @@ export const updateSeoSettingsBodySchema = z.object({
   searchEngineIndexingEnabled: z.boolean(),
 });
 export type UpdateSeoSettingsBody = z.infer<typeof updateSeoSettingsBodySchema>;
+
+// Reuses @brisk/shared-types' schema wholesale (docs/adr/0017) — it already
+// encodes the one real invariant (defaultLocale must be one of
+// enabledLocales), no reason to redeclare it here.
+export const updateLocaleSettingsBodySchema = localeSettingsSchema;
+export type UpdateLocaleSettingsBody = z.infer<
+  typeof updateLocaleSettingsBodySchema
+>;

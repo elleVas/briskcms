@@ -30,6 +30,7 @@ function hasUnpublishedChanges(p: PageDto): boolean {
 
 export interface PagesListViewProps {
   siteId: string;
+  defaultLocale: string;
   pages: PageDto[];
   page: number;
   total: number;
@@ -37,13 +38,17 @@ export interface PagesListViewProps {
 
 export function PagesListView({
   siteId,
+  defaultLocale,
   pages,
   page,
   total,
 }: PagesListViewProps) {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
-  const { createPage, deletePage, publishPage } = usePagesList(siteId);
+  const { createPage, deletePage, publishPage } = usePagesList(
+    siteId,
+    defaultLocale,
+  );
 
   const [selectedPageId, setSelectedPageId] = useState<string | null>(null);
   const [isNewPageDialogOpen, setIsNewPageDialogOpen] = useState(false);
@@ -175,6 +180,9 @@ export function PagesListView({
                       </span>
                     </span>
                     <span className="flex items-center gap-3">
+                      <Badge variant="outline" className="uppercase">
+                        {p.locale}
+                      </Badge>
                       {hasUnpublishedChanges(p) && (
                         <Badge
                           variant="outline"

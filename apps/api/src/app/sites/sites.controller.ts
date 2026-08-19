@@ -11,6 +11,7 @@ import {
 import {
   updateSiteBusinessInfo,
   updateSiteGeneralSettings,
+  updateSiteLocaleSettings,
   updateSiteSeoSettings,
 } from '@brisk/application';
 import { SiteNotFoundError } from '@brisk/domain-core';
@@ -22,6 +23,8 @@ import {
   updateBusinessInfoBodySchema,
   type UpdateGeneralSettingsBody,
   updateGeneralSettingsBodySchema,
+  type UpdateLocaleSettingsBody,
+  updateLocaleSettingsBodySchema,
   type UpdateSeoSettingsBody,
   updateSeoSettingsBodySchema,
 } from './sites.schemas.js';
@@ -94,6 +97,25 @@ export class SitesController {
   ) {
     return this.handleDomainErrors(async () => {
       const site = await updateSiteSeoSettings(
+        { siteRepository: this.siteRepository },
+        {
+          tenantId: this.tenantContext.getCurrentTenantId(),
+          siteId: id,
+          ...body,
+        },
+      );
+      return site.toProps();
+    });
+  }
+
+  @Patch(':id/locale-settings')
+  async updateLocaleSettings(
+    @Param('id') id: string,
+    @Body(new ZodValidationPipe(updateLocaleSettingsBodySchema))
+    body: UpdateLocaleSettingsBody,
+  ) {
+    return this.handleDomainErrors(async () => {
+      const site = await updateSiteLocaleSettings(
         { siteRepository: this.siteRepository },
         {
           tenantId: this.tenantContext.getCurrentTenantId(),

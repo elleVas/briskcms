@@ -101,6 +101,26 @@ export class DrizzlePageRepository implements PageRepositoryPort {
     return { items: rows.map(fromRow), total };
   }
 
+  async listByGroup(
+    tenantId: string,
+    siteId: string,
+    groupId: string,
+  ): Promise<Page[]> {
+    const rows = await withTenant(this.db, tenantId, (tx) =>
+      tx
+        .select()
+        .from(pages)
+        .where(
+          and(
+            eq(pages.tenantId, tenantId),
+            eq(pages.siteId, siteId),
+            eq(pages.groupId, groupId),
+          ),
+        ),
+    );
+    return rows.map(fromRow);
+  }
+
   async delete(tenantId: string, pageId: string): Promise<void> {
     await withTenant(this.db, tenantId, (tx) =>
       tx

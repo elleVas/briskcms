@@ -49,6 +49,7 @@ function renderView(
       <TooltipProvider>
         <PagesListView
           siteId="site-1"
+          defaultLocale="it"
           pages={pages}
           page={options.page ?? 1}
           total={options.total ?? pages.length}

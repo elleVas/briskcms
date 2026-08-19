@@ -208,4 +208,25 @@ describe('DrizzlePageRepository (integration)', () => {
     );
     expect(versionsFromOtherTenant).toHaveLength(0);
   });
+
+  it('listByGroup returns every locale-translation of the same page, scoped to tenant', async () => {
+    const groupId = randomUUID();
+    const italian = buildPage({ groupId, locale: 'it', slug: 'chi-siamo' });
+    const english = buildPage({ groupId, locale: 'en', slug: 'about-us' });
+    const unrelated = buildPage({ locale: 'it', slug: 'contatti' });
+    await pageRepository.save(italian);
+    await pageRepository.save(english);
+    await pageRepository.save(unrelated);
+
+    const found = await pageRepository.listByGroup(tenantAId, siteAId, groupId);
+
+    expect(found.map((p) => p.locale).sort()).toEqual(['en', 'it']);
+
+    const foundFromOtherTenant = await pageRepository.listByGroup(
+      tenantBId,
+      siteAId,
+      groupId,
+    );
+    expect(foundFromOtherTenant).toHaveLength(0);
+  });
 });

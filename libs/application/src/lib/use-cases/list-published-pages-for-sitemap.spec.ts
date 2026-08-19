@@ -31,6 +31,7 @@ describe('listPublishedPagesForSitemap', () => {
       domain: 'example.com',
       defaultLocale: 'it',
       enabledLocales: ['it'],
+      untranslatedPageFallback: 'redirect-to-default',
       businessAddress: null,
       businessPhone: null,
       businessType: null,
@@ -125,5 +126,23 @@ describe('listPublishedPagesForSitemap', () => {
     });
 
     expect(result?.searchEngineIndexingEnabled).toBe(true);
+  });
+
+  it("includes the site's default locale, and each entry's locale/groupId", async () => {
+    const deps = setup();
+    await seedSite(deps.siteRepository, { defaultLocale: 'en' });
+    await createAndPublish(deps, 'chi-siamo');
+
+    const result = await listPublishedPagesForSitemap(deps, {
+      tenantId,
+      domain: 'example.com',
+    });
+
+    expect(result?.defaultLocale).toBe('en');
+    expect(result?.items[0]).toMatchObject({
+      slug: 'chi-siamo',
+      locale: 'it',
+      groupId: 'group-chi-siamo',
+    });
   });
 });

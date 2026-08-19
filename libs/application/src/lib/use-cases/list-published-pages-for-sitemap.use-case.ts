@@ -12,6 +12,11 @@ export interface ListPublishedPagesForSitemapInput {
 
 export interface SitemapEntry {
   slug: string;
+  locale: string;
+  // Links locale-siblings together (docs/adr/0017) so apps/public-site can
+  // group entries into one <url> block with hreflang alternates per group,
+  // instead of one flat <loc> per page regardless of translation.
+  groupId: string;
   updatedAt: Date;
 }
 
@@ -22,6 +27,9 @@ export interface SitemapListing {
   // "what does this domain's site say about crawling", and both already
   // need this same site resolved by domain.
   searchEngineIndexingEnabled: boolean;
+  // apps/public-site's bare "/" route needs this to redirect to the site's
+  // locale-prefixed home (docs/adr/0017) before it knows any slug at all.
+  defaultLocale: string;
 }
 
 // Same "5-15 pagine, siti vetrina" scale assumption as everywhere else in
@@ -58,7 +66,13 @@ export async function listPublishedPagesForSitemap(
   return {
     items: items
       .filter((page) => page.status === 'published')
-      .map((page) => ({ slug: page.slug, updatedAt: page.updatedAt })),
+      .map((page) => ({
+        slug: page.slug,
+        locale: page.locale,
+        groupId: page.groupId,
+        updatedAt: page.updatedAt,
+      })),
     searchEngineIndexingEnabled: site.searchEngineIndexingEnabled,
+    defaultLocale: site.defaultLocale,
   };
 }
