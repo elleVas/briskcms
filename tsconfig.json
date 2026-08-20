@@ -68,6 +68,9 @@
     },
     {
       "path": "./libs/adapters/postgres-search-repository"
+    },
+    {
+      "path": "./libs/adapters/turnstile-captcha"
     }
   ],
   "compilerOptions": {}

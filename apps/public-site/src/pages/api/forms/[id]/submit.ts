@@ -16,6 +16,10 @@ export const POST: APIRoute = async ({ params, request, redirect }) => {
 
   const formData = await request.formData();
   const honeypot = String(formData.get('_honeypot') ?? '');
+  // Turnstile's widget script injects this hidden input itself once the
+  // visitor completes the check — no extra glue needed on our side to wire
+  // it into the form's own POST body.
+  const captchaToken = String(formData.get('cf-turnstile-response') ?? '');
   const redirectTo = String(formData.get('_redirectTo') ?? '/');
   // Native unchecked checkboxes never submit a key at all — the hint tells
   // this proxy which field ids to treat as booleans (present === true,
@@ -27,7 +31,7 @@ export const POST: APIRoute = async ({ params, request, redirect }) => {
 
   const values: Record<string, unknown> = {};
   for (const [key, value] of formData.entries()) {
-    if (key.startsWith('_')) continue;
+    if (key.startsWith('_') || key === 'cf-turnstile-response') continue;
     values[key] = checkboxFieldIds.includes(key) ? value === 'on' : value;
   }
   for (const id of checkboxFieldIds) {
@@ -41,6 +45,7 @@ export const POST: APIRoute = async ({ params, request, redirect }) => {
     pageId: null,
     values,
     honeypot,
+    captchaToken,
   });
 
   const redirectUrl = new URL(redirectTo, request.url);

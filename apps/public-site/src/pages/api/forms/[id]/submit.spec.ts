@@ -51,7 +51,29 @@ describe('POST /api/forms/[id]/submit', () => {
       pageId: null,
       values: { email: 'visitor@example.com', consenso: true },
       honeypot: '',
+      captchaToken: '',
     });
+  });
+
+  it("forwards Turnstile's injected cf-turnstile-response as the captcha token", async () => {
+    vi.mocked(fetch).mockResolvedValue(jsonResponse(undefined, 204));
+
+    const request = formDataRequest({
+      _redirectTo: '/contatti',
+      _checkboxFields: '',
+      _honeypot: '',
+      email: 'visitor@example.com',
+      'cf-turnstile-response': 'widget-token',
+    });
+
+    // @ts-expect-error deliberately partial APIContext
+    await POST({ params: { id: 'form-1' }, request, redirect });
+
+    const [, init] = vi.mocked(fetch).mock.calls[0];
+    const body = JSON.parse(init?.body as string);
+    expect(body.captchaToken).toBe('widget-token');
+    // Must not leak into the form's own field values.
+    expect(body.values).not.toHaveProperty('cf-turnstile-response');
   });
 
   it('marks an unchecked checkbox as false even though the browser never submits its key', async () => {

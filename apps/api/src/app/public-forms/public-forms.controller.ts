@@ -14,9 +14,11 @@ import { ThrottlerGuard } from '@nestjs/throttler';
 import { getPublicForm, submitForm } from '@brisk/application';
 import {
   FormNotFoundError,
+  InvalidCaptchaError,
   InvalidFormSubmissionError,
 } from '@brisk/domain-core';
 import type {
+  CaptchaPort,
   EmailPort,
   FormRepositoryPort,
   FormSubmissionRepositoryPort,
@@ -27,6 +29,7 @@ import {
   submitFormBodySchema,
 } from './public-forms.schemas.js';
 import {
+  CAPTCHA_PORT,
   DEFAULT_TENANT_ID,
   EMAIL_PORT,
   FORM_REPOSITORY,
@@ -47,6 +50,7 @@ export class PublicFormsController {
     @Inject(FORM_SUBMISSION_REPOSITORY)
     private readonly formSubmissionRepository: FormSubmissionRepositoryPort,
     @Inject(EMAIL_PORT) private readonly emailPort: EmailPort,
+    @Inject(CAPTCHA_PORT) private readonly captchaPort: CaptchaPort,
     @Inject(DEFAULT_TENANT_ID) private readonly defaultTenantId: string,
   ) {}
 
@@ -72,6 +76,7 @@ export class PublicFormsController {
           formRepository: this.formRepository,
           formSubmissionRepository: this.formSubmissionRepository,
           emailPort: this.emailPort,
+          captchaPort: this.captchaPort,
         },
         {
           tenantId: this.defaultTenantId,
@@ -79,6 +84,7 @@ export class PublicFormsController {
           pageId: body.pageId,
           values: body.values,
           honeypot: body.honeypot,
+          captchaToken: body.captchaToken,
         },
       ),
     );
@@ -91,7 +97,10 @@ export class PublicFormsController {
       if (error instanceof FormNotFoundError) {
         throw new NotFoundException(error.message);
       }
-      if (error instanceof InvalidFormSubmissionError) {
+      if (
+        error instanceof InvalidFormSubmissionError ||
+        error instanceof InvalidCaptchaError
+      ) {
         throw new BadRequestException(error.message);
       }
       throw error;

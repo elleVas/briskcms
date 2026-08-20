@@ -200,6 +200,7 @@ export interface SubmitPublicFormInput {
   pageId: string | null;
   values: Record<string, unknown>;
   honeypot: string;
+  captchaToken: string;
 }
 
 export type SubmitPublicFormResult =

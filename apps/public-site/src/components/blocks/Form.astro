@@ -26,6 +26,13 @@ const checkboxFieldIds = (form?.fields ?? [])
   .filter((field) => field.type === 'checkbox')
   .map((field) => field.id)
   .join(',');
+
+// process.env, not import.meta.env/PUBLIC_ (same reasoning as apiUrl() in
+// public-api-client.ts): read server-side per request, then written into
+// the rendered HTML's data-sitekey — this app doesn't do per-domain
+// build-time bundling, so a build-time-baked client constant would be
+// wrong here anyway.
+const turnstileSiteKey = process.env['TURNSTILE_SITE_KEY'] ?? '';
 ---
 
 {
@@ -98,10 +105,28 @@ const checkboxFieldIds = (form?.fields ?? [])
               )}
             </div>
           ))}
+          {
+            turnstileSiteKey && (
+              <div class="cf-turnstile" data-sitekey={turnstileSiteKey} />
+            )
+          }
           <button type="submit">Invia</button>
         </form>
       )}
     </div>
+  )
+}
+
+{
+  // Turnstile's own script auto-renders any .cf-turnstile element it finds
+  // on the page and injects its response token as a hidden input inside
+  // the enclosing <form> on completion — no glue JS needed here, same
+  // "prefer native/self-contained mechanisms" reasoning as NavDropdown's
+  // <details>/<summary>. Astro dedupes an identical external <script src>
+  // across multiple Form blocks on the same page, so this is safe even
+  // with more than one form on a page.
+  turnstileSiteKey && (
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer />
   )
 }
 

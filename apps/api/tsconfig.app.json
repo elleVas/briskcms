@@ -23,10 +23,10 @@
   ],
   "references": [
     {
-      "path": "../../libs/adapters/postgres-search-repository/tsconfig.lib.json"
+      "path": "../../libs/adapters/verification-token-adapter/tsconfig.lib.json"
     },
     {
-      "path": "../../libs/adapters/verification-token-adapter/tsconfig.lib.json"
+      "path": "../../libs/adapters/turnstile-captcha/tsconfig.lib.json"
     },
     {
       "path": "../../libs/adapters/smtp-email-adapter/tsconfig.lib.json"
@@ -48,6 +48,9 @@
     },
     {
       "path": "../../libs/adapters/postgres-site-layout-section-repository/tsconfig.lib.json"
+    },
+    {
+      "path": "../../libs/adapters/postgres-search-repository/tsconfig.lib.json"
     },
     {
       "path": "../../libs/adapters/postgres-page-repository/tsconfig.lib.json"

@@ -193,6 +193,7 @@ describe('public-api-client', () => {
       pageId: null,
       values: { email: 'visitor@example.com' },
       honeypot: '',
+      captchaToken: 'test-token',
     });
 
     expect(fetch).toHaveBeenCalledWith(
@@ -211,6 +212,7 @@ describe('public-api-client', () => {
       pageId: null,
       values: {},
       honeypot: '',
+      captchaToken: 'test-token',
     });
 
     expect(result).toEqual({ ok: false, status: 400 });

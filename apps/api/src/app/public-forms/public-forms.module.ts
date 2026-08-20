@@ -7,9 +7,11 @@ import {
   DrizzleFormSubmissionRepository,
 } from '@brisk/postgres-form-repository';
 import { SmtpEmailAdapter } from '@brisk/smtp-email-adapter';
+import { TurnstileCaptchaAdapter } from '@brisk/turnstile-captcha';
 import { DATABASE, DatabaseModule } from '../database.module.js';
 import { PublicFormsController } from './public-forms.controller.js';
 import {
+  CAPTCHA_PORT,
   DEFAULT_TENANT_ID,
   EMAIL_PORT,
   FORM_REPOSITORY,
@@ -56,6 +58,13 @@ import {
           fromAddress: requireEnv('SMTP_FROM_ADDRESS'),
           user: process.env['SMTP_USER'] || undefined,
           password: process.env['SMTP_PASSWORD'] || undefined,
+        }),
+    },
+    {
+      provide: CAPTCHA_PORT,
+      useFactory: () =>
+        new TurnstileCaptchaAdapter({
+          secretKey: requireEnv('TURNSTILE_SECRET_KEY'),
         }),
     },
   ],
