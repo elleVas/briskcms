@@ -9,26 +9,34 @@ const [header, ...body] = rows;
 
 {
   header && (
-    <table class="brisk-table">
-      <thead>
-        <tr>
-          {header.map((cell) => <th>{cell}</th>)}
-        </tr>
-      </thead>
-      {body.length > 0 && (
-        <tbody>
-          {body.map((row) => (
-            <tr>
-              {row.map((cell) => <td>{cell}</td>)}
-            </tr>
-          ))}
-        </tbody>
-      )}
-    </table>
+    <div class="brisk-table-scroll">
+      <table class="brisk-table">
+        <thead>
+          <tr>
+            {header.map((cell) => <th>{cell}</th>)}
+          </tr>
+        </thead>
+        {body.length > 0 && (
+          <tbody>
+            {body.map((row) => (
+              <tr>
+                {row.map((cell) => <td>{cell}</td>)}
+              </tr>
+            ))}
+          </tbody>
+        )}
+      </table>
+    </div>
   )
 }
 
 <style>
+  /* A table with many/wide columns can't shrink below its content's
+     intrinsic width — scrolling the table itself horizontally, instead of
+     letting it force the whole page to scroll, is the standard fix. */
+  .brisk-table-scroll {
+    overflow-x: auto;
+  }
   .brisk-table {
     width: 100%;
     border-collapse: collapse;

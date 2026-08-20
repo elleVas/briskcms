@@ -24,7 +24,11 @@ export const imageConfig: ComponentConfig<ImageProps> = {
   render: ({ media, alt, caption }) => (
     <figure>
       {media ? (
-        <img src={media.url} alt={alt} />
+        <img
+          src={media.url}
+          alt={alt}
+          style={{ maxWidth: '100%', height: 'auto' }}
+        />
       ) : (
         <div
           style={{

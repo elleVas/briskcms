@@ -4,3 +4,14 @@
 <div class="brisk-column">
   <slot />
 </div>
+
+<style>
+  /* Grid items default to min-width: auto, which refuses to shrink below
+     the intrinsic size of their content (e.g. a wide image) — that's what
+     let content inside a Column break out of the parent Columns grid
+     regardless of the grid's own 1fr track sizing. min-width: 0 lets this
+     column actually shrink to its track width. */
+  .brisk-column {
+    min-width: 0;
+  }
+</style>
