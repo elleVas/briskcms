@@ -5,7 +5,9 @@ import {
   searchPublishedPages,
 } from '../../lib/public-api-client.js';
 import { localePath } from '../../lib/locale-path.js';
-import PageLayout from '../../layouts/PageLayout.astro';
+import PageLayoutCore from '../../layouts/PageLayout.astro';
+import { resolveThemeLayoutOverride } from '../../lib/resolve-theme-layout-override.js';
+const PageLayout = resolveThemeLayoutOverride(PageLayoutCore);
 import NotFound from '../../components/NotFound.astro';
 
 // SSR (see astro.config.mjs) — content is fetched per-request, matching

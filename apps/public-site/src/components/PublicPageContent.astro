@@ -1,6 +1,8 @@
 ---
 import type { PublishedPageDto } from '../lib/public-api-client.js';
-import PageLayout from '../layouts/PageLayout.astro';
+import PageLayoutCore from '../layouts/PageLayout.astro';
+import { resolveThemeLayoutOverride } from '../lib/resolve-theme-layout-override.js';
+const PageLayout = resolveThemeLayoutOverride(PageLayoutCore);
 import BlockRenderer from './BlockRenderer.astro';
 import NotFound from './NotFound.astro';
 
