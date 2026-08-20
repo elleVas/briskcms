@@ -1,5 +1,17 @@
 {
   "extends": "astro/tsconfigs/strict",
+  "compilerOptions": {
+    // Mirrors astro.config.mjs's `~theme` Vite alias, for the type-checker
+    // only (tsc/astro check resolve module specifiers via `paths`, not
+    // Vite's own alias config, so it needs its own copy of the mapping).
+    // Always points at the reference "classic" theme regardless of the
+    // BRISK_THEME actually building — good enough for type-checking, since
+    // every theme package (docs/adr/0021) is expected to export the same
+    // shape.
+    "paths": {
+      "~theme/*": ["../../themes/classic/*"]
+    }
+  },
   "include": [".astro/types.d.ts", "**/*"],
   "exclude": ["dist"],
   "references": [

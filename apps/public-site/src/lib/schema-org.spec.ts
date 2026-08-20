@@ -13,6 +13,15 @@ const baseSite: PublishedSiteDto = {
   businessType: null,
   openingHours: null,
   searchEngineIndexingEnabled: false,
+  themeSettings: {
+    primaryColor: null,
+    secondaryColor: null,
+    fontFamily: null,
+    customCss: null,
+    headScript: null,
+    bodyScript: null,
+    faviconUrl: null,
+  },
 };
 
 const seoMeta = { title: 'Chi siamo', description: 'La nostra storia' };

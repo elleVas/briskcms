@@ -5,6 +5,7 @@ import { updateSeoMeta } from './update-seo-meta.use-case.js';
 import { updateSiteBusinessInfo } from './update-site-business-info.use-case.js';
 import { updateSiteGeneralSettings } from './update-site-general-settings.use-case.js';
 import { updateSiteSeoSettings } from './update-site-seo-settings.use-case.js';
+import { updateSiteThemeSettings } from './update-site-theme-settings.use-case.js';
 import { updateSiteLocaleSettings } from './update-site-locale-settings.use-case.js';
 import {
   InMemoryPageRepository,
@@ -90,6 +91,13 @@ describe('updateSiteBusinessInfo', () => {
       businessType: null,
       openingHours: null,
       searchEngineIndexingEnabled: false,
+      themePrimaryColor: null,
+      themeSecondaryColor: null,
+      themeFontFamily: null,
+      themeCustomCss: null,
+      themeHeadScript: null,
+      themeBodyScript: null,
+      themeFaviconUrl: null,
       createdAt: new Date(),
     });
     await siteRepository.save(site);
@@ -173,6 +181,13 @@ describe('updateSiteGeneralSettings', () => {
       businessType: null,
       openingHours: null,
       searchEngineIndexingEnabled: false,
+      themePrimaryColor: null,
+      themeSecondaryColor: null,
+      themeFontFamily: null,
+      themeCustomCss: null,
+      themeHeadScript: null,
+      themeBodyScript: null,
+      themeFaviconUrl: null,
       createdAt: new Date(),
     });
     await siteRepository.save(site);
@@ -245,6 +260,13 @@ describe('updateSiteSeoSettings', () => {
       businessType: null,
       openingHours: null,
       searchEngineIndexingEnabled: false,
+      themePrimaryColor: null,
+      themeSecondaryColor: null,
+      themeFontFamily: null,
+      themeCustomCss: null,
+      themeHeadScript: null,
+      themeBodyScript: null,
+      themeFaviconUrl: null,
       createdAt: new Date(),
     });
     await siteRepository.save(site);
@@ -290,6 +312,100 @@ describe('updateSiteSeoSettings', () => {
   });
 });
 
+describe('updateSiteThemeSettings', () => {
+  const tenantId = 'tenant-1';
+  const otherTenantId = 'tenant-2';
+
+  function setup() {
+    const siteRepository = new InMemorySiteRepository();
+    return { siteRepository };
+  }
+
+  async function seedSite(siteRepository: InMemorySiteRepository) {
+    const site = Site.fromProps({
+      id: 'site-1',
+      tenantId,
+      name: 'Il mio sito',
+      domain: 'localhost',
+      defaultLocale: 'it',
+      enabledLocales: ['it'],
+      untranslatedPageFallback: 'redirect-to-default',
+      businessAddress: null,
+      businessPhone: null,
+      businessType: null,
+      openingHours: null,
+      searchEngineIndexingEnabled: false,
+      themePrimaryColor: null,
+      themeSecondaryColor: null,
+      themeFontFamily: null,
+      themeCustomCss: null,
+      themeHeadScript: null,
+      themeBodyScript: null,
+      themeFaviconUrl: null,
+      createdAt: new Date(),
+    });
+    await siteRepository.save(site);
+    return site;
+  }
+
+  it('sets the theme fields on the site', async () => {
+    const deps = setup();
+    await seedSite(deps.siteRepository);
+
+    const updated = await updateSiteThemeSettings(deps, {
+      tenantId,
+      siteId: 'site-1',
+      primaryColor: '#18181b',
+      secondaryColor: null,
+      fontFamily: 'inter',
+      customCss: null,
+      headScript: null,
+      bodyScript: null,
+      faviconUrl: null,
+    });
+
+    expect(updated.themeSettings.primaryColor).toBe('#18181b');
+    expect(updated.themeSettings.fontFamily).toBe('inter');
+  });
+
+  it('throws SiteNotFoundError for a nonexistent site', async () => {
+    const deps = setup();
+
+    await expect(
+      updateSiteThemeSettings(deps, {
+        tenantId,
+        siteId: 'does-not-exist',
+        primaryColor: null,
+        secondaryColor: null,
+        fontFamily: null,
+        customCss: null,
+        headScript: null,
+        bodyScript: null,
+        faviconUrl: null,
+      }),
+    ).rejects.toThrow(SiteNotFoundError);
+  });
+
+  it('does not update a site belonging to a different tenant', async () => {
+    const deps = setup();
+    await seedSite(deps.siteRepository);
+
+    await expect(
+      updateSiteThemeSettings(deps, {
+        tenantId: otherTenantId,
+        siteId: 'site-1',
+        primaryColor: '#18181b',
+        secondaryColor: null,
+        fontFamily: null,
+        customCss: null,
+        headScript: null,
+        bodyScript: null,
+        faviconUrl: null,
+      }),
+    ).rejects.toThrow(SiteNotFoundError);
+  });
+});
+
 describe('updateSiteLocaleSettings', () => {
   const tenantId = 'tenant-1';
   const otherTenantId = 'tenant-2';
@@ -313,6 +429,13 @@ describe('updateSiteLocaleSettings', () => {
       businessType: null,
       openingHours: null,
       searchEngineIndexingEnabled: false,
+      themePrimaryColor: null,
+      themeSecondaryColor: null,
+      themeFontFamily: null,
+      themeCustomCss: null,
+      themeHeadScript: null,
+      themeBodyScript: null,
+      themeFaviconUrl: null,
       createdAt: new Date(),
     });
     await siteRepository.save(site);

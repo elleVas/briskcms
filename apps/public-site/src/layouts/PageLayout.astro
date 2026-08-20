@@ -8,6 +8,12 @@ import type {
 import BlockRenderer from '../components/BlockRenderer.astro';
 import { localePath } from '../lib/locale-path.js';
 import { buildSchemaOrgGraph } from '../lib/schema-org.js';
+import { resolveThemeFont } from '../lib/theme-font.js';
+import '../styles/global.css';
+// ~theme resolves to themes/<BRISK_THEME>/theme.css (docs/adr/0021,
+// astro.config.mjs) — imported after global.css so its :root tokens win
+// the cascade over that file's bare fallback defaults.
+import '~theme/theme.css';
 import '../styles/visibility.css';
 
 interface Props {
@@ -51,14 +57,70 @@ const schemaOrgGraph = buildSchemaOrgGraph({ site, seoMeta, pageUrl });
 // script content, not the SEO/business data itself, so it lives here at the
 // embedding point rather than in schema-org.ts's own (pure, testable) logic.
 const schemaOrgJson = JSON.stringify(schemaOrgGraph).replace(/</g, '\\u003c');
+
+// Tier 1 of docs/adr/0021's theming model — layered on top of the active
+// filesystem theme (Tier 2, imported above) via a plain <style> block:
+// colors are already hex-validated server-side (sites.schemas.ts), safe to
+// interpolate directly; the font name goes through resolveThemeFont's own
+// stripping first, since a free-text value hasn't been through that same
+// validation.
+//
+// Every declaration below is !important, found necessary by testing this
+// live rather than assumed: Astro's dev server injects `import '*.css'`
+// side-effect styles (global.css, ~theme/theme.css) as their own <style
+// data-vite-dev-id> tags positioned *after* this component's own inline
+// markup in the rendered HTML, regardless of where those imports appear in
+// the frontmatter above — so a same-specificity `:root { --font-sans-value:
+// ... }` here would silently lose to the theme's own `:root` rule despite
+// looking earlier in the source. !important is the explicit, order-
+// independent way to say "Tier 1 always wins over Tier 2's own default",
+// which is the whole point of this block, not a specificity workaround.
+const theme = site.themeSettings;
+const themeFont = resolveThemeFont(theme.fontFamily);
+const themeOverrideDeclarations = [
+	theme.primaryColor && `--primary: ${theme.primaryColor} !important;`,
+	theme.secondaryColor && `--secondary: ${theme.secondaryColor} !important;`,
+	themeFont && `--font-sans-value: ${themeFont.cssFontFamily} !important;`,
+]
+	.filter(Boolean)
+	.join(' ');
 ---
 
 <html lang={locale}>
 	<head>
 		<meta charset="utf-8" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<link rel="icon" href="/favicon.ico" />
+		{
+			theme.faviconUrl ? (
+				<link rel="icon" href={theme.faviconUrl} />
+			) : (
+				<>
+					<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+					<link rel="icon" href="/favicon.ico" />
+				</>
+			)
+		}
 		<meta name="viewport" content="width=device-width" />
+		{
+			themeFont && (
+				<>
+					<link rel="preconnect" href="https://fonts.googleapis.com" />
+					<link
+						rel="preconnect"
+						href="https://fonts.gstatic.com"
+						crossorigin
+					/>
+					<link
+						rel="stylesheet"
+						href={`https://fonts.googleapis.com/css2?family=${themeFont.googleFontsFamily}&display=swap`}
+					/>
+				</>
+			)
+		}
+		{
+			themeOverrideDeclarations && (
+				<style set:html={`:root { ${themeOverrideDeclarations} }`} />
+			)
+		}
 		<meta name="generator" content={Astro.generator} />
 		<title>{seoMeta.title}</title>
 		<meta name="description" content={seoMeta.description} />
@@ -102,6 +164,14 @@ const schemaOrgJson = JSON.stringify(schemaOrgGraph).replace(/</g, '\\u003c');
 		{ogImage && <meta name="twitter:image" content={ogImage} />}
 
 		<script is:inline type="application/ld+json" set:html={schemaOrgJson} />
+
+		{
+			// Raw injection, admin-trusted (docs/adr/0021) — same trust level as
+			// anyone who already edits pages/blocks; this project has no CSP to
+			// lower. theme.customCss/headScript are never escaped or sanitized.
+			theme.customCss && <style set:html={theme.customCss} />
+		}
+		{theme.headScript && <Fragment set:html={theme.headScript} />}
 	</head>
 	<body>
 		{
@@ -137,6 +207,7 @@ const schemaOrgJson = JSON.stringify(schemaOrgGraph).replace(/</g, '\\u003c');
 				</footer>
 			)
 		}
+		{theme.bodyScript && <Fragment set:html={theme.bodyScript} />}
 	</body>
 </html>
 

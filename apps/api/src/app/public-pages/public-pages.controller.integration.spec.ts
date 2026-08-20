@@ -132,6 +132,15 @@ describe('PublicPagesController (integration)', () => {
         businessType: null,
         openingHours: null,
         searchEngineIndexingEnabled: false,
+        themeSettings: {
+          primaryColor: null,
+          secondaryColor: null,
+          fontFamily: null,
+          customCss: null,
+          headScript: null,
+          bodyScript: null,
+          faviconUrl: null,
+        },
       },
     });
   });

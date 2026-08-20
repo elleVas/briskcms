@@ -188,6 +188,61 @@ describe('SitesController (integration)', () => {
       .expect(404);
   });
 
+  it('updates theme settings, persisted across the real HTTP+DB stack', async () => {
+    const res = await agent
+      .patch(`/sites/${siteId}/theme-settings`)
+      .send({
+        primaryColor: '#18181b',
+        secondaryColor: '#71717a',
+        fontFamily: 'inter',
+        customCss: '.brisk-hero { text-transform: uppercase; }',
+        headScript: null,
+        bodyScript: null,
+        faviconUrl: 'https://example.com/favicon.png',
+      })
+      .expect(200);
+
+    expect(res.body.themePrimaryColor).toBe('#18181b');
+    expect(res.body.themeFontFamily).toBe('inter');
+
+    const getRes = await agent.get(`/sites/${siteId}`).expect(200);
+    expect(getRes.body.themeSecondaryColor).toBe('#71717a');
+    expect(getRes.body.themeCustomCss).toBe(
+      '.brisk-hero { text-transform: uppercase; }',
+    );
+    expect(getRes.body.themeFaviconUrl).toBe('https://example.com/favicon.png');
+  });
+
+  it('400s an invalid hex color for theme settings', async () => {
+    await agent
+      .patch(`/sites/${siteId}/theme-settings`)
+      .send({
+        primaryColor: 'not-a-hex-color',
+        secondaryColor: null,
+        fontFamily: null,
+        customCss: null,
+        headScript: null,
+        bodyScript: null,
+        faviconUrl: null,
+      })
+      .expect(400);
+  });
+
+  it('404s updating theme settings for a site that does not exist', async () => {
+    await agent
+      .patch(`/sites/${randomUUID()}/theme-settings`)
+      .send({
+        primaryColor: null,
+        secondaryColor: null,
+        fontFamily: null,
+        customCss: null,
+        headScript: null,
+        bodyScript: null,
+        faviconUrl: null,
+      })
+      .expect(404);
+  });
+
   it('401s without a session cookie', async () => {
     await request(app.getHttpServer()).get(`/sites/${siteId}`).expect(401);
   });

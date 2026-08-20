@@ -6,7 +6,11 @@ type Props = HeroProps;
 const { title, subtitle } = Astro.props;
 ---
 
-<header>
-	<h1>{title}</h1>
-	<p>{subtitle}</p>
+<header class="mx-auto max-w-3xl px-6 py-20 text-center sm:py-28">
+	<h1 class="text-4xl font-semibold tracking-tight text-balance text-foreground sm:text-5xl">
+		{title}
+	</h1>
+	<p class="mt-4 text-lg text-pretty text-muted-foreground sm:text-xl">
+		{subtitle}
+	</p>
 </header>

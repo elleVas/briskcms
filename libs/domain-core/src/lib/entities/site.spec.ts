@@ -15,6 +15,13 @@ describe('Site entity', () => {
     businessType: null,
     openingHours: null,
     searchEngineIndexingEnabled: false,
+    themePrimaryColor: null,
+    themeSecondaryColor: null,
+    themeFontFamily: null,
+    themeCustomCss: null,
+    themeHeadScript: null,
+    themeBodyScript: null,
+    themeFaviconUrl: null,
     createdAt: new Date('2026-01-01T00:00:00Z'),
   };
 
@@ -117,5 +124,43 @@ describe('Site entity', () => {
     expect(site.defaultLocale).toBe('en');
     expect(site.enabledLocales).toEqual(['it', 'en', 'fr']);
     expect(site.untranslatedPageFallback).toBe('not-available');
+  });
+
+  it('themeSettings defaults to every field null', () => {
+    const site = Site.fromProps(props);
+
+    expect(site.themeSettings).toEqual({
+      primaryColor: null,
+      secondaryColor: null,
+      fontFamily: null,
+      customCss: null,
+      headScript: null,
+      bodyScript: null,
+      faviconUrl: null,
+    });
+  });
+
+  it('updateThemeSettings replaces every theme field', () => {
+    const site = Site.fromProps(props);
+
+    site.updateThemeSettings({
+      primaryColor: '#18181b',
+      secondaryColor: '#71717a',
+      fontFamily: 'inter',
+      customCss: '.brisk-hero { text-transform: uppercase; }',
+      headScript: '<script>console.log("head")</script>',
+      bodyScript: '<script>console.log("body")</script>',
+      faviconUrl: 'https://example.com/favicon.png',
+    });
+
+    expect(site.themeSettings).toEqual({
+      primaryColor: '#18181b',
+      secondaryColor: '#71717a',
+      fontFamily: 'inter',
+      customCss: '.brisk-hero { text-transform: uppercase; }',
+      headScript: '<script>console.log("head")</script>',
+      bodyScript: '<script>console.log("body")</script>',
+      faviconUrl: 'https://example.com/favicon.png',
+    });
   });
 });

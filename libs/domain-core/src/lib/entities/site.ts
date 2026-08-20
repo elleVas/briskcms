@@ -1,5 +1,6 @@
 import type {
   OpeningHoursDay,
+  ThemeSettings,
   UntranslatedPageFallback,
 } from '@brisk/shared-types';
 
@@ -16,6 +17,13 @@ export interface SiteProps {
   businessType: string | null;
   openingHours: OpeningHoursDay[] | null;
   searchEngineIndexingEnabled: boolean;
+  themePrimaryColor: string | null;
+  themeSecondaryColor: string | null;
+  themeFontFamily: string | null;
+  themeCustomCss: string | null;
+  themeHeadScript: string | null;
+  themeBodyScript: string | null;
+  themeFaviconUrl: string | null;
   createdAt: Date;
 }
 
@@ -40,6 +48,8 @@ export interface UpdateLocaleSettingsInput {
   enabledLocales: string[];
   untranslatedPageFallback: UntranslatedPageFallback;
 }
+
+export type UpdateThemeSettingsInput = ThemeSettings;
 
 export class Site {
   private constructor(private props: SiteProps) {}
@@ -111,6 +121,27 @@ export class Site {
   }
 
   /**
+   * Tier 1 of docs/adr/0021's two-tier theming model — live, DB-backed,
+   * layered on top of whichever filesystem theme (Tier 2) is active for
+   * the deployment. Every field is nullable and independent: a site that
+   * hasn't touched this panel gets every value as `null`, meaning
+   * "inherit the active theme's own default", not a hardcoded fallback
+   * baked in here — `null` must stay meaningful all the way to
+   * rendering, not get coerced into a default value at this layer.
+   */
+  get themeSettings(): ThemeSettings {
+    return {
+      primaryColor: this.props.themePrimaryColor,
+      secondaryColor: this.props.themeSecondaryColor,
+      fontFamily: this.props.themeFontFamily,
+      customCss: this.props.themeCustomCss,
+      headScript: this.props.themeHeadScript,
+      bodyScript: this.props.themeBodyScript,
+      faviconUrl: this.props.themeFaviconUrl,
+    };
+  }
+
+  /**
    * Used to render schema.org LocalBusiness markup (docs/adr/0014) — a
    * site with none of these set falls back to plain WebSite/WebPage, not
    * a broken LocalBusiness block.
@@ -144,5 +175,15 @@ export class Site {
     this.props.defaultLocale = input.defaultLocale;
     this.props.enabledLocales = input.enabledLocales;
     this.props.untranslatedPageFallback = input.untranslatedPageFallback;
+  }
+
+  updateThemeSettings(input: UpdateThemeSettingsInput): void {
+    this.props.themePrimaryColor = input.primaryColor;
+    this.props.themeSecondaryColor = input.secondaryColor;
+    this.props.themeFontFamily = input.fontFamily;
+    this.props.themeCustomCss = input.customCss;
+    this.props.themeHeadScript = input.headScript;
+    this.props.themeBodyScript = input.bodyScript;
+    this.props.themeFaviconUrl = input.faviconUrl;
   }
 }

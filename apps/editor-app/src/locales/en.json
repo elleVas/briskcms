@@ -205,6 +205,26 @@
     "save": "Save",
     "saving": "Saving..."
   },
+  "themeSettings": {
+    "menuLabel": "Style",
+    "title": "Site style",
+    "intro": "These settings apply on top of the site's active theme — leave a field off to keep the theme's own default.",
+    "primaryColorLabel": "Primary color",
+    "secondaryColorLabel": "Secondary color",
+    "override": "Override",
+    "fontLabel": "Font",
+    "fontInherit": "Theme default",
+    "fontCustom": "Custom (Google Fonts name)...",
+    "fontCustomPlaceholder": "e.g. Space Grotesk",
+    "faviconLabel": "Favicon URL",
+    "customCssLabel": "Custom CSS",
+    "headScriptLabel": "Custom script — <head>",
+    "bodyScriptLabel": "Custom script — end of <body>",
+    "scriptDisclaimer": "Injected verbatim into every page of the site. Only paste code from sources you trust.",
+    "cancel": "Cancel",
+    "save": "Save",
+    "saving": "Saving..."
+  },
   "localeSettings": {
     "menuLabel": "Languages",
     "title": "Site languages",

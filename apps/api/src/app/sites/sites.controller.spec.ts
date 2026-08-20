@@ -19,6 +19,13 @@ function buildSite(
     businessType: null,
     openingHours: null,
     searchEngineIndexingEnabled: false,
+    themePrimaryColor: null,
+    themeSecondaryColor: null,
+    themeFontFamily: null,
+    themeCustomCss: null,
+    themeHeadScript: null,
+    themeBodyScript: null,
+    themeFaviconUrl: null,
     createdAt: new Date(),
     ...overrides,
   });
@@ -125,5 +132,39 @@ describe('SitesController (unit)', () => {
 
     expect(siteRepository.save).toHaveBeenCalled();
     expect(result.searchEngineIndexingEnabled).toBe(true);
+  });
+
+  it('updateThemeSettings maps a SiteNotFoundError to a NotFoundException', async () => {
+    siteRepository.findById.mockResolvedValue(null);
+
+    await expect(
+      controller.updateThemeSettings('missing', {
+        primaryColor: null,
+        secondaryColor: null,
+        fontFamily: null,
+        customCss: null,
+        headScript: null,
+        bodyScript: null,
+        faviconUrl: null,
+      }),
+    ).rejects.toThrow(NotFoundException);
+  });
+
+  it('updateThemeSettings saves the updated site', async () => {
+    siteRepository.findById.mockResolvedValue(buildSite());
+
+    const result = await controller.updateThemeSettings('site-1', {
+      primaryColor: '#18181b',
+      secondaryColor: null,
+      fontFamily: 'inter',
+      customCss: null,
+      headScript: null,
+      bodyScript: null,
+      faviconUrl: null,
+    });
+
+    expect(siteRepository.save).toHaveBeenCalled();
+    expect(result.themePrimaryColor).toBe('#18181b');
+    expect(result.themeFontFamily).toBe('inter');
   });
 });

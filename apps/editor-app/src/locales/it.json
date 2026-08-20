@@ -205,6 +205,26 @@
     "save": "Salva",
     "saving": "Salvataggio in corso..."
   },
+  "themeSettings": {
+    "menuLabel": "Stile",
+    "title": "Stile del sito",
+    "intro": "Queste impostazioni si applicano sopra il tema attivo del sito — lascia un campo disattivato per mantenere il valore predefinito del tema.",
+    "primaryColorLabel": "Colore primario",
+    "secondaryColorLabel": "Colore secondario",
+    "override": "Personalizza",
+    "fontLabel": "Font",
+    "fontInherit": "Predefinito del tema",
+    "fontCustom": "Personalizzato (nome Google Fonts)...",
+    "fontCustomPlaceholder": "es. Space Grotesk",
+    "faviconLabel": "URL favicon",
+    "customCssLabel": "CSS personalizzato",
+    "headScriptLabel": "Script personalizzato — <head>",
+    "bodyScriptLabel": "Script personalizzato — fine <body>",
+    "scriptDisclaimer": "Iniettato così com'è in ogni pagina del sito. Incolla solo codice da fonti di cui ti fidi.",
+    "cancel": "Annulla",
+    "save": "Salva",
+    "saving": "Salvataggio in corso..."
+  },
   "localeSettings": {
     "menuLabel": "Lingue",
     "title": "Lingue del sito",

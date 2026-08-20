@@ -4,6 +4,7 @@ import type {
   FormStep,
   OpeningHoursDay,
   SeoMeta,
+  ThemeSettings,
   UntranslatedPageFallback,
 } from '@brisk/shared-types';
 
@@ -19,6 +20,7 @@ export interface PublishedSiteDto {
   businessType: string | null;
   openingHours: OpeningHoursDay[] | null;
   searchEngineIndexingEnabled: boolean;
+  themeSettings: ThemeSettings;
 }
 
 /** One entry per published locale-translation of this page (docs/adr/0017), including itself. */

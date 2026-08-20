@@ -50,6 +50,13 @@ describe('site layout section lifecycle: get-or-create -> draft -> publish -> ro
       businessType: null,
       openingHours: null,
       searchEngineIndexingEnabled: false,
+      themePrimaryColor: null,
+      themeSecondaryColor: null,
+      themeFontFamily: null,
+      themeCustomCss: null,
+      themeHeadScript: null,
+      themeBodyScript: null,
+      themeFaviconUrl: null,
       createdAt: new Date(),
       ...overrides,
     });

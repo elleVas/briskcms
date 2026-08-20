@@ -1,0 +1,50 @@
+@import 'tailwindcss';
+
+/**
+ * Fallback defaults only — the active theme's theme.css (docs/adr/0021,
+ * resolved via the `~theme` alias in astro.config.mjs) is imported after
+ * this file by PageLayout.astro and overrides every one of these `:root`
+ * values via the normal CSS cascade (same selector, later wins). A
+ * misconfigured BRISK_THEME (a folder with no theme.css) still renders a
+ * plain, readable page instead of an unstyled one.
+ */
+@theme inline {
+  --font-sans: var(--font-sans-value);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-border: var(--border);
+  --radius-md: var(--radius);
+  --radius-lg: calc(var(--radius) * 1.5);
+}
+
+:root {
+  --font-sans-value: ui-sans-serif, system-ui, sans-serif;
+  --background: #fff;
+  --foreground: #18181b;
+  --primary: #18181b;
+  --primary-foreground: #fff;
+  --secondary: #f4f4f5;
+  --secondary-foreground: #18181b;
+  --muted: #f4f4f5;
+  --muted-foreground: #71717a;
+  --border: #e4e4e7;
+  --radius: 0.5rem;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  html {
+    @apply font-sans;
+  }
+}

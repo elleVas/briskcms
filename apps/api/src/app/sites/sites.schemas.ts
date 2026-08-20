@@ -1,5 +1,9 @@
 import { z } from 'zod';
-import { localeSettingsSchema, openingHoursSchema } from '@brisk/shared-types';
+import {
+  localeSettingsSchema,
+  openingHoursSchema,
+  themeSettingsSchema,
+} from '@brisk/shared-types';
 import { domainSchema } from '../public-pages/public-pages.schemas.js';
 
 export const updateBusinessInfoBodySchema = z.object({
@@ -35,4 +39,12 @@ export type UpdateSeoSettingsBody = z.infer<typeof updateSeoSettingsBodySchema>;
 export const updateLocaleSettingsBodySchema = localeSettingsSchema;
 export type UpdateLocaleSettingsBody = z.infer<
   typeof updateLocaleSettingsBodySchema
+>;
+
+// Reuses @brisk/shared-types' schema wholesale (docs/adr/0021) — same
+// reasoning as locale settings above, the validation rules (hex color
+// format) live once, shared between this write path and any future reader.
+export const updateThemeSettingsBodySchema = themeSettingsSchema;
+export type UpdateThemeSettingsBody = z.infer<
+  typeof updateThemeSettingsBodySchema
 >;

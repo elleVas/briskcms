@@ -44,6 +44,13 @@ describe('listPublishedPagesForSitemap', () => {
       businessType: null,
       openingHours: null,
       searchEngineIndexingEnabled: false,
+      themePrimaryColor: null,
+      themeSecondaryColor: null,
+      themeFontFamily: null,
+      themeCustomCss: null,
+      themeHeadScript: null,
+      themeBodyScript: null,
+      themeFaviconUrl: null,
       createdAt: new Date(),
       ...overrides,
     });

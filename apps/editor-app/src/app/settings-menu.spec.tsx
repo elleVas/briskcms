@@ -41,6 +41,13 @@ describe('SettingsMenu', () => {
       businessType: null,
       openingHours: null,
       searchEngineIndexingEnabled: false,
+      themePrimaryColor: null,
+      themeSecondaryColor: null,
+      themeFontFamily: null,
+      themeCustomCss: null,
+      themeHeadScript: null,
+      themeBodyScript: null,
+      themeFaviconUrl: null,
       createdAt: '',
       ...overrides,
     };
@@ -93,6 +100,18 @@ describe('SettingsMenu', () => {
 
     expect(
       await screen.findByRole('heading', { name: /lingue/i }),
+    ).toBeTruthy();
+  });
+
+  it('opens the theme settings dialog from the settings popover', async () => {
+    vi.mocked(api.getSite).mockResolvedValue(mockSite());
+
+    renderMenu();
+    fireEvent.click(screen.getByRole('button', { name: /^impostazioni$/i }));
+    fireEvent.click(screen.getByRole('button', { name: /^stile$/i }));
+
+    expect(
+      await screen.findByRole('heading', { name: /stile del sito/i }),
     ).toBeTruthy();
   });
 });
