@@ -33,6 +33,16 @@ describe('form-fields schemas', () => {
     expect(result.success).toBe(false);
   });
 
+  it('accepts a newsletter-consent field', () => {
+    const result = formFieldSchema.safeParse({
+      id: 'field-1',
+      label: 'Iscrivimi alla newsletter',
+      type: 'newsletter-consent',
+      required: false,
+    });
+    expect(result.success).toBe(true);
+  });
+
   it('rejects an unknown field type', () => {
     const result = formFieldSchema.safeParse({
       id: 'field-1',

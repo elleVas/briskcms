@@ -45,6 +45,7 @@ export * from './lib/blocks/stats-counter.block.js';
 export * from './lib/blocks/stat.block.js';
 export * from './lib/blocks/timeline.block.js';
 export * from './lib/blocks/timeline-step.block.js';
+export * from './lib/blocks/newsletter-signup.block.js';
 export * from './lib/media-picker-context.js';
 export * from './lib/form-list-context.js';
 export * from './lib/page-list-context.js';

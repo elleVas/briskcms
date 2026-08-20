@@ -9,6 +9,7 @@ import {
 import { SmtpEmailAdapter } from '@brisk/smtp-email-adapter';
 import { TurnstileCaptchaAdapter } from '@brisk/turnstile-captcha';
 import { DATABASE, DatabaseModule } from '../database.module.js';
+import { createNewsletterPort } from '../newsletter-port.factory.js';
 import { PublicFormsController } from './public-forms.controller.js';
 import {
   CAPTCHA_PORT,
@@ -16,6 +17,7 @@ import {
   EMAIL_PORT,
   FORM_REPOSITORY,
   FORM_SUBMISSION_REPOSITORY,
+  NEWSLETTER_PORT,
 } from './public-forms.tokens.js';
 
 @Module({
@@ -66,6 +68,10 @@ import {
         new TurnstileCaptchaAdapter({
           secretKey: requireEnv('TURNSTILE_SECRET_KEY'),
         }),
+    },
+    {
+      provide: NEWSLETTER_PORT,
+      useFactory: createNewsletterPort,
     },
   ],
 })

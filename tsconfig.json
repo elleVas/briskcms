@@ -71,6 +71,12 @@
     },
     {
       "path": "./libs/adapters/turnstile-captcha"
+    },
+    {
+      "path": "./libs/adapters/mailchimp-newsletter"
+    },
+    {
+      "path": "./libs/adapters/brevo-newsletter"
     }
   ],
   "compilerOptions": {}

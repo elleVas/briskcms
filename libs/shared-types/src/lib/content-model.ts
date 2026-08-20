@@ -647,3 +647,19 @@ export type TimelineStepProps = z.infer<typeof timelineStepPropsSchema>;
 /** Pure layout wrapper, no props of its own — same reasoning as `columnPropsSchema`. Its content lives entirely in `Block.children` (TimelineStep only). */
 export const timelinePropsSchema = z.strictObject({});
 export type TimelineProps = z.infer<typeof timelinePropsSchema>;
+
+/**
+ * Standalone newsletter signup — deliberately decoupled from the Form
+ * builder (docs/adr/0015): a single email field, its own render/submit
+ * path (NewsletterSignup.astro + /api/newsletter/subscribe), no
+ * `formId`/fields of its own and no FormSubmission row saved — the
+ * subscribe call to NewsletterPort *is* the entire effect, there's no
+ * separate "form data" to keep a historical record of. Same
+ * honeypot+Turnstile anti-spam treatment as Form (it's the same kind of
+ * unauthenticated public write endpoint).
+ */
+export const newsletterSignupPropsSchema = z.object({
+  title: z.string(),
+  buttonLabel: z.string(),
+});
+export type NewsletterSignupProps = z.infer<typeof newsletterSignupPropsSchema>;

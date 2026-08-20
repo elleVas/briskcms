@@ -15,6 +15,12 @@ export const formFieldTypeSchema = z.enum([
   'tel',
   'checkbox',
   'select',
+  // Renders and submits exactly like a checkbox (Form.astro) — the only
+  // difference is submitForm's own handling: if checked, the submission's
+  // email (the form's first `email`-typed field) gets subscribed via
+  // NewsletterPort. Not a separate value shape, just a marker on an
+  // otherwise-ordinary checkbox field.
+  'newsletter-consent',
 ]);
 export type FormFieldType = z.infer<typeof formFieldTypeSchema>;
 

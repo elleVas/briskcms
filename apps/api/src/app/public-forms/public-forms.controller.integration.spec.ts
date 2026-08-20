@@ -3,7 +3,7 @@ import { type INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import cookieParser from 'cookie-parser';
 import request from 'supertest';
-import type { AuthPort, CaptchaPort } from '@brisk/ports';
+import type { AuthPort, CaptchaPort, NewsletterPort } from '@brisk/ports';
 import {
   type BriskDb,
   deleteIntegrationFixtures,
@@ -15,7 +15,7 @@ import { AUTH_PORT } from '../auth/auth.tokens.js';
 import { DATABASE } from '../database.module.js';
 import { FormsModule } from '../forms/forms.module.js';
 import { PublicFormsModule } from './public-forms.module.js';
-import { CAPTCHA_PORT } from './public-forms.tokens.js';
+import { CAPTCHA_PORT, NEWSLETTER_PORT } from './public-forms.tokens.js';
 
 /** Unlike Postgres/Mailpit (real local infra this repo already runs for
  * every integration test), Cloudflare's siteverify API is a live
@@ -27,6 +27,14 @@ import { CAPTCHA_PORT } from './public-forms.tokens.js';
 class FakeCaptchaPort implements CaptchaPort {
   async verify({ token }: { token: string }): Promise<boolean> {
     return token.trim() !== '';
+  }
+}
+
+/** Same "no live third party in tests" reasoning as FakeCaptchaPort above — also lets tests assert exactly what got subscribed. */
+class RecordingNewsletterPort implements NewsletterPort {
+  readonly subscribedEmails: string[] = [];
+  async subscribe(email: string): Promise<void> {
+    this.subscribedEmails.push(email);
   }
 }
 
@@ -44,13 +52,17 @@ describe('PublicFormsController (integration)', () => {
   let siteId: string;
   let tenantId: string;
   let userId: string;
+  let newsletterPort: RecordingNewsletterPort;
 
   beforeAll(async () => {
+    newsletterPort = new RecordingNewsletterPort();
     const moduleRef = await Test.createTestingModule({
       imports: [FormsModule, PublicFormsModule],
     })
       .overrideProvider(CAPTCHA_PORT)
       .useClass(FakeCaptchaPort)
+      .overrideProvider(NEWSLETTER_PORT)
+      .useValue(newsletterPort)
       .compile();
 
     app = moduleRef.createNestApplication();
@@ -186,6 +198,34 @@ describe('PublicFormsController (integration)', () => {
       .post(`/public/forms/${formId}/submissions`)
       .send({ values: {}, honeypot: 'i-am-a-bot' })
       .expect(204);
+  });
+
+  it('subscribes the submitted email when the newsletter-consent field is checked', async () => {
+    const formId = await createForm(
+      [
+        { id: 'email', label: 'Email', type: 'email', required: true },
+        {
+          id: 'newsletter',
+          label: 'Iscrivimi alla newsletter',
+          type: 'newsletter-consent',
+          required: false,
+        },
+      ],
+      null,
+    );
+
+    await request(app.getHttpServer())
+      .post(`/public/forms/${formId}/submissions`)
+      .send({
+        values: { email: 'newsletter-fan@example.com', newsletter: true },
+        honeypot: '',
+        captchaToken: 'test-token',
+      })
+      .expect(204);
+
+    expect(newsletterPort.subscribedEmails).toContain(
+      'newsletter-fan@example.com',
+    );
   });
 
   it('404s submitting to a form that does not exist', async () => {

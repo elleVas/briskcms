@@ -38,6 +38,7 @@ export * from './lib/use-cases/list-forms.use-case.js';
 export * from './lib/use-cases/delete-form.use-case.js';
 export * from './lib/use-cases/get-public-form.use-case.js';
 export * from './lib/use-cases/submit-form.use-case.js';
+export * from './lib/use-cases/subscribe-newsletter.use-case.js';
 export * from './lib/use-cases/get-or-create-site-layout-section.use-case.js';
 export * from './lib/use-cases/save-site-layout-section-draft.use-case.js';
 export * from './lib/use-cases/publish-site-layout-section.use-case.js';

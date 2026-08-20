@@ -40,6 +40,7 @@ describe('puckConfig', () => {
       'Stat',
       'Timeline',
       'TimelineStep',
+      'NewsletterSignup',
     ]);
     expect(typeof puckConfig.components.Hero.render).toBe('function');
     expect(typeof puckConfig.components.Text.render).toBe('function');
@@ -77,5 +78,8 @@ describe('puckConfig', () => {
     expect(typeof puckConfig.components.Stat.render).toBe('function');
     expect(typeof puckConfig.components.Timeline.render).toBe('function');
     expect(typeof puckConfig.components.TimelineStep.render).toBe('function');
+    expect(typeof puckConfig.components.NewsletterSignup.render).toBe(
+      'function',
+    );
   });
 });

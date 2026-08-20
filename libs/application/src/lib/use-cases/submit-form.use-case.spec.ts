@@ -14,6 +14,10 @@ import {
 } from './in-memory-repositories.test-fixture.js';
 import { FakeEmailPort } from './fake-email-port.test-fixture.js';
 import { FakeCaptchaPort } from './fake-captcha-port.test-fixture.js';
+import {
+  FailingNewsletterPort,
+  FakeNewsletterPort,
+} from './fake-newsletter-port.test-fixture.js';
 
 describe('getPublicForm and submitForm', () => {
   const tenantId = 'tenant-1';
@@ -25,10 +29,19 @@ describe('getPublicForm and submitForm', () => {
     const formSubmissionRepository = new InMemoryFormSubmissionRepository();
     const emailPort = new FakeEmailPort();
     const captchaPort = new FakeCaptchaPort();
-    return { formRepository, formSubmissionRepository, emailPort, captchaPort };
+    const newsletterPort = new FakeNewsletterPort();
+    return {
+      formRepository,
+      formSubmissionRepository,
+      emailPort,
+      captchaPort,
+      newsletterPort,
+    };
   }
 
-  async function buildFormWithFields(deps: ReturnType<typeof setup>) {
+  async function buildFormWithFields(deps: {
+    formRepository: InMemoryFormRepository;
+  }) {
     const form = await createForm(deps, { tenantId, siteId, name: 'Contatti' });
     return updateForm(deps, {
       tenantId,
@@ -45,6 +58,27 @@ describe('getPublicForm and submitForm', () => {
         },
       ],
       notificationEmail: 'owner@example.com',
+    });
+  }
+
+  async function buildFormWithNewsletterField(deps: {
+    formRepository: InMemoryFormRepository;
+  }) {
+    const form = await createForm(deps, { tenantId, siteId, name: 'Contatti' });
+    return updateForm(deps, {
+      tenantId,
+      formId: form.id,
+      name: 'Contatti',
+      fields: [
+        { id: 'email', label: 'Email', type: 'email', required: true },
+        {
+          id: 'newsletter',
+          label: 'Iscrivimi alla newsletter',
+          type: 'newsletter-consent',
+          required: false,
+        },
+      ],
+      notificationEmail: null,
     });
   }
 
@@ -197,5 +231,57 @@ describe('getPublicForm and submitForm', () => {
 
     expect(deps.formSubmissionRepository.submissions).toHaveLength(1);
     expect(deps.emailPort.sentEmails).toHaveLength(0);
+  });
+
+  it('submitForm subscribes the submitted email when the newsletter-consent field is checked', async () => {
+    const deps = setup();
+    const form = await buildFormWithNewsletterField(deps);
+
+    await submitForm(deps, {
+      tenantId,
+      formId: form.id,
+      pageId: null,
+      values: { email: 'visitor@example.com', newsletter: true },
+      honeypot: '',
+      captchaToken,
+    });
+
+    expect(deps.newsletterPort.subscribedEmails).toEqual([
+      'visitor@example.com',
+    ]);
+  });
+
+  it('submitForm does not subscribe when the newsletter-consent field is left unchecked', async () => {
+    const deps = setup();
+    const form = await buildFormWithNewsletterField(deps);
+
+    await submitForm(deps, {
+      tenantId,
+      formId: form.id,
+      pageId: null,
+      values: { email: 'visitor@example.com', newsletter: false },
+      honeypot: '',
+      captchaToken,
+    });
+
+    expect(deps.newsletterPort.subscribedEmails).toHaveLength(0);
+  });
+
+  it('submitForm still saves the submission even if the newsletter provider fails', async () => {
+    const deps = { ...setup(), newsletterPort: new FailingNewsletterPort() };
+    const form = await buildFormWithNewsletterField(deps);
+
+    await expect(
+      submitForm(deps, {
+        tenantId,
+        formId: form.id,
+        pageId: null,
+        values: { email: 'visitor@example.com', newsletter: true },
+        honeypot: '',
+        captchaToken,
+      }),
+    ).resolves.not.toThrow();
+
+    expect(deps.formSubmissionRepository.submissions).toHaveLength(1);
   });
 });

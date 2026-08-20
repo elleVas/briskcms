@@ -22,8 +22,11 @@ redirectParams.delete('formError');
 const redirectTo =
   Astro.url.pathname + (redirectParams.size > 0 ? `?${redirectParams}` : '');
 
+// newsletter-consent renders and submits exactly like a checkbox
+// (shared-types' own form-fields.ts comment) — both need the same
+// unchecked-checkbox-omits-its-key hint for the submit proxy.
 const checkboxFieldIds = (form?.fields ?? [])
-  .filter((field) => field.type === 'checkbox')
+  .filter((field) => field.type === 'checkbox' || field.type === 'newsletter-consent')
   .map((field) => field.id)
   .join(',');
 
@@ -88,7 +91,8 @@ const turnstileSiteKey = process.env['TURNSTILE_SITE_KEY'] ?? '';
                     <option value={option}>{option}</option>
                   ))}
                 </select>
-              ) : field.type === 'checkbox' ? (
+              ) : field.type === 'checkbox' ||
+                field.type === 'newsletter-consent' ? (
                 <input
                   type="checkbox"
                   id={`${form.id}-${field.id}`}

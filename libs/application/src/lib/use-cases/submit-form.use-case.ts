@@ -11,6 +11,7 @@ import type {
   EmailPort,
   FormRepositoryPort,
   FormSubmissionRepositoryPort,
+  NewsletterPort,
 } from '@brisk/ports';
 import { buildFormSubmissionNotificationEmail } from '../emails/form-submission-notification-email.template.js';
 
@@ -19,6 +20,7 @@ export interface SubmitFormDeps {
   formSubmissionRepository: FormSubmissionRepositoryPort;
   emailPort: EmailPort;
   captchaPort: CaptchaPort;
+  newsletterPort: NewsletterPort;
 }
 
 export interface SubmitFormInput {
@@ -36,6 +38,13 @@ function isBlank(value: unknown): boolean {
   return value === undefined || value === null || value === '';
 }
 
+// newsletter-consent renders and behaves exactly like a checkbox
+// (form-fields.ts) — both a missing-required check and a Sì/No display
+// need to treat the two types identically.
+function isCheckboxLike(type: FormField['type']): boolean {
+  return type === 'checkbox' || type === 'newsletter-consent';
+}
+
 function validateValues(
   fields: FormField[],
   values: Record<string, unknown>,
@@ -45,7 +54,9 @@ function validateValues(
       continue;
     }
     const value = values[field.id];
-    const missing = field.type === 'checkbox' ? value !== true : isBlank(value);
+    const missing = isCheckboxLike(field.type)
+      ? value !== true
+      : isBlank(value);
     if (missing) {
       throw new InvalidFormSubmissionError(
         `Missing required field: ${field.label}`,
@@ -55,7 +66,7 @@ function validateValues(
 }
 
 function formatValue(field: FormField, value: unknown): string {
-  if (field.type === 'checkbox') {
+  if (isCheckboxLike(field.type)) {
     return value === true ? 'Sì' : 'No';
   }
   return isBlank(value) ? '—' : String(value);
@@ -110,5 +121,23 @@ export async function submitForm(
       to: form.notificationEmail,
       ...buildFormSubmissionNotificationEmail(form.name, entries),
     });
+  }
+
+  const newsletterField = form.fields.find(
+    (field) => field.type === 'newsletter-consent',
+  );
+  if (newsletterField && input.values[newsletterField.id] === true) {
+    const emailField = form.fields.find((field) => field.type === 'email');
+    const email = emailField ? input.values[emailField.id] : undefined;
+    if (typeof email === 'string' && email.trim() !== '') {
+      try {
+        await deps.newsletterPort.subscribe(email);
+      } catch {
+        // Best-effort: a marketing-list signup hiccup must never fail the
+        // submission's primary purpose — the visitor's actual message is
+        // already saved and notified above by this point, and there's no
+        // "newsletter failed" state for the visitor to react to anyway.
+      }
+    }
   }
 }

@@ -22,6 +22,7 @@ import type {
   EmailPort,
   FormRepositoryPort,
   FormSubmissionRepositoryPort,
+  NewsletterPort,
 } from '@brisk/ports';
 import { ZodValidationPipe } from '../zod-validation.pipe.js';
 import {
@@ -34,6 +35,7 @@ import {
   EMAIL_PORT,
   FORM_REPOSITORY,
   FORM_SUBMISSION_REPOSITORY,
+  NEWSLETTER_PORT,
 } from './public-forms.tokens.js';
 
 // No SessionAuthGuard — the public, unauthenticated path apps/public-site's
@@ -51,6 +53,7 @@ export class PublicFormsController {
     private readonly formSubmissionRepository: FormSubmissionRepositoryPort,
     @Inject(EMAIL_PORT) private readonly emailPort: EmailPort,
     @Inject(CAPTCHA_PORT) private readonly captchaPort: CaptchaPort,
+    @Inject(NEWSLETTER_PORT) private readonly newsletterPort: NewsletterPort,
     @Inject(DEFAULT_TENANT_ID) private readonly defaultTenantId: string,
   ) {}
 
@@ -77,6 +80,7 @@ export class PublicFormsController {
           formSubmissionRepository: this.formSubmissionRepository,
           emailPort: this.emailPort,
           captchaPort: this.captchaPort,
+          newsletterPort: this.newsletterPort,
         },
         {
           tenantId: this.defaultTenantId,
