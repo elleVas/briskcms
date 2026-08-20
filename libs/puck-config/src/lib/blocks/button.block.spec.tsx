@@ -74,6 +74,16 @@ describe('buttonConfig.render', () => {
   });
 });
 
+describe('buttonConfig.fields', () => {
+  it('edits label inline on the canvas instead of the sidebar', () => {
+    expect(buttonConfig.fields?.label).toMatchObject({
+      type: 'text',
+      contentEditable: true,
+      visible: false,
+    });
+  });
+});
+
 describe('buttonConfig.fields.page', () => {
   it('wires the custom field to PagePickerField', () => {
     const pageField = buttonConfig.fields

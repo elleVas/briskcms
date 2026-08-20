@@ -29,4 +29,18 @@ const safeHtml = sanitizeHtml(html, {
 });
 ---
 
-<Fragment set:html={safeHtml} />
+<div class="brisk-embed-html" set:html={safeHtml} />
+
+<style>
+  /* `set:html` injects raw markup Astro never authored, so scoped styles
+     can't reach it without :global() — a pasted embed (map, video,
+     calendar widget) often ships with a fixed width/height attribute that
+     would otherwise overflow the page on narrow screens. */
+  .brisk-embed-html :global(iframe),
+  .brisk-embed-html :global(img),
+  .brisk-embed-html :global(video),
+  .brisk-embed-html :global(embed),
+  .brisk-embed-html :global(object) {
+    max-width: 100%;
+  }
+</style>

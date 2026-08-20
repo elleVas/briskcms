@@ -20,11 +20,13 @@ export const ratingConfig: ComponentConfig<RatingProps> = {
   label: 'Valutazione a stelle',
   fields: {
     rating: { type: 'number', min: 1, max: 5, step: 1 },
-    label: { type: 'text' },
+    label: { type: 'text', contentEditable: true, visible: false },
   },
   defaultProps: {
     rating: 5,
-    label: '',
+    // Non-empty, unlike before: an inline-editable field needs visible text
+    // to click on, same reasoning as every other block's placeholder default.
+    label: 'Valutazione clienti',
   },
   render: ({ rating, label }) => (
     <div>

@@ -9,8 +9,8 @@ export { accordionItemPropsSchema, type AccordionItemProps };
 export const accordionItemConfig: ComponentConfig<AccordionItemProps> = {
   label: 'Domanda',
   fields: {
-    question: { type: 'text' },
-    answer: { type: 'textarea' },
+    question: { type: 'text', contentEditable: true, visible: false },
+    answer: { type: 'textarea', contentEditable: true, visible: false },
   },
   defaultProps: {
     question: 'Domanda...',

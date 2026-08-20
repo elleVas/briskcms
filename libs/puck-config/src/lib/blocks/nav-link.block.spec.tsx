@@ -137,6 +137,16 @@ describe('navLinkConfig.render', () => {
   });
 });
 
+describe('navLinkConfig.fields', () => {
+  it('edits label inline on the canvas instead of the sidebar', () => {
+    expect(navLinkConfig.fields?.label).toMatchObject({
+      type: 'text',
+      contentEditable: true,
+      visible: false,
+    });
+  });
+});
+
 describe('navLinkConfig.fields.page', () => {
   it('wires the custom field to PagePickerField', () => {
     const pageField = navLinkConfig.fields

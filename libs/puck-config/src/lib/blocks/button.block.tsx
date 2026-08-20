@@ -5,7 +5,7 @@ import { PagePickerField } from '../fields/page-picker-field.js';
 export { buttonPropsSchema, type ButtonProps };
 
 const fields: Fields<ButtonProps> = {
-  label: { type: 'text' },
+  label: { type: 'text', contentEditable: true, visible: false },
   linkType: {
     type: 'radio',
     options: [

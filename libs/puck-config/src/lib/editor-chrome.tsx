@@ -33,6 +33,11 @@ export function EditorChrome({ label, color, children }: EditorChromeProps) {
         border: `2px dashed ${color}`,
         borderRadius: 8,
         padding: '18px 10px 10px',
+        // Grid/flex items default to min-width: auto, which refuses to
+        // shrink below the intrinsic size of their content (e.g. a wide
+        // image) — this is what let content break out of a parent grid
+        // (Columns) regardless of the grid's own track sizing.
+        minWidth: 0,
       }}
     >
       <span style={{ ...labelStyle, color }}>{label}</span>

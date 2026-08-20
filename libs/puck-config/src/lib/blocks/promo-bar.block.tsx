@@ -9,7 +9,7 @@ export { promoBarPropsSchema, type PromoBarProps };
 // nav-link.block.tsx's own fields), guided by the `linkType` radio for
 // which one the editor is actually meant to fill in.
 const fields: Fields<PromoBarProps> = {
-  message: { type: 'textarea' },
+  message: { type: 'textarea', contentEditable: true, visible: false },
   linkType: {
     type: 'radio',
     options: [

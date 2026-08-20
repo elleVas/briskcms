@@ -8,7 +8,7 @@ import { visibilityField } from '../fields/visibility-field.js';
 export { breadcrumbPropsSchema, type BreadcrumbProps };
 
 const fields: Fields<BreadcrumbProps> = {
-  homeLabel: { type: 'text' },
+  homeLabel: { type: 'text', contentEditable: true, visible: false },
   visibility: visibilityField,
 };
 

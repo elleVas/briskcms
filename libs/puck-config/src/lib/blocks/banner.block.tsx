@@ -9,9 +9,9 @@ export { bannerPropsSchema, type BannerProps };
 // key), guided by the `linkType` radio for which one the editor actually
 // fills in.
 const fields: Fields<BannerProps> = {
-  title: { type: 'text' },
-  text: { type: 'textarea' },
-  buttonLabel: { type: 'text' },
+  title: { type: 'text', contentEditable: true, visible: false },
+  text: { type: 'textarea', contentEditable: true, visible: false },
+  buttonLabel: { type: 'text', contentEditable: true, visible: false },
   linkType: {
     type: 'radio',
     options: [

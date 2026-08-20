@@ -23,28 +23,30 @@ export const tableConfig: ComponentConfig<TableProps> = {
   render: ({ rows }) => {
     const [header, ...body] = rows;
     return (
-      <table>
-        {header && (
-          <thead>
-            <tr>
-              {header.map((cell, colIndex) => (
-                <th key={colIndex}>{cell}</th>
-              ))}
-            </tr>
-          </thead>
-        )}
-        {body.length > 0 && (
-          <tbody>
-            {body.map((row, rowIndex) => (
-              <tr key={rowIndex}>
-                {row.map((cell, colIndex) => (
-                  <td key={colIndex}>{cell}</td>
+      <div style={{ overflowX: 'auto' }}>
+        <table>
+          {header && (
+            <thead>
+              <tr>
+                {header.map((cell, colIndex) => (
+                  <th key={colIndex}>{cell}</th>
                 ))}
               </tr>
-            ))}
-          </tbody>
-        )}
-      </table>
+            </thead>
+          )}
+          {body.length > 0 && (
+            <tbody>
+              {body.map((row, rowIndex) => (
+                <tr key={rowIndex}>
+                  {row.map((cell, colIndex) => (
+                    <td key={colIndex}>{cell}</td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          )}
+        </table>
+      </div>
     );
   },
 };

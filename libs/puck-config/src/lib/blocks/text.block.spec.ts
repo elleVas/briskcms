@@ -35,3 +35,13 @@ describe('textConfig.render', () => {
     expect(screen.getByText('Un paragrafo di prova.')).toBeTruthy();
   });
 });
+
+describe('textConfig.fields', () => {
+  it('edits body inline on the canvas instead of the sidebar', () => {
+    expect(textConfig.fields?.body).toMatchObject({
+      type: 'textarea',
+      contentEditable: true,
+      visible: false,
+    });
+  });
+});

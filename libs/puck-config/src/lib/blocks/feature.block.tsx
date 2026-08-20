@@ -6,9 +6,11 @@ export { featurePropsSchema, type FeatureProps };
 export const featureConfig: ComponentConfig<FeatureProps> = {
   label: 'Feature',
   fields: {
+    // Not contentEditable: a short emoji glyph is closer to an attribute
+    // pick than prose content — stays in the sidebar.
     icon: { type: 'text' },
-    title: { type: 'text' },
-    text: { type: 'textarea' },
+    title: { type: 'text', contentEditable: true, visible: false },
+    text: { type: 'textarea', contentEditable: true, visible: false },
   },
   defaultProps: {
     icon: '🚀',
