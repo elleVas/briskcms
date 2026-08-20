@@ -2,6 +2,7 @@ import type { ComponentConfig, Fields } from '@puckeditor/core';
 import { promoBarPropsSchema, type PromoBarProps } from '@brisk/shared-types';
 import { PagePickerField } from '../fields/page-picker-field.js';
 import { visibilityField } from '../fields/visibility-field.js';
+import { withInlineTextFallback } from '../fields/resolve-inline-text-fallback.js';
 
 export { promoBarPropsSchema, type PromoBarProps };
 
@@ -30,6 +31,7 @@ const fields: Fields<PromoBarProps> = {
 export const promoBarConfig: ComponentConfig<PromoBarProps> = {
   label: 'Barra annuncio/promo',
   fields,
+  resolveFields: (_data, { parent }) => withInlineTextFallback(fields, parent),
   defaultProps: {
     message: 'Messaggio promozionale...',
     linkType: 'page',

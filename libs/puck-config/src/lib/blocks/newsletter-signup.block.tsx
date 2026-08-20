@@ -1,17 +1,21 @@
-import type { ComponentConfig } from '@puckeditor/core';
+import type { ComponentConfig, Fields } from '@puckeditor/core';
 import {
   newsletterSignupPropsSchema,
   type NewsletterSignupProps,
 } from '@brisk/shared-types';
+import { withInlineTextFallback } from '../fields/resolve-inline-text-fallback.js';
 
 export { newsletterSignupPropsSchema, type NewsletterSignupProps };
 
+const fields: Fields<NewsletterSignupProps> = {
+  title: { type: 'text', contentEditable: true, visible: false },
+  buttonLabel: { type: 'text', contentEditable: true, visible: false },
+};
+
 export const newsletterSignupConfig: ComponentConfig<NewsletterSignupProps> = {
   label: 'Iscrizione newsletter',
-  fields: {
-    title: { type: 'text', contentEditable: true, visible: false },
-    buttonLabel: { type: 'text', contentEditable: true, visible: false },
-  },
+  fields,
+  resolveFields: (_data, { parent }) => withInlineTextFallback(fields, parent),
   defaultProps: {
     title: 'Iscriviti alla newsletter',
     buttonLabel: 'Iscrivimi',

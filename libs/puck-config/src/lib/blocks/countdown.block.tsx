@@ -1,19 +1,23 @@
-import type { ComponentConfig } from '@puckeditor/core';
+import type { ComponentConfig, Fields } from '@puckeditor/core';
 import { countdownPropsSchema, type CountdownProps } from '@brisk/shared-types';
+import { withInlineTextFallback } from '../fields/resolve-inline-text-fallback.js';
 
 export { countdownPropsSchema, type CountdownProps };
 
 const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
 
+const fields: Fields<CountdownProps> = {
+  // Not contentEditable: this needs to stay a strictly-formatted ISO
+  // datetime string (Countdown.astro parses it directly), and free-typing
+  // on the canvas has no format guardrail — kept as a sidebar field.
+  targetDate: { type: 'text', placeholder: '2026-12-31T23:59' },
+  label: { type: 'text', contentEditable: true, visible: false },
+};
+
 export const countdownConfig: ComponentConfig<CountdownProps> = {
   label: 'Countdown',
-  fields: {
-    // Not contentEditable: this needs to stay a strictly-formatted ISO
-    // datetime string (Countdown.astro parses it directly), and free-typing
-    // on the canvas has no format guardrail — kept as a sidebar field.
-    targetDate: { type: 'text', placeholder: '2026-12-31T23:59' },
-    label: { type: 'text', contentEditable: true, visible: false },
-  },
+  fields,
+  resolveFields: (_data, { parent }) => withInlineTextFallback(fields, parent),
   defaultProps: {
     targetDate: new Date(Date.now() + THIRTY_DAYS_MS)
       .toISOString()

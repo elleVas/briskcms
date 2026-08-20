@@ -1,5 +1,6 @@
 import type { ComponentConfig, Fields } from '@puckeditor/core';
 import { statPropsSchema, type StatProps } from '@brisk/shared-types';
+import { withInlineTextFallback } from '../fields/resolve-inline-text-fallback.js';
 
 export { statPropsSchema, type StatProps };
 
@@ -17,6 +18,7 @@ const fields: Fields<StatProps> = {
 export const statConfig: ComponentConfig<StatProps> = {
   label: 'Statistica',
   fields,
+  resolveFields: (_data, { parent }) => withInlineTextFallback(fields, parent),
   defaultProps: {
     value: 100,
     prefix: '',

@@ -3,6 +3,7 @@ import { navLinkPropsSchema, type NavLinkProps } from '@brisk/shared-types';
 import { PagePickerField } from '../fields/page-picker-field.js';
 import { positionField } from '../fields/position-field.js';
 import { visibilityField } from '../fields/visibility-field.js';
+import { withInlineTextFallback } from '../fields/resolve-inline-text-fallback.js';
 
 export { navLinkPropsSchema, type NavLinkProps };
 
@@ -33,6 +34,7 @@ const fields: Fields<NavLinkProps> = {
 export const navLinkConfig: ComponentConfig<NavLinkProps> = {
   label: 'Link di navigazione',
   fields,
+  resolveFields: (_data, { parent }) => withInlineTextFallback(fields, parent),
   defaultProps: {
     label: 'Link',
     linkType: 'page',

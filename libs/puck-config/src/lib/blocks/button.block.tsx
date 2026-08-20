@@ -1,6 +1,7 @@
 import type { ComponentConfig, Fields } from '@puckeditor/core';
 import { buttonPropsSchema, type ButtonProps } from '@brisk/shared-types';
 import { PagePickerField } from '../fields/page-picker-field.js';
+import { withInlineTextFallback } from '../fields/resolve-inline-text-fallback.js';
 
 export { buttonPropsSchema, type ButtonProps };
 
@@ -32,6 +33,7 @@ const fields: Fields<ButtonProps> = {
 export const buttonConfig: ComponentConfig<ButtonProps> = {
   label: 'Bottone (CTA)',
   fields,
+  resolveFields: (_data, { parent }) => withInlineTextFallback(fields, parent),
   defaultProps: {
     label: 'Scopri di più',
     linkType: 'page',

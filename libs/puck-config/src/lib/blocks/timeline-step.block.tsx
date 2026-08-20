@@ -3,6 +3,7 @@ import {
   timelineStepPropsSchema,
   type TimelineStepProps,
 } from '@brisk/shared-types';
+import { withInlineTextFallback } from '../fields/resolve-inline-text-fallback.js';
 
 export { timelineStepPropsSchema, type TimelineStepProps };
 
@@ -15,6 +16,7 @@ const fields: Fields<TimelineStepProps> = {
 export const timelineStepConfig: ComponentConfig<TimelineStepProps> = {
   label: 'Fase',
   fields,
+  resolveFields: (_data, { parent }) => withInlineTextFallback(fields, parent),
   defaultProps: {
     label: 'Fase 1',
     title: 'Titolo della fase',

@@ -1,30 +1,34 @@
-import type { ComponentConfig } from '@puckeditor/core';
+import type { ComponentConfig, Fields } from '@puckeditor/core';
 import {
   beforeAfterPropsSchema,
   type BeforeAfterProps,
 } from '@brisk/shared-types';
 import { MediaPickerField } from '../fields/media-picker-field.js';
+import { withInlineTextFallback } from '../fields/resolve-inline-text-fallback.js';
 
 export { beforeAfterPropsSchema, type BeforeAfterProps };
 
+const fields: Fields<BeforeAfterProps> = {
+  beforeImage: {
+    type: 'custom',
+    render: ({ value, onChange }) => (
+      <MediaPickerField value={value} onChange={onChange} />
+    ),
+  },
+  afterImage: {
+    type: 'custom',
+    render: ({ value, onChange }) => (
+      <MediaPickerField value={value} onChange={onChange} />
+    ),
+  },
+  beforeLabel: { type: 'text', contentEditable: true, visible: false },
+  afterLabel: { type: 'text', contentEditable: true, visible: false },
+};
+
 export const beforeAfterConfig: ComponentConfig<BeforeAfterProps> = {
   label: 'Prima/dopo',
-  fields: {
-    beforeImage: {
-      type: 'custom',
-      render: ({ value, onChange }) => (
-        <MediaPickerField value={value} onChange={onChange} />
-      ),
-    },
-    afterImage: {
-      type: 'custom',
-      render: ({ value, onChange }) => (
-        <MediaPickerField value={value} onChange={onChange} />
-      ),
-    },
-    beforeLabel: { type: 'text', contentEditable: true, visible: false },
-    afterLabel: { type: 'text', contentEditable: true, visible: false },
-  },
+  fields,
+  resolveFields: (_data, { parent }) => withInlineTextFallback(fields, parent),
   defaultProps: {
     beforeImage: null,
     afterImage: null,
