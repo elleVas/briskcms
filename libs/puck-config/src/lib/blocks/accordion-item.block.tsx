@@ -3,7 +3,7 @@ import {
   accordionItemPropsSchema,
   type AccordionItemProps,
 } from '@brisk/shared-types';
-import { withInlineTextFallback } from '../fields/resolve-inline-text-fallback.js';
+import { createResolveFields } from '../fields/resolve-inline-text-fallback.js';
 
 export { accordionItemPropsSchema, type AccordionItemProps };
 
@@ -15,7 +15,7 @@ const fields: Fields<AccordionItemProps> = {
 export const accordionItemConfig: ComponentConfig<AccordionItemProps> = {
   label: 'Domanda',
   fields,
-  resolveFields: (_data, { parent }) => withInlineTextFallback(fields, parent),
+  resolveFields: createResolveFields(fields),
   defaultProps: {
     question: 'Domanda...',
     answer: 'Risposta...',

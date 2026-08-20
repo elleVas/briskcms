@@ -1,6 +1,6 @@
 import type { ComponentConfig, Fields } from '@puckeditor/core';
 import { heroPropsSchema, type HeroProps } from '@brisk/shared-types';
-import { withInlineTextFallback } from '../fields/resolve-inline-text-fallback.js';
+import { createResolveFields } from '../fields/resolve-inline-text-fallback.js';
 
 export { heroPropsSchema, type HeroProps };
 
@@ -15,7 +15,7 @@ const fields: Fields<HeroProps> = {
 export const heroConfig: ComponentConfig<HeroProps> = {
   label: 'Hero',
   fields,
-  resolveFields: (_data, { parent }) => withInlineTextFallback(fields, parent),
+  resolveFields: createResolveFields(fields),
   defaultProps: {
     title: 'Titolo',
     subtitle: 'Sottotitolo',

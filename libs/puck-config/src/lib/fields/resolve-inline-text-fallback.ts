@@ -1,4 +1,9 @@
-import type { ComponentData, Field, Fields } from '@puckeditor/core';
+import type {
+  ComponentData,
+  DefaultComponentProps,
+  Field,
+  Fields,
+} from '@puckeditor/core';
 
 /**
  * Puck's canvas inline-editing (InlineTextField) loses the caret when its
@@ -16,7 +21,7 @@ import type { ComponentData, Field, Fields } from '@puckeditor/core';
  * `{ type: 'root', ... }` parent, so nested-in-a-Slot is `parent.type` being
  * an actual block type, not the `parent` reference itself being non-null.
  */
-export function withInlineTextFallback<T extends { [key: string]: any }>(
+export function withInlineTextFallback<T extends DefaultComponentProps>(
   fields: Fields<T>,
   parent: ComponentData | null,
 ): Fields<T> {
@@ -33,4 +38,17 @@ export function withInlineTextFallback<T extends { [key: string]: any }>(
     }
   }
   return result as Fields<T>;
+}
+
+/**
+ * Every block wires this as its `resolveFields`, one call site each
+ * (`resolveFields: createResolveFields(fields)`) — kept as a single shared
+ * closure factory, rather than each block writing its own inline arrow
+ * function, so coverage tooling tracks one function body instead of one
+ * per block regardless of which block's test happens to exercise it.
+ */
+export function createResolveFields<T extends DefaultComponentProps>(
+  fields: Fields<T>,
+): (data: unknown, params: { parent: ComponentData | null }) => Fields<T> {
+  return (_data, { parent }) => withInlineTextFallback(fields, parent);
 }

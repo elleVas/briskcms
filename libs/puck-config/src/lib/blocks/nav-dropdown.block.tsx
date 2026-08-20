@@ -6,7 +6,7 @@ import {
 } from '@brisk/shared-types';
 import { EditorChrome } from '../editor-chrome.js';
 import { positionField } from '../fields/position-field.js';
-import { withInlineTextFallback } from '../fields/resolve-inline-text-fallback.js';
+import { createResolveFields } from '../fields/resolve-inline-text-fallback.js';
 import { visibilityField } from '../fields/visibility-field.js';
 
 export { navDropdownPropsSchema, type NavDropdownProps };
@@ -35,7 +35,7 @@ const fields: Fields<NavDropdownPuckProps> = {
 export const navDropdownConfig: ComponentConfig<NavDropdownPuckProps> = {
   label: 'Sottomenu',
   fields,
-  resolveFields: (_data, { parent }) => withInlineTextFallback(fields, parent),
+  resolveFields: createResolveFields(fields),
   defaultProps: {
     label: 'Sottomenu',
     position: 'left',

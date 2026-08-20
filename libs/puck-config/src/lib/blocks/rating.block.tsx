@@ -4,7 +4,7 @@ import {
   STAR_ICON_PATH,
   type RatingProps,
 } from '@brisk/shared-types';
-import { withInlineTextFallback } from '../fields/resolve-inline-text-fallback.js';
+import { createResolveFields } from '../fields/resolve-inline-text-fallback.js';
 
 export { ratingPropsSchema, type RatingProps };
 
@@ -26,7 +26,7 @@ const fields: Fields<RatingProps> = {
 export const ratingConfig: ComponentConfig<RatingProps> = {
   label: 'Valutazione a stelle',
   fields,
-  resolveFields: (_data, { parent }) => withInlineTextFallback(fields, parent),
+  resolveFields: createResolveFields(fields),
   defaultProps: {
     rating: 5,
     // Non-empty, unlike before: an inline-editable field needs visible text

@@ -1,7 +1,7 @@
 import type { ComponentConfig, Fields } from '@puckeditor/core';
 import { linkPropsSchema, type LinkProps } from '@brisk/shared-types';
 import { PagePickerField } from '../fields/page-picker-field.js';
-import { withInlineTextFallback } from '../fields/resolve-inline-text-fallback.js';
+import { createResolveFields } from '../fields/resolve-inline-text-fallback.js';
 
 export { linkPropsSchema, type LinkProps };
 
@@ -26,7 +26,7 @@ const fields: Fields<LinkProps> = {
 export const linkConfig: ComponentConfig<LinkProps> = {
   label: 'Link',
   fields,
-  resolveFields: (_data, { parent }) => withInlineTextFallback(fields, parent),
+  resolveFields: createResolveFields(fields),
   defaultProps: {
     label: 'Scopri di più',
     linkType: 'page',

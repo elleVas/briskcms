@@ -1,6 +1,6 @@
 import type { ComponentConfig, Fields } from '@puckeditor/core';
 import { mapEmbedPropsSchema, type MapEmbedProps } from '@brisk/shared-types';
-import { withInlineTextFallback } from '../fields/resolve-inline-text-fallback.js';
+import { createResolveFields } from '../fields/resolve-inline-text-fallback.js';
 
 export { mapEmbedPropsSchema, type MapEmbedProps };
 
@@ -11,7 +11,7 @@ const fields: Fields<MapEmbedProps> = {
 export const mapEmbedConfig: ComponentConfig<MapEmbedProps> = {
   label: 'Mappa',
   fields,
-  resolveFields: (_data, { parent }) => withInlineTextFallback(fields, parent),
+  resolveFields: createResolveFields(fields),
   defaultProps: {
     // Non-empty, unlike `''`: contentEditable renders as an empty span with
     // zero width when the value is blank, with nothing left to click on to

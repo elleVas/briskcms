@@ -1,6 +1,6 @@
 import type { ComponentConfig, Fields } from '@puckeditor/core';
 import { featurePropsSchema, type FeatureProps } from '@brisk/shared-types';
-import { withInlineTextFallback } from '../fields/resolve-inline-text-fallback.js';
+import { createResolveFields } from '../fields/resolve-inline-text-fallback.js';
 
 export { featurePropsSchema, type FeatureProps };
 
@@ -15,7 +15,7 @@ const fields: Fields<FeatureProps> = {
 export const featureConfig: ComponentConfig<FeatureProps> = {
   label: 'Feature',
   fields,
-  resolveFields: (_data, { parent }) => withInlineTextFallback(fields, parent),
+  resolveFields: createResolveFields(fields),
   defaultProps: {
     icon: '🚀',
     title: 'Titolo della feature',

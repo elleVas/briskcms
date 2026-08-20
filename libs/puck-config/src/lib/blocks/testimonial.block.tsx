@@ -5,7 +5,7 @@ import {
   type TestimonialProps,
 } from '@brisk/shared-types';
 import { MediaPickerField } from '../fields/media-picker-field.js';
-import { withInlineTextFallback } from '../fields/resolve-inline-text-fallback.js';
+import { createResolveFields } from '../fields/resolve-inline-text-fallback.js';
 
 export { testimonialPropsSchema, type TestimonialProps };
 
@@ -39,7 +39,7 @@ const fields: Fields<TestimonialProps> = {
 export const testimonialConfig: ComponentConfig<TestimonialProps> = {
   label: 'Testimonianza',
   fields,
-  resolveFields: (_data, { parent }) => withInlineTextFallback(fields, parent),
+  resolveFields: createResolveFields(fields),
   defaultProps: {
     quote: 'Testo della recensione...',
     author: 'Nome Cognome',

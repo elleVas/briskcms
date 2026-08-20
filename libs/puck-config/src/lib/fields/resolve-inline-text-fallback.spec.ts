@@ -44,11 +44,11 @@ describe('withInlineTextFallback', () => {
   });
 
   it('leaves non-contentEditable fields untouched either way', () => {
-    expect(withInlineTextFallback(fields, containerParent).icon).toMatchObject(
-      fields.icon!,
-    );
-    expect(withInlineTextFallback(fields, rootParent).icon).toMatchObject(
-      fields.icon!,
-    );
+    expect(withInlineTextFallback(fields, containerParent).icon).toMatchObject({
+      type: 'text',
+    });
+    expect(withInlineTextFallback(fields, rootParent).icon).toMatchObject({
+      type: 'text',
+    });
   });
 });

@@ -1,6 +1,6 @@
 import type { ComponentConfig, Fields } from '@puckeditor/core';
 import { textPropsSchema, type TextProps } from '@brisk/shared-types';
-import { withInlineTextFallback } from '../fields/resolve-inline-text-fallback.js';
+import { createResolveFields } from '../fields/resolve-inline-text-fallback.js';
 
 export { textPropsSchema, type TextProps };
 
@@ -14,7 +14,7 @@ const fields: Fields<TextProps> = {
 export const textConfig: ComponentConfig<TextProps> = {
   label: 'Testo',
   fields,
-  resolveFields: (_data, { parent }) => withInlineTextFallback(fields, parent),
+  resolveFields: createResolveFields(fields),
   defaultProps: {
     body: 'Testo del blocco...',
   },

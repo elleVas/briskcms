@@ -5,7 +5,7 @@ import {
 } from '@brisk/shared-types';
 import { FeatureListField } from '../fields/feature-list-field.js';
 import { PagePickerField } from '../fields/page-picker-field.js';
-import { withInlineTextFallback } from '../fields/resolve-inline-text-fallback.js';
+import { createResolveFields } from '../fields/resolve-inline-text-fallback.js';
 
 export { pricingPlanPropsSchema, type PricingPlanProps };
 
@@ -49,7 +49,7 @@ const fields: Fields<PricingPlanProps> = {
 export const pricingPlanConfig: ComponentConfig<PricingPlanProps> = {
   label: 'Piano prezzo',
   fields,
-  resolveFields: (_data, { parent }) => withInlineTextFallback(fields, parent),
+  resolveFields: createResolveFields(fields),
   defaultProps: {
     name: 'Base',
     price: '9€',

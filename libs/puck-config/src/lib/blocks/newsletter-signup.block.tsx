@@ -3,7 +3,7 @@ import {
   newsletterSignupPropsSchema,
   type NewsletterSignupProps,
 } from '@brisk/shared-types';
-import { withInlineTextFallback } from '../fields/resolve-inline-text-fallback.js';
+import { createResolveFields } from '../fields/resolve-inline-text-fallback.js';
 
 export { newsletterSignupPropsSchema, type NewsletterSignupProps };
 
@@ -15,7 +15,7 @@ const fields: Fields<NewsletterSignupProps> = {
 export const newsletterSignupConfig: ComponentConfig<NewsletterSignupProps> = {
   label: 'Iscrizione newsletter',
   fields,
-  resolveFields: (_data, { parent }) => withInlineTextFallback(fields, parent),
+  resolveFields: createResolveFields(fields),
   defaultProps: {
     title: 'Iscriviti alla newsletter',
     buttonLabel: 'Iscrivimi',

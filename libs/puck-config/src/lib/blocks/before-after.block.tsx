@@ -4,7 +4,7 @@ import {
   type BeforeAfterProps,
 } from '@brisk/shared-types';
 import { MediaPickerField } from '../fields/media-picker-field.js';
-import { withInlineTextFallback } from '../fields/resolve-inline-text-fallback.js';
+import { createResolveFields } from '../fields/resolve-inline-text-fallback.js';
 
 export { beforeAfterPropsSchema, type BeforeAfterProps };
 
@@ -28,7 +28,7 @@ const fields: Fields<BeforeAfterProps> = {
 export const beforeAfterConfig: ComponentConfig<BeforeAfterProps> = {
   label: 'Prima/dopo',
   fields,
-  resolveFields: (_data, { parent }) => withInlineTextFallback(fields, parent),
+  resolveFields: createResolveFields(fields),
   defaultProps: {
     beforeImage: null,
     afterImage: null,

@@ -1,7 +1,7 @@
 import type { ComponentConfig, Fields } from '@puckeditor/core';
 import { bannerPropsSchema, type BannerProps } from '@brisk/shared-types';
 import { PagePickerField } from '../fields/page-picker-field.js';
-import { withInlineTextFallback } from '../fields/resolve-inline-text-fallback.js';
+import { createResolveFields } from '../fields/resolve-inline-text-fallback.js';
 
 export { bannerPropsSchema, type BannerProps };
 
@@ -33,7 +33,7 @@ const fields: Fields<BannerProps> = {
 export const bannerConfig: ComponentConfig<BannerProps> = {
   label: 'Banner/CTA',
   fields,
-  resolveFields: (_data, { parent }) => withInlineTextFallback(fields, parent),
+  resolveFields: createResolveFields(fields),
   defaultProps: {
     title: 'Titolo del banner',
     text: 'Testo del banner...',

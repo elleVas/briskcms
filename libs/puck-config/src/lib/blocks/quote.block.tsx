@@ -1,6 +1,6 @@
 import type { ComponentConfig, Fields } from '@puckeditor/core';
 import { quotePropsSchema, type QuoteProps } from '@brisk/shared-types';
-import { withInlineTextFallback } from '../fields/resolve-inline-text-fallback.js';
+import { createResolveFields } from '../fields/resolve-inline-text-fallback.js';
 
 export { quotePropsSchema, type QuoteProps };
 
@@ -17,7 +17,7 @@ const fields: Fields<QuoteProps> = {
 export const quoteConfig: ComponentConfig<QuoteProps> = {
   label: 'Citazione',
   fields,
-  resolveFields: (_data, { parent }) => withInlineTextFallback(fields, parent),
+  resolveFields: createResolveFields(fields),
   defaultProps: {
     quote: 'Testo della citazione...',
     author: '',

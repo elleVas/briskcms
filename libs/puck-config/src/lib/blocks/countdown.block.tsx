@@ -1,6 +1,6 @@
 import type { ComponentConfig, Fields } from '@puckeditor/core';
 import { countdownPropsSchema, type CountdownProps } from '@brisk/shared-types';
-import { withInlineTextFallback } from '../fields/resolve-inline-text-fallback.js';
+import { createResolveFields } from '../fields/resolve-inline-text-fallback.js';
 
 export { countdownPropsSchema, type CountdownProps };
 
@@ -17,7 +17,7 @@ const fields: Fields<CountdownProps> = {
 export const countdownConfig: ComponentConfig<CountdownProps> = {
   label: 'Countdown',
   fields,
-  resolveFields: (_data, { parent }) => withInlineTextFallback(fields, parent),
+  resolveFields: createResolveFields(fields),
   defaultProps: {
     targetDate: new Date(Date.now() + THIRTY_DAYS_MS)
       .toISOString()
