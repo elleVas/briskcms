@@ -47,16 +47,50 @@ import {
   mapEmbedConfig,
   type MapEmbedProps,
 } from './blocks/map-embed.block.js';
+import {
+  pricingPlanConfig,
+  type PricingPlanProps,
+} from './blocks/pricing-plan.block.js';
+import {
+  pricingTableConfig,
+  type PricingTablePuckProps,
+} from './blocks/pricing-table.block.js';
 import { quoteConfig, type QuoteProps } from './blocks/quote.block.js';
 import { ratingConfig, type RatingProps } from './blocks/rating.block.js';
 import {
   searchBoxConfig,
   type SearchBoxProps,
 } from './blocks/search-box.block.js';
+import { statConfig, type StatProps } from './blocks/stat.block.js';
+import {
+  statsCounterConfig,
+  type StatsCounterPuckProps,
+} from './blocks/stats-counter.block.js';
 import { tabConfig, type TabPuckProps } from './blocks/tab.block.js';
 import { tabsConfig, type TabsPuckProps } from './blocks/tabs.block.js';
 import { tableConfig, type TableProps } from './blocks/table.block.js';
+import {
+  teamMemberConfig,
+  type TeamMemberProps,
+} from './blocks/team-member.block.js';
+import { teamConfig, type TeamPuckProps } from './blocks/team.block.js';
+import {
+  testimonialConfig,
+  type TestimonialProps,
+} from './blocks/testimonial.block.js';
+import {
+  testimonialsConfig,
+  type TestimonialsPuckProps,
+} from './blocks/testimonials.block.js';
 import { textConfig, type TextProps } from './blocks/text.block.js';
+import {
+  timelineStepConfig,
+  type TimelineStepProps,
+} from './blocks/timeline-step.block.js';
+import {
+  timelineConfig,
+  type TimelinePuckProps,
+} from './blocks/timeline.block.js';
 import {
   videoEmbedConfig,
   type VideoEmbedProps,
@@ -89,6 +123,16 @@ export interface BriskComponentProps {
   ImageSlider: ImageSliderProps;
   BeforeAfter: BeforeAfterProps;
   LogoStrip: LogoStripProps;
+  Testimonials: TestimonialsPuckProps;
+  Testimonial: TestimonialProps;
+  Team: TeamPuckProps;
+  TeamMember: TeamMemberProps;
+  PricingTable: PricingTablePuckProps;
+  PricingPlan: PricingPlanProps;
+  StatsCounter: StatsCounterPuckProps;
+  Stat: StatProps;
+  Timeline: TimelinePuckProps;
+  TimelineStep: TimelineStepProps;
 }
 
 export const puckConfig: Config<BriskComponentProps> = {
@@ -119,5 +163,15 @@ export const puckConfig: Config<BriskComponentProps> = {
     ImageSlider: imageSliderConfig,
     BeforeAfter: beforeAfterConfig,
     LogoStrip: logoStripConfig,
+    Testimonials: testimonialsConfig,
+    Testimonial: testimonialConfig,
+    Team: teamConfig,
+    TeamMember: teamMemberConfig,
+    PricingTable: pricingTableConfig,
+    PricingPlan: pricingPlanConfig,
+    StatsCounter: statsCounterConfig,
+    Stat: statConfig,
+    Timeline: timelineConfig,
+    TimelineStep: timelineStepConfig,
   },
 };

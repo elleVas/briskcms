@@ -285,6 +285,18 @@ export const ratingPropsSchema = z.object({
 export type RatingProps = z.infer<typeof ratingPropsSchema>;
 
 /**
+ * Shared 5-point star SVG path — every star-rating render (Rating,
+ * Testimonial) on both sides (editor canvas JSX and public-site Astro)
+ * draws the same star, so the path itself lives here once rather than
+ * being retyped per render target. Still duplicated *once* across the
+ * editor/public divide for each block (a plain string, not JSX, can't be
+ * shared any further than this — apps/public-site never imports
+ * @brisk/puck-config, docs/adr/0007).
+ */
+export const STAR_ICON_PATH =
+  'M10 1.5l2.59 5.25 5.79.84-4.19 4.08.99 5.78L10 14.98l-5.18 2.47.99-5.78-4.19-4.08 5.79-.84L10 1.5z';
+
+/**
  * `targetDate` is a free-form string (an ISO-ish datetime, e.g.
  * "2026-12-31T23:59"), not a branded/refined type — same trade-off as
  * NavLink's `url`: Puck has no native date-picker field, so this is a
@@ -535,3 +547,103 @@ export const logoStripPropsSchema = z.object({
   ),
 });
 export type LogoStripProps = z.infer<typeof logoStripPropsSchema>;
+
+/**
+ * A single testimonial/review card — always a child of Testimonials,
+ * rendered as one slide of a scroll-snap carousel (Testimonials.astro),
+ * same "container + repeated child, single slot" pattern as
+ * Feature/FeatureGrid. `rating` reuses the same 1-5 scale as
+ * `ratingPropsSchema` but is its own field: a testimonial's star rating is
+ * part of that testimonial, not a standalone Rating block placed beside it.
+ */
+export const testimonialPropsSchema = z.object({
+  quote: z.string(),
+  author: z.string(),
+  role: z.string(),
+  avatar: pickedMediaSchema.nullable(),
+  rating: z.number().min(1).max(5),
+});
+export type TestimonialProps = z.infer<typeof testimonialPropsSchema>;
+
+/** Pure layout wrapper, no props of its own — same reasoning as `columnPropsSchema`. Its content lives entirely in `Block.children` (Testimonial only). */
+export const testimonialsPropsSchema = z.strictObject({});
+export type TestimonialsProps = z.infer<typeof testimonialsPropsSchema>;
+
+/** A single team member card — always a child of Team. */
+export const teamMemberPropsSchema = z.object({
+  name: z.string(),
+  role: z.string(),
+  bio: z.string(),
+  photo: pickedMediaSchema.nullable(),
+});
+export type TeamMemberProps = z.infer<typeof teamMemberPropsSchema>;
+
+/** Pure layout wrapper, no props of its own — same reasoning as `columnPropsSchema`. Its content lives entirely in `Block.children` (TeamMember only). */
+export const teamPropsSchema = z.strictObject({});
+export type TeamProps = z.infer<typeof teamPropsSchema>;
+
+/**
+ * A single pricing plan card — always a child of PricingTable. `price` is a
+ * free-form string ("29€", "Su richiesta", ...), not a number — same
+ * "editor is trusted to enter it correctly" trade-off as Banner's
+ * `backgroundColor`, and a plain number can't represent "Gratis" or "Su
+ * richiesta" anyway. `features` is a plain string list, one line per
+ * feature — edited via FeatureListField (a textarea split on `\n`), the
+ * same problem table-data-field.tsx solved for a 2D matrix, since Puck has
+ * no native list-of-strings field. Reuses NavLink/Banner's
+ * `linkType`/`page`/`url` shape for the CTA button's destination.
+ */
+export const pricingPlanPropsSchema = z.object({
+  name: z.string(),
+  price: z.string(),
+  period: z.string(),
+  features: z.array(z.string()),
+  highlighted: z.boolean().default(false),
+  buttonLabel: z.string(),
+  linkType: z.enum(['page', 'url']),
+  page: pickedPageSchema.nullable(),
+  url: z.string(),
+});
+export type PricingPlanProps = z.infer<typeof pricingPlanPropsSchema>;
+
+/** Pure layout wrapper, no props of its own — same reasoning as `columnPropsSchema`. Its content lives entirely in `Block.children` (PricingPlan only). */
+export const pricingTablePropsSchema = z.strictObject({});
+export type PricingTableProps = z.infer<typeof pricingTablePropsSchema>;
+
+/**
+ * A single animated counter — always a child of StatsCounter. `value` is
+ * the target number counted up to; `prefix`/`suffix` are free text around
+ * it (e.g. prefix "+", suffix "%" or "clienti"). The count-up animation
+ * itself (IntersectionObserver + requestAnimationFrame, respecting
+ * `prefers-reduced-motion`) lives entirely in apps/public-site's
+ * StatsCounter.astro — same "editor canvas shows a static preview, the
+ * public site owns the real interactivity" split as Countdown.
+ */
+export const statPropsSchema = z.object({
+  value: z.number(),
+  prefix: z.string(),
+  suffix: z.string(),
+  label: z.string(),
+});
+export type StatProps = z.infer<typeof statPropsSchema>;
+
+/** Pure layout wrapper, no props of its own — same reasoning as `columnPropsSchema`. Its content lives entirely in `Block.children` (Stat only). */
+export const statsCounterPropsSchema = z.strictObject({});
+export type StatsCounterProps = z.infer<typeof statsCounterPropsSchema>;
+
+/**
+ * A single timeline step — always a child of Timeline. `label` is a short
+ * marker (e.g. "Fase 1", "Gennaio 2026"), kept separate from `title`, the
+ * same "eyebrow + heading" split PromoBar/Banner already use for their own
+ * text hierarchy.
+ */
+export const timelineStepPropsSchema = z.object({
+  label: z.string(),
+  title: z.string(),
+  description: z.string(),
+});
+export type TimelineStepProps = z.infer<typeof timelineStepPropsSchema>;
+
+/** Pure layout wrapper, no props of its own — same reasoning as `columnPropsSchema`. Its content lives entirely in `Block.children` (TimelineStep only). */
+export const timelinePropsSchema = z.strictObject({});
+export type TimelineProps = z.infer<typeof timelinePropsSchema>;
