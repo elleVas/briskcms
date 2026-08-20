@@ -1,7 +1,17 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
-import type { PuckContext } from '@puckeditor/core';
+import type { ComponentData, PuckContext } from '@puckeditor/core';
 import { textConfig, textPropsSchema } from './text.block.js';
+
+type ResolveFieldsParams = Parameters<
+  NonNullable<typeof textConfig.resolveFields>
+>[1];
+
+function resolveFieldsWithParent(parent: ComponentData | null) {
+  return textConfig.resolveFields?.({ props: { id: 'text-1', body: 'x' } }, {
+    parent,
+  } as ResolveFieldsParams);
+}
 
 const puckContext: PuckContext = {
   renderDropZone: () => null,
@@ -43,5 +53,23 @@ describe('textConfig.fields', () => {
       contentEditable: true,
       visible: false,
     });
+  });
+});
+
+describe('textConfig.resolveFields', () => {
+  it('keeps canvas-only editing at the page root', async () => {
+    const result = await resolveFieldsWithParent({
+      type: 'root',
+      props: { id: 'root' },
+    } as ComponentData);
+    expect(result?.body).toMatchObject({ visible: false });
+  });
+
+  it('falls back to the sidebar textarea when nested inside a Slot (e.g. Container/Column)', async () => {
+    const result = await resolveFieldsWithParent({
+      type: 'Container',
+      props: { id: 'container-1' },
+    } as ComponentData);
+    expect(result?.body).toMatchObject({ visible: true });
   });
 });

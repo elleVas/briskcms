@@ -1,9 +1,10 @@
-import type { ComponentConfig } from '@puckeditor/core';
+import type { ComponentConfig, Fields } from '@puckeditor/core';
 import {
   ratingPropsSchema,
   STAR_ICON_PATH,
   type RatingProps,
 } from '@brisk/shared-types';
+import { createResolveFields } from '../fields/resolve-inline-text-fallback.js';
 
 export { ratingPropsSchema, type RatingProps };
 
@@ -17,12 +18,15 @@ function Star({ filled }: { filled: boolean }) {
   );
 }
 
+const fields: Fields<RatingProps> = {
+  rating: { type: 'number', min: 1, max: 5, step: 1 },
+  label: { type: 'text', contentEditable: true, visible: false },
+};
+
 export const ratingConfig: ComponentConfig<RatingProps> = {
   label: 'Valutazione a stelle',
-  fields: {
-    rating: { type: 'number', min: 1, max: 5, step: 1 },
-    label: { type: 'text', contentEditable: true, visible: false },
-  },
+  fields,
+  resolveFields: createResolveFields(fields),
   defaultProps: {
     rating: 5,
     // Non-empty, unlike before: an inline-editable field needs visible text

@@ -4,6 +4,7 @@ import {
   type TeamMemberProps,
 } from '@brisk/shared-types';
 import { MediaPickerField } from '../fields/media-picker-field.js';
+import { createResolveFields } from '../fields/resolve-inline-text-fallback.js';
 
 export { teamMemberPropsSchema, type TeamMemberProps };
 
@@ -22,6 +23,7 @@ const fields: Fields<TeamMemberProps> = {
 export const teamMemberConfig: ComponentConfig<TeamMemberProps> = {
   label: 'Membro del team',
   fields,
+  resolveFields: createResolveFields(fields),
   defaultProps: {
     photo: null,
     name: 'Nome Cognome',

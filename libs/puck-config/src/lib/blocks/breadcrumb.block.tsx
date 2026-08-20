@@ -4,6 +4,7 @@ import {
   type BreadcrumbProps,
 } from '@brisk/shared-types';
 import { visibilityField } from '../fields/visibility-field.js';
+import { createResolveFields } from '../fields/resolve-inline-text-fallback.js';
 
 export { breadcrumbPropsSchema, type BreadcrumbProps };
 
@@ -18,6 +19,7 @@ const fields: Fields<BreadcrumbProps> = {
 export const breadcrumbConfig: ComponentConfig<BreadcrumbProps> = {
   label: 'Breadcrumb',
   fields,
+  resolveFields: createResolveFields(fields),
   defaultProps: {
     homeLabel: 'Home',
     visibility: 'always',

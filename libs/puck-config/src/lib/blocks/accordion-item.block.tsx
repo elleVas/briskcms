@@ -1,17 +1,21 @@
-import type { ComponentConfig } from '@puckeditor/core';
+import type { ComponentConfig, Fields } from '@puckeditor/core';
 import {
   accordionItemPropsSchema,
   type AccordionItemProps,
 } from '@brisk/shared-types';
+import { createResolveFields } from '../fields/resolve-inline-text-fallback.js';
 
 export { accordionItemPropsSchema, type AccordionItemProps };
 
+const fields: Fields<AccordionItemProps> = {
+  question: { type: 'text', contentEditable: true, visible: false },
+  answer: { type: 'textarea', contentEditable: true, visible: false },
+};
+
 export const accordionItemConfig: ComponentConfig<AccordionItemProps> = {
   label: 'Domanda',
-  fields: {
-    question: { type: 'text', contentEditable: true, visible: false },
-    answer: { type: 'textarea', contentEditable: true, visible: false },
-  },
+  fields,
+  resolveFields: createResolveFields(fields),
   defaultProps: {
     question: 'Domanda...',
     answer: 'Risposta...',
