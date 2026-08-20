@@ -98,6 +98,7 @@ describe('updateSiteBusinessInfo', () => {
       themeHeadScript: null,
       themeBodyScript: null,
       themeFaviconUrl: null,
+      themeOverridesEnabled: true,
       createdAt: new Date(),
     });
     await siteRepository.save(site);
@@ -188,6 +189,7 @@ describe('updateSiteGeneralSettings', () => {
       themeHeadScript: null,
       themeBodyScript: null,
       themeFaviconUrl: null,
+      themeOverridesEnabled: true,
       createdAt: new Date(),
     });
     await siteRepository.save(site);
@@ -267,6 +269,7 @@ describe('updateSiteSeoSettings', () => {
       themeHeadScript: null,
       themeBodyScript: null,
       themeFaviconUrl: null,
+      themeOverridesEnabled: true,
       createdAt: new Date(),
     });
     await siteRepository.save(site);
@@ -342,6 +345,7 @@ describe('updateSiteThemeSettings', () => {
       themeHeadScript: null,
       themeBodyScript: null,
       themeFaviconUrl: null,
+      themeOverridesEnabled: true,
       createdAt: new Date(),
     });
     await siteRepository.save(site);
@@ -362,6 +366,7 @@ describe('updateSiteThemeSettings', () => {
       headScript: null,
       bodyScript: null,
       faviconUrl: null,
+      overridesEnabled: true,
     });
 
     expect(updated.themeSettings.primaryColor).toBe('#18181b');
@@ -382,6 +387,7 @@ describe('updateSiteThemeSettings', () => {
         headScript: null,
         bodyScript: null,
         faviconUrl: null,
+        overridesEnabled: true,
       }),
     ).rejects.toThrow(SiteNotFoundError);
   });
@@ -401,6 +407,7 @@ describe('updateSiteThemeSettings', () => {
         headScript: null,
         bodyScript: null,
         faviconUrl: null,
+        overridesEnabled: true,
       }),
     ).rejects.toThrow(SiteNotFoundError);
   });
@@ -436,6 +443,7 @@ describe('updateSiteLocaleSettings', () => {
       themeHeadScript: null,
       themeBodyScript: null,
       themeFaviconUrl: null,
+      themeOverridesEnabled: true,
       createdAt: new Date(),
     });
     await siteRepository.save(site);

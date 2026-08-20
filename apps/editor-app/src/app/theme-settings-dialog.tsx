@@ -19,6 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '../components/ui/select.js';
+import { Switch } from '../components/ui/switch.js';
 import { Textarea } from '../components/ui/textarea.js';
 import { siteQueryOptions } from './site-queries.js';
 import { useSiteThemeSettings } from './use-site-theme-settings.js';
@@ -54,6 +55,7 @@ export function ThemeSettingsDialog({
   });
   const { updateThemeSettings, isSaving } = useSiteThemeSettings(siteId);
 
+  const [overridesEnabled, setOverridesEnabled] = useState(true);
   const [primaryColorEnabled, setPrimaryColorEnabled] = useState(false);
   const [primaryColor, setPrimaryColor] = useState('#18181b');
   const [secondaryColorEnabled, setSecondaryColorEnabled] = useState(false);
@@ -74,6 +76,7 @@ export function ThemeSettingsDialog({
   if (syncKey !== lastSyncKey) {
     setLastSyncKey(syncKey);
     if (open && site) {
+      setOverridesEnabled(site.themeOverridesEnabled);
       setPrimaryColorEnabled(site.themePrimaryColor !== null);
       setPrimaryColor(site.themePrimaryColor ?? '#18181b');
       setSecondaryColorEnabled(site.themeSecondaryColor !== null);
@@ -114,6 +117,7 @@ export function ThemeSettingsDialog({
         headScript: headScript.trim() || null,
         bodyScript: bodyScript.trim() || null,
         faviconUrl: faviconUrl.trim() || null,
+        overridesEnabled,
       });
       onOpenChange(false);
     } catch (err) {
@@ -136,161 +140,187 @@ export function ThemeSettingsDialog({
                 {t('themeSettings.intro')}
               </p>
 
-              <div className="flex flex-col gap-2 rounded-md border p-3">
-                <div className="flex items-center justify-between gap-2">
-                  <Label
-                    htmlFor="theme-settings-primary-color"
-                    className="text-sm font-medium"
-                  >
-                    {t('themeSettings.primaryColorLabel')}
-                  </Label>
-                  <label className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <input
-                      type="checkbox"
-                      checked={primaryColorEnabled}
-                      onChange={(event) =>
-                        setPrimaryColorEnabled(event.target.checked)
-                      }
-                    />
-                    {t('themeSettings.override')}
-                  </label>
+              <div className="flex items-center justify-between gap-4 rounded-md border p-3">
+                <div className="flex flex-col gap-1">
+                  <span className="text-sm font-medium">
+                    {t('themeSettings.overridesEnabledLabel')}
+                  </span>
+                  <span className="text-xs text-muted-foreground">
+                    {t('themeSettings.overridesEnabledDescription')}
+                  </span>
                 </div>
-                {primaryColorEnabled && (
-                  <div className="flex items-center gap-2">
-                    <input
-                      id="theme-settings-primary-color"
-                      type="color"
-                      value={primaryColor}
-                      onChange={(event) => setPrimaryColor(event.target.value)}
-                      className="h-9 w-14 rounded border border-input bg-transparent"
-                    />
-                    <span className="text-xs text-muted-foreground">
-                      {primaryColor}
-                    </span>
-                  </div>
-                )}
+                <Switch
+                  checked={overridesEnabled}
+                  onCheckedChange={setOverridesEnabled}
+                  aria-label={t('themeSettings.overridesEnabledLabel')}
+                />
               </div>
 
-              <div className="flex flex-col gap-2 rounded-md border p-3">
-                <div className="flex items-center justify-between gap-2">
-                  <Label
-                    htmlFor="theme-settings-secondary-color"
-                    className="text-sm font-medium"
-                  >
-                    {t('themeSettings.secondaryColorLabel')}
-                  </Label>
-                  <label className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <input
-                      type="checkbox"
-                      checked={secondaryColorEnabled}
-                      onChange={(event) =>
-                        setSecondaryColorEnabled(event.target.checked)
-                      }
-                    />
-                    {t('themeSettings.override')}
-                  </label>
-                </div>
-                {secondaryColorEnabled && (
-                  <div className="flex items-center gap-2">
-                    <input
-                      id="theme-settings-secondary-color"
-                      type="color"
-                      value={secondaryColor}
-                      onChange={(event) =>
-                        setSecondaryColor(event.target.value)
-                      }
-                      className="h-9 w-14 rounded border border-input bg-transparent"
-                    />
-                    <span className="text-xs text-muted-foreground">
-                      {secondaryColor}
-                    </span>
+              <div
+                className={`flex flex-col gap-4 ${overridesEnabled ? '' : 'opacity-50'}`}
+                inert={!overridesEnabled || undefined}
+                aria-disabled={!overridesEnabled}
+              >
+                <div className="flex flex-col gap-2 rounded-md border p-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <Label
+                      htmlFor="theme-settings-primary-color"
+                      className="text-sm font-medium"
+                    >
+                      {t('themeSettings.primaryColorLabel')}
+                    </Label>
+                    <label className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <input
+                        type="checkbox"
+                        checked={primaryColorEnabled}
+                        onChange={(event) =>
+                          setPrimaryColorEnabled(event.target.checked)
+                        }
+                      />
+                      {t('themeSettings.override')}
+                    </label>
                   </div>
-                )}
-              </div>
+                  {primaryColorEnabled && (
+                    <div className="flex items-center gap-2">
+                      <input
+                        id="theme-settings-primary-color"
+                        type="color"
+                        value={primaryColor}
+                        onChange={(event) =>
+                          setPrimaryColor(event.target.value)
+                        }
+                        className="h-9 w-14 rounded border border-input bg-transparent"
+                      />
+                      <span className="text-xs text-muted-foreground">
+                        {primaryColor}
+                      </span>
+                    </div>
+                  )}
+                </div>
 
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="theme-settings-font">
-                  {t('themeSettings.fontLabel')}
-                </Label>
-                <Select value={fontChoice} onValueChange={setFontChoice}>
-                  <SelectTrigger id="theme-settings-font" className="w-full">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value={INHERIT_THEME_FONT}>
-                      {t('themeSettings.fontInherit')}
-                    </SelectItem>
-                    {CURATED_THEME_FONTS.map((font) => (
-                      <SelectItem key={font.value} value={font.value}>
-                        {font.label}
+                <div className="flex flex-col gap-2 rounded-md border p-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <Label
+                      htmlFor="theme-settings-secondary-color"
+                      className="text-sm font-medium"
+                    >
+                      {t('themeSettings.secondaryColorLabel')}
+                    </Label>
+                    <label className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <input
+                        type="checkbox"
+                        checked={secondaryColorEnabled}
+                        onChange={(event) =>
+                          setSecondaryColorEnabled(event.target.checked)
+                        }
+                      />
+                      {t('themeSettings.override')}
+                    </label>
+                  </div>
+                  {secondaryColorEnabled && (
+                    <div className="flex items-center gap-2">
+                      <input
+                        id="theme-settings-secondary-color"
+                        type="color"
+                        value={secondaryColor}
+                        onChange={(event) =>
+                          setSecondaryColor(event.target.value)
+                        }
+                        className="h-9 w-14 rounded border border-input bg-transparent"
+                      />
+                      <span className="text-xs text-muted-foreground">
+                        {secondaryColor}
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  <Label htmlFor="theme-settings-font">
+                    {t('themeSettings.fontLabel')}
+                  </Label>
+                  <Select value={fontChoice} onValueChange={setFontChoice}>
+                    <SelectTrigger id="theme-settings-font" className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value={INHERIT_THEME_FONT}>
+                        {t('themeSettings.fontInherit')}
                       </SelectItem>
-                    ))}
-                    <SelectItem value={CUSTOM_FONT}>
-                      {t('themeSettings.fontCustom')}
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-                {fontChoice === CUSTOM_FONT && (
+                      {CURATED_THEME_FONTS.map((font) => (
+                        <SelectItem key={font.value} value={font.value}>
+                          {font.label}
+                        </SelectItem>
+                      ))}
+                      <SelectItem value={CUSTOM_FONT}>
+                        {t('themeSettings.fontCustom')}
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                  {fontChoice === CUSTOM_FONT && (
+                    <Input
+                      value={customFontName}
+                      onChange={(event) =>
+                        setCustomFontName(event.target.value)
+                      }
+                      placeholder={t('themeSettings.fontCustomPlaceholder')}
+                    />
+                  )}
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  <Label htmlFor="theme-settings-favicon">
+                    {t('themeSettings.faviconLabel')}
+                  </Label>
                   <Input
-                    value={customFontName}
-                    onChange={(event) => setCustomFontName(event.target.value)}
-                    placeholder={t('themeSettings.fontCustomPlaceholder')}
+                    id="theme-settings-favicon"
+                    value={faviconUrl}
+                    onChange={(event) => setFaviconUrl(event.target.value)}
+                    placeholder="https://.../favicon.png"
                   />
-                )}
-              </div>
+                </div>
 
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="theme-settings-favicon">
-                  {t('themeSettings.faviconLabel')}
-                </Label>
-                <Input
-                  id="theme-settings-favicon"
-                  value={faviconUrl}
-                  onChange={(event) => setFaviconUrl(event.target.value)}
-                  placeholder="https://.../favicon.png"
-                />
-              </div>
+                <div className="flex flex-col gap-2">
+                  <Label htmlFor="theme-settings-custom-css">
+                    {t('themeSettings.customCssLabel')}
+                  </Label>
+                  <Textarea
+                    id="theme-settings-custom-css"
+                    value={customCss}
+                    onChange={(event) => setCustomCss(event.target.value)}
+                    rows={4}
+                    className="font-mono text-xs"
+                  />
+                </div>
 
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="theme-settings-custom-css">
-                  {t('themeSettings.customCssLabel')}
-                </Label>
-                <Textarea
-                  id="theme-settings-custom-css"
-                  value={customCss}
-                  onChange={(event) => setCustomCss(event.target.value)}
-                  rows={4}
-                  className="font-mono text-xs"
-                />
-              </div>
+                <div className="flex flex-col gap-2">
+                  <Label htmlFor="theme-settings-head-script">
+                    {t('themeSettings.headScriptLabel')}
+                  </Label>
+                  <Textarea
+                    id="theme-settings-head-script"
+                    value={headScript}
+                    onChange={(event) => setHeadScript(event.target.value)}
+                    rows={3}
+                    className="font-mono text-xs"
+                  />
+                </div>
 
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="theme-settings-head-script">
-                  {t('themeSettings.headScriptLabel')}
-                </Label>
-                <Textarea
-                  id="theme-settings-head-script"
-                  value={headScript}
-                  onChange={(event) => setHeadScript(event.target.value)}
-                  rows={3}
-                  className="font-mono text-xs"
-                />
-              </div>
-
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="theme-settings-body-script">
-                  {t('themeSettings.bodyScriptLabel')}
-                </Label>
-                <Textarea
-                  id="theme-settings-body-script"
-                  value={bodyScript}
-                  onChange={(event) => setBodyScript(event.target.value)}
-                  rows={3}
-                  className="font-mono text-xs"
-                />
-                <p className="text-xs text-muted-foreground">
-                  {t('themeSettings.scriptDisclaimer')}
-                </p>
+                <div className="flex flex-col gap-2">
+                  <Label htmlFor="theme-settings-body-script">
+                    {t('themeSettings.bodyScriptLabel')}
+                  </Label>
+                  <Textarea
+                    id="theme-settings-body-script"
+                    value={bodyScript}
+                    onChange={(event) => setBodyScript(event.target.value)}
+                    rows={3}
+                    className="font-mono text-xs"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    {t('themeSettings.scriptDisclaimer')}
+                  </p>
+                </div>
               </div>
             </div>
             {error && (

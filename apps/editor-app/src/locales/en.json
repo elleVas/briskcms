@@ -209,6 +209,8 @@
     "menuLabel": "Style",
     "title": "Site style",
     "intro": "These settings apply on top of the site's active theme — leave a field off to keep the theme's own default.",
+    "overridesEnabledLabel": "Apply these settings",
+    "overridesEnabledDescription": "When off, every field below is ignored and the theme's own defaults are used, even if you've saved values here before. The active theme can also lock this off entirely — see its own documentation.",
     "primaryColorLabel": "Primary color",
     "secondaryColorLabel": "Secondary color",
     "override": "Override",

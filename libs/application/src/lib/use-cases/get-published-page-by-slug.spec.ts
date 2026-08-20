@@ -55,6 +55,7 @@ describe('getPublishedPageBySlug', () => {
       themeHeadScript: null,
       themeBodyScript: null,
       themeFaviconUrl: null,
+      themeOverridesEnabled: true,
       createdAt: new Date(),
       ...overrides,
     });
@@ -134,6 +135,7 @@ describe('getPublishedPageBySlug', () => {
           headScript: null,
           bodyScript: null,
           faviconUrl: null,
+          overridesEnabled: true,
         },
       },
     });

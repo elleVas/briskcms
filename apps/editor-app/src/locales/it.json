@@ -209,6 +209,8 @@
     "menuLabel": "Stile",
     "title": "Stile del sito",
     "intro": "Queste impostazioni si applicano sopra il tema attivo del sito — lascia un campo disattivato per mantenere il valore predefinito del tema.",
+    "overridesEnabledLabel": "Applica queste impostazioni",
+    "overridesEnabledDescription": "Se disattivato, ogni campo qui sotto viene ignorato e si usano i valori predefiniti del tema, anche se hai salvato dei valori in passato. Il tema attivo può anche bloccare questa opzione del tutto — consulta la sua documentazione.",
     "primaryColorLabel": "Colore primario",
     "secondaryColorLabel": "Colore secondario",
     "override": "Personalizza",

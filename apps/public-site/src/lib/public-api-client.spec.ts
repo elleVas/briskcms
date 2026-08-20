@@ -38,6 +38,7 @@ const samplePage: PublishedPageDto = {
       headScript: null,
       bodyScript: null,
       faviconUrl: null,
+      overridesEnabled: true,
     },
   },
   header: null,

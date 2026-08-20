@@ -26,6 +26,7 @@ function buildSite(
     themeHeadScript: null,
     themeBodyScript: null,
     themeFaviconUrl: null,
+    themeOverridesEnabled: true,
     createdAt: new Date(),
     ...overrides,
   });
@@ -146,6 +147,7 @@ describe('SitesController (unit)', () => {
         headScript: null,
         bodyScript: null,
         faviconUrl: null,
+        overridesEnabled: true,
       }),
     ).rejects.toThrow(NotFoundException);
   });
@@ -161,6 +163,7 @@ describe('SitesController (unit)', () => {
       headScript: null,
       bodyScript: null,
       faviconUrl: null,
+      overridesEnabled: true,
     });
 
     expect(siteRepository.save).toHaveBeenCalled();

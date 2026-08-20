@@ -54,5 +54,12 @@ export const themeSettingsSchema = z.object({
   headScript: z.string().nullable(),
   bodyScript: z.string().nullable(),
   faviconUrl: z.string().nullable(),
+  // Two-gate composition (docs/adr/0021): a theme's own theme.json
+  // `allowStyleOverrides` is the ceiling a site can never raise past — this
+  // flag is the day-to-day switch *below* that ceiling, controlled by
+  // whoever edits Site settings. Both must allow overrides for any Tier 1
+  // field above to actually render; either one being false means "ignore
+  // everything in this object except this flag itself".
+  overridesEnabled: z.boolean(),
 });
 export type ThemeSettings = z.infer<typeof themeSettingsSchema>;

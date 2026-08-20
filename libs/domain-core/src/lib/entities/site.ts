@@ -24,6 +24,7 @@ export interface SiteProps {
   themeHeadScript: string | null;
   themeBodyScript: string | null;
   themeFaviconUrl: string | null;
+  themeOverridesEnabled: boolean;
   createdAt: Date;
 }
 
@@ -138,6 +139,7 @@ export class Site {
       headScript: this.props.themeHeadScript,
       bodyScript: this.props.themeBodyScript,
       faviconUrl: this.props.themeFaviconUrl,
+      overridesEnabled: this.props.themeOverridesEnabled,
     };
   }
 
@@ -185,5 +187,6 @@ export class Site {
     this.props.themeHeadScript = input.headScript;
     this.props.themeBodyScript = input.bodyScript;
     this.props.themeFaviconUrl = input.faviconUrl;
+    this.props.themeOverridesEnabled = input.overridesEnabled;
   }
 }

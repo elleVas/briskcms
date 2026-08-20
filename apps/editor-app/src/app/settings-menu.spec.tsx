@@ -48,6 +48,7 @@ describe('SettingsMenu', () => {
       themeHeadScript: null,
       themeBodyScript: null,
       themeFaviconUrl: null,
+      themeOverridesEnabled: true,
       createdAt: '',
       ...overrides,
     };

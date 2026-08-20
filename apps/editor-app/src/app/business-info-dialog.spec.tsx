@@ -33,6 +33,7 @@ const sampleSite: SiteDto = {
   themeHeadScript: null,
   themeBodyScript: null,
   themeFaviconUrl: null,
+  themeOverridesEnabled: true,
   createdAt: '',
 };
 

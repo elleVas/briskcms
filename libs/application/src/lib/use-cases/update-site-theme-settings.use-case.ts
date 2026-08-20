@@ -28,6 +28,7 @@ export async function updateSiteThemeSettings(
     headScript: input.headScript,
     bodyScript: input.bodyScript,
     faviconUrl: input.faviconUrl,
+    overridesEnabled: input.overridesEnabled,
   });
   await deps.siteRepository.save(site);
 

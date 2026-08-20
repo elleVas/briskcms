@@ -199,6 +199,7 @@ describe('SitesController (integration)', () => {
         headScript: null,
         bodyScript: null,
         faviconUrl: 'https://example.com/favicon.png',
+        overridesEnabled: true,
       })
       .expect(200);
 
@@ -213,6 +214,27 @@ describe('SitesController (integration)', () => {
     expect(getRes.body.themeFaviconUrl).toBe('https://example.com/favicon.png');
   });
 
+  it('defaults theme overrides to enabled, and can be turned off (docs/adr/0021 two-gate composition)', async () => {
+    const getRes = await agent.get(`/sites/${siteId}`).expect(200);
+    expect(getRes.body.themeOverridesEnabled).toBe(true);
+
+    const res = await agent
+      .patch(`/sites/${siteId}/theme-settings`)
+      .send({
+        primaryColor: null,
+        secondaryColor: null,
+        fontFamily: null,
+        customCss: null,
+        headScript: null,
+        bodyScript: null,
+        faviconUrl: null,
+        overridesEnabled: false,
+      })
+      .expect(200);
+
+    expect(res.body.themeOverridesEnabled).toBe(false);
+  });
+
   it('400s an invalid hex color for theme settings', async () => {
     await agent
       .patch(`/sites/${siteId}/theme-settings`)
@@ -224,6 +246,7 @@ describe('SitesController (integration)', () => {
         headScript: null,
         bodyScript: null,
         faviconUrl: null,
+        overridesEnabled: true,
       })
       .expect(400);
   });
@@ -239,6 +262,7 @@ describe('SitesController (integration)', () => {
         headScript: null,
         bodyScript: null,
         faviconUrl: null,
+        overridesEnabled: true,
       })
       .expect(404);
   });

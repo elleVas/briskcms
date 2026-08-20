@@ -51,6 +51,7 @@ describe('listPublishedPagesForSitemap', () => {
       themeHeadScript: null,
       themeBodyScript: null,
       themeFaviconUrl: null,
+      themeOverridesEnabled: true,
       createdAt: new Date(),
       ...overrides,
     });

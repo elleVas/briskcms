@@ -108,6 +108,12 @@ export const sites = pgTable(
     themeHeadScript: text('theme_head_script'),
     themeBodyScript: text('theme_body_script'),
     themeFaviconUrl: text('theme_favicon_url'),
+    // Site-level gate under the theme's own theme.json ceiling
+    // (docs/adr/0021) — defaults true so an existing/fresh site with no
+    // Tier 1 fields set behaves identically to before this column existed.
+    themeOverridesEnabled: boolean('theme_overrides_enabled')
+      .notNull()
+      .default(true),
     createdAt: timestamp('created_at', { withTimezone: true })
       .notNull()
       .defaultNow(),

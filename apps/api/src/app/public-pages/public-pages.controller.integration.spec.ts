@@ -140,6 +140,7 @@ describe('PublicPagesController (integration)', () => {
           headScript: null,
           bodyScript: null,
           faviconUrl: null,
+          overridesEnabled: true,
         },
       },
     });

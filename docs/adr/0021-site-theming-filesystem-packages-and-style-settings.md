@@ -31,13 +31,14 @@ generic template, won't adopt it.
   columns — primary/secondary color, font choice (curated list, with a
   free-text "custom Google Fonts name" escape hatch — the user asked for
   both rather than picking one), custom CSS, custom head/body scripts,
-  favicon. Editable live via a new editor-app settings dialog, no rebuild.
-  Rendered into `PageLayout.astro`'s `<head>` as CSS custom properties, a
-  raw `<style>` block for the custom CSS, and verbatim `<script>` tags for
-  the custom scripts. No sanitization or CSP: this project has no CSP
-  anywhere today, and whoever has access to Site settings already has
-  equal or greater reach by editing pages/blocks directly — this feature
-  doesn't lower an existing trust boundary.
+  favicon, plus a master `overridesEnabled` switch (see the two-gate
+  section below). Editable live via a new editor-app settings dialog, no
+  rebuild. Rendered into `PageLayout.astro`'s `<head>` as CSS custom
+  properties, a raw `<style>` block for the custom CSS, and verbatim
+  `<script>` tags for the custom scripts. No sanitization or CSP: this
+  project has no CSP anywhere today, and whoever has access to Site
+  settings already has equal or greater reach by editing pages/blocks
+  directly — this feature doesn't lower an existing trust boundary.
 - **Tier 2 — filesystem theme packages.** This is the concrete answer to
   point 7 for the theming case specifically: a theme is a directory
   outside the existing Nx `apps`/`libs`, not a new Nx project. A normal Nx
@@ -57,10 +58,12 @@ themes/
   classic/           # ships with core
   docs-showcase/      # ships with core
   shop-showcase/       # ships with core
+  portfolio/           # ships with core
   <agency-name>/         # written from scratch by an agency, same shape
-    blocks/*.astro
-    PageLayout.astro
-    theme.css
+    theme.css            # design tokens (the common case, see below)
+    theme.json            # { "allowStyleOverrides": boolean }, defaults true
+    blocks/*.astro          # optional, full-file escalation past tokens
+    PageLayout.astro          # optional, same
 ```
 
 Considered a Bedrock-style partial-override convention (an agency's file
@@ -91,7 +94,7 @@ and any file it additionally ships is a deliberate, explicit escalation
 past that default, not an implicit gap-filling convention to reason
 about file-by-file.
 
-### Three themes ship with core, at this decision's date
+### Four themes ship with core, at this decision's date
 
 1. **`classic`** — flat, minimal, general-purpose "sito vetrina" style,
    for the product's primary target (restaurants, professionals, small
@@ -112,10 +115,51 @@ about file-by-file.
    vendita"), and is expected to be the theme that exercises the Catalog
    blocks (Griglia prodotti, Prodotti correlati) most directly once that
    phase exists.
+4. **`portfolio`** — added after the first pass at this list: a literal,
+   direct expression of the user's own `ellevas.dev` (dark background,
+   monospace/terminal accents), unlike `classic`'s adapted-in-principle
+   take on the same reference. For a personal technical portfolio, not a
+   general-business site — the two themes deliberately diverge from the
+   same starting point rather than one trying to serve both audiences.
 
-None of the three has any privileged status in the mechanism beyond being
+None of the four has any privileged status in the mechanism beyond being
 maintained and shipped by Brisk itself — an agency's own theme, written
 from scratch, is a peer, not a second-class citizen bolted on top.
+
+### Two-gate override composition: the theme has final say, the site has day-to-day say
+
+Building Tier 1 surfaced a real gap in the design above: nothing stopped
+a client's saved panel edits from silently bleeding into a _different_
+theme later — an agency deploys `BRISK_THEME=my-bespoke-theme` for a
+client who previously had `classic` with a custom primary color saved,
+and that stale color would still apply, `!important`, to a design the
+agency wants to be authoritative. Raised directly by the user: "io
+potrei anche non voler passare dal pannello stile e usare direttamente
+il mio tema" (I might not want to go through the style panel at all and
+just use my own theme).
+
+Two gates now compose, both required for any Tier 1 field to render:
+
+1. **`theme.json`'s `allowStyleOverrides`** (Tier 2, filesystem, defaults
+   `true`) — the theme author's own ceiling. A bespoke agency theme sets
+   this `false` to make Tier 1 permanently inert for every site running
+   it, full stop, regardless of what any site has saved or will save.
+   Nothing at the site level can raise this ceiling back up.
+2. **`Site.themeSettings.overridesEnabled`** (Tier 1, DB, defaults
+   `true`, new `themeOverridesEnabled` column) — a master switch inside
+   the Style dialog itself, _below_ that ceiling: "apply what I've saved
+   here" vs. "temporarily show the theme's own look without losing what
+   I've saved". Controlled by whoever edits Site settings, which is why
+   it can't be the mechanism an agency relies on to protect _their own_
+   design intent — the client who could accidentally flip theme.json's
+   equivalent doesn't have filesystem/deploy access, but does have this
+   toggle.
+
+`PageLayout.astro` computes one effective `theme` object at the top of
+the component (both gates ANDed together) and reads every Tier 1 field
+through it, rather than checking both gates at each of the four usage
+sites (colors, font, favicon, custom CSS/scripts) — one gate is harder to
+accidentally miss than four scattered conditionals.
 
 ### Boundary: presentation is unlimited, the content model is not
 
@@ -135,15 +179,31 @@ theme redefines for itself.
   pages/data, never inside a theme package, so this decision doesn't
   constrain the importer's design, only removes the structural
   uncertainty that was blocking it from starting.
-- **Not yet implemented.** This ADR records the direction agreed with the
-  user; the actual work (Tier 1 settings dialog + migration, Tier 2
-  build-time resolution mechanism, and building out the first theme) is
-  future backlog to sequence and estimate separately, not something this
-  decision itself delivers.
-- Left open for the implementation work, deliberately not decided here:
-  the exact Astro/Vite mechanism for resolving `BRISK_THEME` into which
-  theme's files get bundled (dynamic import vs. alias/resolve config);
-  whether/how a theme registers custom Puck blocks and how those surface
-  in `editor-app`; and a strategy for keeping three (and growing) themes
-  from silently drifting out of sync when a core block's Zod schema
-  changes underneath them.
+- **Implemented same-day**: Tier 1 (`sites.theme_*` columns, migration
+  `0019`, `PATCH /sites/:id/theme-settings`, the Style dialog in
+  editor-app), Tier 2's resolution mechanism (Vite `~theme` alias in
+  `astro.config.mjs`, resolved from `BRISK_THEME`, default `classic`),
+  Tailwind v4 + `@astrojs/react` on `apps/public-site`, and the `classic`
+  theme itself (applied to `Hero.astro` as the mechanism's proof). The
+  `themeOverridesEnabled` column (migration `0020`) and `theme.json`'s
+  `allowStyleOverrides` shipped in the same pass as the two-gate
+  composition above, not as a later fix.
+- **Not yet built**: the `docs-showcase`, `shop-showcase`, and `portfolio`
+  themes, and migrating the rest of the existing ~30 block components onto
+  Tailwind tokens (only `Hero.astro` is done) — sequenced as follow-up
+  work, not blocking this ADR.
+- Found only by testing live in a browser, not by code review: Astro's
+  dev server injects `import '*.css'` side-effect styles as their own
+  `<style data-vite-dev-id>` tags positioned _after_ a component's own
+  inline markup in the rendered HTML, regardless of import order in the
+  frontmatter — an inline Tier 1 `<style>` block written later in
+  `PageLayout.astro`'s template still lost the cascade to the theme's own
+  `:root` rule. Fixed with `!important` on every Tier 1 declaration
+  (`PageLayout.astro`'s own comment has the full account) — an explicit,
+  order-independent "Tier 1 wins when both gates allow it," not a
+  specificity workaround.
+- Left open for future implementation work, deliberately not decided
+  here: whether/how a theme registers custom Puck blocks and how those
+  surface in `editor-app`; and a strategy for keeping four (and growing)
+  themes from silently drifting out of sync when a core block's Zod
+  schema changes underneath them.

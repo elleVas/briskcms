@@ -22,6 +22,7 @@ describe('Site entity', () => {
     themeHeadScript: null,
     themeBodyScript: null,
     themeFaviconUrl: null,
+    themeOverridesEnabled: true,
     createdAt: new Date('2026-01-01T00:00:00Z'),
   };
 
@@ -126,7 +127,7 @@ describe('Site entity', () => {
     expect(site.untranslatedPageFallback).toBe('not-available');
   });
 
-  it('themeSettings defaults to every field null', () => {
+  it('themeSettings defaults to every override field null, overridesEnabled true', () => {
     const site = Site.fromProps(props);
 
     expect(site.themeSettings).toEqual({
@@ -137,6 +138,7 @@ describe('Site entity', () => {
       headScript: null,
       bodyScript: null,
       faviconUrl: null,
+      overridesEnabled: true,
     });
   });
 
@@ -151,6 +153,7 @@ describe('Site entity', () => {
       headScript: '<script>console.log("head")</script>',
       bodyScript: '<script>console.log("body")</script>',
       faviconUrl: 'https://example.com/favicon.png',
+      overridesEnabled: false,
     });
 
     expect(site.themeSettings).toEqual({
@@ -161,6 +164,7 @@ describe('Site entity', () => {
       headScript: '<script>console.log("head")</script>',
       bodyScript: '<script>console.log("body")</script>',
       faviconUrl: 'https://example.com/favicon.png',
+      overridesEnabled: false,
     });
   });
 });

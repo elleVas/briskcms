@@ -21,6 +21,7 @@ const baseSite: PublishedSiteDto = {
     headScript: null,
     bodyScript: null,
     faviconUrl: null,
+    overridesEnabled: true,
   },
 };
 

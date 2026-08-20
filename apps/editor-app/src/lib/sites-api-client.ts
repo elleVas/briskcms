@@ -25,6 +25,7 @@ export interface SiteDto {
   themeHeadScript: string | null;
   themeBodyScript: string | null;
   themeFaviconUrl: string | null;
+  themeOverridesEnabled: boolean;
   createdAt: string;
 }
 

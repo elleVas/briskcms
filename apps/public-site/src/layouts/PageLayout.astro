@@ -14,6 +14,10 @@ import '../styles/global.css';
 // astro.config.mjs) — imported after global.css so its :root tokens win
 // the cascade over that file's bare fallback defaults.
 import '~theme/theme.css';
+// The theme's own manifest — see themeManifest.allowStyleOverrides below
+// for why this exists (docs/adr/0021's later amendment: the theme, not the
+// site, has final say over whether Tier 1 is even allowed to apply).
+import themeManifest from '~theme/theme.json';
 import '../styles/visibility.css';
 
 interface Props {
@@ -59,11 +63,18 @@ const schemaOrgGraph = buildSchemaOrgGraph({ site, seoMeta, pageUrl });
 const schemaOrgJson = JSON.stringify(schemaOrgGraph).replace(/</g, '\\u003c');
 
 // Tier 1 of docs/adr/0021's theming model — layered on top of the active
-// filesystem theme (Tier 2, imported above) via a plain <style> block:
-// colors are already hex-validated server-side (sites.schemas.ts), safe to
-// interpolate directly; the font name goes through resolveThemeFont's own
-// stripping first, since a free-text value hasn't been through that same
-// validation.
+// filesystem theme (Tier 2, imported above) via a plain <style> block, but
+// only when BOTH gates allow it:
+//   1. `themeManifest.allowStyleOverrides` (theme.json) — the theme
+//      author's own ceiling, defaults to true if the field is missing. A
+//      bespoke agency theme can set this to false so *no* site can ever
+//      override it, regardless of what's stored in the DB.
+//   2. `site.themeSettings.overridesEnabled` — the day-to-day switch
+//      *below* that ceiling, in the Style dialog itself, for "I want to
+//      temporarily go back to the theme's own look without losing what
+//      I've saved". A site can turn this off; it can never turn Tier 1
+//      back on if the theme's own ceiling already said no.
+// When either is false, no Tier 1 CSS is emitted at all, full stop.
 //
 // Every declaration below is !important, found necessary by testing this
 // live rather than assumed: Astro's dev server injects `import '*.css'`
@@ -73,9 +84,29 @@ const schemaOrgJson = JSON.stringify(schemaOrgGraph).replace(/</g, '\\u003c');
 // the frontmatter above — so a same-specificity `:root { --font-sans-value:
 // ... }` here would silently lose to the theme's own `:root` rule despite
 // looking earlier in the source. !important is the explicit, order-
-// independent way to say "Tier 1 always wins over Tier 2's own default",
-// which is the whole point of this block, not a specificity workaround.
-const theme = site.themeSettings;
+// independent way to say "Tier 1 wins over Tier 2's own default when both
+// gates allow it", which is the whole point of this block when active, not
+// a specificity workaround.
+// `theme` below is the *effective* Tier 1 settings for this render: every
+// field forced to its "not set" value when either gate disallows
+// overrides, rather than checking both gates at each usage site further
+// down — one check here is much harder to accidentally miss than four
+// scattered conditionals in the markup.
+const allowStyleOverrides =
+	(themeManifest.allowStyleOverrides ?? true) &&
+	site.themeSettings.overridesEnabled;
+const theme = allowStyleOverrides
+	? site.themeSettings
+	: {
+			primaryColor: null,
+			secondaryColor: null,
+			fontFamily: null,
+			customCss: null,
+			headScript: null,
+			bodyScript: null,
+			faviconUrl: null,
+			overridesEnabled: false,
+		};
 const themeFont = resolveThemeFont(theme.fontFamily);
 const themeOverrideDeclarations = [
 	theme.primaryColor && `--primary: ${theme.primaryColor} !important;`,
