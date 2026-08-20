@@ -15,6 +15,7 @@ import {
 } from 'drizzle-orm/pg-core';
 import type {
   FormField,
+  FormStep,
   OpeningHoursDay,
   PageContent,
   SeoMeta,
@@ -353,6 +354,9 @@ export const forms = pgTable(
     // Sole source of truth for both public rendering and submission
     // validation (docs/adr/0015) — no separate schema anywhere else.
     fields: jsonb('fields').notNull().default([]).$type<FormField[]>(),
+    // Empty by default — a plain single-step form, same shape every form
+    // had before this column existed (docs/adr/0015's multi-step follow-up).
+    steps: jsonb('steps').notNull().default([]).$type<FormStep[]>(),
     notificationEmail: text('notification_email'),
     createdAt: timestamp('created_at', { withTimezone: true })
       .notNull()

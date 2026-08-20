@@ -1,6 +1,7 @@
 import type {
   Block,
   FormField,
+  FormStep,
   OpeningHoursDay,
   SeoMeta,
   UntranslatedPageFallback,
@@ -174,6 +175,7 @@ export interface PublicFormDto {
   id: string;
   name: string;
   fields: FormField[];
+  steps: FormStep[];
 }
 
 /**

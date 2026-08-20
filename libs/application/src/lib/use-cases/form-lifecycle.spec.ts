@@ -16,13 +16,14 @@ describe('form lifecycle: create -> update -> list -> delete', () => {
     return { formRepository };
   }
 
-  it('creates a form with empty fields and no notification email', async () => {
+  it('creates a form with empty fields, no steps, and no notification email', async () => {
     const deps = setup();
 
     const form = await createForm(deps, { tenantId, siteId, name: 'Contatti' });
 
     expect(form.name).toBe('Contatti');
     expect(form.fields).toEqual([]);
+    expect(form.steps).toEqual([]);
     expect(form.notificationEmail).toBeNull();
   });
 
@@ -35,12 +36,56 @@ describe('form lifecycle: create -> update -> list -> delete', () => {
       formId: form.id,
       name: 'Richiedi preventivo',
       fields: [{ id: 'email', label: 'Email', type: 'email', required: true }],
+      steps: [],
       notificationEmail: 'owner@example.com',
     });
 
     expect(updated.name).toBe('Richiedi preventivo');
     expect(updated.fields).toHaveLength(1);
     expect(updated.notificationEmail).toBe('owner@example.com');
+  });
+
+  it('updates a form with steps and per-field stepId assignments', async () => {
+    const deps = setup();
+    const form = await createForm(deps, {
+      tenantId,
+      siteId,
+      name: 'Candidatura',
+    });
+
+    const updated = await updateForm(deps, {
+      tenantId,
+      formId: form.id,
+      name: 'Candidatura',
+      fields: [
+        {
+          id: 'nome',
+          label: 'Nome',
+          type: 'text',
+          required: true,
+          stepId: 'dati-personali',
+        },
+        {
+          id: 'esperienza',
+          label: 'Esperienza',
+          type: 'textarea',
+          required: false,
+          stepId: 'dettagli',
+        },
+      ],
+      steps: [
+        { id: 'dati-personali', title: 'Dati personali' },
+        { id: 'dettagli', title: 'Dettagli' },
+      ],
+      notificationEmail: null,
+    });
+
+    expect(updated.steps).toEqual([
+      { id: 'dati-personali', title: 'Dati personali' },
+      { id: 'dettagli', title: 'Dettagli' },
+    ]);
+    expect(updated.fields[0].stepId).toBe('dati-personali');
+    expect(updated.fields[1].stepId).toBe('dettagli');
   });
 
   it('updateForm throws FormNotFoundError for a nonexistent id', async () => {
@@ -52,6 +97,7 @@ describe('form lifecycle: create -> update -> list -> delete', () => {
         formId: 'does-not-exist',
         name: 'x',
         fields: [],
+        steps: [],
         notificationEmail: null,
       }),
     ).rejects.toThrow(FormNotFoundError);
@@ -67,6 +113,7 @@ describe('form lifecycle: create -> update -> list -> delete', () => {
         formId: form.id,
         name: 'hijacked',
         fields: [],
+        steps: [],
         notificationEmail: null,
       }),
     ).rejects.toThrow(FormNotFoundError);

@@ -1,0 +1,76 @@
+---
+import type { FormField } from '@brisk/shared-types';
+
+interface Props {
+  formId: string;
+  field: FormField;
+}
+
+const { formId, field } = Astro.props;
+---
+
+<div class="brisk-form__field">
+  <label for={`${formId}-${field.id}`}>
+    {field.label}
+    {field.required && ' *'}
+  </label>
+  {
+    field.type === 'textarea' ? (
+      <textarea
+        id={`${formId}-${field.id}`}
+        name={field.id}
+        required={field.required}
+      />
+    ) : field.type === 'select' ? (
+      <select id={`${formId}-${field.id}`} name={field.id} required={field.required}>
+        <option value="" />
+        {(field.options ?? []).map((option) => (
+          <option value={option}>{option}</option>
+        ))}
+      </select>
+    ) : field.type === 'checkbox' || field.type === 'newsletter-consent' ? (
+      <input
+        type="checkbox"
+        id={`${formId}-${field.id}`}
+        name={field.id}
+        required={field.required}
+      />
+    ) : (
+      <input
+        type={field.type}
+        id={`${formId}-${field.id}`}
+        name={field.id}
+        required={field.required}
+      />
+    )
+  }
+</div>
+
+<style>
+  /* Moved here from Form.astro's own <style> when this markup was
+     extracted into its own component — Astro scopes styles per-component,
+     so a selector declared in Form.astro no longer reaches elements a
+     child component renders. */
+  .brisk-form__field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.375rem;
+  }
+  .brisk-form__field:has(input[type='checkbox']) {
+    flex-direction: row-reverse;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  input,
+  textarea,
+  select {
+    padding: 0.5rem 0.75rem;
+    border: 1px solid #d4d4d8;
+    border-radius: 6px;
+    font: inherit;
+  }
+  textarea {
+    min-height: 6rem;
+  }
+</style>

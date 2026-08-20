@@ -167,7 +167,7 @@ describe('public-api-client', () => {
   });
 
   it('fetches a public form by id', async () => {
-    const form = { id: 'form-1', name: 'Contatti', fields: [] };
+    const form = { id: 'form-1', name: 'Contatti', fields: [], steps: [] };
     vi.mocked(fetch).mockResolvedValue(jsonResponse(form));
 
     const result = await getPublicForm('form-1');

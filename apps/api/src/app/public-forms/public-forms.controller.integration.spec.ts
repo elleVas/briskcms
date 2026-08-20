@@ -138,6 +138,7 @@ describe('PublicFormsController (integration)', () => {
       id: formId,
       name: 'Contatti',
       fields: [{ id: 'email', label: 'Email', type: 'email', required: true }],
+      steps: [],
     });
     expect(res.body).not.toHaveProperty('notificationEmail');
   });

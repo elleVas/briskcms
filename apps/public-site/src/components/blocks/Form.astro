@@ -1,6 +1,7 @@
 ---
-import type { FormBlockProps } from '@brisk/shared-types';
+import type { FormBlockProps, FormField, FormStep } from '@brisk/shared-types';
 import { getPublicForm } from '../../lib/public-api-client.js';
+import FormFieldComponent from './FormField.astro';
 
 type Props = FormBlockProps;
 
@@ -36,6 +37,44 @@ const checkboxFieldIds = (form?.fields ?? [])
 // build-time bundling, so a build-time-baked client constant would be
 // wrong here anyway.
 const turnstileSiteKey = process.env['TURNSTILE_SITE_KEY'] ?? '';
+
+interface StepGroup {
+  step: FormStep | null;
+  fields: FormField[];
+}
+
+// A form with no steps (the default, and every form that existed before
+// this feature — docs/adr/0015's multi-step follow-up) renders exactly as
+// it always has: one flat list of fields, single "Invia" button, no
+// step-navigation markup or script at all. Fields with no matching
+// stepId — an editor left one unassigned, or a step got deleted (the
+// admin UI already clears stepId when that happens, but a stale reference
+// is handled the same way defensively) — land in a `step: null` group
+// rendered first, never silently dropped.
+function groupFieldsByStep(fields: FormField[], steps: FormStep[]): StepGroup[] {
+  const groups: StepGroup[] = steps.map((step) => ({ step, fields: [] }));
+  const unassigned: FormField[] = [];
+  for (const field of fields) {
+    const group = groups.find((g) => g.step?.id === field.stepId);
+    if (group) {
+      group.fields.push(field);
+    } else {
+      unassigned.push(field);
+    }
+  }
+  return unassigned.length > 0 ? [{ step: null, fields: unassigned }, ...groups] : groups;
+}
+
+// Determined solely by form.steps, never by whether any field happens to
+// carry a stepId — a form with an empty steps array must always render
+// flat (docs/adr/0015's backward-compatibility guarantee), even if a
+// field has a stray/leftover stepId from before its step was deleted.
+let isMultiStep = false;
+let stepGroups: StepGroup[] = [];
+if (form && form.steps.length > 0) {
+  isMultiStep = true;
+  stepGroups = groupFieldsByStep(form.fields, form.steps);
+}
 ---
 
 {
@@ -75,53 +114,43 @@ const turnstileSiteKey = process.env['TURNSTILE_SITE_KEY'] ?? '';
               autocomplete="off"
             />
           </div>
-          {form.fields.map((field) => (
-            <div class="brisk-form__field">
-              <label for={`${form.id}-${field.id}`}>
-                {field.label}
-                {field.required && ' *'}
-              </label>
-              {field.type === 'textarea' ? (
-                <textarea
-                  id={`${form.id}-${field.id}`}
-                  name={field.id}
-                  required={field.required}
-                />
-              ) : field.type === 'select' ? (
-                <select
-                  id={`${form.id}-${field.id}`}
-                  name={field.id}
-                  required={field.required}
-                >
-                  <option value="" />
-                  {(field.options ?? []).map((option) => (
-                    <option value={option}>{option}</option>
+          {isMultiStep ? (
+            <>
+              <p class="brisk-form__step-indicator" data-step-indicator />
+              {stepGroups.map((group, index) => (
+                <div class="brisk-form__step" data-step-index={index}>
+                  {group.fields.map((field) => (
+                    <FormFieldComponent formId={form.id} field={field} />
                   ))}
-                </select>
-              ) : field.type === 'checkbox' ||
-                field.type === 'newsletter-consent' ? (
-                <input
-                  type="checkbox"
-                  id={`${form.id}-${field.id}`}
-                  name={field.id}
-                  required={field.required}
-                />
-              ) : (
-                <input
-                  type={field.type}
-                  id={`${form.id}-${field.id}`}
-                  name={field.id}
-                  required={field.required}
-                />
-              )}
-            </div>
-          ))}
+                </div>
+              ))}
+              <div class="brisk-form__step-nav">
+                <button type="button" class="brisk-form__prev" data-step-prev>
+                  Indietro
+                </button>
+                <button type="button" class="brisk-form__next" data-step-next>
+                  Avanti
+                </button>
+              </div>
+            </>
+          ) : (
+            form.fields.map((field) => (
+              <FormFieldComponent formId={form.id} field={field} />
+            ))
+          )}
           {
             turnstileSiteKey && (
               <div class="cf-turnstile" data-sitekey={turnstileSiteKey} />
             )
           }
-          <button type="submit">Invia</button>
+          <button
+            type="submit"
+            class="brisk-form__submit"
+            data-step-submit
+            hidden={isMultiStep}
+          >
+            Invia
+          </button>
         </form>
       )}
     </div>
@@ -141,6 +170,85 @@ const turnstileSiteKey = process.env['TURNSTILE_SITE_KEY'] ?? '';
   )
 }
 
+<script>
+  // No framework here on purpose (docs/adr/0007), same reasoning as
+  // ImageSlider/Testimonials' own carousels — one step's <div> visible at
+  // a time via the hidden attribute, Indietro/Avanti walk the index.
+  // Every step's markup stays in the DOM the whole time (all fields
+  // submit together in one POST at the end, unchanged from a flat form);
+  // only the currently-visible one is ever validated/interactive.
+  //
+  // A no-op for a plain single-step form: querySelectorAll('.brisk-form__step')
+  // finds nothing, the early return below skips the rest for that form.
+  document.querySelectorAll<HTMLFormElement>('.brisk-form form').forEach((form) => {
+    const steps = Array.from(
+      form.querySelectorAll<HTMLElement>('.brisk-form__step'),
+    );
+    if (steps.length === 0) return;
+
+    const prevButton = form.querySelector<HTMLButtonElement>('[data-step-prev]');
+    const nextButton = form.querySelector<HTMLButtonElement>('[data-step-next]');
+    const submitButton = form.querySelector<HTMLButtonElement>('[data-step-submit]');
+    const indicator = form.querySelector<HTMLElement>('[data-step-indicator]');
+    let current = 0;
+
+    function render() {
+      steps.forEach((step, index) => {
+        step.hidden = index !== current;
+      });
+      if (prevButton) prevButton.hidden = current === 0;
+      if (nextButton) nextButton.hidden = current === steps.length - 1;
+      if (submitButton) submitButton.hidden = current !== steps.length - 1;
+      if (indicator) {
+        indicator.textContent = `Passo ${current + 1} di ${steps.length}`;
+      }
+    }
+
+    // Runs the browser's own constraint validation (required, type=email,
+    // etc.) on just the step being left, reporting the first failure with
+    // the native bubble UI — a required field in an earlier, now-hidden
+    // step would otherwise never be checked at all, since browsers skip
+    // validating anything inside a hidden element on the final submit.
+    function currentStepIsValid(): boolean {
+      const fields = steps[current].querySelectorAll<
+        HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+      >('input, textarea, select');
+      for (const field of fields) {
+        if (!field.reportValidity()) return false;
+      }
+      return true;
+    }
+
+    function goToNextStep() {
+      if (!currentStepIsValid()) return;
+      current = Math.min(current + 1, steps.length - 1);
+      render();
+    }
+
+    nextButton?.addEventListener('click', goToNextStep);
+    prevButton?.addEventListener('click', () => {
+      current = Math.max(current - 1, 0);
+      render();
+    });
+
+    // Pressing Enter in a text field fires a real `submit` event — same as
+    // clicking the (possibly hidden) submit button — regardless of which
+    // field triggered it and regardless of the submit button's own hidden
+    // state; confirmed empirically, not assumed. Intercepted here instead
+    // of relying on the submit button being unreachable, so Enter on any
+    // step but the last one just advances a step, exactly like clicking
+    // Avanti, rather than submitting mid-wizard.
+    form.addEventListener('submit', (event) => {
+      if (current !== steps.length - 1) {
+        event.preventDefault();
+        goToNextStep();
+      }
+    });
+
+    render();
+  });
+</script>
+
 <style>
   .brisk-form {
     display: flex;
@@ -153,17 +261,6 @@ const turnstileSiteKey = process.env['TURNSTILE_SITE_KEY'] ?? '';
     flex-direction: column;
     gap: 1rem;
   }
-  .brisk-form__field {
-    display: flex;
-    flex-direction: column;
-    gap: 0.375rem;
-  }
-  .brisk-form__field:has(input[type='checkbox']) {
-    flex-direction: row-reverse;
-    justify-content: flex-end;
-    align-items: center;
-    gap: 0.5rem;
-  }
   .brisk-form__honeypot {
     position: absolute;
     left: -9999px;
@@ -171,16 +268,29 @@ const turnstileSiteKey = process.env['TURNSTILE_SITE_KEY'] ?? '';
     height: 1px;
     overflow: hidden;
   }
-  .brisk-form input,
-  .brisk-form textarea,
-  .brisk-form select {
-    padding: 0.5rem 0.75rem;
-    border: 1px solid #d4d4d8;
-    border-radius: 6px;
-    font: inherit;
+  .brisk-form__step {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
   }
-  .brisk-form textarea {
-    min-height: 6rem;
+  /* Author styles always win over the browser's own [hidden] UA rule
+     regardless of selector specificity — found via a real screenshot
+     during verification: the JS was correctly setting the hidden
+     attribute (confirmed via DOM queries) but every step still rendered
+     visibly stacked, because the plain `display: flex` rule above
+     silently overrode `[hidden] { display: none }`. This selector's own
+     specificity is what actually matters here, so it has to win. */
+  .brisk-form__step[hidden] {
+    display: none;
+  }
+  .brisk-form__step-indicator {
+    margin: 0;
+    font-size: 0.8125rem;
+    color: #71717a;
+  }
+  .brisk-form__step-nav {
+    display: flex;
+    justify-content: space-between;
   }
   .brisk-form button {
     align-self: flex-start;
@@ -191,6 +301,11 @@ const turnstileSiteKey = process.env['TURNSTILE_SITE_KEY'] ?? '';
     color: #fff;
     font: inherit;
     cursor: pointer;
+  }
+  .brisk-form__prev {
+    background: transparent;
+    color: #18181b;
+    border: 1px solid #d4d4d8;
   }
   .brisk-form__status {
     padding: 0.75rem 1rem;

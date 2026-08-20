@@ -1,4 +1,4 @@
-import type { FormField } from '@brisk/shared-types';
+import type { FormField, FormStep } from '@brisk/shared-types';
 import { request } from './http-client.js';
 
 export interface FormDto {
@@ -7,6 +7,7 @@ export interface FormDto {
   siteId: string;
   name: string;
   fields: FormField[];
+  steps: FormStep[];
   notificationEmail: string | null;
   createdAt: string;
   updatedAt: string;
@@ -46,6 +47,7 @@ export function createForm(input: CreateFormInput): Promise<FormDto> {
 export interface UpdateFormInput {
   name: string;
   fields: FormField[];
+  steps: FormStep[];
   notificationEmail: string | null;
 }
 

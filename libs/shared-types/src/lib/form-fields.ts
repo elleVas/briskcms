@@ -55,7 +55,31 @@ export const formFieldSchema = z.object({
   required: z.boolean(),
   // Only meaningful (and only ever populated) for type: 'select'.
   options: z.array(z.string()).optional(),
+  // Which step (formStepSchema below) this field belongs to, for a
+  // multi-step form — null/omitted means "no step assigned". Deliberately
+  // kept on the flat field, not by restructuring `fields` into
+  // `steps[].fields`: a form with no steps defined (the common case,
+  // and every form that existed before this feature) needs zero migration
+  // and renders exactly as it always has (Form.astro checks
+  // `form.steps.length === 0` first) — see docs/adr/0015's own multi-step
+  // follow-up note.
+  stepId: z.string().nullable().optional(),
 });
 export type FormField = z.infer<typeof formFieldSchema>;
 
 export const formFieldsSchema = z.array(formFieldSchema);
+
+/**
+ * One step of a multi-step form — just an id (matched against
+ * FormField.stepId) and a display title, no fields of its own (those stay
+ * in the form's flat `fields` array, grouped by `stepId` at render time).
+ * A form with an empty `steps` array is a plain single-step form, the
+ * default and backward-compatible shape.
+ */
+export const formStepSchema = z.object({
+  id: z.string(),
+  title: z.string().min(1),
+});
+export type FormStep = z.infer<typeof formStepSchema>;
+
+export const formStepsSchema = z.array(formStepSchema);

@@ -1,5 +1,5 @@
 import { FormNotFoundError, type Form } from '@brisk/domain-core';
-import type { FormField } from '@brisk/shared-types';
+import type { FormField, FormStep } from '@brisk/shared-types';
 import type { FormRepositoryPort } from '@brisk/ports';
 
 export interface UpdateFormDeps {
@@ -11,6 +11,7 @@ export interface UpdateFormInput {
   formId: string;
   name: string;
   fields: FormField[];
+  steps: FormStep[];
   notificationEmail: string | null;
 }
 
@@ -26,6 +27,7 @@ export async function updateForm(
   form.update({
     name: input.name,
     fields: input.fields,
+    steps: input.steps,
     notificationEmail: input.notificationEmail,
   });
   await deps.formRepository.save(form);

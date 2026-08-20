@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from '@tanstack/react-router';
-import { Plus } from 'lucide-react';
-import type { FormField } from '@brisk/shared-types';
+import { Plus, Trash2 } from 'lucide-react';
+import type { FormField, FormStep } from '@brisk/shared-types';
 import { Button } from '../components/ui/button.js';
 import { Input } from '../components/ui/input.js';
 import { Label } from '../components/ui/label.js';
 import { FormFieldEditorRow } from './form-field-editor-row.js';
+import { IconButton } from './icon-button.js';
 import { useFormEditor } from './use-form-editor.js';
 
 export interface FormEditorViewProps {
@@ -24,6 +25,7 @@ export function FormEditorView({ formId }: FormEditorViewProps) {
   // unlike dialogs that stay mounted across multiple opens.
   const [name, setName] = useState(form.name);
   const [fields, setFields] = useState<FormField[]>(form.fields);
+  const [steps, setSteps] = useState<FormStep[]>(form.steps);
   const [notificationEmail, setNotificationEmail] = useState(
     form.notificationEmail ?? '',
   );
@@ -60,6 +62,28 @@ export function FormEditorView({ formId }: FormEditorViewProps) {
     });
   }
 
+  function addStep() {
+    setSteps((current) => [...current, { id: crypto.randomUUID(), title: '' }]);
+  }
+
+  function updateStepTitle(index: number, title: string) {
+    setSteps((current) =>
+      current.map((step, i) => (i === index ? { ...step, title } : step)),
+    );
+  }
+
+  // Also clears stepId on any field pointing at the removed step, so
+  // saving never leaves a field referencing a step that no longer exists.
+  function removeStep(index: number) {
+    const removedId = steps[index].id;
+    setSteps((current) => current.filter((_, i) => i !== index));
+    setFields((current) =>
+      current.map((field) =>
+        field.stepId === removedId ? { ...field, stepId: null } : field,
+      ),
+    );
+  }
+
   // The options textarea (FormFieldEditorRow) keeps blank/untrimmed lines
   // while the user is typing, so a newly pressed Enter never immediately
   // collapses back — this is the one point where that raw text turns into
@@ -81,6 +105,7 @@ export function FormEditorView({ formId }: FormEditorViewProps) {
       await save({
         name,
         fields: fields.map(sanitizeOptions),
+        steps,
         notificationEmail: notificationEmail.trim() || null,
       });
       setSaved(true);
@@ -134,6 +159,37 @@ export function FormEditorView({ formId }: FormEditorViewProps) {
       </div>
       <div className="flex flex-col gap-3">
         <div className="flex items-center justify-between">
+          <Label>{t('forms.editor.stepsLabel')}</Label>
+          <Button type="button" variant="outline" size="sm" onClick={addStep}>
+            <Plus className="size-3.5" />
+            {t('forms.editor.addStep')}
+          </Button>
+        </div>
+        <p className="text-sm text-muted-foreground">
+          {steps.length === 0
+            ? t('forms.editor.noSteps')
+            : t('forms.editor.stepsHint')}
+        </p>
+        {steps.length > 0 &&
+          steps.map((step, index) => (
+            <div key={step.id} className="flex items-center gap-2">
+              <Input
+                aria-label={t('forms.editor.stepTitlePlaceholder')}
+                value={step.title}
+                placeholder={t('forms.editor.stepTitlePlaceholder')}
+                onChange={(event) => updateStepTitle(index, event.target.value)}
+              />
+              <IconButton
+                label={t('forms.editor.removeStep')}
+                onClick={() => removeStep(index)}
+              >
+                <Trash2 />
+              </IconButton>
+            </div>
+          ))}
+      </div>
+      <div className="flex flex-col gap-3">
+        <div className="flex items-center justify-between">
           <Label>{t('forms.editor.fieldsLabel')}</Label>
           <Button type="button" variant="outline" size="sm" onClick={addField}>
             <Plus className="size-3.5" />
@@ -155,6 +211,7 @@ export function FormEditorView({ formId }: FormEditorViewProps) {
               onMoveDown={() => moveField(index, 1)}
               canMoveUp={index > 0}
               canMoveDown={index < fields.length - 1}
+              steps={steps}
             />
           ))
         )}

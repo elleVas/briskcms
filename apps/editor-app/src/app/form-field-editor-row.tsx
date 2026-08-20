@@ -1,10 +1,15 @@
 import { useTranslation } from 'react-i18next';
 import { ArrowDown, ArrowUp, Trash2 } from 'lucide-react';
-import type { FormField, FormFieldType } from '@brisk/shared-types';
+import type { FormField, FormFieldType, FormStep } from '@brisk/shared-types';
 import { Input } from '../components/ui/input.js';
 import { Label } from '../components/ui/label.js';
 import { Switch } from '../components/ui/switch.js';
 import { IconButton } from './icon-button.js';
+
+// The literal value a plain <select> submits for its "no step assigned"
+// option — never a real step id (crypto.randomUUID() strings, see
+// form-editor-view.tsx's addStep), so it can't collide.
+const NO_STEP_VALUE = '';
 
 const FIELD_TYPES: FormFieldType[] = [
   'text',
@@ -33,6 +38,11 @@ export interface FormFieldEditorRowProps {
   onMoveDown: () => void;
   canMoveUp: boolean;
   canMoveDown: boolean;
+  // Only rendered (as a step-assignment dropdown below) when the form
+  // actually has steps — a single-step form shows nothing extra here,
+  // same "renders exactly as before" backward-compat reasoning as
+  // Form.astro's own multi-step check.
+  steps: FormStep[];
 }
 
 export function FormFieldEditorRow({
@@ -43,6 +53,7 @@ export function FormFieldEditorRow({
   onMoveDown,
   canMoveUp,
   canMoveDown,
+  steps,
 }: FormFieldEditorRowProps) {
   const { t } = useTranslation();
 
@@ -98,6 +109,33 @@ export function FormFieldEditorRow({
           </select>
         </div>
       </div>
+      {steps.length > 0 && (
+        <div className="flex flex-col gap-2">
+          <Label htmlFor={`field-step-${field.id}`}>
+            {t('forms.editor.fieldStepLabel')}
+          </Label>
+          <select
+            id={`field-step-${field.id}`}
+            className={selectClassName}
+            value={field.stepId ?? NO_STEP_VALUE}
+            onChange={(event) =>
+              onChange({
+                ...field,
+                stepId: event.target.value || null,
+              })
+            }
+          >
+            <option value={NO_STEP_VALUE}>
+              {t('forms.editor.fieldStepNone')}
+            </option>
+            {steps.map((step) => (
+              <option key={step.id} value={step.id}>
+                {step.title || t('forms.editor.untitledStep')}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
       {field.type === 'select' && (
         <div className="flex flex-col gap-2">
           <Label htmlFor={`field-options-${field.id}`}>

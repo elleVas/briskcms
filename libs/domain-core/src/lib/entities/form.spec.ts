@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { Form } from './form.js';
 
 describe('Form entity', () => {
-  it('create starts with no fields and no notification email', () => {
+  it('create starts with no fields, no steps, and no notification email', () => {
     const form = Form.create({
       id: 'form-1',
       tenantId: 'tenant-1',
@@ -12,6 +12,7 @@ describe('Form entity', () => {
 
     expect(form.name).toBe('Contattaci');
     expect(form.fields).toEqual([]);
+    expect(form.steps).toEqual([]);
     expect(form.notificationEmail).toBeNull();
   });
 
@@ -22,8 +23,15 @@ describe('Form entity', () => {
       siteId: 'site-1',
       name: 'Contattaci',
       fields: [
-        { id: 'f1', label: 'Nome', type: 'text' as const, required: true },
+        {
+          id: 'f1',
+          label: 'Nome',
+          type: 'text' as const,
+          required: true,
+          stepId: 'step-1',
+        },
       ],
+      steps: [{ id: 'step-1', title: 'Dati personali' }],
       notificationEmail: 'info@example.com',
       createdAt: new Date('2026-01-01T00:00:00Z'),
       updatedAt: new Date('2026-01-01T00:00:00Z'),
@@ -33,7 +41,7 @@ describe('Form entity', () => {
     expect(form.toProps()).toEqual(props);
   });
 
-  it('update replaces name, fields, and notification email, bumping updatedAt', () => {
+  it('update replaces name, fields, steps, and notification email, bumping updatedAt', () => {
     const form = Form.create({
       id: 'form-1',
       tenantId: 'tenant-1',
@@ -46,6 +54,7 @@ describe('Form entity', () => {
       {
         name: 'Richiedi preventivo',
         fields: [{ id: 'f1', label: 'Email', type: 'email', required: true }],
+        steps: [{ id: 'step-1', title: 'Contatti' }],
         notificationEmail: 'preventivi@example.com',
       },
       new Date('2026-01-02T00:00:00Z'),
@@ -55,6 +64,7 @@ describe('Form entity', () => {
     expect(form.fields).toEqual([
       { id: 'f1', label: 'Email', type: 'email', required: true },
     ]);
+    expect(form.steps).toEqual([{ id: 'step-1', title: 'Contatti' }]);
     expect(form.notificationEmail).toBe('preventivi@example.com');
     expect(form.updatedAt).toEqual(new Date('2026-01-02T00:00:00Z'));
   });
