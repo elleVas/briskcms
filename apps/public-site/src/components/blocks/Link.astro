@@ -1,0 +1,12 @@
+---
+import type { LinkProps } from '@brisk/shared-types';
+import { localePath } from '../../lib/locale-path.js';
+
+type Props = LinkProps;
+
+const { label, linkType, page, url } = Astro.props;
+const href =
+	linkType === 'page' && page ? localePath(page.locale, page.slug) : url;
+---
+
+<a href={href}>{label}</a>
