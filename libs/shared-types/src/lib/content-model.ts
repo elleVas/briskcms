@@ -266,6 +266,35 @@ export function columnsGridTemplate(layout: ColumnsLayout): string {
 export const columnPropsSchema = z.strictObject({});
 export type ColumnProps = z.infer<typeof columnPropsSchema>;
 
+/**
+ * Generic grouping wrapper — the "Container/Sezione" from the original MVP
+ * block list (piano-progetto-astro-cms.md) that never actually got built.
+ * Unlike Column, its `children` slot is unrestricted (no `allow` list in
+ * container.block.tsx): any block, including a nested Container or
+ * Columns, can go inside. `background`/`padding` are theme-token-driven
+ * (docs/adr/0021) — `primary`/`secondary` here follow the same convention
+ * as everywhere else in the design system: primary is the CTA/accent
+ * color (Button's own default `variant`, the global link color), muted/
+ * secondary is supporting chrome (Card-like backgrounds, subtle
+ * separation), never body copy or large surfaces on their own.
+ */
+export const containerBackgroundSchema = z.enum([
+  'none',
+  'muted',
+  'primary',
+  'secondary',
+]);
+export type ContainerBackground = z.infer<typeof containerBackgroundSchema>;
+
+export const containerPaddingSchema = z.enum(['none', 'sm', 'md', 'lg']);
+export type ContainerPadding = z.infer<typeof containerPaddingSchema>;
+
+export const containerPropsSchema = z.object({
+  background: containerBackgroundSchema.default('none'),
+  padding: containerPaddingSchema.default('md'),
+});
+export type ContainerProps = z.infer<typeof containerPropsSchema>;
+
 export const quotePropsSchema = z.object({
   quote: z.string(),
   author: z.string(),
@@ -442,6 +471,21 @@ export const buttonPropsSchema = z.object({
   variant: z.enum(['primary', 'secondary']).default('primary'),
 });
 export type ButtonProps = z.infer<typeof buttonPropsSchema>;
+
+/**
+ * Plain inline text link — same page/URL targeting as Button, deliberately
+ * without a `variant`: a Link isn't a CTA, it renders as ordinary text
+ * with the global link treatment (apps/public-site global.css), not a
+ * button shape. For "a clickable word inside a sentence", not "a button
+ * that happens to look like a link".
+ */
+export const linkPropsSchema = z.object({
+  label: z.string(),
+  linkType: z.enum(['page', 'url']),
+  page: pickedPageSchema.nullable(),
+  url: z.string(),
+});
+export type LinkProps = z.infer<typeof linkPropsSchema>;
 
 /**
  * `icon` is a plain free-text field (the editor pastes an emoji, e.g.

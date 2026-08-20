@@ -47,4 +47,13 @@
   html {
     @apply font-sans;
   }
+  /* The one global link rule this site had none of before — every block
+     that renders its own <a> (Button, Breadcrumb, PromoBar, ...) still
+     sets its own look on purpose (a button must not look like a text
+     link), but a bare <a> with no block-specific styling — the new Link
+     block, EmbedHtml, anything else — now gets the theme's primary color
+     instead of falling back to the browser's default blue. */
+  a {
+    @apply text-primary underline-offset-2 hover:underline;
+  }
 }
