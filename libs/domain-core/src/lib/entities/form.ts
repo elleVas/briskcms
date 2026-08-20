@@ -1,4 +1,4 @@
-import type { FormField } from '@brisk/shared-types';
+import type { FormField, FormStep } from '@brisk/shared-types';
 
 export interface FormProps {
   id: string;
@@ -6,6 +6,9 @@ export interface FormProps {
   siteId: string;
   name: string;
   fields: FormField[];
+  // Empty by default — a plain single-step form, the shape every form had
+  // before this field existed (docs/adr/0015's multi-step follow-up).
+  steps: FormStep[];
   notificationEmail: string | null;
   createdAt: Date;
   updatedAt: Date;
@@ -36,6 +39,7 @@ export class Form {
       siteId: input.siteId,
       name: input.name,
       fields: [],
+      steps: [],
       notificationEmail: null,
       createdAt: now,
       updatedAt: now,
@@ -70,6 +74,10 @@ export class Form {
     return this.props.fields;
   }
 
+  get steps(): FormStep[] {
+    return this.props.steps;
+  }
+
   get notificationEmail(): string | null {
     return this.props.notificationEmail;
   }
@@ -86,12 +94,14 @@ export class Form {
     input: {
       name: string;
       fields: FormField[];
+      steps: FormStep[];
       notificationEmail: string | null;
     },
     now: Date = new Date(),
   ): void {
     this.props.name = input.name;
     this.props.fields = input.fields;
+    this.props.steps = input.steps;
     this.props.notificationEmail = input.notificationEmail;
     this.props.updatedAt = now;
   }

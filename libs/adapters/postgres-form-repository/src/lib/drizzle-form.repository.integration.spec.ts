@@ -76,6 +76,7 @@ describe('DrizzleFormRepository (integration)', () => {
     expect(found?.id).toBe(form.id);
     expect(found?.name).toBe('Contatti');
     expect(found?.fields).toEqual([]);
+    expect(found?.steps).toEqual([]);
     expect(found?.notificationEmail).toBeNull();
 
     const foundFromOtherTenant = await formRepository.findById(
@@ -138,8 +139,15 @@ describe('DrizzleFormRepository (integration)', () => {
       {
         name: 'Contatti aggiornato',
         fields: [
-          { id: 'email', label: 'Email', type: 'email', required: true },
+          {
+            id: 'email',
+            label: 'Email',
+            type: 'email',
+            required: true,
+            stepId: 'step-1',
+          },
         ],
+        steps: [{ id: 'step-1', title: 'Contatti' }],
         notificationEmail: 'owner@example.com',
       },
       new Date(),
@@ -149,8 +157,15 @@ describe('DrizzleFormRepository (integration)', () => {
     const found = await formRepository.findById(tenantAId, form.id);
     expect(found?.name).toBe('Contatti aggiornato');
     expect(found?.fields).toEqual([
-      { id: 'email', label: 'Email', type: 'email', required: true },
+      {
+        id: 'email',
+        label: 'Email',
+        type: 'email',
+        required: true,
+        stepId: 'step-1',
+      },
     ]);
+    expect(found?.steps).toEqual([{ id: 'step-1', title: 'Contatti' }]);
     expect(found?.notificationEmail).toBe('owner@example.com');
   });
 

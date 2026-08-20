@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { formFieldsSchema } from '@brisk/shared-types';
+import { formFieldsSchema, formStepsSchema } from '@brisk/shared-types';
 
 export const createFormBodySchema = z.object({
   siteId: z.string().uuid(),
@@ -17,6 +17,7 @@ export type ListFormsQuery = z.infer<typeof listFormsQuerySchema>;
 export const updateFormBodySchema = z.object({
   name: z.string().min(1),
   fields: formFieldsSchema,
+  steps: formStepsSchema.default([]),
   notificationEmail: z.string().email().nullable(),
 });
 export type UpdateFormBody = z.infer<typeof updateFormBodySchema>;

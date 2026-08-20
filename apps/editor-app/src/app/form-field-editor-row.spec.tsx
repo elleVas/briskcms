@@ -1,12 +1,13 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import type { FormField } from '@brisk/shared-types';
+import type { FormField, FormStep } from '@brisk/shared-types';
 import { TooltipProvider } from '../components/ui/tooltip.js';
 import { FormFieldEditorRow } from './form-field-editor-row.js';
 
 function renderRow(
   field: FormField,
   onChange: (field: FormField) => void = vi.fn(),
+  steps: FormStep[] = [],
 ) {
   return render(
     <TooltipProvider>
@@ -18,6 +19,7 @@ function renderRow(
         onMoveDown={vi.fn()}
         canMoveUp={false}
         canMoveDown={false}
+        steps={steps}
       />
     </TooltipProvider>,
   );
@@ -127,6 +129,58 @@ describe('FormFieldEditorRow', () => {
       screen.getByRole('option', { name: 'Caricamento file' }),
     ).toBeTruthy();
     expect(screen.queryByLabelText(/opzioni/i)).toBeFalsy();
+  });
+
+  it('shows no step dropdown when the form has no steps', () => {
+    renderRow(
+      { id: 'f1', label: 'x', type: 'text', required: false },
+      vi.fn(),
+      [],
+    );
+
+    expect(screen.queryByLabelText('Step')).toBeFalsy();
+  });
+
+  it('shows a step dropdown listing every step, plus "no step", when the form has steps', () => {
+    const steps: FormStep[] = [
+      { id: 'step-1', title: 'Dati personali' },
+      { id: 'step-2', title: 'Dettagli' },
+    ];
+    renderRow(
+      { id: 'f1', label: 'x', type: 'text', required: false },
+      vi.fn(),
+      steps,
+    );
+
+    const select = screen.getByLabelText('Step') as HTMLSelectElement;
+    expect(select.value).toBe('');
+    expect(screen.getByRole('option', { name: 'Nessuno step' })).toBeTruthy();
+    expect(screen.getByRole('option', { name: 'Dati personali' })).toBeTruthy();
+    expect(screen.getByRole('option', { name: 'Dettagli' })).toBeTruthy();
+  });
+
+  it('assigns a field to a step and can clear it back to none', () => {
+    const onChange = vi.fn();
+    const steps: FormStep[] = [{ id: 'step-1', title: 'Dati personali' }];
+    renderRow(
+      { id: 'f1', label: 'x', type: 'text', required: false },
+      onChange,
+      steps,
+    );
+
+    fireEvent.change(screen.getByLabelText('Step'), {
+      target: { value: 'step-1' },
+    });
+    expect(onChange).toHaveBeenCalledWith(
+      expect.objectContaining({ stepId: 'step-1' }),
+    );
+
+    fireEvent.change(screen.getByLabelText('Step'), {
+      target: { value: '' },
+    });
+    expect(onChange).toHaveBeenCalledWith(
+      expect.objectContaining({ stepId: null }),
+    );
   });
 
   it('toggles required', () => {

@@ -57,6 +57,7 @@ describe('getPublicForm and submitForm', () => {
           required: true,
         },
       ],
+      steps: [],
       notificationEmail: 'owner@example.com',
     });
   }
@@ -78,6 +79,7 @@ describe('getPublicForm and submitForm', () => {
           required: false,
         },
       ],
+      steps: [],
       notificationEmail: null,
     });
   }
@@ -139,6 +141,7 @@ describe('getPublicForm and submitForm', () => {
         { id: 'email', label: 'Email', type: 'email', required: true },
         { id: 'cv', label: 'Curriculum', type: 'file', required: false },
       ],
+      steps: [],
       notificationEmail: 'hr@example.com',
     });
 
@@ -178,6 +181,7 @@ describe('getPublicForm and submitForm', () => {
         { id: 'email', label: 'Email', type: 'email', required: true },
         { id: 'cv', label: 'Curriculum', type: 'file', required: false },
       ],
+      steps: [],
       notificationEmail: 'hr@example.com',
     });
 

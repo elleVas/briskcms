@@ -3,6 +3,8 @@ import {
   formFieldFileValueSchema,
   formFieldSchema,
   formFieldsSchema,
+  formStepSchema,
+  formStepsSchema,
 } from './form-fields.js';
 
 describe('form-fields schemas', () => {
@@ -93,6 +95,58 @@ describe('form-fields schemas', () => {
       { id: 'f3', label: 'Messaggio', type: 'textarea', required: false },
     ]);
     expect(result.success).toBe(true);
+  });
+
+  it('accepts a field with a stepId, and one without', () => {
+    expect(
+      formFieldSchema.safeParse({
+        id: 'f1',
+        label: 'Nome',
+        type: 'text',
+        required: true,
+        stepId: 'step-1',
+      }).success,
+    ).toBe(true);
+    expect(
+      formFieldSchema.safeParse({
+        id: 'f2',
+        label: 'Email',
+        type: 'email',
+        required: true,
+      }).success,
+    ).toBe(true);
+  });
+});
+
+describe('formStepSchema', () => {
+  it('accepts a valid step', () => {
+    const result = formStepSchema.safeParse({
+      id: 'step-1',
+      title: 'Dati personali',
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it('rejects a step missing a title', () => {
+    const result = formStepSchema.safeParse({ id: 'step-1' });
+    expect(result.success).toBe(false);
+  });
+
+  it('rejects a step with an empty title', () => {
+    const result = formStepSchema.safeParse({ id: 'step-1', title: '' });
+    expect(result.success).toBe(false);
+  });
+
+  it('validates an array of steps', () => {
+    const result = formStepsSchema.safeParse([
+      { id: 'step-1', title: 'Dati personali' },
+      { id: 'step-2', title: 'Dettagli richiesta' },
+    ]);
+    expect(result.success).toBe(true);
+  });
+
+  it('accepts an empty steps array (single-step form, the default)', () => {
+    expect(formStepsSchema.safeParse([]).success).toBe(true);
   });
 });
 

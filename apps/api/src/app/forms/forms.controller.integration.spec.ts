@@ -84,6 +84,7 @@ describe('FormsController (integration)', () => {
       .expect(201);
     expect(createRes.body.name).toBe('Contatti');
     expect(createRes.body.fields).toEqual([]);
+    expect(createRes.body.steps).toEqual([]);
     const formId = createRes.body.id;
 
     const getRes = await agent.get(`/forms/${formId}`).expect(200);
@@ -115,6 +116,44 @@ describe('FormsController (integration)', () => {
 
   it('404s reading a form that does not exist', async () => {
     await agent.get(`/forms/${randomUUID()}`).expect(404);
+  });
+
+  it('persists steps and per-field stepId assignments across the real HTTP+DB stack', async () => {
+    const createRes = await agent
+      .post('/forms')
+      .send({ siteId, name: 'Candidatura' })
+      .expect(201);
+    const formId = createRes.body.id;
+
+    const updateRes = await agent
+      .patch(`/forms/${formId}`)
+      .send({
+        name: 'Candidatura',
+        fields: [
+          {
+            id: 'nome',
+            label: 'Nome',
+            type: 'text',
+            required: true,
+            stepId: 'dati-personali',
+          },
+        ],
+        steps: [{ id: 'dati-personali', title: 'Dati personali' }],
+        notificationEmail: null,
+      })
+      .expect(200);
+
+    expect(updateRes.body.steps).toEqual([
+      { id: 'dati-personali', title: 'Dati personali' },
+    ]);
+    expect(updateRes.body.fields[0].stepId).toBe('dati-personali');
+
+    const getRes = await agent.get(`/forms/${formId}`).expect(200);
+    expect(getRes.body.steps).toEqual([
+      { id: 'dati-personali', title: 'Dati personali' },
+    ]);
+
+    await agent.delete(`/forms/${formId}`).expect(204);
   });
 
   it('404s updating a form that does not exist', async () => {
