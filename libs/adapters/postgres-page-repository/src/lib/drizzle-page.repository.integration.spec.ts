@@ -224,6 +224,63 @@ describe('DrizzlePageRepository (integration)', () => {
     expect(versionsFromOtherTenant).toHaveLength(0);
   });
 
+  it('prunes versions once they are both outside the last 20 and older than 90 days', async () => {
+    const page = buildPage();
+    await pageRepository.save(page);
+
+    const ninetyOneDaysAgo = new Date(Date.now() - 91 * 24 * 60 * 60 * 1000);
+    const staleId = randomUUID();
+    await pageVersionRepository.save({
+      id: staleId,
+      tenantId: tenantAId,
+      pageId: page.id,
+      content: [{ type: 'Hero', props: { title: 'stale' } }],
+      createdBy: null,
+      createdAt: ninetyOneDaysAgo,
+    });
+
+    // 20 more recent saves push the stale one out of the "last 20 by
+    // count" window — each save also runs the prune, so by the time this
+    // loop finishes the stale version should already be gone.
+    for (let i = 0; i < 20; i++) {
+      await pageVersionRepository.save({
+        id: randomUUID(),
+        tenantId: tenantAId,
+        pageId: page.id,
+        content: [{ type: 'Hero', props: { title: `recent-${i}` } }],
+        createdBy: null,
+        createdAt: new Date(Date.now() - (19 - i) * 1000),
+      });
+    }
+
+    const versions = await pageVersionRepository.listByPage(tenantAId, page.id);
+    expect(versions).toHaveLength(20);
+    expect(versions.map((v) => v.id)).not.toContain(staleId);
+  });
+
+  it('never prunes a version younger than 90 days, even past the count of 20', async () => {
+    const page = buildPage();
+    await pageRepository.save(page);
+
+    // 22 recent saves, none older than 90 days — the count cap alone
+    // would trim this to 20, but the age clause is a floor, not a
+    // ceiling: nothing this recent is ever pruned (docs/adr — see
+    // DrizzlePageVersionRepository's own comment for the "OR" semantics).
+    for (let i = 0; i < 22; i++) {
+      await pageVersionRepository.save({
+        id: randomUUID(),
+        tenantId: tenantAId,
+        pageId: page.id,
+        content: [{ type: 'Hero', props: { title: `recent-${i}` } }],
+        createdBy: null,
+        createdAt: new Date(Date.now() - (21 - i) * 1000),
+      });
+    }
+
+    const versions = await pageVersionRepository.listByPage(tenantAId, page.id);
+    expect(versions).toHaveLength(22);
+  });
+
   it('listByGroup returns every locale-translation of the same page, scoped to tenant', async () => {
     const groupId = randomUUID();
     const italian = buildPage({ groupId, locale: 'it', slug: 'chi-siamo' });
