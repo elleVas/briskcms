@@ -15,7 +15,7 @@ const { question, answer } = Astro.props;
   /* Native <details>/<summary> — same "no JS needed" reasoning as
      NavDropdown.astro's own comment on this exact HTML pattern. */
   .brisk-accordion-item {
-    border-bottom: 1px solid #e4e4e7;
+    border-bottom: 1px solid var(--border);
     padding: 0.75rem 0;
   }
   .brisk-accordion-item__question {
@@ -34,6 +34,6 @@ const { question, answer } = Astro.props;
   }
   .brisk-accordion-item__answer {
     margin-top: 0.5rem;
-    color: #52525b;
+    color: var(--muted-foreground);
   }
 </style>

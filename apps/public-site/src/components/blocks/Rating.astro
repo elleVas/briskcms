@@ -17,10 +17,12 @@ const STAR_POSITIONS = [1, 2, 3, 4, 5];
   >
     {
       STAR_POSITIONS.map((position) => (
+        // Filled stars stay literal amber regardless of theme — a rating
+        // color, not a brand one, same reasoning as WhatsAppButton's green.
         <svg viewBox="0 0 20 20" width="24" height="24" aria-hidden="true">
           <path
             d={STAR_ICON_PATH}
-            fill={position <= rating ? '#f59e0b' : '#d4d4d8'}
+            fill={position <= rating ? '#f59e0b' : 'var(--border)'}
           />
         </svg>
       ))

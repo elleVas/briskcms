@@ -31,7 +31,7 @@ const { name, role, bio, photo } = Astro.props;
     margin: 0 auto;
   }
   .brisk-team-member__photo--placeholder {
-    background: #f4f4f5;
+    background: var(--muted);
   }
   .brisk-team-member__name {
     margin-top: 0.75rem;
@@ -39,11 +39,11 @@ const { name, role, bio, photo } = Astro.props;
   }
   .brisk-team-member__role {
     font-size: 0.875rem;
-    color: #71717a;
+    color: var(--muted-foreground);
   }
   .brisk-team-member__bio {
     margin: 0.375rem 0 0;
     font-size: 0.8125rem;
-    color: #52525b;
+    color: var(--muted-foreground);
   }
 </style>

@@ -23,6 +23,10 @@ const { label, title, description } = Astro.props;
   .brisk-timeline-step:last-child {
     padding-bottom: 0;
   }
+  /* No dedicated "accent" token distinct from primary — a timeline marker
+     uses the same "draw attention" role as a primary CTA. Changes the
+     default marker color from the original indigo to the classic theme's
+     primary (near-black); still fully theme-responsive going forward. */
   .brisk-timeline-step__marker {
     position: absolute;
     left: -1.75rem;
@@ -30,11 +34,11 @@ const { label, title, description } = Astro.props;
     width: 0.75rem;
     height: 0.75rem;
     border-radius: 50%;
-    background: #4338ca;
+    background: var(--primary);
   }
   .brisk-timeline-step__label {
     font-size: 0.75rem;
-    color: #71717a;
+    color: var(--muted-foreground);
   }
   .brisk-timeline-step__title {
     font-weight: 600;
@@ -43,6 +47,6 @@ const { label, title, description } = Astro.props;
   .brisk-timeline-step__description {
     margin: 0.25rem 0 0;
     font-size: 0.875rem;
-    color: #52525b;
+    color: var(--muted-foreground);
   }
 </style>

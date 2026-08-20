@@ -15,11 +15,13 @@ const STAR_POSITIONS = [1, 2, 3, 4, 5];
     aria-label={`${rating} su 5 stelle`}
   >
     {
+      // Filled stars stay literal amber regardless of theme — same
+      // reasoning as Rating.astro's own stars.
       STAR_POSITIONS.map((position) => (
         <svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true">
           <path
             d={STAR_ICON_PATH}
-            fill={position <= rating ? '#f59e0b' : '#d4d4d8'}
+            fill={position <= rating ? '#f59e0b' : 'var(--border)'}
           />
         </svg>
       ))
@@ -39,7 +41,7 @@ const STAR_POSITIONS = [1, 2, 3, 4, 5];
   .brisk-testimonial {
     flex: 0 0 min(320px, 85vw);
     scroll-snap-align: start;
-    border: 1px solid #e4e4e7;
+    border: 1px solid var(--border);
     border-radius: 12px;
     padding: 1.5rem;
   }
@@ -50,7 +52,7 @@ const STAR_POSITIONS = [1, 2, 3, 4, 5];
   .brisk-testimonial__quote {
     margin: 0.75rem 0;
     font-size: 0.9375rem;
-    color: #27272a;
+    color: var(--foreground);
   }
   .brisk-testimonial__footer {
     display: flex;
@@ -70,6 +72,6 @@ const STAR_POSITIONS = [1, 2, 3, 4, 5];
   }
   .brisk-testimonial__role {
     font-size: 0.8125rem;
-    color: #71717a;
+    color: var(--muted-foreground);
   }
 </style>

@@ -118,8 +118,8 @@ const { position, visibility } = Astro.props;
     right: 0;
     z-index: 10;
     padding: 1rem;
-    background: #fff;
-    border: 1px solid #e4e4e7;
+    background: var(--background);
+    border: 1px solid var(--border);
     border-radius: 8px;
     box-shadow: 0 8px 24px rgb(0 0 0 / 12%);
   }
@@ -142,6 +142,6 @@ const { position, visibility } = Astro.props;
     border-radius: 6px;
   }
   .brisk-hamburger__links :global(.brisk-nav-link:hover) {
-    background: #f4f4f5;
+    background: var(--muted);
   }
 </style>
