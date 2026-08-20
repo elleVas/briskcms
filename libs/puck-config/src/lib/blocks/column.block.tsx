@@ -16,11 +16,12 @@ const COLUMN_COLOR = '#0d9488';
 
 export const columnConfig: ComponentConfig<ColumnPuckProps> = {
   label: 'Colonna',
+  // No `allow` list (was previously restricted to Hero/Text/Image/
+  // Gallery/Form only) — a Column is meant to hold whatever the page needs
+  // side by side with its siblings, same reasoning as Container's own
+  // unrestricted slot.
   fields: {
-    children: {
-      type: 'slot',
-      allow: ['Hero', 'Text', 'Image', 'Gallery', 'Form'],
-    },
+    children: { type: 'slot' },
   },
   defaultProps: { children: [] },
   render: ({ children: Children }) => (

@@ -48,6 +48,14 @@ describe('getPublishedPageBySlug', () => {
       businessType: null,
       openingHours: null,
       searchEngineIndexingEnabled: false,
+      themePrimaryColor: null,
+      themeSecondaryColor: null,
+      themeFontFamily: null,
+      themeCustomCss: null,
+      themeHeadScript: null,
+      themeBodyScript: null,
+      themeFaviconUrl: null,
+      themeOverridesEnabled: true,
       createdAt: new Date(),
       ...overrides,
     });
@@ -119,6 +127,16 @@ describe('getPublishedPageBySlug', () => {
         businessType: null,
         openingHours: null,
         searchEngineIndexingEnabled: false,
+        themeSettings: {
+          primaryColor: null,
+          secondaryColor: null,
+          fontFamily: null,
+          customCss: null,
+          headScript: null,
+          bodyScript: null,
+          faviconUrl: null,
+          overridesEnabled: true,
+        },
       },
     });
   });

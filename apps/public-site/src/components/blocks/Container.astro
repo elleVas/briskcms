@@ -1,0 +1,31 @@
+---
+import type { ContainerProps } from '@brisk/shared-types';
+
+type Props = ContainerProps;
+
+const { background, padding } = Astro.props;
+
+// Token-driven (docs/adr/0021) — a theme swap changes what these mean,
+// this component never hardcodes a color. `primary`/`secondary` follow
+// the same convention as Button/the global link color: primary is the
+// accent surface, secondary is supporting/subtle chrome.
+const backgroundClass: Record<ContainerProps['background'], string> = {
+	none: '',
+	muted: 'bg-muted text-foreground',
+	primary: 'bg-primary text-primary-foreground',
+	secondary: 'bg-secondary text-secondary-foreground',
+};
+
+const paddingClass: Record<ContainerProps['padding'], string> = {
+	none: '',
+	sm: 'p-4',
+	md: 'p-8',
+	lg: 'p-12',
+};
+---
+
+<div
+	class={`flex flex-col gap-4 rounded-lg ${backgroundClass[background]} ${paddingClass[padding]}`}
+>
+	<slot />
+</div>

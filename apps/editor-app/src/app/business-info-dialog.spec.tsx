@@ -26,6 +26,14 @@ const sampleSite: SiteDto = {
   businessType: 'Restaurant',
   openingHours: null,
   searchEngineIndexingEnabled: false,
+  themePrimaryColor: null,
+  themeSecondaryColor: null,
+  themeFontFamily: null,
+  themeCustomCss: null,
+  themeHeadScript: null,
+  themeBodyScript: null,
+  themeFaviconUrl: null,
+  themeOverridesEnabled: true,
   createdAt: '',
 };
 

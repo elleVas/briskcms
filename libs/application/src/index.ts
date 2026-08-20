@@ -29,6 +29,7 @@ export * from './lib/use-cases/update-seo-meta.use-case.js';
 export * from './lib/use-cases/update-site-business-info.use-case.js';
 export * from './lib/use-cases/update-site-general-settings.use-case.js';
 export * from './lib/use-cases/update-site-seo-settings.use-case.js';
+export * from './lib/use-cases/update-site-theme-settings.use-case.js';
 export * from './lib/use-cases/update-site-locale-settings.use-case.js';
 export * from './lib/use-cases/create-page-translation.use-case.js';
 export * from './lib/use-cases/list-page-translations.use-case.js';

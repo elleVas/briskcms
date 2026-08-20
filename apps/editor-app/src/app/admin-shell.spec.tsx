@@ -43,7 +43,7 @@ describe('AdminShell', () => {
     vi.clearAllMocks();
   });
 
-  it('renders links to Pagine, Media, Aspetto and Utenti, and separate Impostazioni/Account menus', () => {
+  it('renders links to Pagine, Media, Layout, Stile and Utenti, and separate Impostazioni/Account menus', () => {
     vi.mocked(router.useNavigate).mockReturnValue(vi.fn());
 
     renderShell();
@@ -55,8 +55,11 @@ describe('AdminShell', () => {
       screen.getByRole('link', { name: 'Media' }).getAttribute('href'),
     ).toBe('/media');
     expect(
-      screen.getByRole('link', { name: 'Aspetto' }).getAttribute('href'),
-    ).toBe('/appearance');
+      screen.getByRole('link', { name: 'Layout' }).getAttribute('href'),
+    ).toBe('/layout');
+    expect(
+      screen.getByRole('link', { name: 'Stile' }).getAttribute('href'),
+    ).toBe('/style');
     expect(
       screen.getByRole('link', { name: 'Utenti' }).getAttribute('href'),
     ).toBe('/users');

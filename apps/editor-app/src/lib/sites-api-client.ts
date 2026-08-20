@@ -1,4 +1,8 @@
-import type { LocaleSettings, OpeningHoursDay } from '@brisk/shared-types';
+import type {
+  LocaleSettings,
+  OpeningHoursDay,
+  ThemeSettings,
+} from '@brisk/shared-types';
 import { request } from './http-client.js';
 
 export interface SiteDto {
@@ -14,6 +18,14 @@ export interface SiteDto {
   businessType: string | null;
   openingHours: OpeningHoursDay[] | null;
   searchEngineIndexingEnabled: boolean;
+  themePrimaryColor: string | null;
+  themeSecondaryColor: string | null;
+  themeFontFamily: string | null;
+  themeCustomCss: string | null;
+  themeHeadScript: string | null;
+  themeBodyScript: string | null;
+  themeFaviconUrl: string | null;
+  themeOverridesEnabled: boolean;
   createdAt: string;
 }
 
@@ -72,6 +84,16 @@ export function updateLocaleSettings(
   input: LocaleSettings,
 ): Promise<SiteDto> {
   return request(`/sites/${id}/locale-settings`, {
+    method: 'PATCH',
+    body: JSON.stringify(input),
+  });
+}
+
+export function updateThemeSettings(
+  id: string,
+  input: ThemeSettings,
+): Promise<SiteDto> {
+  return request(`/sites/${id}/theme-settings`, {
     method: 'PATCH',
     body: JSON.stringify(input),
   });

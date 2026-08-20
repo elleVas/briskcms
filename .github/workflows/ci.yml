@@ -125,7 +125,19 @@ jobs:
           POSTGRES_HOST: localhost
 
       - run: pnpm exec nx format:check --base=origin/main
-      - run: pnpm exec nx run-many -t lint build typecheck
+      # --parallel=1: found by direct reproduction (2026-08-20) that
+      # default parallelism on this runner let `tsc --build` for a
+      # dependent project (e.g. @brisk/puck-config) start reading
+      # @brisk/shared-types's emitted declarations before that project's
+      # own typecheck had finished writing them — nx.json's
+      # `typecheck: { dependsOn: ['^typecheck'] }` orders the *Nx tasks*
+      # correctly, but each project's own `tsc --build` also independently
+      # walks its TS project references and can end up racing another
+      # concurrent `tsc --build` process over the same output files. Not
+      # reproducible locally even with every cache cleared — only surfaced
+      # at this runner's actual core count/scheduling. Same reasoning as
+      # docs/adr/0009's existing --parallel=1 on the coverage step below.
+      - run: pnpm exec nx run-many -t lint build typecheck --parallel=1
         env:
           POSTGRES_HOST: localhost
 

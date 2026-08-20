@@ -19,6 +19,10 @@ import {
   type ColumnsPuckProps,
 } from './blocks/columns.block.js';
 import {
+  containerConfig,
+  type ContainerPuckProps,
+} from './blocks/container.block.js';
+import {
   countdownConfig,
   type CountdownProps,
 } from './blocks/countdown.block.js';
@@ -39,6 +43,7 @@ import {
   type ImageSliderProps,
 } from './blocks/image-slider.block.js';
 import { imageConfig, type ImageProps } from './blocks/image.block.js';
+import { linkConfig, type LinkProps } from './blocks/link.block.js';
 import {
   logoStripConfig,
   type LogoStripProps,
@@ -108,6 +113,8 @@ export interface BriskComponentProps {
   Form: FormBlockProps;
   Columns: ColumnsPuckProps;
   Column: ColumnPuckProps;
+  Container: ContainerPuckProps;
+  Link: LinkProps;
   Quote: QuoteProps;
   Rating: RatingProps;
   Countdown: CountdownProps;
@@ -140,7 +147,80 @@ export interface BriskComponentProps {
   NewsletterSignup: NewsletterSignupProps;
 }
 
+// Grouped for the block picker (Puck's own `categories`, previously
+// unused — every block sat in one flat 37-entry list). Every component key
+// above must appear in exactly one category here; there's no automatic
+// fallback bucket for one left out.
 export const puckConfig: Config<BriskComponentProps> = {
+  categories: {
+    layout: {
+      title: 'Layout',
+      components: ['Columns', 'Column', 'Container'],
+      defaultExpanded: true,
+    },
+    content: {
+      title: 'Contenuto',
+      components: [
+        'Hero',
+        'Text',
+        'Link',
+        'Image',
+        'Gallery',
+        'Quote',
+        'Table',
+        'EmbedHtml',
+      ],
+      defaultExpanded: true,
+    },
+    conversion: {
+      title: 'Moduli e conversione',
+      components: [
+        'Form',
+        'NewsletterSignup',
+        'Button',
+        'SearchBox',
+        'Countdown',
+        'Banner',
+      ],
+    },
+    media: {
+      title: 'Media',
+      components: [
+        'VideoEmbed',
+        'MapEmbed',
+        'ImageSlider',
+        'BeforeAfter',
+        'LogoStrip',
+        'Rating',
+      ],
+    },
+    socialProof: {
+      title: 'Prova sociale',
+      components: [
+        'Testimonials',
+        'Testimonial',
+        'Team',
+        'TeamMember',
+        'PricingTable',
+        'PricingPlan',
+        'StatsCounter',
+        'Stat',
+        'Timeline',
+        'TimelineStep',
+      ],
+    },
+    interactive: {
+      title: 'Interattivo',
+      components: [
+        'Accordion',
+        'AccordionItem',
+        'Tabs',
+        'Tab',
+        'FeatureGrid',
+        'Feature',
+      ],
+    },
+  },
   components: {
     Hero: heroConfig,
     Text: textConfig,
@@ -149,6 +229,8 @@ export const puckConfig: Config<BriskComponentProps> = {
     Form: formConfig,
     Columns: columnsConfig,
     Column: columnConfig,
+    Container: containerConfig,
+    Link: linkConfig,
     Quote: quoteConfig,
     Rating: ratingConfig,
     Countdown: countdownConfig,

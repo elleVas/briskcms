@@ -134,6 +134,20 @@
       "when": 1787235449359,
       "tag": "0018_forms_steps",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1787241783584,
+      "tag": "0019_sites_theme_settings",
+      "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1787246016379,
+      "tag": "0020_sites_theme_overrides_enabled",
+      "breakpoints": true
     }
   ]
 }

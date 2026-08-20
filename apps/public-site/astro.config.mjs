@@ -1,6 +1,19 @@
 // @ts-check
+import { fileURLToPath } from 'node:url';
 import { defineConfig } from 'astro/config';
 import node from '@astrojs/node';
+import react from '@astrojs/react';
+import tailwindcss from '@tailwindcss/vite';
+
+// Tier 2 of docs/adr/0021's theming model: which filesystem theme package
+// (../../themes/<name>) this build resolves `~theme/*` imports to. Build-
+// time only, by design (never read per-request) — the Docker image is the
+// unit of distribution, so changing a site's theme means a rebuild, the
+// same cost as every other deployment-level config in this product.
+const themeName = process.env.BRISK_THEME || 'classic';
+const themeDir = fileURLToPath(
+  new URL(`../../themes/${themeName}/`, import.meta.url),
+);
 
 // https://astro.build/config
 export default defineConfig({
@@ -14,4 +27,18 @@ export default defineConfig({
     // to.
     mode: 'standalone',
   }),
+  // Available to any theme (docs/adr/0021), not used by core's own blocks:
+  // ADR-0019's "no framework" precedent stays the default for blocks we
+  // ship, but nothing stops a theme author from dropping a .tsx component
+  // and hydrating it with a client: directive — Astro islands mean it costs
+  // nothing on a page that never uses one.
+  integrations: [react()],
+  vite: {
+    plugins: [tailwindcss()],
+    resolve: {
+      alias: {
+        '~theme': themeDir,
+      },
+    },
+  },
 });

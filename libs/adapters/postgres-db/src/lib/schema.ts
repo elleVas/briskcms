@@ -98,6 +98,22 @@ export const sites = pgTable(
     searchEngineIndexingEnabled: boolean('search_engine_indexing_enabled')
       .notNull()
       .default(false),
+    // Tier 1 of docs/adr/0021's theming model — all nullable, `null` means
+    // "inherit the active filesystem theme's own default" (Tier 2), not a
+    // value coerced here at the DB layer. See Site.themeSettings.
+    themePrimaryColor: text('theme_primary_color'),
+    themeSecondaryColor: text('theme_secondary_color'),
+    themeFontFamily: text('theme_font_family'),
+    themeCustomCss: text('theme_custom_css'),
+    themeHeadScript: text('theme_head_script'),
+    themeBodyScript: text('theme_body_script'),
+    themeFaviconUrl: text('theme_favicon_url'),
+    // Site-level gate under the theme's own theme.json ceiling
+    // (docs/adr/0021) — defaults true so an existing/fresh site with no
+    // Tier 1 fields set behaves identically to before this column existed.
+    themeOverridesEnabled: boolean('theme_overrides_enabled')
+      .notNull()
+      .default(true),
     createdAt: timestamp('created_at', { withTimezone: true })
       .notNull()
       .defaultNow(),

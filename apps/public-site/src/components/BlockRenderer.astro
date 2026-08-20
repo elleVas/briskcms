@@ -8,6 +8,7 @@ import {
   breadcrumbPropsSchema,
   buttonPropsSchema,
   columnsPropsSchema,
+  containerPropsSchema,
   countdownPropsSchema,
   embedHtmlPropsSchema,
   featureGridPropsSchema,
@@ -19,6 +20,7 @@ import {
   imagePropsSchema,
   imageSliderPropsSchema,
   languageSwitcherPropsSchema,
+  linkPropsSchema,
   logoStripPropsSchema,
   mapEmbedPropsSchema,
   navDropdownPropsSchema,
@@ -61,6 +63,7 @@ import Breadcrumb from './blocks/Breadcrumb.astro';
 import Button from './blocks/Button.astro';
 import Column from './blocks/Column.astro';
 import Columns from './blocks/Columns.astro';
+import Container from './blocks/Container.astro';
 import Countdown from './blocks/Countdown.astro';
 import EmbedHtml from './blocks/EmbedHtml.astro';
 import Feature from './blocks/Feature.astro';
@@ -72,6 +75,7 @@ import Hero from './blocks/Hero.astro';
 import Image from './blocks/Image.astro';
 import ImageSlider from './blocks/ImageSlider.astro';
 import LanguageSwitcher from './blocks/LanguageSwitcher.astro';
+import Link from './blocks/Link.astro';
 import LogoStrip from './blocks/LogoStrip.astro';
 import MapEmbed from './blocks/MapEmbed.astro';
 import Nav from './blocks/Nav.astro';
@@ -267,6 +271,22 @@ const { block, locale, translations, site, ancestors, currentPageTitle } =
   )
 }
 {
+  block.type === 'Container' && (
+    <Container {...containerPropsSchema.parse(block.props)}>
+      {block.children?.map((child) => (
+        <Astro.self
+          block={child}
+          locale={locale}
+          translations={translations}
+          site={site}
+          ancestors={ancestors}
+          currentPageTitle={currentPageTitle}
+        />
+      ))}
+    </Container>
+  )
+}
+{
   block.type === 'PromoBar' && (
     <PromoBar {...promoBarPropsSchema.parse(block.props)} />
   )
@@ -343,6 +363,9 @@ const { block, locale, translations, site, ancestors, currentPageTitle } =
   block.type === 'Button' && (
     <Button {...buttonPropsSchema.parse(block.props)} />
   )
+}
+{
+  block.type === 'Link' && <Link {...linkPropsSchema.parse(block.props)} />
 }
 {
   block.type === 'FeatureGrid' && (

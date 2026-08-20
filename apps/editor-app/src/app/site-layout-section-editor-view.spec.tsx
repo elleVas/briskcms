@@ -83,12 +83,12 @@ describe('SiteLayoutSectionEditorView', () => {
     vi.clearAllMocks();
   });
 
-  it('renders a link back to Aspetto', () => {
+  it('renders a link back to Layout', () => {
     renderView();
 
     expect(
-      screen.getByRole('link', { name: /aspetto/i }).getAttribute('href'),
-    ).toBe('/appearance');
+      screen.getByRole('link', { name: /layout/i }).getAttribute('href'),
+    ).toBe('/layout');
   });
 
   it('opens the version history dialog and lists past versions newest-first', async () => {

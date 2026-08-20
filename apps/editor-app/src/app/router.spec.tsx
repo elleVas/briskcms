@@ -69,6 +69,14 @@ const sampleSite: SiteDto = {
   businessType: null,
   openingHours: null,
   searchEngineIndexingEnabled: false,
+  themePrimaryColor: null,
+  themeSecondaryColor: null,
+  themeFontFamily: null,
+  themeCustomCss: null,
+  themeHeadScript: null,
+  themeBodyScript: null,
+  themeFaviconUrl: null,
+  themeOverridesEnabled: true,
   createdAt: '',
 };
 
@@ -227,29 +235,38 @@ describe('router', () => {
     );
   });
 
-  it('navigates from Aspetto to the Header editor and back', async () => {
+  it('navigates from Layout to the Header editor and back', async () => {
     vi.mocked(api.listPages).mockResolvedValue({ items: [], total: 0 });
     vi.mocked(sectionsApi.getOrCreateSiteLayoutSection).mockResolvedValue(
       sampleHeaderSection,
     );
 
-    renderApp('/appearance');
-    expect(
-      await screen.findByRole('heading', { name: 'Aspetto' }),
-    ).toBeTruthy();
+    renderApp('/layout');
+    expect(await screen.findByRole('heading', { name: 'Layout' })).toBeTruthy();
 
     fireEvent.click(screen.getByRole('link', { name: /modifica header/i }));
 
-    expect(await screen.findByRole('link', { name: /aspetto/i })).toBeTruthy();
+    expect(await screen.findByRole('link', { name: /layout/i })).toBeTruthy();
     expect(sectionsApi.getOrCreateSiteLayoutSection).toHaveBeenCalledWith(
       expect.any(String),
       'it',
       'header',
     );
 
-    fireEvent.click(screen.getByRole('link', { name: /aspetto/i }));
+    fireEvent.click(screen.getByRole('link', { name: /layout/i }));
+    expect(await screen.findByRole('heading', { name: 'Layout' })).toBeTruthy();
+  });
+
+  it('navigates to the dedicated Stile page from the sidebar', async () => {
+    vi.mocked(api.listPages).mockResolvedValue({ items: [], total: 0 });
+
+    renderApp('/pages');
+    expect(await screen.findByRole('heading', { name: 'Pagine' })).toBeTruthy();
+
+    fireEvent.click(screen.getByRole('link', { name: /^stile$/i }));
+
     expect(
-      await screen.findByRole('heading', { name: 'Aspetto' }),
+      await screen.findByRole('heading', { name: /stile del sito/i }),
     ).toBeTruthy();
   });
 

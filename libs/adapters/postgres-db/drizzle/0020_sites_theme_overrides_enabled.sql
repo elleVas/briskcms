@@ -1,0 +1,1 @@
+ALTER TABLE "sites" ADD COLUMN "theme_overrides_enabled" boolean DEFAULT true NOT NULL;

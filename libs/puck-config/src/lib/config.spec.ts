@@ -11,6 +11,8 @@ describe('puckConfig', () => {
       'Form',
       'Columns',
       'Column',
+      'Container',
+      'Link',
       'Quote',
       'Rating',
       'Countdown',
@@ -49,6 +51,8 @@ describe('puckConfig', () => {
     expect(typeof puckConfig.components.Form.render).toBe('function');
     expect(typeof puckConfig.components.Columns.render).toBe('function');
     expect(typeof puckConfig.components.Column.render).toBe('function');
+    expect(typeof puckConfig.components.Container.render).toBe('function');
+    expect(typeof puckConfig.components.Link.render).toBe('function');
     expect(typeof puckConfig.components.Quote.render).toBe('function');
     expect(typeof puckConfig.components.Rating.render).toBe('function');
     expect(typeof puckConfig.components.Countdown.render).toBe('function');
