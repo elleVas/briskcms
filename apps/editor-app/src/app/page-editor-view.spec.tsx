@@ -249,6 +249,12 @@ describe('PageEditorView', () => {
     expect(screen.getByRole('button', { name: 'EN' })).toBeTruthy();
   });
 
+  // Longer timeout than vitest's 5000ms default: two sequential waitFors
+  // plus a findByRole comfortably finish under 1.5s locally, but this
+  // exact test has intermittently hit the default timeout on CI's
+  // --parallel=1 sequential run under load — see
+  // memory/flaky-test-page-editor-translation.md, confirmed unrelated to
+  // any code change (failed on PRs that never touched this file).
   it('creates a translation and navigates to its editor', async () => {
     const navigate = vi.fn();
     vi.mocked(router.useNavigate).mockReturnValue(navigate);
@@ -278,5 +284,5 @@ describe('PageEditorView', () => {
         params: { pageId: 'page-2' },
       }),
     );
-  });
+  }, 15000);
 });
