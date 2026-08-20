@@ -29,16 +29,21 @@ const { page } = Astro.props;
       ancestors={page.ancestors}
     >
       {
-        // The generic baseline gap between stacked page blocks — before
-        // this, BlockRenderer/PageLayout applied zero spacing of any kind
-        // between siblings, so every page ran blocks together edge-to-edge
-        // regardless of theme. One wrapper here fixes it site-wide instead
-        // of touching all ~46 block files individually. A per-block
-        // override (a block that wants tighter/looser spacing than this
-        // default) is a separate, not-yet-built editor field — this is
-        // only the default every block gets for free.
+        // The generic baseline layout every page gets for free: a vertical
+        // gap between stacked blocks, and a centered max-width column with
+        // horizontal padding — before this, BlockRenderer/PageLayout
+        // applied neither, so every page ran blocks together edge-to-edge
+        // AND stretched full-viewport-width on a wide desktop, regardless
+        // of theme. One wrapper here fixes both site-wide instead of
+        // touching all ~46 block files individually. A block that
+        // deliberately wants full-bleed width (e.g. a future full-width
+        // Container/Section) isn't supported by this default yet — that's
+        // a real, separate case to design when a block actually needs it,
+        // not something to guess at now. A per-block spacing override is
+        // likewise a separate, not-yet-built editor field — this is only
+        // the default every block gets for free.
       }
-      <div class="flex flex-col gap-16">
+      <div class="mx-auto flex max-w-5xl flex-col gap-16 px-6">
         {page.content.map((block) => (
           <BlockRenderer
             block={block}
