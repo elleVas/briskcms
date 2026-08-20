@@ -4,9 +4,15 @@ import { localePath } from '../../lib/locale-path.js';
 
 type Props = PromoBarProps;
 
-const { message, linkType, page, url, visibility } = Astro.props;
+const { message, linkType, page, url, visibility, colorOverride } =
+  Astro.props;
 const href = linkType === 'page' && page ? localePath(page.locale, page.slug) : url;
 const hasLink = linkType === 'page' ? Boolean(page) : Boolean(url);
+
+// Same per-instance escape hatch as Button.astro — see its own comment.
+const overrideStyle = colorOverride
+  ? { '--primary': colorOverride, '--primary-foreground': '#fff' }
+  : undefined;
 ---
 
 <div
@@ -15,6 +21,7 @@ const hasLink = linkType === 'page' ? Boolean(page) : Boolean(url);
     { 'brisk-visibility-desktop-only': visibility === 'desktop-only' },
     { 'brisk-visibility-mobile-only': visibility === 'mobile-only' },
   ]}
+  style={overrideStyle}
 >
   {
     /* is:inline, not the bundled/deferred <script> below: this one must run

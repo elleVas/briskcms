@@ -4,9 +4,17 @@ import { localePath } from '../../lib/locale-path.js';
 
 type Props = ButtonProps;
 
-const { label, linkType, page, url, variant } = Astro.props;
+const { label, linkType, page, url, variant, colorOverride } = Astro.props;
 const href =
   linkType === 'page' && page ? localePath(page.locale, page.slug) : url;
+
+// Per-instance escape hatch (docs/adr/0021, per-block granularity):
+// scoping `--primary`/`--primary-foreground` locally on this element means
+// `.brisk-button`'s existing var(--primary) usage below picks it up
+// automatically — no separate color logic to duplicate.
+const overrideStyle = colorOverride
+  ? { '--primary': colorOverride, '--primary-foreground': '#fff' }
+  : undefined;
 ---
 
 <a
@@ -15,6 +23,7 @@ const href =
     { 'brisk-button--secondary': variant === 'secondary' },
   ]}
   href={href}
+  style={overrideStyle}
 >
   {label}
 </a>

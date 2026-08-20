@@ -1,5 +1,6 @@
 import type { ComponentConfig, Fields } from '@puckeditor/core';
 import { bannerPropsSchema, type BannerProps } from '@brisk/shared-types';
+import { ColorPickerField } from '../fields/color-picker-field.js';
 import { PagePickerField } from '../fields/page-picker-field.js';
 import { createResolveFields } from '../fields/resolve-inline-text-fallback.js';
 
@@ -27,7 +28,13 @@ const fields: Fields<BannerProps> = {
     ),
   },
   url: { type: 'text' },
-  backgroundColor: { type: 'text' },
+  backgroundColor: {
+    type: 'custom',
+    label: 'Colore di sfondo (sovrascrive il tema)',
+    render: ({ value, onChange }) => (
+      <ColorPickerField value={value} onChange={onChange} />
+    ),
+  },
 };
 
 export const bannerConfig: ComponentConfig<BannerProps> = {
@@ -41,12 +48,12 @@ export const bannerConfig: ComponentConfig<BannerProps> = {
     linkType: 'page',
     page: null,
     url: '',
-    backgroundColor: '#f4f4f5',
+    backgroundColor: null,
   },
   render: ({ title, text, buttonLabel, linkType, page, backgroundColor }) => (
     <div
       style={{
-        background: backgroundColor,
+        background: backgroundColor ?? '#f4f4f5',
         padding: 24,
         borderRadius: 8,
         textAlign: 'center',

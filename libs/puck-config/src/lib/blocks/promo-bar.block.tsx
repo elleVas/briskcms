@@ -1,5 +1,6 @@
 import type { ComponentConfig, Fields } from '@puckeditor/core';
 import { promoBarPropsSchema, type PromoBarProps } from '@brisk/shared-types';
+import { ColorPickerField } from '../fields/color-picker-field.js';
 import { PagePickerField } from '../fields/page-picker-field.js';
 import { visibilityField } from '../fields/visibility-field.js';
 import { createResolveFields } from '../fields/resolve-inline-text-fallback.js';
@@ -26,6 +27,13 @@ const fields: Fields<PromoBarProps> = {
   },
   url: { type: 'text' },
   visibility: visibilityField,
+  colorOverride: {
+    type: 'custom',
+    label: 'Colore personalizzato (sovrascrive il tema)',
+    render: ({ value, onChange }) => (
+      <ColorPickerField value={value} onChange={onChange} />
+    ),
+  },
 };
 
 export const promoBarConfig: ComponentConfig<PromoBarProps> = {
@@ -38,14 +46,15 @@ export const promoBarConfig: ComponentConfig<PromoBarProps> = {
     page: null,
     url: '',
     visibility: 'always',
+    colorOverride: null,
   },
-  render: ({ message, linkType, page }) => (
+  render: ({ message, linkType, page, colorOverride }) => (
     <div
       style={{
         width: '100%',
         boxSizing: 'border-box',
         padding: '10px 16px',
-        background: '#fde68a',
+        background: colorOverride ?? '#fde68a',
         textAlign: 'center',
       }}
     >

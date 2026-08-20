@@ -11,7 +11,10 @@ const href =
 const hasLink = linkType === 'page' ? Boolean(page) : Boolean(url);
 ---
 
-<div class="brisk-banner" style={{ background: backgroundColor }}>
+<div
+  class="brisk-banner"
+  style={{ background: backgroundColor ?? 'var(--secondary)' }}
+>
   <h2 class="brisk-banner__title">{title}</h2>
   <p class="brisk-banner__text">{text}</p>
   {
