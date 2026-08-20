@@ -286,7 +286,7 @@ if (form && form.steps.length > 0) {
   .brisk-form__step-indicator {
     margin: 0;
     font-size: 0.8125rem;
-    color: #71717a;
+    color: var(--muted-foreground);
   }
   .brisk-form__step-nav {
     display: flex;
@@ -297,20 +297,23 @@ if (form && form.steps.length > 0) {
     padding: 0.5rem 1.25rem;
     border: none;
     border-radius: 6px;
-    background: #18181b;
-    color: #fff;
+    background: var(--primary);
+    color: var(--primary-foreground);
     font: inherit;
     cursor: pointer;
   }
   .brisk-form__prev {
     background: transparent;
-    color: #18181b;
-    border: 1px solid #d4d4d8;
+    color: var(--primary);
+    border: 1px solid var(--border);
   }
   .brisk-form__status {
     padding: 0.75rem 1rem;
     border-radius: 6px;
   }
+  /* Success/error stay literal green/red regardless of theme — a status
+     color, not a brand one (same reasoning as WhatsAppButton's green and
+     Rating/Testimonial's filled-star amber). */
   .brisk-form__status--success {
     background: #dcfce7;
     color: #166534;

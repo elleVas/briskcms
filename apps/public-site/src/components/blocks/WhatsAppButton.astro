@@ -32,7 +32,10 @@ const href = message
   /* bottom-RIGHT, not bottom-left: when a BackToTop button is also placed
      (the common case), it sits bottom-left — see BackToTop.astro's own
      comment for why the two independent blocks split corners instead of
-     coordinating some other way. */
+     coordinating some other way. Background stays WhatsApp's own literal
+     green (#25d366) regardless of theme — a brand-recognition color, not
+     Brisk's; same reasoning as Rating/Testimonial's filled-star amber and
+     Form's status colors. */
   .brisk-whatsapp-button {
     position: fixed;
     right: 1.5rem;

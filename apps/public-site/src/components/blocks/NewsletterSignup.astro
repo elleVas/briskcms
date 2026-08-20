@@ -99,7 +99,7 @@ const turnstileSiteKey = process.env['TURNSTILE_SITE_KEY'] ?? '';
   }
   .brisk-newsletter-signup input {
     padding: 0.5rem 0.75rem;
-    border: 1px solid #d4d4d8;
+    border: 1px solid var(--border);
     border-radius: 6px;
     font: inherit;
   }
@@ -107,8 +107,8 @@ const turnstileSiteKey = process.env['TURNSTILE_SITE_KEY'] ?? '';
     padding: 0.5rem 1.25rem;
     border: none;
     border-radius: 6px;
-    background: #18181b;
-    color: #fff;
+    background: var(--primary);
+    color: var(--primary-foreground);
     font: inherit;
     cursor: pointer;
   }
@@ -123,6 +123,8 @@ const turnstileSiteKey = process.env['TURNSTILE_SITE_KEY'] ?? '';
     padding: 0.75rem 1rem;
     border-radius: 6px;
   }
+  /* Literal green/red regardless of theme — same reasoning as Form.astro's
+     own status colors. */
   .brisk-newsletter-signup__status--success {
     background: #dcfce7;
     color: #166534;

@@ -73,6 +73,9 @@ const canRender = beforeImage !== null && afterImage !== null;
     inset: 0;
     clip-path: inset(0 calc(100% - var(--reveal)) 0 0);
   }
+  /* Divider and label stay literal white — they overlay arbitrary photos,
+     not the page's own background, same "overlay control on unpredictable
+     image content" reasoning as ImageSlider/Testimonials' nav buttons. */
   .brisk-before-after__divider {
     position: absolute;
     top: 0;
