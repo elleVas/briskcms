@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   FormNotFoundError,
+  InvalidCaptchaError,
   InvalidFormSubmissionError,
 } from '@brisk/domain-core';
 import { createForm } from './create-form.use-case.js';
@@ -12,16 +13,19 @@ import {
   InMemoryFormSubmissionRepository,
 } from './in-memory-repositories.test-fixture.js';
 import { FakeEmailPort } from './fake-email-port.test-fixture.js';
+import { FakeCaptchaPort } from './fake-captcha-port.test-fixture.js';
 
 describe('getPublicForm and submitForm', () => {
   const tenantId = 'tenant-1';
   const siteId = 'site-1';
+  const captchaToken = 'valid-token';
 
   function setup() {
     const formRepository = new InMemoryFormRepository();
     const formSubmissionRepository = new InMemoryFormSubmissionRepository();
     const emailPort = new FakeEmailPort();
-    return { formRepository, formSubmissionRepository, emailPort };
+    const captchaPort = new FakeCaptchaPort();
+    return { formRepository, formSubmissionRepository, emailPort, captchaPort };
   }
 
   async function buildFormWithFields(deps: ReturnType<typeof setup>) {
@@ -73,6 +77,7 @@ describe('getPublicForm and submitForm', () => {
       pageId: 'page-1',
       values: { email: 'visitor@example.com', consent: true },
       honeypot: '',
+      captchaToken,
     });
 
     expect(deps.formSubmissionRepository.submissions).toHaveLength(1);
@@ -96,6 +101,7 @@ describe('getPublicForm and submitForm', () => {
         pageId: null,
         values: { consent: true },
         honeypot: '',
+        captchaToken,
       }),
     ).rejects.toThrow(InvalidFormSubmissionError);
     expect(deps.formSubmissionRepository.submissions).toHaveLength(0);
@@ -112,6 +118,7 @@ describe('getPublicForm and submitForm', () => {
         pageId: null,
         values: { email: 'visitor@example.com', consent: false },
         honeypot: '',
+        captchaToken,
       }),
     ).rejects.toThrow(InvalidFormSubmissionError);
   });
@@ -127,9 +134,31 @@ describe('getPublicForm and submitForm', () => {
         pageId: null,
         values: {},
         honeypot: 'i-am-a-bot',
+        // Deliberately blank: the honeypot short-circuit (docs/adr/0015)
+        // must return before the CAPTCHA check ever runs, so an invalid
+        // token here must not turn into a visible InvalidCaptchaError.
+        captchaToken: '',
       }),
     ).resolves.not.toThrow();
 
+    expect(deps.formSubmissionRepository.submissions).toHaveLength(0);
+    expect(deps.emailPort.sentEmails).toHaveLength(0);
+  });
+
+  it('submitForm rejects an invalid or missing CAPTCHA token', async () => {
+    const deps = setup();
+    const form = await buildFormWithFields(deps);
+
+    await expect(
+      submitForm(deps, {
+        tenantId,
+        formId: form.id,
+        pageId: null,
+        values: { email: 'visitor@example.com', consent: true },
+        honeypot: '',
+        captchaToken: '',
+      }),
+    ).rejects.toThrow(InvalidCaptchaError);
     expect(deps.formSubmissionRepository.submissions).toHaveLength(0);
     expect(deps.emailPort.sentEmails).toHaveLength(0);
   });
@@ -144,6 +173,7 @@ describe('getPublicForm and submitForm', () => {
         pageId: null,
         values: {},
         honeypot: '',
+        captchaToken,
       }),
     ).rejects.toThrow(FormNotFoundError);
   });
@@ -162,6 +192,7 @@ describe('getPublicForm and submitForm', () => {
       pageId: null,
       values: {},
       honeypot: '',
+      captchaToken,
     });
 
     expect(deps.formSubmissionRepository.submissions).toHaveLength(1);

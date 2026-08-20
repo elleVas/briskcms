@@ -2,10 +2,12 @@ import { randomUUID } from 'node:crypto';
 import {
   FormNotFoundError,
   FormSubmission,
+  InvalidCaptchaError,
   InvalidFormSubmissionError,
 } from '@brisk/domain-core';
 import type { FormField } from '@brisk/shared-types';
 import type {
+  CaptchaPort,
   EmailPort,
   FormRepositoryPort,
   FormSubmissionRepositoryPort,
@@ -16,6 +18,7 @@ export interface SubmitFormDeps {
   formRepository: FormRepositoryPort;
   formSubmissionRepository: FormSubmissionRepositoryPort;
   emailPort: EmailPort;
+  captchaPort: CaptchaPort;
 }
 
 export interface SubmitFormInput {
@@ -25,6 +28,8 @@ export interface SubmitFormInput {
   values: Record<string, unknown>;
   /** CSS-hidden field real visitors never fill (docs/adr/0015). Non-empty means a bot. */
   honeypot: string;
+  /** Cloudflare Turnstile's client-side widget token. */
+  captchaToken: string;
 }
 
 function isBlank(value: unknown): boolean {
@@ -68,8 +73,20 @@ export async function submitForm(
   if (input.honeypot.trim() !== '') {
     // Silent accept: the caller gets the same "success" response a real
     // submission would, so a bot can never distinguish "rejected" from
-    // "accepted" and tune itself against this check.
+    // "accepted" and tune itself against this check. Checked before the
+    // CAPTCHA verify call below so a caught bot never even burns a
+    // Turnstile API round-trip.
     return;
+  }
+
+  const captchaValid = await deps.captchaPort.verify({
+    token: input.captchaToken,
+  });
+  if (!captchaValid) {
+    // Visible failure, unlike the honeypot above: a real visitor can hit
+    // this from an expired/blocked token and deserves a chance to retry,
+    // not a fake success.
+    throw new InvalidCaptchaError();
   }
 
   validateValues(form.fields, input.values);

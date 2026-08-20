@@ -100,6 +100,7 @@
     "@brisk/session-auth-adapter": "workspace:*",
     "@brisk/shared-types": "workspace:*",
     "@brisk/smtp-email-adapter": "workspace:*",
+    "@brisk/turnstile-captcha": "workspace:*",
     "@brisk/verification-token-adapter": "workspace:*",
     "@nestjs/common": "^11.0.0",
     "@nestjs/core": "^11.0.0",

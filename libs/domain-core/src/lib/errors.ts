@@ -103,6 +103,17 @@ export class InvalidFormSubmissionError extends Error {
   }
 }
 
+/** A failed/expired/missing Turnstile token — unlike the honeypot check
+ * (silently accepted so a bot can't tell it was rejected), this is a real
+ * visitor-facing error: the public submission endpoint maps it to a 400 so
+ * the visitor sees "please retry" instead of a fake success. */
+export class InvalidCaptchaError extends Error {
+  constructor() {
+    super('Invalid or missing CAPTCHA token');
+    this.name = 'InvalidCaptchaError';
+  }
+}
+
 export class UserNotFoundError extends Error {
   constructor(userId: string) {
     super(`User not found: ${userId}`);

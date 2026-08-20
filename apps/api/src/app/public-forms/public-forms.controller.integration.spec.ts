@@ -3,7 +3,7 @@ import { type INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import cookieParser from 'cookie-parser';
 import request from 'supertest';
-import type { AuthPort } from '@brisk/ports';
+import type { AuthPort, CaptchaPort } from '@brisk/ports';
 import {
   type BriskDb,
   deleteIntegrationFixtures,
@@ -15,6 +15,20 @@ import { AUTH_PORT } from '../auth/auth.tokens.js';
 import { DATABASE } from '../database.module.js';
 import { FormsModule } from '../forms/forms.module.js';
 import { PublicFormsModule } from './public-forms.module.js';
+import { CAPTCHA_PORT } from './public-forms.tokens.js';
+
+/** Unlike Postgres/Mailpit (real local infra this repo already runs for
+ * every integration test), Cloudflare's siteverify API is a live
+ * third-party endpoint — depending on it here would make this suite's
+ * pass/fail depend on Cloudflare's uptime and network reachability from
+ * CI, not on whether our own code is correct. Overridden below with this
+ * in-process fake instead, mirroring FakeCaptchaPort's contract
+ * (@brisk/application's unit-test fixture): any non-empty token passes. */
+class FakeCaptchaPort implements CaptchaPort {
+  async verify({ token }: { token: string }): Promise<boolean> {
+    return token.trim() !== '';
+  }
+}
 
 /**
  * Runs against a real Postgres and a real SMTP relay (Mailpit in dev, see
@@ -34,7 +48,10 @@ describe('PublicFormsController (integration)', () => {
   beforeAll(async () => {
     const moduleRef = await Test.createTestingModule({
       imports: [FormsModule, PublicFormsModule],
-    }).compile();
+    })
+      .overrideProvider(CAPTCHA_PORT)
+      .useClass(FakeCaptchaPort)
+      .compile();
 
     app = moduleRef.createNestApplication();
     app.use(cookieParser());
@@ -127,7 +144,11 @@ describe('PublicFormsController (integration)', () => {
 
     await request(app.getHttpServer())
       .post(`/public/forms/${formId}/submissions`)
-      .send({ values: { email: 'visitor@example.com' }, honeypot: '' })
+      .send({
+        values: { email: 'visitor@example.com' },
+        honeypot: '',
+        captchaToken: 'test-token',
+      })
       .expect(204);
   });
 
@@ -139,7 +160,19 @@ describe('PublicFormsController (integration)', () => {
 
     await request(app.getHttpServer())
       .post(`/public/forms/${formId}/submissions`)
-      .send({ values: {}, honeypot: '' })
+      .send({ values: {}, honeypot: '', captchaToken: 'test-token' })
+      .expect(400);
+  });
+
+  it('400s a submission with a missing or invalid CAPTCHA token', async () => {
+    const formId = await createForm(
+      [{ id: 'email', label: 'Email', type: 'email', required: true }],
+      'owner@example.com',
+    );
+
+    await request(app.getHttpServer())
+      .post(`/public/forms/${formId}/submissions`)
+      .send({ values: { email: 'visitor@example.com' }, honeypot: '' })
       .expect(400);
   });
 
@@ -158,7 +191,7 @@ describe('PublicFormsController (integration)', () => {
   it('404s submitting to a form that does not exist', async () => {
     await request(app.getHttpServer())
       .post(`/public/forms/${randomUUID()}/submissions`)
-      .send({ values: {}, honeypot: '' })
+      .send({ values: {}, honeypot: '', captchaToken: 'test-token' })
       .expect(404);
   });
 });

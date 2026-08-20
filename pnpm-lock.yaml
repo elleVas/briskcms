@@ -252,6 +252,9 @@ importers:
       '@brisk/smtp-email-adapter':
         specifier: workspace:*
         version: link:../../libs/adapters/smtp-email-adapter
+      '@brisk/turnstile-captcha':
+        specifier: workspace:*
+        version: link:../../libs/adapters/turnstile-captcha
       '@brisk/verification-token-adapter':
         specifier: workspace:*
         version: link:../../libs/adapters/verification-token-adapter
@@ -637,6 +640,12 @@ importers:
       '@types/nodemailer':
         specifier: ^8.0.1
         version: 8.0.1
+
+  libs/adapters/turnstile-captcha:
+    dependencies:
+      '@brisk/ports':
+        specifier: workspace:*
+        version: link:../../ports
 
   libs/adapters/verification-token-adapter:
     dependencies:
