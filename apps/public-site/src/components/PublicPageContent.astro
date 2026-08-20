@@ -28,16 +28,28 @@ const { page } = Astro.props;
       headerSticky={page.headerSticky}
       ancestors={page.ancestors}
     >
-      {page.content.map((block) => (
-        <BlockRenderer
-          block={block}
-          locale={page.locale}
-          translations={page.translations}
-          site={page.site}
-          ancestors={page.ancestors}
-          currentPageTitle={page.seoMeta.title}
-        />
-      ))}
+      {
+        // The generic baseline gap between stacked page blocks — before
+        // this, BlockRenderer/PageLayout applied zero spacing of any kind
+        // between siblings, so every page ran blocks together edge-to-edge
+        // regardless of theme. One wrapper here fixes it site-wide instead
+        // of touching all ~46 block files individually. A per-block
+        // override (a block that wants tighter/looser spacing than this
+        // default) is a separate, not-yet-built editor field — this is
+        // only the default every block gets for free.
+      }
+      <div class="flex flex-col gap-16">
+        {page.content.map((block) => (
+          <BlockRenderer
+            block={block}
+            locale={page.locale}
+            translations={page.translations}
+            site={page.site}
+            ancestors={page.ancestors}
+            currentPageTitle={page.seoMeta.title}
+          />
+        ))}
+      </div>
     </PageLayout>
   ) : (
     <NotFound />

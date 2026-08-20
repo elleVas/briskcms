@@ -207,34 +207,43 @@ const themeOverrideDeclarations = [
 	<body>
 		{
 			header && (
-				<header class:list={[{ 'brisk-header--sticky': headerSticky }]}>
-					{header.map((block) => (
-						<BlockRenderer
-							block={block}
-							locale={locale}
-							translations={translations}
-							site={site}
-							ancestors={ancestors}
-							currentPageTitle={seoMeta.title}
-						/>
-					))}
+				<header
+					class:list={[
+						'border-b border-border bg-background px-6 py-4',
+						{ 'brisk-header--sticky': headerSticky },
+					]}
+				>
+					<div class="flex flex-col gap-3">
+						{header.map((block) => (
+							<BlockRenderer
+								block={block}
+								locale={locale}
+								translations={translations}
+								site={site}
+								ancestors={ancestors}
+								currentPageTitle={seoMeta.title}
+							/>
+						))}
+					</div>
 				</header>
 			)
 		}
 		<slot />
 		{
 			footer && (
-				<footer>
-					{footer.map((block) => (
-						<BlockRenderer
-							block={block}
-							locale={locale}
-							translations={translations}
-							site={site}
-							ancestors={ancestors}
-							currentPageTitle={seoMeta.title}
-						/>
-					))}
+				<footer class="border-t border-border bg-secondary px-6 py-12">
+					<div class="flex flex-col gap-3">
+						{footer.map((block) => (
+							<BlockRenderer
+								block={block}
+								locale={locale}
+								translations={translations}
+								site={site}
+								ancestors={ancestors}
+								currentPageTitle={seoMeta.title}
+							/>
+						))}
+					</div>
 				</footer>
 			)
 		}
