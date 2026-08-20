@@ -1,0 +1,112 @@
+---
+import type { BeforeAfterProps } from '@brisk/shared-types';
+
+type Props = BeforeAfterProps;
+
+const { beforeImage, afterImage, beforeLabel, afterLabel } = Astro.props;
+const canRender = beforeImage !== null && afterImage !== null;
+---
+
+{
+  canRender ? (
+    <div class="brisk-before-after" style="--reveal: 50%">
+      <img src={afterImage.url} alt={afterLabel} class="brisk-before-after__image" />
+      <div class="brisk-before-after__reveal">
+        <img
+          src={beforeImage.url}
+          alt={beforeLabel}
+          class="brisk-before-after__image"
+        />
+      </div>
+      <div class="brisk-before-after__divider" aria-hidden="true" />
+      <span class="brisk-before-after__label brisk-before-after__label--before">
+        {beforeLabel}
+      </span>
+      <span class="brisk-before-after__label brisk-before-after__label--after">
+        {afterLabel}
+      </span>
+      <input
+        type="range"
+        min="0"
+        max="100"
+        value="50"
+        class="brisk-before-after__slider"
+        aria-label={`Confronta ${beforeLabel} e ${afterLabel}`}
+      />
+    </div>
+  ) : (
+    <p>Seleziona entrambe le immagini per il confronto prima/dopo.</p>
+  )
+}
+
+<script>
+  document
+    .querySelectorAll<HTMLDivElement>('.brisk-before-after')
+    .forEach((container) => {
+      const slider = container.querySelector<HTMLInputElement>(
+        '.brisk-before-after__slider',
+      );
+      slider?.addEventListener('input', () => {
+        container.style.setProperty('--reveal', `${slider.value}%`);
+      });
+    });
+</script>
+
+<style>
+  .brisk-before-after {
+    position: relative;
+    aspect-ratio: 4 / 3;
+    width: 100%;
+    overflow: hidden;
+    border-radius: 8px;
+  }
+  .brisk-before-after__image {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    max-width: 100%;
+    object-fit: cover;
+  }
+  .brisk-before-after__reveal {
+    position: absolute;
+    inset: 0;
+    clip-path: inset(0 calc(100% - var(--reveal)) 0 0);
+  }
+  .brisk-before-after__divider {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: var(--reveal);
+    width: 2px;
+    background: #fff;
+    box-shadow: 0 0 4px rgb(0 0 0 / 40%);
+    pointer-events: none;
+    transform: translateX(-50%);
+  }
+  .brisk-before-after__label {
+    position: absolute;
+    top: 0.75rem;
+    padding: 0.25rem 0.6rem;
+    border-radius: 4px;
+    background: rgb(0 0 0 / 55%);
+    color: #fff;
+    font-size: 0.75rem;
+  }
+  .brisk-before-after__label--before {
+    left: 0.75rem;
+  }
+  .brisk-before-after__label--after {
+    right: 0.75rem;
+  }
+  .brisk-before-after__slider {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    opacity: 0;
+    cursor: ew-resize;
+    appearance: none;
+  }
+</style>

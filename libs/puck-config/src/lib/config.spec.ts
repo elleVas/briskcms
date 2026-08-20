@@ -25,6 +25,11 @@ describe('puckConfig', () => {
       'FeatureGrid',
       'Feature',
       'SearchBox',
+      'VideoEmbed',
+      'MapEmbed',
+      'ImageSlider',
+      'BeforeAfter',
+      'LogoStrip',
     ]);
     expect(typeof puckConfig.components.Hero.render).toBe('function');
     expect(typeof puckConfig.components.Text.render).toBe('function');
@@ -47,5 +52,10 @@ describe('puckConfig', () => {
     expect(typeof puckConfig.components.FeatureGrid.render).toBe('function');
     expect(typeof puckConfig.components.Feature.render).toBe('function');
     expect(typeof puckConfig.components.SearchBox.render).toBe('function');
+    expect(typeof puckConfig.components.VideoEmbed.render).toBe('function');
+    expect(typeof puckConfig.components.MapEmbed.render).toBe('function');
+    expect(typeof puckConfig.components.ImageSlider.render).toBe('function');
+    expect(typeof puckConfig.components.BeforeAfter.render).toBe('function');
+    expect(typeof puckConfig.components.LogoStrip.render).toBe('function');
   });
 });

@@ -1,0 +1,120 @@
+---
+import type { ImageSliderProps, PickedMedia } from '@brisk/shared-types';
+
+type Props = ImageSliderProps;
+type SliderImage = ImageSliderProps['images'][number];
+
+function isPictured(
+  image: SliderImage,
+): image is SliderImage & { media: PickedMedia } {
+  return image.media !== null;
+}
+
+const { images } = Astro.props;
+const pictured = images.filter(isPictured);
+---
+
+{
+  pictured.length > 0 ? (
+    <div class="brisk-slider">
+      <div class="brisk-slider__track">
+        {pictured.map((image) => (
+          <img
+            src={image.media.url}
+            alt={image.alt}
+            class="brisk-slider__slide"
+          />
+        ))}
+      </div>
+      {pictured.length > 1 && (
+        <>
+          <button
+            type="button"
+            class="brisk-slider__nav brisk-slider__nav--prev"
+            aria-label="Immagine precedente"
+          >
+            ‹
+          </button>
+          <button
+            type="button"
+            class="brisk-slider__nav brisk-slider__nav--next"
+            aria-label="Immagine successiva"
+          >
+            ›
+          </button>
+        </>
+      )}
+    </div>
+  ) : (
+    <p>Nessuna immagine nello slider.</p>
+  )
+}
+
+<script>
+  // Native CSS scroll-snap already makes this swipeable/scrollable with no
+  // JS at all — the prev/next buttons are a progressive-enhancement layer
+  // on top (scrollBy one track width), not the only way to move it.
+  document
+    .querySelectorAll<HTMLDivElement>('.brisk-slider')
+    .forEach((slider) => {
+      const track = slider.querySelector<HTMLDivElement>(
+        '.brisk-slider__track',
+      );
+      if (!track) return;
+
+      const scrollByOneSlide = (direction: 1 | -1) => {
+        track.scrollBy({ left: direction * track.clientWidth, behavior: 'smooth' });
+      };
+
+      slider
+        .querySelector('.brisk-slider__nav--prev')
+        ?.addEventListener('click', () => scrollByOneSlide(-1));
+      slider
+        .querySelector('.brisk-slider__nav--next')
+        ?.addEventListener('click', () => scrollByOneSlide(1));
+    });
+</script>
+
+<style>
+  .brisk-slider {
+    position: relative;
+  }
+  .brisk-slider__track {
+    display: flex;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+  }
+  .brisk-slider__track::-webkit-scrollbar {
+    display: none;
+  }
+  .brisk-slider__slide {
+    flex: 0 0 100%;
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+    aspect-ratio: 16 / 9;
+    object-fit: cover;
+    scroll-snap-align: start;
+  }
+  .brisk-slider__nav {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 50%;
+    border: none;
+    background: rgb(255 255 255 / 85%);
+    color: #18181b;
+    font-size: 1.5rem;
+    line-height: 1;
+    cursor: pointer;
+  }
+  .brisk-slider__nav--prev {
+    left: 0.75rem;
+  }
+  .brisk-slider__nav--next {
+    right: 0.75rem;
+  }
+</style>

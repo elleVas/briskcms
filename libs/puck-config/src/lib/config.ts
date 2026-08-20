@@ -8,6 +8,10 @@ import {
   type AccordionItemProps,
 } from './blocks/accordion-item.block.js';
 import { bannerConfig, type BannerProps } from './blocks/banner.block.js';
+import {
+  beforeAfterConfig,
+  type BeforeAfterProps,
+} from './blocks/before-after.block.js';
 import { buttonConfig, type ButtonProps } from './blocks/button.block.js';
 import { columnConfig, type ColumnPuckProps } from './blocks/column.block.js';
 import {
@@ -30,7 +34,19 @@ import {
 import { formConfig, type FormBlockProps } from './blocks/form.block.js';
 import { galleryConfig, type GalleryProps } from './blocks/gallery.block.js';
 import { heroConfig, type HeroProps } from './blocks/hero.block.js';
+import {
+  imageSliderConfig,
+  type ImageSliderProps,
+} from './blocks/image-slider.block.js';
 import { imageConfig, type ImageProps } from './blocks/image.block.js';
+import {
+  logoStripConfig,
+  type LogoStripProps,
+} from './blocks/logo-strip.block.js';
+import {
+  mapEmbedConfig,
+  type MapEmbedProps,
+} from './blocks/map-embed.block.js';
 import { quoteConfig, type QuoteProps } from './blocks/quote.block.js';
 import { ratingConfig, type RatingProps } from './blocks/rating.block.js';
 import {
@@ -41,6 +57,10 @@ import { tabConfig, type TabPuckProps } from './blocks/tab.block.js';
 import { tabsConfig, type TabsPuckProps } from './blocks/tabs.block.js';
 import { tableConfig, type TableProps } from './blocks/table.block.js';
 import { textConfig, type TextProps } from './blocks/text.block.js';
+import {
+  videoEmbedConfig,
+  type VideoEmbedProps,
+} from './blocks/video-embed.block.js';
 
 export interface BriskComponentProps {
   Hero: HeroProps;
@@ -64,6 +84,11 @@ export interface BriskComponentProps {
   FeatureGrid: FeatureGridPuckProps;
   Feature: FeatureProps;
   SearchBox: SearchBoxProps;
+  VideoEmbed: VideoEmbedProps;
+  MapEmbed: MapEmbedProps;
+  ImageSlider: ImageSliderProps;
+  BeforeAfter: BeforeAfterProps;
+  LogoStrip: LogoStripProps;
 }
 
 export const puckConfig: Config<BriskComponentProps> = {
@@ -89,5 +114,10 @@ export const puckConfig: Config<BriskComponentProps> = {
     FeatureGrid: featureGridConfig,
     Feature: featureConfig,
     SearchBox: searchBoxConfig,
+    VideoEmbed: videoEmbedConfig,
+    MapEmbed: mapEmbedConfig,
+    ImageSlider: imageSliderConfig,
+    BeforeAfter: beforeAfterConfig,
+    LogoStrip: logoStripConfig,
   },
 };
