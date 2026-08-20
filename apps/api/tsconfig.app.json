@@ -47,6 +47,9 @@
       "path": "../../libs/adapters/s3-media-storage/tsconfig.lib.json"
     },
     {
+      "path": "../../libs/adapters/s3-attachment-storage/tsconfig.lib.json"
+    },
+    {
       "path": "../../libs/adapters/postgres-user-repository/tsconfig.lib.json"
     },
     {
@@ -75,6 +78,9 @@
     },
     {
       "path": "../../libs/adapters/local-disk-media-storage/tsconfig.lib.json"
+    },
+    {
+      "path": "../../libs/adapters/local-disk-attachment-storage/tsconfig.lib.json"
     },
     {
       "path": "../../libs/env-config/tsconfig.lib.json"

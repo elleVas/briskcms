@@ -213,6 +213,9 @@ importers:
       '@brisk/env-config':
         specifier: workspace:*
         version: link:../../libs/env-config
+      '@brisk/local-disk-attachment-storage':
+        specifier: workspace:*
+        version: link:../../libs/adapters/local-disk-attachment-storage
       '@brisk/local-disk-media-storage':
         specifier: workspace:*
         version: link:../../libs/adapters/local-disk-media-storage
@@ -246,6 +249,9 @@ importers:
       '@brisk/postgres-user-repository':
         specifier: workspace:*
         version: link:../../libs/adapters/postgres-user-repository
+      '@brisk/s3-attachment-storage':
+        specifier: workspace:*
+        version: link:../../libs/adapters/s3-attachment-storage
       '@brisk/s3-media-storage':
         specifier: workspace:*
         version: link:../../libs/adapters/s3-media-storage
@@ -413,6 +419,12 @@ importers:
         version: 6.0.3
 
   libs/adapters/brevo-newsletter:
+    dependencies:
+      '@brisk/ports':
+        specifier: workspace:*
+        version: link:../../ports
+
+  libs/adapters/local-disk-attachment-storage:
     dependencies:
       '@brisk/ports':
         specifier: workspace:*
@@ -605,6 +617,15 @@ importers:
       dotenv:
         specifier: ^17.4.2
         version: 17.4.2
+
+  libs/adapters/s3-attachment-storage:
+    dependencies:
+      '@aws-sdk/client-s3':
+        specifier: ^3.1113.0
+        version: 3.1113.0
+      '@brisk/ports':
+        specifier: workspace:*
+        version: link:../../ports
 
   libs/adapters/s3-media-storage:
     dependencies:

@@ -234,4 +234,37 @@ describe('PublicFormsController (integration)', () => {
       .send({ values: {}, honeypot: '', captchaToken: 'test-token' })
       .expect(404);
   });
+
+  it('uploads an attachment and returns its public URL and original filename', async () => {
+    const formId = await createForm(
+      [{ id: 'cv', label: 'Curriculum', type: 'file', required: false }],
+      null,
+    );
+
+    const res = await request(app.getHttpServer())
+      .post(`/public/forms/${formId}/attachments`)
+      .attach('file', Buffer.from('%PDF-1.4 fake pdf'), 'cv.pdf')
+      .expect(201);
+
+    expect(res.body.filename).toBe('cv.pdf');
+    expect(res.body.url).toContain('/uploads/attachments/');
+  });
+
+  it('400s an attachment upload with no file', async () => {
+    const formId = await createForm(
+      [{ id: 'cv', label: 'Curriculum', type: 'file', required: false }],
+      null,
+    );
+
+    await request(app.getHttpServer())
+      .post(`/public/forms/${formId}/attachments`)
+      .expect(400);
+  });
+
+  it('404s an attachment upload for a form that does not exist', async () => {
+    await request(app.getHttpServer())
+      .post(`/public/forms/${randomUUID()}/attachments`)
+      .attach('file', Buffer.from('data'), 'file.txt')
+      .expect(404);
+  });
 });

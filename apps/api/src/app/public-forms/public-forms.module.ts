@@ -9,9 +9,11 @@ import {
 import { SmtpEmailAdapter } from '@brisk/smtp-email-adapter';
 import { TurnstileCaptchaAdapter } from '@brisk/turnstile-captcha';
 import { DATABASE, DatabaseModule } from '../database.module.js';
+import { createAttachmentStorage } from '../attachment-storage.factory.js';
 import { createNewsletterPort } from '../newsletter-port.factory.js';
 import { PublicFormsController } from './public-forms.controller.js';
 import {
+  ATTACHMENT_STORAGE,
   CAPTCHA_PORT,
   DEFAULT_TENANT_ID,
   EMAIL_PORT,
@@ -72,6 +74,10 @@ import {
     {
       provide: NEWSLETTER_PORT,
       useFactory: createNewsletterPort,
+    },
+    {
+      provide: ATTACHMENT_STORAGE,
+      useFactory: createAttachmentStorage,
     },
   ],
 })

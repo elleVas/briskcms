@@ -294,7 +294,10 @@
         "tel": "Phone",
         "checkbox": "Checkbox",
         "select": "Select",
-        "newsletter-consent": "Newsletter signup"
+        "newsletter-consent": "Newsletter signup",
+        "date": "Date",
+        "time": "Time",
+        "file": "File upload"
       }
     }
   },

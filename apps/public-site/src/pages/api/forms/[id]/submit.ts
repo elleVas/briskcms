@@ -1,5 +1,8 @@
 import type { APIRoute } from 'astro';
-import { submitPublicForm } from '../../../../lib/public-api-client.js';
+import {
+  submitPublicForm,
+  uploadFormAttachment,
+} from '../../../../lib/public-api-client.js';
 
 // Same-origin proxy (docs/adr/0015): the browser only ever POSTs to this
 // app's own origin, never directly to the API — avoids touching ADR-0010's
@@ -30,12 +33,31 @@ export const POST: APIRoute = async ({ params, request, redirect }) => {
     .filter(Boolean);
 
   const values: Record<string, unknown> = {};
-  for (const [key, value] of formData.entries()) {
-    if (key.startsWith('_') || key === 'cf-turnstile-response') continue;
-    values[key] = checkboxFieldIds.includes(key) ? value === 'on' : value;
-  }
-  for (const id of checkboxFieldIds) {
-    if (!(id in values)) values[id] = false;
+  // Honeypot check first, before touching any file field: an obvious bot
+  // must never trigger an attachment upload, same "checked before the
+  // expensive/network step" reasoning submitForm's own use-case already
+  // applies to the CAPTCHA verify call.
+  if (honeypot.trim() === '') {
+    for (const [key, value] of formData.entries()) {
+      if (key.startsWith('_') || key === 'cf-turnstile-response') continue;
+      if (value instanceof File) {
+        // A real <input type="file"> with nothing selected submits its
+        // field as an empty string, not a File (WHATWG spec) — so this
+        // branch only runs for an actual selection. The size>0 guard is
+        // defensive for the rare runtime that might still hand back an
+        // empty-name File instead; either way "no value" falls straight
+        // through to submitForm's own isBlank() check, no special-casing
+        // needed here.
+        if (value.size > 0) {
+          values[key] = await uploadFormAttachment(formId, value);
+        }
+        continue;
+      }
+      values[key] = checkboxFieldIds.includes(key) ? value === 'on' : value;
+    }
+    for (const id of checkboxFieldIds) {
+      if (!(id in values)) values[id] = false;
+    }
   }
 
   // The public site doesn't track a page's own id yet (see
