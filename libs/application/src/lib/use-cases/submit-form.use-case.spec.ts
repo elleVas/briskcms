@@ -124,6 +124,75 @@ describe('getPublicForm and submitForm', () => {
     expect(deps.emailPort.sentEmails[0].html).toContain('visitor@example.com');
   });
 
+  it('submitForm formats a file field as its filename and URL in the notification email', async () => {
+    const deps = setup();
+    const form = await createForm(deps, {
+      tenantId,
+      siteId,
+      name: 'Candidature',
+    });
+    await updateForm(deps, {
+      tenantId,
+      formId: form.id,
+      name: 'Candidature',
+      fields: [
+        { id: 'email', label: 'Email', type: 'email', required: true },
+        { id: 'cv', label: 'Curriculum', type: 'file', required: false },
+      ],
+      notificationEmail: 'hr@example.com',
+    });
+
+    await submitForm(deps, {
+      tenantId,
+      formId: form.id,
+      pageId: null,
+      values: {
+        email: 'candidato@example.com',
+        cv: {
+          url: 'http://localhost:3000/api/uploads/attachments/abc.pdf',
+          filename: 'cv.pdf',
+        },
+      },
+      honeypot: '',
+      captchaToken,
+    });
+
+    expect(deps.emailPort.sentEmails[0].html).toContain('cv.pdf');
+    expect(deps.emailPort.sentEmails[0].html).toContain(
+      'http://localhost:3000/api/uploads/attachments/abc.pdf',
+    );
+  });
+
+  it('submitForm shows a dash for a file field left empty in the notification email', async () => {
+    const deps = setup();
+    const form = await createForm(deps, {
+      tenantId,
+      siteId,
+      name: 'Candidature',
+    });
+    await updateForm(deps, {
+      tenantId,
+      formId: form.id,
+      name: 'Candidature',
+      fields: [
+        { id: 'email', label: 'Email', type: 'email', required: true },
+        { id: 'cv', label: 'Curriculum', type: 'file', required: false },
+      ],
+      notificationEmail: 'hr@example.com',
+    });
+
+    await submitForm(deps, {
+      tenantId,
+      formId: form.id,
+      pageId: null,
+      values: { email: 'candidato@example.com', cv: '' },
+      honeypot: '',
+      captchaToken,
+    });
+
+    expect(deps.emailPort.sentEmails[0].html).not.toContain('[object Object]');
+  });
+
   it('submitForm rejects a missing required field', async () => {
     const deps = setup();
     const form = await buildFormWithFields(deps);

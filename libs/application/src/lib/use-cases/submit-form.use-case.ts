@@ -5,7 +5,7 @@ import {
   InvalidCaptchaError,
   InvalidFormSubmissionError,
 } from '@brisk/domain-core';
-import type { FormField } from '@brisk/shared-types';
+import { formFieldFileValueSchema, type FormField } from '@brisk/shared-types';
 import type {
   CaptchaPort,
   EmailPort,
@@ -68,6 +68,13 @@ function validateValues(
 function formatValue(field: FormField, value: unknown): string {
   if (isCheckboxLike(field.type)) {
     return value === true ? 'Sì' : 'No';
+  }
+  if (field.type === 'file') {
+    // The raw value is `{ url, filename }`, not a plain string — String()
+    // on it would print the useless "[object Object]" in the
+    // notification email.
+    const file = formFieldFileValueSchema.safeParse(value);
+    return file.success ? `${file.data.filename} (${file.data.url})` : '—';
   }
   return isBlank(value) ? '—' : String(value);
 }

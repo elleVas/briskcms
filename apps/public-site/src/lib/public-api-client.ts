@@ -196,6 +196,37 @@ export async function getPublicForm(
   return res.json();
 }
 
+export interface UploadedFormAttachment {
+  url: string;
+  filename: string;
+}
+
+/**
+ * Called server-side from the submit proxy (docs/adr/0015's pattern),
+ * before the main JSON submission — a `file`-typed field's value has to
+ * become `{ url, filename }` (form-fields.ts's own formFieldFileValueSchema)
+ * ahead of that JSON POST, since a File object itself isn't JSON-
+ * serializable. No CAPTCHA token needed here: the real API endpoint this
+ * calls doesn't re-verify one (a Turnstile token is single-use, and the
+ * main submission below already verifies it once for the whole
+ * transaction — see public-forms.controller.ts's own comment on this).
+ */
+export async function uploadFormAttachment(
+  formId: string,
+  file: File,
+): Promise<UploadedFormAttachment> {
+  const body = new FormData();
+  body.append('file', file, file.name);
+  const res = await fetch(`${apiUrl()}/public/forms/${formId}/attachments`, {
+    method: 'POST',
+    body,
+  });
+  if (!res.ok) {
+    throw new Error(`Public forms API error: ${res.status}`);
+  }
+  return res.json();
+}
+
 export interface SubmitPublicFormInput {
   pageId: string | null;
   values: Record<string, unknown>;

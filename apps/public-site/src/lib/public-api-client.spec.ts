@@ -10,6 +10,7 @@ import {
   listPublishedPagesForSitemap,
   subscribeNewsletter,
   submitPublicForm,
+  uploadFormAttachment,
 } from './public-api-client.js';
 
 const samplePage: PublishedPageDto = {
@@ -202,6 +203,38 @@ describe('public-api-client', () => {
       expect.objectContaining({ method: 'POST' }),
     );
     expect(result).toEqual({ ok: true });
+  });
+
+  it('uploadFormAttachment posts the file as multipart and returns the stored url/filename', async () => {
+    vi.mocked(fetch).mockResolvedValue(
+      jsonResponse({
+        url: 'http://localhost:3000/api/uploads/attachments/abc.pdf',
+        filename: 'cv.pdf',
+      }),
+    );
+    const file = new File(['%PDF-1.4'], 'cv.pdf', {
+      type: 'application/pdf',
+    });
+
+    const result = await uploadFormAttachment('form-1', file);
+
+    expect(fetch).toHaveBeenCalledWith(
+      expect.stringContaining('/public/forms/form-1/attachments'),
+      expect.objectContaining({ method: 'POST' }),
+    );
+    const [, init] = vi.mocked(fetch).mock.calls[0];
+    expect(init?.body).toBeInstanceOf(FormData);
+    expect(result).toEqual({
+      url: 'http://localhost:3000/api/uploads/attachments/abc.pdf',
+      filename: 'cv.pdf',
+    });
+  });
+
+  it('uploadFormAttachment throws on a failed upload', async () => {
+    vi.mocked(fetch).mockResolvedValue(jsonResponse({}, 400));
+    const file = new File(['x'], 'x.txt', { type: 'text/plain' });
+
+    await expect(uploadFormAttachment('form-1', file)).rejects.toThrow();
   });
 
   it('submitPublicForm reports failure with the status code, without throwing', async () => {

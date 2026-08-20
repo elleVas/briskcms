@@ -102,6 +102,33 @@ describe('FormFieldEditorRow', () => {
     expect(screen.queryByLabelText(/opzioni/i)).toBeFalsy();
   });
 
+  it('lists date, time and file as selectable types, with no options textarea', () => {
+    const { unmount: unmountDate } = renderRow({
+      id: 'f1',
+      label: 'x',
+      type: 'date',
+      required: false,
+    });
+    expect(screen.getByRole('option', { name: 'Data' })).toBeTruthy();
+    expect(screen.queryByLabelText(/opzioni/i)).toBeFalsy();
+    unmountDate();
+
+    const { unmount: unmountTime } = renderRow({
+      id: 'f2',
+      label: 'x',
+      type: 'time',
+      required: false,
+    });
+    expect(screen.getByRole('option', { name: 'Ora' })).toBeTruthy();
+    unmountTime();
+
+    renderRow({ id: 'f3', label: 'x', type: 'file', required: false });
+    expect(
+      screen.getByRole('option', { name: 'Caricamento file' }),
+    ).toBeTruthy();
+    expect(screen.queryByLabelText(/opzioni/i)).toBeFalsy();
+  });
+
   it('toggles required', () => {
     const onChange = vi.fn();
     renderRow(

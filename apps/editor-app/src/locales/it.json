@@ -294,7 +294,10 @@
         "tel": "Telefono",
         "checkbox": "Checkbox",
         "select": "Selezione",
-        "newsletter-consent": "Iscrizione newsletter"
+        "newsletter-consent": "Iscrizione newsletter",
+        "date": "Data",
+        "time": "Ora",
+        "file": "Caricamento file"
       }
     }
   },

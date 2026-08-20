@@ -52,7 +52,14 @@ const turnstileSiteKey = process.env['TURNSTILE_SITE_KEY'] ?? '';
         </p>
       )}
       {!submitted && (
-        <form method="POST" action={`/api/forms/${form.id}/submit`}>
+        // multipart/form-data always, not just when a `file` field is
+        // present — it works identically for every other field type too,
+        // so there's no need to compute a per-form conditional for it.
+        <form
+          method="POST"
+          action={`/api/forms/${form.id}/submit`}
+          enctype="multipart/form-data"
+        >
           <input type="hidden" name="_redirectTo" value={redirectTo} />
           <input type="hidden" name="_checkboxFields" value={checkboxFieldIds} />
           {/* Honeypot: real visitors never see or fill this (docs/adr/0015).

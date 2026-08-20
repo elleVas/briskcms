@@ -16,6 +16,23 @@ function formDataRequest(fields: Record<string, string>): Request {
   });
 }
 
+function multipartRequest(
+  fields: Record<string, string>,
+  files: Record<string, File> = {},
+): Request {
+  const body = new FormData();
+  for (const [key, value] of Object.entries(fields)) {
+    body.append(key, value);
+  }
+  for (const [key, file] of Object.entries(files)) {
+    body.append(key, file);
+  }
+  return new Request('http://localhost:4321/api/forms/form-1/submit', {
+    method: 'POST',
+    body,
+  });
+}
+
 function redirect(path: string, status = 302): Response {
   return new Response(null, { status, headers: { Location: path } });
 }
@@ -92,6 +109,81 @@ describe('POST /api/forms/[id]/submit', () => {
 
     const [, init] = vi.mocked(fetch).mock.calls[0];
     expect(JSON.parse(init?.body as string).values.consenso).toBe(false);
+  });
+
+  it('uploads a selected file first, then sends its {url, filename} in the values', async () => {
+    vi.mocked(fetch)
+      .mockResolvedValueOnce(
+        jsonResponse({
+          url: 'http://localhost:3000/api/uploads/attachments/abc.pdf',
+          filename: 'cv.pdf',
+        }),
+      )
+      .mockResolvedValueOnce(jsonResponse(undefined, 204));
+
+    const file = new File(['%PDF-1.4'], 'cv.pdf', { type: 'application/pdf' });
+    const request = multipartRequest(
+      { _redirectTo: '/contatti', _checkboxFields: '', _honeypot: '' },
+      { cv: file },
+    );
+
+    // @ts-expect-error deliberately partial APIContext
+    await POST({ params: { id: 'form-1' }, request, redirect });
+
+    expect(fetch).toHaveBeenCalledTimes(2);
+    expect(vi.mocked(fetch).mock.calls[0][0]).toContain(
+      '/public/forms/form-1/attachments',
+    );
+    const [, submitInit] = vi.mocked(fetch).mock.calls[1];
+    const body = JSON.parse(submitInit?.body as string);
+    expect(body.values.cv).toEqual({
+      url: 'http://localhost:3000/api/uploads/attachments/abc.pdf',
+      filename: 'cv.pdf',
+    });
+  });
+
+  it('does not attempt an upload when no file was selected', async () => {
+    vi.mocked(fetch).mockResolvedValue(jsonResponse(undefined, 204));
+
+    // A real <input type="file"> with nothing selected submits its field
+    // as an empty string, not a File (WHATWG spec) — even an explicitly
+    // constructed empty-name File round-trips through FormData/fetch the
+    // same way, confirmed by this test.
+    const emptyFile = new File([], '');
+    const request = multipartRequest(
+      { _redirectTo: '/contatti', _checkboxFields: '', _honeypot: '' },
+      { cv: emptyFile },
+    );
+
+    // @ts-expect-error deliberately partial APIContext
+    await POST({ params: { id: 'form-1' }, request, redirect });
+
+    expect(fetch).toHaveBeenCalledTimes(1);
+    const [, init] = vi.mocked(fetch).mock.calls[0];
+    // Not a { url, filename } object — submitForm's own isBlank() already
+    // treats '' as missing, same as any other untouched optional field.
+    expect(JSON.parse(init?.body as string).values.cv).toBe('');
+  });
+
+  it('never uploads a file for a honeypot-filled submission', async () => {
+    vi.mocked(fetch).mockResolvedValue(jsonResponse(undefined, 204));
+
+    const file = new File(['%PDF-1.4'], 'cv.pdf', { type: 'application/pdf' });
+    const request = multipartRequest(
+      {
+        _redirectTo: '/contatti',
+        _checkboxFields: '',
+        _honeypot: 'i-am-a-bot',
+      },
+      { cv: file },
+    );
+
+    // @ts-expect-error deliberately partial APIContext
+    await POST({ params: { id: 'form-1' }, request, redirect });
+
+    // Only the final (silently-accepted) submission call, never an upload.
+    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(vi.mocked(fetch).mock.calls[0][0]).toContain('/submissions');
   });
 
   it('redirects with formError when the API rejects the submission', async () => {

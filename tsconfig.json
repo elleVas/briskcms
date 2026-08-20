@@ -77,6 +77,12 @@
     },
     {
       "path": "./libs/adapters/brevo-newsletter"
+    },
+    {
+      "path": "./libs/adapters/local-disk-attachment-storage"
+    },
+    {
+      "path": "./libs/adapters/s3-attachment-storage"
     }
   ],
   "compilerOptions": {}
