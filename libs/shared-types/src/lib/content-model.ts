@@ -461,3 +461,77 @@ export const searchBoxPropsSchema = z.object({
   visibility: visibilitySchema.default('always'),
 });
 export type SearchBoxProps = z.infer<typeof searchBoxPropsSchema>;
+
+/**
+ * "Solo embed (link YouTube/Vimeo), niente encoding/hosting video lato
+ * nostro" (piano progetto, Blocchi editor MVP). `url` is parsed by
+ * apps/public-site (parseVideoEmbedUrl) into a privacy-enhanced iframe src
+ * — YouTube via youtube-nocookie.com; no such domain exists for Vimeo — and
+ * gated behind a click on the public site (no third-party request/cookie
+ * until the visitor explicitly asks for the video), same GDPR-conscious
+ * pattern as `mapEmbedPropsSchema` below.
+ */
+export const videoEmbedPropsSchema = z.object({
+  url: z.string(),
+});
+export type VideoEmbedProps = z.infer<typeof videoEmbedPropsSchema>;
+
+/**
+ * Google Maps by address, using the no-API-key `output=embed` query form
+ * (not the paid Maps Embed API) — zero setup for a non-technical site
+ * owner. Gated behind a click on the public site (no request to Google, no
+ * cookie, until the visitor explicitly asks to see the map): Brisk has no
+ * cookie-consent banner yet (batch H, not built), and click-to-load is a
+ * complete, self-contained GDPR mitigation on its own, not a stopgap
+ * waiting for that banner.
+ */
+export const mapEmbedPropsSchema = z.object({
+  address: z.string(),
+});
+export type MapEmbedProps = z.infer<typeof mapEmbedPropsSchema>;
+
+/**
+ * Same `{ media, alt }[]` shape as `galleryPropsSchema`, on its own named
+ * schema rather than reusing that const — same reasoning as
+ * `columnPropsSchema`/`accordionPropsSchema`/`tabsPropsSchema` each having
+ * their own name despite an identical `z.strictObject({})` shape. Rendered
+ * as a swipeable/scroll-snap carousel (ImageSlider.astro) instead of a grid.
+ */
+export const imageSliderPropsSchema = z.object({
+  images: z.array(
+    z.object({
+      media: pickedMediaSchema.nullable(),
+      alt: z.string(),
+    }),
+  ),
+});
+export type ImageSliderProps = z.infer<typeof imageSliderPropsSchema>;
+
+/**
+ * A reveal slider between two images of the same subject. `beforeLabel`/
+ * `afterLabel` default to "Prima"/"Dopo" but stay editable — a renovation
+ * before/after reads differently than e.g. a progress-photo before/after.
+ */
+export const beforeAfterPropsSchema = z.object({
+  beforeImage: pickedMediaSchema.nullable(),
+  afterImage: pickedMediaSchema.nullable(),
+  beforeLabel: z.string().default('Prima'),
+  afterLabel: z.string().default('Dopo'),
+});
+export type BeforeAfterProps = z.infer<typeof beforeAfterPropsSchema>;
+
+/**
+ * Same `{ media, alt }[]` shape as `galleryPropsSchema`/
+ * `imageSliderPropsSchema` — rendered as a wrapping row, grayscale by
+ * default with color-on-hover (LogoStrip.astro), the customary visual
+ * treatment for an "as seen with" partner/client strip.
+ */
+export const logoStripPropsSchema = z.object({
+  logos: z.array(
+    z.object({
+      media: pickedMediaSchema.nullable(),
+      alt: z.string(),
+    }),
+  ),
+});
+export type LogoStripProps = z.infer<typeof logoStripPropsSchema>;

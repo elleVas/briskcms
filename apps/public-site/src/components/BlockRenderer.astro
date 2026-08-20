@@ -4,6 +4,7 @@ import {
   accordionPropsSchema,
   backToTopPropsSchema,
   bannerPropsSchema,
+  beforeAfterPropsSchema,
   breadcrumbPropsSchema,
   buttonPropsSchema,
   columnsPropsSchema,
@@ -16,7 +17,10 @@ import {
   hamburgerMenuPropsSchema,
   heroPropsSchema,
   imagePropsSchema,
+  imageSliderPropsSchema,
   languageSwitcherPropsSchema,
+  logoStripPropsSchema,
+  mapEmbedPropsSchema,
   navDropdownPropsSchema,
   navLinkPropsSchema,
   navPropsSchema,
@@ -28,6 +32,7 @@ import {
   tablePropsSchema,
   promoBarPropsSchema,
   textPropsSchema,
+  videoEmbedPropsSchema,
   whatsAppButtonPropsSchema,
   type Block,
 } from '@brisk/shared-types';
@@ -40,6 +45,7 @@ import Accordion from './blocks/Accordion.astro';
 import AccordionItem from './blocks/AccordionItem.astro';
 import BackToTop from './blocks/BackToTop.astro';
 import Banner from './blocks/Banner.astro';
+import BeforeAfter from './blocks/BeforeAfter.astro';
 import Breadcrumb from './blocks/Breadcrumb.astro';
 import Button from './blocks/Button.astro';
 import Column from './blocks/Column.astro';
@@ -53,7 +59,10 @@ import Gallery from './blocks/Gallery.astro';
 import HamburgerMenu from './blocks/HamburgerMenu.astro';
 import Hero from './blocks/Hero.astro';
 import Image from './blocks/Image.astro';
+import ImageSlider from './blocks/ImageSlider.astro';
 import LanguageSwitcher from './blocks/LanguageSwitcher.astro';
+import LogoStrip from './blocks/LogoStrip.astro';
+import MapEmbed from './blocks/MapEmbed.astro';
 import Nav from './blocks/Nav.astro';
 import NavDropdown from './blocks/NavDropdown.astro';
 import NavLink from './blocks/NavLink.astro';
@@ -65,6 +74,7 @@ import Table from './blocks/Table.astro';
 import PromoBar from './blocks/PromoBar.astro';
 import SearchBox from './blocks/SearchBox.astro';
 import Text from './blocks/Text.astro';
+import VideoEmbed from './blocks/VideoEmbed.astro';
 import WhatsAppButton from './blocks/WhatsAppButton.astro';
 
 // Walks `Block[]`/`children` directly — no dependency on Puck's own data
@@ -331,5 +341,30 @@ const { block, locale, translations, site, ancestors, currentPageTitle } =
 {
   block.type === 'Feature' && (
     <Feature {...featurePropsSchema.parse(block.props)} />
+  )
+}
+{
+  block.type === 'VideoEmbed' && (
+    <VideoEmbed {...videoEmbedPropsSchema.parse(block.props)} />
+  )
+}
+{
+  block.type === 'MapEmbed' && (
+    <MapEmbed {...mapEmbedPropsSchema.parse(block.props)} />
+  )
+}
+{
+  block.type === 'ImageSlider' && (
+    <ImageSlider {...imageSliderPropsSchema.parse(block.props)} />
+  )
+}
+{
+  block.type === 'BeforeAfter' && (
+    <BeforeAfter {...beforeAfterPropsSchema.parse(block.props)} />
+  )
+}
+{
+  block.type === 'LogoStrip' && (
+    <LogoStrip {...logoStripPropsSchema.parse(block.props)} />
   )
 }

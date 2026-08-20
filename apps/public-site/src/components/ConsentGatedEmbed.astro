@@ -1,0 +1,77 @@
+---
+// Shared by VideoEmbed.astro and MapEmbed.astro (both GDPR-conscious
+// third-party iframes) so the click-to-load mechanism exists in exactly
+// one place — see either block's own comment for why a click gate: no
+// request to the third party, no cookie, until the visitor explicitly
+// asks for it, a complete mitigation on its own that doesn't depend on a
+// cookie-consent banner Brisk doesn't have yet (batch H, not built).
+interface Props {
+  src: string;
+  title: string;
+  buttonLabel: string;
+}
+
+const { src, title, buttonLabel } = Astro.props;
+---
+
+<div class="brisk-consent-embed">
+  <button
+    type="button"
+    class="brisk-consent-embed__trigger"
+    data-embed-src={src}
+    data-embed-title={title}
+  >
+    {buttonLabel}
+  </button>
+</div>
+
+<script>
+  document
+    .querySelectorAll<HTMLButtonElement>('.brisk-consent-embed__trigger')
+    .forEach((button) => {
+      button.addEventListener(
+        'click',
+        () => {
+          const iframe = document.createElement('iframe');
+          iframe.src = button.dataset.embedSrc ?? '';
+          iframe.title = button.dataset.embedTitle ?? '';
+          iframe.loading = 'lazy';
+          iframe.allowFullscreen = true;
+          iframe.className = 'brisk-consent-embed__iframe';
+          button.replaceWith(iframe);
+        },
+        { once: true },
+      );
+    });
+</script>
+
+<style>
+  .brisk-consent-embed {
+    position: relative;
+    aspect-ratio: 16 / 9;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f4f4f5;
+    border-radius: 8px;
+  }
+  .brisk-consent-embed__trigger {
+    padding: 0.75rem 1.25rem;
+    border-radius: 6px;
+    border: 1px solid #d4d4d8;
+    background: #fff;
+    color: #18181b;
+    font: inherit;
+    font-size: 0.9rem;
+    cursor: pointer;
+  }
+  .brisk-consent-embed__iframe {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    border: 0;
+    border-radius: 8px;
+  }
+</style>
