@@ -55,7 +55,8 @@
       "pages": "Pages",
       "media": "Media",
       "forms": "Forms",
-      "appearance": "Appearance",
+      "layout": "Layout",
+      "style": "Style",
       "users": "Users"
     },
     "settings": {
@@ -148,15 +149,15 @@
       "none": "— None (root level) —"
     }
   },
-  "appearance": {
-    "title": "Appearance",
+  "layout": {
+    "title": "Layout",
     "localeLabel": "Language",
     "editHeader": "Edit Header",
     "editHeaderDescription": "Logo, navigation menu, and language switcher.",
     "editFooter": "Edit Footer",
     "editFooterDescription": "Content and links at the bottom of every page.",
     "editor": {
-      "backToList": "Appearance",
+      "backToList": "Layout",
       "draftSaved": "Draft saved",
       "published": "Published",
       "sticky": "Stick while scrolling"
@@ -206,7 +207,6 @@
     "saving": "Saving..."
   },
   "themeSettings": {
-    "menuLabel": "Style",
     "title": "Site style",
     "intro": "These settings apply on top of the site's active theme — leave a field off to keep the theme's own default.",
     "overridesEnabledLabel": "Apply these settings",
@@ -223,8 +223,8 @@
     "headScriptLabel": "Custom script — <head>",
     "bodyScriptLabel": "Custom script — end of <body>",
     "scriptDisclaimer": "Injected verbatim into every page of the site. Only paste code from sources you trust.",
-    "cancel": "Cancel",
     "save": "Save",
+    "saved": "Saved",
     "saving": "Saving..."
   },
   "localeSettings": {

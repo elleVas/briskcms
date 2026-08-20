@@ -103,16 +103,4 @@ describe('SettingsMenu', () => {
       await screen.findByRole('heading', { name: /lingue/i }),
     ).toBeTruthy();
   });
-
-  it('opens the theme settings dialog from the settings popover', async () => {
-    vi.mocked(api.getSite).mockResolvedValue(mockSite());
-
-    renderMenu();
-    fireEvent.click(screen.getByRole('button', { name: /^impostazioni$/i }));
-    fireEvent.click(screen.getByRole('button', { name: /^stile$/i }));
-
-    expect(
-      await screen.findByRole('heading', { name: /stile del sito/i }),
-    ).toBeTruthy();
-  });
 });

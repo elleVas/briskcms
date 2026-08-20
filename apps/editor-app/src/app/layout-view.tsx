@@ -4,7 +4,7 @@ import { PanelBottom, PanelTop } from 'lucide-react';
 import { Badge } from '../components/ui/badge.js';
 import { cn } from '../lib/utils.js';
 
-export interface AppearanceViewProps {
+export interface LayoutViewProps {
   enabledLocales: string[];
   locale: string;
 }
@@ -15,25 +15,27 @@ export interface AppearanceViewProps {
  * LocaleListEditor implies) plus two cards linking into the fullscreen
  * Puck editor for each. No "create" step: getOrCreateSiteLayoutSection
  * means the editor is always ready the moment you land on it.
+ *
+ * Named "Layout" (not "Aspetto"/"Appearance") — that name never fit, this
+ * section only ever managed Header/Footer structure, never colors/fonts/
+ * general site look, which is what the separate "Style" section
+ * (style-view.tsx, docs/adr/0021) actually owns.
  */
-export function AppearanceView({
-  enabledLocales,
-  locale,
-}: AppearanceViewProps) {
+export function LayoutView({ enabledLocales, locale }: LayoutViewProps) {
   const { t } = useTranslation();
 
   return (
     <div className="flex flex-col gap-4">
-      <h1 className="text-lg font-semibold">{t('appearance.title')}</h1>
+      <h1 className="text-lg font-semibold">{t('layout.title')}</h1>
       {enabledLocales.length > 1 && (
         <div className="flex items-center gap-2">
           <span className="text-sm text-muted-foreground">
-            {t('appearance.localeLabel')}
+            {t('layout.localeLabel')}
           </span>
           {enabledLocales.map((loc) => (
             <Link
               key={loc}
-              to="/appearance"
+              to="/layout"
               search={{ locale: loc }}
               className={cn('inline-flex', loc === locale && 'font-semibold')}
             >
@@ -46,32 +48,32 @@ export function AppearanceView({
       )}
       <div className="grid max-w-md gap-3">
         <Link
-          to="/appearance/header"
+          to="/layout/header"
           search={{ locale }}
           className="flex items-center gap-3 rounded-md border p-4 hover:bg-muted"
         >
           <PanelTop className="size-5" />
           <div className="flex flex-col">
             <span className="text-sm font-medium">
-              {t('appearance.editHeader')}
+              {t('layout.editHeader')}
             </span>
             <span className="text-xs text-muted-foreground">
-              {t('appearance.editHeaderDescription')}
+              {t('layout.editHeaderDescription')}
             </span>
           </div>
         </Link>
         <Link
-          to="/appearance/footer"
+          to="/layout/footer"
           search={{ locale }}
           className="flex items-center gap-3 rounded-md border p-4 hover:bg-muted"
         >
           <PanelBottom className="size-5" />
           <div className="flex flex-col">
             <span className="text-sm font-medium">
-              {t('appearance.editFooter')}
+              {t('layout.editFooter')}
             </span>
             <span className="text-xs text-muted-foreground">
-              {t('appearance.editFooterDescription')}
+              {t('layout.editFooterDescription')}
             </span>
           </div>
         </Link>

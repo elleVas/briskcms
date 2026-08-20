@@ -55,7 +55,8 @@
       "pages": "Pagine",
       "media": "Media",
       "forms": "Moduli",
-      "appearance": "Aspetto",
+      "layout": "Layout",
+      "style": "Stile",
       "users": "Utenti"
     },
     "settings": {
@@ -148,15 +149,15 @@
       "none": "— Nessuno (livello radice) —"
     }
   },
-  "appearance": {
-    "title": "Aspetto",
+  "layout": {
+    "title": "Layout",
     "localeLabel": "Lingua",
     "editHeader": "Modifica Header",
     "editHeaderDescription": "Logo, menu di navigazione e selettore lingua.",
     "editFooter": "Modifica Footer",
     "editFooterDescription": "Contenuto e link in fondo a ogni pagina.",
     "editor": {
-      "backToList": "Aspetto",
+      "backToList": "Layout",
       "draftSaved": "Bozza salvata",
       "published": "Pubblicato",
       "sticky": "Fisso durante lo scroll"
@@ -206,7 +207,6 @@
     "saving": "Salvataggio in corso..."
   },
   "themeSettings": {
-    "menuLabel": "Stile",
     "title": "Stile del sito",
     "intro": "Queste impostazioni si applicano sopra il tema attivo del sito — lascia un campo disattivato per mantenere il valore predefinito del tema.",
     "overridesEnabledLabel": "Applica queste impostazioni",
@@ -223,9 +223,9 @@
     "headScriptLabel": "Script personalizzato — <head>",
     "bodyScriptLabel": "Script personalizzato — fine <body>",
     "scriptDisclaimer": "Iniettato così com'è in ogni pagina del sito. Incolla solo codice da fonti di cui ti fidi.",
-    "cancel": "Annulla",
     "save": "Salva",
-    "saving": "Salvataggio in corso..."
+    "saving": "Salvataggio in corso...",
+    "saved": "Salvato"
   },
   "localeSettings": {
     "menuLabel": "Lingue",

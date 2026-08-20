@@ -1,7 +1,14 @@
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from '@tanstack/react-router';
-import { FileText, FormInput, Image, Palette, Users } from 'lucide-react';
+import {
+  FileText,
+  FormInput,
+  Image,
+  LayoutTemplate,
+  Palette,
+  Users,
+} from 'lucide-react';
 import { AccountMenu } from './account-menu.js';
 import { SettingsMenu } from './settings-menu.js';
 import { Separator } from '../components/ui/separator.js';
@@ -43,11 +50,18 @@ export function AdminShell({ children }: AdminShellProps) {
               {t('shell.nav.forms')}
             </Link>
             <Link
-              to="/appearance"
+              to="/layout"
+              className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm font-medium hover:bg-muted"
+            >
+              <LayoutTemplate className="size-4" />
+              {t('shell.nav.layout')}
+            </Link>
+            <Link
+              to="/style"
               className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm font-medium hover:bg-muted"
             >
               <Palette className="size-4" />
-              {t('shell.nav.appearance')}
+              {t('shell.nav.style')}
             </Link>
             <Separator className="my-2" />
             <Link

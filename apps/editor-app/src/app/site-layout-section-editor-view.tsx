@@ -27,9 +27,9 @@ function useStatusText(status: SaveStatus): string {
     case 'idle':
       return '';
     case 'saved':
-      return t('appearance.editor.draftSaved');
+      return t('layout.editor.draftSaved');
     case 'published':
-      return t('appearance.editor.published');
+      return t('layout.editor.published');
     case 'error':
       return status.message;
   }
@@ -73,8 +73,8 @@ export function SiteLayoutSectionEditorView({
       <PageListProvider siteId={siteId} locale={locale}>
         <BlockEditorShell
           backLink={
-            <Link to="/appearance" className="hover:underline">
-              ← {t('appearance.editor.backToList')}
+            <Link to="/layout" className="hover:underline">
+              ← {t('layout.editor.backToList')}
             </Link>
           }
           statusText={statusText}
@@ -87,7 +87,7 @@ export function SiteLayoutSectionEditorView({
                     checked={section.sticky}
                     onCheckedChange={handleStickyChange}
                   />
-                  {t('appearance.editor.sticky')}
+                  {t('layout.editor.sticky')}
                 </label>
               )}
               <IconButton

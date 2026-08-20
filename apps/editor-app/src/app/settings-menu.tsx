@@ -5,7 +5,6 @@ import {
   Globe,
   Languages,
   Moon,
-  Paintbrush,
   Search,
   Settings,
   Sun,
@@ -22,7 +21,6 @@ import { BusinessInfoDialog } from './business-info-dialog.js';
 import { GeneralSettingsDialog } from './general-settings-dialog.js';
 import { LocaleSettingsDialog } from './locale-settings-dialog.js';
 import { SeoSettingsDialog } from './seo-settings-dialog.js';
-import { ThemeSettingsDialog } from './theme-settings-dialog.js';
 import { useTheme } from './use-theme.js';
 
 const DEFAULT_SITE_ID = import.meta.env['VITE_DEFAULT_SITE_ID'] as string;
@@ -34,7 +32,6 @@ export function SettingsMenu() {
   const [isGeneralSettingsOpen, setIsGeneralSettingsOpen] = useState(false);
   const [isSeoSettingsOpen, setIsSeoSettingsOpen] = useState(false);
   const [isLocaleSettingsOpen, setIsLocaleSettingsOpen] = useState(false);
-  const [isThemeSettingsOpen, setIsThemeSettingsOpen] = useState(false);
 
   return (
     <>
@@ -116,14 +113,6 @@ export function SettingsMenu() {
             <Building2 className="size-4" />
             {t('businessInfo.menuLabel')}
           </Button>
-          <Button
-            variant="ghost"
-            className="w-full justify-start gap-2 px-1 py-1.5 text-sm"
-            onClick={() => setIsThemeSettingsOpen(true)}
-          >
-            <Paintbrush className="size-4" />
-            {t('themeSettings.menuLabel')}
-          </Button>
         </PopoverContent>
       </Popover>
       <GeneralSettingsDialog
@@ -145,11 +134,6 @@ export function SettingsMenu() {
         siteId={DEFAULT_SITE_ID}
         open={isBusinessInfoOpen}
         onOpenChange={setIsBusinessInfoOpen}
-      />
-      <ThemeSettingsDialog
-        siteId={DEFAULT_SITE_ID}
-        open={isThemeSettingsOpen}
-        onOpenChange={setIsThemeSettingsOpen}
       />
     </>
   );

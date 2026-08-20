@@ -8,13 +8,15 @@ import { requireAuth } from './-require-auth.js';
 
 const DEFAULT_SITE_ID = import.meta.env['VITE_DEFAULT_SITE_ID'] as string;
 
-// Same reasoning as appearance.header.tsx's own schema.
-const appearanceFooterSearchSchema = z.object({
+// Optional, not required: a direct visit with no `locale` in the URL still
+// works, falling back to the site's own defaultLocale (loaded below) —
+// same reasoning as layoutSearchSchema on the index route.
+const layoutHeaderSearchSchema = z.object({
   locale: z.string().min(2).optional(),
 });
 
-export const Route = createFileRoute('/appearance/footer')({
-  validateSearch: appearanceFooterSearchSchema,
+export const Route = createFileRoute('/layout/header')({
+  validateSearch: layoutHeaderSearchSchema,
   loaderDeps: ({ search }) => ({ locale: search.locale }),
   loader: ({ context, deps }) =>
     requireAuth(async () => {
@@ -23,13 +25,13 @@ export const Route = createFileRoute('/appearance/footer')({
       );
       const locale = deps.locale ?? site.defaultLocale;
       await context.queryClient.ensureQueryData(
-        siteLayoutSectionQueryOptions(DEFAULT_SITE_ID, locale, 'footer'),
+        siteLayoutSectionQueryOptions(DEFAULT_SITE_ID, locale, 'header'),
       );
     }),
-  component: AppearanceFooterRoute,
+  component: LayoutHeaderRoute,
 });
 
-function AppearanceFooterRoute() {
+function LayoutHeaderRoute() {
   const { locale: searchLocale } = Route.useSearch();
   const { data: site } = useSuspenseQuery(siteQueryOptions(DEFAULT_SITE_ID));
   const locale = searchLocale ?? site.defaultLocale;
@@ -39,7 +41,7 @@ function AppearanceFooterRoute() {
       key={locale}
       siteId={DEFAULT_SITE_ID}
       locale={locale}
-      kind="footer"
+      kind="header"
     />
   );
 }
