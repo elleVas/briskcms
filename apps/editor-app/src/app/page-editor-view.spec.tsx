@@ -121,6 +121,10 @@ describe('PageEditorView', () => {
     expect(screen.getByDisplayValue('Test')).toBeTruthy();
   });
 
+  // Longer timeout than the vitest default (5000ms): this test mounts the
+  // full Puck editor (puckConfig now registers 25 blocks) on top of the
+  // async dialog/query-mock flow — comfortably fast locally, but the
+  // combined cost occasionally tips over 5000ms on a loaded CI runner.
   it('opens the version history dialog and lists past versions newest-first', async () => {
     vi.mocked(router.useNavigate).mockReturnValue(vi.fn());
     vi.mocked(api.listPageVersions).mockResolvedValue([
@@ -155,8 +159,10 @@ describe('PageEditorView', () => {
     });
     expect(restoreButtons).toHaveLength(1);
     expect(screen.getByText(/versione attuale/i)).toBeTruthy();
-  });
+  }, 10000);
 
+  // Same reasoning as the test above: full Puck editor mount + the version
+  // dialog's async flow, plus a rollback round-trip on top.
   it('restores a past version and closes the dialog', async () => {
     vi.mocked(router.useNavigate).mockReturnValue(vi.fn());
     vi.mocked(api.listPageVersions).mockResolvedValue([
@@ -196,7 +202,7 @@ describe('PageEditorView', () => {
     await waitFor(() =>
       expect(screen.queryByText(/versione attuale/i)).toBeNull(),
     );
-  });
+  }, 10000);
 
   it('links to the public page when it is published', () => {
     vi.mocked(router.useNavigate).mockReturnValue(vi.fn());
