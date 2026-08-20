@@ -24,12 +24,22 @@ import {
   navDropdownPropsSchema,
   navLinkPropsSchema,
   navPropsSchema,
+  pricingPlanPropsSchema,
+  pricingTablePropsSchema,
   quotePropsSchema,
   ratingPropsSchema,
   searchBoxPropsSchema,
+  statPropsSchema,
+  statsCounterPropsSchema,
   tabPropsSchema,
   tabsPropsSchema,
   tablePropsSchema,
+  teamMemberPropsSchema,
+  teamPropsSchema,
+  testimonialPropsSchema,
+  testimonialsPropsSchema,
+  timelinePropsSchema,
+  timelineStepPropsSchema,
   promoBarPropsSchema,
   textPropsSchema,
   videoEmbedPropsSchema,
@@ -66,11 +76,21 @@ import MapEmbed from './blocks/MapEmbed.astro';
 import Nav from './blocks/Nav.astro';
 import NavDropdown from './blocks/NavDropdown.astro';
 import NavLink from './blocks/NavLink.astro';
+import PricingPlan from './blocks/PricingPlan.astro';
+import PricingTable from './blocks/PricingTable.astro';
 import Quote from './blocks/Quote.astro';
 import Rating from './blocks/Rating.astro';
+import Stat from './blocks/Stat.astro';
+import StatsCounter from './blocks/StatsCounter.astro';
 import Tab from './blocks/Tab.astro';
 import Tabs from './blocks/Tabs.astro';
 import Table from './blocks/Table.astro';
+import Team from './blocks/Team.astro';
+import TeamMember from './blocks/TeamMember.astro';
+import Testimonial from './blocks/Testimonial.astro';
+import Testimonials from './blocks/Testimonials.astro';
+import Timeline from './blocks/Timeline.astro';
+import TimelineStep from './blocks/TimelineStep.astro';
 import PromoBar from './blocks/PromoBar.astro';
 import SearchBox from './blocks/SearchBox.astro';
 import Text from './blocks/Text.astro';
@@ -366,5 +386,106 @@ const { block, locale, translations, site, ancestors, currentPageTitle } =
 {
   block.type === 'LogoStrip' && (
     <LogoStrip {...logoStripPropsSchema.parse(block.props)} />
+  )
+}
+{
+  block.type === 'Testimonials' && (
+    <Testimonials {...testimonialsPropsSchema.parse(block.props)}>
+      {block.children?.map((child) => (
+        <Astro.self
+          block={child}
+          locale={locale}
+          translations={translations}
+          site={site}
+          ancestors={ancestors}
+          currentPageTitle={currentPageTitle}
+        />
+      ))}
+    </Testimonials>
+  )
+}
+{
+  block.type === 'Testimonial' && (
+    <Testimonial {...testimonialPropsSchema.parse(block.props)} />
+  )
+}
+{
+  block.type === 'Team' && (
+    <Team {...teamPropsSchema.parse(block.props)}>
+      {block.children?.map((child) => (
+        <Astro.self
+          block={child}
+          locale={locale}
+          translations={translations}
+          site={site}
+          ancestors={ancestors}
+          currentPageTitle={currentPageTitle}
+        />
+      ))}
+    </Team>
+  )
+}
+{
+  block.type === 'TeamMember' && (
+    <TeamMember {...teamMemberPropsSchema.parse(block.props)} />
+  )
+}
+{
+  block.type === 'PricingTable' && (
+    <PricingTable {...pricingTablePropsSchema.parse(block.props)}>
+      {block.children?.map((child) => (
+        <Astro.self
+          block={child}
+          locale={locale}
+          translations={translations}
+          site={site}
+          ancestors={ancestors}
+          currentPageTitle={currentPageTitle}
+        />
+      ))}
+    </PricingTable>
+  )
+}
+{
+  block.type === 'PricingPlan' && (
+    <PricingPlan {...pricingPlanPropsSchema.parse(block.props)} />
+  )
+}
+{
+  block.type === 'StatsCounter' && (
+    <StatsCounter {...statsCounterPropsSchema.parse(block.props)}>
+      {block.children?.map((child) => (
+        <Astro.self
+          block={child}
+          locale={locale}
+          translations={translations}
+          site={site}
+          ancestors={ancestors}
+          currentPageTitle={currentPageTitle}
+        />
+      ))}
+    </StatsCounter>
+  )
+}
+{block.type === 'Stat' && <Stat {...statPropsSchema.parse(block.props)} />}
+{
+  block.type === 'Timeline' && (
+    <Timeline {...timelinePropsSchema.parse(block.props)}>
+      {block.children?.map((child) => (
+        <Astro.self
+          block={child}
+          locale={locale}
+          translations={translations}
+          site={site}
+          ancestors={ancestors}
+          currentPageTitle={currentPageTitle}
+        />
+      ))}
+    </Timeline>
+  )
+}
+{
+  block.type === 'TimelineStep' && (
+    <TimelineStep {...timelineStepPropsSchema.parse(block.props)} />
   )
 }

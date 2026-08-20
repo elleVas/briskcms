@@ -1,0 +1,48 @@
+---
+import type { TimelineStepProps } from '@brisk/shared-types';
+
+type Props = TimelineStepProps;
+
+const { label, title, description } = Astro.props;
+---
+
+<div class="brisk-timeline-step">
+  <div class="brisk-timeline-step__marker" aria-hidden="true"></div>
+  <div class="brisk-timeline-step__body">
+    {label && <div class="brisk-timeline-step__label">{label}</div>}
+    <div class="brisk-timeline-step__title">{title}</div>
+    {description && <p class="brisk-timeline-step__description">{description}</p>}
+  </div>
+</div>
+
+<style>
+  .brisk-timeline-step {
+    position: relative;
+    padding: 0 0 1.5rem 1rem;
+  }
+  .brisk-timeline-step:last-child {
+    padding-bottom: 0;
+  }
+  .brisk-timeline-step__marker {
+    position: absolute;
+    left: -1.75rem;
+    top: 0.375rem;
+    width: 0.75rem;
+    height: 0.75rem;
+    border-radius: 50%;
+    background: #4338ca;
+  }
+  .brisk-timeline-step__label {
+    font-size: 0.75rem;
+    color: #71717a;
+  }
+  .brisk-timeline-step__title {
+    font-weight: 600;
+    margin-top: 0.125rem;
+  }
+  .brisk-timeline-step__description {
+    margin: 0.25rem 0 0;
+    font-size: 0.875rem;
+    color: #52525b;
+  }
+</style>

@@ -1,0 +1,84 @@
+---
+import type { StatProps } from '@brisk/shared-types';
+
+type Props = StatProps;
+
+const { value, prefix, suffix, label } = Astro.props;
+---
+
+<div class="brisk-stat" data-value={value}>
+  <div class="brisk-stat__value">
+    <span class="brisk-stat__prefix">{prefix}</span><span
+      class="brisk-stat__number"
+      data-current="0">0</span
+    ><span class="brisk-stat__suffix">{suffix}</span>
+  </div>
+  {label && <div class="brisk-stat__label">{label}</div>}
+</div>
+
+<script>
+  // No framework here on purpose (docs/adr/0007), same reasoning as
+  // Countdown.astro/HamburgerMenu.astro — an IntersectionObserver triggers
+  // a requestAnimationFrame count-up from 0 to the target value the first
+  // time each stat scrolls into view, then stops watching it (a stat only
+  // needs to animate once). Jumps straight to the final value for visitors
+  // who prefer reduced motion, rather than skipping the animation silently.
+  const COUNT_UP_MS = 1500;
+  const prefersReducedMotion = window.matchMedia(
+    '(prefers-reduced-motion: reduce)',
+  ).matches;
+
+  function animateCount(el: HTMLElement, target: number) {
+    const numberEl = el.querySelector<HTMLElement>('.brisk-stat__number');
+    if (!numberEl) return;
+
+    if (prefersReducedMotion) {
+      numberEl.textContent = String(target);
+      return;
+    }
+
+    const start = performance.now();
+    // An arrow function expression, not a function declaration: TS only
+    // carries the `numberEl` null-narrowing from the check above into a
+    // closure created after it, not into a hoisted function declaration.
+    const tick = (now: number) => {
+      const progress = Math.min((now - start) / COUNT_UP_MS, 1);
+      numberEl.textContent = String(Math.round(target * progress));
+      if (progress < 1) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  }
+
+  const stats = document.querySelectorAll<HTMLElement>('.brisk-stat');
+  if (stats.length > 0) {
+    const observer = new IntersectionObserver(
+      (entries, obs) => {
+        for (const entry of entries) {
+          if (!entry.isIntersecting) continue;
+          const target = Number(entry.target.getAttribute('data-value'));
+          if (!Number.isNaN(target)) {
+            animateCount(entry.target as HTMLElement, target);
+          }
+          obs.unobserve(entry.target);
+        }
+      },
+      { threshold: 0.4 },
+    );
+    stats.forEach((stat) => observer.observe(stat));
+  }
+</script>
+
+<style>
+  .brisk-stat {
+    text-align: center;
+  }
+  .brisk-stat__value {
+    font-size: 2rem;
+    font-weight: 700;
+  }
+  .brisk-stat__label {
+    margin-top: 0.25rem;
+    font-size: 0.8125rem;
+    color: #71717a;
+  }
+</style>

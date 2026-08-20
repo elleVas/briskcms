@@ -1,0 +1,75 @@
+---
+import { STAR_ICON_PATH, type TestimonialProps } from '@brisk/shared-types';
+
+type Props = TestimonialProps;
+
+const { quote, author, role, avatar, rating } = Astro.props;
+
+const STAR_POSITIONS = [1, 2, 3, 4, 5];
+---
+
+<div class="brisk-testimonial">
+  <div
+    class="brisk-testimonial__stars"
+    role="img"
+    aria-label={`${rating} su 5 stelle`}
+  >
+    {
+      STAR_POSITIONS.map((position) => (
+        <svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true">
+          <path
+            d={STAR_ICON_PATH}
+            fill={position <= rating ? '#f59e0b' : '#d4d4d8'}
+          />
+        </svg>
+      ))
+    }
+  </div>
+  <blockquote class="brisk-testimonial__quote">{quote}</blockquote>
+  <div class="brisk-testimonial__footer">
+    {avatar && <img src={avatar.url} alt="" class="brisk-testimonial__avatar" />}
+    <div>
+      <div class="brisk-testimonial__author">{author}</div>
+      {role && <div class="brisk-testimonial__role">{role}</div>}
+    </div>
+  </div>
+</div>
+
+<style>
+  .brisk-testimonial {
+    flex: 0 0 min(320px, 85vw);
+    scroll-snap-align: start;
+    border: 1px solid #e4e4e7;
+    border-radius: 12px;
+    padding: 1.5rem;
+  }
+  .brisk-testimonial__stars {
+    display: flex;
+    gap: 2px;
+  }
+  .brisk-testimonial__quote {
+    margin: 0.75rem 0;
+    font-size: 0.9375rem;
+    color: #27272a;
+  }
+  .brisk-testimonial__footer {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+  }
+  .brisk-testimonial__avatar {
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 50%;
+    object-fit: cover;
+    flex-shrink: 0;
+  }
+  .brisk-testimonial__author {
+    font-weight: 600;
+    font-size: 0.875rem;
+  }
+  .brisk-testimonial__role {
+    font-size: 0.8125rem;
+    color: #71717a;
+  }
+</style>

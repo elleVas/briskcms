@@ -1,0 +1,93 @@
+---
+---
+
+<div class="brisk-testimonials">
+  <div class="brisk-testimonials__track">
+    <slot />
+  </div>
+  <button
+    type="button"
+    class="brisk-testimonials__nav brisk-testimonials__nav--prev"
+    aria-label="Testimonianza precedente"
+  >
+    ‹
+  </button>
+  <button
+    type="button"
+    class="brisk-testimonials__nav brisk-testimonials__nav--next"
+    aria-label="Testimonianza successiva"
+  >
+    ›
+  </button>
+</div>
+
+<script>
+  // Same "native scroll-snap first, buttons as progressive enhancement"
+  // pattern as ImageSlider.astro's own carousel.
+  document
+    .querySelectorAll<HTMLDivElement>('.brisk-testimonials')
+    .forEach((carousel) => {
+      const track = carousel.querySelector<HTMLDivElement>(
+        '.brisk-testimonials__track',
+      );
+      if (!track) return;
+
+      const card = track.querySelector<HTMLElement>(
+        '.brisk-testimonial',
+      );
+      const scrollByOneCard = (direction: 1 | -1) => {
+        const width = card?.offsetWidth ?? track.clientWidth;
+        track.scrollBy({ left: direction * (width + 24), behavior: 'smooth' });
+      };
+
+      carousel
+        .querySelector('.brisk-testimonials__nav--prev')
+        ?.addEventListener('click', () => scrollByOneCard(-1));
+      carousel
+        .querySelector('.brisk-testimonials__nav--next')
+        ?.addEventListener('click', () => scrollByOneCard(1));
+    });
+</script>
+
+<style>
+  .brisk-testimonials {
+    position: relative;
+  }
+  .brisk-testimonials__track {
+    display: flex;
+    gap: 1.5rem;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+    padding: 0.5rem 0;
+  }
+  .brisk-testimonials__track::-webkit-scrollbar {
+    display: none;
+  }
+  .brisk-testimonials__nav {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 50%;
+    border: 1px solid #e4e4e7;
+    background: rgb(255 255 255 / 90%);
+    color: #18181b;
+    font-size: 1.5rem;
+    line-height: 1;
+    cursor: pointer;
+  }
+  /* Positive insets, not negative — unlike ImageSlider.astro's slider
+     (which fills the block's full width, so its buttons float safely
+     inside the image), a Testimonials track can end near the block's own
+     edge with little margin around it; a negative offset here pushed the
+     button past the page's own right edge and caused horizontal overflow
+     (found via Playwright's scrollWidth check on a real preview page). */
+  .brisk-testimonials__nav--prev {
+    left: 0.5rem;
+  }
+  .brisk-testimonials__nav--next {
+    right: 0.5rem;
+  }
+</style>

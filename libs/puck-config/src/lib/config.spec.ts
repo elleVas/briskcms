@@ -30,6 +30,16 @@ describe('puckConfig', () => {
       'ImageSlider',
       'BeforeAfter',
       'LogoStrip',
+      'Testimonials',
+      'Testimonial',
+      'Team',
+      'TeamMember',
+      'PricingTable',
+      'PricingPlan',
+      'StatsCounter',
+      'Stat',
+      'Timeline',
+      'TimelineStep',
     ]);
     expect(typeof puckConfig.components.Hero.render).toBe('function');
     expect(typeof puckConfig.components.Text.render).toBe('function');
@@ -57,5 +67,15 @@ describe('puckConfig', () => {
     expect(typeof puckConfig.components.ImageSlider.render).toBe('function');
     expect(typeof puckConfig.components.BeforeAfter.render).toBe('function');
     expect(typeof puckConfig.components.LogoStrip.render).toBe('function');
+    expect(typeof puckConfig.components.Testimonials.render).toBe('function');
+    expect(typeof puckConfig.components.Testimonial.render).toBe('function');
+    expect(typeof puckConfig.components.Team.render).toBe('function');
+    expect(typeof puckConfig.components.TeamMember.render).toBe('function');
+    expect(typeof puckConfig.components.PricingTable.render).toBe('function');
+    expect(typeof puckConfig.components.PricingPlan.render).toBe('function');
+    expect(typeof puckConfig.components.StatsCounter.render).toBe('function');
+    expect(typeof puckConfig.components.Stat.render).toBe('function');
+    expect(typeof puckConfig.components.Timeline.render).toBe('function');
+    expect(typeof puckConfig.components.TimelineStep.render).toBe('function');
   });
 });
