@@ -46,3 +46,22 @@ describe('featureConfig.render', () => {
     expect(screen.getByText('Prestazioni ottime.')).toBeTruthy();
   });
 });
+
+describe('featureConfig.fields', () => {
+  it('edits title and text inline on the canvas, but keeps icon in the sidebar', () => {
+    expect(featureConfig.fields?.title).toMatchObject({
+      type: 'text',
+      contentEditable: true,
+      visible: false,
+    });
+    expect(featureConfig.fields?.text).toMatchObject({
+      type: 'textarea',
+      contentEditable: true,
+      visible: false,
+    });
+    expect(featureConfig.fields?.icon).not.toHaveProperty(
+      'contentEditable',
+      true,
+    );
+  });
+});

@@ -40,3 +40,13 @@ describe('breadcrumbConfig.render', () => {
     expect(screen.getByText('Inizio')).toBeTruthy();
   });
 });
+
+describe('breadcrumbConfig.fields', () => {
+  it('edits homeLabel inline on the canvas instead of the sidebar', () => {
+    expect(breadcrumbConfig.fields?.homeLabel).toMatchObject({
+      type: 'text',
+      contentEditable: true,
+      visible: false,
+    });
+  });
+});

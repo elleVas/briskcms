@@ -43,3 +43,18 @@ describe('accordionItemConfig.render', () => {
     expect(screen.getByText('Facile.')).toBeTruthy();
   });
 });
+
+describe('accordionItemConfig.fields', () => {
+  it('edits question and answer inline on the canvas instead of the sidebar', () => {
+    expect(accordionItemConfig.fields?.question).toMatchObject({
+      type: 'text',
+      contentEditable: true,
+      visible: false,
+    });
+    expect(accordionItemConfig.fields?.answer).toMatchObject({
+      type: 'textarea',
+      contentEditable: true,
+      visible: false,
+    });
+  });
+});

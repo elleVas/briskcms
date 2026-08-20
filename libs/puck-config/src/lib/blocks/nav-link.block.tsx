@@ -11,7 +11,7 @@ export { navLinkPropsSchema, type NavLinkProps };
 // swap what each field *is*), guided by the `linkType` radio for which
 // one the editor is actually meant to fill in.
 const fields: Fields<NavLinkProps> = {
-  label: { type: 'text' },
+  label: { type: 'text', contentEditable: true, visible: false },
   linkType: {
     type: 'radio',
     options: [

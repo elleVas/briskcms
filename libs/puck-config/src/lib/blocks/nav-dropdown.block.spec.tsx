@@ -56,3 +56,13 @@ describe('navDropdownConfig.render', () => {
     expect(screen.getByText('Contenuto annidato')).toBeTruthy();
   });
 });
+
+describe('navDropdownConfig.fields', () => {
+  it('edits label inline on the canvas instead of the sidebar', () => {
+    expect(navDropdownConfig.fields?.label).toMatchObject({
+      type: 'text',
+      contentEditable: true,
+      visible: false,
+    });
+  });
+});

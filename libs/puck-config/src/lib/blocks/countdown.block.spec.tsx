@@ -53,3 +53,20 @@ describe('countdownConfig.render', () => {
     expect(screen.getByText('Nessuna data impostata')).toBeTruthy();
   });
 });
+
+describe('countdownConfig.fields', () => {
+  it('edits label inline on the canvas, but keeps targetDate in the sidebar', () => {
+    expect(countdownConfig.fields?.label).toMatchObject({
+      type: 'text',
+      contentEditable: true,
+      visible: false,
+    });
+    expect(countdownConfig.fields?.targetDate).toMatchObject({
+      type: 'text',
+    });
+    expect(countdownConfig.fields?.targetDate).not.toHaveProperty(
+      'contentEditable',
+      true,
+    );
+  });
+});

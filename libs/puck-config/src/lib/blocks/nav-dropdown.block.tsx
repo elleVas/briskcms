@@ -23,7 +23,7 @@ export interface NavDropdownPuckProps {
 const NAV_DROPDOWN_COLOR = '#0891b2';
 
 const fields: Fields<NavDropdownPuckProps> = {
-  label: { type: 'text' },
+  label: { type: 'text', contentEditable: true, visible: false },
   position: positionField,
   visibility: visibilityField,
   // Capped at one level (docs/adr/0018 follow-up): only `NavLink`, not

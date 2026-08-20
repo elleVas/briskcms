@@ -42,3 +42,18 @@ describe('heroConfig.render', () => {
     expect(screen.getByText('Sottotitolo')).toBeTruthy();
   });
 });
+
+describe('heroConfig.fields', () => {
+  it('edits title and subtitle inline on the canvas instead of the sidebar', () => {
+    expect(heroConfig.fields?.title).toMatchObject({
+      type: 'text',
+      contentEditable: true,
+      visible: false,
+    });
+    expect(heroConfig.fields?.subtitle).toMatchObject({
+      type: 'textarea',
+      contentEditable: true,
+      visible: false,
+    });
+  });
+});

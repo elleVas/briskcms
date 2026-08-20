@@ -114,6 +114,16 @@ describe('promoBarConfig.render', () => {
   });
 });
 
+describe('promoBarConfig.fields', () => {
+  it('edits message inline on the canvas instead of the sidebar', () => {
+    expect(promoBarConfig.fields?.message).toMatchObject({
+      type: 'textarea',
+      contentEditable: true,
+      visible: false,
+    });
+  });
+});
+
 describe('promoBarConfig.fields.page', () => {
   it('wires the custom field to PagePickerField', () => {
     const pageField = promoBarConfig.fields

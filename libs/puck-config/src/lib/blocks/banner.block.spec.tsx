@@ -90,6 +90,26 @@ describe('bannerConfig.render', () => {
   });
 });
 
+describe('bannerConfig.fields', () => {
+  it('edits title, text and buttonLabel inline on the canvas instead of the sidebar', () => {
+    expect(bannerConfig.fields?.title).toMatchObject({
+      type: 'text',
+      contentEditable: true,
+      visible: false,
+    });
+    expect(bannerConfig.fields?.text).toMatchObject({
+      type: 'textarea',
+      contentEditable: true,
+      visible: false,
+    });
+    expect(bannerConfig.fields?.buttonLabel).toMatchObject({
+      type: 'text',
+      contentEditable: true,
+      visible: false,
+    });
+  });
+});
+
 describe('bannerConfig.fields.page', () => {
   it('wires the custom field to PagePickerField', () => {
     const pageField = bannerConfig.fields

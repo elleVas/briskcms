@@ -8,8 +8,11 @@ const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
 export const countdownConfig: ComponentConfig<CountdownProps> = {
   label: 'Countdown',
   fields: {
+    // Not contentEditable: this needs to stay a strictly-formatted ISO
+    // datetime string (Countdown.astro parses it directly), and free-typing
+    // on the canvas has no format guardrail — kept as a sidebar field.
     targetDate: { type: 'text', placeholder: '2026-12-31T23:59' },
-    label: { type: 'text' },
+    label: { type: 'text', contentEditable: true, visible: false },
   },
   defaultProps: {
     targetDate: new Date(Date.now() + THIRTY_DAYS_MS)
