@@ -13,6 +13,7 @@ const FIELD_TYPES: FormFieldType[] = [
   'tel',
   'checkbox',
   'select',
+  'newsletter-consent',
 ];
 
 // Same select styling as Input (components/ui/input.tsx) — no shadcn

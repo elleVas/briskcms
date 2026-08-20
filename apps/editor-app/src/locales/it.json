@@ -293,7 +293,8 @@
         "textarea": "Testo lungo",
         "tel": "Telefono",
         "checkbox": "Checkbox",
-        "select": "Selezione"
+        "select": "Selezione",
+        "newsletter-consent": "Iscrizione newsletter"
       }
     }
   },

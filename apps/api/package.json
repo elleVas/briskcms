@@ -99,6 +99,8 @@
     "@brisk/s3-media-storage": "workspace:*",
     "@brisk/session-auth-adapter": "workspace:*",
     "@brisk/shared-types": "workspace:*",
+    "@brisk/brevo-newsletter": "workspace:*",
+    "@brisk/mailchimp-newsletter": "workspace:*",
     "@brisk/smtp-email-adapter": "workspace:*",
     "@brisk/turnstile-captcha": "workspace:*",
     "@brisk/verification-token-adapter": "workspace:*",

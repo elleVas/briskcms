@@ -48,6 +48,10 @@ import {
   type MapEmbedProps,
 } from './blocks/map-embed.block.js';
 import {
+  newsletterSignupConfig,
+  type NewsletterSignupProps,
+} from './blocks/newsletter-signup.block.js';
+import {
   pricingPlanConfig,
   type PricingPlanProps,
 } from './blocks/pricing-plan.block.js';
@@ -133,6 +137,7 @@ export interface BriskComponentProps {
   Stat: StatProps;
   Timeline: TimelinePuckProps;
   TimelineStep: TimelineStepProps;
+  NewsletterSignup: NewsletterSignupProps;
 }
 
 export const puckConfig: Config<BriskComponentProps> = {
@@ -173,5 +178,6 @@ export const puckConfig: Config<BriskComponentProps> = {
     Stat: statConfig,
     Timeline: timelineConfig,
     TimelineStep: timelineStepConfig,
+    NewsletterSignup: newsletterSignupConfig,
   },
 };

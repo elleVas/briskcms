@@ -24,6 +24,7 @@ import {
   navDropdownPropsSchema,
   navLinkPropsSchema,
   navPropsSchema,
+  newsletterSignupPropsSchema,
   pricingPlanPropsSchema,
   pricingTablePropsSchema,
   quotePropsSchema,
@@ -76,6 +77,7 @@ import MapEmbed from './blocks/MapEmbed.astro';
 import Nav from './blocks/Nav.astro';
 import NavDropdown from './blocks/NavDropdown.astro';
 import NavLink from './blocks/NavLink.astro';
+import NewsletterSignup from './blocks/NewsletterSignup.astro';
 import PricingPlan from './blocks/PricingPlan.astro';
 import PricingTable from './blocks/PricingTable.astro';
 import Quote from './blocks/Quote.astro';
@@ -487,5 +489,10 @@ const { block, locale, translations, site, ancestors, currentPageTitle } =
 {
   block.type === 'TimelineStep' && (
     <TimelineStep {...timelineStepPropsSchema.parse(block.props)} />
+  )
+}
+{
+  block.type === 'NewsletterSignup' && (
+    <NewsletterSignup {...newsletterSignupPropsSchema.parse(block.props)} />
   )
 }

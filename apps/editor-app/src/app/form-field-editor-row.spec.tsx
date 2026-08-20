@@ -88,6 +88,20 @@ describe('FormFieldEditorRow', () => {
     );
   });
 
+  it('lists newsletter-consent as a selectable type, with no options textarea', () => {
+    renderRow({
+      id: 'f1',
+      label: 'x',
+      type: 'newsletter-consent',
+      required: false,
+    });
+
+    expect(
+      screen.getByRole('option', { name: 'Iscrizione newsletter' }),
+    ).toBeTruthy();
+    expect(screen.queryByLabelText(/opzioni/i)).toBeFalsy();
+  });
+
   it('toggles required', () => {
     const onChange = vi.fn();
     renderRow(

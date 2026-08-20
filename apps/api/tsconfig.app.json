@@ -32,6 +32,12 @@
       "path": "../../libs/adapters/smtp-email-adapter/tsconfig.lib.json"
     },
     {
+      "path": "../../libs/adapters/mailchimp-newsletter/tsconfig.lib.json"
+    },
+    {
+      "path": "../../libs/adapters/brevo-newsletter/tsconfig.lib.json"
+    },
+    {
       "path": "../../libs/shared-types/tsconfig.lib.json"
     },
     {

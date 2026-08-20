@@ -6,6 +6,7 @@ import { FormsModule } from './forms/forms.module.js';
 import { MediaModule } from './media/media.module.js';
 import { PagesModule } from './pages/pages.module.js';
 import { PublicFormsModule } from './public-forms/public-forms.module.js';
+import { PublicNewsletterModule } from './public-newsletter/public-newsletter.module.js';
 import { PublicPagesModule } from './public-pages/public-pages.module.js';
 import { SiteLayoutSectionsModule } from './site-layout-sections/site-layout-sections.module.js';
 import { SitesModule } from './sites/sites.module.js';
@@ -20,6 +21,7 @@ import { UsersModule } from './users/users.module.js';
     SitesModule,
     FormsModule,
     PublicFormsModule,
+    PublicNewsletterModule,
     SiteLayoutSectionsModule,
     UsersModule,
   ],

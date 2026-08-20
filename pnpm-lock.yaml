@@ -204,6 +204,9 @@ importers:
       '@brisk/application':
         specifier: workspace:*
         version: link:../../libs/application
+      '@brisk/brevo-newsletter':
+        specifier: workspace:*
+        version: link:../../libs/adapters/brevo-newsletter
       '@brisk/domain-core':
         specifier: workspace:*
         version: link:../../libs/domain-core
@@ -213,6 +216,9 @@ importers:
       '@brisk/local-disk-media-storage':
         specifier: workspace:*
         version: link:../../libs/adapters/local-disk-media-storage
+      '@brisk/mailchimp-newsletter':
+        specifier: workspace:*
+        version: link:../../libs/adapters/mailchimp-newsletter
       '@brisk/ports':
         specifier: workspace:*
         version: link:../../libs/ports
@@ -406,6 +412,12 @@ importers:
         specifier: ~6.0.3
         version: 6.0.3
 
+  libs/adapters/brevo-newsletter:
+    dependencies:
+      '@brisk/ports':
+        specifier: workspace:*
+        version: link:../../ports
+
   libs/adapters/local-disk-media-storage:
     dependencies:
       '@brisk/domain-core':
@@ -417,6 +429,12 @@ importers:
       sharp:
         specifier: ^0.35.3
         version: 0.35.3(@types/node@26.2.0)
+
+  libs/adapters/mailchimp-newsletter:
+    dependencies:
+      '@brisk/ports':
+        specifier: workspace:*
+        version: link:../../ports
 
   libs/adapters/postgres-db:
     dependencies:

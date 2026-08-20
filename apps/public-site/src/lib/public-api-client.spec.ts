@@ -8,6 +8,7 @@ import {
   getPublishedPageBySlug,
   getPublishedSiteChrome,
   listPublishedPagesForSitemap,
+  subscribeNewsletter,
   submitPublicForm,
 } from './public-api-client.js';
 
@@ -211,6 +212,36 @@ describe('public-api-client', () => {
     const result = await submitPublicForm('form-1', {
       pageId: null,
       values: {},
+      honeypot: '',
+      captchaToken: 'test-token',
+    });
+
+    expect(result).toEqual({ ok: false, status: 400 });
+  });
+
+  it('subscribeNewsletter posts the email and reports success', async () => {
+    vi.mocked(fetch).mockResolvedValue(jsonResponse(undefined, 204));
+
+    const result = await subscribeNewsletter({
+      email: 'visitor@example.com',
+      honeypot: '',
+      captchaToken: 'test-token',
+    });
+
+    expect(fetch).toHaveBeenCalledWith(
+      expect.stringContaining('/public/newsletter/subscribe'),
+      expect.objectContaining({ method: 'POST' }),
+    );
+    expect(result).toEqual({ ok: true });
+  });
+
+  it('subscribeNewsletter reports failure with the status code, without throwing', async () => {
+    vi.mocked(fetch).mockResolvedValue(
+      jsonResponse({ message: 'Invalid email' }, 400),
+    );
+
+    const result = await subscribeNewsletter({
+      email: 'not-an-email',
       honeypot: '',
       captchaToken: 'test-token',
     });

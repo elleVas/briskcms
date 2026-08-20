@@ -221,3 +221,27 @@ export async function submitPublicForm(
   }
   return { ok: false, status: res.status };
 }
+
+export interface SubscribeNewsletterInput {
+  email: string;
+  honeypot: string;
+  captchaToken: string;
+}
+
+export type SubscribeNewsletterResult =
+  { ok: true } | { ok: false; status: number };
+
+/** Called server-side from NewsletterSignup's same-origin proxy endpoint — same reasoning as submitPublicForm. */
+export async function subscribeNewsletter(
+  input: SubscribeNewsletterInput,
+): Promise<SubscribeNewsletterResult> {
+  const res = await fetch(`${apiUrl()}/public/newsletter/subscribe`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(input),
+  });
+  if (res.ok) {
+    return { ok: true };
+  }
+  return { ok: false, status: res.status };
+}
