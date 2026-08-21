@@ -1,0 +1,78 @@
+---
+// Override of apps/public-site/src/components/blocks/Hero.astro, resolved
+// via resolveThemeBlockOverride (docs/adr/0021's per-block escalation) —
+// same title/subtitle props as core, themes/README.md's own boundary: a
+// theme restyles, it doesn't get new data fields on an existing block.
+// The pill badge below is a fixed design element of this theme, not
+// editor-controlled content — same reasoning astro.build's own "Astro 7.2
+// Available now!" badge is baked into their homepage, not a CMS field.
+import type { HeroProps } from '@brisk/shared-types';
+
+type Props = HeroProps;
+
+const { title, subtitle } = Astro.props;
+---
+
+<header class="brisk-docs-hero">
+	<div class="brisk-docs-hero__badge">✨ Nuovo sito, stesso contenuto</div>
+	<h1 class="brisk-docs-hero__title">{title}</h1>
+	<p class="brisk-docs-hero__subtitle">{subtitle}</p>
+</header>
+
+<style>
+	.brisk-docs-hero {
+		position: relative;
+		overflow: hidden;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 1.25rem;
+		padding: 6rem 1.5rem 7rem;
+		text-align: center;
+		/* Scoped to this component only — the rest of the site (including
+		   docs pages, via PageLayout.astro's own override) stays on the
+		   theme's light tokens above. Same gradient family as astro.build's
+		   own hero: deep indigo/navy sliding into violet. */
+		background: radial-gradient(
+				ellipse 80% 60% at 30% 0%,
+				oklch(0.35 0.18 290 / 60%),
+				transparent
+			),
+			linear-gradient(
+				135deg,
+				oklch(0.16 0.05 275) 0%,
+				oklch(0.22 0.12 290) 55%,
+				oklch(0.3 0.16 300) 100%
+			);
+		color: oklch(0.985 0 0);
+	}
+	.brisk-docs-hero__badge {
+		display: inline-flex;
+		align-items: center;
+		padding: 0.375rem 0.9rem;
+		border-radius: 999px;
+		background: oklch(1 0 0 / 12%);
+		border: 1px solid oklch(1 0 0 / 16%);
+		font-size: 0.8125rem;
+		font-weight: 500;
+	}
+	.brisk-docs-hero__title {
+		max-width: 42rem;
+		margin: 0;
+		font-size: 3rem;
+		line-height: 1.1;
+		font-weight: 800;
+		letter-spacing: -0.02em;
+	}
+	.brisk-docs-hero__subtitle {
+		max-width: 34rem;
+		margin: 0;
+		font-size: 1.125rem;
+		color: oklch(0.85 0.02 290);
+	}
+	@media (max-width: 640px) {
+		.brisk-docs-hero__title {
+			font-size: 2.25rem;
+		}
+	}
+</style>

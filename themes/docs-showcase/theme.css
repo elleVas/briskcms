@@ -1,0 +1,45 @@
+/**
+ * "docs-showcase" — tech/documentation site look (docs/adr/0021), styled
+ * after astro.build's own docs section: light, indigo-accented pages with
+ * a dark, gradient hero on the homepage only (see blocks/Hero.astro's own
+ * override — that dark background is scoped to the Hero component itself,
+ * not a site-wide dark mode, so these :root tokens stay light throughout).
+ *
+ * Design tokens only, same contract as classic/theme.css — every block in
+ * apps/public-site/src/components/blocks reads these same Tailwind v4
+ * tokens. Imported by PageLayout.astro *after* global.css, so these :root
+ * values win the cascade over that file's bare-default fallback.
+ */
+
+@theme inline {
+  --font-sans: var(--font-sans-value);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-border: var(--border);
+  --radius-md: var(--radius);
+  --radius-lg: calc(var(--radius) * 1.5);
+}
+
+:root {
+  --font-sans-value: 'Inter Variable', ui-sans-serif, system-ui, sans-serif;
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.145 0 0);
+  /* Indigo, not classic's neutral near-black — the one token every block
+     already reads for its accent surface (buttons, links, highlighted
+     borders), so this alone re-themes the whole site to "docs" without
+     touching a single block. */
+  --primary: oklch(0.457 0.24 264);
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.97 0 0);
+  --secondary-foreground: oklch(0.205 0 0);
+  --muted: oklch(0.97 0 0);
+  --muted-foreground: oklch(0.556 0 0);
+  --border: oklch(0.922 0 0);
+  --radius: 0.5rem;
+}
