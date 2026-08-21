@@ -231,14 +231,27 @@ describe('CanvasEditorShell', () => {
     );
   });
 
-  it('removing the selected block calls onChange with it gone', async () => {
+  it('removing the selected block calls onChange with it gone, and patches the canvas to actually remove it', async () => {
     const { onChange } = renderShell();
     const iframe = await getIframe();
+    const postMessageSpy = vi.spyOn(
+      iframe.contentWindow as Window,
+      'postMessage',
+    );
 
     selectBlockWithRect(iframe, 'hero-1', HERO_RECT);
     fireEvent.click(screen.getByRole('button', { name: 'Rimuovi blocco' }));
 
     expect(onChange).toHaveBeenCalledWith([]);
+    expect(postMessageSpy).toHaveBeenCalledWith(
+      {
+        source: PREVIEW_BRIDGE_SOURCE,
+        v: PREVIEW_BRIDGE_VERSION,
+        type: 'editor:remove-block',
+        payload: { blockId: 'hero-1' },
+      },
+      'http://localhost:4321',
+    );
   });
 
   it('inserting a block from the picker appends it at the root', async () => {
@@ -429,6 +442,45 @@ describe('CanvasEditorShell', () => {
     expect(onChange).not.toHaveBeenCalled();
   });
 
+  it("moving the selected block down via the toolbar's arrows reorders it and patches the canvas", async () => {
+    const { onChange } = renderShell({
+      blocks: [
+        {
+          id: 'hero-1',
+          type: 'Hero',
+          props: { title: 'Titolo', subtitle: 'Sottotitolo' },
+        },
+        { id: 'text-1', type: 'Text', props: { body: 'Corpo' } },
+      ],
+    });
+    const iframe = await getIframe();
+    const postMessageSpy = vi.spyOn(
+      iframe.contentWindow as Window,
+      'postMessage',
+    );
+
+    selectBlockWithRect(iframe, 'hero-1', HERO_RECT);
+    fireEvent.click(screen.getByRole('button', { name: 'Sposta giù' }));
+
+    expect(onChange).toHaveBeenCalledWith([
+      { id: 'text-1', type: 'Text', props: { body: 'Corpo' } },
+      {
+        id: 'hero-1',
+        type: 'Hero',
+        props: { title: 'Titolo', subtitle: 'Sottotitolo' },
+      },
+    ]);
+    expect(postMessageSpy).toHaveBeenCalledWith(
+      {
+        source: PREVIEW_BRIDGE_SOURCE,
+        v: PREVIEW_BRIDGE_VERSION,
+        type: 'editor:reorder-blocks',
+        payload: { parentId: null, orderedIds: ['text-1', 'hero-1'] },
+      },
+      'http://localhost:4321',
+    );
+  });
+
   it('publish sends the current local block tree', async () => {
     const { onPublish, blocks } = renderShell();
     await getIframe();
@@ -526,6 +578,10 @@ describe('CanvasEditorShell', () => {
       ],
     });
     const iframe = await getIframe();
+    const postMessageSpy = vi.spyOn(
+      iframe.contentWindow as Window,
+      'postMessage',
+    );
 
     act(() => {
       dispatchFromIframe(iframe, 'preview:ready', {
@@ -565,6 +621,17 @@ describe('CanvasEditorShell', () => {
       },
     ]);
     expect(screen.queryByTestId('drop-indicator')).toBeNull();
+    await waitFor(() =>
+      expect(postMessageSpy).toHaveBeenCalledWith(
+        {
+          source: PREVIEW_BRIDGE_SOURCE,
+          v: PREVIEW_BRIDGE_VERSION,
+          type: 'editor:reorder-blocks',
+          payload: { parentId: null, orderedIds: ['text-1', 'hero-1'] },
+        },
+        'http://localhost:4321',
+      ),
+    );
   });
 
   it('dragging without crossing any midpoint leaves the root order unchanged (no spurious onChange)', async () => {

@@ -47,6 +47,8 @@ describe('usePreviewBridge', () => {
       dragEnded: null,
       patchBlock: expect.any(Function),
       insertBlock: expect.any(Function),
+      removeBlock: expect.any(Function),
+      reorderBlocks: expect.any(Function),
       enterTextEdit: expect.any(Function),
       exitTextEdit: expect.any(Function),
     });
@@ -198,6 +200,8 @@ describe('usePreviewBridge', () => {
       dragEnded: null,
       patchBlock: expect.any(Function),
       insertBlock: expect.any(Function),
+      removeBlock: expect.any(Function),
+      reorderBlocks: expect.any(Function),
       enterTextEdit: expect.any(Function),
       exitTextEdit: expect.any(Function),
     });
@@ -376,6 +380,48 @@ describe('usePreviewBridge', () => {
           parentId: 'container-1',
           beforeBlockId: 'sibling-1',
         },
+      },
+      EXPECTED_ORIGIN,
+    );
+  });
+
+  it('removeBlock posts editor:remove-block to the iframe, at the expected origin', () => {
+    const { ref, contentWindow } = buildIframeRef();
+    if (!contentWindow) {
+      throw new Error('Test fixture iframe has no contentWindow');
+    }
+    const postMessageSpy = vi.spyOn(contentWindow, 'postMessage');
+    const { result } = renderHook(() => usePreviewBridge(ref, EXPECTED_ORIGIN));
+
+    result.current.removeBlock('hero-1');
+
+    expect(postMessageSpy).toHaveBeenCalledWith(
+      {
+        source: PREVIEW_BRIDGE_SOURCE,
+        v: PREVIEW_BRIDGE_VERSION,
+        type: 'editor:remove-block',
+        payload: { blockId: 'hero-1' },
+      },
+      EXPECTED_ORIGIN,
+    );
+  });
+
+  it('reorderBlocks posts editor:reorder-blocks to the iframe, at the expected origin', () => {
+    const { ref, contentWindow } = buildIframeRef();
+    if (!contentWindow) {
+      throw new Error('Test fixture iframe has no contentWindow');
+    }
+    const postMessageSpy = vi.spyOn(contentWindow, 'postMessage');
+    const { result } = renderHook(() => usePreviewBridge(ref, EXPECTED_ORIGIN));
+
+    result.current.reorderBlocks(null, ['b', 'a']);
+
+    expect(postMessageSpy).toHaveBeenCalledWith(
+      {
+        source: PREVIEW_BRIDGE_SOURCE,
+        v: PREVIEW_BRIDGE_VERSION,
+        type: 'editor:reorder-blocks',
+        payload: { parentId: null, orderedIds: ['b', 'a'] },
       },
       EXPECTED_ORIGIN,
     );

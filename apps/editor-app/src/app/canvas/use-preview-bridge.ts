@@ -55,6 +55,10 @@ export interface PreviewBridgeState {
     parentId: string | null,
     beforeBlockId: string | null,
   ) => void;
+  /** Rimuove un blocco già renderizzato dal DOM dell'iframe — vedi EditorRemoveBlockMessage. */
+  removeBlock: (blockId: string) => void;
+  /** Riordina i fratelli esistenti (già tutti renderizzati) — vedi EditorReorderBlocksMessage. */
+  reorderBlocks: (parentId: string | null, orderedIds: string[]) => void;
   /** Monta TipTap sul posto nell'iframe (Giorno 4) — vedi editor:enter-text-edit. */
   enterTextEdit: (blockId: string, field: string) => void;
   /** Smonta l'istanza TipTap corrente nell'iframe, se c'è. */
@@ -63,7 +67,12 @@ export interface PreviewBridgeState {
 
 type PreviewBridgeMessageState = Omit<
   PreviewBridgeState,
-  'patchBlock' | 'insertBlock' | 'enterTextEdit' | 'exitTextEdit'
+  | 'patchBlock'
+  | 'insertBlock'
+  | 'removeBlock'
+  | 'reorderBlocks'
+  | 'enterTextEdit'
+  | 'exitTextEdit'
 >;
 
 const initialState: PreviewBridgeMessageState = {
@@ -190,6 +199,8 @@ export function usePreviewBridge(
         case 'editor:enter-text-edit':
         case 'editor:exit-text-edit':
         case 'editor:insert-block':
+        case 'editor:remove-block':
+        case 'editor:reorder-blocks':
           // Genitore -> iframe: mai attesi in arrivo qui, il genitore è chi
           // li invia (vedi patchBlock/enterTextEdit/exitTextEdit sotto).
           // Ignorati difensivamente.
@@ -231,6 +242,36 @@ export function usePreviewBridge(
     [iframeRef, expectedOrigin],
   );
 
+  const removeBlock = useCallback(
+    (blockId: string) => {
+      iframeRef.current?.contentWindow?.postMessage(
+        {
+          source: PREVIEW_BRIDGE_SOURCE,
+          v: PREVIEW_BRIDGE_VERSION,
+          type: 'editor:remove-block',
+          payload: { blockId },
+        },
+        expectedOrigin,
+      );
+    },
+    [iframeRef, expectedOrigin],
+  );
+
+  const reorderBlocks = useCallback(
+    (parentId: string | null, orderedIds: string[]) => {
+      iframeRef.current?.contentWindow?.postMessage(
+        {
+          source: PREVIEW_BRIDGE_SOURCE,
+          v: PREVIEW_BRIDGE_VERSION,
+          type: 'editor:reorder-blocks',
+          payload: { parentId, orderedIds },
+        },
+        expectedOrigin,
+      );
+    },
+    [iframeRef, expectedOrigin],
+  );
+
   const enterTextEdit = useCallback(
     (blockId: string, field: string) => {
       iframeRef.current?.contentWindow?.postMessage(
@@ -258,5 +299,13 @@ export function usePreviewBridge(
     );
   }, [iframeRef, expectedOrigin]);
 
-  return { ...state, patchBlock, insertBlock, enterTextEdit, exitTextEdit };
+  return {
+    ...state,
+    patchBlock,
+    insertBlock,
+    removeBlock,
+    reorderBlocks,
+    enterTextEdit,
+    exitTextEdit,
+  };
 }

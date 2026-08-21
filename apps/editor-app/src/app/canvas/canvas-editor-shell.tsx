@@ -335,8 +335,12 @@ export function CanvasEditorShell({
   useEffect(() => {
     if (pendingReorderCommit) {
       onChange(pendingReorderCommit);
+      bridge.reorderBlocks(
+        null,
+        pendingReorderCommit.map((block) => block.id as string),
+      );
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- reagisce solo a un NUOVO pendingReorderCommit — onChange è letta dal valore corrente, non serve rieseguire per un suo cambio di riferimento.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- reagisce solo a un NUOVO pendingReorderCommit — onChange/bridge.reorderBlocks sono letti dal valore corrente, non serve rieseguire per un loro cambio di riferimento.
   }, [pendingReorderCommit]);
 
   const selectedBlock = bridge.selectedBlockId
@@ -436,6 +440,7 @@ export function CanvasEditorShell({
       next = moveBlock(next, id, { parentId: null, index });
     });
     applyLocalChange(next);
+    bridge.reorderBlocks(null, orderedIds);
   }
 
   function handleRemoveSelected(): void {
@@ -443,6 +448,7 @@ export function CanvasEditorShell({
       return;
     }
     applyLocalChange(removeBlock(localBlocks, selectedBlock.id));
+    bridge.removeBlock(selectedBlock.id);
   }
 
   function handlePublish(): void {
@@ -479,11 +485,14 @@ export function CanvasEditorShell({
     if (targetIndex < 0 || targetIndex >= localBlocks.length) {
       return;
     }
-    applyLocalChange(
-      moveBlock(localBlocks, selectedBlock.id, {
-        parentId: null,
-        index: targetIndex,
-      }),
+    const next = moveBlock(localBlocks, selectedBlock.id, {
+      parentId: null,
+      index: targetIndex,
+    });
+    applyLocalChange(next);
+    bridge.reorderBlocks(
+      null,
+      next.map((block) => block.id as string),
     );
   }
 
