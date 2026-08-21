@@ -111,6 +111,32 @@ export async function getPublishedSiteChrome(
   return res.json();
 }
 
+export interface PageTreeNodeDto {
+  id: string;
+  parentId: string | null;
+  slug: string;
+  title: string;
+  ancestorSlugs: string[];
+}
+
+// Built for a theme's own sidebar/tree navigation (docs-showcase,
+// docs/adr/0021's per-block override escalation) — flat list, not nested;
+// the caller (a theme's PageLayout.astro override) groups it into whatever
+// shape its own sidebar needs.
+export async function listPublishedPageTree(
+  domain: string,
+  locale: string,
+): Promise<PageTreeNodeDto[]> {
+  const params = new URLSearchParams({ domain, locale });
+  const res = await fetch(`${apiUrl()}/public/pages/tree?${params.toString()}`);
+
+  if (!res.ok) {
+    throw new Error(`Public pages API error: ${res.status}`);
+  }
+  const body: { items: PageTreeNodeDto[] } = await res.json();
+  return body.items;
+}
+
 export interface SitemapEntryDto {
   slug: string;
   locale: string;

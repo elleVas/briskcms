@@ -9,6 +9,7 @@ export * from './lib/use-cases/get-published-page-by-slug.use-case.js';
 export * from './lib/use-cases/resolve-site-chrome.js';
 export * from './lib/use-cases/get-published-site-chrome.use-case.js';
 export * from './lib/use-cases/list-published-pages-for-sitemap.use-case.js';
+export * from './lib/use-cases/list-published-page-tree.use-case.js';
 export * from './lib/use-cases/search-pages.use-case.js';
 export * from './lib/use-cases/upload-media.use-case.js';
 export * from './lib/use-cases/list-media.use-case.js';

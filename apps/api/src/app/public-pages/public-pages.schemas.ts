@@ -49,3 +49,9 @@ export const publicPagesChromeQuerySchema = z.object({
 export type PublicPagesChromeQuery = z.infer<
   typeof publicPagesChromeQuerySchema
 >;
+
+export const publicPagesTreeQuerySchema = z.object({
+  domain: domainSchema,
+  locale: z.string().min(2),
+});
+export type PublicPagesTreeQuery = z.infer<typeof publicPagesTreeQuerySchema>;
