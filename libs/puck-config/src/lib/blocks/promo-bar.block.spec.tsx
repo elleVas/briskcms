@@ -69,6 +69,7 @@ describe('promoBarConfig.render', () => {
         page: null,
         url: '',
         visibility: 'always',
+        colorOverride: null,
         puck: puckContext,
       }),
     );
@@ -90,6 +91,7 @@ describe('promoBarConfig.render', () => {
         },
         url: '',
         visibility: 'always',
+        colorOverride: null,
         puck: puckContext,
       }),
     );
@@ -106,6 +108,7 @@ describe('promoBarConfig.render', () => {
         page: null,
         url: 'https://example.com',
         visibility: 'always',
+        colorOverride: null,
         puck: puckContext,
       }),
     );

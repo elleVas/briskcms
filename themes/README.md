@@ -77,12 +77,20 @@ wins over core's own component, resolved at build time via the same
 default, not the expected common case — most themes should need `theme.css`
 and `theme.json` alone.
 
-**Not yet wired**: the actual per-block resolution (does `~theme/blocks/Hero.astro`
-existing cause `apps/public-site` to import it instead of the core
-component?) and a full `PageLayout.astro` override are described in the
-ADR as available in principle but not yet built — `classic` is the only
-theme that exists today, and it only needed tokens. Building this out is
-future work, not something to assume already works.
+**Wired** (2026-08-21): `~theme/blocks/<Name>.astro` overrides the matching
+core component, resolved via `import.meta.glob('~theme/blocks/*.astro')`
+in `apps/public-site/src/lib/resolve-theme-block-override.ts`, called once
+per block import in `BlockRenderer.astro` — a theme that ships nothing
+there falls back to core with zero error (`import.meta.glob` against an
+empty/missing directory just matches nothing). A full page-shell override
+works the same way one level up: ship `~theme/PageLayout.astro` at the
+theme's own root (next to `theme.css`/`theme.json`, not inside `blocks/`)
+and it replaces `apps/public-site/src/layouts/PageLayout.astro` wholesale
+— resolved in `resolve-theme-layout-override.ts`, wired into both of
+PageLayout's two importers (`PublicPageContent.astro`,
+`pages/[locale]/search.astro`). `classic` still ships neither — it only
+ever needed tokens — so this remains unexercised by any real theme today,
+but the resolution mechanism itself is no longer aspirational.
 
 ## The boundary you can't cross
 

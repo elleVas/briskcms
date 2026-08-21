@@ -1,5 +1,6 @@
 import type { ComponentConfig, Fields } from '@puckeditor/core';
 import { buttonPropsSchema, type ButtonProps } from '@brisk/shared-types';
+import { ColorPickerField } from '../fields/color-picker-field.js';
 import { PagePickerField } from '../fields/page-picker-field.js';
 import { createResolveFields } from '../fields/resolve-inline-text-fallback.js';
 
@@ -28,6 +29,13 @@ const fields: Fields<ButtonProps> = {
       { label: 'Secondario', value: 'secondary' },
     ],
   },
+  colorOverride: {
+    type: 'custom',
+    label: 'Colore personalizzato (sovrascrive il tema)',
+    render: ({ value, onChange }) => (
+      <ColorPickerField value={value} onChange={onChange} />
+    ),
+  },
 };
 
 export const buttonConfig: ComponentConfig<ButtonProps> = {
@@ -40,20 +48,24 @@ export const buttonConfig: ComponentConfig<ButtonProps> = {
     page: null,
     url: '',
     variant: 'primary',
+    colorOverride: null,
   },
-  render: ({ label, linkType, page, variant }) => (
-    <button
-      type="button"
-      style={{
-        padding: '8px 16px',
-        borderRadius: 6,
-        border: variant === 'secondary' ? '1px solid #18181b' : 'none',
-        background: variant === 'secondary' ? 'transparent' : '#18181b',
-        color: variant === 'secondary' ? '#18181b' : '#fff',
-      }}
-    >
-      {label}
-      {linkType === 'page' && page ? ` → ${page.title}` : ''}
-    </button>
-  ),
+  render: ({ label, linkType, page, variant, colorOverride }) => {
+    const accent = colorOverride ?? '#18181b';
+    return (
+      <button
+        type="button"
+        style={{
+          padding: '8px 16px',
+          borderRadius: 6,
+          border: variant === 'secondary' ? `1px solid ${accent}` : 'none',
+          background: variant === 'secondary' ? 'transparent' : accent,
+          color: variant === 'secondary' ? accent : '#fff',
+        }}
+      >
+        {label}
+        {linkType === 'page' && page ? ` → ${page.title}` : ''}
+      </button>
+    );
+  },
 };

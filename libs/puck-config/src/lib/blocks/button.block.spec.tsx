@@ -45,6 +45,7 @@ describe('buttonConfig.render', () => {
         page: null,
         url: 'https://example.com',
         variant: 'primary',
+        colorOverride: null,
         puck: puckContext,
       }),
     );
@@ -66,11 +67,31 @@ describe('buttonConfig.render', () => {
         },
         url: '',
         variant: 'primary',
+        colorOverride: null,
         puck: puckContext,
       }),
     );
 
     expect(screen.getByText('Vai → Servizi')).toBeTruthy();
+  });
+
+  it('applies colorOverride as the background when set', () => {
+    const { container } = render(
+      buttonConfig.render({
+        id: 'test-id',
+        label: 'Vai',
+        linkType: 'url',
+        page: null,
+        url: 'https://example.com',
+        variant: 'primary',
+        colorOverride: '#ff0000',
+        puck: puckContext,
+      }),
+    );
+
+    expect(container.querySelector('button')?.style.background).toBe(
+      'rgb(255, 0, 0)',
+    );
   });
 });
 
