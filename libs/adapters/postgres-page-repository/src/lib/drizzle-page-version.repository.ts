@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, lt, notInArray } from 'drizzle-orm';
+import { and, asc, desc, eq, notInArray } from 'drizzle-orm';
 import type { PageVersion } from '@brisk/domain-core';
 import type { PageVersionRepositoryPort } from '@brisk/ports';
 import {
@@ -8,12 +8,14 @@ import {
   withTenant,
 } from '@brisk/postgres-db';
 
-// A version survives if it's among the most recent MAX_VERSIONS_TO_KEEP OR
-// newer than RETENTION_DAYS — only pruned when both conditions fail. No
-// scheduled job: pruning runs inline after every save, in the same
-// transaction, so the table never needs a separate cleanup process.
-const MAX_VERSIONS_TO_KEEP = 20;
-const RETENTION_DAYS = 90;
+// Hard cap, not an age-based exemption: a page saved 30 times in one
+// editing session is pruned down to the last 10 immediately, same as a
+// page nobody has touched in a year. Simpler and more predictable than an
+// earlier "last 20 OR newer than 90 days" design (see git history) — that
+// union let an actively-edited page grow unbounded within the 90-day
+// window, which defeated the point. No scheduled job: pruning runs
+// inline after every save, in the same transaction.
+const MAX_VERSIONS_TO_KEEP = 10;
 
 function fromRow(row: typeof pageVersions.$inferSelect): PageVersion {
   return row;
@@ -47,18 +49,20 @@ export class DrizzlePageVersionRepository implements PageVersionRepositoryPort {
       .orderBy(desc(pageVersions.createdAt))
       .limit(MAX_VERSIONS_TO_KEEP);
     const keepIds = recent.map((row) => row.id);
+    // keepIds always has at least the version just inserted by save() —
+    // never empty in practice, but notInArray([]) would match everything
+    // and delete the whole page's history, so guard it explicitly anyway.
+    if (keepIds.length === 0) return;
 
-    const cutoff = new Date(Date.now() - RETENTION_DAYS * 24 * 60 * 60 * 1000);
-    const conditions = [
-      eq(pageVersions.tenantId, tenantId),
-      eq(pageVersions.pageId, pageId),
-      lt(pageVersions.createdAt, cutoff),
-    ];
-    if (keepIds.length > 0) {
-      conditions.push(notInArray(pageVersions.id, keepIds));
-    }
-
-    await tx.delete(pageVersions).where(and(...conditions));
+    await tx
+      .delete(pageVersions)
+      .where(
+        and(
+          eq(pageVersions.tenantId, tenantId),
+          eq(pageVersions.pageId, pageId),
+          notInArray(pageVersions.id, keepIds),
+        ),
+      );
   }
 
   async findById(
