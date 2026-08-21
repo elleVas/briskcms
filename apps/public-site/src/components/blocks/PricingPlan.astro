@@ -12,9 +12,9 @@ const hasLink = linkType === 'page' ? Boolean(page) : Boolean(url);
 ---
 
 <div class:list={['brisk-pricing-plan', { 'brisk-pricing-plan--highlighted': highlighted }]}>
-  <div class="brisk-pricing-plan__name">{name}</div>
+  <div class="brisk-pricing-plan__name" data-brisk-field="name">{name}</div>
   <div class="brisk-pricing-plan__price">
-    {price}<span class="brisk-pricing-plan__period">{period}</span>
+    <span data-brisk-field="price">{price}</span><span class="brisk-pricing-plan__period" data-brisk-field="period">{period}</span>
   </div>
   {
     features.length > 0 && (
@@ -27,7 +27,7 @@ const hasLink = linkType === 'page' ? Boolean(page) : Boolean(url);
   }
   {
     hasLink && (
-      <a class="brisk-pricing-plan__button" href={href}>
+      <a class="brisk-pricing-plan__button" href={href} data-brisk-field="buttonLabel">
         {buttonLabel}
       </a>
     )

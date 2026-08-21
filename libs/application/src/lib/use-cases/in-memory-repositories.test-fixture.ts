@@ -4,6 +4,7 @@ import type {
   Media,
   Page,
   PageVersion,
+  PreviewContentType,
   Site,
   SiteLayoutSection,
   SiteLayoutSectionKind,
@@ -20,6 +21,8 @@ import type {
   PageRepositoryPort,
   PageSearchResult,
   PageVersionRepositoryPort,
+  PreviewToken,
+  PreviewTokenPort,
   SearchPort,
   SiteLayoutSectionRepositoryPort,
   SiteLayoutSectionVersionRepositoryPort,
@@ -359,5 +362,46 @@ export class InMemorySearchPort implements SearchPort {
 
   async search(): Promise<PageSearchResult[]> {
     return this.results;
+  }
+}
+
+export class InMemoryPreviewTokenPort implements PreviewTokenPort {
+  private tokens = new Map<string, PreviewToken>();
+
+  async createToken(
+    tenantId: string,
+    contentType: PreviewContentType,
+    contentId: string,
+    ttlMs: number,
+  ): Promise<PreviewToken> {
+    const token = `preview-token-${this.tokens.size + 1}`;
+    const previewToken: PreviewToken = {
+      token,
+      tenantId,
+      contentType,
+      contentId,
+      expiresAt: new Date(Date.now() + ttlMs),
+    };
+    this.tokens.set(token, previewToken);
+    return previewToken;
+  }
+
+  async validateToken(
+    token: string,
+    contentType: PreviewContentType,
+    contentId: string,
+  ): Promise<PreviewToken | null> {
+    const found = this.tokens.get(token);
+    if (
+      !found ||
+      found.contentType !== contentType ||
+      found.contentId !== contentId
+    ) {
+      return null;
+    }
+    if (found.expiresAt.getTime() <= Date.now()) {
+      return null;
+    }
+    return found;
   }
 }

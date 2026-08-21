@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useRef, useState, type ReactNode } from 'react';
-import { PageListContext, type PageListPort } from '@brisk/puck-config';
+import { PageListContext, type PageListPort } from '@brisk/block-registry';
 import type { PickedPage } from '@brisk/shared-types';
 import { PagePickerDialog } from './page-picker-dialog.js';
 
@@ -13,7 +13,7 @@ export interface PageListProviderProps {
 }
 
 /**
- * The concrete implementation of @brisk/puck-config's PageListPort — same
+ * The concrete implementation of @brisk/block-registry's PageListPort — same
  * Promise-based `pick()` pattern as FormListProvider/MediaPickerProvider.
  */
 export function PageListProvider({

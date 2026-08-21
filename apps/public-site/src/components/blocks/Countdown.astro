@@ -7,7 +7,7 @@ const { targetDate, label } = Astro.props;
 ---
 
 <div class="brisk-countdown" data-target-date={targetDate}>
-  {label && <p class="brisk-countdown__label">{label}</p>}
+  {label && <p class="brisk-countdown__label" data-brisk-field="label">{label}</p>}
   <div class="brisk-countdown__timer">
     <div class="brisk-countdown__unit">
       <span class="brisk-countdown__value" data-unit="days">00</span>

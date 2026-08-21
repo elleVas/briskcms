@@ -1,0 +1,42 @@
+---
+import type { Block } from '@brisk/shared-types';
+import type {
+  PublishedPageAncestorDto,
+  PublishedPageTranslationDto,
+  PublishedSiteDto,
+} from '../lib/public-api-client.js';
+import BlockRenderer from './BlockRenderer.astro';
+
+// Punto d'ingresso dedicato per la patch a frammento (vedi il piano
+// dell'editor visuale, Giorno 3: POST /api/render-block-fragment) — riusa
+// per intero la logica di dispatch di BlockRenderer.astro invece di
+// duplicarla: un cambio di proprietà nell'Inspector renderizza UN blocco
+// isolato tramite questo componente (via l'Astro Container API,
+// apps/public-site/src/pages/api/render-block-fragment.ts), non l'intera
+// pagina. `editable` è sempre true qui: il frammento risultante deve
+// portare lo stesso wrapper data-brisk-block-id/data-brisk-block-type
+// dell'originale che sta sostituendo, altrimenti il blocco patchato
+// smetterebbe di essere tracciabile dal bridge dopo il primo cambio
+// proprietà.
+interface Props {
+  block: Block;
+  locale: string;
+  translations: PublishedPageTranslationDto[];
+  site: PublishedSiteDto;
+  ancestors: PublishedPageAncestorDto[];
+  currentPageTitle: string;
+}
+
+const { block, locale, translations, site, ancestors, currentPageTitle } =
+  Astro.props;
+---
+
+<BlockRenderer
+  block={block}
+  locale={locale}
+  translations={translations}
+  site={site}
+  ancestors={ancestors}
+  currentPageTitle={currentPageTitle}
+  editable
+/>

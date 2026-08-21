@@ -4,8 +4,17 @@ import type { QuoteProps } from '@brisk/shared-types';
 type Props = QuoteProps;
 
 const { quote, author, role } = Astro.props;
-const citation = [author, role].filter(Boolean).join(' — ');
+const hasAuthor = Boolean(author);
+const hasRole = Boolean(role);
 ---
 
-<blockquote>{quote}</blockquote>
-{citation && <cite>{citation}</cite>}
+<blockquote data-brisk-field="quote">{quote}</blockquote>
+{
+  (hasAuthor || hasRole) && (
+    <cite>
+      {hasAuthor && <span data-brisk-field="author">{author}</span>}
+      {hasAuthor && hasRole && ' — '}
+      {hasRole && <span data-brisk-field="role">{role}</span>}
+    </cite>
+  )
+}

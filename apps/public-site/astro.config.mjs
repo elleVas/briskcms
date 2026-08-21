@@ -40,5 +40,15 @@ export default defineConfig({
         '~theme': themeDir,
       },
     },
+    server: {
+      // Il dev server di Vite intercetta ogni preflight OPTIONS con la
+      // propria risposta CORS generica, prima ancora che raggiunga la
+      // rotta Astro — impedirebbe a render-block-fragment.ts's export
+      // OPTIONS/i suoi header CORS scoped a EDITOR_APP_URL di funzionare
+      // in dev (in produzione questo non esiste affatto: l'adapter Node
+      // standalone non passa da Vite). Disabilitato così è sempre la
+      // rotta stessa a rispondere, identico tra dev e produzione.
+      cors: false,
+    },
   },
 });

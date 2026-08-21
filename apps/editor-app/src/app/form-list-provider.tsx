@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useRef, useState, type ReactNode } from 'react';
-import { FormListContext, type FormListPort } from '@brisk/puck-config';
+import { FormListContext, type FormListPort } from '@brisk/block-registry';
 import type { PickedForm } from '@brisk/shared-types';
 import { FormPickerDialog } from './form-picker-dialog.js';
 
@@ -9,7 +9,7 @@ export interface FormListProviderProps {
 }
 
 /**
- * The concrete implementation of @brisk/puck-config's FormListPort — same
+ * The concrete implementation of @brisk/block-registry's FormListPort — same
  * Promise-based `pick()` pattern as MediaPickerProvider.
  */
 export function FormListProvider({ siteId, children }: FormListProviderProps) {

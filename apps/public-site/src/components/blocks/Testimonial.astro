@@ -27,12 +27,12 @@ const STAR_POSITIONS = [1, 2, 3, 4, 5];
       ))
     }
   </div>
-  <blockquote class="brisk-testimonial__quote">{quote}</blockquote>
+  <blockquote class="brisk-testimonial__quote" data-brisk-field="quote">{quote}</blockquote>
   <div class="brisk-testimonial__footer">
     {avatar && <img src={avatar.url} alt="" class="brisk-testimonial__avatar" />}
     <div>
-      <div class="brisk-testimonial__author">{author}</div>
-      {role && <div class="brisk-testimonial__role">{role}</div>}
+      <div class="brisk-testimonial__author" data-brisk-field="author">{author}</div>
+      {role && <div class="brisk-testimonial__role" data-brisk-field="role">{role}</div>}
     </div>
   </div>
 </div>

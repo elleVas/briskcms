@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import { act, renderHook } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { QueryClientProvider } from '@tanstack/react-query';
-import type { Data } from '@puckeditor/core';
+import type { Block } from '@brisk/shared-types';
 import * as api from '../lib/site-layout-sections-api-client.js';
 import { createTestQueryClient } from '../test-query-client.js';
 import { siteLayoutSectionQueryOptions } from './site-layout-sections-queries.js';
@@ -35,7 +35,7 @@ const sampleSection: api.SiteLayoutSectionDto = {
   updatedAt: '',
 };
 
-const emptyData: Data = { root: {}, content: [], zones: {} };
+const sampleContent: Block[] = [{ id: 'nav-1', type: 'Nav', props: {} }];
 
 // Pre-seeds the query cache so useSuspenseQuery resolves synchronously —
 // same reasoning as usePageEditor's own tests.
@@ -58,7 +58,6 @@ function renderEditor() {
 
 describe('useSiteLayoutSectionEditor', () => {
   afterEach(() => {
-    vi.useRealTimers();
     vi.clearAllMocks();
   });
 
@@ -69,32 +68,26 @@ describe('useSiteLayoutSectionEditor', () => {
     expect(result.current.status).toEqual({ kind: 'idle' });
   });
 
-  it('handleChange debounces and saves the draft', async () => {
-    vi.useFakeTimers();
+  it('handleChange saves the draft immediately — no debounce, canvas-editor-shell already debounces', async () => {
     vi.mocked(api.saveDraft).mockResolvedValue(sampleSection);
 
     const { result } = renderEditor();
 
-    act(() => result.current.handleChange(emptyData));
-    expect(api.saveDraft).not.toHaveBeenCalled();
-
     await act(async () => {
-      await vi.advanceTimersByTimeAsync(1000);
+      result.current.handleChange(sampleContent);
     });
 
-    expect(api.saveDraft).toHaveBeenCalledWith(sampleSection.id, []);
+    expect(api.saveDraft).toHaveBeenCalledWith(sampleSection.id, sampleContent);
     expect(result.current.status).toEqual({ kind: 'saved' });
   });
 
-  it('handleChange sets an error status when the debounced save fails', async () => {
-    vi.useFakeTimers();
+  it('handleChange sets an error status when the save fails', async () => {
     vi.mocked(api.saveDraft).mockRejectedValue(new Error('save failed'));
 
     const { result } = renderEditor();
 
-    act(() => result.current.handleChange(emptyData));
     await act(async () => {
-      await vi.advanceTimersByTimeAsync(1000);
+      result.current.handleChange(sampleContent);
     });
 
     expect(result.current.status).toEqual({
@@ -113,10 +106,10 @@ describe('useSiteLayoutSectionEditor', () => {
     const { result } = renderEditor();
 
     await act(async () => {
-      await result.current.handlePublish(emptyData);
+      await result.current.handlePublish(sampleContent);
     });
 
-    expect(api.saveDraft).toHaveBeenCalledWith(sampleSection.id, []);
+    expect(api.saveDraft).toHaveBeenCalledWith(sampleSection.id, sampleContent);
     expect(api.publishSiteLayoutSection).toHaveBeenCalledWith(sampleSection.id);
     expect(result.current.status).toEqual({ kind: 'published' });
   });

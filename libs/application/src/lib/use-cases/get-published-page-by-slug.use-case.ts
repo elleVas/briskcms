@@ -8,6 +8,10 @@ import {
   resolveSiteChrome,
   type PublishedSite,
 } from './resolve-site-chrome.js';
+import {
+  resolvePageAncestors,
+  type PageAncestor,
+} from './resolve-page-ancestors.js';
 
 export interface GetPublishedPageBySlugDeps {
   siteRepository: SiteRepositoryPort;
@@ -22,47 +26,14 @@ export interface GetPublishedPageBySlugInput {
   slug: string;
 }
 
-// Safety net only — real sites are 1-3 levels deep (see the "5-15 pagine
-// per sito" assumption used throughout this codebase), this guards
-// against an unexpected cycle looping forever rather than a realistic
-// depth.
-const MAX_ANCESTOR_WALK = 20;
-
-/** Walks parentId one hop at a time via findById — fine at this product's scale (a handful of hops at most), not worth fetching the whole site's page list just to resolve one page's ancestors. Root-to-parent order. */
-async function resolveAncestors(
-  pageRepository: PageRepositoryPort,
-  tenantId: string,
-  parentId: string | null,
-): Promise<PublishedPageAncestor[]> {
-  const ancestors: PublishedPageAncestor[] = [];
-  let currentId = parentId;
-  for (
-    let hops = 0;
-    currentId !== null && hops < MAX_ANCESTOR_WALK;
-    hops += 1
-  ) {
-    const current = await pageRepository.findById(tenantId, currentId);
-    if (!current) break;
-    ancestors.unshift({
-      slug: current.slug,
-      title: current.seoMeta.title || current.slug,
-    });
-    currentId = current.parentId;
-  }
-  return ancestors;
-}
-
 /** One entry per published locale-translation of this page (docs/adr/0017) — never includes an unpublished draft translation's slug. */
 export interface PublishedPageTranslation {
   locale: string;
   slug: string;
 }
 
-/** Root-to-parent order (does not include the page itself). Empty for a root-level page. */
-export interface PublishedPageAncestor {
-  slug: string;
-  title: string;
-}
+/** Root-to-parent order (does not include the page itself). Empty for a root-level page. Alias kept for external consumers — the walk itself lives in resolve-page-ancestors.ts, shared with getPreviewPageById. */
+export type PublishedPageAncestor = PageAncestor;
 
 export interface PublishedPage {
   content: Block[];
@@ -123,7 +94,7 @@ export async function getPublishedPageBySlug(
   const [siblings, chrome, ancestors] = await Promise.all([
     deps.pageRepository.listByGroup(input.tenantId, site.id, page.groupId),
     resolveSiteChrome(deps, input.tenantId, site, input.locale),
-    resolveAncestors(deps.pageRepository, input.tenantId, page.parentId),
+    resolvePageAncestors(deps.pageRepository, input.tenantId, page.parentId),
   ]);
   const translations = siblings
     .filter((sibling) => sibling.status === 'published')

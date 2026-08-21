@@ -15,11 +15,11 @@ const hasLink = linkType === 'page' ? Boolean(page) : Boolean(url);
   class="brisk-banner"
   style={{ background: backgroundColor ?? 'var(--secondary)' }}
 >
-  <h2 class="brisk-banner__title">{title}</h2>
-  <p class="brisk-banner__text">{text}</p>
+  <h2 class="brisk-banner__title" data-brisk-field="title">{title}</h2>
+  <p class="brisk-banner__text" data-brisk-field="text">{text}</p>
   {
     hasLink && (
-      <a class="brisk-banner__button" href={href}>
+      <a class="brisk-banner__button" href={href} data-brisk-field="buttonLabel">
         {buttonLabel}
       </a>
     )

@@ -1,0 +1,30 @@
+---
+import { getPreviewPageById } from '../../lib/public-api-client.js';
+import PublicPageContent from '../../components/PublicPageContent.astro';
+import { editorAppUrl } from '../../lib/editor-app-url.js';
+
+// SSR, mai prerenderizzata — stessa ragione di [locale]/[...slug].astro:
+// il contenuto (qui, la bozza dietro un token) non è mai noto a build time.
+export const prerender = false;
+
+const { pageId } = Astro.params;
+const token = Astro.url.searchParams.get('token');
+
+const page =
+  pageId && token ? await getPreviewPageById(pageId, token) : null;
+
+if (!page) {
+  Astro.response.status = 404;
+}
+
+// Mai indicizzabile, e imbarcabile in iframe solo dall'editor-app — questa
+// rotta esiste unicamente perché il canvas dell'editor (Giorno 2+) la
+// carica in un <iframe>, non è mai un link pubblico da seguire.
+Astro.response.headers.set('X-Robots-Tag', 'noindex');
+Astro.response.headers.set(
+  'Content-Security-Policy',
+  `frame-ancestors ${editorAppUrl()}`,
+);
+---
+
+<PublicPageContent page={page} editable />

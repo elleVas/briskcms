@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { QueryClientProvider } from '@tanstack/react-query';
-import { usePageList } from '@brisk/puck-config';
+import { usePageList } from '@brisk/block-registry';
 import type { PickedPage } from '@brisk/shared-types';
 import * as api from '../lib/pages-api-client.js';
 import type { PageDto } from '../lib/pages-api-client.js';

@@ -14,9 +14,9 @@ const { name, role, bio, photo } = Astro.props;
       <div class="brisk-team-member__photo brisk-team-member__photo--placeholder" />
     )
   }
-  <div class="brisk-team-member__name">{name}</div>
-  <div class="brisk-team-member__role">{role}</div>
-  {bio && <p class="brisk-team-member__bio">{bio}</p>}
+  <div class="brisk-team-member__name" data-brisk-field="name">{name}</div>
+  <div class="brisk-team-member__role" data-brisk-field="role">{role}</div>
+  {bio && <p class="brisk-team-member__bio" data-brisk-field="bio">{bio}</p>}
 </div>
 
 <style>

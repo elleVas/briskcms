@@ -3,6 +3,7 @@ import { Page } from '@brisk/domain-core';
 import type {
   PageRepositoryPort,
   PageVersionRepositoryPort,
+  PreviewTokenPort,
   SearchPort,
   TenantContextPort,
 } from '@brisk/ports';
@@ -26,6 +27,7 @@ describe('PagesController (unit)', () => {
   let pageVersionRepository: jest.Mocked<PageVersionRepositoryPort>;
   let searchPort: jest.Mocked<SearchPort>;
   let tenantContext: TenantContextPort;
+  let previewTokenPort: jest.Mocked<PreviewTokenPort>;
   let controller: PagesController;
 
   beforeEach(() => {
@@ -47,11 +49,16 @@ describe('PagesController (unit)', () => {
       search: jest.fn(),
     };
     tenantContext = { getCurrentTenantId: () => 'tenant-1' };
+    previewTokenPort = {
+      createToken: jest.fn(),
+      validateToken: jest.fn(),
+    };
     controller = new PagesController(
       pageRepository,
       pageVersionRepository,
       searchPort,
       tenantContext,
+      previewTokenPort,
     );
   });
 
@@ -120,5 +127,37 @@ describe('PagesController (unit)', () => {
     await expect(
       controller.createTranslation('page-1', { locale: 'it', slug: 'home-en' }),
     ).rejects.toThrow(ConflictException);
+  });
+
+  it('createPreviewToken throws a NotFoundException when the page does not exist', async () => {
+    pageRepository.findById.mockResolvedValue(null);
+
+    await expect(controller.createPreviewToken('missing-id')).rejects.toThrow(
+      NotFoundException,
+    );
+    expect(previewTokenPort.createToken).not.toHaveBeenCalled();
+  });
+
+  it("createPreviewToken issues a token scoped to (tenant, 'page', pageId)", async () => {
+    const page = buildPage();
+    pageRepository.findById.mockResolvedValue(page);
+    const expiresAt = new Date();
+    previewTokenPort.createToken.mockResolvedValue({
+      token: 'opaque-token',
+      tenantId: 'tenant-1',
+      contentType: 'page',
+      contentId: page.id,
+      expiresAt,
+    });
+
+    const result = await controller.createPreviewToken(page.id);
+
+    expect(previewTokenPort.createToken).toHaveBeenCalledWith(
+      'tenant-1',
+      'page',
+      page.id,
+      expect.any(Number),
+    );
+    expect(result).toEqual({ token: 'opaque-token', expiresAt });
   });
 });

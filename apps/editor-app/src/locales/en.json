@@ -160,7 +160,8 @@
       "backToList": "Layout",
       "draftSaved": "Draft saved",
       "published": "Published",
-      "sticky": "Stick while scrolling"
+      "sticky": "Stick while scrolling",
+      "noPageToPreview": "Create a page in this language first — the canvas needs a real page to preview {{section}} against."
     }
   },
   "media": {
@@ -375,5 +376,14 @@
       "publisher": "Publisher",
       "editor": "Editor"
     }
+  },
+  "canvas": {
+    "previewFrameTitle": "Page preview",
+    "previewTokenError": "Couldn't load the preview. Try again.",
+    "layersTitle": "Layers",
+    "inspectorEmpty": "Select a block on the canvas to edit its properties.",
+    "insertBlock": "Insert block",
+    "removeBlock": "Remove block",
+    "publish": "Publish"
   }
 }

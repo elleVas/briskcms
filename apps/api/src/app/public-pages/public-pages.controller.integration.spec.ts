@@ -352,4 +352,86 @@ describe('PublicPagesController (integration)', () => {
       defaultLocale: 'it',
     });
   });
+
+  describe('preview', () => {
+    it('serves the real draft, unpublished, behind a valid preview token — without a session', async () => {
+      const createRes = await agent
+        .post('/pages')
+        .send({
+          siteId,
+          groupId: randomUUID(),
+          locale: 'it',
+          slug: `preview-${randomUUID()}`,
+          seoMeta: { title: 'In lavorazione', description: '...' },
+        })
+        .expect(201);
+      const pageId = createRes.body.id;
+      await agent
+        .patch(`/pages/${pageId}/draft`)
+        .send({ content: [{ type: 'Hero', props: { title: 'Bozza' } }] })
+        .expect(200);
+      // Deliberately never published.
+      const tokenRes = await agent
+        .post(`/pages/${pageId}/preview-token`)
+        .expect(201);
+
+      const res = await request(app.getHttpServer())
+        .get(`/public/pages/${pageId}/preview`)
+        .query({ token: tokenRes.body.token })
+        .expect(200);
+
+      expect(res.body.content).toEqual([
+        { type: 'Hero', props: { title: 'Bozza' } },
+      ]);
+    });
+
+    it('404s a preview request with a wrong/mismatched token', async () => {
+      const createRes = await agent
+        .post('/pages')
+        .send({
+          siteId,
+          groupId: randomUUID(),
+          locale: 'it',
+          slug: `preview-${randomUUID()}`,
+          seoMeta: { title: 'In lavorazione', description: '...' },
+        })
+        .expect(201);
+
+      await request(app.getHttpServer())
+        .get(`/public/pages/${createRes.body.id}/preview`)
+        .query({ token: 'not-a-real-token' })
+        .expect(404);
+    });
+
+    it('404s a preview request whose token belongs to a different page', async () => {
+      const first = await agent
+        .post('/pages')
+        .send({
+          siteId,
+          groupId: randomUUID(),
+          locale: 'it',
+          slug: `preview-${randomUUID()}`,
+          seoMeta: { title: 'Prima', description: '...' },
+        })
+        .expect(201);
+      const second = await agent
+        .post('/pages')
+        .send({
+          siteId,
+          groupId: randomUUID(),
+          locale: 'it',
+          slug: `preview-${randomUUID()}`,
+          seoMeta: { title: 'Seconda', description: '...' },
+        })
+        .expect(201);
+      const tokenForFirst = await agent
+        .post(`/pages/${first.body.id}/preview-token`)
+        .expect(201);
+
+      await request(app.getHttpServer())
+        .get(`/public/pages/${second.body.id}/preview`)
+        .query({ token: tokenForFirst.body.token })
+        .expect(404);
+    });
+  });
 });

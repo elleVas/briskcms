@@ -7,9 +7,9 @@ const { icon, title, text } = Astro.props;
 ---
 
 <div class="brisk-feature">
-  <div class="brisk-feature__icon" aria-hidden="true">{icon}</div>
-  <h3 class="brisk-feature__title">{title}</h3>
-  <p class="brisk-feature__text">{text}</p>
+  <div class="brisk-feature__icon" aria-hidden="true" data-brisk-field="icon">{icon}</div>
+  <h3 class="brisk-feature__title" data-brisk-field="title">{title}</h3>
+  <p class="brisk-feature__text" data-brisk-field="text">{text}</p>
 </div>
 
 <style>

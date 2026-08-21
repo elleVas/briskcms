@@ -8,12 +8,12 @@ const { value, prefix, suffix, label } = Astro.props;
 
 <div class="brisk-stat" data-value={value}>
   <div class="brisk-stat__value">
-    <span class="brisk-stat__prefix">{prefix}</span><span
+    <span class="brisk-stat__prefix" data-brisk-field="prefix">{prefix}</span><span
       class="brisk-stat__number"
       data-current="0">0</span
-    ><span class="brisk-stat__suffix">{suffix}</span>
+    ><span class="brisk-stat__suffix" data-brisk-field="suffix">{suffix}</span>
   </div>
-  {label && <div class="brisk-stat__label">{label}</div>}
+  {label && <div class="brisk-stat__label" data-brisk-field="label">{label}</div>}
 </div>
 
 <script>

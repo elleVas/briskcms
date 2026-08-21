@@ -1,26 +1,22 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useState } from 'react';
 import {
   useMutation,
   useQueryClient,
   useSuspenseQuery,
 } from '@tanstack/react-query';
-import type { Data } from '@puckeditor/core';
-import { headerFooterPuckConfig } from '@brisk/puck-config';
+import type { Block } from '@brisk/shared-types';
 import {
   publishSiteLayoutSection,
   saveDraft,
   updateSticky,
   type SiteLayoutSectionKind,
 } from '../lib/site-layout-sections-api-client.js';
-import { fromPuckData } from '../lib/puck-data-mapper.js';
 import { siteLayoutSectionQueryOptions } from './site-layout-sections-queries.js';
 import type { SaveStatus } from './use-page-editor.js';
 
-// Same debounce reasoning as usePageEditor: Puck's onChange fires on every
-// keystroke, and every draft save creates a
-// site_layout_section_versions row.
-const DRAFT_SAVE_DEBOUNCE_MS = 1000;
-
+// No debounce here (unlike the old Puck-backed version) — same reasoning
+// as usePageEditor.ts: canvas-editor-shell.tsx already debounces
+// property/text changes on its own.
 export function useSiteLayoutSectionEditor(
   siteId: string,
   locale: string,
@@ -30,13 +26,9 @@ export function useSiteLayoutSectionEditor(
   const { data: section } = useSuspenseQuery(queryOptions);
   const queryClient = useQueryClient();
   const [status, setStatus] = useState<SaveStatus>({ kind: 'idle' });
-  const saveTimeoutRef = useRef<number | undefined>(undefined);
-
-  useEffect(() => () => window.clearTimeout(saveTimeoutRef.current), []);
 
   const saveDraftMutation = useMutation({
-    mutationFn: (content: ReturnType<typeof fromPuckData>) =>
-      saveDraft(section.id, content),
+    mutationFn: (content: Block[]) => saveDraft(section.id, content),
     onSuccess: (updated) => {
       queryClient.setQueryData(queryOptions.queryKey, updated);
       setStatus({ kind: 'saved' });
@@ -46,7 +38,7 @@ export function useSiteLayoutSectionEditor(
   });
 
   const publishMutation = useMutation({
-    mutationFn: async (content: ReturnType<typeof fromPuckData>) => {
+    mutationFn: async (content: Block[]) => {
       await saveDraft(section.id, content);
       return publishSiteLayoutSection(section.id);
     },
@@ -59,28 +51,20 @@ export function useSiteLayoutSectionEditor(
   });
 
   const handleChange = useCallback(
-    (data: Data) => {
-      window.clearTimeout(saveTimeoutRef.current);
-      saveTimeoutRef.current = window.setTimeout(() => {
-        saveDraftMutation.mutate(fromPuckData(data, headerFooterPuckConfig));
-      }, DRAFT_SAVE_DEBOUNCE_MS);
+    (content: Block[]) => {
+      saveDraftMutation.mutate(content);
     },
     [saveDraftMutation],
   );
 
   const handlePublish = useCallback(
-    (data: Data) => {
-      window.clearTimeout(saveTimeoutRef.current);
-      return publishMutation.mutateAsync(
-        fromPuckData(data, headerFooterPuckConfig),
-      );
-    },
+    (content: Block[]) => publishMutation.mutateAsync(content),
     [publishMutation],
   );
 
   // Not part of saveDraftMutation on purpose (docs/adr/0018 follow-up):
-  // sticky takes effect immediately, it isn't "content" a debounced
-  // autosave should batch with Puck's own onChange.
+  // sticky takes effect immediately, it isn't "content" the canvas debounces
+  // alongside its own property/text changes.
   const stickyMutation = useMutation({
     mutationFn: (sticky: boolean) => updateSticky(section.id, sticky),
     onSuccess: (updated) => {

@@ -55,3 +55,10 @@ export const publicPagesTreeQuerySchema = z.object({
   locale: z.string().min(2),
 });
 export type PublicPagesTreeQuery = z.infer<typeof publicPagesTreeQuerySchema>;
+
+export const publicPagePreviewQuerySchema = z.object({
+  token: z.string().min(1),
+});
+export type PublicPagePreviewQuery = z.infer<
+  typeof publicPagePreviewQuerySchema
+>;

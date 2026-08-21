@@ -40,13 +40,21 @@ export interface ResolveSiteChromeDeps {
  * specific page (if any) is being rendered alongside it. Split out so a
  * route with no backing Page row (e.g. apps/public-site's search.astro)
  * can get the site's normal chrome without needing a page to anchor to.
+ *
+ * `preview: true` (used only by getPreviewPageById, gated on that page's own
+ * valid preview token — vedi il piano dell'editor visuale, Giorno 1) reads
+ * each section's draft `content` regardless of its own `status`, instead of
+ * the published-only collapse below. A section that was never created at
+ * all still resolves to `null` either way — there is nothing to preview.
  */
 export async function resolveSiteChrome(
   deps: ResolveSiteChromeDeps,
   tenantId: string,
   site: Site,
   locale: string,
+  options: { preview?: boolean } = {},
 ): Promise<PublishedSiteChrome> {
+  const preview = options.preview ?? false;
   const [headerSection, footerSection] = await Promise.all([
     deps.siteLayoutSectionRepository.findBySiteLocaleKind(
       tenantId,
@@ -62,17 +70,25 @@ export async function resolveSiteChrome(
     ),
   ]);
 
+  function resolveContent(section: typeof headerSection): Block[] | null {
+    if (!section) {
+      return null;
+    }
+    return preview
+      ? section.content
+      : section.status === 'published'
+        ? section.publishedContent
+        : null;
+  }
+
   return {
-    header:
-      headerSection?.status === 'published'
-        ? headerSection.publishedContent
-        : null,
-    footer:
-      footerSection?.status === 'published'
-        ? footerSection.publishedContent
-        : null,
-    headerSticky:
-      headerSection?.status === 'published' ? headerSection.sticky : false,
+    header: resolveContent(headerSection),
+    footer: resolveContent(footerSection),
+    headerSticky: preview
+      ? (headerSection?.sticky ?? false)
+      : headerSection?.status === 'published'
+        ? headerSection.sticky
+        : false,
     site: {
       name: site.name,
       domain: site.domain,

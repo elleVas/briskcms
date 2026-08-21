@@ -16,6 +16,7 @@ const href = linkType === 'page' && page ? localePath(page.locale, page.slug) : 
     { 'brisk-visibility-desktop-only': visibility === 'desktop-only' },
     { 'brisk-visibility-mobile-only': visibility === 'mobile-only' },
   ]}
+  data-brisk-field="label"
 >
   {label}
 </a>

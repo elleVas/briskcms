@@ -50,6 +50,9 @@
       "path": "../../libs/adapters/s3-attachment-storage/tsconfig.lib.json"
     },
     {
+      "path": "../../libs/adapters/preview-token-adapter/tsconfig.lib.json"
+    },
+    {
       "path": "../../libs/adapters/postgres-user-repository/tsconfig.lib.json"
     },
     {

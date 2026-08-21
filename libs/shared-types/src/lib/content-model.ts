@@ -11,8 +11,16 @@ import { hexColorSchema } from './site-theme-settings.js';
  * editor-app converte le drop-zone di Puck in/da `children`, così restiamo
  * capaci di supportare blocchi "contenitore" senza accoppiare dominio e DB
  * al formato interno di una libreria terza.
+ *
+ * `id` è opzionale qui di proposito, in una finestra transitoria: il
+ * backfill una tantum (vedi @brisk/shared-types' backfill-block-ids.ts)
+ * assegna un id stabile ad ogni blocco esistente prima che qualunque nuovo
+ * editor lo richieda. Reso obbligatorio solo nel deploy *successivo* al
+ * backfill — mai prima, altrimenti un salvataggio dell'editor Puck ancora
+ * attivo (che non scrive id) fallirebbe la validazione a metà rollout.
  */
 export interface Block {
+  id?: string;
   type: string;
   props: Record<string, unknown>;
   children?: Block[];
@@ -20,6 +28,7 @@ export interface Block {
 
 export const blockSchema: z.ZodType<Block> = z.lazy(() =>
   z.object({
+    id: z.string().optional(),
     type: z.string(),
     props: z.record(z.string(), z.unknown()),
     children: z.array(blockSchema).optional(),
@@ -39,13 +48,13 @@ export type SeoMeta = z.infer<typeof seoMetaSchema>;
 
 /**
  * Per-block-type prop schemas, one per concrete block (Hero, Text, ...).
- * Kept here rather than in `@brisk/puck-config` so apps/public-site can
- * import them without pulling in Puck/React at all (see docs/adr/0007 —
- * "any consumer of page content that isn't the editor... can walk children
- * directly without knowing anything about Puck"). `@brisk/puck-config`
- * imports these same schemas and wraps them in Puck's `ComponentConfig` for
- * the editor; this file is the single source of truth for each block's
- * shape either way.
+ * Kept here rather than in `@brisk/block-registry` so apps/public-site can
+ * import them without pulling in React at all (see docs/adr/0007 — "any
+ * consumer of page content that isn't the editor... can walk children
+ * directly without knowing anything about the editor"). Both
+ * `@brisk/block-registry`'s field descriptors and apps/public-site's
+ * `BlockRenderer.astro` import these same schemas; this file is the single
+ * source of truth for each block's shape either way.
  */
 export const heroPropsSchema = z.object({
   title: z.string(),
@@ -246,7 +255,7 @@ export const columnsPropsSchema = z.object({
 });
 export type ColumnsProps = z.infer<typeof columnsPropsSchema>;
 
-/** One CSS value per `ColumnsLayout`, shared between the Puck editor render (libs/puck-config) and the public Astro render (apps/public-site) so the two never drift apart. */
+/** One CSS value per `ColumnsLayout` — read by apps/public-site's Columns.astro, the only renderer (docs/adr/0007). */
 export function columnsGridTemplate(layout: ColumnsLayout): string {
   switch (layout) {
     case 'two-equal':
@@ -316,12 +325,11 @@ export type RatingProps = z.infer<typeof ratingPropsSchema>;
 
 /**
  * Shared 5-point star SVG path — every star-rating render (Rating,
- * Testimonial) on both sides (editor canvas JSX and public-site Astro)
- * draws the same star, so the path itself lives here once rather than
- * being retyped per render target. Still duplicated *once* across the
- * editor/public divide for each block (a plain string, not JSX, can't be
- * shared any further than this — apps/public-site never imports
- * @brisk/puck-config, docs/adr/0007).
+ * Testimonial) draws the same star, so the path itself lives here once
+ * rather than being retyped per render target. apps/public-site's own
+ * Astro components are the only renderer now (docs/adr/0007) — the editor
+ * canvas shows that same real Astro output inside an iframe rather than a
+ * separate React re-implementation.
  */
 export const STAR_ICON_PATH =
   'M10 1.5l2.59 5.25 5.79.84-4.19 4.08.99 5.78L10 14.98l-5.18 2.47.99-5.78-4.19-4.08 5.79-.84L10 1.5z';

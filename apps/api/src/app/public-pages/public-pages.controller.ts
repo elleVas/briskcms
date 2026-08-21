@@ -3,11 +3,13 @@ import {
   Get,
   Inject,
   NotFoundException,
+  Param,
   Query,
   UseGuards,
 } from '@nestjs/common';
 import { ThrottlerGuard } from '@nestjs/throttler';
 import {
+  getPreviewPageById,
   getPublishedPageBySlug,
   getPublishedSiteChrome,
   listPublishedPagesForSitemap,
@@ -16,6 +18,7 @@ import {
 } from '@brisk/application';
 import type {
   PageRepositoryPort,
+  PreviewTokenPort,
   SearchPort,
   SiteLayoutSectionRepositoryPort,
   SiteRepositoryPort,
@@ -24,6 +27,8 @@ import { ZodValidationPipe } from '../zod-validation.pipe.js';
 import {
   type PublicPageBySlugQuery,
   publicPageBySlugQuerySchema,
+  type PublicPagePreviewQuery,
+  publicPagePreviewQuerySchema,
   type PublicPagesChromeQuery,
   publicPagesChromeQuerySchema,
   type PublicPagesSearchQuery,
@@ -36,6 +41,7 @@ import {
 import {
   DEFAULT_TENANT_ID,
   PAGE_REPOSITORY,
+  PREVIEW_TOKEN_PORT,
   SEARCH_REPOSITORY,
   SITE_LAYOUT_SECTION_REPOSITORY,
   SITE_REPOSITORY,
@@ -57,6 +63,8 @@ export class PublicPagesController {
     @Inject(SEARCH_REPOSITORY)
     private readonly searchPort: SearchPort,
     @Inject(DEFAULT_TENANT_ID) private readonly defaultTenantId: string,
+    @Inject(PREVIEW_TOKEN_PORT)
+    private readonly previewTokenPort: PreviewTokenPort,
   ) {}
 
   @Get('by-slug')
@@ -81,6 +89,34 @@ export class PublicPagesController {
     // getPublishedPageBySlug already collapses both cases into `null`, so
     // there's no way for this handler to tell them apart even if it wanted
     // to (see the use case's own comment on why that's deliberate).
+    if (!result) {
+      throw new NotFoundException();
+    }
+    return result;
+  }
+
+  @Get(':id/preview')
+  async preview(
+    @Param('id') id: string,
+    @Query(new ZodValidationPipe(publicPagePreviewQuerySchema))
+    query: PublicPagePreviewQuery,
+  ) {
+    const result = await getPreviewPageById(
+      {
+        pageRepository: this.pageRepository,
+        siteRepository: this.siteRepository,
+        siteLayoutSectionRepository: this.siteLayoutSectionRepository,
+        previewTokenPort: this.previewTokenPort,
+      },
+      {
+        tenantId: this.defaultTenantId,
+        pageId: id,
+        token: query.token,
+      },
+    );
+    // Stessa postura "indistinguibile dal non-esistente" di findBySlug: un
+    // token mancante/scaduto/mismatch e una pagina che non esiste ricevono
+    // lo stesso 404, nessun oracolo per indovinare id di pagina validi.
     if (!result) {
       throw new NotFoundException();
     }

@@ -6,6 +6,7 @@ import type {
 	PublishedSiteDto,
 } from '../lib/public-api-client.js';
 import BlockRenderer from '../components/BlockRenderer.astro';
+import { editorAppUrl } from '../lib/editor-app-url.js';
 import { localePath } from '../lib/locale-path.js';
 import { buildSchemaOrgGraph } from '../lib/schema-org.js';
 import { resolveThemeFont } from '../lib/theme-font.js';
@@ -29,6 +30,9 @@ interface Props {
 	footer: Block[] | null;
 	headerSticky: boolean;
 	ancestors: PublishedPageAncestorDto[];
+	// Solo la rotta di preview lo passa (vedi il piano dell'editor visuale,
+	// Giorno 2) — non influenza mai la rotta pubblicata reale.
+	editable?: boolean;
 }
 
 const {
@@ -40,6 +44,7 @@ const {
 	footer,
 	headerSticky,
 	ancestors,
+	editable,
 } = Astro.props;
 // The default locale's translation, if published, doubles as the
 // x-default alternate (docs/adr/0017) — the version search engines should
@@ -204,7 +209,7 @@ const themeOverrideDeclarations = [
 		}
 		{theme.headScript && <Fragment set:html={theme.headScript} />}
 	</head>
-	<body>
+	<body data-brisk-editor-app-url={editable ? editorAppUrl() : undefined}>
 		{
 			header && (
 				<header
@@ -222,6 +227,7 @@ const themeOverrideDeclarations = [
 								site={site}
 								ancestors={ancestors}
 								currentPageTitle={seoMeta.title}
+								editable={editable}
 							/>
 						))}
 					</div>
@@ -241,6 +247,7 @@ const themeOverrideDeclarations = [
 								site={site}
 								ancestors={ancestors}
 								currentPageTitle={seoMeta.title}
+								editable={editable}
 							/>
 						))}
 					</div>
@@ -248,6 +255,14 @@ const themeOverrideDeclarations = [
 			)
 		}
 		{theme.bodyScript && <Fragment set:html={theme.bodyScript} />}
+		{
+			editable && (
+				<script>
+					import { initPreviewBridge } from '../lib/preview-bridge-client.js';
+					initPreviewBridge();
+				</script>
+			)
+		}
 	</body>
 </html>
 

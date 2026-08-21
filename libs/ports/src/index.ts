@@ -16,3 +16,4 @@ export * from './lib/search.port.js';
 export * from './lib/captcha.port.js';
 export * from './lib/newsletter.port.js';
 export * from './lib/attachment-storage.port.js';
+export * from './lib/preview-token.port.js';
