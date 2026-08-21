@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef } from 'react';
+import type { Block } from '@brisk/shared-types';
 import { renderBlockFragment } from '../../lib/block-fragment-api-client.js';
 
 export interface UsePropertyPatchInput {
@@ -17,6 +18,7 @@ export interface UsePropertyPatchResult {
     blockId: string,
     blockType: string,
     props: Record<string, unknown>,
+    children?: Block[],
   ) => void;
   /**
    * Da chiamare ad ogni `preview:text-changed` (Giorno 4) — stesso debounce
@@ -76,10 +78,22 @@ export function usePropertyPatch({
   }
 
   const scheduleChange = useCallback(
-    (blockId: string, blockType: string, props: Record<string, unknown>) => {
+    (
+      blockId: string,
+      blockType: string,
+      props: Record<string, unknown>,
+      children?: Block[],
+    ) => {
       schedule(blockId, () => {
         onSaveDraft(blockId, props);
-        renderBlockFragment({ pageId, token, blockId, blockType, props })
+        renderBlockFragment({
+          pageId,
+          token,
+          blockId,
+          blockType,
+          props,
+          children,
+        })
           .then((html) => patchBlock(blockId, html))
           .catch(() => {
             /* la bozza è già salvata sopra — un fallimento qui lascia solo il canvas visivamente indietro di un cambio, non perde dati. */

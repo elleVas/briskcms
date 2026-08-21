@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
+  applyBlockInsert,
   applyBlockPatch,
   collectBlockElements,
   escapeHtml,
@@ -168,6 +169,109 @@ describe('applyBlockPatch', () => {
     expect(document.body.innerHTML).toBe(
       '<div data-brisk-block-id="a">old</div>',
     );
+  });
+});
+
+describe('applyBlockInsert', () => {
+  it('appends to the root blocks list for the current editing scope when there is no beforeBlockId', () => {
+    document.body.innerHTML =
+      '<div data-brisk-root-blocks="page">' +
+      '<div data-brisk-block-id="a">first</div>' +
+      '</div>';
+
+    const inserted = applyBlockInsert(
+      document,
+      '<div data-brisk-block-id="b">second</div>',
+      null,
+      null,
+      null,
+    );
+
+    expect(inserted?.textContent).toBe('second');
+    expect(document.body.innerHTML).toBe(
+      '<div data-brisk-root-blocks="page">' +
+        '<div data-brisk-block-id="a">first</div>' +
+        '<div data-brisk-block-id="b">second</div>' +
+        '</div>',
+    );
+  });
+
+  it('inserts before an existing root sibling, using its own parent as the container', () => {
+    document.body.innerHTML =
+      '<div data-brisk-root-blocks="page">' +
+      '<div data-brisk-block-id="a">first</div>' +
+      '</div>';
+
+    applyBlockInsert(
+      document,
+      '<div data-brisk-block-id="b">new</div>',
+      null,
+      'a',
+      null,
+    );
+
+    expect(document.body.innerHTML).toBe(
+      '<div data-brisk-root-blocks="page">' +
+        '<div data-brisk-block-id="b">new</div>' +
+        '<div data-brisk-block-id="a">first</div>' +
+        '</div>',
+    );
+  });
+
+  it('picks the header/footer root list matching the current editing scope', () => {
+    document.body.innerHTML =
+      '<div data-brisk-root-blocks="page"></div>' +
+      '<div data-brisk-root-blocks="header"></div>' +
+      '<div data-brisk-root-blocks="footer"></div>';
+
+    applyBlockInsert(
+      document,
+      '<div data-brisk-block-id="h1">nav</div>',
+      null,
+      null,
+      'header',
+    );
+
+    expect(
+      document.querySelector('[data-brisk-root-blocks="header"]')?.innerHTML,
+    ).toBe('<div data-brisk-block-id="h1">nav</div>');
+    expect(
+      document.querySelector('[data-brisk-root-blocks="page"]')?.innerHTML,
+    ).toBe('');
+  });
+
+  it("appends into an empty container via its wrapper's first element child", () => {
+    document.body.innerHTML =
+      '<div data-brisk-block-id="container-1">' +
+      '<div class="rendered-container"></div>' +
+      '</div>';
+
+    const inserted = applyBlockInsert(
+      document,
+      '<div data-brisk-block-id="child-1">inside</div>',
+      'container-1',
+      null,
+      null,
+    );
+
+    expect(inserted?.textContent).toBe('inside');
+    expect(document.querySelector('.rendered-container')?.innerHTML).toBe(
+      '<div data-brisk-block-id="child-1">inside</div>',
+    );
+  });
+
+  it('returns null without throwing when neither a sibling nor the parent/root container can be found', () => {
+    document.body.innerHTML = '<div>unrelated</div>';
+
+    expect(
+      applyBlockInsert(
+        document,
+        '<div>new</div>',
+        'missing-parent',
+        null,
+        null,
+      ),
+    ).toBeNull();
   });
 });
 

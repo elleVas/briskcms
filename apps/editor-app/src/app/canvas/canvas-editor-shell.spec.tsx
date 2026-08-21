@@ -245,11 +245,188 @@ describe('CanvasEditorShell', () => {
     const { onChange } = renderShell({ blocks: [] });
     await getIframe();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Testo' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Contenuto' }));
+    // Il bottone-blocco è trascinabile (block-picker.tsx) — usa Pointer
+    // Events, non un semplice click: un down+up senza movimento in mezzo è
+    // la simulazione corretta di un click normale (nessuna soglia di drag
+    // superata).
+    const testoButton = screen.getByRole('button', { name: 'Testo' });
+    fireEvent.pointerDown(testoButton, { pointerId: 1 });
+    fireEvent.pointerUp(testoButton, { pointerId: 1 });
 
     expect(onChange).toHaveBeenCalledWith([
       expect.objectContaining({ type: 'Text', props: { body: 'Corpo' } }),
     ]);
+  });
+
+  it('inserting a block from the picker also renders and patches it into the canvas (the reported bug: a new block used to stay invisible until reload)', async () => {
+    vi.mocked(blockFragmentApi.renderBlockFragment).mockResolvedValue(
+      '<div data-brisk-block-id="new-text">Corpo</div>',
+    );
+    renderShell({ blocks: [] });
+    const iframe = await getIframe();
+    const postMessageSpy = vi.spyOn(
+      iframe.contentWindow as Window,
+      'postMessage',
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Contenuto' }));
+    const testoButton = screen.getByRole('button', { name: 'Testo' });
+    fireEvent.pointerDown(testoButton, { pointerId: 1 });
+    fireEvent.pointerUp(testoButton, { pointerId: 1 });
+
+    await waitFor(() =>
+      expect(blockFragmentApi.renderBlockFragment).toHaveBeenCalledWith(
+        expect.objectContaining({
+          blockType: 'Text',
+          props: { body: 'Corpo' },
+        }),
+      ),
+    );
+    await waitFor(() =>
+      expect(postMessageSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: 'editor:insert-block',
+          payload: expect.objectContaining({
+            html: '<div data-brisk-block-id="new-text">Corpo</div>',
+            parentId: null,
+            beforeBlockId: null,
+          }),
+        }),
+        'http://localhost:4321',
+      ),
+    );
+  });
+
+  it('duplicating a block renders and patches the clone into the canvas', async () => {
+    vi.mocked(blockFragmentApi.renderBlockFragment).mockResolvedValue(
+      '<div data-brisk-block-id="hero-copy">Titolo</div>',
+    );
+    renderShell();
+    const iframe = await getIframe();
+    const postMessageSpy = vi.spyOn(
+      iframe.contentWindow as Window,
+      'postMessage',
+    );
+
+    selectBlockWithRect(iframe, 'hero-1', HERO_RECT);
+    fireEvent.click(screen.getByRole('button', { name: 'Duplica blocco' }));
+
+    await waitFor(() =>
+      expect(postMessageSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: 'editor:insert-block',
+          payload: expect.objectContaining({
+            parentId: null,
+            beforeBlockId: null,
+          }),
+        }),
+        'http://localhost:4321',
+      ),
+    );
+  });
+
+  it('dragging a block from the picker onto the canvas inserts it at the computed drop position', async () => {
+    vi.mocked(blockFragmentApi.renderBlockFragment).mockResolvedValue(
+      '<div data-brisk-block-id="new-text">Corpo</div>',
+    );
+    const { onChange } = renderShell({
+      blocks: [
+        {
+          id: 'hero-1',
+          type: 'Hero',
+          props: { title: 'Titolo', subtitle: 'Sottotitolo' },
+        },
+        { id: 'text-1', type: 'Text', props: { body: 'Corpo' } },
+      ],
+    });
+    const iframe = await getIframe();
+    const postMessageSpy = vi.spyOn(
+      iframe.contentWindow as Window,
+      'postMessage',
+    );
+
+    act(() => {
+      dispatchFromIframe(iframe, 'preview:ready', {
+        blockRects: [
+          { id: 'hero-1', top: 0, left: 0, width: 800, height: 100 },
+          { id: 'text-1', top: 100, left: 0, width: 800, height: 100 },
+        ],
+        scrollHeight: 200,
+      });
+    });
+
+    // La sidebar/BlockPicker misura sempre {top:0,left:0,width:0} in questo
+    // ambiente di test (nessun layout reale in jsdom, e questo file non
+    // mocka getBoundingClientRect dell'iframe come fa invece
+    // overlay-layer.spec.tsx) — pageX 0 è quindi "dentro" al canvas per
+    // costruzione, coerente con isOverCanvas in canvas-editor-shell.tsx.
+    fireEvent.click(screen.getByRole('button', { name: 'Contenuto' }));
+    const testoButton = screen.getByRole('button', { name: 'Testo' });
+    fireEvent.pointerDown(testoButton, {
+      pointerId: 1,
+      clientX: 0,
+      clientY: 0,
+    });
+    // Oltre il punto medio di text-1 (150) — il rilascio deve finire in coda.
+    fireEvent.pointerMove(testoButton, {
+      pointerId: 1,
+      clientX: 0,
+      clientY: 180,
+    });
+    fireEvent.pointerUp(testoButton, {
+      pointerId: 1,
+      clientX: 0,
+      clientY: 180,
+    });
+
+    await waitFor(() =>
+      expect(onChange).toHaveBeenCalledWith([
+        expect.objectContaining({ id: 'hero-1' }),
+        expect.objectContaining({ id: 'text-1' }),
+        expect.objectContaining({ type: 'Text', props: { body: 'Corpo' } }),
+      ]),
+    );
+    await waitFor(() =>
+      expect(postMessageSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: 'editor:insert-block',
+          payload: expect.objectContaining({
+            html: '<div data-brisk-block-id="new-text">Corpo</div>',
+            parentId: null,
+            beforeBlockId: null,
+          }),
+        }),
+        'http://localhost:4321',
+      ),
+    );
+  });
+
+  it('dragging a block from the picker but releasing outside the canvas cancels the insert', async () => {
+    const { onChange } = renderShell({ blocks: [] });
+    await getIframe();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Contenuto' }));
+    const testoButton = screen.getByRole('button', { name: 'Testo' });
+    fireEvent.pointerDown(testoButton, {
+      pointerId: 1,
+      clientX: 0,
+      clientY: 0,
+    });
+    // width dell'iframe è 0 in questo ambiente di test — qualunque clientX
+    // positivo cade quindi fuori dai suoi confini per costruzione.
+    fireEvent.pointerMove(testoButton, {
+      pointerId: 1,
+      clientX: 999,
+      clientY: 50,
+    });
+    fireEvent.pointerUp(testoButton, {
+      pointerId: 1,
+      clientX: 999,
+      clientY: 50,
+    });
+
+    expect(onChange).not.toHaveBeenCalled();
   });
 
   it('publish sends the current local block tree', async () => {

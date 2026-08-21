@@ -332,6 +332,34 @@ describe('initPreviewBridge', () => {
     );
   });
 
+  it('applies editor:insert-block, appending to the page root blocks list', () => {
+    document.body.innerHTML =
+      '<div data-brisk-root-blocks="page">' +
+      '<div data-brisk-block-id="hero-1" data-brisk-block-type="Hero" style="display:contents">' +
+      '<h1 data-brisk-field="title">Titolo</h1>' +
+      '</div>' +
+      '</div>';
+    initPreviewBridge();
+    postMessageSpy.mockClear();
+
+    dispatchPostMessage({
+      source: PREVIEW_BRIDGE_SOURCE,
+      v: PREVIEW_BRIDGE_VERSION,
+      type: 'editor:insert-block',
+      payload: {
+        html: '<div data-brisk-block-id="text-1" data-brisk-block-type="Text" style="display:contents"><p data-brisk-field="body">Nuovo</p></div>',
+        parentId: null,
+        beforeBlockId: null,
+      },
+    });
+
+    const inserted = document.querySelector('[data-brisk-block-id="text-1"]');
+    expect(inserted?.textContent).toBe('Nuovo');
+    expect(messagesOfType(postMessageSpy, 'preview:block-rects')).toHaveLength(
+      1,
+    );
+  });
+
   it('prevents the default form submission', () => {
     document.body.innerHTML = '<form></form>';
     initPreviewBridge();

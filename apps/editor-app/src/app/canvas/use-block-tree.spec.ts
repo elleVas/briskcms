@@ -7,6 +7,7 @@ import {
   locateBlock,
   moveBlock,
   removeBlock,
+  siblingsAt,
   updateBlockProps,
 } from './use-block-tree.js';
 
@@ -154,6 +155,29 @@ describe('locateBlock', () => {
 
   it('returns null for an unknown id', () => {
     expect(locateBlock(tree(), 'ghost')).toBeNull();
+  });
+});
+
+describe('siblingsAt', () => {
+  it('returns the root blocks when parentId is null', () => {
+    expect(siblingsAt(tree(), null).map((b) => b.id)).toEqual([
+      'hero-1',
+      'container-1',
+    ]);
+  });
+
+  it("returns a container's children", () => {
+    expect(siblingsAt(tree(), 'container-1').map((b) => b.id)).toEqual([
+      'text-1',
+    ]);
+  });
+
+  it('returns an empty array for a block with no children yet', () => {
+    expect(siblingsAt(tree(), 'hero-1')).toEqual([]);
+  });
+
+  it('returns an empty array for an unknown parentId', () => {
+    expect(siblingsAt(tree(), 'ghost')).toEqual([]);
   });
 });
 

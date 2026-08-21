@@ -134,6 +134,21 @@ export function locateBlock(
 }
 
 /**
+ * I fratelli attuali in un punto dell'albero — `null` = la radice,
+ * altrimenti i `children` del blocco `parentId` (`[]` se non ha ancora
+ * figli, o se `parentId` non esiste). Serve a canvas-editor-shell.tsx per
+ * sapere quale blocco finirà SUBITO DOPO un nuovo inserimento (vedi
+ * `EditorInsertBlockMessage.beforeBlockId`), prima di applicare l'inserimento
+ * stesso all'albero locale.
+ */
+export function siblingsAt(blocks: Block[], parentId: string | null): Block[] {
+  if (parentId === null) {
+    return blocks;
+  }
+  return findBlockInTree(blocks, parentId)?.children ?? [];
+}
+
+/**
  * Un clone profondo con id NUOVI su ogni nodo (incluso ogni figlio
  * annidato, ricorsivamente) — mai gli stessi id dell'originale, altrimenti
  * due blocchi diversi condividerebbero lo stesso id nell'albero (patch a
@@ -141,7 +156,7 @@ export function locateBlock(
  * dell'editor visuale). Le props sono copiate per valore (shallow), non
  * condivise con l'originale.
  */
-export function cloneBlockWithNewIds(block: Block): Block {
+export function cloneBlockWithNewIds(block: Block): Block & { id: string } {
   return {
     ...block,
     id: crypto.randomUUID(),

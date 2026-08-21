@@ -159,10 +159,26 @@ export type EditorExitTextEditMessage = PreviewBridgeEnvelope<
   Record<string, never>
 >;
 
+/**
+ * Un blocco MAI visto prima dall'iframe (inserimento/duplicazione) — a
+ * differenza di `editor:patch-block` (sostituisce un nodo esistente), qui
+ * serve creare un nodo nuovo e inserirlo nel punto giusto. `html` porta già
+ * il proprio wrapper (stesso RenderSingleBlock.astro di patch-block,
+ * includendo l'intero sottoalbero se il blocco ha figli — un solo
+ * `container.renderToString` rende anche i nested). `parentId: null` =
+ * radice della pagina; `beforeBlockId: null` = in coda alla lista
+ * (radice o dentro il genitore) invece che prima di un fratello preciso.
+ */
+export type EditorInsertBlockMessage = PreviewBridgeEnvelope<
+  'editor:insert-block',
+  { html: string; parentId: string | null; beforeBlockId: string | null }
+>;
+
 export type ParentToPreviewMessage =
   | EditorPatchBlockMessage
   | EditorEnterTextEditMessage
-  | EditorExitTextEditMessage;
+  | EditorExitTextEditMessage
+  | EditorInsertBlockMessage;
 
 export type AnyPreviewBridgeMessage =
   PreviewToParentMessage | ParentToPreviewMessage;

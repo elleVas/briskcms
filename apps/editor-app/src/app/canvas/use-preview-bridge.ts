@@ -49,6 +49,12 @@ export interface PreviewBridgeState {
   dragEnded: { blockId: string; pointer: { x: number; y: number } } | null;
   /** Sostituisce un blocco già renderizzato con l'HTML del frammento ottenuto da render-block-fragment (Giorno 3) — vedi block-fragment-api-client.ts. */
   patchBlock: (blockId: string, html: string) => void;
+  /** Inserisce un blocco MAI renderizzato prima (inserimento/duplicazione) — vedi EditorInsertBlockMessage. */
+  insertBlock: (
+    html: string,
+    parentId: string | null,
+    beforeBlockId: string | null,
+  ) => void;
   /** Monta TipTap sul posto nell'iframe (Giorno 4) — vedi editor:enter-text-edit. */
   enterTextEdit: (blockId: string, field: string) => void;
   /** Smonta l'istanza TipTap corrente nell'iframe, se c'è. */
@@ -57,7 +63,7 @@ export interface PreviewBridgeState {
 
 type PreviewBridgeMessageState = Omit<
   PreviewBridgeState,
-  'patchBlock' | 'enterTextEdit' | 'exitTextEdit'
+  'patchBlock' | 'insertBlock' | 'enterTextEdit' | 'exitTextEdit'
 >;
 
 const initialState: PreviewBridgeMessageState = {
@@ -183,6 +189,7 @@ export function usePreviewBridge(
         case 'editor:patch-block':
         case 'editor:enter-text-edit':
         case 'editor:exit-text-edit':
+        case 'editor:insert-block':
           // Genitore -> iframe: mai attesi in arrivo qui, il genitore è chi
           // li invia (vedi patchBlock/enterTextEdit/exitTextEdit sotto).
           // Ignorati difensivamente.
@@ -202,6 +209,21 @@ export function usePreviewBridge(
           v: PREVIEW_BRIDGE_VERSION,
           type: 'editor:patch-block',
           payload: { blockId, html },
+        },
+        expectedOrigin,
+      );
+    },
+    [iframeRef, expectedOrigin],
+  );
+
+  const insertBlock = useCallback(
+    (html: string, parentId: string | null, beforeBlockId: string | null) => {
+      iframeRef.current?.contentWindow?.postMessage(
+        {
+          source: PREVIEW_BRIDGE_SOURCE,
+          v: PREVIEW_BRIDGE_VERSION,
+          type: 'editor:insert-block',
+          payload: { html, parentId, beforeBlockId },
         },
         expectedOrigin,
       );
@@ -236,5 +258,5 @@ export function usePreviewBridge(
     );
   }, [iframeRef, expectedOrigin]);
 
-  return { ...state, patchBlock, enterTextEdit, exitTextEdit };
+  return { ...state, patchBlock, insertBlock, enterTextEdit, exitTextEdit };
 }

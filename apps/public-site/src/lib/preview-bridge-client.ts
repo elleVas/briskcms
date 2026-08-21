@@ -113,6 +113,60 @@ export function applyBlockPatch(
   return root.querySelector(`[data-brisk-block-id="${blockId}"]`);
 }
 
+/**
+ * Inserisce un blocco MAI visto prima dell'iframe (inserimento/duplicazione)
+ * — vedi EditorInsertBlockMessage. Trova il contenitore DOM giusto senza
+ * bisogno di conoscere la struttura interna di ogni tipo di blocco-
+ * contenitore (Container/Columns/Accordion/...): se esiste già un fratello
+ * (`beforeBlockId`), il SUO `parentElement` è per costruzione il contenitore
+ * giusto (ogni blocco è un wrapper `display:contents` piazzato direttamente
+ * come figlio di quel contenitore, mai avvolto in altro — vedi
+ * BlockRenderer.astro). Altrimenti (contenitore vuoto, o radice) serve un
+ * riferimento esplicito: il primo figlio del wrapper del blocco-contenitore
+ * (ogni blocco-contenitore renderizza `<slot/>` come unico contenuto del
+ * proprio elemento radice) per un inserimento annidato, o il marcatore
+ * `data-brisk-root-blocks="page"/"header"/"footer"` (PublicPageContent.astro/
+ * PageLayout.astro) per la radice, distinto per scope perché le tre liste
+ * radice possono coesistere sulla stessa pagina.
+ */
+export function applyBlockInsert(
+  root: ParentNode,
+  html: string,
+  parentId: string | null,
+  beforeBlockId: string | null,
+  editingSection: EditingSection | null,
+): Element | null {
+  const beforeEl = beforeBlockId
+    ? root.querySelector(`[data-brisk-block-id="${beforeBlockId}"]`)
+    : null;
+
+  const container = beforeEl?.parentElement
+    ? beforeEl.parentElement
+    : parentId
+      ? (root.querySelector(`[data-brisk-block-id="${parentId}"]`)
+          ?.firstElementChild ?? null)
+      : root.querySelector(
+          `[data-brisk-root-blocks="${editingSection ?? 'page'}"]`,
+        );
+  if (!container) {
+    return null;
+  }
+
+  const template = document.createElement('template');
+  template.innerHTML = html.trim();
+  const newNode = template.content.firstElementChild;
+  if (!newNode) {
+    return null;
+  }
+
+  if (beforeEl) {
+    container.insertBefore(newNode, beforeEl);
+  } else {
+    container.appendChild(newNode);
+  }
+  return newNode;
+}
+
 /** Il nodo esatto di un field `inlineEditable` dentro un blocco — marcato a mano nel componente Astro del blocco (vedi Hero.astro). `null` se il blocco o il field non esistono (mai un errore da segnalare: un blockId/field ormai stale, es. dopo una patch a frammento, è un caso normale). */
 export function findFieldElement(
   root: ParentNode,
@@ -446,6 +500,21 @@ export function initPreviewBridge(): void {
         const patched = applyBlockPatch(document, blockId, html);
         if (patched) {
           resizeObserver.observe(patched);
+        }
+        sendBlockRects();
+        return;
+      }
+      case 'editor:insert-block': {
+        const { html, parentId, beforeBlockId } = event.data.payload;
+        const inserted = applyBlockInsert(
+          document,
+          html,
+          parentId,
+          beforeBlockId,
+          editingSection,
+        );
+        if (inserted) {
+          resizeObserver.observe(inserted);
         }
         sendBlockRects();
         return;

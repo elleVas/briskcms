@@ -1,3 +1,4 @@
+import type { Block } from '@brisk/shared-types';
 import { editorAppUrl } from './editor-app-url.js';
 
 export interface RenderBlockFragmentBody {
@@ -6,6 +7,15 @@ export interface RenderBlockFragmentBody {
   blockId: string;
   blockType: string;
   props: Record<string, unknown>;
+  /**
+   * Se presente, usati direttamente invece di ricostruirli leggendo la
+   * bozza salvata lato server (vedi render-block-fragment.ts) — il
+   * chiamante (canvas-editor-shell.tsx) conosce già l'albero corrente,
+   * niente bisogno di rileggerlo, e soprattutto niente race: il salvataggio
+   * bozza e questa chiamata partono in parallelo, una lettura server non ha
+   * garanzia di vedere il salvataggio appena fatto.
+   */
+  children?: Block[];
 }
 
 /**
@@ -30,7 +40,9 @@ export function isValidRenderBlockFragmentBody(
     typeof candidate['blockId'] === 'string' &&
     typeof candidate['blockType'] === 'string' &&
     typeof candidate['props'] === 'object' &&
-    candidate['props'] !== null
+    candidate['props'] !== null &&
+    (candidate['children'] === undefined ||
+      Array.isArray(candidate['children']))
   );
 }
 

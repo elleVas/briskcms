@@ -36,6 +36,21 @@ describe('isValidRenderBlockFragmentBody', () => {
       false,
     );
   });
+
+  it('accepts an optional children array', () => {
+    expect(
+      isValidRenderBlockFragmentBody({
+        ...valid,
+        children: [{ id: 'child-1', type: 'Text', props: { body: 'x' } }],
+      }),
+    ).toBe(true);
+  });
+
+  it('rejects children that are not an array', () => {
+    expect(isValidRenderBlockFragmentBody({ ...valid, children: 'nope' })).toBe(
+      false,
+    );
+  });
 });
 
 describe('renderBlockFragmentCorsHeaders', () => {

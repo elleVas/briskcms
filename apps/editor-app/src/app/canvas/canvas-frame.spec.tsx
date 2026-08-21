@@ -23,6 +23,7 @@ const emptyBridge: PreviewBridgeState = {
   activeDrag: null,
   dragEnded: null,
   patchBlock: vi.fn(),
+  insertBlock: vi.fn(),
   enterTextEdit: vi.fn(),
   exitTextEdit: vi.fn(),
 };

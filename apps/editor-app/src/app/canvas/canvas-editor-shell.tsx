@@ -4,6 +4,7 @@ import { Palette } from 'lucide-react';
 import type { Block } from '@brisk/shared-types';
 import type { BlockDescriptor } from '@brisk/block-registry';
 import { Button } from '../../components/ui/button.js';
+import { renderBlockFragment } from '../../lib/block-fragment-api-client.js';
 import { createPagePreviewToken } from '../../lib/preview-token-api-client.js';
 import { PUBLIC_SITE_URL } from '../../lib/public-site-url.js';
 import { GlobalStylesDialog } from '../global-styles-dialog.js';
@@ -22,6 +23,7 @@ import {
   type DropCandidateRect,
 } from './compute-drop-target.js';
 import { LayersPanel } from './layers-panel.js';
+import { useIframeGeometry } from './overlay-layer.js';
 import {
   cloneBlockWithNewIds,
   findBlockInTree,
@@ -29,7 +31,9 @@ import {
   locateBlock,
   moveBlock,
   removeBlock,
+  siblingsAt,
   updateBlockProps,
+  type BlockTreeTarget,
 } from './use-block-tree.js';
 import { usePreviewBridge } from './use-preview-bridge.js';
 import { usePropertyPatch } from './use-property-patch.js';
@@ -119,8 +123,22 @@ export function CanvasEditorShell({
   const { t } = useTranslation();
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const bridge = usePreviewBridge(iframeRef, PUBLIC_SITE_URL);
+  const iframeGeometry = useIframeGeometry(iframeRef);
   const [breakpoint, setBreakpoint] = useState<Breakpoint>('desktop');
   const [isGlobalStylesOpen, setIsGlobalStylesOpen] = useState(false);
+  // Drag di un blocco NUOVO dalla sidebar (BlockPicker) verso il canvas —
+  // a differenza di `bridge.activeDrag` (riordino di un blocco già
+  // esistente, tracciato dall'iframe) qui il drag nasce nel genitore
+  // stesso, quindi lo stato vive qui e non nel bridge. `pointer` è
+  // page-relative (coordinate native del puntatore nel documento del
+  // genitore), va convertito in coordinate iframe-relative prima di
+  // riusare compute-drop-target.ts (che si aspetta la stessa unità di
+  // bridge.blockRects).
+  const [sidebarDrag, setSidebarDrag] = useState<{
+    descriptor: BlockDescriptor;
+    pointerX: number;
+    pointerY: number;
+  } | null>(null);
 
   // Copia locale mutata otticamente (le mutazioni sull'albero devono
   // riflettersi subito su Layers/Inspector, non solo dopo il round-trip col
@@ -255,15 +273,24 @@ export function CanvasEditorShell({
   });
 
   // Calcolo puramente derivato (nessuno stato proprio) — si aggiorna ad ogni
-  // render insieme a `bridge.activeDrag`, così l'indicatore segue il
-  // puntatore dal vivo senza bisogno di un effect dedicato.
+  // render insieme a `bridge.activeDrag`/`sidebarDrag`, così l'indicatore
+  // segue il puntatore dal vivo senza bisogno di un effect dedicato. Per un
+  // drag dalla sidebar non esiste un "blocco trascinato" già nell'albero da
+  // escludere dai candidati — nessun id reale può eguagliare '', quindi
+  // computeDropTarget considera tutti i blocchi di primo livello.
   const liveDropTarget = bridge.activeDrag
     ? computeDropTarget(
         rootRects,
         bridge.activeDrag.blockId,
         bridge.activeDrag.pointer.y,
       )
-    : null;
+    : sidebarDrag
+      ? computeDropTarget(
+          rootRects,
+          '',
+          sidebarDrag.pointerY - iframeGeometry.top,
+        )
+      : null;
 
   // Applica il riordino al termine del drag — stesso pattern "aggiusta lo
   // stato durante il render" già usato sopra per lastTextChange: l'aggiornamento
@@ -339,7 +366,52 @@ export function CanvasEditorShell({
     setLocalBlocks((prev) =>
       updateBlockProps(prev, selectedBlock.id as string, nextProps),
     );
-    scheduleChange(selectedBlock.id, selectedBlock.type, nextProps);
+    scheduleChange(
+      selectedBlock.id,
+      selectedBlock.type,
+      nextProps,
+      selectedBlock.children,
+    );
+  }
+
+  /**
+   * Renderizza il frammento del blocco APPENA creato (mai visto prima
+   * dall'iframe, a differenza di usePropertyPatch che ne sostituisce uno
+   * esistente) e lo inserisce nel canvas via `editor:insert-block` — senza
+   * questo, il blocco resterebbe nell'albero locale/nella bozza salvata ma
+   * invisibile finché l'iframe non si ricarica (il bug segnalato). I
+   * `children` del blocco sono già noti qui (appena costruiti o clonati),
+   * niente bisogno che il server li rilegga dalla bozza salvata — evita
+   * anche la race fra salvataggio e lettura per un contenitore.
+   * `beforeBlockId` è calcolato PRIMA di applicare l'inserimento
+   * all'albero: è l'id di chi oggi occupa la posizione target, che dopo
+   * l'inserimento si ritroverà spostato di uno.
+   */
+  async function insertIntoCanvas(
+    block: Block & { id: string },
+    target: BlockTreeTarget,
+  ): Promise<void> {
+    if (!token) {
+      return;
+    }
+    const siblingsBefore = siblingsAt(localBlocks, target.parentId);
+    const beforeBlockId = siblingsBefore[target.index]?.id ?? null;
+    try {
+      const html = await renderBlockFragment({
+        pageId,
+        token,
+        blockId: block.id,
+        blockType: block.type,
+        props: block.props,
+        children: block.children,
+      });
+      bridge.insertBlock(html, target.parentId, beforeBlockId);
+    } catch {
+      // Il blocco resta comunque nell'albero locale e nella bozza salvata
+      // (applyLocalChange è già avvenuto) — ricomparirà nel canvas al
+      // prossimo reload dell'iframe, stesso comportamento di oggi per
+      // qualunque fallimento di rete.
+    }
   }
 
   function handleInsert(descriptor: BlockDescriptor): void {
@@ -348,13 +420,14 @@ export function CanvasEditorShell({
       registry,
       bridge.selectedBlockId,
     );
-    const newBlock: Block = {
+    const newBlock: Block & { id: string } = {
       id: crypto.randomUUID(),
       type: descriptor.type,
       props: descriptor.defaultProps,
       ...(descriptor.isContainer ? { children: [] } : {}),
     };
     applyLocalChange(insertBlock(localBlocks, newBlock, target));
+    void insertIntoCanvas(newBlock, target);
   }
 
   function handleReorderRoot(orderedIds: string[]): void {
@@ -423,12 +496,12 @@ export function CanvasEditorShell({
       return;
     }
     const clone = cloneBlockWithNewIds(selectedBlock);
-    applyLocalChange(
-      insertBlock(localBlocks, clone, {
-        parentId: location.parentId,
-        index: location.index + 1,
-      }),
-    );
+    const target: BlockTreeTarget = {
+      parentId: location.parentId,
+      index: location.index + 1,
+    };
+    applyLocalChange(insertBlock(localBlocks, clone, target));
+    void insertIntoCanvas(clone, target);
   }
 
   function handleInsertAtRoot(
@@ -442,18 +515,64 @@ export function CanvasEditorShell({
     if (index === -1) {
       return;
     }
-    const newBlock: Block = {
+    const newBlock: Block & { id: string } = {
       id: crypto.randomUUID(),
       type: descriptor.type,
       props: descriptor.defaultProps,
       ...(descriptor.isContainer ? { children: [] } : {}),
     };
-    applyLocalChange(
-      insertBlock(localBlocks, newBlock, {
-        parentId: null,
-        index: index + offset,
-      }),
+    const target: BlockTreeTarget = { parentId: null, index: index + offset };
+    applyLocalChange(insertBlock(localBlocks, newBlock, target));
+    void insertIntoCanvas(newBlock, target);
+  }
+
+  /**
+   * Drag di un blocco nuovo dalla sidebar (BlockPicker) — mousedown+
+   * movimento oltre la soglia lì dentro innesca questi tre callback (vedi
+   * block-picker.tsx). Il punto di rilascio è calcolato con la STESSA
+   * compute-drop-target.ts già usata per il riordino: root-level soltanto,
+   * stesso limite del riordino via drag e del "+" della toolbar.
+   */
+  function handleSidebarDragStart(descriptor: BlockDescriptor): void {
+    setSidebarDrag({ descriptor, pointerX: 0, pointerY: 0 });
+  }
+
+  function handleSidebarDragMove(pageX: number, pageY: number): void {
+    setSidebarDrag((prev) =>
+      prev ? { ...prev, pointerX: pageX, pointerY: pageY } : prev,
     );
+  }
+
+  function handleSidebarDragEnd(
+    descriptor: BlockDescriptor,
+    pageX: number,
+    pageY: number,
+  ): void {
+    setSidebarDrag(null);
+    const isOverCanvas =
+      pageX >= iframeGeometry.left &&
+      pageX <= iframeGeometry.left + iframeGeometry.width &&
+      pageY >= iframeGeometry.top;
+    if (!isOverCanvas) {
+      return;
+    }
+    const dropTarget = computeDropTarget(
+      rootRects,
+      '',
+      pageY - iframeGeometry.top,
+    );
+    const newBlock: Block & { id: string } = {
+      id: crypto.randomUUID(),
+      type: descriptor.type,
+      props: descriptor.defaultProps,
+      ...(descriptor.isContainer ? { children: [] } : {}),
+    };
+    const target: BlockTreeTarget = {
+      parentId: null,
+      index: dropTarget?.index ?? localBlocks.length,
+    };
+    applyLocalChange(insertBlock(localBlocks, newBlock, target));
+    void insertIntoCanvas(newBlock, target);
   }
 
   return (
@@ -511,6 +630,11 @@ export function CanvasEditorShell({
             categories={categories}
             registry={registry}
             onInsert={handleInsert}
+            drag={{
+              onDragStart: handleSidebarDragStart,
+              onDragMove: handleSidebarDragMove,
+              onDragEnd: handleSidebarDragEnd,
+            }}
           />
         </aside>
         <div style={{ flex: 1, minHeight: 0, position: 'relative' }}>
@@ -544,6 +668,18 @@ export function CanvasEditorShell({
               onInsertBefore={(descriptor) => handleInsertAtRoot(descriptor, 0)}
               onInsertAfter={(descriptor) => handleInsertAtRoot(descriptor, 1)}
             />
+          )}
+          {sidebarDrag && (
+            <div
+              data-testid="sidebar-drag-ghost"
+              className="pointer-events-none fixed z-50 rounded bg-primary px-2 py-1 text-xs font-medium text-primary-foreground shadow-md"
+              style={{
+                top: sidebarDrag.pointerY + 12,
+                left: sidebarDrag.pointerX + 12,
+              }}
+            >
+              {sidebarDrag.descriptor.label}
+            </div>
           )}
         </div>
       </div>
