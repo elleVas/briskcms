@@ -1,0 +1,353 @@
+---
+// Override of apps/public-site/src/layouts/PageLayout.astro, resolved via
+// resolveThemeLayoutOverride (docs/adr/0021's full-layout escalation).
+// Everything above <body> (head/meta/SEO/Tier-1-theme-override wiring) is
+// unchanged from core — copied, not re-derived, so this theme doesn't
+// silently drift from whatever core's own <head> does. The only real
+// difference is inside <body>: a docs-style sidebar next to the content
+// for any page that's part of a multi-page section, nothing for a
+// standalone page (the home included) — see the sidebar logic below.
+import type { Block, SeoMeta } from '@brisk/shared-types';
+import {
+	listPublishedPageTree,
+	type PageTreeNodeDto,
+	type PublishedPageAncestorDto,
+	type PublishedPageTranslationDto,
+	type PublishedSiteDto,
+} from '../../apps/public-site/src/lib/public-api-client.js';
+import BlockRenderer from '../../apps/public-site/src/components/BlockRenderer.astro';
+import {
+	localePath,
+	localePathFromAncestors,
+} from '../../apps/public-site/src/lib/locale-path.js';
+import { buildSchemaOrgGraph } from '../../apps/public-site/src/lib/schema-org.js';
+import { resolveThemeFont } from '../../apps/public-site/src/lib/theme-font.js';
+import '../../apps/public-site/src/styles/global.css';
+import './theme.css';
+import themeManifest from './theme.json';
+import '../../apps/public-site/src/styles/visibility.css';
+
+interface Props {
+	seoMeta: SeoMeta;
+	locale: string;
+	translations: PublishedPageTranslationDto[];
+	site: PublishedSiteDto;
+	header: Block[] | null;
+	footer: Block[] | null;
+	headerSticky: boolean;
+	ancestors: PublishedPageAncestorDto[];
+}
+
+const {
+	seoMeta,
+	locale,
+	translations,
+	site,
+	header,
+	footer,
+	headerSticky,
+	ancestors,
+} = Astro.props;
+const defaultTranslation = translations.find(
+	(translation) => translation.locale === site.defaultLocale,
+);
+
+const pageUrl = seoMeta.canonical || Astro.url.href;
+const ogImage = seoMeta.ogTags?.['image'];
+const schemaOrgGraph = buildSchemaOrgGraph({ site, seoMeta, pageUrl });
+const schemaOrgJson = JSON.stringify(schemaOrgGraph).replace(/</g, '\\u003c');
+
+const allowStyleOverrides =
+	(themeManifest.allowStyleOverrides ?? true) &&
+	site.themeSettings.overridesEnabled;
+const theme = allowStyleOverrides
+	? site.themeSettings
+	: {
+			primaryColor: null,
+			secondaryColor: null,
+			fontFamily: null,
+			customCss: null,
+			headScript: null,
+			bodyScript: null,
+			faviconUrl: null,
+			overridesEnabled: false,
+		};
+const themeFont = resolveThemeFont(theme.fontFamily);
+const themeOverrideDeclarations = [
+	theme.primaryColor && `--primary: ${theme.primaryColor} !important;`,
+	theme.secondaryColor && `--secondary: ${theme.secondaryColor} !important;`,
+	themeFont && `--font-sans-value: ${themeFont.cssFontFamily} !important;`,
+]
+	.filter(Boolean)
+	.join(' ');
+
+// --- Sidebar: only for a page that's part of a multi-page section ---
+// (see this file's own top comment). Built from the flat page tree
+// (docs/adr/0021's own list-published-page-tree endpoint, added for this
+// theme) rather than `ancestors`: `ancestors` alone can't tell a section's
+// *root* page (which has no ancestors of its own, being top-level) that
+// it should still show its own siblings/children.
+interface SidebarNode {
+	slug: string;
+	title: string;
+	href: string;
+}
+let sidebarSectionTitle: string | null = null;
+let sidebarItems: SidebarNode[] = [];
+let currentSlug: string | null = null;
+
+if (site.domain) {
+	const currentPathSegments = Astro.url.pathname.split('/').filter(Boolean);
+	currentSlug = currentPathSegments.at(-1) ?? null;
+
+	let tree: PageTreeNodeDto[] = [];
+	try {
+		tree = await listPublishedPageTree(site.domain, locale);
+	} catch {
+		// Best-effort: a page tree fetch failing shouldn't take the whole
+		// page down with it, just fall back to "no sidebar" like a
+		// standalone page would render anyway.
+		tree = [];
+	}
+
+	const currentNode = tree.find((node) => node.slug === currentSlug) ?? null;
+	if (currentNode) {
+		// Walk up to this section's root (parentId === null) — that root's
+		// direct children are the sidebar's own entries. The root itself
+		// might *be* the current page (visiting the section's landing page)
+		// or one of its descendants.
+		let root = currentNode;
+		const visited = new Set<string>([root.id]);
+		while (root.parentId) {
+			const parent = tree.find((node) => node.id === root.parentId);
+			if (!parent || visited.has(parent.id)) break;
+			root = parent;
+			visited.add(root.id);
+		}
+
+		const siblings = tree.filter((node) => node.parentId === root.id);
+		if (siblings.length > 0) {
+			sidebarSectionTitle = root.title;
+			sidebarItems = [
+				{
+					slug: root.slug,
+					title: root.title,
+					href: localePathFromAncestors(locale, root.ancestorSlugs, root.slug),
+				},
+				...siblings.map((node) => ({
+					slug: node.slug,
+					title: node.title,
+					href: localePathFromAncestors(locale, node.ancestorSlugs, node.slug),
+				})),
+			];
+		}
+	}
+}
+const hasSidebar = sidebarItems.length > 0;
+---
+
+<html lang={locale}>
+	<head>
+		<meta charset="utf-8" />
+		{
+			theme.faviconUrl ? (
+				<link rel="icon" href={theme.faviconUrl} />
+			) : (
+				<>
+					<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+					<link rel="icon" href="/favicon.ico" />
+				</>
+			)
+		}
+		<meta name="viewport" content="width=device-width" />
+		{
+			themeFont && (
+				<>
+					<link rel="preconnect" href="https://fonts.googleapis.com" />
+					<link
+						rel="preconnect"
+						href="https://fonts.gstatic.com"
+						crossorigin
+					/>
+					<link
+						rel="stylesheet"
+						href={`https://fonts.googleapis.com/css2?family=${themeFont.googleFontsFamily}&display=swap`}
+					/>
+				</>
+			)
+		}
+		{
+			themeOverrideDeclarations && (
+				<style set:html={`:root { ${themeOverrideDeclarations} }`} />
+			)
+		}
+		<meta name="generator" content={Astro.generator} />
+		<title>{seoMeta.title}</title>
+		<meta name="description" content={seoMeta.description} />
+		{seoMeta.canonical && <link rel="canonical" href={seoMeta.canonical} />}
+		{
+			!site.searchEngineIndexingEnabled && (
+				<meta name="robots" content="noindex, nofollow" />
+			)
+		}
+		{
+			translations.map((translation) => (
+				<link
+					rel="alternate"
+					hreflang={translation.locale}
+					href={`${Astro.url.origin}${localePath(translation.locale, translation.slug)}`}
+				/>
+			))
+		}
+		{
+			defaultTranslation && (
+				<link
+					rel="alternate"
+					hreflang="x-default"
+					href={`${Astro.url.origin}${localePath(defaultTranslation.locale, defaultTranslation.slug)}`}
+				/>
+			)
+		}
+
+		<meta property="og:type" content="website" />
+		<meta property="og:title" content={seoMeta.title} />
+		<meta property="og:description" content={seoMeta.description} />
+		<meta property="og:url" content={pageUrl} />
+		{ogImage && <meta property="og:image" content={ogImage} />}
+
+		<meta
+			name="twitter:card"
+			content={ogImage ? 'summary_large_image' : 'summary'}
+		/>
+		<meta name="twitter:title" content={seoMeta.title} />
+		<meta name="twitter:description" content={seoMeta.description} />
+		{ogImage && <meta name="twitter:image" content={ogImage} />}
+
+		<script is:inline type="application/ld+json" set:html={schemaOrgJson} />
+
+		{theme.customCss && <style set:html={theme.customCss} />}
+		{theme.headScript && <Fragment set:html={theme.headScript} />}
+	</head>
+	<body>
+		{
+			header && (
+				<header
+					class:list={[
+						'border-b border-border bg-background px-6 py-4',
+						{ 'brisk-header--sticky': headerSticky },
+					]}
+				>
+					<div class="flex flex-col gap-3">
+						{header.map((block) => (
+							<BlockRenderer
+								block={block}
+								locale={locale}
+								translations={translations}
+								site={site}
+								ancestors={ancestors}
+								currentPageTitle={seoMeta.title}
+							/>
+						))}
+					</div>
+				</header>
+			)
+		}
+		{
+			hasSidebar ? (
+				<div class="brisk-docs-shell">
+					<nav class="brisk-docs-sidebar" aria-label={sidebarSectionTitle ?? undefined}>
+						<div class="brisk-docs-sidebar__title">{sidebarSectionTitle}</div>
+						<ul class="brisk-docs-sidebar__list">
+							{sidebarItems.map((item) => (
+								<li>
+									<a
+										href={item.href}
+										aria-current={item.slug === currentSlug ? 'page' : undefined}
+									>
+										{item.title}
+									</a>
+								</li>
+							))}
+						</ul>
+					</nav>
+					<div class="brisk-docs-shell__content">
+						<slot />
+					</div>
+				</div>
+			) : (
+				<slot />
+			)
+		}
+		{
+			footer && (
+				<footer class="border-t border-border bg-secondary px-6 py-12">
+					<div class="flex flex-col gap-3">
+						{footer.map((block) => (
+							<BlockRenderer
+								block={block}
+								locale={locale}
+								translations={translations}
+								site={site}
+								ancestors={ancestors}
+								currentPageTitle={seoMeta.title}
+							/>
+						))}
+					</div>
+				</footer>
+			)
+		}
+		{theme.bodyScript && <Fragment set:html={theme.bodyScript} />}
+	</body>
+</html>
+
+<style>
+	.brisk-header--sticky {
+		position: sticky;
+		top: 0;
+		z-index: 40;
+	}
+	.brisk-docs-shell {
+		display: grid;
+		grid-template-columns: 16rem minmax(0, 1fr);
+		gap: 2.5rem;
+		max-width: 72rem;
+		margin: 0 auto;
+		padding: 2.5rem 1.5rem;
+	}
+	.brisk-docs-sidebar__title {
+		font-weight: 700;
+		font-size: 0.9375rem;
+		margin-bottom: 0.75rem;
+	}
+	.brisk-docs-sidebar__list {
+		display: flex;
+		flex-direction: column;
+		gap: 0.125rem;
+		list-style: none;
+		padding: 0;
+		margin: 0;
+		border-left: 2px solid var(--border);
+	}
+	.brisk-docs-sidebar__list a {
+		display: block;
+		padding: 0.375rem 0.875rem;
+		margin-left: -2px;
+		border-left: 2px solid transparent;
+		font-size: 0.875rem;
+		color: var(--muted-foreground);
+		text-decoration: none;
+	}
+	.brisk-docs-sidebar__list a:hover {
+		color: var(--foreground);
+	}
+	.brisk-docs-sidebar__list a[aria-current='page'] {
+		border-left-color: var(--primary);
+		color: var(--primary);
+		font-weight: 600;
+	}
+	@media (max-width: 800px) {
+		.brisk-docs-shell {
+			grid-template-columns: 1fr;
+		}
+	}
+</style>

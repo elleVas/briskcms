@@ -8,6 +8,7 @@ import {
   getPublishedPageBySlug,
   getPublishedSiteChrome,
   listPublishedPagesForSitemap,
+  listPublishedPageTree,
   subscribeNewsletter,
   submitPublicForm,
   uploadFormAttachment,
@@ -135,6 +136,36 @@ describe('public-api-client', () => {
     vi.mocked(fetch).mockResolvedValue(jsonResponse({ message: 'boom' }, 500));
 
     await expect(getPublishedSiteChrome('example.com', 'it')).rejects.toThrow(
+      'Public pages API error: 500',
+    );
+  });
+
+  it('fetches the flat page tree for a domain and locale', async () => {
+    const items = [
+      {
+        id: 'page-1',
+        parentId: null,
+        slug: 'guide',
+        title: 'Guide',
+        ancestorSlugs: [],
+      },
+    ];
+    vi.mocked(fetch).mockResolvedValue(jsonResponse({ items }));
+
+    const result = await listPublishedPageTree('example.com', 'it');
+
+    expect(fetch).toHaveBeenCalledWith(
+      expect.stringContaining(
+        '/public/pages/tree?domain=example.com&locale=it',
+      ),
+    );
+    expect(result).toEqual(items);
+  });
+
+  it('listPublishedPageTree throws on a non-ok response', async () => {
+    vi.mocked(fetch).mockResolvedValue(jsonResponse({ message: 'boom' }, 500));
+
+    await expect(listPublishedPageTree('example.com', 'it')).rejects.toThrow(
       'Public pages API error: 500',
     );
   });

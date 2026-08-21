@@ -11,6 +11,7 @@ import {
   getPublishedPageBySlug,
   getPublishedSiteChrome,
   listPublishedPagesForSitemap,
+  listPublishedPageTree,
   searchPages,
 } from '@brisk/application';
 import type {
@@ -29,6 +30,8 @@ import {
   publicPagesSearchQuerySchema,
   type PublicPagesSitemapQuery,
   publicPagesSitemapQuerySchema,
+  type PublicPagesTreeQuery,
+  publicPagesTreeQuerySchema,
 } from './public-pages.schemas.js';
 import {
   DEFAULT_TENANT_ID,
@@ -109,6 +112,28 @@ export class PublicPagesController {
       throw new NotFoundException();
     }
     return result;
+  }
+
+  @Get('tree')
+  async tree(
+    @Query(new ZodValidationPipe(publicPagesTreeQuerySchema))
+    query: PublicPagesTreeQuery,
+  ) {
+    const result = await listPublishedPageTree(
+      {
+        siteRepository: this.siteRepository,
+        pageRepository: this.pageRepository,
+      },
+      {
+        tenantId: this.defaultTenantId,
+        domain: query.domain,
+        locale: query.locale,
+      },
+    );
+    // Same "nothing to show" collapse as search/listForSitemap — an
+    // unrecognized domain has nothing to build a nav tree from, and a
+    // theme's sidebar has nowhere useful to send a 404 to anyway.
+    return { items: result ?? [] };
   }
 
   @Get('search')
