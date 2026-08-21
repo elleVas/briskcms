@@ -82,7 +82,8 @@
       "actions": {
         "edit": "Open editor",
         "publish": "Publish",
-        "delete": "Delete"
+        "delete": "Delete",
+        "duplicate": "Duplicate page"
       }
     },
     "newPageDialog": {
@@ -94,6 +95,16 @@
       "create": "Create",
       "creating": "Creating...",
       "slugTaken": "A page with this name already exists on this site."
+    },
+    "duplicateDialog": {
+      "title": "Duplicate page",
+      "titleLabel": "Title",
+      "slugLabel": "URL",
+      "descriptionLabel": "SEO description",
+      "cancel": "Cancel",
+      "confirm": "Create copy",
+      "duplicating": "Duplicating...",
+      "slugTaken": "A page with this URL already exists on this site."
     },
     "deleteDialog": {
       "title": "Delete this page?",
@@ -227,6 +238,23 @@
     "save": "Save",
     "saved": "Saved",
     "saving": "Saving..."
+  },
+  "globalStyles": {
+    "open": "Global styles",
+    "title": "Global styles",
+    "loading": "Loading...",
+    "categories": {
+      "colors": "Colors",
+      "buttons": "Buttons"
+    },
+    "buttonRadiusLabel": "Corner radius",
+    "buttonRadiusPlaceholder": "e.g. 6px, 9999px for a pill",
+    "buttonPaddingXLabel": "Horizontal padding",
+    "buttonPaddingYLabel": "Vertical padding",
+    "paddingPlaceholder": "e.g. 1.25rem — empty for the theme default",
+    "save": "Save",
+    "saving": "Saving...",
+    "close": "Close"
   },
   "localeSettings": {
     "menuLabel": "Languages",
@@ -381,9 +409,18 @@
     "previewFrameTitle": "Page preview",
     "previewTokenError": "Couldn't load the preview. Try again.",
     "layersTitle": "Layers",
-    "inspectorEmpty": "Select a block on the canvas to edit its properties.",
     "insertBlock": "Insert block",
     "removeBlock": "Remove block",
-    "publish": "Publish"
+    "publish": "Publish",
+    "preview": "Preview",
+    "moveUp": "Move up",
+    "moveDown": "Move down",
+    "editProperties": "Edit properties",
+    "duplicateBlock": "Duplicate block",
+    "breakpointGroup": "Preview width",
+    "breakpointDesktop": "Desktop",
+    "breakpointTablet": "Tablet",
+    "breakpointMobile": "Mobile",
+    "switchPage": "Switch page"
   }
 }

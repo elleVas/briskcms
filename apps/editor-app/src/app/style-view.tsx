@@ -14,6 +14,7 @@ import {
 import { Switch } from '../components/ui/switch.js';
 import { Textarea } from '../components/ui/textarea.js';
 import type { SiteDto } from '../lib/sites-api-client.js';
+import { ToggleableColorField } from './toggleable-color-field.js';
 import { useSiteThemeSettings } from './use-site-theme-settings.js';
 
 export interface StyleViewProps {
@@ -135,75 +136,25 @@ export function StyleView({ siteId, site }: StyleViewProps) {
         inert={!overridesEnabled || undefined}
         aria-disabled={!overridesEnabled}
       >
-        <div className="flex flex-col gap-2 rounded-md border p-3">
-          <div className="flex items-center justify-between gap-2">
-            <Label
-              htmlFor="theme-settings-primary-color"
-              className="text-sm font-medium"
-            >
-              {t('themeSettings.primaryColorLabel')}
-            </Label>
-            <label className="flex items-center gap-2 text-xs text-muted-foreground">
-              <input
-                type="checkbox"
-                checked={primaryColorEnabled}
-                onChange={(event) =>
-                  setPrimaryColorEnabled(event.target.checked)
-                }
-              />
-              {t('themeSettings.override')}
-            </label>
-          </div>
-          {primaryColorEnabled && (
-            <div className="flex items-center gap-2">
-              <input
-                id="theme-settings-primary-color"
-                type="color"
-                value={primaryColor}
-                onChange={(event) => setPrimaryColor(event.target.value)}
-                className="h-9 w-14 rounded border border-input bg-transparent"
-              />
-              <span className="text-xs text-muted-foreground">
-                {primaryColor}
-              </span>
-            </div>
-          )}
-        </div>
+        <ToggleableColorField
+          id="theme-settings-primary-color"
+          label={t('themeSettings.primaryColorLabel')}
+          overrideLabel={t('themeSettings.override')}
+          enabled={primaryColorEnabled}
+          onEnabledChange={setPrimaryColorEnabled}
+          value={primaryColor}
+          onValueChange={setPrimaryColor}
+        />
 
-        <div className="flex flex-col gap-2 rounded-md border p-3">
-          <div className="flex items-center justify-between gap-2">
-            <Label
-              htmlFor="theme-settings-secondary-color"
-              className="text-sm font-medium"
-            >
-              {t('themeSettings.secondaryColorLabel')}
-            </Label>
-            <label className="flex items-center gap-2 text-xs text-muted-foreground">
-              <input
-                type="checkbox"
-                checked={secondaryColorEnabled}
-                onChange={(event) =>
-                  setSecondaryColorEnabled(event.target.checked)
-                }
-              />
-              {t('themeSettings.override')}
-            </label>
-          </div>
-          {secondaryColorEnabled && (
-            <div className="flex items-center gap-2">
-              <input
-                id="theme-settings-secondary-color"
-                type="color"
-                value={secondaryColor}
-                onChange={(event) => setSecondaryColor(event.target.value)}
-                className="h-9 w-14 rounded border border-input bg-transparent"
-              />
-              <span className="text-xs text-muted-foreground">
-                {secondaryColor}
-              </span>
-            </div>
-          )}
-        </div>
+        <ToggleableColorField
+          id="theme-settings-secondary-color"
+          label={t('themeSettings.secondaryColorLabel')}
+          overrideLabel={t('themeSettings.override')}
+          enabled={secondaryColorEnabled}
+          onEnabledChange={setSecondaryColorEnabled}
+          value={secondaryColor}
+          onValueChange={setSecondaryColor}
+        />
 
         <div className="flex flex-col gap-2">
           <Label htmlFor="theme-settings-font">

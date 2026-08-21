@@ -58,6 +58,7 @@ describe('site layout section lifecycle: get-or-create -> draft -> publish -> ro
       themeBodyScript: null,
       themeFaviconUrl: null,
       themeOverridesEnabled: true,
+      themeTokens: null,
       createdAt: new Date(),
       ...overrides,
     });

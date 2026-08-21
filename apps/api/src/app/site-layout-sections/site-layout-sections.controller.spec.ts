@@ -46,6 +46,7 @@ function buildSite(
     themeBodyScript: null,
     themeFaviconUrl: null,
     themeOverridesEnabled: true,
+    themeTokens: null,
     createdAt: new Date(),
     ...overrides,
   });

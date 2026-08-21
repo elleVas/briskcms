@@ -56,3 +56,10 @@ export const createTranslationBodySchema = z.object({
   slug: pageSlugSchema,
 });
 export type CreateTranslationBody = z.infer<typeof createTranslationBodySchema>;
+
+export const duplicatePageBodySchema = z.object({
+  slug: pageSlugSchema,
+  title: z.string().min(1),
+  description: z.string(),
+});
+export type DuplicatePageBody = z.infer<typeof duplicatePageBodySchema>;

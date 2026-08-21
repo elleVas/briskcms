@@ -100,6 +100,7 @@ export function SiteLayoutSectionEditorView({
                   ← {t('layout.editor.backToList')}
                 </Link>
               }
+              siteId={siteId}
               statusText={statusText}
               actions={
                 <>

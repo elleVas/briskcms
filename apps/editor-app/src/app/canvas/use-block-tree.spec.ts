@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import type { Block } from '@brisk/shared-types';
 import {
+  cloneBlockWithNewIds,
   findBlockInTree,
   insertBlock,
+  locateBlock,
   moveBlock,
   removeBlock,
   updateBlockProps,
@@ -132,5 +134,64 @@ describe('moveBlock', () => {
     const original = tree();
     const result = moveBlock(original, 'ghost', { parentId: null, index: 0 });
     expect(result).toEqual(original);
+  });
+});
+
+describe('locateBlock', () => {
+  it('returns parentId: null and its index for a root-level block', () => {
+    expect(locateBlock(tree(), 'container-1')).toEqual({
+      parentId: null,
+      index: 1,
+    });
+  });
+
+  it("returns the real parent's id and index for a nested block", () => {
+    expect(locateBlock(tree(), 'text-1')).toEqual({
+      parentId: 'container-1',
+      index: 0,
+    });
+  });
+
+  it('returns null for an unknown id', () => {
+    expect(locateBlock(tree(), 'ghost')).toBeNull();
+  });
+});
+
+describe('cloneBlockWithNewIds', () => {
+  it('copies type and props, but assigns a new id', () => {
+    const [hero] = tree();
+    const clone = cloneBlockWithNewIds(hero);
+
+    expect(clone.id).not.toBe(hero.id);
+    expect(clone.type).toBe('Hero');
+    expect(clone.props).toEqual(hero.props);
+  });
+
+  it('does not share the props object with the original (a later edit to one leaves the other untouched)', () => {
+    const [hero] = tree();
+    const clone = cloneBlockWithNewIds(hero);
+
+    clone.props['title'] = 'Changed on the clone';
+
+    expect(hero.props['title']).toBe('Old');
+  });
+
+  it('recursively assigns new ids to every nested child, never reusing the original ids', () => {
+    const [, container] = tree();
+    const clone = cloneBlockWithNewIds(container);
+
+    expect(clone.id).not.toBe(container.id);
+    expect(clone.children).toHaveLength(1);
+    expect(clone.children?.[0].id).not.toBe(container.children?.[0].id);
+    expect(clone.children?.[0].type).toBe('Text');
+    expect(clone.children?.[0].props).toEqual(container.children?.[0].props);
+  });
+
+  it('gives every clone a distinct id, even across repeated calls', () => {
+    const [hero] = tree();
+    const first = cloneBlockWithNewIds(hero);
+    const second = cloneBlockWithNewIds(hero);
+
+    expect(first.id).not.toBe(second.id);
   });
 });

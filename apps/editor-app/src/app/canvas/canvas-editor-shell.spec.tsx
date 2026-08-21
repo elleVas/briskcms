@@ -14,6 +14,7 @@ import {
   PREVIEW_BRIDGE_VERSION,
 } from '@brisk/shared-types';
 import type { BlockDescriptor } from '@brisk/block-registry';
+import { TooltipProvider } from '../../components/ui/tooltip.js';
 import { createTestQueryClient } from '../../test-query-client.js';
 import * as blockFragmentApi from '../../lib/block-fragment-api-client.js';
 import * as previewTokenApi from '../../lib/preview-token-api-client.js';
@@ -88,16 +89,18 @@ function renderShell(
 
   const utils = render(
     <QueryClientProvider client={queryClient}>
-      <CanvasEditorShell
-        backLink={<a href="/pages">Pagine</a>}
-        statusText="Bozza salvata"
-        registry={registry}
-        categories={categories}
-        blocks={blocks}
-        onChange={onChange}
-        onPublish={onPublish}
-        pageId="page-1"
-      />
+      <TooltipProvider>
+        <CanvasEditorShell
+          backLink={<a href="/pages">Pagine</a>}
+          statusText="Bozza salvata"
+          registry={registry}
+          categories={categories}
+          blocks={blocks}
+          onChange={onChange}
+          onPublish={onPublish}
+          pageId="page-1"
+        />
+      </TooltipProvider>
     </QueryClientProvider>,
   );
 
@@ -128,6 +131,29 @@ function dispatchFromIframe(
   window.dispatchEvent(event);
 }
 
+/** La toolbar contestuale compare solo per un blocco di cui il bridge conosce già il rect — selezionarlo in un test richiede prima un `preview:ready`/`preview:block-rects` con quel rect, non solo il click. */
+function selectBlockWithRect(
+  iframe: HTMLIFrameElement,
+  blockId: string,
+  rect: { top: number; left: number; width: number; height: number },
+) {
+  act(() => {
+    dispatchFromIframe(iframe, 'preview:ready', {
+      blockRects: [{ id: blockId, ...rect }],
+      scrollHeight: rect.top + rect.height,
+    });
+  });
+  act(() => {
+    dispatchFromIframe(iframe, 'preview:click', { blockId });
+  });
+}
+
+const HERO_RECT = { top: 0, left: 0, width: 800, height: 100 };
+
+function openPropertiesPopover() {
+  fireEvent.click(screen.getByRole('button', { name: 'Modifica proprietà' }));
+}
+
 describe('CanvasEditorShell', () => {
   beforeEach(() => {
     vi.useFakeTimers({ shouldAdvanceTime: true });
@@ -138,7 +164,7 @@ describe('CanvasEditorShell', () => {
     vi.useRealTimers();
   });
 
-  it('renders the top bar (back link, status, publish, logout) and the empty inspector state', async () => {
+  it('renders the top bar (back link, status, publish, logout) and no toolbar when nothing is selected', async () => {
     renderShell();
     await getIframe();
 
@@ -146,24 +172,20 @@ describe('CanvasEditorShell', () => {
     expect(screen.getByText('Bozza salvata')).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Pubblica' })).toBeTruthy();
     expect(screen.getByRole('button', { name: /^esci$/i })).toBeTruthy();
-    expect(
-      screen.getByText(
-        'Seleziona un blocco sul canvas per modificarne le proprietà.',
-      ),
-    ).toBeTruthy();
+    expect(screen.queryByTestId('block-breadcrumb')).toBeNull();
   });
 
-  it('selecting a block on the canvas shows it in the Inspector', async () => {
+  it('selecting a block on the canvas shows the contextual toolbar', async () => {
     renderShell();
     const iframe = await getIframe();
 
-    act(() => {
-      dispatchFromIframe(iframe, 'preview:click', { blockId: 'hero-1' });
-    });
+    selectBlockWithRect(iframe, 'hero-1', HERO_RECT);
 
-    expect(screen.getByRole('heading', { name: 'Hero' })).toBeTruthy();
-    expect(screen.getByDisplayValue('Titolo')).toBeTruthy();
+    expect(screen.getByTestId('block-breadcrumb').textContent).toBe('Hero');
     expect(screen.getByRole('button', { name: 'Rimuovi blocco' })).toBeTruthy();
+
+    openPropertiesPopover();
+    expect(screen.getByDisplayValue('Titolo')).toBeTruthy();
   });
 
   it('changing a property in the Inspector updates onChange after the debounce, and patches the fragment', async () => {
@@ -177,9 +199,8 @@ describe('CanvasEditorShell', () => {
       'postMessage',
     );
 
-    act(() => {
-      dispatchFromIframe(iframe, 'preview:click', { blockId: 'hero-1' });
-    });
+    selectBlockWithRect(iframe, 'hero-1', HERO_RECT);
+    openPropertiesPopover();
 
     const input = screen.getByDisplayValue('Titolo');
     fireEvent.change(input, { target: { value: 'Nuovo titolo' } });
@@ -214,9 +235,7 @@ describe('CanvasEditorShell', () => {
     const { onChange } = renderShell();
     const iframe = await getIframe();
 
-    act(() => {
-      dispatchFromIframe(iframe, 'preview:click', { blockId: 'hero-1' });
-    });
+    selectBlockWithRect(iframe, 'hero-1', HERO_RECT);
     fireEvent.click(screen.getByRole('button', { name: 'Rimuovi blocco' }));
 
     expect(onChange).toHaveBeenCalledWith([]);
@@ -302,9 +321,8 @@ describe('CanvasEditorShell', () => {
     });
 
     // Aggiornamento ottico immediato, prima del debounce di salvataggio.
-    act(() => {
-      dispatchFromIframe(iframe, 'preview:click', { blockId: 'hero-1' });
-    });
+    selectBlockWithRect(iframe, 'hero-1', HERO_RECT);
+    openPropertiesPopover();
     expect(screen.getByDisplayValue('Digitato dal vivo')).toBeTruthy();
 
     await act(async () => {

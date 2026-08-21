@@ -18,6 +18,7 @@ import {
   createPage,
   createPageTranslation,
   deletePage,
+  duplicatePage,
   listPages,
   listPageTranslations,
   listPageVersions,
@@ -59,6 +60,8 @@ import {
   createPageBodySchema,
   type CreateTranslationBody,
   createTranslationBodySchema,
+  type DuplicatePageBody,
+  duplicatePageBodySchema,
   type ListPagesQuery,
   listPagesQuerySchema,
   type RollbackBody,
@@ -294,6 +297,31 @@ export class PagesController {
         },
       );
       return translation.toProps();
+    });
+  }
+
+  @Post(':id/duplicate')
+  async duplicate(
+    @Param('id') id: string,
+    @Body(new ZodValidationPipe(duplicatePageBodySchema))
+    body: DuplicatePageBody,
+  ) {
+    return this.handleDomainErrors(async () => {
+      const duplicate = await duplicatePage(
+        {
+          pageRepository: this.pageRepository,
+          pageVersionRepository: this.pageVersionRepository,
+        },
+        {
+          tenantId: this.tenantContext.getCurrentTenantId(),
+          sourcePageId: id,
+          slug: body.slug,
+          title: body.title,
+          description: body.description,
+          createdBy: null,
+        },
+      );
+      return duplicate.toProps();
     });
   }
 

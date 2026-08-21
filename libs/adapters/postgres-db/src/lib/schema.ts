@@ -19,6 +19,7 @@ import type {
   OpeningHoursDay,
   PageContent,
   SeoMeta,
+  ThemeTokens,
   UntranslatedPageFallback,
 } from '@brisk/shared-types';
 import type {
@@ -115,6 +116,10 @@ export const sites = pgTable(
     themeOverridesEnabled: boolean('theme_overrides_enabled')
       .notNull()
       .default(true),
+    // Fase 2a del piano editor visuale, parte 2 (Global Styles Editor) —
+    // categorie di stile oltre ai colori (Bottoni oggi). Nullable come il
+    // resto di Tier 1: `null` = nessuna categoria personalizzata ancora.
+    themeTokens: jsonb('theme_tokens').$type<ThemeTokens>(),
     createdAt: timestamp('created_at', { withTimezone: true })
       .notNull()
       .defaultNow(),

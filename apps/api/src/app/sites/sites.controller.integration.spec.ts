@@ -267,6 +267,36 @@ describe('SitesController (integration)', () => {
       .expect(404);
   });
 
+  it('defaults theme tokens to every field null, and updates the buttons category', async () => {
+    const getRes = await agent.get(`/sites/${siteId}`).expect(200);
+    expect(getRes.body.themeTokens).toBeNull();
+
+    const res = await agent
+      .patch(`/sites/${siteId}/theme-tokens`)
+      .send({
+        buttons: { borderRadius: '9999px', paddingX: '1.5rem', paddingY: null },
+      })
+      .expect(200);
+
+    expect(res.body.themeTokens).toEqual({
+      buttons: { borderRadius: '9999px', paddingX: '1.5rem', paddingY: null },
+    });
+
+    const getAfter = await agent.get(`/sites/${siteId}`).expect(200);
+    expect(getAfter.body.themeTokens).toEqual({
+      buttons: { borderRadius: '9999px', paddingX: '1.5rem', paddingY: null },
+    });
+  });
+
+  it('404s updating theme tokens for a site that does not exist', async () => {
+    await agent
+      .patch(`/sites/${randomUUID()}/theme-tokens`)
+      .send({
+        buttons: { borderRadius: '6px', paddingX: null, paddingY: null },
+      })
+      .expect(404);
+  });
+
   it('401s without a session cookie', async () => {
     await request(app.getHttpServer()).get(`/sites/${siteId}`).expect(401);
   });

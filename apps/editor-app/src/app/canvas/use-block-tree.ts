@@ -102,3 +102,52 @@ export function moveBlock(
   const withoutBlock = removeBlock(blocks, blockId);
   return insertBlock(withoutBlock, block, target);
 }
+
+/**
+ * Trova un blocco e restituisce la sua posizione come `BlockTreeTarget` —
+ * `parentId: null` se è di primo livello, altrimenti l'id del suo vero
+ * genitore nell'albero (serve a "Duplica blocco" per reinserire la copia
+ * come fratello, allo stesso livello dell'originale, anche quando quel
+ * livello è dentro un Container/Columns). `null` se `id` non esiste
+ * nell'albero.
+ */
+export function locateBlock(
+  blocks: Block[],
+  id: string,
+): BlockTreeTarget | null {
+  const index = blocks.findIndex((block) => block.id === id);
+  if (index !== -1) {
+    return { parentId: null, index };
+  }
+  for (const block of blocks) {
+    if (!block.children) {
+      continue;
+    }
+    const found = locateBlock(block.children, id);
+    if (found) {
+      return found.parentId === null
+        ? { parentId: block.id ?? null, index: found.index }
+        : found;
+    }
+  }
+  return null;
+}
+
+/**
+ * Un clone profondo con id NUOVI su ogni nodo (incluso ogni figlio
+ * annidato, ricorsivamente) — mai gli stessi id dell'originale, altrimenti
+ * due blocchi diversi condividerebbero lo stesso id nell'albero (patch a
+ * frammento/drag/riordino sono tutti indirizzati per id, vedi il piano
+ * dell'editor visuale). Le props sono copiate per valore (shallow), non
+ * condivise con l'originale.
+ */
+export function cloneBlockWithNewIds(block: Block): Block {
+  return {
+    ...block,
+    id: crypto.randomUUID(),
+    props: { ...block.props },
+    ...(block.children
+      ? { children: block.children.map(cloneBlockWithNewIds) }
+      : {}),
+  };
+}

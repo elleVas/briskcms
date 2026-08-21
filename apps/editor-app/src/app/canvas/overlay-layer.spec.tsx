@@ -15,7 +15,7 @@ describe('toOverlayStyle', () => {
     );
 
     expect(style).toEqual({
-      position: 'absolute',
+      position: 'fixed',
       top: 110,
       left: 70,
       width: 300,
@@ -29,7 +29,7 @@ describe('toDropIndicatorStyle', () => {
     const style = toDropIndicatorStyle({ top: 100, left: 50, width: 800 }, 30);
 
     expect(style).toEqual({
-      position: 'absolute',
+      position: 'fixed',
       top: 129,
       left: 50,
       width: 800,

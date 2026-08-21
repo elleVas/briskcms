@@ -142,6 +142,9 @@ describe('PublicPagesController (integration)', () => {
           faviconUrl: null,
           overridesEnabled: true,
         },
+        themeTokens: {
+          buttons: { borderRadius: null, paddingX: null, paddingY: null },
+        },
       },
     });
   });

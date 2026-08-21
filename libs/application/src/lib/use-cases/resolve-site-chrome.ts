@@ -2,6 +2,7 @@ import type {
   Block,
   OpeningHoursDay,
   ThemeSettings,
+  ThemeTokens,
   UntranslatedPageFallback,
 } from '@brisk/shared-types';
 import type { Site } from '@brisk/domain-core';
@@ -21,6 +22,8 @@ export interface PublishedSite {
   searchEngineIndexingEnabled: boolean;
   /** Tier 1 of docs/adr/0021's theming model — layered by PageLayout.astro on top of the active filesystem theme (Tier 2). */
   themeSettings: ThemeSettings;
+  /** Global Styles Editor (Fase 2a) — categorie di stile oltre ai colori (Bottoni oggi). */
+  themeTokens: ThemeTokens;
 }
 
 export interface PublishedSiteChrome {
@@ -101,6 +104,7 @@ export async function resolveSiteChrome(
       openingHours: site.openingHours,
       searchEngineIndexingEnabled: site.searchEngineIndexingEnabled,
       themeSettings: site.themeSettings,
+      themeTokens: site.themeTokens,
     },
   };
 }

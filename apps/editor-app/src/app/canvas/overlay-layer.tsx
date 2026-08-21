@@ -10,7 +10,7 @@ export interface OverlayLayerProps {
   dropIndicatorTop?: number | null;
 }
 
-interface IframeGeometry {
+export interface IframeGeometry {
   top: number;
   left: number;
   width: number;
@@ -25,12 +25,22 @@ const ZERO_GEOMETRY: IframeGeometry = { top: 0, left: 0, width: 0 };
  * dell'iframe stesso nella pagina del genitore per disegnare l'overlay nel
  * punto giusto.
  */
+/**
+ * `position: 'fixed'`, non `'absolute'` — l'overlay vive dentro un
+ * contenitore che di per sé è già co-locato con il box dell'iframe (nessun
+ * padding/margine fra i due), quindi un `absolute` sommerebbe l'offset
+ * dell'iframe una seconda volta sopra quello già dato dal genitore
+ * posizionato. `fixed` ignora la gerarchia degli antenati e usa
+ * direttamente le coordinate viewport di `geometry`/`rect` (stessa
+ * semantica di `getBoundingClientRect()`), l'unica cosa per cui la
+ * traduzione qui sotto è corretta.
+ */
 export function toOverlayStyle(
   geometry: IframeGeometry,
   rect: BlockRect,
 ): CSSProperties {
   return {
-    position: 'absolute',
+    position: 'fixed',
     top: geometry.top + rect.top,
     left: geometry.left + rect.left,
     width: rect.width,
@@ -44,7 +54,7 @@ export function toDropIndicatorStyle(
   top: number,
 ): CSSProperties {
   return {
-    position: 'absolute',
+    position: 'fixed',
     top: geometry.top + top - 1,
     left: geometry.left,
     width: geometry.width,
@@ -52,23 +62,55 @@ export function toDropIndicatorStyle(
   };
 }
 
-/** Ricalcola la posizione/larghezza dell'iframe nel documento del genitore ad ogni resize/scroll — l'overlay altrimenti va alla deriva se la pagina del genitore stesso scrolla. */
-function useIframeGeometry(
+/**
+ * Ricalcola la posizione/larghezza dell'iframe nel documento del genitore
+ * ad ogni resize/scroll — l'overlay altrimenti va alla deriva se la pagina
+ * del genitore stesso scrolla. Esportata: `block-toolbar-overlay.tsx` la
+ * condivide invece di ricalcolare la stessa cosa una seconda volta.
+ */
+export function useIframeGeometry(
   iframeRef: RefObject<HTMLIFrameElement | null>,
 ): IframeGeometry {
   const [geometry, setGeometry] = useState<IframeGeometry>(ZERO_GEOMETRY);
 
   useEffect(() => {
+    let resizeObserver: ResizeObserver | undefined;
+    let rafId: number | undefined;
+
     function recompute(): void {
       const rect = iframeRef.current?.getBoundingClientRect();
       if (rect) {
         setGeometry({ top: rect.top, left: rect.left, width: rect.width });
       }
     }
-    recompute();
+
+    /**
+     * CanvasFrame monta l'`<iframe>` solo dopo che il token di preview
+     * arriva (async) — al primo run di questo effect `iframeRef.current`
+     * è quasi sempre ancora `null`. Senza questo retry `recompute()` non
+     * troverebbe nulla e resterebbe bloccato su ZERO_GEOMETRY per sempre
+     * (i listener di resize/scroll da soli non se ne accorgono, perché
+     * nessuno dei due si attiva quando l'iframe compare in seguito).
+     */
+    function attach(): void {
+      const el = iframeRef.current;
+      if (!el) {
+        rafId = requestAnimationFrame(attach);
+        return;
+      }
+      recompute();
+      resizeObserver = new ResizeObserver(recompute);
+      resizeObserver.observe(el);
+    }
+
+    attach();
     window.addEventListener('resize', recompute);
     window.addEventListener('scroll', recompute, true);
     return () => {
+      if (rafId !== undefined) {
+        cancelAnimationFrame(rafId);
+      }
+      resizeObserver?.disconnect();
       window.removeEventListener('resize', recompute);
       window.removeEventListener('scroll', recompute, true);
     };

@@ -27,6 +27,7 @@ function buildSite(
     themeBodyScript: null,
     themeFaviconUrl: null,
     themeOverridesEnabled: true,
+    themeTokens: null,
     createdAt: new Date(),
     ...overrides,
   });
@@ -169,5 +170,28 @@ describe('SitesController (unit)', () => {
     expect(siteRepository.save).toHaveBeenCalled();
     expect(result.themePrimaryColor).toBe('#18181b');
     expect(result.themeFontFamily).toBe('inter');
+  });
+
+  it('updateThemeTokens maps a SiteNotFoundError to a NotFoundException', async () => {
+    siteRepository.findById.mockResolvedValue(null);
+
+    await expect(
+      controller.updateThemeTokens('missing', {
+        buttons: { borderRadius: '6px', paddingX: null, paddingY: null },
+      }),
+    ).rejects.toThrow(NotFoundException);
+  });
+
+  it('updateThemeTokens saves only the categories present in the body', async () => {
+    siteRepository.findById.mockResolvedValue(buildSite());
+
+    const result = await controller.updateThemeTokens('site-1', {
+      buttons: { borderRadius: '9999px', paddingX: '1.5rem', paddingY: null },
+    });
+
+    expect(siteRepository.save).toHaveBeenCalled();
+    expect(result.themeTokens).toEqual({
+      buttons: { borderRadius: '9999px', paddingX: '1.5rem', paddingY: null },
+    });
   });
 });

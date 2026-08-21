@@ -7,6 +7,7 @@ import { CanvasEditorShell } from './canvas/canvas-editor-shell.js';
 import { FormListProvider } from './form-list-provider.js';
 import { IconButton } from './icon-button.js';
 import { MediaPickerProvider } from './media-picker-provider.js';
+import { PageSwitcher } from './page-switcher.js';
 import { PageTranslationsDialog } from './page-translations-dialog.js';
 import { SeoPanelDialog } from './seo-panel-dialog.js';
 import { PUBLIC_SITE_URL } from '../lib/public-site-url.js';
@@ -73,6 +74,14 @@ export function PageEditorView({ pageId }: PageEditorViewProps) {
               ← {t('pages.editor.backToList')}
             </Link>
           }
+          pageSwitcher={
+            <PageSwitcher
+              siteId={page.siteId}
+              currentPageId={pageId}
+              currentLabel={page.slug}
+            />
+          }
+          siteId={page.siteId}
           statusText={statusText}
           actions={
             <>

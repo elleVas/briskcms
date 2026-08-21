@@ -1,21 +1,32 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Palette } from 'lucide-react';
 import type { Block } from '@brisk/shared-types';
 import type { BlockDescriptor } from '@brisk/block-registry';
+import { Button } from '../../components/ui/button.js';
 import { createPagePreviewToken } from '../../lib/preview-token-api-client.js';
 import { PUBLIC_SITE_URL } from '../../lib/public-site-url.js';
+import { GlobalStylesDialog } from '../global-styles-dialog.js';
+import { IconButton } from '../icon-button.js';
 import { LogoutButton } from '../logout-button.js';
 import { BlockPicker, type BlockPickerCategory } from './block-picker.js';
-import { CanvasFrame, type EditingSection } from './canvas-frame.js';
+import { BlockToolbarOverlay } from './block-toolbar-overlay.js';
+import { BreakpointSelector, type Breakpoint } from './breakpoint-selector.js';
+import {
+  buildPreviewUrl,
+  CanvasFrame,
+  type EditingSection,
+} from './canvas-frame.js';
 import {
   computeDropTarget,
   type DropCandidateRect,
 } from './compute-drop-target.js';
-import { InspectorPanel } from './inspector-panel.js';
 import { LayersPanel } from './layers-panel.js';
 import {
+  cloneBlockWithNewIds,
   findBlockInTree,
   insertBlock,
+  locateBlock,
   moveBlock,
   removeBlock,
   updateBlockProps,
@@ -25,6 +36,10 @@ import { usePropertyPatch } from './use-property-patch.js';
 
 export interface CanvasEditorShellProps {
   backLink: ReactNode;
+  /** Dropdown per passare ad un'altra pagina senza uscire dall'editor (barra in alto, vicino a `backLink`) — solo l'editor di pagina lo passa, l'editor Header/Footer no (non ha un concetto di "altre pagine tra cui scegliere"). */
+  pageSwitcher?: ReactNode;
+  /** Se presente, mostra l'icona "Stile globale" nella barra in alto (Fase 2a del piano editor visuale, parte 2) — entrambi gli editor (pagina, Header/Footer) hanno un site a cui applicare lo stile. */
+  siteId?: string;
   statusText: string;
   actions?: ReactNode;
   registry: BlockDescriptor[];
@@ -87,6 +102,8 @@ function isInlineEditableField(
  */
 export function CanvasEditorShell({
   backLink,
+  pageSwitcher,
+  siteId,
   statusText,
   actions,
   registry,
@@ -102,6 +119,8 @@ export function CanvasEditorShell({
   const { t } = useTranslation();
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const bridge = usePreviewBridge(iframeRef, PUBLIC_SITE_URL);
+  const [breakpoint, setBreakpoint] = useState<Breakpoint>('desktop');
+  const [isGlobalStylesOpen, setIsGlobalStylesOpen] = useState(false);
 
   // Copia locale mutata otticamente (le mutazioni sull'albero devono
   // riflettersi subito su Layers/Inspector, non solo dopo il round-trip col
@@ -299,6 +318,13 @@ export function CanvasEditorShell({
   const selectedDescriptor = selectedBlock
     ? registry.find((d) => d.type === selectedBlock.type)
     : undefined;
+  const selectedRect = bridge.selectedBlockId
+    ? bridge.blockRects.find((r) => r.id === bridge.selectedBlockId)
+    : undefined;
+  const selectedRootIndex = selectedBlock?.id
+    ? localBlocks.findIndex((b) => b.id === selectedBlock.id)
+    : -1;
+  const isSelectedRootLevel = selectedRootIndex !== -1;
 
   function applyLocalChange(next: Block[]): void {
     setLocalBlocks(next);
@@ -350,25 +376,123 @@ export function CanvasEditorShell({
     onPublish(localBlocksRef.current);
   }
 
+  /** Stessa `token` già in stato per `usePropertyPatch` — apre in una nuova scheda l'URL di anteprima, disponibile anche per una bozza mai pubblicata (a differenza di un link diretto al sito pubblico). */
+  function handleOpenPreview(): void {
+    if (!token) {
+      return;
+    }
+    window.open(
+      buildPreviewUrl(pageId, token, editingSection),
+      '_blank',
+      'noopener,noreferrer',
+    );
+  }
+
+  // Sposta su/giù, duplica, inserisci prima/dopo — azioni della toolbar
+  // contestuale (sostituisce l'Inspector a colonna fissa). Sposta/inserisci
+  // sono scoped ai blocchi di primo livello (stesso limite del riordino via
+  // drag, vedi compute-drop-target.ts); duplica funziona a qualunque
+  // livello via `locateBlock`, che trova il vero genitore anche per un
+  // blocco annidato.
+  function handleMoveSelected(direction: -1 | 1): void {
+    if (!selectedBlock?.id) {
+      return;
+    }
+    const index = localBlocks.findIndex((b) => b.id === selectedBlock.id);
+    if (index === -1) {
+      return;
+    }
+    const targetIndex = index + direction;
+    if (targetIndex < 0 || targetIndex >= localBlocks.length) {
+      return;
+    }
+    applyLocalChange(
+      moveBlock(localBlocks, selectedBlock.id, {
+        parentId: null,
+        index: targetIndex,
+      }),
+    );
+  }
+
+  function handleDuplicateSelected(): void {
+    if (!selectedBlock?.id) {
+      return;
+    }
+    const location = locateBlock(localBlocks, selectedBlock.id);
+    if (!location) {
+      return;
+    }
+    const clone = cloneBlockWithNewIds(selectedBlock);
+    applyLocalChange(
+      insertBlock(localBlocks, clone, {
+        parentId: location.parentId,
+        index: location.index + 1,
+      }),
+    );
+  }
+
+  function handleInsertAtRoot(
+    descriptor: BlockDescriptor,
+    offset: 0 | 1,
+  ): void {
+    if (!selectedBlock?.id) {
+      return;
+    }
+    const index = localBlocks.findIndex((b) => b.id === selectedBlock.id);
+    if (index === -1) {
+      return;
+    }
+    const newBlock: Block = {
+      id: crypto.randomUUID(),
+      type: descriptor.type,
+      props: descriptor.defaultProps,
+      ...(descriptor.isContainer ? { children: [] } : {}),
+    };
+    applyLocalChange(
+      insertBlock(localBlocks, newBlock, {
+        parentId: null,
+        index: index + offset,
+      }),
+    );
+  }
+
   return (
     <div style={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
-      <div className="flex items-center justify-between border-b px-3 py-1 text-xs text-muted-foreground">
+      <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3 border-b px-3 py-1.5 text-xs text-muted-foreground">
         <div className="flex items-center gap-3">
           {backLink}
+          {pageSwitcher}
           <span>{statusText}</span>
           {actions}
         </div>
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            className="rounded bg-primary px-2 py-1 text-primary-foreground hover:opacity-90"
-            onClick={handlePublish}
-          >
+        <div className="flex items-center justify-center gap-2">
+          <BreakpointSelector value={breakpoint} onChange={setBreakpoint} />
+          {siteId && (
+            <IconButton
+              label={t('globalStyles.open')}
+              onClick={() => setIsGlobalStylesOpen(true)}
+            >
+              <Palette />
+            </IconButton>
+          )}
+        </div>
+        <div className="flex items-center justify-end gap-2">
+          <Button variant="outline" size="sm" onClick={handleOpenPreview}>
+            {t('canvas.preview')}
+          </Button>
+          <Button size="sm" onClick={handlePublish}>
             {t('canvas.publish')}
-          </button>
+          </Button>
           <LogoutButton />
         </div>
       </div>
+      {siteId && (
+        <GlobalStylesDialog
+          siteId={siteId}
+          open={isGlobalStylesOpen}
+          onOpenChange={setIsGlobalStylesOpen}
+        />
+      )}
       <div style={{ flex: 1, minHeight: 0, display: 'flex' }}>
         <aside className="w-64 shrink-0 overflow-y-auto border-r p-3">
           <h3 className="mb-2 text-sm font-medium">
@@ -396,30 +520,32 @@ export function CanvasEditorShell({
             iframeRef={iframeRef}
             bridge={bridge}
             dropIndicatorTop={liveDropTarget?.indicatorTop}
+            breakpoint={breakpoint}
           />
-        </div>
-        <aside className="w-72 shrink-0 overflow-y-auto border-l p-3">
-          {selectedBlock && selectedDescriptor ? (
-            <>
-              <button
-                type="button"
-                className="mb-2 text-xs text-destructive hover:underline"
-                onClick={handleRemoveSelected}
-              >
-                {t('canvas.removeBlock')}
-              </button>
-              <InspectorPanel
-                block={selectedBlock}
-                descriptor={selectedDescriptor}
-                onChangeProp={handleChangeProp}
-              />
-            </>
-          ) : (
-            <p className="text-sm text-muted-foreground">
-              {t('canvas.inspectorEmpty')}
-            </p>
+          {selectedBlock && selectedDescriptor && selectedRect && (
+            <BlockToolbarOverlay
+              iframeRef={iframeRef}
+              block={selectedBlock}
+              descriptor={selectedDescriptor}
+              rect={selectedRect}
+              isRootLevel={isSelectedRootLevel}
+              canMoveUp={isSelectedRootLevel && selectedRootIndex > 0}
+              canMoveDown={
+                isSelectedRootLevel &&
+                selectedRootIndex < localBlocks.length - 1
+              }
+              registry={registry}
+              categories={categories}
+              onChangeProp={handleChangeProp}
+              onMoveUp={() => handleMoveSelected(-1)}
+              onMoveDown={() => handleMoveSelected(1)}
+              onDuplicate={handleDuplicateSelected}
+              onDelete={handleRemoveSelected}
+              onInsertBefore={(descriptor) => handleInsertAtRoot(descriptor, 0)}
+              onInsertAfter={(descriptor) => handleInsertAtRoot(descriptor, 1)}
+            />
           )}
-        </aside>
+        </div>
       </div>
       {children}
     </div>

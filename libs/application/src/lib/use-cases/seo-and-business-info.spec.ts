@@ -99,6 +99,7 @@ describe('updateSiteBusinessInfo', () => {
       themeBodyScript: null,
       themeFaviconUrl: null,
       themeOverridesEnabled: true,
+      themeTokens: null,
       createdAt: new Date(),
     });
     await siteRepository.save(site);
@@ -190,6 +191,7 @@ describe('updateSiteGeneralSettings', () => {
       themeBodyScript: null,
       themeFaviconUrl: null,
       themeOverridesEnabled: true,
+      themeTokens: null,
       createdAt: new Date(),
     });
     await siteRepository.save(site);
@@ -270,6 +272,7 @@ describe('updateSiteSeoSettings', () => {
       themeBodyScript: null,
       themeFaviconUrl: null,
       themeOverridesEnabled: true,
+      themeTokens: null,
       createdAt: new Date(),
     });
     await siteRepository.save(site);
@@ -346,6 +349,7 @@ describe('updateSiteThemeSettings', () => {
       themeBodyScript: null,
       themeFaviconUrl: null,
       themeOverridesEnabled: true,
+      themeTokens: null,
       createdAt: new Date(),
     });
     await siteRepository.save(site);
@@ -444,6 +448,7 @@ describe('updateSiteLocaleSettings', () => {
       themeBodyScript: null,
       themeFaviconUrl: null,
       themeOverridesEnabled: true,
+      themeTokens: null,
       createdAt: new Date(),
     });
     await siteRepository.save(site);

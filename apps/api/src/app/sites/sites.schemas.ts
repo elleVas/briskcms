@@ -3,6 +3,7 @@ import {
   localeSettingsSchema,
   openingHoursSchema,
   themeSettingsSchema,
+  updateThemeTokensBodySchema as sharedUpdateThemeTokensBodySchema,
 } from '@brisk/shared-types';
 import { domainSchema } from '../public-pages/public-pages.schemas.js';
 
@@ -48,3 +49,9 @@ export const updateThemeSettingsBodySchema = themeSettingsSchema;
 export type UpdateThemeSettingsBody = z.infer<
   typeof updateThemeSettingsBodySchema
 >;
+
+// Reuses @brisk/shared-types' schema wholesale — same reasoning as theme
+// settings above (Global Styles Editor, Fase 2a del piano editor visuale
+// parte 2).
+export const updateThemeTokensBodySchema = sharedUpdateThemeTokensBodySchema;
+export type UpdateThemeTokensBody = z.infer<typeof updateThemeTokensBodySchema>;

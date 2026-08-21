@@ -23,6 +23,7 @@ describe('Site entity', () => {
     themeBodyScript: null,
     themeFaviconUrl: null,
     themeOverridesEnabled: true,
+    themeTokens: null,
     createdAt: new Date('2026-01-01T00:00:00Z'),
   };
 
@@ -165,6 +166,41 @@ describe('Site entity', () => {
       bodyScript: '<script>console.log("body")</script>',
       faviconUrl: 'https://example.com/favicon.png',
       overridesEnabled: false,
+    });
+  });
+
+  it('themeTokens defaults to every field null when never customized', () => {
+    const site = Site.fromProps(props);
+
+    expect(site.themeTokens).toEqual({
+      buttons: { borderRadius: null, paddingX: null, paddingY: null },
+    });
+  });
+
+  it('updateThemeTokens replaces only the categories present in the input', () => {
+    const site = Site.fromProps(props);
+
+    site.updateThemeTokens({
+      buttons: { borderRadius: '9999px', paddingX: '1.5rem', paddingY: null },
+    });
+
+    expect(site.themeTokens).toEqual({
+      buttons: { borderRadius: '9999px', paddingX: '1.5rem', paddingY: null },
+    });
+  });
+
+  it('updateThemeTokens leaves an already-saved category untouched when the input omits it', () => {
+    const site = Site.fromProps({
+      ...props,
+      themeTokens: {
+        buttons: { borderRadius: '6px', paddingX: null, paddingY: null },
+      },
+    });
+
+    site.updateThemeTokens({});
+
+    expect(site.themeTokens).toEqual({
+      buttons: { borderRadius: '6px', paddingX: null, paddingY: null },
     });
   });
 });
