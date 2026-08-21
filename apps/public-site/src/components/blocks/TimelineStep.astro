@@ -9,9 +9,9 @@ const { label, title, description } = Astro.props;
 <div class="brisk-timeline-step">
   <div class="brisk-timeline-step__marker" aria-hidden="true"></div>
   <div class="brisk-timeline-step__body">
-    {label && <div class="brisk-timeline-step__label">{label}</div>}
-    <div class="brisk-timeline-step__title">{title}</div>
-    {description && <p class="brisk-timeline-step__description">{description}</p>}
+    {label && <div class="brisk-timeline-step__label" data-brisk-field="label">{label}</div>}
+    <div class="brisk-timeline-step__title" data-brisk-field="title">{title}</div>
+    {description && <p class="brisk-timeline-step__description" data-brisk-field="description">{description}</p>}
   </div>
 </div>
 

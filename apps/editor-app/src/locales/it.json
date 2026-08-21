@@ -160,7 +160,8 @@
       "backToList": "Layout",
       "draftSaved": "Bozza salvata",
       "published": "Pubblicato",
-      "sticky": "Fisso durante lo scroll"
+      "sticky": "Fisso durante lo scroll",
+      "noPageToPreview": "Crea prima una pagina in questa lingua — il canvas ha bisogno di una pagina vera su cui visualizzare l'anteprima di {{section}}."
     }
   },
   "media": {
@@ -375,5 +376,14 @@
       "publisher": "Publisher",
       "editor": "Editor"
     }
+  },
+  "canvas": {
+    "previewFrameTitle": "Anteprima pagina",
+    "previewTokenError": "Impossibile caricare l'anteprima. Riprova.",
+    "layersTitle": "Livelli",
+    "inspectorEmpty": "Seleziona un blocco sul canvas per modificarne le proprietà.",
+    "insertBlock": "Inserisci blocco",
+    "removeBlock": "Rimuovi blocco",
+    "publish": "Pubblica"
   }
 }

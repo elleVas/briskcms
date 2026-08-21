@@ -232,4 +232,31 @@ describe('SiteLayoutSectionsController (integration)', () => {
       .get(`/site-layout-sections/${randomUUID()}`)
       .expect(401);
   });
+
+  describe('preview-token', () => {
+    it('issues a token for an existing section, over HTTP against a real Postgres', async () => {
+      const locale = `it-${randomUUID()}`;
+      const created = await agent
+        .get('/site-layout-sections')
+        .query({ siteId, locale, kind: 'footer' })
+        .expect(200);
+      const id = created.body.id;
+
+      const res = await agent
+        .post(`/site-layout-sections/${id}/preview-token`)
+        .expect(201);
+
+      expect(typeof res.body.token).toBe('string');
+      expect(res.body.token.length).toBeGreaterThan(0);
+      expect(new Date(res.body.expiresAt).getTime()).toBeGreaterThan(
+        Date.now(),
+      );
+    });
+
+    it('404s for a section id that does not exist', async () => {
+      await agent
+        .post(`/site-layout-sections/${randomUUID()}/preview-token`)
+        .expect(404);
+    });
+  });
 });

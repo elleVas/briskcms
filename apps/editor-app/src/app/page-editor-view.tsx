@@ -2,24 +2,17 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from '@tanstack/react-router';
 import { ExternalLink, History, Languages, Search } from 'lucide-react';
-import { puckConfig } from '@brisk/puck-config';
-import { toPuckData } from '../lib/puck-data-mapper.js';
-import { BlockEditorShell } from './block-editor-shell.js';
+import { pageBlockCategories, pageBlocks } from '@brisk/block-registry';
+import { CanvasEditorShell } from './canvas/canvas-editor-shell.js';
 import { FormListProvider } from './form-list-provider.js';
 import { IconButton } from './icon-button.js';
 import { MediaPickerProvider } from './media-picker-provider.js';
 import { PageTranslationsDialog } from './page-translations-dialog.js';
 import { SeoPanelDialog } from './seo-panel-dialog.js';
+import { PUBLIC_SITE_URL } from '../lib/public-site-url.js';
 import { usePageEditor, type SaveStatus } from './use-page-editor.js';
 import { usePageVersions } from './use-page-versions.js';
 import { VersionHistoryDialog } from './version-history-dialog.js';
-
-// Not VITE_API_URL: this is the public site's own origin (apps/public-site).
-// Same fallback pattern as VITE_API_URL in http-client.ts — a sane local-dev
-// default, always overridden by a real domain outside dev.
-const PUBLIC_SITE_URL =
-  (import.meta.env['VITE_PUBLIC_SITE_URL'] as string | undefined) ??
-  'http://localhost:4321';
 
 // Mirrors apps/public-site/src/lib/locale-path.ts's own convention (docs/adr/0017)
 // — every locale gets a URL prefix, and "home" collapses to the bare
@@ -68,13 +61,13 @@ export function PageEditorView({ pageId }: PageEditorViewProps) {
   return (
     // The whole view (not just the canvas) is wrapped in MediaPickerProvider:
     // SeoPanelDialog's OG-image field reuses the same media picker as the
-    // Image/Gallery Puck blocks, and it lives in the top bar, outside the
+    // Image/Gallery blocks, and it lives in the top bar, outside the
     // canvas. FormListProvider only backs the Form block inside the canvas,
     // but nesting it here too keeps both providers alongside each other
     // rather than splitting the wrapping between two different levels.
     <MediaPickerProvider siteId={page.siteId}>
       <FormListProvider siteId={page.siteId}>
-        <BlockEditorShell
+        <CanvasEditorShell
           backLink={
             <Link to="/pages" className="hover:underline">
               ← {t('pages.editor.backToList')}
@@ -117,10 +110,12 @@ export function PageEditorView({ pageId }: PageEditorViewProps) {
               )}
             </>
           }
-          config={puckConfig}
-          data={toPuckData(page.content, puckConfig)}
+          registry={pageBlocks}
+          categories={pageBlockCategories}
+          blocks={page.content}
           onChange={handleChange}
           onPublish={handlePublish}
+          pageId={pageId}
           restoredAt={restoredAt}
         >
           <VersionHistoryDialog
@@ -143,7 +138,7 @@ export function PageEditorView({ pageId }: PageEditorViewProps) {
             open={isTranslationsOpen}
             onOpenChange={setIsTranslationsOpen}
           />
-        </BlockEditorShell>
+        </CanvasEditorShell>
       </FormListProvider>
     </MediaPickerProvider>
   );

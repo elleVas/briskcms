@@ -41,7 +41,7 @@ const turnstileSiteKey = process.env['TURNSTILE_SITE_KEY'] ?? '';
     !subscribed && (
       <form method="POST" action="/api/newsletter/subscribe">
         <input type="hidden" name="_redirectTo" value={redirectTo} />
-        <p class="brisk-newsletter-signup__title">{title}</p>
+        <p class="brisk-newsletter-signup__title" data-brisk-field="title">{title}</p>
         {/* Honeypot: same reasoning as Form.astro's own. */}
         <div class="brisk-newsletter-signup__honeypot" aria-hidden="true">
           <label for="newsletter-hp">Lascia questo campo vuoto</label>
@@ -60,7 +60,7 @@ const turnstileSiteKey = process.env['TURNSTILE_SITE_KEY'] ?? '';
             placeholder="La tua email"
             required
           />
-          <button type="submit">{buttonLabel}</button>
+          <button type="submit" data-brisk-field="buttonLabel">{buttonLabel}</button>
         </div>
         {
           turnstileSiteKey && (

@@ -7,8 +7,8 @@ const { question, answer } = Astro.props;
 ---
 
 <details class="brisk-accordion-item">
-  <summary class="brisk-accordion-item__question">{question}</summary>
-  <div class="brisk-accordion-item__answer">{answer}</div>
+  <summary class="brisk-accordion-item__question" data-brisk-field="question">{question}</summary>
+  <div class="brisk-accordion-item__answer" data-brisk-field="answer">{answer}</div>
 </details>
 
 <style>

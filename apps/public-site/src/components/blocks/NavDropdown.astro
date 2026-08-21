@@ -14,7 +14,7 @@ const { label, position, visibility } = Astro.props;
     { 'brisk-visibility-mobile-only': visibility === 'mobile-only' },
   ]}
 >
-  <summary class="brisk-nav-dropdown__trigger">{label}</summary>
+  <summary class="brisk-nav-dropdown__trigger" data-brisk-field="label">{label}</summary>
   <div class="brisk-nav-dropdown__panel">
     <slot />
   </div>

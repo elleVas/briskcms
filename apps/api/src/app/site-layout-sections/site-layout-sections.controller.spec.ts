@@ -1,6 +1,7 @@
 import { NotFoundException } from '@nestjs/common';
 import { Site, SiteLayoutSection } from '@brisk/domain-core';
 import type {
+  PreviewTokenPort,
   SiteLayoutSectionRepositoryPort,
   SiteLayoutSectionVersionRepositoryPort,
   SiteRepositoryPort,
@@ -55,6 +56,7 @@ describe('SiteLayoutSectionsController (unit)', () => {
   let siteLayoutSectionVersionRepository: jest.Mocked<SiteLayoutSectionVersionRepositoryPort>;
   let siteRepository: jest.Mocked<SiteRepositoryPort>;
   let tenantContext: TenantContextPort;
+  let previewTokenPort: jest.Mocked<PreviewTokenPort>;
   let controller: SiteLayoutSectionsController;
 
   beforeEach(() => {
@@ -74,11 +76,16 @@ describe('SiteLayoutSectionsController (unit)', () => {
       findByDomain: jest.fn(),
     };
     tenantContext = { getCurrentTenantId: () => 'tenant-1' };
+    previewTokenPort = {
+      createToken: jest.fn(),
+      validateToken: jest.fn(),
+    };
     controller = new SiteLayoutSectionsController(
       siteLayoutSectionRepository,
       siteLayoutSectionVersionRepository,
       siteRepository,
       tenantContext,
+      previewTokenPort,
     );
   });
 
@@ -175,5 +182,37 @@ describe('SiteLayoutSectionsController (unit)', () => {
 
     expect(result.id).toBe(existing.id);
     expect(siteLayoutSectionRepository.save).not.toHaveBeenCalled();
+  });
+
+  it('createPreviewToken throws a NotFoundException when the section does not exist', async () => {
+    siteLayoutSectionRepository.findById.mockResolvedValue(null);
+
+    await expect(controller.createPreviewToken('missing-id')).rejects.toThrow(
+      NotFoundException,
+    );
+    expect(previewTokenPort.createToken).not.toHaveBeenCalled();
+  });
+
+  it("createPreviewToken issues a token scoped to (tenant, section's own kind, sectionId)", async () => {
+    const section = buildSection({ kind: 'footer' });
+    siteLayoutSectionRepository.findById.mockResolvedValue(section);
+    const expiresAt = new Date();
+    previewTokenPort.createToken.mockResolvedValue({
+      token: 'opaque-token',
+      tenantId: 'tenant-1',
+      contentType: 'footer',
+      contentId: section.id,
+      expiresAt,
+    });
+
+    const result = await controller.createPreviewToken(section.id);
+
+    expect(previewTokenPort.createToken).toHaveBeenCalledWith(
+      'tenant-1',
+      'footer',
+      section.id,
+      expect.any(Number),
+    );
+    expect(result).toEqual({ token: 'opaque-token', expiresAt });
   });
 });

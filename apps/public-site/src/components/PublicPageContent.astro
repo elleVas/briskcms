@@ -13,9 +13,13 @@ import NotFound from './NotFound.astro';
 // set it here rendered the right NotFound markup but still answered 200).
 interface Props {
   page: PublishedPageDto | null;
+  // Solo la rotta di preview lo passa (vedi il piano dell'editor visuale,
+  // Giorno 2) — la rotta pubblicata reale non lo passa mai, quindi resta
+  // undefined e l'HTML pubblicato è byte-identico a prima.
+  editable?: boolean;
 }
 
-const { page } = Astro.props;
+const { page, editable } = Astro.props;
 ---
 
 {
@@ -29,6 +33,7 @@ const { page } = Astro.props;
       footer={page.footer}
       headerSticky={page.headerSticky}
       ancestors={page.ancestors}
+      editable={editable}
     >
       {
         // The generic baseline layout every page gets for free: a vertical
@@ -54,6 +59,7 @@ const { page } = Astro.props;
             site={page.site}
             ancestors={page.ancestors}
             currentPageTitle={page.seoMeta.title}
+            editable={editable}
           />
         ))}
       </div>

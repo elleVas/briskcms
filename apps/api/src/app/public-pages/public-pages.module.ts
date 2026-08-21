@@ -3,6 +3,7 @@ import { ThrottlerModule } from '@nestjs/throttler';
 import { requireEnv } from '@brisk/env-config';
 import { type BriskDb } from '@brisk/postgres-db';
 import { DrizzlePageRepository } from '@brisk/postgres-page-repository';
+import { PreviewTokenAdapter } from '@brisk/preview-token-adapter';
 import { DrizzleSearchRepository } from '@brisk/postgres-search-repository';
 import { DrizzleSiteLayoutSectionRepository } from '@brisk/postgres-site-layout-section-repository';
 import { DrizzleSiteRepository } from '@brisk/postgres-site-repository';
@@ -11,6 +12,7 @@ import { PublicPagesController } from './public-pages.controller.js';
 import {
   DEFAULT_TENANT_ID,
   PAGE_REPOSITORY,
+  PREVIEW_TOKEN_PORT,
   SEARCH_REPOSITORY,
   SITE_LAYOUT_SECTION_REPOSITORY,
   SITE_REPOSITORY,
@@ -54,6 +56,12 @@ import {
       provide: SEARCH_REPOSITORY,
       useFactory: (db: BriskDb) => new DrizzleSearchRepository(db),
       inject: [DATABASE],
+    },
+    {
+      provide: PREVIEW_TOKEN_PORT,
+      useFactory: (db: BriskDb, tenantId: string) =>
+        new PreviewTokenAdapter(db, tenantId),
+      inject: [DATABASE, DEFAULT_TENANT_ID],
     },
   ],
 })

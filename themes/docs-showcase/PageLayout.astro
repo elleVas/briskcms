@@ -16,6 +16,7 @@ import {
 	type PublishedSiteDto,
 } from '../../apps/public-site/src/lib/public-api-client.js';
 import BlockRenderer from '../../apps/public-site/src/components/BlockRenderer.astro';
+import { editorAppUrl } from '../../apps/public-site/src/lib/editor-app-url.js';
 import {
 	localePath,
 	localePathFromAncestors,
@@ -36,6 +37,11 @@ interface Props {
 	footer: Block[] | null;
 	headerSticky: boolean;
 	ancestors: PublishedPageAncestorDto[];
+	// Solo la rotta di preview lo passa (vedi il piano dell'editor visuale,
+	// Giorno 2) — stessa prop di core PageLayout.astro, che questo file
+	// sovrascrive per intero (docs/adr/0021's full-layout escalation), va
+	// quindi propagata anche qui.
+	editable?: boolean;
 }
 
 const {
@@ -47,6 +53,7 @@ const {
 	footer,
 	headerSticky,
 	ancestors,
+	editable,
 } = Astro.props;
 const defaultTranslation = translations.find(
 	(translation) => translation.locale === site.defaultLocale,
@@ -228,7 +235,7 @@ const hasSidebar = sidebarItems.length > 0;
 		{theme.customCss && <style set:html={theme.customCss} />}
 		{theme.headScript && <Fragment set:html={theme.headScript} />}
 	</head>
-	<body>
+	<body data-brisk-editor-app-url={editable ? editorAppUrl() : undefined}>
 		{
 			header && (
 				<header
@@ -246,6 +253,7 @@ const hasSidebar = sidebarItems.length > 0;
 								site={site}
 								ancestors={ancestors}
 								currentPageTitle={seoMeta.title}
+								editable={editable}
 							/>
 						))}
 					</div>
@@ -290,6 +298,7 @@ const hasSidebar = sidebarItems.length > 0;
 								site={site}
 								ancestors={ancestors}
 								currentPageTitle={seoMeta.title}
+								editable={editable}
 							/>
 						))}
 					</div>
@@ -297,6 +306,14 @@ const hasSidebar = sidebarItems.length > 0;
 			)
 		}
 		{theme.bodyScript && <Fragment set:html={theme.bodyScript} />}
+		{
+			editable && (
+				<script>
+					import { initPreviewBridge } from '../../apps/public-site/src/lib/preview-bridge-client.js';
+					initPreviewBridge();
+				</script>
+			)
+		}
 	</body>
 </html>
 

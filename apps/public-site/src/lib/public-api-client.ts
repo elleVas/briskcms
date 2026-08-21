@@ -80,6 +80,31 @@ export async function getPublishedPageBySlug(
   return res.json();
 }
 
+/**
+ * L'editing draft, unauthenticated read path (vedi il piano dell'editor
+ * visuale, Giorno 1) — usata solo dalla rotta di preview
+ * (src/pages/preview/[pageId].astro), mai dalla rotta pubblica reale.
+ * Stesso collasso 404 -> null di getPublishedPageBySlug: un token
+ * mancante/scaduto/mismatch è indistinguibile da una pagina che non esiste.
+ */
+export async function getPreviewPageById(
+  pageId: string,
+  token: string,
+): Promise<PublishedPageDto | null> {
+  const params = new URLSearchParams({ token });
+  const res = await fetch(
+    `${apiUrl()}/public/pages/${pageId}/preview?${params.toString()}`,
+  );
+
+  if (res.status === 404) {
+    return null;
+  }
+  if (!res.ok) {
+    throw new Error(`Public pages API error: ${res.status}`);
+  }
+  return res.json();
+}
+
 export interface PublishedSiteChromeDto {
   site: PublishedSiteDto;
   header: Block[] | null;

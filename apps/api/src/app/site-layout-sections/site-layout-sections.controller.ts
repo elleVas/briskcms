@@ -24,11 +24,13 @@ import {
   SiteNotFoundError,
 } from '@brisk/domain-core';
 import type {
+  PreviewTokenPort,
   SiteLayoutSectionRepositoryPort,
   SiteLayoutSectionVersionRepositoryPort,
   SiteRepositoryPort,
   TenantContextPort,
 } from '@brisk/ports';
+import { PREVIEW_TOKEN_TTL_MS } from '../preview-token-ttl.constant.js';
 import { SessionAuthGuard } from '../auth/session-auth.guard.js';
 import { ZodValidationPipe } from '../zod-validation.pipe.js';
 import {
@@ -42,6 +44,7 @@ import {
   stickyBodySchema,
 } from './site-layout-sections.schemas.js';
 import {
+  PREVIEW_TOKEN_PORT,
   SITE_LAYOUT_SECTION_REPOSITORY,
   SITE_LAYOUT_SECTION_VERSION_REPOSITORY,
   SITE_REPOSITORY,
@@ -59,6 +62,8 @@ export class SiteLayoutSectionsController {
     @Inject(SITE_REPOSITORY)
     private readonly siteRepository: SiteRepositoryPort,
     @Inject(TENANT_CONTEXT) private readonly tenantContext: TenantContextPort,
+    @Inject(PREVIEW_TOKEN_PORT)
+    private readonly previewTokenPort: PreviewTokenPort,
   ) {}
 
   @Get()
@@ -93,6 +98,24 @@ export class SiteLayoutSectionsController {
       throw new NotFoundException(`Site layout section not found: ${id}`);
     }
     return section.toProps();
+  }
+
+  @Post(':id/preview-token')
+  async createPreviewToken(@Param('id') id: string) {
+    const section = await this.siteLayoutSectionRepository.findById(
+      this.tenantContext.getCurrentTenantId(),
+      id,
+    );
+    if (!section) {
+      throw new NotFoundException(`Site layout section not found: ${id}`);
+    }
+    const { token, expiresAt } = await this.previewTokenPort.createToken(
+      this.tenantContext.getCurrentTenantId(),
+      section.kind,
+      id,
+      PREVIEW_TOKEN_TTL_MS,
+    );
+    return { token, expiresAt };
   }
 
   @Patch(':id/draft')

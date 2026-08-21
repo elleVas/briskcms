@@ -45,10 +45,12 @@ const crumbs: Crumb[] = [
 >
   <ol>
     {
-      crumbs.map((crumb) => (
+      crumbs.map((crumb, index) => (
         <li>
           {crumb.href ? (
-            <a href={crumb.href}>{crumb.title}</a>
+            <a href={crumb.href} data-brisk-field={index === 0 ? 'homeLabel' : undefined}>
+              {crumb.title}
+            </a>
           ) : (
             <span aria-current="page">{crumb.title}</span>
           )}

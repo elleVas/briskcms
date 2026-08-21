@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import { act, renderHook } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { QueryClientProvider } from '@tanstack/react-query';
-import type { Data } from '@puckeditor/core';
+import type { Block } from '@brisk/shared-types';
 import * as api from '../lib/pages-api-client.js';
 import { createTestQueryClient } from '../test-query-client.js';
 import { pageQueryOptions } from './pages-queries.js';
@@ -30,7 +30,9 @@ const samplePage: api.PageDto = {
   updatedAt: '',
 };
 
-const emptyData: Data = { root: {}, content: [], zones: {} };
+const sampleContent: Block[] = [
+  { id: 'hero-1', type: 'Hero', props: { title: 'Titolo' } },
+];
 
 // Pre-seeds the query cache so useSuspenseQuery resolves synchronously —
 // these tests exercise the mutations, not the initial fetch/suspense path.
@@ -50,7 +52,6 @@ function renderPageEditor() {
 
 describe('usePageEditor', () => {
   afterEach(() => {
-    vi.useRealTimers();
     vi.clearAllMocks();
   });
 
@@ -61,53 +62,32 @@ describe('usePageEditor', () => {
     expect(result.current.status).toEqual({ kind: 'idle' });
   });
 
-  it('handleChange debounces and saves the draft', async () => {
-    vi.useFakeTimers();
+  it('handleChange saves the draft immediately — no debounce, canvas-editor-shell already debounces', async () => {
     vi.mocked(api.saveDraft).mockResolvedValue(samplePage);
 
     const { result } = renderPageEditor();
 
-    act(() => result.current.handleChange(emptyData));
-    expect(api.saveDraft).not.toHaveBeenCalled();
-
     await act(async () => {
-      await vi.advanceTimersByTimeAsync(1000);
+      result.current.handleChange(sampleContent);
     });
 
-    expect(api.saveDraft).toHaveBeenCalledWith(samplePage.id, []);
+    expect(api.saveDraft).toHaveBeenCalledWith(samplePage.id, sampleContent);
     expect(result.current.status).toEqual({ kind: 'saved' });
   });
 
-  it('handleChange sets an error status when the debounced save fails', async () => {
-    vi.useFakeTimers();
+  it('handleChange sets an error status when the save fails', async () => {
     vi.mocked(api.saveDraft).mockRejectedValue(new Error('save failed'));
 
     const { result } = renderPageEditor();
 
-    act(() => result.current.handleChange(emptyData));
     await act(async () => {
-      await vi.advanceTimersByTimeAsync(1000);
+      result.current.handleChange(sampleContent);
     });
 
     expect(result.current.status).toEqual({
       kind: 'error',
       message: expect.stringContaining('save failed'),
     });
-  });
-
-  it('a pending debounced save does not fire after unmount', async () => {
-    vi.useFakeTimers();
-    vi.mocked(api.saveDraft).mockResolvedValue(samplePage);
-
-    const { result, unmount } = renderPageEditor();
-    act(() => result.current.handleChange(emptyData));
-    unmount();
-
-    await act(async () => {
-      await vi.advanceTimersByTimeAsync(1000);
-    });
-
-    expect(api.saveDraft).not.toHaveBeenCalled();
   });
 
   it('handlePublish saves the draft then publishes', async () => {
@@ -120,10 +100,10 @@ describe('usePageEditor', () => {
     const { result } = renderPageEditor();
 
     await act(async () => {
-      await result.current.handlePublish(emptyData);
+      await result.current.handlePublish(sampleContent);
     });
 
-    expect(api.saveDraft).toHaveBeenCalledWith(samplePage.id, []);
+    expect(api.saveDraft).toHaveBeenCalledWith(samplePage.id, sampleContent);
     expect(api.publishPage).toHaveBeenCalledWith(samplePage.id);
     expect(result.current.status).toEqual({ kind: 'published' });
   });

@@ -41,7 +41,11 @@ const overrideStyle = colorOverride
     })();
   </script>
   <p class="brisk-promo-bar__message">
-    {hasLink ? <a href={href}>{message}</a> : message}
+    {hasLink ? (
+      <a href={href} data-brisk-field="message">{message}</a>
+    ) : (
+      <span data-brisk-field="message">{message}</span>
+    )}
   </p>
   <button type="button" class="brisk-promo-bar__close" aria-label="Chiudi">×</button>
 </div>

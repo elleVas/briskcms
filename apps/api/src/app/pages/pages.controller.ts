@@ -38,9 +38,11 @@ import {
 import type {
   PageRepositoryPort,
   PageVersionRepositoryPort,
+  PreviewTokenPort,
   SearchPort,
   TenantContextPort,
 } from '@brisk/ports';
+import { PREVIEW_TOKEN_TTL_MS } from '../preview-token-ttl.constant.js';
 import { Roles } from '../auth/roles.decorator.js';
 import { RolesGuard } from '../auth/roles.guard.js';
 import { SessionAuthGuard } from '../auth/session-auth.guard.js';
@@ -48,6 +50,7 @@ import { ZodValidationPipe } from '../zod-validation.pipe.js';
 import {
   PAGE_REPOSITORY,
   PAGE_VERSION_REPOSITORY,
+  PREVIEW_TOKEN_PORT,
   SEARCH_REPOSITORY,
   TENANT_CONTEXT,
 } from './pages.tokens.js';
@@ -79,6 +82,8 @@ export class PagesController {
     @Inject(SEARCH_REPOSITORY)
     private readonly searchPort: SearchPort,
     @Inject(TENANT_CONTEXT) private readonly tenantContext: TenantContextPort,
+    @Inject(PREVIEW_TOKEN_PORT)
+    private readonly previewTokenPort: PreviewTokenPort,
   ) {}
 
   @Post()
@@ -169,6 +174,26 @@ export class PagesController {
       throw new NotFoundException(`Page not found: ${id}`);
     }
     return page.toProps();
+  }
+
+  // Ogni ruolo che può salvare una bozza deve poter anche previewarla —
+  // stesso gate di saveDraft sotto, non ristretto come publish.
+  @Post(':id/preview-token')
+  async createPreviewToken(@Param('id') id: string) {
+    const page = await this.pageRepository.findById(
+      this.tenantContext.getCurrentTenantId(),
+      id,
+    );
+    if (!page) {
+      throw new NotFoundException(`Page not found: ${id}`);
+    }
+    const { token, expiresAt } = await this.previewTokenPort.createToken(
+      this.tenantContext.getCurrentTenantId(),
+      'page',
+      id,
+      PREVIEW_TOKEN_TTL_MS,
+    );
+    return { token, expiresAt };
   }
 
   @Patch(':id/draft')

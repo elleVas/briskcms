@@ -10,7 +10,8 @@
     "db:migrate": "dotenv -e ../../../.env -- drizzle-kit migrate",
     "db:seed-tenant": "dotenv -e ../../../.env -- tsx scripts/seed-default-tenant.ts",
     "db:seed-user": "dotenv -e ../../../.env -- tsx scripts/seed-default-user.ts",
-    "db:seed": "pnpm run db:seed-tenant && pnpm run db:seed-user"
+    "db:seed": "pnpm run db:seed-tenant && pnpm run db:seed-user",
+    "db:backfill-block-ids": "dotenv -e ../../../.env -- tsx scripts/backfill-block-ids.ts"
   },
   "exports": {
     ".": {

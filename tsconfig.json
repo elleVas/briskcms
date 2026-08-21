@@ -19,9 +19,6 @@
       "path": "./libs/shared-types"
     },
     {
-      "path": "./libs/puck-config"
-    },
-    {
       "path": "./libs/adapters/postgres-page-repository"
     },
     {
@@ -83,6 +80,12 @@
     },
     {
       "path": "./libs/adapters/s3-attachment-storage"
+    },
+    {
+      "path": "./libs/adapters/preview-token-adapter"
+    },
+    {
+      "path": "./libs/block-registry"
     }
   ],
   "compilerOptions": {}

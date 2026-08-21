@@ -442,4 +442,28 @@ describe('PagesController (integration)', () => {
         .expect(401);
     });
   });
+
+  describe('preview-token', () => {
+    it('issues a token for an existing page, over HTTP against a real Postgres', async () => {
+      const created = await agent
+        .post('/pages')
+        .send(createPageBody())
+        .expect(201);
+      const pageId = created.body.id;
+
+      const res = await agent
+        .post(`/pages/${pageId}/preview-token`)
+        .expect(201);
+
+      expect(typeof res.body.token).toBe('string');
+      expect(res.body.token.length).toBeGreaterThan(0);
+      expect(new Date(res.body.expiresAt).getTime()).toBeGreaterThan(
+        Date.now(),
+      );
+    });
+
+    it('404s for a page id that does not exist', async () => {
+      await agent.post(`/pages/${randomUUID()}/preview-token`).expect(404);
+    });
+  });
 });

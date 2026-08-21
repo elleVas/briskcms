@@ -9,4 +9,4 @@ const href =
 	linkType === 'page' && page ? localePath(page.locale, page.slug) : url;
 ---
 
-<a href={href}>{label}</a>
+<a href={href} data-brisk-field="label">{label}</a>

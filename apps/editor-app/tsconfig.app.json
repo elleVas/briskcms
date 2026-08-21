@@ -50,7 +50,7 @@
       "path": "../../libs/shared-types/tsconfig.lib.json"
     },
     {
-      "path": "../../libs/puck-config/tsconfig.lib.json"
+      "path": "../../libs/block-registry/tsconfig.lib.json"
     }
   ]
 }

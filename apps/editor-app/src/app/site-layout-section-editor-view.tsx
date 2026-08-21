@@ -2,18 +2,26 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from '@tanstack/react-router';
 import { History } from 'lucide-react';
-import { headerFooterPuckConfig } from '@brisk/puck-config';
-import { toPuckData } from '../lib/puck-data-mapper.js';
+import { headerFooterBlocks } from '@brisk/block-registry';
 import type { SaveStatus } from './use-page-editor.js';
-import { BlockEditorShell } from './block-editor-shell.js';
+import { CanvasEditorShell } from './canvas/canvas-editor-shell.js';
 import { IconButton } from './icon-button.js';
 import { MediaPickerProvider } from './media-picker-provider.js';
 import { PageListProvider } from './page-list-provider.js';
 import type { SiteLayoutSectionKind } from '../lib/site-layout-sections-api-client.js';
 import { Switch } from '../components/ui/switch.js';
+import { useRepresentativePage } from './use-representative-page.js';
 import { useSiteLayoutSectionEditor } from './use-site-layout-section-editor.js';
 import { useSiteLayoutSectionVersions } from './use-site-layout-section-versions.js';
 import { VersionHistoryDialog } from './version-history-dialog.js';
+
+// Header/footer condividono un unico registro (docs/adr/0018, vedi il
+// commento su headerFooterBlocks stesso) — nessuna categorizzazione
+// separata esiste ancora per loro, un'unica sezione "Blocchi" basta finché
+// il registro resta piccolo (12 tipi).
+const headerFooterCategories = [
+  { title: 'Blocchi', types: headerFooterBlocks.map((block) => block.type) },
+];
 
 export interface SiteLayoutSectionEditorViewProps {
   siteId: string;
@@ -62,56 +70,76 @@ export function SiteLayoutSectionEditorView({
     kind,
     isHistoryOpen,
   );
+  // canvas-editor-shell.tsx renderizza sempre il canvas Astro vero di UNA
+  // PAGINA (vedi canvas-frame.tsx) — header/footer non ne hanno una propria,
+  // quindi ne serve una rappresentativa nella stessa lingua da usare come
+  // sfondo su cui mostrare l'header/footer in editing.
+  const { page: representativePage, isLoading: isLoadingRepresentativePage } =
+    useRepresentativePage(siteId, locale);
 
   async function handleRollback(versionId: string) {
     await rollback(versionId);
     setRestoredAt((n) => n + 1);
   }
 
+  const sectionLabel =
+    kind === 'header' ? t('layout.editHeader') : t('layout.editFooter');
+
   return (
     <MediaPickerProvider siteId={siteId}>
       <PageListProvider siteId={siteId} locale={locale}>
-        <BlockEditorShell
-          backLink={
-            <Link to="/layout" className="hover:underline">
-              ← {t('layout.editor.backToList')}
-            </Link>
-          }
-          statusText={statusText}
-          actions={
-            <>
-              {kind === 'header' && (
-                <label className="flex items-center gap-1.5">
-                  <Switch
-                    size="sm"
-                    checked={section.sticky}
-                    onCheckedChange={handleStickyChange}
-                  />
-                  {t('layout.editor.sticky')}
-                </label>
-              )}
-              <IconButton
-                label={t('pages.versionHistory.open')}
-                onClick={() => setIsHistoryOpen(true)}
-              >
-                <History />
-              </IconButton>
-            </>
-          }
-          config={headerFooterPuckConfig}
-          data={toPuckData(section.content, headerFooterPuckConfig)}
-          onChange={handleChange}
-          onPublish={handlePublish}
-          restoredAt={restoredAt}
-        >
-          <VersionHistoryDialog
-            versions={versions}
-            isLoading={isLoadingVersions}
-            open={isHistoryOpen}
-            onOpenChange={setIsHistoryOpen}
-            onRollback={handleRollback}
-          />
-        </BlockEditorShell>
+        {!isLoadingRepresentativePage && !representativePage ? (
+          <div className="flex h-screen items-center justify-center p-6 text-center text-sm text-muted-foreground">
+            {t('layout.editor.noPageToPreview', { section: sectionLabel })}
+          </div>
+        ) : (
+          representativePage && (
+            <CanvasEditorShell
+              backLink={
+                <Link to="/layout" className="hover:underline">
+                  ← {t('layout.editor.backToList')}
+                </Link>
+              }
+              statusText={statusText}
+              actions={
+                <>
+                  {kind === 'header' && (
+                    <label className="flex items-center gap-1.5">
+                      <Switch
+                        size="sm"
+                        checked={section.sticky}
+                        onCheckedChange={handleStickyChange}
+                      />
+                      {t('layout.editor.sticky')}
+                    </label>
+                  )}
+                  <IconButton
+                    label={t('pages.versionHistory.open')}
+                    onClick={() => setIsHistoryOpen(true)}
+                  >
+                    <History />
+                  </IconButton>
+                </>
+              }
+              registry={headerFooterBlocks}
+              categories={headerFooterCategories}
+              blocks={section.content}
+              onChange={handleChange}
+              onPublish={handlePublish}
+              pageId={representativePage.id}
+              editingSection={kind}
+              restoredAt={restoredAt}
+            >
+              <VersionHistoryDialog
+                versions={versions}
+                isLoading={isLoadingVersions}
+                open={isHistoryOpen}
+                onOpenChange={setIsHistoryOpen}
+                onRollback={handleRollback}
+              />
+            </CanvasEditorShell>
+          )
+        )}
       </PageListProvider>
     </MediaPickerProvider>
   );
