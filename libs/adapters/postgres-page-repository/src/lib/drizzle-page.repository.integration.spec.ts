@@ -224,61 +224,60 @@ describe('DrizzlePageRepository (integration)', () => {
     expect(versionsFromOtherTenant).toHaveLength(0);
   });
 
-  it('prunes versions once they are both outside the last 20 and older than 90 days', async () => {
+  it('prunes down to the last 10 versions, regardless of age', async () => {
     const page = buildPage();
     await pageRepository.save(page);
 
-    const ninetyOneDaysAgo = new Date(Date.now() - 91 * 24 * 60 * 60 * 1000);
-    const staleId = randomUUID();
+    const oldestId = randomUUID();
     await pageVersionRepository.save({
-      id: staleId,
+      id: oldestId,
       tenantId: tenantAId,
       pageId: page.id,
-      content: [{ type: 'Hero', props: { title: 'stale' } }],
+      content: [{ type: 'Hero', props: { title: 'oldest' } }],
       createdBy: null,
-      createdAt: ninetyOneDaysAgo,
+      createdAt: new Date(Date.now() - 10 * 1000),
     });
 
-    // 20 more recent saves push the stale one out of the "last 20 by
-    // count" window — each save also runs the prune, so by the time this
-    // loop finishes the stale version should already be gone.
-    for (let i = 0; i < 20; i++) {
+    // 12 more saves in the same short burst — each save also runs the
+    // prune, so by the time this loop finishes the two oldest versions
+    // (the seed above plus the loop's own first save) are already gone,
+    // even though every single one of them is only seconds old.
+    let lastId = oldestId;
+    for (let i = 0; i < 12; i++) {
+      lastId = randomUUID();
       await pageVersionRepository.save({
-        id: randomUUID(),
+        id: lastId,
         tenantId: tenantAId,
         pageId: page.id,
         content: [{ type: 'Hero', props: { title: `recent-${i}` } }],
         createdBy: null,
-        createdAt: new Date(Date.now() - (19 - i) * 1000),
+        createdAt: new Date(Date.now() - (11 - i) * 1000),
       });
     }
 
     const versions = await pageVersionRepository.listByPage(tenantAId, page.id);
-    expect(versions).toHaveLength(20);
-    expect(versions.map((v) => v.id)).not.toContain(staleId);
+    expect(versions).toHaveLength(10);
+    expect(versions.map((v) => v.id)).not.toContain(oldestId);
+    expect(versions.map((v) => v.id)).toContain(lastId);
   });
 
-  it('never prunes a version younger than 90 days, even past the count of 20', async () => {
+  it('keeps every version when there are 10 or fewer', async () => {
     const page = buildPage();
     await pageRepository.save(page);
 
-    // 22 recent saves, none older than 90 days — the count cap alone
-    // would trim this to 20, but the age clause is a floor, not a
-    // ceiling: nothing this recent is ever pruned (docs/adr — see
-    // DrizzlePageVersionRepository's own comment for the "OR" semantics).
-    for (let i = 0; i < 22; i++) {
+    for (let i = 0; i < 7; i++) {
       await pageVersionRepository.save({
         id: randomUUID(),
         tenantId: tenantAId,
         pageId: page.id,
-        content: [{ type: 'Hero', props: { title: `recent-${i}` } }],
+        content: [{ type: 'Hero', props: { title: `v-${i}` } }],
         createdBy: null,
-        createdAt: new Date(Date.now() - (21 - i) * 1000),
+        createdAt: new Date(Date.now() - (6 - i) * 1000),
       });
     }
 
     const versions = await pageVersionRepository.listByPage(tenantAId, page.id);
-    expect(versions).toHaveLength(22);
+    expect(versions).toHaveLength(7);
   });
 
   it('listByGroup returns every locale-translation of the same page, scoped to tenant', async () => {
