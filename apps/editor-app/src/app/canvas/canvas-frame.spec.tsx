@@ -28,6 +28,7 @@ const emptyBridge: PreviewBridgeState = {
   reorderBlocks: vi.fn(),
   enterTextEdit: vi.fn(),
   exitTextEdit: vi.fn(),
+  selectBlock: vi.fn(),
 };
 
 describe('buildPreviewUrl', () => {

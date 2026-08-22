@@ -1,6 +1,5 @@
 import type { BlockDescriptor } from './field-types.js';
 import { backToTopBlock } from './blocks/back-to-top.block.js';
-import { breadcrumbBlock } from './blocks/breadcrumb.block.js';
 import { hamburgerMenuBlock } from './blocks/hamburger-menu.block.js';
 import { languageSwitcherBlock } from './blocks/language-switcher.block.js';
 import { navDropdownBlock } from './blocks/nav-dropdown.block.js';
@@ -14,7 +13,6 @@ import { textBlock } from './blocks/text.block.js';
 
 export {
   backToTopBlock,
-  breadcrumbBlock,
   hamburgerMenuBlock,
   languageSwitcherBlock,
   navDropdownBlock,
@@ -38,9 +36,15 @@ export {
  * in questa lista, nessuna validazione a runtime da tenere sincronizzata a
  * parte.
  *
- * 12 blocchi totali: 9 esclusivi (sotto) + Text/Image/SearchBox riusati
+ * 11 blocchi totali: 8 esclusivi (sotto) + Text/Image/SearchBox riusati
  * da @brisk/block-registry's config.ts (stessi descrittori, stesso
- * componente Astro — nessuna duplicazione).
+ * componente Astro — nessuna duplicazione). Breadcrumb NON è più qui
+ * (spostato tra i blocchi pagina in config.ts, 2026-08-22): è contenuto
+ * intrinsecamente per-pagina (dipende dalla posizione della pagina nella
+ * gerarchia), editarlo come parte dell'Header/Footer condiviso — pur
+ * "funzionando" grazie ad ancestors/currentPageTitle passati dinamicamente
+ * da BlockRenderer — lo rendeva concettualmente un blocco di pagina
+ * travestito da blocco di sezione condivisa.
  */
 export const headerFooterBlocks: BlockDescriptor[] = [
   navBlock,
@@ -53,6 +57,5 @@ export const headerFooterBlocks: BlockDescriptor[] = [
   promoBarBlock,
   backToTopBlock,
   whatsAppButtonBlock,
-  breadcrumbBlock,
   searchBoxBlock,
 ];

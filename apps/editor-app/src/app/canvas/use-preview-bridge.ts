@@ -11,7 +11,15 @@ export interface PreviewBridgeState {
   blockRects: BlockRect[];
   isReady: boolean;
   hoveredBlockId: string | null;
-  /** Sola-lettura per ora (Giorno 2): nessuno stato persistito altrove, solo un riscontro visivo nell'overlay/Layers. */
+  /**
+   * Non più sola-lettura: oltre a un vero `preview:click` dall'iframe,
+   * anche `selectBlock` sotto lo scrive direttamente — serve al pannello
+   * Livelli per selezionare un blocco che sul canvas è completamente
+   * coperto da un suo figlio (es. una Colonna che contiene una sola
+   * Galleria a tutta larghezza: nessun pixel del canvas appartiene più
+   * alla Colonna stessa), dove cliccare sul canvas selezionerebbe sempre
+   * il figlio, mai il genitore.
+   */
   selectedBlockId: string | null;
   /**
    * L'ultimo doppio click ricevuto (Giorno 4) — un OGGETTO NUOVO ad ogni
@@ -63,6 +71,8 @@ export interface PreviewBridgeState {
   enterTextEdit: (blockId: string, field: string) => void;
   /** Smonta l'istanza TipTap corrente nell'iframe, se c'è. */
   exitTextEdit: () => void;
+  /** Seleziona un blocco direttamente da questo lato (pannello Livelli), senza passare da un vero `preview:click` sul canvas — vedi il commento su `selectedBlockId` sopra. */
+  selectBlock: (blockId: string | null) => void;
 }
 
 type PreviewBridgeMessageState = Omit<
@@ -73,6 +83,7 @@ type PreviewBridgeMessageState = Omit<
   | 'reorderBlocks'
   | 'enterTextEdit'
   | 'exitTextEdit'
+  | 'selectBlock'
 >;
 
 const initialState: PreviewBridgeMessageState = {
@@ -299,6 +310,10 @@ export function usePreviewBridge(
     );
   }, [iframeRef, expectedOrigin]);
 
+  const selectBlock = useCallback((blockId: string | null) => {
+    setState((prev) => ({ ...prev, selectedBlockId: blockId }));
+  }, []);
+
   return {
     ...state,
     patchBlock,
@@ -307,5 +322,6 @@ export function usePreviewBridge(
     reorderBlocks,
     enterTextEdit,
     exitTextEdit,
+    selectBlock,
   };
 }

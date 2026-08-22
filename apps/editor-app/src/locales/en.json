@@ -410,6 +410,8 @@
     "previewTokenError": "Couldn't load the preview. Try again.",
     "layersTitle": "Layers",
     "insertBlock": "Insert block",
+    "collapseSidebar": "Collapse sidebar",
+    "expandSidebar": "Expand sidebar",
     "removeBlock": "Remove block",
     "addChild": "Add item",
     "publish": "Publish",

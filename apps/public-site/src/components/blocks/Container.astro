@@ -42,7 +42,13 @@ const paddingClass: Record<ContainerProps['padding'], string> = {
 	   Column.astro. Un attributo `data-*` condizionale, non una classe
 	   dentro un'espressione ternaria — quest'ultima viene scartata dal
 	   compilatore Astro come "non usata" (analizza solo stringhe statiche
-	   nel markup), osservato dal vivo proprio su Column.astro. */
+	   nel markup), osservato dal vivo proprio su Column.astro.
+	   Niente `padding` fisso qui a differenza degli altri contenitori: a
+	   differenza loro, Container ha già un padding scelto dall'utente
+	   (`none`/`sm`/`md`/`lg`, sopra) — un valore fisso lo sovrascriverebbe
+	   con una specificità CSS più alta, facendolo sembrare diverso
+	   nell'editor rispetto alla pagina pubblicata. Il default "md" (2rem)
+	   basta già da solo come area cliccabile. */
 	.brisk-container[data-brisk-editable-outline] {
 		outline: 1px dashed var(--border);
 		outline-offset: -4px;

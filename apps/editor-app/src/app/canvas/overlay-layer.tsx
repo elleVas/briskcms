@@ -14,9 +14,44 @@ export interface IframeGeometry {
   top: number;
   left: number;
   width: number;
+  height: number;
 }
 
-const ZERO_GEOMETRY: IframeGeometry = { top: 0, left: 0, width: 0 };
+const ZERO_GEOMETRY: IframeGeometry = { top: 0, left: 0, width: 0, height: 0 };
+
+/**
+ * `rect` è viewport-relative DENTRO l'iframe (stesso sistema di coordinate
+ * di `getBoundingClientRect()` lì dentro) — resta valido anche quando il
+ * blocco è scrollato fuori dalla parte visibile dell'iframe (una pagina
+ * lunga scrolla DENTRO l'iframe stesso, che ha un'altezza fissa, vedi
+ * canvas-frame.tsx). Senza questo controllo, un overlay `position: fixed`
+ * (bordo di selezione, indicatore di drop, o l'intera toolbar contestuale)
+ * per un blocco così finiva renderizzato fuori dal riquadro del canvas,
+ * sopra il resto della pagina dell'editor — bug trovato dal vivo popolando
+ * un contenitore in fondo a una pagina lunga: il pulsante "Aggiungi
+ * elemento" appariva staccato, lontano dal contenitore a cui apparteneva.
+ *
+ * `geometry` ancora a `ZERO_GEOMETRY` (mai misurata — al primo render,
+ * prima che `useIframeGeometry` trovi l'iframe nel DOM, o in jsdom nei test
+ * che non mockano `getBoundingClientRect`) è trattata come "visibilità
+ * sconosciuta" e passa sempre: un falso negativo qui (nascondere la toolbar
+ * quando in realtà l'iframe è a piena dimensione ma non ancora misurato)
+ * sarebbe peggio del falso positivo opposto.
+ */
+export function isRectVisibleInIframe(
+  geometry: IframeGeometry,
+  rect: { top: number; left: number; width: number; height: number },
+): boolean {
+  if (geometry.width === 0 && geometry.height === 0) {
+    return true;
+  }
+  return (
+    rect.top + rect.height > 0 &&
+    rect.top < geometry.height &&
+    rect.left + rect.width > 0 &&
+    rect.left < geometry.width
+  );
+}
 
 /**
  * Ogni `BlockRect` arriva viewport-relative rispetto al DOCUMENTO DENTRO
@@ -80,7 +115,12 @@ export function useIframeGeometry(
     function recompute(): void {
       const rect = iframeRef.current?.getBoundingClientRect();
       if (rect) {
-        setGeometry({ top: rect.top, left: rect.left, width: rect.width });
+        setGeometry({
+          top: rect.top,
+          left: rect.left,
+          width: rect.width,
+          height: rect.height,
+        });
       }
     }
 
@@ -140,6 +180,9 @@ export function OverlayLayer({
         const isSelected = rect.id === selectedBlockId;
         const isHovered = rect.id === hoveredBlockId;
         if (!isSelected && !isHovered) {
+          return null;
+        }
+        if (!isRectVisibleInIframe(geometry, rect)) {
           return null;
         }
         return (

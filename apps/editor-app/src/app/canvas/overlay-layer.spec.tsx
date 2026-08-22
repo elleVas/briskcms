@@ -10,7 +10,7 @@ import {
 describe('toOverlayStyle', () => {
   it("adds the iframe's own offset to a viewport-relative block rect", () => {
     const style = toOverlayStyle(
-      { top: 100, left: 50, width: 800 },
+      { top: 100, left: 50, width: 800, height: 600 },
       { id: 'a', top: 10, left: 20, width: 300, height: 40 },
     );
 
@@ -26,7 +26,10 @@ describe('toOverlayStyle', () => {
 
 describe('toDropIndicatorStyle', () => {
   it("adds the iframe's own offset and spans its full width", () => {
-    const style = toDropIndicatorStyle({ top: 100, left: 50, width: 800 }, 30);
+    const style = toDropIndicatorStyle(
+      { top: 100, left: 50, width: 800, height: 600 },
+      30,
+    );
 
     expect(style).toEqual({
       position: 'fixed',
@@ -43,7 +46,7 @@ describe('OverlayLayer', () => {
     const iframe = document.createElement('iframe');
     document.body.append(iframe);
     iframe.getBoundingClientRect = vi.fn(
-      () => ({ top: 100, left: 50, width: 800 }) as DOMRect,
+      () => ({ top: 100, left: 50, width: 800, height: 600 }) as DOMRect,
     );
     const ref = createRef<HTMLIFrameElement>();
     ref.current = iframe;
@@ -113,6 +116,26 @@ describe('OverlayLayer', () => {
     );
 
     expect(screen.getAllByTestId('overlay-box')).toHaveLength(2);
+  });
+
+  it("hides a selected box whose rect is scrolled below the iframe's own visible viewport", () => {
+    // L'iframe misura 600px di altezza (vedi setup()) — un blocco a 900px
+    // dal top del SUO documento interno esiste ma non è nella parte
+    // visibile senza scorrere l'iframe stesso: senza la guardia aggiunta,
+    // l'overlay `position: fixed` finirebbe renderizzato ben oltre il
+    // riquadro del canvas, sopra il resto della pagina dell'editor (bug
+    // trovato dal vivo popolando un contenitore in fondo a una pagina lunga).
+    const ref = setup();
+    render(
+      <OverlayLayer
+        iframeRef={ref}
+        blockRects={[{ id: 'a', top: 900, left: 0, width: 300, height: 40 }]}
+        hoveredBlockId={null}
+        selectedBlockId="a"
+      />,
+    );
+
+    expect(screen.queryByTestId('overlay-box')).toBeNull();
   });
 
   it('renders no drop indicator when dropIndicatorTop is not set', () => {

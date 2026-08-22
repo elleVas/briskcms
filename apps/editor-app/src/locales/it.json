@@ -410,6 +410,8 @@
     "previewTokenError": "Impossibile caricare l'anteprima. Riprova.",
     "layersTitle": "Livelli",
     "insertBlock": "Inserisci blocco",
+    "collapseSidebar": "Comprimi barra laterale",
+    "expandSidebar": "Espandi barra laterale",
     "removeBlock": "Rimuovi blocco",
     "addChild": "Aggiungi elemento",
     "publish": "Pubblica",

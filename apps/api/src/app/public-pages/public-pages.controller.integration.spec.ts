@@ -247,15 +247,33 @@ describe('PublicPagesController (integration)', () => {
     expect(res.body.site.name).toBe('Public Test Site');
   });
 
-  it('/public/pages/chrome returns null header/footer for a locale with nothing configured', async () => {
+  it("/public/pages/chrome falls back to the site's default locale (it) header/footer for a locale with nothing of its own configured", async () => {
+    // Regression: a locale that never got its own header/footer section
+    // used to render with NEITHER (found live on a real multi-locale site —
+    // the English page lost its nav and footer entirely). The site's own
+    // 'it' header is (re)published here with a distinctive payload so this
+    // assertion is self-contained, independent of what any earlier test in
+    // this file left behind at 'it'.
+    const headerRes = await agent
+      .get('/site-layout-sections')
+      .query({ siteId, locale: 'it', kind: 'header' })
+      .expect(200);
+    await agent
+      .patch(`/site-layout-sections/${headerRes.body.id}/draft`)
+      .send({ content: [{ type: 'Header', props: { fallbackCheck: true } }] })
+      .expect(200);
+    await agent
+      .post(`/site-layout-sections/${headerRes.body.id}/publish`)
+      .expect(201);
+
     const res = await request(app.getHttpServer())
       .get('/public/pages/chrome')
       .query({ domain, locale: `it-${randomUUID()}` })
       .expect(200);
 
-    expect(res.body.header).toBeNull();
-    expect(res.body.footer).toBeNull();
-    expect(res.body.headerSticky).toBe(false);
+    expect(res.body.header).toEqual([
+      { type: 'Header', props: { fallbackCheck: true } },
+    ]);
   });
 
   it('/public/pages/chrome 404s for a domain that does not match any site', async () => {

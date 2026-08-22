@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Palette } from 'lucide-react';
+import { Palette, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 import type { Block } from '@brisk/shared-types';
 import type { BlockDescriptor } from '@brisk/block-registry';
 import { Button } from '../../components/ui/button.js';
@@ -20,10 +20,11 @@ import {
 } from './canvas-frame.js';
 import {
   computeDropTarget,
+  findContainerAtPoint,
   type DropCandidateRect,
 } from './compute-drop-target.js';
 import { LayersPanel } from './layers-panel.js';
-import { useIframeGeometry } from './overlay-layer.js';
+import { isRectVisibleInIframe, useIframeGeometry } from './overlay-layer.js';
 import {
   cloneBlockWithNewIds,
   createBlockFromDescriptor,
@@ -127,6 +128,8 @@ export function CanvasEditorShell({
   const iframeGeometry = useIframeGeometry(iframeRef);
   const [breakpoint, setBreakpoint] = useState<Breakpoint>('desktop');
   const [isGlobalStylesOpen, setIsGlobalStylesOpen] = useState(false);
+  /** Richiesto dal vivo: su pagine lunghe/con molti blocchi, poter chiudere la sidebar per dare più spazio al canvas — nessuno stato persistito, riparte sempre aperta a un nuovo mount (stesso comportamento di breakpoint/isGlobalStylesOpen sopra). */
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   // Drag di un blocco NUOVO dalla sidebar (BlockPicker) verso il canvas —
   // a differenza di `bridge.activeDrag` (riordino di un blocco già
   // esistente, tracciato dall'iframe) qui il drag nasce nel genitore
@@ -626,13 +629,7 @@ export function CanvasEditorShell({
   /**
    * Drag di un blocco nuovo dalla sidebar (BlockPicker) — mousedown+
    * movimento oltre la soglia lì dentro innesca questi tre callback (vedi
-   * block-picker.tsx). Stessa regola "contenitore selezionato o radice" di
-   * resolveInsertTarget (click-to-insert) — senza, un drag su un contenitore
-   * SELEZIONATO lo ignorava del tutto e finiva sempre alla radice come
-   * fratello, non come figlio (bug segnalato dal vivo: Colonna trascinata
-   * dentro Colonne selezionato finiva fuori, non dentro). Solo quando NON
-   * si sta annidando, il punto di rilascio decide la posizione nella lista
-   * radice (compute-drop-target.ts, stessa euristica del riordino via drag).
+   * block-picker.tsx).
    */
   function handleSidebarDragStart(descriptor: BlockDescriptor): void {
     setSidebarDrag({ descriptor, pointerX: 0, pointerY: 0 });
@@ -644,6 +641,20 @@ export function CanvasEditorShell({
     );
   }
 
+  /**
+   * A differenza del click-to-insert (resolveInsertTarget, basato sul
+   * blocco SELEZIONATO), un drag ha un vero punto di rilascio — usarlo per
+   * decidere il contenitore invece della selezione era il bug segnalato dal
+   * vivo: trascinare un blocco su un contenitore diverso da quello ancora
+   * selezionato in precedenza lo annidava comunque in quest'ultimo, non in
+   * quello visivamente sotto il puntatore, producendo un layout che sembrava
+   * rotto (contenuto/toolbar posizionati altrove rispetto al drop reale).
+   * `bridge.blockRects` include già ogni blocco annidato, non solo quelli di
+   * primo livello (a differenza di `rootRects` sotto, scoped al riordino tra
+   * fratelli) — qui si filtra ai soli blocchi che il registry marca come
+   * contenitori, poi si sceglie il rect più piccolo (il contenitore più
+   * profondo) che contiene il punto.
+   */
   function handleSidebarDragEnd(
     descriptor: BlockDescriptor,
     pageX: number,
@@ -657,20 +668,31 @@ export function CanvasEditorShell({
     if (!isOverCanvas) {
       return;
     }
-    const resolved = resolveInsertTarget(
-      localBlocks,
-      registry,
-      selectedBlock?.id ?? null,
+    const iframeX = pageX - iframeGeometry.left;
+    const iframeY = pageY - iframeGeometry.top;
+    const containerRects = bridge.blockRects.filter((rect) => {
+      const block = findBlockInTree(localBlocks, rect.id);
+      const blockDescriptor = block
+        ? registry.find((d) => d.type === block.type)
+        : undefined;
+      return Boolean(blockDescriptor?.isContainer);
+    });
+    const hitContainerId = findContainerAtPoint(
+      containerRects,
+      iframeX,
+      iframeY,
     );
-    const target: BlockTreeTarget =
-      resolved.parentId !== null
-        ? resolved
-        : {
-            parentId: null,
-            index:
-              computeDropTarget(rootRects, '', pageY - iframeGeometry.top)
-                ?.index ?? localBlocks.length,
-          };
+    const hitContainer = hitContainerId
+      ? findBlockInTree(localBlocks, hitContainerId)
+      : null;
+    const target: BlockTreeTarget = hitContainer?.id
+      ? { parentId: hitContainer.id, index: hitContainer.children?.length ?? 0 }
+      : {
+          parentId: null,
+          index:
+            computeDropTarget(rootRects, '', iframeY)?.index ??
+            localBlocks.length,
+        };
     const newBlock = createBlockFromDescriptor(descriptor, registry);
     const next = insertBlock(localBlocks, newBlock, target);
     applyLocalChange(next);
@@ -715,29 +737,51 @@ export function CanvasEditorShell({
         />
       )}
       <div style={{ flex: 1, minHeight: 0, display: 'flex' }}>
-        <aside className="w-64 shrink-0 overflow-y-auto border-r p-3">
-          <h3 className="mb-2 text-sm font-medium">
-            {t('canvas.layersTitle')}
-          </h3>
-          <LayersPanel
-            blocks={localBlocks}
-            hoveredBlockId={bridge.hoveredBlockId}
-            selectedBlockId={bridge.selectedBlockId}
-            onReorderRoot={handleReorderRoot}
-          />
-          <h3 className="mb-2 mt-4 text-sm font-medium">
-            {t('canvas.insertBlock')}
-          </h3>
-          <BlockPicker
-            categories={categories}
-            registry={registry}
-            onInsert={handleInsert}
-            drag={{
-              onDragStart: handleSidebarDragStart,
-              onDragMove: handleSidebarDragMove,
-              onDragEnd: handleSidebarDragEnd,
-            }}
-          />
+        <aside
+          className={
+            isSidebarCollapsed
+              ? 'flex w-10 shrink-0 flex-col items-center border-r py-3'
+              : 'w-64 shrink-0 overflow-y-auto border-r p-3'
+          }
+        >
+          <IconButton
+            label={
+              isSidebarCollapsed
+                ? t('canvas.expandSidebar')
+                : t('canvas.collapseSidebar')
+            }
+            onClick={() => setIsSidebarCollapsed((collapsed) => !collapsed)}
+            className={isSidebarCollapsed ? undefined : 'mb-2 -ml-1'}
+          >
+            {isSidebarCollapsed ? <PanelLeftOpen /> : <PanelLeftClose />}
+          </IconButton>
+          {!isSidebarCollapsed && (
+            <>
+              <h3 className="mb-2 text-sm font-medium">
+                {t('canvas.layersTitle')}
+              </h3>
+              <LayersPanel
+                blocks={localBlocks}
+                hoveredBlockId={bridge.hoveredBlockId}
+                selectedBlockId={bridge.selectedBlockId}
+                onReorderRoot={handleReorderRoot}
+                onSelect={bridge.selectBlock}
+              />
+              <h3 className="mb-2 mt-4 text-sm font-medium">
+                {t('canvas.insertBlock')}
+              </h3>
+              <BlockPicker
+                categories={categories}
+                registry={registry}
+                onInsert={handleInsert}
+                drag={{
+                  onDragStart: handleSidebarDragStart,
+                  onDragMove: handleSidebarDragMove,
+                  onDragEnd: handleSidebarDragEnd,
+                }}
+              />
+            </>
+          )}
         </aside>
         <div style={{ flex: 1, minHeight: 0, position: 'relative' }}>
           <CanvasFrame
@@ -748,30 +792,37 @@ export function CanvasEditorShell({
             dropIndicatorTop={liveDropTarget?.indicatorTop}
             breakpoint={breakpoint}
           />
-          {selectedBlock && selectedDescriptor && selectedRect && (
-            <BlockToolbarOverlay
-              iframeRef={iframeRef}
-              block={selectedBlock}
-              descriptor={selectedDescriptor}
-              rect={selectedRect}
-              isRootLevel={isSelectedRootLevel}
-              canMoveUp={isSelectedRootLevel && selectedRootIndex > 0}
-              canMoveDown={
-                isSelectedRootLevel &&
-                selectedRootIndex < localBlocks.length - 1
-              }
-              registry={registry}
-              categories={categories}
-              onChangeProp={handleChangeProp}
-              onMoveUp={() => handleMoveSelected(-1)}
-              onMoveDown={() => handleMoveSelected(1)}
-              onDuplicate={handleDuplicateSelected}
-              onDelete={handleRemoveSelected}
-              onInsertBefore={(descriptor) => handleInsertAtRoot(descriptor, 0)}
-              onInsertAfter={(descriptor) => handleInsertAtRoot(descriptor, 1)}
-              onAddChild={handleAddChild}
-            />
-          )}
+          {selectedBlock &&
+            selectedDescriptor &&
+            selectedRect &&
+            isRectVisibleInIframe(iframeGeometry, selectedRect) && (
+              <BlockToolbarOverlay
+                iframeRef={iframeRef}
+                block={selectedBlock}
+                descriptor={selectedDescriptor}
+                rect={selectedRect}
+                isRootLevel={isSelectedRootLevel}
+                canMoveUp={isSelectedRootLevel && selectedRootIndex > 0}
+                canMoveDown={
+                  isSelectedRootLevel &&
+                  selectedRootIndex < localBlocks.length - 1
+                }
+                registry={registry}
+                categories={categories}
+                onChangeProp={handleChangeProp}
+                onMoveUp={() => handleMoveSelected(-1)}
+                onMoveDown={() => handleMoveSelected(1)}
+                onDuplicate={handleDuplicateSelected}
+                onDelete={handleRemoveSelected}
+                onInsertBefore={(descriptor) =>
+                  handleInsertAtRoot(descriptor, 0)
+                }
+                onInsertAfter={(descriptor) =>
+                  handleInsertAtRoot(descriptor, 1)
+                }
+                onAddChild={handleAddChild}
+              />
+            )}
           {sidebarDrag && (
             <div
               data-testid="sidebar-drag-ghost"

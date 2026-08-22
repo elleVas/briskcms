@@ -7,7 +7,11 @@ type Props = ColumnsProps & { editable?: boolean; hasChildren?: boolean };
 const { layout, editable, hasChildren } = Astro.props;
 ---
 
-<div class="brisk-columns" style={`grid-template-columns: ${columnsGridTemplate(layout)}`}>
+<div
+  class="brisk-columns"
+  style={`grid-template-columns: ${columnsGridTemplate(layout)}`}
+  data-brisk-editable-outline={editable && hasChildren ? '' : undefined}
+>
   <slot />
 </div>
 <EmptyContainerHint show={!hasChildren && Boolean(editable)} />
@@ -21,5 +25,15 @@ const { layout, editable, hasChildren } = Astro.props;
     .brisk-columns {
       grid-template-columns: 1fr !important;
     }
+  }
+  /* Solo nell'editor, e solo con contenuto — stesso motivo/pattern di
+     Column.astro/Container.astro: senza un bordo persistente, un layout a
+     più colonne diventa difficile da "leggere" mentre si lavora, specie
+     quando le colonne hanno già del vero contenuto dentro (feedback utente
+     dal vivo). */
+  .brisk-columns[data-brisk-editable-outline] {
+    outline: 1px dashed var(--border);
+    outline-offset: -4px;
+    padding: 0.5rem;
   }
 </style>

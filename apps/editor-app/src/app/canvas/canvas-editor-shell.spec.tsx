@@ -199,6 +199,26 @@ describe('CanvasEditorShell', () => {
     expect(screen.queryByTestId('block-breadcrumb')).toBeNull();
   });
 
+  it('collapsing the sidebar hides Layers/BlockPicker and can be expanded again', async () => {
+    renderShell();
+    await getIframe();
+
+    expect(screen.getByText('Livelli')).toBeTruthy();
+    expect(screen.getByText('Inserisci blocco')).toBeTruthy();
+
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Comprimi barra laterale' }),
+    );
+    expect(screen.queryByText('Livelli')).toBeNull();
+    expect(screen.queryByText('Inserisci blocco')).toBeNull();
+
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Espandi barra laterale' }),
+    );
+    expect(screen.getByText('Livelli')).toBeTruthy();
+    expect(screen.getByText('Inserisci blocco')).toBeTruthy();
+  });
+
   it('selecting a block on the canvas shows the contextual toolbar', async () => {
     renderShell();
     const iframe = await getIframe();
