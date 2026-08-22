@@ -1,6 +1,12 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Palette, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
+import {
+  Palette,
+  PanelLeftClose,
+  PanelLeftOpen,
+  PanelRightClose,
+  PanelRightOpen,
+} from 'lucide-react';
 import type { Block } from '@brisk/shared-types';
 import type { BlockDescriptor } from '@brisk/block-registry';
 import { Button } from '../../components/ui/button.js';
@@ -128,8 +134,15 @@ export function CanvasEditorShell({
   const iframeGeometry = useIframeGeometry(iframeRef);
   const [breakpoint, setBreakpoint] = useState<Breakpoint>('desktop');
   const [isGlobalStylesOpen, setIsGlobalStylesOpen] = useState(false);
-  /** Richiesto dal vivo: su pagine lunghe/con molti blocchi, poter chiudere la sidebar per dare più spazio al canvas — nessuno stato persistito, riparte sempre aperta a un nuovo mount (stesso comportamento di breakpoint/isGlobalStylesOpen sopra). */
+  /**
+   * Richiesto dal vivo: su pagine lunghe/con molti blocchi, poter chiudere
+   * ciascuna barra laterale per dare più spazio al canvas — due stati
+   * indipendenti (sinistra: Inserisci blocco; destra: Livelli), nessuno
+   * persistito, riparte sempre tutto aperto a un nuovo mount (stesso
+   * comportamento di breakpoint/isGlobalStylesOpen sopra).
+   */
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [isLayersPanelCollapsed, setIsLayersPanelCollapsed] = useState(false);
   // Drag di un blocco NUOVO dalla sidebar (BlockPicker) verso il canvas —
   // a differenza di `bridge.activeDrag` (riordino di un blocco già
   // esistente, tracciato dall'iframe) qui il drag nasce nel genitore
@@ -758,16 +771,6 @@ export function CanvasEditorShell({
           {!isSidebarCollapsed && (
             <>
               <h3 className="mb-2 text-sm font-medium">
-                {t('canvas.layersTitle')}
-              </h3>
-              <LayersPanel
-                blocks={localBlocks}
-                hoveredBlockId={bridge.hoveredBlockId}
-                selectedBlockId={bridge.selectedBlockId}
-                onReorderRoot={handleReorderRoot}
-                onSelect={bridge.selectBlock}
-              />
-              <h3 className="mb-2 mt-4 text-sm font-medium">
                 {t('canvas.insertBlock')}
               </h3>
               <BlockPicker
@@ -836,6 +839,41 @@ export function CanvasEditorShell({
             </div>
           )}
         </div>
+        <aside
+          className={
+            isLayersPanelCollapsed
+              ? 'flex w-10 shrink-0 flex-col items-center border-l py-3'
+              : 'w-64 shrink-0 overflow-y-auto border-l p-3'
+          }
+        >
+          <IconButton
+            label={
+              isLayersPanelCollapsed
+                ? t('canvas.expandLayersPanel')
+                : t('canvas.collapseLayersPanel')
+            }
+            onClick={() => setIsLayersPanelCollapsed((collapsed) => !collapsed)}
+            className={
+              isLayersPanelCollapsed ? undefined : 'mb-2 -mr-1 self-end'
+            }
+          >
+            {isLayersPanelCollapsed ? <PanelRightOpen /> : <PanelRightClose />}
+          </IconButton>
+          {!isLayersPanelCollapsed && (
+            <>
+              <h3 className="mb-2 text-sm font-medium">
+                {t('canvas.layersTitle')}
+              </h3>
+              <LayersPanel
+                blocks={localBlocks}
+                hoveredBlockId={bridge.hoveredBlockId}
+                selectedBlockId={bridge.selectedBlockId}
+                onReorderRoot={handleReorderRoot}
+                onSelect={bridge.selectBlock}
+              />
+            </>
+          )}
+        </aside>
       </div>
       {children}
     </div>

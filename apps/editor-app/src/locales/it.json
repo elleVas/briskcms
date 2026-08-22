@@ -412,6 +412,8 @@
     "insertBlock": "Inserisci blocco",
     "collapseSidebar": "Comprimi barra laterale",
     "expandSidebar": "Espandi barra laterale",
+    "collapseLayersPanel": "Comprimi pannello Livelli",
+    "expandLayersPanel": "Espandi pannello Livelli",
     "removeBlock": "Rimuovi blocco",
     "addChild": "Aggiungi elemento",
     "publish": "Pubblica",

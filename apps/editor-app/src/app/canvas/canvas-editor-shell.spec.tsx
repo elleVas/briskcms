@@ -199,7 +199,7 @@ describe('CanvasEditorShell', () => {
     expect(screen.queryByTestId('block-breadcrumb')).toBeNull();
   });
 
-  it('collapsing the sidebar hides Layers/BlockPicker and can be expanded again', async () => {
+  it('collapsing the left sidebar hides only the block picker, not the Layers panel', async () => {
     renderShell();
     await getIframe();
 
@@ -209,11 +209,28 @@ describe('CanvasEditorShell', () => {
     fireEvent.click(
       screen.getByRole('button', { name: 'Comprimi barra laterale' }),
     );
-    expect(screen.queryByText('Livelli')).toBeNull();
     expect(screen.queryByText('Inserisci blocco')).toBeNull();
+    expect(screen.getByText('Livelli')).toBeTruthy();
 
     fireEvent.click(
       screen.getByRole('button', { name: 'Espandi barra laterale' }),
+    );
+    expect(screen.getByText('Inserisci blocco')).toBeTruthy();
+    expect(screen.getByText('Livelli')).toBeTruthy();
+  });
+
+  it('collapsing the right Layers panel hides only Livelli, not the block picker', async () => {
+    renderShell();
+    await getIframe();
+
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Comprimi pannello Livelli' }),
+    );
+    expect(screen.queryByText('Livelli')).toBeNull();
+    expect(screen.getByText('Inserisci blocco')).toBeTruthy();
+
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Espandi pannello Livelli' }),
     );
     expect(screen.getByText('Livelli')).toBeTruthy();
     expect(screen.getByText('Inserisci blocco')).toBeTruthy();

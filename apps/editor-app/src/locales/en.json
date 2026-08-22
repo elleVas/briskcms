@@ -412,6 +412,8 @@
     "insertBlock": "Insert block",
     "collapseSidebar": "Collapse sidebar",
     "expandSidebar": "Expand sidebar",
+    "collapseLayersPanel": "Collapse Layers panel",
+    "expandLayersPanel": "Expand Layers panel",
     "removeBlock": "Remove block",
     "addChild": "Add item",
     "publish": "Publish",
