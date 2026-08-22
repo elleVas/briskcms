@@ -1,24 +1,44 @@
 ---
+import EmptyContainerHint from '../EmptyContainerHint.astro';
+
+export interface Props {
+  editable?: boolean;
+  hasChildren?: boolean;
+}
+
+const { editable, hasChildren } = Astro.props;
 ---
 
 <div class="brisk-testimonials">
-  <div class="brisk-testimonials__track">
-    <slot />
-  </div>
-  <button
-    type="button"
-    class="brisk-testimonials__nav brisk-testimonials__nav--prev"
-    aria-label="Testimonianza precedente"
-  >
-    ‹
-  </button>
-  <button
-    type="button"
-    class="brisk-testimonials__nav brisk-testimonials__nav--next"
-    aria-label="Testimonianza successiva"
-  >
-    ›
-  </button>
+  {
+    hasChildren ? (
+      <div class="brisk-testimonials__track">
+        <slot />
+      </div>
+    ) : (
+      <EmptyContainerHint show={Boolean(editable)} />
+    )
+  }
+  {
+    hasChildren && (
+      <>
+        <button
+          type="button"
+          class="brisk-testimonials__nav brisk-testimonials__nav--prev"
+          aria-label="Testimonianza precedente"
+        >
+          ‹
+        </button>
+        <button
+          type="button"
+          class="brisk-testimonials__nav brisk-testimonials__nav--next"
+          aria-label="Testimonianza successiva"
+        >
+          ›
+        </button>
+      </>
+    )
+  }
 </div>
 
 <script>

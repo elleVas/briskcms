@@ -7,11 +7,13 @@ const { media, alt, caption } = Astro.props;
 ---
 
 {
-  media && (
+  media ? (
     <figure>
       <img src={media.url} alt={alt} />
       {caption && <figcaption data-brisk-field="caption">{caption}</figcaption>}
     </figure>
+  ) : (
+    <p>Nessuna immagine selezionata.</p>
   )
 }
 

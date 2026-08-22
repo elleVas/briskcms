@@ -26,6 +26,7 @@ import { LayersPanel } from './layers-panel.js';
 import { useIframeGeometry } from './overlay-layer.js';
 import {
   cloneBlockWithNewIds,
+  createBlockFromDescriptor,
   findBlockInTree,
   insertBlock,
   locateBlock,
@@ -379,6 +380,47 @@ export function CanvasEditorShell({
   }
 
   /**
+   * Rigenera e ripatcha per intero un blocco-contenitore (stesso
+   * `editor:patch-block` di un cambio proprietà) dopo che uno dei suoi
+   * figli è stato inserito/rimosso — non basta inserire/rimuovere SOLO quel
+   * figlio nel DOM: l'euristica di risoluzione del contenitore in
+   * preview-bridge-client.ts assume che `<slot/>` sia l'unico contenuto
+   * dell'elemento radice del blocco-contenitore, falsa per Testimonials
+   * (pulsanti di navigazione + segnaposto "contenitore vuoto" attorno allo
+   * slot) e fragile in generale per qualunque "cornice" che dipenda dalla
+   * presenza di figli. `treeWithUpdatedChildren` è l'albero già ricalcolato
+   * dal chiamante DOPO la modifica (a differenza di `localBlocks` altrove
+   * in questo file, che resta quello PRIMA finché serve).
+   */
+  async function patchParentBlock(
+    parentId: string,
+    treeWithUpdatedChildren: Block[],
+  ): Promise<void> {
+    if (!token) {
+      return;
+    }
+    const parent = findBlockInTree(treeWithUpdatedChildren, parentId);
+    if (!parent?.id) {
+      return;
+    }
+    try {
+      const html = await renderBlockFragment({
+        pageId,
+        token,
+        blockId: parent.id,
+        blockType: parent.type,
+        props: parent.props,
+        children: parent.children,
+      });
+      bridge.patchBlock(parent.id, html);
+    } catch {
+      // Resta nell'albero locale/nella bozza salvata, riappare corretto al
+      // prossimo reload — stesso comportamento del fallimento di rete negli
+      // altri rami di insertIntoCanvas sotto.
+    }
+  }
+
+  /**
    * Renderizza il frammento del blocco APPENA creato (mai visto prima
    * dall'iframe, a differenza di usePropertyPatch che ne sostituisce uno
    * esistente) e lo inserisce nel canvas via `editor:insert-block` — senza
@@ -390,12 +432,21 @@ export function CanvasEditorShell({
    * `beforeBlockId` è calcolato PRIMA di applicare l'inserimento
    * all'albero: è l'id di chi oggi occupa la posizione target, che dopo
    * l'inserimento si ritroverà spostato di uno.
+   *
+   * Per un inserimento ANNIDATO (`target.parentId` non nullo), vedi
+   * `patchParentBlock` sopra — si ripatcha il genitore, non si inserisce il
+   * figlio da solo.
    */
   async function insertIntoCanvas(
     block: Block & { id: string },
     target: BlockTreeTarget,
+    nextBlocks: Block[],
   ): Promise<void> {
     if (!token) {
+      return;
+    }
+    if (target.parentId !== null) {
+      await patchParentBlock(target.parentId, nextBlocks);
       return;
     }
     const siblingsBefore = siblingsAt(localBlocks, target.parentId);
@@ -424,14 +475,10 @@ export function CanvasEditorShell({
       registry,
       bridge.selectedBlockId,
     );
-    const newBlock: Block & { id: string } = {
-      id: crypto.randomUUID(),
-      type: descriptor.type,
-      props: descriptor.defaultProps,
-      ...(descriptor.isContainer ? { children: [] } : {}),
-    };
-    applyLocalChange(insertBlock(localBlocks, newBlock, target));
-    void insertIntoCanvas(newBlock, target);
+    const newBlock = createBlockFromDescriptor(descriptor, registry);
+    const next = insertBlock(localBlocks, newBlock, target);
+    applyLocalChange(next);
+    void insertIntoCanvas(newBlock, target, next);
   }
 
   function handleReorderRoot(orderedIds: string[]): void {
@@ -447,8 +494,20 @@ export function CanvasEditorShell({
     if (!selectedBlock?.id) {
       return;
     }
-    applyLocalChange(removeBlock(localBlocks, selectedBlock.id));
-    bridge.removeBlock(selectedBlock.id);
+    const location = locateBlock(localBlocks, selectedBlock.id);
+    const next = removeBlock(localBlocks, selectedBlock.id);
+    applyLocalChange(next);
+    // Un blocco annidato rimosso può cambiare la "cornice" del suo
+    // genitore (es. Testimonials nasconde di nuovo i pulsanti nav e
+    // rimostra il segnaposto vuoto quando perde il suo ultimo figlio) —
+    // stesso motivo per cui un inserimento annidato ripatcha il genitore
+    // invece di toccare solo il nodo rimosso (vedi patchParentBlock sopra).
+    // Un blocco di primo livello resta invece un semplice editor:remove-block.
+    if (location?.parentId) {
+      void patchParentBlock(location.parentId, next);
+    } else {
+      bridge.removeBlock(selectedBlock.id);
+    }
   }
 
   function handlePublish(): void {
@@ -509,8 +568,41 @@ export function CanvasEditorShell({
       parentId: location.parentId,
       index: location.index + 1,
     };
-    applyLocalChange(insertBlock(localBlocks, clone, target));
-    void insertIntoCanvas(clone, target);
+    const next = insertBlock(localBlocks, clone, target);
+    applyLocalChange(next);
+    void insertIntoCanvas(clone, target, next);
+  }
+
+  /**
+   * "+" dentro a un contenitore-collezione selezionato (Testimonianze,
+   * Team, Accordion, ...) — aggiunge un altro figlio del suo UNICO tipo
+   * consentito (`allowedChildTypes[0]`) senza aprire il picker: non c'è
+   * ambiguità da chiedere, è l'unico tipo sensato per quel contenitore
+   * (stessa regola di createBlockFromDescriptor). Il pulsante compare solo
+   * quando `descriptor.allowedChildTypes` ha esattamente un elemento (vedi
+   * block-toolbar-overlay.tsx's canAddChild), quindi qui la ricerca nel
+   * registry non dovrebbe mai fallire — se fallisse comunque (registry
+   * disallineato), semplicemente non succede nulla.
+   */
+  function handleAddChild(): void {
+    if (!selectedBlock?.id || !selectedDescriptor) {
+      return;
+    }
+    const childType = selectedDescriptor.allowedChildTypes?.[0];
+    const childDescriptor = childType
+      ? registry.find((d) => d.type === childType)
+      : undefined;
+    if (!childDescriptor) {
+      return;
+    }
+    const newChild = createBlockFromDescriptor(childDescriptor, registry);
+    const target: BlockTreeTarget = {
+      parentId: selectedBlock.id,
+      index: selectedBlock.children?.length ?? 0,
+    };
+    const next = insertBlock(localBlocks, newChild, target);
+    applyLocalChange(next);
+    void insertIntoCanvas(newChild, target, next);
   }
 
   function handleInsertAtRoot(
@@ -524,23 +616,23 @@ export function CanvasEditorShell({
     if (index === -1) {
       return;
     }
-    const newBlock: Block & { id: string } = {
-      id: crypto.randomUUID(),
-      type: descriptor.type,
-      props: descriptor.defaultProps,
-      ...(descriptor.isContainer ? { children: [] } : {}),
-    };
+    const newBlock = createBlockFromDescriptor(descriptor, registry);
     const target: BlockTreeTarget = { parentId: null, index: index + offset };
-    applyLocalChange(insertBlock(localBlocks, newBlock, target));
-    void insertIntoCanvas(newBlock, target);
+    const next = insertBlock(localBlocks, newBlock, target);
+    applyLocalChange(next);
+    void insertIntoCanvas(newBlock, target, next);
   }
 
   /**
    * Drag di un blocco nuovo dalla sidebar (BlockPicker) — mousedown+
    * movimento oltre la soglia lì dentro innesca questi tre callback (vedi
-   * block-picker.tsx). Il punto di rilascio è calcolato con la STESSA
-   * compute-drop-target.ts già usata per il riordino: root-level soltanto,
-   * stesso limite del riordino via drag e del "+" della toolbar.
+   * block-picker.tsx). Stessa regola "contenitore selezionato o radice" di
+   * resolveInsertTarget (click-to-insert) — senza, un drag su un contenitore
+   * SELEZIONATO lo ignorava del tutto e finiva sempre alla radice come
+   * fratello, non come figlio (bug segnalato dal vivo: Colonna trascinata
+   * dentro Colonne selezionato finiva fuori, non dentro). Solo quando NON
+   * si sta annidando, il punto di rilascio decide la posizione nella lista
+   * radice (compute-drop-target.ts, stessa euristica del riordino via drag).
    */
   function handleSidebarDragStart(descriptor: BlockDescriptor): void {
     setSidebarDrag({ descriptor, pointerX: 0, pointerY: 0 });
@@ -565,23 +657,24 @@ export function CanvasEditorShell({
     if (!isOverCanvas) {
       return;
     }
-    const dropTarget = computeDropTarget(
-      rootRects,
-      '',
-      pageY - iframeGeometry.top,
+    const resolved = resolveInsertTarget(
+      localBlocks,
+      registry,
+      selectedBlock?.id ?? null,
     );
-    const newBlock: Block & { id: string } = {
-      id: crypto.randomUUID(),
-      type: descriptor.type,
-      props: descriptor.defaultProps,
-      ...(descriptor.isContainer ? { children: [] } : {}),
-    };
-    const target: BlockTreeTarget = {
-      parentId: null,
-      index: dropTarget?.index ?? localBlocks.length,
-    };
-    applyLocalChange(insertBlock(localBlocks, newBlock, target));
-    void insertIntoCanvas(newBlock, target);
+    const target: BlockTreeTarget =
+      resolved.parentId !== null
+        ? resolved
+        : {
+            parentId: null,
+            index:
+              computeDropTarget(rootRects, '', pageY - iframeGeometry.top)
+                ?.index ?? localBlocks.length,
+          };
+    const newBlock = createBlockFromDescriptor(descriptor, registry);
+    const next = insertBlock(localBlocks, newBlock, target);
+    applyLocalChange(next);
+    void insertIntoCanvas(newBlock, target, next);
   }
 
   return (
@@ -676,6 +769,7 @@ export function CanvasEditorShell({
               onDelete={handleRemoveSelected}
               onInsertBefore={(descriptor) => handleInsertAtRoot(descriptor, 0)}
               onInsertAfter={(descriptor) => handleInsertAtRoot(descriptor, 1)}
+              onAddChild={handleAddChild}
             />
           )}
           {sidebarDrag && (

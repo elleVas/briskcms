@@ -1,5 +1,7 @@
 import type { Block } from '@brisk/shared-types';
 import type { BlockDescriptor, FieldDescriptor } from '@brisk/block-registry';
+import { Input } from '../../components/ui/input.js';
+import { Textarea } from '../../components/ui/textarea.js';
 
 export interface InspectorPanelProps {
   block: Block;
@@ -13,12 +15,15 @@ interface FieldRowProps {
   onChange: (value: unknown) => void;
 }
 
+const nativeFieldClass =
+  'h-8 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 py-1 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50';
+
 /** Un input per kind — pannello guidato dal field descriptor, sostituisce Puck's Fields<T> sidebar (docs/adr/0007, vedi il piano dell'editor visuale, Giorno 3). */
 function FieldRow({ field, value, onChange }: FieldRowProps) {
   switch (field.kind) {
     case 'text':
       return (
-        <input
+        <Input
           type="text"
           value={typeof value === 'string' ? value : ''}
           placeholder={field.placeholder}
@@ -27,9 +32,10 @@ function FieldRow({ field, value, onChange }: FieldRowProps) {
       );
     case 'textarea':
       return (
-        <textarea
+        <Textarea
           value={typeof value === 'string' ? value : ''}
           placeholder={field.placeholder}
+          rows={4}
           onChange={(event) => onChange(event.target.value)}
         />
       );
@@ -37,6 +43,7 @@ function FieldRow({ field, value, onChange }: FieldRowProps) {
       return (
         <input
           type="number"
+          className={nativeFieldClass}
           value={typeof value === 'number' ? value : ''}
           min={field.min}
           max={field.max}
@@ -48,6 +55,7 @@ function FieldRow({ field, value, onChange }: FieldRowProps) {
       return (
         <input
           type="checkbox"
+          className="size-4 rounded border-input"
           checked={Boolean(value)}
           onChange={(event) => onChange(event.target.checked)}
         />
@@ -56,6 +64,7 @@ function FieldRow({ field, value, onChange }: FieldRowProps) {
     case 'select':
       return (
         <select
+          className={nativeFieldClass}
           value={typeof value === 'string' ? value : ''}
           onChange={(event) => onChange(event.target.value)}
         >
@@ -90,11 +99,13 @@ export function InspectorPanel({
   }
 
   return (
-    <div>
-      <h3>{descriptor.label}</h3>
+    <div className="flex flex-col gap-3">
+      <h3 className="text-sm font-semibold">{descriptor.label}</h3>
       {descriptor.fields.map((field) => (
-        <label key={field.key}>
-          <span>{field.label}</span>
+        <label key={field.key} className="flex flex-col gap-1.5">
+          <span className="text-xs font-medium text-muted-foreground">
+            {field.label}
+          </span>
           <FieldRow
             field={field}
             value={block.props[field.key]}

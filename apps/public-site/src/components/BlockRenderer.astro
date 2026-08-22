@@ -191,6 +191,14 @@ const {
   editable,
 } = Astro.props;
 
+// `Astro.slots.has('default')` non basta per un contenitore appena creato
+// vuoto: canvas-editor-shell.tsx gli assegna `children: []` (array vuoto,
+// non `undefined`) — passarlo comunque come children (anche se `.map`
+// produce un array vuoto) fa risultare lo slot "riempito" per Astro,
+// anche se non renderizza nulla di visibile. Il conteggio reale va preso
+// dal `Block` stesso, non dallo slot.
+const hasChildren = Boolean(block.children?.length);
+
 // Un unico punto di wrapping per l'intero componente (non uno scattered
 // nei ~50 arm sotto) — un blocco è sempre esattamente uno di quegli arm,
 // mai più di uno, quindi avvolgere l'intero output equivale ad avvolgere
@@ -324,7 +332,7 @@ const wrapperProps = editable
 }
 {
   block.type === 'Columns' && (
-    <Columns {...columnsPropsSchema.parse(block.props)}>
+    <Columns {...columnsPropsSchema.parse(block.props)} editable={editable} hasChildren={hasChildren}>
       {block.children?.map((child) => (
         <Astro.self
           block={child}
@@ -341,7 +349,7 @@ const wrapperProps = editable
 }
 {
   block.type === 'Column' && (
-    <Column>
+    <Column editable={editable} hasChildren={hasChildren}>
       {block.children?.map((child) => (
         <Astro.self
           block={child}
@@ -358,7 +366,7 @@ const wrapperProps = editable
 }
 {
   block.type === 'Container' && (
-    <Container {...containerPropsSchema.parse(block.props)}>
+    <Container {...containerPropsSchema.parse(block.props)} editable={editable} hasChildren={hasChildren}>
       {block.children?.map((child) => (
         <Astro.self
           block={child}
@@ -390,7 +398,7 @@ const wrapperProps = editable
 }
 {
   block.type === 'Accordion' && (
-    <Accordion {...accordionPropsSchema.parse(block.props)}>
+    <Accordion {...accordionPropsSchema.parse(block.props)} editable={editable} hasChildren={hasChildren}>
       {block.children?.map((child) => (
         <Astro.self
           block={child}
@@ -412,7 +420,7 @@ const wrapperProps = editable
 }
 {
   block.type === 'Tabs' && (
-    <Tabs {...tabsPropsSchema.parse(block.props)}>
+    <Tabs {...tabsPropsSchema.parse(block.props)} editable={editable} hasChildren={hasChildren}>
       {block.children?.map((child) => (
         <Astro.self
           block={child}
@@ -459,7 +467,7 @@ const wrapperProps = editable
 }
 {
   block.type === 'FeatureGrid' && (
-    <FeatureGrid {...featureGridPropsSchema.parse(block.props)}>
+    <FeatureGrid {...featureGridPropsSchema.parse(block.props)} editable={editable} hasChildren={hasChildren}>
       {block.children?.map((child) => (
         <Astro.self
           block={child}
@@ -506,7 +514,7 @@ const wrapperProps = editable
 }
 {
   block.type === 'Testimonials' && (
-    <Testimonials {...testimonialsPropsSchema.parse(block.props)}>
+    <Testimonials {...testimonialsPropsSchema.parse(block.props)} editable={editable} hasChildren={hasChildren}>
       {block.children?.map((child) => (
         <Astro.self
           block={child}
@@ -528,7 +536,7 @@ const wrapperProps = editable
 }
 {
   block.type === 'Team' && (
-    <Team {...teamPropsSchema.parse(block.props)}>
+    <Team {...teamPropsSchema.parse(block.props)} editable={editable} hasChildren={hasChildren}>
       {block.children?.map((child) => (
         <Astro.self
           block={child}
@@ -550,7 +558,7 @@ const wrapperProps = editable
 }
 {
   block.type === 'PricingTable' && (
-    <PricingTable {...pricingTablePropsSchema.parse(block.props)}>
+    <PricingTable {...pricingTablePropsSchema.parse(block.props)} editable={editable} hasChildren={hasChildren}>
       {block.children?.map((child) => (
         <Astro.self
           block={child}
@@ -572,7 +580,7 @@ const wrapperProps = editable
 }
 {
   block.type === 'StatsCounter' && (
-    <StatsCounter {...statsCounterPropsSchema.parse(block.props)}>
+    <StatsCounter {...statsCounterPropsSchema.parse(block.props)} editable={editable} hasChildren={hasChildren}>
       {block.children?.map((child) => (
         <Astro.self
           block={child}
@@ -590,7 +598,7 @@ const wrapperProps = editable
 {block.type === 'Stat' && <Stat {...statPropsSchema.parse(block.props)} />}
 {
   block.type === 'Timeline' && (
-    <Timeline {...timelinePropsSchema.parse(block.props)}>
+    <Timeline {...timelinePropsSchema.parse(block.props)} editable={editable} hasChildren={hasChildren}>
       {block.children?.map((child) => (
         <Astro.self
           block={child}

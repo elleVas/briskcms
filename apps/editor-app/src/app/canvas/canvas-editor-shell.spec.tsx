@@ -59,9 +59,33 @@ const textDescriptor: BlockDescriptor = {
   defaultProps: { body: 'Corpo' },
   fields: [{ kind: 'text', key: 'body', label: 'Corpo', inlineEditable: true }],
 };
+const columnsDescriptor: BlockDescriptor = {
+  type: 'Columns',
+  label: 'Colonne',
+  category: 'layout',
+  defaultProps: {},
+  fields: [],
+  isContainer: true,
+  allowedChildTypes: ['Column'],
+};
+const columnDescriptor: BlockDescriptor = {
+  type: 'Column',
+  label: 'Colonna',
+  category: 'layout',
+  defaultProps: {},
+  fields: [],
+};
 
-const registry = [heroDescriptor, textDescriptor];
-const categories = [{ title: 'Contenuto', types: ['Hero', 'Text'] }];
+const registry = [
+  heroDescriptor,
+  textDescriptor,
+  columnsDescriptor,
+  columnDescriptor,
+];
+const categories = [
+  { title: 'Contenuto', types: ['Hero', 'Text'] },
+  { title: 'Layout', types: ['Columns', 'Column'] },
+];
 
 function renderShell(
   overrides: {
@@ -254,6 +278,64 @@ describe('CanvasEditorShell', () => {
     );
   });
 
+  it('removing a NESTED block re-patches its parent instead of a plain editor:remove-block, so the parent chrome (e.g. an empty-state hint) updates too', async () => {
+    vi.mocked(blockFragmentApi.renderBlockFragment).mockResolvedValue(
+      '<div data-brisk-block-id="columns-1" data-brisk-block-type="Columns">colonne di nuovo vuote</div>',
+    );
+    const { onChange } = renderShell({
+      blocks: [
+        {
+          id: 'columns-1',
+          type: 'Columns',
+          props: {},
+          children: [{ id: 'column-1', type: 'Column', props: {} }],
+        },
+      ],
+    });
+    const iframe = await getIframe();
+    const postMessageSpy = vi.spyOn(
+      iframe.contentWindow as Window,
+      'postMessage',
+    );
+
+    selectBlockWithRect(iframe, 'column-1', {
+      top: 0,
+      left: 0,
+      width: 400,
+      height: 40,
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Rimuovi blocco' }));
+
+    expect(onChange).toHaveBeenCalledWith([
+      expect.objectContaining({ id: 'columns-1', children: [] }),
+    ]);
+    await waitFor(() =>
+      expect(blockFragmentApi.renderBlockFragment).toHaveBeenCalledWith(
+        expect.objectContaining({
+          blockId: 'columns-1',
+          blockType: 'Columns',
+          children: [],
+        }),
+      ),
+    );
+    await waitFor(() =>
+      expect(postMessageSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: 'editor:patch-block',
+          payload: expect.objectContaining({
+            blockId: 'columns-1',
+            html: '<div data-brisk-block-id="columns-1" data-brisk-block-type="Columns">colonne di nuovo vuote</div>',
+          }),
+        }),
+        'http://localhost:4321',
+      ),
+    );
+    expect(postMessageSpy).not.toHaveBeenCalledWith(
+      expect.objectContaining({ type: 'editor:remove-block' }),
+      'http://localhost:4321',
+    );
+  });
+
   it('inserting a block from the picker appends it at the root', async () => {
     const { onChange } = renderShell({ blocks: [] });
     await getIframe();
@@ -413,6 +495,163 @@ describe('CanvasEditorShell', () => {
         'http://localhost:4321',
       ),
     );
+  });
+
+  it('dragging a block from the picker while a container is selected nests it as a child, instead of landing at root', async () => {
+    vi.mocked(blockFragmentApi.renderBlockFragment).mockResolvedValue(
+      '<div data-brisk-block-id="columns-1" data-brisk-block-type="Columns">colonne aggiornate</div>',
+    );
+    const { onChange } = renderShell({
+      blocks: [{ id: 'columns-1', type: 'Columns', props: {}, children: [] }],
+    });
+    const iframe = await getIframe();
+    const postMessageSpy = vi.spyOn(
+      iframe.contentWindow as Window,
+      'postMessage',
+    );
+
+    selectBlockWithRect(iframe, 'columns-1', {
+      top: 0,
+      left: 0,
+      width: 800,
+      height: 40,
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Layout' }));
+    const colonnaButton = screen.getByRole('button', { name: 'Colonna' });
+    fireEvent.pointerDown(colonnaButton, {
+      pointerId: 1,
+      clientX: 0,
+      clientY: 0,
+    });
+    // Stesso punto (0,0) del test di inserimento a radice sopra — "dentro
+    // al canvas" per costruzione in questo ambiente di test. Il punto qui
+    // non conta per la posizione (un contenitore selezionato annida sempre
+    // in coda ai suoi figli, stessa regola di resolveInsertTarget per il
+    // click), solo per superare la soglia di 4px che avvia il drag.
+    fireEvent.pointerMove(colonnaButton, {
+      pointerId: 1,
+      clientX: 0,
+      clientY: 5,
+    });
+    fireEvent.pointerUp(colonnaButton, {
+      pointerId: 1,
+      clientX: 0,
+      clientY: 5,
+    });
+
+    await waitFor(() =>
+      expect(onChange).toHaveBeenCalledWith([
+        expect.objectContaining({
+          id: 'columns-1',
+          type: 'Columns',
+          children: [expect.objectContaining({ type: 'Column' })],
+        }),
+      ]),
+    );
+    // Non "editor:insert-block" per il nuovo figlio da solo: il GENITORE
+    // (Columns) va rigenerato e ripatchato per intero via "editor:patch-block"
+    // — l'euristica di risoluzione del contenitore in preview-bridge-client.ts
+    // assumerebbe altrimenti che <slot/> sia l'unico contenuto della radice
+    // del blocco-contenitore, falsa per blocchi come Testimonials (pulsanti
+    // di navigazione + segnaposto attorno allo slot).
+    await waitFor(() =>
+      expect(blockFragmentApi.renderBlockFragment).toHaveBeenCalledWith(
+        expect.objectContaining({
+          blockId: 'columns-1',
+          blockType: 'Columns',
+          children: [expect.objectContaining({ type: 'Column' })],
+        }),
+      ),
+    );
+    await waitFor(() =>
+      expect(postMessageSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: 'editor:patch-block',
+          payload: expect.objectContaining({
+            blockId: 'columns-1',
+            html: '<div data-brisk-block-id="columns-1" data-brisk-block-type="Columns">colonne aggiornate</div>',
+          }),
+        }),
+        'http://localhost:4321',
+      ),
+    );
+  });
+
+  it('the "Aggiungi elemento" button on a selected collection container adds one more child of its canonical type, no picker needed', async () => {
+    vi.mocked(blockFragmentApi.renderBlockFragment).mockResolvedValue(
+      '<div data-brisk-block-id="columns-1" data-brisk-block-type="Columns">colonne con due colonne</div>',
+    );
+    const { onChange } = renderShell({
+      blocks: [
+        {
+          id: 'columns-1',
+          type: 'Columns',
+          props: {},
+          children: [{ id: 'column-1', type: 'Column', props: {} }],
+        },
+      ],
+    });
+    const iframe = await getIframe();
+    const postMessageSpy = vi.spyOn(
+      iframe.contentWindow as Window,
+      'postMessage',
+    );
+
+    selectBlockWithRect(iframe, 'columns-1', {
+      top: 0,
+      left: 0,
+      width: 800,
+      height: 80,
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Aggiungi elemento' }));
+
+    await waitFor(() =>
+      expect(onChange).toHaveBeenCalledWith([
+        expect.objectContaining({
+          id: 'columns-1',
+          children: [
+            expect.objectContaining({ id: 'column-1', type: 'Column' }),
+            expect.objectContaining({ type: 'Column' }),
+          ],
+        }),
+      ]),
+    );
+    await waitFor(() =>
+      expect(blockFragmentApi.renderBlockFragment).toHaveBeenCalledWith(
+        expect.objectContaining({
+          blockId: 'columns-1',
+          blockType: 'Columns',
+          children: expect.arrayContaining([
+            expect.objectContaining({ id: 'column-1' }),
+            expect.objectContaining({ type: 'Column' }),
+          ]),
+        }),
+      ),
+    );
+    await waitFor(() =>
+      expect(postMessageSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: 'editor:patch-block',
+          payload: expect.objectContaining({ blockId: 'columns-1' }),
+        }),
+        'http://localhost:4321',
+      ),
+    );
+  });
+
+  it('the "Aggiungi elemento" button is absent for a block that is not a container, and for a generic container with no single canonical child type', async () => {
+    renderShell({
+      blocks: [{ id: 'hero-1', type: 'Hero', props: { title: 'Titolo' } }],
+    });
+    const iframe = await getIframe();
+
+    selectBlockWithRect(iframe, 'hero-1', HERO_RECT);
+
+    expect(
+      screen.queryByRole('button', { name: 'Aggiungi elemento' }),
+    ).toBeNull();
   });
 
   it('dragging a block from the picker but releasing outside the canvas cancels the insert', async () => {

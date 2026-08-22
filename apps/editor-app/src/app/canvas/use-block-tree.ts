@@ -1,4 +1,5 @@
-import type { Block } from '@brisk/shared-types';
+import { columnsGridTemplate, type Block } from '@brisk/shared-types';
+import type { BlockDescriptor } from '@brisk/block-registry';
 
 export interface BlockTreeTarget {
   /** `null` = alla radice dell'albero (pagina o header/footer). */
@@ -165,4 +166,63 @@ export function cloneBlockWithNewIds(block: Block): Block & { id: string } {
       ? { children: block.children.map(cloneBlockWithNewIds) }
       : {}),
   };
+}
+
+/**
+ * Costruisce un blocco nuovo dal suo descrittore — "seminato" con figli
+ * quando ha senso mostrare subito un esempio reale invece di un
+ * contenitore vuoto (feedback utente: un contenitore-collezione vuoto
+ * senza nulla dentro è confuso, non invita a costruirci sopra). Regola:
+ * - Colonne nasce già con le colonne del proprio layout di default
+ *   (`columnsGridTemplate`, stessa fonte di verità del CSS grid reale).
+ * - Un contenitore con esattamente UN tipo in `allowedChildTypes`
+ *   (Testimonianze→Testimonianza, Team→Membro, Accordion→Domanda, ...)
+ *   nasce con UN figlio di quel tipo — è l'unico tipo sensato, nessuna
+ *   ambiguità da chiedere all'utente.
+ * - Un contenitore generico (Container/Colonna, nessun `allowedChildTypes`
+ *   — pensato per contenere qualunque cosa) resta vuoto: non c'è un
+ *   "figlio canonico" da indovinare, mostrerebbe solo un esempio arbitrario.
+ */
+export function createBlockFromDescriptor(
+  descriptor: BlockDescriptor,
+  registry: BlockDescriptor[],
+): Block & { id: string } {
+  const block: Block & { id: string } = {
+    id: crypto.randomUUID(),
+    type: descriptor.type,
+    props: descriptor.defaultProps,
+  };
+  if (!descriptor.isContainer) {
+    return block;
+  }
+  if (descriptor.type === 'Columns') {
+    const layout =
+      (
+        descriptor.defaultProps as {
+          layout?: Parameters<typeof columnsGridTemplate>[0];
+        }
+      ).layout ?? 'two-equal';
+    const columnCount = columnsGridTemplate(layout).split(' ').length;
+    const columnDescriptor = registry.find((d) => d.type === 'Column');
+    return {
+      ...block,
+      children: columnDescriptor
+        ? Array.from({ length: columnCount }, () =>
+            createBlockFromDescriptor(columnDescriptor, registry),
+          )
+        : [],
+    };
+  }
+  if (descriptor.allowedChildTypes?.length === 1) {
+    const childDescriptor = registry.find(
+      (d) => d.type === descriptor.allowedChildTypes?.[0],
+    );
+    return {
+      ...block,
+      children: childDescriptor
+        ? [createBlockFromDescriptor(childDescriptor, registry)]
+        : [],
+    };
+  }
+  return { ...block, children: [] };
 }

@@ -1,6 +1,15 @@
 ---
+import EmptyContainerHint from '../EmptyContainerHint.astro';
+
+export interface Props {
+  editable?: boolean;
+  hasChildren?: boolean;
+}
+
+const { editable, hasChildren } = Astro.props;
 ---
 
 <div class="brisk-accordion">
   <slot />
+  <EmptyContainerHint show={!hasChildren && Boolean(editable)} />
 </div>

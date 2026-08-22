@@ -38,6 +38,8 @@ export interface BlockToolbarOverlayProps {
   onDelete: () => void;
   onInsertBefore: (descriptor: BlockDescriptor) => void;
   onInsertAfter: (descriptor: BlockDescriptor) => void;
+  /** Presente solo per un contenitore "a collezione" (un solo tipo in `allowedChildTypes`, es. Testimonianze→Testimonianza) — aggiunge un altro figlio di quel tipo direttamente, nessun picker: l'unico tipo sensato è già noto. */
+  onAddChild?: () => void;
 }
 
 /**
@@ -92,6 +94,25 @@ function toInsertPointStyle(
   };
 }
 
+/**
+ * A differenza di `toInsertPointStyle` (che STRADDLES il bordo del blocco,
+ * per un fratello a livello di pagina — e per un blocco di primo livello
+ * compare proprio sul bordo INFERIORE), questo resta DENTRO al rettangolo
+ * del contenitore stesso, nell'angolo in alto a destra: visivamente
+ * "aggiungi qui dentro", non "inserisci un fratello altrove". Centrato sul
+ * bordo destro (invece che nell'angolo) finiva quasi sempre sovrapposto ai
+ * pulsanti di navigazione di Testimonianze (anch'essi centrati
+ * verticalmente lì); sul bordo inferiore finiva invece sovrapposto al "+"
+ * radice di un blocco di primo livello — entrambi osservati dal vivo.
+ */
+function toAddChildStyle(geometry: IframeGeometry, rect: BlockRect) {
+  return {
+    position: 'fixed' as const,
+    top: geometry.top + rect.top + 4,
+    left: geometry.left + rect.left + rect.width - 32,
+  };
+}
+
 const iconButtonClass =
   'flex h-7 w-7 items-center justify-center rounded border bg-background text-muted-foreground shadow-sm hover:bg-muted hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40';
 
@@ -120,6 +141,7 @@ export function BlockToolbarOverlay({
   onDelete,
   onInsertBefore,
   onInsertAfter,
+  onAddChild,
 }: BlockToolbarOverlayProps) {
   const { t } = useTranslation();
   const geometry = useIframeGeometry(iframeRef);
@@ -128,6 +150,8 @@ export function BlockToolbarOverlay({
   const colorField = descriptor.fields.find(
     (field) => field.kind === 'custom' && field.component === ColorPickerField,
   );
+  const canAddChild =
+    descriptor.isContainer && descriptor.allowedChildTypes?.length === 1;
 
   return (
     <div className="pointer-events-none absolute inset-0 overflow-visible">
@@ -219,7 +243,10 @@ export function BlockToolbarOverlay({
                 <Pencil size={16} />
               </button>
             </PopoverTrigger>
-            <PopoverContent side="right" className="w-80">
+            <PopoverContent
+              side="right"
+              className="w-104 max-h-[min(32rem,80vh)] overflow-y-auto"
+            >
               <InspectorPanel
                 block={block}
                 descriptor={descriptor}
@@ -274,6 +301,18 @@ export function BlockToolbarOverlay({
             />
           </PopoverContent>
         </Popover>
+      )}
+
+      {canAddChild && onAddChild && (
+        <button
+          type="button"
+          className="pointer-events-auto flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-sm hover:opacity-90"
+          style={toAddChildStyle(geometry, rect)}
+          onClick={onAddChild}
+          aria-label={t('canvas.addChild')}
+        >
+          <Plus size={14} />
+        </button>
       )}
     </div>
   );

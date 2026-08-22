@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import type { Block } from '@brisk/shared-types';
+import type { BlockDescriptor } from '@brisk/block-registry';
 import {
   cloneBlockWithNewIds,
+  createBlockFromDescriptor,
   findBlockInTree,
   insertBlock,
   locateBlock,
@@ -217,5 +219,136 @@ describe('cloneBlockWithNewIds', () => {
     const second = cloneBlockWithNewIds(hero);
 
     expect(first.id).not.toBe(second.id);
+  });
+});
+
+describe('createBlockFromDescriptor', () => {
+  const heroDescriptor: BlockDescriptor = {
+    type: 'Hero',
+    label: 'Hero',
+    category: 'content',
+    defaultProps: { title: 'Titolo' },
+    fields: [],
+  };
+  const containerDescriptor: BlockDescriptor = {
+    type: 'Container',
+    label: 'Contenitore',
+    category: 'layout',
+    defaultProps: {},
+    fields: [],
+    isContainer: true,
+  };
+  const columnDescriptor: BlockDescriptor = {
+    type: 'Column',
+    label: 'Colonna',
+    category: 'layout',
+    defaultProps: {},
+    fields: [],
+    isContainer: true,
+  };
+  const columnsDescriptor: BlockDescriptor = {
+    type: 'Columns',
+    label: 'Colonne',
+    category: 'layout',
+    defaultProps: { layout: 'two-equal' },
+    fields: [],
+    isContainer: true,
+    allowedChildTypes: ['Column'],
+  };
+  const testimonialDescriptor: BlockDescriptor = {
+    type: 'Testimonial',
+    label: 'Testimonianza',
+    category: 'socialProof',
+    defaultProps: { quote: 'Testo della recensione...' },
+    fields: [],
+  };
+  const testimonialsDescriptor: BlockDescriptor = {
+    type: 'Testimonials',
+    label: 'Testimonianze/recensioni',
+    category: 'socialProof',
+    defaultProps: {},
+    fields: [],
+    isContainer: true,
+    allowedChildTypes: ['Testimonial'],
+  };
+  const registry = [
+    heroDescriptor,
+    containerDescriptor,
+    columnDescriptor,
+    columnsDescriptor,
+    testimonialDescriptor,
+    testimonialsDescriptor,
+  ];
+
+  it('gives a non-container block its default props and a fresh id, no children key', () => {
+    const block = createBlockFromDescriptor(heroDescriptor, registry);
+
+    expect(block.type).toBe('Hero');
+    expect(block.props).toEqual({ title: 'Titolo' });
+    expect(block.id).toBeTruthy();
+    expect(block.children).toBeUndefined();
+  });
+
+  it('leaves a generic container (no allowedChildTypes) empty — there is no single canonical child to seed', () => {
+    const block = createBlockFromDescriptor(containerDescriptor, registry);
+
+    expect(block.children).toEqual([]);
+  });
+
+  it('seeds a "collection" container (exactly one allowedChildTypes entry) with one child of that type, using the child descriptor\'s own default props', () => {
+    const block = createBlockFromDescriptor(testimonialsDescriptor, registry);
+
+    expect(block.children).toHaveLength(1);
+    expect(block.children?.[0]).toMatchObject({
+      type: 'Testimonial',
+      props: { quote: 'Testo della recensione...' },
+    });
+    expect(block.children?.[0].id).toBeTruthy();
+  });
+
+  it('seeds Columns with one Column per track of its default layout (two-equal → 2)', () => {
+    const block = createBlockFromDescriptor(columnsDescriptor, registry);
+
+    expect(block.children).toHaveLength(2);
+    expect(block.children?.every((child) => child.type === 'Column')).toBe(
+      true,
+    );
+  });
+
+  it('seeds Columns with 3 columns for the three-equal layout', () => {
+    const threeColumnsDescriptor: BlockDescriptor = {
+      ...columnsDescriptor,
+      defaultProps: { layout: 'three-equal' },
+    };
+
+    const block = createBlockFromDescriptor(threeColumnsDescriptor, registry);
+
+    expect(block.children).toHaveLength(3);
+  });
+
+  it('gives each seeded Column a distinct id, and leaves it empty (a Column has no canonical child of its own)', () => {
+    const block = createBlockFromDescriptor(columnsDescriptor, registry);
+    const [first, second] = block.children ?? [];
+
+    expect(first?.id).not.toBe(second?.id);
+    expect(first?.children).toEqual([]);
+  });
+
+  it('leaves the container empty (instead of throwing) if its declared child type is missing from the registry', () => {
+    const orphanDescriptor: BlockDescriptor = {
+      type: 'Orphan',
+      label: 'Orfano',
+      category: 'content',
+      defaultProps: {},
+      fields: [],
+      isContainer: true,
+      allowedChildTypes: ['Ghost'],
+    };
+
+    const block = createBlockFromDescriptor(orphanDescriptor, [
+      orphanDescriptor,
+    ]);
+
+    expect(block.children).toEqual([]);
   });
 });

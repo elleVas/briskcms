@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import {
   useMutation,
   useQueryClient,
@@ -55,11 +55,54 @@ export function usePageEditor(pageId: string) {
       setStatus({ kind: 'error', message: String(error) }),
   });
 
+  // Coda single-flight: mai più di un PATCH /draft in volo alla volta.
+  // Senza questa coda, due `handleChange` ravvicinati (es. un salvataggio
+  // debounced di una proprietà e un inserimento immediato) partono come due
+  // richieste HTTP indipendenti — e se quella PIÙ VECCHIA completa DOPO
+  // quella più nuova (normale jitter di rete, non serve un errore), il
+  // server sovrascrive silenziosamente lo stato corretto con uno superato:
+  // "vince l'ultima risposta arrivata", non "l'ultima modifica fatta".
+  // Riprodotto dal vivo: Hero+Image in editor, solo Hero dopo il reload.
+  // Qui invece ogni chiamata aggiorna solo l'ULTIMO stato noto da inviare;
+  // se un salvataggio è già in corso, quello nuovo aspetta che finisca —
+  // le richieste partono sempre in ordine stretto, mai in parallelo, quindi
+  // non possono più completarsi fuori ordine.
+  const isSavingRef = useRef(false);
+  const pendingContentRef = useRef<Block[] | null>(null);
+
+  const flushPendingSave = useCallback(async () => {
+    if (isSavingRef.current) {
+      return;
+    }
+    isSavingRef.current = true;
+    try {
+      // Loop invece di richiamarsi ricorsivamente: se un nuovo `handleChange`
+      // arriva MENTRE questo `await` è in corso, lo riprende subito dopo
+      // nello stesso giro, invece di uscire e rientrare nella funzione (il
+      // React Compiler non riesce a preservare la memoizzazione di uno
+      // `useCallback` che richiama se stesso).
+      while (pendingContentRef.current !== null) {
+        const next = pendingContentRef.current;
+        pendingContentRef.current = null;
+        try {
+          await saveDraftMutation.mutateAsync(next);
+        } catch {
+          // Lo stato di errore è già impostato da `onError` sopra — qui
+          // basta non bloccare la coda: un cambio successivo deve poter
+          // ritentare.
+        }
+      }
+    } finally {
+      isSavingRef.current = false;
+    }
+  }, [saveDraftMutation]);
+
   const handleChange = useCallback(
     (content: Block[]) => {
-      saveDraftMutation.mutate(content);
+      pendingContentRef.current = content;
+      void flushPendingSave();
     },
-    [saveDraftMutation],
+    [flushPendingSave],
   );
 
   const handlePublish = useCallback(
