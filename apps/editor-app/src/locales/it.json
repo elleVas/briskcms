@@ -82,7 +82,8 @@
       "actions": {
         "edit": "Apri editor",
         "publish": "Pubblica",
-        "delete": "Elimina"
+        "delete": "Elimina",
+        "duplicate": "Duplica pagina"
       }
     },
     "newPageDialog": {
@@ -94,6 +95,16 @@
       "create": "Crea",
       "creating": "Creazione in corso...",
       "slugTaken": "Esiste già una pagina con questo nome in questo sito."
+    },
+    "duplicateDialog": {
+      "title": "Duplica pagina",
+      "titleLabel": "Titolo",
+      "slugLabel": "URL",
+      "descriptionLabel": "Descrizione SEO",
+      "cancel": "Annulla",
+      "confirm": "Crea copia",
+      "duplicating": "Duplicazione in corso...",
+      "slugTaken": "Esiste già una pagina con questo URL in questo sito."
     },
     "deleteDialog": {
       "title": "Eliminare questa pagina?",
@@ -227,6 +238,23 @@
     "save": "Salva",
     "saving": "Salvataggio in corso...",
     "saved": "Salvato"
+  },
+  "globalStyles": {
+    "open": "Stile globale",
+    "title": "Stile globale",
+    "loading": "Caricamento...",
+    "categories": {
+      "colors": "Colori",
+      "buttons": "Bottoni"
+    },
+    "buttonRadiusLabel": "Raggio angoli",
+    "buttonRadiusPlaceholder": "es. 6px, 9999px per un pill",
+    "buttonPaddingXLabel": "Padding orizzontale",
+    "buttonPaddingYLabel": "Padding verticale",
+    "paddingPlaceholder": "es. 1.25rem — vuoto per il default del tema",
+    "save": "Salva",
+    "saving": "Salvataggio in corso...",
+    "close": "Chiudi"
   },
   "localeSettings": {
     "menuLabel": "Lingue",
@@ -381,9 +409,23 @@
     "previewFrameTitle": "Anteprima pagina",
     "previewTokenError": "Impossibile caricare l'anteprima. Riprova.",
     "layersTitle": "Livelli",
-    "inspectorEmpty": "Seleziona un blocco sul canvas per modificarne le proprietà.",
     "insertBlock": "Inserisci blocco",
+    "collapseSidebar": "Comprimi barra laterale",
+    "expandSidebar": "Espandi barra laterale",
+    "collapseLayersPanel": "Comprimi pannello Livelli",
+    "expandLayersPanel": "Espandi pannello Livelli",
     "removeBlock": "Rimuovi blocco",
-    "publish": "Pubblica"
+    "addChild": "Aggiungi elemento",
+    "publish": "Pubblica",
+    "preview": "Anteprima",
+    "moveUp": "Sposta su",
+    "moveDown": "Sposta giù",
+    "editProperties": "Modifica proprietà",
+    "duplicateBlock": "Duplica blocco",
+    "breakpointGroup": "Larghezza anteprima",
+    "breakpointDesktop": "Desktop",
+    "breakpointTablet": "Tablet",
+    "breakpointMobile": "Mobile",
+    "switchPage": "Cambia pagina"
   }
 }

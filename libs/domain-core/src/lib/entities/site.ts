@@ -1,7 +1,9 @@
-import type {
-  OpeningHoursDay,
-  ThemeSettings,
-  UntranslatedPageFallback,
+import {
+  DEFAULT_THEME_TOKENS,
+  type OpeningHoursDay,
+  type ThemeSettings,
+  type ThemeTokens,
+  type UntranslatedPageFallback,
 } from '@brisk/shared-types';
 
 export interface SiteProps {
@@ -25,6 +27,8 @@ export interface SiteProps {
   themeBodyScript: string | null;
   themeFaviconUrl: string | null;
   themeOverridesEnabled: boolean;
+  /** Fase 2a del piano editor visuale, parte 2 (Global Styles Editor) — categorie oltre ai colori (Bottoni oggi, altre in futuro). `null` = nessuna categoria personalizzata ancora. */
+  themeTokens: ThemeTokens | null;
   createdAt: Date;
 }
 
@@ -188,5 +192,19 @@ export class Site {
     this.props.themeBodyScript = input.bodyScript;
     this.props.themeFaviconUrl = input.faviconUrl;
     this.props.themeOverridesEnabled = input.overridesEnabled;
+  }
+
+  get themeTokens(): ThemeTokens {
+    return this.props.themeTokens ?? DEFAULT_THEME_TOKENS;
+  }
+
+  /**
+   * Ogni categoria presente in `input` sostituisce per intero quella
+   * categoria (vedi `updateThemeTokensBodySchema`) — non un merge
+   * campo-per-campo, e le categorie assenti dal body restano quelle già
+   * salvate (o il default, se non erano mai state personalizzate).
+   */
+  updateThemeTokens(input: Partial<ThemeTokens>): void {
+    this.props.themeTokens = { ...this.themeTokens, ...input };
   }
 }

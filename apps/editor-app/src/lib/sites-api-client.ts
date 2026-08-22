@@ -2,6 +2,7 @@ import type {
   LocaleSettings,
   OpeningHoursDay,
   ThemeSettings,
+  ThemeTokens,
 } from '@brisk/shared-types';
 import { request } from './http-client.js';
 
@@ -26,6 +27,7 @@ export interface SiteDto {
   themeBodyScript: string | null;
   themeFaviconUrl: string | null;
   themeOverridesEnabled: boolean;
+  themeTokens: ThemeTokens | null;
   createdAt: string;
 }
 
@@ -94,6 +96,16 @@ export function updateThemeSettings(
   input: ThemeSettings,
 ): Promise<SiteDto> {
   return request(`/sites/${id}/theme-settings`, {
+    method: 'PATCH',
+    body: JSON.stringify(input),
+  });
+}
+
+export function updateThemeTokens(
+  id: string,
+  input: Partial<ThemeTokens>,
+): Promise<SiteDto> {
+  return request(`/sites/${id}/theme-tokens`, {
     method: 'PATCH',
     body: JSON.stringify(input),
   });

@@ -3,6 +3,7 @@ import { accordionBlock } from './blocks/accordion.block.js';
 import { accordionItemBlock } from './blocks/accordion-item.block.js';
 import { bannerBlock } from './blocks/banner.block.js';
 import { beforeAfterBlock } from './blocks/before-after.block.js';
+import { breadcrumbBlock } from './blocks/breadcrumb.block.js';
 import { buttonBlock } from './blocks/button.block.js';
 import { columnBlock } from './blocks/column.block.js';
 import { columnsBlock } from './blocks/columns.block.js';
@@ -44,6 +45,7 @@ export {
   accordionItemBlock,
   bannerBlock,
   beforeAfterBlock,
+  breadcrumbBlock,
   buttonBlock,
   columnBlock,
   columnsBlock,
@@ -82,10 +84,12 @@ export {
 };
 
 /**
- * I 39 blocchi pagina (docs/adr/0007) — "non registrato = non droppabile",
+ * I 40 blocchi pagina (docs/adr/0007) — "non registrato = non droppabile",
  * nessuna deny-list. Solo dati (fields/defaultProps), nessun `render`: il
  * vero componente Astro in apps/public-site è l'unico renderer, mostrato
  * dal vivo nel canvas dentro un iframe (vedi il piano dell'editor visuale).
+ * Breadcrumb è qui (non tra i blocchi Header/Footer di layout-config.ts,
+ * vedi il commento lì) perché è contenuto intrinsecamente per-pagina.
  */
 export const pageBlocks: BlockDescriptor[] = [
   heroBlock,
@@ -93,6 +97,7 @@ export const pageBlocks: BlockDescriptor[] = [
   imageBlock,
   galleryBlock,
   formBlock,
+  breadcrumbBlock,
   columnsBlock,
   columnBlock,
   containerBlock,
@@ -146,6 +151,7 @@ export const pageBlockCategories: { title: string; types: string[] }[] = [
       'Quote',
       'Table',
       'EmbedHtml',
+      'Breadcrumb',
     ],
   },
   {

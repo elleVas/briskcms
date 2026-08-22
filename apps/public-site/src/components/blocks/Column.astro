@@ -1,8 +1,20 @@
 ---
+import EmptyContainerHint from '../EmptyContainerHint.astro';
+
+export interface Props {
+  editable?: boolean;
+  hasChildren?: boolean;
+}
+
+const { editable, hasChildren } = Astro.props;
 ---
 
-<div class="brisk-column">
+<div
+  class="brisk-column"
+  data-brisk-editable-outline={editable && hasChildren ? '' : undefined}
+>
   <slot />
+  <EmptyContainerHint show={!hasChildren && Boolean(editable)} />
 </div>
 
 <style>
@@ -13,5 +25,21 @@
      column actually shrink to its track width. */
   .brisk-column {
     min-width: 0;
+  }
+  /* Solo nell'editor (mai sulla pagina pubblicata, vedi editable), e solo
+     una volta che ha contenuto — da vuota mostra già il proprio bordo
+     tratteggiato via EmptyContainerHint, un secondo qui sarebbe ridondante.
+     Senza questo, una Colonna con dentro del vero contenuto (es. un blocco
+     Testo) perde ogni confine visibile: sembra testo fluttuante sulla
+     pagina, non più dentro a una colonna — feedback utente dal vivo.
+     Un selettore per CLASSE condizionale qui verrebbe scartato dal
+     compilatore Astro come "non usato" (analizza solo stringhe statiche
+     nel markup, non un'espressione ternaria) — un attributo `data-*`
+     condizionale, stesso pattern già usato altrove (es.
+     `data-brisk-root-blocks`), non ha questo problema. */
+  .brisk-column[data-brisk-editable-outline] {
+    outline: 1px dashed var(--border);
+    outline-offset: -4px;
+    padding: 0.5rem;
   }
 </style>

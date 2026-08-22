@@ -2,9 +2,10 @@ import type {
   Block,
   OpeningHoursDay,
   ThemeSettings,
+  ThemeTokens,
   UntranslatedPageFallback,
 } from '@brisk/shared-types';
-import type { Site } from '@brisk/domain-core';
+import type { Site, SiteLayoutSection } from '@brisk/domain-core';
 import type { SiteLayoutSectionRepositoryPort } from '@brisk/ports';
 
 /** Only what the public renderer needs for OG tags + schema.org (docs/adr/0014) and the language switcher (docs/adr/0017) — never the tenant id or anything else internal. */
@@ -21,6 +22,8 @@ export interface PublishedSite {
   searchEngineIndexingEnabled: boolean;
   /** Tier 1 of docs/adr/0021's theming model — layered by PageLayout.astro on top of the active filesystem theme (Tier 2). */
   themeSettings: ThemeSettings;
+  /** Global Styles Editor (Fase 2a) — categorie di stile oltre ai colori (Bottoni oggi). */
+  themeTokens: ThemeTokens;
 }
 
 export interface PublishedSiteChrome {
@@ -32,6 +35,43 @@ export interface PublishedSiteChrome {
 
 export interface ResolveSiteChromeDeps {
   siteLayoutSectionRepository: SiteLayoutSectionRepositoryPort;
+}
+
+/**
+ * Una sezione (header/footer) esiste per (sito, locale, kind) — se una
+ * locale non ne ha mai avuta una propria (creata solo per la locale di
+ * default, es. durante il setup iniziale del sito), senza questo fallback
+ * `findBySiteLocaleKind` tornava `null` e la pagina usciva senza header né
+ * footer, in ogni locale diversa da quella di default — bug segnalato dal
+ * vivo (2026-08-22): una pagina pubblicata in inglese su un sito impostato
+ * in italiano perdeva sia la nav che il footer. Stessa idea di
+ * `untranslatedPageFallback` per le pagine (mostra il contenuto della
+ * locale di default piuttosto che niente), applicata qui a header/footer.
+ * Una sezione mai creata per NESSUNA locale resta `null` anche dopo il
+ * fallback — non c'è nulla da mostrare in quel caso.
+ */
+async function findSectionWithLocaleFallback(
+  repository: SiteLayoutSectionRepositoryPort,
+  tenantId: string,
+  site: Site,
+  locale: string,
+  kind: 'header' | 'footer',
+): Promise<SiteLayoutSection | null> {
+  const section = await repository.findBySiteLocaleKind(
+    tenantId,
+    site.id,
+    locale,
+    kind,
+  );
+  if (section || locale === site.defaultLocale) {
+    return section;
+  }
+  return repository.findBySiteLocaleKind(
+    tenantId,
+    site.id,
+    site.defaultLocale,
+    kind,
+  );
 }
 
 /**
@@ -56,15 +96,17 @@ export async function resolveSiteChrome(
 ): Promise<PublishedSiteChrome> {
   const preview = options.preview ?? false;
   const [headerSection, footerSection] = await Promise.all([
-    deps.siteLayoutSectionRepository.findBySiteLocaleKind(
+    findSectionWithLocaleFallback(
+      deps.siteLayoutSectionRepository,
       tenantId,
-      site.id,
+      site,
       locale,
       'header',
     ),
-    deps.siteLayoutSectionRepository.findBySiteLocaleKind(
+    findSectionWithLocaleFallback(
+      deps.siteLayoutSectionRepository,
       tenantId,
-      site.id,
+      site,
       locale,
       'footer',
     ),
@@ -101,6 +143,7 @@ export async function resolveSiteChrome(
       openingHours: site.openingHours,
       searchEngineIndexingEnabled: site.searchEngineIndexingEnabled,
       themeSettings: site.themeSettings,
+      themeTokens: site.themeTokens,
     },
   };
 }

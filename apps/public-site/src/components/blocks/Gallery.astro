@@ -8,9 +8,13 @@ const { images } = Astro.props;
 
 <div class="gallery">
   {
-    images.map(
-      (image) =>
-        image.media && <img src={image.media.url} alt={image.alt} />,
+    images.some((image) => image.media) ? (
+      images.map(
+        (image) =>
+          image.media && <img src={image.media.url} alt={image.alt} />,
+      )
+    ) : (
+      <p>Nessuna immagine nella galleria.</p>
     )
   }
 </div>

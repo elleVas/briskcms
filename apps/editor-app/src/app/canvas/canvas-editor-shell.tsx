@@ -1,30 +1,57 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
+import {
+  Palette,
+  PanelLeftClose,
+  PanelLeftOpen,
+  PanelRightClose,
+  PanelRightOpen,
+} from 'lucide-react';
 import type { Block } from '@brisk/shared-types';
 import type { BlockDescriptor } from '@brisk/block-registry';
+import { Button } from '../../components/ui/button.js';
+import { renderBlockFragment } from '../../lib/block-fragment-api-client.js';
 import { createPagePreviewToken } from '../../lib/preview-token-api-client.js';
 import { PUBLIC_SITE_URL } from '../../lib/public-site-url.js';
+import { GlobalStylesDialog } from '../global-styles-dialog.js';
+import { IconButton } from '../icon-button.js';
 import { LogoutButton } from '../logout-button.js';
 import { BlockPicker, type BlockPickerCategory } from './block-picker.js';
-import { CanvasFrame, type EditingSection } from './canvas-frame.js';
+import { BlockToolbarOverlay } from './block-toolbar-overlay.js';
+import { BreakpointSelector, type Breakpoint } from './breakpoint-selector.js';
+import {
+  buildPreviewUrl,
+  CanvasFrame,
+  type EditingSection,
+} from './canvas-frame.js';
 import {
   computeDropTarget,
+  findContainerAtPoint,
   type DropCandidateRect,
 } from './compute-drop-target.js';
-import { InspectorPanel } from './inspector-panel.js';
 import { LayersPanel } from './layers-panel.js';
+import { isRectVisibleInIframe, useIframeGeometry } from './overlay-layer.js';
 import {
+  cloneBlockWithNewIds,
+  createBlockFromDescriptor,
   findBlockInTree,
   insertBlock,
+  locateBlock,
   moveBlock,
   removeBlock,
+  siblingsAt,
   updateBlockProps,
+  type BlockTreeTarget,
 } from './use-block-tree.js';
 import { usePreviewBridge } from './use-preview-bridge.js';
 import { usePropertyPatch } from './use-property-patch.js';
 
 export interface CanvasEditorShellProps {
   backLink: ReactNode;
+  /** Dropdown per passare ad un'altra pagina senza uscire dall'editor (barra in alto, vicino a `backLink`) — solo l'editor di pagina lo passa, l'editor Header/Footer no (non ha un concetto di "altre pagine tra cui scegliere"). */
+  pageSwitcher?: ReactNode;
+  /** Se presente, mostra l'icona "Stile globale" nella barra in alto (Fase 2a del piano editor visuale, parte 2) — entrambi gli editor (pagina, Header/Footer) hanno un site a cui applicare lo stile. */
+  siteId?: string;
   statusText: string;
   actions?: ReactNode;
   registry: BlockDescriptor[];
@@ -87,6 +114,8 @@ function isInlineEditableField(
  */
 export function CanvasEditorShell({
   backLink,
+  pageSwitcher,
+  siteId,
   statusText,
   actions,
   registry,
@@ -102,6 +131,31 @@ export function CanvasEditorShell({
   const { t } = useTranslation();
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const bridge = usePreviewBridge(iframeRef, PUBLIC_SITE_URL);
+  const iframeGeometry = useIframeGeometry(iframeRef);
+  const [breakpoint, setBreakpoint] = useState<Breakpoint>('desktop');
+  const [isGlobalStylesOpen, setIsGlobalStylesOpen] = useState(false);
+  /**
+   * Richiesto dal vivo: su pagine lunghe/con molti blocchi, poter chiudere
+   * ciascuna barra laterale per dare più spazio al canvas — due stati
+   * indipendenti (sinistra: Inserisci blocco; destra: Livelli), nessuno
+   * persistito, riparte sempre tutto aperto a un nuovo mount (stesso
+   * comportamento di breakpoint/isGlobalStylesOpen sopra).
+   */
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [isLayersPanelCollapsed, setIsLayersPanelCollapsed] = useState(false);
+  // Drag di un blocco NUOVO dalla sidebar (BlockPicker) verso il canvas —
+  // a differenza di `bridge.activeDrag` (riordino di un blocco già
+  // esistente, tracciato dall'iframe) qui il drag nasce nel genitore
+  // stesso, quindi lo stato vive qui e non nel bridge. `pointer` è
+  // page-relative (coordinate native del puntatore nel documento del
+  // genitore), va convertito in coordinate iframe-relative prima di
+  // riusare compute-drop-target.ts (che si aspetta la stessa unità di
+  // bridge.blockRects).
+  const [sidebarDrag, setSidebarDrag] = useState<{
+    descriptor: BlockDescriptor;
+    pointerX: number;
+    pointerY: number;
+  } | null>(null);
 
   // Copia locale mutata otticamente (le mutazioni sull'albero devono
   // riflettersi subito su Layers/Inspector, non solo dopo il round-trip col
@@ -236,15 +290,24 @@ export function CanvasEditorShell({
   });
 
   // Calcolo puramente derivato (nessuno stato proprio) — si aggiorna ad ogni
-  // render insieme a `bridge.activeDrag`, così l'indicatore segue il
-  // puntatore dal vivo senza bisogno di un effect dedicato.
+  // render insieme a `bridge.activeDrag`/`sidebarDrag`, così l'indicatore
+  // segue il puntatore dal vivo senza bisogno di un effect dedicato. Per un
+  // drag dalla sidebar non esiste un "blocco trascinato" già nell'albero da
+  // escludere dai candidati — nessun id reale può eguagliare '', quindi
+  // computeDropTarget considera tutti i blocchi di primo livello.
   const liveDropTarget = bridge.activeDrag
     ? computeDropTarget(
         rootRects,
         bridge.activeDrag.blockId,
         bridge.activeDrag.pointer.y,
       )
-    : null;
+    : sidebarDrag
+      ? computeDropTarget(
+          rootRects,
+          '',
+          sidebarDrag.pointerY - iframeGeometry.top,
+        )
+      : null;
 
   // Applica il riordino al termine del drag — stesso pattern "aggiusta lo
   // stato durante il render" già usato sopra per lastTextChange: l'aggiornamento
@@ -289,8 +352,12 @@ export function CanvasEditorShell({
   useEffect(() => {
     if (pendingReorderCommit) {
       onChange(pendingReorderCommit);
+      bridge.reorderBlocks(
+        null,
+        pendingReorderCommit.map((block) => block.id as string),
+      );
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- reagisce solo a un NUOVO pendingReorderCommit — onChange è letta dal valore corrente, non serve rieseguire per un suo cambio di riferimento.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- reagisce solo a un NUOVO pendingReorderCommit — onChange/bridge.reorderBlocks sono letti dal valore corrente, non serve rieseguire per un loro cambio di riferimento.
   }, [pendingReorderCommit]);
 
   const selectedBlock = bridge.selectedBlockId
@@ -299,6 +366,13 @@ export function CanvasEditorShell({
   const selectedDescriptor = selectedBlock
     ? registry.find((d) => d.type === selectedBlock.type)
     : undefined;
+  const selectedRect = bridge.selectedBlockId
+    ? bridge.blockRects.find((r) => r.id === bridge.selectedBlockId)
+    : undefined;
+  const selectedRootIndex = selectedBlock?.id
+    ? localBlocks.findIndex((b) => b.id === selectedBlock.id)
+    : -1;
+  const isSelectedRootLevel = selectedRootIndex !== -1;
 
   function applyLocalChange(next: Block[]): void {
     setLocalBlocks(next);
@@ -313,7 +387,102 @@ export function CanvasEditorShell({
     setLocalBlocks((prev) =>
       updateBlockProps(prev, selectedBlock.id as string, nextProps),
     );
-    scheduleChange(selectedBlock.id, selectedBlock.type, nextProps);
+    scheduleChange(
+      selectedBlock.id,
+      selectedBlock.type,
+      nextProps,
+      selectedBlock.children,
+    );
+  }
+
+  /**
+   * Rigenera e ripatcha per intero un blocco-contenitore (stesso
+   * `editor:patch-block` di un cambio proprietà) dopo che uno dei suoi
+   * figli è stato inserito/rimosso — non basta inserire/rimuovere SOLO quel
+   * figlio nel DOM: l'euristica di risoluzione del contenitore in
+   * preview-bridge-client.ts assume che `<slot/>` sia l'unico contenuto
+   * dell'elemento radice del blocco-contenitore, falsa per Testimonials
+   * (pulsanti di navigazione + segnaposto "contenitore vuoto" attorno allo
+   * slot) e fragile in generale per qualunque "cornice" che dipenda dalla
+   * presenza di figli. `treeWithUpdatedChildren` è l'albero già ricalcolato
+   * dal chiamante DOPO la modifica (a differenza di `localBlocks` altrove
+   * in questo file, che resta quello PRIMA finché serve).
+   */
+  async function patchParentBlock(
+    parentId: string,
+    treeWithUpdatedChildren: Block[],
+  ): Promise<void> {
+    if (!token) {
+      return;
+    }
+    const parent = findBlockInTree(treeWithUpdatedChildren, parentId);
+    if (!parent?.id) {
+      return;
+    }
+    try {
+      const html = await renderBlockFragment({
+        pageId,
+        token,
+        blockId: parent.id,
+        blockType: parent.type,
+        props: parent.props,
+        children: parent.children,
+      });
+      bridge.patchBlock(parent.id, html);
+    } catch {
+      // Resta nell'albero locale/nella bozza salvata, riappare corretto al
+      // prossimo reload — stesso comportamento del fallimento di rete negli
+      // altri rami di insertIntoCanvas sotto.
+    }
+  }
+
+  /**
+   * Renderizza il frammento del blocco APPENA creato (mai visto prima
+   * dall'iframe, a differenza di usePropertyPatch che ne sostituisce uno
+   * esistente) e lo inserisce nel canvas via `editor:insert-block` — senza
+   * questo, il blocco resterebbe nell'albero locale/nella bozza salvata ma
+   * invisibile finché l'iframe non si ricarica (il bug segnalato). I
+   * `children` del blocco sono già noti qui (appena costruiti o clonati),
+   * niente bisogno che il server li rilegga dalla bozza salvata — evita
+   * anche la race fra salvataggio e lettura per un contenitore.
+   * `beforeBlockId` è calcolato PRIMA di applicare l'inserimento
+   * all'albero: è l'id di chi oggi occupa la posizione target, che dopo
+   * l'inserimento si ritroverà spostato di uno.
+   *
+   * Per un inserimento ANNIDATO (`target.parentId` non nullo), vedi
+   * `patchParentBlock` sopra — si ripatcha il genitore, non si inserisce il
+   * figlio da solo.
+   */
+  async function insertIntoCanvas(
+    block: Block & { id: string },
+    target: BlockTreeTarget,
+    nextBlocks: Block[],
+  ): Promise<void> {
+    if (!token) {
+      return;
+    }
+    if (target.parentId !== null) {
+      await patchParentBlock(target.parentId, nextBlocks);
+      return;
+    }
+    const siblingsBefore = siblingsAt(localBlocks, target.parentId);
+    const beforeBlockId = siblingsBefore[target.index]?.id ?? null;
+    try {
+      const html = await renderBlockFragment({
+        pageId,
+        token,
+        blockId: block.id,
+        blockType: block.type,
+        props: block.props,
+        children: block.children,
+      });
+      bridge.insertBlock(html, target.parentId, beforeBlockId);
+    } catch {
+      // Il blocco resta comunque nell'albero locale e nella bozza salvata
+      // (applyLocalChange è già avvenuto) — ricomparirà nel canvas al
+      // prossimo reload dell'iframe, stesso comportamento di oggi per
+      // qualunque fallimento di rete.
+    }
   }
 
   function handleInsert(descriptor: BlockDescriptor): void {
@@ -322,13 +491,10 @@ export function CanvasEditorShell({
       registry,
       bridge.selectedBlockId,
     );
-    const newBlock: Block = {
-      id: crypto.randomUUID(),
-      type: descriptor.type,
-      props: descriptor.defaultProps,
-      ...(descriptor.isContainer ? { children: [] } : {}),
-    };
-    applyLocalChange(insertBlock(localBlocks, newBlock, target));
+    const newBlock = createBlockFromDescriptor(descriptor, registry);
+    const next = insertBlock(localBlocks, newBlock, target);
+    applyLocalChange(next);
+    void insertIntoCanvas(newBlock, target, next);
   }
 
   function handleReorderRoot(orderedIds: string[]): void {
@@ -337,57 +503,288 @@ export function CanvasEditorShell({
       next = moveBlock(next, id, { parentId: null, index });
     });
     applyLocalChange(next);
+    bridge.reorderBlocks(null, orderedIds);
   }
 
   function handleRemoveSelected(): void {
     if (!selectedBlock?.id) {
       return;
     }
-    applyLocalChange(removeBlock(localBlocks, selectedBlock.id));
+    const location = locateBlock(localBlocks, selectedBlock.id);
+    const next = removeBlock(localBlocks, selectedBlock.id);
+    applyLocalChange(next);
+    // Un blocco annidato rimosso può cambiare la "cornice" del suo
+    // genitore (es. Testimonials nasconde di nuovo i pulsanti nav e
+    // rimostra il segnaposto vuoto quando perde il suo ultimo figlio) —
+    // stesso motivo per cui un inserimento annidato ripatcha il genitore
+    // invece di toccare solo il nodo rimosso (vedi patchParentBlock sopra).
+    // Un blocco di primo livello resta invece un semplice editor:remove-block.
+    if (location?.parentId) {
+      void patchParentBlock(location.parentId, next);
+    } else {
+      bridge.removeBlock(selectedBlock.id);
+    }
   }
 
   function handlePublish(): void {
     onPublish(localBlocksRef.current);
   }
 
+  /** Stessa `token` già in stato per `usePropertyPatch` — apre in una nuova scheda l'URL di anteprima, disponibile anche per una bozza mai pubblicata (a differenza di un link diretto al sito pubblico). */
+  function handleOpenPreview(): void {
+    if (!token) {
+      return;
+    }
+    window.open(
+      buildPreviewUrl(pageId, token, editingSection),
+      '_blank',
+      'noopener,noreferrer',
+    );
+  }
+
+  // Sposta su/giù, duplica, inserisci prima/dopo — azioni della toolbar
+  // contestuale (sostituisce l'Inspector a colonna fissa). Sposta/inserisci
+  // sono scoped ai blocchi di primo livello (stesso limite del riordino via
+  // drag, vedi compute-drop-target.ts); duplica funziona a qualunque
+  // livello via `locateBlock`, che trova il vero genitore anche per un
+  // blocco annidato.
+  function handleMoveSelected(direction: -1 | 1): void {
+    if (!selectedBlock?.id) {
+      return;
+    }
+    const index = localBlocks.findIndex((b) => b.id === selectedBlock.id);
+    if (index === -1) {
+      return;
+    }
+    const targetIndex = index + direction;
+    if (targetIndex < 0 || targetIndex >= localBlocks.length) {
+      return;
+    }
+    const next = moveBlock(localBlocks, selectedBlock.id, {
+      parentId: null,
+      index: targetIndex,
+    });
+    applyLocalChange(next);
+    bridge.reorderBlocks(
+      null,
+      next.map((block) => block.id as string),
+    );
+  }
+
+  function handleDuplicateSelected(): void {
+    if (!selectedBlock?.id) {
+      return;
+    }
+    const location = locateBlock(localBlocks, selectedBlock.id);
+    if (!location) {
+      return;
+    }
+    const clone = cloneBlockWithNewIds(selectedBlock);
+    const target: BlockTreeTarget = {
+      parentId: location.parentId,
+      index: location.index + 1,
+    };
+    const next = insertBlock(localBlocks, clone, target);
+    applyLocalChange(next);
+    void insertIntoCanvas(clone, target, next);
+  }
+
+  /**
+   * "+" dentro a un contenitore-collezione selezionato (Testimonianze,
+   * Team, Accordion, ...) — aggiunge un altro figlio del suo UNICO tipo
+   * consentito (`allowedChildTypes[0]`) senza aprire il picker: non c'è
+   * ambiguità da chiedere, è l'unico tipo sensato per quel contenitore
+   * (stessa regola di createBlockFromDescriptor). Il pulsante compare solo
+   * quando `descriptor.allowedChildTypes` ha esattamente un elemento (vedi
+   * block-toolbar-overlay.tsx's canAddChild), quindi qui la ricerca nel
+   * registry non dovrebbe mai fallire — se fallisse comunque (registry
+   * disallineato), semplicemente non succede nulla.
+   */
+  function handleAddChild(): void {
+    if (!selectedBlock?.id || !selectedDescriptor) {
+      return;
+    }
+    const childType = selectedDescriptor.allowedChildTypes?.[0];
+    const childDescriptor = childType
+      ? registry.find((d) => d.type === childType)
+      : undefined;
+    if (!childDescriptor) {
+      return;
+    }
+    const newChild = createBlockFromDescriptor(childDescriptor, registry);
+    const target: BlockTreeTarget = {
+      parentId: selectedBlock.id,
+      index: selectedBlock.children?.length ?? 0,
+    };
+    const next = insertBlock(localBlocks, newChild, target);
+    applyLocalChange(next);
+    void insertIntoCanvas(newChild, target, next);
+  }
+
+  function handleInsertAtRoot(
+    descriptor: BlockDescriptor,
+    offset: 0 | 1,
+  ): void {
+    if (!selectedBlock?.id) {
+      return;
+    }
+    const index = localBlocks.findIndex((b) => b.id === selectedBlock.id);
+    if (index === -1) {
+      return;
+    }
+    const newBlock = createBlockFromDescriptor(descriptor, registry);
+    const target: BlockTreeTarget = { parentId: null, index: index + offset };
+    const next = insertBlock(localBlocks, newBlock, target);
+    applyLocalChange(next);
+    void insertIntoCanvas(newBlock, target, next);
+  }
+
+  /**
+   * Drag di un blocco nuovo dalla sidebar (BlockPicker) — mousedown+
+   * movimento oltre la soglia lì dentro innesca questi tre callback (vedi
+   * block-picker.tsx).
+   */
+  function handleSidebarDragStart(descriptor: BlockDescriptor): void {
+    setSidebarDrag({ descriptor, pointerX: 0, pointerY: 0 });
+  }
+
+  function handleSidebarDragMove(pageX: number, pageY: number): void {
+    setSidebarDrag((prev) =>
+      prev ? { ...prev, pointerX: pageX, pointerY: pageY } : prev,
+    );
+  }
+
+  /**
+   * A differenza del click-to-insert (resolveInsertTarget, basato sul
+   * blocco SELEZIONATO), un drag ha un vero punto di rilascio — usarlo per
+   * decidere il contenitore invece della selezione era il bug segnalato dal
+   * vivo: trascinare un blocco su un contenitore diverso da quello ancora
+   * selezionato in precedenza lo annidava comunque in quest'ultimo, non in
+   * quello visivamente sotto il puntatore, producendo un layout che sembrava
+   * rotto (contenuto/toolbar posizionati altrove rispetto al drop reale).
+   * `bridge.blockRects` include già ogni blocco annidato, non solo quelli di
+   * primo livello (a differenza di `rootRects` sotto, scoped al riordino tra
+   * fratelli) — qui si filtra ai soli blocchi che il registry marca come
+   * contenitori, poi si sceglie il rect più piccolo (il contenitore più
+   * profondo) che contiene il punto.
+   */
+  function handleSidebarDragEnd(
+    descriptor: BlockDescriptor,
+    pageX: number,
+    pageY: number,
+  ): void {
+    setSidebarDrag(null);
+    const isOverCanvas =
+      pageX >= iframeGeometry.left &&
+      pageX <= iframeGeometry.left + iframeGeometry.width &&
+      pageY >= iframeGeometry.top;
+    if (!isOverCanvas) {
+      return;
+    }
+    const iframeX = pageX - iframeGeometry.left;
+    const iframeY = pageY - iframeGeometry.top;
+    const containerRects = bridge.blockRects.filter((rect) => {
+      const block = findBlockInTree(localBlocks, rect.id);
+      const blockDescriptor = block
+        ? registry.find((d) => d.type === block.type)
+        : undefined;
+      return Boolean(blockDescriptor?.isContainer);
+    });
+    const hitContainerId = findContainerAtPoint(
+      containerRects,
+      iframeX,
+      iframeY,
+    );
+    const hitContainer = hitContainerId
+      ? findBlockInTree(localBlocks, hitContainerId)
+      : null;
+    const target: BlockTreeTarget = hitContainer?.id
+      ? { parentId: hitContainer.id, index: hitContainer.children?.length ?? 0 }
+      : {
+          parentId: null,
+          index:
+            computeDropTarget(rootRects, '', iframeY)?.index ??
+            localBlocks.length,
+        };
+    const newBlock = createBlockFromDescriptor(descriptor, registry);
+    const next = insertBlock(localBlocks, newBlock, target);
+    applyLocalChange(next);
+    void insertIntoCanvas(newBlock, target, next);
+  }
+
   return (
     <div style={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
-      <div className="flex items-center justify-between border-b px-3 py-1 text-xs text-muted-foreground">
+      <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3 border-b px-3 py-1.5 text-xs text-muted-foreground">
         <div className="flex items-center gap-3">
           {backLink}
+          {pageSwitcher}
           <span>{statusText}</span>
           {actions}
         </div>
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            className="rounded bg-primary px-2 py-1 text-primary-foreground hover:opacity-90"
-            onClick={handlePublish}
-          >
+        <div className="flex items-center justify-center gap-2">
+          <BreakpointSelector value={breakpoint} onChange={setBreakpoint} />
+          {siteId && (
+            <IconButton
+              label={t('globalStyles.open')}
+              onClick={() => setIsGlobalStylesOpen(true)}
+            >
+              <Palette />
+            </IconButton>
+          )}
+        </div>
+        <div className="flex items-center justify-end gap-2">
+          <Button variant="outline" size="sm" onClick={handleOpenPreview}>
+            {t('canvas.preview')}
+          </Button>
+          <Button size="sm" onClick={handlePublish}>
             {t('canvas.publish')}
-          </button>
+          </Button>
           <LogoutButton />
         </div>
       </div>
+      {siteId && (
+        <GlobalStylesDialog
+          siteId={siteId}
+          open={isGlobalStylesOpen}
+          onOpenChange={setIsGlobalStylesOpen}
+        />
+      )}
       <div style={{ flex: 1, minHeight: 0, display: 'flex' }}>
-        <aside className="w-64 shrink-0 overflow-y-auto border-r p-3">
-          <h3 className="mb-2 text-sm font-medium">
-            {t('canvas.layersTitle')}
-          </h3>
-          <LayersPanel
-            blocks={localBlocks}
-            hoveredBlockId={bridge.hoveredBlockId}
-            selectedBlockId={bridge.selectedBlockId}
-            onReorderRoot={handleReorderRoot}
-          />
-          <h3 className="mb-2 mt-4 text-sm font-medium">
-            {t('canvas.insertBlock')}
-          </h3>
-          <BlockPicker
-            categories={categories}
-            registry={registry}
-            onInsert={handleInsert}
-          />
+        <aside
+          className={
+            isSidebarCollapsed
+              ? 'flex w-10 shrink-0 flex-col items-center border-r py-3'
+              : 'w-64 shrink-0 overflow-y-auto border-r p-3'
+          }
+        >
+          <IconButton
+            label={
+              isSidebarCollapsed
+                ? t('canvas.expandSidebar')
+                : t('canvas.collapseSidebar')
+            }
+            onClick={() => setIsSidebarCollapsed((collapsed) => !collapsed)}
+            className={isSidebarCollapsed ? undefined : 'mb-2 -ml-1'}
+          >
+            {isSidebarCollapsed ? <PanelLeftOpen /> : <PanelLeftClose />}
+          </IconButton>
+          {!isSidebarCollapsed && (
+            <>
+              <h3 className="mb-2 text-sm font-medium">
+                {t('canvas.insertBlock')}
+              </h3>
+              <BlockPicker
+                categories={categories}
+                registry={registry}
+                onInsert={handleInsert}
+                drag={{
+                  onDragStart: handleSidebarDragStart,
+                  onDragMove: handleSidebarDragMove,
+                  onDragEnd: handleSidebarDragEnd,
+                }}
+              />
+            </>
+          )}
         </aside>
         <div style={{ flex: 1, minHeight: 0, position: 'relative' }}>
           <CanvasFrame
@@ -396,28 +793,85 @@ export function CanvasEditorShell({
             iframeRef={iframeRef}
             bridge={bridge}
             dropIndicatorTop={liveDropTarget?.indicatorTop}
+            breakpoint={breakpoint}
           />
-        </div>
-        <aside className="w-72 shrink-0 overflow-y-auto border-l p-3">
-          {selectedBlock && selectedDescriptor ? (
-            <>
-              <button
-                type="button"
-                className="mb-2 text-xs text-destructive hover:underline"
-                onClick={handleRemoveSelected}
-              >
-                {t('canvas.removeBlock')}
-              </button>
-              <InspectorPanel
+          {selectedBlock &&
+            selectedDescriptor &&
+            selectedRect &&
+            isRectVisibleInIframe(iframeGeometry, selectedRect) && (
+              <BlockToolbarOverlay
+                iframeRef={iframeRef}
                 block={selectedBlock}
                 descriptor={selectedDescriptor}
+                rect={selectedRect}
+                isRootLevel={isSelectedRootLevel}
+                canMoveUp={isSelectedRootLevel && selectedRootIndex > 0}
+                canMoveDown={
+                  isSelectedRootLevel &&
+                  selectedRootIndex < localBlocks.length - 1
+                }
+                registry={registry}
+                categories={categories}
                 onChangeProp={handleChangeProp}
+                onMoveUp={() => handleMoveSelected(-1)}
+                onMoveDown={() => handleMoveSelected(1)}
+                onDuplicate={handleDuplicateSelected}
+                onDelete={handleRemoveSelected}
+                onInsertBefore={(descriptor) =>
+                  handleInsertAtRoot(descriptor, 0)
+                }
+                onInsertAfter={(descriptor) =>
+                  handleInsertAtRoot(descriptor, 1)
+                }
+                onAddChild={handleAddChild}
+              />
+            )}
+          {sidebarDrag && (
+            <div
+              data-testid="sidebar-drag-ghost"
+              className="pointer-events-none fixed z-50 rounded bg-primary px-2 py-1 text-xs font-medium text-primary-foreground shadow-md"
+              style={{
+                top: sidebarDrag.pointerY + 12,
+                left: sidebarDrag.pointerX + 12,
+              }}
+            >
+              {sidebarDrag.descriptor.label}
+            </div>
+          )}
+        </div>
+        <aside
+          className={
+            isLayersPanelCollapsed
+              ? 'flex w-10 shrink-0 flex-col items-center border-l py-3'
+              : 'w-64 shrink-0 overflow-y-auto border-l p-3'
+          }
+        >
+          <IconButton
+            label={
+              isLayersPanelCollapsed
+                ? t('canvas.expandLayersPanel')
+                : t('canvas.collapseLayersPanel')
+            }
+            onClick={() => setIsLayersPanelCollapsed((collapsed) => !collapsed)}
+            className={
+              isLayersPanelCollapsed ? undefined : 'mb-2 -mr-1 self-end'
+            }
+          >
+            {isLayersPanelCollapsed ? <PanelRightOpen /> : <PanelRightClose />}
+          </IconButton>
+          {!isLayersPanelCollapsed && (
+            <>
+              <h3 className="mb-2 text-sm font-medium">
+                {t('canvas.layersTitle')}
+              </h3>
+              <LayersPanel
+                blocks={localBlocks}
+                hoveredBlockId={bridge.hoveredBlockId}
+                selectedBlockId={bridge.selectedBlockId}
+                onReorderRoot={handleReorderRoot}
+                onSelect={bridge.selectBlock}
               />
             </>
-          ) : (
-            <p className="text-sm text-muted-foreground">
-              {t('canvas.inspectorEmpty')}
-            </p>
           )}
         </aside>
       </div>

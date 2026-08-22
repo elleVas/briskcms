@@ -56,3 +56,46 @@ export function computeDropTarget(
 
   return { index, indicatorTop };
 }
+
+export interface ContainerHitRect {
+  id: string;
+  top: number;
+  left: number;
+  width: number;
+  height: number;
+}
+
+/**
+ * Drop di un blocco NUOVO dalla sidebar (segnalato dal vivo: annidava sempre
+ * nel contenitore ancora SELEZIONATO, ignorando il punto di rilascio — se
+ * l'utente trascinava sopra un contenitore diverso da quello selezionato in
+ * precedenza, il blocco finiva nel posto sbagliato senza alcun segnale
+ * visivo del perché). Restituisce l'id del contenitore più profondo (l'area
+ * più piccola, tra quelli le cui coordinate contengono il punto) — il
+ * chiamante (canvas-editor-shell.tsx) passa solo i rect già filtrati per
+ * essere contenitori: questo modulo non conosce il registry dei blocchi.
+ * `null` se il punto non cade in nessun contenitore — il chiamante ricade
+ * sulla posizione a livello radice via `computeDropTarget` sopra.
+ */
+export function findContainerAtPoint(
+  containerRects: ContainerHitRect[],
+  x: number,
+  y: number,
+): string | null {
+  let best: { id: string; area: number } | null = null;
+  for (const rect of containerRects) {
+    const inside =
+      x >= rect.left &&
+      x <= rect.left + rect.width &&
+      y >= rect.top &&
+      y <= rect.top + rect.height;
+    if (!inside) {
+      continue;
+    }
+    const area = rect.width * rect.height;
+    if (!best || area < best.area) {
+      best = { id: rect.id, area };
+    }
+  }
+  return best?.id ?? null;
+}

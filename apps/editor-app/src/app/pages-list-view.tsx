@@ -4,6 +4,7 @@ import { useNavigate } from '@tanstack/react-router';
 import {
   ChevronLeft,
   ChevronRight,
+  Copy,
   Pencil,
   Search,
   Send,
@@ -14,6 +15,7 @@ import { Button } from '../components/ui/button.js';
 import { cn } from '../lib/utils.js';
 import type { PageDto } from '../lib/pages-api-client.js';
 import { DeletePageConfirmDialog } from './delete-page-confirm-dialog.js';
+import { DuplicatePageDialog } from './duplicate-page-dialog.js';
 import { IconButton } from './icon-button.js';
 import { MediaPickerProvider } from './media-picker-provider.js';
 import { NewPageDialog } from './new-page-dialog.js';
@@ -47,16 +49,15 @@ export function PagesListView({
 }: PagesListViewProps) {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
-  const { createPage, deletePage, publishPage, setPageParent } = usePagesList(
-    siteId,
-    defaultLocale,
-  );
+  const { createPage, deletePage, duplicatePage, publishPage, setPageParent } =
+    usePagesList(siteId, defaultLocale);
   const tree = buildPageTree(pages);
 
   const [selectedPageId, setSelectedPageId] = useState<string | null>(null);
   const [isNewPageDialogOpen, setIsNewPageDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isSeoOpen, setIsSeoOpen] = useState(false);
+  const [isDuplicateOpen, setIsDuplicateOpen] = useState(false);
   const [actionError, setActionError] = useState('');
 
   const selectedPage = pages.find((p) => p.id === selectedPageId) ?? null;
@@ -131,6 +132,12 @@ export function PagesListView({
                   onClick={() => setIsDeleteDialogOpen(true)}
                 >
                   <Trash2 />
+                </IconButton>
+                <IconButton
+                  label={t('pages.list.actions.duplicate')}
+                  onClick={() => setIsDuplicateOpen(true)}
+                >
+                  <Copy />
                 </IconButton>
               </>
             )}
@@ -271,6 +278,14 @@ export function PagesListView({
             seoMeta={selectedPage.seoMeta}
             open={isSeoOpen}
             onOpenChange={setIsSeoOpen}
+          />
+        )}
+        {selectedPage && (
+          <DuplicatePageDialog
+            sourcePage={selectedPage}
+            open={isDuplicateOpen}
+            onOpenChange={setIsDuplicateOpen}
+            onDuplicate={(input) => duplicatePage(selectedPage.id, input)}
           />
         )}
       </div>

@@ -159,10 +159,47 @@ export type EditorExitTextEditMessage = PreviewBridgeEnvelope<
   Record<string, never>
 >;
 
+/**
+ * Un blocco MAI visto prima dall'iframe (inserimento/duplicazione) — a
+ * differenza di `editor:patch-block` (sostituisce un nodo esistente), qui
+ * serve creare un nodo nuovo e inserirlo nel punto giusto. `html` porta già
+ * il proprio wrapper (stesso RenderSingleBlock.astro di patch-block,
+ * includendo l'intero sottoalbero se il blocco ha figli — un solo
+ * `container.renderToString` rende anche i nested). `parentId: null` =
+ * radice della pagina; `beforeBlockId: null` = in coda alla lista
+ * (radice o dentro il genitore) invece che prima di un fratello preciso.
+ */
+export type EditorInsertBlockMessage = PreviewBridgeEnvelope<
+  'editor:insert-block',
+  { html: string; parentId: string | null; beforeBlockId: string | null }
+>;
+
+/** Un blocco eliminato (toolbar "Rimuovi blocco") — l'iframe rimuove il nodo `[data-brisk-block-id=blockId]` dal proprio DOM, nessun reload. */
+export type EditorRemoveBlockMessage = PreviewBridgeEnvelope<
+  'editor:remove-block',
+  { blockId: string }
+>;
+
+/**
+ * Un riordino applicato (drag sul canvas, frecce sposta su/giù, drag nel
+ * pannello Livelli) — `orderedIds` è l'elenco completo e finale dei
+ * fratelli in quel punto dell'albero, nello stesso ordine desiderato.
+ * L'iframe si limita a ri-appendere i nodi ESISTENTI in quell'ordine
+ * (`appendChild` su un nodo già nel DOM lo sposta, non lo clona) — nessun
+ * nuovo rendering, i blocchi coinvolti sono già tutti visibili.
+ */
+export type EditorReorderBlocksMessage = PreviewBridgeEnvelope<
+  'editor:reorder-blocks',
+  { parentId: string | null; orderedIds: string[] }
+>;
+
 export type ParentToPreviewMessage =
   | EditorPatchBlockMessage
   | EditorEnterTextEditMessage
-  | EditorExitTextEditMessage;
+  | EditorExitTextEditMessage
+  | EditorRemoveBlockMessage
+  | EditorReorderBlocksMessage
+  | EditorInsertBlockMessage;
 
 export type AnyPreviewBridgeMessage =
   PreviewToParentMessage | ParentToPreviewMessage;

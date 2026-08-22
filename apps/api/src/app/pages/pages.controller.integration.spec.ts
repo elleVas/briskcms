@@ -142,6 +142,68 @@ describe('PagesController (integration)', () => {
     ]);
   });
 
+  it('duplicates a published page into an independent draft over HTTP', async () => {
+    const createRes = await agent
+      .post('/pages')
+      .send(createPageBody())
+      .expect(201);
+    const sourceId = createRes.body.id;
+    const sourceGroupId = createRes.body.groupId;
+
+    await agent
+      .patch(`/pages/${sourceId}/draft`)
+      .send({ content: [{ type: 'Hero', props: { title: 'v1' } }] })
+      .expect(200);
+    await agent.post(`/pages/${sourceId}/publish`).expect(201);
+
+    const duplicateSlug = `page-${randomUUID()}`;
+    const duplicateRes = await agent
+      .post(`/pages/${sourceId}/duplicate`)
+      .send({
+        slug: duplicateSlug,
+        title: 'Copia',
+        description: 'Descrizione copia',
+      })
+      .expect(201);
+
+    expect(duplicateRes.body.id).not.toBe(sourceId);
+    expect(duplicateRes.body.groupId).not.toBe(sourceGroupId);
+    expect(duplicateRes.body.slug).toBe(duplicateSlug);
+    expect(duplicateRes.body.status).toBe('draft');
+    expect(duplicateRes.body.publishedContent).toBeNull();
+    expect(duplicateRes.body.content).toEqual([
+      { type: 'Hero', props: { title: 'v1' } },
+    ]);
+    expect(duplicateRes.body.seoMeta).toEqual({
+      title: 'Copia',
+      description: 'Descrizione copia',
+    });
+  });
+
+  it('409s duplicating a page onto a slug already used on that site/locale', async () => {
+    const sourceRes = await agent
+      .post('/pages')
+      .send(createPageBody())
+      .expect(201);
+    const takenSlug = `page-${randomUUID()}`;
+    await agent
+      .post('/pages')
+      .send(createPageBody({ slug: takenSlug }))
+      .expect(201);
+
+    await agent
+      .post(`/pages/${sourceRes.body.id}/duplicate`)
+      .send({ slug: takenSlug, title: 'Copia', description: '' })
+      .expect(409);
+  });
+
+  it('404s duplicating a page that does not exist', async () => {
+    await agent
+      .post(`/pages/${randomUUID()}/duplicate`)
+      .send({ slug: `page-${randomUUID()}`, title: 'Copia', description: '' })
+      .expect(404);
+  });
+
   it('updates seoMeta without touching content', async () => {
     const createRes = await agent
       .post('/pages')

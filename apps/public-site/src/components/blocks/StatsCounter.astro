@@ -1,8 +1,17 @@
 ---
+import EmptyContainerHint from '../EmptyContainerHint.astro';
+
+export interface Props {
+  editable?: boolean;
+  hasChildren?: boolean;
+}
+
+const { editable, hasChildren } = Astro.props;
 ---
 
-<div class="brisk-stats-counter">
+<div class="brisk-stats-counter" data-brisk-editable-outline={editable && hasChildren ? '' : undefined}>
   <slot />
+  <EmptyContainerHint show={!hasChildren && Boolean(editable)} />
 </div>
 
 <style>
@@ -10,5 +19,16 @@
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
     gap: 1.5rem;
+  }
+
+  /* Solo nell'editor, e solo con contenuto — vuoto mostra già il proprio
+     bordo tratteggiato via EmptyContainerHint, un secondo qui sarebbe
+     ridondante. Senza questo, un contenitore con dentro del vero contenuto
+     perde ogni confine visibile mentre si lavora (feedback utente dal
+     vivo, stesso motivo di Column.astro/Container.astro). */
+  .brisk-stats-counter[data-brisk-editable-outline] {
+    outline: 1px dashed var(--border);
+    outline-offset: -4px;
+    padding: 0.5rem;
   }
 </style>

@@ -113,6 +113,151 @@ export function applyBlockPatch(
   return root.querySelector(`[data-brisk-block-id="${blockId}"]`);
 }
 
+/**
+ * Inserisce un blocco MAI visto prima dell'iframe (inserimento/duplicazione)
+ * — vedi EditorInsertBlockMessage. Trova il contenitore DOM giusto senza
+ * bisogno di conoscere la struttura interna di ogni tipo di blocco-
+ * contenitore (Container/Columns/Accordion/...): se esiste già un fratello
+ * (`beforeBlockId`), il SUO `parentElement` è per costruzione il contenitore
+ * giusto (ogni blocco è un wrapper `display:contents` piazzato direttamente
+ * come figlio di quel contenitore, mai avvolto in altro — vedi
+ * BlockRenderer.astro). Altrimenti (contenitore vuoto, o radice) serve un
+ * riferimento esplicito: il primo figlio del wrapper del blocco-contenitore
+ * (ogni blocco-contenitore renderizza `<slot/>` come unico contenuto del
+ * proprio elemento radice) per un inserimento annidato, o il marcatore
+ * `data-brisk-root-blocks="page"/"header"/"footer"` (PublicPageContent.astro/
+ * PageLayout.astro) per la radice, distinto per scope perché le tre liste
+ * radice possono coesistere sulla stessa pagina.
+ */
+export function applyBlockInsert(
+  root: ParentNode,
+  html: string,
+  parentId: string | null,
+  beforeBlockId: string | null,
+  editingSection: EditingSection | null,
+): Element | null {
+  const beforeEl = beforeBlockId
+    ? root.querySelector(`[data-brisk-block-id="${beforeBlockId}"]`)
+    : null;
+
+  const container = beforeEl?.parentElement
+    ? beforeEl.parentElement
+    : parentId
+      ? (root.querySelector(`[data-brisk-block-id="${parentId}"]`)
+          ?.firstElementChild ?? null)
+      : root.querySelector(
+          `[data-brisk-root-blocks="${editingSection ?? 'page'}"]`,
+        );
+  if (!container) {
+    return null;
+  }
+
+  const template = document.createElement('template');
+  template.innerHTML = html.trim();
+
+  // Il wrapper vero non è per forza il primo figlio del frammento: alcuni
+  // blocchi (Countdown, Form, MapEmbed...) hanno il proprio <script>
+  // renderizzato come fratello del wrapper — RenderSingleBlock non ha una
+  // pagina condivisa a cui "agganciarlo", diversamente da un render intero.
+  const newNode = template.content.querySelector('[data-brisk-block-id]');
+  if (!newNode) {
+    return null;
+  }
+
+  // Uno <script> spostato qui via innerHTML/<template> è marcato "already
+  // started" dallo spec e non esegue MAI da solo, nemmeno una volta
+  // ricollegato al documento — va ricreato da zero (stesso motivo per cui
+  // Countdown/Stat/ImageSlider/Tabs/Testimonials/BeforeAfter/Form/MapEmbed
+  // restavano vuoti finché non si ricaricava la pagina; per Form/
+  // NewsletterSignup questo fa ripartire anche lo <script src> di Turnstile,
+  // che si auto-renderizza su ogni .cf-turnstile trovato). Sostituito in
+  // loco, prima di spostare qualunque nodo: se annidato dentro newNode si
+  // ricollega da solo quando newNode entra nel documento (l'intero sotto-
+  // albero si connette in un colpo solo, prima che parta qualunque script
+  // al suo interno); se è un fratello di newNode resta comunque dentro
+  // `template.content` e va spostato a parte, subito dopo.
+  for (const oldScript of Array.from(
+    template.content.querySelectorAll('script'),
+  )) {
+    const freshScript = document.createElement('script');
+    for (const { name, value } of Array.from(oldScript.attributes)) {
+      freshScript.setAttribute(name, value);
+    }
+    freshScript.textContent = oldScript.textContent;
+    oldScript.replaceWith(freshScript);
+  }
+
+  if (beforeEl) {
+    container.insertBefore(newNode, beforeEl);
+  } else {
+    container.appendChild(newNode);
+  }
+
+  // Ogni nodo fratello rimasto in `template.content` (tipicamente lo
+  // <script> ricreato sopra, se il fratello e non annidato) va riattaccato
+  // subito dopo newNode, nello stesso ordine relativo dell'HTML originale.
+  let anchor: ChildNode = newNode;
+  for (const sibling of Array.from(template.content.childNodes)) {
+    anchor.after(sibling);
+    anchor = sibling;
+  }
+
+  return newNode;
+}
+
+/** Rimuove un blocco eliminato dal DOM dell'iframe — `true` se un nodo è stato davvero rimosso, `false` se non era (più) presente (non un errore: un'azione precedente potrebbe già averlo tolto). */
+export function applyBlockRemove(root: ParentNode, blockId: string): boolean {
+  const target = root.querySelector(`[data-brisk-block-id="${blockId}"]`);
+  if (!target) {
+    return false;
+  }
+  target.remove();
+  return true;
+}
+
+/**
+ * Riordina i fratelli ESISTENTI (già tutti renderizzati) secondo
+ * `orderedIds` — vedi EditorReorderBlocksMessage. Il contenitore è trovato
+ * tramite il PRIMO fratello ancora presente nel DOM (il suo
+ * `parentElement`, stessa euristica di `applyBlockInsert`): non serve
+ * conoscere la struttura interna del blocco-contenitore. Un id in
+ * `orderedIds` che non esiste (più) nel DOM viene ignorato in silenzio —
+ * non tutti i fratelli devono necessariamente esistere ancora (una
+ * rimozione appena applicata potrebbe non essere ancora rispecchiata nella
+ * lista che il chiamante ha costruito).
+ */
+export function applyBlockReorder(
+  root: ParentNode,
+  parentId: string | null,
+  orderedIds: string[],
+  editingSection: EditingSection | null,
+): void {
+  const existing = orderedIds
+    .map((id) => root.querySelector(`[data-brisk-block-id="${id}"]`))
+    .filter((el): el is Element => el !== null);
+  if (existing.length === 0) {
+    return;
+  }
+
+  const container = existing[0].parentElement
+    ? existing[0].parentElement
+    : parentId
+      ? (root.querySelector(`[data-brisk-block-id="${parentId}"]`)
+          ?.firstElementChild ?? null)
+      : root.querySelector(
+          `[data-brisk-root-blocks="${editingSection ?? 'page'}"]`,
+        );
+  if (!container) {
+    return;
+  }
+
+  // `appendChild` su un nodo già nel DOM lo SPOSTA (niente clone) — ri-
+  // appenderli in sequenza desiderata li lascia in quell'ordine finale.
+  for (const el of existing) {
+    container.appendChild(el);
+  }
+}
+
 /** Il nodo esatto di un field `inlineEditable` dentro un blocco — marcato a mano nel componente Astro del blocco (vedi Hero.astro). `null` se il blocco o il field non esistono (mai un errore da segnalare: un blockId/field ormai stale, es. dopo una patch a frammento, è un caso normale). */
 export function findFieldElement(
   root: ParentNode,
@@ -447,6 +592,32 @@ export function initPreviewBridge(): void {
         if (patched) {
           resizeObserver.observe(patched);
         }
+        sendBlockRects();
+        return;
+      }
+      case 'editor:insert-block': {
+        const { html, parentId, beforeBlockId } = event.data.payload;
+        const inserted = applyBlockInsert(
+          document,
+          html,
+          parentId,
+          beforeBlockId,
+          editingSection,
+        );
+        if (inserted) {
+          resizeObserver.observe(inserted);
+        }
+        sendBlockRects();
+        return;
+      }
+      case 'editor:remove-block': {
+        applyBlockRemove(document, event.data.payload.blockId);
+        sendBlockRects();
+        return;
+      }
+      case 'editor:reorder-blocks': {
+        const { parentId, orderedIds } = event.data.payload;
+        applyBlockReorder(document, parentId, orderedIds, editingSection);
         sendBlockRects();
         return;
       }

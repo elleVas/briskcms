@@ -1,9 +1,10 @@
 ---
 import type { ContainerProps } from '@brisk/shared-types';
+import EmptyContainerHint from '../EmptyContainerHint.astro';
 
-type Props = ContainerProps;
+type Props = ContainerProps & { editable?: boolean; hasChildren?: boolean };
 
-const { background, padding } = Astro.props;
+const { background, padding, editable, hasChildren } = Astro.props;
 
 // Token-driven (docs/adr/0021) — a theme swap changes what these mean,
 // this component never hardcodes a color. `primary`/`secondary` follow
@@ -25,7 +26,31 @@ const paddingClass: Record<ContainerProps['padding'], string> = {
 ---
 
 <div
-	class={`flex flex-col gap-4 rounded-lg ${backgroundClass[background]} ${paddingClass[padding]}`}
+	class={`brisk-container flex flex-col gap-4 rounded-lg ${backgroundClass[background]} ${paddingClass[padding]}`}
+	data-brisk-editable-outline={editable && hasChildren ? '' : undefined}
 >
 	<slot />
+	<EmptyContainerHint show={!hasChildren && Boolean(editable)} />
 </div>
+
+<style>
+	/* Solo nell'editor (mai sulla pagina pubblicata, vedi editable), e solo
+	   una volta che ha contenuto — da vuoto mostra già il proprio bordo
+	   tratteggiato via EmptyContainerHint, un secondo qui sarebbe ridondante.
+	   Senza questo, un Container con dentro del vero contenuto perde ogni
+	   confine visibile — feedback utente dal vivo, stesso motivo di
+	   Column.astro. Un attributo `data-*` condizionale, non una classe
+	   dentro un'espressione ternaria — quest'ultima viene scartata dal
+	   compilatore Astro come "non usata" (analizza solo stringhe statiche
+	   nel markup), osservato dal vivo proprio su Column.astro.
+	   Niente `padding` fisso qui a differenza degli altri contenitori: a
+	   differenza loro, Container ha già un padding scelto dall'utente
+	   (`none`/`sm`/`md`/`lg`, sopra) — un valore fisso lo sovrascriverebbe
+	   con una specificità CSS più alta, facendolo sembrare diverso
+	   nell'editor rispetto alla pagina pubblicata. Il default "md" (2rem)
+	   basta già da solo come area cliccabile. */
+	.brisk-container[data-brisk-editable-outline] {
+		outline: 1px dashed var(--border);
+		outline-offset: -4px;
+	}
+</style>

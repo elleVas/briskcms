@@ -44,20 +44,23 @@ export const POST: APIRoute = async ({ request }) => {
     });
   }
 
-  // I `children` esistenti del blocco (se contenitore) vanno preservati —
-  // un cambio di proprietà dall'Inspector non li tocca mai. Cercato in
-  // content/header/footer: la patch a frammento serve identicamente per
-  // pagina ed header/footer (stesso token pagina, vedi il piano, Giorno 1).
-  const existing =
-    findBlockById(page.content, body.blockId) ??
-    findBlockById(page.header ?? [], body.blockId) ??
-    findBlockById(page.footer ?? [], body.blockId);
+  // I `children` vanno preservati se il blocco è un contenitore — un
+  // cambio di proprietà dall'Inspector non li tocca mai. Preferisce quelli
+  // passati dal chiamante (già noti client-side, niente race col
+  // salvataggio bozza in corso in parallelo — vedi RenderBlockFragmentBody);
+  // la lettura server resta solo un fallback per chiamate più vecchie che
+  // non li passano ancora.
+  const children =
+    body.children ??
+    findBlockById(page.content, body.blockId)?.children ??
+    findBlockById(page.header ?? [], body.blockId)?.children ??
+    findBlockById(page.footer ?? [], body.blockId)?.children;
 
   const block: Block = {
     id: body.blockId,
     type: body.blockType,
     props: body.props,
-    ...(existing?.children ? { children: existing.children } : {}),
+    ...(children ? { children } : {}),
   };
 
   const container = await AstroContainer.create();

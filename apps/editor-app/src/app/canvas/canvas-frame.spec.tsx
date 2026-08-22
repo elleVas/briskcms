@@ -23,8 +23,12 @@ const emptyBridge: PreviewBridgeState = {
   activeDrag: null,
   dragEnded: null,
   patchBlock: vi.fn(),
+  insertBlock: vi.fn(),
+  removeBlock: vi.fn(),
+  reorderBlocks: vi.fn(),
   enterTextEdit: vi.fn(),
   exitTextEdit: vi.fn(),
+  selectBlock: vi.fn(),
 };
 
 describe('buildPreviewUrl', () => {
@@ -104,5 +108,41 @@ describe('CanvasFrame', () => {
       ).not.toBeNull(),
     );
     expect(screen.queryByTitle('Anteprima pagina')).toBeNull();
+  });
+
+  it('defaults to full width when no breakpoint is given', async () => {
+    vi.mocked(previewTokenApi.createPagePreviewToken).mockResolvedValue({
+      token: 'tok123',
+      expiresAt: new Date().toISOString(),
+    });
+
+    renderFrame();
+
+    const iframe = await waitFor(() => screen.getByTitle('Anteprima pagina'));
+    expect((iframe.parentElement as HTMLElement).style.width).toBe('100%');
+  });
+
+  it('constrains the iframe to a fixed width for the tablet breakpoint', async () => {
+    vi.mocked(previewTokenApi.createPagePreviewToken).mockResolvedValue({
+      token: 'tok123',
+      expiresAt: new Date().toISOString(),
+    });
+
+    renderFrame({ breakpoint: 'tablet' });
+
+    const iframe = await waitFor(() => screen.getByTitle('Anteprima pagina'));
+    expect((iframe.parentElement as HTMLElement).style.width).toBe('768px');
+  });
+
+  it('constrains the iframe to a fixed width for the mobile breakpoint', async () => {
+    vi.mocked(previewTokenApi.createPagePreviewToken).mockResolvedValue({
+      token: 'tok123',
+      expiresAt: new Date().toISOString(),
+    });
+
+    renderFrame({ breakpoint: 'mobile' });
+
+    const iframe = await waitFor(() => screen.getByTitle('Anteprima pagina'));
+    expect((iframe.parentElement as HTMLElement).style.width).toBe('375px');
   });
 });

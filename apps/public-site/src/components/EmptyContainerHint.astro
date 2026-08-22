@@ -1,0 +1,40 @@
+---
+/**
+ * Segnaposto per un blocco-contenitore (Columns/Accordion/Tabs/...) senza
+ * figli — senza questo, un contenitore vuoto collassa a un'altezza
+ * praticamente nulla (grid/flex vuoto) e diventa impossibile da selezionare
+ * sul canvas, l'unico modo per aggiungerci dentro il primo elemento
+ * (seleziona il contenitore, poi scegli un blocco dalla barra laterale —
+ * resolveInsertTarget in canvas-editor-shell.tsx lo inserisce come figlio).
+ * `show` è calcolato dal chiamante (`!Astro.slots.has('default') &&
+ * editable`) — mai renderizzato sulla pagina pubblicata reale, solo sulle
+ * rotte di preview.
+ */
+export interface Props {
+  show: boolean;
+}
+
+const { show } = Astro.props;
+---
+
+{
+  show && (
+    <p class="brisk-empty-container-hint">
+      Contenitore vuoto — seleziona questo blocco e scegli un elemento dalla
+      barra laterale per aggiungerlo qui.
+    </p>
+  )
+}
+
+<style>
+  .brisk-empty-container-hint {
+    margin: 0;
+    padding: 1.5rem;
+    min-height: 3rem;
+    border: 1px dashed var(--border);
+    border-radius: 0.5rem;
+    color: var(--muted-foreground);
+    font-size: 0.875rem;
+    text-align: center;
+  }
+</style>

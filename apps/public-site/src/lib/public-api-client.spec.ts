@@ -41,6 +41,9 @@ const samplePage: PublishedPageDto = {
       faviconUrl: null,
       overridesEnabled: true,
     },
+    themeTokens: {
+      buttons: { borderRadius: null, paddingX: null, paddingY: null },
+    },
   },
   header: null,
   footer: null,

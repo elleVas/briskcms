@@ -56,6 +56,7 @@ describe('getPublishedPageBySlug', () => {
       themeBodyScript: null,
       themeFaviconUrl: null,
       themeOverridesEnabled: true,
+      themeTokens: null,
       createdAt: new Date(),
       ...overrides,
     });
@@ -136,6 +137,9 @@ describe('getPublishedPageBySlug', () => {
           bodyScript: null,
           faviconUrl: null,
           overridesEnabled: true,
+        },
+        themeTokens: {
+          buttons: { borderRadius: null, paddingX: null, paddingY: null },
         },
       },
     });

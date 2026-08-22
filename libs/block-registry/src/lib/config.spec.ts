@@ -2,8 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { pageBlockCategories, pageBlocks } from './config.js';
 
 describe('pageBlocks', () => {
-  it('registers all 39 page blocks, each with a unique type', () => {
-    expect(pageBlocks).toHaveLength(39);
+  it('registers all 40 page blocks, each with a unique type', () => {
+    expect(pageBlocks).toHaveLength(40);
     const types = pageBlocks.map((block) => block.type);
     expect(new Set(types).size).toBe(types.length);
   });

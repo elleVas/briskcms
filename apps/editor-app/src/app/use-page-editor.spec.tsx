@@ -75,6 +75,51 @@ describe('usePageEditor', () => {
     expect(result.current.status).toEqual({ kind: 'saved' });
   });
 
+  it('never sends two saveDraft requests in parallel — a second handleChange waits for the first to finish, even if the first is still pending', async () => {
+    let resolveFirst!: (page: api.PageDto) => void;
+    const firstCall = new Promise<api.PageDto>((resolve) => {
+      resolveFirst = resolve;
+    });
+    vi.mocked(api.saveDraft)
+      .mockReturnValueOnce(firstCall)
+      .mockResolvedValueOnce(samplePage);
+
+    const { result } = renderPageEditor();
+    const secondContent: Block[] = [
+      ...sampleContent,
+      { id: 'image-1', type: 'Image', props: { media: null } },
+    ];
+
+    await act(async () => {
+      result.current.handleChange(sampleContent);
+      // Fired while the first save is still in flight — must NOT become a
+      // second concurrent request (that's exactly the lost-update race:
+      // an older in-flight request completing after a newer one would
+      // silently overwrite it).
+      result.current.handleChange(secondContent);
+      // Let react-query's own internal microtask actually invoke the
+      // mutationFn for the first call, without resolving it yet.
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(api.saveDraft).toHaveBeenCalledTimes(1);
+    expect(api.saveDraft).toHaveBeenCalledWith(samplePage.id, sampleContent);
+
+    await act(async () => {
+      resolveFirst(samplePage);
+      // Let the queue's `finally` notice the queued second content and
+      // send it as the next (and only next) request.
+      await firstCall;
+    });
+
+    expect(api.saveDraft).toHaveBeenCalledTimes(2);
+    expect(api.saveDraft).toHaveBeenLastCalledWith(
+      samplePage.id,
+      secondContent,
+    );
+  });
+
   it('handleChange sets an error status when the save fails', async () => {
     vi.mocked(api.saveDraft).mockRejectedValue(new Error('save failed'));
 

@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { computeDropTarget } from './compute-drop-target.js';
+import {
+  computeDropTarget,
+  findContainerAtPoint,
+} from './compute-drop-target.js';
 
 const rects = [
   { id: 'a', top: 0, height: 100 },
@@ -43,6 +46,38 @@ describe('computeDropTarget', () => {
     expect(
       computeDropTarget([{ id: 'a', top: 0, height: 100 }], 'a', 50),
     ).toBeNull();
+  });
+});
+
+describe('findContainerAtPoint', () => {
+  it('returns the container whose rect contains the point', () => {
+    const rects = [
+      { id: 'column-1', top: 0, left: 0, width: 400, height: 200 },
+    ];
+    expect(findContainerAtPoint(rects, 50, 50)).toBe('column-1');
+  });
+
+  it('returns null when the point is outside every rect', () => {
+    const rects = [
+      { id: 'column-1', top: 0, left: 0, width: 400, height: 200 },
+    ];
+    expect(findContainerAtPoint(rects, 500, 500)).toBeNull();
+  });
+
+  it('picks the smallest (deepest) rect when containers are nested', () => {
+    const rects = [
+      { id: 'columns', top: 0, left: 0, width: 800, height: 200 },
+      { id: 'column-1', top: 0, left: 0, width: 400, height: 200 },
+    ];
+    expect(findContainerAtPoint(rects, 50, 50)).toBe('column-1');
+  });
+
+  it('ignores a sibling container the point does not fall inside', () => {
+    const rects = [
+      { id: 'column-1', top: 0, left: 0, width: 400, height: 200 },
+      { id: 'column-2', top: 0, left: 400, width: 400, height: 200 },
+    ];
+    expect(findContainerAtPoint(rects, 450, 50)).toBe('column-2');
   });
 
   it('drops exactly at a midpoint by treating it as already past (pointerY > midpoint is strict)', () => {

@@ -19,7 +19,7 @@ const textDescriptor: BlockDescriptor = {
 };
 
 describe('BlockPicker', () => {
-  it('renders one section per category, one button per registered type in it', () => {
+  it('renders one collapsed section per category, expandable to show its registered block types', () => {
     render(
       <BlockPicker
         categories={[{ title: 'Contenuto', types: ['Hero', 'Text'] }]}
@@ -29,6 +29,10 @@ describe('BlockPicker', () => {
     );
 
     expect(screen.getByText('Contenuto')).toBeDefined();
+    expect(screen.queryByText('Hero')).toBeNull();
+
+    fireEvent.click(screen.getByText('Contenuto'));
+
     expect(screen.getByText('Hero')).toBeDefined();
     expect(screen.getByText('Testo')).toBeDefined();
   });
@@ -43,6 +47,7 @@ describe('BlockPicker', () => {
       />,
     );
 
+    fireEvent.click(screen.getByText('Contenuto'));
     fireEvent.click(screen.getByText('Hero'));
 
     expect(onInsert).toHaveBeenCalledWith(heroDescriptor);
@@ -58,5 +63,24 @@ describe('BlockPicker', () => {
     );
 
     expect(screen.queryByText('Contenuto')).toBeNull();
+  });
+
+  it('keeps multiple categories open at the same time', () => {
+    render(
+      <BlockPicker
+        categories={[
+          { title: 'Contenuto', types: ['Hero'] },
+          { title: 'Testuale', types: ['Text'] },
+        ]}
+        registry={[heroDescriptor, textDescriptor]}
+        onInsert={vi.fn()}
+      />,
+    );
+
+    fireEvent.click(screen.getByText('Contenuto'));
+    fireEvent.click(screen.getByText('Testuale'));
+
+    expect(screen.getByRole('button', { name: 'Hero' })).toBeDefined();
+    expect(screen.getByRole('button', { name: 'Testo' })).toBeDefined();
   });
 });

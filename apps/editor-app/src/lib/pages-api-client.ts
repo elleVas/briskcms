@@ -84,6 +84,22 @@ export function deletePage(id: string): Promise<void> {
   return request(`/pages/${id}`, { method: 'DELETE' });
 }
 
+export interface DuplicatePageInput {
+  slug: string;
+  title: string;
+  description: string;
+}
+
+export function duplicatePage(
+  id: string,
+  input: DuplicatePageInput,
+): Promise<PageDto> {
+  return request(`/pages/${id}/duplicate`, {
+    method: 'POST',
+    body: JSON.stringify(input),
+  });
+}
+
 export interface PageVersionDto {
   id: string;
   tenantId: string;

@@ -1,5 +1,5 @@
 ---
-import type { Block, SeoMeta } from '@brisk/shared-types';
+import { DEFAULT_THEME_TOKENS, type Block, type SeoMeta } from '@brisk/shared-types';
 import type {
 	PublishedPageAncestorDto,
 	PublishedPageTranslationDto,
@@ -113,10 +113,19 @@ const theme = allowStyleOverrides
 			overridesEnabled: false,
 		};
 const themeFont = resolveThemeFont(theme.fontFamily);
+// Global Styles Editor (Fase 2a) — stessa gate di sopra: nessun token
+// personalizzato emesso quando gli override sono disabilitati.
+const tokens = allowStyleOverrides ? site.themeTokens : DEFAULT_THEME_TOKENS;
 const themeOverrideDeclarations = [
 	theme.primaryColor && `--primary: ${theme.primaryColor} !important;`,
 	theme.secondaryColor && `--secondary: ${theme.secondaryColor} !important;`,
 	themeFont && `--font-sans-value: ${themeFont.cssFontFamily} !important;`,
+	tokens.buttons.borderRadius &&
+		`--button-radius: ${tokens.buttons.borderRadius} !important;`,
+	tokens.buttons.paddingX &&
+		`--button-padding-x: ${tokens.buttons.paddingX} !important;`,
+	tokens.buttons.paddingY &&
+		`--button-padding-y: ${tokens.buttons.paddingY} !important;`,
 ]
 	.filter(Boolean)
 	.join(' ');
@@ -218,7 +227,10 @@ const themeOverrideDeclarations = [
 						{ 'brisk-header--sticky': headerSticky },
 					]}
 				>
-					<div class="flex flex-col gap-3">
+					<div
+						class="flex flex-col gap-3"
+						data-brisk-root-blocks={editable ? 'header' : undefined}
+					>
 						{header.map((block) => (
 							<BlockRenderer
 								block={block}
@@ -238,7 +250,10 @@ const themeOverrideDeclarations = [
 		{
 			footer && (
 				<footer class="border-t border-border bg-secondary px-6 py-12">
-					<div class="flex flex-col gap-3">
+					<div
+						class="flex flex-col gap-3"
+						data-brisk-root-blocks={editable ? 'footer' : undefined}
+					>
 						{footer.map((block) => (
 							<BlockRenderer
 								block={block}

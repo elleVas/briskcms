@@ -46,8 +46,12 @@ describe('usePreviewBridge', () => {
       activeDrag: null,
       dragEnded: null,
       patchBlock: expect.any(Function),
+      insertBlock: expect.any(Function),
+      removeBlock: expect.any(Function),
+      reorderBlocks: expect.any(Function),
       enterTextEdit: expect.any(Function),
       exitTextEdit: expect.any(Function),
+      selectBlock: expect.any(Function),
     });
   });
 
@@ -196,8 +200,12 @@ describe('usePreviewBridge', () => {
       activeDrag: null,
       dragEnded: null,
       patchBlock: expect.any(Function),
+      insertBlock: expect.any(Function),
+      removeBlock: expect.any(Function),
+      reorderBlocks: expect.any(Function),
       enterTextEdit: expect.any(Function),
       exitTextEdit: expect.any(Function),
+      selectBlock: expect.any(Function),
     });
   });
 
@@ -349,6 +357,95 @@ describe('usePreviewBridge', () => {
         v: PREVIEW_BRIDGE_VERSION,
         type: 'editor:patch-block',
         payload: { blockId: 'hero-1', html: '<div>new</div>' },
+      },
+      EXPECTED_ORIGIN,
+    );
+  });
+
+  it('insertBlock posts editor:insert-block to the iframe, at the expected origin', () => {
+    const { ref, contentWindow } = buildIframeRef();
+    if (!contentWindow) {
+      throw new Error('Test fixture iframe has no contentWindow');
+    }
+    const postMessageSpy = vi.spyOn(contentWindow, 'postMessage');
+    const { result } = renderHook(() => usePreviewBridge(ref, EXPECTED_ORIGIN));
+
+    result.current.insertBlock('<div>new</div>', 'container-1', 'sibling-1');
+
+    expect(postMessageSpy).toHaveBeenCalledWith(
+      {
+        source: PREVIEW_BRIDGE_SOURCE,
+        v: PREVIEW_BRIDGE_VERSION,
+        type: 'editor:insert-block',
+        payload: {
+          html: '<div>new</div>',
+          parentId: 'container-1',
+          beforeBlockId: 'sibling-1',
+        },
+      },
+      EXPECTED_ORIGIN,
+    );
+  });
+
+  it('removeBlock posts editor:remove-block to the iframe, at the expected origin', () => {
+    const { ref, contentWindow } = buildIframeRef();
+    if (!contentWindow) {
+      throw new Error('Test fixture iframe has no contentWindow');
+    }
+    const postMessageSpy = vi.spyOn(contentWindow, 'postMessage');
+    const { result } = renderHook(() => usePreviewBridge(ref, EXPECTED_ORIGIN));
+
+    result.current.removeBlock('hero-1');
+
+    expect(postMessageSpy).toHaveBeenCalledWith(
+      {
+        source: PREVIEW_BRIDGE_SOURCE,
+        v: PREVIEW_BRIDGE_VERSION,
+        type: 'editor:remove-block',
+        payload: { blockId: 'hero-1' },
+      },
+      EXPECTED_ORIGIN,
+    );
+  });
+
+  it('selectBlock sets selectedBlockId directly — no postMessage, unlike a real preview:click — so the Layers panel can select a block the canvas has no clickable pixel for (a child fully covering its parent)', () => {
+    const { ref, contentWindow } = buildIframeRef();
+    if (!contentWindow) {
+      throw new Error('Test fixture iframe has no contentWindow');
+    }
+    const postMessageSpy = vi.spyOn(contentWindow, 'postMessage');
+    const { result } = renderHook(() => usePreviewBridge(ref, EXPECTED_ORIGIN));
+
+    act(() => {
+      result.current.selectBlock('column-1');
+    });
+
+    expect(result.current.selectedBlockId).toBe('column-1');
+    expect(postMessageSpy).not.toHaveBeenCalled();
+
+    act(() => {
+      result.current.selectBlock(null);
+    });
+
+    expect(result.current.selectedBlockId).toBeNull();
+  });
+
+  it('reorderBlocks posts editor:reorder-blocks to the iframe, at the expected origin', () => {
+    const { ref, contentWindow } = buildIframeRef();
+    if (!contentWindow) {
+      throw new Error('Test fixture iframe has no contentWindow');
+    }
+    const postMessageSpy = vi.spyOn(contentWindow, 'postMessage');
+    const { result } = renderHook(() => usePreviewBridge(ref, EXPECTED_ORIGIN));
+
+    result.current.reorderBlocks(null, ['b', 'a']);
+
+    expect(postMessageSpy).toHaveBeenCalledWith(
+      {
+        source: PREVIEW_BRIDGE_SOURCE,
+        v: PREVIEW_BRIDGE_VERSION,
+        type: 'editor:reorder-blocks',
+        payload: { parentId: null, orderedIds: ['b', 'a'] },
       },
       EXPECTED_ORIGIN,
     );

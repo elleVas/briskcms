@@ -11,7 +11,15 @@ export interface PreviewBridgeState {
   blockRects: BlockRect[];
   isReady: boolean;
   hoveredBlockId: string | null;
-  /** Sola-lettura per ora (Giorno 2): nessuno stato persistito altrove, solo un riscontro visivo nell'overlay/Layers. */
+  /**
+   * Non più sola-lettura: oltre a un vero `preview:click` dall'iframe,
+   * anche `selectBlock` sotto lo scrive direttamente — serve al pannello
+   * Livelli per selezionare un blocco che sul canvas è completamente
+   * coperto da un suo figlio (es. una Colonna che contiene una sola
+   * Galleria a tutta larghezza: nessun pixel del canvas appartiene più
+   * alla Colonna stessa), dove cliccare sul canvas selezionerebbe sempre
+   * il figlio, mai il genitore.
+   */
   selectedBlockId: string | null;
   /**
    * L'ultimo doppio click ricevuto (Giorno 4) — un OGGETTO NUOVO ad ogni
@@ -49,15 +57,33 @@ export interface PreviewBridgeState {
   dragEnded: { blockId: string; pointer: { x: number; y: number } } | null;
   /** Sostituisce un blocco già renderizzato con l'HTML del frammento ottenuto da render-block-fragment (Giorno 3) — vedi block-fragment-api-client.ts. */
   patchBlock: (blockId: string, html: string) => void;
+  /** Inserisce un blocco MAI renderizzato prima (inserimento/duplicazione) — vedi EditorInsertBlockMessage. */
+  insertBlock: (
+    html: string,
+    parentId: string | null,
+    beforeBlockId: string | null,
+  ) => void;
+  /** Rimuove un blocco già renderizzato dal DOM dell'iframe — vedi EditorRemoveBlockMessage. */
+  removeBlock: (blockId: string) => void;
+  /** Riordina i fratelli esistenti (già tutti renderizzati) — vedi EditorReorderBlocksMessage. */
+  reorderBlocks: (parentId: string | null, orderedIds: string[]) => void;
   /** Monta TipTap sul posto nell'iframe (Giorno 4) — vedi editor:enter-text-edit. */
   enterTextEdit: (blockId: string, field: string) => void;
   /** Smonta l'istanza TipTap corrente nell'iframe, se c'è. */
   exitTextEdit: () => void;
+  /** Seleziona un blocco direttamente da questo lato (pannello Livelli), senza passare da un vero `preview:click` sul canvas — vedi il commento su `selectedBlockId` sopra. */
+  selectBlock: (blockId: string | null) => void;
 }
 
 type PreviewBridgeMessageState = Omit<
   PreviewBridgeState,
-  'patchBlock' | 'enterTextEdit' | 'exitTextEdit'
+  | 'patchBlock'
+  | 'insertBlock'
+  | 'removeBlock'
+  | 'reorderBlocks'
+  | 'enterTextEdit'
+  | 'exitTextEdit'
+  | 'selectBlock'
 >;
 
 const initialState: PreviewBridgeMessageState = {
@@ -183,6 +209,9 @@ export function usePreviewBridge(
         case 'editor:patch-block':
         case 'editor:enter-text-edit':
         case 'editor:exit-text-edit':
+        case 'editor:insert-block':
+        case 'editor:remove-block':
+        case 'editor:reorder-blocks':
           // Genitore -> iframe: mai attesi in arrivo qui, il genitore è chi
           // li invia (vedi patchBlock/enterTextEdit/exitTextEdit sotto).
           // Ignorati difensivamente.
@@ -202,6 +231,51 @@ export function usePreviewBridge(
           v: PREVIEW_BRIDGE_VERSION,
           type: 'editor:patch-block',
           payload: { blockId, html },
+        },
+        expectedOrigin,
+      );
+    },
+    [iframeRef, expectedOrigin],
+  );
+
+  const insertBlock = useCallback(
+    (html: string, parentId: string | null, beforeBlockId: string | null) => {
+      iframeRef.current?.contentWindow?.postMessage(
+        {
+          source: PREVIEW_BRIDGE_SOURCE,
+          v: PREVIEW_BRIDGE_VERSION,
+          type: 'editor:insert-block',
+          payload: { html, parentId, beforeBlockId },
+        },
+        expectedOrigin,
+      );
+    },
+    [iframeRef, expectedOrigin],
+  );
+
+  const removeBlock = useCallback(
+    (blockId: string) => {
+      iframeRef.current?.contentWindow?.postMessage(
+        {
+          source: PREVIEW_BRIDGE_SOURCE,
+          v: PREVIEW_BRIDGE_VERSION,
+          type: 'editor:remove-block',
+          payload: { blockId },
+        },
+        expectedOrigin,
+      );
+    },
+    [iframeRef, expectedOrigin],
+  );
+
+  const reorderBlocks = useCallback(
+    (parentId: string | null, orderedIds: string[]) => {
+      iframeRef.current?.contentWindow?.postMessage(
+        {
+          source: PREVIEW_BRIDGE_SOURCE,
+          v: PREVIEW_BRIDGE_VERSION,
+          type: 'editor:reorder-blocks',
+          payload: { parentId, orderedIds },
         },
         expectedOrigin,
       );
@@ -236,5 +310,18 @@ export function usePreviewBridge(
     );
   }, [iframeRef, expectedOrigin]);
 
-  return { ...state, patchBlock, enterTextEdit, exitTextEdit };
+  const selectBlock = useCallback((blockId: string | null) => {
+    setState((prev) => ({ ...prev, selectedBlockId: blockId }));
+  }, []);
+
+  return {
+    ...state,
+    patchBlock,
+    insertBlock,
+    removeBlock,
+    reorderBlocks,
+    enterTextEdit,
+    exitTextEdit,
+    selectBlock,
+  };
 }

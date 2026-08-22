@@ -23,6 +23,9 @@ const baseSite: PublishedSiteDto = {
     faviconUrl: null,
     overridesEnabled: true,
   },
+  themeTokens: {
+    buttons: { borderRadius: null, paddingX: null, paddingY: null },
+  },
 };
 
 const seoMeta = { title: 'Chi siamo', description: 'La nostra storia' };

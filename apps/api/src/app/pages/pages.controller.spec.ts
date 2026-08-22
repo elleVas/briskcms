@@ -129,6 +129,51 @@ describe('PagesController (unit)', () => {
     ).rejects.toThrow(ConflictException);
   });
 
+  it('duplicate maps a PageNotFoundError to a NotFoundException', async () => {
+    pageRepository.findById.mockResolvedValue(null);
+
+    await expect(
+      controller.duplicate('missing-id', {
+        slug: 'home-copia',
+        title: 'Home (copia)',
+        description: '',
+      }),
+    ).rejects.toThrow(NotFoundException);
+  });
+
+  it('duplicate maps a PageSlugAlreadyExistsError to a ConflictException', async () => {
+    pageRepository.findById.mockResolvedValue(buildPage());
+    pageRepository.findBySlug.mockResolvedValue(buildPage({ id: 'page-2' }));
+
+    await expect(
+      controller.duplicate('page-1', {
+        slug: 'home',
+        title: 'Home (copia)',
+        description: '',
+      }),
+    ).rejects.toThrow(ConflictException);
+  });
+
+  it('duplicate saves an independent draft copy and returns it', async () => {
+    const source = buildPage({
+      content: [{ type: 'Hero', props: { title: 'Ciao' } }],
+    });
+    pageRepository.findById.mockResolvedValue(source);
+    pageRepository.findBySlug.mockResolvedValue(null);
+
+    const result = await controller.duplicate('page-1', {
+      slug: 'home-copia',
+      title: 'Home (copia)',
+      description: 'Nuova descrizione',
+    });
+
+    expect(result.id).not.toBe(source.id);
+    expect(result.slug).toBe('home-copia');
+    expect(result.status).toBe('draft');
+    expect(pageRepository.save).toHaveBeenCalled();
+    expect(pageVersionRepository.save).toHaveBeenCalled();
+  });
+
   it('createPreviewToken throws a NotFoundException when the page does not exist', async () => {
     pageRepository.findById.mockResolvedValue(null);
 

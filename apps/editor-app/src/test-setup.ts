@@ -39,3 +39,12 @@ window.matchMedia ??= ((query: string) => ({
   removeEventListener: () => undefined,
   dispatchEvent: () => false,
 })) as typeof window.matchMedia;
+
+// jsdom doesn't implement the Pointer Capture methods — block-picker.tsx's
+// drag-to-insert (Pointer Capture instead of a real HTML5 drag, so the
+// drag keeps receiving events even while the cursor is visually over the
+// iframe) calls `setPointerCapture` on every pointerdown, real or
+// simulated.
+Element.prototype.setPointerCapture ??= () => undefined;
+Element.prototype.releasePointerCapture ??= () => undefined;
+Element.prototype.hasPointerCapture ??= () => false;

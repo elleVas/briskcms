@@ -14,6 +14,7 @@ import {
   updateSiteLocaleSettings,
   updateSiteSeoSettings,
   updateSiteThemeSettings,
+  updateSiteThemeTokens,
 } from '@brisk/application';
 import { SiteNotFoundError } from '@brisk/domain-core';
 import type { SiteRepositoryPort, TenantContextPort } from '@brisk/ports';
@@ -30,6 +31,8 @@ import {
   updateSeoSettingsBodySchema,
   type UpdateThemeSettingsBody,
   updateThemeSettingsBodySchema,
+  type UpdateThemeTokensBody,
+  updateThemeTokensBodySchema,
 } from './sites.schemas.js';
 import { SITE_REPOSITORY, TENANT_CONTEXT } from './sites.tokens.js';
 
@@ -143,6 +146,25 @@ export class SitesController {
           tenantId: this.tenantContext.getCurrentTenantId(),
           siteId: id,
           ...body,
+        },
+      );
+      return site.toProps();
+    });
+  }
+
+  @Patch(':id/theme-tokens')
+  async updateThemeTokens(
+    @Param('id') id: string,
+    @Body(new ZodValidationPipe(updateThemeTokensBodySchema))
+    body: UpdateThemeTokensBody,
+  ) {
+    return this.handleDomainErrors(async () => {
+      const site = await updateSiteThemeTokens(
+        { siteRepository: this.siteRepository },
+        {
+          tenantId: this.tenantContext.getCurrentTenantId(),
+          siteId: id,
+          tokens: body,
         },
       );
       return site.toProps();

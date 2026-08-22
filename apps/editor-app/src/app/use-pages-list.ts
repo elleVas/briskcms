@@ -5,8 +5,10 @@ import { slugify } from '@brisk/shared-types';
 import {
   createPage as apiCreatePage,
   deletePage as apiDeletePage,
+  duplicatePage as apiDuplicatePage,
   publishPage as apiPublishPage,
   setPageParent as apiSetPageParent,
+  type DuplicatePageInput,
 } from '../lib/pages-api-client.js';
 
 // Fetching the list itself is the route loader's job (see
@@ -63,6 +65,20 @@ export function usePagesList(siteId: string, defaultLocale: string) {
     onSuccess: invalidateList,
   });
 
+  const duplicatePageMutation = useMutation({
+    mutationFn: ({
+      pageId,
+      input,
+    }: {
+      pageId: string;
+      input: DuplicatePageInput;
+    }) => apiDuplicatePage(pageId, input),
+    onSuccess: async (page) => {
+      await invalidateList();
+      await navigate({ to: '/pages/$pageId', params: { pageId: page.id } });
+    },
+  });
+
   const setPageParentMutation = useMutation({
     mutationFn: ({
       pageId,
@@ -80,6 +96,9 @@ export function usePagesList(siteId: string, defaultLocale: string) {
     isCreating: createPageMutation.isPending,
     deletePage: deletePageMutation.mutateAsync,
     isDeleting: deletePageMutation.isPending,
+    duplicatePage: (pageId: string, input: DuplicatePageInput) =>
+      duplicatePageMutation.mutateAsync({ pageId, input }),
+    isDuplicating: duplicatePageMutation.isPending,
     publishPage: publishPageMutation.mutateAsync,
     isPublishing: publishPageMutation.isPending,
     setPageParent: (pageId: string, parentId: string | null) =>

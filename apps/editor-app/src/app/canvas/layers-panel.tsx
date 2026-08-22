@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import {
   closestCenter,
   DndContext,
@@ -13,6 +14,7 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { ChevronDown, ChevronRight } from 'lucide-react';
 import type { Block } from '@brisk/shared-types';
 
 export interface LayersPanelProps {
@@ -28,6 +30,16 @@ export interface LayersPanelProps {
    * visuale, Giorno 3: il drag diretto sul canvas copre il resto).
    */
   onReorderRoot?: (orderedIds: string[]) => void;
+  /**
+   * Seleziona un blocco cliccando direttamente la sua riga — l'unico modo
+   * affidabile di selezionare un blocco-contenitore quando un suo figlio
+   * lo copre per intero sul canvas (es. una Colonna con dentro una sola
+   * Galleria a tutta larghezza: nessun pixel del canvas appartiene più
+   * alla Colonna, ogni click lì selezionerebbe sempre la Galleria).
+   * Prima di questa prop il pannello Livelli mostrava hover/selezione ma
+   * non offriva alcun modo di AGIRE su una riga (bug segnalato dal vivo).
+   */
+  onSelect: (blockId: string) => void;
 }
 
 interface LayerRowProps {
@@ -35,12 +47,17 @@ interface LayerRowProps {
   hoveredBlockId: string | null;
   selectedBlockId: string | null;
   depth: number;
+  onSelect: (blockId: string) => void;
+  collapsedIds: ReadonlySet<string>;
+  onToggleCollapsed: (blockId: string) => void;
 }
 
 function rowClassName(isSelected: boolean, isHovered: boolean): string {
-  if (isSelected) return 'rounded bg-primary/10 px-2 py-1 text-sm font-medium';
-  if (isHovered) return 'rounded bg-muted px-2 py-1 text-sm';
-  return 'px-2 py-1 text-sm text-muted-foreground';
+  const base = 'w-full cursor-pointer text-left';
+  if (isSelected)
+    return `${base} rounded bg-primary/10 px-2 py-1 text-sm font-medium`;
+  if (isHovered) return `${base} rounded bg-muted px-2 py-1 text-sm`;
+  return `${base} px-2 py-1 text-sm text-muted-foreground`;
 }
 
 /** Isolata per essere testata senza dover simulare un drag reale di dnd-kit (pointer events + misura del DOM) in jsdom. `null` = drop senza effetto (nessun target, stesso punto, id sconosciuto). */
@@ -65,30 +82,63 @@ function LayerRow({
   hoveredBlockId,
   selectedBlockId,
   depth,
+  onSelect,
+  collapsedIds,
+  onToggleCollapsed,
 }: LayerRowProps) {
   const isSelected = block.id === selectedBlockId;
   const isHovered = block.id === hoveredBlockId;
+  const blockId = block.id;
+  const hasChildren = Boolean(block.children && block.children.length > 0);
+  const isCollapsed = Boolean(blockId && collapsedIds.has(blockId));
 
   return (
     <li>
-      <div
-        data-testid="layer-row"
-        data-block-id={block.id}
-        data-state={isSelected ? 'selected' : isHovered ? 'hovered' : 'idle'}
-        className={rowClassName(isSelected, isHovered)}
-        style={{ paddingLeft: depth * 12 + 8 }}
-      >
-        {block.type}
+      <div className="flex items-center" style={{ paddingLeft: depth * 12 }}>
+        {hasChildren ? (
+          <button
+            type="button"
+            aria-label={isCollapsed ? 'Espandi' : 'Comprimi'}
+            className="flex h-5 w-5 shrink-0 items-center justify-center text-muted-foreground hover:text-foreground"
+            onClick={() => blockId && onToggleCollapsed(blockId)}
+          >
+            {isCollapsed ? (
+              <ChevronRight size={14} />
+            ) : (
+              <ChevronDown size={14} />
+            )}
+          </button>
+        ) : (
+          <span className="w-5 shrink-0" />
+        )}
+        <button
+          type="button"
+          data-testid="layer-row"
+          data-block-id={blockId}
+          data-state={isSelected ? 'selected' : isHovered ? 'hovered' : 'idle'}
+          className={rowClassName(isSelected, isHovered)}
+          disabled={!blockId}
+          onClick={() => {
+            if (blockId) {
+              onSelect(blockId);
+            }
+          }}
+        >
+          {block.type}
+        </button>
       </div>
-      {block.children && block.children.length > 0 && (
+      {hasChildren && !isCollapsed && (
         <ul>
-          {block.children.map((child, index) => (
+          {block.children?.map((child, index) => (
             <LayerRow
               key={child.id ?? index}
               block={child}
               hoveredBlockId={hoveredBlockId}
               selectedBlockId={selectedBlockId}
               depth={depth + 1}
+              onSelect={onSelect}
+              collapsedIds={collapsedIds}
+              onToggleCollapsed={onToggleCollapsed}
             />
           ))}
         </ul>
@@ -133,8 +183,38 @@ export function LayersPanel({
   hoveredBlockId,
   selectedBlockId,
   onReorderRoot,
+  onSelect,
 }: LayersPanelProps) {
-  const sensors = useSensors(useSensor(PointerSensor));
+  // Espansi di default (nessuna sorpresa per chi già usa il pannello) — un
+  // contenitore compare qui solo dopo che l'utente stesso lo comprime,
+  // richiesto dal vivo: con molti blocchi annidati l'elenco diventava
+  // troppo lungo da scorrere per trovarne uno.
+  const [collapsedIds, setCollapsedIds] = useState<Set<string>>(new Set());
+
+  function toggleCollapsed(blockId: string): void {
+    setCollapsedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(blockId)) {
+        next.delete(blockId);
+      } else {
+        next.add(blockId);
+      }
+      return next;
+    });
+  }
+
+  // Senza una soglia di attivazione, dnd-kit cattura il puntatore al primo
+  // pointerdown su una riga — ANCHE un semplice click, senza alcun
+  // movimento, verrebbe trattato come un possibile inizio di drag,
+  // interferendo con l'onClick del bottone-riga (visto dal vivo in un
+  // browser reale: il click per selezionare smetteva di funzionare — un
+  // test con jsdom non lo rilevava, perché jsdom non replica la stessa
+  // cattura del puntatore di un browser vero). Un piccolo scarto di
+  // distanza minima (pattern raccomandato da dnd-kit stesso) distingue un
+  // click normale da un vero drag.
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
+  );
 
   if (blocks.length === 0) {
     return null;
@@ -171,6 +251,9 @@ export function LayersPanel({
             hoveredBlockId={hoveredBlockId}
             selectedBlockId={selectedBlockId}
             depth={0}
+            onSelect={onSelect}
+            collapsedIds={collapsedIds}
+            onToggleCollapsed={toggleCollapsed}
           />
         ))}
       </ul>
@@ -193,6 +276,9 @@ export function LayersPanel({
               hoveredBlockId={hoveredBlockId}
               selectedBlockId={selectedBlockId}
               depth={0}
+              onSelect={onSelect}
+              collapsedIds={collapsedIds}
+              onToggleCollapsed={toggleCollapsed}
             />
           ))}
         </ul>

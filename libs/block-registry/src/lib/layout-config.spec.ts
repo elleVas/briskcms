@@ -3,8 +3,8 @@ import { pageBlocks } from './config.js';
 import { headerFooterBlocks } from './layout-config.js';
 
 describe('headerFooterBlocks', () => {
-  it('registers all 12 header/footer blocks, each with a unique type', () => {
-    expect(headerFooterBlocks).toHaveLength(12);
+  it('registers all 11 header/footer blocks, each with a unique type', () => {
+    expect(headerFooterBlocks).toHaveLength(11);
     const types = headerFooterBlocks.map((block) => block.type);
     expect(new Set(types).size).toBe(types.length);
   });
@@ -20,11 +20,11 @@ describe('headerFooterBlocks', () => {
     }
   });
 
-  it('has 9 blocks exclusive to header/footer, absent from the page palette', () => {
+  it('has 8 blocks exclusive to header/footer, absent from the page palette', () => {
     const pageTypes = new Set(pageBlocks.map((block) => block.type));
     const exclusive = headerFooterBlocks.filter(
       (block) => !pageTypes.has(block.type),
     );
-    expect(exclusive).toHaveLength(9);
+    expect(exclusive).toHaveLength(8);
   });
 });

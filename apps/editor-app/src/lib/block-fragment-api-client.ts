@@ -1,3 +1,4 @@
+import type { Block } from '@brisk/shared-types';
 import { PUBLIC_SITE_URL } from './public-site-url.js';
 
 export interface RenderBlockFragmentInput {
@@ -6,6 +7,8 @@ export interface RenderBlockFragmentInput {
   blockId: string;
   blockType: string;
   props: Record<string, unknown>;
+  /** I figli correnti del blocco (se contenitore), noti già lato client — evita che il server li ricostruisca leggendo la bozza salvata, che può non aver ancora recepito il salvataggio in corso in parallelo. */
+  children?: Block[];
 }
 
 /**
