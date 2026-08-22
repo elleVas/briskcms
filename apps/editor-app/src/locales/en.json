@@ -243,15 +243,6 @@
     "open": "Global styles",
     "title": "Global styles",
     "loading": "Loading...",
-    "categories": {
-      "colors": "Colors",
-      "buttons": "Buttons"
-    },
-    "buttonRadiusLabel": "Corner radius",
-    "buttonRadiusPlaceholder": "e.g. 6px, 9999px for a pill",
-    "buttonPaddingXLabel": "Horizontal padding",
-    "buttonPaddingYLabel": "Vertical padding",
-    "paddingPlaceholder": "e.g. 1.25rem — empty for the theme default",
     "save": "Save",
     "saving": "Saving...",
     "close": "Close"

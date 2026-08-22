@@ -383,7 +383,10 @@ const wrapperProps = editable
 }
 {
   block.type === 'PromoBar' && (
-    <PromoBar {...promoBarPropsSchema.parse(block.props)} />
+    <PromoBar
+      {...promoBarPropsSchema.parse(block.props)}
+      styleOverride={block.styleOverride}
+    />
   )
 }
 {
@@ -454,12 +457,18 @@ const wrapperProps = editable
 }
 {
   block.type === 'Banner' && (
-    <Banner {...bannerPropsSchema.parse(block.props)} />
+    <Banner
+      {...bannerPropsSchema.parse(block.props)}
+      styleOverride={block.styleOverride}
+    />
   )
 }
 {
   block.type === 'Button' && (
-    <Button {...buttonPropsSchema.parse(block.props)} />
+    <Button
+      {...buttonPropsSchema.parse(block.props)}
+      styleOverride={block.styleOverride}
+    />
   )
 }
 {

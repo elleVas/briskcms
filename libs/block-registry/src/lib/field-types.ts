@@ -1,4 +1,5 @@
 import type { ComponentType } from 'react';
+import type { BlockStyleOverride } from '@brisk/shared-types';
 
 /**
  * Sostituisce Puck's `Fields<T>` (docs/adr/0007) — niente `resolveFields`/
@@ -84,4 +85,13 @@ export interface BlockDescriptor<Props = Record<string, unknown>> {
   isContainer?: boolean;
   /** Nessuna lista = qualunque blocco registrato può entrarci (es. Column/Container). */
   allowedChildTypes?: string[];
+  /**
+   * Quali proprietà condivise di stile (docs/adr/0022) hanno senso per
+   * questo tipo — non ogni blocco usa ogni proprietà (un Testo non ha un
+   * "border radius" sensato). Assente/vuoto = nessun pulsante "Stile" né
+   * popover di override per-istanza per questo tipo: il rollout è
+   * incrementale, non un'aggiunta meccanica a tutti i 48+ blocchi in un
+   * colpo solo (vedi l'ADR per il perché).
+   */
+  stylableProperties?: (keyof BlockStyleOverride)[];
 }

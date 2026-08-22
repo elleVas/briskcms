@@ -34,3 +34,5 @@ explicitly supersedes it (status `Superseded by ADR-000X`).
 | [0019](0019-canvas-inline-text-editing.md)                              | Canvas inline text editing via Puck's `contentEditable`                      | Accepted |
 | [0020](0020-form-builder-anti-spam-newsletter-attachments-multistep.md) | Form builder extensions: anti-spam, newsletter, file attachments, multi-step | Accepted |
 | [0021](0021-site-theming-filesystem-packages-and-style-settings.md)     | Site theming: filesystem theme packages + DB-backed style settings           | Accepted |
+| [0022](0022-component-and-instance-style-overrides.md)                  | Component-level and instance-level style overrides                           | Accepted |
+| [0023](0023-icon-system-theme-provided-manifest.md)                     | Icon system: theme-provided manifest, curated default set                    | Accepted |

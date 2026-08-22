@@ -1,20 +1,17 @@
 ---
-import type { ButtonProps } from '@brisk/shared-types';
+import type { BlockStyleOverride, ButtonProps } from '@brisk/shared-types';
+import { buildBlockInstanceStyle } from '../../lib/block-style-overrides.js';
 import { localePath } from '../../lib/locale-path.js';
 
-type Props = ButtonProps;
+type Props = ButtonProps & { styleOverride?: BlockStyleOverride };
 
-const { label, linkType, page, url, variant, colorOverride } = Astro.props;
+const { label, linkType, page, url, variant, styleOverride } = Astro.props;
 const href =
   linkType === 'page' && page ? localePath(page.locale, page.slug) : url;
 
-// Per-instance escape hatch (docs/adr/0021, per-block granularity):
-// scoping `--primary`/`--primary-foreground` locally on this element means
-// `.brisk-button`'s existing var(--primary) usage below picks it up
-// automatically — no separate color logic to duplicate.
-const overrideStyle = colorOverride
-  ? { '--primary': colorOverride, '--primary-foreground': '#fff' }
-  : undefined;
+// Override per-istanza (docs/adr/0022) — inline sull'elemento reale, non
+// su un wrapper: funziona identico in editor e sul sito pubblicato.
+const instanceStyle = buildBlockInstanceStyle(styleOverride);
 ---
 
 <a
@@ -23,7 +20,7 @@ const overrideStyle = colorOverride
     { 'brisk-button--secondary': variant === 'secondary' },
   ]}
   href={href}
-  style={overrideStyle}
+  style={instanceStyle}
   data-brisk-field="label"
 >
   {label}
@@ -32,15 +29,16 @@ const overrideStyle = colorOverride
 <style>
   .brisk-button {
     display: inline-block;
-    padding: var(--button-padding-y, 0.5rem) var(--button-padding-x, 1.25rem);
-    border-radius: var(--button-radius, var(--radius));
-    background: var(--primary);
-    color: var(--primary-foreground);
+    padding: var(--brisk-override-padding-y, 0.5rem)
+      var(--brisk-override-padding-x, 1.25rem);
+    border-radius: var(--brisk-override-radius, var(--radius));
+    background: var(--brisk-override-bg, var(--primary));
+    color: var(--brisk-override-text, var(--primary-foreground));
     text-decoration: none;
-    border: 1px solid var(--primary);
+    border: 1px solid var(--brisk-override-bg, var(--primary));
   }
   .brisk-button--secondary {
     background: transparent;
-    color: var(--primary);
+    color: var(--brisk-override-bg, var(--primary));
   }
 </style>

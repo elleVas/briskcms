@@ -6,6 +6,7 @@ import type {
 	PublishedSiteDto,
 } from '../lib/public-api-client.js';
 import BlockRenderer from '../components/BlockRenderer.astro';
+import { buildBlockStyleOverridesCss } from '../lib/block-style-overrides.js';
 import { editorAppUrl } from '../lib/editor-app-url.js';
 import { localePath } from '../lib/locale-path.js';
 import { buildSchemaOrgGraph } from '../lib/schema-org.js';
@@ -120,15 +121,16 @@ const themeOverrideDeclarations = [
 	theme.primaryColor && `--primary: ${theme.primaryColor} !important;`,
 	theme.secondaryColor && `--secondary: ${theme.secondaryColor} !important;`,
 	themeFont && `--font-sans-value: ${themeFont.cssFontFamily} !important;`,
-	tokens.buttons.borderRadius &&
-		`--button-radius: ${tokens.buttons.borderRadius} !important;`,
-	tokens.buttons.paddingX &&
-		`--button-padding-x: ${tokens.buttons.paddingX} !important;`,
-	tokens.buttons.paddingY &&
-		`--button-padding-y: ${tokens.buttons.paddingY} !important;`,
 ]
 	.filter(Boolean)
 	.join(' ');
+// Override "a livello di componente" (docs/adr/0022) — una regola CSS per
+// tipo di blocco stilizzato, non un `:root` unico come sopra: ogni tipo
+// ha il proprio scoping via `[data-brisk-block-type]`, così solo i
+// blocchi di quel tipo vedono il nuovo valore.
+const blockStyleOverridesCss = buildBlockStyleOverridesCss(
+	tokens.blockStyles,
+);
 ---
 
 <html lang={locale}>
@@ -165,6 +167,9 @@ const themeOverrideDeclarations = [
 			themeOverrideDeclarations && (
 				<style set:html={`:root { ${themeOverrideDeclarations} }`} />
 			)
+		}
+		{
+			blockStyleOverridesCss && <style set:html={blockStyleOverridesCss} />
 		}
 		<meta name="generator" content={Astro.generator} />
 		<title>{seoMeta.title}</title>

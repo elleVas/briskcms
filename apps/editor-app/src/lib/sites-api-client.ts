@@ -1,4 +1,5 @@
 import type {
+  BlockStyleOverride,
   LocaleSettings,
   OpeningHoursDay,
   ThemeSettings,
@@ -103,10 +104,11 @@ export function updateThemeSettings(
 
 export function updateThemeTokens(
   id: string,
-  input: Partial<ThemeTokens>,
+  blockType: string,
+  style: BlockStyleOverride,
 ): Promise<SiteDto> {
   return request(`/sites/${id}/theme-tokens`, {
     method: 'PATCH',
-    body: JSON.stringify(input),
+    body: JSON.stringify({ blockType, style }),
   });
 }

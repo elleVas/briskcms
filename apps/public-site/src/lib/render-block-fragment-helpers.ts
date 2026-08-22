@@ -1,4 +1,4 @@
-import type { Block } from '@brisk/shared-types';
+import type { Block, BlockStyleOverride } from '@brisk/shared-types';
 import { editorAppUrl } from './editor-app-url.js';
 
 export interface RenderBlockFragmentBody {
@@ -16,6 +16,8 @@ export interface RenderBlockFragmentBody {
    * garanzia di vedere il salvataggio appena fatto.
    */
   children?: Block[];
+  /** Override per-istanza (docs/adr/0022) — senza questo, cambiare lo stile di UN blocco dal canvas non si vedrebbe finché l'iframe non ricarica. */
+  styleOverride?: BlockStyleOverride;
 }
 
 /**
@@ -42,7 +44,10 @@ export function isValidRenderBlockFragmentBody(
     typeof candidate['props'] === 'object' &&
     candidate['props'] !== null &&
     (candidate['children'] === undefined ||
-      Array.isArray(candidate['children']))
+      Array.isArray(candidate['children'])) &&
+    (candidate['styleOverride'] === undefined ||
+      (typeof candidate['styleOverride'] === 'object' &&
+        candidate['styleOverride'] !== null))
   );
 }
 

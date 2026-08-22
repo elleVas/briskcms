@@ -51,6 +51,21 @@ describe('isValidRenderBlockFragmentBody', () => {
       false,
     );
   });
+
+  it('accepts an optional styleOverride object', () => {
+    expect(
+      isValidRenderBlockFragmentBody({
+        ...valid,
+        styleOverride: { backgroundColor: '#ff0000' },
+      }),
+    ).toBe(true);
+  });
+
+  it('rejects a styleOverride that is not an object', () => {
+    expect(
+      isValidRenderBlockFragmentBody({ ...valid, styleOverride: 'nope' }),
+    ).toBe(false);
+  });
 });
 
 describe('renderBlockFragmentCorsHeaders', () => {

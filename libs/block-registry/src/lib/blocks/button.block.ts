@@ -1,6 +1,5 @@
 import type { ButtonProps } from '@brisk/shared-types';
 import { customField, type BlockDescriptor } from '../field-types.js';
-import { ColorPickerField } from '../fields/color-picker-field.js';
 import { linkTypeField } from '../fields/link-type-field.js';
 import { PagePickerField } from '../fields/page-picker-field.js';
 
@@ -14,7 +13,6 @@ export const buttonBlock: BlockDescriptor<ButtonProps> = {
     page: null,
     url: '',
     variant: 'primary',
-    colorOverride: null,
   },
   fields: [
     { kind: 'text', key: 'label', label: 'Testo', inlineEditable: true },
@@ -30,10 +28,15 @@ export const buttonBlock: BlockDescriptor<ButtonProps> = {
         { label: 'Secondario', value: 'secondary' },
       ],
     },
-    customField(
-      'colorOverride',
-      'Colore personalizzato (sovrascrive il tema)',
-      ColorPickerField,
-    ),
+  ],
+  // Colore/bordi/padding — editabili per TUTTI i Button del sito (pulsante
+  // "Stile" nella toolbar) o solo per questa istanza (popover sul blocco
+  // selezionato), docs/adr/0022. Sostituisce il vecchio `colorOverride`.
+  stylableProperties: [
+    'backgroundColor',
+    'textColor',
+    'borderRadius',
+    'paddingX',
+    'paddingY',
   ],
 };

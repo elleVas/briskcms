@@ -13,7 +13,6 @@ vi.mock('../lib/sites-api-client.js', async (importOriginal) => {
     ...actual,
     getSite: vi.fn(),
     updateThemeSettings: vi.fn(),
-    updateThemeTokens: vi.fn(),
   };
 });
 
@@ -72,7 +71,7 @@ describe('GlobalStylesDialog', () => {
     );
   });
 
-  it('defaults to the Colori tab with both colors off when never customized', async () => {
+  it('shows both colors off when never customized', async () => {
     vi.mocked(api.getSite).mockResolvedValue(buildSite());
     renderDialog(true);
 
@@ -112,25 +111,6 @@ describe('GlobalStylesDialog', () => {
           fontFamily: 'inter',
         }),
       ),
-    );
-  });
-
-  it('switches to the Bottoni tab and saves button tokens', async () => {
-    vi.mocked(api.getSite).mockResolvedValue(buildSite());
-    vi.mocked(api.updateThemeTokens).mockResolvedValue(buildSite());
-    renderDialog(true);
-    await waitFor(() => screen.getByText('Colore primario'));
-
-    fireEvent.click(screen.getByText('Bottoni'));
-    fireEvent.change(screen.getByLabelText('Raggio angoli'), {
-      target: { value: '9999px' },
-    });
-    fireEvent.click(screen.getByRole('button', { name: /^salva$/i }));
-
-    await waitFor(() =>
-      expect(api.updateThemeTokens).toHaveBeenCalledWith('site-1', {
-        buttons: { borderRadius: '9999px', paddingX: null, paddingY: null },
-      }),
     );
   });
 

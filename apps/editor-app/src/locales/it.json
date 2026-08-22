@@ -243,15 +243,6 @@
     "open": "Stile globale",
     "title": "Stile globale",
     "loading": "Caricamento...",
-    "categories": {
-      "colors": "Colori",
-      "buttons": "Bottoni"
-    },
-    "buttonRadiusLabel": "Raggio angoli",
-    "buttonRadiusPlaceholder": "es. 6px, 9999px per un pill",
-    "buttonPaddingXLabel": "Padding orizzontale",
-    "buttonPaddingYLabel": "Padding verticale",
-    "paddingPlaceholder": "es. 1.25rem — vuoto per il default del tema",
     "save": "Salva",
     "saving": "Salvataggio in corso...",
     "close": "Chiudi"

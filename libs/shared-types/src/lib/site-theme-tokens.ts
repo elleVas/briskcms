@@ -9,39 +9,53 @@ import { z } from 'zod';
  */
 export const cssLengthTokenSchema = z.string().min(1).nullable();
 
-/**
- * Categoria "Bottoni" del Global Styles Editor (piano editor visuale, parte
- * 2, Fase 2a) — la prima categoria di `themeTokens` oltre ai colori
- * esistenti (`ThemeSettings.primaryColor`/`secondaryColor`, che restano
- * lì: non duplicati qui). Ogni nuova categoria futura (Typography, Cards,
- * Tables, Footer — vedi il piano) si aggiunge come nuovo campo opzionale
- * qui accanto, mai sostituendo questo shape.
- */
-export const buttonThemeTokensSchema = z.object({
-  borderRadius: cssLengthTokenSchema,
-  paddingX: cssLengthTokenSchema,
-  paddingY: cssLengthTokenSchema,
-});
-export type ButtonThemeTokens = z.infer<typeof buttonThemeTokensSchema>;
+/** Un colore CSS grezzo (qualunque sintassi valida — hex, oklch, var(...)). `null` = non personalizzato. */
+export const cssColorTokenSchema = z.string().min(1).nullable();
 
+/**
+ * Le proprietà di stile che un blocco può rendere sovrascrivibili — una
+ * SOLA forma condivisa da ogni tipo di blocco (docs/adr/0022), non un
+ * campo Zod aggiunto a mano per ciascuno dei 48+ tipi: non ogni blocco usa
+ * ogni proprietà (un Testo non ha un "border radius" sensato), è
+ * `BlockDescriptor.stylableProperties` a dichiarare quali di queste sono
+ * effettivamente rilevanti per un dato tipo.
+ */
+export const blockStyleOverrideSchema = z.object({
+  backgroundColor: cssColorTokenSchema.optional(),
+  textColor: cssColorTokenSchema.optional(),
+  borderRadius: cssLengthTokenSchema.optional(),
+  paddingX: cssLengthTokenSchema.optional(),
+  paddingY: cssLengthTokenSchema.optional(),
+});
+export type BlockStyleOverride = z.infer<typeof blockStyleOverrideSchema>;
+
+/**
+ * Override "a livello di componente" (docs/adr/0022) — sostituisce la
+ * vecchia forma fissa `{ buttons: {...} }` con una mappa generica per
+ * tipo di blocco: qualunque tipo può ricevere un override senza
+ * richiedere un nuovo campo Zod dedicato ogni volta. Applicato a TUTTE le
+ * istanze di quel tipo sul sito — vedi `Block.styleOverride` per
+ * l'override della singola istanza.
+ */
 export const themeTokensSchema = z.object({
-  buttons: buttonThemeTokensSchema,
+  blockStyles: z.record(z.string(), blockStyleOverrideSchema),
 });
 export type ThemeTokens = z.infer<typeof themeTokensSchema>;
 
-/** Ogni campo `null` — nessuna personalizzazione, ogni blocco usa i propri default CSS esistenti. */
+/** Nessun tipo personalizzato — ogni blocco usa i propri default CSS esistenti. */
 export const DEFAULT_THEME_TOKENS: ThemeTokens = {
-  buttons: { borderRadius: null, paddingX: null, paddingY: null },
+  blockStyles: {},
 };
 
 /**
- * Aggiornamento per-categoria (endpoint `PATCH /sites/:id/theme-tokens`):
- * ogni categoria presente nel body sostituisce per intero quella categoria
- * nei token salvati (non un merge campo-per-campo) — semplice e sufficiente
- * finché ogni categoria ha pochi campi tutti editati insieme nello stesso
- * pannello; le categorie ASSENTI dal body restano invariate.
+ * Aggiornamento per-tipo (endpoint `PATCH /sites/:id/theme-tokens`): il
+ * body porta l'override completo per UN tipo di blocco alla volta (il
+ * pulsante "Stile" della toolbar edita sempre il tipo del blocco
+ * selezionato) — sostituisce per intero quella voce della mappa, gli
+ * altri tipi già salvati restano invariati.
  */
 export const updateThemeTokensBodySchema = z.object({
-  buttons: buttonThemeTokensSchema.optional(),
+  blockType: z.string().min(1),
+  style: blockStyleOverrideSchema,
 });
 export type UpdateThemeTokensBody = z.infer<typeof updateThemeTokensBodySchema>;
