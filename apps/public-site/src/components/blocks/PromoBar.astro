@@ -1,6 +1,9 @@
 ---
-import type { BlockStyleOverride, PromoBarProps } from '@brisk/shared-types';
-import { buildBlockInstanceStyle } from '../../lib/block-style-overrides.js';
+import {
+  buildBlockInstanceStyle,
+  type BlockStyleOverride,
+  type PromoBarProps,
+} from '@brisk/shared-types';
 import { localePath } from '../../lib/locale-path.js';
 
 type Props = PromoBarProps & { styleOverride?: BlockStyleOverride };

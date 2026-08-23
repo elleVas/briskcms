@@ -73,6 +73,8 @@ export interface PreviewBridgeState {
   exitTextEdit: () => void;
   /** Seleziona un blocco direttamente da questo lato (pannello Livelli), senza passare da un vero `preview:click` sul canvas — vedi il commento su `selectedBlockId` sopra. */
   selectBlock: (blockId: string | null) => void;
+  /** Aggiorna il `<style>` degli override "a livello di componente" nell'iframe (docs/adr/0022, pulsante "Stile") — `css` è già pronto (buildBlockStyleOverridesCss), l'iframe si limita a scriverlo. */
+  updateBlockStyleCss: (css: string) => void;
 }
 
 type PreviewBridgeMessageState = Omit<
@@ -84,6 +86,7 @@ type PreviewBridgeMessageState = Omit<
   | 'enterTextEdit'
   | 'exitTextEdit'
   | 'selectBlock'
+  | 'updateBlockStyleCss'
 >;
 
 const initialState: PreviewBridgeMessageState = {
@@ -212,6 +215,7 @@ export function usePreviewBridge(
         case 'editor:insert-block':
         case 'editor:remove-block':
         case 'editor:reorder-blocks':
+        case 'editor:update-block-style-css':
           // Genitore -> iframe: mai attesi in arrivo qui, il genitore è chi
           // li invia (vedi patchBlock/enterTextEdit/exitTextEdit sotto).
           // Ignorati difensivamente.
@@ -314,6 +318,21 @@ export function usePreviewBridge(
     setState((prev) => ({ ...prev, selectedBlockId: blockId }));
   }, []);
 
+  const updateBlockStyleCss = useCallback(
+    (css: string) => {
+      iframeRef.current?.contentWindow?.postMessage(
+        {
+          source: PREVIEW_BRIDGE_SOURCE,
+          v: PREVIEW_BRIDGE_VERSION,
+          type: 'editor:update-block-style-css',
+          payload: { css },
+        },
+        expectedOrigin,
+      );
+    },
+    [iframeRef, expectedOrigin],
+  );
+
   return {
     ...state,
     patchBlock,
@@ -323,5 +342,6 @@ export function usePreviewBridge(
     enterTextEdit,
     exitTextEdit,
     selectBlock,
+    updateBlockStyleCss,
   };
 }

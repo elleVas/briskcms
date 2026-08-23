@@ -1,4 +1,4 @@
-import type { Block } from '@brisk/shared-types';
+import type { Block, BlockStyleOverride } from '@brisk/shared-types';
 import { PUBLIC_SITE_URL } from './public-site-url.js';
 
 export interface RenderBlockFragmentInput {
@@ -9,6 +9,8 @@ export interface RenderBlockFragmentInput {
   props: Record<string, unknown>;
   /** I figli correnti del blocco (se contenitore), noti già lato client — evita che il server li ricostruisca leggendo la bozza salvata, che può non aver ancora recepito il salvataggio in corso in parallelo. */
   children?: Block[];
+  /** Override per-istanza (docs/adr/0022) — senza questo, un cambio di stile dal canvas non si vedrebbe nel frammento appena patchato. */
+  styleOverride?: BlockStyleOverride;
 }
 
 /**

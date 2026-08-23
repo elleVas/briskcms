@@ -1,4 +1,4 @@
-import type { BlockStyleOverride } from '@brisk/shared-types';
+import type { BlockStyleOverride } from './site-theme-tokens.js';
 
 /**
  * Un solo nome di custom property per campo, condiviso da ogni tipo di
@@ -7,7 +7,10 @@ import type { BlockStyleOverride } from '@brisk/shared-types';
  * legge sempre `var(--brisk-override-*, <default del tema>)`, quale che
  * sia il tipo, quindi il nome della property non ha bisogno di
  * conoscere il tipo — è la regola CSS che lo scopa già per tipo (vedi
- * `buildBlockStyleOverridesCss` sotto).
+ * `buildBlockStyleOverridesCss` sotto). Vive in shared-types (non solo in
+ * apps/public-site) perché editor-app la usa anche lei, per aggiornare
+ * dal vivo il `<style>` dentro l'iframe del canvas quando il pulsante
+ * "Stile" salva — stessa logica, non duplicata tra le due app.
  */
 export const BLOCK_STYLE_CUSTOM_PROPERTIES: Record<
   keyof BlockStyleOverride,

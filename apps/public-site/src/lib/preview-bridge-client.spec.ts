@@ -5,6 +5,7 @@ import {
   applyBlockPatch,
   applyBlockRemove,
   applyBlockReorder,
+  applyBlockStyleCss,
   collectBlockElements,
   escapeHtml,
   findFieldElement,
@@ -527,5 +528,47 @@ describe('escapeHtml', () => {
 
   it('leaves plain text untouched', () => {
     expect(escapeHtml('Ciao mondo')).toBe('Ciao mondo');
+  });
+});
+
+describe('applyBlockStyleCss', () => {
+  afterEach(() => {
+    document.getElementById('brisk-block-style-overrides')?.remove();
+  });
+
+  it('creates the style element on the first call and writes the css into it', () => {
+    applyBlockStyleCss(document, '.brisk-button { --brisk-override-bg: red; }');
+
+    const styleEl = document.getElementById('brisk-block-style-overrides');
+    expect(styleEl?.tagName).toBe('STYLE');
+    expect(styleEl?.textContent).toBe(
+      '.brisk-button { --brisk-override-bg: red; }',
+    );
+    expect(styleEl?.parentElement).toBe(document.head);
+  });
+
+  it('reuses the same element and replaces its content on a later call, not appending a second one', () => {
+    applyBlockStyleCss(document, '.brisk-button { --brisk-override-bg: red; }');
+    applyBlockStyleCss(
+      document,
+      '.brisk-banner { --brisk-override-bg: blue; }',
+    );
+
+    const styleEls = document.head.querySelectorAll(
+      '#brisk-block-style-overrides',
+    );
+    expect(styleEls).toHaveLength(1);
+    expect(styleEls[0].textContent).toBe(
+      '.brisk-banner { --brisk-override-bg: blue; }',
+    );
+  });
+
+  it('clears the style element when called with an empty string (last styled type removed)', () => {
+    applyBlockStyleCss(document, '.brisk-button { --brisk-override-bg: red; }');
+    applyBlockStyleCss(document, '');
+
+    expect(
+      document.getElementById('brisk-block-style-overrides')?.textContent,
+    ).toBe('');
   });
 });

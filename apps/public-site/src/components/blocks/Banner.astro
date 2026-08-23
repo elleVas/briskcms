@@ -1,6 +1,9 @@
 ---
-import type { BannerProps, BlockStyleOverride } from '@brisk/shared-types';
-import { buildBlockInstanceStyle } from '../../lib/block-style-overrides.js';
+import {
+  buildBlockInstanceStyle,
+  type BannerProps,
+  type BlockStyleOverride,
+} from '@brisk/shared-types';
 import { localePath } from '../../lib/locale-path.js';
 
 type Props = BannerProps & { styleOverride?: BlockStyleOverride };

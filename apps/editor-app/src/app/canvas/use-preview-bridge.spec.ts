@@ -52,6 +52,7 @@ describe('usePreviewBridge', () => {
       enterTextEdit: expect.any(Function),
       exitTextEdit: expect.any(Function),
       selectBlock: expect.any(Function),
+      updateBlockStyleCss: expect.any(Function),
     });
   });
 
@@ -206,6 +207,7 @@ describe('usePreviewBridge', () => {
       enterTextEdit: expect.any(Function),
       exitTextEdit: expect.any(Function),
       selectBlock: expect.any(Function),
+      updateBlockStyleCss: expect.any(Function),
     });
   });
 
@@ -357,6 +359,29 @@ describe('usePreviewBridge', () => {
         v: PREVIEW_BRIDGE_VERSION,
         type: 'editor:patch-block',
         payload: { blockId: 'hero-1', html: '<div>new</div>' },
+      },
+      EXPECTED_ORIGIN,
+    );
+  });
+
+  it('updateBlockStyleCss posts editor:update-block-style-css to the iframe, at the expected origin', () => {
+    const { ref, contentWindow } = buildIframeRef();
+    if (!contentWindow) {
+      throw new Error('Test fixture iframe has no contentWindow');
+    }
+    const postMessageSpy = vi.spyOn(contentWindow, 'postMessage');
+    const { result } = renderHook(() => usePreviewBridge(ref, EXPECTED_ORIGIN));
+
+    result.current.updateBlockStyleCss(
+      '.brisk-button { --brisk-override-bg: red; }',
+    );
+
+    expect(postMessageSpy).toHaveBeenCalledWith(
+      {
+        source: PREVIEW_BRIDGE_SOURCE,
+        v: PREVIEW_BRIDGE_VERSION,
+        type: 'editor:update-block-style-css',
+        payload: { css: '.brisk-button { --brisk-override-bg: red; }' },
       },
       EXPECTED_ORIGIN,
     );

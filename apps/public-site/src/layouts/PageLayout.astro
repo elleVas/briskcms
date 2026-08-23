@@ -1,12 +1,16 @@
 ---
-import { DEFAULT_THEME_TOKENS, type Block, type SeoMeta } from '@brisk/shared-types';
+import {
+	buildBlockStyleOverridesCss,
+	DEFAULT_THEME_TOKENS,
+	type Block,
+	type SeoMeta,
+} from '@brisk/shared-types';
 import type {
 	PublishedPageAncestorDto,
 	PublishedPageTranslationDto,
 	PublishedSiteDto,
 } from '../lib/public-api-client.js';
 import BlockRenderer from '../components/BlockRenderer.astro';
-import { buildBlockStyleOverridesCss } from '../lib/block-style-overrides.js';
 import { editorAppUrl } from '../lib/editor-app-url.js';
 import { localePath } from '../lib/locale-path.js';
 import { buildSchemaOrgGraph } from '../lib/schema-org.js';

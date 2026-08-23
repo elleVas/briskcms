@@ -7,7 +7,12 @@
 // difference is inside <body>: a docs-style sidebar next to the content
 // for any page that's part of a multi-page section, nothing for a
 // standalone page (the home included) — see the sidebar logic below.
-import { DEFAULT_THEME_TOKENS, type Block, type SeoMeta } from '@brisk/shared-types';
+import {
+	buildBlockStyleOverridesCss,
+	DEFAULT_THEME_TOKENS,
+	type Block,
+	type SeoMeta,
+} from '@brisk/shared-types';
 import {
 	listPublishedPageTree,
 	type PageTreeNodeDto,
@@ -16,7 +21,6 @@ import {
 	type PublishedSiteDto,
 } from '../../apps/public-site/src/lib/public-api-client.js';
 import BlockRenderer from '../../apps/public-site/src/components/BlockRenderer.astro';
-import { buildBlockStyleOverridesCss } from '../../apps/public-site/src/lib/block-style-overrides.js';
 import { editorAppUrl } from '../../apps/public-site/src/lib/editor-app-url.js';
 import {
 	localePath,

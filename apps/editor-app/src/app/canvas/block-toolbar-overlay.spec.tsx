@@ -1,0 +1,175 @@
+import { createRef } from 'react';
+import { fireEvent, render, screen } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
+import type { Block, BlockRect } from '@brisk/shared-types';
+import type { BlockDescriptor } from '@brisk/block-registry';
+import { BlockToolbarOverlay } from './block-toolbar-overlay.js';
+
+const RECT: BlockRect = {
+  id: 'block-1',
+  top: 100,
+  left: 50,
+  width: 300,
+  height: 40,
+};
+
+function buildIframeRef() {
+  const iframe = document.createElement('iframe');
+  document.body.append(iframe);
+  iframe.getBoundingClientRect = vi.fn(
+    () => ({ top: 0, left: 0, width: 800, height: 600 }) as DOMRect,
+  );
+  const ref = createRef<HTMLIFrameElement>();
+  ref.current = iframe;
+  return ref;
+}
+
+const buttonDescriptor: BlockDescriptor = {
+  type: 'Button',
+  label: 'Bottone (CTA)',
+  category: 'conversion',
+  defaultProps: { label: 'Clicca qui' },
+  fields: [],
+  stylableProperties: ['backgroundColor', 'textColor', 'borderRadius'],
+};
+
+const heroDescriptor: BlockDescriptor = {
+  type: 'Hero',
+  label: 'Hero',
+  category: 'content',
+  defaultProps: { title: 'Titolo' },
+  fields: [],
+};
+
+function baseProps() {
+  return {
+    iframeRef: buildIframeRef(),
+    block: { id: 'block-1', type: 'Button', props: {} } as Block,
+    descriptor: buttonDescriptor,
+    rect: RECT,
+    isRootLevel: true,
+    canMoveUp: false,
+    canMoveDown: false,
+    registry: [buttonDescriptor],
+    categories: [],
+    onChangeProp: vi.fn(),
+    onChangeInstanceStyle: vi.fn(),
+    onMoveUp: vi.fn(),
+    onMoveDown: vi.fn(),
+    onDuplicate: vi.fn(),
+    onDelete: vi.fn(),
+    onInsertBefore: vi.fn(),
+    onInsertAfter: vi.fn(),
+  };
+}
+
+describe('BlockToolbarOverlay style buttons', () => {
+  it('shows neither style button for a block with no stylableProperties', () => {
+    render(
+      <BlockToolbarOverlay {...baseProps()} descriptor={heroDescriptor} />,
+    );
+
+    expect(
+      screen.queryByRole('button', { name: /Stile di questo blocco/ }),
+    ).toBeNull();
+    expect(
+      screen.queryByRole('button', { name: /Stile di tutti i blocchi/ }),
+    ).toBeNull();
+  });
+
+  it('shows the instance style button whenever the type has stylableProperties, regardless of typeStyle', () => {
+    render(<BlockToolbarOverlay {...baseProps()} />);
+
+    expect(
+      screen.getByRole('button', { name: 'Stile di questo blocco' }),
+    ).toBeTruthy();
+  });
+
+  it('hides the type-level "Stile" button when typeStyle/onChangeTypeStyle are not provided (no site to save to yet)', () => {
+    render(<BlockToolbarOverlay {...baseProps()} />);
+
+    expect(
+      screen.queryByRole('button', { name: /Stile di tutti i blocchi/ }),
+    ).toBeNull();
+  });
+
+  it('shows the type-level "Stile" button once typeStyle/onChangeTypeStyle are both provided', () => {
+    render(
+      <BlockToolbarOverlay
+        {...baseProps()}
+        typeStyle={{}}
+        onChangeTypeStyle={vi.fn()}
+      />,
+    );
+
+    expect(
+      screen.getByRole('button', {
+        name: 'Stile di tutti i blocchi Bottone (CTA)',
+      }),
+    ).toBeTruthy();
+  });
+
+  it('the instance popover is pre-filled from block.styleOverride and calls onChangeInstanceStyle on edit', () => {
+    const onChangeInstanceStyle = vi.fn();
+    render(
+      <BlockToolbarOverlay
+        {...baseProps()}
+        block={
+          {
+            id: 'block-1',
+            type: 'Button',
+            props: {},
+            styleOverride: { borderRadius: '6px' },
+          } as Block
+        }
+        onChangeInstanceStyle={onChangeInstanceStyle}
+      />,
+    );
+
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Stile di questo blocco' }),
+    );
+    expect(screen.getByLabelText('Raggio angoli')).toHaveProperty(
+      'value',
+      '6px',
+    );
+
+    fireEvent.change(screen.getByLabelText('Raggio angoli'), {
+      target: { value: '9999px' },
+    });
+
+    expect(onChangeInstanceStyle).toHaveBeenCalledWith({
+      borderRadius: '9999px',
+    });
+  });
+
+  it('the type popover is pre-filled from typeStyle and calls onChangeTypeStyle on edit, never touching onChangeInstanceStyle', () => {
+    const onChangeTypeStyle = vi.fn();
+    const onChangeInstanceStyle = vi.fn();
+    render(
+      <BlockToolbarOverlay
+        {...baseProps()}
+        typeStyle={{ borderRadius: '4px' }}
+        onChangeTypeStyle={onChangeTypeStyle}
+        onChangeInstanceStyle={onChangeInstanceStyle}
+      />,
+    );
+
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: 'Stile di tutti i blocchi Bottone (CTA)',
+      }),
+    );
+    expect(screen.getByLabelText('Raggio angoli')).toHaveProperty(
+      'value',
+      '4px',
+    );
+
+    fireEvent.change(screen.getByLabelText('Raggio angoli'), {
+      target: { value: '9999px' },
+    });
+
+    expect(onChangeTypeStyle).toHaveBeenCalledWith({ borderRadius: '9999px' });
+    expect(onChangeInstanceStyle).not.toHaveBeenCalled();
+  });
+});

@@ -417,6 +417,11 @@
     "breakpointDesktop": "Desktop",
     "breakpointTablet": "Tablet",
     "breakpointMobile": "Mobile",
-    "switchPage": "Cambia pagina"
+    "switchPage": "Cambia pagina",
+    "style": {
+      "editType": "Stile di tutti i blocchi {{type}}",
+      "editTypeHint": "Questi valori si applicano a OGNI blocco {{type}} del sito.",
+      "editInstance": "Stile di questo blocco"
+    }
   }
 }

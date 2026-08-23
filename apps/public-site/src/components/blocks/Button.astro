@@ -1,6 +1,9 @@
 ---
-import type { BlockStyleOverride, ButtonProps } from '@brisk/shared-types';
-import { buildBlockInstanceStyle } from '../../lib/block-style-overrides.js';
+import {
+  buildBlockInstanceStyle,
+  type BlockStyleOverride,
+  type ButtonProps,
+} from '@brisk/shared-types';
 import { localePath } from '../../lib/locale-path.js';
 
 type Props = ButtonProps & { styleOverride?: BlockStyleOverride };

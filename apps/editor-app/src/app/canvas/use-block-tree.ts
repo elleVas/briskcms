@@ -1,4 +1,8 @@
-import { columnsGridTemplate, type Block } from '@brisk/shared-types';
+import {
+  columnsGridTemplate,
+  type Block,
+  type BlockStyleOverride,
+} from '@brisk/shared-types';
 import type { BlockDescriptor } from '@brisk/block-registry';
 
 export interface BlockTreeTarget {
@@ -43,6 +47,30 @@ export function updateBlockProps(
       return {
         ...block,
         children: updateBlockProps(block.children, blockId, props),
+      };
+    }
+    return block;
+  });
+}
+
+/** Sostituisce per intero `styleOverride` (docs/adr/0022) — un solo pannello lo edita tutto insieme, stesso "sostituisce, non fonde campo-per-campo" di Site.updateThemeTokens, non un merge come updateBlockProps sopra. */
+export function updateBlockStyleOverride(
+  blocks: Block[],
+  blockId: string,
+  styleOverride: BlockStyleOverride,
+): Block[] {
+  return blocks.map((block) => {
+    if (block.id === blockId) {
+      return { ...block, styleOverride };
+    }
+    if (block.children) {
+      return {
+        ...block,
+        children: updateBlockStyleOverride(
+          block.children,
+          blockId,
+          styleOverride,
+        ),
       };
     }
     return block;
