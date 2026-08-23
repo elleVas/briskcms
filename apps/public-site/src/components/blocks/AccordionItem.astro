@@ -1,12 +1,17 @@
 ---
-import type { AccordionItemProps } from '@brisk/shared-types';
+import {
+  buildBlockInstanceStyle,
+  type AccordionItemProps,
+  type BlockStyleOverride,
+} from '@brisk/shared-types';
 
-type Props = AccordionItemProps;
+type Props = AccordionItemProps & { styleOverride?: BlockStyleOverride };
 
-const { question, answer } = Astro.props;
+const { question, answer, styleOverride } = Astro.props;
+const instanceStyle = buildBlockInstanceStyle(styleOverride);
 ---
 
-<details class="brisk-accordion-item">
+<details class="brisk-accordion-item" style={instanceStyle}>
   <summary class="brisk-accordion-item__question" data-brisk-field="question">{question}</summary>
   <div class="brisk-accordion-item__answer" data-brisk-field="answer">{answer}</div>
 </details>
@@ -16,7 +21,10 @@ const { question, answer } = Astro.props;
      NavDropdown.astro's own comment on this exact HTML pattern. */
   .brisk-accordion-item {
     border-bottom: 1px solid var(--border);
-    padding: 0.75rem 0;
+    padding: var(--brisk-override-padding-y, 0.75rem) var(--brisk-override-padding-x, 0);
+    background: var(--brisk-override-bg, transparent);
+    color: var(--brisk-override-text, inherit);
+    border-radius: var(--brisk-override-radius, 0);
   }
   .brisk-accordion-item__question {
     cursor: pointer;

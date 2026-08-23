@@ -10,4 +10,11 @@ export const formBlock: BlockDescriptor<FormBlockProps> = {
     form: null,
   },
   fields: [customField('form', 'Modulo', FormPickerField)],
+  stylableProperties: [
+    'backgroundColor',
+    'textColor',
+    'borderRadius',
+    'paddingX',
+    'paddingY',
+  ],
 };

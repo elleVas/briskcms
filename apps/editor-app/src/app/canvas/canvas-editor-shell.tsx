@@ -443,32 +443,37 @@ export function CanvasEditorShell({
   }
 
   /**
-   * Override per-TIPO (docs/adr/0022) — pulsante "Stile" della toolbar,
-   * tocca `site.themeTokens.blockStyles[tipo]`: OGNI istanza di quel tipo
-   * sul sito, non solo il blocco selezionato. Nessun aggiornamento ottico
-   * locale dell'albero (a differenza di handleChangeStyleOverride sopra):
-   * non è nell'albero della pagina, è nei theme tokens del sito —
+   * Override per-TIPO (docs/adr/0022) — tocca `site.themeTokens.blockStyles[tipo]`:
+   * OGNI istanza di quel tipo sul sito. Nessun aggiornamento ottico locale
+   * dell'albero (a differenza di handleChangeStyleOverride sopra): non è
+   * nell'albero della pagina, è nei theme tokens del sito —
    * `useSiteThemeTokens` invalida già la query del sito al successo,
-   * `site.themeTokens` sopra si aggiorna da sé.
+   * `site.themeTokens` sopra si aggiorna da sé. Condivisa da due chiamanti
+   * (docs/adr/0022, parte 2): il pulsante "Stile" della toolbar (tipo del
+   * blocco selezionato) e la nuova modale "Stile globale" (qualunque tipo
+   * scelto dalla lista, senza bisogno di una sua istanza sul canvas).
    */
+  async function saveTypeStyle(
+    blockType: string,
+    style: BlockStyleOverride,
+  ): Promise<void> {
+    const updated = await updateThemeTokens({ blockType, style });
+    // Aggiorna subito il <style> dentro l'iframe (docs/adr/0022) — senza
+    // questo, ogni istanza già visibile di quel tipo resterebbe con
+    // l'aspetto vecchio finché l'iframe non ricarica, anche se il
+    // salvataggio è già andato a buon fine.
+    bridge.updateBlockStyleCss(
+      buildBlockStyleOverridesCss(updated.themeTokens?.blockStyles ?? {}),
+    );
+  }
+
   function handleChangeTypeStyle(style: BlockStyleOverride): void {
     if (!selectedDescriptor) {
       return;
     }
-    updateThemeTokens({ blockType: selectedDescriptor.type, style }).then(
-      (updated) => {
-        // Aggiorna subito il <style> dentro l'iframe (docs/adr/0022) — senza
-        // questo, ogni istanza già visibile di quel tipo resterebbe con
-        // l'aspetto vecchio finché l'iframe non ricarica, anche se il
-        // salvataggio è già andato a buon fine.
-        bridge.updateBlockStyleCss(
-          buildBlockStyleOverridesCss(updated.themeTokens?.blockStyles ?? {}),
-        );
-      },
-      () => {
-        /* la mutation stessa espone già isSaving/errori a chi la invoca — nessun fallback qui, il canvas resta con l'ultimo CSS buono finché il prossimo salvataggio non ritenta. */
-      },
-    );
+    saveTypeStyle(selectedDescriptor.type, style).catch(() => {
+      /* la mutation stessa espone già isSaving/errori a chi la invoca — nessun fallback qui, il canvas resta con l'ultimo CSS buono finché il prossimo salvataggio non ritenta. */
+    });
   }
 
   /**
@@ -823,6 +828,9 @@ export function CanvasEditorShell({
           siteId={siteId}
           open={isGlobalStylesOpen}
           onOpenChange={setIsGlobalStylesOpen}
+          registry={registry}
+          categories={categories}
+          onSaveTypeStyle={saveTypeStyle}
         />
       )}
       <div style={{ flex: 1, minHeight: 0, display: 'flex' }}>

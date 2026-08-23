@@ -9,4 +9,11 @@ export const teamBlock: BlockDescriptor<TeamProps> = {
   fields: [],
   isContainer: true,
   allowedChildTypes: ['TeamMember'],
+  stylableProperties: [
+    'backgroundColor',
+    'textColor',
+    'borderRadius',
+    'paddingX',
+    'paddingY',
+  ],
 };

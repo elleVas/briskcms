@@ -34,4 +34,7 @@ export const containerBlock: BlockDescriptor<ContainerProps> = {
   // un track di griglia), un Contenitore è pensato per contenere
   // qualunque cosa, incluso un altro Contenitore o Colonne.
   isContainer: true,
+  // Solo radius e colore testo: background/padding hanno già i propri
+  // campi dedicati sopra, non vanno duplicati qui.
+  stylableProperties: ['textColor', 'borderRadius'],
 };

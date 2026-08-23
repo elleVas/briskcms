@@ -9,4 +9,6 @@ export const timelineBlock: BlockDescriptor<TimelineProps> = {
   fields: [],
   isContainer: true,
   allowedChildTypes: ['TimelineStep'],
+  // Niente paddingX/paddingY: padding-left è strutturale in Timeline.astro.
+  stylableProperties: ['backgroundColor', 'textColor', 'borderRadius'],
 };

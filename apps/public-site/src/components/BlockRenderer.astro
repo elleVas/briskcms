@@ -219,29 +219,66 @@ const wrapperProps = editable
 ---
 
 <Wrapper {...wrapperProps}>
-{block.type === 'Hero' && <Hero {...heroPropsSchema.parse(block.props)} />}
-{block.type === 'Text' && <Text {...textPropsSchema.parse(block.props)} />}
+{
+  block.type === 'Hero' && (
+    <Hero
+      {...heroPropsSchema.parse(block.props)}
+      styleOverride={block.styleOverride}
+    />
+  )
+}
+{
+  block.type === 'Text' && (
+    <Text
+      {...textPropsSchema.parse(block.props)}
+      styleOverride={block.styleOverride}
+    />
+  )
+}
 {block.type === 'Image' && <Image {...imagePropsSchema.parse(block.props)} />}
 {
   block.type === 'Gallery' && (
     <Gallery {...galleryPropsSchema.parse(block.props)} />
   )
 }
-{block.type === 'Form' && <Form {...formBlockPropsSchema.parse(block.props)} />}
-{block.type === 'Quote' && <Quote {...quotePropsSchema.parse(block.props)} />}
+{
+  block.type === 'Form' && (
+    <Form
+      {...formBlockPropsSchema.parse(block.props)}
+      styleOverride={block.styleOverride}
+    />
+  )
+}
+{
+  block.type === 'Quote' && (
+    <Quote
+      {...quotePropsSchema.parse(block.props)}
+      styleOverride={block.styleOverride}
+    />
+  )
+}
 {
   block.type === 'Rating' && (
-    <Rating {...ratingPropsSchema.parse(block.props)} />
+    <Rating
+      {...ratingPropsSchema.parse(block.props)}
+      styleOverride={block.styleOverride}
+    />
   )
 }
 {
   block.type === 'Countdown' && (
-    <Countdown {...countdownPropsSchema.parse(block.props)} />
+    <Countdown
+      {...countdownPropsSchema.parse(block.props)}
+      styleOverride={block.styleOverride}
+    />
   )
 }
 {
   block.type === 'EmbedHtml' && (
-    <EmbedHtml {...embedHtmlPropsSchema.parse(block.props)} />
+    <EmbedHtml
+      {...embedHtmlPropsSchema.parse(block.props)}
+      styleOverride={block.styleOverride}
+    />
   )
 }
 {
@@ -332,7 +369,7 @@ const wrapperProps = editable
 }
 {
   block.type === 'Columns' && (
-    <Columns {...columnsPropsSchema.parse(block.props)} editable={editable} hasChildren={hasChildren}>
+    <Columns {...columnsPropsSchema.parse(block.props)} editable={editable} hasChildren={hasChildren} styleOverride={block.styleOverride}>
       {block.children?.map((child) => (
         <Astro.self
           block={child}
@@ -349,7 +386,7 @@ const wrapperProps = editable
 }
 {
   block.type === 'Column' && (
-    <Column editable={editable} hasChildren={hasChildren}>
+    <Column editable={editable} hasChildren={hasChildren} styleOverride={block.styleOverride}>
       {block.children?.map((child) => (
         <Astro.self
           block={child}
@@ -366,7 +403,7 @@ const wrapperProps = editable
 }
 {
   block.type === 'Container' && (
-    <Container {...containerPropsSchema.parse(block.props)} editable={editable} hasChildren={hasChildren}>
+    <Container {...containerPropsSchema.parse(block.props)} editable={editable} hasChildren={hasChildren} styleOverride={block.styleOverride}>
       {block.children?.map((child) => (
         <Astro.self
           block={child}
@@ -401,7 +438,7 @@ const wrapperProps = editable
 }
 {
   block.type === 'Accordion' && (
-    <Accordion {...accordionPropsSchema.parse(block.props)} editable={editable} hasChildren={hasChildren}>
+    <Accordion {...accordionPropsSchema.parse(block.props)} editable={editable} hasChildren={hasChildren} styleOverride={block.styleOverride}>
       {block.children?.map((child) => (
         <Astro.self
           block={child}
@@ -418,12 +455,15 @@ const wrapperProps = editable
 }
 {
   block.type === 'AccordionItem' && (
-    <AccordionItem {...accordionItemPropsSchema.parse(block.props)} />
+    <AccordionItem
+      {...accordionItemPropsSchema.parse(block.props)}
+      styleOverride={block.styleOverride}
+    />
   )
 }
 {
   block.type === 'Tabs' && (
-    <Tabs {...tabsPropsSchema.parse(block.props)} editable={editable} hasChildren={hasChildren}>
+    <Tabs {...tabsPropsSchema.parse(block.props)} editable={editable} hasChildren={hasChildren} styleOverride={block.styleOverride}>
       {block.children?.map((child) => (
         <Astro.self
           block={child}
@@ -440,7 +480,7 @@ const wrapperProps = editable
 }
 {
   block.type === 'Tab' && (
-    <Tab {...tabPropsSchema.parse(block.props)}>
+    <Tab {...tabPropsSchema.parse(block.props)} styleOverride={block.styleOverride}>
       {block.children?.map((child) => (
         <Astro.self
           block={child}
@@ -476,7 +516,7 @@ const wrapperProps = editable
 }
 {
   block.type === 'FeatureGrid' && (
-    <FeatureGrid {...featureGridPropsSchema.parse(block.props)} editable={editable} hasChildren={hasChildren}>
+    <FeatureGrid {...featureGridPropsSchema.parse(block.props)} editable={editable} hasChildren={hasChildren} styleOverride={block.styleOverride}>
       {block.children?.map((child) => (
         <Astro.self
           block={child}
@@ -493,7 +533,10 @@ const wrapperProps = editable
 }
 {
   block.type === 'Feature' && (
-    <Feature {...featurePropsSchema.parse(block.props)} />
+    <Feature
+      {...featurePropsSchema.parse(block.props)}
+      styleOverride={block.styleOverride}
+    />
   )
 }
 {
@@ -518,12 +561,15 @@ const wrapperProps = editable
 }
 {
   block.type === 'LogoStrip' && (
-    <LogoStrip {...logoStripPropsSchema.parse(block.props)} />
+    <LogoStrip
+      {...logoStripPropsSchema.parse(block.props)}
+      styleOverride={block.styleOverride}
+    />
   )
 }
 {
   block.type === 'Testimonials' && (
-    <Testimonials {...testimonialsPropsSchema.parse(block.props)} editable={editable} hasChildren={hasChildren}>
+    <Testimonials {...testimonialsPropsSchema.parse(block.props)} editable={editable} hasChildren={hasChildren} styleOverride={block.styleOverride}>
       {block.children?.map((child) => (
         <Astro.self
           block={child}
@@ -540,12 +586,15 @@ const wrapperProps = editable
 }
 {
   block.type === 'Testimonial' && (
-    <Testimonial {...testimonialPropsSchema.parse(block.props)} />
+    <Testimonial
+      {...testimonialPropsSchema.parse(block.props)}
+      styleOverride={block.styleOverride}
+    />
   )
 }
 {
   block.type === 'Team' && (
-    <Team {...teamPropsSchema.parse(block.props)} editable={editable} hasChildren={hasChildren}>
+    <Team {...teamPropsSchema.parse(block.props)} editable={editable} hasChildren={hasChildren} styleOverride={block.styleOverride}>
       {block.children?.map((child) => (
         <Astro.self
           block={child}
@@ -562,12 +611,15 @@ const wrapperProps = editable
 }
 {
   block.type === 'TeamMember' && (
-    <TeamMember {...teamMemberPropsSchema.parse(block.props)} />
+    <TeamMember
+      {...teamMemberPropsSchema.parse(block.props)}
+      styleOverride={block.styleOverride}
+    />
   )
 }
 {
   block.type === 'PricingTable' && (
-    <PricingTable {...pricingTablePropsSchema.parse(block.props)} editable={editable} hasChildren={hasChildren}>
+    <PricingTable {...pricingTablePropsSchema.parse(block.props)} editable={editable} hasChildren={hasChildren} styleOverride={block.styleOverride}>
       {block.children?.map((child) => (
         <Astro.self
           block={child}
@@ -584,12 +636,15 @@ const wrapperProps = editable
 }
 {
   block.type === 'PricingPlan' && (
-    <PricingPlan {...pricingPlanPropsSchema.parse(block.props)} />
+    <PricingPlan
+      {...pricingPlanPropsSchema.parse(block.props)}
+      styleOverride={block.styleOverride}
+    />
   )
 }
 {
   block.type === 'StatsCounter' && (
-    <StatsCounter {...statsCounterPropsSchema.parse(block.props)} editable={editable} hasChildren={hasChildren}>
+    <StatsCounter {...statsCounterPropsSchema.parse(block.props)} editable={editable} hasChildren={hasChildren} styleOverride={block.styleOverride}>
       {block.children?.map((child) => (
         <Astro.self
           block={child}
@@ -604,10 +659,17 @@ const wrapperProps = editable
     </StatsCounter>
   )
 }
-{block.type === 'Stat' && <Stat {...statPropsSchema.parse(block.props)} />}
+{
+  block.type === 'Stat' && (
+    <Stat
+      {...statPropsSchema.parse(block.props)}
+      styleOverride={block.styleOverride}
+    />
+  )
+}
 {
   block.type === 'Timeline' && (
-    <Timeline {...timelinePropsSchema.parse(block.props)} editable={editable} hasChildren={hasChildren}>
+    <Timeline {...timelinePropsSchema.parse(block.props)} editable={editable} hasChildren={hasChildren} styleOverride={block.styleOverride}>
       {block.children?.map((child) => (
         <Astro.self
           block={child}

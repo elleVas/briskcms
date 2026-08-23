@@ -18,4 +18,11 @@ export const accordionItemBlock: BlockDescriptor<AccordionItemProps> = {
       inlineEditable: true,
     },
   ],
+  stylableProperties: [
+    'backgroundColor',
+    'textColor',
+    'borderRadius',
+    'paddingX',
+    'paddingY',
+  ],
 };

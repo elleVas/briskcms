@@ -1,11 +1,18 @@
 ---
-import type { FormBlockProps, FormField, FormStep } from '@brisk/shared-types';
+import {
+  buildBlockInstanceStyle,
+  type BlockStyleOverride,
+  type FormBlockProps,
+  type FormField,
+  type FormStep,
+} from '@brisk/shared-types';
 import { getPublicForm } from '../../lib/public-api-client.js';
 import FormFieldComponent from './FormField.astro';
 
-type Props = FormBlockProps;
+type Props = FormBlockProps & { styleOverride?: BlockStyleOverride };
 
-const { form: pickedForm } = Astro.props;
+const { form: pickedForm, styleOverride } = Astro.props;
+const instanceStyle = buildBlockInstanceStyle(styleOverride);
 const form = pickedForm ? await getPublicForm(pickedForm.formId) : null;
 
 // Read back from the submission proxy's redirect (src/pages/api/forms/[id]/
@@ -79,7 +86,7 @@ if (form && form.steps.length > 0) {
 
 {
   form && (
-    <div class="brisk-form">
+    <div class="brisk-form" style={instanceStyle}>
       {submitted && (
         <p class="brisk-form__status brisk-form__status--success">
           Grazie! Il tuo messaggio è stato inviato.
@@ -255,6 +262,10 @@ if (form && form.steps.length > 0) {
     flex-direction: column;
     gap: 1rem;
     max-width: 32rem;
+    background: var(--brisk-override-bg, transparent);
+    color: var(--brisk-override-text, inherit);
+    border-radius: var(--brisk-override-radius, 0);
+    padding: var(--brisk-override-padding-y, 0) var(--brisk-override-padding-x, 0);
   }
   .brisk-form form {
     display: flex;

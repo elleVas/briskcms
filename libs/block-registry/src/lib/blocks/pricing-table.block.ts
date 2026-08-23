@@ -9,4 +9,11 @@ export const pricingTableBlock: BlockDescriptor<PricingTableProps> = {
   fields: [],
   isContainer: true,
   allowedChildTypes: ['PricingPlan'],
+  stylableProperties: [
+    'backgroundColor',
+    'textColor',
+    'borderRadius',
+    'paddingX',
+    'paddingY',
+  ],
 };

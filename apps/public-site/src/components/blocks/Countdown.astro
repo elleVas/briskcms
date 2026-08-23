@@ -1,12 +1,17 @@
 ---
-import type { CountdownProps } from '@brisk/shared-types';
+import {
+  buildBlockInstanceStyle,
+  type BlockStyleOverride,
+  type CountdownProps,
+} from '@brisk/shared-types';
 
-type Props = CountdownProps;
+type Props = CountdownProps & { styleOverride?: BlockStyleOverride };
 
-const { targetDate, label } = Astro.props;
+const { targetDate, label, styleOverride } = Astro.props;
+const instanceStyle = buildBlockInstanceStyle(styleOverride);
 ---
 
-<div class="brisk-countdown" data-target-date={targetDate}>
+<div class="brisk-countdown" data-target-date={targetDate} style={instanceStyle}>
   {label && <p class="brisk-countdown__label" data-brisk-field="label">{label}</p>}
   <div class="brisk-countdown__timer">
     <div class="brisk-countdown__unit">
@@ -89,6 +94,12 @@ const { targetDate, label } = Astro.props;
 </script>
 
 <style>
+  .brisk-countdown {
+    background: var(--brisk-override-bg, transparent);
+    color: var(--brisk-override-text, inherit);
+    border-radius: var(--brisk-override-radius, 0);
+    padding: var(--brisk-override-padding-y, 0) var(--brisk-override-padding-x, 0);
+  }
   .brisk-countdown__timer {
     display: flex;
     gap: 1rem;

@@ -245,7 +245,11 @@
     "loading": "Loading...",
     "save": "Save",
     "saving": "Saving...",
-    "close": "Close"
+    "close": "Close",
+    "back": "Back",
+    "colorsTitle": "Colors",
+    "blockStylesTitle": "Style by block",
+    "blockStylesHint": "Pick a block type to edit its style across the whole site — background, text color, corners, padding."
   },
   "localeSettings": {
     "menuLabel": "Languages",

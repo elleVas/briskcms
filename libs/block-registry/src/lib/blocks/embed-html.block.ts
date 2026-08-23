@@ -9,4 +9,13 @@ export const embedHtmlBlock: BlockDescriptor<EmbedHtmlProps> = {
     html: '',
   },
   fields: [{ kind: 'textarea', key: 'html', label: 'Codice HTML' }],
+  // Niente textColor: il contenuto è HTML arbitrario incollato dall'utente,
+  // che spesso porta già il proprio colore — solo lo spazio "cornice"
+  // (sfondo/angoli/padding) ha senso qui.
+  stylableProperties: [
+    'backgroundColor',
+    'borderRadius',
+    'paddingX',
+    'paddingY',
+  ],
 };

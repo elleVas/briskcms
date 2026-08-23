@@ -20,4 +20,11 @@ export const columnsBlock: BlockDescriptor<ColumnsProps> = {
   ],
   isContainer: true,
   allowedChildTypes: ['Column'],
+  stylableProperties: [
+    'backgroundColor',
+    'textColor',
+    'borderRadius',
+    'paddingX',
+    'paddingY',
+  ],
 };

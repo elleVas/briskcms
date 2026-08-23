@@ -10,4 +10,11 @@ export const logoStripBlock: BlockDescriptor<LogoStripProps> = {
     logos: [],
   },
   fields: [customField('logos', 'Loghi', GalleryPickerField)],
+  // Niente textColor: la striscia contiene solo immagini, nessun testo.
+  stylableProperties: [
+    'backgroundColor',
+    'borderRadius',
+    'paddingX',
+    'paddingY',
+  ],
 };

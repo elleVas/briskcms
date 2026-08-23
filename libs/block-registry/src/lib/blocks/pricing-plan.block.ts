@@ -37,4 +37,11 @@ export const pricingPlanBlock: BlockDescriptor<PricingPlanProps> = {
     customField('page', 'Pagina', PagePickerField),
     { kind: 'text', key: 'url', label: 'URL' },
   ],
+  stylableProperties: [
+    'backgroundColor',
+    'textColor',
+    'borderRadius',
+    'paddingX',
+    'paddingY',
+  ],
 };

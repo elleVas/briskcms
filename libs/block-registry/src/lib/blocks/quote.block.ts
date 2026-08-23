@@ -20,4 +20,11 @@ export const quoteBlock: BlockDescriptor<QuoteProps> = {
     { kind: 'text', key: 'author', label: 'Autore', inlineEditable: true },
     { kind: 'text', key: 'role', label: 'Ruolo', inlineEditable: true },
   ],
+  stylableProperties: [
+    'backgroundColor',
+    'textColor',
+    'borderRadius',
+    'paddingX',
+    'paddingY',
+  ],
 };

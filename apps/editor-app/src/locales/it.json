@@ -245,7 +245,11 @@
     "loading": "Caricamento...",
     "save": "Salva",
     "saving": "Salvataggio in corso...",
-    "close": "Chiudi"
+    "close": "Chiudi",
+    "back": "Indietro",
+    "colorsTitle": "Colori",
+    "blockStylesTitle": "Stile per blocco",
+    "blockStylesHint": "Scegli un tipo di blocco per modificarne lo stile su tutto il sito — sfondo, colore testo, angoli, padding."
   },
   "localeSettings": {
     "menuLabel": "Lingue",

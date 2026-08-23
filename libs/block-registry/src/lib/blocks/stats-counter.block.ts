@@ -9,4 +9,11 @@ export const statsCounterBlock: BlockDescriptor<StatsCounterProps> = {
   fields: [],
   isContainer: true,
   allowedChildTypes: ['Stat'],
+  stylableProperties: [
+    'backgroundColor',
+    'textColor',
+    'borderRadius',
+    'paddingX',
+    'paddingY',
+  ],
 };

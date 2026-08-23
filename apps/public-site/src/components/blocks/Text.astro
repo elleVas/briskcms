@@ -1,9 +1,20 @@
 ---
-import type { TextProps } from '@brisk/shared-types';
+import {
+  buildBlockInstanceStyle,
+  type BlockStyleOverride,
+  type TextProps,
+} from '@brisk/shared-types';
 
-type Props = TextProps;
+type Props = TextProps & { styleOverride?: BlockStyleOverride };
 
-const { body } = Astro.props;
+const { body, styleOverride } = Astro.props;
+const instanceStyle = buildBlockInstanceStyle(styleOverride);
 ---
 
-<p data-brisk-field="body">{body}</p>
+<p class="brisk-text" data-brisk-field="body" style={instanceStyle}>{body}</p>
+
+<style>
+  .brisk-text {
+    color: var(--brisk-override-text, inherit);
+  }
+</style>

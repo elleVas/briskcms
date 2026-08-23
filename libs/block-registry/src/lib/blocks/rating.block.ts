@@ -13,4 +13,11 @@ export const ratingBlock: BlockDescriptor<RatingProps> = {
     { kind: 'number', key: 'rating', label: 'Stelle', min: 1, max: 5, step: 1 },
     { kind: 'text', key: 'label', label: 'Etichetta', inlineEditable: true },
   ],
+  stylableProperties: [
+    'backgroundColor',
+    'textColor',
+    'borderRadius',
+    'paddingX',
+    'paddingY',
+  ],
 };

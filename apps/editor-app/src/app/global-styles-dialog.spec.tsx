@@ -1,10 +1,30 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { QueryClientProvider } from '@tanstack/react-query';
+import type { BlockDescriptor } from '@brisk/block-registry';
 import * as api from '../lib/sites-api-client.js';
 import type { SiteDto } from '../lib/sites-api-client.js';
 import { createTestQueryClient } from '../test-query-client.js';
 import { GlobalStylesDialog } from './global-styles-dialog.js';
+
+const heroDescriptor: BlockDescriptor = {
+  type: 'Hero',
+  label: 'Hero',
+  category: 'content',
+  defaultProps: { title: '', subtitle: '' },
+  fields: [],
+  stylableProperties: ['backgroundColor', 'textColor', 'borderRadius'],
+};
+const textDescriptor: BlockDescriptor = {
+  type: 'Text',
+  label: 'Testo',
+  category: 'content',
+  defaultProps: { body: '' },
+  fields: [],
+  // Nessuna stylableProperties: non deve comparire nell'elenco "Stile per blocco".
+};
+const registry = [heroDescriptor, textDescriptor];
+const categories = [{ title: 'Contenuto', types: ['Hero', 'Text'] }];
 
 vi.mock('../lib/sites-api-client.js', async (importOriginal) => {
   const actual =
@@ -44,13 +64,20 @@ function buildSite(overrides: Partial<SiteDto> = {}): SiteDto {
   };
 }
 
-function renderDialog(open: boolean, onOpenChange = vi.fn()) {
+function renderDialog(
+  open: boolean,
+  onOpenChange = vi.fn(),
+  onSaveTypeStyle = vi.fn().mockResolvedValue(undefined),
+) {
   return render(
     <QueryClientProvider client={createTestQueryClient()}>
       <GlobalStylesDialog
         siteId="site-1"
         open={open}
         onOpenChange={onOpenChange}
+        registry={registry}
+        categories={categories}
+        onSaveTypeStyle={onSaveTypeStyle}
       />
     </QueryClientProvider>,
   );
@@ -124,5 +151,48 @@ describe('GlobalStylesDialog', () => {
 
     expect(onOpenChange).toHaveBeenCalledWith(false);
     expect(api.updateThemeSettings).not.toHaveBeenCalled();
+  });
+
+  it('lists only styleable block types, grouped by category', async () => {
+    vi.mocked(api.getSite).mockResolvedValue(buildSite());
+    renderDialog(true);
+    await waitFor(() => screen.getByText('Contenuto'));
+
+    fireEvent.click(screen.getByText('Contenuto'));
+
+    expect(screen.getByText('Hero')).toBeTruthy();
+    expect(screen.queryByText('Testo')).toBeNull();
+  });
+
+  it('opens a per-type style editor and saves a field change via onSaveTypeStyle', async () => {
+    vi.mocked(api.getSite).mockResolvedValue(buildSite());
+    const onSaveTypeStyle = vi.fn().mockResolvedValue(undefined);
+    renderDialog(true, vi.fn(), onSaveTypeStyle);
+    await waitFor(() => screen.getByText('Contenuto'));
+    fireEvent.click(screen.getByText('Contenuto'));
+    fireEvent.click(screen.getByText('Hero'));
+
+    await waitFor(() => screen.getByText('Raggio angoli'));
+    fireEvent.change(screen.getByPlaceholderText(/9999px/), {
+      target: { value: '8px' },
+    });
+
+    expect(onSaveTypeStyle).toHaveBeenCalledWith(
+      'Hero',
+      expect.objectContaining({ borderRadius: '8px' }),
+    );
+  });
+
+  it('goes back to the list from the per-type editor', async () => {
+    vi.mocked(api.getSite).mockResolvedValue(buildSite());
+    renderDialog(true);
+    await waitFor(() => screen.getByText('Contenuto'));
+    fireEvent.click(screen.getByText('Contenuto'));
+    fireEvent.click(screen.getByText('Hero'));
+    await waitFor(() => screen.getByText('Raggio angoli'));
+
+    fireEvent.click(screen.getByRole('button', { name: /indietro/i }));
+
+    expect(screen.getByText('Colore primario')).toBeTruthy();
   });
 });
