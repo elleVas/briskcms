@@ -11,4 +11,5 @@ export const textBlock: BlockDescriptor<TextProps> = {
   fields: [
     { kind: 'textarea', key: 'body', label: 'Testo', inlineEditable: true },
   ],
+  stylableProperties: ['textColor'],
 };

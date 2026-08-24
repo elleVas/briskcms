@@ -24,7 +24,7 @@ const baseSite: PublishedSiteDto = {
     overridesEnabled: true,
   },
   themeTokens: {
-    buttons: { borderRadius: null, paddingX: null, paddingY: null },
+    blockStyles: {},
   },
 };
 

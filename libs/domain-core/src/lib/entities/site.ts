@@ -1,5 +1,6 @@
 import {
   DEFAULT_THEME_TOKENS,
+  type BlockStyleOverride,
   type OpeningHoursDay,
   type ThemeSettings,
   type ThemeTokens,
@@ -199,12 +200,15 @@ export class Site {
   }
 
   /**
-   * Ogni categoria presente in `input` sostituisce per intero quella
-   * categoria (vedi `updateThemeTokensBodySchema`) — non un merge
-   * campo-per-campo, e le categorie assenti dal body restano quelle già
-   * salvate (o il default, se non erano mai state personalizzate).
+   * Sostituisce per intero l'override di UN tipo di blocco (docs/adr/0022)
+   * — gli altri tipi già salvati in `blockStyles` restano invariati. Il
+   * pulsante "Stile" della toolbar edita sempre un solo tipo alla volta
+   * (quello del blocco selezionato), non un merge campo-per-campo.
    */
-  updateThemeTokens(input: Partial<ThemeTokens>): void {
-    this.props.themeTokens = { ...this.themeTokens, ...input };
+  updateThemeTokens(blockType: string, style: BlockStyleOverride): void {
+    this.props.themeTokens = {
+      ...this.themeTokens,
+      blockStyles: { ...this.themeTokens.blockStyles, [blockType]: style },
+    };
   }
 }

@@ -1,6 +1,5 @@
 import type { BannerProps } from '@brisk/shared-types';
 import { customField, type BlockDescriptor } from '../field-types.js';
-import { ColorPickerField } from '../fields/color-picker-field.js';
 import { linkTypeField } from '../fields/link-type-field.js';
 import { PagePickerField } from '../fields/page-picker-field.js';
 
@@ -15,7 +14,6 @@ export const bannerBlock: BlockDescriptor<BannerProps> = {
     linkType: 'page',
     page: null,
     url: '',
-    backgroundColor: null,
   },
   fields: [
     { kind: 'text', key: 'title', label: 'Titolo', inlineEditable: true },
@@ -29,10 +27,13 @@ export const bannerBlock: BlockDescriptor<BannerProps> = {
     linkTypeField,
     customField('page', 'Pagina', PagePickerField),
     { kind: 'text', key: 'url', label: 'URL' },
-    customField(
-      'backgroundColor',
-      'Colore di sfondo (sovrascrive il tema)',
-      ColorPickerField,
-    ),
+  ],
+  // Sostituisce il vecchio `backgroundColor` — vedi button.block.ts.
+  stylableProperties: [
+    'backgroundColor',
+    'textColor',
+    'borderRadius',
+    'paddingX',
+    'paddingY',
   ],
 };

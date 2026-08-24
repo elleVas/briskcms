@@ -9,4 +9,11 @@ export const accordionBlock: BlockDescriptor<AccordionProps> = {
   fields: [],
   isContainer: true,
   allowedChildTypes: ['AccordionItem'],
+  stylableProperties: [
+    'backgroundColor',
+    'textColor',
+    'borderRadius',
+    'paddingX',
+    'paddingY',
+  ],
 };

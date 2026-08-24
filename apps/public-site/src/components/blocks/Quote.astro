@@ -1,20 +1,36 @@
 ---
-import type { QuoteProps } from '@brisk/shared-types';
+import {
+  buildBlockInstanceStyle,
+  type BlockStyleOverride,
+  type QuoteProps,
+} from '@brisk/shared-types';
 
-type Props = QuoteProps;
+type Props = QuoteProps & { styleOverride?: BlockStyleOverride };
 
-const { quote, author, role } = Astro.props;
+const { quote, author, role, styleOverride } = Astro.props;
 const hasAuthor = Boolean(author);
 const hasRole = Boolean(role);
+const instanceStyle = buildBlockInstanceStyle(styleOverride);
 ---
 
-<blockquote data-brisk-field="quote">{quote}</blockquote>
-{
-  (hasAuthor || hasRole) && (
-    <cite>
-      {hasAuthor && <span data-brisk-field="author">{author}</span>}
-      {hasAuthor && hasRole && ' — '}
-      {hasRole && <span data-brisk-field="role">{role}</span>}
-    </cite>
-  )
-}
+<div class="brisk-quote" style={instanceStyle}>
+  <blockquote data-brisk-field="quote">{quote}</blockquote>
+  {
+    (hasAuthor || hasRole) && (
+      <cite>
+        {hasAuthor && <span data-brisk-field="author">{author}</span>}
+        {hasAuthor && hasRole && ' — '}
+        {hasRole && <span data-brisk-field="role">{role}</span>}
+      </cite>
+    )
+  }
+</div>
+
+<style>
+  .brisk-quote {
+    background: var(--brisk-override-bg, transparent);
+    border-radius: var(--brisk-override-radius, 0);
+    padding: var(--brisk-override-padding-y, 0) var(--brisk-override-padding-x, 0);
+    color: var(--brisk-override-text, inherit);
+  }
+</style>

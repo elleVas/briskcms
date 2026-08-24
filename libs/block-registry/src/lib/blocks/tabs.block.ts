@@ -9,4 +9,11 @@ export const tabsBlock: BlockDescriptor<TabsProps> = {
   fields: [],
   isContainer: true,
   allowedChildTypes: ['Tab'],
+  stylableProperties: [
+    'backgroundColor',
+    'textColor',
+    'borderRadius',
+    'paddingX',
+    'paddingY',
+  ],
 };

@@ -1,10 +1,15 @@
 ---
 import sanitizeHtml from 'sanitize-html';
-import type { EmbedHtmlProps } from '@brisk/shared-types';
+import {
+  buildBlockInstanceStyle,
+  type BlockStyleOverride,
+  type EmbedHtmlProps,
+} from '@brisk/shared-types';
 
-type Props = EmbedHtmlProps;
+type Props = EmbedHtmlProps & { styleOverride?: BlockStyleOverride };
 
-const { html } = Astro.props;
+const { html, styleOverride } = Astro.props;
+const instanceStyle = buildBlockInstanceStyle(styleOverride);
 
 // Permissive policy (confirmed with the user, 2026-08-19): script/iframe
 // stay allowed — that's what a free-embed block is for (YouTube, Calendly,
@@ -29,9 +34,14 @@ const safeHtml = sanitizeHtml(html, {
 });
 ---
 
-<div class="brisk-embed-html" set:html={safeHtml} />
+<div class="brisk-embed-html" style={instanceStyle} set:html={safeHtml} />
 
 <style>
+  .brisk-embed-html {
+    background: var(--brisk-override-bg, transparent);
+    border-radius: var(--brisk-override-radius, 0);
+    padding: var(--brisk-override-padding-y, 0) var(--brisk-override-padding-x, 0);
+  }
   /* `set:html` injects raw markup Astro never authored, so scoped styles
      can't reach it without :global() — a pasted embed (map, video,
      calendar widget) often ships with a fixed width/height attribute that

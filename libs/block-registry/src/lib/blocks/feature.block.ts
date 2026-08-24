@@ -15,4 +15,11 @@ export const featureBlock: BlockDescriptor<FeatureProps> = {
     { kind: 'text', key: 'title', label: 'Titolo', inlineEditable: true },
     { kind: 'textarea', key: 'text', label: 'Testo', inlineEditable: true },
   ],
+  stylableProperties: [
+    'backgroundColor',
+    'textColor',
+    'borderRadius',
+    'paddingX',
+    'paddingY',
+  ],
 };

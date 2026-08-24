@@ -7,7 +7,12 @@
 // difference is inside <body>: a docs-style sidebar next to the content
 // for any page that's part of a multi-page section, nothing for a
 // standalone page (the home included) — see the sidebar logic below.
-import type { Block, SeoMeta } from '@brisk/shared-types';
+import {
+	buildBlockStyleOverridesCss,
+	DEFAULT_THEME_TOKENS,
+	type Block,
+	type SeoMeta,
+} from '@brisk/shared-types';
 import {
 	listPublishedPageTree,
 	type PageTreeNodeDto,
@@ -87,6 +92,10 @@ const themeOverrideDeclarations = [
 ]
 	.filter(Boolean)
 	.join(' ');
+const tokens = allowStyleOverrides ? site.themeTokens : DEFAULT_THEME_TOKENS;
+const blockStyleOverridesCss = buildBlockStyleOverridesCss(
+	tokens.blockStyles,
+);
 
 // --- Sidebar: only for a page that's part of a multi-page section ---
 // (see this file's own top comment). Built from the flat page tree
@@ -187,6 +196,9 @@ const hasSidebar = sidebarItems.length > 0;
 			themeOverrideDeclarations && (
 				<style set:html={`:root { ${themeOverrideDeclarations} }`} />
 			)
+		}
+		{
+			blockStyleOverridesCss && <style set:html={blockStyleOverridesCss} />
 		}
 		<meta name="generator" content={Astro.generator} />
 		<title>{seoMeta.title}</title>

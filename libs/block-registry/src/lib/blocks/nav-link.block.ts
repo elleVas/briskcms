@@ -1,5 +1,6 @@
 import type { NavLinkProps } from '@brisk/shared-types';
 import { customField, type BlockDescriptor } from '../field-types.js';
+import { IconPickerField } from '../fields/icon-picker-field.js';
 import { linkTypeField } from '../fields/link-type-field.js';
 import { PagePickerField } from '../fields/page-picker-field.js';
 import { positionField } from '../fields/position-field.js';
@@ -14,6 +15,7 @@ export const navLinkBlock: BlockDescriptor<NavLinkProps> = {
     linkType: 'page',
     page: null,
     url: '',
+    icon: null,
     position: 'left',
     visibility: 'always',
   },
@@ -22,6 +24,7 @@ export const navLinkBlock: BlockDescriptor<NavLinkProps> = {
     linkTypeField,
     customField('page', 'Pagina', PagePickerField),
     { kind: 'text', key: 'url', label: 'URL' },
+    customField('icon', 'Icona', IconPickerField),
     positionField,
     visibilityField,
   ],

@@ -1,12 +1,17 @@
 ---
-import type { TeamMemberProps } from '@brisk/shared-types';
+import {
+  buildBlockInstanceStyle,
+  type BlockStyleOverride,
+  type TeamMemberProps,
+} from '@brisk/shared-types';
 
-type Props = TeamMemberProps;
+type Props = TeamMemberProps & { styleOverride?: BlockStyleOverride };
 
-const { name, role, bio, photo } = Astro.props;
+const { name, role, bio, photo, styleOverride } = Astro.props;
+const instanceStyle = buildBlockInstanceStyle(styleOverride);
 ---
 
-<div class="brisk-team-member">
+<div class="brisk-team-member" style={instanceStyle}>
   {
     photo ? (
       <img src={photo.url} alt="" class="brisk-team-member__photo" />
@@ -22,6 +27,9 @@ const { name, role, bio, photo } = Astro.props;
 <style>
   .brisk-team-member {
     text-align: center;
+    background: var(--brisk-override-bg, transparent);
+    border-radius: var(--brisk-override-radius, 0);
+    padding: var(--brisk-override-padding-y, 0) var(--brisk-override-padding-x, 0);
   }
   .brisk-team-member__photo {
     width: 6rem;
@@ -36,6 +44,7 @@ const { name, role, bio, photo } = Astro.props;
   .brisk-team-member__name {
     margin-top: 0.75rem;
     font-weight: 600;
+    color: var(--brisk-override-text, inherit);
   }
   .brisk-team-member__role {
     font-size: 0.875rem;

@@ -9,4 +9,6 @@ export * from './lib/page-hierarchy.js';
 export * from './lib/preview-bridge-protocol.js';
 export * from './lib/site-theme-settings.js';
 export * from './lib/site-theme-tokens.js';
+export * from './lib/block-style-overrides.js';
+export * from './lib/icons.js';
 export * from './lib/slugify.js';

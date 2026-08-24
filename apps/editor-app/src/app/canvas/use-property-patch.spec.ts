@@ -23,17 +23,19 @@ describe('usePropertyPatch', () => {
 
   function setup(debounceMs = 300) {
     const onSaveDraft = vi.fn();
+    const onSaveStyleOverride = vi.fn();
     const patchBlock = vi.fn();
     const { result } = renderHook(() =>
       usePropertyPatch({
         pageId: 'page-1',
         token: 'tok',
         onSaveDraft,
+        onSaveStyleOverride,
         patchBlock,
         debounceMs,
       }),
     );
-    return { result, onSaveDraft, patchBlock };
+    return { result, onSaveDraft, onSaveStyleOverride, patchBlock };
   }
 
   it('does nothing before the debounce window elapses', () => {
@@ -185,5 +187,70 @@ describe('usePropertyPatch', () => {
 
     expect(onSaveDraft).toHaveBeenCalledWith('hero-1', { title: 'New' });
     expect(patchBlock).not.toHaveBeenCalled();
+  });
+
+  it('scheduleStyleOverrideChange saves the override and renders+patches the fragment once the debounce elapses', async () => {
+    vi.mocked(blockFragmentApi.renderBlockFragment).mockResolvedValue(
+      '<div>patched</div>',
+    );
+    const { result, onSaveStyleOverride, patchBlock } = setup();
+
+    act(() => {
+      result.current.scheduleStyleOverrideChange(
+        'button-1',
+        'Button',
+        { label: 'Clicca qui' },
+        { backgroundColor: '#ff0000' },
+      );
+    });
+    await act(async () => {
+      vi.advanceTimersByTime(300);
+    });
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    expect(onSaveStyleOverride).toHaveBeenCalledWith('button-1', {
+      backgroundColor: '#ff0000',
+    });
+    expect(blockFragmentApi.renderBlockFragment).toHaveBeenCalledWith({
+      pageId: 'page-1',
+      token: 'tok',
+      blockId: 'button-1',
+      blockType: 'Button',
+      props: { label: 'Clicca qui' },
+      children: undefined,
+      styleOverride: { backgroundColor: '#ff0000' },
+    });
+    expect(patchBlock).toHaveBeenCalledWith('button-1', '<div>patched</div>');
+  });
+
+  it('scheduleChange and scheduleStyleOverrideChange on the same block have independent timers', () => {
+    const { result, onSaveDraft, onSaveStyleOverride } = setup();
+
+    act(() => {
+      result.current.scheduleChange('button-1', 'Button', {
+        label: 'Prop change',
+      });
+    });
+    act(() => {
+      vi.advanceTimersByTime(200);
+    });
+    act(() => {
+      result.current.scheduleStyleOverrideChange(
+        'button-1',
+        'Button',
+        { label: 'Prop change' },
+        { backgroundColor: '#ff0000' },
+      );
+    });
+    act(() => {
+      vi.advanceTimersByTime(100);
+    });
+
+    expect(onSaveDraft).toHaveBeenCalledWith('button-1', {
+      label: 'Prop change',
+    });
+    expect(onSaveStyleOverride).not.toHaveBeenCalled();
   });
 });

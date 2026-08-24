@@ -99,6 +99,17 @@ describe('per-block visibility defaults', () => {
     ).toBe('always');
   });
 
+  it('NavLink defaults icon to null (backward-compat with NavLinks saved before docs/adr/0023)', () => {
+    expect(
+      navLinkPropsSchema.parse({
+        label: 'x',
+        linkType: 'url',
+        page: null,
+        url: '',
+      }).icon,
+    ).toBe(null);
+  });
+
   it('LanguageSwitcher defaults to always', () => {
     expect(languageSwitcherPropsSchema.parse({}).visibility).toBe('always');
   });

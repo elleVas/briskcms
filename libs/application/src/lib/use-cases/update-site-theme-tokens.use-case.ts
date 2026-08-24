@@ -1,6 +1,6 @@
 import { SiteNotFoundError, type Site } from '@brisk/domain-core';
 import type { SiteRepositoryPort } from '@brisk/ports';
-import type { ThemeTokens } from '@brisk/shared-types';
+import type { BlockStyleOverride } from '@brisk/shared-types';
 
 export interface UpdateSiteThemeTokensDeps {
   siteRepository: SiteRepositoryPort;
@@ -9,10 +9,11 @@ export interface UpdateSiteThemeTokensDeps {
 export interface UpdateSiteThemeTokensInput {
   tenantId: string;
   siteId: string;
-  tokens: Partial<ThemeTokens>;
+  blockType: string;
+  style: BlockStyleOverride;
 }
 
-/** Vedi Site.updateThemeTokens — per-categoria: solo le categorie presenti in `tokens` vengono sostituite. */
+/** Vedi Site.updateThemeTokens — sostituisce per intero l'override del tipo di blocco dato, gli altri tipi restano invariati. */
 export async function updateSiteThemeTokens(
   deps: UpdateSiteThemeTokensDeps,
   input: UpdateSiteThemeTokensInput,
@@ -22,7 +23,7 @@ export async function updateSiteThemeTokens(
     throw new SiteNotFoundError(input.siteId);
   }
 
-  site.updateThemeTokens(input.tokens);
+  site.updateThemeTokens(input.blockType, input.style);
   await deps.siteRepository.save(site);
 
   return site;

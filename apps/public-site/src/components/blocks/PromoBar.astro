@@ -1,18 +1,18 @@
 ---
-import type { PromoBarProps } from '@brisk/shared-types';
+import {
+  buildBlockInstanceStyle,
+  type BlockStyleOverride,
+  type PromoBarProps,
+} from '@brisk/shared-types';
 import { localePath } from '../../lib/locale-path.js';
 
-type Props = PromoBarProps;
+type Props = PromoBarProps & { styleOverride?: BlockStyleOverride };
 
-const { message, linkType, page, url, visibility, colorOverride } =
+const { message, linkType, page, url, visibility, styleOverride } =
   Astro.props;
 const href = linkType === 'page' && page ? localePath(page.locale, page.slug) : url;
 const hasLink = linkType === 'page' ? Boolean(page) : Boolean(url);
-
-// Same per-instance escape hatch as Button.astro — see its own comment.
-const overrideStyle = colorOverride
-  ? { '--primary': colorOverride, '--primary-foreground': '#fff' }
-  : undefined;
+const instanceStyle = buildBlockInstanceStyle(styleOverride);
 ---
 
 <div
@@ -21,7 +21,7 @@ const overrideStyle = colorOverride
     { 'brisk-visibility-desktop-only': visibility === 'desktop-only' },
     { 'brisk-visibility-mobile-only': visibility === 'mobile-only' },
   ]}
-  style={overrideStyle}
+  style={instanceStyle}
 >
   {
     /* is:inline, not the bundled/deferred <script> below: this one must run
@@ -70,9 +70,11 @@ const overrideStyle = colorOverride
     align-items: center;
     justify-content: center;
     gap: 0.5rem;
-    padding: 0.75rem 2.5rem;
-    background: var(--primary);
-    color: var(--primary-foreground);
+    padding: var(--brisk-override-padding-y, 0.75rem)
+      var(--brisk-override-padding-x, 2.5rem);
+    border-radius: var(--brisk-override-radius, 0);
+    background: var(--brisk-override-bg, var(--primary));
+    color: var(--brisk-override-text, var(--primary-foreground));
     text-align: center;
   }
   .brisk-promo-bar__message {

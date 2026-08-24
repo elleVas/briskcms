@@ -1,12 +1,17 @@
 ---
-import type { FeatureProps } from '@brisk/shared-types';
+import {
+  buildBlockInstanceStyle,
+  type BlockStyleOverride,
+  type FeatureProps,
+} from '@brisk/shared-types';
 
-type Props = FeatureProps;
+type Props = FeatureProps & { styleOverride?: BlockStyleOverride };
 
-const { icon, title, text } = Astro.props;
+const { icon, title, text, styleOverride } = Astro.props;
+const instanceStyle = buildBlockInstanceStyle(styleOverride);
 ---
 
-<div class="brisk-feature">
+<div class="brisk-feature" style={instanceStyle}>
   <div class="brisk-feature__icon" aria-hidden="true" data-brisk-field="icon">{icon}</div>
   <h3 class="brisk-feature__title" data-brisk-field="title">{title}</h3>
   <p class="brisk-feature__text" data-brisk-field="text">{text}</p>
@@ -15,6 +20,10 @@ const { icon, title, text } = Astro.props;
 <style>
   .brisk-feature {
     text-align: center;
+    background: var(--brisk-override-bg, transparent);
+    color: var(--brisk-override-text, inherit);
+    border-radius: var(--brisk-override-radius, 0);
+    padding: var(--brisk-override-padding-y, 0) var(--brisk-override-padding-x, 0);
   }
   .brisk-feature__icon {
     font-size: 2rem;

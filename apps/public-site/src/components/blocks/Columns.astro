@@ -1,15 +1,25 @@
 ---
-import { columnsGridTemplate, type ColumnsProps } from '@brisk/shared-types';
+import {
+  buildBlockInstanceStyle,
+  columnsGridTemplate,
+  type BlockStyleOverride,
+  type ColumnsProps,
+} from '@brisk/shared-types';
 import EmptyContainerHint from '../EmptyContainerHint.astro';
 
-type Props = ColumnsProps & { editable?: boolean; hasChildren?: boolean };
+type Props = ColumnsProps & {
+  editable?: boolean;
+  hasChildren?: boolean;
+  styleOverride?: BlockStyleOverride;
+};
 
-const { layout, editable, hasChildren } = Astro.props;
+const { layout, editable, hasChildren, styleOverride } = Astro.props;
+const instanceStyle = buildBlockInstanceStyle(styleOverride);
 ---
 
 <div
   class="brisk-columns"
-  style={`grid-template-columns: ${columnsGridTemplate(layout)}`}
+  style={`grid-template-columns: ${columnsGridTemplate(layout)}; ${instanceStyle ?? ''}`}
   data-brisk-editable-outline={editable && hasChildren ? '' : undefined}
 >
   <slot />
@@ -20,6 +30,10 @@ const { layout, editable, hasChildren } = Astro.props;
   .brisk-columns {
     display: grid;
     gap: 1.5rem;
+    background: var(--brisk-override-bg, transparent);
+    color: var(--brisk-override-text, inherit);
+    border-radius: var(--brisk-override-radius, 0);
+    padding: var(--brisk-override-padding-y, 0) var(--brisk-override-padding-x, 0);
   }
   @media (max-width: 640px) {
     .brisk-columns {

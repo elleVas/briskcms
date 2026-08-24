@@ -18,4 +18,11 @@ export const teamMemberBlock: BlockDescriptor<TeamMemberProps> = {
     { kind: 'text', key: 'role', label: 'Ruolo', inlineEditable: true },
     { kind: 'textarea', key: 'bio', label: 'Bio', inlineEditable: true },
   ],
+  stylableProperties: [
+    'backgroundColor',
+    'textColor',
+    'borderRadius',
+    'paddingX',
+    'paddingY',
+  ],
 };

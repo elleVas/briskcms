@@ -9,4 +9,11 @@ export const testimonialsBlock: BlockDescriptor<TestimonialsProps> = {
   fields: [],
   isContainer: true,
   allowedChildTypes: ['Testimonial'],
+  stylableProperties: [
+    'backgroundColor',
+    'textColor',
+    'borderRadius',
+    'paddingX',
+    'paddingY',
+  ],
 };

@@ -13,4 +13,11 @@ export const tabBlock: BlockDescriptor<{ label: string }> = {
   fields: [{ kind: 'text', key: 'label', label: 'Etichetta tab' }],
   isContainer: true,
   allowedChildTypes: ['Hero', 'Text', 'Image', 'Gallery', 'Form'],
+  stylableProperties: [
+    'backgroundColor',
+    'textColor',
+    'borderRadius',
+    'paddingX',
+    'paddingY',
+  ],
 };

@@ -198,6 +198,16 @@
       "title": "Scegli un'immagine"
     }
   },
+  "icons": {
+    "picker": {
+      "title": "Scegli un'icona",
+      "search": "Cerca icona…",
+      "empty": "Nessuna icona trovata."
+    },
+    "field": {
+      "remove": "Rimuovi icona"
+    }
+  },
   "generalSettings": {
     "menuLabel": "Impostazioni generali",
     "title": "Impostazioni generali",
@@ -243,18 +253,13 @@
     "open": "Stile globale",
     "title": "Stile globale",
     "loading": "Caricamento...",
-    "categories": {
-      "colors": "Colori",
-      "buttons": "Bottoni"
-    },
-    "buttonRadiusLabel": "Raggio angoli",
-    "buttonRadiusPlaceholder": "es. 6px, 9999px per un pill",
-    "buttonPaddingXLabel": "Padding orizzontale",
-    "buttonPaddingYLabel": "Padding verticale",
-    "paddingPlaceholder": "es. 1.25rem — vuoto per il default del tema",
     "save": "Salva",
     "saving": "Salvataggio in corso...",
-    "close": "Chiudi"
+    "close": "Chiudi",
+    "back": "Indietro",
+    "colorsTitle": "Colori",
+    "blockStylesTitle": "Stile per blocco",
+    "blockStylesHint": "Scegli un tipo di blocco per modificarne lo stile su tutto il sito — sfondo, colore testo, angoli, padding."
   },
   "localeSettings": {
     "menuLabel": "Lingue",
@@ -426,6 +431,11 @@
     "breakpointDesktop": "Desktop",
     "breakpointTablet": "Tablet",
     "breakpointMobile": "Mobile",
-    "switchPage": "Cambia pagina"
+    "switchPage": "Cambia pagina",
+    "style": {
+      "editType": "Stile di tutti i blocchi {{type}}",
+      "editTypeHint": "Questi valori si applicano a OGNI blocco {{type}} del sito.",
+      "editInstance": "Stile di questo blocco"
+    }
   }
 }

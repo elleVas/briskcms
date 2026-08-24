@@ -1,17 +1,35 @@
 ---
-import type { PricingPlanProps } from '@brisk/shared-types';
+import {
+  buildBlockInstanceStyle,
+  type BlockStyleOverride,
+  type PricingPlanProps,
+} from '@brisk/shared-types';
 import { localePath } from '../../lib/locale-path.js';
 
-type Props = PricingPlanProps;
+type Props = PricingPlanProps & { styleOverride?: BlockStyleOverride };
 
-const { name, price, period, features, highlighted, buttonLabel, linkType, page, url } =
-  Astro.props;
+const {
+  name,
+  price,
+  period,
+  features,
+  highlighted,
+  buttonLabel,
+  linkType,
+  page,
+  url,
+  styleOverride,
+} = Astro.props;
 const href =
   linkType === 'page' && page ? localePath(page.locale, page.slug) : url;
 const hasLink = linkType === 'page' ? Boolean(page) : Boolean(url);
+const instanceStyle = buildBlockInstanceStyle(styleOverride);
 ---
 
-<div class:list={['brisk-pricing-plan', { 'brisk-pricing-plan--highlighted': highlighted }]}>
+<div
+  class:list={['brisk-pricing-plan', { 'brisk-pricing-plan--highlighted': highlighted }]}
+  style={instanceStyle}
+>
   <div class="brisk-pricing-plan__name" data-brisk-field="name">{name}</div>
   <div class="brisk-pricing-plan__price">
     <span data-brisk-field="price">{price}</span><span class="brisk-pricing-plan__period" data-brisk-field="period">{period}</span>
@@ -37,8 +55,11 @@ const hasLink = linkType === 'page' ? Boolean(page) : Boolean(url);
 <style>
   .brisk-pricing-plan {
     border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 1.5rem;
+    border-radius: var(--brisk-override-radius, 12px);
+    padding: var(--brisk-override-padding-y, 1.5rem)
+      var(--brisk-override-padding-x, 1.5rem);
+    background: var(--brisk-override-bg, transparent);
+    color: var(--brisk-override-text, inherit);
     text-align: center;
   }
   /* No dedicated "accent" token distinct from primary — a highlighted

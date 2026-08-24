@@ -1,20 +1,26 @@
 ---
-import type { LogoStripProps, PickedMedia } from '@brisk/shared-types';
+import {
+  buildBlockInstanceStyle,
+  type BlockStyleOverride,
+  type LogoStripProps,
+  type PickedMedia,
+} from '@brisk/shared-types';
 
-type Props = LogoStripProps;
+type Props = LogoStripProps & { styleOverride?: BlockStyleOverride };
 type LogoItem = LogoStripProps['logos'][number];
 
 function isPictured(logo: LogoItem): logo is LogoItem & { media: PickedMedia } {
   return logo.media !== null;
 }
 
-const { logos } = Astro.props;
+const { logos, styleOverride } = Astro.props;
 const pictured = logos.filter(isPictured);
+const instanceStyle = buildBlockInstanceStyle(styleOverride);
 ---
 
 {
   pictured.length > 0 ? (
-    <div class="brisk-logo-strip">
+    <div class="brisk-logo-strip" style={instanceStyle}>
       {pictured.map((logo) => (
         <img src={logo.media.url} alt={logo.alt} class="brisk-logo-strip__logo" />
       ))}
@@ -31,6 +37,9 @@ const pictured = logos.filter(isPictured);
     align-items: center;
     justify-content: center;
     gap: 2.5rem;
+    background: var(--brisk-override-bg, transparent);
+    border-radius: var(--brisk-override-radius, 0);
+    padding: var(--brisk-override-padding-y, 0) var(--brisk-override-padding-x, 0);
   }
   .brisk-logo-strip__logo {
     max-width: 100%;

@@ -42,7 +42,7 @@ const samplePage: PublishedPageDto = {
       overridesEnabled: true,
     },
     themeTokens: {
-      buttons: { borderRadius: null, paddingX: null, paddingY: null },
+      blockStyles: {},
     },
   },
   header: null,

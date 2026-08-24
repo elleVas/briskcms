@@ -25,4 +25,11 @@ export const countdownBlock: BlockDescriptor<CountdownProps> = {
     },
     { kind: 'text', key: 'label', label: 'Etichetta', inlineEditable: true },
   ],
+  stylableProperties: [
+    'backgroundColor',
+    'textColor',
+    'borderRadius',
+    'paddingX',
+    'paddingY',
+  ],
 };

@@ -17,6 +17,7 @@ have no concept of which theme is active.
 themes/<name>/
   theme.css      # required — design tokens
   theme.json      # required — manifest
+  icons/*.svg      # optional — icon set (docs/adr/0023)
   blocks/*.astro    # optional — full-file block overrides
   PageLayout.astro   # optional — full layout override (not wired yet, see below)
 ```
@@ -91,6 +92,27 @@ PageLayout's two importers (`PublicPageContent.astro`,
 `pages/[locale]/search.astro`). `classic` still ships neither — it only
 ever needed tokens — so this remains unexercised by any real theme today,
 but the resolution mechanism itself is no longer aspirational.
+
+## `icons/` — the icon set (docs/adr/0023)
+
+Optional. One `.svg` file per icon, filename (minus extension) is the
+icon's name — e.g. `icons/arrow-right.svg` registers `arrow-right`. A
+theme that ships even one icon here uses **only** that set — no
+per-missing-name fallback to the default set, this is a binary choice per
+theme, not a merge (see ADR 0023's Consequences for why).
+
+A theme that ships no `icons/` directory at all falls back to the full
+current [Lucide](https://lucide.dev) icon set, resolved from the
+`lucide-static` dependency in `apps/public-site/package.json` (raw SVG
+files, same icon family already used for editor-app's own UI chrome via
+`lucide-react`) — not a hand-picked/vendored subset, so it stays in sync
+automatically whenever that dependency is bumped. See
+`apps/public-site/src/lib/resolve-theme-icons.ts`.
+
+editor-app's icon picker never reads this directory directly (it can't —
+separate app, no filesystem access to a theme package at runtime); it
+fetches the resolved manifest from `GET /api/themes/current/icons`
+instead.
 
 ## The boundary you can't cross
 

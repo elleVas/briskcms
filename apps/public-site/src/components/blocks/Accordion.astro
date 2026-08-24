@@ -1,20 +1,30 @@
 ---
+import { buildBlockInstanceStyle, type BlockStyleOverride } from '@brisk/shared-types';
 import EmptyContainerHint from '../EmptyContainerHint.astro';
 
 export interface Props {
   editable?: boolean;
   hasChildren?: boolean;
+  styleOverride?: BlockStyleOverride;
 }
 
-const { editable, hasChildren } = Astro.props;
+const { editable, hasChildren, styleOverride } = Astro.props;
+const instanceStyle = buildBlockInstanceStyle(styleOverride);
 ---
 
-<div class="brisk-accordion" data-brisk-editable-outline={editable && hasChildren ? '' : undefined}>
+<div class="brisk-accordion" data-brisk-editable-outline={editable && hasChildren ? '' : undefined} style={instanceStyle}>
   <slot />
   <EmptyContainerHint show={!hasChildren && Boolean(editable)} />
 </div>
 
 <style>
+  .brisk-accordion {
+    background: var(--brisk-override-bg, transparent);
+    color: var(--brisk-override-text, inherit);
+    border-radius: var(--brisk-override-radius, 0);
+    padding: var(--brisk-override-padding-y, 0) var(--brisk-override-padding-x, 0);
+  }
+
   /* Solo nell'editor, e solo con contenuto — vuoto mostra già il proprio
      bordo tratteggiato via EmptyContainerHint, un secondo qui sarebbe
      ridondante. Senza questo, un contenitore con dentro del vero contenuto

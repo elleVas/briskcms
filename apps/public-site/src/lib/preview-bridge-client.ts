@@ -205,6 +205,25 @@ export function applyBlockInsert(
   return newNode;
 }
 
+/**
+ * id fisso del `<style>` iniettato per l'override "a livello di
+ * componente" (docs/adr/0022) — un solo elemento, riscritto per intero ad
+ * ogni salvataggio dal pulsante "Stile" (il genitore manda già l'intera
+ * mappa aggiornata di `blockStyles`, non un delta), mai accumulato.
+ */
+const BLOCK_STYLE_CSS_ELEMENT_ID = 'brisk-block-style-overrides';
+
+/** Scrive/sostituisce il `<style>` degli override per-tipo (docs/adr/0022) — vedi EditorUpdateBlockStyleCssMessage. Crea l'elemento se non esiste ancora (primo salvataggio della sessione), lo riusa altrimenti. */
+export function applyBlockStyleCss(root: Document, css: string): void {
+  let styleEl = root.getElementById(BLOCK_STYLE_CSS_ELEMENT_ID);
+  if (!styleEl) {
+    styleEl = root.createElement('style');
+    styleEl.id = BLOCK_STYLE_CSS_ELEMENT_ID;
+    root.head.appendChild(styleEl);
+  }
+  styleEl.textContent = css;
+}
+
 /** Rimuove un blocco eliminato dal DOM dell'iframe — `true` se un nodo è stato davvero rimosso, `false` se non era (più) presente (non un errore: un'azione precedente potrebbe già averlo tolto). */
 export function applyBlockRemove(root: ParentNode, blockId: string): boolean {
   const target = root.querySelector(`[data-brisk-block-id="${blockId}"]`);
@@ -628,6 +647,9 @@ export function initPreviewBridge(): void {
       }
       case 'editor:exit-text-edit':
         exitTextEdit();
+        return;
+      case 'editor:update-block-style-css':
+        applyBlockStyleCss(document, event.data.payload.css);
         return;
       default:
         return;

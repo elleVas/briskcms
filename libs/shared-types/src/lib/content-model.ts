@@ -1,5 +1,8 @@
 import { z } from 'zod';
-import { hexColorSchema } from './site-theme-settings.js';
+import {
+  blockStyleOverrideSchema,
+  type BlockStyleOverride,
+} from './site-theme-tokens.js';
 
 /**
  * Formato generico di un blocco di contenuto (output editor Puck, Fase 2).
@@ -24,6 +27,8 @@ export interface Block {
   type: string;
   props: Record<string, unknown>;
   children?: Block[];
+  /** Override per-istanza (docs/adr/0022) — solo QUESTO blocco, sopra l'eventuale override di tipo salvato nei themeTokens del sito. `undefined`/campi assenti = eredita normalmente. */
+  styleOverride?: BlockStyleOverride;
 }
 
 export const blockSchema: z.ZodType<Block> = z.lazy(() =>
@@ -32,6 +37,7 @@ export const blockSchema: z.ZodType<Block> = z.lazy(() =>
     type: z.string(),
     props: z.record(z.string(), z.unknown()),
     children: z.array(blockSchema).optional(),
+    styleOverride: blockStyleOverrideSchema.optional(),
   }),
 );
 
@@ -212,6 +218,8 @@ export const navLinkPropsSchema = navItemPositionSchema.extend({
   linkType: z.enum(['page', 'url']),
   page: pickedPageSchema.nullable(),
   url: z.string(),
+  /** Nome icona risolto contro il set del tema attivo (docs/adr/0023) — `null` = nessuna icona. `.default(null)`: i NavLink già salvati prima di questo campo non hanno la chiave. */
+  icon: z.string().nullable().default(null),
   visibility: visibilitySchema.default('always'),
 });
 export type NavLinkProps = z.infer<typeof navLinkPropsSchema>;
@@ -435,9 +443,6 @@ export const promoBarPropsSchema = z.object({
   page: pickedPageSchema.nullable(),
   url: z.string(),
   visibility: visibilitySchema.default('always'),
-  // Per-instance escape hatch, same reasoning as ButtonProps' own field —
-  // null means "use the theme's primary color like every other PromoBar".
-  colorOverride: hexColorSchema.nullable().default(null),
 });
 export type PromoBarProps = z.infer<typeof promoBarPropsSchema>;
 
@@ -462,7 +467,7 @@ export type TabProps = z.infer<typeof tabPropsSchema>;
 export const tabsPropsSchema = z.strictObject({});
 export type TabsProps = z.infer<typeof tabsPropsSchema>;
 
-/** Reuses NavLink/PromoBar's `linkType`/`page`/`url` shape for the button's destination. `backgroundColor` is nullable — `null` means "inherit the theme's primary color" (Banner.astro only applies a CSS-var override when it's set), picked via ColorPickerField in the editor. */
+/** Reuses NavLink/PromoBar's `linkType`/`page`/`url` shape for the button's destination. Per-instance color/spacing overrides live on `Block.styleOverride` (docs/adr/0022), not here — a block-agnostic mechanism, not a bespoke field per block. */
 export const bannerPropsSchema = z.object({
   title: z.string(),
   text: z.string(),
@@ -470,18 +475,16 @@ export const bannerPropsSchema = z.object({
   linkType: z.enum(['page', 'url']),
   page: pickedPageSchema.nullable(),
   url: z.string(),
-  backgroundColor: hexColorSchema.nullable().default(null),
 });
 export type BannerProps = z.infer<typeof bannerPropsSchema>;
 
-/** Standalone CTA button — same link shape as Banner/NavLink/PromoBar. `variant` picks between the two button styles Button.astro defines. `colorOverride` is a per-instance escape hatch — `null` (the default) means "use the theme's primary/secondary color like every other Button", set means this one instance renders with its own color regardless of theme. */
+/** Standalone CTA button — same link shape as Banner/NavLink/PromoBar. `variant` picks between the two button styles Button.astro defines. Per-instance color/spacing overrides live on `Block.styleOverride` (docs/adr/0022), not here. */
 export const buttonPropsSchema = z.object({
   label: z.string(),
   linkType: z.enum(['page', 'url']),
   page: pickedPageSchema.nullable(),
   url: z.string(),
   variant: z.enum(['primary', 'secondary']).default('primary'),
-  colorOverride: hexColorSchema.nullable().default(null),
 });
 export type ButtonProps = z.infer<typeof buttonPropsSchema>;
 

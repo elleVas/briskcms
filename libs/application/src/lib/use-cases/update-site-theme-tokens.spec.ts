@@ -40,27 +40,28 @@ describe('updateSiteThemeTokens', () => {
     return site;
   }
 
-  it('saves the buttons category', async () => {
+  it('saves the override for the given block type', async () => {
     const deps = setup();
     await createSite(deps);
 
     const result = await updateSiteThemeTokens(deps, {
       tenantId,
       siteId: 'site-1',
-      tokens: {
-        buttons: {
-          borderRadius: '9999px',
-          paddingX: '1.5rem',
-          paddingY: '0.75rem',
-        },
+      blockType: 'Button',
+      style: {
+        borderRadius: '9999px',
+        paddingX: '1.5rem',
+        paddingY: '0.75rem',
       },
     });
 
     expect(result.themeTokens).toEqual({
-      buttons: {
-        borderRadius: '9999px',
-        paddingX: '1.5rem',
-        paddingY: '0.75rem',
+      blockStyles: {
+        Button: {
+          borderRadius: '9999px',
+          paddingX: '1.5rem',
+          paddingY: '0.75rem',
+        },
       },
     });
     const persisted = await deps.siteRepository.findById(tenantId, 'site-1');
@@ -74,9 +75,8 @@ describe('updateSiteThemeTokens', () => {
       updateSiteThemeTokens(deps, {
         tenantId,
         siteId: 'does-not-exist',
-        tokens: {
-          buttons: { borderRadius: '6px', paddingX: null, paddingY: null },
-        },
+        blockType: 'Button',
+        style: { borderRadius: '6px' },
       }),
     ).rejects.toThrow(SiteNotFoundError);
   });

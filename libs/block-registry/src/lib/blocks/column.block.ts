@@ -11,4 +11,11 @@ export const columnBlock: BlockDescriptor<ColumnProps> = {
   defaultProps: {},
   fields: [],
   isContainer: true,
+  stylableProperties: [
+    'backgroundColor',
+    'textColor',
+    'borderRadius',
+    'paddingX',
+    'paddingY',
+  ],
 };

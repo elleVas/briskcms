@@ -1,23 +1,32 @@
 ---
+import { buildBlockInstanceStyle, type BlockStyleOverride } from '@brisk/shared-types';
 import EmptyContainerHint from '../EmptyContainerHint.astro';
 
 export interface Props {
   editable?: boolean;
   hasChildren?: boolean;
+  styleOverride?: BlockStyleOverride;
 }
 
-const { editable, hasChildren } = Astro.props;
+const { editable, hasChildren, styleOverride } = Astro.props;
+const instanceStyle = buildBlockInstanceStyle(styleOverride);
 ---
 
-<div class="brisk-timeline" data-brisk-editable-outline={editable && hasChildren ? '' : undefined}>
+<div class="brisk-timeline" data-brisk-editable-outline={editable && hasChildren ? '' : undefined} style={instanceStyle}>
   <slot />
   <EmptyContainerHint show={!hasChildren && Boolean(editable)} />
 </div>
 
 <style>
+  /* Niente paddingX/paddingY qui: padding-left è strutturale (spazio per
+     la linea verticale ::before), un override generico lo sovrascriverebbe
+     rompendo il layout. */
   .brisk-timeline {
     position: relative;
     padding-left: 1.5rem;
+    background: var(--brisk-override-bg, transparent);
+    color: var(--brisk-override-text, inherit);
+    border-radius: var(--brisk-override-radius, 0);
   }
   .brisk-timeline::before {
     content: '';

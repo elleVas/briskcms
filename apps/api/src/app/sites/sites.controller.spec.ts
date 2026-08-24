@@ -177,21 +177,25 @@ describe('SitesController (unit)', () => {
 
     await expect(
       controller.updateThemeTokens('missing', {
-        buttons: { borderRadius: '6px', paddingX: null, paddingY: null },
+        blockType: 'Button',
+        style: { borderRadius: '6px' },
       }),
     ).rejects.toThrow(NotFoundException);
   });
 
-  it('updateThemeTokens saves only the categories present in the body', async () => {
+  it('updateThemeTokens saves the override for only the block type given', async () => {
     siteRepository.findById.mockResolvedValue(buildSite());
 
     const result = await controller.updateThemeTokens('site-1', {
-      buttons: { borderRadius: '9999px', paddingX: '1.5rem', paddingY: null },
+      blockType: 'Button',
+      style: { borderRadius: '9999px', paddingX: '1.5rem' },
     });
 
     expect(siteRepository.save).toHaveBeenCalled();
     expect(result.themeTokens).toEqual({
-      buttons: { borderRadius: '9999px', paddingX: '1.5rem', paddingY: null },
+      blockStyles: {
+        Button: { borderRadius: '9999px', paddingX: '1.5rem' },
+      },
     });
   });
 });

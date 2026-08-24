@@ -1,12 +1,17 @@
 ---
-import type { HeroProps } from '@brisk/shared-types';
+import type { BlockStyleOverride, HeroProps } from '@brisk/shared-types';
+import { buildBlockInstanceStyle } from '@brisk/shared-types';
 
-type Props = HeroProps;
+type Props = HeroProps & { styleOverride?: BlockStyleOverride };
 
-const { title, subtitle } = Astro.props;
+const { title, subtitle, styleOverride } = Astro.props;
+const instanceStyle = buildBlockInstanceStyle(styleOverride);
 ---
 
-<header class="mx-auto max-w-3xl py-20 text-center sm:py-28">
+<header
+	class="brisk-hero mx-auto max-w-3xl py-20 text-center sm:py-28"
+	style={instanceStyle}
+>
 	<h1
 		data-brisk-field="title"
 		class="text-4xl font-semibold tracking-tight text-balance text-foreground sm:text-5xl"
@@ -20,3 +25,13 @@ const { title, subtitle } = Astro.props;
 		{subtitle}
 	</p>
 </header>
+
+<style>
+	.brisk-hero {
+		background: var(--brisk-override-bg, transparent);
+		border-radius: var(--brisk-override-radius, 0);
+	}
+	.brisk-hero h1 {
+		color: var(--brisk-override-text, var(--foreground));
+	}
+</style>

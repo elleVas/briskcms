@@ -19,4 +19,11 @@ export const statBlock: BlockDescriptor<StatProps> = {
     { kind: 'text', key: 'suffix', label: 'Suffisso', inlineEditable: true },
     { kind: 'text', key: 'label', label: 'Etichetta', inlineEditable: true },
   ],
+  stylableProperties: [
+    'backgroundColor',
+    'textColor',
+    'borderRadius',
+    'paddingX',
+    'paddingY',
+  ],
 };

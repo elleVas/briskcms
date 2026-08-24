@@ -29,6 +29,7 @@ const emptyBridge: PreviewBridgeState = {
   enterTextEdit: vi.fn(),
   exitTextEdit: vi.fn(),
   selectBlock: vi.fn(),
+  updateBlockStyleCss: vi.fn(),
 };
 
 describe('buildPreviewUrl', () => {

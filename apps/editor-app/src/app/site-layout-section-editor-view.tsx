@@ -6,6 +6,7 @@ import { headerFooterBlocks } from '@brisk/block-registry';
 import type { SaveStatus } from './use-page-editor.js';
 import { CanvasEditorShell } from './canvas/canvas-editor-shell.js';
 import { IconButton } from './icon-button.js';
+import { IconListProvider } from './icon-list-provider.js';
 import { MediaPickerProvider } from './media-picker-provider.js';
 import { PageListProvider } from './page-list-provider.js';
 import type { SiteLayoutSectionKind } from '../lib/site-layout-sections-api-client.js';
@@ -88,59 +89,61 @@ export function SiteLayoutSectionEditorView({
   return (
     <MediaPickerProvider siteId={siteId}>
       <PageListProvider siteId={siteId} locale={locale}>
-        {!isLoadingRepresentativePage && !representativePage ? (
-          <div className="flex h-screen items-center justify-center p-6 text-center text-sm text-muted-foreground">
-            {t('layout.editor.noPageToPreview', { section: sectionLabel })}
-          </div>
-        ) : (
-          representativePage && (
-            <CanvasEditorShell
-              backLink={
-                <Link to="/layout" className="hover:underline">
-                  ← {t('layout.editor.backToList')}
-                </Link>
-              }
-              siteId={siteId}
-              statusText={statusText}
-              actions={
-                <>
-                  {kind === 'header' && (
-                    <label className="flex items-center gap-1.5">
-                      <Switch
-                        size="sm"
-                        checked={section.sticky}
-                        onCheckedChange={handleStickyChange}
-                      />
-                      {t('layout.editor.sticky')}
-                    </label>
-                  )}
-                  <IconButton
-                    label={t('pages.versionHistory.open')}
-                    onClick={() => setIsHistoryOpen(true)}
-                  >
-                    <History />
-                  </IconButton>
-                </>
-              }
-              registry={headerFooterBlocks}
-              categories={headerFooterCategories}
-              blocks={section.content}
-              onChange={handleChange}
-              onPublish={handlePublish}
-              pageId={representativePage.id}
-              editingSection={kind}
-              restoredAt={restoredAt}
-            >
-              <VersionHistoryDialog
-                versions={versions}
-                isLoading={isLoadingVersions}
-                open={isHistoryOpen}
-                onOpenChange={setIsHistoryOpen}
-                onRollback={handleRollback}
-              />
-            </CanvasEditorShell>
-          )
-        )}
+        <IconListProvider>
+          {!isLoadingRepresentativePage && !representativePage ? (
+            <div className="flex h-screen items-center justify-center p-6 text-center text-sm text-muted-foreground">
+              {t('layout.editor.noPageToPreview', { section: sectionLabel })}
+            </div>
+          ) : (
+            representativePage && (
+              <CanvasEditorShell
+                backLink={
+                  <Link to="/layout" className="hover:underline">
+                    ← {t('layout.editor.backToList')}
+                  </Link>
+                }
+                siteId={siteId}
+                statusText={statusText}
+                actions={
+                  <>
+                    {kind === 'header' && (
+                      <label className="flex items-center gap-1.5">
+                        <Switch
+                          size="sm"
+                          checked={section.sticky}
+                          onCheckedChange={handleStickyChange}
+                        />
+                        {t('layout.editor.sticky')}
+                      </label>
+                    )}
+                    <IconButton
+                      label={t('pages.versionHistory.open')}
+                      onClick={() => setIsHistoryOpen(true)}
+                    >
+                      <History />
+                    </IconButton>
+                  </>
+                }
+                registry={headerFooterBlocks}
+                categories={headerFooterCategories}
+                blocks={section.content}
+                onChange={handleChange}
+                onPublish={handlePublish}
+                pageId={representativePage.id}
+                editingSection={kind}
+                restoredAt={restoredAt}
+              >
+                <VersionHistoryDialog
+                  versions={versions}
+                  isLoading={isLoadingVersions}
+                  open={isHistoryOpen}
+                  onOpenChange={setIsHistoryOpen}
+                  onRollback={handleRollback}
+                />
+              </CanvasEditorShell>
+            )
+          )}
+        </IconListProvider>
       </PageListProvider>
     </MediaPickerProvider>
   );

@@ -25,4 +25,11 @@ export const testimonialBlock: BlockDescriptor<TestimonialProps> = {
     customField('avatar', 'Avatar', MediaPickerField),
     { kind: 'number', key: 'rating', label: 'Stelle', min: 1, max: 5, step: 1 },
   ],
+  stylableProperties: [
+    'backgroundColor',
+    'textColor',
+    'borderRadius',
+    'paddingX',
+    'paddingY',
+  ],
 };

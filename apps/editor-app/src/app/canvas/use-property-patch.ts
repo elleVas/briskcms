@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef } from 'react';
-import type { Block } from '@brisk/shared-types';
+import type { Block, BlockStyleOverride } from '@brisk/shared-types';
 import { renderBlockFragment } from '../../lib/block-fragment-api-client.js';
 
 export interface UsePropertyPatchInput {
@@ -7,6 +7,11 @@ export interface UsePropertyPatchInput {
   token: string;
   /** Chiamato con le props già fuse (il chiamante possiede l'albero, vedi use-block-tree.ts) — persiste la bozza reale. */
   onSaveDraft: (blockId: string, props: Record<string, unknown>) => void;
+  /** Come `onSaveDraft` ma per l'override per-istanza (docs/adr/0022) — un valore separato da `props`, sostituito per intero (vedi use-block-tree.ts's updateBlockStyleOverride), non fuso campo-per-campo. */
+  onSaveStyleOverride: (
+    blockId: string,
+    styleOverride: BlockStyleOverride,
+  ) => void;
   /** Da usePreviewBridge — invia editor:patch-block all'iframe. */
   patchBlock: (blockId: string, html: string) => void;
   debounceMs?: number;
@@ -29,6 +34,14 @@ export interface UsePropertyPatchResult {
    * lì sopra a metà digitazione.
    */
   scheduleTextChange: (blockId: string, field: string, text: string) => void;
+  /** Da chiamare ad ogni cambio nel popover di stile per-istanza (docs/adr/0022) — timer indipendente da `scheduleChange`: un cambio di stile e un cambio di proprietà "normale" sullo stesso blocco, ravvicinati, non si annullano il debounce a vicenda. */
+  scheduleStyleOverrideChange: (
+    blockId: string,
+    blockType: string,
+    props: Record<string, unknown>,
+    styleOverride: BlockStyleOverride,
+    children?: Block[],
+  ) => void;
 }
 
 const DEFAULT_DEBOUNCE_MS = 300;
@@ -46,6 +59,7 @@ export function usePropertyPatch({
   pageId,
   token,
   onSaveDraft,
+  onSaveStyleOverride,
   patchBlock,
   debounceMs = DEFAULT_DEBOUNCE_MS,
 }: UsePropertyPatchInput): UsePropertyPatchResult {
@@ -114,5 +128,38 @@ export function usePropertyPatch({
     [onSaveDraft, debounceMs],
   );
 
-  return { scheduleChange, scheduleTextChange };
+  const scheduleStyleOverrideChange = useCallback(
+    (
+      blockId: string,
+      blockType: string,
+      props: Record<string, unknown>,
+      styleOverride: BlockStyleOverride,
+      children?: Block[],
+    ) => {
+      schedule(`style:${blockId}`, () => {
+        onSaveStyleOverride(blockId, styleOverride);
+        renderBlockFragment({
+          pageId,
+          token,
+          blockId,
+          blockType,
+          props,
+          children,
+          styleOverride,
+        })
+          .then((html) => patchBlock(blockId, html))
+          .catch(() => {
+            /* la bozza è già salvata sopra — vedi lo stesso commento di scheduleChange. */
+          });
+      });
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- vedi scheduleChange sopra.
+    [pageId, token, onSaveStyleOverride, patchBlock, debounceMs],
+  );
+
+  return {
+    scheduleChange,
+    scheduleTextChange,
+    scheduleStyleOverrideChange,
+  };
 }

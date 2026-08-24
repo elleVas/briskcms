@@ -61,6 +61,7 @@ export const POST: APIRoute = async ({ request }) => {
     type: body.blockType,
     props: body.props,
     ...(children ? { children } : {}),
+    ...(body.styleOverride ? { styleOverride: body.styleOverride } : {}),
   };
 
   const container = await AstroContainer.create();

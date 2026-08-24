@@ -1,20 +1,22 @@
 ---
-import type { BannerProps } from '@brisk/shared-types';
+import {
+  buildBlockInstanceStyle,
+  type BannerProps,
+  type BlockStyleOverride,
+} from '@brisk/shared-types';
 import { localePath } from '../../lib/locale-path.js';
 
-type Props = BannerProps;
+type Props = BannerProps & { styleOverride?: BlockStyleOverride };
 
-const { title, text, buttonLabel, linkType, page, url, backgroundColor } =
+const { title, text, buttonLabel, linkType, page, url, styleOverride } =
   Astro.props;
 const href =
   linkType === 'page' && page ? localePath(page.locale, page.slug) : url;
 const hasLink = linkType === 'page' ? Boolean(page) : Boolean(url);
+const instanceStyle = buildBlockInstanceStyle(styleOverride);
 ---
 
-<div
-  class="brisk-banner"
-  style={{ background: backgroundColor ?? 'var(--secondary)' }}
->
+<div class="brisk-banner" style={instanceStyle}>
   <h2 class="brisk-banner__title" data-brisk-field="title">{title}</h2>
   <p class="brisk-banner__text" data-brisk-field="text">{text}</p>
   {
@@ -28,8 +30,11 @@ const hasLink = linkType === 'page' ? Boolean(page) : Boolean(url);
 
 <style>
   .brisk-banner {
-    padding: 2.5rem 1.5rem;
-    border-radius: 12px;
+    padding: var(--brisk-override-padding-y, 2.5rem)
+      var(--brisk-override-padding-x, 1.5rem);
+    border-radius: var(--brisk-override-radius, 12px);
+    background: var(--brisk-override-bg, var(--secondary));
+    color: var(--brisk-override-text, inherit);
     text-align: center;
   }
   .brisk-banner__title {

@@ -267,24 +267,25 @@ describe('SitesController (integration)', () => {
       .expect(404);
   });
 
-  it('defaults theme tokens to every field null, and updates the buttons category', async () => {
+  it('defaults theme tokens to null, and updates the override for one block type', async () => {
     const getRes = await agent.get(`/sites/${siteId}`).expect(200);
     expect(getRes.body.themeTokens).toBeNull();
 
     const res = await agent
       .patch(`/sites/${siteId}/theme-tokens`)
       .send({
-        buttons: { borderRadius: '9999px', paddingX: '1.5rem', paddingY: null },
+        blockType: 'Button',
+        style: { borderRadius: '9999px', paddingX: '1.5rem' },
       })
       .expect(200);
 
     expect(res.body.themeTokens).toEqual({
-      buttons: { borderRadius: '9999px', paddingX: '1.5rem', paddingY: null },
+      blockStyles: { Button: { borderRadius: '9999px', paddingX: '1.5rem' } },
     });
 
     const getAfter = await agent.get(`/sites/${siteId}`).expect(200);
     expect(getAfter.body.themeTokens).toEqual({
-      buttons: { borderRadius: '9999px', paddingX: '1.5rem', paddingY: null },
+      blockStyles: { Button: { borderRadius: '9999px', paddingX: '1.5rem' } },
     });
   });
 
@@ -292,7 +293,8 @@ describe('SitesController (integration)', () => {
     await agent
       .patch(`/sites/${randomUUID()}/theme-tokens`)
       .send({
-        buttons: { borderRadius: '6px', paddingX: null, paddingY: null },
+        blockType: 'Button',
+        style: { borderRadius: '6px' },
       })
       .expect(404);
   });

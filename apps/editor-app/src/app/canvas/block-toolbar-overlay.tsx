@@ -4,19 +4,21 @@ import {
   ChevronDown,
   ChevronUp,
   Copy,
+  Paintbrush,
   Palette,
   Pencil,
   Plus,
   Trash2,
 } from 'lucide-react';
-import type { Block, BlockRect } from '@brisk/shared-types';
-import { ColorPickerField, type BlockDescriptor } from '@brisk/block-registry';
+import type { Block, BlockRect, BlockStyleOverride } from '@brisk/shared-types';
+import type { BlockDescriptor } from '@brisk/block-registry';
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from '../../components/ui/popover.js';
 import { BlockPicker, type BlockPickerCategory } from './block-picker.js';
+import { BlockStyleFields } from './block-style-fields.js';
 import { InspectorPanel } from './inspector-panel.js';
 import { useIframeGeometry, type IframeGeometry } from './overlay-layer.js';
 
@@ -32,6 +34,18 @@ export interface BlockToolbarOverlayProps {
   registry: BlockDescriptor[];
   categories: BlockPickerCategory[];
   onChangeProp: (key: string, value: unknown) => void;
+  /**
+   * Override "a livello di componente" (docs/adr/0022) — valore corrente
+   * per il TIPO del blocco selezionato (`site.themeTokens.blockStyles[tipo]
+   * ?? {}`), tocca OGNI istanza di quel tipo sul sito. Entrambi assenti
+   * quando non c'è ancora un sito da cui leggerlo (query non arrivata, o
+   * nessun `siteId` — vedi canvas-editor-shell.tsx): il pulsante "Stile"
+   * semplicemente non appare finché non lo sono.
+   */
+  typeStyle?: BlockStyleOverride;
+  onChangeTypeStyle?: (style: BlockStyleOverride) => void;
+  /** Override per-ISTANZA (docs/adr/0022) — solo `block` stesso, letto da `block.styleOverride` direttamente (non serve una prop separata). */
+  onChangeInstanceStyle: (style: BlockStyleOverride) => void;
   onMoveUp: () => void;
   onMoveDown: () => void;
   onDuplicate: () => void;
@@ -135,6 +149,9 @@ export function BlockToolbarOverlay({
   registry,
   categories,
   onChangeProp,
+  typeStyle,
+  onChangeTypeStyle,
+  onChangeInstanceStyle,
   onMoveUp,
   onMoveDown,
   onDuplicate,
@@ -147,11 +164,14 @@ export function BlockToolbarOverlay({
   const geometry = useIframeGeometry(iframeRef);
   const [insertOpen, setInsertOpen] = useState<'before' | 'after' | null>(null);
 
-  const colorField = descriptor.fields.find(
-    (field) => field.kind === 'custom' && field.component === ColorPickerField,
-  );
   const canAddChild =
     descriptor.isContainer && descriptor.allowedChildTypes?.length === 1;
+  const stylableProperties = descriptor.stylableProperties ?? [];
+  const canStyleType =
+    stylableProperties.length > 0 &&
+    typeStyle !== undefined &&
+    onChangeTypeStyle !== undefined;
+  const canStyleInstance = stylableProperties.length > 0;
 
   return (
     <div className="pointer-events-none absolute inset-0 overflow-visible">
@@ -213,21 +233,47 @@ export function BlockToolbarOverlay({
         >
           <ChevronDown size={16} />
         </button>
-        {colorField && (
+        {canStyleType && (
           <Popover>
             <PopoverTrigger asChild>
               <button
                 type="button"
                 className={iconButtonClass}
-                aria-label={colorField.label}
+                aria-label={t('canvas.style.editType', {
+                  type: descriptor.label,
+                })}
+              >
+                <Paintbrush size={16} />
+              </button>
+            </PopoverTrigger>
+            <PopoverContent side="right">
+              <p className="mb-3 text-xs text-muted-foreground">
+                {t('canvas.style.editTypeHint', { type: descriptor.label })}
+              </p>
+              <BlockStyleFields
+                properties={stylableProperties}
+                value={typeStyle ?? {}}
+                onChange={(next) => onChangeTypeStyle?.(next)}
+              />
+            </PopoverContent>
+          </Popover>
+        )}
+        {canStyleInstance && (
+          <Popover>
+            <PopoverTrigger asChild>
+              <button
+                type="button"
+                className={iconButtonClass}
+                aria-label={t('canvas.style.editInstance')}
               >
                 <Palette size={16} />
               </button>
             </PopoverTrigger>
             <PopoverContent side="right">
-              <ColorPickerField
-                value={block.props[colorField.key] as string | null}
-                onChange={(value) => onChangeProp(colorField.key, value)}
+              <BlockStyleFields
+                properties={stylableProperties}
+                value={block.styleOverride ?? {}}
+                onChange={onChangeInstanceStyle}
               />
             </PopoverContent>
           </Popover>

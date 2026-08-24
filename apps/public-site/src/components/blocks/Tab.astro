@@ -1,18 +1,31 @@
 ---
-import type { TabProps } from '@brisk/shared-types';
+import {
+  buildBlockInstanceStyle,
+  type BlockStyleOverride,
+  type TabProps,
+} from '@brisk/shared-types';
 
-type Props = TabProps;
+type Props = TabProps & { styleOverride?: BlockStyleOverride };
 
-const { label } = Astro.props;
+const { label, styleOverride } = Astro.props;
+const instanceStyle = buildBlockInstanceStyle(styleOverride);
 ---
 
-<div class="brisk-tab-panel" data-tab-label={label} role="tabpanel">
+<div
+  class="brisk-tab-panel brisk-tab"
+  data-tab-label={label}
+  role="tabpanel"
+  style={instanceStyle}
+>
   <slot />
 </div>
 
 <style>
   .brisk-tab-panel {
-    padding: 1rem 0;
+    padding: var(--brisk-override-padding-y, 1rem) var(--brisk-override-padding-x, 0);
+    background: var(--brisk-override-bg, transparent);
+    color: var(--brisk-override-text, inherit);
+    border-radius: var(--brisk-override-radius, 0);
   }
   .brisk-tab-panel[hidden] {
     display: none;

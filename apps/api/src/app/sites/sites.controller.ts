@@ -164,7 +164,8 @@ export class SitesController {
         {
           tenantId: this.tenantContext.getCurrentTenantId(),
           siteId: id,
-          tokens: body,
+          blockType: body.blockType,
+          style: body.style,
         },
       );
       return site.toProps();

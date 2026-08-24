@@ -169,38 +169,49 @@ describe('Site entity', () => {
     });
   });
 
-  it('themeTokens defaults to every field null when never customized', () => {
+  it('themeTokens defaults to an empty blockStyles map when never customized', () => {
     const site = Site.fromProps(props);
 
-    expect(site.themeTokens).toEqual({
-      buttons: { borderRadius: null, paddingX: null, paddingY: null },
-    });
+    expect(site.themeTokens).toEqual({ blockStyles: {} });
   });
 
-  it('updateThemeTokens replaces only the categories present in the input', () => {
-    const site = Site.fromProps(props);
-
-    site.updateThemeTokens({
-      buttons: { borderRadius: '9999px', paddingX: '1.5rem', paddingY: null },
-    });
-
-    expect(site.themeTokens).toEqual({
-      buttons: { borderRadius: '9999px', paddingX: '1.5rem', paddingY: null },
-    });
-  });
-
-  it('updateThemeTokens leaves an already-saved category untouched when the input omits it', () => {
+  it('updateThemeTokens replaces only the block type given, leaving other types untouched', () => {
     const site = Site.fromProps({
       ...props,
       themeTokens: {
-        buttons: { borderRadius: '6px', paddingX: null, paddingY: null },
+        blockStyles: {
+          Banner: { backgroundColor: '#000000' },
+        },
       },
     });
 
-    site.updateThemeTokens({});
+    site.updateThemeTokens('Button', {
+      borderRadius: '9999px',
+      paddingX: '1.5rem',
+    });
 
     expect(site.themeTokens).toEqual({
-      buttons: { borderRadius: '6px', paddingX: null, paddingY: null },
+      blockStyles: {
+        Banner: { backgroundColor: '#000000' },
+        Button: { borderRadius: '9999px', paddingX: '1.5rem' },
+      },
+    });
+  });
+
+  it("updateThemeTokens on an already-styled type replaces that type's whole override, not a field-by-field merge", () => {
+    const site = Site.fromProps({
+      ...props,
+      themeTokens: {
+        blockStyles: {
+          Button: { borderRadius: '6px', paddingX: '1rem' },
+        },
+      },
+    });
+
+    site.updateThemeTokens('Button', { borderRadius: '9999px' });
+
+    expect(site.themeTokens).toEqual({
+      blockStyles: { Button: { borderRadius: '9999px' } },
     });
   });
 });

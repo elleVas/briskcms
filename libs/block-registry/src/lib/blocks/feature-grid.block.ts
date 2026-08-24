@@ -9,4 +9,11 @@ export const featureGridBlock: BlockDescriptor<FeatureGridProps> = {
   fields: [],
   isContainer: true,
   allowedChildTypes: ['Feature'],
+  stylableProperties: [
+    'backgroundColor',
+    'textColor',
+    'borderRadius',
+    'paddingX',
+    'paddingY',
+  ],
 };

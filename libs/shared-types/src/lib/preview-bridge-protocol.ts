@@ -193,13 +193,29 @@ export type EditorReorderBlocksMessage = PreviewBridgeEnvelope<
   { parentId: string | null; orderedIds: string[] }
 >;
 
+/**
+ * Override "a livello di componente" appena salvato dal pulsante "Stile"
+ * (docs/adr/0022) — `css` è già il risultato di `buildBlockStyleOverridesCss`
+ * lato genitore (che conosce l'intera mappa aggiornata dopo la mutation),
+ * l'iframe si limita a scrivere quel testo in un `<style>` dedicato nel
+ * proprio `<head>` (creandolo se non esiste ancora). A differenza di
+ * `editor:patch-block`, tocca lo stile dell'intero documento, non un nodo:
+ * ogni istanza già visibile di quel tipo si aggiorna in un colpo solo,
+ * niente reload dell'iframe.
+ */
+export type EditorUpdateBlockStyleCssMessage = PreviewBridgeEnvelope<
+  'editor:update-block-style-css',
+  { css: string }
+>;
+
 export type ParentToPreviewMessage =
   | EditorPatchBlockMessage
   | EditorEnterTextEditMessage
   | EditorExitTextEditMessage
   | EditorRemoveBlockMessage
   | EditorReorderBlocksMessage
-  | EditorInsertBlockMessage;
+  | EditorInsertBlockMessage
+  | EditorUpdateBlockStyleCssMessage;
 
 export type AnyPreviewBridgeMessage =
   PreviewToParentMessage | ParentToPreviewMessage;

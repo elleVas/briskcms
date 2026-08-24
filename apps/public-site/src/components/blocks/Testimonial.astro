@@ -1,14 +1,20 @@
 ---
-import { STAR_ICON_PATH, type TestimonialProps } from '@brisk/shared-types';
+import {
+  buildBlockInstanceStyle,
+  STAR_ICON_PATH,
+  type BlockStyleOverride,
+  type TestimonialProps,
+} from '@brisk/shared-types';
 
-type Props = TestimonialProps;
+type Props = TestimonialProps & { styleOverride?: BlockStyleOverride };
 
-const { quote, author, role, avatar, rating } = Astro.props;
+const { quote, author, role, avatar, rating, styleOverride } = Astro.props;
+const instanceStyle = buildBlockInstanceStyle(styleOverride);
 
 const STAR_POSITIONS = [1, 2, 3, 4, 5];
 ---
 
-<div class="brisk-testimonial">
+<div class="brisk-testimonial" style={instanceStyle}>
   <div
     class="brisk-testimonial__stars"
     role="img"
@@ -42,8 +48,10 @@ const STAR_POSITIONS = [1, 2, 3, 4, 5];
     flex: 0 0 min(320px, 85vw);
     scroll-snap-align: start;
     border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 1.5rem;
+    border-radius: var(--brisk-override-radius, 12px);
+    padding: var(--brisk-override-padding-y, 1.5rem)
+      var(--brisk-override-padding-x, 1.5rem);
+    background: var(--brisk-override-bg, transparent);
   }
   .brisk-testimonial__stars {
     display: flex;
@@ -52,7 +60,7 @@ const STAR_POSITIONS = [1, 2, 3, 4, 5];
   .brisk-testimonial__quote {
     margin: 0.75rem 0;
     font-size: 0.9375rem;
-    color: var(--foreground);
+    color: var(--brisk-override-text, var(--foreground));
   }
   .brisk-testimonial__footer {
     display: flex;

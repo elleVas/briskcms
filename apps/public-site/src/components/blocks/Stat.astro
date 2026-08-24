@@ -1,12 +1,17 @@
 ---
-import type { StatProps } from '@brisk/shared-types';
+import {
+  buildBlockInstanceStyle,
+  type BlockStyleOverride,
+  type StatProps,
+} from '@brisk/shared-types';
 
-type Props = StatProps;
+type Props = StatProps & { styleOverride?: BlockStyleOverride };
 
-const { value, prefix, suffix, label } = Astro.props;
+const { value, prefix, suffix, label, styleOverride } = Astro.props;
+const instanceStyle = buildBlockInstanceStyle(styleOverride);
 ---
 
-<div class="brisk-stat" data-value={value}>
+<div class="brisk-stat" data-value={value} style={instanceStyle}>
   <div class="brisk-stat__value">
     <span class="brisk-stat__prefix" data-brisk-field="prefix">{prefix}</span><span
       class="brisk-stat__number"
@@ -71,10 +76,14 @@ const { value, prefix, suffix, label } = Astro.props;
 <style>
   .brisk-stat {
     text-align: center;
+    background: var(--brisk-override-bg, transparent);
+    border-radius: var(--brisk-override-radius, 0);
+    padding: var(--brisk-override-padding-y, 0) var(--brisk-override-padding-x, 0);
   }
   .brisk-stat__value {
     font-size: 2rem;
     font-weight: 700;
+    color: var(--brisk-override-text, inherit);
   }
   .brisk-stat__label {
     margin-top: 0.25rem;

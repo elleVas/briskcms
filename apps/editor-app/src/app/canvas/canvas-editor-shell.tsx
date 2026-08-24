@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useQuery } from '@tanstack/react-query';
 import {
   Palette,
   PanelLeftClose,
@@ -7,7 +8,11 @@ import {
   PanelRightClose,
   PanelRightOpen,
 } from 'lucide-react';
-import type { Block } from '@brisk/shared-types';
+import {
+  buildBlockStyleOverridesCss,
+  type Block,
+  type BlockStyleOverride,
+} from '@brisk/shared-types';
 import type { BlockDescriptor } from '@brisk/block-registry';
 import { Button } from '../../components/ui/button.js';
 import { renderBlockFragment } from '../../lib/block-fragment-api-client.js';
@@ -16,6 +21,8 @@ import { PUBLIC_SITE_URL } from '../../lib/public-site-url.js';
 import { GlobalStylesDialog } from '../global-styles-dialog.js';
 import { IconButton } from '../icon-button.js';
 import { LogoutButton } from '../logout-button.js';
+import { siteQueryOptions } from '../site-queries.js';
+import { useSiteThemeTokens } from '../use-site-theme-tokens.js';
 import { BlockPicker, type BlockPickerCategory } from './block-picker.js';
 import { BlockToolbarOverlay } from './block-toolbar-overlay.js';
 import { BreakpointSelector, type Breakpoint } from './breakpoint-selector.js';
@@ -41,6 +48,7 @@ import {
   removeBlock,
   siblingsAt,
   updateBlockProps,
+  updateBlockStyleOverride,
   type BlockTreeTarget,
 } from './use-block-tree.js';
 import { usePreviewBridge } from './use-preview-bridge.js';
@@ -134,6 +142,18 @@ export function CanvasEditorShell({
   const iframeGeometry = useIframeGeometry(iframeRef);
   const [breakpoint, setBreakpoint] = useState<Breakpoint>('desktop');
   const [isGlobalStylesOpen, setIsGlobalStylesOpen] = useState(false);
+  // Serve solo per l'override "a livello di componente" (docs/adr/0022,
+  // pulsante "Stile" nella toolbar) — l'unico altro consumer di questa
+  // query, global-styles-dialog.tsx, ne ha già una propria indipendente,
+  // stessa queryKey quindi la cache di React Query le tiene comunque in
+  // sync tra loro. `enabled: Boolean(siteId)` perché siteId è opzionale
+  // qui (l'editor Header/Footer lo passa sempre, ma la prop resta
+  // opzionale nel tipo) — niente fetch con un id vuoto.
+  const { data: site } = useQuery({
+    ...siteQueryOptions(siteId ?? ''),
+    enabled: Boolean(siteId),
+  });
+  const { updateThemeTokens } = useSiteThemeTokens(siteId ?? '');
   /**
    * Richiesto dal vivo: su pagine lunghe/con molti blocchi, poter chiudere
    * ciascuna barra laterale per dare più spazio al canvas — due stati
@@ -221,16 +241,26 @@ export function CanvasEditorShell({
     };
   }, [pageId]);
 
-  const { scheduleChange, scheduleTextChange } = usePropertyPatch({
-    pageId,
-    token: token ?? '',
-    onSaveDraft: (blockId, props) => {
-      const next = updateBlockProps(localBlocksRef.current, blockId, props);
-      setLocalBlocks(next);
-      onChange(next);
-    },
-    patchBlock: bridge.patchBlock,
-  });
+  const { scheduleChange, scheduleTextChange, scheduleStyleOverrideChange } =
+    usePropertyPatch({
+      pageId,
+      token: token ?? '',
+      onSaveDraft: (blockId, props) => {
+        const next = updateBlockProps(localBlocksRef.current, blockId, props);
+        setLocalBlocks(next);
+        onChange(next);
+      },
+      onSaveStyleOverride: (blockId, styleOverride) => {
+        const next = updateBlockStyleOverride(
+          localBlocksRef.current,
+          blockId,
+          styleOverride,
+        );
+        setLocalBlocks(next);
+        onChange(next);
+      },
+      patchBlock: bridge.patchBlock,
+    });
 
   // Pianifica il salvataggio debounced del testo digitato dal vivo (Giorno
   // 4) — nessun setState qui (l'aggiornamento ottico vive nel blocco sopra),
@@ -393,6 +423,57 @@ export function CanvasEditorShell({
       nextProps,
       selectedBlock.children,
     );
+  }
+
+  /** Override per-ISTANZA (docs/adr/0022) — popover sul blocco selezionato, tocca solo questo blocco. Stesso pattern "ottico subito, debounce per il salvataggio vero" di handleChangeProp sopra. */
+  function handleChangeStyleOverride(styleOverride: BlockStyleOverride): void {
+    if (!selectedBlock?.id) {
+      return;
+    }
+    setLocalBlocks((prev) =>
+      updateBlockStyleOverride(prev, selectedBlock.id as string, styleOverride),
+    );
+    scheduleStyleOverrideChange(
+      selectedBlock.id,
+      selectedBlock.type,
+      selectedBlock.props,
+      styleOverride,
+      selectedBlock.children,
+    );
+  }
+
+  /**
+   * Override per-TIPO (docs/adr/0022) — tocca `site.themeTokens.blockStyles[tipo]`:
+   * OGNI istanza di quel tipo sul sito. Nessun aggiornamento ottico locale
+   * dell'albero (a differenza di handleChangeStyleOverride sopra): non è
+   * nell'albero della pagina, è nei theme tokens del sito —
+   * `useSiteThemeTokens` invalida già la query del sito al successo,
+   * `site.themeTokens` sopra si aggiorna da sé. Condivisa da due chiamanti
+   * (docs/adr/0022, parte 2): il pulsante "Stile" della toolbar (tipo del
+   * blocco selezionato) e la nuova modale "Stile globale" (qualunque tipo
+   * scelto dalla lista, senza bisogno di una sua istanza sul canvas).
+   */
+  async function saveTypeStyle(
+    blockType: string,
+    style: BlockStyleOverride,
+  ): Promise<void> {
+    const updated = await updateThemeTokens({ blockType, style });
+    // Aggiorna subito il <style> dentro l'iframe (docs/adr/0022) — senza
+    // questo, ogni istanza già visibile di quel tipo resterebbe con
+    // l'aspetto vecchio finché l'iframe non ricarica, anche se il
+    // salvataggio è già andato a buon fine.
+    bridge.updateBlockStyleCss(
+      buildBlockStyleOverridesCss(updated.themeTokens?.blockStyles ?? {}),
+    );
+  }
+
+  function handleChangeTypeStyle(style: BlockStyleOverride): void {
+    if (!selectedDescriptor) {
+      return;
+    }
+    saveTypeStyle(selectedDescriptor.type, style).catch(() => {
+      /* la mutation stessa espone già isSaving/errori a chi la invoca — nessun fallback qui, il canvas resta con l'ultimo CSS buono finché il prossimo salvataggio non ritenta. */
+    });
   }
 
   /**
@@ -747,6 +828,9 @@ export function CanvasEditorShell({
           siteId={siteId}
           open={isGlobalStylesOpen}
           onOpenChange={setIsGlobalStylesOpen}
+          registry={registry}
+          categories={categories}
+          onSaveTypeStyle={saveTypeStyle}
         />
       )}
       <div style={{ flex: 1, minHeight: 0, display: 'flex' }}>
@@ -813,6 +897,14 @@ export function CanvasEditorShell({
                 registry={registry}
                 categories={categories}
                 onChangeProp={handleChangeProp}
+                typeStyle={
+                  site
+                    ? (site.themeTokens?.blockStyles[selectedDescriptor.type] ??
+                      {})
+                    : undefined
+                }
+                onChangeTypeStyle={site ? handleChangeTypeStyle : undefined}
+                onChangeInstanceStyle={handleChangeStyleOverride}
                 onMoveUp={() => handleMoveSelected(-1)}
                 onMoveDown={() => handleMoveSelected(1)}
                 onDuplicate={handleDuplicateSelected}

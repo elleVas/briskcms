@@ -1,10 +1,20 @@
 ---
-import type { ContainerProps } from '@brisk/shared-types';
+import {
+	buildBlockInstanceStyle,
+	type BlockStyleOverride,
+	type ContainerProps,
+} from '@brisk/shared-types';
 import EmptyContainerHint from '../EmptyContainerHint.astro';
 
-type Props = ContainerProps & { editable?: boolean; hasChildren?: boolean };
+type Props = ContainerProps & {
+	editable?: boolean;
+	hasChildren?: boolean;
+	styleOverride?: BlockStyleOverride;
+};
 
-const { background, padding, editable, hasChildren } = Astro.props;
+const { background, padding, editable, hasChildren, styleOverride } =
+	Astro.props;
+const instanceStyle = buildBlockInstanceStyle(styleOverride);
 
 // Token-driven (docs/adr/0021) — a theme swap changes what these mean,
 // this component never hardcodes a color. `primary`/`secondary` follow
@@ -28,6 +38,7 @@ const paddingClass: Record<ContainerProps['padding'], string> = {
 <div
 	class={`brisk-container flex flex-col gap-4 rounded-lg ${backgroundClass[background]} ${paddingClass[padding]}`}
 	data-brisk-editable-outline={editable && hasChildren ? '' : undefined}
+	style={instanceStyle}
 >
 	<slot />
 	<EmptyContainerHint show={!hasChildren && Boolean(editable)} />
@@ -52,5 +63,13 @@ const paddingClass: Record<ContainerProps['padding'], string> = {
 	.brisk-container[data-brisk-editable-outline] {
 		outline: 1px dashed var(--border);
 		outline-offset: -4px;
+	}
+
+	/* Solo raggio e colore testo: background/padding hanno già i propri
+	   campi utente dedicati sopra (background/padding), aggiungerli qui
+	   creerebbe due meccanismi in conflitto per la stessa proprietà. */
+	.brisk-container {
+		border-radius: var(--brisk-override-radius, 0.5rem);
+		color: var(--brisk-override-text, inherit);
 	}
 </style>
