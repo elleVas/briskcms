@@ -17,6 +17,7 @@
     "@brisk/domain-core": "workspace:*",
     "@brisk/ports": "workspace:*",
     "@brisk/postgres-db": "workspace:*",
+    "@brisk/shared-types": "workspace:*",
     "drizzle-orm": "^0.45.2"
   },
   "devDependencies": {

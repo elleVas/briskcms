@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { themeIconsCorsHeaders } from './theme-icons-cors.js';
+import { themesApiCorsHeaders } from './themes-api-cors.js';
 
-describe('themeIconsCorsHeaders', () => {
+describe('themesApiCorsHeaders', () => {
   it('allows only GET/OPTIONS and only the editor-app origin', () => {
-    const headers = themeIconsCorsHeaders();
+    const headers = themesApiCorsHeaders();
     expect(headers['Access-Control-Allow-Origin']).toBe(
       'http://localhost:4200',
     );

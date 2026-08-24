@@ -1,4 +1,5 @@
 import type { ContainerProps } from '@brisk/shared-types';
+import { BLOCK_STYLE_DEFAULTS } from '@brisk/shared-types';
 import type { BlockDescriptor } from '../field-types.js';
 
 export const containerBlock: BlockDescriptor<ContainerProps> = {
@@ -37,4 +38,5 @@ export const containerBlock: BlockDescriptor<ContainerProps> = {
   // Solo radius e colore testo: background/padding hanno già i propri
   // campi dedicati sopra, non vanno duplicati qui.
   stylableProperties: ['textColor', 'borderRadius'],
+  defaultStyle: BLOCK_STYLE_DEFAULTS.Container,
 };

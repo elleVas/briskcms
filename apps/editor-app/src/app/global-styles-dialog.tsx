@@ -17,6 +17,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '../components/ui/dialog.js';
+import { blockStyleDefaultsQueryOptions } from './block-style-defaults-queries.js';
 import type { BlockPickerCategory } from './canvas/block-picker.js';
 import { BlockStyleFields } from './canvas/block-style-fields.js';
 import { siteQueryOptions } from './site-queries.js';
@@ -65,6 +66,9 @@ export function GlobalStylesDialog({
 }: GlobalStylesDialogProps) {
   const { t } = useTranslation();
   const { data: site } = useQuery(siteQueryOptions(siteId));
+  const { data: blockStyleDefaults } = useQuery(
+    blockStyleDefaultsQueryOptions(),
+  );
   const { updateThemeSettings, isSaving } = useSiteThemeSettings(siteId);
 
   const [primaryColorEnabled, setPrimaryColorEnabled] = useState(false);
@@ -174,6 +178,7 @@ export function GlobalStylesDialog({
               onChange={(next) =>
                 void onSaveTypeStyle(selectedDescriptor.type, next)
               }
+              defaults={blockStyleDefaults?.[selectedDescriptor.type]}
             />
           </div>
         ) : (

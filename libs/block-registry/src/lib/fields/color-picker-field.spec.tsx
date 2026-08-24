@@ -70,4 +70,59 @@ describe('ColorPickerField', () => {
 
     expect(onChange).toHaveBeenCalledWith(null);
   });
+
+  it('shows no clear button when value is undefined (a never-customized property, not the same as null)', () => {
+    render(
+      <ColorPickerField
+        value={undefined as unknown as null}
+        onChange={vi.fn()}
+      />,
+    );
+
+    expect(screen.queryByRole('button')).toBeNull();
+  });
+
+  it('previews a resolved theme default when value is unset', () => {
+    render(
+      <ColorPickerField
+        value={null}
+        onChange={vi.fn()}
+        defaultValue="oklch(0.205 0 0)"
+      />,
+    );
+
+    expect(
+      screen.getByTitle('Valore attuale del tema: oklch(0.205 0 0)'),
+    ).toBeTruthy();
+    expect(screen.getByPlaceholderText('Tema: oklch(0.205 0 0)')).toBeTruthy();
+  });
+
+  it('uses a hex default value directly as the color swatch value', () => {
+    render(
+      <ColorPickerField
+        value={null}
+        onChange={vi.fn()}
+        defaultValue="#336699"
+      />,
+    );
+
+    const colorInput = document.querySelector(
+      'input[type="color"]',
+    ) as HTMLInputElement;
+    expect(colorInput.value).toBe('#336699');
+  });
+
+  it('does not show the theme-default preview once a real value is set', () => {
+    render(
+      <ColorPickerField
+        value="#123456"
+        onChange={vi.fn()}
+        defaultValue="oklch(0.205 0 0)"
+      />,
+    );
+
+    expect(
+      screen.queryByTitle('Valore attuale del tema: oklch(0.205 0 0)'),
+    ).toBeNull();
+  });
 });

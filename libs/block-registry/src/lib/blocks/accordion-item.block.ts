@@ -1,4 +1,5 @@
 import type { AccordionItemProps } from '@brisk/shared-types';
+import { BLOCK_STYLE_DEFAULTS } from '@brisk/shared-types';
 import type { BlockDescriptor } from '../field-types.js';
 
 export const accordionItemBlock: BlockDescriptor<AccordionItemProps> = {
@@ -25,4 +26,5 @@ export const accordionItemBlock: BlockDescriptor<AccordionItemProps> = {
     'paddingX',
     'paddingY',
   ],
+  defaultStyle: BLOCK_STYLE_DEFAULTS.AccordionItem,
 };

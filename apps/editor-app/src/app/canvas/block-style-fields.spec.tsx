@@ -71,4 +71,30 @@ describe('BlockStyleFields', () => {
 
     expect(onChange).toHaveBeenCalledWith({ backgroundColor: '#ff0000' });
   });
+
+  it('shows the resolved theme default as the placeholder for a length field', () => {
+    render(
+      <BlockStyleFields
+        properties={['borderRadius']}
+        value={{}}
+        onChange={vi.fn()}
+        defaults={{ borderRadius: '0.5rem' }}
+      />,
+    );
+
+    expect(screen.getByPlaceholderText('0.5rem')).toBeTruthy();
+  });
+
+  it('passes the resolved theme default through to ColorPickerField as a preview', () => {
+    render(
+      <BlockStyleFields
+        properties={['backgroundColor']}
+        value={{}}
+        onChange={vi.fn()}
+        defaults={{ backgroundColor: 'oklch(0.205 0 0)' }}
+      />,
+    );
+
+    expect(screen.getByPlaceholderText('Tema: oklch(0.205 0 0)')).toBeTruthy();
+  });
 });

@@ -3,19 +3,40 @@ const HEX_PATTERN = /^#[0-9a-fA-F]{6}$/;
 export interface ColorPickerFieldProps {
   value: string | null;
   onChange: (value: string | null) => void;
+  /**
+   * Il valore RISOLTO del tema attivo per questo campo (docs/adr/0022's
+   * follow-up sul pre-fill) — `null`/assente = non ancora caricato o
+   * nessun default noto. Mostrato come anteprima quando `value` non è
+   * impostato, così il campo parte già dall'aspetto reale attuale invece
+   * che vuoto. Non sempre un hex (spesso `oklch(...)`, come i token dei
+   * temi di questo progetto): `<input type="color">` accetta solo hex,
+   * quindi quello resta nero finché non è un match; il quadratino di
+   * anteprima sotto invece accetta qualunque sintassi colore CSS valida.
+   */
+  defaultValue?: string | null;
 }
 
 /**
- * Per-instance color override — `null` significa "eredita dal tema" (il
- * block renderer applica un wrapper di scoping via CSS-var solo quando
- * questo è non-null).
+ * Per-instance color override — `null`/assente significa "eredita dal
+ * tema" (il block renderer applica un wrapper di scoping via CSS-var solo
+ * quando questo è non-vuoto). Il controllo è un check di verità, non
+ * `!== null`: `value` può arrivare `undefined` (proprietà mai
+ * personalizzata, quindi assente dall'oggetto sparso), e `undefined !==
+ * null` è `true` in JS — con `!== null` il pulsante "torna al tema"
+ * comparirebbe anche senza nessuna personalizzazione reale.
  */
-export function ColorPickerField({ value, onChange }: ColorPickerFieldProps) {
+export function ColorPickerField({
+  value,
+  onChange,
+  defaultValue,
+}: ColorPickerFieldProps) {
+  const hexDefault =
+    defaultValue && HEX_PATTERN.test(defaultValue) ? defaultValue : null;
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
       <input
         type="color"
-        value={value ?? '#000000'}
+        value={value ?? hexDefault ?? '#000000'}
         onChange={(event) => onChange(event.target.value)}
         style={{
           width: 36,
@@ -26,10 +47,26 @@ export function ColorPickerField({ value, onChange }: ColorPickerFieldProps) {
           cursor: 'pointer',
         }}
       />
+      {!value && defaultValue && (
+        <span
+          aria-hidden="true"
+          title={`Valore attuale del tema: ${defaultValue}`}
+          style={{
+            width: 16,
+            height: 16,
+            flexShrink: 0,
+            borderRadius: 3,
+            border: '1px solid #d4d4d8',
+            background: defaultValue,
+          }}
+        />
+      )}
       <input
         type="text"
         value={value ?? ''}
-        placeholder="Eredita dal tema"
+        placeholder={
+          defaultValue ? `Tema: ${defaultValue}` : 'Eredita dal tema'
+        }
         onChange={(event) => {
           const next = event.target.value;
           if (next === '') {
@@ -50,7 +87,7 @@ export function ColorPickerField({ value, onChange }: ColorPickerFieldProps) {
           fontSize: 13,
         }}
       />
-      {value !== null && (
+      {value && (
         <button
           type="button"
           onClick={() => onChange(null)}

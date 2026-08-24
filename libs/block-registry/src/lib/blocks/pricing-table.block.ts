@@ -1,4 +1,5 @@
 import type { PricingTableProps } from '@brisk/shared-types';
+import { BLOCK_STYLE_DEFAULTS } from '@brisk/shared-types';
 import type { BlockDescriptor } from '../field-types.js';
 
 export const pricingTableBlock: BlockDescriptor<PricingTableProps> = {
@@ -16,4 +17,5 @@ export const pricingTableBlock: BlockDescriptor<PricingTableProps> = {
     'paddingX',
     'paddingY',
   ],
+  defaultStyle: BLOCK_STYLE_DEFAULTS.PricingTable,
 };

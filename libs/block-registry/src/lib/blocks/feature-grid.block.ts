@@ -1,4 +1,5 @@
 import type { FeatureGridProps } from '@brisk/shared-types';
+import { BLOCK_STYLE_DEFAULTS } from '@brisk/shared-types';
 import type { BlockDescriptor } from '../field-types.js';
 
 export const featureGridBlock: BlockDescriptor<FeatureGridProps> = {
@@ -16,4 +17,5 @@ export const featureGridBlock: BlockDescriptor<FeatureGridProps> = {
     'paddingX',
     'paddingY',
   ],
+  defaultStyle: BLOCK_STYLE_DEFAULTS.FeatureGrid,
 };

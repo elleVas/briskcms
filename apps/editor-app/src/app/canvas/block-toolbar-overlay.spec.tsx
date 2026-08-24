@@ -1,9 +1,27 @@
-import { createRef } from 'react';
+import { createRef, type ReactElement } from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
+import { QueryClientProvider } from '@tanstack/react-query';
 import type { Block, BlockRect } from '@brisk/shared-types';
 import type { BlockDescriptor } from '@brisk/block-registry';
+import { createTestQueryClient } from '../../test-query-client.js';
 import { BlockToolbarOverlay } from './block-toolbar-overlay.js';
+
+// Nessun default risolto in questi test — non è il loro oggetto, e senza
+// mock la query farebbe una vera fetch di rete (comportamento non
+// deterministico). Vuoto = i campi mostrano il valore/placeholder com'era
+// prima di docs/adr/0022's follow-up sul pre-fill.
+vi.mock('../../lib/block-style-defaults-api-client.js', () => ({
+  fetchBlockStyleDefaults: vi.fn().mockResolvedValue({}),
+}));
+
+function renderOverlay(ui: ReactElement) {
+  return render(
+    <QueryClientProvider client={createTestQueryClient()}>
+      {ui}
+    </QueryClientProvider>,
+  );
+}
 
 const RECT: BlockRect = {
   id: 'block-1',
@@ -65,7 +83,7 @@ function baseProps() {
 
 describe('BlockToolbarOverlay style buttons', () => {
   it('shows neither style button for a block with no stylableProperties', () => {
-    render(
+    renderOverlay(
       <BlockToolbarOverlay {...baseProps()} descriptor={heroDescriptor} />,
     );
 
@@ -78,7 +96,7 @@ describe('BlockToolbarOverlay style buttons', () => {
   });
 
   it('shows the instance style button whenever the type has stylableProperties, regardless of typeStyle', () => {
-    render(<BlockToolbarOverlay {...baseProps()} />);
+    renderOverlay(<BlockToolbarOverlay {...baseProps()} />);
 
     expect(
       screen.getByRole('button', { name: 'Stile di questo blocco' }),
@@ -86,7 +104,7 @@ describe('BlockToolbarOverlay style buttons', () => {
   });
 
   it('hides the type-level "Stile" button when typeStyle/onChangeTypeStyle are not provided (no site to save to yet)', () => {
-    render(<BlockToolbarOverlay {...baseProps()} />);
+    renderOverlay(<BlockToolbarOverlay {...baseProps()} />);
 
     expect(
       screen.queryByRole('button', { name: /Stile di tutti i blocchi/ }),
@@ -94,7 +112,7 @@ describe('BlockToolbarOverlay style buttons', () => {
   });
 
   it('shows the type-level "Stile" button once typeStyle/onChangeTypeStyle are both provided', () => {
-    render(
+    renderOverlay(
       <BlockToolbarOverlay
         {...baseProps()}
         typeStyle={{}}
@@ -111,7 +129,7 @@ describe('BlockToolbarOverlay style buttons', () => {
 
   it('the instance popover is pre-filled from block.styleOverride and calls onChangeInstanceStyle on edit', () => {
     const onChangeInstanceStyle = vi.fn();
-    render(
+    renderOverlay(
       <BlockToolbarOverlay
         {...baseProps()}
         block={
@@ -146,7 +164,7 @@ describe('BlockToolbarOverlay style buttons', () => {
   it('the type popover is pre-filled from typeStyle and calls onChangeTypeStyle on edit, never touching onChangeInstanceStyle', () => {
     const onChangeTypeStyle = vi.fn();
     const onChangeInstanceStyle = vi.fn();
-    render(
+    renderOverlay(
       <BlockToolbarOverlay
         {...baseProps()}
         typeStyle={{ borderRadius: '4px' }}

@@ -1,5 +1,8 @@
 import type { ComponentType } from 'react';
-import type { BlockStyleOverride } from '@brisk/shared-types';
+import type {
+  BlockStyleDefaults,
+  BlockStyleOverride,
+} from '@brisk/shared-types';
 
 /**
  * Sostituisce Puck's `Fields<T>` (docs/adr/0007) — niente `resolveFields`/
@@ -94,4 +97,19 @@ export interface BlockDescriptor<Props = Record<string, unknown>> {
    * colpo solo (vedi l'ADR per il perché).
    */
   stylableProperties?: (keyof BlockStyleOverride)[];
+  /**
+   * L'espressione CSS di default per ciascuna `stylableProperties` di
+   * questo tipo — es. `{ borderRadius: 'var(--radius)', paddingX:
+   * '1.25rem' }` — copiata 1:1 dal fallback che il `.astro` del blocco già
+   * usa (`var(--brisk-override-radius, var(--radius))`), non inventata:
+   * questa è la stessa identica sorgente di verità, dichiarata qui invece
+   * che rimanere visibile solo dentro un file CSS. Un riferimento a un
+   * custom property del tema (`var(--x)`) viene risolto contro il
+   * `theme.css` del tema attivo da
+   * `apps/public-site/src/lib/resolve-theme-block-style-defaults.ts` prima
+   * di raggiungere l'editor — un letterale (es. `'transparent'`,
+   * `'0.5rem'`) passa invariato. Presente solo quando `stylableProperties`
+   * non è vuoto, con le stesse chiavi.
+   */
+  defaultStyle?: BlockStyleDefaults;
 }

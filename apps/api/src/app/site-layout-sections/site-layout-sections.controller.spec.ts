@@ -75,6 +75,7 @@ describe('SiteLayoutSectionsController (unit)', () => {
       save: jest.fn(),
       findById: jest.fn(),
       findByDomain: jest.fn(),
+      updateThemeTokensBlockStyle: jest.fn(),
     };
     tenantContext = { getCurrentTenantId: () => 'tenant-1' };
     previewTokenPort = {

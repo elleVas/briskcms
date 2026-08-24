@@ -36,6 +36,14 @@ vi.mock('../lib/sites-api-client.js', async (importOriginal) => {
   };
 });
 
+// Nessun default risolto in questi test — non è il loro oggetto, e senza
+// mock la query farebbe una vera fetch di rete (comportamento non
+// deterministico, dipendente da cosa gira sulla macchina di chi lancia i
+// test). Vuoto = i campi mostrano il placeholder generico com'era prima.
+vi.mock('../lib/block-style-defaults-api-client.js', () => ({
+  fetchBlockStyleDefaults: vi.fn().mockResolvedValue({}),
+}));
+
 function buildSite(overrides: Partial<SiteDto> = {}): SiteDto {
   return {
     id: 'site-1',

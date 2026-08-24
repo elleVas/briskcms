@@ -1,4 +1,5 @@
 import type { BlockDescriptor } from '../field-types.js';
+import { BLOCK_STYLE_DEFAULTS } from '@brisk/shared-types';
 
 // `label` non fa parte di `TabProps` nel dominio (content-model.ts) — in
 // realtà lo fa: TabProps = { label: string }. Nessun tipo Puck-only extra
@@ -20,4 +21,5 @@ export const tabBlock: BlockDescriptor<{ label: string }> = {
     'paddingX',
     'paddingY',
   ],
+  defaultStyle: BLOCK_STYLE_DEFAULTS.Tab,
 };

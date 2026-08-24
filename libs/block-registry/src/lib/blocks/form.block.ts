@@ -1,4 +1,5 @@
 import type { FormBlockProps } from '@brisk/shared-types';
+import { BLOCK_STYLE_DEFAULTS } from '@brisk/shared-types';
 import { customField, type BlockDescriptor } from '../field-types.js';
 import { FormPickerField } from '../fields/form-picker-field.js';
 
@@ -17,4 +18,5 @@ export const formBlock: BlockDescriptor<FormBlockProps> = {
     'paddingX',
     'paddingY',
   ],
+  defaultStyle: BLOCK_STYLE_DEFAULTS.Form,
 };
