@@ -1,4 +1,5 @@
 import type { ButtonProps } from '@brisk/shared-types';
+import { BLOCK_STYLE_DEFAULTS } from '@brisk/shared-types';
 import { customField, type BlockDescriptor } from '../field-types.js';
 import { linkTypeField } from '../fields/link-type-field.js';
 import { PagePickerField } from '../fields/page-picker-field.js';
@@ -39,4 +40,5 @@ export const buttonBlock: BlockDescriptor<ButtonProps> = {
     'paddingX',
     'paddingY',
   ],
+  defaultStyle: BLOCK_STYLE_DEFAULTS.Button,
 };

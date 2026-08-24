@@ -1,5 +1,6 @@
 import { useState, type RefObject } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useQuery } from '@tanstack/react-query';
 import {
   ChevronDown,
   ChevronUp,
@@ -10,13 +11,19 @@ import {
   Plus,
   Trash2,
 } from 'lucide-react';
-import type { Block, BlockRect, BlockStyleOverride } from '@brisk/shared-types';
+import type {
+  Block,
+  BlockRect,
+  BlockStyleDefaults,
+  BlockStyleOverride,
+} from '@brisk/shared-types';
 import type { BlockDescriptor } from '@brisk/block-registry';
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from '../../components/ui/popover.js';
+import { blockStyleDefaultsQueryOptions } from '../block-style-defaults-queries.js';
 import { BlockPicker, type BlockPickerCategory } from './block-picker.js';
 import { BlockStyleFields } from './block-style-fields.js';
 import { InspectorPanel } from './inspector-panel.js';
@@ -163,6 +170,9 @@ export function BlockToolbarOverlay({
   const { t } = useTranslation();
   const geometry = useIframeGeometry(iframeRef);
   const [insertOpen, setInsertOpen] = useState<'before' | 'after' | null>(null);
+  const { data: blockStyleDefaults } = useQuery(
+    blockStyleDefaultsQueryOptions(),
+  );
 
   const canAddChild =
     descriptor.isContainer && descriptor.allowedChildTypes?.length === 1;
@@ -172,6 +182,19 @@ export function BlockToolbarOverlay({
     typeStyle !== undefined &&
     onChangeTypeStyle !== undefined;
   const canStyleInstance = stylableProperties.length > 0;
+  // L'override di TIPO (se presente e non null, cioè davvero personalizzato)
+  // vince sul default del tema come anteprima per il popover d'istanza: è
+  // quello che l'istanza sta effettivamente mostrando finché non viene
+  // ristilizzata anche a livello di istanza — non il default del tema
+  // "grezzo", fuorviante se il tipo è già stato ristilizzato. `typeStyle`
+  // può contenere `null` (proprietà esplicitamente non personalizzata),
+  // che qui non ha senso propagare — BlockStyleDefaults non è nullable.
+  const instanceStyleDefaults: BlockStyleDefaults = {
+    ...blockStyleDefaults?.[block.type],
+    ...Object.fromEntries(
+      Object.entries(typeStyle ?? {}).filter(([, v]) => v != null),
+    ),
+  };
 
   return (
     <div className="pointer-events-none absolute inset-0 overflow-visible">
@@ -254,6 +277,7 @@ export function BlockToolbarOverlay({
                 properties={stylableProperties}
                 value={typeStyle ?? {}}
                 onChange={(next) => onChangeTypeStyle?.(next)}
+                defaults={blockStyleDefaults?.[block.type]}
               />
             </PopoverContent>
           </Popover>
@@ -274,6 +298,7 @@ export function BlockToolbarOverlay({
                 properties={stylableProperties}
                 value={block.styleOverride ?? {}}
                 onChange={onChangeInstanceStyle}
+                defaults={instanceStyleDefaults}
               />
             </PopoverContent>
           </Popover>

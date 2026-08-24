@@ -11,6 +11,7 @@ import type {
   SiteLayoutSectionVersion,
   User,
 } from '@brisk/domain-core';
+import type { BlockStyleOverride } from '@brisk/shared-types';
 import type {
   FormRepositoryPort,
   FormSubmissionRepositoryPort,
@@ -179,6 +180,18 @@ export class InMemorySiteRepository implements SiteRepositoryPort {
   async findById(tenantId: string, id: string): Promise<Site | null> {
     const site = this.sites.get(id);
     return site && site.tenantId === tenantId ? site : null;
+  }
+
+  async updateThemeTokensBlockStyle(
+    tenantId: string,
+    siteId: string,
+    blockType: string,
+    style: BlockStyleOverride,
+  ): Promise<Site | null> {
+    const site = await this.findById(tenantId, siteId);
+    if (!site) return null;
+    site.updateThemeTokens(blockType, style);
+    return site;
   }
 }
 

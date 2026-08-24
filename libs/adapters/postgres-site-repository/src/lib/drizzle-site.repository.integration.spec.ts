@@ -123,4 +123,84 @@ describe('DrizzleSiteRepository (integration)', () => {
       { dayOfWeek: 'monday', ranges: [{ opens: '12:00', closes: '15:00' }] },
     ]);
   });
+
+  it('updateThemeTokensBlockStyle sets a block style on a site with no theme_tokens yet (NULL column)', async () => {
+    const [row] = await withTenant(db, tenantAId, (tx) =>
+      tx
+        .insert(sites)
+        .values({
+          tenantId: tenantAId,
+          name: 'Fresh site',
+          defaultLocale: 'it',
+        })
+        .returning({ id: sites.id }),
+    );
+
+    const updated = await siteRepository.updateThemeTokensBlockStyle(
+      tenantAId,
+      row.id,
+      'Button',
+      { borderRadius: '9999px' },
+    );
+
+    expect(updated?.themeTokens).toEqual({
+      blockStyles: { Button: { borderRadius: '9999px' } },
+    });
+  });
+
+  it('updateThemeTokensBlockStyle returns null for a site that does not exist', async () => {
+    expect(
+      await siteRepository.updateThemeTokensBlockStyle(
+        tenantAId,
+        randomUUID(),
+        'Button',
+        { borderRadius: '6px' },
+      ),
+    ).toBeNull();
+  });
+
+  it(
+    'updateThemeTokensBlockStyle: two concurrent writes to DIFFERENT block ' +
+      "types both survive (the lost-update bug save()'s full-row " +
+      'read-modify-write had, before this method existed)',
+    async () => {
+      const [row] = await withTenant(db, tenantAId, (tx) =>
+        tx
+          .insert(sites)
+          .values({
+            tenantId: tenantAId,
+            name: 'Concurrent edits site',
+            defaultLocale: 'it',
+          })
+          .returning({ id: sites.id }),
+      );
+
+      // Fired together, not awaited one after the other: this is what a
+      // full-row read-modify-write (site.save()) would lose — the second
+      // write's in-memory snapshot wouldn't yet reflect the first write,
+      // so its full-row overwrite would silently drop it. A per-key
+      // jsonb_set UPDATE has no such window.
+      await Promise.all([
+        siteRepository.updateThemeTokensBlockStyle(
+          tenantAId,
+          row.id,
+          'Button',
+          {
+            borderRadius: '9999px',
+          },
+        ),
+        siteRepository.updateThemeTokensBlockStyle(tenantAId, row.id, 'Hero', {
+          textColor: '#ffffff',
+        }),
+      ]);
+
+      const final = await siteRepository.findById(tenantAId, row.id);
+      expect(final?.themeTokens).toEqual({
+        blockStyles: {
+          Button: { borderRadius: '9999px' },
+          Hero: { textColor: '#ffffff' },
+        },
+      });
+    },
+  );
 });

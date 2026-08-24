@@ -1,4 +1,5 @@
 import type { StatsCounterProps } from '@brisk/shared-types';
+import { BLOCK_STYLE_DEFAULTS } from '@brisk/shared-types';
 import type { BlockDescriptor } from '../field-types.js';
 
 export const statsCounterBlock: BlockDescriptor<StatsCounterProps> = {
@@ -16,4 +17,5 @@ export const statsCounterBlock: BlockDescriptor<StatsCounterProps> = {
     'paddingX',
     'paddingY',
   ],
+  defaultStyle: BLOCK_STYLE_DEFAULTS.StatsCounter,
 };

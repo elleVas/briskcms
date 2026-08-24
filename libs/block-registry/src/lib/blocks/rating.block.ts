@@ -1,4 +1,5 @@
 import type { RatingProps } from '@brisk/shared-types';
+import { BLOCK_STYLE_DEFAULTS } from '@brisk/shared-types';
 import type { BlockDescriptor } from '../field-types.js';
 
 export const ratingBlock: BlockDescriptor<RatingProps> = {
@@ -20,4 +21,5 @@ export const ratingBlock: BlockDescriptor<RatingProps> = {
     'paddingX',
     'paddingY',
   ],
+  defaultStyle: BLOCK_STYLE_DEFAULTS.Rating,
 };

@@ -31,8 +31,17 @@ const instanceStyle = buildBlockInstanceStyle(styleOverride);
   // (data-tab-label). No framework here on purpose — same vanilla DOM
   // approach as HamburgerMenu.astro.
   document.querySelectorAll<HTMLElement>('.brisk-tabs').forEach((root) => {
+    // Not `:scope > .brisk-tab-panel`: in the editor canvas each child
+    // block is wrapped in its own `data-brisk-block-id` div (`style=
+    // "display:contents"`, invisible for layout but still a real DOM
+    // node) so a Tab panel is a grandchild, not a direct child, of
+    // `.brisk-tabs` there — only on the published site (no wrapper,
+    // BlockRenderer.astro's Wrapper is a bare Fragment) is it a direct
+    // child. A plain descendant selector works in both, and can't
+    // accidentally pick up a nested Tabs' own panels: Tab.allowedChildTypes
+    // doesn't include Tab/Tabs, so tabs-within-tabs can't exist.
     const panels = Array.from(
-      root.querySelectorAll<HTMLElement>(':scope > .brisk-tab-panel'),
+      root.querySelectorAll<HTMLElement>(':scope .brisk-tab-panel'),
     );
     if (panels.length === 0) return;
 

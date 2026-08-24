@@ -1,4 +1,5 @@
 import type { EmbedHtmlProps } from '@brisk/shared-types';
+import { BLOCK_STYLE_DEFAULTS } from '@brisk/shared-types';
 import type { BlockDescriptor } from '../field-types.js';
 
 export const embedHtmlBlock: BlockDescriptor<EmbedHtmlProps> = {
@@ -18,4 +19,5 @@ export const embedHtmlBlock: BlockDescriptor<EmbedHtmlProps> = {
     'paddingX',
     'paddingY',
   ],
+  defaultStyle: BLOCK_STYLE_DEFAULTS.EmbedHtml,
 };

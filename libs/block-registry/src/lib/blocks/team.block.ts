@@ -1,4 +1,5 @@
 import type { TeamProps } from '@brisk/shared-types';
+import { BLOCK_STYLE_DEFAULTS } from '@brisk/shared-types';
 import type { BlockDescriptor } from '../field-types.js';
 
 export const teamBlock: BlockDescriptor<TeamProps> = {
@@ -16,4 +17,5 @@ export const teamBlock: BlockDescriptor<TeamProps> = {
     'paddingX',
     'paddingY',
   ],
+  defaultStyle: BLOCK_STYLE_DEFAULTS.Team,
 };

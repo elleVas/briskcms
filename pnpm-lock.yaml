@@ -636,6 +636,9 @@ importers:
       '@brisk/postgres-db':
         specifier: workspace:*
         version: link:../postgres-db
+      '@brisk/shared-types':
+        specifier: workspace:*
+        version: link:../../shared-types
       drizzle-orm:
         specifier: ^0.45.2
         version: 0.45.2(postgres@3.4.9)
@@ -821,6 +824,9 @@ importers:
       '@brisk/domain-core':
         specifier: workspace:*
         version: link:../domain-core
+      '@brisk/shared-types':
+        specifier: workspace:*
+        version: link:../shared-types
 
   libs/shared-types:
     dependencies:

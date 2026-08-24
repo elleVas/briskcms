@@ -1,4 +1,5 @@
 import type { TestimonialProps } from '@brisk/shared-types';
+import { BLOCK_STYLE_DEFAULTS } from '@brisk/shared-types';
 import { customField, type BlockDescriptor } from '../field-types.js';
 import { MediaPickerField } from '../fields/media-picker-field.js';
 
@@ -32,4 +33,5 @@ export const testimonialBlock: BlockDescriptor<TestimonialProps> = {
     'paddingX',
     'paddingY',
   ],
+  defaultStyle: BLOCK_STYLE_DEFAULTS.Testimonial,
 };

@@ -1,5 +1,8 @@
 import { ColorPickerField } from '@brisk/block-registry';
-import type { BlockStyleOverride } from '@brisk/shared-types';
+import type {
+  BlockStyleDefaults,
+  BlockStyleOverride,
+} from '@brisk/shared-types';
 import { Input } from '../../components/ui/input.js';
 import { Label } from '../../components/ui/label.js';
 
@@ -8,6 +11,14 @@ export interface BlockStyleFieldsProps {
   properties: (keyof BlockStyleOverride)[];
   value: BlockStyleOverride;
   onChange: (next: BlockStyleOverride) => void;
+  /**
+   * Il valore RISOLTO del tema attivo per ogni proprietà (docs/adr/0022's
+   * follow-up), da `GET /api/themes/current/block-style-defaults` — così
+   * i campi partono già dall'aspetto reale attuale invece che vuoti.
+   * Assente/`undefined` = non ancora caricato (mostra il placeholder
+   * generico com'era prima), non un errore.
+   */
+  defaults?: BlockStyleDefaults;
 }
 
 const COLOR_FIELD_LABELS: Partial<Record<keyof BlockStyleOverride, string>> = {
@@ -45,6 +56,7 @@ export function BlockStyleFields({
   properties,
   value,
   onChange,
+  defaults,
 }: BlockStyleFieldsProps) {
   function setField<K extends keyof BlockStyleOverride>(
     key: K,
@@ -64,6 +76,7 @@ export function BlockStyleFields({
               <ColorPickerField
                 value={(value[property] as string | null | undefined) ?? null}
                 onChange={(next) => setField(property, next)}
+                defaultValue={defaults?.[property]}
               />
             </div>
           );
@@ -78,7 +91,7 @@ export function BlockStyleFields({
               <Input
                 id={`block-style-${property}`}
                 value={(value[property] as string | null | undefined) ?? ''}
-                placeholder={lengthField.placeholder}
+                placeholder={defaults?.[property] ?? lengthField.placeholder}
                 onChange={(event) => {
                   const next = event.target.value;
                   setField(property, next.trim() === '' ? null : next);

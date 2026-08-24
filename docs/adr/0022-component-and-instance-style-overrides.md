@@ -158,3 +158,73 @@ ever had.
   `BlockRenderer.astro` passes `styleOverride={block.styleOverride}` to
   every participating block, but the block itself owns rendering it,
   same as it owns reading its own content props.
+
+## Follow-up (2026-08-24): resolved-default pre-fill, no schema change
+
+Before this, the style popovers (toolbar and "Stile globale") showed an
+empty field with a generic hint ("vuoto per il default") whenever nothing
+was customized — the actual default value was invisible, because it only
+ever lived as a hardcoded CSS fallback inside each block's own `.astro`
+`<style>` block (often itself a reference to a theme token, e.g.
+`var(--brisk-override-radius, var(--radius))`), never as data.
+
+Considered (and rejected) making `theme_tokens.blockStyles` non-sparse —
+seeding every block type with a real value at theme-creation time —
+because it would need either a one-off migration script per theme (drifts
+the moment a new block type ships without someone remembering to reseed)
+or per-theme literal values that can't express "this default is itself a
+reference to a theme token" (Hero's text color default isn't a fixed
+color, it's `var(--foreground)` — different per theme).
+
+**Decision**: no schema/database change. `BlockDescriptor` gains an
+optional `defaultStyle: Partial<Record<keyof BlockStyleOverride,
+string>>` (block-registry `field-types.ts`) — the same CSS expression
+already hardcoded in the block's own fallback chain, now declared as
+data, for every type that has `stylableProperties`. The actual values
+live in `BLOCK_STYLE_DEFAULTS` (`libs/shared-types/src/lib/block-style-
+defaults.ts`) rather than inline in block-registry — see that file's own
+comment for why (a real TypeScript project-reference conflict between
+Astro's checker and block-registry's React-testing spec files, hit when
+`apps/public-site` briefly depended on `@brisk/block-registry` directly;
+shared-types has no such problem and both apps already depend on it).
+
+A new endpoint, `GET /api/themes/current/block-style-defaults`
+(apps/public-site, same CORS/resolution pattern as docs/adr/0023's icon
+endpoint), resolves each declared expression against the active theme's
+real `theme.css` (`~theme/theme.css?raw`, parsed for its `:root` custom
+properties) — a `var(--x)` reference resolves to the real value, a
+literal (`'transparent'`, `'0.5rem'`) passes through unchanged. `theme_
+tokens` itself stays exactly as before: one sparse JSONB column, only
+customized properties stored — the "what does an untouched field look
+like" question is answered by this live resolution, not by stored data.
+
+editor-app fetches this once per session (`staleTime: Infinity`, the
+active theme never changes at runtime) and threads it into
+`BlockStyleFields`: a length field's placeholder becomes the resolved
+value instead of a generic hint; `ColorPickerField` gained a
+`defaultValue` prop showing a small CSS-native preview swatch (handles
+non-hex values like `oklch(...)` that `<input type="color">` itself
+can't display) plus the resolved value as the hex field's placeholder.
+For the per-instance popover specifically, the effective pre-fill is
+`typeStyle ?? themeDefault` (excluding explicit `null`s in `typeStyle`,
+which mean "not customized at the type level either") — an instance
+should preview what it's actually currently rendering, which is the
+type-level override if one exists, not the theme's raw default.
+
+Live-verified in a real browser: opening "Stile di tutti i blocchi Hero"
+shows `Colore di sfondo` placeholder `Tema: transparent` and `Colore
+testo` placeholder `Tema: oklch(0.145 0 0)` (Hero's real resolved
+`var(--foreground)` value for the `classic` theme) — not blank.
+
+Two real, pre-existing bugs found and fixed while touching this code
+(both the same class: a loose-equality/strict-equality mix-up between
+`null` and `undefined`, present because a sparse `BlockStyleOverride`
+object can genuinely have a property missing — `undefined` — not just
+explicitly `null`):
+
+- `ColorPickerField`'s "torna al tema" (✕) button was gated on `value
+!== null`; `undefined !== null` is `true` in JS, so it showed even for
+  a never-customized field. Fixed to a truthy check.
+- The same bug, same fix, in `IconPickerField` (docs/adr/0023) — found
+  first there, during that feature's own live verification, which is
+  what prompted checking `ColorPickerField` for the identical pattern.

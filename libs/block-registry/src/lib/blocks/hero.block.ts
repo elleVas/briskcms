@@ -1,4 +1,5 @@
 import type { HeroProps } from '@brisk/shared-types';
+import { BLOCK_STYLE_DEFAULTS } from '@brisk/shared-types';
 import type { BlockDescriptor } from '../field-types.js';
 
 export const heroBlock: BlockDescriptor<HeroProps> = {
@@ -19,4 +20,5 @@ export const heroBlock: BlockDescriptor<HeroProps> = {
     },
   ],
   stylableProperties: ['backgroundColor', 'textColor', 'borderRadius'],
+  defaultStyle: BLOCK_STYLE_DEFAULTS.Hero,
 };

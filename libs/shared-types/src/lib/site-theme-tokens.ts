@@ -59,3 +59,33 @@ export const updateThemeTokensBodySchema = z.object({
   style: blockStyleOverrideSchema,
 });
 export type UpdateThemeTokensBody = z.infer<typeof updateThemeTokensBodySchema>;
+
+/**
+ * Il valore RISOLTO (non un token grezzo) di ogni proprietà stilizzabile
+ * per un tipo di blocco, contro il tema attivo — es. `borderRadius:
+ * "0.5rem"`, mai `"var(--radius)"` non risolto. A differenza di
+ * `BlockStyleOverride`, qui ogni chiave presente ha SEMPRE un valore
+ * stringa: non esiste un "default nullo", un blocco stilizzabile ha
+ * sempre un aspetto quando non personalizzato, è quell'aspetto che questo
+ * tipo cattura. Sorgente: `BlockDescriptor.defaultStyle` (block-registry,
+ * l'espressione dichiarata, es. `var(--primary)`) risolto contro il
+ * `theme.css` del tema attivo — vedi
+ * `apps/public-site/src/lib/resolve-theme-block-style-defaults.ts`.
+ */
+export const blockStyleDefaultsSchema = z.object({
+  backgroundColor: z.string().min(1).optional(),
+  textColor: z.string().min(1).optional(),
+  borderRadius: z.string().min(1).optional(),
+  paddingX: z.string().min(1).optional(),
+  paddingY: z.string().min(1).optional(),
+});
+export type BlockStyleDefaults = z.infer<typeof blockStyleDefaultsSchema>;
+
+/** Corpo di risposta di `GET /api/themes/current/block-style-defaults` (apps/public-site): una entry per tipo di blocco stilizzabile. */
+export const blockStyleDefaultsResponseSchema = z.record(
+  z.string().min(1),
+  blockStyleDefaultsSchema,
+);
+export type BlockStyleDefaultsResponse = z.infer<
+  typeof blockStyleDefaultsResponseSchema
+>;

@@ -43,6 +43,7 @@ describe('SitesController (unit)', () => {
       findByDomain: jest.fn(),
       findById: jest.fn(),
       save: jest.fn(),
+      updateThemeTokensBlockStyle: jest.fn(),
     };
     tenantContext = { getCurrentTenantId: () => 'tenant-1' };
     controller = new SitesController(siteRepository, tenantContext);
@@ -173,7 +174,7 @@ describe('SitesController (unit)', () => {
   });
 
   it('updateThemeTokens maps a SiteNotFoundError to a NotFoundException', async () => {
-    siteRepository.findById.mockResolvedValue(null);
+    siteRepository.updateThemeTokensBlockStyle.mockResolvedValue(null);
 
     await expect(
       controller.updateThemeTokens('missing', {
@@ -184,14 +185,27 @@ describe('SitesController (unit)', () => {
   });
 
   it('updateThemeTokens saves the override for only the block type given', async () => {
-    siteRepository.findById.mockResolvedValue(buildSite());
+    siteRepository.updateThemeTokensBlockStyle.mockResolvedValue(
+      buildSite({
+        themeTokens: {
+          blockStyles: {
+            Button: { borderRadius: '9999px', paddingX: '1.5rem' },
+          },
+        },
+      }),
+    );
 
     const result = await controller.updateThemeTokens('site-1', {
       blockType: 'Button',
       style: { borderRadius: '9999px', paddingX: '1.5rem' },
     });
 
-    expect(siteRepository.save).toHaveBeenCalled();
+    expect(siteRepository.updateThemeTokensBlockStyle).toHaveBeenCalledWith(
+      'tenant-1',
+      'site-1',
+      'Button',
+      { borderRadius: '9999px', paddingX: '1.5rem' },
+    );
     expect(result.themeTokens).toEqual({
       blockStyles: {
         Button: { borderRadius: '9999px', paddingX: '1.5rem' },
