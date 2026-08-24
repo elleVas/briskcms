@@ -218,6 +218,8 @@ export const navLinkPropsSchema = navItemPositionSchema.extend({
   linkType: z.enum(['page', 'url']),
   page: pickedPageSchema.nullable(),
   url: z.string(),
+  /** Nome icona risolto contro il set del tema attivo (docs/adr/0023) — `null` = nessuna icona. `.default(null)`: i NavLink già salvati prima di questo campo non hanno la chiave. */
+  icon: z.string().nullable().default(null),
   visibility: visibilitySchema.default('always'),
 });
 export type NavLinkProps = z.infer<typeof navLinkPropsSchema>;

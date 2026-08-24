@@ -1,6 +1,8 @@
 # 0023 — Icon system: theme-provided manifest, curated default set
 
-**Status**: Accepted — 2026-08-22
+**Status**: Accepted — 2026-08-22, implemented 2026-08-23 (see
+"Implementation notes" at the end for where the build diverged from the
+original decision text below).
 
 ## Context
 
@@ -82,3 +84,39 @@ same name.
 - Not yet decided: whether a block can offer a _curated subset_ of icons
   (e.g. only directional arrows for a "next/prev" field) rather than the
   full active set — deferred until a concrete block needs it.
+
+## Implementation notes (2026-08-23)
+
+- **Default set source**: `lucide-static@^1.31.0` added as a real
+  dependency of `apps/public-site` (pinned to the same version editor-app
+  already uses for `lucide-react`), not a "resolved from the
+  `lucide-react` dependency" trick — `lucide-react` ships React
+  components, not raw SVG; `lucide-static` is the sibling package in the
+  same Lucide monorepo that ships one `.svg` file per icon, the form this
+  system actually needs. Resolved server-side via Node's
+  `import.meta.resolve('lucide-static/package.json')` + `fs.readdirSync`
+  (`resolve-theme-icons.ts`), not `import.meta.glob` — a glob pattern
+  reaching into `node_modules` isn't a relative path or the `~theme`
+  alias Vite's glob handles in this project, while Node's own module
+  resolution finds the package wherever pnpm actually symlinked it,
+  independent of hoisting. `~theme/icons/*.svg` itself is still resolved
+  via `import.meta.glob` (it does need the alias).
+- **Field kind**: implemented as `customField('icon', 'Icona',
+IconPickerField)` — `kind: 'custom'`, the same mechanism every other
+  picker field already uses (Page/Media/Gallery/Form) — not a new
+  `kind: 'icon'` member on `FieldDescriptor`. The union has no native
+  `color` kind either despite this ADR's "alongside text, color, etc."
+  phrasing; every rich-picker field in this codebase is `custom`, and
+  matching that existing, consistent pattern was judged more valuable
+  than adding a new union member for one field type.
+- **Endpoint path**: `GET /api/themes/current/icons`, not
+  `/public/themes/current/icons` — `apps/public-site`'s existing API
+  routes all live under `/api/*` (see `render-block-fragment.ts`,
+  `newsletter/subscribe.ts`); there is no `/public/*` prefix convention
+  in this app to match.
+- **First real consumer**: `NavLink` (the ADR's own motivating example)
+  — `NavLinkProps.icon: string | null` (default `null`, backward-
+  compatible with every NavLink saved before this field existed),
+  rendered via `resolveIconSvg()` in `NavLink.astro`. Other blocks are
+  deliberately not wired up yet — no concrete need identified for them
+  at this point.

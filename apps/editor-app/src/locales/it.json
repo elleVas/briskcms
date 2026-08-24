@@ -198,6 +198,16 @@
       "title": "Scegli un'immagine"
     }
   },
+  "icons": {
+    "picker": {
+      "title": "Scegli un'icona",
+      "search": "Cerca icona…",
+      "empty": "Nessuna icona trovata."
+    },
+    "field": {
+      "remove": "Rimuovi icona"
+    }
+  },
   "generalSettings": {
     "menuLabel": "Impostazioni generali",
     "title": "Impostazioni generali",

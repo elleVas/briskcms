@@ -1,11 +1,13 @@
 ---
 import type { NavLinkProps } from '@brisk/shared-types';
 import { localePath } from '../../lib/locale-path.js';
+import { resolveIconSvg } from '../../lib/resolve-theme-icons.js';
 
 type Props = NavLinkProps;
 
-const { label, linkType, page, url, position, visibility } = Astro.props;
+const { label, linkType, page, url, icon, position, visibility } = Astro.props;
 const href = linkType === 'page' && page ? localePath(page.locale, page.slug) : url;
+const iconSvg = resolveIconSvg(icon);
 ---
 
 <a
@@ -16,13 +18,27 @@ const href = linkType === 'page' && page ? localePath(page.locale, page.slug) : 
     { 'brisk-visibility-desktop-only': visibility === 'desktop-only' },
     { 'brisk-visibility-mobile-only': visibility === 'mobile-only' },
   ]}
-  data-brisk-field="label"
 >
-  {label}
+  {iconSvg && <span class="brisk-nav-link__icon" set:html={iconSvg} />}
+  <span data-brisk-field="label">{label}</span>
 </a>
 
 <style>
+  .brisk-nav-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4em;
+  }
   .brisk-nav-link--right {
     margin-left: auto;
+  }
+  .brisk-nav-link__icon {
+    display: inline-flex;
+    width: 1em;
+    height: 1em;
+  }
+  .brisk-nav-link__icon :global(svg) {
+    width: 100%;
+    height: 100%;
   }
 </style>
