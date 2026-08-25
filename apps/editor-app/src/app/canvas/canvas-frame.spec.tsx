@@ -81,6 +81,21 @@ describe('CanvasFrame', () => {
     );
   });
 
+  it('sandboxes the iframe without allow-same-origin — the preview can render untrusted user-authored blocks, and allow-same-origin combined with allow-scripts would neutralize the sandbox', async () => {
+    vi.mocked(previewTokenApi.createPagePreviewToken).mockResolvedValue({
+      token: 'tok123',
+      expiresAt: new Date().toISOString(),
+    });
+
+    renderFrame();
+
+    await waitFor(() =>
+      expect(
+        screen.getByTitle('Anteprima pagina').getAttribute('sandbox'),
+      ).toBe('allow-scripts allow-forms'),
+    );
+  });
+
   it('passes editingSection through to the iframe URL', async () => {
     vi.mocked(previewTokenApi.createPagePreviewToken).mockResolvedValue({
       token: 'tok123',

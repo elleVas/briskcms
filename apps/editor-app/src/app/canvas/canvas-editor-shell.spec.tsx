@@ -287,7 +287,7 @@ describe('CanvasEditorShell', () => {
     await waitFor(() =>
       expect(postMessageSpy).toHaveBeenCalledWith(
         expect.objectContaining({ type: 'editor:patch-block' }),
-        'http://localhost:4321',
+        '*',
       ),
     );
   });
@@ -311,7 +311,7 @@ describe('CanvasEditorShell', () => {
         type: 'editor:remove-block',
         payload: { blockId: 'hero-1' },
       },
-      'http://localhost:4321',
+      '*',
     );
   });
 
@@ -364,12 +364,12 @@ describe('CanvasEditorShell', () => {
             html: '<div data-brisk-block-id="columns-1" data-brisk-block-type="Columns">colonne di nuovo vuote</div>',
           }),
         }),
-        'http://localhost:4321',
+        '*',
       ),
     );
     expect(postMessageSpy).not.toHaveBeenCalledWith(
       expect.objectContaining({ type: 'editor:remove-block' }),
-      'http://localhost:4321',
+      '*',
     );
   });
 
@@ -425,7 +425,7 @@ describe('CanvasEditorShell', () => {
             beforeBlockId: null,
           }),
         }),
-        'http://localhost:4321',
+        '*',
       ),
     );
   });
@@ -453,7 +453,7 @@ describe('CanvasEditorShell', () => {
             beforeBlockId: null,
           }),
         }),
-        'http://localhost:4321',
+        '*',
       ),
     );
   });
@@ -529,7 +529,7 @@ describe('CanvasEditorShell', () => {
             beforeBlockId: null,
           }),
         }),
-        'http://localhost:4321',
+        '*',
       ),
     );
   });
@@ -610,7 +610,7 @@ describe('CanvasEditorShell', () => {
             html: '<div data-brisk-block-id="columns-1" data-brisk-block-type="Columns">colonne aggiornate</div>',
           }),
         }),
-        'http://localhost:4321',
+        '*',
       ),
     );
   });
@@ -673,7 +673,7 @@ describe('CanvasEditorShell', () => {
           type: 'editor:patch-block',
           payload: expect.objectContaining({ blockId: 'columns-1' }),
         }),
-        'http://localhost:4321',
+        '*',
       ),
     );
   });
@@ -753,7 +753,7 @@ describe('CanvasEditorShell', () => {
         type: 'editor:reorder-blocks',
         payload: { parentId: null, orderedIds: ['text-1', 'hero-1'] },
       },
-      'http://localhost:4321',
+      '*',
     );
   });
 
@@ -788,7 +788,7 @@ describe('CanvasEditorShell', () => {
         type: 'editor:enter-text-edit',
         payload: { blockId: 'hero-1', field: 'title' },
       },
-      'http://localhost:4321',
+      '*',
     );
   });
 
@@ -905,7 +905,7 @@ describe('CanvasEditorShell', () => {
           type: 'editor:reorder-blocks',
           payload: { parentId: null, orderedIds: ['text-1', 'hero-1'] },
         },
-        'http://localhost:4321',
+        '*',
       ),
     );
   });
@@ -963,7 +963,7 @@ describe('CanvasEditorShell', () => {
         type: 'editor:exit-text-edit',
         payload: {},
       },
-      'http://localhost:4321',
+      '*',
     );
   });
 });
