@@ -10,6 +10,7 @@ import {
   InMemorySearchPort,
   InMemorySiteLayoutSectionRepository,
   InMemorySiteRepository,
+  InMemorySiteThemeBlockStylesRepository,
 } from './in-memory-repositories.test-fixture.js';
 
 describe('getPublishedPageBySlug', () => {
@@ -21,12 +22,15 @@ describe('getPublishedPageBySlug', () => {
     const siteRepository = new InMemorySiteRepository();
     const siteLayoutSectionRepository =
       new InMemorySiteLayoutSectionRepository();
+    const siteThemeBlockStylesRepository =
+      new InMemorySiteThemeBlockStylesRepository();
     const searchPort = new InMemorySearchPort();
     return {
       pageRepository,
       pageVersionRepository,
       siteRepository,
       siteLayoutSectionRepository,
+      siteThemeBlockStylesRepository,
       searchPort,
     };
   }
@@ -56,7 +60,6 @@ describe('getPublishedPageBySlug', () => {
       themeBodyScript: null,
       themeFaviconUrl: null,
       themeOverridesEnabled: true,
-      themeTokens: null,
       createdAt: new Date(),
       ...overrides,
     });

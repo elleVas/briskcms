@@ -6,7 +6,10 @@ import { DrizzlePageRepository } from '@brisk/postgres-page-repository';
 import { PreviewTokenAdapter } from '@brisk/preview-token-adapter';
 import { DrizzleSearchRepository } from '@brisk/postgres-search-repository';
 import { DrizzleSiteLayoutSectionRepository } from '@brisk/postgres-site-layout-section-repository';
-import { DrizzleSiteRepository } from '@brisk/postgres-site-repository';
+import {
+  DrizzleSiteRepository,
+  DrizzleSiteThemeBlockStylesRepository,
+} from '@brisk/postgres-site-repository';
 import { DATABASE, DatabaseModule } from '../database.module.js';
 import { PublicPagesController } from './public-pages.controller.js';
 import {
@@ -16,6 +19,7 @@ import {
   SEARCH_REPOSITORY,
   SITE_LAYOUT_SECTION_REPOSITORY,
   SITE_REPOSITORY,
+  SITE_THEME_BLOCK_STYLES_REPOSITORY,
 } from './public-pages.tokens.js';
 
 @Module({
@@ -50,6 +54,12 @@ import {
     {
       provide: SITE_LAYOUT_SECTION_REPOSITORY,
       useFactory: (db: BriskDb) => new DrizzleSiteLayoutSectionRepository(db),
+      inject: [DATABASE],
+    },
+    {
+      provide: SITE_THEME_BLOCK_STYLES_REPOSITORY,
+      useFactory: (db: BriskDb) =>
+        new DrizzleSiteThemeBlockStylesRepository(db),
       inject: [DATABASE],
     },
     {

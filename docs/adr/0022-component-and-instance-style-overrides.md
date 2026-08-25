@@ -228,3 +228,83 @@ explicitly `null`):
 - The same bug, same fix, in `IconPickerField` (docs/adr/0023) — found
   first there, during that feature's own live verification, which is
   what prompted checking `ColorPickerField` for the identical pattern.
+
+## Follow-up (2026-08-24, later same day): `theme_tokens` split into its own table after all
+
+The follow-up directly above concluded "no schema change" for the
+pre-fill work specifically — that conclusion still stands, pre-fill never
+needed one. Separately, the founder revisited the blob-vs-columns
+question from [[theme-tokens-schema-redesign-todo]] one more time later
+the same day, explicitly asking for an independent third opinion (two
+fresh agents, briefed on the tradeoffs but not on any prior conclusion)
+given the project's open-source ambitions: contributors judge a codebase
+partly on structural hygiene, not just correctness.
+
+**Decision, superseding "keep the single JSONB column" from the earlier
+discussion**: `sites.theme_tokens` is removed. A new table,
+`site_theme_block_styles`, holds one row per `(site_id, block_type)`:
+
+```sql
+site_theme_block_styles (
+  tenant_id   uuid not null references tenants(id) on delete cascade,
+  site_id     uuid not null references sites(id) on delete cascade,
+  block_type  text not null,
+  style       jsonb not null,
+  primary key (site_id, block_type)
+)
+```
+
+`style` stays JSONB (not typed columns per property) — the two
+independent agents' consensus, and the reasoning that survived scrutiny:
+splitting into typed columns would need a migration every time a new
+_property_ is added to `BlockStyleOverride`, which is exactly the
+schema-coupling the generic map was designed to avoid; row-per-type
+already delivers the two real benefits normalizing was for (see below),
+neither of which needs the payload itself to be typed.
+
+**Why this and not the single-blob column it replaces** — two concrete
+benefits, not "one JSONB blob feels messy" (that instinct was
+specifically pushed back on and rejected):
+
+1. **Smaller write footprint.** An `UPDATE` to one block type's style no
+   longer rewrites the entire wide `sites` row (name, domain, SEO
+   settings, business info — all unrelated to styling) under Postgres
+   MVCC. It rewrites one narrow child-table row instead.
+2. **Direct per-type queries/indexes.** `WHERE block_type = 'Button'` is
+   a normal indexed lookup instead of a `jsonb -> 'blockStyles' -> ...`
+   path traversal.
+
+**What this is explicitly NOT about**: concurrency/atomicity. The
+`jsonb_set`-based atomic UPDATE from earlier the same day (the
+[[theme-tokens-followup-2026-08-24]] concurrency fix) already made
+concurrent writes to different block types on the single-blob column
+fully safe — proven by a passing integration test with two real
+concurrent writes. Splitting into a child table doesn't fix a
+correctness problem (there wasn't one left to fix); the per-row upsert
+this migration uses (`INSERT ... ON CONFLICT (site_id, block_type) DO
+UPDATE`) is, if anything, simpler than the `jsonb_set` expression it
+replaces — not a "necessary evil" traded for hygiene, a straight
+improvement on every axis actually in play.
+
+**Consequences**:
+
+- `Site`/`SiteProps` (domain-core) no longer carries `themeTokens` at
+  all — it's not a property of the site's own row anymore.
+  `Site.updateThemeTokens()` is gone from the domain entity; a new
+  `SiteThemeBlockStylesPort` (own Port, same reasoning as `SearchPort`:
+  a distinct capability/storage shape, not a site attribute) owns
+  `listBySite`/`upsert`.
+- The HTTP contract is unchanged on purpose: `GET /sites/:id` and
+  `PATCH /sites/:id/theme-tokens` still return `themeTokens: {
+blockStyles: {...} }` nested exactly as before — assembled by the
+  controller from two sources (`site.toProps()` + a `listBySite` call)
+  instead of being one property already on the row. No editor-app or
+  public-site consumer needed to change.
+- `resolveSiteChrome` (the public rendering path) fetches `blockStyles`
+  via the new port in parallel with header/footer resolution — same
+  `Promise.all`, one more entry.
+- Migrated real dev-DB data (three existing rows: `Tab`, `Hero`, `Button`
+  overrides on the one real site) via a hand-written data-copy migration
+  (`jsonb_each` expanding the old blob into rows) sequenced between the
+  `CREATE TABLE` and the `DROP COLUMN` migrations — verified against the
+  live dev DB, not just assumed safe.

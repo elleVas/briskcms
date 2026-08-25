@@ -7,6 +7,7 @@ import {
   integer,
   jsonb,
   pgTable,
+  primaryKey,
   text,
   timestamp,
   unique,
@@ -14,12 +15,12 @@ import {
   type AnyPgColumn,
 } from 'drizzle-orm/pg-core';
 import type {
+  BlockStyleOverride,
   FormField,
   FormStep,
   OpeningHoursDay,
   PageContent,
   SeoMeta,
-  ThemeTokens,
   UntranslatedPageFallback,
 } from '@brisk/shared-types';
 import type {
@@ -116,10 +117,6 @@ export const sites = pgTable(
     themeOverridesEnabled: boolean('theme_overrides_enabled')
       .notNull()
       .default(true),
-    // Fase 2a del piano editor visuale, parte 2 (Global Styles Editor) —
-    // categorie di stile oltre ai colori (Bottoni oggi). Nullable come il
-    // resto di Tier 1: `null` = nessuna categoria personalizzata ancora.
-    themeTokens: jsonb('theme_tokens').$type<ThemeTokens>(),
     createdAt: timestamp('created_at', { withTimezone: true })
       .notNull()
       .defaultNow(),
@@ -128,6 +125,40 @@ export const sites = pgTable(
     check(
       'sites_untranslated_page_fallback_check',
       sql`${table.untranslatedPageFallback} in ('redirect-to-default', 'not-available')`,
+    ),
+  ],
+);
+
+/**
+ * Sostituisce `sites.theme_tokens` (era un'unica mappa JSONB sparsa sulla
+ * riga del sito) — una riga per (site, tipo di blocco) invece di una voce
+ * annidata in un blob. Non per correttezza (l'`UPDATE ... jsonb_set`
+ * precedente era già atomico per-tipo) ma per due motivi reali: una
+ * scrittura qui non riscrive più l'intera riga larga `sites` sotto MVCC
+ * (nome, dominio, impostazioni SEO, ecc. — tutte estranee allo stile), e
+ * `WHERE block_type = 'Button'` diventa una lookup su indice normale
+ * invece di una traversata di path JSONB. `style` resta jsonb (non
+ * colonne tipizzate per proprietà): aggiungere/rimuovere una proprietà
+ * stilabile resta un cambio di dato, non una migrazione — lo stesso
+ * motivo per cui `blockStyles` era già una mappa generica.
+ */
+export const siteThemeBlockStyles = pgTable(
+  'site_theme_block_styles',
+  {
+    tenantId: uuid('tenant_id')
+      .notNull()
+      .references(() => tenants.id, { onDelete: 'cascade' }),
+    siteId: uuid('site_id')
+      .notNull()
+      .references(() => sites.id, { onDelete: 'cascade' }),
+    blockType: text('block_type').notNull(),
+    style: jsonb('style').notNull().$type<BlockStyleOverride>(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.siteId, table.blockType] }),
+    index('site_theme_block_styles_tenant_site_idx').on(
+      table.tenantId,
+      table.siteId,
     ),
   ],
 );

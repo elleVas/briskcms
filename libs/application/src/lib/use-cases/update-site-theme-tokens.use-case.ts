@@ -1,9 +1,13 @@
-import { SiteNotFoundError, type Site } from '@brisk/domain-core';
-import type { SiteRepositoryPort } from '@brisk/ports';
+import { SiteNotFoundError } from '@brisk/domain-core';
+import type {
+  SiteRepositoryPort,
+  SiteThemeBlockStylesPort,
+} from '@brisk/ports';
 import type { BlockStyleOverride } from '@brisk/shared-types';
 
 export interface UpdateSiteThemeTokensDeps {
   siteRepository: SiteRepositoryPort;
+  siteThemeBlockStylesRepository: SiteThemeBlockStylesPort;
 }
 
 export interface UpdateSiteThemeTokensInput {
@@ -14,26 +18,27 @@ export interface UpdateSiteThemeTokensInput {
 }
 
 /**
- * Sostituisce per intero l'override del tipo di blocco dato, gli altri tipi
- * restano invariati — via un UPDATE atomico lato DB
- * (`updateThemeTokensBlockStyle`), non un findById + mutate + save a riga
- * intera: due chiamate concorrenti su tipi di blocco diversi (es. due
- * editor che salvano lo stile di blocchi diversi nello stesso momento) non
- * possono più sovrascriversi a vicenda.
+ * Sostituisce per intero l'override del tipo di blocco dato (gli altri
+ * tipi restano invariati) via un upsert atomico su
+ * `site_theme_block_styles` (docs/adr/0022's follow-up sullo schema — non
+ * più `sites.theme_tokens`). L'esistenza del sito va verificata a parte:
+ * la tabella figlia ha solo un FK su `site_id`, non un vincolo che dia un
+ * errore di dominio leggibile — meglio un `findById` esplicito che un
+ * generico errore di violazione FK propagato al chiamante.
  */
 export async function updateSiteThemeTokens(
   deps: UpdateSiteThemeTokensDeps,
   input: UpdateSiteThemeTokensInput,
-): Promise<Site> {
-  const site = await deps.siteRepository.updateThemeTokensBlockStyle(
+): Promise<void> {
+  const site = await deps.siteRepository.findById(input.tenantId, input.siteId);
+  if (!site) {
+    throw new SiteNotFoundError(input.siteId);
+  }
+
+  await deps.siteThemeBlockStylesRepository.upsert(
     input.tenantId,
     input.siteId,
     input.blockType,
     input.style,
   );
-  if (!site) {
-    throw new SiteNotFoundError(input.siteId);
-  }
-
-  return site;
 }

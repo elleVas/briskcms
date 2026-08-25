@@ -16,8 +16,12 @@ import {
   updateSiteThemeSettings,
   updateSiteThemeTokens,
 } from '@brisk/application';
-import { SiteNotFoundError } from '@brisk/domain-core';
-import type { SiteRepositoryPort, TenantContextPort } from '@brisk/ports';
+import { SiteNotFoundError, type Site } from '@brisk/domain-core';
+import type {
+  SiteRepositoryPort,
+  SiteThemeBlockStylesPort,
+  TenantContextPort,
+} from '@brisk/ports';
 import { SessionAuthGuard } from '../auth/session-auth.guard.js';
 import { ZodValidationPipe } from '../zod-validation.pipe.js';
 import {
@@ -34,7 +38,11 @@ import {
   type UpdateThemeTokensBody,
   updateThemeTokensBodySchema,
 } from './sites.schemas.js';
-import { SITE_REPOSITORY, TENANT_CONTEXT } from './sites.tokens.js';
+import {
+  SITE_REPOSITORY,
+  SITE_THEME_BLOCK_STYLES_REPOSITORY,
+  TENANT_CONTEXT,
+} from './sites.tokens.js';
 
 @Controller('sites')
 @UseGuards(SessionAuthGuard)
@@ -42,6 +50,8 @@ export class SitesController {
   constructor(
     @Inject(SITE_REPOSITORY)
     private readonly siteRepository: SiteRepositoryPort,
+    @Inject(SITE_THEME_BLOCK_STYLES_REPOSITORY)
+    private readonly siteThemeBlockStylesRepository: SiteThemeBlockStylesPort,
     @Inject(TENANT_CONTEXT) private readonly tenantContext: TenantContextPort,
   ) {}
 
@@ -54,7 +64,7 @@ export class SitesController {
     if (!site) {
       throw new NotFoundException(`Site not found: ${id}`);
     }
-    return site.toProps();
+    return this.toDto(site);
   }
 
   @Patch(':id/business-info')
@@ -72,7 +82,7 @@ export class SitesController {
           ...body,
         },
       );
-      return site.toProps();
+      return this.toDto(site);
     });
   }
 
@@ -91,7 +101,7 @@ export class SitesController {
           ...body,
         },
       );
-      return site.toProps();
+      return this.toDto(site);
     });
   }
 
@@ -110,7 +120,7 @@ export class SitesController {
           ...body,
         },
       );
-      return site.toProps();
+      return this.toDto(site);
     });
   }
 
@@ -129,7 +139,7 @@ export class SitesController {
           ...body,
         },
       );
-      return site.toProps();
+      return this.toDto(site);
     });
   }
 
@@ -148,7 +158,7 @@ export class SitesController {
           ...body,
         },
       );
-      return site.toProps();
+      return this.toDto(site);
     });
   }
 
@@ -159,17 +169,47 @@ export class SitesController {
     body: UpdateThemeTokensBody,
   ) {
     return this.handleDomainErrors(async () => {
-      const site = await updateSiteThemeTokens(
-        { siteRepository: this.siteRepository },
+      const tenantId = this.tenantContext.getCurrentTenantId();
+      await updateSiteThemeTokens(
         {
-          tenantId: this.tenantContext.getCurrentTenantId(),
+          siteRepository: this.siteRepository,
+          siteThemeBlockStylesRepository: this.siteThemeBlockStylesRepository,
+        },
+        {
+          tenantId,
           siteId: id,
           blockType: body.blockType,
           style: body.style,
         },
       );
-      return site.toProps();
+      // Il site è già stato verificato esistente dallo use-case — un
+      // secondo findById qui è per ricomporre il DTO completo, non per
+      // ricontrollare l'esistenza (che getterebbe comunque un 404 identico
+      // nell'improbabile finestra in cui il sito sparisse tra le due
+      // chiamate).
+      const site = await this.siteRepository.findById(tenantId, id);
+      if (!site) {
+        throw new SiteNotFoundError(id);
+      }
+      return this.toDto(site);
     });
+  }
+
+  /**
+   * Ogni handler che restituisce il sito lo fa attraverso questo stesso
+   * punto — `themeTokens` non è più parte di `Site`/`SiteProps` (vive in
+   * `site_theme_block_styles`, docs/adr/0022's follow-up sullo schema) ma
+   * il contratto della risposta HTTP resta invariato per non toccare
+   * nessun consumer (editor-app sovrascrive per intero la propria cache
+   * del sito con QUALUNQUE risposta di queste mutation — un DTO senza
+   * `themeTokens` la farebbe sparire dalla cache fino al prossimo GET).
+   */
+  private async toDto(site: Site) {
+    const blockStyles = await this.siteThemeBlockStylesRepository.listBySite(
+      site.tenantId,
+      site.id,
+    );
+    return { ...site.toProps(), themeTokens: { blockStyles } };
   }
 
   private async handleDomainErrors<T>(fn: () => Promise<T>): Promise<T> {

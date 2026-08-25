@@ -4,6 +4,7 @@ import { getPublishedSiteChrome } from './get-published-site-chrome.use-case.js'
 import {
   InMemorySiteLayoutSectionRepository,
   InMemorySiteRepository,
+  InMemorySiteThemeBlockStylesRepository,
 } from './in-memory-repositories.test-fixture.js';
 
 describe('getPublishedSiteChrome', () => {
@@ -13,7 +14,13 @@ describe('getPublishedSiteChrome', () => {
     const siteRepository = new InMemorySiteRepository();
     const siteLayoutSectionRepository =
       new InMemorySiteLayoutSectionRepository();
-    return { siteRepository, siteLayoutSectionRepository };
+    const siteThemeBlockStylesRepository =
+      new InMemorySiteThemeBlockStylesRepository();
+    return {
+      siteRepository,
+      siteLayoutSectionRepository,
+      siteThemeBlockStylesRepository,
+    };
   }
 
   function seedSite(siteRepository: InMemorySiteRepository) {
@@ -39,7 +46,6 @@ describe('getPublishedSiteChrome', () => {
         themeBodyScript: null,
         themeFaviconUrl: null,
         themeOverridesEnabled: true,
-        themeTokens: null,
         createdAt: new Date(),
       }),
     );

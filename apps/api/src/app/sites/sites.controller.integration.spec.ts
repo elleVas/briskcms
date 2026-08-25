@@ -267,9 +267,9 @@ describe('SitesController (integration)', () => {
       .expect(404);
   });
 
-  it('defaults theme tokens to null, and updates the override for one block type', async () => {
+  it('defaults theme tokens to an empty blockStyles map, and updates the override for one block type', async () => {
     const getRes = await agent.get(`/sites/${siteId}`).expect(200);
-    expect(getRes.body.themeTokens).toBeNull();
+    expect(getRes.body.themeTokens).toEqual({ blockStyles: {} });
 
     const res = await agent
       .patch(`/sites/${siteId}/theme-tokens`)

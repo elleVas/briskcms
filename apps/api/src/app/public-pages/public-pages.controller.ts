@@ -22,6 +22,7 @@ import type {
   SearchPort,
   SiteLayoutSectionRepositoryPort,
   SiteRepositoryPort,
+  SiteThemeBlockStylesPort,
 } from '@brisk/ports';
 import { ZodValidationPipe } from '../zod-validation.pipe.js';
 import {
@@ -45,6 +46,7 @@ import {
   SEARCH_REPOSITORY,
   SITE_LAYOUT_SECTION_REPOSITORY,
   SITE_REPOSITORY,
+  SITE_THEME_BLOCK_STYLES_REPOSITORY,
 } from './public-pages.tokens.js';
 
 // No SessionAuthGuard on this controller — it's the public, unauthenticated
@@ -60,6 +62,8 @@ export class PublicPagesController {
     private readonly siteRepository: SiteRepositoryPort,
     @Inject(SITE_LAYOUT_SECTION_REPOSITORY)
     private readonly siteLayoutSectionRepository: SiteLayoutSectionRepositoryPort,
+    @Inject(SITE_THEME_BLOCK_STYLES_REPOSITORY)
+    private readonly siteThemeBlockStylesRepository: SiteThemeBlockStylesPort,
     @Inject(SEARCH_REPOSITORY)
     private readonly searchPort: SearchPort,
     @Inject(DEFAULT_TENANT_ID) private readonly defaultTenantId: string,
@@ -77,6 +81,7 @@ export class PublicPagesController {
         siteRepository: this.siteRepository,
         pageRepository: this.pageRepository,
         siteLayoutSectionRepository: this.siteLayoutSectionRepository,
+        siteThemeBlockStylesRepository: this.siteThemeBlockStylesRepository,
       },
       {
         tenantId: this.defaultTenantId,
@@ -106,6 +111,7 @@ export class PublicPagesController {
         pageRepository: this.pageRepository,
         siteRepository: this.siteRepository,
         siteLayoutSectionRepository: this.siteLayoutSectionRepository,
+        siteThemeBlockStylesRepository: this.siteThemeBlockStylesRepository,
         previewTokenPort: this.previewTokenPort,
       },
       {
@@ -132,6 +138,7 @@ export class PublicPagesController {
       {
         siteRepository: this.siteRepository,
         siteLayoutSectionRepository: this.siteLayoutSectionRepository,
+        siteThemeBlockStylesRepository: this.siteThemeBlockStylesRepository,
       },
       {
         tenantId: this.defaultTenantId,

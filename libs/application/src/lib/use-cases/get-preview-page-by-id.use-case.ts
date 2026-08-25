@@ -3,6 +3,7 @@ import type {
   PreviewTokenPort,
   SiteLayoutSectionRepositoryPort,
   SiteRepositoryPort,
+  SiteThemeBlockStylesPort,
 } from '@brisk/ports';
 import { resolveSiteChrome } from './resolve-site-chrome.js';
 import { resolvePageAncestors } from './resolve-page-ancestors.js';
@@ -12,6 +13,7 @@ export interface GetPreviewPageByIdDeps {
   pageRepository: PageRepositoryPort;
   siteRepository: SiteRepositoryPort;
   siteLayoutSectionRepository: SiteLayoutSectionRepositoryPort;
+  siteThemeBlockStylesRepository: SiteThemeBlockStylesPort;
   previewTokenPort: PreviewTokenPort;
 }
 
