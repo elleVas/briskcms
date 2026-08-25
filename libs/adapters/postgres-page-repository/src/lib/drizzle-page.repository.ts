@@ -1,11 +1,25 @@
 import { and, count, desc, eq } from 'drizzle-orm';
-import { Page, type PageProps } from '@brisk/domain-core';
+import {
+  Page,
+  PageSlugAlreadyExistsError,
+  PageTranslationAlreadyExistsError,
+  type PageProps,
+} from '@brisk/domain-core';
 import type {
   PaginatedResult,
   Pagination,
   PageRepositoryPort,
 } from '@brisk/ports';
-import { type BriskDb, pages, withTenant } from '@brisk/postgres-db';
+import {
+  type BriskDb,
+  isUniqueViolation,
+  pages,
+  withTenant,
+} from '@brisk/postgres-db';
+
+const SLUG_UNIQUE_CONSTRAINT = 'pages_tenant_id_site_id_locale_slug_unique';
+const TRANSLATION_UNIQUE_CONSTRAINT =
+  'pages_tenant_id_site_id_group_id_locale_unique';
 
 function toRow(props: PageProps) {
   return {
@@ -52,14 +66,34 @@ function fromRow(row: typeof pages.$inferSelect): Page {
 export class DrizzlePageRepository implements PageRepositoryPort {
   constructor(private readonly db: BriskDb) {}
 
+  /**
+   * `onConflictDoUpdate` copre solo un conflitto sulla PK (`id`, un UUID
+   * appena generato: mai in conflitto su un vero insert) — un conflitto
+   * sugli altri due UNIQUE della tabella (slug, o locale-nel-gruppo) risale
+   * comunque come `PostgresError` grezzo. Sotto concorrenza reale (due
+   * richieste quasi simultanee superano entrambe il check-then-act
+   * dell'use-case) è questo il primo punto che vede il conflitto — va
+   * tradotto nello stesso errore di dominio che l'use-case già lancia nel
+   * caso comune, non lasciato risalire come 500 grezzo.
+   */
   async save(page: Page): Promise<void> {
     const row = toRow(page.toProps());
-    await withTenant(this.db, row.tenantId, (tx) =>
-      tx
-        .insert(pages)
-        .values(row)
-        .onConflictDoUpdate({ target: pages.id, set: row }),
-    );
+    try {
+      await withTenant(this.db, row.tenantId, (tx) =>
+        tx
+          .insert(pages)
+          .values(row)
+          .onConflictDoUpdate({ target: pages.id, set: row }),
+      );
+    } catch (error) {
+      if (isUniqueViolation(error, SLUG_UNIQUE_CONSTRAINT)) {
+        throw new PageSlugAlreadyExistsError(row.slug);
+      }
+      if (isUniqueViolation(error, TRANSLATION_UNIQUE_CONSTRAINT)) {
+        throw new PageTranslationAlreadyExistsError(row.locale);
+      }
+      throw error;
+    }
   }
 
   async findById(tenantId: string, pageId: string): Promise<Page | null> {

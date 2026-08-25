@@ -1,11 +1,22 @@
 import { and, count, desc, eq } from 'drizzle-orm';
-import { User, type UserProps } from '@brisk/domain-core';
+import {
+  User,
+  UserEmailAlreadyExistsError,
+  type UserProps,
+} from '@brisk/domain-core';
 import type {
   PaginatedResult,
   Pagination,
   UserRepositoryPort,
 } from '@brisk/ports';
-import { type BriskDb, users, withTenant } from '@brisk/postgres-db';
+import {
+  type BriskDb,
+  isUniqueViolation,
+  users,
+  withTenant,
+} from '@brisk/postgres-db';
+
+const EMAIL_UNIQUE_CONSTRAINT = 'users_tenant_id_email_unique';
 
 function toRow(props: UserProps) {
   return {
@@ -29,14 +40,29 @@ function fromRow(row: typeof users.$inferSelect): User {
 export class DrizzleUserRepository implements UserRepositoryPort {
   constructor(private readonly db: BriskDb) {}
 
+  /**
+   * `onConflictDoUpdate` copre solo un conflitto sulla PK (`id`, un UUID
+   * appena generato) — un conflitto sull'UNIQUE(tenant_id, email) risale
+   * comunque come `PostgresError` grezzo sotto concorrenza reale (due
+   * inviti/registrazioni quasi simultanee sulla stessa email superano
+   * entrambe il check-then-act dell'use-case). Tradotto nello stesso errore
+   * di dominio che l'use-case già lancia nel caso comune.
+   */
   async save(user: User): Promise<void> {
     const row = toRow(user.toProps());
-    await withTenant(this.db, row.tenantId, (tx) =>
-      tx
-        .insert(users)
-        .values(row)
-        .onConflictDoUpdate({ target: users.id, set: row }),
-    );
+    try {
+      await withTenant(this.db, row.tenantId, (tx) =>
+        tx
+          .insert(users)
+          .values(row)
+          .onConflictDoUpdate({ target: users.id, set: row }),
+      );
+    } catch (error) {
+      if (isUniqueViolation(error, EMAIL_UNIQUE_CONSTRAINT)) {
+        throw new UserEmailAlreadyExistsError(row.email);
+      }
+      throw error;
+    }
   }
 
   async findById(tenantId: string, userId: string): Promise<User | null> {
