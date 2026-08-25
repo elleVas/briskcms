@@ -5,6 +5,11 @@
   "type": "module",
   "main": "./src/index.ts",
   "types": "./src/index.ts",
+  "nx": {
+    "tags": [
+      "application"
+    ]
+  },
   "exports": {
     ".": {
       "types": "./src/index.ts",

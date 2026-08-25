@@ -29,10 +29,29 @@ export default [
           // happens to use — see docs/adr/0008.
           enforceBuildableLibDependency: false,
           allow: ['^.*/eslint(\\.base)?\\.config\\.[cm]?[jt]s$'],
+          // Hexagonal layering (docs/adr — vedi anche piano-progetto-astro-cms.md):
+          // domain (entità/value-object puri) <- application (use-case + ports)
+          // <- adapter (Drizzle/S3/SMTP/React field-descriptors...) <- app
+          // (NestJS api, editor-app, public-site). Ogni tag può dipendere solo
+          // da sé stesso e da quelli più a sinistra — mai il contrario, e mai
+          // un app da un altro app (nessuna delle tre app importa le altre
+          // oggi, verificato).
           depConstraints: [
             {
-              sourceTag: '*',
-              onlyDependOnLibsWithTags: ['*'],
+              sourceTag: 'domain',
+              onlyDependOnLibsWithTags: ['domain'],
+            },
+            {
+              sourceTag: 'application',
+              onlyDependOnLibsWithTags: ['domain', 'application'],
+            },
+            {
+              sourceTag: 'adapter',
+              onlyDependOnLibsWithTags: ['domain', 'application', 'adapter'],
+            },
+            {
+              sourceTag: 'app',
+              onlyDependOnLibsWithTags: ['domain', 'application', 'adapter'],
             },
           ],
         },
