@@ -22,6 +22,8 @@ import type {
   SiteThemeBlockStylesPort,
   TenantContextPort,
 } from '@brisk/ports';
+import { Roles } from '../auth/roles.decorator.js';
+import { RolesGuard } from '../auth/roles.guard.js';
 import { SessionAuthGuard } from '../auth/session-auth.guard.js';
 import { ZodValidationPipe } from '../zod-validation.pipe.js';
 import {
@@ -143,7 +145,14 @@ export class SitesController {
     });
   }
 
+  // customCss/headScript/bodyScript below are injected verbatim into every
+  // visitor's page (PageLayout.astro, ADR-0021, deliberately unsanitized —
+  // meant for trusted admins only). Without this guard any authenticated
+  // role, including the lowest ('editor'), could inject arbitrary script
+  // served to the whole public site (security review 2026-08-25, critical).
   @Patch(':id/theme-settings')
+  @UseGuards(RolesGuard)
+  @Roles('admin')
   async updateThemeSettings(
     @Param('id') id: string,
     @Body(new ZodValidationPipe(updateThemeSettingsBodySchema))

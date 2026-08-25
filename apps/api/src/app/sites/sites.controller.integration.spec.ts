@@ -25,9 +25,11 @@ describe('SitesController (integration)', () => {
   let app: INestApplication;
   let db: BriskDb;
   let agent: ReturnType<typeof request.agent>;
+  let editorAgent: ReturnType<typeof request.agent>;
   let siteId: string;
   let tenantId: string;
   let userId: string;
+  let editorUserId: string;
 
   beforeAll(async () => {
     const moduleRef = await Test.createTestingModule({
@@ -67,12 +69,39 @@ describe('SitesController (integration)', () => {
 
     agent = request.agent(app.getHttpServer());
     await agent.post('/auth/login').send({ email, password }).expect(200);
+
+    // Second user with the lowest role, to prove RolesGuard/@Roles('admin')
+    // actually blocks theme-settings for it (security review 2026-08-25 —
+    // this endpoint injects headScript/bodyScript/customCss unsanitized
+    // into every public visitor's page, so a non-admin writing to it is a
+    // site-wide XSS).
+    const editorEmail = `sites-integration-editor-${randomUUID()}@example.test`;
+    const editorPassword = randomUUID();
+    const editorPasswordHash = await authPort.hashPassword(editorPassword);
+    const [editorUser] = await withTenant(db, tenantId, (tx) =>
+      tx
+        .insert(users)
+        .values({
+          tenantId,
+          email: editorEmail,
+          passwordHash: editorPasswordHash,
+          role: 'editor',
+        })
+        .returning({ id: users.id }),
+    );
+    editorUserId = editorUser.id;
+
+    editorAgent = request.agent(app.getHttpServer());
+    await editorAgent
+      .post('/auth/login')
+      .send({ email: editorEmail, password: editorPassword })
+      .expect(200);
   });
 
   afterAll(async () => {
     await deleteIntegrationFixtures(db, tenantId, {
       siteIds: [siteId],
-      userIds: [userId],
+      userIds: [userId, editorUserId],
     });
     await app.close();
     await db.$client.end();
@@ -265,6 +294,22 @@ describe('SitesController (integration)', () => {
         overridesEnabled: true,
       })
       .expect(404);
+  });
+
+  it("403s updating theme settings for a non-admin role (an 'editor' can't inject scripts served to every public visitor)", async () => {
+    await editorAgent
+      .patch(`/sites/${siteId}/theme-settings`)
+      .send({
+        primaryColor: null,
+        secondaryColor: null,
+        fontFamily: null,
+        customCss: null,
+        headScript: '<script>alert(1)</script>',
+        bodyScript: null,
+        faviconUrl: null,
+        overridesEnabled: true,
+      })
+      .expect(403);
   });
 
   it('defaults theme tokens to an empty blockStyles map, and updates the override for one block type', async () => {
