@@ -123,6 +123,38 @@ describe('AuthController', () => {
       expect(response.cookie).not.toHaveBeenCalled();
     });
 
+    it('maps a deactivated account to the same generic 401 as bad credentials (no enumeration)', async () => {
+      const user = User.create({
+        id: 'user-1',
+        tenantId,
+        email: 'lele@example.com',
+        displayName: 'Lele',
+        passwordHash: 'hashed',
+        role: 'admin',
+        isActive: false,
+      });
+      userRepository.findByEmail.mockResolvedValue(user);
+      authPort.verifyPassword.mockResolvedValue(true);
+      const response = buildResponse();
+
+      let caught: unknown;
+      try {
+        await controller.login(
+          { email: 'lele@example.com', password: 'correct' },
+          response,
+        );
+      } catch (error) {
+        caught = error;
+      }
+
+      expect(caught).toBeInstanceOf(UnauthorizedException);
+      expect((caught as UnauthorizedException).message).toBe(
+        'Invalid email or password',
+      );
+      expect(authPort.createSession).not.toHaveBeenCalled();
+      expect(response.cookie).not.toHaveBeenCalled();
+    });
+
     it('lets unexpected errors propagate unchanged', async () => {
       userRepository.findByEmail.mockRejectedValue(new Error('db exploded'));
       const response = buildResponse();

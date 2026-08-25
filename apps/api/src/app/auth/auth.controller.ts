@@ -24,6 +24,7 @@ import {
 import {
   InvalidCredentialsError,
   InvalidOrExpiredTokenError,
+  UserNotActiveError,
 } from '@brisk/domain-core';
 import type {
   AuthPort,
@@ -90,8 +91,16 @@ export class AuthController {
         },
       );
     } catch (error) {
-      if (error instanceof InvalidCredentialsError) {
-        throw new UnauthorizedException(error.message);
+      // Same 401 + the exact InvalidCredentialsError message for both —
+      // deliberately not error.message from UserNotActiveError, which
+      // would otherwise reveal to anyone who already knows the correct
+      // password that the account exists and is specifically deactivated
+      // (see loginUser's own comment on this).
+      if (
+        error instanceof InvalidCredentialsError ||
+        error instanceof UserNotActiveError
+      ) {
+        throw new UnauthorizedException(new InvalidCredentialsError().message);
       }
       throw error;
     }
