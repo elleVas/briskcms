@@ -6,7 +6,10 @@ import type {
   UntranslatedPageFallback,
 } from '@brisk/shared-types';
 import type { Site, SiteLayoutSection } from '@brisk/domain-core';
-import type { SiteLayoutSectionRepositoryPort } from '@brisk/ports';
+import type {
+  SiteLayoutSectionRepositoryPort,
+  SiteThemeBlockStylesPort,
+} from '@brisk/ports';
 
 /** Only what the public renderer needs for OG tags + schema.org (docs/adr/0014) and the language switcher (docs/adr/0017) — never the tenant id or anything else internal. */
 export interface PublishedSite {
@@ -35,6 +38,7 @@ export interface PublishedSiteChrome {
 
 export interface ResolveSiteChromeDeps {
   siteLayoutSectionRepository: SiteLayoutSectionRepositoryPort;
+  siteThemeBlockStylesRepository: SiteThemeBlockStylesPort;
 }
 
 /**
@@ -95,7 +99,7 @@ export async function resolveSiteChrome(
   options: { preview?: boolean } = {},
 ): Promise<PublishedSiteChrome> {
   const preview = options.preview ?? false;
-  const [headerSection, footerSection] = await Promise.all([
+  const [headerSection, footerSection, blockStyles] = await Promise.all([
     findSectionWithLocaleFallback(
       deps.siteLayoutSectionRepository,
       tenantId,
@@ -110,6 +114,7 @@ export async function resolveSiteChrome(
       locale,
       'footer',
     ),
+    deps.siteThemeBlockStylesRepository.listBySite(tenantId, site.id),
   ]);
 
   function resolveContent(section: typeof headerSection): Block[] | null {
@@ -143,7 +148,7 @@ export async function resolveSiteChrome(
       openingHours: site.openingHours,
       searchEngineIndexingEnabled: site.searchEngineIndexingEnabled,
       themeSettings: site.themeSettings,
-      themeTokens: site.themeTokens,
+      themeTokens: { blockStyles },
     },
   };
 }

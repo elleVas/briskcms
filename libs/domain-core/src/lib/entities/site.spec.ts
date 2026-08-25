@@ -23,7 +23,6 @@ describe('Site entity', () => {
     themeBodyScript: null,
     themeFaviconUrl: null,
     themeOverridesEnabled: true,
-    themeTokens: null,
     createdAt: new Date('2026-01-01T00:00:00Z'),
   };
 
@@ -166,52 +165,6 @@ describe('Site entity', () => {
       bodyScript: '<script>console.log("body")</script>',
       faviconUrl: 'https://example.com/favicon.png',
       overridesEnabled: false,
-    });
-  });
-
-  it('themeTokens defaults to an empty blockStyles map when never customized', () => {
-    const site = Site.fromProps(props);
-
-    expect(site.themeTokens).toEqual({ blockStyles: {} });
-  });
-
-  it('updateThemeTokens replaces only the block type given, leaving other types untouched', () => {
-    const site = Site.fromProps({
-      ...props,
-      themeTokens: {
-        blockStyles: {
-          Banner: { backgroundColor: '#000000' },
-        },
-      },
-    });
-
-    site.updateThemeTokens('Button', {
-      borderRadius: '9999px',
-      paddingX: '1.5rem',
-    });
-
-    expect(site.themeTokens).toEqual({
-      blockStyles: {
-        Banner: { backgroundColor: '#000000' },
-        Button: { borderRadius: '9999px', paddingX: '1.5rem' },
-      },
-    });
-  });
-
-  it("updateThemeTokens on an already-styled type replaces that type's whole override, not a field-by-field merge", () => {
-    const site = Site.fromProps({
-      ...props,
-      themeTokens: {
-        blockStyles: {
-          Button: { borderRadius: '6px', paddingX: '1rem' },
-        },
-      },
-    });
-
-    site.updateThemeTokens('Button', { borderRadius: '9999px' });
-
-    expect(site.themeTokens).toEqual({
-      blockStyles: { Button: { borderRadius: '9999px' } },
     });
   });
 });

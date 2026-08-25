@@ -28,6 +28,7 @@ import type {
   SiteLayoutSectionRepositoryPort,
   SiteLayoutSectionVersionRepositoryPort,
   SiteRepositoryPort,
+  SiteThemeBlockStylesPort,
   UploadMediaInput,
   UploadMediaResult,
   UserRepositoryPort,
@@ -181,17 +182,31 @@ export class InMemorySiteRepository implements SiteRepositoryPort {
     const site = this.sites.get(id);
     return site && site.tenantId === tenantId ? site : null;
   }
+}
 
-  async updateThemeTokensBlockStyle(
+export class InMemorySiteThemeBlockStylesRepository implements SiteThemeBlockStylesPort {
+  private styles = new Map<string, Record<string, BlockStyleOverride>>();
+
+  private key(tenantId: string, siteId: string): string {
+    return `${tenantId}:${siteId}`;
+  }
+
+  async listBySite(
+    tenantId: string,
+    siteId: string,
+  ): Promise<Record<string, BlockStyleOverride>> {
+    return { ...(this.styles.get(this.key(tenantId, siteId)) ?? {}) };
+  }
+
+  async upsert(
     tenantId: string,
     siteId: string,
     blockType: string,
     style: BlockStyleOverride,
-  ): Promise<Site | null> {
-    const site = await this.findById(tenantId, siteId);
-    if (!site) return null;
-    site.updateThemeTokens(blockType, style);
-    return site;
+  ): Promise<void> {
+    const key = this.key(tenantId, siteId);
+    const existing = this.styles.get(key) ?? {};
+    this.styles.set(key, { ...existing, [blockType]: style });
   }
 }
 

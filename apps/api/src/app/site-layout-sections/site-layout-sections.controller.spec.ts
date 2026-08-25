@@ -46,7 +46,6 @@ function buildSite(
     themeBodyScript: null,
     themeFaviconUrl: null,
     themeOverridesEnabled: true,
-    themeTokens: null,
     createdAt: new Date(),
     ...overrides,
   });
@@ -75,7 +74,6 @@ describe('SiteLayoutSectionsController (unit)', () => {
       save: jest.fn(),
       findById: jest.fn(),
       findByDomain: jest.fn(),
-      updateThemeTokensBlockStyle: jest.fn(),
     };
     tenantContext = { getCurrentTenantId: () => 'tenant-1' };
     previewTokenPort = {

@@ -1,10 +1,7 @@
-import {
-  DEFAULT_THEME_TOKENS,
-  type BlockStyleOverride,
-  type OpeningHoursDay,
-  type ThemeSettings,
-  type ThemeTokens,
-  type UntranslatedPageFallback,
+import type {
+  OpeningHoursDay,
+  ThemeSettings,
+  UntranslatedPageFallback,
 } from '@brisk/shared-types';
 
 export interface SiteProps {
@@ -28,8 +25,6 @@ export interface SiteProps {
   themeBodyScript: string | null;
   themeFaviconUrl: string | null;
   themeOverridesEnabled: boolean;
-  /** Fase 2a del piano editor visuale, parte 2 (Global Styles Editor) — categorie oltre ai colori (Bottoni oggi, altre in futuro). `null` = nessuna categoria personalizzata ancora. */
-  themeTokens: ThemeTokens | null;
   createdAt: Date;
 }
 
@@ -193,22 +188,5 @@ export class Site {
     this.props.themeBodyScript = input.bodyScript;
     this.props.themeFaviconUrl = input.faviconUrl;
     this.props.themeOverridesEnabled = input.overridesEnabled;
-  }
-
-  get themeTokens(): ThemeTokens {
-    return this.props.themeTokens ?? DEFAULT_THEME_TOKENS;
-  }
-
-  /**
-   * Sostituisce per intero l'override di UN tipo di blocco (docs/adr/0022)
-   * — gli altri tipi già salvati in `blockStyles` restano invariati. Il
-   * pulsante "Stile" della toolbar edita sempre un solo tipo alla volta
-   * (quello del blocco selezionato), non un merge campo-per-campo.
-   */
-  updateThemeTokens(blockType: string, style: BlockStyleOverride): void {
-    this.props.themeTokens = {
-      ...this.themeTokens,
-      blockStyles: { ...this.themeTokens.blockStyles, [blockType]: style },
-    };
   }
 }

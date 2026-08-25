@@ -11,6 +11,7 @@ import {
   InMemorySearchPort,
   InMemorySiteLayoutSectionRepository,
   InMemorySiteRepository,
+  InMemorySiteThemeBlockStylesRepository,
 } from './in-memory-repositories.test-fixture.js';
 
 describe('getPreviewPageById', () => {
@@ -22,6 +23,8 @@ describe('getPreviewPageById', () => {
     const siteRepository = new InMemorySiteRepository();
     const siteLayoutSectionRepository =
       new InMemorySiteLayoutSectionRepository();
+    const siteThemeBlockStylesRepository =
+      new InMemorySiteThemeBlockStylesRepository();
     const searchPort = new InMemorySearchPort();
     const previewTokenPort = new InMemoryPreviewTokenPort();
     return {
@@ -29,6 +32,7 @@ describe('getPreviewPageById', () => {
       pageVersionRepository,
       siteRepository,
       siteLayoutSectionRepository,
+      siteThemeBlockStylesRepository,
       searchPort,
       previewTokenPort,
     };
@@ -56,7 +60,6 @@ describe('getPreviewPageById', () => {
       themeBodyScript: null,
       themeFaviconUrl: null,
       themeOverridesEnabled: true,
-      themeTokens: null,
       createdAt: new Date(),
     });
     await siteRepository.save(site);

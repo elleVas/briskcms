@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { Site, SiteLayoutSection } from '@brisk/domain-core';
 import { resolveSiteChrome } from './resolve-site-chrome.js';
-import { InMemorySiteLayoutSectionRepository } from './in-memory-repositories.test-fixture.js';
+import {
+  InMemorySiteLayoutSectionRepository,
+  InMemorySiteThemeBlockStylesRepository,
+} from './in-memory-repositories.test-fixture.js';
 
 describe('resolveSiteChrome', () => {
   const tenantId = 'tenant-1';
@@ -30,7 +33,6 @@ describe('resolveSiteChrome', () => {
       themeBodyScript: null,
       themeFaviconUrl: null,
       themeOverridesEnabled: true,
-      themeTokens: null,
       createdAt: new Date(),
       ...overrides,
     });
@@ -73,7 +75,11 @@ describe('resolveSiteChrome', () => {
     });
 
     const chrome = await resolveSiteChrome(
-      { siteLayoutSectionRepository: repository },
+      {
+        siteLayoutSectionRepository: repository,
+        siteThemeBlockStylesRepository:
+          new InMemorySiteThemeBlockStylesRepository(),
+      },
       tenantId,
       site,
       'it',
@@ -103,7 +109,11 @@ describe('resolveSiteChrome', () => {
     });
 
     const chrome = await resolveSiteChrome(
-      { siteLayoutSectionRepository: repository },
+      {
+        siteLayoutSectionRepository: repository,
+        siteThemeBlockStylesRepository:
+          new InMemorySiteThemeBlockStylesRepository(),
+      },
       tenantId,
       site,
       'en',
@@ -125,7 +135,11 @@ describe('resolveSiteChrome', () => {
     });
 
     const chrome = await resolveSiteChrome(
-      { siteLayoutSectionRepository: repository },
+      {
+        siteLayoutSectionRepository: repository,
+        siteThemeBlockStylesRepository:
+          new InMemorySiteThemeBlockStylesRepository(),
+      },
       tenantId,
       site,
       'en',
@@ -160,7 +174,11 @@ describe('resolveSiteChrome', () => {
     await repository.save(enDraft);
 
     const chrome = await resolveSiteChrome(
-      { siteLayoutSectionRepository: repository },
+      {
+        siteLayoutSectionRepository: repository,
+        siteThemeBlockStylesRepository:
+          new InMemorySiteThemeBlockStylesRepository(),
+      },
       tenantId,
       site,
       'en',
@@ -186,7 +204,11 @@ describe('resolveSiteChrome', () => {
     await repository.save(itDraft);
 
     const chrome = await resolveSiteChrome(
-      { siteLayoutSectionRepository: repository },
+      {
+        siteLayoutSectionRepository: repository,
+        siteThemeBlockStylesRepository:
+          new InMemorySiteThemeBlockStylesRepository(),
+      },
       tenantId,
       site,
       'en',

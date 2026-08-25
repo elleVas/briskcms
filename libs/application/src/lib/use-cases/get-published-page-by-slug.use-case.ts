@@ -3,6 +3,7 @@ import type {
   PageRepositoryPort,
   SiteLayoutSectionRepositoryPort,
   SiteRepositoryPort,
+  SiteThemeBlockStylesPort,
 } from '@brisk/ports';
 import {
   resolveSiteChrome,
@@ -17,6 +18,7 @@ export interface GetPublishedPageBySlugDeps {
   siteRepository: SiteRepositoryPort;
   pageRepository: PageRepositoryPort;
   siteLayoutSectionRepository: SiteLayoutSectionRepositoryPort;
+  siteThemeBlockStylesRepository: SiteThemeBlockStylesPort;
 }
 
 export interface GetPublishedPageBySlugInput {

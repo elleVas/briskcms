@@ -1,6 +1,10 @@
 import { NotFoundException } from '@nestjs/common';
 import { Site } from '@brisk/domain-core';
-import type { SiteRepositoryPort, TenantContextPort } from '@brisk/ports';
+import type {
+  SiteRepositoryPort,
+  SiteThemeBlockStylesPort,
+  TenantContextPort,
+} from '@brisk/ports';
 import { SitesController } from './sites.controller.js';
 
 function buildSite(
@@ -27,7 +31,6 @@ function buildSite(
     themeBodyScript: null,
     themeFaviconUrl: null,
     themeOverridesEnabled: true,
-    themeTokens: null,
     createdAt: new Date(),
     ...overrides,
   });
@@ -35,6 +38,7 @@ function buildSite(
 
 describe('SitesController (unit)', () => {
   let siteRepository: jest.Mocked<SiteRepositoryPort>;
+  let siteThemeBlockStylesRepository: jest.Mocked<SiteThemeBlockStylesPort>;
   let tenantContext: TenantContextPort;
   let controller: SitesController;
 
@@ -43,10 +47,17 @@ describe('SitesController (unit)', () => {
       findByDomain: jest.fn(),
       findById: jest.fn(),
       save: jest.fn(),
-      updateThemeTokensBlockStyle: jest.fn(),
+    };
+    siteThemeBlockStylesRepository = {
+      listBySite: jest.fn().mockResolvedValue({}),
+      upsert: jest.fn(),
     };
     tenantContext = { getCurrentTenantId: () => 'tenant-1' };
-    controller = new SitesController(siteRepository, tenantContext);
+    controller = new SitesController(
+      siteRepository,
+      siteThemeBlockStylesRepository,
+      tenantContext,
+    );
   });
 
   it('findById throws a NotFoundException when no site matches', async () => {
@@ -57,12 +68,18 @@ describe('SitesController (unit)', () => {
     );
   });
 
-  it('findById returns the site props when found', async () => {
+  it('findById returns the site props, with themeTokens composed from the block styles repository', async () => {
     siteRepository.findById.mockResolvedValue(buildSite());
+    siteThemeBlockStylesRepository.listBySite.mockResolvedValue({
+      Button: { borderRadius: '9999px' },
+    });
 
     const result = await controller.findById('site-1');
 
     expect(result.name).toBe('Il mio sito');
+    expect(result.themeTokens).toEqual({
+      blockStyles: { Button: { borderRadius: '9999px' } },
+    });
   });
 
   it('updateBusinessInfo maps a SiteNotFoundError to a NotFoundException', async () => {
@@ -174,7 +191,7 @@ describe('SitesController (unit)', () => {
   });
 
   it('updateThemeTokens maps a SiteNotFoundError to a NotFoundException', async () => {
-    siteRepository.updateThemeTokensBlockStyle.mockResolvedValue(null);
+    siteRepository.findById.mockResolvedValue(null);
 
     await expect(
       controller.updateThemeTokens('missing', {
@@ -182,25 +199,21 @@ describe('SitesController (unit)', () => {
         style: { borderRadius: '6px' },
       }),
     ).rejects.toThrow(NotFoundException);
+    expect(siteThemeBlockStylesRepository.upsert).not.toHaveBeenCalled();
   });
 
-  it('updateThemeTokens saves the override for only the block type given', async () => {
-    siteRepository.updateThemeTokensBlockStyle.mockResolvedValue(
-      buildSite({
-        themeTokens: {
-          blockStyles: {
-            Button: { borderRadius: '9999px', paddingX: '1.5rem' },
-          },
-        },
-      }),
-    );
+  it('updateThemeTokens upserts the override for only the block type given', async () => {
+    siteRepository.findById.mockResolvedValue(buildSite());
+    siteThemeBlockStylesRepository.listBySite.mockResolvedValue({
+      Button: { borderRadius: '9999px', paddingX: '1.5rem' },
+    });
 
     const result = await controller.updateThemeTokens('site-1', {
       blockType: 'Button',
       style: { borderRadius: '9999px', paddingX: '1.5rem' },
     });
 
-    expect(siteRepository.updateThemeTokensBlockStyle).toHaveBeenCalledWith(
+    expect(siteThemeBlockStylesRepository.upsert).toHaveBeenCalledWith(
       'tenant-1',
       'site-1',
       'Button',
