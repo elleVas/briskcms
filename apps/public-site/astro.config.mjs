@@ -34,7 +34,35 @@ export default defineConfig({
   // nothing on a page that never uses one.
   integrations: [react()],
   vite: {
-    plugins: [tailwindcss()],
+    plugins: [
+      tailwindcss(),
+      {
+        // Il canvas dell'editor (apps/editor-app/canvas-frame.tsx) carica
+        // questa pagina in un iframe sandboxato SENZA allow-same-origin
+        // (fix dello stored XSS via blocchi utente non fidati) — la sua
+        // origine è quindi opaca, e il browser tratta OGNI richiesta che fa,
+        // anche verso questo stesso host, come cross-origin. Solo in dev
+        // questo rompe qualcosa di visibile: i chunk CSS/JS per-componente
+        // che Vite serve come fetch di modulo (HMR) vengono bloccati senza
+        // un Access-Control-Allow-Origin, e il canvas mostra i blocchi senza
+        // stile. In produzione non esiste — l'adapter Node standalone serve
+        // CSS/JS bundlati come file statici via <link>/<script src>, non
+        // come fetch di modulo Vite.
+        // Esclude esplicitamente /api/*: render-block-fragment.ts ha il
+        // proprio scoping CORS su EDITOR_APP_URL (vedi il commento su
+        // `cors: false` sotto) e non deve mai essere sovrascritto qui.
+        name: 'brisk-dev-sandboxed-iframe-cors',
+        apply: 'serve',
+        configureServer(server) {
+          server.middlewares.use((req, res, next) => {
+            if (!req.url?.startsWith('/api/')) {
+              res.setHeader('Access-Control-Allow-Origin', '*');
+            }
+            next();
+          });
+        },
+      },
+    ],
     resolve: {
       alias: {
         '~theme': themeDir,
