@@ -1,6 +1,13 @@
 export interface UploadAttachmentInput {
   filename: string;
+  /** Must already be the sniffed, verified MIME type — see
+   * sniffAttachmentType in @brisk/domain-core — never the raw
+   * client-declared one. */
   mimeType: string;
+  /** No leading dot. Must already be the sniffed, verified extension —
+   * the storage key is built from this, never from `filename`, which is
+   * client-controlled on this unauthenticated upload path. */
+  extension: string;
   data: Uint8Array;
 }
 

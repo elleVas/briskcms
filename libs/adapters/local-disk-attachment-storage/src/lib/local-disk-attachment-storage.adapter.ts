@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { extname, join } from 'node:path';
+import { join } from 'node:path';
 import { mkdir, writeFile } from 'node:fs/promises';
 import type {
   AttachmentStoragePort,
@@ -26,7 +26,7 @@ export class LocalDiskAttachmentStorageAdapter implements AttachmentStoragePort 
     const attachmentsDir = join(this.options.uploadDir, 'attachments');
     await mkdir(attachmentsDir, { recursive: true });
 
-    const storageKey = `${randomUUID()}${extname(input.filename)}`;
+    const storageKey = `${randomUUID()}.${input.extension}`;
     await writeFile(join(attachmentsDir, storageKey), input.data);
 
     return {

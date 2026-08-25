@@ -41,6 +41,7 @@ describe('S3AttachmentStorageAdapter', () => {
     const result = await adapter.upload({
       filename: 'cv.pdf',
       mimeType: 'application/pdf',
+      extension: 'pdf',
       data,
     });
 

@@ -20,6 +20,8 @@ import {
   FormNotFoundError,
   InvalidCaptchaError,
   InvalidFormSubmissionError,
+  UnsupportedAttachmentTypeError,
+  sniffAttachmentType,
 } from '@brisk/domain-core';
 import type {
   AttachmentStoragePort,
@@ -104,9 +106,14 @@ export class PublicFormsController {
       if (!form) {
         throw new FormNotFoundError(id);
       }
+      // Unauthenticated endpoint — file.mimetype/originalname are entirely
+      // client-controlled, sniff the real bytes instead (security review
+      // 2026-08-25).
+      const sniffed = sniffAttachmentType(file.buffer, file.mimetype);
       return this.attachmentStorage.upload({
         filename: file.originalname,
-        mimeType: file.mimetype,
+        mimeType: sniffed.mimeType,
+        extension: sniffed.extension,
         data: file.buffer,
       });
     });
@@ -148,7 +155,8 @@ export class PublicFormsController {
       }
       if (
         error instanceof InvalidFormSubmissionError ||
-        error instanceof InvalidCaptchaError
+        error instanceof InvalidCaptchaError ||
+        error instanceof UnsupportedAttachmentTypeError
       ) {
         throw new BadRequestException(error.message);
       }
