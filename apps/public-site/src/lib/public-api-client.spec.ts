@@ -81,10 +81,10 @@ describe('public-api-client', () => {
         '/public/pages/by-slug?domain=example.com&locale=it&slug=chi-siamo',
       ),
     );
-    expect(result).toEqual(samplePage);
+    expect(result).toEqual({ found: true, page: samplePage });
   });
 
-  it('returns null on a 404 instead of throwing', async () => {
+  it('returns found: false with no fallback on a plain 404 instead of throwing', async () => {
     vi.mocked(fetch).mockResolvedValue(
       jsonResponse({ message: 'Not Found' }, 404),
     );
@@ -95,7 +95,24 @@ describe('public-api-client', () => {
       'non-esiste',
     );
 
-    expect(result).toBeNull();
+    expect(result).toEqual({ found: false, fallback: null });
+  });
+
+  it('surfaces the fallback locale/slug from a 404 body when the site redirects untranslated pages', async () => {
+    vi.mocked(fetch).mockResolvedValue(
+      jsonResponse({ fallback: { locale: 'it', slug: 'chi-siamo' } }, 404),
+    );
+
+    const result = await getPublishedPageBySlug(
+      'example.com',
+      'en',
+      'chi-siamo',
+    );
+
+    expect(result).toEqual({
+      found: false,
+      fallback: { locale: 'it', slug: 'chi-siamo' },
+    });
   });
 
   it('throws on any other non-ok response', async () => {

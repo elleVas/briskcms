@@ -49,6 +49,16 @@ export interface PublishedPageDto {
   headerSticky: boolean;
 }
 
+/** Dove mandare il visitatore quando (locale, slug) non ha una pagina pubblicata — vedi resolveUntranslatedPageFallback lato applicazione. */
+export interface UntranslatedPageFallbackTargetDto {
+  locale: string;
+  slug: string;
+}
+
+export type PublishedPageLookupResult =
+  | { found: true; page: PublishedPageDto }
+  | { found: false; fallback: UntranslatedPageFallbackTargetDto | null };
+
 // process.env, not import.meta.env: this must read the real deployment's
 // value at request time (Node adapter, SSR), not whatever was baked in at
 // build time — one built image serves whichever domains its env points at.
@@ -59,27 +69,37 @@ function apiUrl(): string {
 /**
  * Talks to the public, unauthenticated endpoint only (see
  * apps/api/src/app/public-pages) — never the authenticated CRUD one
- * editor-app uses. A 404 here means "nothing to show" (no page, or a page
- * that's still a draft — the API deliberately doesn't distinguish the two,
- * see that module's own comments), not an error.
+ * editor-app uses. A 404 here means "nothing to show at this exact
+ * (locale, slug)" (no page, or a page that's still a draft — the API
+ * deliberately doesn't distinguish the two, see that module's own
+ * comments), not an error — `found: false` still carries an optional
+ * `fallback` (a sibling page in the site's default locale, only when the
+ * site is configured for it) that the caller decides whether to redirect
+ * to. See resolveUntranslatedPageFallback in @brisk/application.
  */
 export async function getPublishedPageBySlug(
   domain: string,
   locale: string,
   slug: string,
-): Promise<PublishedPageDto | null> {
+): Promise<PublishedPageLookupResult> {
   const params = new URLSearchParams({ domain, locale, slug });
   const res = await fetch(
     `${apiUrl()}/public/pages/by-slug?${params.toString()}`,
   );
 
   if (res.status === 404) {
-    return null;
+    const body: unknown = await res.json().catch(() => null);
+    const fallback =
+      body && typeof body === 'object' && 'fallback' in body
+        ? ((body as { fallback: UntranslatedPageFallbackTargetDto | null })
+            .fallback ?? null)
+        : null;
+    return { found: false, fallback };
   }
   if (!res.ok) {
     throw new Error(`Public pages API error: ${res.status}`);
   }
-  return res.json();
+  return { found: true, page: await res.json() };
 }
 
 /**
