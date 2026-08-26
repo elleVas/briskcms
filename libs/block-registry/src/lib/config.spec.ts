@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
+import { BLOCK_STYLE_DEFAULTS } from '@brisk/shared-types';
 import { pageBlockCategories, pageBlocks } from './config.js';
+import { headerFooterBlocks } from './layout-config.js';
 
 describe('pageBlocks', () => {
   it('registers all 40 page blocks, each with a unique type', () => {
@@ -37,5 +39,33 @@ describe('pageBlockCategories', () => {
   it('never lists the same type in two categories', () => {
     const allTypes = pageBlockCategories.flatMap((category) => category.types);
     expect(new Set(allTypes).size).toBe(allTypes.length);
+  });
+});
+
+// Security review 2026-08-24, point 16: nulla verificava che
+// `stylableProperties` di un blocco corrispondesse alle chiavi presenti in
+// `BLOCK_STYLE_DEFAULTS` — un disallineamento (es. un blocco dichiara
+// `backgroundColor` ma il suo `BLOCK_STYLE_DEFAULTS` non la definisce)
+// passava inosservato. header/footer + page blocks insieme (Text/Image/
+// SearchBox condivisi tra i due, deduplicati per tipo).
+describe('stylableProperties / BLOCK_STYLE_DEFAULTS alignment', () => {
+  const allBlocksByType = new Map(
+    [...pageBlocks, ...headerFooterBlocks].map((block) => [block.type, block]),
+  );
+
+  it('gives every block with stylableProperties a BLOCK_STYLE_DEFAULTS entry with exactly those keys', () => {
+    for (const block of allBlocksByType.values()) {
+      if (!block.stylableProperties || block.stylableProperties.length === 0) {
+        continue;
+      }
+      const defaults = BLOCK_STYLE_DEFAULTS[block.type];
+      expect(
+        defaults,
+        `${block.type} declares stylableProperties but has no BLOCK_STYLE_DEFAULTS entry`,
+      ).toBeDefined();
+      expect(Object.keys(defaults ?? {}).sort()).toEqual(
+        [...block.stylableProperties].sort(),
+      );
+    }
   });
 });

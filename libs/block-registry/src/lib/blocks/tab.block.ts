@@ -1,5 +1,6 @@
 import type { BlockDescriptor } from '../field-types.js';
 import { BLOCK_STYLE_DEFAULTS } from '@brisk/shared-types';
+import { BlockStyleRegistry } from '../block-style-registry.js';
 
 // `label` non fa parte di `TabProps` nel dominio (content-model.ts) — in
 // realtà lo fa: TabProps = { label: string }. Nessun tipo Puck-only extra
@@ -14,12 +15,6 @@ export const tabBlock: BlockDescriptor<{ label: string }> = {
   fields: [{ kind: 'text', key: 'label', label: 'Etichetta tab' }],
   isContainer: true,
   allowedChildTypes: ['Hero', 'Text', 'Image', 'Gallery', 'Form'],
-  stylableProperties: [
-    'backgroundColor',
-    'textColor',
-    'borderRadius',
-    'paddingX',
-    'paddingY',
-  ],
+  stylableProperties: BlockStyleRegistry.STANDARD,
   defaultStyle: BLOCK_STYLE_DEFAULTS.Tab,
 };

@@ -1,6 +1,6 @@
 import type { LogoStripProps } from '@brisk/shared-types';
 import { BLOCK_STYLE_DEFAULTS } from '@brisk/shared-types';
-import { customField, type BlockDescriptor } from '../field-types.js';
+import { FieldBuilder, type BlockDescriptor } from '../field-types.js';
 import { GalleryPickerField } from '../fields/gallery-picker-field.js';
 
 export const logoStripBlock: BlockDescriptor<LogoStripProps> = {
@@ -10,7 +10,7 @@ export const logoStripBlock: BlockDescriptor<LogoStripProps> = {
   defaultProps: {
     logos: [],
   },
-  fields: [customField('logos', 'Loghi', GalleryPickerField)],
+  fields: [FieldBuilder.custom('logos', 'Loghi', GalleryPickerField)],
   // Niente textColor: la striscia contiene solo immagini, nessun testo.
   stylableProperties: [
     'backgroundColor',

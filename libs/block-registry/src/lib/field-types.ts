@@ -62,20 +62,22 @@ export type FieldDescriptor =
  * commento, invece che ripetuto ad ogni singolo utilizzo nei descrittori
  * di blocco.
  */
-export function customField<V>(
-  key: string,
-  label: string,
-  component: ComponentType<{ value: V; onChange: (value: V) => void }>,
-): FieldDescriptor {
-  return {
-    kind: 'custom',
-    key,
-    label,
-    component: component as unknown as ComponentType<{
-      value: unknown;
-      onChange: (value: unknown) => void;
-    }>,
-  };
+export class FieldBuilder {
+  static custom<V>(
+    key: string,
+    label: string,
+    component: ComponentType<{ value: V; onChange: (value: V) => void }>,
+  ): FieldDescriptor {
+    return {
+      kind: 'custom',
+      key,
+      label,
+      component: component as unknown as ComponentType<{
+        value: unknown;
+        onChange: (value: unknown) => void;
+      }>,
+    };
+  }
 }
 
 export interface BlockDescriptor<Props = Record<string, unknown>> {
@@ -96,7 +98,7 @@ export interface BlockDescriptor<Props = Record<string, unknown>> {
    * incrementale, non un'aggiunta meccanica a tutti i 48+ blocchi in un
    * colpo solo (vedi l'ADR per il perché).
    */
-  stylableProperties?: (keyof BlockStyleOverride)[];
+  stylableProperties?: readonly (keyof BlockStyleOverride)[];
   /**
    * L'espressione CSS di default per ciascuna `stylableProperties` di
    * questo tipo — es. `{ borderRadius: 'var(--radius)', paddingX:

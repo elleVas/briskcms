@@ -1,8 +1,7 @@
 import type { NavLinkProps } from '@brisk/shared-types';
-import { customField, type BlockDescriptor } from '../field-types.js';
+import { FieldBuilder, type BlockDescriptor } from '../field-types.js';
 import { IconPickerField } from '../fields/icon-picker-field.js';
-import { linkTypeField } from '../fields/link-type-field.js';
-import { PagePickerField } from '../fields/page-picker-field.js';
+import { ctaLinkFields } from '../fields/link-type-field.js';
 import { positionField } from '../fields/position-field.js';
 import { visibilityField } from '../fields/visibility-field.js';
 
@@ -21,10 +20,8 @@ export const navLinkBlock: BlockDescriptor<NavLinkProps> = {
   },
   fields: [
     { kind: 'text', key: 'label', label: 'Testo', inlineEditable: true },
-    linkTypeField,
-    customField('page', 'Pagina', PagePickerField),
-    { kind: 'text', key: 'url', label: 'URL' },
-    customField('icon', 'Icona', IconPickerField),
+    ...ctaLinkFields(),
+    FieldBuilder.custom('icon', 'Icona', IconPickerField),
     positionField,
     visibilityField,
   ],

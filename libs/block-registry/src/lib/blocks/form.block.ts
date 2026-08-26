@@ -1,7 +1,8 @@
 import type { FormBlockProps } from '@brisk/shared-types';
 import { BLOCK_STYLE_DEFAULTS } from '@brisk/shared-types';
-import { customField, type BlockDescriptor } from '../field-types.js';
+import { FieldBuilder, type BlockDescriptor } from '../field-types.js';
 import { FormPickerField } from '../fields/form-picker-field.js';
+import { BlockStyleRegistry } from '../block-style-registry.js';
 
 export const formBlock: BlockDescriptor<FormBlockProps> = {
   type: 'Form',
@@ -10,13 +11,7 @@ export const formBlock: BlockDescriptor<FormBlockProps> = {
   defaultProps: {
     form: null,
   },
-  fields: [customField('form', 'Modulo', FormPickerField)],
-  stylableProperties: [
-    'backgroundColor',
-    'textColor',
-    'borderRadius',
-    'paddingX',
-    'paddingY',
-  ],
+  fields: [FieldBuilder.custom('form', 'Modulo', FormPickerField)],
+  stylableProperties: BlockStyleRegistry.STANDARD,
   defaultStyle: BLOCK_STYLE_DEFAULTS.Form,
 };

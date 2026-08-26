@@ -1,6 +1,7 @@
 import type { StatProps } from '@brisk/shared-types';
 import { BLOCK_STYLE_DEFAULTS } from '@brisk/shared-types';
 import type { BlockDescriptor } from '../field-types.js';
+import { BlockStyleRegistry } from '../block-style-registry.js';
 
 export const statBlock: BlockDescriptor<StatProps> = {
   type: 'Stat',
@@ -20,12 +21,6 @@ export const statBlock: BlockDescriptor<StatProps> = {
     { kind: 'text', key: 'suffix', label: 'Suffisso', inlineEditable: true },
     { kind: 'text', key: 'label', label: 'Etichetta', inlineEditable: true },
   ],
-  stylableProperties: [
-    'backgroundColor',
-    'textColor',
-    'borderRadius',
-    'paddingX',
-    'paddingY',
-  ],
+  stylableProperties: BlockStyleRegistry.STANDARD,
   defaultStyle: BLOCK_STYLE_DEFAULTS.Stat,
 };

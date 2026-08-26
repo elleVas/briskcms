@@ -1,6 +1,7 @@
 import type { ColumnProps } from '@brisk/shared-types';
 import { BLOCK_STYLE_DEFAULTS } from '@brisk/shared-types';
 import type { BlockDescriptor } from '../field-types.js';
+import { BlockStyleRegistry } from '../block-style-registry.js';
 
 // Nessuna allowedChildTypes — una Colonna è pensata per contenere qualunque
 // cosa serva alla pagina fianco a fianco con le sue sorelle, stessa
@@ -12,12 +13,6 @@ export const columnBlock: BlockDescriptor<ColumnProps> = {
   defaultProps: {},
   fields: [],
   isContainer: true,
-  stylableProperties: [
-    'backgroundColor',
-    'textColor',
-    'borderRadius',
-    'paddingX',
-    'paddingY',
-  ],
+  stylableProperties: BlockStyleRegistry.STANDARD,
   defaultStyle: BLOCK_STYLE_DEFAULTS.Column,
 };

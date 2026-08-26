@@ -1,5 +1,5 @@
 import type { TableProps } from '@brisk/shared-types';
-import { customField, type BlockDescriptor } from '../field-types.js';
+import { FieldBuilder, type BlockDescriptor } from '../field-types.js';
 import { TableDataField } from '../fields/table-data-field.js';
 
 export const tableBlock: BlockDescriptor<TableProps> = {
@@ -12,5 +12,5 @@ export const tableBlock: BlockDescriptor<TableProps> = {
       ['', ''],
     ],
   },
-  fields: [customField('rows', 'Righe', TableDataField)],
+  fields: [FieldBuilder.custom('rows', 'Righe', TableDataField)],
 };

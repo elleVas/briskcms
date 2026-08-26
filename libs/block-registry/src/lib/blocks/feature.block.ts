@@ -1,6 +1,7 @@
 import type { FeatureProps } from '@brisk/shared-types';
 import { BLOCK_STYLE_DEFAULTS } from '@brisk/shared-types';
 import type { BlockDescriptor } from '../field-types.js';
+import { BlockStyleRegistry } from '../block-style-registry.js';
 
 export const featureBlock: BlockDescriptor<FeatureProps> = {
   type: 'Feature',
@@ -16,12 +17,6 @@ export const featureBlock: BlockDescriptor<FeatureProps> = {
     { kind: 'text', key: 'title', label: 'Titolo', inlineEditable: true },
     { kind: 'textarea', key: 'text', label: 'Testo', inlineEditable: true },
   ],
-  stylableProperties: [
-    'backgroundColor',
-    'textColor',
-    'borderRadius',
-    'paddingX',
-    'paddingY',
-  ],
+  stylableProperties: BlockStyleRegistry.STANDARD,
   defaultStyle: BLOCK_STYLE_DEFAULTS.Feature,
 };

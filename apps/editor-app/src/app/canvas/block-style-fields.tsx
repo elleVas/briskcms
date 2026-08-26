@@ -8,7 +8,7 @@ import { Label } from '../../components/ui/label.js';
 
 export interface BlockStyleFieldsProps {
   /** `BlockDescriptor.stylableProperties` del tipo selezionato — decide quali campi mostrare, nello stesso ordine (docs/adr/0022). */
-  properties: (keyof BlockStyleOverride)[];
+  properties: readonly (keyof BlockStyleOverride)[];
   value: BlockStyleOverride;
   onChange: (next: BlockStyleOverride) => void;
   /**
