@@ -2,6 +2,8 @@ import { randomUUID } from 'node:crypto';
 import { unlink } from 'node:fs/promises';
 import { type INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
+import { HttpExceptionFilter } from '../http-exception.filter.js';
+import { requestIdMiddleware } from '../request-id.middleware.js';
 import cookieParser from 'cookie-parser';
 import express from 'express';
 import request from 'supertest';
@@ -41,6 +43,8 @@ describe('MediaController (integration)', () => {
 
     app = moduleRef.createNestApplication();
     app.use(cookieParser());
+    app.useGlobalFilters(new HttpExceptionFilter());
+    app.use(requestIdMiddleware);
     // Mirrors main.ts's static-serving setup (minus the global prefix,
     // which this isolated test harness — like the sibling integration
     // specs — never sets either) so this suite exercises the real

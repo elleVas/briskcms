@@ -1,10 +1,8 @@
 import {
   Body,
-  ConflictException,
   Controller,
   Get,
   Inject,
-  NotFoundException,
   Param,
   Patch,
   Post,
@@ -17,10 +15,6 @@ import {
   setUserActive,
   updateUserRole,
 } from '@brisk/application';
-import {
-  UserEmailAlreadyExistsError,
-  UserNotFoundError,
-} from '@brisk/domain-core';
 import type { User } from '@brisk/domain-core';
 import type {
   AuthPort,
@@ -94,24 +88,22 @@ export class UsersController {
   async invite(
     @Body(new ZodValidationPipe(inviteUserBodySchema)) body: InviteUserBody,
   ) {
-    return this.handleDomainErrors(async () => {
-      const user = await inviteUser(
-        {
-          userRepository: this.userRepository,
-          authPort: this.authPort,
-          verificationTokenPort: this.verificationTokenPort,
-          emailPort: this.emailPort,
-        },
-        {
-          tenantId: this.tenantContext.getCurrentTenantId(),
-          email: body.email,
-          displayName: body.displayName,
-          role: body.role,
-          inviteUrlBase: this.editorAppUrl,
-        },
-      );
-      return this.toDto(user);
-    });
+    const user = await inviteUser(
+      {
+        userRepository: this.userRepository,
+        authPort: this.authPort,
+        verificationTokenPort: this.verificationTokenPort,
+        emailPort: this.emailPort,
+      },
+      {
+        tenantId: this.tenantContext.getCurrentTenantId(),
+        email: body.email,
+        displayName: body.displayName,
+        role: body.role,
+        inviteUrlBase: this.editorAppUrl,
+      },
+    );
+    return this.toDto(user);
   }
 
   @Patch(':id/role')
@@ -120,17 +112,15 @@ export class UsersController {
     @Body(new ZodValidationPipe(updateUserRoleBodySchema))
     body: UpdateUserRoleBody,
   ) {
-    return this.handleDomainErrors(async () => {
-      const user = await updateUserRole(
-        { userRepository: this.userRepository },
-        {
-          tenantId: this.tenantContext.getCurrentTenantId(),
-          userId: id,
-          role: body.role,
-        },
-      );
-      return this.toDto(user);
-    });
+    const user = await updateUserRole(
+      { userRepository: this.userRepository },
+      {
+        tenantId: this.tenantContext.getCurrentTenantId(),
+        userId: id,
+        role: body.role,
+      },
+    );
+    return this.toDto(user);
   }
 
   @Patch(':id/active')
@@ -139,17 +129,15 @@ export class UsersController {
     @Body(new ZodValidationPipe(setUserActiveBodySchema))
     body: SetUserActiveBody,
   ) {
-    return this.handleDomainErrors(async () => {
-      const user = await setUserActive(
-        { userRepository: this.userRepository, authPort: this.authPort },
-        {
-          tenantId: this.tenantContext.getCurrentTenantId(),
-          userId: id,
-          isActive: body.isActive,
-        },
-      );
-      return this.toDto(user);
-    });
+    const user = await setUserActive(
+      { userRepository: this.userRepository, authPort: this.authPort },
+      {
+        tenantId: this.tenantContext.getCurrentTenantId(),
+        userId: id,
+        isActive: body.isActive,
+      },
+    );
+    return this.toDto(user);
   }
 
   /** Built field-by-field, never a `...rest` of toProps() — unlike Page (no secret fields), a user row has passwordHash, which must never reach the client. */
@@ -165,19 +153,5 @@ export class UsersController {
       emailVerifiedAt: props.emailVerifiedAt,
       createdAt: props.createdAt,
     };
-  }
-
-  private async handleDomainErrors<T>(fn: () => Promise<T>): Promise<T> {
-    try {
-      return await fn();
-    } catch (error) {
-      if (error instanceof UserNotFoundError) {
-        throw new NotFoundException(error.message);
-      }
-      if (error instanceof UserEmailAlreadyExistsError) {
-        throw new ConflictException(error.message);
-      }
-      throw error;
-    }
   }
 }

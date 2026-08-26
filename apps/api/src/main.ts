@@ -11,6 +11,8 @@ import express from 'express';
 import helmet from 'helmet';
 import { requireEnv } from '@brisk/env-config';
 import { AppModule } from './app/app.module';
+import { HttpExceptionFilter } from './app/http-exception.filter.js';
+import { requestIdMiddleware } from './app/request-id.middleware.js';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -20,6 +22,8 @@ async function bootstrap() {
   // embedded cross-origin by apps/public-site and apps/editor-app.
   app.use(helmet({ crossOriginResourcePolicy: false }));
   app.use(cookieParser());
+  app.use(requestIdMiddleware);
+  app.useGlobalFilters(new HttpExceptionFilter());
   // Credentialed cookies can't use a wildcard origin — must be the exact
   // editor-app origin, see docs/adr/0010-session-based-auth-foundations.md.
   app.enableCors({ origin: requireEnv('EDITOR_APP_URL'), credentials: true });

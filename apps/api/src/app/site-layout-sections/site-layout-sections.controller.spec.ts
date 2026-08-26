@@ -1,5 +1,11 @@
 import { NotFoundException } from '@nestjs/common';
-import { Site, SiteLayoutSection } from '@brisk/domain-core';
+import {
+  Site,
+  SiteLayoutSection,
+  SiteLayoutSectionNotFoundError,
+  SiteLayoutSectionVersionNotFoundError,
+  SiteNotFoundError,
+} from '@brisk/domain-core';
 import type {
   PreviewTokenPort,
   SiteLayoutSectionRepositoryPort,
@@ -97,7 +103,10 @@ describe('SiteLayoutSectionsController (unit)', () => {
     );
   });
 
-  it('getOrCreate maps a SiteNotFoundError to a NotFoundException', async () => {
+  // The mapping to a 404 now happens in the global HttpExceptionFilter
+  // (see http-exception.filter.spec.ts), not here — the controller's own
+  // contract is just to let the domain error propagate unwrapped.
+  it('getOrCreate propagates SiteNotFoundError, unwrapped', async () => {
     siteRepository.findById.mockResolvedValue(null);
 
     await expect(
@@ -106,36 +115,36 @@ describe('SiteLayoutSectionsController (unit)', () => {
         locale: 'it',
         kind: 'header',
       }),
-    ).rejects.toThrow(NotFoundException);
+    ).rejects.toThrow(SiteNotFoundError);
   });
 
-  it('saveDraft maps a SiteLayoutSectionNotFoundError to a NotFoundException', async () => {
+  it('saveDraft propagates SiteLayoutSectionNotFoundError, unwrapped', async () => {
     siteLayoutSectionRepository.findById.mockResolvedValue(null);
 
     await expect(
       controller.saveDraft('missing-id', { content: [] }),
-    ).rejects.toThrow(NotFoundException);
+    ).rejects.toThrow(SiteLayoutSectionNotFoundError);
   });
 
-  it('publish maps a SiteLayoutSectionNotFoundError to a NotFoundException', async () => {
+  it('publish propagates SiteLayoutSectionNotFoundError, unwrapped', async () => {
     siteLayoutSectionRepository.findById.mockResolvedValue(null);
 
     await expect(controller.publish('missing-id')).rejects.toThrow(
-      NotFoundException,
+      SiteLayoutSectionNotFoundError,
     );
   });
 
-  it('rollback maps a SiteLayoutSectionVersionNotFoundError to a NotFoundException', async () => {
+  it('rollback propagates SiteLayoutSectionVersionNotFoundError, unwrapped', async () => {
     const section = buildSection();
     siteLayoutSectionRepository.findById.mockResolvedValue(section);
     siteLayoutSectionVersionRepository.findById.mockResolvedValue(null);
 
     await expect(
       controller.rollback(section.id, { versionId: 'missing-version' }),
-    ).rejects.toThrow(NotFoundException);
+    ).rejects.toThrow(SiteLayoutSectionVersionNotFoundError);
   });
 
-  it('lets unexpected errors from handleDomainErrors-wrapped actions propagate unchanged', async () => {
+  it('lets unexpected errors propagate unchanged', async () => {
     const section = buildSection();
     siteLayoutSectionRepository.findById.mockResolvedValue(section);
     siteLayoutSectionRepository.save.mockRejectedValue(
@@ -147,12 +156,12 @@ describe('SiteLayoutSectionsController (unit)', () => {
     ).rejects.toThrow('db exploded');
   });
 
-  it('updateSticky maps a SiteLayoutSectionNotFoundError to a NotFoundException', async () => {
+  it('updateSticky propagates SiteLayoutSectionNotFoundError, unwrapped', async () => {
     siteLayoutSectionRepository.findById.mockResolvedValue(null);
 
     await expect(
       controller.updateSticky('missing-id', { sticky: true }),
-    ).rejects.toThrow(NotFoundException);
+    ).rejects.toThrow(SiteLayoutSectionNotFoundError);
   });
 
   it('updateSticky flips the flag and persists it', async () => {

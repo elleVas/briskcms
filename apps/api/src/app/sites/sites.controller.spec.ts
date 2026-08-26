@@ -1,5 +1,5 @@
 import { NotFoundException } from '@nestjs/common';
-import { Site } from '@brisk/domain-core';
+import { Site, SiteNotFoundError } from '@brisk/domain-core';
 import type {
   SiteRepositoryPort,
   SiteThemeBlockStylesPort,
@@ -82,7 +82,10 @@ describe('SitesController (unit)', () => {
     });
   });
 
-  it('updateBusinessInfo maps a SiteNotFoundError to a NotFoundException', async () => {
+  // The mapping to a 404 now happens in the global HttpExceptionFilter
+  // (see http-exception.filter.spec.ts), not here — the controller's own
+  // contract is just to let the domain error propagate unwrapped.
+  it('updateBusinessInfo propagates SiteNotFoundError, unwrapped', async () => {
     siteRepository.findById.mockResolvedValue(null);
 
     await expect(
@@ -92,7 +95,7 @@ describe('SitesController (unit)', () => {
         businessType: null,
         openingHours: null,
       }),
-    ).rejects.toThrow(NotFoundException);
+    ).rejects.toThrow(SiteNotFoundError);
   });
 
   it('updateBusinessInfo saves the updated site', async () => {
@@ -109,7 +112,7 @@ describe('SitesController (unit)', () => {
     expect(result.businessAddress).toBe('Via Roma 1');
   });
 
-  it('updateGeneralSettings maps a SiteNotFoundError to a NotFoundException', async () => {
+  it('updateGeneralSettings propagates SiteNotFoundError, unwrapped', async () => {
     siteRepository.findById.mockResolvedValue(null);
 
     await expect(
@@ -117,7 +120,7 @@ describe('SitesController (unit)', () => {
         name: 'x',
         domain: null,
       }),
-    ).rejects.toThrow(NotFoundException);
+    ).rejects.toThrow(SiteNotFoundError);
   });
 
   it('updateGeneralSettings saves the updated site', async () => {
@@ -133,14 +136,14 @@ describe('SitesController (unit)', () => {
     expect(result.domain).toBe('ilmioristorante.it');
   });
 
-  it('updateSeoSettings maps a SiteNotFoundError to a NotFoundException', async () => {
+  it('updateSeoSettings propagates SiteNotFoundError, unwrapped', async () => {
     siteRepository.findById.mockResolvedValue(null);
 
     await expect(
       controller.updateSeoSettings('missing', {
         searchEngineIndexingEnabled: true,
       }),
-    ).rejects.toThrow(NotFoundException);
+    ).rejects.toThrow(SiteNotFoundError);
   });
 
   it('updateSeoSettings saves the updated site', async () => {
@@ -154,7 +157,7 @@ describe('SitesController (unit)', () => {
     expect(result.searchEngineIndexingEnabled).toBe(true);
   });
 
-  it('updateThemeSettings maps a SiteNotFoundError to a NotFoundException', async () => {
+  it('updateThemeSettings propagates SiteNotFoundError, unwrapped', async () => {
     siteRepository.findById.mockResolvedValue(null);
 
     await expect(
@@ -168,7 +171,7 @@ describe('SitesController (unit)', () => {
         faviconUrl: null,
         overridesEnabled: true,
       }),
-    ).rejects.toThrow(NotFoundException);
+    ).rejects.toThrow(SiteNotFoundError);
   });
 
   it('updateThemeSettings saves the updated site', async () => {
@@ -190,7 +193,7 @@ describe('SitesController (unit)', () => {
     expect(result.themeFontFamily).toBe('inter');
   });
 
-  it('updateThemeTokens maps a SiteNotFoundError to a NotFoundException', async () => {
+  it('updateThemeTokens propagates SiteNotFoundError, unwrapped', async () => {
     siteRepository.findById.mockResolvedValue(null);
 
     await expect(
@@ -198,7 +201,7 @@ describe('SitesController (unit)', () => {
         blockType: 'Button',
         style: { borderRadius: '6px' },
       }),
-    ).rejects.toThrow(NotFoundException);
+    ).rejects.toThrow(SiteNotFoundError);
     expect(siteThemeBlockStylesRepository.upsert).not.toHaveBeenCalled();
   });
 

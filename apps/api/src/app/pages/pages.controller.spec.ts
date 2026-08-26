@@ -1,5 +1,11 @@
-import { ConflictException, NotFoundException } from '@nestjs/common';
-import { Page } from '@brisk/domain-core';
+import { NotFoundException } from '@nestjs/common';
+import {
+  Page,
+  PageNotFoundError,
+  PageSlugAlreadyExistsError,
+  PageTranslationAlreadyExistsError,
+  PageVersionNotFoundError,
+} from '@brisk/domain-core';
 import type {
   PageRepositoryPort,
   PageVersionRepositoryPort,
@@ -71,25 +77,29 @@ describe('PagesController (unit)', () => {
     ).rejects.toThrow(NotFoundException);
   });
 
-  it('saveDraft maps a PageNotFoundError to a NotFoundException', async () => {
+  // The mapping to the right HTTP status now happens in the global
+  // HttpExceptionFilter (see http-exception.filter.spec.ts), not here —
+  // the controller's own contract is just to let the domain error
+  // propagate unwrapped.
+  it('saveDraft propagates PageNotFoundError, unwrapped', async () => {
     pageRepository.findById.mockResolvedValue(null);
 
     await expect(
       controller.saveDraft('missing-id', { content: [] }),
-    ).rejects.toThrow(NotFoundException);
+    ).rejects.toThrow(PageNotFoundError);
   });
 
-  it('rollback maps a PageVersionNotFoundError to a NotFoundException', async () => {
+  it('rollback propagates PageVersionNotFoundError, unwrapped', async () => {
     const page = buildPage();
     pageRepository.findById.mockResolvedValue(page);
     pageVersionRepository.findById.mockResolvedValue(null);
 
     await expect(
       controller.rollback(page.id, { versionId: 'missing-version' }),
-    ).rejects.toThrow(NotFoundException);
+    ).rejects.toThrow(PageVersionNotFoundError);
   });
 
-  it('lets unexpected errors from handleDomainErrors-wrapped actions propagate unchanged', async () => {
+  it('lets unexpected errors propagate unchanged', async () => {
     const page = buildPage();
     pageRepository.findById.mockResolvedValue(page);
     pageRepository.saveWithVersion.mockRejectedValue(new Error('db exploded'));
@@ -99,15 +109,15 @@ describe('PagesController (unit)', () => {
     ).rejects.toThrow('db exploded');
   });
 
-  it('delete maps a PageNotFoundError to a NotFoundException', async () => {
+  it('delete propagates PageNotFoundError, unwrapped', async () => {
     pageRepository.findById.mockResolvedValue(null);
 
     await expect(controller.delete('missing-id')).rejects.toThrow(
-      NotFoundException,
+      PageNotFoundError,
     );
   });
 
-  it('create maps a PageSlugAlreadyExistsError to a ConflictException', async () => {
+  it('create propagates PageSlugAlreadyExistsError, unwrapped', async () => {
     pageRepository.findBySlug.mockResolvedValue(buildPage());
 
     await expect(
@@ -118,19 +128,19 @@ describe('PagesController (unit)', () => {
         slug: 'home',
         seoMeta: { title: 'Home again', description: '...' },
       }),
-    ).rejects.toThrow(ConflictException);
+    ).rejects.toThrow(PageSlugAlreadyExistsError);
   });
 
-  it('createTranslation maps a PageTranslationAlreadyExistsError to a ConflictException', async () => {
+  it('createTranslation propagates PageTranslationAlreadyExistsError, unwrapped', async () => {
     pageRepository.findById.mockResolvedValue(buildPage());
     pageRepository.listByGroup.mockResolvedValue([buildPage()]);
 
     await expect(
       controller.createTranslation('page-1', { locale: 'it', slug: 'home-en' }),
-    ).rejects.toThrow(ConflictException);
+    ).rejects.toThrow(PageTranslationAlreadyExistsError);
   });
 
-  it('duplicate maps a PageNotFoundError to a NotFoundException', async () => {
+  it('duplicate propagates PageNotFoundError, unwrapped', async () => {
     pageRepository.findById.mockResolvedValue(null);
 
     await expect(
@@ -139,10 +149,10 @@ describe('PagesController (unit)', () => {
         title: 'Home (copia)',
         description: '',
       }),
-    ).rejects.toThrow(NotFoundException);
+    ).rejects.toThrow(PageNotFoundError);
   });
 
-  it('duplicate maps a PageSlugAlreadyExistsError to a ConflictException', async () => {
+  it('duplicate propagates PageSlugAlreadyExistsError, unwrapped', async () => {
     pageRepository.findById.mockResolvedValue(buildPage());
     pageRepository.findBySlug.mockResolvedValue(buildPage({ id: 'page-2' }));
 
@@ -152,7 +162,7 @@ describe('PagesController (unit)', () => {
         title: 'Home (copia)',
         description: '',
       }),
-    ).rejects.toThrow(ConflictException);
+    ).rejects.toThrow(PageSlugAlreadyExistsError);
   });
 
   it('duplicate saves an independent draft copy and returns it', async () => {

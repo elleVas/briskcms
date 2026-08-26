@@ -75,17 +75,15 @@ export class SitesController {
     @Body(new ZodValidationPipe(updateBusinessInfoBodySchema))
     body: UpdateBusinessInfoBody,
   ) {
-    return this.handleDomainErrors(async () => {
-      const site = await updateSiteBusinessInfo(
-        { siteRepository: this.siteRepository },
-        {
-          tenantId: this.tenantContext.getCurrentTenantId(),
-          siteId: id,
-          ...body,
-        },
-      );
-      return this.toDto(site);
-    });
+    const site = await updateSiteBusinessInfo(
+      { siteRepository: this.siteRepository },
+      {
+        tenantId: this.tenantContext.getCurrentTenantId(),
+        siteId: id,
+        ...body,
+      },
+    );
+    return this.toDto(site);
   }
 
   @Patch(':id/general-settings')
@@ -94,17 +92,15 @@ export class SitesController {
     @Body(new ZodValidationPipe(updateGeneralSettingsBodySchema))
     body: UpdateGeneralSettingsBody,
   ) {
-    return this.handleDomainErrors(async () => {
-      const site = await updateSiteGeneralSettings(
-        { siteRepository: this.siteRepository },
-        {
-          tenantId: this.tenantContext.getCurrentTenantId(),
-          siteId: id,
-          ...body,
-        },
-      );
-      return this.toDto(site);
-    });
+    const site = await updateSiteGeneralSettings(
+      { siteRepository: this.siteRepository },
+      {
+        tenantId: this.tenantContext.getCurrentTenantId(),
+        siteId: id,
+        ...body,
+      },
+    );
+    return this.toDto(site);
   }
 
   @Patch(':id/seo-settings')
@@ -113,17 +109,15 @@ export class SitesController {
     @Body(new ZodValidationPipe(updateSeoSettingsBodySchema))
     body: UpdateSeoSettingsBody,
   ) {
-    return this.handleDomainErrors(async () => {
-      const site = await updateSiteSeoSettings(
-        { siteRepository: this.siteRepository },
-        {
-          tenantId: this.tenantContext.getCurrentTenantId(),
-          siteId: id,
-          ...body,
-        },
-      );
-      return this.toDto(site);
-    });
+    const site = await updateSiteSeoSettings(
+      { siteRepository: this.siteRepository },
+      {
+        tenantId: this.tenantContext.getCurrentTenantId(),
+        siteId: id,
+        ...body,
+      },
+    );
+    return this.toDto(site);
   }
 
   @Patch(':id/locale-settings')
@@ -132,17 +126,15 @@ export class SitesController {
     @Body(new ZodValidationPipe(updateLocaleSettingsBodySchema))
     body: UpdateLocaleSettingsBody,
   ) {
-    return this.handleDomainErrors(async () => {
-      const site = await updateSiteLocaleSettings(
-        { siteRepository: this.siteRepository },
-        {
-          tenantId: this.tenantContext.getCurrentTenantId(),
-          siteId: id,
-          ...body,
-        },
-      );
-      return this.toDto(site);
-    });
+    const site = await updateSiteLocaleSettings(
+      { siteRepository: this.siteRepository },
+      {
+        tenantId: this.tenantContext.getCurrentTenantId(),
+        siteId: id,
+        ...body,
+      },
+    );
+    return this.toDto(site);
   }
 
   // customCss/headScript/bodyScript below are injected verbatim into every
@@ -158,17 +150,15 @@ export class SitesController {
     @Body(new ZodValidationPipe(updateThemeSettingsBodySchema))
     body: UpdateThemeSettingsBody,
   ) {
-    return this.handleDomainErrors(async () => {
-      const site = await updateSiteThemeSettings(
-        { siteRepository: this.siteRepository },
-        {
-          tenantId: this.tenantContext.getCurrentTenantId(),
-          siteId: id,
-          ...body,
-        },
-      );
-      return this.toDto(site);
-    });
+    const site = await updateSiteThemeSettings(
+      { siteRepository: this.siteRepository },
+      {
+        tenantId: this.tenantContext.getCurrentTenantId(),
+        siteId: id,
+        ...body,
+      },
+    );
+    return this.toDto(site);
   }
 
   @Patch(':id/theme-tokens')
@@ -177,31 +167,29 @@ export class SitesController {
     @Body(new ZodValidationPipe(updateThemeTokensBodySchema))
     body: UpdateThemeTokensBody,
   ) {
-    return this.handleDomainErrors(async () => {
-      const tenantId = this.tenantContext.getCurrentTenantId();
-      await updateSiteThemeTokens(
-        {
-          siteRepository: this.siteRepository,
-          siteThemeBlockStylesRepository: this.siteThemeBlockStylesRepository,
-        },
-        {
-          tenantId,
-          siteId: id,
-          blockType: body.blockType,
-          style: body.style,
-        },
-      );
-      // Il site è già stato verificato esistente dallo use-case — un
-      // secondo findById qui è per ricomporre il DTO completo, non per
-      // ricontrollare l'esistenza (che getterebbe comunque un 404 identico
-      // nell'improbabile finestra in cui il sito sparisse tra le due
-      // chiamate).
-      const site = await this.siteRepository.findById(tenantId, id);
-      if (!site) {
-        throw new SiteNotFoundError(id);
-      }
-      return this.toDto(site);
-    });
+    const tenantId = this.tenantContext.getCurrentTenantId();
+    await updateSiteThemeTokens(
+      {
+        siteRepository: this.siteRepository,
+        siteThemeBlockStylesRepository: this.siteThemeBlockStylesRepository,
+      },
+      {
+        tenantId,
+        siteId: id,
+        blockType: body.blockType,
+        style: body.style,
+      },
+    );
+    // Il site è già stato verificato esistente dallo use-case — un
+    // secondo findById qui è per ricomporre il DTO completo, non per
+    // ricontrollare l'esistenza (che getterebbe comunque un 404 identico
+    // nell'improbabile finestra in cui il sito sparisse tra le due
+    // chiamate).
+    const site = await this.siteRepository.findById(tenantId, id);
+    if (!site) {
+      throw new SiteNotFoundError(id);
+    }
+    return this.toDto(site);
   }
 
   /**
@@ -219,16 +207,5 @@ export class SitesController {
       site.id,
     );
     return { ...site.toProps(), themeTokens: { blockStyles } };
-  }
-
-  private async handleDomainErrors<T>(fn: () => Promise<T>): Promise<T> {
-    try {
-      return await fn();
-    } catch (error) {
-      if (error instanceof SiteNotFoundError) {
-        throw new NotFoundException(error.message);
-      }
-      throw error;
-    }
   }
 }

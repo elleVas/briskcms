@@ -1,7 +1,5 @@
 import {
-  BadRequestException,
   Body,
-  ConflictException,
   Controller,
   Delete,
   Get,
@@ -28,14 +26,6 @@ import {
   setPageParent,
   updateSeoMeta,
 } from '@brisk/application';
-import {
-  PageHierarchyCycleError,
-  PageHierarchyLocaleMismatchError,
-  PageNotFoundError,
-  PageSlugAlreadyExistsError,
-  PageTranslationAlreadyExistsError,
-  PageVersionNotFoundError,
-} from '@brisk/domain-core';
 import type {
   PageRepositoryPort,
   PageVersionRepositoryPort,
@@ -93,17 +83,15 @@ export class PagesController {
   async create(
     @Body(new ZodValidationPipe(createPageBodySchema)) body: CreatePageBody,
   ) {
-    return this.handleDomainErrors(async () => {
-      const page = await createPage(
-        { pageRepository: this.pageRepository },
-        {
-          ...body,
-          createdBy: null,
-          tenantId: this.tenantContext.getCurrentTenantId(),
-        },
-      );
-      return page.toProps();
-    });
+    const page = await createPage(
+      { pageRepository: this.pageRepository },
+      {
+        ...body,
+        createdBy: null,
+        tenantId: this.tenantContext.getCurrentTenantId(),
+      },
+    );
+    return page.toProps();
   }
 
   @Patch(':id/parent')
@@ -112,17 +100,15 @@ export class PagesController {
     @Body(new ZodValidationPipe(setPageParentBodySchema))
     body: SetPageParentBody,
   ) {
-    return this.handleDomainErrors(async () => {
-      const page = await setPageParent(
-        { pageRepository: this.pageRepository },
-        {
-          tenantId: this.tenantContext.getCurrentTenantId(),
-          pageId: id,
-          parentId: body.parentId,
-        },
-      );
-      return page.toProps();
-    });
+    const page = await setPageParent(
+      { pageRepository: this.pageRepository },
+      {
+        tenantId: this.tenantContext.getCurrentTenantId(),
+        pageId: id,
+        parentId: body.parentId,
+      },
+    );
+    return page.toProps();
   }
 
   @Get()
@@ -201,18 +187,16 @@ export class PagesController {
     @Param('id') id: string,
     @Body(new ZodValidationPipe(saveDraftBodySchema)) body: SaveDraftBody,
   ) {
-    return this.handleDomainErrors(async () => {
-      const page = await saveDraft(
-        { pageRepository: this.pageRepository },
-        {
-          tenantId: this.tenantContext.getCurrentTenantId(),
-          pageId: id,
-          content: body.content,
-          actorUserId: null,
-        },
-      );
-      return page.toProps();
-    });
+    const page = await saveDraft(
+      { pageRepository: this.pageRepository },
+      {
+        tenantId: this.tenantContext.getCurrentTenantId(),
+        pageId: id,
+        content: body.content,
+        actorUserId: null,
+      },
+    );
+    return page.toProps();
   }
 
   @Patch(':id/seo')
@@ -221,17 +205,15 @@ export class PagesController {
     @Body(new ZodValidationPipe(updateSeoMetaBodySchema))
     body: UpdateSeoMetaBody,
   ) {
-    return this.handleDomainErrors(async () => {
-      const page = await updateSeoMeta(
-        { pageRepository: this.pageRepository },
-        {
-          tenantId: this.tenantContext.getCurrentTenantId(),
-          pageId: id,
-          seoMeta: body.seoMeta,
-        },
-      );
-      return page.toProps();
-    });
+    const page = await updateSeoMeta(
+      { pageRepository: this.pageRepository },
+      {
+        tenantId: this.tenantContext.getCurrentTenantId(),
+        pageId: id,
+        seoMeta: body.seoMeta,
+      },
+    );
+    return page.toProps();
   }
 
   // Fase 5c: only admin/publisher can publish — draft/save stays open to
@@ -241,13 +223,11 @@ export class PagesController {
   @UseGuards(RolesGuard)
   @Roles('admin', 'publisher')
   async publish(@Param('id') id: string) {
-    return this.handleDomainErrors(async () => {
-      const page = await publishPage(
-        { pageRepository: this.pageRepository, searchPort: this.searchPort },
-        { tenantId: this.tenantContext.getCurrentTenantId(), pageId: id },
-      );
-      return page.toProps();
-    });
+    const page = await publishPage(
+      { pageRepository: this.pageRepository, searchPort: this.searchPort },
+      { tenantId: this.tenantContext.getCurrentTenantId(), pageId: id },
+    );
+    return page.toProps();
   }
 
   @Get(':id/versions')
@@ -261,13 +241,11 @@ export class PagesController {
 
   @Get(':id/translations')
   async listTranslations(@Param('id') id: string) {
-    return this.handleDomainErrors(async () => {
-      const translations = await listPageTranslations(
-        { pageRepository: this.pageRepository },
-        { tenantId: this.tenantContext.getCurrentTenantId(), pageId: id },
-      );
-      return translations.map((page) => page.toProps());
-    });
+    const translations = await listPageTranslations(
+      { pageRepository: this.pageRepository },
+      { tenantId: this.tenantContext.getCurrentTenantId(), pageId: id },
+    );
+    return translations.map((page) => page.toProps());
   }
 
   @Post(':id/translations')
@@ -276,19 +254,17 @@ export class PagesController {
     @Body(new ZodValidationPipe(createTranslationBodySchema))
     body: CreateTranslationBody,
   ) {
-    return this.handleDomainErrors(async () => {
-      const translation = await createPageTranslation(
-        { pageRepository: this.pageRepository },
-        {
-          tenantId: this.tenantContext.getCurrentTenantId(),
-          sourcePageId: id,
-          locale: body.locale,
-          slug: body.slug,
-          createdBy: null,
-        },
-      );
-      return translation.toProps();
-    });
+    const translation = await createPageTranslation(
+      { pageRepository: this.pageRepository },
+      {
+        tenantId: this.tenantContext.getCurrentTenantId(),
+        sourcePageId: id,
+        locale: body.locale,
+        slug: body.slug,
+        createdBy: null,
+      },
+    );
+    return translation.toProps();
   }
 
   @Post(':id/duplicate')
@@ -297,20 +273,18 @@ export class PagesController {
     @Body(new ZodValidationPipe(duplicatePageBodySchema))
     body: DuplicatePageBody,
   ) {
-    return this.handleDomainErrors(async () => {
-      const duplicate = await duplicatePage(
-        { pageRepository: this.pageRepository },
-        {
-          tenantId: this.tenantContext.getCurrentTenantId(),
-          sourcePageId: id,
-          slug: body.slug,
-          title: body.title,
-          description: body.description,
-          createdBy: null,
-        },
-      );
-      return duplicate.toProps();
-    });
+    const duplicate = await duplicatePage(
+      { pageRepository: this.pageRepository },
+      {
+        tenantId: this.tenantContext.getCurrentTenantId(),
+        sourcePageId: id,
+        slug: body.slug,
+        title: body.title,
+        description: body.description,
+        createdBy: null,
+      },
+    );
+    return duplicate.toProps();
   }
 
   @Post(':id/rollback')
@@ -318,57 +292,27 @@ export class PagesController {
     @Param('id') id: string,
     @Body(new ZodValidationPipe(rollbackBodySchema)) body: RollbackBody,
   ) {
-    return this.handleDomainErrors(async () => {
-      const page = await rollbackToVersion(
-        {
-          pageRepository: this.pageRepository,
-          pageVersionRepository: this.pageVersionRepository,
-        },
-        {
-          tenantId: this.tenantContext.getCurrentTenantId(),
-          pageId: id,
-          versionId: body.versionId,
-          actorUserId: null,
-        },
-      );
-      return page.toProps();
-    });
+    const page = await rollbackToVersion(
+      {
+        pageRepository: this.pageRepository,
+        pageVersionRepository: this.pageVersionRepository,
+      },
+      {
+        tenantId: this.tenantContext.getCurrentTenantId(),
+        pageId: id,
+        versionId: body.versionId,
+        actorUserId: null,
+      },
+    );
+    return page.toProps();
   }
 
   @Delete(':id')
   @HttpCode(204)
   async delete(@Param('id') id: string): Promise<void> {
-    return this.handleDomainErrors(() =>
-      deletePage(
-        { pageRepository: this.pageRepository },
-        { tenantId: this.tenantContext.getCurrentTenantId(), pageId: id },
-      ),
+    await deletePage(
+      { pageRepository: this.pageRepository },
+      { tenantId: this.tenantContext.getCurrentTenantId(), pageId: id },
     );
-  }
-
-  private async handleDomainErrors<T>(fn: () => Promise<T>): Promise<T> {
-    try {
-      return await fn();
-    } catch (error) {
-      if (
-        error instanceof PageNotFoundError ||
-        error instanceof PageVersionNotFoundError
-      ) {
-        throw new NotFoundException(error.message);
-      }
-      if (
-        error instanceof PageSlugAlreadyExistsError ||
-        error instanceof PageTranslationAlreadyExistsError
-      ) {
-        throw new ConflictException(error.message);
-      }
-      if (
-        error instanceof PageHierarchyCycleError ||
-        error instanceof PageHierarchyLocaleMismatchError
-      ) {
-        throw new BadRequestException(error.message);
-      }
-      throw error;
-    }
   }
 }

@@ -4,7 +4,6 @@ import {
   Get,
   HttpCode,
   Inject,
-  NotFoundException,
   Param,
   Post,
   Body,
@@ -16,13 +15,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { ThrottlerGuard } from '@nestjs/throttler';
 import { memoryStorage } from 'multer';
 import { getPublicForm, submitForm } from '@brisk/application';
-import {
-  FormNotFoundError,
-  InvalidCaptchaError,
-  InvalidFormSubmissionError,
-  UnsupportedAttachmentTypeError,
-  sniffAttachmentType,
-} from '@brisk/domain-core';
+import { FormNotFoundError, sniffAttachmentType } from '@brisk/domain-core';
 import type {
   AttachmentStoragePort,
   CaptchaPort,
@@ -71,11 +64,9 @@ export class PublicFormsController {
 
   @Get(':id')
   async findById(@Param('id') id: string) {
-    return this.handleDomainErrors(() =>
-      getPublicForm(
-        { formRepository: this.formRepository },
-        { tenantId: this.defaultTenantId, formId: id },
-      ),
+    return getPublicForm(
+      { formRepository: this.formRepository },
+      { tenantId: this.defaultTenantId, formId: id },
     );
   }
 
@@ -101,21 +92,19 @@ export class PublicFormsController {
     if (!file) {
       throw new BadRequestException('No file uploaded');
     }
-    return this.handleDomainErrors(async () => {
-      const form = await this.formRepository.findById(this.defaultTenantId, id);
-      if (!form) {
-        throw new FormNotFoundError(id);
-      }
-      // Unauthenticated endpoint — file.mimetype/originalname are entirely
-      // client-controlled, sniff the real bytes instead (security review
-      // 2026-08-25).
-      const sniffed = sniffAttachmentType(file.buffer, file.mimetype);
-      return this.attachmentStorage.upload({
-        filename: file.originalname,
-        mimeType: sniffed.mimeType,
-        extension: sniffed.extension,
-        data: file.buffer,
-      });
+    const form = await this.formRepository.findById(this.defaultTenantId, id);
+    if (!form) {
+      throw new FormNotFoundError(id);
+    }
+    // Unauthenticated endpoint — file.mimetype/originalname are entirely
+    // client-controlled, sniff the real bytes instead (security review
+    // 2026-08-25).
+    const sniffed = sniffAttachmentType(file.buffer, file.mimetype);
+    return this.attachmentStorage.upload({
+      filename: file.originalname,
+      mimeType: sniffed.mimeType,
+      extension: sniffed.extension,
+      data: file.buffer,
     });
   }
 
@@ -125,42 +114,22 @@ export class PublicFormsController {
     @Param('id') id: string,
     @Body(new ZodValidationPipe(submitFormBodySchema)) body: SubmitFormBody,
   ): Promise<void> {
-    return this.handleDomainErrors(() =>
-      submitForm(
-        {
-          formRepository: this.formRepository,
-          formSubmissionRepository: this.formSubmissionRepository,
-          emailPort: this.emailPort,
-          captchaPort: this.captchaPort,
-          newsletterPort: this.newsletterPort,
-        },
-        {
-          tenantId: this.defaultTenantId,
-          formId: id,
-          pageId: body.pageId,
-          values: body.values,
-          honeypot: body.honeypot,
-          captchaToken: body.captchaToken,
-        },
-      ),
+    await submitForm(
+      {
+        formRepository: this.formRepository,
+        formSubmissionRepository: this.formSubmissionRepository,
+        emailPort: this.emailPort,
+        captchaPort: this.captchaPort,
+        newsletterPort: this.newsletterPort,
+      },
+      {
+        tenantId: this.defaultTenantId,
+        formId: id,
+        pageId: body.pageId,
+        values: body.values,
+        honeypot: body.honeypot,
+        captchaToken: body.captchaToken,
+      },
     );
-  }
-
-  private async handleDomainErrors<T>(fn: () => Promise<T>): Promise<T> {
-    try {
-      return await fn();
-    } catch (error) {
-      if (error instanceof FormNotFoundError) {
-        throw new NotFoundException(error.message);
-      }
-      if (
-        error instanceof InvalidFormSubmissionError ||
-        error instanceof InvalidCaptchaError ||
-        error instanceof UnsupportedAttachmentTypeError
-      ) {
-        throw new BadRequestException(error.message);
-      }
-      throw error;
-    }
   }
 }
