@@ -73,6 +73,32 @@ function apiUrl(): string {
 const DEFAULT_TIMEOUT_MS = 20_000;
 
 /**
+ * Not exported — an injected collaborator private to this module, not a
+ * general-purpose "fetch helper". Every one of the 10 functions below owns
+ * its own response interpretation (404-collapses-to-null, `{ ok, status }`
+ * discriminated results, differing error message prefixes); this class
+ * owns only the one thing they genuinely share: applying the timeout and
+ * turning `AbortSignal.timeout()`'s `DOMException` into a readable error.
+ */
+class TimedFetcher {
+  async fetch(url: string, init?: RequestInit): Promise<Response> {
+    try {
+      return await fetch(url, {
+        ...init,
+        signal: AbortSignal.timeout(DEFAULT_TIMEOUT_MS),
+      });
+    } catch (error) {
+      if (error instanceof DOMException && error.name === 'TimeoutError') {
+        throw new Error(`Public API request timed out: ${url}`);
+      }
+      throw error;
+    }
+  }
+}
+
+const timedFetcher = new TimedFetcher();
+
+/**
  * Talks to the public, unauthenticated endpoint only (see
  * apps/api/src/app/public-pages) — never the authenticated CRUD one
  * editor-app uses. A 404 here means "nothing to show at this exact
@@ -89,16 +115,9 @@ export async function getPublishedPageBySlug(
   slug: string,
 ): Promise<PublishedPageLookupResult> {
   const params = new URLSearchParams({ domain, locale, slug });
-  const url = `${apiUrl()}/public/pages/by-slug?${params.toString()}`;
-  let res: Response;
-  try {
-    res = await fetch(url, { signal: AbortSignal.timeout(DEFAULT_TIMEOUT_MS) });
-  } catch (error) {
-    if (error instanceof DOMException && error.name === 'TimeoutError') {
-      throw new Error(`Public API request timed out: ${url}`);
-    }
-    throw error;
-  }
+  const res = await timedFetcher.fetch(
+    `${apiUrl()}/public/pages/by-slug?${params.toString()}`,
+  );
 
   if (res.status === 404) {
     const body: unknown = await res.json().catch(() => null);
@@ -127,16 +146,9 @@ export async function getPreviewPageById(
   token: string,
 ): Promise<PublishedPageDto | null> {
   const params = new URLSearchParams({ token });
-  const url = `${apiUrl()}/public/pages/${pageId}/preview?${params.toString()}`;
-  let res: Response;
-  try {
-    res = await fetch(url, { signal: AbortSignal.timeout(DEFAULT_TIMEOUT_MS) });
-  } catch (error) {
-    if (error instanceof DOMException && error.name === 'TimeoutError') {
-      throw new Error(`Public API request timed out: ${url}`);
-    }
-    throw error;
-  }
+  const res = await timedFetcher.fetch(
+    `${apiUrl()}/public/pages/${pageId}/preview?${params.toString()}`,
+  );
 
   if (res.status === 404) {
     return null;
@@ -165,16 +177,9 @@ export async function getPublishedSiteChrome(
   locale: string,
 ): Promise<PublishedSiteChromeDto | null> {
   const params = new URLSearchParams({ domain, locale });
-  const url = `${apiUrl()}/public/pages/chrome?${params.toString()}`;
-  let res: Response;
-  try {
-    res = await fetch(url, { signal: AbortSignal.timeout(DEFAULT_TIMEOUT_MS) });
-  } catch (error) {
-    if (error instanceof DOMException && error.name === 'TimeoutError') {
-      throw new Error(`Public API request timed out: ${url}`);
-    }
-    throw error;
-  }
+  const res = await timedFetcher.fetch(
+    `${apiUrl()}/public/pages/chrome?${params.toString()}`,
+  );
 
   if (res.status === 404) {
     return null;
@@ -202,16 +207,9 @@ export async function listPublishedPageTree(
   locale: string,
 ): Promise<PageTreeNodeDto[]> {
   const params = new URLSearchParams({ domain, locale });
-  const url = `${apiUrl()}/public/pages/tree?${params.toString()}`;
-  let res: Response;
-  try {
-    res = await fetch(url, { signal: AbortSignal.timeout(DEFAULT_TIMEOUT_MS) });
-  } catch (error) {
-    if (error instanceof DOMException && error.name === 'TimeoutError') {
-      throw new Error(`Public API request timed out: ${url}`);
-    }
-    throw error;
-  }
+  const res = await timedFetcher.fetch(
+    `${apiUrl()}/public/pages/tree?${params.toString()}`,
+  );
 
   if (!res.ok) {
     throw new Error(`Public pages API error: ${res.status}`);
@@ -250,16 +248,9 @@ export async function listPublishedPagesForSitemap(
   domain: string,
 ): Promise<SitemapListingDto> {
   const params = new URLSearchParams({ domain });
-  const url = `${apiUrl()}/public/pages?${params.toString()}`;
-  let res: Response;
-  try {
-    res = await fetch(url, { signal: AbortSignal.timeout(DEFAULT_TIMEOUT_MS) });
-  } catch (error) {
-    if (error instanceof DOMException && error.name === 'TimeoutError') {
-      throw new Error(`Public API request timed out: ${url}`);
-    }
-    throw error;
-  }
+  const res = await timedFetcher.fetch(
+    `${apiUrl()}/public/pages?${params.toString()}`,
+  );
 
   if (!res.ok) {
     throw new Error(`Public pages API error: ${res.status}`);
@@ -280,16 +271,9 @@ export async function searchPublishedPages(
   query: string,
 ): Promise<SearchResultDto[]> {
   const params = new URLSearchParams({ domain, locale, q: query });
-  const url = `${apiUrl()}/public/pages/search?${params.toString()}`;
-  let res: Response;
-  try {
-    res = await fetch(url, { signal: AbortSignal.timeout(DEFAULT_TIMEOUT_MS) });
-  } catch (error) {
-    if (error instanceof DOMException && error.name === 'TimeoutError') {
-      throw new Error(`Public API request timed out: ${url}`);
-    }
-    throw error;
-  }
+  const res = await timedFetcher.fetch(
+    `${apiUrl()}/public/pages/search?${params.toString()}`,
+  );
 
   if (!res.ok) {
     throw new Error(`Public pages API error: ${res.status}`);
@@ -315,16 +299,7 @@ export interface PublicFormDto {
 export async function getPublicForm(
   formId: string,
 ): Promise<PublicFormDto | null> {
-  const url = `${apiUrl()}/public/forms/${formId}`;
-  let res: Response;
-  try {
-    res = await fetch(url, { signal: AbortSignal.timeout(DEFAULT_TIMEOUT_MS) });
-  } catch (error) {
-    if (error instanceof DOMException && error.name === 'TimeoutError') {
-      throw new Error(`Public API request timed out: ${url}`);
-    }
-    throw error;
-  }
+  const res = await timedFetcher.fetch(`${apiUrl()}/public/forms/${formId}`);
   if (res.status === 404) {
     return null;
   }
@@ -355,20 +330,10 @@ export async function uploadFormAttachment(
 ): Promise<UploadedFormAttachment> {
   const body = new FormData();
   body.append('file', file, file.name);
-  const url = `${apiUrl()}/public/forms/${formId}/attachments`;
-  let res: Response;
-  try {
-    res = await fetch(url, {
-      method: 'POST',
-      body,
-      signal: AbortSignal.timeout(DEFAULT_TIMEOUT_MS),
-    });
-  } catch (error) {
-    if (error instanceof DOMException && error.name === 'TimeoutError') {
-      throw new Error(`Public API request timed out: ${url}`);
-    }
-    throw error;
-  }
+  const res = await timedFetcher.fetch(
+    `${apiUrl()}/public/forms/${formId}/attachments`,
+    { method: 'POST', body },
+  );
   if (!res.ok) {
     throw new Error(`Public forms API error: ${res.status}`);
   }
@@ -390,21 +355,14 @@ export async function submitPublicForm(
   formId: string,
   input: SubmitPublicFormInput,
 ): Promise<SubmitPublicFormResult> {
-  const url = `${apiUrl()}/public/forms/${formId}/submissions`;
-  let res: Response;
-  try {
-    res = await fetch(url, {
+  const res = await timedFetcher.fetch(
+    `${apiUrl()}/public/forms/${formId}/submissions`,
+    {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(input),
-      signal: AbortSignal.timeout(DEFAULT_TIMEOUT_MS),
-    });
-  } catch (error) {
-    if (error instanceof DOMException && error.name === 'TimeoutError') {
-      throw new Error(`Public API request timed out: ${url}`);
-    }
-    throw error;
-  }
+    },
+  );
   if (res.ok) {
     return { ok: true };
   }
@@ -424,21 +382,14 @@ export type SubscribeNewsletterResult =
 export async function subscribeNewsletter(
   input: SubscribeNewsletterInput,
 ): Promise<SubscribeNewsletterResult> {
-  const url = `${apiUrl()}/public/newsletter/subscribe`;
-  let res: Response;
-  try {
-    res = await fetch(url, {
+  const res = await timedFetcher.fetch(
+    `${apiUrl()}/public/newsletter/subscribe`,
+    {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(input),
-      signal: AbortSignal.timeout(DEFAULT_TIMEOUT_MS),
-    });
-  } catch (error) {
-    if (error instanceof DOMException && error.name === 'TimeoutError') {
-      throw new Error(`Public API request timed out: ${url}`);
-    }
-    throw error;
-  }
+    },
+  );
   if (res.ok) {
     return { ok: true };
   }
