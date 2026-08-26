@@ -11,7 +11,14 @@ const { images } = Astro.props;
     images.some((image) => image.media) ? (
       images.map(
         (image) =>
-          image.media && <img src={image.media.url} alt={image.alt} />,
+          image.media && (
+            <img
+              src={image.media.url}
+              alt={image.alt}
+              loading="lazy"
+              decoding="async"
+            />
+          ),
       )
     ) : (
       <p>Nessuna immagine nella galleria.</p>

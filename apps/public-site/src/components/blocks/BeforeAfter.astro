@@ -10,12 +10,23 @@ const canRender = beforeImage !== null && afterImage !== null;
 {
   canRender ? (
     <div class="brisk-before-after" style="--reveal: 50%">
-      <img src={afterImage.url} alt={afterLabel} class="brisk-before-after__image" />
+      {
+        /* No loading="lazy" (same reasoning as Image.astro): full-width,
+        can be the first block on a page, so it can be the page's own LCP
+        element — lazy-loading that would delay it instead of helping CWV. */
+      }
+      <img
+        src={afterImage.url}
+        alt={afterLabel}
+        class="brisk-before-after__image"
+        decoding="async"
+      />
       <div class="brisk-before-after__reveal">
         <img
           src={beforeImage.url}
           alt={beforeLabel}
           class="brisk-before-after__image"
+          decoding="async"
         />
       </div>
       <div class="brisk-before-after__divider" aria-hidden="true" />

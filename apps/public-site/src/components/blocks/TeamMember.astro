@@ -14,7 +14,13 @@ const instanceStyle = buildBlockInstanceStyle(styleOverride);
 <div class="brisk-team-member" style={instanceStyle}>
   {
     photo ? (
-      <img src={photo.url} alt="" class="brisk-team-member__photo" />
+      <img
+        src={photo.url}
+        alt=""
+        class="brisk-team-member__photo"
+        loading="lazy"
+        decoding="async"
+      />
     ) : (
       <div class="brisk-team-member__photo brisk-team-member__photo--placeholder" />
     )

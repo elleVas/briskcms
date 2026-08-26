@@ -9,7 +9,14 @@ const { media, alt, caption } = Astro.props;
 {
   media ? (
     <figure>
-      <img src={media.url} alt={alt} />
+      {
+        /* No loading="lazy" here (unlike the other image blocks): this is
+        the one block type a page can use as a full-width hero at the very
+        top — lazily loading a real LCP element actively delays it, the
+        opposite of the Core Web Vitals fix this is for. decoding="async"
+        is always safe (doesn't block the main thread on decode either way). */
+      }
+      <img src={media.url} alt={alt} decoding="async" />
       {caption && <figcaption data-brisk-field="caption">{caption}</figcaption>}
     </figure>
   ) : (

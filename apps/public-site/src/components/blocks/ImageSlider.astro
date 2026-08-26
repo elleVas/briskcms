@@ -18,11 +18,13 @@ const pictured = images.filter(isPictured);
   pictured.length > 0 ? (
     <div class="brisk-slider">
       <div class="brisk-slider__track">
-        {pictured.map((image) => (
+        {pictured.map((image, index) => (
           <img
             src={image.media.url}
             alt={image.alt}
             class="brisk-slider__slide"
+            loading={index === 0 ? undefined : 'lazy'}
+            decoding="async"
           />
         ))}
       </div>
