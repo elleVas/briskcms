@@ -1,0 +1,14 @@
+---
+// Security review 2026-08-24, "terzo giro": [locale]/[...slug].astro e
+// [locale]/index.astro chiamano l'API pubblica senza try/catch — un 500
+// backend o un timeout (vedi public-api-client.ts) propagava come
+// eccezione non gestita. Astro (output:'server', adapter Node) rende
+// automaticamente questa pagina per qualunque errore non catturato
+// durante il render SSR — copre ogni route, non solo le due note, senza
+// un try/catch ad hoc in ognuna.
+import ServerError from '../components/ServerError.astro';
+
+Astro.response.status = 500;
+---
+
+<ServerError />
