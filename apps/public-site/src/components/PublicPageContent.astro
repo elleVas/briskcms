@@ -50,7 +50,8 @@ const { page, editable } = Astro.props;
         // likewise a separate, not-yet-built editor field — this is only
         // the default every block gets for free.
       }
-      <div
+      <main
+        id="main-content"
         class="mx-auto flex max-w-5xl flex-col gap-16 px-6"
         data-brisk-root-blocks={editable ? 'page' : undefined}
       >
@@ -65,7 +66,7 @@ const { page, editable } = Astro.props;
             editable={editable}
           />
         ))}
-      </div>
+      </main>
     </PageLayout>
   ) : (
     <NotFound />
