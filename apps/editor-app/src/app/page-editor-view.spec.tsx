@@ -12,6 +12,7 @@ import * as previewTokenApi from '../lib/preview-token-api-client.js';
 import { createTestQueryClient } from '../test-query-client.js';
 import { pageQueryOptions } from './pages-queries.js';
 import { PageEditorView } from './page-editor-view.js';
+import { ToastProvider } from './toast-provider.js';
 
 vi.mock('@tanstack/react-router', async (importOriginal) => {
   const actual =
@@ -110,7 +111,9 @@ function renderView(page: PageDto = samplePage) {
   return render(
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <PageEditorView pageId={page.id} />
+        <ToastProvider>
+          <PageEditorView pageId={page.id} />
+        </ToastProvider>
       </TooltipProvider>
     </QueryClientProvider>,
   );

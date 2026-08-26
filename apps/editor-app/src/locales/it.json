@@ -435,7 +435,11 @@
     "style": {
       "editType": "Stile di tutti i blocchi {{type}}",
       "editTypeHint": "Questi valori si applicano a OGNI blocco {{type}} del sito.",
-      "editInstance": "Stile di questo blocco"
+      "editInstance": "Stile di questo blocco",
+      "saveError": "Salvataggio dello stile non riuscito. Riprova."
     }
+  },
+  "toast": {
+    "dismiss": "Chiudi notifica"
   }
 }

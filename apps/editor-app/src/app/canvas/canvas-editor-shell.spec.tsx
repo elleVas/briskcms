@@ -18,6 +18,7 @@ import { TooltipProvider } from '../../components/ui/tooltip.js';
 import { createTestQueryClient } from '../../test-query-client.js';
 import * as blockFragmentApi from '../../lib/block-fragment-api-client.js';
 import * as previewTokenApi from '../../lib/preview-token-api-client.js';
+import { ToastProvider } from '../toast-provider.js';
 import { CanvasEditorShell } from './canvas-editor-shell.js';
 
 vi.mock('@tanstack/react-router', async (importOriginal) => {
@@ -114,16 +115,18 @@ function renderShell(
   const utils = render(
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <CanvasEditorShell
-          backLink={<a href="/pages">Pagine</a>}
-          statusText="Bozza salvata"
-          registry={registry}
-          categories={categories}
-          blocks={blocks}
-          onChange={onChange}
-          onPublish={onPublish}
-          pageId="page-1"
-        />
+        <ToastProvider>
+          <CanvasEditorShell
+            backLink={<a href="/pages">Pagine</a>}
+            statusText="Bozza salvata"
+            registry={registry}
+            categories={categories}
+            blocks={blocks}
+            onChange={onChange}
+            onPublish={onPublish}
+            pageId="page-1"
+          />
+        </ToastProvider>
       </TooltipProvider>
     </QueryClientProvider>,
   );
