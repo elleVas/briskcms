@@ -10,7 +10,7 @@ import {
   UnauthorizedException,
   UseGuards,
 } from '@nestjs/common';
-import { ThrottlerGuard } from '@nestjs/throttler';
+import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
 import type { Request, Response } from 'express';
 import { PerAccountThrottlerGuard } from './per-account-throttler.guard.js';
 import {
@@ -160,7 +160,13 @@ export class AuthController {
     return { success: true };
   }
 
+  // Higher limit than login/request-password-reset's 5/60s default: these
+  // three consume a 256-bit token (brute-force impractical regardless of
+  // rate limiting), so the guard here is defense-in-depth/consistency, not
+  // the primary defense — a generous limit avoids throttling a legitimate
+  // user who double-clicks a link, while still capping abuse.
   @UseGuards(ThrottlerGuard)
+  @Throttle({ default: { limit: 20, ttl: 60000 } })
   @Post('verify-email')
   @HttpCode(200)
   async confirmEmailVerification(
@@ -217,6 +223,7 @@ export class AuthController {
   }
 
   @UseGuards(ThrottlerGuard)
+  @Throttle({ default: { limit: 20, ttl: 60000 } })
   @Post('reset-password')
   @HttpCode(200)
   async confirmPasswordReset(
@@ -242,6 +249,7 @@ export class AuthController {
   }
 
   @UseGuards(ThrottlerGuard)
+  @Throttle({ default: { limit: 20, ttl: 60000 } })
   @Post('accept-invite')
   @HttpCode(200)
   async acceptInvite(

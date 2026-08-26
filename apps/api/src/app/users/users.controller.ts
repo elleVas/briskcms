@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Get,
+  HttpCode,
   Inject,
   Param,
   Patch,
@@ -12,6 +13,7 @@ import {
 import {
   inviteUser,
   listUsers,
+  resendInvite,
   setUserActive,
   updateUserRole,
 } from '@brisk/application';
@@ -104,6 +106,31 @@ export class UsersController {
       },
     );
     return this.toDto(user);
+  }
+
+  /**
+   * Security review 2026-08-24, "terzo giro": un invito scaduto (7 giorni,
+   * vedi inviteUser) lasciava l'email dell'invitato bloccata per sempre
+   * (UserEmailAlreadyExistsError su un nuovo invite), senza alcun modo di
+   * dargli un link nuovo. Rifiuta con UserAlreadyActiveError (mappato a
+   * 409 sotto) se l'invito è già stato accettato — non ha senso re-inviarlo.
+   */
+  @Post(':id/resend-invite')
+  @HttpCode(200)
+  async resend(@Param('id') id: string) {
+    await resendInvite(
+      {
+        userRepository: this.userRepository,
+        verificationTokenPort: this.verificationTokenPort,
+        emailPort: this.emailPort,
+      },
+      {
+        tenantId: this.tenantContext.getCurrentTenantId(),
+        userId: id,
+        inviteUrlBase: this.editorAppUrl,
+      },
+    );
+    return { success: true };
   }
 
   @Patch(':id/role')

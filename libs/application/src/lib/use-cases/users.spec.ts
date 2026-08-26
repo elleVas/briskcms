@@ -2,10 +2,12 @@ import { describe, expect, it } from 'vitest';
 import {
   InvalidOrExpiredTokenError,
   User,
+  UserAlreadyActiveError,
   UserEmailAlreadyExistsError,
   UserNotFoundError,
 } from '@brisk/domain-core';
 import { inviteUser } from './invite-user.use-case.js';
+import { resendInvite } from './resend-invite.use-case.js';
 import { acceptInvite } from './accept-invite.use-case.js';
 import { updateUserRole } from './update-user-role.use-case.js';
 import { setUserActive } from './set-user-active.use-case.js';
@@ -71,6 +73,68 @@ describe('inviteUser', () => {
       }),
     ).rejects.toThrow(UserEmailAlreadyExistsError);
     expect(deps.emailPort.sentEmails).toHaveLength(0);
+  });
+});
+
+describe('resendInvite', () => {
+  it('mints a fresh invite token and re-sends the email for a pending user', async () => {
+    const deps = setup();
+    const user = await inviteUser(deps, {
+      tenantId,
+      email: 'in-attesa@example.com',
+      displayName: 'In Attesa',
+      role: 'editor',
+      inviteUrlBase: 'https://editor.example.com/',
+    });
+    deps.emailPort.sentEmails.length = 0; // clear the original invite's email
+
+    await resendInvite(deps, {
+      tenantId,
+      userId: user.id,
+      inviteUrlBase: 'https://editor.example.com/',
+    });
+
+    expect(deps.emailPort.sentEmails).toHaveLength(1);
+    expect(deps.emailPort.sentEmails[0].to).toBe('in-attesa@example.com');
+    expect(deps.emailPort.sentEmails[0].html).toContain(
+      'https://editor.example.com/accept-invite?inviteToken=',
+    );
+  });
+
+  it('throws UserAlreadyActiveError for a user that already accepted', async () => {
+    const deps = setup();
+    await deps.userRepository.save(
+      User.create({
+        id: 'user-1',
+        tenantId,
+        email: 'attivo@example.com',
+        displayName: 'Attivo',
+        passwordHash: 'irrelevant',
+        role: 'editor',
+        isActive: true,
+      }),
+    );
+
+    await expect(
+      resendInvite(deps, {
+        tenantId,
+        userId: 'user-1',
+        inviteUrlBase: 'https://editor.example.com/',
+      }),
+    ).rejects.toThrow(UserAlreadyActiveError);
+    expect(deps.emailPort.sentEmails).toHaveLength(0);
+  });
+
+  it('throws UserNotFoundError for a user that does not exist', async () => {
+    const deps = setup();
+
+    await expect(
+      resendInvite(deps, {
+        tenantId,
+        userId: 'does-not-exist',
+        inviteUrlBase: 'https://editor.example.com/',
+      }),
+    ).rejects.toThrow(UserNotFoundError);
   });
 });
 

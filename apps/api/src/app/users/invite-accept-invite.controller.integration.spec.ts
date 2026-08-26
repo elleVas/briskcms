@@ -56,6 +56,29 @@ async function fetchInviteToken(toEmail: string): Promise<string> {
   }
 }
 
+/** Polls Mailpit until at least `count` messages exist for `toEmail` — used to confirm a resend actually sent a second email, without assuming Mailpit's ordering. */
+async function waitForMessageCount(
+  toEmail: string,
+  count: number,
+): Promise<void> {
+  const deadline = Date.now() + 5000;
+  for (;;) {
+    const searchRes = await fetch(
+      `${MAILPIT_URL}/api/v1/messages?query=${encodeURIComponent(`to:${toEmail}`)}`,
+    );
+    const search = (await searchRes.json()) as { messages: { ID: string }[] };
+    if (search.messages.length >= count) {
+      return;
+    }
+    if (Date.now() > deadline) {
+      throw new Error(
+        `Expected ${count} messages for ${toEmail} within 5s, found ${search.messages.length}`,
+      );
+    }
+    await new Promise((resolve) => setTimeout(resolve, 200));
+  }
+}
+
 describe('Invite -> accept-invite (integration)', () => {
   let app: INestApplication;
   let db: BriskDb;
@@ -212,6 +235,53 @@ describe('Invite -> accept-invite (integration)', () => {
         role: 'editor',
       })
       .expect(403);
+  });
+
+  it('re-sends the invite with a fresh, still-working token', async () => {
+    const inviteeEmail = `invitee-${randomUUID()}@example.test`;
+    const inviteRes = await adminAgent
+      .post('/users/invite')
+      .send({
+        email: inviteeEmail,
+        displayName: 'Da Re-invitare',
+        role: 'editor',
+      })
+      .expect(201);
+    createdUserIds.push(inviteRes.body.id);
+    await fetchInviteToken(inviteeEmail);
+
+    await adminAgent
+      .post(`/users/${inviteRes.body.id}/resend-invite`)
+      .expect(200);
+    await waitForMessageCount(inviteeEmail, 2);
+
+    const freshToken = await fetchInviteToken(inviteeEmail);
+    await request(app.getHttpServer())
+      .post('/auth/accept-invite')
+      .send({ token: freshToken, password: 'fresh-password' })
+      .expect(200);
+  });
+
+  it('409s resending an invite to a user who already accepted it', async () => {
+    const inviteeEmail = `invitee-${randomUUID()}@example.test`;
+    const inviteRes = await adminAgent
+      .post('/users/invite')
+      .send({
+        email: inviteeEmail,
+        displayName: 'Attivo Subito',
+        role: 'editor',
+      })
+      .expect(201);
+    createdUserIds.push(inviteRes.body.id);
+    const inviteToken = await fetchInviteToken(inviteeEmail);
+    await request(app.getHttpServer())
+      .post('/auth/accept-invite')
+      .send({ token: inviteToken, password: 'a-password' })
+      .expect(200);
+
+    await adminAgent
+      .post(`/users/${inviteRes.body.id}/resend-invite`)
+      .expect(409);
   });
 
   it('409s inviting an email that already belongs to a user', async () => {

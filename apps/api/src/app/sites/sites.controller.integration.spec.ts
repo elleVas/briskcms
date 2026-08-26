@@ -183,16 +183,24 @@ describe('SitesController (integration)', () => {
   });
 
   it('updates general settings (name and domain)', async () => {
+    // Randomized, not a literal: sites has UNIQUE(tenant_id, domain) (security
+    // review 2026-08-24, point 8) and this test runs under the shared
+    // DEFAULT_TENANT_ID — a literal domain here would permanently collide
+    // with itself if a prior run of this exact test was ever killed before
+    // its own afterAll cleanup ran (verified: this happened once already,
+    // from an unrelated OOM kill mid-suite, and blocked every subsequent
+    // run until the orphaned row was deleted by hand).
+    const domain = `ilmioristorante-${randomUUID()}.it`;
     const res = await agent
       .patch(`/sites/${siteId}/general-settings`)
-      .send({ name: 'Il mio ristorante', domain: 'ilmioristorante.it' })
+      .send({ name: 'Il mio ristorante', domain })
       .expect(200);
 
     expect(res.body.name).toBe('Il mio ristorante');
-    expect(res.body.domain).toBe('ilmioristorante.it');
+    expect(res.body.domain).toBe(domain);
 
     const getRes = await agent.get(`/sites/${siteId}`).expect(200);
-    expect(getRes.body.domain).toBe('ilmioristorante.it');
+    expect(getRes.body.domain).toBe(domain);
   });
 
   it('400s a domain that is not a valid hostname', async () => {

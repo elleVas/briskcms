@@ -26,6 +26,7 @@ export * from './lib/use-cases/verify-email.use-case.js';
 export * from './lib/use-cases/request-password-reset.use-case.js';
 export * from './lib/use-cases/reset-password.use-case.js';
 export * from './lib/use-cases/invite-user.use-case.js';
+export * from './lib/use-cases/resend-invite.use-case.js';
 export * from './lib/use-cases/accept-invite.use-case.js';
 export * from './lib/use-cases/update-user-role.use-case.js';
 export * from './lib/use-cases/set-user-active.use-case.js';

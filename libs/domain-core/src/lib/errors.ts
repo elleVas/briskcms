@@ -129,6 +129,20 @@ export class UserEmailAlreadyExistsError extends Error {
   }
 }
 
+/**
+ * Security review 2026-08-24, "terzo giro": un invito già accettato non
+ * può essere "re-inviato" — l'utente ha già una password reale, mandargli
+ * di nuovo il link di invito lo lascerebbe reimpostare la password senza
+ * passare dal flusso "password dimenticata" (che verifica l'identità
+ * diversamente: invalida tutte le sessioni esistenti, questo no).
+ */
+export class UserAlreadyActiveError extends Error {
+  constructor(userId: string) {
+    super(`User already active, cannot resend invite: ${userId}`);
+    this.name = 'UserAlreadyActiveError';
+  }
+}
+
 export class MediaNotFoundError extends Error {
   constructor(mediaId: string) {
     super(`Media not found: ${mediaId}`);

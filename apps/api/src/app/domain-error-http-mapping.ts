@@ -21,6 +21,7 @@ import {
   SiteNotFoundError,
   UnsupportedAttachmentTypeError,
   UnsupportedMediaTypeError,
+  UserAlreadyActiveError,
   UserEmailAlreadyExistsError,
   UserNotFoundError,
 } from '@brisk/domain-core';
@@ -53,6 +54,7 @@ const DOMAIN_ERROR_MAPPINGS: Array<[Type<Error>, DomainErrorFactory]> = [
   [PageSlugAlreadyExistsError, (m) => new ConflictException(m)],
   [PageTranslationAlreadyExistsError, (m) => new ConflictException(m)],
   [UserEmailAlreadyExistsError, (m) => new ConflictException(m)],
+  [UserAlreadyActiveError, (m) => new ConflictException(m)],
   [PageHierarchyCycleError, (m) => new BadRequestException(m)],
   [PageHierarchyLocaleMismatchError, (m) => new BadRequestException(m)],
   [InvalidFormSubmissionError, (m) => new BadRequestException(m)],
