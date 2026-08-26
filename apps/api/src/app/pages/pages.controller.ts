@@ -124,10 +124,7 @@ export class PagesController {
         pageSize: query.pageSize,
       },
     );
-    return {
-      items: result.items.map((page) => page.toProps()),
-      total: result.total,
-    };
+    return result;
   }
 
   @Get('by-slug')

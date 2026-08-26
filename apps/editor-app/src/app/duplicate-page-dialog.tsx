@@ -12,10 +12,10 @@ import {
 import { Input } from '../components/ui/input.js';
 import { Label } from '../components/ui/label.js';
 import { ApiError } from '../lib/http-client.js';
-import type { PageDto } from '../lib/pages-api-client.js';
+import type { PageDto, PageSummaryDto } from '../lib/pages-api-client.js';
 
 export interface DuplicatePageDialogProps {
-  sourcePage: PageDto;
+  sourcePage: PageSummaryDto;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onDuplicate: (input: {

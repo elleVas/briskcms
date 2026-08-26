@@ -13,7 +13,7 @@ import {
 import { Badge } from '../components/ui/badge.js';
 import { Button } from '../components/ui/button.js';
 import { cn } from '../lib/utils.js';
-import type { PageDto } from '../lib/pages-api-client.js';
+import type { PageSummaryDto } from '../lib/pages-api-client.js';
 import { DeletePageConfirmDialog } from './delete-page-confirm-dialog.js';
 import { DuplicatePageDialog } from './duplicate-page-dialog.js';
 import { IconButton } from './icon-button.js';
@@ -25,17 +25,10 @@ import { PAGES_PAGE_SIZE } from './pages-queries.js';
 import { SeoPanelDialog } from './seo-panel-dialog.js';
 import { usePagesList } from './use-pages-list.js';
 
-function hasUnpublishedChanges(p: PageDto): boolean {
-  return (
-    p.status === 'published' &&
-    JSON.stringify(p.content) !== JSON.stringify(p.publishedContent)
-  );
-}
-
 export interface PagesListViewProps {
   siteId: string;
   defaultLocale: string;
-  pages: PageDto[];
+  pages: PageSummaryDto[];
   page: number;
   total: number;
 }
@@ -194,7 +187,7 @@ export function PagesListView({
                       <Badge variant="outline" className="uppercase">
                         {p.locale}
                       </Badge>
-                      {hasUnpublishedChanges(p) && (
+                      {p.hasUnpublishedChanges && (
                         <Badge
                           variant="outline"
                           className="border-amber-600/30 text-amber-600 dark:border-amber-400/30 dark:text-amber-400"

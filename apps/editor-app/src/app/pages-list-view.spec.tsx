@@ -4,7 +4,7 @@ import { QueryClientProvider } from '@tanstack/react-query';
 import * as router from '@tanstack/react-router';
 import { TooltipProvider } from '../components/ui/tooltip.js';
 import * as api from '../lib/pages-api-client.js';
-import type { PageDto } from '../lib/pages-api-client.js';
+import type { PageDto, PageSummaryDto } from '../lib/pages-api-client.js';
 import { createTestQueryClient } from '../test-query-client.js';
 import { PagesListView } from './pages-list-view.js';
 
@@ -30,7 +30,7 @@ vi.mock('../lib/pages-api-client.js', async (importOriginal) => {
   };
 });
 
-const pageOne: PageDto = {
+const pageOne: PageSummaryDto = {
   id: 'page-1',
   tenantId: 'tenant-1',
   siteId: 'site-1',
@@ -39,15 +39,14 @@ const pageOne: PageDto = {
   locale: 'it',
   slug: 'home',
   status: 'published',
-  content: [],
-  publishedContent: [],
   seoMeta: { title: 'Home', description: '' },
   createdAt: '',
   updatedAt: '2026-01-01T00:00:00.000Z',
+  hasUnpublishedChanges: false,
 };
 
 function renderView(
-  pages: PageDto[],
+  pages: PageSummaryDto[],
   options: { page?: number; total?: number } = {},
 ) {
   return render(
@@ -91,9 +90,9 @@ describe('PagesListView', () => {
 
   it('flags a published page whose draft has diverged from what is live', () => {
     vi.mocked(router.useNavigate).mockReturnValue(vi.fn());
-    const pageWithPendingChanges: PageDto = {
+    const pageWithPendingChanges: PageSummaryDto = {
       ...pageOne,
-      content: [{ type: 'Text', props: { body: 'draft edit' } }],
+      hasUnpublishedChanges: true,
     };
 
     renderView([pageWithPendingChanges]);
@@ -190,7 +189,12 @@ describe('PagesListView', () => {
 
   it('publishes the selected page', async () => {
     vi.mocked(router.useNavigate).mockReturnValue(vi.fn());
-    vi.mocked(api.publishPage).mockResolvedValue(pageOne);
+    const publishedPage: PageDto = {
+      ...pageOne,
+      content: [],
+      publishedContent: [],
+    };
+    vi.mocked(api.publishPage).mockResolvedValue(publishedPage);
 
     renderView([pageOne]);
     fireEvent.click(screen.getByRole('button', { name: /home/i }));

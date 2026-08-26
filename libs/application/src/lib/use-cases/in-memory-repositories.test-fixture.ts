@@ -21,6 +21,7 @@ import type {
   Pagination,
   PageRepositoryPort,
   PageSearchResult,
+  PageSummary,
   PageVersionRepositoryPort,
   PreviewToken,
   PreviewTokenPort,
@@ -86,14 +87,37 @@ export class InMemoryPageRepository implements PageRepositoryPort {
     tenantId: string,
     siteId: string,
     pagination: Pagination,
-  ): Promise<PaginatedResult<Page>> {
+  ): Promise<PaginatedResult<PageSummary>> {
     const matching = [...this.pages.values()].filter(
       (page) => page.tenantId === tenantId && page.siteId === siteId,
     );
     const start = (pagination.page - 1) * pagination.pageSize;
     return {
-      items: matching.slice(start, start + pagination.pageSize),
+      items: matching
+        .slice(start, start + pagination.pageSize)
+        .map((page) => this.toSummary(page)),
       total: matching.length,
+    };
+  }
+
+  private toSummary(page: Page): PageSummary {
+    const props = page.toProps();
+    return {
+      id: props.id,
+      tenantId: props.tenantId,
+      siteId: props.siteId,
+      groupId: props.groupId,
+      locale: props.locale,
+      slug: props.slug,
+      parentId: props.parentId,
+      status: props.status,
+      seoMeta: props.seoMeta,
+      createdAt: props.createdAt,
+      updatedAt: props.updatedAt,
+      hasUnpublishedChanges:
+        props.status === 'published' &&
+        JSON.stringify(props.publishedContent) !==
+          JSON.stringify(props.content),
     };
   }
 

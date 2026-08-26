@@ -1,4 +1,4 @@
-import { and, eq } from 'drizzle-orm';
+import { and, count, desc, eq, sql } from 'drizzle-orm';
 import {
   Page,
   PageSlugAlreadyExistsError,
@@ -10,6 +10,7 @@ import type {
   PaginatedResult,
   Pagination,
   PageRepositoryPort,
+  PageSummary,
 } from '@brisk/ports';
 import {
   DrizzlePaginatedRepository,
@@ -165,18 +166,45 @@ export class DrizzlePageRepository
     return rows[0] ? fromRow(rows[0]) : null;
   }
 
-  /** Most recently updated first — matches "wp-admin style" page list usage. */
+  /**
+   * Most recently updated first — matches "wp-admin style" page list
+   * usage. Bespoke query, not `listPaginatedTx`: the list needs a lean
+   * projection (no `content`/`publishedContent`, see `PageSummary`'s own
+   * doc comment) plus a computed `hasUnpublishedChanges`, neither of which
+   * the shared base method's generic `select()` can express.
+   */
   async listBySite(
     tenantId: string,
     siteId: string,
     pagination: Pagination,
-  ): Promise<PaginatedResult<Page>> {
-    return this.listPaginatedTx(
-      tenantId,
-      and(eq(pages.tenantId, tenantId), eq(pages.siteId, siteId)),
-      pages.updatedAt,
-      pagination,
+  ): Promise<PaginatedResult<PageSummary>> {
+    const scope = and(eq(pages.tenantId, tenantId), eq(pages.siteId, siteId));
+    const [rows, totalRows] = await withTenant(this.db, tenantId, (tx) =>
+      Promise.all([
+        tx
+          .select({
+            id: pages.id,
+            tenantId: pages.tenantId,
+            siteId: pages.siteId,
+            groupId: pages.groupId,
+            locale: pages.locale,
+            slug: pages.slug,
+            parentId: pages.parentId,
+            status: pages.status,
+            seoMeta: pages.seoMeta,
+            createdAt: pages.createdAt,
+            updatedAt: pages.updatedAt,
+            hasUnpublishedChanges: sql<boolean>`${pages.status} = 'published' and ${pages.publishedContent} is distinct from ${pages.content}`,
+          })
+          .from(pages)
+          .where(scope)
+          .orderBy(desc(pages.updatedAt))
+          .limit(pagination.pageSize)
+          .offset((pagination.page - 1) * pagination.pageSize),
+        tx.select({ total: count() }).from(pages).where(scope),
+      ]),
     );
+    return { items: rows, total: totalRows[0].total };
   }
 
   async listByGroup(
