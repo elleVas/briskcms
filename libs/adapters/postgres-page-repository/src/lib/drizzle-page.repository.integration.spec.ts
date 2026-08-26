@@ -330,4 +330,69 @@ describe('DrizzlePageRepository (integration)', () => {
       PageTranslationAlreadyExistsError,
     );
   });
+
+  describe('saveWithVersion', () => {
+    it('saves the page and its version together', async () => {
+      const page = buildPage({
+        content: [{ type: 'Hero', props: { title: 'v1' } }],
+      });
+      const versionId = randomUUID();
+
+      await pageRepository.saveWithVersion(page, {
+        id: versionId,
+        tenantId: tenantAId,
+        pageId: page.id,
+        content: page.content,
+        createdBy: null,
+        createdAt: page.updatedAt,
+      });
+
+      const foundPage = await pageRepository.findById(tenantAId, page.id);
+      expect(foundPage?.id).toBe(page.id);
+      const versions = await pageVersionRepository.listByPage(
+        tenantAId,
+        page.id,
+      );
+      expect(versions.map((v) => v.id)).toEqual([versionId]);
+    });
+
+    it('maps a slug conflict to PageSlugAlreadyExistsError, same as save()', async () => {
+      const first = buildPage({ slug: 'stessa-slug-with-version' });
+      await pageRepository.save(first);
+
+      const second = buildPage({ slug: 'stessa-slug-with-version' });
+      await expect(
+        pageRepository.saveWithVersion(second, {
+          id: randomUUID(),
+          tenantId: tenantAId,
+          pageId: second.id,
+          content: second.content,
+          createdBy: null,
+          createdAt: second.updatedAt,
+        }),
+      ).rejects.toThrow(PageSlugAlreadyExistsError);
+    });
+
+    // The regression this method exists to fix: page+version must commit
+    // atomically. Forced here by pointing the version at a page id that
+    // doesn't exist, which trips page_versions' FK on page_id — if the two
+    // writes weren't in the same transaction, the page upsert above would
+    // still have committed even though the whole call rejects.
+    it('rolls back the page save too when the version insert fails', async () => {
+      const page = buildPage();
+
+      await expect(
+        pageRepository.saveWithVersion(page, {
+          id: randomUUID(),
+          tenantId: tenantAId,
+          pageId: randomUUID(),
+          content: page.content,
+          createdBy: null,
+          createdAt: page.updatedAt,
+        }),
+      ).rejects.toThrow();
+
+      expect(await pageRepository.findById(tenantAId, page.id)).toBeNull();
+    });
+  });
 });

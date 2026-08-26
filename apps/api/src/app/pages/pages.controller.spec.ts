@@ -33,6 +33,7 @@ describe('PagesController (unit)', () => {
   beforeEach(() => {
     pageRepository = {
       save: jest.fn(),
+      saveWithVersion: jest.fn(),
       findById: jest.fn(),
       findBySlug: jest.fn(),
       listBySite: jest.fn(),
@@ -91,7 +92,7 @@ describe('PagesController (unit)', () => {
   it('lets unexpected errors from handleDomainErrors-wrapped actions propagate unchanged', async () => {
     const page = buildPage();
     pageRepository.findById.mockResolvedValue(page);
-    pageRepository.save.mockRejectedValue(new Error('db exploded'));
+    pageRepository.saveWithVersion.mockRejectedValue(new Error('db exploded'));
 
     await expect(
       controller.saveDraft(page.id, { content: [] }),
@@ -170,8 +171,7 @@ describe('PagesController (unit)', () => {
     expect(result.id).not.toBe(source.id);
     expect(result.slug).toBe('home-copia');
     expect(result.status).toBe('draft');
-    expect(pageRepository.save).toHaveBeenCalled();
-    expect(pageVersionRepository.save).toHaveBeenCalled();
+    expect(pageRepository.saveWithVersion).toHaveBeenCalled();
   });
 
   it('createPreviewToken throws a NotFoundException when the page does not exist', async () => {

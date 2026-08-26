@@ -16,8 +16,8 @@ describe('createPageTranslation', () => {
   const tenantId = 'tenant-1';
 
   function setup() {
-    const pageRepository = new InMemoryPageRepository();
     const pageVersionRepository = new InMemoryPageVersionRepository();
+    const pageRepository = new InMemoryPageRepository(pageVersionRepository);
     return { pageRepository, pageVersionRepository };
   }
 
@@ -144,8 +144,8 @@ describe('listPageTranslations', () => {
   const tenantId = 'tenant-1';
 
   function setup() {
-    const pageRepository = new InMemoryPageRepository();
     const pageVersionRepository = new InMemoryPageVersionRepository();
+    const pageRepository = new InMemoryPageRepository(pageVersionRepository);
     return { pageRepository, pageVersionRepository };
   }
 

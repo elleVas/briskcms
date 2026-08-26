@@ -1,14 +1,10 @@
 import { randomUUID } from 'node:crypto';
 import { Page, PageSlugAlreadyExistsError } from '@brisk/domain-core';
 import type { PageContent, SeoMeta } from '@brisk/shared-types';
-import type {
-  PageRepositoryPort,
-  PageVersionRepositoryPort,
-} from '@brisk/ports';
+import type { PageRepositoryPort } from '@brisk/ports';
 
 export interface CreatePageDeps {
   pageRepository: PageRepositoryPort;
-  pageVersionRepository: PageVersionRepositoryPort;
 }
 
 export interface CreatePageInput {
@@ -49,8 +45,7 @@ export async function createPage(
     content: input.content,
   });
 
-  await deps.pageRepository.save(page);
-  await deps.pageVersionRepository.save({
+  await deps.pageRepository.saveWithVersion(page, {
     id: randomUUID(),
     tenantId: page.tenantId,
     pageId: page.id,

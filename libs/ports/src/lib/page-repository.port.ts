@@ -1,4 +1,4 @@
-import type { Page } from '@brisk/domain-core';
+import type { Page, PageVersion } from '@brisk/domain-core';
 
 export interface Pagination {
   page: number;
@@ -17,6 +17,15 @@ export interface PaginatedResult<T> {
  */
 export interface PageRepositoryPort {
   save(page: Page): Promise<void>;
+  /**
+   * Salva la pagina e la sua nuova versione nella STESSA transazione — mai
+   * due `save()` separati (uno su `PageRepositoryPort`, uno su
+   * `PageVersionRepositoryPort`): se il secondo fallisse dopo che il primo è
+   * già committato, la pagina risulterebbe salvata senza che esista alcuna
+   * versione storica, rompendo silenziosamente cronologia e rollback nel
+   * percorso più usato del prodotto (ogni salvataggio di draft).
+   */
+  saveWithVersion(page: Page, version: PageVersion): Promise<void>;
   findById(tenantId: string, pageId: string): Promise<Page | null>;
   findBySlug(
     tenantId: string,

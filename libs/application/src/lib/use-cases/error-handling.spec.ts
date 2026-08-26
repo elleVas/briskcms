@@ -26,8 +26,8 @@ import {
 const tenantId = 'tenant-1';
 
 function setup() {
-  const pageRepository = new InMemoryPageRepository();
   const pageVersionRepository = new InMemoryPageVersionRepository();
+  const pageRepository = new InMemoryPageRepository(pageVersionRepository);
   const searchPort = new InMemorySearchPort();
   return { pageRepository, pageVersionRepository, searchPort };
 }

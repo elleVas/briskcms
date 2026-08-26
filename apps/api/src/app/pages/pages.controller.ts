@@ -95,10 +95,7 @@ export class PagesController {
   ) {
     return this.handleDomainErrors(async () => {
       const page = await createPage(
-        {
-          pageRepository: this.pageRepository,
-          pageVersionRepository: this.pageVersionRepository,
-        },
+        { pageRepository: this.pageRepository },
         {
           ...body,
           createdBy: null,
@@ -206,10 +203,7 @@ export class PagesController {
   ) {
     return this.handleDomainErrors(async () => {
       const page = await saveDraft(
-        {
-          pageRepository: this.pageRepository,
-          pageVersionRepository: this.pageVersionRepository,
-        },
+        { pageRepository: this.pageRepository },
         {
           tenantId: this.tenantContext.getCurrentTenantId(),
           pageId: id,
@@ -284,10 +278,7 @@ export class PagesController {
   ) {
     return this.handleDomainErrors(async () => {
       const translation = await createPageTranslation(
-        {
-          pageRepository: this.pageRepository,
-          pageVersionRepository: this.pageVersionRepository,
-        },
+        { pageRepository: this.pageRepository },
         {
           tenantId: this.tenantContext.getCurrentTenantId(),
           sourcePageId: id,
@@ -308,10 +299,7 @@ export class PagesController {
   ) {
     return this.handleDomainErrors(async () => {
       const duplicate = await duplicatePage(
-        {
-          pageRepository: this.pageRepository,
-          pageVersionRepository: this.pageVersionRepository,
-        },
+        { pageRepository: this.pageRepository },
         {
           tenantId: this.tenantContext.getCurrentTenantId(),
           sourcePageId: id,

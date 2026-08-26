@@ -4,6 +4,7 @@ import {
   PageSlugAlreadyExistsError,
   PageTranslationAlreadyExistsError,
   type PageProps,
+  type PageVersion,
 } from '@brisk/domain-core';
 import type {
   PaginatedResult,
@@ -12,10 +13,12 @@ import type {
 } from '@brisk/ports';
 import {
   type BriskDb,
+  type BriskTx,
   isUniqueViolation,
   pages,
   withTenant,
 } from '@brisk/postgres-db';
+import { savePageVersionTx } from './save-page-version-tx.js';
 
 const SLUG_UNIQUE_CONSTRAINT = 'pages_tenant_id_site_id_locale_slug_unique';
 const TRANSLATION_UNIQUE_CONSTRAINT =
@@ -78,13 +81,51 @@ export class DrizzlePageRepository implements PageRepositoryPort {
    */
   async save(page: Page): Promise<void> {
     const row = toRow(page.toProps());
+    await this.withUniqueViolationMapping(row, () =>
+      withTenant(this.db, row.tenantId, (tx) => this.upsertTx(tx, row)),
+    );
+  }
+
+  /**
+   * Salva la pagina e la sua nuova versione in un'UNICA transazione — vedi
+   * il commento su questo metodo in `PageRepositoryPort`. `page` e
+   * `version` sono sempre coerenti tra loro (i 4 use-case che chiamano
+   * questo metodo costruiscono `version.content` da `page.content` appena
+   * prima), quindi non serve validare la relazione qui.
+   */
+  async saveWithVersion(page: Page, version: PageVersion): Promise<void> {
+    const row = toRow(page.toProps());
+    await this.withUniqueViolationMapping(row, () =>
+      withTenant(this.db, row.tenantId, async (tx) => {
+        await this.upsertTx(tx, row);
+        await savePageVersionTx(tx, version);
+      }),
+    );
+  }
+
+  private upsertTx(tx: BriskTx, row: ReturnType<typeof toRow>) {
+    return tx
+      .insert(pages)
+      .values(row)
+      .onConflictDoUpdate({ target: pages.id, set: row });
+  }
+
+  /**
+   * `onConflictDoUpdate` copre solo un conflitto sulla PK (`id`, un UUID
+   * appena generato: mai in conflitto su un vero insert) — un conflitto
+   * sugli altri due UNIQUE della tabella (slug, o locale-nel-gruppo) risale
+   * comunque come `PostgresError` grezzo. Sotto concorrenza reale (due
+   * richieste quasi simultanee superano entrambe il check-then-act
+   * dell'use-case) è questo il primo punto che vede il conflitto — va
+   * tradotto nello stesso errore di dominio che l'use-case già lancia nel
+   * caso comune, non lasciato risalire come 500 grezzo.
+   */
+  private async withUniqueViolationMapping<T>(
+    row: ReturnType<typeof toRow>,
+    fn: () => Promise<T>,
+  ): Promise<T> {
     try {
-      await withTenant(this.db, row.tenantId, (tx) =>
-        tx
-          .insert(pages)
-          .values(row)
-          .onConflictDoUpdate({ target: pages.id, set: row }),
-      );
+      return await fn();
     } catch (error) {
       if (isUniqueViolation(error, SLUG_UNIQUE_CONSTRAINT)) {
         throw new PageSlugAlreadyExistsError(row.slug);
