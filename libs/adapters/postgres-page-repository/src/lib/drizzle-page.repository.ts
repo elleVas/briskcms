@@ -1,4 +1,4 @@
-import { and, count, desc, eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import {
   Page,
   PageSlugAlreadyExistsError,
@@ -12,6 +12,7 @@ import type {
   PageRepositoryPort,
 } from '@brisk/ports';
 import {
+  DrizzlePaginatedRepository,
   type BriskDb,
   type BriskTx,
   isUniqueViolation,
@@ -66,21 +67,32 @@ function fromRow(row: typeof pages.$inferSelect): Page {
 }
 
 /** Connects as `brisk_app` — see docs/adr/0002-non-superuser-role-for-rls-enforcement.md. */
-export class DrizzlePageRepository implements PageRepositoryPort {
-  constructor(private readonly db: BriskDb) {}
+export class DrizzlePageRepository
+  extends DrizzlePaginatedRepository<
+    typeof pages.$inferSelect,
+    Page,
+    ReturnType<typeof toRow>
+  >
+  implements PageRepositoryPort
+{
+  protected readonly table = pages;
+  protected readonly idColumn = pages.id;
+  protected readonly tenantIdColumn = pages.tenantId;
 
-  /**
-   * `onConflictDoUpdate` copre solo un conflitto sulla PK (`id`, un UUID
-   * appena generato: mai in conflitto su un vero insert) — un conflitto
-   * sugli altri due UNIQUE della tabella (slug, o locale-nel-gruppo) risale
-   * comunque come `PostgresError` grezzo. Sotto concorrenza reale (due
-   * richieste quasi simultanee superano entrambe il check-then-act
-   * dell'use-case) è questo il primo punto che vede il conflitto — va
-   * tradotto nello stesso errore di dominio che l'use-case già lancia nel
-   * caso comune, non lasciato risalire come 500 grezzo.
-   */
-  async save(page: Page): Promise<void> {
-    const row = toRow(page.toProps());
+  constructor(db: BriskDb) {
+    super(db);
+  }
+
+  protected toRow(page: Page) {
+    return toRow(page.toProps());
+  }
+
+  protected fromRow(row: typeof pages.$inferSelect): Page {
+    return fromRow(row);
+  }
+
+  override async save(page: Page): Promise<void> {
+    const row = this.toRow(page);
     await this.withUniqueViolationMapping(row, () =>
       withTenant(this.db, row.tenantId, (tx) => this.upsertTx(tx, row)),
     );
@@ -89,25 +101,18 @@ export class DrizzlePageRepository implements PageRepositoryPort {
   /**
    * Salva la pagina e la sua nuova versione in un'UNICA transazione — vedi
    * il commento su questo metodo in `PageRepositoryPort`. `page` e
-   * `version` sono sempre coerenti tra loro (i 4 use-case che chiamano
+   * `version` sono sempre coerenti tra loro (i 5 use-case che chiamano
    * questo metodo costruiscono `version.content` da `page.content` appena
    * prima), quindi non serve validare la relazione qui.
    */
   async saveWithVersion(page: Page, version: PageVersion): Promise<void> {
-    const row = toRow(page.toProps());
+    const row = this.toRow(page);
     await this.withUniqueViolationMapping(row, () =>
-      withTenant(this.db, row.tenantId, async (tx) => {
+      withTenant(this.db, row.tenantId, async (tx: BriskTx) => {
         await this.upsertTx(tx, row);
         await savePageVersionTx(tx, version);
       }),
     );
-  }
-
-  private upsertTx(tx: BriskTx, row: ReturnType<typeof toRow>) {
-    return tx
-      .insert(pages)
-      .values(row)
-      .onConflictDoUpdate({ target: pages.id, set: row });
   }
 
   /**
@@ -135,17 +140,6 @@ export class DrizzlePageRepository implements PageRepositoryPort {
       }
       throw error;
     }
-  }
-
-  async findById(tenantId: string, pageId: string): Promise<Page | null> {
-    const rows = await withTenant(this.db, tenantId, (tx) =>
-      tx
-        .select()
-        .from(pages)
-        .where(and(eq(pages.tenantId, tenantId), eq(pages.id, pageId)))
-        .limit(1),
-    );
-    return rows[0] ? fromRow(rows[0]) : null;
   }
 
   async findBySlug(
@@ -177,23 +171,12 @@ export class DrizzlePageRepository implements PageRepositoryPort {
     siteId: string,
     pagination: Pagination,
   ): Promise<PaginatedResult<Page>> {
-    const siteScope = and(
-      eq(pages.tenantId, tenantId),
-      eq(pages.siteId, siteId),
+    return this.listPaginatedTx(
+      tenantId,
+      and(eq(pages.tenantId, tenantId), eq(pages.siteId, siteId)),
+      pages.updatedAt,
+      pagination,
     );
-    const [rows, [{ total }]] = await withTenant(this.db, tenantId, (tx) =>
-      Promise.all([
-        tx
-          .select()
-          .from(pages)
-          .where(siteScope)
-          .orderBy(desc(pages.updatedAt))
-          .limit(pagination.pageSize)
-          .offset((pagination.page - 1) * pagination.pageSize),
-        tx.select({ total: count() }).from(pages).where(siteScope),
-      ]),
-    );
-    return { items: rows.map(fromRow), total };
   }
 
   async listByGroup(
@@ -214,13 +197,5 @@ export class DrizzlePageRepository implements PageRepositoryPort {
         ),
     );
     return rows.map(fromRow);
-  }
-
-  async delete(tenantId: string, pageId: string): Promise<void> {
-    await withTenant(this.db, tenantId, (tx) =>
-      tx
-        .delete(pages)
-        .where(and(eq(pages.tenantId, tenantId), eq(pages.id, pageId))),
-    );
   }
 }
