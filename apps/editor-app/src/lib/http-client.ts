@@ -1,5 +1,6 @@
-const API_BASE_URL =
-  import.meta.env['VITE_API_URL'] ?? 'http://localhost:3000/api';
+import { requireViteEnv } from './require-vite-env.js';
+
+const API_BASE_URL = requireViteEnv('VITE_API_URL');
 
 // Security review 2026-08-24, point 18: without this, a backend that hangs
 // (pool exhausted, a slow query) left the editor tab stuck indefinitely —
