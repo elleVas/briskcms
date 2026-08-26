@@ -10,9 +10,15 @@ import {
 } from '../components/ui/card.js';
 import { Input } from '../components/ui/input.js';
 import { Label } from '../components/ui/label.js';
+import { TURNSTILE_SITE_KEY } from '../lib/turnstile-site-key.js';
+import { TurnstileWidget } from './turnstile-widget.js';
 
 export interface LoginFormProps {
-  onLogin: (email: string, password: string) => Promise<void>;
+  onLogin: (
+    email: string,
+    password: string,
+    captchaToken: string,
+  ) => Promise<void>;
   onForgotPassword: () => void;
 }
 
@@ -22,15 +28,26 @@ export function LoginForm({ onLogin, onForgotPassword }: LoginFormProps) {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  // Incremented after a rejected attempt to force a fresh Turnstile
+  // challenge — the widget still shows "verified" for the OLD token even
+  // though the server has already refused it (single-use), see
+  // TurnstileWidget's own doc comment.
+  const [captchaResetSignal, setCaptchaResetSignal] = useState(0);
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
+    if (!captchaToken) {
+      return;
+    }
     setError('');
     setSubmitting(true);
     try {
-      await onLogin(email, password);
+      await onLogin(email, password, captchaToken);
     } catch {
       setError(t('auth.login.invalidCredentials'));
+      setCaptchaToken(null);
+      setCaptchaResetSignal((n) => n + 1);
     } finally {
       setSubmitting(false);
     }
@@ -67,12 +84,21 @@ export function LoginForm({ onLogin, onForgotPassword }: LoginFormProps) {
                 required
               />
             </div>
+            <TurnstileWidget
+              siteKey={TURNSTILE_SITE_KEY}
+              onToken={setCaptchaToken}
+              resetSignal={captchaResetSignal}
+            />
             {error && (
               <p role="alert" className="text-sm text-destructive">
                 {error}
               </p>
             )}
-            <Button type="submit" disabled={submitting} className="w-full">
+            <Button
+              type="submit"
+              disabled={submitting || !captchaToken}
+              className="w-full"
+            >
               {submitting
                 ? t('auth.login.submitPending')
                 : t('auth.login.submitIdle')}

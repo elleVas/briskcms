@@ -3,10 +3,11 @@ import { request } from './http-client.js';
 export function login(
   email: string,
   password: string,
+  captchaToken: string,
 ): Promise<{ userId: string }> {
   return request('/auth/login', {
     method: 'POST',
-    body: JSON.stringify({ email, password }),
+    body: JSON.stringify({ email, password, captchaToken }),
   });
 }
 
@@ -16,10 +17,11 @@ export function logout(): Promise<{ success: boolean }> {
 
 export function requestPasswordReset(
   email: string,
+  captchaToken: string,
 ): Promise<{ success: boolean }> {
   return request('/auth/request-password-reset', {
     method: 'POST',
-    body: JSON.stringify({ email }),
+    body: JSON.stringify({ email, captchaToken }),
   });
 }
 

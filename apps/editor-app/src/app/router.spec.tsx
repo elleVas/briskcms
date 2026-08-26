@@ -233,6 +233,7 @@ describe('router', () => {
     expect(authApi.login).toHaveBeenCalledWith(
       'lele@example.com',
       'correct-horse',
+      'fake-turnstile-token-for-tests',
     );
   });
 

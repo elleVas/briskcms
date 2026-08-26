@@ -4,12 +4,14 @@ import { loginUser } from './login-user.use-case.js';
 import { logoutUser } from './logout-user.use-case.js';
 import { InMemoryUserRepository } from './in-memory-repositories.test-fixture.js';
 import { FakeAuthPort } from './fake-auth-port.test-fixture.js';
+import { FakeCaptchaPort } from './fake-captcha-port.test-fixture.js';
 
 const tenantId = 'tenant-1';
 
 async function setup() {
   const userRepository = new InMemoryUserRepository();
   const authPort = new FakeAuthPort();
+  const captchaPort = new FakeCaptchaPort();
   const passwordHash = await authPort.hashPassword('correct-horse-battery');
   const user = User.create({
     id: 'user-1',
@@ -20,7 +22,7 @@ async function setup() {
     role: 'admin',
   });
   await userRepository.save(user);
-  return { userRepository, authPort, user };
+  return { userRepository, authPort, captchaPort, user };
 }
 
 describe('loginUser', () => {
@@ -31,6 +33,7 @@ describe('loginUser', () => {
       tenantId,
       email: 'lele@example.com',
       password: 'correct-horse-battery',
+      captchaToken: 'valid-token',
     });
 
     expect(session.userId).toBe('user-1');
@@ -45,6 +48,7 @@ describe('loginUser', () => {
         tenantId,
         email: 'nobody@example.com',
         password: 'irrelevant',
+        captchaToken: 'valid-token',
       }),
     ).rejects.toThrow(InvalidCredentialsError);
   });
@@ -57,6 +61,7 @@ describe('loginUser', () => {
         tenantId,
         email: 'lele@example.com',
         password: 'wrong-password',
+        captchaToken: 'valid-token',
       }),
     ).rejects.toThrow(InvalidCredentialsError);
   });
@@ -69,6 +74,7 @@ describe('logoutUser', () => {
       tenantId,
       email: 'lele@example.com',
       password: 'correct-horse-battery',
+      captchaToken: 'valid-token',
     });
 
     await logoutUser(deps, { token: session.token });

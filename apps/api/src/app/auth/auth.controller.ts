@@ -12,6 +12,7 @@ import {
 } from '@nestjs/common';
 import { ThrottlerGuard } from '@nestjs/throttler';
 import type { Request, Response } from 'express';
+import { PerAccountThrottlerGuard } from './per-account-throttler.guard.js';
 import {
   acceptInvite,
   loginUser,
@@ -22,12 +23,14 @@ import {
   verifyEmail,
 } from '@brisk/application';
 import {
+  InvalidCaptchaError,
   InvalidCredentialsError,
   InvalidOrExpiredTokenError,
   UserNotActiveError,
 } from '@brisk/domain-core';
 import type {
   AuthPort,
+  CaptchaPort,
   EmailPort,
   UserRepositoryPort,
   VerificationTokenPort,
@@ -35,6 +38,7 @@ import type {
 import { ZodValidationPipe } from '../zod-validation.pipe.js';
 import {
   AUTH_PORT,
+  CAPTCHA_PORT,
   DEFAULT_TENANT_ID,
   EDITOR_APP_URL,
   EMAIL_PORT,
@@ -69,11 +73,12 @@ export class AuthController {
     @Inject(VERIFICATION_TOKEN_PORT)
     private readonly verificationTokenPort: VerificationTokenPort,
     @Inject(EMAIL_PORT) private readonly emailPort: EmailPort,
+    @Inject(CAPTCHA_PORT) private readonly captchaPort: CaptchaPort,
     @Inject(DEFAULT_TENANT_ID) private readonly defaultTenantId: string,
     @Inject(EDITOR_APP_URL) private readonly editorAppUrl: string,
   ) {}
 
-  @UseGuards(ThrottlerGuard)
+  @UseGuards(ThrottlerGuard, PerAccountThrottlerGuard)
   @Post('login')
   @HttpCode(200)
   async login(
@@ -83,14 +88,22 @@ export class AuthController {
     let session;
     try {
       session = await loginUser(
-        { userRepository: this.userRepository, authPort: this.authPort },
+        {
+          userRepository: this.userRepository,
+          authPort: this.authPort,
+          captchaPort: this.captchaPort,
+        },
         {
           tenantId: this.defaultTenantId,
           email: body.email,
           password: body.password,
+          captchaToken: body.captchaToken,
         },
       );
     } catch (error) {
+      if (error instanceof InvalidCaptchaError) {
+        throw new BadRequestException(error.message);
+      }
       // Same 401 + the exact InvalidCredentialsError message for both —
       // deliberately not error.message from UserNotActiveError, which
       // would otherwise reveal to anyone who already knows the correct
@@ -169,25 +182,34 @@ export class AuthController {
     return { success: true };
   }
 
-  @UseGuards(ThrottlerGuard)
+  @UseGuards(ThrottlerGuard, PerAccountThrottlerGuard)
   @Post('request-password-reset')
   @HttpCode(200)
   async requestPasswordReset(
     @Body(new ZodValidationPipe(requestPasswordResetBodySchema))
     body: RequestPasswordResetBody,
   ) {
-    await requestPasswordReset(
-      {
-        userRepository: this.userRepository,
-        verificationTokenPort: this.verificationTokenPort,
-        emailPort: this.emailPort,
-      },
-      {
-        tenantId: this.defaultTenantId,
-        email: body.email,
-        resetUrlBase: this.editorAppUrl,
-      },
-    );
+    try {
+      await requestPasswordReset(
+        {
+          userRepository: this.userRepository,
+          verificationTokenPort: this.verificationTokenPort,
+          emailPort: this.emailPort,
+          captchaPort: this.captchaPort,
+        },
+        {
+          tenantId: this.defaultTenantId,
+          email: body.email,
+          resetUrlBase: this.editorAppUrl,
+          captchaToken: body.captchaToken,
+        },
+      );
+    } catch (error) {
+      if (error instanceof InvalidCaptchaError) {
+        throw new BadRequestException(error.message);
+      }
+      throw error;
+    }
     // Always the same response, whether or not the email matched a real
     // account — see requestPasswordReset's own anti-enumeration doc comment.
     return { success: true };

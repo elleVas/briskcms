@@ -78,7 +78,10 @@ describe('PublicPagesController (integration)', () => {
     userId = user.id;
 
     agent = request.agent(app.getHttpServer());
-    await agent.post('/auth/login').send({ email, password }).expect(200);
+    await agent
+      .post('/auth/login')
+      .send({ email, password, captchaToken: 'test-token' })
+      .expect(200);
   });
 
   afterAll(async () => {

@@ -38,7 +38,10 @@ describe('ForgotPasswordForm', () => {
     await waitFor(() =>
       expect(screen.getByText(/se l'indirizzo esiste/i)).toBeTruthy(),
     );
-    expect(api.requestPasswordReset).toHaveBeenCalledWith('lele@example.com');
+    expect(api.requestPasswordReset).toHaveBeenCalledWith(
+      'lele@example.com',
+      'fake-turnstile-token-for-tests',
+    );
   });
 
   it('shows the confirmation even when the request itself fails', async () => {

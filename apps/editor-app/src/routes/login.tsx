@@ -13,8 +13,12 @@ function LoginRoute() {
   const navigate = useNavigate();
   const [view, setView] = useState<'login' | 'forgot-password'>('login');
 
-  async function onLogin(email: string, password: string) {
-    await handleLogin(email, password);
+  async function onLogin(
+    email: string,
+    password: string,
+    captchaToken: string,
+  ) {
+    await handleLogin(email, password, captchaToken);
     await navigate({ to: '/pages' });
   }
 

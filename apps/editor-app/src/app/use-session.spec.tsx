@@ -42,10 +42,18 @@ describe('useSession', () => {
     const { result } = renderHook(() => useSession(), { wrapper });
 
     await act(async () => {
-      await result.current.handleLogin('lele@example.com', 'correct');
+      await result.current.handleLogin(
+        'lele@example.com',
+        'correct',
+        'captcha-token',
+      );
     });
 
-    expect(authApi.login).toHaveBeenCalledWith('lele@example.com', 'correct');
+    expect(authApi.login).toHaveBeenCalledWith(
+      'lele@example.com',
+      'correct',
+      'captcha-token',
+    );
   });
 
   it('handleLogin propagates the error when login fails', async () => {
@@ -56,7 +64,7 @@ describe('useSession', () => {
     const { result } = renderHook(() => useSession(), { wrapper });
 
     await expect(
-      result.current.handleLogin('lele@example.com', 'wrong'),
+      result.current.handleLogin('lele@example.com', 'wrong', 'captcha-token'),
     ).rejects.toThrow('Invalid credentials');
   });
 

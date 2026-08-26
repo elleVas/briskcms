@@ -11,8 +11,15 @@ export function useSession() {
 
   // Errors intentionally propagate to the caller (LoginForm shows them).
   const loginMutation = useMutation({
-    mutationFn: ({ email, password }: { email: string; password: string }) =>
-      apiLogin(email, password),
+    mutationFn: ({
+      email,
+      password,
+      captchaToken,
+    }: {
+      email: string;
+      password: string;
+      captchaToken: string;
+    }) => apiLogin(email, password, captchaToken),
   });
 
   // Always redirects, whether or not the server call actually succeeded
@@ -25,8 +32,8 @@ export function useSession() {
   });
 
   const handleLogin = useCallback(
-    (email: string, password: string) =>
-      loginMutation.mutateAsync({ email, password }),
+    (email: string, password: string, captchaToken: string) =>
+      loginMutation.mutateAsync({ email, password, captchaToken }),
     [loginMutation],
   );
 

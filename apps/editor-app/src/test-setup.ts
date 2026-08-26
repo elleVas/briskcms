@@ -48,3 +48,18 @@ window.matchMedia ??= ((query: string) => ({
 Element.prototype.setPointerCapture ??= () => undefined;
 Element.prototype.releasePointerCapture ??= () => undefined;
 Element.prototype.hasPointerCapture ??= () => false;
+
+// jsdom never loads the real Cloudflare Turnstile script (login/forgot-
+// password widget, security review 2026-08-24, point 13) — this fires the
+// widget's callback immediately with a fixed fake token on render, so every
+// existing fill-and-submit test flow keeps working unchanged without
+// knowing Turnstile exists. A test that specifically cares about the
+// pre-token disabled state overrides `window.turnstile` for itself.
+window.turnstile ??= {
+  render: (_container, options) => {
+    options.callback('fake-turnstile-token-for-tests');
+    return 'fake-widget-id';
+  },
+  reset: () => undefined,
+  remove: () => undefined,
+};

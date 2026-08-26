@@ -68,7 +68,10 @@ describe('SitesController (integration)', () => {
     userId = user.id;
 
     agent = request.agent(app.getHttpServer());
-    await agent.post('/auth/login').send({ email, password }).expect(200);
+    await agent
+      .post('/auth/login')
+      .send({ email, password, captchaToken: 'test-token' })
+      .expect(200);
 
     // Second user with the lowest role, to prove RolesGuard/@Roles('admin')
     // actually blocks theme-settings for it (security review 2026-08-25 —
@@ -94,7 +97,11 @@ describe('SitesController (integration)', () => {
     editorAgent = request.agent(app.getHttpServer());
     await editorAgent
       .post('/auth/login')
-      .send({ email: editorEmail, password: editorPassword })
+      .send({
+        email: editorEmail,
+        password: editorPassword,
+        captchaToken: 'test-token',
+      })
       .expect(200);
   });
 

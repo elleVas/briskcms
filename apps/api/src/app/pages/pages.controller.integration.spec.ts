@@ -78,7 +78,10 @@ describe('PagesController (integration)', () => {
     createdUserIds.push(user.id);
 
     agent = request.agent(app.getHttpServer());
-    await agent.post('/auth/login').send({ email, password }).expect(200);
+    await agent
+      .post('/auth/login')
+      .send({ email, password, captchaToken: 'test-token' })
+      .expect(200);
   });
 
   afterAll(async () => {
@@ -445,7 +448,10 @@ describe('PagesController (integration)', () => {
       );
       createdUserIds.push(roleUser.id);
       const roleAgent = request.agent(app.getHttpServer());
-      await roleAgent.post('/auth/login').send({ email, password }).expect(200);
+      await roleAgent
+        .post('/auth/login')
+        .send({ email, password, captchaToken: 'test-token' })
+        .expect(200);
       return { agent: roleAgent, email };
     }
 
