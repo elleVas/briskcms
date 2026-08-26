@@ -1,11 +1,16 @@
 import { describe, expect, it } from 'vitest';
-import { InvalidOrExpiredTokenError, User } from '@brisk/domain-core';
+import {
+  InvalidCaptchaError,
+  InvalidOrExpiredTokenError,
+  User,
+} from '@brisk/domain-core';
 import { requestPasswordReset } from './request-password-reset.use-case.js';
 import { resetPassword } from './reset-password.use-case.js';
 import { InMemoryUserRepository } from './in-memory-repositories.test-fixture.js';
 import { FakeVerificationTokenPort } from './fake-verification-token-port.test-fixture.js';
 import { FakeEmailPort } from './fake-email-port.test-fixture.js';
 import { FakeAuthPort } from './fake-auth-port.test-fixture.js';
+import { FakeCaptchaPort } from './fake-captcha-port.test-fixture.js';
 
 const tenantId = 'tenant-1';
 
@@ -14,6 +19,7 @@ async function setup() {
   const verificationTokenPort = new FakeVerificationTokenPort();
   const emailPort = new FakeEmailPort();
   const authPort = new FakeAuthPort();
+  const captchaPort = new FakeCaptchaPort();
   const user = User.create({
     id: 'user-1',
     tenantId,
@@ -23,7 +29,14 @@ async function setup() {
     role: 'admin',
   });
   await userRepository.save(user);
-  return { userRepository, verificationTokenPort, emailPort, authPort, user };
+  return {
+    userRepository,
+    verificationTokenPort,
+    emailPort,
+    authPort,
+    captchaPort,
+    user,
+  };
 }
 
 describe('requestPasswordReset', () => {
@@ -34,6 +47,7 @@ describe('requestPasswordReset', () => {
       tenantId,
       email: 'lele@example.com',
       resetUrlBase: 'https://editor.example.com/',
+      captchaToken: 'valid-token',
     });
 
     expect(deps.emailPort.sentEmails).toHaveLength(1);
@@ -50,8 +64,27 @@ describe('requestPasswordReset', () => {
         tenantId,
         email: 'nobody@example.com',
         resetUrlBase: 'https://editor.example.com/',
+        captchaToken: 'valid-token',
       }),
     ).resolves.toBeUndefined();
+    expect(deps.emailPort.sentEmails).toHaveLength(0);
+  });
+
+  // Security review 2026-08-24, point 13: without this, a single IP stays
+  // under the per-IP rate limit while still mailing hundreds of reset
+  // emails per hour to one victim. Checked before the user lookup, so it
+  // rejects a known AND an unknown email identically — no enumeration leak.
+  it('rejects a missing/invalid CAPTCHA token before even looking up the account', async () => {
+    const deps = await setup();
+
+    await expect(
+      requestPasswordReset(deps, {
+        tenantId,
+        email: 'lele@example.com',
+        resetUrlBase: 'https://editor.example.com/',
+        captchaToken: '',
+      }),
+    ).rejects.toThrow(InvalidCaptchaError);
     expect(deps.emailPort.sentEmails).toHaveLength(0);
   });
 });

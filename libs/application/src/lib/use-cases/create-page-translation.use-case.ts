@@ -5,14 +5,10 @@ import {
   PageSlugAlreadyExistsError,
   PageTranslationAlreadyExistsError,
 } from '@brisk/domain-core';
-import type {
-  PageRepositoryPort,
-  PageVersionRepositoryPort,
-} from '@brisk/ports';
+import type { PageRepositoryPort } from '@brisk/ports';
 
 export interface CreatePageTranslationDeps {
   pageRepository: PageRepositoryPort;
-  pageVersionRepository: PageVersionRepositoryPort;
 }
 
 export interface CreatePageTranslationInput {
@@ -95,8 +91,7 @@ export async function createPageTranslation(
     content: source.content,
   });
 
-  await deps.pageRepository.save(translation);
-  await deps.pageVersionRepository.save({
+  await deps.pageRepository.saveWithVersion(translation, {
     id: randomUUID(),
     tenantId: translation.tenantId,
     pageId: translation.id,

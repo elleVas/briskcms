@@ -22,7 +22,13 @@ const instanceStyle = buildBlockInstanceStyle(styleOverride);
   pictured.length > 0 ? (
     <div class="brisk-logo-strip" style={instanceStyle}>
       {pictured.map((logo) => (
-        <img src={logo.media.url} alt={logo.alt} class="brisk-logo-strip__logo" />
+        <img
+          src={logo.media.url}
+          alt={logo.alt}
+          class="brisk-logo-strip__logo"
+          loading="lazy"
+          decoding="async"
+        />
       ))}
     </div>
   ) : (

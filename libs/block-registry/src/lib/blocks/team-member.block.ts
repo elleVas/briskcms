@@ -1,7 +1,8 @@
 import type { TeamMemberProps } from '@brisk/shared-types';
 import { BLOCK_STYLE_DEFAULTS } from '@brisk/shared-types';
-import { customField, type BlockDescriptor } from '../field-types.js';
+import { FieldBuilder, type BlockDescriptor } from '../field-types.js';
 import { MediaPickerField } from '../fields/media-picker-field.js';
+import { BlockStyleRegistry } from '../block-style-registry.js';
 
 export const teamMemberBlock: BlockDescriptor<TeamMemberProps> = {
   type: 'TeamMember',
@@ -14,17 +15,11 @@ export const teamMemberBlock: BlockDescriptor<TeamMemberProps> = {
     bio: '',
   },
   fields: [
-    customField('photo', 'Foto', MediaPickerField),
+    FieldBuilder.custom('photo', 'Foto', MediaPickerField),
     { kind: 'text', key: 'name', label: 'Nome', inlineEditable: true },
     { kind: 'text', key: 'role', label: 'Ruolo', inlineEditable: true },
     { kind: 'textarea', key: 'bio', label: 'Bio', inlineEditable: true },
   ],
-  stylableProperties: [
-    'backgroundColor',
-    'textColor',
-    'borderRadius',
-    'paddingX',
-    'paddingY',
-  ],
+  stylableProperties: BlockStyleRegistry.STANDARD,
   defaultStyle: BLOCK_STYLE_DEFAULTS.TeamMember,
 };

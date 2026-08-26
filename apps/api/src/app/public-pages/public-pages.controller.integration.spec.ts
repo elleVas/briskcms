@@ -1,6 +1,8 @@
 import { randomUUID } from 'node:crypto';
 import { type INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
+import { HttpExceptionFilter } from '../http-exception.filter.js';
+import { requestIdMiddleware } from '../request-id.middleware.js';
 import cookieParser from 'cookie-parser';
 import request from 'supertest';
 import type { AuthPort } from '@brisk/ports';
@@ -45,6 +47,8 @@ describe('PublicPagesController (integration)', () => {
 
     app = moduleRef.createNestApplication();
     app.use(cookieParser());
+    app.useGlobalFilters(new HttpExceptionFilter());
+    app.use(requestIdMiddleware);
     await app.init();
     db = app.get<BriskDb>(DATABASE);
 
@@ -78,7 +82,10 @@ describe('PublicPagesController (integration)', () => {
     userId = user.id;
 
     agent = request.agent(app.getHttpServer());
-    await agent.post('/auth/login').send({ email, password }).expect(200);
+    await agent
+      .post('/auth/login')
+      .send({ email, password, captchaToken: 'test-token' })
+      .expect(200);
   });
 
   afterAll(async () => {
@@ -306,6 +313,55 @@ describe('PublicPagesController (integration)', () => {
       .get('/public/pages/by-slug')
       .query({ domain, locale: 'it', slug: 'non-esiste-proprio' })
       .expect(404);
+  });
+
+  // Regression: this is exactly the "fallback linguistico ingannevole" the
+  // security review flagged — untranslatedPageFallback defaults to
+  // 'redirect-to-default' (schema.ts), but nothing consumed it for direct
+  // navigation/crawlers, only the language switcher (which needs a page to
+  // already be found). A locale never enabled on this test site still
+  // resolves the fallback: it's a same-slug/default-locale lookup, not
+  // gated on enabledLocales (that list only decides what the switcher
+  // renders as a link).
+  it('404s with the default-locale fallback in the body for a locale that was never translated', async () => {
+    const createRes = await agent
+      .post('/pages')
+      .send({
+        siteId,
+        groupId: randomUUID(),
+        locale: 'it',
+        slug: 'chi-siamo-fallback',
+        seoMeta: { title: 'Chi siamo', description: '' },
+      })
+      .expect(201);
+    await agent
+      .patch(`/pages/${createRes.body.id}/draft`)
+      .send({ content: [{ type: 'Hero', props: { title: 'Ciao' } }] })
+      .expect(200);
+    await agent.post(`/pages/${createRes.body.id}/publish`).expect(201);
+
+    const res = await request(app.getHttpServer())
+      .get('/public/pages/by-slug')
+      .query({ domain, locale: 'en', slug: 'chi-siamo-fallback' })
+      .expect(404);
+
+    expect(res.body.fallback).toEqual({
+      locale: 'it',
+      slug: 'chi-siamo-fallback',
+    });
+  });
+
+  it('404s with fallback: null when there is no default-locale page with that slug either', async () => {
+    const res = await request(app.getHttpServer())
+      .get('/public/pages/by-slug')
+      .query({
+        domain,
+        locale: 'en',
+        slug: 'davvero-non-esiste-da-nessuna-parte',
+      })
+      .expect(404);
+
+    expect(res.body.fallback).toBeNull();
   });
 
   it('404s for a domain that does not match any site', async () => {

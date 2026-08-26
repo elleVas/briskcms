@@ -435,7 +435,11 @@
     "style": {
       "editType": "Style all {{type}} blocks",
       "editTypeHint": "These values apply to EVERY {{type}} block on the site.",
-      "editInstance": "Style this block"
+      "editInstance": "Style this block",
+      "saveError": "Couldn't save the style. Try again."
     }
+  },
+  "toast": {
+    "dismiss": "Dismiss notification"
   }
 }

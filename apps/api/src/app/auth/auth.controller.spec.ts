@@ -3,6 +3,7 @@ import type { Request, Response } from 'express';
 import { User } from '@brisk/domain-core';
 import type {
   AuthPort,
+  CaptchaPort,
   EmailPort,
   Session,
   UserRepositoryPort,
@@ -42,6 +43,7 @@ describe('AuthController', () => {
   let authPort: jest.Mocked<AuthPort>;
   let verificationTokenPort: jest.Mocked<VerificationTokenPort>;
   let emailPort: jest.Mocked<EmailPort>;
+  let captchaPort: jest.Mocked<CaptchaPort>;
   let controller: AuthController;
 
   beforeEach(() => {
@@ -66,11 +68,14 @@ describe('AuthController', () => {
     emailPort = {
       sendEmail: jest.fn(),
     };
+    // Passes by default — the captcha-specific tests below override it.
+    captchaPort = { verify: jest.fn().mockResolvedValue(true) };
     controller = new AuthController(
       userRepository,
       authPort,
       verificationTokenPort,
       emailPort,
+      captchaPort,
       tenantId,
       editorAppUrl,
     );
@@ -98,7 +103,11 @@ describe('AuthController', () => {
       const response = buildResponse();
 
       const result = await controller.login(
-        { email: 'lele@example.com', password: 'correct' },
+        {
+          email: 'lele@example.com',
+          password: 'correct',
+          captchaToken: 'valid-token',
+        },
         response,
       );
 
@@ -116,10 +125,50 @@ describe('AuthController', () => {
 
       await expect(
         controller.login(
-          { email: 'nobody@example.com', password: 'irrelevant' },
+          {
+            email: 'nobody@example.com',
+            password: 'irrelevant',
+            captchaToken: 'valid-token',
+          },
           response,
         ),
       ).rejects.toThrow(UnauthorizedException);
+      expect(response.cookie).not.toHaveBeenCalled();
+    });
+
+    it('maps a deactivated account to the same generic 401 as bad credentials (no enumeration)', async () => {
+      const user = User.create({
+        id: 'user-1',
+        tenantId,
+        email: 'lele@example.com',
+        displayName: 'Lele',
+        passwordHash: 'hashed',
+        role: 'admin',
+        isActive: false,
+      });
+      userRepository.findByEmail.mockResolvedValue(user);
+      authPort.verifyPassword.mockResolvedValue(true);
+      const response = buildResponse();
+
+      let caught: unknown;
+      try {
+        await controller.login(
+          {
+            email: 'lele@example.com',
+            password: 'correct',
+            captchaToken: 'valid-token',
+          },
+          response,
+        );
+      } catch (error) {
+        caught = error;
+      }
+
+      expect(caught).toBeInstanceOf(UnauthorizedException);
+      expect((caught as UnauthorizedException).message).toBe(
+        'Invalid email or password',
+      );
+      expect(authPort.createSession).not.toHaveBeenCalled();
       expect(response.cookie).not.toHaveBeenCalled();
     });
 
@@ -129,10 +178,32 @@ describe('AuthController', () => {
 
       await expect(
         controller.login(
-          { email: 'lele@example.com', password: 'irrelevant' },
+          {
+            email: 'lele@example.com',
+            password: 'irrelevant',
+            captchaToken: 'valid-token',
+          },
           response,
         ),
       ).rejects.toThrow('db exploded');
+    });
+
+    it('maps InvalidCaptchaError to a 400, before even looking up the account', async () => {
+      captchaPort.verify.mockResolvedValue(false);
+      const response = buildResponse();
+
+      await expect(
+        controller.login(
+          {
+            email: 'lele@example.com',
+            password: 'correct',
+            captchaToken: 'bad-token',
+          },
+          response,
+        ),
+      ).rejects.toThrow(BadRequestException);
+      expect(userRepository.findByEmail).not.toHaveBeenCalled();
+      expect(response.cookie).not.toHaveBeenCalled();
     });
   });
 
@@ -251,10 +322,23 @@ describe('AuthController', () => {
 
       const result = await controller.requestPasswordReset({
         email: 'nobody@example.com',
+        captchaToken: 'valid-token',
       });
 
       expect(result).toEqual({ success: true });
       expect(emailPort.sendEmail).not.toHaveBeenCalled();
+    });
+
+    it('maps InvalidCaptchaError to a 400, before even looking up the account', async () => {
+      captchaPort.verify.mockResolvedValue(false);
+
+      await expect(
+        controller.requestPasswordReset({
+          email: 'lele@example.com',
+          captchaToken: 'bad-token',
+        }),
+      ).rejects.toThrow(BadRequestException);
+      expect(userRepository.findByEmail).not.toHaveBeenCalled();
     });
   });
 

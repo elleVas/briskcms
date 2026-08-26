@@ -1,6 +1,6 @@
 ---
 import { getPublishedPageBySlug } from '../../lib/public-api-client.js';
-import { localePathFromAncestors } from '../../lib/locale-path.js';
+import { localePath, localePathFromAncestors } from '../../lib/locale-path.js';
 import PublicPageContent from '../../components/PublicPageContent.astro';
 
 // A dynamic route ([locale]/[...slug]) with no getStaticPaths() is
@@ -24,10 +24,26 @@ const requestedPath = Astro.params.slug ?? '';
 const segments = requestedPath.split('/').filter(Boolean);
 const ownSlug = segments.at(-1);
 
-const page =
+const result =
   locale && ownSlug
     ? await getPublishedPageBySlug(Astro.url.hostname, locale, ownSlug)
     : null;
+
+// Direct navigation/old link/crawler on a (locale, slug) never translated —
+// `untranslatedPageFallback: 'redirect-to-default'` promises visitors land
+// somewhere instead of a bare 404 (the language switcher already does this
+// once a page IS found; this is the same promise for when it never loads
+// in the first place). `redirect-to-default`/no fallback available both
+// still end in a real 404, same as before this existed.
+if (result && !result.found && result.fallback) {
+  return Astro.redirect(
+    localePath(result.fallback.locale, result.fallback.slug) +
+      Astro.url.search,
+    302,
+  );
+}
+
+const page = result?.found ? result.page : null;
 
 if (!page) {
   Astro.response.status = 404;

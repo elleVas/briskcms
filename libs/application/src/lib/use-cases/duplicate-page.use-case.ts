@@ -4,14 +4,10 @@ import {
   PageNotFoundError,
   PageSlugAlreadyExistsError,
 } from '@brisk/domain-core';
-import type {
-  PageRepositoryPort,
-  PageVersionRepositoryPort,
-} from '@brisk/ports';
+import type { PageRepositoryPort } from '@brisk/ports';
 
 export interface DuplicatePageDeps {
   pageRepository: PageRepositoryPort;
-  pageVersionRepository: PageVersionRepositoryPort;
 }
 
 export interface DuplicatePageInput {
@@ -71,8 +67,7 @@ export async function duplicatePage(
     content: source.content,
   });
 
-  await deps.pageRepository.save(duplicate);
-  await deps.pageVersionRepository.save({
+  await deps.pageRepository.saveWithVersion(duplicate, {
     id: randomUUID(),
     tenantId: duplicate.tenantId,
     pageId: duplicate.id,

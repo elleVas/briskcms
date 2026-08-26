@@ -49,6 +49,16 @@ export interface PublishedPageDto {
   headerSticky: boolean;
 }
 
+/** Dove mandare il visitatore quando (locale, slug) non ha una pagina pubblicata — vedi resolveUntranslatedPageFallback lato applicazione. */
+export interface UntranslatedPageFallbackTargetDto {
+  locale: string;
+  slug: string;
+}
+
+export type PublishedPageLookupResult =
+  | { found: true; page: PublishedPageDto }
+  | { found: false; fallback: UntranslatedPageFallbackTargetDto | null };
+
 // process.env, not import.meta.env: this must read the real deployment's
 // value at request time (Node adapter, SSR), not whatever was baked in at
 // build time — one built image serves whichever domains its env points at.
@@ -56,30 +66,72 @@ function apiUrl(): string {
   return process.env['API_URL'] ?? 'http://localhost:3000/api';
 }
 
+// Security review 2026-08-24, point 18: without this, a hung apps/api
+// (pool exhausted, a slow query) blocked the Node worker rendering this
+// request indefinitely — in SSR (astro.config.mjs's output:'server') that
+// worker serves other visitors too, not just this one request.
+const DEFAULT_TIMEOUT_MS = 20_000;
+
+/**
+ * Not exported — an injected collaborator private to this module, not a
+ * general-purpose "fetch helper". Every one of the 10 functions below owns
+ * its own response interpretation (404-collapses-to-null, `{ ok, status }`
+ * discriminated results, differing error message prefixes); this class
+ * owns only the one thing they genuinely share: applying the timeout and
+ * turning `AbortSignal.timeout()`'s `DOMException` into a readable error.
+ */
+class TimedFetcher {
+  async fetch(url: string, init?: RequestInit): Promise<Response> {
+    try {
+      return await fetch(url, {
+        ...init,
+        signal: AbortSignal.timeout(DEFAULT_TIMEOUT_MS),
+      });
+    } catch (error) {
+      if (error instanceof DOMException && error.name === 'TimeoutError') {
+        throw new Error(`Public API request timed out: ${url}`);
+      }
+      throw error;
+    }
+  }
+}
+
+const timedFetcher = new TimedFetcher();
+
 /**
  * Talks to the public, unauthenticated endpoint only (see
  * apps/api/src/app/public-pages) — never the authenticated CRUD one
- * editor-app uses. A 404 here means "nothing to show" (no page, or a page
- * that's still a draft — the API deliberately doesn't distinguish the two,
- * see that module's own comments), not an error.
+ * editor-app uses. A 404 here means "nothing to show at this exact
+ * (locale, slug)" (no page, or a page that's still a draft — the API
+ * deliberately doesn't distinguish the two, see that module's own
+ * comments), not an error — `found: false` still carries an optional
+ * `fallback` (a sibling page in the site's default locale, only when the
+ * site is configured for it) that the caller decides whether to redirect
+ * to. See resolveUntranslatedPageFallback in @brisk/application.
  */
 export async function getPublishedPageBySlug(
   domain: string,
   locale: string,
   slug: string,
-): Promise<PublishedPageDto | null> {
+): Promise<PublishedPageLookupResult> {
   const params = new URLSearchParams({ domain, locale, slug });
-  const res = await fetch(
+  const res = await timedFetcher.fetch(
     `${apiUrl()}/public/pages/by-slug?${params.toString()}`,
   );
 
   if (res.status === 404) {
-    return null;
+    const body: unknown = await res.json().catch(() => null);
+    const fallback =
+      body && typeof body === 'object' && 'fallback' in body
+        ? ((body as { fallback: UntranslatedPageFallbackTargetDto | null })
+            .fallback ?? null)
+        : null;
+    return { found: false, fallback };
   }
   if (!res.ok) {
     throw new Error(`Public pages API error: ${res.status}`);
   }
-  return res.json();
+  return { found: true, page: await res.json() };
 }
 
 /**
@@ -94,7 +146,7 @@ export async function getPreviewPageById(
   token: string,
 ): Promise<PublishedPageDto | null> {
   const params = new URLSearchParams({ token });
-  const res = await fetch(
+  const res = await timedFetcher.fetch(
     `${apiUrl()}/public/pages/${pageId}/preview?${params.toString()}`,
   );
 
@@ -125,7 +177,7 @@ export async function getPublishedSiteChrome(
   locale: string,
 ): Promise<PublishedSiteChromeDto | null> {
   const params = new URLSearchParams({ domain, locale });
-  const res = await fetch(
+  const res = await timedFetcher.fetch(
     `${apiUrl()}/public/pages/chrome?${params.toString()}`,
   );
 
@@ -155,7 +207,9 @@ export async function listPublishedPageTree(
   locale: string,
 ): Promise<PageTreeNodeDto[]> {
   const params = new URLSearchParams({ domain, locale });
-  const res = await fetch(`${apiUrl()}/public/pages/tree?${params.toString()}`);
+  const res = await timedFetcher.fetch(
+    `${apiUrl()}/public/pages/tree?${params.toString()}`,
+  );
 
   if (!res.ok) {
     throw new Error(`Public pages API error: ${res.status}`);
@@ -194,7 +248,9 @@ export async function listPublishedPagesForSitemap(
   domain: string,
 ): Promise<SitemapListingDto> {
   const params = new URLSearchParams({ domain });
-  const res = await fetch(`${apiUrl()}/public/pages?${params.toString()}`);
+  const res = await timedFetcher.fetch(
+    `${apiUrl()}/public/pages?${params.toString()}`,
+  );
 
   if (!res.ok) {
     throw new Error(`Public pages API error: ${res.status}`);
@@ -215,7 +271,7 @@ export async function searchPublishedPages(
   query: string,
 ): Promise<SearchResultDto[]> {
   const params = new URLSearchParams({ domain, locale, q: query });
-  const res = await fetch(
+  const res = await timedFetcher.fetch(
     `${apiUrl()}/public/pages/search?${params.toString()}`,
   );
 
@@ -243,7 +299,7 @@ export interface PublicFormDto {
 export async function getPublicForm(
   formId: string,
 ): Promise<PublicFormDto | null> {
-  const res = await fetch(`${apiUrl()}/public/forms/${formId}`);
+  const res = await timedFetcher.fetch(`${apiUrl()}/public/forms/${formId}`);
   if (res.status === 404) {
     return null;
   }
@@ -274,10 +330,10 @@ export async function uploadFormAttachment(
 ): Promise<UploadedFormAttachment> {
   const body = new FormData();
   body.append('file', file, file.name);
-  const res = await fetch(`${apiUrl()}/public/forms/${formId}/attachments`, {
-    method: 'POST',
-    body,
-  });
+  const res = await timedFetcher.fetch(
+    `${apiUrl()}/public/forms/${formId}/attachments`,
+    { method: 'POST', body },
+  );
   if (!res.ok) {
     throw new Error(`Public forms API error: ${res.status}`);
   }
@@ -299,11 +355,14 @@ export async function submitPublicForm(
   formId: string,
   input: SubmitPublicFormInput,
 ): Promise<SubmitPublicFormResult> {
-  const res = await fetch(`${apiUrl()}/public/forms/${formId}/submissions`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(input),
-  });
+  const res = await timedFetcher.fetch(
+    `${apiUrl()}/public/forms/${formId}/submissions`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(input),
+    },
+  );
   if (res.ok) {
     return { ok: true };
   }
@@ -323,11 +382,14 @@ export type SubscribeNewsletterResult =
 export async function subscribeNewsletter(
   input: SubscribeNewsletterInput,
 ): Promise<SubscribeNewsletterResult> {
-  const res = await fetch(`${apiUrl()}/public/newsletter/subscribe`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(input),
-  });
+  const res = await timedFetcher.fetch(
+    `${apiUrl()}/public/newsletter/subscribe`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(input),
+    },
+  );
   if (res.ok) {
     return { ok: true };
   }

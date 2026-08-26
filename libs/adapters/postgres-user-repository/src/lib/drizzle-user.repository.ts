@@ -1,11 +1,24 @@
-import { and, count, desc, eq } from 'drizzle-orm';
-import { User, type UserProps } from '@brisk/domain-core';
+import { and, eq } from 'drizzle-orm';
+import {
+  User,
+  UserEmailAlreadyExistsError,
+  type UserProps,
+} from '@brisk/domain-core';
 import type {
   PaginatedResult,
   Pagination,
   UserRepositoryPort,
 } from '@brisk/ports';
-import { type BriskDb, users, withTenant } from '@brisk/postgres-db';
+import {
+  DrizzlePaginatedRepository,
+  type BriskDb,
+  type BriskTx,
+  isUniqueViolation,
+  users,
+  withTenant,
+} from '@brisk/postgres-db';
+
+const EMAIL_UNIQUE_CONSTRAINT = 'users_tenant_id_email_unique';
 
 function toRow(props: UserProps) {
   return {
@@ -26,28 +39,46 @@ function fromRow(row: typeof users.$inferSelect): User {
 }
 
 /** Connects as `brisk_app` — see docs/adr/0002-non-superuser-role-for-rls-enforcement.md. */
-export class DrizzleUserRepository implements UserRepositoryPort {
-  constructor(private readonly db: BriskDb) {}
+export class DrizzleUserRepository
+  extends DrizzlePaginatedRepository<typeof users.$inferSelect, User>
+  implements UserRepositoryPort
+{
+  protected readonly table = users;
+  protected readonly idColumn = users.id;
+  protected readonly tenantIdColumn = users.tenantId;
 
-  async save(user: User): Promise<void> {
-    const row = toRow(user.toProps());
-    await withTenant(this.db, row.tenantId, (tx) =>
-      tx
-        .insert(users)
-        .values(row)
-        .onConflictDoUpdate({ target: users.id, set: row }),
-    );
+  constructor(db: BriskDb) {
+    super(db);
   }
 
-  async findById(tenantId: string, userId: string): Promise<User | null> {
-    const rows = await withTenant(this.db, tenantId, (tx) =>
-      tx
-        .select()
-        .from(users)
-        .where(and(eq(users.tenantId, tenantId), eq(users.id, userId)))
-        .limit(1),
-    );
-    return rows[0] ? fromRow(rows[0]) : null;
+  protected toRow(user: User) {
+    return toRow(user.toProps());
+  }
+
+  protected fromRow(row: typeof users.$inferSelect): User {
+    return fromRow(row);
+  }
+
+  /**
+   * `onConflictDoUpdate` copre solo un conflitto sulla PK (`id`, un UUID
+   * appena generato) — un conflitto sull'UNIQUE(tenant_id, email) risale
+   * comunque come `PostgresError` grezzo sotto concorrenza reale (due
+   * inviti/registrazioni quasi simultanee sulla stessa email superano
+   * entrambe il check-then-act dell'use-case). Tradotto nello stesso errore
+   * di dominio che l'use-case già lancia nel caso comune.
+   */
+  override async save(user: User): Promise<void> {
+    const row = this.toRow(user);
+    try {
+      await withTenant(this.db, row.tenantId, (tx: BriskTx) =>
+        this.upsertTx(tx, row),
+      );
+    } catch (error) {
+      if (isUniqueViolation(error, EMAIL_UNIQUE_CONSTRAINT)) {
+        throw new UserEmailAlreadyExistsError(row.email);
+      }
+      throw error;
+    }
   }
 
   async findByEmail(tenantId: string, email: string): Promise<User | null> {
@@ -66,19 +97,11 @@ export class DrizzleUserRepository implements UserRepositoryPort {
     tenantId: string,
     pagination: Pagination,
   ): Promise<PaginatedResult<User>> {
-    const tenantScope = eq(users.tenantId, tenantId);
-    const [rows, [{ total }]] = await withTenant(this.db, tenantId, (tx) =>
-      Promise.all([
-        tx
-          .select()
-          .from(users)
-          .where(tenantScope)
-          .orderBy(desc(users.createdAt))
-          .limit(pagination.pageSize)
-          .offset((pagination.page - 1) * pagination.pageSize),
-        tx.select({ total: count() }).from(users).where(tenantScope),
-      ]),
+    return this.listPaginatedTx(
+      tenantId,
+      eq(users.tenantId, tenantId),
+      users.createdAt,
+      pagination,
     );
-    return { items: rows.map(fromRow), total };
   }
 }

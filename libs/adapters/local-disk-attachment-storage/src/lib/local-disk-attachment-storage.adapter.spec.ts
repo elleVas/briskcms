@@ -32,6 +32,7 @@ describe('LocalDiskAttachmentStorageAdapter', () => {
     const result = await adapter.upload({
       filename: 'cv.pdf',
       mimeType: 'application/pdf',
+      extension: 'pdf',
       data,
     });
 
@@ -51,11 +52,13 @@ describe('LocalDiskAttachmentStorageAdapter', () => {
     const result1 = await adapter.upload({
       filename: 'note.txt',
       mimeType: 'text/plain',
+      extension: 'txt',
       data,
     });
     const result2 = await adapter.upload({
       filename: 'note.txt',
       mimeType: 'text/plain',
+      extension: 'txt',
       data,
     });
 

@@ -1,5 +1,4 @@
 import { randomUUID } from 'node:crypto';
-import { extname } from 'node:path';
 import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import type {
   AttachmentStoragePort,
@@ -36,7 +35,7 @@ export class S3AttachmentStorageAdapter implements AttachmentStoragePort {
   }
 
   async upload(input: UploadAttachmentInput): Promise<UploadAttachmentResult> {
-    const storageKey = `attachments/${randomUUID()}${extname(input.filename)}`;
+    const storageKey = `attachments/${randomUUID()}.${input.extension}`;
     await this.client.send(
       new PutObjectCommand({
         Bucket: this.options.bucket,

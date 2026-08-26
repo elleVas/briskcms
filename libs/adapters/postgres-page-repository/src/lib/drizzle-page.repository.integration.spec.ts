@@ -1,6 +1,10 @@
 import { randomUUID } from 'node:crypto';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { Page } from '@brisk/domain-core';
+import {
+  Page,
+  PageSlugAlreadyExistsError,
+  PageTranslationAlreadyExistsError,
+} from '@brisk/domain-core';
 import {
   type BriskDb,
   createAppDb,
@@ -299,5 +303,96 @@ describe('DrizzlePageRepository (integration)', () => {
       groupId,
     );
     expect(foundFromOtherTenant).toHaveLength(0);
+  });
+
+  // Regression: the check-then-act in createPage/createPageTranslation isn't
+  // atomic — under real concurrency the second insert must still fail with
+  // the right domain error at the DB level, not a raw PostgresError. This
+  // simulates the race by skipping the use-case's own check entirely and
+  // saving two conflicting pages directly.
+  it('save() rejects a second page with the same tenant/site/locale/slug with PageSlugAlreadyExistsError', async () => {
+    const first = buildPage({ slug: 'stessa-slug' });
+    await pageRepository.save(first);
+
+    const second = buildPage({ slug: 'stessa-slug' });
+    await expect(pageRepository.save(second)).rejects.toThrow(
+      PageSlugAlreadyExistsError,
+    );
+  });
+
+  it('save() rejects a second page in the same tenant/site/group with an already-used locale with PageTranslationAlreadyExistsError', async () => {
+    const groupId = randomUUID();
+    const first = buildPage({ groupId, locale: 'it' });
+    await pageRepository.save(first);
+
+    const second = buildPage({ groupId, locale: 'it' });
+    await expect(pageRepository.save(second)).rejects.toThrow(
+      PageTranslationAlreadyExistsError,
+    );
+  });
+
+  describe('saveWithVersion', () => {
+    it('saves the page and its version together', async () => {
+      const page = buildPage({
+        content: [{ type: 'Hero', props: { title: 'v1' } }],
+      });
+      const versionId = randomUUID();
+
+      await pageRepository.saveWithVersion(page, {
+        id: versionId,
+        tenantId: tenantAId,
+        pageId: page.id,
+        content: page.content,
+        createdBy: null,
+        createdAt: page.updatedAt,
+      });
+
+      const foundPage = await pageRepository.findById(tenantAId, page.id);
+      expect(foundPage?.id).toBe(page.id);
+      const versions = await pageVersionRepository.listByPage(
+        tenantAId,
+        page.id,
+      );
+      expect(versions.map((v) => v.id)).toEqual([versionId]);
+    });
+
+    it('maps a slug conflict to PageSlugAlreadyExistsError, same as save()', async () => {
+      const first = buildPage({ slug: 'stessa-slug-with-version' });
+      await pageRepository.save(first);
+
+      const second = buildPage({ slug: 'stessa-slug-with-version' });
+      await expect(
+        pageRepository.saveWithVersion(second, {
+          id: randomUUID(),
+          tenantId: tenantAId,
+          pageId: second.id,
+          content: second.content,
+          createdBy: null,
+          createdAt: second.updatedAt,
+        }),
+      ).rejects.toThrow(PageSlugAlreadyExistsError);
+    });
+
+    // The regression this method exists to fix: page+version must commit
+    // atomically. Forced here by pointing the version at a page id that
+    // doesn't exist, which trips page_versions' FK on page_id — if the two
+    // writes weren't in the same transaction, the page upsert above would
+    // still have committed even though the whole call rejects.
+    it('rolls back the page save too when the version insert fails', async () => {
+      const page = buildPage();
+
+      await expect(
+        pageRepository.saveWithVersion(page, {
+          id: randomUUID(),
+          tenantId: tenantAId,
+          pageId: randomUUID(),
+          content: page.content,
+          createdBy: null,
+          createdAt: page.updatedAt,
+        }),
+      ).rejects.toThrow();
+
+      expect(await pageRepository.findById(tenantAId, page.id)).toBeNull();
+    });
   });
 });

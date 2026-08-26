@@ -37,8 +37,25 @@ import type {
 export class InMemoryPageRepository implements PageRepositoryPort {
   private pages = new Map<string, Page>();
 
+  /**
+   * Il repository delle versioni è un collaboratore opzionale, non un
+   * secondo store interno — `saveWithVersion` deve scrivere nello STESSO
+   * `InMemoryPageVersionRepository` che il test costruisce e interroga
+   * (`listByPage`/`findById`), altrimenti la versione "sparirebbe" agli
+   * occhi delle asserzioni pur essendo stata scritta. Rispecchia
+   * `DrizzlePageRepository.saveWithVersion`, che scrive nella stessa
+   * tabella `page_versions` di `DrizzlePageVersionRepository`, solo nella
+   * stessa transazione invece che nello stesso Map.
+   */
+  constructor(private readonly versionRepository?: PageVersionRepositoryPort) {}
+
   async save(page: Page): Promise<void> {
     this.pages.set(page.id, page);
+  }
+
+  async saveWithVersion(page: Page, version: PageVersion): Promise<void> {
+    this.pages.set(page.id, page);
+    await this.versionRepository?.save(version);
   }
 
   async findById(tenantId: string, pageId: string): Promise<Page | null> {

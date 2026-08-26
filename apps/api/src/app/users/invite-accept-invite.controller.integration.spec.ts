@@ -1,6 +1,8 @@
 import { randomUUID } from 'node:crypto';
 import { type INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
+import { HttpExceptionFilter } from '../http-exception.filter.js';
+import { requestIdMiddleware } from '../request-id.middleware.js';
 import cookieParser from 'cookie-parser';
 import request from 'supertest';
 import type { AuthPort } from '@brisk/ports';
@@ -68,6 +70,8 @@ describe('Invite -> accept-invite (integration)', () => {
 
     app = moduleRef.createNestApplication();
     app.use(cookieParser());
+    app.useGlobalFilters(new HttpExceptionFilter());
+    app.use(requestIdMiddleware);
     await app.init();
     db = app.get<BriskDb>(DATABASE);
 
@@ -91,7 +95,10 @@ describe('Invite -> accept-invite (integration)', () => {
     createdUserIds.push(admin.id);
 
     adminAgent = request.agent(app.getHttpServer());
-    await adminAgent.post('/auth/login').send({ email, password }).expect(200);
+    await adminAgent
+      .post('/auth/login')
+      .send({ email, password, captchaToken: 'test-token' })
+      .expect(200);
   });
 
   afterAll(async () => {
@@ -133,7 +140,11 @@ describe('Invite -> accept-invite (integration)', () => {
 
     const loginRes = await request(app.getHttpServer())
       .post('/auth/login')
-      .send({ email: inviteeEmail, password: newPassword })
+      .send({
+        email: inviteeEmail,
+        password: newPassword,
+        captchaToken: 'test-token',
+      })
       .expect(200);
     expect(loginRes.body.userId).toBe(inviteRes.body.id);
   });
@@ -190,7 +201,7 @@ describe('Invite -> accept-invite (integration)', () => {
     const editorAgent = request.agent(app.getHttpServer());
     await editorAgent
       .post('/auth/login')
-      .send({ email: editorEmail, password })
+      .send({ email: editorEmail, password, captchaToken: 'test-token' })
       .expect(200);
 
     await editorAgent

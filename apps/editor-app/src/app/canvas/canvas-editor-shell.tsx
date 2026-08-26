@@ -22,6 +22,7 @@ import { GlobalStylesDialog } from '../global-styles-dialog.js';
 import { IconButton } from '../icon-button.js';
 import { LogoutButton } from '../logout-button.js';
 import { siteQueryOptions } from '../site-queries.js';
+import { useToast } from '../toast-provider.js';
 import { useSiteThemeTokens } from '../use-site-theme-tokens.js';
 import { BlockPicker, type BlockPickerCategory } from './block-picker.js';
 import { BlockToolbarOverlay } from './block-toolbar-overlay.js';
@@ -137,6 +138,7 @@ export function CanvasEditorShell({
   children,
 }: CanvasEditorShellProps) {
   const { t } = useTranslation();
+  const { toast } = useToast();
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const bridge = usePreviewBridge(iframeRef, PUBLIC_SITE_URL);
   const iframeGeometry = useIframeGeometry(iframeRef);
@@ -453,27 +455,37 @@ export function CanvasEditorShell({
    * blocco selezionato) e la nuova modale "Stile globale" (qualunque tipo
    * scelto dalla lista, senza bisogno di una sua istanza sul canvas).
    */
+  /**
+   * Cattura l'errore qui, non nei chiamanti (handleChangeTypeStyle sotto,
+   * e global-styles-dialog.tsx che la invoca via `onSaveTypeStyle`): un
+   * solo punto per mostrare il toast invece di duplicarlo in entrambi i
+   * chiamanti. Non rilancia — il canvas resta con l'ultimo CSS buono
+   * finché il prossimo salvataggio non ritenta, invariato rispetto a
+   * prima; l'unica differenza è che ora l'utente lo sa.
+   */
   async function saveTypeStyle(
     blockType: string,
     style: BlockStyleOverride,
   ): Promise<void> {
-    const updated = await updateThemeTokens({ blockType, style });
-    // Aggiorna subito il <style> dentro l'iframe (docs/adr/0022) — senza
-    // questo, ogni istanza già visibile di quel tipo resterebbe con
-    // l'aspetto vecchio finché l'iframe non ricarica, anche se il
-    // salvataggio è già andato a buon fine.
-    bridge.updateBlockStyleCss(
-      buildBlockStyleOverridesCss(updated.themeTokens?.blockStyles ?? {}),
-    );
+    try {
+      const updated = await updateThemeTokens({ blockType, style });
+      // Aggiorna subito il <style> dentro l'iframe (docs/adr/0022) — senza
+      // questo, ogni istanza già visibile di quel tipo resterebbe con
+      // l'aspetto vecchio finché l'iframe non ricarica, anche se il
+      // salvataggio è già andato a buon fine.
+      bridge.updateBlockStyleCss(
+        buildBlockStyleOverridesCss(updated.themeTokens?.blockStyles ?? {}),
+      );
+    } catch {
+      toast(t('canvas.style.saveError'), 'destructive');
+    }
   }
 
   function handleChangeTypeStyle(style: BlockStyleOverride): void {
     if (!selectedDescriptor) {
       return;
     }
-    saveTypeStyle(selectedDescriptor.type, style).catch(() => {
-      /* la mutation stessa espone già isSaving/errori a chi la invoca — nessun fallback qui, il canvas resta con l'ultimo CSS buono finché il prossimo salvataggio non ritenta. */
-    });
+    void saveTypeStyle(selectedDescriptor.type, style);
   }
 
   /**

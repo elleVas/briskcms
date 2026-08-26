@@ -12,6 +12,7 @@ import { createTestQueryClient } from '../test-query-client.js';
 import { pagesQueryOptions } from './pages-queries.js';
 import { siteLayoutSectionQueryOptions } from './site-layout-sections-queries.js';
 import { SiteLayoutSectionEditorView } from './site-layout-section-editor-view.js';
+import { ToastProvider } from './toast-provider.js';
 
 vi.mock('@tanstack/react-router', async (importOriginal) => {
   const actual =
@@ -110,7 +111,13 @@ function renderView(
   return render(
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <SiteLayoutSectionEditorView siteId="site-1" locale="it" kind={kind} />
+        <ToastProvider>
+          <SiteLayoutSectionEditorView
+            siteId="site-1"
+            locale="it"
+            kind={kind}
+          />
+        </ToastProvider>
       </TooltipProvider>
     </QueryClientProvider>,
   );

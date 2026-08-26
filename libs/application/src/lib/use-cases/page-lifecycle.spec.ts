@@ -17,8 +17,8 @@ describe('page lifecycle: create -> draft -> publish -> rollback', () => {
   const otherTenantId = 'tenant-2';
 
   function setup() {
-    const pageRepository = new InMemoryPageRepository();
     const pageVersionRepository = new InMemoryPageVersionRepository();
+    const pageRepository = new InMemoryPageRepository(pageVersionRepository);
     const searchPort = new InMemorySearchPort();
     return { pageRepository, pageVersionRepository, searchPort };
   }

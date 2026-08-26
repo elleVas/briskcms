@@ -13,6 +13,9 @@
     "typecheck": "astro check"
   },
   "nx": {
+    "tags": [
+      "app"
+    ],
     "targets": {
       "typecheck": {
         "executor": "nx:run-commands",

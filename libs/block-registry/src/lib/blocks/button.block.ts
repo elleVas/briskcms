@@ -1,8 +1,8 @@
 import type { ButtonProps } from '@brisk/shared-types';
 import { BLOCK_STYLE_DEFAULTS } from '@brisk/shared-types';
-import { customField, type BlockDescriptor } from '../field-types.js';
-import { linkTypeField } from '../fields/link-type-field.js';
-import { PagePickerField } from '../fields/page-picker-field.js';
+import type { BlockDescriptor } from '../field-types.js';
+import { BlockStyleRegistry } from '../block-style-registry.js';
+import { ctaLinkFields } from '../fields/link-type-field.js';
 
 export const buttonBlock: BlockDescriptor<ButtonProps> = {
   type: 'Button',
@@ -17,9 +17,7 @@ export const buttonBlock: BlockDescriptor<ButtonProps> = {
   },
   fields: [
     { kind: 'text', key: 'label', label: 'Testo', inlineEditable: true },
-    linkTypeField,
-    customField('page', 'Pagina', PagePickerField),
-    { kind: 'text', key: 'url', label: 'URL' },
+    ...ctaLinkFields(),
     {
       kind: 'radio',
       key: 'variant',
@@ -33,12 +31,6 @@ export const buttonBlock: BlockDescriptor<ButtonProps> = {
   // Colore/bordi/padding — editabili per TUTTI i Button del sito (pulsante
   // "Stile" nella toolbar) o solo per questa istanza (popover sul blocco
   // selezionato), docs/adr/0022. Sostituisce il vecchio `colorOverride`.
-  stylableProperties: [
-    'backgroundColor',
-    'textColor',
-    'borderRadius',
-    'paddingX',
-    'paddingY',
-  ],
+  stylableProperties: BlockStyleRegistry.STANDARD,
   defaultStyle: BLOCK_STYLE_DEFAULTS.Button,
 };

@@ -80,11 +80,12 @@ describe('public-api-client', () => {
       expect.stringContaining(
         '/public/pages/by-slug?domain=example.com&locale=it&slug=chi-siamo',
       ),
+      expect.objectContaining({ signal: expect.anything() }),
     );
-    expect(result).toEqual(samplePage);
+    expect(result).toEqual({ found: true, page: samplePage });
   });
 
-  it('returns null on a 404 instead of throwing', async () => {
+  it('returns found: false with no fallback on a plain 404 instead of throwing', async () => {
     vi.mocked(fetch).mockResolvedValue(
       jsonResponse({ message: 'Not Found' }, 404),
     );
@@ -95,7 +96,24 @@ describe('public-api-client', () => {
       'non-esiste',
     );
 
-    expect(result).toBeNull();
+    expect(result).toEqual({ found: false, fallback: null });
+  });
+
+  it('surfaces the fallback locale/slug from a 404 body when the site redirects untranslated pages', async () => {
+    vi.mocked(fetch).mockResolvedValue(
+      jsonResponse({ fallback: { locale: 'it', slug: 'chi-siamo' } }, 404),
+    );
+
+    const result = await getPublishedPageBySlug(
+      'example.com',
+      'en',
+      'chi-siamo',
+    );
+
+    expect(result).toEqual({
+      found: false,
+      fallback: { locale: 'it', slug: 'chi-siamo' },
+    });
   });
 
   it('throws on any other non-ok response', async () => {
@@ -121,6 +139,7 @@ describe('public-api-client', () => {
       expect.stringContaining(
         '/public/pages/chrome?domain=example.com&locale=it',
       ),
+      expect.objectContaining({ signal: expect.anything() }),
     );
     expect(result).toEqual(chrome);
   });
@@ -161,6 +180,7 @@ describe('public-api-client', () => {
       expect.stringContaining(
         '/public/pages/tree?domain=example.com&locale=it',
       ),
+      expect.objectContaining({ signal: expect.anything() }),
     );
     expect(result).toEqual(items);
   });
@@ -194,6 +214,7 @@ describe('public-api-client', () => {
 
     expect(fetch).toHaveBeenCalledWith(
       expect.stringContaining('/public/pages?domain=example.com'),
+      expect.objectContaining({ signal: expect.anything() }),
     );
     expect(result).toEqual({
       items,
@@ -218,6 +239,7 @@ describe('public-api-client', () => {
 
     expect(fetch).toHaveBeenCalledWith(
       expect.stringContaining('/public/forms/form-1'),
+      expect.objectContaining({ signal: expect.anything() }),
     );
     expect(result).toEqual(form);
   });
@@ -324,5 +346,26 @@ describe('public-api-client', () => {
     });
 
     expect(result).toEqual({ ok: false, status: 400 });
+  });
+
+  // Security review 2026-08-24, point 18: simulates what AbortSignal.timeout()
+  // produces when a hung apps/api never responds — a rejecting fetch, not a
+  // hanging one, is what actually protects the SSR worker.
+  it('throws a clear timeout error instead of a raw AbortError when the request times out', async () => {
+    vi.mocked(fetch).mockRejectedValue(
+      new DOMException('The operation was aborted.', 'TimeoutError'),
+    );
+
+    await expect(
+      getPublishedPageBySlug('example.com', 'it', 'chi-siamo'),
+    ).rejects.toThrow(/timed out/i);
+  });
+
+  it('lets a non-timeout fetch failure propagate unchanged', async () => {
+    vi.mocked(fetch).mockRejectedValue(new TypeError('Failed to fetch'));
+
+    await expect(
+      getPublishedPageBySlug('example.com', 'it', 'chi-siamo'),
+    ).rejects.toThrow('Failed to fetch');
   });
 });

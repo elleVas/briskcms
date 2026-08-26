@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { User } from '@brisk/domain-core';
+import { User, UserEmailAlreadyExistsError } from '@brisk/domain-core';
 import {
   type BriskDb,
   createAppDb,
@@ -98,5 +98,21 @@ describe('DrizzleUserRepository (integration)', () => {
     expect(
       await userRepository.findByEmail(tenantAId, 'nobody@example.com'),
     ).toBeNull();
+  });
+
+  // Regression: inviteUser's check-then-act isn't atomic — under real
+  // concurrency (two near-simultaneous invites to the same email) the
+  // second insert must still fail with the domain error, not a raw
+  // PostgresError. Simulated here by skipping the use-case's own check
+  // entirely and saving two users with the same email directly.
+  it('save() rejects a second user with the same tenant/email with UserEmailAlreadyExistsError', async () => {
+    const email = `duplicate-${randomUUID()}@example.com`;
+    const first = buildUser({ email });
+    await userRepository.save(first);
+
+    const second = buildUser({ email });
+    await expect(userRepository.save(second)).rejects.toThrow(
+      UserEmailAlreadyExistsError,
+    );
   });
 });

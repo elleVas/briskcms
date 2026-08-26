@@ -7,6 +7,7 @@ import './styles.css';
 import { TooltipProvider } from './components/ui/tooltip.js';
 import { ApiError } from './lib/http-client.js';
 import { routeTree } from './routeTree.gen';
+import { ToastProvider } from './app/toast-provider.js';
 import { applyTheme, getInitialTheme } from './theme.js';
 
 // Applied before the first render, not inside a component — otherwise the
@@ -48,7 +49,9 @@ root.render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <RouterProvider router={router} />
+        <ToastProvider>
+          <RouterProvider router={router} />
+        </ToastProvider>
       </TooltipProvider>
     </QueryClientProvider>
   </StrictMode>,

@@ -1,6 +1,7 @@
 import type { AccordionItemProps } from '@brisk/shared-types';
 import { BLOCK_STYLE_DEFAULTS } from '@brisk/shared-types';
 import type { BlockDescriptor } from '../field-types.js';
+import { BlockStyleRegistry } from '../block-style-registry.js';
 
 export const accordionItemBlock: BlockDescriptor<AccordionItemProps> = {
   type: 'AccordionItem',
@@ -19,12 +20,6 @@ export const accordionItemBlock: BlockDescriptor<AccordionItemProps> = {
       inlineEditable: true,
     },
   ],
-  stylableProperties: [
-    'backgroundColor',
-    'textColor',
-    'borderRadius',
-    'paddingX',
-    'paddingY',
-  ],
+  stylableProperties: BlockStyleRegistry.STANDARD,
   defaultStyle: BLOCK_STYLE_DEFAULTS.AccordionItem,
 };

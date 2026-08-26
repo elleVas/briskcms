@@ -1,7 +1,6 @@
 import type { LinkProps } from '@brisk/shared-types';
-import { customField, type BlockDescriptor } from '../field-types.js';
-import { linkTypeField } from '../fields/link-type-field.js';
-import { PagePickerField } from '../fields/page-picker-field.js';
+import type { BlockDescriptor } from '../field-types.js';
+import { ctaLinkFields } from '../fields/link-type-field.js';
 
 export const linkBlock: BlockDescriptor<LinkProps> = {
   type: 'Link',
@@ -15,8 +14,6 @@ export const linkBlock: BlockDescriptor<LinkProps> = {
   },
   fields: [
     { kind: 'text', key: 'label', label: 'Testo', inlineEditable: true },
-    linkTypeField,
-    customField('page', 'Pagina', PagePickerField),
-    { kind: 'text', key: 'url', label: 'URL' },
+    ...ctaLinkFields(),
   ],
 };

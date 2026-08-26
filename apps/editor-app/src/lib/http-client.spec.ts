@@ -79,4 +79,30 @@ describe('http-client', () => {
     >;
     expect(headers['Content-Type']).toBeUndefined();
   });
+
+  it('passes an AbortSignal, so a hung backend eventually rejects instead of leaving the caller stuck forever', async () => {
+    vi.mocked(fetch).mockResolvedValue(jsonResponse({}));
+
+    await request('/anything');
+
+    const signal = vi.mocked(fetch).mock.calls[0][1]?.signal;
+    expect(signal).toBeInstanceOf(AbortSignal);
+  });
+
+  // Security review 2026-08-24, point 18: this is the exact failure mode
+  // that motivated the fix — simulates what the browser produces when
+  // AbortSignal.timeout() actually fires on a hung request.
+  it('throws a clear timeout error instead of a raw AbortError when the request times out', async () => {
+    vi.mocked(fetch).mockRejectedValue(
+      new DOMException('The operation was aborted.', 'TimeoutError'),
+    );
+
+    await expect(request('/slow')).rejects.toThrow(/timed out/i);
+  });
+
+  it('lets a non-timeout fetch failure (e.g. offline) propagate unchanged', async () => {
+    vi.mocked(fetch).mockRejectedValue(new TypeError('Failed to fetch'));
+
+    await expect(request('/anything')).rejects.toThrow('Failed to fetch');
+  });
 });

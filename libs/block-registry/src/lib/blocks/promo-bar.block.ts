@@ -1,8 +1,8 @@
 import type { PromoBarProps } from '@brisk/shared-types';
 import { BLOCK_STYLE_DEFAULTS } from '@brisk/shared-types';
-import { customField, type BlockDescriptor } from '../field-types.js';
-import { linkTypeField } from '../fields/link-type-field.js';
-import { PagePickerField } from '../fields/page-picker-field.js';
+import type { BlockDescriptor } from '../field-types.js';
+import { BlockStyleRegistry } from '../block-style-registry.js';
+import { ctaLinkFields } from '../fields/link-type-field.js';
 import { visibilityField } from '../fields/visibility-field.js';
 
 export const promoBarBlock: BlockDescriptor<PromoBarProps> = {
@@ -23,18 +23,10 @@ export const promoBarBlock: BlockDescriptor<PromoBarProps> = {
       label: 'Messaggio',
       inlineEditable: true,
     },
-    linkTypeField,
-    customField('page', 'Pagina', PagePickerField),
-    { kind: 'text', key: 'url', label: 'URL' },
+    ...ctaLinkFields(),
     visibilityField,
   ],
   // Sostituisce il vecchio `colorOverride` — vedi button.block.ts.
-  stylableProperties: [
-    'backgroundColor',
-    'textColor',
-    'borderRadius',
-    'paddingX',
-    'paddingY',
-  ],
+  stylableProperties: BlockStyleRegistry.STANDARD,
   defaultStyle: BLOCK_STYLE_DEFAULTS.PromoBar,
 };

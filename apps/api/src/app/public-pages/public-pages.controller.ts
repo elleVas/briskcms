@@ -14,6 +14,7 @@ import {
   getPublishedSiteChrome,
   listPublishedPagesForSitemap,
   listPublishedPageTree,
+  resolveUntranslatedPageFallback,
   searchPages,
 } from '@brisk/application';
 import type {
@@ -95,7 +96,25 @@ export class PublicPagesController {
     // there's no way for this handler to tell them apart even if it wanted
     // to (see the use case's own comment on why that's deliberate).
     if (!result) {
-      throw new NotFoundException();
+      // Direct navigation/old link/crawler on a (locale, slug) that was
+      // never translated — the language switcher can't help here, it only
+      // computes a fallback once a page IS found. `fallback` is `null` when
+      // there's nowhere better to send the visitor (site set to
+      // 'not-available', or the default-locale page doesn't exist either):
+      // apps/public-site renders a real 404 in that case, same as today.
+      const fallback = await resolveUntranslatedPageFallback(
+        {
+          siteRepository: this.siteRepository,
+          pageRepository: this.pageRepository,
+        },
+        {
+          tenantId: this.defaultTenantId,
+          domain: query.domain,
+          locale: query.locale,
+          slug: query.slug,
+        },
+      );
+      throw new NotFoundException({ fallback });
     }
     return result;
   }

@@ -1,9 +1,9 @@
 import type { PricingPlanProps } from '@brisk/shared-types';
 import { BLOCK_STYLE_DEFAULTS } from '@brisk/shared-types';
-import { customField, type BlockDescriptor } from '../field-types.js';
+import { FieldBuilder, type BlockDescriptor } from '../field-types.js';
+import { BlockStyleRegistry } from '../block-style-registry.js';
 import { FeatureListField } from '../fields/feature-list-field.js';
-import { linkTypeField } from '../fields/link-type-field.js';
-import { PagePickerField } from '../fields/page-picker-field.js';
+import { ctaLinkFields } from '../fields/link-type-field.js';
 
 export const pricingPlanBlock: BlockDescriptor<PricingPlanProps> = {
   type: 'PricingPlan',
@@ -24,7 +24,7 @@ export const pricingPlanBlock: BlockDescriptor<PricingPlanProps> = {
     { kind: 'text', key: 'name', label: 'Nome piano', inlineEditable: true },
     { kind: 'text', key: 'price', label: 'Prezzo', inlineEditable: true },
     { kind: 'text', key: 'period', label: 'Periodo', inlineEditable: true },
-    customField('features', 'Caratteristiche', FeatureListField),
+    FieldBuilder.custom('features', 'Caratteristiche', FeatureListField),
     // Sostituisce il radio a valori booleani di Puck (options con
     // value: true/false) — un toggle si adatta meglio a un flag binario.
     { kind: 'boolean', key: 'highlighted', label: 'In evidenza' },
@@ -34,16 +34,8 @@ export const pricingPlanBlock: BlockDescriptor<PricingPlanProps> = {
       label: 'Testo bottone',
       inlineEditable: true,
     },
-    linkTypeField,
-    customField('page', 'Pagina', PagePickerField),
-    { kind: 'text', key: 'url', label: 'URL' },
+    ...ctaLinkFields(),
   ],
-  stylableProperties: [
-    'backgroundColor',
-    'textColor',
-    'borderRadius',
-    'paddingX',
-    'paddingY',
-  ],
+  stylableProperties: BlockStyleRegistry.STANDARD,
   defaultStyle: BLOCK_STYLE_DEFAULTS.PricingPlan,
 };

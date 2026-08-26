@@ -1,6 +1,8 @@
 import { randomUUID } from 'node:crypto';
 import { type INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
+import { HttpExceptionFilter } from '../http-exception.filter.js';
+import { requestIdMiddleware } from '../request-id.middleware.js';
 import cookieParser from 'cookie-parser';
 import request from 'supertest';
 import type { AuthPort, UserRepositoryPort } from '@brisk/ports';
@@ -48,6 +50,8 @@ describe('PagesController (integration)', () => {
 
     app = moduleRef.createNestApplication();
     app.use(cookieParser());
+    app.useGlobalFilters(new HttpExceptionFilter());
+    app.use(requestIdMiddleware);
     await app.init();
     db = app.get<BriskDb>(DATABASE);
 
@@ -78,7 +82,10 @@ describe('PagesController (integration)', () => {
     createdUserIds.push(user.id);
 
     agent = request.agent(app.getHttpServer());
-    await agent.post('/auth/login').send({ email, password }).expect(200);
+    await agent
+      .post('/auth/login')
+      .send({ email, password, captchaToken: 'test-token' })
+      .expect(200);
   });
 
   afterAll(async () => {
@@ -418,6 +425,29 @@ describe('PagesController (integration)', () => {
     await agent.delete(`/pages/${randomUUID()}`).expect(404);
   });
 
+  // Security review 2026-08-24, point 14: every response, success or
+  // error, must carry a request id — the whole point is to correlate what
+  // a client saw with the matching HttpExceptionFilter log line after the
+  // fact, real HTTP round-trip through the full stack (middleware + global
+  // filter), not just the filter's own unit test against a fake host.
+  it('tags every response with an X-Request-Id, echoed inside a 404 error body too', async () => {
+    const okRes = await agent.get(`/pages/${randomUUID()}`);
+    expect(okRes.status).toBe(404);
+    const requestId = okRes.headers['x-request-id'];
+    expect(typeof requestId).toBe('string');
+    expect(requestId.length).toBeGreaterThan(0);
+    expect(okRes.body.requestId).toBe(requestId);
+  });
+
+  it('reuses an inbound X-Request-Id instead of generating a new one, for cross-service correlation', async () => {
+    const res = await agent
+      .get(`/pages/${randomUUID()}`)
+      .set('X-Request-Id', 'caller-supplied-id-123');
+
+    expect(res.headers['x-request-id']).toBe('caller-supplied-id-123');
+    expect(res.body.requestId).toBe('caller-supplied-id-123');
+  });
+
   it('401s without a session cookie', async () => {
     await request(app.getHttpServer())
       .get(`/pages/${randomUUID()}`)
@@ -445,7 +475,10 @@ describe('PagesController (integration)', () => {
       );
       createdUserIds.push(roleUser.id);
       const roleAgent = request.agent(app.getHttpServer());
-      await roleAgent.post('/auth/login').send({ email, password }).expect(200);
+      await roleAgent
+        .post('/auth/login')
+        .send({ email, password, captchaToken: 'test-token' })
+        .expect(200);
       return { agent: roleAgent, email };
     }
 

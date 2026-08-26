@@ -10,3 +10,4 @@ export * from './lib/entities/form-submission.js';
 export * from './lib/errors.js';
 export * from './lib/verification-token-purpose.js';
 export * from './lib/preview-content-type.js';
+export * from './lib/attachment-type-sniffer.js';

@@ -3,6 +3,12 @@ import { z } from 'zod';
 export const loginBodySchema = z.object({
   email: z.string().email(),
   password: z.string().min(1),
+  // Default to '', not required: an empty token is a real user input (the
+  // client-side Turnstile widget failing to load/render), not a malformed
+  // request — same convention as public-forms, and it lets the use-case's
+  // own InvalidCaptchaError produce the right domain-mapped error instead
+  // of a raw zod validation 400.
+  captchaToken: z.string().default(''),
 });
 export type LoginBody = z.infer<typeof loginBodySchema>;
 
@@ -13,6 +19,7 @@ export type VerifyEmailBody = z.infer<typeof verifyEmailBodySchema>;
 
 export const requestPasswordResetBodySchema = z.object({
   email: z.string().email(),
+  captchaToken: z.string().default(''),
 });
 export type RequestPasswordResetBody = z.infer<
   typeof requestPasswordResetBodySchema

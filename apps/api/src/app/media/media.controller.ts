@@ -6,7 +6,6 @@ import {
   Get,
   HttpCode,
   Inject,
-  NotFoundException,
   Param,
   Post,
   Query,
@@ -17,11 +16,7 @@ import {
 import { FileInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
 import { deleteMedia, listMedia, uploadMedia } from '@brisk/application';
-import {
-  type Media,
-  MediaNotFoundError,
-  UnsupportedMediaTypeError,
-} from '@brisk/domain-core';
+import { type Media } from '@brisk/domain-core';
 import type {
   MediaRepositoryPort,
   MediaStoragePort,
@@ -86,35 +81,31 @@ export class MediaController {
     if (!file) {
       throw new BadRequestException('No file uploaded');
     }
-    return this.handleDomainErrors(async () => {
-      const media = await uploadMedia(
-        {
-          mediaRepository: this.mediaRepository,
-          mediaStorage: this.mediaStorage,
-        },
-        {
-          tenantId: this.tenantContext.getCurrentTenantId(),
-          siteId: body.siteId,
-          filename: file.originalname,
-          mimeType: file.mimetype,
-          data: file.buffer,
-        },
-      );
-      return this.toDto(media);
-    });
+    const media = await uploadMedia(
+      {
+        mediaRepository: this.mediaRepository,
+        mediaStorage: this.mediaStorage,
+      },
+      {
+        tenantId: this.tenantContext.getCurrentTenantId(),
+        siteId: body.siteId,
+        filename: file.originalname,
+        mimeType: file.mimetype,
+        data: file.buffer,
+      },
+    );
+    return this.toDto(media);
   }
 
   @Delete(':id')
   @HttpCode(204)
   async delete(@Param('id') id: string): Promise<void> {
-    return this.handleDomainErrors(() =>
-      deleteMedia(
-        {
-          mediaRepository: this.mediaRepository,
-          mediaStorage: this.mediaStorage,
-        },
-        { tenantId: this.tenantContext.getCurrentTenantId(), mediaId: id },
-      ),
+    await deleteMedia(
+      {
+        mediaRepository: this.mediaRepository,
+        mediaStorage: this.mediaStorage,
+      },
+      { tenantId: this.tenantContext.getCurrentTenantId(), mediaId: id },
     );
   }
 
@@ -123,19 +114,5 @@ export class MediaController {
       ...media.toProps(),
       url: this.mediaStorage.getUrl(media.storageKey),
     };
-  }
-
-  private async handleDomainErrors<T>(fn: () => Promise<T>): Promise<T> {
-    try {
-      return await fn();
-    } catch (error) {
-      if (error instanceof MediaNotFoundError) {
-        throw new NotFoundException(error.message);
-      }
-      if (error instanceof UnsupportedMediaTypeError) {
-        throw new BadRequestException(error.message);
-      }
-      throw error;
-    }
   }
 }

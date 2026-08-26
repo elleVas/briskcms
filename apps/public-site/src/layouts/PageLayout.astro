@@ -228,6 +228,7 @@ const blockStyleOverridesCss = buildBlockStyleOverridesCss(
 		{theme.headScript && <Fragment set:html={theme.headScript} />}
 	</head>
 	<body data-brisk-editor-app-url={editable ? editorAppUrl() : undefined}>
+		<a href="#main-content" class="brisk-skip-link">Vai al contenuto principale</a>
 		{
 			header && (
 				<header
@@ -291,6 +292,26 @@ const blockStyleOverridesCss = buildBlockStyleOverridesCss(
 </html>
 
 <style>
+	/* WCAG 2.4.1 Bypass Blocks — invisibile finché non riceve focus da
+	   tastiera (primo elemento del body, prima di header/nav), poi si
+	   posiziona in vista. Punta a #main-content, l'id che ogni contenuto
+	   slottato in questo layout deve portare sul proprio <main> reale
+	   (PublicPageContent.astro, search.astro). */
+	.brisk-skip-link {
+		position: absolute;
+		top: -100%;
+		left: 0.5rem;
+		z-index: 100;
+		padding: 0.5rem 1rem;
+		background: var(--background);
+		color: var(--foreground);
+		border: 1px solid var(--border);
+		border-radius: 0.25rem;
+	}
+	.brisk-skip-link:focus {
+		top: 0.5rem;
+	}
+
 	/* Configurable per (site, locale) — editor-app's "Fisso durante lo
 	   scroll" toggle on the Header editor (docs/adr/0018 follow-up). A
 	   z-index high enough to sit above ordinary page content, but not

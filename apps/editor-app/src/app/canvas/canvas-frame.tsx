@@ -51,9 +51,13 @@ export function buildPreviewUrl(
  * Giorno 2) — un token di preview nuovo ad ogni mount/cambio pagina (TTL
  * corto, non pensato per sopravvivere a lungo), poi l'overlay di
  * hover/selezione sopra, alimentato dal bridge del chiamante.
- * `allow-same-origin` nel sandbox è sicuro qui perché apps/public-site è
- * sempre un'origine diversa da editor-app (mai lo stesso host:porta) —
- * concede all'iframe la PROPRIA origine, non quella del genitore.
+ * Niente `allow-same-origin` nel sandbox: il contenuto renderizzato qui
+ * dentro include blocchi/script inseriti da utenti della piattaforma
+ * (non fidati), quindi `allow-scripts` da solo li lascia girare ma con
+ * un'origine opaca — combinato ad `allow-same-origin` neutralizzerebbe la
+ * sandbox stessa. La comunicazione col genitore resta comunque intatta:
+ * passa solo via postMessage (vedi use-preview-bridge.ts), che non
+ * richiede same-origin.
  */
 export function CanvasFrame({
   pageId,
@@ -105,7 +109,7 @@ export function CanvasFrame({
             src={src}
             title={t('canvas.previewFrameTitle')}
             className="h-full w-full border-0"
-            sandbox="allow-scripts allow-same-origin allow-forms"
+            sandbox="allow-scripts allow-forms"
           />
         )}
         <OverlayLayer

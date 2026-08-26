@@ -124,7 +124,14 @@ export function usePreviewBridge(
 
   useEffect(() => {
     function handleMessage(event: MessageEvent): void {
-      if (event.origin !== expectedOrigin) {
+      // L'iframe è sandboxato senza `allow-same-origin` (contiene blocchi
+      // inseriti da utenti della piattaforma, non fidati) — la sua origine
+      // è quindi opaca e ogni messaggio in uscita da lì arriva con
+      // `event.origin === 'null'`, mai l'origine reale di public-site.
+      // La sicurezza del check resta comunque garantita dal confronto di
+      // identità sotto (`event.source`), che individua quell'iframe
+      // preciso indipendentemente dalla stringa origin.
+      if (event.origin !== expectedOrigin && event.origin !== 'null') {
         return;
       }
       if (event.source !== iframeRef.current?.contentWindow) {
@@ -236,10 +243,15 @@ export function usePreviewBridge(
           type: 'editor:patch-block',
           payload: { blockId, html },
         },
-        expectedOrigin,
+        // Non `expectedOrigin`: l'iframe è sandboxato senza `allow-same-origin`
+        // (vedi handleMessage sopra), quindi la sua origine è opaca e non può
+        // mai combaciare con una stringa letterale — bisogna usare `'*'`.
+        // Nessuna perdita di sicurezza: si scrive sul riferimento diretto
+        // `iframeRef.current.contentWindow`, mai su un window "trovato".
+        '*',
       );
     },
-    [iframeRef, expectedOrigin],
+    [iframeRef],
   );
 
   const insertBlock = useCallback(
@@ -251,10 +263,10 @@ export function usePreviewBridge(
           type: 'editor:insert-block',
           payload: { html, parentId, beforeBlockId },
         },
-        expectedOrigin,
+        '*',
       );
     },
-    [iframeRef, expectedOrigin],
+    [iframeRef],
   );
 
   const removeBlock = useCallback(
@@ -266,10 +278,10 @@ export function usePreviewBridge(
           type: 'editor:remove-block',
           payload: { blockId },
         },
-        expectedOrigin,
+        '*',
       );
     },
-    [iframeRef, expectedOrigin],
+    [iframeRef],
   );
 
   const reorderBlocks = useCallback(
@@ -281,10 +293,10 @@ export function usePreviewBridge(
           type: 'editor:reorder-blocks',
           payload: { parentId, orderedIds },
         },
-        expectedOrigin,
+        '*',
       );
     },
-    [iframeRef, expectedOrigin],
+    [iframeRef],
   );
 
   const enterTextEdit = useCallback(
@@ -296,10 +308,10 @@ export function usePreviewBridge(
           type: 'editor:enter-text-edit',
           payload: { blockId, field },
         },
-        expectedOrigin,
+        '*',
       );
     },
-    [iframeRef, expectedOrigin],
+    [iframeRef],
   );
 
   const exitTextEdit = useCallback(() => {
@@ -310,9 +322,9 @@ export function usePreviewBridge(
         type: 'editor:exit-text-edit',
         payload: {},
       },
-      expectedOrigin,
+      '*',
     );
-  }, [iframeRef, expectedOrigin]);
+  }, [iframeRef]);
 
   const selectBlock = useCallback((blockId: string | null) => {
     setState((prev) => ({ ...prev, selectedBlockId: blockId }));
@@ -327,10 +339,10 @@ export function usePreviewBridge(
           type: 'editor:update-block-style-css',
           payload: { css },
         },
-        expectedOrigin,
+        '*',
       );
     },
-    [iframeRef, expectedOrigin],
+    [iframeRef],
   );
 
   return {

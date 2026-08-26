@@ -18,7 +18,6 @@ import {
   listForms,
   updateForm,
 } from '@brisk/application';
-import { FormNotFoundError } from '@brisk/domain-core';
 import type { FormRepositoryPort, TenantContextPort } from '@brisk/ports';
 import { SessionAuthGuard } from '../auth/session-auth.guard.js';
 import { ZodValidationPipe } from '../zod-validation.pipe.js';
@@ -88,38 +87,23 @@ export class FormsController {
     @Param('id') id: string,
     @Body(new ZodValidationPipe(updateFormBodySchema)) body: UpdateFormBody,
   ) {
-    return this.handleDomainErrors(async () => {
-      const form = await updateForm(
-        { formRepository: this.formRepository },
-        {
-          tenantId: this.tenantContext.getCurrentTenantId(),
-          formId: id,
-          ...body,
-        },
-      );
-      return form.toProps();
-    });
+    const form = await updateForm(
+      { formRepository: this.formRepository },
+      {
+        tenantId: this.tenantContext.getCurrentTenantId(),
+        formId: id,
+        ...body,
+      },
+    );
+    return form.toProps();
   }
 
   @Delete(':id')
   @HttpCode(204)
   async delete(@Param('id') id: string): Promise<void> {
-    return this.handleDomainErrors(() =>
-      deleteForm(
-        { formRepository: this.formRepository },
-        { tenantId: this.tenantContext.getCurrentTenantId(), formId: id },
-      ),
+    await deleteForm(
+      { formRepository: this.formRepository },
+      { tenantId: this.tenantContext.getCurrentTenantId(), formId: id },
     );
-  }
-
-  private async handleDomainErrors<T>(fn: () => Promise<T>): Promise<T> {
-    try {
-      return await fn();
-    } catch (error) {
-      if (error instanceof FormNotFoundError) {
-        throw new NotFoundException(error.message);
-      }
-      throw error;
-    }
   }
 }

@@ -1,5 +1,6 @@
 ---
 import { getPublishedPageBySlug } from '../../lib/public-api-client.js';
+import { localePath } from '../../lib/locale-path.js';
 import PublicPageContent from '../../components/PublicPageContent.astro';
 
 export const prerender = false;
@@ -8,9 +9,22 @@ export const prerender = false;
 // "home" within that locale, by convention (docs/adr/0017) — same as the
 // pre-multilingua single-locale "/" did.
 const { locale } = Astro.params;
-const page = locale
+const result = locale
   ? await getPublishedPageBySlug(Astro.url.hostname, locale, 'home')
   : null;
+
+// Same fallback promise as [...slug].astro — an enabled locale with no
+// "home" page yet shouldn't just 404 when the site is set to
+// 'redirect-to-default'.
+if (result && !result.found && result.fallback) {
+  return Astro.redirect(
+    localePath(result.fallback.locale, result.fallback.slug) +
+      Astro.url.search,
+    302,
+  );
+}
+
+const page = result?.found ? result.page : null;
 
 if (!page) {
   Astro.response.status = 404;

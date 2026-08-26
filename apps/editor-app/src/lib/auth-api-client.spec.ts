@@ -24,10 +24,14 @@ describe('auth-api-client', () => {
     vi.unstubAllGlobals();
   });
 
-  it('login posts credentials to the login endpoint', async () => {
+  it('login posts credentials and the captcha token to the login endpoint', async () => {
     vi.mocked(fetch).mockResolvedValue(jsonResponse({ userId: 'user-1' }));
 
-    const result = await login('lele@example.com', 'correct-horse-battery');
+    const result = await login(
+      'lele@example.com',
+      'correct-horse-battery',
+      'captcha-token',
+    );
 
     expect(fetch).toHaveBeenCalledWith(
       expect.stringContaining('/auth/login'),
@@ -37,6 +41,7 @@ describe('auth-api-client', () => {
         body: JSON.stringify({
           email: 'lele@example.com',
           password: 'correct-horse-battery',
+          captchaToken: 'captcha-token',
         }),
       }),
     );
@@ -54,16 +59,19 @@ describe('auth-api-client', () => {
     );
   });
 
-  it('requestPasswordReset posts the email to the request-password-reset endpoint', async () => {
+  it('requestPasswordReset posts the email and captcha token to the request-password-reset endpoint', async () => {
     vi.mocked(fetch).mockResolvedValue(jsonResponse({ success: true }));
 
-    await requestPasswordReset('lele@example.com');
+    await requestPasswordReset('lele@example.com', 'captcha-token');
 
     expect(fetch).toHaveBeenCalledWith(
       expect.stringContaining('/auth/request-password-reset'),
       expect.objectContaining({
         method: 'POST',
-        body: JSON.stringify({ email: 'lele@example.com' }),
+        body: JSON.stringify({
+          email: 'lele@example.com',
+          captchaToken: 'captcha-token',
+        }),
       }),
     );
   });

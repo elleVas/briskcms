@@ -44,8 +44,7 @@ export async function rollbackToVersion(
   }
 
   page.restoreContent(version.content);
-  await deps.pageRepository.save(page);
-  await deps.pageVersionRepository.save({
+  await deps.pageRepository.saveWithVersion(page, {
     id: randomUUID(),
     tenantId: page.tenantId,
     pageId: page.id,

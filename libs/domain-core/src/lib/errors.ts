@@ -144,3 +144,29 @@ export class UnsupportedMediaTypeError extends Error {
     this.name = 'UnsupportedMediaTypeError';
   }
 }
+
+/** Raised by sniffAttachmentType when the real content of a public form
+ * attachment doesn't match anything on the allowlist — see
+ * attachment-type-sniffer.ts for why this exists (security review
+ * 2026-08-25: unauthenticated upload, client-declared extension/MIME
+ * can't be trusted). */
+export class UnsupportedAttachmentTypeError extends Error {
+  constructor(declaredMimeType: string) {
+    super(`Unsupported attachment type: ${declaredMimeType}`);
+    this.name = 'UnsupportedAttachmentTypeError';
+  }
+}
+
+/** Raised by loginUser when the account exists and the password is
+ * correct but the account has been deactivated. Deliberately a distinct
+ * error from InvalidCredentialsError (which is generic on purpose to
+ * avoid user enumeration) — callers that want to preserve that generic
+ * response can still catch both the same way, but the distinct type lets
+ * anything that legitimately needs to tell them apart (e.g. logging) do
+ * so. */
+export class UserNotActiveError extends Error {
+  constructor(userId: string) {
+    super(`User is not active: ${userId}`);
+    this.name = 'UserNotActiveError';
+  }
+}

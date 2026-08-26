@@ -18,6 +18,7 @@ import { TooltipProvider } from '../../components/ui/tooltip.js';
 import { createTestQueryClient } from '../../test-query-client.js';
 import * as blockFragmentApi from '../../lib/block-fragment-api-client.js';
 import * as previewTokenApi from '../../lib/preview-token-api-client.js';
+import { ToastProvider } from '../toast-provider.js';
 import { CanvasEditorShell } from './canvas-editor-shell.js';
 
 vi.mock('@tanstack/react-router', async (importOriginal) => {
@@ -114,16 +115,18 @@ function renderShell(
   const utils = render(
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <CanvasEditorShell
-          backLink={<a href="/pages">Pagine</a>}
-          statusText="Bozza salvata"
-          registry={registry}
-          categories={categories}
-          blocks={blocks}
-          onChange={onChange}
-          onPublish={onPublish}
-          pageId="page-1"
-        />
+        <ToastProvider>
+          <CanvasEditorShell
+            backLink={<a href="/pages">Pagine</a>}
+            statusText="Bozza salvata"
+            registry={registry}
+            categories={categories}
+            blocks={blocks}
+            onChange={onChange}
+            onPublish={onPublish}
+            pageId="page-1"
+          />
+        </ToastProvider>
       </TooltipProvider>
     </QueryClientProvider>,
   );
@@ -287,7 +290,7 @@ describe('CanvasEditorShell', () => {
     await waitFor(() =>
       expect(postMessageSpy).toHaveBeenCalledWith(
         expect.objectContaining({ type: 'editor:patch-block' }),
-        'http://localhost:4321',
+        '*',
       ),
     );
   });
@@ -311,7 +314,7 @@ describe('CanvasEditorShell', () => {
         type: 'editor:remove-block',
         payload: { blockId: 'hero-1' },
       },
-      'http://localhost:4321',
+      '*',
     );
   });
 
@@ -364,12 +367,12 @@ describe('CanvasEditorShell', () => {
             html: '<div data-brisk-block-id="columns-1" data-brisk-block-type="Columns">colonne di nuovo vuote</div>',
           }),
         }),
-        'http://localhost:4321',
+        '*',
       ),
     );
     expect(postMessageSpy).not.toHaveBeenCalledWith(
       expect.objectContaining({ type: 'editor:remove-block' }),
-      'http://localhost:4321',
+      '*',
     );
   });
 
@@ -425,7 +428,7 @@ describe('CanvasEditorShell', () => {
             beforeBlockId: null,
           }),
         }),
-        'http://localhost:4321',
+        '*',
       ),
     );
   });
@@ -453,7 +456,7 @@ describe('CanvasEditorShell', () => {
             beforeBlockId: null,
           }),
         }),
-        'http://localhost:4321',
+        '*',
       ),
     );
   });
@@ -529,7 +532,7 @@ describe('CanvasEditorShell', () => {
             beforeBlockId: null,
           }),
         }),
-        'http://localhost:4321',
+        '*',
       ),
     );
   });
@@ -610,7 +613,7 @@ describe('CanvasEditorShell', () => {
             html: '<div data-brisk-block-id="columns-1" data-brisk-block-type="Columns">colonne aggiornate</div>',
           }),
         }),
-        'http://localhost:4321',
+        '*',
       ),
     );
   });
@@ -673,7 +676,7 @@ describe('CanvasEditorShell', () => {
           type: 'editor:patch-block',
           payload: expect.objectContaining({ blockId: 'columns-1' }),
         }),
-        'http://localhost:4321',
+        '*',
       ),
     );
   });
@@ -753,7 +756,7 @@ describe('CanvasEditorShell', () => {
         type: 'editor:reorder-blocks',
         payload: { parentId: null, orderedIds: ['text-1', 'hero-1'] },
       },
-      'http://localhost:4321',
+      '*',
     );
   });
 
@@ -788,7 +791,7 @@ describe('CanvasEditorShell', () => {
         type: 'editor:enter-text-edit',
         payload: { blockId: 'hero-1', field: 'title' },
       },
-      'http://localhost:4321',
+      '*',
     );
   });
 
@@ -905,7 +908,7 @@ describe('CanvasEditorShell', () => {
           type: 'editor:reorder-blocks',
           payload: { parentId: null, orderedIds: ['text-1', 'hero-1'] },
         },
-        'http://localhost:4321',
+        '*',
       ),
     );
   });
@@ -963,7 +966,7 @@ describe('CanvasEditorShell', () => {
         type: 'editor:exit-text-edit',
         payload: {},
       },
-      'http://localhost:4321',
+      '*',
     );
   });
 });

@@ -164,6 +164,39 @@ describe('usePreviewBridge', () => {
     expect(result.current.hoveredBlockId).toBeNull();
   });
 
+  it("accepts a message with origin 'null' from its own iframe (sandboxed without allow-same-origin, so its origin is opaque)", () => {
+    const { ref, contentWindow } = buildIframeRef();
+    const { result } = renderHook(() => usePreviewBridge(ref, EXPECTED_ORIGIN));
+
+    act(() => {
+      dispatchBridgeMessage(contentWindow, 'null', {
+        source: PREVIEW_BRIDGE_SOURCE,
+        v: PREVIEW_BRIDGE_VERSION,
+        type: 'preview:hover',
+        payload: { blockId: 'hero-1', pointer: { x: 0, y: 0 } },
+      });
+    });
+
+    expect(result.current.hoveredBlockId).toBe('hero-1');
+  });
+
+  it("ignores a message with origin 'null' whose source is NOT this iframe's own contentWindow — the identity check is what keeps the opaque-origin acceptance above safe", () => {
+    const { ref } = buildIframeRef();
+    const someOtherWindow = window;
+    const { result } = renderHook(() => usePreviewBridge(ref, EXPECTED_ORIGIN));
+
+    act(() => {
+      dispatchBridgeMessage(someOtherWindow, 'null', {
+        source: PREVIEW_BRIDGE_SOURCE,
+        v: PREVIEW_BRIDGE_VERSION,
+        type: 'preview:hover',
+        payload: { blockId: 'hero-1', pointer: { x: 0, y: 0 } },
+      });
+    });
+
+    expect(result.current.hoveredBlockId).toBeNull();
+  });
+
   it("ignores a message whose source is not this iframe's own contentWindow", () => {
     const { ref } = buildIframeRef();
     const someOtherWindow = window;
@@ -301,7 +334,7 @@ describe('usePreviewBridge', () => {
     expect(result.current.lastTextChange).not.toBe(first);
   });
 
-  it('enterTextEdit posts editor:enter-text-edit to the iframe, at the expected origin', () => {
+  it('enterTextEdit posts editor:enter-text-edit to the iframe, at "*" (the iframe is sandboxed without allow-same-origin, its origin is opaque)', () => {
     const { ref, contentWindow } = buildIframeRef();
     if (!contentWindow) {
       throw new Error('Test fixture iframe has no contentWindow');
@@ -318,11 +351,11 @@ describe('usePreviewBridge', () => {
         type: 'editor:enter-text-edit',
         payload: { blockId: 'hero-1', field: 'title' },
       },
-      EXPECTED_ORIGIN,
+      '*',
     );
   });
 
-  it('exitTextEdit posts editor:exit-text-edit to the iframe, at the expected origin', () => {
+  it('exitTextEdit posts editor:exit-text-edit to the iframe, at "*" (the iframe is sandboxed without allow-same-origin, its origin is opaque)', () => {
     const { ref, contentWindow } = buildIframeRef();
     if (!contentWindow) {
       throw new Error('Test fixture iframe has no contentWindow');
@@ -339,11 +372,11 @@ describe('usePreviewBridge', () => {
         type: 'editor:exit-text-edit',
         payload: {},
       },
-      EXPECTED_ORIGIN,
+      '*',
     );
   });
 
-  it('patchBlock posts editor:patch-block to the iframe, at the expected origin', () => {
+  it('patchBlock posts editor:patch-block to the iframe, at "*" (the iframe is sandboxed without allow-same-origin, its origin is opaque)', () => {
     const { ref, contentWindow } = buildIframeRef();
     if (!contentWindow) {
       throw new Error('Test fixture iframe has no contentWindow');
@@ -360,11 +393,11 @@ describe('usePreviewBridge', () => {
         type: 'editor:patch-block',
         payload: { blockId: 'hero-1', html: '<div>new</div>' },
       },
-      EXPECTED_ORIGIN,
+      '*',
     );
   });
 
-  it('updateBlockStyleCss posts editor:update-block-style-css to the iframe, at the expected origin', () => {
+  it('updateBlockStyleCss posts editor:update-block-style-css to the iframe, at "*" (the iframe is sandboxed without allow-same-origin, its origin is opaque)', () => {
     const { ref, contentWindow } = buildIframeRef();
     if (!contentWindow) {
       throw new Error('Test fixture iframe has no contentWindow');
@@ -383,11 +416,11 @@ describe('usePreviewBridge', () => {
         type: 'editor:update-block-style-css',
         payload: { css: '.brisk-button { --brisk-override-bg: red; }' },
       },
-      EXPECTED_ORIGIN,
+      '*',
     );
   });
 
-  it('insertBlock posts editor:insert-block to the iframe, at the expected origin', () => {
+  it('insertBlock posts editor:insert-block to the iframe, at "*" (the iframe is sandboxed without allow-same-origin, its origin is opaque)', () => {
     const { ref, contentWindow } = buildIframeRef();
     if (!contentWindow) {
       throw new Error('Test fixture iframe has no contentWindow');
@@ -408,11 +441,11 @@ describe('usePreviewBridge', () => {
           beforeBlockId: 'sibling-1',
         },
       },
-      EXPECTED_ORIGIN,
+      '*',
     );
   });
 
-  it('removeBlock posts editor:remove-block to the iframe, at the expected origin', () => {
+  it('removeBlock posts editor:remove-block to the iframe, at "*" (the iframe is sandboxed without allow-same-origin, its origin is opaque)', () => {
     const { ref, contentWindow } = buildIframeRef();
     if (!contentWindow) {
       throw new Error('Test fixture iframe has no contentWindow');
@@ -429,7 +462,7 @@ describe('usePreviewBridge', () => {
         type: 'editor:remove-block',
         payload: { blockId: 'hero-1' },
       },
-      EXPECTED_ORIGIN,
+      '*',
     );
   });
 
@@ -455,7 +488,7 @@ describe('usePreviewBridge', () => {
     expect(result.current.selectedBlockId).toBeNull();
   });
 
-  it('reorderBlocks posts editor:reorder-blocks to the iframe, at the expected origin', () => {
+  it('reorderBlocks posts editor:reorder-blocks to the iframe, at "*" (the iframe is sandboxed without allow-same-origin, its origin is opaque)', () => {
     const { ref, contentWindow } = buildIframeRef();
     if (!contentWindow) {
       throw new Error('Test fixture iframe has no contentWindow');
@@ -472,7 +505,7 @@ describe('usePreviewBridge', () => {
         type: 'editor:reorder-blocks',
         payload: { parentId: null, orderedIds: ['b', 'a'] },
       },
-      EXPECTED_ORIGIN,
+      '*',
     );
   });
 

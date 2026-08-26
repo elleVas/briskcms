@@ -10,6 +10,8 @@ import {
 } from '../components/ui/card.js';
 import { Input } from '../components/ui/input.js';
 import { Label } from '../components/ui/label.js';
+import { TURNSTILE_SITE_KEY } from '../lib/turnstile-site-key.js';
+import { TurnstileWidget } from './turnstile-widget.js';
 import { useForgotPasswordRequest } from './use-forgot-password-request.js';
 
 export interface ForgotPasswordFormProps {
@@ -21,10 +23,14 @@ export function ForgotPasswordForm({ onBackToLogin }: ForgotPasswordFormProps) {
   const { requestReset, isSubmitting } = useForgotPasswordRequest();
   const [email, setEmail] = useState('');
   const [sent, setSent] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
-    await requestReset(email);
+    if (!captchaToken) {
+      return;
+    }
+    await requestReset(email, captchaToken);
     setSent(true);
   }
 
@@ -67,7 +73,15 @@ export function ForgotPasswordForm({ onBackToLogin }: ForgotPasswordFormProps) {
                   required
                 />
               </div>
-              <Button type="submit" disabled={isSubmitting} className="w-full">
+              <TurnstileWidget
+                siteKey={TURNSTILE_SITE_KEY}
+                onToken={setCaptchaToken}
+              />
+              <Button
+                type="submit"
+                disabled={isSubmitting || !captchaToken}
+                className="w-full"
+              >
                 {isSubmitting
                   ? t('auth.forgotPassword.submitPending')
                   : t('auth.forgotPassword.submitIdle')}

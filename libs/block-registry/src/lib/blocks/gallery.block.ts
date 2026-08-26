@@ -1,5 +1,5 @@
 import type { GalleryProps } from '@brisk/shared-types';
-import { customField, type BlockDescriptor } from '../field-types.js';
+import { FieldBuilder, type BlockDescriptor } from '../field-types.js';
 import { GalleryPickerField } from '../fields/gallery-picker-field.js';
 
 export const galleryBlock: BlockDescriptor<GalleryProps> = {
@@ -9,5 +9,5 @@ export const galleryBlock: BlockDescriptor<GalleryProps> = {
   defaultProps: {
     images: [],
   },
-  fields: [customField('images', 'Immagini', GalleryPickerField)],
+  fields: [FieldBuilder.custom('images', 'Immagini', GalleryPickerField)],
 };

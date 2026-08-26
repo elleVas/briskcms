@@ -13,6 +13,11 @@
     "db:seed": "pnpm run db:seed-tenant && pnpm run db:seed-user",
     "db:backfill-block-ids": "dotenv -e ../../../.env -- tsx scripts/backfill-block-ids.ts"
   },
+  "nx": {
+    "tags": [
+      "adapter"
+    ]
+  },
   "exports": {
     ".": {
       "types": "./src/index.ts",

@@ -1,5 +1,5 @@
 import type { BeforeAfterProps } from '@brisk/shared-types';
-import { customField, type BlockDescriptor } from '../field-types.js';
+import { FieldBuilder, type BlockDescriptor } from '../field-types.js';
 import { MediaPickerField } from '../fields/media-picker-field.js';
 
 export const beforeAfterBlock: BlockDescriptor<BeforeAfterProps> = {
@@ -13,8 +13,8 @@ export const beforeAfterBlock: BlockDescriptor<BeforeAfterProps> = {
     afterLabel: 'Dopo',
   },
   fields: [
-    customField('beforeImage', 'Immagine "prima"', MediaPickerField),
-    customField('afterImage', 'Immagine "dopo"', MediaPickerField),
+    FieldBuilder.custom('beforeImage', 'Immagine "prima"', MediaPickerField),
+    FieldBuilder.custom('afterImage', 'Immagine "dopo"', MediaPickerField),
     {
       kind: 'text',
       key: 'beforeLabel',

@@ -1,14 +1,10 @@
 import { randomUUID } from 'node:crypto';
 import { Page, PageNotFoundError } from '@brisk/domain-core';
 import type { PageContent } from '@brisk/shared-types';
-import type {
-  PageRepositoryPort,
-  PageVersionRepositoryPort,
-} from '@brisk/ports';
+import type { PageRepositoryPort } from '@brisk/ports';
 
 export interface SaveDraftDeps {
   pageRepository: PageRepositoryPort;
-  pageVersionRepository: PageVersionRepositoryPort;
 }
 
 export interface SaveDraftInput {
@@ -28,8 +24,7 @@ export async function saveDraft(
   }
 
   page.saveDraft(input.content);
-  await deps.pageRepository.save(page);
-  await deps.pageVersionRepository.save({
+  await deps.pageRepository.saveWithVersion(page, {
     id: randomUUID(),
     tenantId: page.tenantId,
     pageId: page.id,

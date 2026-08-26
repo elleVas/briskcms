@@ -1,6 +1,8 @@
 import { randomUUID } from 'node:crypto';
 import { type INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
+import { HttpExceptionFilter } from '../http-exception.filter.js';
+import { requestIdMiddleware } from '../request-id.middleware.js';
 import cookieParser from 'cookie-parser';
 import request from 'supertest';
 import type { AuthPort } from '@brisk/ports';
@@ -38,6 +40,8 @@ describe('PublicSiteLayoutSectionsController (integration)', () => {
 
     app = moduleRef.createNestApplication();
     app.use(cookieParser());
+    app.useGlobalFilters(new HttpExceptionFilter());
+    app.use(requestIdMiddleware);
     await app.init();
     db = app.get<BriskDb>(DATABASE);
 
@@ -68,7 +72,10 @@ describe('PublicSiteLayoutSectionsController (integration)', () => {
     userId = user.id;
 
     agent = request.agent(app.getHttpServer());
-    await agent.post('/auth/login').send({ email, password }).expect(200);
+    await agent
+      .post('/auth/login')
+      .send({ email, password, captchaToken: 'test-token' })
+      .expect(200);
   });
 
   afterAll(async () => {

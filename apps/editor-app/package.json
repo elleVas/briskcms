@@ -2,6 +2,11 @@
   "name": "@brisk/editor-app",
   "version": "0.0.1",
   "private": true,
+  "nx": {
+    "tags": [
+      "app"
+    ]
+  },
   "dependencies": {
     "@brisk/block-registry": "workspace:*",
     "@brisk/shared-types": "workspace:*",

@@ -123,4 +123,72 @@ describe('DrizzleSiteRepository (integration)', () => {
       { dayOfWeek: 'monday', ranges: [{ opens: '12:00', closes: '15:00' }] },
     ]);
   });
+
+  // Regression for the UNIQUE(tenant_id, domain) constraint (migration
+  // 0027): before it, findByDomain's `.limit(1)` with no ORDER BY made
+  // which site got served indeterminate whenever two sites of the same
+  // tenant shared a domain — nothing prevented that at the DB level.
+  it('rejects a second site with the same tenant and domain', async () => {
+    const domain = `dup-${randomUUID()}.example.com`;
+    await withTenant(db, tenantAId, (tx) =>
+      tx.insert(sites).values({
+        tenantId: tenantAId,
+        name: 'First',
+        domain,
+        defaultLocale: 'it',
+      }),
+    );
+
+    await expect(
+      withTenant(db, tenantAId, (tx) =>
+        tx.insert(sites).values({
+          tenantId: tenantAId,
+          name: 'Second',
+          domain,
+          defaultLocale: 'it',
+        }),
+      ),
+    ).rejects.toThrow();
+  });
+
+  // A site can go without a domain configured yet (e.g. still mid-setup) —
+  // the constraint must not treat "no domain" as a value sites can collide
+  // on. Postgres itself guarantees this (UNIQUE never matches NULL against
+  // NULL), this just pins that behavior against a regression.
+  it('allows multiple sites of the same tenant with no domain set', async () => {
+    await withTenant(db, tenantAId, (tx) =>
+      tx.insert(sites).values([
+        { tenantId: tenantAId, name: 'No domain A', defaultLocale: 'it' },
+        { tenantId: tenantAId, name: 'No domain B', defaultLocale: 'it' },
+      ]),
+    );
+  });
+
+  it('allows the same domain across different tenants', async () => {
+    const domain = `shared-${randomUUID()}.example.com`;
+    await withTenant(db, tenantAId, (tx) =>
+      tx.insert(sites).values({
+        tenantId: tenantAId,
+        name: 'Tenant A site',
+        domain,
+        defaultLocale: 'it',
+      }),
+    );
+
+    await withTenant(db, tenantBId, (tx) =>
+      tx.insert(sites).values({
+        tenantId: tenantBId,
+        name: 'Tenant B site',
+        domain,
+        defaultLocale: 'it',
+      }),
+    );
+
+    expect((await siteRepository.findByDomain(tenantAId, domain))?.name).toBe(
+      'Tenant A site',
+    );
+    expect((await siteRepository.findByDomain(tenantBId, domain))?.name).toBe(
+      'Tenant B site',
+    );
+  });
 });
