@@ -126,6 +126,17 @@ export const sites = pgTable(
       'sites_untranslated_page_fallback_check',
       sql`${table.untranslatedPageFallback} in ('redirect-to-default', 'not-available')`,
     ),
+    // findByDomain() è l'hot path di ogni richiesta pubblica (rendering
+    // pagina, sitemap, ricerca, chrome del sito) — senza questo indice fa
+    // scan sequenziale. Il vincolo UNIQUE che lo porta con sé è la parte
+    // più importante: senza, due siti dello stesso tenant potrebbero avere
+    // lo stesso domain (nulla lo impedisce a livello applicativo), e
+    // findByDomain (che usa .limit(1) senza ORDER BY) servirebbe uno dei
+    // due in modo indeterminato. `domain` resta nullable — Postgres tratta
+    // più NULL come sempre distinti tra loro sotto UNIQUE, quindi più siti
+    // dello stesso tenant senza ancora un dominio configurato coesistono
+    // senza conflitto.
+    unique().on(table.tenantId, table.domain),
   ],
 );
 
