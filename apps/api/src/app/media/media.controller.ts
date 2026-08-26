@@ -14,6 +14,7 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { ThrottlerGuard } from '@nestjs/throttler';
 import { memoryStorage } from 'multer';
 import { deleteMedia, listMedia, uploadMedia } from '@brisk/application';
 import { type Media } from '@brisk/domain-core';
@@ -68,6 +69,7 @@ export class MediaController {
   }
 
   @Post()
+  @UseGuards(ThrottlerGuard)
   @UseInterceptors(
     FileInterceptor('file', {
       storage: memoryStorage(),

@@ -160,6 +160,7 @@ export class AuthController {
     return { success: true };
   }
 
+  @UseGuards(ThrottlerGuard)
   @Post('verify-email')
   @HttpCode(200)
   async confirmEmailVerification(
@@ -215,6 +216,7 @@ export class AuthController {
     return { success: true };
   }
 
+  @UseGuards(ThrottlerGuard)
   @Post('reset-password')
   @HttpCode(200)
   async confirmPasswordReset(
@@ -239,6 +241,7 @@ export class AuthController {
     return { success: true };
   }
 
+  @UseGuards(ThrottlerGuard)
   @Post('accept-invite')
   @HttpCode(200)
   async acceptInvite(

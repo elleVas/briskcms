@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { ThrottlerModule } from '@nestjs/throttler';
 import { requireEnv } from '@brisk/env-config';
 import { type BriskDb } from '@brisk/postgres-db';
 import { DrizzleMediaRepository } from '@brisk/postgres-media-repository';
@@ -45,7 +46,16 @@ export function createMediaStorage(): MediaStoragePort {
 }
 
 @Module({
-  imports: [DatabaseModule, AuthModule],
+  imports: [
+    DatabaseModule,
+    AuthModule,
+    // Security review 2026-08-24, "terzo giro": l'upload media autenticato
+    // non aveva alcun rate limiting — un singolo account compromesso
+    // poteva riempire lo storage senza alcun limite. 30/minuto per IP è
+    // generoso per un editor legittimo che carica più immagini in
+    // sequenza, ma limita un abuso automatizzato.
+    ThrottlerModule.forRoot({ throttlers: [{ ttl: 60000, limit: 30 }] }),
+  ],
   controllers: [MediaController],
   providers: [
     {
