@@ -14,6 +14,24 @@ import { AppModule } from './app/app.module';
 import { HttpExceptionFilter } from './app/http-exception.filter.js';
 import { requestIdMiddleware } from './app/request-id.middleware.js';
 
+// Security review 2026-08-24, "terzo giro": nessun handler globale — un
+// reject non gestito o un throw fuori da qualunque try/catch spariva nel
+// nulla, mai loggato. Node considera lo stato del processo indefinito dopo
+// uno di questi due eventi (stesso motivo per cui Node 15+ termina di
+// default su un unhandledRejection non gestito) — loggare e uscire, non
+// continuare a servire richieste in uno stato potenzialmente corrotto.
+process.on('unhandledRejection', (reason) => {
+  Logger.error(
+    'Unhandled promise rejection',
+    reason instanceof Error ? reason.stack : String(reason),
+  );
+  process.exit(1);
+});
+process.on('uncaughtException', (error) => {
+  Logger.error('Uncaught exception', error.stack);
+  process.exit(1);
+});
+
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const globalPrefix = 'api';
