@@ -80,6 +80,7 @@ describe('public-api-client', () => {
       expect.stringContaining(
         '/public/pages/by-slug?domain=example.com&locale=it&slug=chi-siamo',
       ),
+      expect.objectContaining({ signal: expect.anything() }),
     );
     expect(result).toEqual({ found: true, page: samplePage });
   });
@@ -138,6 +139,7 @@ describe('public-api-client', () => {
       expect.stringContaining(
         '/public/pages/chrome?domain=example.com&locale=it',
       ),
+      expect.objectContaining({ signal: expect.anything() }),
     );
     expect(result).toEqual(chrome);
   });
@@ -178,6 +180,7 @@ describe('public-api-client', () => {
       expect.stringContaining(
         '/public/pages/tree?domain=example.com&locale=it',
       ),
+      expect.objectContaining({ signal: expect.anything() }),
     );
     expect(result).toEqual(items);
   });
@@ -211,6 +214,7 @@ describe('public-api-client', () => {
 
     expect(fetch).toHaveBeenCalledWith(
       expect.stringContaining('/public/pages?domain=example.com'),
+      expect.objectContaining({ signal: expect.anything() }),
     );
     expect(result).toEqual({
       items,
@@ -235,6 +239,7 @@ describe('public-api-client', () => {
 
     expect(fetch).toHaveBeenCalledWith(
       expect.stringContaining('/public/forms/form-1'),
+      expect.objectContaining({ signal: expect.anything() }),
     );
     expect(result).toEqual(form);
   });
@@ -341,5 +346,26 @@ describe('public-api-client', () => {
     });
 
     expect(result).toEqual({ ok: false, status: 400 });
+  });
+
+  // Security review 2026-08-24, point 18: simulates what AbortSignal.timeout()
+  // produces when a hung apps/api never responds — a rejecting fetch, not a
+  // hanging one, is what actually protects the SSR worker.
+  it('throws a clear timeout error instead of a raw AbortError when the request times out', async () => {
+    vi.mocked(fetch).mockRejectedValue(
+      new DOMException('The operation was aborted.', 'TimeoutError'),
+    );
+
+    await expect(
+      getPublishedPageBySlug('example.com', 'it', 'chi-siamo'),
+    ).rejects.toThrow(/timed out/i);
+  });
+
+  it('lets a non-timeout fetch failure propagate unchanged', async () => {
+    vi.mocked(fetch).mockRejectedValue(new TypeError('Failed to fetch'));
+
+    await expect(
+      getPublishedPageBySlug('example.com', 'it', 'chi-siamo'),
+    ).rejects.toThrow('Failed to fetch');
   });
 });

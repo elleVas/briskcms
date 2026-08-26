@@ -66,6 +66,12 @@ function apiUrl(): string {
   return process.env['API_URL'] ?? 'http://localhost:3000/api';
 }
 
+// Security review 2026-08-24, point 18: without this, a hung apps/api
+// (pool exhausted, a slow query) blocked the Node worker rendering this
+// request indefinitely — in SSR (astro.config.mjs's output:'server') that
+// worker serves other visitors too, not just this one request.
+const DEFAULT_TIMEOUT_MS = 20_000;
+
 /**
  * Talks to the public, unauthenticated endpoint only (see
  * apps/api/src/app/public-pages) — never the authenticated CRUD one
@@ -83,9 +89,16 @@ export async function getPublishedPageBySlug(
   slug: string,
 ): Promise<PublishedPageLookupResult> {
   const params = new URLSearchParams({ domain, locale, slug });
-  const res = await fetch(
-    `${apiUrl()}/public/pages/by-slug?${params.toString()}`,
-  );
+  const url = `${apiUrl()}/public/pages/by-slug?${params.toString()}`;
+  let res: Response;
+  try {
+    res = await fetch(url, { signal: AbortSignal.timeout(DEFAULT_TIMEOUT_MS) });
+  } catch (error) {
+    if (error instanceof DOMException && error.name === 'TimeoutError') {
+      throw new Error(`Public API request timed out: ${url}`);
+    }
+    throw error;
+  }
 
   if (res.status === 404) {
     const body: unknown = await res.json().catch(() => null);
@@ -114,9 +127,16 @@ export async function getPreviewPageById(
   token: string,
 ): Promise<PublishedPageDto | null> {
   const params = new URLSearchParams({ token });
-  const res = await fetch(
-    `${apiUrl()}/public/pages/${pageId}/preview?${params.toString()}`,
-  );
+  const url = `${apiUrl()}/public/pages/${pageId}/preview?${params.toString()}`;
+  let res: Response;
+  try {
+    res = await fetch(url, { signal: AbortSignal.timeout(DEFAULT_TIMEOUT_MS) });
+  } catch (error) {
+    if (error instanceof DOMException && error.name === 'TimeoutError') {
+      throw new Error(`Public API request timed out: ${url}`);
+    }
+    throw error;
+  }
 
   if (res.status === 404) {
     return null;
@@ -145,9 +165,16 @@ export async function getPublishedSiteChrome(
   locale: string,
 ): Promise<PublishedSiteChromeDto | null> {
   const params = new URLSearchParams({ domain, locale });
-  const res = await fetch(
-    `${apiUrl()}/public/pages/chrome?${params.toString()}`,
-  );
+  const url = `${apiUrl()}/public/pages/chrome?${params.toString()}`;
+  let res: Response;
+  try {
+    res = await fetch(url, { signal: AbortSignal.timeout(DEFAULT_TIMEOUT_MS) });
+  } catch (error) {
+    if (error instanceof DOMException && error.name === 'TimeoutError') {
+      throw new Error(`Public API request timed out: ${url}`);
+    }
+    throw error;
+  }
 
   if (res.status === 404) {
     return null;
@@ -175,7 +202,16 @@ export async function listPublishedPageTree(
   locale: string,
 ): Promise<PageTreeNodeDto[]> {
   const params = new URLSearchParams({ domain, locale });
-  const res = await fetch(`${apiUrl()}/public/pages/tree?${params.toString()}`);
+  const url = `${apiUrl()}/public/pages/tree?${params.toString()}`;
+  let res: Response;
+  try {
+    res = await fetch(url, { signal: AbortSignal.timeout(DEFAULT_TIMEOUT_MS) });
+  } catch (error) {
+    if (error instanceof DOMException && error.name === 'TimeoutError') {
+      throw new Error(`Public API request timed out: ${url}`);
+    }
+    throw error;
+  }
 
   if (!res.ok) {
     throw new Error(`Public pages API error: ${res.status}`);
@@ -214,7 +250,16 @@ export async function listPublishedPagesForSitemap(
   domain: string,
 ): Promise<SitemapListingDto> {
   const params = new URLSearchParams({ domain });
-  const res = await fetch(`${apiUrl()}/public/pages?${params.toString()}`);
+  const url = `${apiUrl()}/public/pages?${params.toString()}`;
+  let res: Response;
+  try {
+    res = await fetch(url, { signal: AbortSignal.timeout(DEFAULT_TIMEOUT_MS) });
+  } catch (error) {
+    if (error instanceof DOMException && error.name === 'TimeoutError') {
+      throw new Error(`Public API request timed out: ${url}`);
+    }
+    throw error;
+  }
 
   if (!res.ok) {
     throw new Error(`Public pages API error: ${res.status}`);
@@ -235,9 +280,16 @@ export async function searchPublishedPages(
   query: string,
 ): Promise<SearchResultDto[]> {
   const params = new URLSearchParams({ domain, locale, q: query });
-  const res = await fetch(
-    `${apiUrl()}/public/pages/search?${params.toString()}`,
-  );
+  const url = `${apiUrl()}/public/pages/search?${params.toString()}`;
+  let res: Response;
+  try {
+    res = await fetch(url, { signal: AbortSignal.timeout(DEFAULT_TIMEOUT_MS) });
+  } catch (error) {
+    if (error instanceof DOMException && error.name === 'TimeoutError') {
+      throw new Error(`Public API request timed out: ${url}`);
+    }
+    throw error;
+  }
 
   if (!res.ok) {
     throw new Error(`Public pages API error: ${res.status}`);
@@ -263,7 +315,16 @@ export interface PublicFormDto {
 export async function getPublicForm(
   formId: string,
 ): Promise<PublicFormDto | null> {
-  const res = await fetch(`${apiUrl()}/public/forms/${formId}`);
+  const url = `${apiUrl()}/public/forms/${formId}`;
+  let res: Response;
+  try {
+    res = await fetch(url, { signal: AbortSignal.timeout(DEFAULT_TIMEOUT_MS) });
+  } catch (error) {
+    if (error instanceof DOMException && error.name === 'TimeoutError') {
+      throw new Error(`Public API request timed out: ${url}`);
+    }
+    throw error;
+  }
   if (res.status === 404) {
     return null;
   }
@@ -294,10 +355,20 @@ export async function uploadFormAttachment(
 ): Promise<UploadedFormAttachment> {
   const body = new FormData();
   body.append('file', file, file.name);
-  const res = await fetch(`${apiUrl()}/public/forms/${formId}/attachments`, {
-    method: 'POST',
-    body,
-  });
+  const url = `${apiUrl()}/public/forms/${formId}/attachments`;
+  let res: Response;
+  try {
+    res = await fetch(url, {
+      method: 'POST',
+      body,
+      signal: AbortSignal.timeout(DEFAULT_TIMEOUT_MS),
+    });
+  } catch (error) {
+    if (error instanceof DOMException && error.name === 'TimeoutError') {
+      throw new Error(`Public API request timed out: ${url}`);
+    }
+    throw error;
+  }
   if (!res.ok) {
     throw new Error(`Public forms API error: ${res.status}`);
   }
@@ -319,11 +390,21 @@ export async function submitPublicForm(
   formId: string,
   input: SubmitPublicFormInput,
 ): Promise<SubmitPublicFormResult> {
-  const res = await fetch(`${apiUrl()}/public/forms/${formId}/submissions`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(input),
-  });
+  const url = `${apiUrl()}/public/forms/${formId}/submissions`;
+  let res: Response;
+  try {
+    res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(input),
+      signal: AbortSignal.timeout(DEFAULT_TIMEOUT_MS),
+    });
+  } catch (error) {
+    if (error instanceof DOMException && error.name === 'TimeoutError') {
+      throw new Error(`Public API request timed out: ${url}`);
+    }
+    throw error;
+  }
   if (res.ok) {
     return { ok: true };
   }
@@ -343,11 +424,21 @@ export type SubscribeNewsletterResult =
 export async function subscribeNewsletter(
   input: SubscribeNewsletterInput,
 ): Promise<SubscribeNewsletterResult> {
-  const res = await fetch(`${apiUrl()}/public/newsletter/subscribe`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(input),
-  });
+  const url = `${apiUrl()}/public/newsletter/subscribe`;
+  let res: Response;
+  try {
+    res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(input),
+      signal: AbortSignal.timeout(DEFAULT_TIMEOUT_MS),
+    });
+  } catch (error) {
+    if (error instanceof DOMException && error.name === 'TimeoutError') {
+      throw new Error(`Public API request timed out: ${url}`);
+    }
+    throw error;
+  }
   if (res.ok) {
     return { ok: true };
   }
