@@ -27,6 +27,7 @@ import {
   setPageParent,
   updateSeoMeta,
 } from '@brisk/application';
+import type { Page } from '@brisk/domain-core';
 import type {
   PageRepositoryPort,
   PageVersionRepositoryPort,
@@ -92,7 +93,7 @@ export class PagesController {
         tenantId: this.tenantContext.getCurrentTenantId(),
       },
     );
-    return page.toProps();
+    return this.toDto(page);
   }
 
   @Patch(':id/parent')
@@ -109,7 +110,7 @@ export class PagesController {
         parentId: body.parentId,
       },
     );
-    return page.toProps();
+    return this.toDto(page);
   }
 
   @Get()
@@ -143,7 +144,7 @@ export class PagesController {
         slug,
       },
     );
-    return page.toProps();
+    return this.toDto(page);
   }
 
   @Get(':id')
@@ -152,7 +153,7 @@ export class PagesController {
       { pageRepository: this.pageRepository },
       { tenantId: this.tenantContext.getCurrentTenantId(), pageId: id },
     );
-    return page.toProps();
+    return this.toDto(page);
   }
 
   // Ogni ruolo che può salvare una bozza deve poter anche previewarla —
@@ -186,7 +187,7 @@ export class PagesController {
         actorUserId: null,
       },
     );
-    return page.toProps();
+    return this.toDto(page);
   }
 
   @Patch(':id/seo')
@@ -203,7 +204,7 @@ export class PagesController {
         seoMeta: body.seoMeta,
       },
     );
-    return page.toProps();
+    return this.toDto(page);
   }
 
   // Fase 5c: only admin/publisher can publish — draft/save stays open to
@@ -217,7 +218,7 @@ export class PagesController {
       { pageRepository: this.pageRepository, searchPort: this.searchPort },
       { tenantId: this.tenantContext.getCurrentTenantId(), pageId: id },
     );
-    return page.toProps();
+    return this.toDto(page);
   }
 
   @Get(':id/versions')
@@ -235,7 +236,7 @@ export class PagesController {
       { pageRepository: this.pageRepository },
       { tenantId: this.tenantContext.getCurrentTenantId(), pageId: id },
     );
-    return translations.map((page) => page.toProps());
+    return translations.map((page) => this.toDto(page));
   }
 
   @Post(':id/translations')
@@ -254,7 +255,7 @@ export class PagesController {
         createdBy: null,
       },
     );
-    return translation.toProps();
+    return this.toDto(translation);
   }
 
   @Post(':id/duplicate')
@@ -274,7 +275,7 @@ export class PagesController {
         createdBy: null,
       },
     );
-    return duplicate.toProps();
+    return this.toDto(duplicate);
   }
 
   @Post(':id/rollback')
@@ -294,7 +295,7 @@ export class PagesController {
         actorUserId: null,
       },
     );
-    return page.toProps();
+    return this.toDto(page);
   }
 
   @Delete(':id')
@@ -304,5 +305,32 @@ export class PagesController {
       { pageRepository: this.pageRepository },
       { tenantId: this.tenantContext.getCurrentTenantId(), pageId: id },
     );
+  }
+
+  /**
+   * Security review 2026-08-24, backend seconda passata: a differenza di
+   * UsersController/MediaController (whitelist esplicita già presente),
+   * questo controller restituiva page.toProps() grezzo su ogni endpoint —
+   * nessun campo sensibile su Page oggi, ma senza whitelist un futuro
+   * campo lo esporrebbe automaticamente, senza che nessuno se ne accorga
+   * qui.
+   */
+  private toDto(page: Page) {
+    const props = page.toProps();
+    return {
+      id: props.id,
+      tenantId: props.tenantId,
+      siteId: props.siteId,
+      groupId: props.groupId,
+      locale: props.locale,
+      slug: props.slug,
+      parentId: props.parentId,
+      status: props.status,
+      content: props.content,
+      publishedContent: props.publishedContent,
+      seoMeta: props.seoMeta,
+      createdAt: props.createdAt,
+      updatedAt: props.updatedAt,
+    };
   }
 }

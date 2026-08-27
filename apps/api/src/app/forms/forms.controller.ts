@@ -18,6 +18,7 @@ import {
   listForms,
   updateForm,
 } from '@brisk/application';
+import type { Form } from '@brisk/domain-core';
 import type { FormRepositoryPort, TenantContextPort } from '@brisk/ports';
 import { SessionAuthGuard } from '../auth/session-auth.guard.js';
 import { ZodValidationPipe } from '../zod-validation.pipe.js';
@@ -49,7 +50,7 @@ export class FormsController {
       { formRepository: this.formRepository },
       { tenantId: this.tenantContext.getCurrentTenantId(), ...body },
     );
-    return form.toProps();
+    return this.toDto(form);
   }
 
   @Get()
@@ -66,7 +67,7 @@ export class FormsController {
       },
     );
     return {
-      items: result.items.map((form) => form.toProps()),
+      items: result.items.map((form) => this.toDto(form)),
       total: result.total,
     };
   }
@@ -77,7 +78,7 @@ export class FormsController {
       { formRepository: this.formRepository },
       { tenantId: this.tenantContext.getCurrentTenantId(), formId: id },
     );
-    return form.toProps();
+    return this.toDto(form);
   }
 
   @Patch(':id')
@@ -93,7 +94,7 @@ export class FormsController {
         ...body,
       },
     );
-    return form.toProps();
+    return this.toDto(form);
   }
 
   @Delete(':id')
@@ -103,5 +104,27 @@ export class FormsController {
       { formRepository: this.formRepository },
       { tenantId: this.tenantContext.getCurrentTenantId(), formId: id },
     );
+  }
+
+  /**
+   * Security review 2026-08-24, backend seconda passata: a differenza di
+   * UsersController/MediaController (whitelist esplicita già presente),
+   * questo controller restituiva form.toProps() grezzo — nessun campo
+   * sensibile su Form oggi, ma senza whitelist un futuro campo lo
+   * esporrebbe automaticamente, senza che nessuno se ne accorga qui.
+   */
+  private toDto(form: Form) {
+    const props = form.toProps();
+    return {
+      id: props.id,
+      tenantId: props.tenantId,
+      siteId: props.siteId,
+      name: props.name,
+      fields: props.fields,
+      steps: props.steps,
+      notificationEmail: props.notificationEmail,
+      createdAt: props.createdAt,
+      updatedAt: props.updatedAt,
+    };
   }
 }
