@@ -2,7 +2,9 @@
   "common": {
     "loading": "Caricamento...",
     "error": "Si è verificato un errore.",
-    "retry": "Riprova"
+    "retry": "Riprova",
+    "cancel": "Annulla",
+    "delete": "Elimina"
   },
   "auth": {
     "login": {
@@ -108,9 +110,7 @@
     },
     "deleteDialog": {
       "title": "Eliminare questa pagina?",
-      "description": "\"{{name}}\" e tutte le sue versioni verranno eliminate definitivamente. L'azione non può essere annullata.",
-      "cancel": "Annulla",
-      "confirm": "Elimina"
+      "description": "\"{{name}}\" e tutte le sue versioni verranno eliminate definitivamente. L'azione non può essere annullata."
     },
     "editor": {
       "backToList": "Pagine",
@@ -190,9 +190,7 @@
     },
     "deleteDialog": {
       "title": "Eliminare questo file?",
-      "description": "\"{{name}}\" verrà eliminato definitivamente. L'azione non può essere annullata.",
-      "cancel": "Annulla",
-      "confirm": "Elimina"
+      "description": "\"{{name}}\" verrà eliminato definitivamente. L'azione non può essere annullata."
     },
     "picker": {
       "title": "Scegli un'immagine"
@@ -314,9 +312,7 @@
     },
     "deleteDialog": {
       "title": "Eliminare questo modulo?",
-      "description": "\"{{name}}\" verrà eliminato definitivamente. Le pagine che lo usano smetteranno di mostrarlo. L'azione non può essere annullata.",
-      "cancel": "Annulla",
-      "confirm": "Elimina"
+      "description": "\"{{name}}\" verrà eliminato definitivamente. Le pagine che lo usano smetteranno di mostrarlo. L'azione non può essere annullata."
     },
     "picker": {
       "title": "Scegli un modulo",

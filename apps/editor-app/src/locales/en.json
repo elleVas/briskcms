@@ -2,7 +2,9 @@
   "common": {
     "loading": "Loading...",
     "error": "Something went wrong.",
-    "retry": "Retry"
+    "retry": "Retry",
+    "cancel": "Cancel",
+    "delete": "Delete"
   },
   "auth": {
     "login": {
@@ -108,9 +110,7 @@
     },
     "deleteDialog": {
       "title": "Delete this page?",
-      "description": "\"{{name}}\" and all of its versions will be permanently deleted. This action cannot be undone.",
-      "cancel": "Cancel",
-      "confirm": "Delete"
+      "description": "\"{{name}}\" and all of its versions will be permanently deleted. This action cannot be undone."
     },
     "editor": {
       "backToList": "Pages",
@@ -190,9 +190,7 @@
     },
     "deleteDialog": {
       "title": "Delete this file?",
-      "description": "\"{{name}}\" will be permanently deleted. This action cannot be undone.",
-      "cancel": "Cancel",
-      "confirm": "Delete"
+      "description": "\"{{name}}\" will be permanently deleted. This action cannot be undone."
     },
     "picker": {
       "title": "Choose an image"
@@ -314,9 +312,7 @@
     },
     "deleteDialog": {
       "title": "Delete this form?",
-      "description": "\"{{name}}\" will be permanently deleted. Pages using it will stop showing it. This action cannot be undone.",
-      "cancel": "Cancel",
-      "confirm": "Delete"
+      "description": "\"{{name}}\" will be permanently deleted. Pages using it will stop showing it. This action cannot be undone."
     },
     "picker": {
       "title": "Choose a form",

@@ -14,7 +14,7 @@ import { Badge } from '../components/ui/badge.js';
 import { Button } from '../components/ui/button.js';
 import { cn } from '../lib/utils.js';
 import type { PageSummaryDto } from '../lib/pages-api-client.js';
-import { DeletePageConfirmDialog } from './delete-page-confirm-dialog.js';
+import { ConfirmDeleteDialog } from './confirm-delete-dialog.js';
 import { DuplicatePageDialog } from './duplicate-page-dialog.js';
 import { IconButton } from './icon-button.js';
 import { MediaPickerProvider } from './media-picker-provider.js';
@@ -258,10 +258,13 @@ export function PagesListView({
           onCreate={createPage}
         />
         {selectedPage && (
-          <DeletePageConfirmDialog
+          <ConfirmDeleteDialog
             open={isDeleteDialogOpen}
             onOpenChange={setIsDeleteDialogOpen}
-            pageName={selectedPage.seoMeta.title}
+            title={t('pages.deleteDialog.title')}
+            description={t('pages.deleteDialog.description', {
+              name: selectedPage.seoMeta.title,
+            })}
             onConfirm={() => void handleConfirmDelete()}
           />
         )}
