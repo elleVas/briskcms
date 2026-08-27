@@ -79,11 +79,24 @@ export type TextProps = z.infer<typeof textPropsSchema>;
  * never needs a live call back to the media API to resolve an id to a URL.
  * `mediaId` is kept alongside it so the editor's media picker can still
  * highlight "this is the currently selected image" reliably, by id rather
- * than by string-matching a URL.
+ * than by string-matching a URL. `width`/`height` follow the same
+ * reasoning (denormalized at pick-time, not re-resolved at render time) —
+ * already measured by sharp at upload (see media.width/height,
+ * local-disk-media-storage.adapter.ts/s3-media-storage.adapter.ts),
+ * nullable only because media picked before this field existed has none.
+ * Public-site's image-bearing blocks render them as real `width`/`height`
+ * attributes to prevent layout shift (CLS) — omitted, not defaulted, when
+ * absent, since a guessed value would be actively wrong. `.nullish()`, not
+ * just `.nullable()`: every page saved before this field existed has
+ * Image/Gallery/etc. blocks whose `media` object is missing the key
+ * entirely, not holding `null` — a plain `.nullable()` would reject that
+ * already-saved content outright the first time it's parsed.
  */
 export const pickedMediaSchema = z.object({
   mediaId: z.string(),
   url: z.string(),
+  width: z.number().nullish(),
+  height: z.number().nullish(),
 });
 export type PickedMedia = z.infer<typeof pickedMediaSchema>;
 

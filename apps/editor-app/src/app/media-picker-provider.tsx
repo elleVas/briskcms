@@ -49,7 +49,12 @@ export function MediaPickerProvider({
           if (!next) resolveAndClose(null);
         }}
         onSelect={(media) =>
-          resolveAndClose({ mediaId: media.id, url: media.url })
+          resolveAndClose({
+            mediaId: media.id,
+            url: media.url,
+            width: media.width,
+            height: media.height,
+          })
         }
       />
     </MediaPickerContext.Provider>

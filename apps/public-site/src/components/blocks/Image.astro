@@ -16,7 +16,21 @@ const { media, alt, caption } = Astro.props;
         opposite of the Core Web Vitals fix this is for. decoding="async"
         is always safe (doesn't block the main thread on decode either way). */
       }
-      <img src={media.url} alt={alt} decoding="async" />
+      {
+        /* width/height set the intrinsic aspect ratio the browser reserves
+        space for before the image loads (prevents layout shift) — CSS's
+        height: auto below still makes the rendered size fully responsive,
+        these two don't fight each other. undefined, not 0, when absent
+        (media picked before this field existed): an explicit 0 would
+        collapse the reserved space to nothing, worse than reserving none. */
+      }
+      <img
+        src={media.url}
+        alt={alt}
+        width={media.width ?? undefined}
+        height={media.height ?? undefined}
+        decoding="async"
+      />
       {caption && <figcaption data-brisk-field="caption">{caption}</figcaption>}
     </figure>
   ) : (

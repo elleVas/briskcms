@@ -22,6 +22,8 @@ const pictured = images.filter(isPictured);
           <img
             src={image.media.url}
             alt={image.alt}
+            width={image.media.width ?? undefined}
+            height={image.media.height ?? undefined}
             class="brisk-slider__slide"
             loading={index === 0 ? undefined : 'lazy'}
             decoding="async"

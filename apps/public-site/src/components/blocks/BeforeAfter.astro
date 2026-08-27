@@ -18,6 +18,8 @@ const canRender = beforeImage !== null && afterImage !== null;
       <img
         src={afterImage.url}
         alt={afterLabel}
+        width={afterImage.width ?? undefined}
+        height={afterImage.height ?? undefined}
         class="brisk-before-after__image"
         decoding="async"
       />
@@ -25,6 +27,8 @@ const canRender = beforeImage !== null && afterImage !== null;
         <img
           src={beforeImage.url}
           alt={beforeLabel}
+          width={beforeImage.width ?? undefined}
+          height={beforeImage.height ?? undefined}
           class="brisk-before-after__image"
           decoding="async"
         />
