@@ -1,11 +1,4 @@
 import { defineConfig } from 'vitest/config';
-import { config } from 'dotenv';
-import { resolve } from 'node:path';
-
-// Loads local dev credentials for the integration spec, which talks to a
-// real Postgres (see docs/development.md). CI sets these as job env vars
-// instead, so this is a no-op there.
-config({ path: resolve(import.meta.dirname, '../../../.env') });
 
 export default defineConfig(() => ({
   root: import.meta.dirname,
@@ -23,10 +16,10 @@ export default defineConfig(() => ({
       include: ['src/**/*.ts'],
       exclude: ['src/**/*.spec.ts', 'src/index.ts'],
       thresholds: {
-        statements: 60,
-        branches: 60,
-        functions: 60,
-        lines: 60,
+        statements: 80,
+        branches: 80,
+        functions: 80,
+        lines: 80,
       },
     },
   },

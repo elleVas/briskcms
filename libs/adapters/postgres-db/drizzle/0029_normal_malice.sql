@@ -1,0 +1,1 @@
+DROP TABLE "content_preview_tokens" CASCADE;

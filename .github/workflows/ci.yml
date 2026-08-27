@@ -38,6 +38,11 @@ jobs:
       # real challenge" test secret (see .env.example), not a real one. No
       # live siteverify call happens in CI's non-integration unit tests.
       TURNSTILE_SECRET_KEY: 1x0000000000000000000000000000000AA
+      # Needed for PagesModule/SiteLayoutSectionsModule/PublicPagesModule/
+      # PublicSiteLayoutSectionsModule to compile (requireEnv) — token di
+      # preview stateless (@brisk/preview-token-adapter), non un secret reale
+      # verso un servizio esterno, un valore fisso di test basta.
+      PREVIEW_TOKEN_SECRET: ci-test-preview-token-secret
       # apps/editor-app (Vite) only reads VITE_-prefixed vars — same value as
       # DEFAULT_SITE_ID above, see .env.example.
       VITE_DEFAULT_SITE_ID: 568b7d6a-3483-45f2-83f1-3b31b433c5eb

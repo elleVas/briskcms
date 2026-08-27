@@ -69,9 +69,8 @@ import {
     },
     {
       provide: PREVIEW_TOKEN_PORT,
-      useFactory: (db: BriskDb, tenantId: string) =>
-        new PreviewTokenAdapter(db, tenantId),
-      inject: [DATABASE, DEFAULT_TENANT_ID],
+      useFactory: () =>
+        new PreviewTokenAdapter(requireEnv('PREVIEW_TOKEN_SECRET')),
     },
   ],
 })

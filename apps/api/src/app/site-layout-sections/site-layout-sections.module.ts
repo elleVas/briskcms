@@ -11,7 +11,6 @@ import { AuthModule } from '../auth/auth.module.js';
 import { DATABASE, DatabaseModule } from '../database.module.js';
 import { SiteLayoutSectionsController } from './site-layout-sections.controller.js';
 import {
-  DEFAULT_TENANT_ID,
   PREVIEW_TOKEN_PORT,
   SITE_LAYOUT_SECTION_REPOSITORY,
   SITE_LAYOUT_SECTION_VERSION_REPOSITORY,
@@ -38,17 +37,10 @@ import {
       useFactory: (db: BriskDb) => new DrizzleSiteRepository(db),
       inject: [DATABASE],
     },
-    // Locale a questo modulo, non importato da AuthModule (che non lo
-    // esporta) — stessa scelta di public-pages.module.ts/pages.module.ts.
-    {
-      provide: DEFAULT_TENANT_ID,
-      useFactory: (): string => requireEnv('DEFAULT_TENANT_ID'),
-    },
     {
       provide: PREVIEW_TOKEN_PORT,
-      useFactory: (db: BriskDb, tenantId: string) =>
-        new PreviewTokenAdapter(db, tenantId),
-      inject: [DATABASE, DEFAULT_TENANT_ID],
+      useFactory: () =>
+        new PreviewTokenAdapter(requireEnv('PREVIEW_TOKEN_SECRET')),
     },
   ],
 })
