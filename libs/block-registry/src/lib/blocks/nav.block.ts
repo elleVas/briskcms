@@ -4,7 +4,7 @@ import { visibilityField } from '../fields/visibility-field.js';
 
 export const navBlock: BlockDescriptor<NavProps> = {
   type: 'Nav',
-  label: 'Menu di navigazione',
+  label: 'blocks.nav.label',
   category: 'navigation',
   defaultProps: { visibility: 'always' },
   fields: [visibilityField],

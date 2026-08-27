@@ -3,7 +3,7 @@ import type { BlockDescriptor } from '../field-types.js';
 
 export const mapEmbedBlock: BlockDescriptor<MapEmbedProps> = {
   type: 'MapEmbed',
-  label: 'Mappa',
+  label: 'blocks.mapEmbed.label',
   category: 'media',
   defaultProps: {
     address: 'Via Roma 1, Milano',
@@ -16,7 +16,7 @@ export const mapEmbedBlock: BlockDescriptor<MapEmbedProps> = {
     {
       kind: 'text',
       key: 'address',
-      label: 'Indirizzo',
+      label: 'blocks.mapEmbed.fields.address.fieldLabel',
     },
   ],
 };

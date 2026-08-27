@@ -7,7 +7,7 @@ import { ctaLinkFields } from '../fields/link-type-field.js';
 
 export const pricingPlanBlock: BlockDescriptor<PricingPlanProps> = {
   type: 'PricingPlan',
-  label: 'Piano prezzo',
+  label: 'blocks.pricingPlan.label',
   category: 'socialProof',
   defaultProps: {
     name: 'Base',
@@ -21,17 +21,40 @@ export const pricingPlanBlock: BlockDescriptor<PricingPlanProps> = {
     url: '',
   },
   fields: [
-    { kind: 'text', key: 'name', label: 'Nome piano', inlineEditable: true },
-    { kind: 'text', key: 'price', label: 'Prezzo', inlineEditable: true },
-    { kind: 'text', key: 'period', label: 'Periodo', inlineEditable: true },
-    FieldBuilder.custom('features', 'Caratteristiche', FeatureListField),
+    {
+      kind: 'text',
+      key: 'name',
+      label: 'blocks.pricingPlan.fields.name.fieldLabel',
+      inlineEditable: true,
+    },
+    {
+      kind: 'text',
+      key: 'price',
+      label: 'blocks.pricingPlan.fields.price.fieldLabel',
+      inlineEditable: true,
+    },
+    {
+      kind: 'text',
+      key: 'period',
+      label: 'blocks.pricingPlan.fields.period.fieldLabel',
+      inlineEditable: true,
+    },
+    FieldBuilder.custom(
+      'features',
+      'blocks.pricingPlan.fields.features.fieldLabel',
+      FeatureListField,
+    ),
     // Sostituisce il radio a valori booleani di Puck (options con
     // value: true/false) — un toggle si adatta meglio a un flag binario.
-    { kind: 'boolean', key: 'highlighted', label: 'In evidenza' },
+    {
+      kind: 'boolean',
+      key: 'highlighted',
+      label: 'blocks.pricingPlan.fields.highlighted.fieldLabel',
+    },
     {
       kind: 'text',
       key: 'buttonLabel',
-      label: 'Testo bottone',
+      label: 'blocks.pricingPlan.fields.buttonLabel.fieldLabel',
       inlineEditable: true,
     },
     ...ctaLinkFields(),

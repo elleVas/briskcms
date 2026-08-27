@@ -4,12 +4,18 @@ import type { BlockDescriptor } from '../field-types.js';
 
 export const embedHtmlBlock: BlockDescriptor<EmbedHtmlProps> = {
   type: 'EmbedHtml',
-  label: 'Embed HTML',
+  label: 'blocks.embedHtml.label',
   category: 'content',
   defaultProps: {
     html: '',
   },
-  fields: [{ kind: 'textarea', key: 'html', label: 'Codice HTML' }],
+  fields: [
+    {
+      kind: 'textarea',
+      key: 'html',
+      label: 'blocks.embedHtml.fields.html.fieldLabel',
+    },
+  ],
   // Niente textColor: il contenuto è HTML arbitrario incollato dall'utente,
   // che spesso porta già il proprio colore — solo lo spazio "cornice"
   // (sfondo/angoli/padding) ha senso qui.

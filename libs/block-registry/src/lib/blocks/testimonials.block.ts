@@ -5,7 +5,7 @@ import { BlockStyleRegistry } from '../block-style-registry.js';
 
 export const testimonialsBlock: BlockDescriptor<TestimonialsProps> = {
   type: 'Testimonials',
-  label: 'Testimonianze/recensioni',
+  label: 'blocks.testimonials.label',
   category: 'socialProof',
   defaultProps: {},
   fields: [],

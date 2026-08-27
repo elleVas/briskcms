@@ -4,7 +4,7 @@ import { visibilityField } from '../fields/visibility-field.js';
 
 export const breadcrumbBlock: BlockDescriptor<BreadcrumbProps> = {
   type: 'Breadcrumb',
-  label: 'Breadcrumb',
+  label: 'blocks.breadcrumb.label',
   category: 'chrome',
   defaultProps: {
     homeLabel: 'Home',
@@ -14,7 +14,7 @@ export const breadcrumbBlock: BlockDescriptor<BreadcrumbProps> = {
     {
       kind: 'text',
       key: 'homeLabel',
-      label: 'Etichetta home',
+      label: 'blocks.breadcrumb.fields.homeLabel.fieldLabel',
       inlineEditable: true,
     },
     visibilityField,

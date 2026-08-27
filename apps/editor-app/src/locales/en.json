@@ -433,9 +433,381 @@
       "editTypeHint": "These values apply to EVERY {{type}} block on the site.",
       "editInstance": "Style this block",
       "saveError": "Couldn't save the style. Try again."
+    },
+    "blockStyle": {
+      "colors": {
+        "backgroundColor": "Background color",
+        "textColor": "Text color"
+      },
+      "lengths": {
+        "borderRadius": {
+          "fieldLabel": "Corner radius",
+          "placeholder": "e.g. 6px, 9999px for a pill"
+        },
+        "paddingX": {
+          "fieldLabel": "Horizontal padding",
+          "placeholder": "e.g. 1.25rem — empty for default"
+        },
+        "paddingY": {
+          "fieldLabel": "Vertical padding",
+          "placeholder": "e.g. 1.25rem — empty for default"
+        }
+      }
     }
   },
   "toast": {
     "dismiss": "Dismiss notification"
+  },
+  "blocks": {
+    "categories": {
+      "layout": "Layout",
+      "content": "Content",
+      "conversion": "Forms & conversion",
+      "media": "Media",
+      "socialProof": "Social proof",
+      "interactive": "Interactive",
+      "headerFooter": "Blocks"
+    },
+    "shared": {
+      "linkType": {
+        "fieldLabel": "Link type",
+        "options": {
+          "page": "Site page",
+          "url": "External URL"
+        },
+        "pageFieldLabel": "Page",
+        "urlFieldLabel": "URL"
+      },
+      "position": {
+        "fieldLabel": "Position",
+        "options": {
+          "left": "Left",
+          "right": "Right"
+        }
+      },
+      "visibility": {
+        "fieldLabel": "Visibility",
+        "options": {
+          "always": "Always",
+          "desktopOnly": "Desktop only",
+          "mobileOnly": "Mobile only"
+        }
+      }
+    },
+    "accordionItem": {
+      "label": "Question",
+      "fields": {
+        "question": { "fieldLabel": "Question" },
+        "answer": { "fieldLabel": "Answer" }
+      }
+    },
+    "accordion": {
+      "label": "Accordion/FAQ"
+    },
+    "backToTop": {
+      "label": "\"Back to top\" button"
+    },
+    "banner": {
+      "label": "Banner/CTA",
+      "fields": {
+        "title": { "fieldLabel": "Title" },
+        "text": { "fieldLabel": "Text" },
+        "buttonLabel": { "fieldLabel": "Button text" }
+      }
+    },
+    "beforeAfter": {
+      "label": "Before/after",
+      "fields": {
+        "beforeImage": { "fieldLabel": "\"Before\" image" },
+        "afterImage": { "fieldLabel": "\"After\" image" },
+        "beforeLabel": { "fieldLabel": "\"Before\" label" },
+        "afterLabel": { "fieldLabel": "\"After\" label" }
+      }
+    },
+    "breadcrumb": {
+      "label": "Breadcrumb",
+      "fields": {
+        "homeLabel": { "fieldLabel": "Home label" }
+      }
+    },
+    "button": {
+      "label": "Button (CTA)",
+      "fields": {
+        "label": { "fieldLabel": "Text" },
+        "variant": {
+          "fieldLabel": "Style",
+          "options": {
+            "primary": "Primary",
+            "secondary": "Secondary"
+          }
+        }
+      }
+    },
+    "column": {
+      "label": "Column"
+    },
+    "columns": {
+      "label": "Columns",
+      "fields": {
+        "layout": {
+          "fieldLabel": "Layout",
+          "options": {
+            "twoEqual": "2 equal",
+            "twoAsymmetric": "2 (30/70)",
+            "threeEqual": "3 equal"
+          }
+        }
+      }
+    },
+    "container": {
+      "label": "Container",
+      "fields": {
+        "background": {
+          "fieldLabel": "Background",
+          "options": {
+            "none": "None",
+            "muted": "Muted",
+            "primary": "Primary",
+            "secondary": "Secondary"
+          }
+        },
+        "padding": {
+          "fieldLabel": "Padding",
+          "options": {
+            "none": "None",
+            "sm": "Small",
+            "md": "Medium",
+            "lg": "Large"
+          }
+        }
+      }
+    },
+    "countdown": {
+      "label": "Countdown",
+      "fields": {
+        "targetDate": { "fieldLabel": "Target date/time" },
+        "label": { "fieldLabel": "Label" }
+      }
+    },
+    "embedHtml": {
+      "label": "Embed HTML",
+      "fields": {
+        "html": { "fieldLabel": "HTML code" }
+      }
+    },
+    "featureGrid": {
+      "label": "Feature grid"
+    },
+    "feature": {
+      "label": "Feature",
+      "fields": {
+        "icon": { "fieldLabel": "Icon (emoji)" },
+        "title": { "fieldLabel": "Title" },
+        "text": { "fieldLabel": "Text" }
+      }
+    },
+    "form": {
+      "label": "Form",
+      "fields": {
+        "form": { "fieldLabel": "Form" }
+      }
+    },
+    "gallery": {
+      "label": "Gallery",
+      "fields": {
+        "images": { "fieldLabel": "Images" }
+      }
+    },
+    "hamburgerMenu": {
+      "label": "Mobile menu (hamburger)"
+    },
+    "hero": {
+      "label": "Hero",
+      "fields": {
+        "title": { "fieldLabel": "Title" },
+        "subtitle": { "fieldLabel": "Subtitle" }
+      }
+    },
+    "imageSlider": {
+      "label": "Image slider",
+      "fields": {
+        "images": { "fieldLabel": "Images" }
+      }
+    },
+    "image": {
+      "label": "Image",
+      "fields": {
+        "media": { "fieldLabel": "Image" },
+        "alt": { "fieldLabel": "Alt text" },
+        "caption": { "fieldLabel": "Caption" }
+      }
+    },
+    "languageSwitcher": {
+      "label": "Language switcher"
+    },
+    "link": {
+      "label": "Link",
+      "fields": {
+        "label": { "fieldLabel": "Text" }
+      }
+    },
+    "logoStrip": {
+      "label": "Partner/client logos",
+      "fields": {
+        "logos": { "fieldLabel": "Logos" }
+      }
+    },
+    "mapEmbed": {
+      "label": "Map",
+      "fields": {
+        "address": { "fieldLabel": "Address" }
+      }
+    },
+    "navDropdown": {
+      "label": "Submenu",
+      "fields": {
+        "label": { "fieldLabel": "Label" }
+      }
+    },
+    "navLink": {
+      "label": "Navigation link",
+      "fields": {
+        "label": { "fieldLabel": "Text" },
+        "icon": { "fieldLabel": "Icon" }
+      }
+    },
+    "nav": {
+      "label": "Navigation menu"
+    },
+    "newsletterSignup": {
+      "label": "Newsletter signup",
+      "fields": {
+        "title": { "fieldLabel": "Title" },
+        "buttonLabel": { "fieldLabel": "Button text" }
+      }
+    },
+    "pricingPlan": {
+      "label": "Pricing plan",
+      "fields": {
+        "name": { "fieldLabel": "Plan name" },
+        "price": { "fieldLabel": "Price" },
+        "period": { "fieldLabel": "Period" },
+        "features": { "fieldLabel": "Features" },
+        "highlighted": { "fieldLabel": "Highlighted" },
+        "buttonLabel": { "fieldLabel": "Button text" }
+      }
+    },
+    "pricingTable": {
+      "label": "Pricing table"
+    },
+    "promoBar": {
+      "label": "Announcement/promo bar",
+      "fields": {
+        "message": { "fieldLabel": "Message" }
+      }
+    },
+    "quote": {
+      "label": "Quote",
+      "fields": {
+        "quote": { "fieldLabel": "Quote" },
+        "author": { "fieldLabel": "Author" },
+        "role": { "fieldLabel": "Role" }
+      }
+    },
+    "rating": {
+      "label": "Star rating",
+      "fields": {
+        "rating": { "fieldLabel": "Stars" },
+        "label": { "fieldLabel": "Label" }
+      }
+    },
+    "searchBox": {
+      "label": "Site search",
+      "fields": {
+        "placeholder": { "fieldLabel": "Placeholder" }
+      }
+    },
+    "stat": {
+      "label": "Statistic",
+      "fields": {
+        "value": { "fieldLabel": "Value" },
+        "prefix": { "fieldLabel": "Prefix" },
+        "suffix": { "fieldLabel": "Suffix" },
+        "label": { "fieldLabel": "Label" }
+      }
+    },
+    "statsCounter": {
+      "label": "Counters/statistics"
+    },
+    "tab": {
+      "label": "Tab",
+      "fields": {
+        "label": { "fieldLabel": "Tab label" }
+      }
+    },
+    "table": {
+      "label": "Data table",
+      "fields": {
+        "rows": { "fieldLabel": "Rows" }
+      }
+    },
+    "tabs": {
+      "label": "Tabs"
+    },
+    "teamMember": {
+      "label": "Team member",
+      "fields": {
+        "photo": { "fieldLabel": "Photo" },
+        "name": { "fieldLabel": "Name" },
+        "role": { "fieldLabel": "Role" },
+        "bio": { "fieldLabel": "Bio" }
+      }
+    },
+    "team": {
+      "label": "Team/staff"
+    },
+    "testimonial": {
+      "label": "Testimonial",
+      "fields": {
+        "quote": { "fieldLabel": "Review" },
+        "author": { "fieldLabel": "Author" },
+        "role": { "fieldLabel": "Role" },
+        "avatar": { "fieldLabel": "Avatar" },
+        "rating": { "fieldLabel": "Stars" }
+      }
+    },
+    "testimonials": {
+      "label": "Testimonials/reviews"
+    },
+    "text": {
+      "label": "Text",
+      "fields": {
+        "body": { "fieldLabel": "Text" }
+      }
+    },
+    "timelineStep": {
+      "label": "Step",
+      "fields": {
+        "label": { "fieldLabel": "Label" },
+        "title": { "fieldLabel": "Title" },
+        "description": { "fieldLabel": "Description" }
+      }
+    },
+    "timeline": {
+      "label": "Timeline/process"
+    },
+    "videoEmbed": {
+      "label": "Video",
+      "fields": {
+        "url": { "fieldLabel": "Video URL" }
+      }
+    },
+    "whatsAppButton": {
+      "label": "WhatsApp button",
+      "fields": {
+        "phoneNumber": { "fieldLabel": "Phone number" },
+        "message": { "fieldLabel": "Pre-filled message" }
+      }
+    }
   }
 }

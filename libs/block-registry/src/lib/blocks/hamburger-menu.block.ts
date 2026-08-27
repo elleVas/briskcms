@@ -12,7 +12,7 @@ export const hamburgerMenuBlock: BlockDescriptor<{
   visibility: 'always' | 'desktop-only' | 'mobile-only';
 }> = {
   type: 'HamburgerMenu',
-  label: 'Menu mobile (hamburger)',
+  label: 'blocks.hamburgerMenu.label',
   category: 'navigation',
   defaultProps: { position: 'left', visibility: 'mobile-only' },
   fields: [positionField, visibilityField],

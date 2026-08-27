@@ -4,7 +4,7 @@ import { ctaLinkFields } from '../fields/link-type-field.js';
 
 export const linkBlock: BlockDescriptor<LinkProps> = {
   type: 'Link',
-  label: 'Link',
+  label: 'blocks.link.label',
   category: 'content',
   defaultProps: {
     label: 'Scopri di più',
@@ -13,7 +13,12 @@ export const linkBlock: BlockDescriptor<LinkProps> = {
     url: '',
   },
   fields: [
-    { kind: 'text', key: 'label', label: 'Testo', inlineEditable: true },
+    {
+      kind: 'text',
+      key: 'label',
+      label: 'blocks.link.fields.label.fieldLabel',
+      inlineEditable: true,
+    },
     ...ctaLinkFields(),
   ],
 };

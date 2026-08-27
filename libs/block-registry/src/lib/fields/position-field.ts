@@ -9,9 +9,9 @@ import type { FieldDescriptor } from '../field-types.js';
 export const positionField: FieldDescriptor = {
   kind: 'radio',
   key: 'position',
-  label: 'Posizione',
+  label: 'blocks.shared.position.fieldLabel',
   options: [
-    { label: 'Sinistra', value: 'left' },
-    { label: 'Destra', value: 'right' },
+    { label: 'blocks.shared.position.options.left', value: 'left' },
+    { label: 'blocks.shared.position.options.right', value: 'right' },
   ],
 };

@@ -6,7 +6,7 @@ import { ctaLinkFields } from '../fields/link-type-field.js';
 
 export const bannerBlock: BlockDescriptor<BannerProps> = {
   type: 'Banner',
-  label: 'Banner/CTA',
+  label: 'blocks.banner.label',
   category: 'conversion',
   defaultProps: {
     title: 'Titolo del banner',
@@ -17,12 +17,22 @@ export const bannerBlock: BlockDescriptor<BannerProps> = {
     url: '',
   },
   fields: [
-    { kind: 'text', key: 'title', label: 'Titolo', inlineEditable: true },
-    { kind: 'textarea', key: 'text', label: 'Testo', inlineEditable: true },
+    {
+      kind: 'text',
+      key: 'title',
+      label: 'blocks.banner.fields.title.fieldLabel',
+      inlineEditable: true,
+    },
+    {
+      kind: 'textarea',
+      key: 'text',
+      label: 'blocks.banner.fields.text.fieldLabel',
+      inlineEditable: true,
+    },
     {
       kind: 'text',
       key: 'buttonLabel',
-      label: 'Testo bottone',
+      label: 'blocks.banner.fields.buttonLabel.fieldLabel',
       inlineEditable: true,
     },
     ...ctaLinkFields(),

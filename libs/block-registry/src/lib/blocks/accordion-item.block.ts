@@ -5,18 +5,23 @@ import { BlockStyleRegistry } from '../block-style-registry.js';
 
 export const accordionItemBlock: BlockDescriptor<AccordionItemProps> = {
   type: 'AccordionItem',
-  label: 'Domanda',
+  label: 'blocks.accordionItem.label',
   category: 'interactive',
   defaultProps: {
     question: 'Domanda...',
     answer: 'Risposta...',
   },
   fields: [
-    { kind: 'text', key: 'question', label: 'Domanda', inlineEditable: true },
+    {
+      kind: 'text',
+      key: 'question',
+      label: 'blocks.accordionItem.fields.question.fieldLabel',
+      inlineEditable: true,
+    },
     {
       kind: 'textarea',
       key: 'answer',
-      label: 'Risposta',
+      label: 'blocks.accordionItem.fields.answer.fieldLabel',
       inlineEditable: true,
     },
   ],

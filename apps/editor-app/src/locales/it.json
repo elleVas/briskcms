@@ -433,9 +433,381 @@
       "editTypeHint": "Questi valori si applicano a OGNI blocco {{type}} del sito.",
       "editInstance": "Stile di questo blocco",
       "saveError": "Salvataggio dello stile non riuscito. Riprova."
+    },
+    "blockStyle": {
+      "colors": {
+        "backgroundColor": "Colore di sfondo",
+        "textColor": "Colore testo"
+      },
+      "lengths": {
+        "borderRadius": {
+          "fieldLabel": "Raggio angoli",
+          "placeholder": "es. 6px, 9999px per un pill"
+        },
+        "paddingX": {
+          "fieldLabel": "Padding orizzontale",
+          "placeholder": "es. 1.25rem — vuoto per il default"
+        },
+        "paddingY": {
+          "fieldLabel": "Padding verticale",
+          "placeholder": "es. 1.25rem — vuoto per il default"
+        }
+      }
     }
   },
   "toast": {
     "dismiss": "Chiudi notifica"
+  },
+  "blocks": {
+    "categories": {
+      "layout": "Layout",
+      "content": "Contenuto",
+      "conversion": "Moduli e conversione",
+      "media": "Media",
+      "socialProof": "Prova sociale",
+      "interactive": "Interattivo",
+      "headerFooter": "Blocchi"
+    },
+    "shared": {
+      "linkType": {
+        "fieldLabel": "Tipo di link",
+        "options": {
+          "page": "Pagina del sito",
+          "url": "URL esterno"
+        },
+        "pageFieldLabel": "Pagina",
+        "urlFieldLabel": "URL"
+      },
+      "position": {
+        "fieldLabel": "Posizione",
+        "options": {
+          "left": "Sinistra",
+          "right": "Destra"
+        }
+      },
+      "visibility": {
+        "fieldLabel": "Visibilità",
+        "options": {
+          "always": "Sempre",
+          "desktopOnly": "Solo desktop",
+          "mobileOnly": "Solo mobile"
+        }
+      }
+    },
+    "accordionItem": {
+      "label": "Domanda",
+      "fields": {
+        "question": { "fieldLabel": "Domanda" },
+        "answer": { "fieldLabel": "Risposta" }
+      }
+    },
+    "accordion": {
+      "label": "Accordion/FAQ"
+    },
+    "backToTop": {
+      "label": "Bottone \"torna su\""
+    },
+    "banner": {
+      "label": "Banner/CTA",
+      "fields": {
+        "title": { "fieldLabel": "Titolo" },
+        "text": { "fieldLabel": "Testo" },
+        "buttonLabel": { "fieldLabel": "Testo bottone" }
+      }
+    },
+    "beforeAfter": {
+      "label": "Prima/dopo",
+      "fields": {
+        "beforeImage": { "fieldLabel": "Immagine \"prima\"" },
+        "afterImage": { "fieldLabel": "Immagine \"dopo\"" },
+        "beforeLabel": { "fieldLabel": "Etichetta \"prima\"" },
+        "afterLabel": { "fieldLabel": "Etichetta \"dopo\"" }
+      }
+    },
+    "breadcrumb": {
+      "label": "Breadcrumb",
+      "fields": {
+        "homeLabel": { "fieldLabel": "Etichetta home" }
+      }
+    },
+    "button": {
+      "label": "Bottone (CTA)",
+      "fields": {
+        "label": { "fieldLabel": "Testo" },
+        "variant": {
+          "fieldLabel": "Stile",
+          "options": {
+            "primary": "Primario",
+            "secondary": "Secondario"
+          }
+        }
+      }
+    },
+    "column": {
+      "label": "Colonna"
+    },
+    "columns": {
+      "label": "Colonne",
+      "fields": {
+        "layout": {
+          "fieldLabel": "Layout",
+          "options": {
+            "twoEqual": "2 uguali",
+            "twoAsymmetric": "2 (30/70)",
+            "threeEqual": "3 uguali"
+          }
+        }
+      }
+    },
+    "container": {
+      "label": "Contenitore",
+      "fields": {
+        "background": {
+          "fieldLabel": "Sfondo",
+          "options": {
+            "none": "Nessuno",
+            "muted": "Tenue",
+            "primary": "Primario",
+            "secondary": "Secondario"
+          }
+        },
+        "padding": {
+          "fieldLabel": "Padding",
+          "options": {
+            "none": "Nessuno",
+            "sm": "Piccolo",
+            "md": "Medio",
+            "lg": "Grande"
+          }
+        }
+      }
+    },
+    "countdown": {
+      "label": "Countdown",
+      "fields": {
+        "targetDate": { "fieldLabel": "Data/ora obiettivo" },
+        "label": { "fieldLabel": "Etichetta" }
+      }
+    },
+    "embedHtml": {
+      "label": "Embed HTML",
+      "fields": {
+        "html": { "fieldLabel": "Codice HTML" }
+      }
+    },
+    "featureGrid": {
+      "label": "Feature grid"
+    },
+    "feature": {
+      "label": "Feature",
+      "fields": {
+        "icon": { "fieldLabel": "Icona (emoji)" },
+        "title": { "fieldLabel": "Titolo" },
+        "text": { "fieldLabel": "Testo" }
+      }
+    },
+    "form": {
+      "label": "Modulo",
+      "fields": {
+        "form": { "fieldLabel": "Modulo" }
+      }
+    },
+    "gallery": {
+      "label": "Galleria",
+      "fields": {
+        "images": { "fieldLabel": "Immagini" }
+      }
+    },
+    "hamburgerMenu": {
+      "label": "Menu mobile (hamburger)"
+    },
+    "hero": {
+      "label": "Hero",
+      "fields": {
+        "title": { "fieldLabel": "Titolo" },
+        "subtitle": { "fieldLabel": "Sottotitolo" }
+      }
+    },
+    "imageSlider": {
+      "label": "Slider immagini",
+      "fields": {
+        "images": { "fieldLabel": "Immagini" }
+      }
+    },
+    "image": {
+      "label": "Immagine",
+      "fields": {
+        "media": { "fieldLabel": "Immagine" },
+        "alt": { "fieldLabel": "Testo alternativo" },
+        "caption": { "fieldLabel": "Didascalia" }
+      }
+    },
+    "languageSwitcher": {
+      "label": "Selettore lingua"
+    },
+    "link": {
+      "label": "Link",
+      "fields": {
+        "label": { "fieldLabel": "Testo" }
+      }
+    },
+    "logoStrip": {
+      "label": "Loghi partner/clienti",
+      "fields": {
+        "logos": { "fieldLabel": "Loghi" }
+      }
+    },
+    "mapEmbed": {
+      "label": "Mappa",
+      "fields": {
+        "address": { "fieldLabel": "Indirizzo" }
+      }
+    },
+    "navDropdown": {
+      "label": "Sottomenu",
+      "fields": {
+        "label": { "fieldLabel": "Etichetta" }
+      }
+    },
+    "navLink": {
+      "label": "Link di navigazione",
+      "fields": {
+        "label": { "fieldLabel": "Testo" },
+        "icon": { "fieldLabel": "Icona" }
+      }
+    },
+    "nav": {
+      "label": "Menu di navigazione"
+    },
+    "newsletterSignup": {
+      "label": "Iscrizione newsletter",
+      "fields": {
+        "title": { "fieldLabel": "Titolo" },
+        "buttonLabel": { "fieldLabel": "Testo bottone" }
+      }
+    },
+    "pricingPlan": {
+      "label": "Piano prezzo",
+      "fields": {
+        "name": { "fieldLabel": "Nome piano" },
+        "price": { "fieldLabel": "Prezzo" },
+        "period": { "fieldLabel": "Periodo" },
+        "features": { "fieldLabel": "Caratteristiche" },
+        "highlighted": { "fieldLabel": "In evidenza" },
+        "buttonLabel": { "fieldLabel": "Testo bottone" }
+      }
+    },
+    "pricingTable": {
+      "label": "Tabella prezzi"
+    },
+    "promoBar": {
+      "label": "Barra annuncio/promo",
+      "fields": {
+        "message": { "fieldLabel": "Messaggio" }
+      }
+    },
+    "quote": {
+      "label": "Citazione",
+      "fields": {
+        "quote": { "fieldLabel": "Citazione" },
+        "author": { "fieldLabel": "Autore" },
+        "role": { "fieldLabel": "Ruolo" }
+      }
+    },
+    "rating": {
+      "label": "Valutazione a stelle",
+      "fields": {
+        "rating": { "fieldLabel": "Stelle" },
+        "label": { "fieldLabel": "Etichetta" }
+      }
+    },
+    "searchBox": {
+      "label": "Ricerca sul sito",
+      "fields": {
+        "placeholder": { "fieldLabel": "Placeholder" }
+      }
+    },
+    "stat": {
+      "label": "Statistica",
+      "fields": {
+        "value": { "fieldLabel": "Valore" },
+        "prefix": { "fieldLabel": "Prefisso" },
+        "suffix": { "fieldLabel": "Suffisso" },
+        "label": { "fieldLabel": "Etichetta" }
+      }
+    },
+    "statsCounter": {
+      "label": "Contatori/statistiche"
+    },
+    "tab": {
+      "label": "Tab",
+      "fields": {
+        "label": { "fieldLabel": "Etichetta tab" }
+      }
+    },
+    "table": {
+      "label": "Tabella dati",
+      "fields": {
+        "rows": { "fieldLabel": "Righe" }
+      }
+    },
+    "tabs": {
+      "label": "Tabs"
+    },
+    "teamMember": {
+      "label": "Membro del team",
+      "fields": {
+        "photo": { "fieldLabel": "Foto" },
+        "name": { "fieldLabel": "Nome" },
+        "role": { "fieldLabel": "Ruolo" },
+        "bio": { "fieldLabel": "Bio" }
+      }
+    },
+    "team": {
+      "label": "Team/staff"
+    },
+    "testimonial": {
+      "label": "Testimonianza",
+      "fields": {
+        "quote": { "fieldLabel": "Recensione" },
+        "author": { "fieldLabel": "Autore" },
+        "role": { "fieldLabel": "Ruolo" },
+        "avatar": { "fieldLabel": "Avatar" },
+        "rating": { "fieldLabel": "Stelle" }
+      }
+    },
+    "testimonials": {
+      "label": "Testimonianze/recensioni"
+    },
+    "text": {
+      "label": "Testo",
+      "fields": {
+        "body": { "fieldLabel": "Testo" }
+      }
+    },
+    "timelineStep": {
+      "label": "Fase",
+      "fields": {
+        "label": { "fieldLabel": "Etichetta" },
+        "title": { "fieldLabel": "Titolo" },
+        "description": { "fieldLabel": "Descrizione" }
+      }
+    },
+    "timeline": {
+      "label": "Timeline/processo"
+    },
+    "videoEmbed": {
+      "label": "Video",
+      "fields": {
+        "url": { "fieldLabel": "URL video" }
+      }
+    },
+    "whatsAppButton": {
+      "label": "Bottone WhatsApp",
+      "fields": {
+        "phoneNumber": { "fieldLabel": "Numero di telefono" },
+        "message": { "fieldLabel": "Messaggio precompilato" }
+      }
+    }
   }
 }

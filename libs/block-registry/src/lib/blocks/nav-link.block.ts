@@ -7,7 +7,7 @@ import { visibilityField } from '../fields/visibility-field.js';
 
 export const navLinkBlock: BlockDescriptor<NavLinkProps> = {
   type: 'NavLink',
-  label: 'Link di navigazione',
+  label: 'blocks.navLink.label',
   category: 'navigation',
   defaultProps: {
     label: 'Link',
@@ -19,9 +19,18 @@ export const navLinkBlock: BlockDescriptor<NavLinkProps> = {
     visibility: 'always',
   },
   fields: [
-    { kind: 'text', key: 'label', label: 'Testo', inlineEditable: true },
+    {
+      kind: 'text',
+      key: 'label',
+      label: 'blocks.navLink.fields.label.fieldLabel',
+      inlineEditable: true,
+    },
     ...ctaLinkFields(),
-    FieldBuilder.custom('icon', 'Icona', IconPickerField),
+    FieldBuilder.custom(
+      'icon',
+      'blocks.navLink.fields.icon.fieldLabel',
+      IconPickerField,
+    ),
     positionField,
     visibilityField,
   ],

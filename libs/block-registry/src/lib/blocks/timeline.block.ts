@@ -4,7 +4,7 @@ import type { BlockDescriptor } from '../field-types.js';
 
 export const timelineBlock: BlockDescriptor<TimelineProps> = {
   type: 'Timeline',
-  label: 'Timeline/processo',
+  label: 'blocks.timeline.label',
   category: 'socialProof',
   defaultProps: {},
   fields: [],

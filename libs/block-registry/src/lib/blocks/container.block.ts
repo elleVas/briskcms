@@ -4,30 +4,54 @@ import type { BlockDescriptor } from '../field-types.js';
 
 export const containerBlock: BlockDescriptor<ContainerProps> = {
   type: 'Container',
-  label: 'Contenitore',
+  label: 'blocks.container.label',
   category: 'layout',
   defaultProps: { background: 'none', padding: 'md' },
   fields: [
     {
       kind: 'radio',
       key: 'background',
-      label: 'Sfondo',
+      label: 'blocks.container.fields.background.fieldLabel',
       options: [
-        { label: 'Nessuno', value: 'none' },
-        { label: 'Tenue', value: 'muted' },
-        { label: 'Primario', value: 'primary' },
-        { label: 'Secondario', value: 'secondary' },
+        {
+          label: 'blocks.container.fields.background.options.none',
+          value: 'none',
+        },
+        {
+          label: 'blocks.container.fields.background.options.muted',
+          value: 'muted',
+        },
+        {
+          label: 'blocks.container.fields.background.options.primary',
+          value: 'primary',
+        },
+        {
+          label: 'blocks.container.fields.background.options.secondary',
+          value: 'secondary',
+        },
       ],
     },
     {
       kind: 'radio',
       key: 'padding',
-      label: 'Padding',
+      label: 'blocks.container.fields.padding.fieldLabel',
       options: [
-        { label: 'Nessuno', value: 'none' },
-        { label: 'Piccolo', value: 'sm' },
-        { label: 'Medio', value: 'md' },
-        { label: 'Grande', value: 'lg' },
+        {
+          label: 'blocks.container.fields.padding.options.none',
+          value: 'none',
+        },
+        {
+          label: 'blocks.container.fields.padding.options.sm',
+          value: 'sm',
+        },
+        {
+          label: 'blocks.container.fields.padding.options.md',
+          value: 'md',
+        },
+        {
+          label: 'blocks.container.fields.padding.options.lg',
+          value: 'lg',
+        },
       ],
     },
   ],

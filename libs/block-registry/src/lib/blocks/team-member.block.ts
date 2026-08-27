@@ -6,7 +6,7 @@ import { BlockStyleRegistry } from '../block-style-registry.js';
 
 export const teamMemberBlock: BlockDescriptor<TeamMemberProps> = {
   type: 'TeamMember',
-  label: 'Membro del team',
+  label: 'blocks.teamMember.label',
   category: 'socialProof',
   defaultProps: {
     photo: null,
@@ -15,10 +15,29 @@ export const teamMemberBlock: BlockDescriptor<TeamMemberProps> = {
     bio: '',
   },
   fields: [
-    FieldBuilder.custom('photo', 'Foto', MediaPickerField),
-    { kind: 'text', key: 'name', label: 'Nome', inlineEditable: true },
-    { kind: 'text', key: 'role', label: 'Ruolo', inlineEditable: true },
-    { kind: 'textarea', key: 'bio', label: 'Bio', inlineEditable: true },
+    FieldBuilder.custom(
+      'photo',
+      'blocks.teamMember.fields.photo.fieldLabel',
+      MediaPickerField,
+    ),
+    {
+      kind: 'text',
+      key: 'name',
+      label: 'blocks.teamMember.fields.name.fieldLabel',
+      inlineEditable: true,
+    },
+    {
+      kind: 'text',
+      key: 'role',
+      label: 'blocks.teamMember.fields.role.fieldLabel',
+      inlineEditable: true,
+    },
+    {
+      kind: 'textarea',
+      key: 'bio',
+      label: 'blocks.teamMember.fields.bio.fieldLabel',
+      inlineEditable: true,
+    },
   ],
   stylableProperties: BlockStyleRegistry.STANDARD,
   defaultStyle: BLOCK_STYLE_DEFAULTS.TeamMember,

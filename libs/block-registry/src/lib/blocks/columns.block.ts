@@ -5,18 +5,27 @@ import { BlockStyleRegistry } from '../block-style-registry.js';
 
 export const columnsBlock: BlockDescriptor<ColumnsProps> = {
   type: 'Columns',
-  label: 'Colonne',
+  label: 'blocks.columns.label',
   category: 'layout',
   defaultProps: { layout: 'two-equal' },
   fields: [
     {
       kind: 'radio',
       key: 'layout',
-      label: 'Layout',
+      label: 'blocks.columns.fields.layout.fieldLabel',
       options: [
-        { label: '2 uguali', value: 'two-equal' },
-        { label: '2 (30/70)', value: 'two-asymmetric' },
-        { label: '3 uguali', value: 'three-equal' },
+        {
+          label: 'blocks.columns.fields.layout.options.twoEqual',
+          value: 'two-equal',
+        },
+        {
+          label: 'blocks.columns.fields.layout.options.twoAsymmetric',
+          value: 'two-asymmetric',
+        },
+        {
+          label: 'blocks.columns.fields.layout.options.threeEqual',
+          value: 'three-equal',
+        },
       ],
     },
   ],

@@ -3,18 +3,23 @@ import type { BlockDescriptor } from '../field-types.js';
 
 export const newsletterSignupBlock: BlockDescriptor<NewsletterSignupProps> = {
   type: 'NewsletterSignup',
-  label: 'Iscrizione newsletter',
+  label: 'blocks.newsletterSignup.label',
   category: 'conversion',
   defaultProps: {
     title: 'Iscriviti alla newsletter',
     buttonLabel: 'Iscrivimi',
   },
   fields: [
-    { kind: 'text', key: 'title', label: 'Titolo', inlineEditable: true },
+    {
+      kind: 'text',
+      key: 'title',
+      label: 'blocks.newsletterSignup.fields.title.fieldLabel',
+      inlineEditable: true,
+    },
     {
       kind: 'text',
       key: 'buttonLabel',
-      label: 'Testo bottone',
+      label: 'blocks.newsletterSignup.fields.buttonLabel.fieldLabel',
       inlineEditable: true,
     },
   ],

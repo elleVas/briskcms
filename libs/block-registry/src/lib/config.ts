@@ -137,11 +137,11 @@ export const pageBlocks: BlockDescriptor[] = [
 /** Raggruppamento per il selettore blocchi — ogni blocco sopra compare in esattamente una categoria qui, nessun bucket di fallback automatico per uno dimenticato. */
 export const pageBlockCategories: { title: string; types: string[] }[] = [
   {
-    title: 'Layout',
+    title: 'blocks.categories.layout',
     types: ['Columns', 'Column', 'Container'],
   },
   {
-    title: 'Contenuto',
+    title: 'blocks.categories.content',
     types: [
       'Hero',
       'Text',
@@ -155,7 +155,7 @@ export const pageBlockCategories: { title: string; types: string[] }[] = [
     ],
   },
   {
-    title: 'Moduli e conversione',
+    title: 'blocks.categories.conversion',
     types: [
       'Form',
       'NewsletterSignup',
@@ -166,7 +166,7 @@ export const pageBlockCategories: { title: string; types: string[] }[] = [
     ],
   },
   {
-    title: 'Media',
+    title: 'blocks.categories.media',
     types: [
       'VideoEmbed',
       'MapEmbed',
@@ -177,7 +177,7 @@ export const pageBlockCategories: { title: string; types: string[] }[] = [
     ],
   },
   {
-    title: 'Prova sociale',
+    title: 'blocks.categories.socialProof',
     types: [
       'Testimonials',
       'Testimonial',
@@ -192,7 +192,7 @@ export const pageBlockCategories: { title: string; types: string[] }[] = [
     ],
   },
   {
-    title: 'Interattivo',
+    title: 'blocks.categories.interactive',
     types: [
       'Accordion',
       'AccordionItem',

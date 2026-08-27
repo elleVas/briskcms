@@ -4,7 +4,7 @@ import { MediaPickerField } from '../fields/media-picker-field.js';
 
 export const imageBlock: BlockDescriptor<ImageProps> = {
   type: 'Image',
-  label: 'Immagine',
+  label: 'blocks.image.label',
   category: 'content',
   defaultProps: {
     media: null,
@@ -12,10 +12,23 @@ export const imageBlock: BlockDescriptor<ImageProps> = {
     caption: '',
   },
   fields: [
-    FieldBuilder.custom('media', 'Immagine', MediaPickerField),
+    FieldBuilder.custom(
+      'media',
+      'blocks.image.fields.media.fieldLabel',
+      MediaPickerField,
+    ),
     // alt non è inlineEditable: è un attributo (nessun nodo di testo
     // visibile nel DOM), non un contenuto che si possa editare sul canvas.
-    { kind: 'text', key: 'alt', label: 'Testo alternativo' },
-    { kind: 'text', key: 'caption', label: 'Didascalia', inlineEditable: true },
+    {
+      kind: 'text',
+      key: 'alt',
+      label: 'blocks.image.fields.alt.fieldLabel',
+    },
+    {
+      kind: 'text',
+      key: 'caption',
+      label: 'blocks.image.fields.caption.fieldLabel',
+      inlineEditable: true,
+    },
   ],
 };

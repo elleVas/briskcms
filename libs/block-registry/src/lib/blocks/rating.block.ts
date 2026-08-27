@@ -5,15 +5,27 @@ import { BlockStyleRegistry } from '../block-style-registry.js';
 
 export const ratingBlock: BlockDescriptor<RatingProps> = {
   type: 'Rating',
-  label: 'Valutazione a stelle',
+  label: 'blocks.rating.label',
   category: 'media',
   defaultProps: {
     rating: 5,
     label: 'Valutazione clienti',
   },
   fields: [
-    { kind: 'number', key: 'rating', label: 'Stelle', min: 1, max: 5, step: 1 },
-    { kind: 'text', key: 'label', label: 'Etichetta', inlineEditable: true },
+    {
+      kind: 'number',
+      key: 'rating',
+      label: 'blocks.rating.fields.rating.fieldLabel',
+      min: 1,
+      max: 5,
+      step: 1,
+    },
+    {
+      kind: 'text',
+      key: 'label',
+      label: 'blocks.rating.fields.label.fieldLabel',
+      inlineEditable: true,
+    },
   ],
   stylableProperties: BlockStyleRegistry.STANDARD,
   defaultStyle: BLOCK_STYLE_DEFAULTS.Rating,

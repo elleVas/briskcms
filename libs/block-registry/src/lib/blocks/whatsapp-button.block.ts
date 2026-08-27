@@ -4,7 +4,7 @@ import { visibilityField } from '../fields/visibility-field.js';
 
 export const whatsAppButtonBlock: BlockDescriptor<WhatsAppButtonProps> = {
   type: 'WhatsAppButton',
-  label: 'Bottone WhatsApp',
+  label: 'blocks.whatsAppButton.label',
   category: 'chrome',
   defaultProps: {
     phoneNumber: '',
@@ -12,8 +12,16 @@ export const whatsAppButtonBlock: BlockDescriptor<WhatsAppButtonProps> = {
     visibility: 'always',
   },
   fields: [
-    { kind: 'text', key: 'phoneNumber', label: 'Numero di telefono' },
-    { kind: 'text', key: 'message', label: 'Messaggio precompilato' },
+    {
+      kind: 'text',
+      key: 'phoneNumber',
+      label: 'blocks.whatsAppButton.fields.phoneNumber.fieldLabel',
+    },
+    {
+      kind: 'text',
+      key: 'message',
+      label: 'blocks.whatsAppButton.fields.message.fieldLabel',
+    },
     visibilityField,
   ],
 };

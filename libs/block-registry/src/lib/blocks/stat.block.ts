@@ -5,7 +5,7 @@ import { BlockStyleRegistry } from '../block-style-registry.js';
 
 export const statBlock: BlockDescriptor<StatProps> = {
   type: 'Stat',
-  label: 'Statistica',
+  label: 'blocks.stat.label',
   category: 'socialProof',
   defaultProps: {
     value: 100,
@@ -16,10 +16,29 @@ export const statBlock: BlockDescriptor<StatProps> = {
   fields: [
     // Non inlineEditable: guida l'animazione count-up sul sito pubblico
     // (StatsCounter.astro la fa il parse diretto), deve restare un numero.
-    { kind: 'number', key: 'value', label: 'Valore' },
-    { kind: 'text', key: 'prefix', label: 'Prefisso', inlineEditable: true },
-    { kind: 'text', key: 'suffix', label: 'Suffisso', inlineEditable: true },
-    { kind: 'text', key: 'label', label: 'Etichetta', inlineEditable: true },
+    {
+      kind: 'number',
+      key: 'value',
+      label: 'blocks.stat.fields.value.fieldLabel',
+    },
+    {
+      kind: 'text',
+      key: 'prefix',
+      label: 'blocks.stat.fields.prefix.fieldLabel',
+      inlineEditable: true,
+    },
+    {
+      kind: 'text',
+      key: 'suffix',
+      label: 'blocks.stat.fields.suffix.fieldLabel',
+      inlineEditable: true,
+    },
+    {
+      kind: 'text',
+      key: 'label',
+      label: 'blocks.stat.fields.label.fieldLabel',
+      inlineEditable: true,
+    },
   ],
   stylableProperties: BlockStyleRegistry.STANDARD,
   defaultStyle: BLOCK_STYLE_DEFAULTS.Stat,

@@ -8,7 +8,7 @@ import { BlockStyleRegistry } from '../block-style-registry.js';
 // ragione del Contenitore.
 export const columnBlock: BlockDescriptor<ColumnProps> = {
   type: 'Column',
-  label: 'Colonna',
+  label: 'blocks.column.label',
   category: 'layout',
   defaultProps: {},
   fields: [],

@@ -11,10 +11,10 @@ import { PagePickerField } from './page-picker-field.js';
 export const linkTypeField: FieldDescriptor = {
   kind: 'radio',
   key: 'linkType',
-  label: 'Tipo di link',
+  label: 'blocks.shared.linkType.fieldLabel',
   options: [
-    { label: 'Pagina del sito', value: 'page' },
-    { label: 'URL esterno', value: 'url' },
+    { label: 'blocks.shared.linkType.options.page', value: 'page' },
+    { label: 'blocks.shared.linkType.options.url', value: 'url' },
   ],
 };
 
@@ -26,7 +26,11 @@ export const linkTypeField: FieldDescriptor = {
 export function ctaLinkFields(): FieldDescriptor[] {
   return [
     linkTypeField,
-    FieldBuilder.custom('page', 'Pagina', PagePickerField),
-    { kind: 'text', key: 'url', label: 'URL' },
+    FieldBuilder.custom(
+      'page',
+      'blocks.shared.linkType.pageFieldLabel',
+      PagePickerField,
+    ),
+    { kind: 'text', key: 'url', label: 'blocks.shared.linkType.urlFieldLabel' },
   ];
 }

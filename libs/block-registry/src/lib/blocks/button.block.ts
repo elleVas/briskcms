@@ -6,7 +6,7 @@ import { ctaLinkFields } from '../fields/link-type-field.js';
 
 export const buttonBlock: BlockDescriptor<ButtonProps> = {
   type: 'Button',
-  label: 'Bottone (CTA)',
+  label: 'blocks.button.label',
   category: 'conversion',
   defaultProps: {
     label: 'Scopri di più',
@@ -16,15 +16,26 @@ export const buttonBlock: BlockDescriptor<ButtonProps> = {
     variant: 'primary',
   },
   fields: [
-    { kind: 'text', key: 'label', label: 'Testo', inlineEditable: true },
+    {
+      kind: 'text',
+      key: 'label',
+      label: 'blocks.button.fields.label.fieldLabel',
+      inlineEditable: true,
+    },
     ...ctaLinkFields(),
     {
       kind: 'radio',
       key: 'variant',
-      label: 'Stile',
+      label: 'blocks.button.fields.variant.fieldLabel',
       options: [
-        { label: 'Primario', value: 'primary' },
-        { label: 'Secondario', value: 'secondary' },
+        {
+          label: 'blocks.button.fields.variant.options.primary',
+          value: 'primary',
+        },
+        {
+          label: 'blocks.button.fields.variant.options.secondary',
+          value: 'secondary',
+        },
       ],
     },
   ],

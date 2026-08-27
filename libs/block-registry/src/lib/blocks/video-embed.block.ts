@@ -3,7 +3,7 @@ import type { BlockDescriptor } from '../field-types.js';
 
 export const videoEmbedBlock: BlockDescriptor<VideoEmbedProps> = {
   type: 'VideoEmbed',
-  label: 'Video',
+  label: 'blocks.videoEmbed.label',
   category: 'media',
   defaultProps: {
     url: '',
@@ -12,7 +12,7 @@ export const videoEmbedBlock: BlockDescriptor<VideoEmbedProps> = {
     {
       kind: 'text',
       key: 'url',
-      label: 'URL video',
+      label: 'blocks.videoEmbed.fields.url.fieldLabel',
       placeholder: 'https://www.youtube.com/watch?v=...',
     },
   ],

@@ -4,10 +4,16 @@ import { GalleryPickerField } from '../fields/gallery-picker-field.js';
 
 export const galleryBlock: BlockDescriptor<GalleryProps> = {
   type: 'Gallery',
-  label: 'Galleria',
+  label: 'blocks.gallery.label',
   category: 'content',
   defaultProps: {
     images: [],
   },
-  fields: [FieldBuilder.custom('images', 'Immagini', GalleryPickerField)],
+  fields: [
+    FieldBuilder.custom(
+      'images',
+      'blocks.gallery.fields.images.fieldLabel',
+      GalleryPickerField,
+    ),
+  ],
 };

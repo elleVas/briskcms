@@ -245,7 +245,15 @@ export const pageVersions = pgTable(
       .defaultNow(),
     // every save creates a row here, never a destructive overwrite
   },
-  (table) => [index('page_versions_page_idx').on(table.pageId)],
+  (table) => [
+    // Composite, not just on pageId: every listing query is
+    // `WHERE page_id = ? ORDER BY created_at ASC` (see
+    // drizzle-page-version.repository.ts) — a pageId-only index still
+    // needs a separate sort step, this one serves the query as a pure
+    // index scan. The pageId-only lookups (if any) are still served by
+    // this index's leading column.
+    index('page_versions_page_created_idx').on(table.pageId, table.createdAt),
+  ],
 );
 
 // One header and one footer per (site, locale) at most (docs/adr/0018) —
@@ -314,8 +322,12 @@ export const siteLayoutSectionVersions = pgTable(
     // every save creates a row here, never a destructive overwrite
   },
   (table) => [
-    index('site_layout_section_versions_section_idx').on(
+    // Composite for the same reason as page_versions_page_created_idx
+    // above: listing is always
+    // `WHERE site_layout_section_id = ? ORDER BY created_at ASC`.
+    index('site_layout_section_versions_section_created_idx').on(
       table.siteLayoutSectionId,
+      table.createdAt,
     ),
   ],
 );

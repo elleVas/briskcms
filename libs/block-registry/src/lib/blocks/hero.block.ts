@@ -4,18 +4,23 @@ import type { BlockDescriptor } from '../field-types.js';
 
 export const heroBlock: BlockDescriptor<HeroProps> = {
   type: 'Hero',
-  label: 'Hero',
+  label: 'blocks.hero.label',
   category: 'content',
   defaultProps: {
     title: 'Titolo',
     subtitle: 'Sottotitolo',
   },
   fields: [
-    { kind: 'text', key: 'title', label: 'Titolo', inlineEditable: true },
+    {
+      kind: 'text',
+      key: 'title',
+      label: 'blocks.hero.fields.title.fieldLabel',
+      inlineEditable: true,
+    },
     {
       kind: 'textarea',
       key: 'subtitle',
-      label: 'Sottotitolo',
+      label: 'blocks.hero.fields.subtitle.fieldLabel',
       inlineEditable: true,
     },
   ],
