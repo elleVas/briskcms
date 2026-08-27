@@ -22,6 +22,7 @@ import type {
   SiteThemeBlockStylesPort,
   TenantContextPort,
 } from '@brisk/ports';
+import { siteRecordSchema, type SiteRecord } from '@brisk/shared-types';
 import { Roles } from '../auth/roles.decorator.js';
 import { RolesGuard } from '../auth/roles.guard.js';
 import { SessionAuthGuard } from '../auth/session-auth.guard.js';
@@ -207,13 +208,17 @@ export class SitesController {
    * Nessun campo sensibile su Site oggi, ma senza whitelist esplicita un
    * futuro campo lo esporrebbe automaticamente qui.
    */
-  private async toDto(site: Site) {
+  private async toDto(site: Site): Promise<SiteRecord> {
     const blockStyles = await this.siteThemeBlockStylesRepository.listBySite(
       site.tenantId,
       site.id,
     );
     const props = site.toProps();
-    return {
+    // Validated, not just cast: siteRecordSchema is the same schema
+    // apps/editor-app's sites-api-client.ts parses the response against —
+    // a shape mismatch fails loudly here instead of silently reaching the
+    // client as a structurally-wrong object.
+    return siteRecordSchema.parse({
       id: props.id,
       tenantId: props.tenantId,
       name: props.name,
@@ -234,8 +239,12 @@ export class SitesController {
       themeBodyScript: props.themeBodyScript,
       themeFaviconUrl: props.themeFaviconUrl,
       themeOverridesEnabled: props.themeOverridesEnabled,
-      createdAt: props.createdAt,
+      // .toISOString(), not the raw Date: siteRecordSchema's createdAt is a
+      // string (the shape the client actually parses off the wire) —
+      // validating a live Date object against it would fail even though
+      // JSON.stringify would have serialized it to the same string anyway.
+      createdAt: props.createdAt.toISOString(),
       themeTokens: { blockStyles },
-    };
+    });
   }
 }

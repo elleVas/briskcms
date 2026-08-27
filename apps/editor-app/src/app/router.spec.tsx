@@ -15,7 +15,7 @@ import * as sitesApi from '../lib/sites-api-client.js';
 import { ApiError } from '../lib/http-client.js';
 import type { PageDto } from '../lib/pages-api-client.js';
 import type { SiteLayoutSectionDto } from '../lib/site-layout-sections-api-client.js';
-import type { SiteDto } from '../lib/sites-api-client.js';
+import type { SiteRecord } from '@brisk/shared-types';
 import { routeTree } from '../routeTree.gen.js';
 import { createTestQueryClient } from '../test-query-client.js';
 
@@ -56,7 +56,7 @@ vi.mock('../lib/site-layout-sections-api-client.js', async (importOriginal) => {
   return { ...actual, getOrCreateSiteLayoutSection: vi.fn() };
 });
 
-const sampleSite: SiteDto = {
+const sampleSite: SiteRecord = {
   id: 'site-1',
   tenantId: 'tenant-1',
   name: 'Il mio sito',
@@ -77,7 +77,7 @@ const sampleSite: SiteDto = {
   themeBodyScript: null,
   themeFaviconUrl: null,
   themeOverridesEnabled: true,
-  themeTokens: null,
+  themeTokens: { blockStyles: {} },
   createdAt: '',
 };
 

@@ -1,14 +1,14 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import type { SiteRecord } from '@brisk/shared-types';
 import {
   getSite,
   updateBusinessInfo,
   updateGeneralSettings,
   updateLocaleSettings,
   updateSeoSettings,
-  type SiteDto,
 } from './sites-api-client.js';
 
-const sampleSite: SiteDto = {
+const sampleSite: SiteRecord = {
   id: 'site-1',
   tenantId: 'tenant-1',
   name: 'Il mio sito',

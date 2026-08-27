@@ -13,3 +13,5 @@ export * from './lib/block-style-overrides.js';
 export * from './lib/block-style-defaults.js';
 export * from './lib/icons.js';
 export * from './lib/slugify.js';
+export * from './lib/published-site.js';
+export * from './lib/site-record.js';

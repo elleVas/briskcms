@@ -1,6 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { QueryClientProvider } from '@tanstack/react-query';
+import type { SiteRecord } from '@brisk/shared-types';
 import { TooltipProvider } from '../components/ui/tooltip.js';
 import * as api from '../lib/sites-api-client.js';
 import { createTestQueryClient } from '../test-query-client.js';
@@ -27,7 +28,7 @@ describe('SettingsMenu', () => {
     vi.clearAllMocks();
   });
 
-  function mockSite(overrides: Partial<api.SiteDto> = {}): api.SiteDto {
+  function mockSite(overrides: Partial<SiteRecord> = {}): SiteRecord {
     return {
       id: 'site-1',
       tenantId: 'tenant-1',
@@ -49,7 +50,7 @@ describe('SettingsMenu', () => {
       themeBodyScript: null,
       themeFaviconUrl: null,
       themeOverridesEnabled: true,
-      themeTokens: null,
+      themeTokens: { blockStyles: {} },
       createdAt: '',
       ...overrides,
     };

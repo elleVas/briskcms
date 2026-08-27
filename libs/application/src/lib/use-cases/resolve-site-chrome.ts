@@ -1,33 +1,11 @@
-import type {
-  Block,
-  OpeningHoursDay,
-  ThemeSettings,
-  ThemeTokens,
-  UntranslatedPageFallback,
-} from '@brisk/shared-types';
+import type { Block, PublishedSite } from '@brisk/shared-types';
 import type { Site, SiteLayoutSection } from '@brisk/domain-core';
 import type {
   SiteLayoutSectionRepositoryPort,
   SiteThemeBlockStylesPort,
 } from '@brisk/ports';
 
-/** Only what the public renderer needs for OG tags + schema.org (docs/adr/0014) and the language switcher (docs/adr/0017) — never the tenant id or anything else internal. */
-export interface PublishedSite {
-  name: string;
-  domain: string | null;
-  defaultLocale: string;
-  enabledLocales: string[];
-  untranslatedPageFallback: UntranslatedPageFallback;
-  businessAddress: string | null;
-  businessPhone: string | null;
-  businessType: string | null;
-  openingHours: OpeningHoursDay[] | null;
-  searchEngineIndexingEnabled: boolean;
-  /** Tier 1 of docs/adr/0021's theming model — layered by PageLayout.astro on top of the active filesystem theme (Tier 2). */
-  themeSettings: ThemeSettings;
-  /** Global Styles Editor (Fase 2a) — categorie di stile oltre ai colori (Bottoni oggi). */
-  themeTokens: ThemeTokens;
-}
+export type { PublishedSite };
 
 export interface PublishedSiteChrome {
   site: PublishedSite;

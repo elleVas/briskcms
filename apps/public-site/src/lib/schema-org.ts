@@ -1,5 +1,9 @@
-import type { DayOfWeek, SeoMeta } from '@brisk/shared-types';
-import type { PublishedSiteDto } from './public-api-client.js';
+import type {
+  DayOfWeek,
+  OpeningHoursDay,
+  PublishedSite,
+  SeoMeta,
+} from '@brisk/shared-types';
 
 const SCHEMA_ORG_DAY: Record<DayOfWeek, string> = {
   monday: 'Monday',
@@ -12,12 +16,12 @@ const SCHEMA_ORG_DAY: Record<DayOfWeek, string> = {
 };
 
 export interface BuildSchemaOrgGraphInput {
-  site: PublishedSiteDto;
+  site: PublishedSite;
   seoMeta: SeoMeta;
   pageUrl: string;
 }
 
-function hasBusinessInfo(site: PublishedSiteDto): boolean {
+function hasBusinessInfo(site: PublishedSite): boolean {
   return (
     site.businessAddress !== null ||
     site.businessPhone !== null ||
@@ -26,7 +30,7 @@ function hasBusinessInfo(site: PublishedSiteDto): boolean {
   );
 }
 
-function buildLocalBusinessNode(site: PublishedSiteDto): object {
+function buildLocalBusinessNode(site: PublishedSite): object {
   const business: Record<string, unknown> = {
     // Falls back to the generic schema.org type when the site hasn't set
     // a more specific one (e.g. "Restaurant") — see docs/adr/0014,
@@ -43,13 +47,14 @@ function buildLocalBusinessNode(site: PublishedSiteDto): object {
   if (site.businessAddress) business['address'] = site.businessAddress;
   if (site.businessPhone) business['telephone'] = site.businessPhone;
   if (site.openingHours) {
-    business['openingHoursSpecification'] = site.openingHours.flatMap((day) =>
-      day.ranges.map((range) => ({
-        '@type': 'OpeningHoursSpecification',
-        dayOfWeek: `https://schema.org/${SCHEMA_ORG_DAY[day.dayOfWeek]}`,
-        opens: range.opens,
-        closes: range.closes,
-      })),
+    business['openingHoursSpecification'] = site.openingHours.flatMap(
+      (day: OpeningHoursDay) =>
+        day.ranges.map((range) => ({
+          '@type': 'OpeningHoursSpecification',
+          dayOfWeek: `https://schema.org/${SCHEMA_ORG_DAY[day.dayOfWeek]}`,
+          opens: range.opens,
+          closes: range.closes,
+        })),
     );
   }
   return business;
