@@ -48,12 +48,10 @@ import {
   videoEmbedPropsSchema,
   whatsAppButtonPropsSchema,
   type Block,
+  type PublishedPageAncestor,
+  type PublishedPageTranslation,
   type PublishedSite,
 } from '@brisk/shared-types';
-import type {
-  PublishedPageAncestorDto,
-  PublishedPageTranslationDto,
-} from '../lib/public-api-client.js';
 import { resolveThemeBlockOverride } from '../lib/resolve-theme-block-override.js';
 import AccordionCore from './blocks/Accordion.astro';
 const Accordion = resolveThemeBlockOverride('Accordion', AccordionCore);
@@ -169,9 +167,9 @@ const WhatsAppButton = resolveThemeBlockOverride('WhatsAppButton', WhatsAppButto
 interface Props {
   block: Block;
   locale: string;
-  translations: PublishedPageTranslationDto[];
+  translations: PublishedPageTranslation[];
   site: PublishedSite;
-  ancestors: PublishedPageAncestorDto[];
+  ancestors: PublishedPageAncestor[];
   currentPageTitle: string;
   // Solo le rotte di preview (apps/public-site/src/pages/preview/[pageId].astro)
   // passano true — la rotta pubblicata reale non la passa mai, quindi

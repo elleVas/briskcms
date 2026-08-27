@@ -15,3 +15,5 @@ export * from './lib/icons.js';
 export * from './lib/slugify.js';
 export * from './lib/published-site.js';
 export * from './lib/site-record.js';
+export * from './lib/published-page.js';
+export * from './lib/page-record.js';

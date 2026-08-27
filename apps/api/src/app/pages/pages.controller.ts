@@ -27,7 +27,7 @@ import {
   setPageParent,
   updateSeoMeta,
 } from '@brisk/application';
-import type { Page } from '@brisk/domain-core';
+import type { Page, PageVersion } from '@brisk/domain-core';
 import type {
   PageRepositoryPort,
   PageVersionRepositoryPort,
@@ -35,6 +35,12 @@ import type {
   SearchPort,
   TenantContextPort,
 } from '@brisk/ports';
+import {
+  pageRecordSchema,
+  pageVersionRecordSchema,
+  paginatedPagesSchema,
+  type PageRecord,
+} from '@brisk/shared-types';
 import { PREVIEW_TOKEN_TTL_MS } from '../preview-token-ttl.constant.js';
 import { Roles } from '../auth/roles.decorator.js';
 import { RolesGuard } from '../auth/roles.guard.js';
@@ -126,7 +132,14 @@ export class PagesController {
         pageSize: query.pageSize,
       },
     );
-    return result;
+    return paginatedPagesSchema.parse({
+      total: result.total,
+      items: result.items.map((item) => ({
+        ...item,
+        createdAt: item.createdAt.toISOString(),
+        updatedAt: item.updatedAt.toISOString(),
+      })),
+    });
   }
 
   @Get('by-slug')
@@ -227,7 +240,7 @@ export class PagesController {
       { pageVersionRepository: this.pageVersionRepository },
       { tenantId: this.tenantContext.getCurrentTenantId(), pageId: id },
     );
-    return versions;
+    return versions.map((version) => this.toVersionDto(version));
   }
 
   @Get(':id/translations')
@@ -315,9 +328,11 @@ export class PagesController {
    * campo lo esporrebbe automaticamente, senza che nessuno se ne accorga
    * qui.
    */
-  private toDto(page: Page) {
+  private toDto(page: Page): PageRecord {
     const props = page.toProps();
-    return {
+    // Validated, not just cast: pageRecordSchema is the same schema
+    // apps/editor-app's pages-api-client.ts parses the response against.
+    return pageRecordSchema.parse({
       id: props.id,
       tenantId: props.tenantId,
       siteId: props.siteId,
@@ -329,8 +344,15 @@ export class PagesController {
       content: props.content,
       publishedContent: props.publishedContent,
       seoMeta: props.seoMeta,
-      createdAt: props.createdAt,
-      updatedAt: props.updatedAt,
-    };
+      createdAt: props.createdAt.toISOString(),
+      updatedAt: props.updatedAt.toISOString(),
+    });
+  }
+
+  private toVersionDto(version: PageVersion) {
+    return pageVersionRecordSchema.parse({
+      ...version,
+      createdAt: version.createdAt.toISOString(),
+    });
   }
 }

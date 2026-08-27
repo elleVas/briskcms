@@ -1,10 +1,10 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { ApiError } from '../lib/http-client.js';
-import type { PageSummaryDto } from '../lib/pages-api-client.js';
+import type { PageListItem } from '../lib/pages-api-client.js';
 import { DuplicatePageDialog } from './duplicate-page-dialog.js';
 
-const sourcePage: PageSummaryDto = {
+const sourcePage: PageListItem = {
   id: 'page-1',
   tenantId: 'tenant-1',
   siteId: 'site-1',
@@ -130,7 +130,7 @@ describe('DuplicatePageDialog', () => {
         onDuplicate={vi.fn()}
       />,
     );
-    const otherPage: PageSummaryDto = {
+    const otherPage: PageListItem = {
       ...sourcePage,
       id: 'page-2',
       slug: 'contatti',

@@ -1,14 +1,14 @@
 ---
 import type {
   LanguageSwitcherProps,
+  PublishedPageTranslation,
   PublishedSite,
 } from '@brisk/shared-types';
-import type { PublishedPageTranslationDto } from '../../lib/public-api-client.js';
 import { localePath } from '../../lib/locale-path.js';
 
 interface Props extends LanguageSwitcherProps {
   locale: string;
-  translations: PublishedPageTranslationDto[];
+  translations: PublishedPageTranslation[];
   site: PublishedSite;
 }
 

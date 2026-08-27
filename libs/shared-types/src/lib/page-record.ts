@@ -1,0 +1,74 @@
+import { z } from 'zod';
+import { blockSchema, seoMetaSchema } from './content-model.js';
+
+export const pageStatusSchema = z.enum(['draft', 'published']);
+export type PageStatus = z.infer<typeof pageStatusSchema>;
+
+/**
+ * The editor CRUD shape (`GET/PATCH/POST /pages/*` responses in
+ * apps/api's PagesController) — the full block tree (both draft and
+ * published), unlike PublishedPage which only ever carries the published
+ * one. Shared between PagesController's toDto() (server-side shape) and
+ * apps/editor-app's pages-api-client.ts (parses it off the wire).
+ */
+export const pageRecordSchema = z.object({
+  id: z.string(),
+  tenantId: z.string(),
+  siteId: z.string(),
+  groupId: z.string(),
+  locale: z.string(),
+  slug: z.string(),
+  parentId: z.string().nullable(),
+  status: pageStatusSchema,
+  content: z.array(blockSchema),
+  publishedContent: z.array(blockSchema).nullable(),
+  seoMeta: seoMetaSchema,
+  createdAt: z.string(),
+  updatedAt: z.string(),
+});
+export type PageRecord = z.infer<typeof pageRecordSchema>;
+
+/**
+ * The `GET /pages` list-item shape — deliberately without `content`/
+ * `publishedContent` (security review 2026-08-24, database section: the
+ * list endpoint used to ship the entire Puck block tree just to render a
+ * list of titles). `hasUnpublishedChanges` replaces the client-side
+ * content-vs-publishedContent comparison the list view used to do with
+ * both full trees already in hand — computed server-side instead (see
+ * `PageSummary` in libs/ports, the internal Port-level type this DTO
+ * mirrors at the wire boundary; named differently here to keep the two
+ * concerns — internal repository contract vs. wire shape — visibly
+ * distinct, even though they happen to carry the same fields today).
+ */
+export const pageListItemSchema = z.object({
+  id: z.string(),
+  tenantId: z.string(),
+  siteId: z.string(),
+  groupId: z.string(),
+  locale: z.string(),
+  slug: z.string(),
+  parentId: z.string().nullable(),
+  status: pageStatusSchema,
+  seoMeta: seoMetaSchema,
+  createdAt: z.string(),
+  updatedAt: z.string(),
+  hasUnpublishedChanges: z.boolean(),
+});
+export type PageListItem = z.infer<typeof pageListItemSchema>;
+
+export const paginatedPagesSchema = z.object({
+  items: z.array(pageListItemSchema),
+  total: z.number(),
+});
+export type PaginatedPages = z.infer<typeof paginatedPagesSchema>;
+
+/** `GET /pages/:id/versions` — mirrors the plain `PageVersion` domain interface (libs/domain-core), which has no extra fields to whitelist against. */
+export const pageVersionRecordSchema = z.object({
+  id: z.string(),
+  tenantId: z.string(),
+  pageId: z.string(),
+  content: z.array(blockSchema),
+  createdBy: z.string().nullable(),
+  createdAt: z.string(),
+});
+export type PageVersionRecord = z.infer<typeof pageVersionRecordSchema>;

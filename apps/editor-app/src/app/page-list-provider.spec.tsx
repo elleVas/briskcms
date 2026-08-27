@@ -5,7 +5,7 @@ import { QueryClientProvider } from '@tanstack/react-query';
 import { usePageList } from '@brisk/block-registry';
 import type { PickedPage } from '@brisk/shared-types';
 import * as api from '../lib/pages-api-client.js';
-import type { PageSummaryDto } from '../lib/pages-api-client.js';
+import type { PageListItem } from '../lib/pages-api-client.js';
 import { createTestQueryClient } from '../test-query-client.js';
 import { PageListProvider } from './page-list-provider.js';
 
@@ -15,7 +15,7 @@ vi.mock('../lib/pages-api-client.js', async (importOriginal) => {
   return { ...actual, listPages: vi.fn() };
 });
 
-const italianPage: PageSummaryDto = {
+const italianPage: PageListItem = {
   id: 'page-1',
   tenantId: 'tenant-1',
   siteId: 'site-1',
@@ -30,7 +30,7 @@ const italianPage: PageSummaryDto = {
   hasUnpublishedChanges: false,
 };
 
-const englishPage: PageSummaryDto = {
+const englishPage: PageListItem = {
   ...italianPage,
   id: 'page-2',
   locale: 'en',

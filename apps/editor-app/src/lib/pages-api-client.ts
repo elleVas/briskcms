@@ -1,55 +1,30 @@
-import type { Block, SeoMeta } from '@brisk/shared-types';
+import {
+  pageRecordSchema,
+  pageVersionRecordSchema,
+  paginatedPagesSchema,
+  type Block,
+  type PageListItem,
+  type PageRecord,
+  type PageVersionRecord,
+  type PaginatedPages,
+  type SeoMeta,
+} from '@brisk/shared-types';
 import { request } from './http-client.js';
 
-export interface PageDto {
-  id: string;
-  tenantId: string;
-  siteId: string;
-  groupId: string;
-  locale: string;
-  slug: string;
-  parentId: string | null;
-  status: 'draft' | 'published';
-  content: Block[];
-  publishedContent: Block[] | null;
-  seoMeta: SeoMeta;
-  createdAt: string;
-  updatedAt: string;
+export type { PageListItem, PageRecord, PageVersionRecord, PaginatedPages };
+
+async function requestPage(
+  path: string,
+  init?: RequestInit,
+): Promise<PageRecord> {
+  return pageRecordSchema.parse(await request(path, init));
 }
 
-/**
- * Security review 2026-08-24, database section: the list endpoint used to
- * return full PageDto rows — content/publishedContent (the entire Puck
- * block tree) shipped for every page just to render a list of titles.
- * hasUnpublishedChanges replaces the client-side content-vs-
- * publishedContent comparison the list view used to do with both full
- * trees already in hand — computed server-side instead.
- */
-export interface PageSummaryDto {
-  id: string;
-  tenantId: string;
-  siteId: string;
-  groupId: string;
-  locale: string;
-  slug: string;
-  parentId: string | null;
-  status: 'draft' | 'published';
-  seoMeta: SeoMeta;
-  createdAt: string;
-  updatedAt: string;
-  hasUnpublishedChanges: boolean;
+export function getPage(id: string): Promise<PageRecord> {
+  return requestPage(`/pages/${id}`);
 }
 
-export interface PaginatedPages {
-  items: PageSummaryDto[];
-  total: number;
-}
-
-export function getPage(id: string): Promise<PageDto> {
-  return request(`/pages/${id}`);
-}
-
-export function listPages(
+export async function listPages(
   siteId: string,
   page: number,
   pageSize: number,
@@ -59,7 +34,9 @@ export function listPages(
     page: String(page),
     pageSize: String(pageSize),
   });
-  return request(`/pages?${params.toString()}`);
+  return paginatedPagesSchema.parse(
+    await request(`/pages?${params.toString()}`),
+  );
 }
 
 export interface CreatePageInput {
@@ -71,33 +48,36 @@ export interface CreatePageInput {
   seoMeta: SeoMeta;
 }
 
-export function createPage(input: CreatePageInput): Promise<PageDto> {
-  return request('/pages', { method: 'POST', body: JSON.stringify(input) });
+export function createPage(input: CreatePageInput): Promise<PageRecord> {
+  return requestPage('/pages', { method: 'POST', body: JSON.stringify(input) });
 }
 
 export function setPageParent(
   id: string,
   parentId: string | null,
-): Promise<PageDto> {
-  return request(`/pages/${id}/parent`, {
+): Promise<PageRecord> {
+  return requestPage(`/pages/${id}/parent`, {
     method: 'PATCH',
     body: JSON.stringify({ parentId }),
   });
 }
 
-export function saveDraft(id: string, content: Block[]): Promise<PageDto> {
-  return request(`/pages/${id}/draft`, {
+export function saveDraft(id: string, content: Block[]): Promise<PageRecord> {
+  return requestPage(`/pages/${id}/draft`, {
     method: 'PATCH',
     body: JSON.stringify({ content }),
   });
 }
 
-export function publishPage(id: string): Promise<PageDto> {
-  return request(`/pages/${id}/publish`, { method: 'POST' });
+export function publishPage(id: string): Promise<PageRecord> {
+  return requestPage(`/pages/${id}/publish`, { method: 'POST' });
 }
 
-export function updateSeoMeta(id: string, seoMeta: SeoMeta): Promise<PageDto> {
-  return request(`/pages/${id}/seo`, {
+export function updateSeoMeta(
+  id: string,
+  seoMeta: SeoMeta,
+): Promise<PageRecord> {
+  return requestPage(`/pages/${id}/seo`, {
     method: 'PATCH',
     body: JSON.stringify({ seoMeta }),
   });
@@ -116,31 +96,25 @@ export interface DuplicatePageInput {
 export function duplicatePage(
   id: string,
   input: DuplicatePageInput,
-): Promise<PageDto> {
-  return request(`/pages/${id}/duplicate`, {
+): Promise<PageRecord> {
+  return requestPage(`/pages/${id}/duplicate`, {
     method: 'POST',
     body: JSON.stringify(input),
   });
 }
 
-export interface PageVersionDto {
-  id: string;
-  tenantId: string;
-  pageId: string;
-  content: Block[];
-  createdBy: string | null;
-  createdAt: string;
-}
-
-export function listPageVersions(pageId: string): Promise<PageVersionDto[]> {
-  return request(`/pages/${pageId}/versions`);
+export async function listPageVersions(
+  pageId: string,
+): Promise<PageVersionRecord[]> {
+  const versions = await request(`/pages/${pageId}/versions`);
+  return pageVersionRecordSchema.array().parse(versions);
 }
 
 export function rollbackToVersion(
   pageId: string,
   versionId: string,
-): Promise<PageDto> {
-  return request(`/pages/${pageId}/rollback`, {
+): Promise<PageRecord> {
+  return requestPage(`/pages/${pageId}/rollback`, {
     method: 'POST',
     body: JSON.stringify({ versionId }),
   });
@@ -149,8 +123,9 @@ export function rollbackToVersion(
 // Every group sibling, including the page itself (docs/adr/0017) — the
 // caller (PageTranslationsDialog) needs "am I already in the list" to
 // decide which of the site's enabledLocales still have no translation.
-export function listTranslations(pageId: string): Promise<PageDto[]> {
-  return request(`/pages/${pageId}/translations`);
+export async function listTranslations(pageId: string): Promise<PageRecord[]> {
+  const pages = await request(`/pages/${pageId}/translations`);
+  return pageRecordSchema.array().parse(pages);
 }
 
 export interface CreateTranslationInput {
@@ -161,8 +136,8 @@ export interface CreateTranslationInput {
 export function createTranslation(
   pageId: string,
   input: CreateTranslationInput,
-): Promise<PageDto> {
-  return request(`/pages/${pageId}/translations`, {
+): Promise<PageRecord> {
+  return requestPage(`/pages/${pageId}/translations`, {
     method: 'POST',
     body: JSON.stringify(input),
   });

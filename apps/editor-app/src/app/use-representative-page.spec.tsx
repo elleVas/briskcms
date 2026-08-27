@@ -12,7 +12,7 @@ vi.mock('../lib/pages-api-client.js', async (importOriginal) => {
   return { ...actual, listPages: vi.fn() };
 });
 
-function page(overrides: Partial<api.PageSummaryDto>): api.PageSummaryDto {
+function page(overrides: Partial<api.PageListItem>): api.PageListItem {
   return {
     id: 'page-1',
     tenantId: 'tenant-1',

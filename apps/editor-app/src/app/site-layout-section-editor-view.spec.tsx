@@ -5,7 +5,7 @@ import { QueryClientProvider } from '@tanstack/react-query';
 import * as sectionsApi from '../lib/site-layout-sections-api-client.js';
 import type { SiteLayoutSectionDto } from '../lib/site-layout-sections-api-client.js';
 import * as pagesApi from '../lib/pages-api-client.js';
-import type { PageSummaryDto } from '../lib/pages-api-client.js';
+import type { PageListItem } from '../lib/pages-api-client.js';
 import * as previewTokenApi from '../lib/preview-token-api-client.js';
 import { TooltipProvider } from '../components/ui/tooltip.js';
 import { createTestQueryClient } from '../test-query-client.js';
@@ -62,7 +62,7 @@ vi.mock('../lib/preview-token-api-client.js', async (importOriginal) => {
   return { ...actual, createPagePreviewToken: vi.fn() };
 });
 
-const representativePage: PageSummaryDto = {
+const representativePage: PageListItem = {
   id: 'page-1',
   tenantId: 'tenant-1',
   siteId: 'site-1',

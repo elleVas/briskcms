@@ -9,7 +9,7 @@ import {
   DialogTitle,
 } from '../components/ui/dialog.js';
 import { cn } from '../lib/utils.js';
-import type { PageSummaryDto } from '../lib/pages-api-client.js';
+import type { PageListItem } from '../lib/pages-api-client.js';
 import { PAGES_PAGE_SIZE, pagesQueryOptions } from './pages-queries.js';
 import { IconButton } from './icon-button.js';
 
@@ -18,7 +18,7 @@ export interface PagePickerDialogProps {
   locale: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSelect: (page: PageSummaryDto) => void;
+  onSelect: (page: PageListItem) => void;
 }
 
 export function PagePickerDialog({

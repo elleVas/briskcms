@@ -1,8 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type {
-  PublishedPageDto,
-  PublishedSiteChromeDto,
-} from './public-api-client.js';
+import type { PublishedPage } from '@brisk/shared-types';
+import type { PublishedSiteChromeDto } from './public-api-client.js';
 import {
   getPublicForm,
   getPublishedPageBySlug,
@@ -14,7 +12,7 @@ import {
   uploadFormAttachment,
 } from './public-api-client.js';
 
-const samplePage: PublishedPageDto = {
+const samplePage: PublishedPage = {
   content: [{ type: 'Hero', props: { title: 'Ciao', subtitle: 'Sub' } }],
   seoMeta: { title: 'Chi siamo', description: 'La nostra storia' },
   locale: 'it',

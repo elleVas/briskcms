@@ -5,7 +5,7 @@ import { QueryClientProvider } from '@tanstack/react-query';
 import * as router from '@tanstack/react-router';
 import { TooltipProvider } from '../components/ui/tooltip.js';
 import * as api from '../lib/pages-api-client.js';
-import type { PageDto } from '../lib/pages-api-client.js';
+import type { PageRecord } from '../lib/pages-api-client.js';
 import * as sitesApi from '../lib/sites-api-client.js';
 import type { SiteRecord } from '@brisk/shared-types';
 import * as previewTokenApi from '../lib/preview-token-api-client.js';
@@ -64,7 +64,7 @@ vi.mock('../lib/preview-token-api-client.js', async (importOriginal) => {
   return { ...actual, createPagePreviewToken: vi.fn() };
 });
 
-const samplePage: PageDto = {
+const samplePage: PageRecord = {
   id: 'page-1',
   tenantId: 'tenant-1',
   siteId: 'site-1',
@@ -105,7 +105,7 @@ const sampleSite: SiteRecord = {
   createdAt: '',
 };
 
-function renderView(page: PageDto = samplePage) {
+function renderView(page: PageRecord = samplePage) {
   const queryClient = createTestQueryClient();
   queryClient.setQueryData(pageQueryOptions(page.id).queryKey, page);
   return render(

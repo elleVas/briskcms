@@ -1,18 +1,14 @@
-import type { Block, SeoMeta } from '@brisk/shared-types';
+import type { PublishedPage } from '@brisk/shared-types';
 import type {
   PageRepositoryPort,
   SiteLayoutSectionRepositoryPort,
   SiteRepositoryPort,
   SiteThemeBlockStylesPort,
 } from '@brisk/ports';
-import {
-  resolveSiteChrome,
-  type PublishedSite,
-} from './resolve-site-chrome.js';
-import {
-  resolvePageAncestors,
-  type PageAncestor,
-} from './resolve-page-ancestors.js';
+import { resolveSiteChrome } from './resolve-site-chrome.js';
+import { resolvePageAncestors } from './resolve-page-ancestors.js';
+
+export type { PublishedPage };
 
 export interface GetPublishedPageBySlugDeps {
   siteRepository: SiteRepositoryPort;
@@ -26,34 +22,6 @@ export interface GetPublishedPageBySlugInput {
   domain: string;
   locale: string;
   slug: string;
-}
-
-/** One entry per published locale-translation of this page (docs/adr/0017) — never includes an unpublished draft translation's slug. */
-export interface PublishedPageTranslation {
-  locale: string;
-  slug: string;
-}
-
-/** Root-to-parent order (does not include the page itself). Empty for a root-level page. Alias kept for external consumers — the walk itself lives in resolve-page-ancestors.ts, shared with getPreviewPageById. */
-export type PublishedPageAncestor = PageAncestor;
-
-export interface PublishedPage {
-  content: Block[];
-  seoMeta: SeoMeta;
-  locale: string;
-  translations: PublishedPageTranslation[];
-  ancestors: PublishedPageAncestor[];
-  site: PublishedSite;
-  // Site-level, not page-level (docs/adr/0018) — resolved for (site, this
-  // page's locale) in the same call, `null` when never published (or
-  // never configured at all) for that locale, same collapse as
-  // page.publishedContent.
-  header: Block[] | null;
-  footer: Block[] | null;
-  // Gated the same way as `header` (only meaningful once a header is
-  // actually published) — no footer equivalent, "sticky footer" wasn't
-  // asked for.
-  headerSticky: boolean;
 }
 
 /**

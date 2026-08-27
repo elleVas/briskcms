@@ -24,7 +24,7 @@ vi.mock('../lib/pages-api-client.js', async (importOriginal) => {
   };
 });
 
-const samplePage: api.PageDto = {
+const samplePage: api.PageRecord = {
   id: 'page-1',
   tenantId: 'tenant-1',
   siteId: 'site-1',

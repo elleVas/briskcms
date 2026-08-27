@@ -5,7 +5,7 @@ import { MediaPickerContext } from '@brisk/block-registry';
 import type { PickedMedia } from '@brisk/shared-types';
 import { TooltipProvider } from '../components/ui/tooltip.js';
 import * as api from '../lib/pages-api-client.js';
-import type { PageDto } from '../lib/pages-api-client.js';
+import type { PageRecord } from '../lib/pages-api-client.js';
 import { createTestQueryClient } from '../test-query-client.js';
 import { SeoPanelDialog } from './seo-panel-dialog.js';
 
@@ -15,7 +15,7 @@ vi.mock('../lib/pages-api-client.js', async (importOriginal) => {
   return { ...actual, updateSeoMeta: vi.fn() };
 });
 
-const samplePage: PageDto = {
+const samplePage: PageRecord = {
   id: 'page-1',
   tenantId: 'tenant-1',
   siteId: 'site-1',

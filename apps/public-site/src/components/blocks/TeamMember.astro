@@ -17,6 +17,8 @@ const instanceStyle = buildBlockInstanceStyle(styleOverride);
       <img
         src={photo.url}
         alt=""
+        width={photo.width ?? undefined}
+        height={photo.height ?? undefined}
         class="brisk-team-member__photo"
         loading="lazy"
         decoding="async"

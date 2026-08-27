@@ -1,9 +1,10 @@
 ---
-import type { Block, PublishedSite } from '@brisk/shared-types';
 import type {
-  PublishedPageAncestorDto,
-  PublishedPageTranslationDto,
-} from '../lib/public-api-client.js';
+  Block,
+  PublishedPageAncestor,
+  PublishedPageTranslation,
+  PublishedSite,
+} from '@brisk/shared-types';
 import BlockRenderer from './BlockRenderer.astro';
 
 // Punto d'ingresso dedicato per la patch a frammento (vedi il piano
@@ -20,9 +21,9 @@ import BlockRenderer from './BlockRenderer.astro';
 interface Props {
   block: Block;
   locale: string;
-  translations: PublishedPageTranslationDto[];
+  translations: PublishedPageTranslation[];
   site: PublishedSite;
-  ancestors: PublishedPageAncestorDto[];
+  ancestors: PublishedPageAncestor[];
   currentPageTitle: string;
 }
 
