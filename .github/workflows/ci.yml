@@ -80,6 +80,13 @@ jobs:
   # over. Only typecheck/lint/build don't need a live Postgres at all (pure
   # static analysis / bundling, nothing executes against a real DB) — only
   # `test` starts Postgres/Mailpit.
+  #
+  # build/test gated on typecheck+lint (`needs:` below), not fully parallel:
+  # typecheck/lint are the cheapest checks (seconds, mostly Nx cache hits)
+  # and catch the most common failures (type errors, lint violations) —
+  # failing fast on those saves runner-minutes on the two expensive jobs
+  # (build actually bundles; test pays Postgres/Mailpit startup) instead of
+  # running everything simultaneously regardless of the cheap checks' outcome.
   typecheck:
     runs-on: ubuntu-latest
     steps:
@@ -120,6 +127,7 @@ jobs:
       - run: pnpm exec nx run-many -t lint --parallel=1
 
   build:
+    needs: [typecheck, lint]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -133,6 +141,7 @@ jobs:
       - run: pnpm exec nx run-many -t build --parallel=1
 
   test:
+    needs: [typecheck, lint]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
