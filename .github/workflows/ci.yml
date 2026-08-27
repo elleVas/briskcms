@@ -9,79 +9,156 @@ on:
 permissions:
   contents: read
 
+# Shared by every job below via `env:` — GitHub Actions has no clean way to
+# share an env block across jobs without a reusable workflow (overkill
+# here), so it's duplicated per job rather than factored out. Only the
+# `test` job's Postgres-dependent values (POSTGRES_HOST/POSTGRES_PASSWORD/
+# POSTGRES_APP_PASSWORD) are set separately there, since they don't exist
+# until that job starts its own Postgres container.
+env:
+  POSTGRES_USER: brisk
+  POSTGRES_DB: brisk
+  # Not secrets — see docs/adr/0002 and the "TEMPORARY" note on
+  # StaticTenantContextAdapter. Any fixed UUIDs work; these just need to be
+  # consistent across the seed step and the test run.
+  DEFAULT_TENANT_ID: 31329174-2ede-4151-be9d-a3e765d21e1f
+  DEFAULT_SITE_ID: 568b7d6a-3483-45f2-83f1-3b31b433c5eb
+  # Same reasoning: this seeds a throwaway CI-only database destroyed at the
+  # end of the run, so a fixed dev-only value (matching .env.example,
+  # already public) carries no real risk.
+  DEFAULT_USER_EMAIL: admin@example.com
+  DEFAULT_USER_PASSWORD: changeme_dev_password
+  # Needed for AuthModule to compile in apps/api's unit tests (see
+  # app.module.spec.ts/auth.module.spec.ts) — the SMTP values point at the
+  # Mailpit container started in the test job, no real provider needed.
+  EDITOR_APP_URL: http://localhost:4200
+  SMTP_HOST: localhost
+  SMTP_PORT: 1025
+  SMTP_FROM_ADDRESS: noreply@brisk.local
+  # Needed for PublicFormsModule to compile in apps/api's unit tests (see
+  # app.module.spec.ts) — Cloudflare's own documented "always passes, no
+  # real challenge" test secret (see .env.example), not a real one. No live
+  # siteverify call happens in CI's non-integration unit tests.
+  TURNSTILE_SECRET_KEY: 1x0000000000000000000000000000000AA
+  # Needed for PagesModule/SiteLayoutSectionsModule/PublicPagesModule/
+  # PublicSiteLayoutSectionsModule to compile (requireEnv) — token di
+  # preview stateless (@brisk/preview-token-adapter), non un secret reale
+  # verso un servizio esterno, un valore fisso di test basta.
+  PREVIEW_TOKEN_SECRET: ci-test-preview-token-secret
+  # apps/editor-app (Vite) only reads VITE_-prefixed vars — same value as
+  # DEFAULT_SITE_ID above, see .env.example.
+  VITE_DEFAULT_SITE_ID: 568b7d6a-3483-45f2-83f1-3b31b433c5eb
+  VITE_API_URL: http://localhost:3000/api
+  # Needed for apps/public-site's public-api-client.ts (requireEnv), same
+  # value as VITE_API_URL above but read via process.env (Node/SSR), not
+  # import.meta.env.
+  API_URL: http://localhost:3000/api
+  # Needed for page-editor-view.spec.tsx's "Visualizza pagina" link tests —
+  # see ADR-0012. Never followed in CI (no browser/e2e step), just has to be
+  # set for the link to render.
+  VITE_PUBLIC_SITE_URL: http://localhost:4321
+  # Needed for login-form.spec.tsx/forgot-password-form.spec.tsx to render
+  # the Turnstile widget (security review 2026-08-24, point 13) —
+  # Cloudflare's own "always passes" test site key (see .env.example), not a
+  # real one. No live Turnstile script actually loads in CI.
+  VITE_TURNSTILE_SITE_KEY: 1x00000000000000000000AA
+  # Needed for MediaModule to compile in apps/api's unit tests (see
+  # app.module.spec.ts) — see ADR-0013. No upload actually happens in CI, so
+  # MEDIA_UPLOAD_DIR is never written to.
+  MEDIA_UPLOAD_DIR: /tmp/brisk-ci-uploads
+  API_PUBLIC_URL: http://localhost:3000/api
+
 jobs:
-  main:
+  # Typecheck/lint/build/test used to be steps inside one "main" job —
+  # GitHub reports one check per JOB, not per step, so a PR only ever showed
+  # a single "main" check no matter how many named steps ran inside it (the
+  # step split still helped the log, but not the PR checks list). Four
+  # separate jobs give four separate checks, and as a side effect also fixes
+  # the tsc --build race this workflow used to work around with
+  # --parallel=1 for build/typecheck sharing one runner: sibling jobs run on
+  # entirely separate VMs, so there's no shared filesystem left to race
+  # over. Only typecheck/lint/build don't need a live Postgres at all (pure
+  # static analysis / bundling, nothing executes against a real DB) — only
+  # `test` starts Postgres/Mailpit.
+  #
+  # build/test gated on typecheck+lint (`needs:` below), not fully parallel:
+  # typecheck/lint are the cheapest checks (seconds, mostly Nx cache hits)
+  # and catch the most common failures (type errors, lint violations) —
+  # failing fast on those saves runner-minutes on the two expensive jobs
+  # (build actually bundles; test pays Postgres/Mailpit startup) instead of
+  # running everything simultaneously regardless of the cheap checks' outcome.
+  typecheck:
     runs-on: ubuntu-latest
-
-    env:
-      POSTGRES_USER: brisk
-      POSTGRES_DB: brisk
-      # Not secrets — see docs/adr/0002 and the "TEMPORARY" note on
-      # StaticTenantContextAdapter. Any fixed UUIDs work; these just need to
-      # be consistent across the seed step and the test run.
-      DEFAULT_TENANT_ID: 31329174-2ede-4151-be9d-a3e765d21e1f
-      DEFAULT_SITE_ID: 568b7d6a-3483-45f2-83f1-3b31b433c5eb
-      # Same reasoning: this seeds a throwaway CI-only database destroyed at
-      # the end of the run, so a fixed dev-only value (matching
-      # .env.example, already public) carries no real risk.
-      DEFAULT_USER_EMAIL: admin@example.com
-      DEFAULT_USER_PASSWORD: changeme_dev_password
-      # Needed for AuthModule to compile in apps/api's unit tests (see
-      # app.module.spec.ts/auth.module.spec.ts) — the SMTP values point at
-      # the Mailpit container started below, no real provider needed.
-      EDITOR_APP_URL: http://localhost:4200
-      SMTP_HOST: localhost
-      SMTP_PORT: 1025
-      SMTP_FROM_ADDRESS: noreply@brisk.local
-      # Needed for PublicFormsModule to compile in apps/api's unit tests (see
-      # app.module.spec.ts) — Cloudflare's own documented "always passes, no
-      # real challenge" test secret (see .env.example), not a real one. No
-      # live siteverify call happens in CI's non-integration unit tests.
-      TURNSTILE_SECRET_KEY: 1x0000000000000000000000000000000AA
-      # apps/editor-app (Vite) only reads VITE_-prefixed vars — same value as
-      # DEFAULT_SITE_ID above, see .env.example.
-      VITE_DEFAULT_SITE_ID: 568b7d6a-3483-45f2-83f1-3b31b433c5eb
-      VITE_API_URL: http://localhost:3000/api
-      # Needed for apps/public-site's public-api-client.ts (requireEnv), same
-      # value as VITE_API_URL above but read via process.env (Node/SSR), not
-      # import.meta.env.
-      API_URL: http://localhost:3000/api
-      # Needed for page-editor-view.spec.tsx's "Visualizza pagina" link
-      # tests — see ADR-0012. Never followed in CI (no browser/e2e step),
-      # just has to be set for the link to render.
-      VITE_PUBLIC_SITE_URL: http://localhost:4321
-      # Needed for login-form.spec.tsx/forgot-password-form.spec.tsx to
-      # render the Turnstile widget (security review 2026-08-24, point 13)
-      # — Cloudflare's own "always passes" test site key (see .env.example),
-      # not a real one. No live Turnstile script actually loads in CI.
-      VITE_TURNSTILE_SITE_KEY: 1x00000000000000000000AA
-      # Needed for MediaModule to compile in apps/api's unit tests (see
-      # app.module.spec.ts) — see ADR-0013. No upload actually happens in
-      # CI, so MEDIA_UPLOAD_DIR is never written to.
-      MEDIA_UPLOAD_DIR: /tmp/brisk-ci-uploads
-      API_PUBLIC_URL: http://localhost:3000/api
-
     steps:
       - uses: actions/checkout@v7
-        with:
-          fetch-depth: 0
-
       - uses: pnpm/action-setup@v6
-
       - uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: 'pnpm'
+      - run: pnpm install --frozen-lockfile
+      # --parallel=1: nx.json's `typecheck: { dependsOn: ['^typecheck'] }`
+      # orders the *Nx tasks* correctly, but each project's own
+      # `tsc --build` independently walks its TS project references and can
+      # still end up racing another concurrent `tsc --build` process on
+      # *this* runner over the same output files (found by direct
+      # reproduction, 2026-08-20 — not reproducible locally even with every
+      # cache cleared, only at this runner's actual core count/scheduling).
+      # Splitting typecheck into its own job removed the *build vs
+      # typecheck* half of that race; this flag still guards the remaining
+      # *typecheck-vs-itself-across-projects* half.
+      - run: pnpm exec nx run-many -t typecheck --parallel=1
 
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      # fetch-depth: 0 — only this job needs full history, for
+      # `format:check --base=origin/main`'s diff against main.
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: 'pnpm'
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec nx format:check --base=origin/main
+      - run: pnpm exec nx run-many -t lint --parallel=1
+
+  build:
+    needs: [typecheck, lint]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: 'pnpm'
+      - run: pnpm install --frozen-lockfile
+      # --parallel=1: same tsc --build race as typecheck above.
+      - run: pnpm exec nx run-many -t build --parallel=1
+
+  test:
+    needs: [typecheck, lint]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: 'pnpm'
       - run: pnpm install --frozen-lockfile
 
-      # GitHub Actions doesn't expose repository secrets to workflows triggered
-      # by Dependabot (by design, to stop a malicious dependency bump from
-      # exfiltrating them) — so a services:-block password sourced from
-      # secrets.* silently comes through empty on every Dependabot PR. Instead,
-      # generate a random password here, in-job, for every run regardless of
-      # trigger: never a literal value anywhere, never dependent on secrets
-      # access at all.
+      # GitHub Actions doesn't expose repository secrets to workflows
+      # triggered by Dependabot (by design, to stop a malicious dependency
+      # bump from exfiltrating them) — so a services:-block password
+      # sourced from secrets.* silently comes through empty on every
+      # Dependabot PR. Instead, generate a random password here, in-job,
+      # for every run regardless of trigger: never a literal value
+      # anywhere, never dependent on secrets access at all.
       - name: Start Postgres
         run: |
           admin_password=$(openssl rand -hex 24)
@@ -100,11 +177,12 @@ jobs:
 
           # The official image starts Postgres twice: once internally to run
           # initdb, then for real. pg_isready can report ready during that
-          # first, transient instance, right before it shuts down to restart
-          # — a bare "until pg_isready" loop can catch that window and then
-          # get "server closed the connection unexpectedly" on the very next
-          # command. Wait for the *second* "ready to accept connections" in
-          # the logs, which only appears once the real server is up.
+          # first, transient instance, right before it shuts down to
+          # restart — a bare "until pg_isready" loop can catch that window
+          # and then get "server closed the connection unexpectedly" on the
+          # very next command. Wait for the *second* "ready to accept
+          # connections" in the logs, which only appears once the real
+          # server is up.
           until [ "$(docker logs postgres 2>&1 | grep -c 'database system is ready to accept connections')" -ge 2 ]; do
             sleep 1
           done
@@ -133,48 +211,7 @@ jobs:
         env:
           POSTGRES_HOST: localhost
 
-      - run: pnpm exec nx format:check --base=origin/main
-
-      # Lint, typecheck and build were previously bundled into a single
-      # `nx run-many -t lint build typecheck` step — a failure gave no
-      # signal about which of the three actually broke without opening the
-      # log. Split into 3 named steps: each fails independently and shows
-      # up as its own red X in the PR checks.
-      #
-      # --parallel=1 kept on every step: found by direct reproduction
-      # (2026-08-20) that default parallelism on this runner let
-      # `tsc --build` for a dependent project (e.g. @brisk/block-registry)
-      # start reading @brisk/shared-types's emitted declarations before
-      # that project's own typecheck had finished writing them — nx.json's
-      # `typecheck: { dependsOn: ['^typecheck'] }` orders the *Nx tasks*
-      # correctly, but each project's own `tsc --build` also independently
-      # walks its TS project references and can end up racing another
-      # concurrent `tsc --build` process over the same output files. Not
-      # reproducible locally even with every cache cleared — only surfaced
-      # at this runner's actual core count/scheduling. Same reasoning as
-      # docs/adr/0009's existing --parallel=1 on the coverage step below.
-      # Splitting into separate steps removes one more source of that same
-      # race: build and typecheck can no longer run as concurrent `tsc
-      # --build` processes at all, since they're now separate commands
-      # that never overlap.
-      - name: Typecheck
-        run: pnpm exec nx run-many -t typecheck --parallel=1
-        env:
-          POSTGRES_HOST: localhost
-
-      - name: Lint
-        run: pnpm exec nx run-many -t lint --parallel=1
-        env:
-          POSTGRES_HOST: localhost
-
-      - name: Build
-        run: pnpm exec nx run-many -t build --parallel=1
-        env:
-          POSTGRES_HOST: localhost
-
-      # Coverage runs as its own step (not bundled into the line above) so
-      # --coverage — a flag only the test executors understand — is never
-      # passed to lint/build/typecheck. Sequential, not --parallel: see
+      # Sequential, not --parallel: see
       # docs/adr/0009-enforced-coverage-thresholds.md.
       - run: pnpm exec nx run-many -t test --coverage --parallel=1
         env:

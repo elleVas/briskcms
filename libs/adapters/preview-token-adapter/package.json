@@ -20,12 +20,6 @@
   },
   "dependencies": {
     "@brisk/domain-core": "workspace:*",
-    "@brisk/opaque-token": "workspace:*",
-    "@brisk/ports": "workspace:*",
-    "@brisk/postgres-db": "workspace:*",
-    "drizzle-orm": "^0.45.2"
-  },
-  "devDependencies": {
-    "dotenv": "^17.4.2"
+    "@brisk/ports": "workspace:*"
   }
 }

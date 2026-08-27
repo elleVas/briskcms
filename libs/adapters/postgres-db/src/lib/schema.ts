@@ -25,7 +25,6 @@ import type {
 } from '@brisk/shared-types';
 import type {
   PageStatus,
-  PreviewContentType,
   SiteLayoutSectionKind,
   SiteLayoutSectionStatus,
   StorageProvider,
@@ -328,40 +327,6 @@ export const siteLayoutSectionVersions = pgTable(
     index('site_layout_section_versions_section_created_idx').on(
       table.siteLayoutSectionId,
       table.createdAt,
-    ),
-  ],
-);
-
-// Un token per (contentType, contentId) alla volta è ammesso — nessun
-// vincolo di unicità: creare un nuovo token per lo stesso contenuto non
-// invalida quelli già emessi (non-consumante, vedi PreviewTokenPort). Niente
-// FK su `contentId`: punta a `pages.id` o `site_layout_sections.id` a
-// seconda di `contentType` (associazione polimorfica), le due tabelle non
-// condividono una chiave comune su cui appoggiare un singolo vincolo FK.
-export const contentPreviewTokens = pgTable(
-  'content_preview_tokens',
-  {
-    id: uuid('id').primaryKey().defaultRandom(),
-    tenantId: uuid('tenant_id')
-      .notNull()
-      .references(() => tenants.id, { onDelete: 'cascade' }),
-    contentType: text('content_type').notNull().$type<PreviewContentType>(),
-    contentId: uuid('content_id').notNull(),
-    // SHA-256 del token opaco — stesso trattamento di sessions/verification_tokens.
-    tokenHash: text('token_hash').notNull().unique(),
-    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
-    createdAt: timestamp('created_at', { withTimezone: true })
-      .notNull()
-      .defaultNow(),
-  },
-  (table) => [
-    check(
-      'content_preview_tokens_content_type_check',
-      sql`${table.contentType} in ('page', 'header', 'footer')`,
-    ),
-    index('content_preview_tokens_content_idx').on(
-      table.contentType,
-      table.contentId,
     ),
   ],
 );

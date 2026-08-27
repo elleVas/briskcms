@@ -1,47 +1,42 @@
-import { and, eq } from 'drizzle-orm';
-import { generateOpaqueToken, hashOpaqueToken } from '@brisk/opaque-token';
+import { createHmac, timingSafeEqual } from 'node:crypto';
 import type { PreviewContentType } from '@brisk/domain-core';
 import type { PreviewToken, PreviewTokenPort } from '@brisk/ports';
-import {
-  contentPreviewTokens,
-  type BriskDb,
-  withTenant,
-} from '@brisk/postgres-db';
 
-function toPreviewToken(
-  row: typeof contentPreviewTokens.$inferSelect,
-  token: string,
-): PreviewToken {
-  return {
-    token,
-    tenantId: row.tenantId,
-    contentType: row.contentType,
-    contentId: row.contentId,
-    expiresAt: row.expiresAt,
-  };
+interface PreviewTokenPayload {
+  tenantId: string;
+  contentType: PreviewContentType;
+  contentId: string;
+  expiresAt: number;
+}
+
+function sign(payloadB64: string, secret: string): string {
+  return createHmac('sha256', secret).update(payloadB64).digest('base64url');
 }
 
 /**
- * Same opaque-token mechanic as SessionAuthAdapter/VerificationTokenAdapter
- * (@brisk/opaque-token) — connects as `brisk_app`, see
- * docs/adr/0002-non-superuser-role-for-rls-enforcement.md. Non-consumante a
- * differenza di VerificationTokenAdapter: `validateToken` non cancella la
- * riga, una sessione di preview ricarica l'iframe più volte (vedi il piano
- * dell'editor visuale, Giorno 1).
+ * Stateless, non-consumante per costruzione: nessuna riga da persistere o
+ * ripulire (era `content_preview_tokens`, la tabella a crescita più rapida
+ * delle tre trovate dalla review 2026-08-24, senza alcun meccanismo di
+ * pulizia). Il token stesso porta (tenantId, contentType, contentId,
+ * expiresAt) più una firma HMAC — validare significa solo ricalcolare la
+ * firma e controllare la scadenza, mai una query.
  *
- * `bootstrapTenantId`: stesso chicken-and-egg RLS di SessionAuthAdapter —
- * `validateToken` cerca un token per il suo hash (globalmente unico) prima
- * di sapere a quale tenant appartiene, ma RLS richiede
- * `app.current_tenant_id` impostato per vedere qualunque riga, anche una
- * già identificata da una chiave univoca. Sicuro nell'attuale modello
- * single-tenant-per-deployment (docs/adr/0010) — ogni riga di questa
- * tabella appartiene comunque già a questo unico tenant.
+ * A differenza di sessions/verification_tokens, qui non serve né la revoca
+ * anticipata (un preview link vive un'ora, solo dentro la stessa sessione
+ * browser dell'editor) né il single-use (il canvas ricarica l'iframe più
+ * volte con lo stesso token) — le due proprietà che invece giustificano il
+ * meccanismo DB-backed di quegli altri due Port.
+ *
+ * Nota di sicurezza: il payload è firmato ma non cifrato — tenantId/
+ * contentType/contentId restano leggibili da chi ha il token (decodificando
+ * il base64url), anche se non falsificabili senza il secret. Accettabile
+ * qui: tenantId non è trattato come segreto altrove in questo codebase
+ * (single-tenant-per-deployment, docs/adr/0010), e chi possiede il token è
+ * già, per costruzione, l'iframe autorizzato a vedere esattamente quel
+ * contentId.
  */
 export class PreviewTokenAdapter implements PreviewTokenPort {
-  constructor(
-    private readonly db: BriskDb,
-    private readonly bootstrapTenantId: string,
-  ) {}
+  constructor(private readonly secret: string) {}
 
   async createToken(
     tenantId: string,
@@ -49,18 +44,17 @@ export class PreviewTokenAdapter implements PreviewTokenPort {
     contentId: string,
     ttlMs: number,
   ): Promise<PreviewToken> {
-    const token = generateOpaqueToken();
     const expiresAt = new Date(Date.now() + ttlMs);
-
-    await withTenant(this.db, tenantId, (tx) =>
-      tx.insert(contentPreviewTokens).values({
-        tenantId,
-        contentType,
-        contentId,
-        tokenHash: hashOpaqueToken(token),
-        expiresAt,
-      }),
+    const payload: PreviewTokenPayload = {
+      tenantId,
+      contentType,
+      contentId,
+      expiresAt: expiresAt.getTime(),
+    };
+    const payloadB64 = Buffer.from(JSON.stringify(payload)).toString(
+      'base64url',
     );
+    const token = `${payloadB64}.${sign(payloadB64, this.secret)}`;
 
     return { token, tenantId, contentType, contentId, expiresAt };
   }
@@ -70,30 +64,42 @@ export class PreviewTokenAdapter implements PreviewTokenPort {
     contentType: PreviewContentType,
     contentId: string,
   ): Promise<PreviewToken | null> {
-    const tokenHash = hashOpaqueToken(token);
-
-    const rows = await withTenant(this.db, this.bootstrapTenantId, (tx) =>
-      tx
-        .select()
-        .from(contentPreviewTokens)
-        .where(
-          and(
-            eq(contentPreviewTokens.tokenHash, tokenHash),
-            eq(contentPreviewTokens.contentType, contentType),
-            eq(contentPreviewTokens.contentId, contentId),
-          ),
-        )
-        .limit(1),
-    );
-    const row = rows[0];
-    if (!row) {
+    const [payloadB64, signature] = token.split('.');
+    if (!payloadB64 || !signature) {
       return null;
     }
 
-    if (row.expiresAt.getTime() <= Date.now()) {
+    const expectedSignature = sign(payloadB64, this.secret);
+    const signatureBuffer = Buffer.from(signature);
+    const expectedBuffer = Buffer.from(expectedSignature);
+    if (
+      signatureBuffer.length !== expectedBuffer.length ||
+      !timingSafeEqual(signatureBuffer, expectedBuffer)
+    ) {
       return null;
     }
 
-    return toPreviewToken(row, token);
+    let payload: PreviewTokenPayload;
+    try {
+      payload = JSON.parse(Buffer.from(payloadB64, 'base64url').toString());
+    } catch {
+      return null;
+    }
+
+    if (
+      payload.contentType !== contentType ||
+      payload.contentId !== contentId ||
+      payload.expiresAt <= Date.now()
+    ) {
+      return null;
+    }
+
+    return {
+      token,
+      tenantId: payload.tenantId,
+      contentType: payload.contentType,
+      contentId: payload.contentId,
+      expiresAt: new Date(payload.expiresAt),
+    };
   }
 }
