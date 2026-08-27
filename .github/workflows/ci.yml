@@ -134,11 +134,18 @@ jobs:
           POSTGRES_HOST: localhost
 
       - run: pnpm exec nx format:check --base=origin/main
-      # --parallel=1: found by direct reproduction (2026-08-20) that
-      # default parallelism on this runner let `tsc --build` for a
-      # dependent project (e.g. @brisk/block-registry) start reading
-      # @brisk/shared-types's emitted declarations before that project's
-      # own typecheck had finished writing them — nx.json's
+
+      # Lint, typecheck and build were previously bundled into a single
+      # `nx run-many -t lint build typecheck` step — a failure gave no
+      # signal about which of the three actually broke without opening the
+      # log. Split into 3 named steps: each fails independently and shows
+      # up as its own red X in the PR checks.
+      #
+      # --parallel=1 kept on every step: found by direct reproduction
+      # (2026-08-20) that default parallelism on this runner let
+      # `tsc --build` for a dependent project (e.g. @brisk/block-registry)
+      # start reading @brisk/shared-types's emitted declarations before
+      # that project's own typecheck had finished writing them — nx.json's
       # `typecheck: { dependsOn: ['^typecheck'] }` orders the *Nx tasks*
       # correctly, but each project's own `tsc --build` also independently
       # walks its TS project references and can end up racing another
@@ -146,7 +153,22 @@ jobs:
       # reproducible locally even with every cache cleared — only surfaced
       # at this runner's actual core count/scheduling. Same reasoning as
       # docs/adr/0009's existing --parallel=1 on the coverage step below.
-      - run: pnpm exec nx run-many -t lint build typecheck --parallel=1
+      # Splitting into separate steps removes one more source of that same
+      # race: build and typecheck can no longer run as concurrent `tsc
+      # --build` processes at all, since they're now separate commands
+      # that never overlap.
+      - name: Typecheck
+        run: pnpm exec nx run-many -t typecheck --parallel=1
+        env:
+          POSTGRES_HOST: localhost
+
+      - name: Lint
+        run: pnpm exec nx run-many -t lint --parallel=1
+        env:
+          POSTGRES_HOST: localhost
+
+      - name: Build
+        run: pnpm exec nx run-many -t build --parallel=1
         env:
           POSTGRES_HOST: localhost
 
