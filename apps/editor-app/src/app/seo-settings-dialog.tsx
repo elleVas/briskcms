@@ -1,6 +1,8 @@
 import { useState } from 'react';
+import { Controller, useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
+import type { SiteRecord } from '@brisk/shared-types';
 import { Button } from '../components/ui/button.js';
 import {
   Dialog,
@@ -11,12 +13,21 @@ import {
 } from '../components/ui/dialog.js';
 import { Switch } from '../components/ui/switch.js';
 import { siteQueryOptions } from './site-queries.js';
+import { useResetFormOnOpen } from './use-reset-form-on-open.js';
 import { useSiteSeoSettings } from './use-site-seo-settings.js';
 
 export interface SeoSettingsDialogProps {
   siteId: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+}
+
+interface SeoSettingsFormValues {
+  searchEngineIndexingEnabled: boolean;
+}
+
+function toFormValues(site: SiteRecord): SeoSettingsFormValues {
+  return { searchEngineIndexingEnabled: site.searchEngineIndexingEnabled };
 }
 
 export function SeoSettingsDialog({
@@ -30,26 +41,20 @@ export function SeoSettingsDialog({
     enabled: open,
   });
   const { updateSeoSettings, isSaving } = useSiteSeoSettings(siteId);
-
-  const [searchEngineIndexingEnabled, setSearchEngineIndexingEnabled] =
-    useState(false);
   const [error, setError] = useState('');
 
-  // Same "adjust state during render" resync as GeneralSettingsDialog.
-  const [lastSyncKey, setLastSyncKey] = useState<string | null>(null);
-  const syncKey = open ? `open:${site?.id ?? 'loading'}` : 'closed';
-  if (syncKey !== lastSyncKey) {
-    setLastSyncKey(syncKey);
-    if (open && site) {
-      setSearchEngineIndexingEnabled(site.searchEngineIndexingEnabled);
-      setError('');
-    }
-  }
+  const { control, handleSubmit, reset } = useForm<SeoSettingsFormValues>({
+    defaultValues: { searchEngineIndexingEnabled: false },
+  });
+  useResetFormOnOpen(open, site, reset, (currentSite) => {
+    setError('');
+    return toFormValues(currentSite);
+  });
 
-  async function handleSubmit() {
+  async function onSubmit(values: SeoSettingsFormValues) {
     setError('');
     try {
-      await updateSeoSettings({ searchEngineIndexingEnabled });
+      await updateSeoSettings(values);
       onOpenChange(false);
     } catch (err) {
       setError(String(err));
@@ -65,7 +70,7 @@ export function SeoSettingsDialog({
         {!site ? (
           <p className="text-sm text-muted-foreground">{t('common.loading')}</p>
         ) : (
-          <>
+          <form onSubmit={(event) => void handleSubmit(onSubmit)(event)}>
             <div className="flex flex-col gap-3">
               <div className="flex items-center justify-between gap-4 rounded-md border p-3">
                 <div className="flex flex-col gap-1">
@@ -76,10 +81,16 @@ export function SeoSettingsDialog({
                     {t('seoSettings.indexingDescription')}
                   </span>
                 </div>
-                <Switch
-                  checked={searchEngineIndexingEnabled}
-                  onCheckedChange={setSearchEngineIndexingEnabled}
-                  aria-label={t('seoSettings.indexingLabel')}
+                <Controller
+                  control={control}
+                  name="searchEngineIndexingEnabled"
+                  render={({ field }) => (
+                    <Switch
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                      aria-label={t('seoSettings.indexingLabel')}
+                    />
+                  )}
                 />
               </div>
               <p className="text-xs text-muted-foreground">
@@ -99,15 +110,11 @@ export function SeoSettingsDialog({
               >
                 {t('seoSettings.cancel')}
               </Button>
-              <Button
-                type="button"
-                disabled={isSaving}
-                onClick={() => void handleSubmit()}
-              >
+              <Button type="submit" disabled={isSaving}>
                 {isSaving ? t('seoSettings.saving') : t('seoSettings.save')}
               </Button>
             </DialogFooter>
-          </>
+          </form>
         )}
       </DialogContent>
     </Dialog>

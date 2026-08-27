@@ -1,7 +1,13 @@
 import { useState } from 'react';
+import { Controller, useForm, useWatch } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
-import type { UntranslatedPageFallback } from '@brisk/shared-types';
+import {
+  localeSettingsSchema,
+  type LocaleSettings,
+  type SiteRecord,
+} from '@brisk/shared-types';
 import { Button } from '../components/ui/button.js';
 import {
   Dialog,
@@ -14,12 +20,21 @@ import { Label } from '../components/ui/label.js';
 import { Switch } from '../components/ui/switch.js';
 import { LocaleListEditor } from './locale-list-editor.js';
 import { siteQueryOptions } from './site-queries.js';
+import { useResetFormOnOpen } from './use-reset-form-on-open.js';
 import { useSiteLocaleSettings } from './use-site-locale-settings.js';
 
 export interface LocaleSettingsDialogProps {
   siteId: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+}
+
+function toFormValues(site: SiteRecord): LocaleSettings {
+  return {
+    enabledLocales: site.enabledLocales,
+    defaultLocale: site.defaultLocale,
+    untranslatedPageFallback: site.untranslatedPageFallback,
+  };
 }
 
 export function LocaleSettingsDialog({
@@ -35,34 +50,32 @@ export function LocaleSettingsDialog({
     enabled: open,
   });
   const { updateLocaleSettings, isSaving } = useSiteLocaleSettings(siteId);
-
-  const [enabledLocales, setEnabledLocales] = useState<string[]>([]);
-  const [defaultLocale, setDefaultLocale] = useState('');
-  const [untranslatedPageFallback, setUntranslatedPageFallback] =
-    useState<UntranslatedPageFallback>('redirect-to-default');
   const [error, setError] = useState('');
 
-  // Same "adjust state during render" resync as GeneralSettingsDialog.
-  const [lastSyncKey, setLastSyncKey] = useState<string | null>(null);
-  const syncKey = open ? `open:${site?.id ?? 'loading'}` : 'closed';
-  if (syncKey !== lastSyncKey) {
-    setLastSyncKey(syncKey);
-    if (open && site) {
-      setEnabledLocales(site.enabledLocales);
-      setDefaultLocale(site.defaultLocale);
-      setUntranslatedPageFallback(site.untranslatedPageFallback);
-      setError('');
-    }
-  }
+  const { control, handleSubmit, reset, setValue } = useForm<LocaleSettings>({
+    resolver: zodResolver(localeSettingsSchema),
+    defaultValues: {
+      enabledLocales: [],
+      defaultLocale: '',
+      untranslatedPageFallback: 'redirect-to-default',
+    },
+  });
+  useResetFormOnOpen(open, site, reset, (currentSite) => {
+    setError('');
+    return toFormValues(currentSite);
+  });
 
-  async function handleSubmit() {
+  const enabledLocales = useWatch({ control, name: 'enabledLocales' });
+  const defaultLocale = useWatch({ control, name: 'defaultLocale' });
+  const untranslatedPageFallback = useWatch({
+    control,
+    name: 'untranslatedPageFallback',
+  });
+
+  async function onSubmit(values: LocaleSettings) {
     setError('');
     try {
-      await updateLocaleSettings({
-        enabledLocales,
-        defaultLocale,
-        untranslatedPageFallback,
-      });
+      await updateLocaleSettings(values);
       onOpenChange(false);
     } catch (err) {
       setError(String(err));
@@ -78,7 +91,7 @@ export function LocaleSettingsDialog({
         {!site ? (
           <p className="text-sm text-muted-foreground">{t('common.loading')}</p>
         ) : (
-          <>
+          <form onSubmit={(event) => void handleSubmit(onSubmit)(event)}>
             <div className="flex flex-col gap-4">
               <div className="flex flex-col gap-2">
                 <Label>{t('localeSettings.localesLabel')}</Label>
@@ -86,8 +99,8 @@ export function LocaleSettingsDialog({
                   enabledLocales={enabledLocales}
                   defaultLocale={defaultLocale}
                   onChange={(locales, nextDefault) => {
-                    setEnabledLocales(locales);
-                    setDefaultLocale(nextDefault);
+                    setValue('enabledLocales', locales);
+                    setValue('defaultLocale', nextDefault);
                   }}
                 />
               </div>
@@ -102,14 +115,20 @@ export function LocaleSettingsDialog({
                       : t('localeSettings.fallbackRedirectDescription')}
                   </span>
                 </div>
-                <Switch
-                  checked={untranslatedPageFallback === 'not-available'}
-                  onCheckedChange={(checked) =>
-                    setUntranslatedPageFallback(
-                      checked ? 'not-available' : 'redirect-to-default',
-                    )
-                  }
-                  aria-label={t('localeSettings.fallbackLabel')}
+                <Controller
+                  control={control}
+                  name="untranslatedPageFallback"
+                  render={({ field }) => (
+                    <Switch
+                      checked={field.value === 'not-available'}
+                      onCheckedChange={(checked) =>
+                        field.onChange(
+                          checked ? 'not-available' : 'redirect-to-default',
+                        )
+                      }
+                      aria-label={t('localeSettings.fallbackLabel')}
+                    />
+                  )}
                 />
               </div>
             </div>
@@ -127,16 +146,15 @@ export function LocaleSettingsDialog({
                 {t('localeSettings.cancel')}
               </Button>
               <Button
-                type="button"
+                type="submit"
                 disabled={isSaving || enabledLocales.length === 0}
-                onClick={() => void handleSubmit()}
               >
                 {isSaving
                   ? t('localeSettings.saving')
                   : t('localeSettings.save')}
               </Button>
             </DialogFooter>
-          </>
+          </form>
         )}
       </DialogContent>
     </Dialog>
