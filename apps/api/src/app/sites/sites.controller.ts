@@ -40,10 +40,10 @@ import {
   type UpdateThemeTokensBody,
   updateThemeTokensBodySchema,
 } from './sites.schemas.js';
+import { TENANT_CONTEXT } from '../auth/auth.tokens.js';
 import {
   SITE_REPOSITORY,
   SITE_THEME_BLOCK_STYLES_REPOSITORY,
-  TENANT_CONTEXT,
 } from './sites.tokens.js';
 
 @Controller('sites')
@@ -200,12 +200,42 @@ export class SitesController {
    * nessun consumer (editor-app sovrascrive per intero la propria cache
    * del sito con QUALUNQUE risposta di queste mutation — un DTO senza
    * `themeTokens` la farebbe sparire dalla cache fino al prossimo GET).
+   *
+   * Security review 2026-08-24, backend seconda passata: prima faceva
+   * `{ ...site.toProps(), themeTokens }` — un nome che sembrava una
+   * whitelist ma non lo era, esponeva ogni campo di Site senza filtro.
+   * Nessun campo sensibile su Site oggi, ma senza whitelist esplicita un
+   * futuro campo lo esporrebbe automaticamente qui.
    */
   private async toDto(site: Site) {
     const blockStyles = await this.siteThemeBlockStylesRepository.listBySite(
       site.tenantId,
       site.id,
     );
-    return { ...site.toProps(), themeTokens: { blockStyles } };
+    const props = site.toProps();
+    return {
+      id: props.id,
+      tenantId: props.tenantId,
+      name: props.name,
+      domain: props.domain,
+      defaultLocale: props.defaultLocale,
+      enabledLocales: props.enabledLocales,
+      untranslatedPageFallback: props.untranslatedPageFallback,
+      businessAddress: props.businessAddress,
+      businessPhone: props.businessPhone,
+      businessType: props.businessType,
+      openingHours: props.openingHours,
+      searchEngineIndexingEnabled: props.searchEngineIndexingEnabled,
+      themePrimaryColor: props.themePrimaryColor,
+      themeSecondaryColor: props.themeSecondaryColor,
+      themeFontFamily: props.themeFontFamily,
+      themeCustomCss: props.themeCustomCss,
+      themeHeadScript: props.themeHeadScript,
+      themeBodyScript: props.themeBodyScript,
+      themeFaviconUrl: props.themeFaviconUrl,
+      themeOverridesEnabled: props.themeOverridesEnabled,
+      createdAt: props.createdAt,
+      themeTokens: { blockStyles },
+    };
   }
 }

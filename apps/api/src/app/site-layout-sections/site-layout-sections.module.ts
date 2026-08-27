@@ -8,7 +8,6 @@ import {
 import { PreviewTokenAdapter } from '@brisk/preview-token-adapter';
 import { DrizzleSiteRepository } from '@brisk/postgres-site-repository';
 import { AuthModule } from '../auth/auth.module.js';
-import { SessionTenantContextAdapter } from '../auth/session-tenant-context.adapter.js';
 import { DATABASE, DatabaseModule } from '../database.module.js';
 import { SiteLayoutSectionsController } from './site-layout-sections.controller.js';
 import {
@@ -17,7 +16,6 @@ import {
   SITE_LAYOUT_SECTION_REPOSITORY,
   SITE_LAYOUT_SECTION_VERSION_REPOSITORY,
   SITE_REPOSITORY,
-  TENANT_CONTEXT,
 } from './site-layout-sections.tokens.js';
 
 @Module({
@@ -40,7 +38,6 @@ import {
       useFactory: (db: BriskDb) => new DrizzleSiteRepository(db),
       inject: [DATABASE],
     },
-    { provide: TENANT_CONTEXT, useClass: SessionTenantContextAdapter },
     // Locale a questo modulo, non importato da AuthModule (che non lo
     // esporta) — stessa scelta di public-pages.module.ts/pages.module.ts.
     {

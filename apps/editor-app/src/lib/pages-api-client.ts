@@ -17,8 +17,31 @@ export interface PageDto {
   updatedAt: string;
 }
 
+/**
+ * Security review 2026-08-24, database section: the list endpoint used to
+ * return full PageDto rows — content/publishedContent (the entire Puck
+ * block tree) shipped for every page just to render a list of titles.
+ * hasUnpublishedChanges replaces the client-side content-vs-
+ * publishedContent comparison the list view used to do with both full
+ * trees already in hand — computed server-side instead.
+ */
+export interface PageSummaryDto {
+  id: string;
+  tenantId: string;
+  siteId: string;
+  groupId: string;
+  locale: string;
+  slug: string;
+  parentId: string | null;
+  status: 'draft' | 'published';
+  seoMeta: SeoMeta;
+  createdAt: string;
+  updatedAt: string;
+  hasUnpublishedChanges: boolean;
+}
+
 export interface PaginatedPages {
-  items: PageDto[];
+  items: PageSummaryDto[];
   total: number;
 }
 

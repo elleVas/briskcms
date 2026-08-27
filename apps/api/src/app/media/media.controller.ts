@@ -14,6 +14,7 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { ThrottlerGuard } from '@nestjs/throttler';
 import { memoryStorage } from 'multer';
 import { deleteMedia, listMedia, uploadMedia } from '@brisk/application';
 import { type Media } from '@brisk/domain-core';
@@ -30,11 +31,8 @@ import {
   type UploadMediaBody,
   uploadMediaBodySchema,
 } from './media.schemas.js';
-import {
-  MEDIA_REPOSITORY,
-  MEDIA_STORAGE,
-  TENANT_CONTEXT,
-} from './media.tokens.js';
+import { TENANT_CONTEXT } from '../auth/auth.tokens.js';
+import { MEDIA_REPOSITORY, MEDIA_STORAGE } from './media.tokens.js';
 
 const MAX_UPLOAD_BYTES = 10 * 1024 * 1024; // 10MB — a generous photo, not a video/archive
 
@@ -68,6 +66,7 @@ export class MediaController {
   }
 
   @Post()
+  @UseGuards(ThrottlerGuard)
   @UseInterceptors(
     FileInterceptor('file', {
       storage: memoryStorage(),

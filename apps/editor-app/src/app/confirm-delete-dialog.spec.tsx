@@ -1,28 +1,31 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import { DeleteMediaConfirmDialog } from './delete-media-confirm-dialog.js';
+import { ConfirmDeleteDialog } from './confirm-delete-dialog.js';
 
-describe('DeleteMediaConfirmDialog', () => {
-  it('shows the filename in the confirmation text', () => {
+describe('ConfirmDeleteDialog', () => {
+  it('shows the given title and description', () => {
     render(
-      <DeleteMediaConfirmDialog
+      <ConfirmDeleteDialog
         open
         onOpenChange={vi.fn()}
-        filename="foto.png"
+        title="Eliminare questa pagina?"
+        description='"Chi siamo" verrà eliminata definitivamente.'
         onConfirm={vi.fn()}
       />,
     );
 
-    expect(screen.getByText(/"foto\.png"/)).toBeTruthy();
+    expect(screen.getByText('Eliminare questa pagina?')).toBeTruthy();
+    expect(screen.getByText(/"Chi siamo"/)).toBeTruthy();
   });
 
   it('calls onConfirm when the destructive action is clicked', () => {
     const onConfirm = vi.fn();
     render(
-      <DeleteMediaConfirmDialog
+      <ConfirmDeleteDialog
         open
         onOpenChange={vi.fn()}
-        filename="foto.png"
+        title="Eliminare questo file?"
+        description="Verrà eliminato definitivamente."
         onConfirm={onConfirm}
       />,
     );
@@ -35,10 +38,11 @@ describe('DeleteMediaConfirmDialog', () => {
   it('does not call onConfirm when cancelled', () => {
     const onConfirm = vi.fn();
     render(
-      <DeleteMediaConfirmDialog
+      <ConfirmDeleteDialog
         open
         onOpenChange={vi.fn()}
-        filename="foto.png"
+        title="Eliminare questo modulo?"
+        description="Verrà eliminato definitivamente."
         onConfirm={onConfirm}
       />,
     );

@@ -10,36 +10,38 @@ import {
   AlertDialogTitle,
 } from '../components/ui/alert-dialog.js';
 
-export interface DeletePageConfirmDialogProps {
+export interface ConfirmDeleteDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  pageName: string;
+  /** Already resolved via t() by the caller — title/description text (and
+   * the {{name}} interpolation) differ per resource type, but "Annulla"/
+   * "Elimina" never did (security review 2026-08-24: 3 dialogs, identical
+   * character-for-character except this). */
+  title: string;
+  description: string;
   onConfirm: () => void;
 }
 
-export function DeletePageConfirmDialog({
+export function ConfirmDeleteDialog({
   open,
   onOpenChange,
-  pageName,
+  title,
+  description,
   onConfirm,
-}: DeletePageConfirmDialogProps) {
+}: ConfirmDeleteDialogProps) {
   const { t } = useTranslation();
 
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>{t('pages.deleteDialog.title')}</AlertDialogTitle>
-          <AlertDialogDescription>
-            {t('pages.deleteDialog.description', { name: pageName })}
-          </AlertDialogDescription>
+          <AlertDialogTitle>{title}</AlertDialogTitle>
+          <AlertDialogDescription>{description}</AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>
-            {t('pages.deleteDialog.cancel')}
-          </AlertDialogCancel>
+          <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
           <AlertDialogAction variant="destructive" onClick={onConfirm}>
-            {t('pages.deleteDialog.confirm')}
+            {t('common.delete')}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

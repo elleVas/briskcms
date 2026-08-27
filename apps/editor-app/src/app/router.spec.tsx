@@ -81,7 +81,11 @@ const sampleSite: SiteDto = {
   createdAt: '',
 };
 
-const samplePage: PageDto = {
+// Not explicitly typed PageDto: used both as a full getPage() mock and as
+// a listPages() item (PageSummaryDto), so it carries every field either
+// shape needs — TypeScript checks structural compatibility at each call
+// site, not against a single declared type here.
+const samplePage: PageDto & { hasUnpublishedChanges: boolean } = {
   id: 'page-1',
   tenantId: 'tenant-1',
   siteId: 'site-1',
@@ -95,6 +99,7 @@ const samplePage: PageDto = {
   seoMeta: { title: 'Home', description: '' },
   createdAt: '',
   updatedAt: '2026-01-01T00:00:00.000Z',
+  hasUnpublishedChanges: false,
 };
 
 const sampleHeaderSection: SiteLayoutSectionDto = {

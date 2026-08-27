@@ -4,8 +4,19 @@ import postgres from 'postgres';
 import { requireEnv } from '@brisk/env-config';
 import * as schema from './schema.js';
 
+// Security review 2026-08-24, database section: postgres() ran with no
+// options at all — the driver's own default (max: 10) was baked in,
+// un-tunable without a code change. Irrelevant at today's scale, but a
+// fixed number will eventually need adjusting for real multi-tenant load
+// without a redeploy — an env var gets there without a schema change.
+function poolMax(): number {
+  const raw = process.env['POSTGRES_POOL_MAX'];
+  const parsed = raw ? Number(raw) : NaN;
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : 10;
+}
+
 export function createDb(connectionString: string) {
-  const client = postgres(connectionString);
+  const client = postgres(connectionString, { max: poolMax() });
   return drizzle(client, { schema });
 }
 

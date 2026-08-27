@@ -15,6 +15,7 @@ import {
   DEFAULT_TENANT_ID,
   EDITOR_APP_URL,
   EMAIL_PORT,
+  TENANT_CONTEXT,
   USER_REPOSITORY,
   VERIFICATION_TOKEN_PORT,
 } from './auth.tokens.js';
@@ -82,6 +83,7 @@ import { SessionTenantContextAdapter } from './session-tenant-context.adapter.js
     RolesGuard,
     PerAccountThrottlerGuard,
     SessionTenantContextAdapter,
+    { provide: TENANT_CONTEXT, useClass: SessionTenantContextAdapter },
   ],
   exports: [
     AUTH_PORT,
@@ -92,6 +94,7 @@ import { SessionTenantContextAdapter } from './session-tenant-context.adapter.js
     SessionAuthGuard,
     RolesGuard,
     SessionTenantContextAdapter,
+    TENANT_CONTEXT,
   ],
 })
 export class AuthModule {}

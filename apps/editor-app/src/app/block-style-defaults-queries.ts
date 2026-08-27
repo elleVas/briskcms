@@ -1,5 +1,5 @@
 import { queryOptions } from '@tanstack/react-query';
-import { fetchBlockStyleDefaults } from '../lib/block-style-defaults-api-client.js';
+import { fetchBlockStyleDefaults } from '../lib/theme-api-client.js';
 
 /**
  * Il default risolto di ogni tipo di blocco non cambia mai a runtime

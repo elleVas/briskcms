@@ -40,8 +40,9 @@ vi.mock('../lib/sites-api-client.js', async (importOriginal) => {
 // mock la query farebbe una vera fetch di rete (comportamento non
 // deterministico, dipendente da cosa gira sulla macchina di chi lancia i
 // test). Vuoto = i campi mostrano il placeholder generico com'era prima.
-vi.mock('../lib/block-style-defaults-api-client.js', () => ({
+vi.mock('../lib/theme-api-client.js', () => ({
   fetchBlockStyleDefaults: vi.fn().mockResolvedValue({}),
+  fetchThemeIcons: vi.fn().mockResolvedValue([]),
 }));
 
 function buildSite(overrides: Partial<SiteDto> = {}): SiteDto {

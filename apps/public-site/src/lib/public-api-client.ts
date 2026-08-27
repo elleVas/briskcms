@@ -1,3 +1,4 @@
+import { requireEnv } from '@brisk/env-config';
 import type {
   Block,
   FormField,
@@ -63,7 +64,7 @@ export type PublishedPageLookupResult =
 // value at request time (Node adapter, SSR), not whatever was baked in at
 // build time — one built image serves whichever domains its env points at.
 function apiUrl(): string {
-  return process.env['API_URL'] ?? 'http://localhost:3000/api';
+  return requireEnv('API_URL');
 }
 
 // Security review 2026-08-24, point 18: without this, a hung apps/api

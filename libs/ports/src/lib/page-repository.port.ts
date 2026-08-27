@@ -1,4 +1,5 @@
-import type { Page, PageVersion } from '@brisk/domain-core';
+import type { Page, PageStatus, PageVersion } from '@brisk/domain-core';
+import type { SeoMeta } from '@brisk/shared-types';
 
 export interface Pagination {
   page: number;
@@ -8,6 +9,32 @@ export interface Pagination {
 export interface PaginatedResult<T> {
   items: T[];
   total: number;
+}
+
+/**
+ * Security review 2026-08-24, database section: `listBySite` used to
+ * return full `Page` entities — `content`/`publishedContent` (the entire
+ * Puck block tree) shipped with every row of a page LIST, when the list UI
+ * only ever needs id/slug/title/status/updatedAt (see
+ * pages-list-view.tsx). `hasUnpublishedChanges` replaces the raw
+ * content-vs-publishedContent comparison the list UI used to do
+ * client-side with both full trees already in hand — computed once in SQL
+ * instead (`content IS DISTINCT FROM published_content`), so neither tree
+ * ever leaves Postgres for a list request.
+ */
+export interface PageSummary {
+  id: string;
+  tenantId: string;
+  siteId: string;
+  groupId: string;
+  locale: string;
+  slug: string;
+  parentId: string | null;
+  status: PageStatus;
+  seoMeta: SeoMeta;
+  createdAt: Date;
+  updatedAt: Date;
+  hasUnpublishedChanges: boolean;
 }
 
 /**
@@ -37,7 +64,7 @@ export interface PageRepositoryPort {
     tenantId: string,
     siteId: string,
     pagination: Pagination,
-  ): Promise<PaginatedResult<Page>>;
+  ): Promise<PaginatedResult<PageSummary>>;
   /** Every locale-translation of the same page (Fase 5b) — `groupId` links them, see schema.ts's own comment on the column. */
   listByGroup(
     tenantId: string,

@@ -1,5 +1,5 @@
 import { queryOptions } from '@tanstack/react-query';
-import { fetchThemeIcons } from '../lib/theme-icons-api-client.js';
+import { fetchThemeIcons } from '../lib/theme-api-client.js';
 
 /**
  * Il set di icone del tema attivo non cambia mai a runtime (`BRISK_THEME`

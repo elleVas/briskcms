@@ -11,12 +11,46 @@ const ENV_KEYS = [
 ] as const;
 
 describe('createDb', () => {
+  const originalPoolMax = process.env['POSTGRES_POOL_MAX'];
+
+  afterEach(() => {
+    if (originalPoolMax === undefined) {
+      delete process.env['POSTGRES_POOL_MAX'];
+    } else {
+      process.env['POSTGRES_POOL_MAX'] = originalPoolMax;
+    }
+  });
+
   it('builds a BriskDb without opening a connection', () => {
     // postgres.js connects lazily on first query, so this is safe without a
     // real database — constructing the client must not throw.
     expect(() =>
       createDb('postgres://user:pass@localhost:5432/db'),
     ).not.toThrow();
+  });
+
+  it('defaults the pool size to 10 when POSTGRES_POOL_MAX is unset', () => {
+    delete process.env['POSTGRES_POOL_MAX'];
+    const db = createDb('postgres://user:pass@localhost:5432/db');
+    expect(db.$client.options.max).toBe(10);
+  });
+
+  it('honors POSTGRES_POOL_MAX when set to a valid positive integer', () => {
+    process.env['POSTGRES_POOL_MAX'] = '25';
+    const db = createDb('postgres://user:pass@localhost:5432/db');
+    expect(db.$client.options.max).toBe(25);
+  });
+
+  it('falls back to 10 for a non-numeric or non-positive POSTGRES_POOL_MAX', () => {
+    process.env['POSTGRES_POOL_MAX'] = 'not-a-number';
+    expect(
+      createDb('postgres://user:pass@localhost:5432/db').$client.options.max,
+    ).toBe(10);
+
+    process.env['POSTGRES_POOL_MAX'] = '-5';
+    expect(
+      createDb('postgres://user:pass@localhost:5432/db').$client.options.max,
+    ).toBe(10);
   });
 });
 

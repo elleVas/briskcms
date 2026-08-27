@@ -11,8 +11,9 @@ import { BlockToolbarOverlay } from './block-toolbar-overlay.js';
 // mock la query farebbe una vera fetch di rete (comportamento non
 // deterministico). Vuoto = i campi mostrano il valore/placeholder com'era
 // prima di docs/adr/0022's follow-up sul pre-fill.
-vi.mock('../../lib/block-style-defaults-api-client.js', () => ({
+vi.mock('../../lib/theme-api-client.js', () => ({
   fetchBlockStyleDefaults: vi.fn().mockResolvedValue({}),
+  fetchThemeIcons: vi.fn().mockResolvedValue([]),
 }));
 
 function renderOverlay(ui: ReactElement) {

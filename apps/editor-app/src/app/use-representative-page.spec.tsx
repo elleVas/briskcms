@@ -12,7 +12,7 @@ vi.mock('../lib/pages-api-client.js', async (importOriginal) => {
   return { ...actual, listPages: vi.fn() };
 });
 
-function page(overrides: Partial<api.PageDto>): api.PageDto {
+function page(overrides: Partial<api.PageSummaryDto>): api.PageSummaryDto {
   return {
     id: 'page-1',
     tenantId: 'tenant-1',
@@ -22,11 +22,10 @@ function page(overrides: Partial<api.PageDto>): api.PageDto {
     locale: 'it',
     slug: 'home',
     status: 'published',
-    content: [],
-    publishedContent: [],
     seoMeta: { title: 'Home', description: '' },
     createdAt: '',
     updatedAt: '',
+    hasUnpublishedChanges: false,
     ...overrides,
   };
 }

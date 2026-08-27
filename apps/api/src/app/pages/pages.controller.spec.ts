@@ -1,4 +1,3 @@
-import { NotFoundException } from '@nestjs/common';
 import {
   Page,
   PageNotFoundError,
@@ -69,12 +68,12 @@ describe('PagesController (unit)', () => {
     );
   });
 
-  it('findBySlug throws a NotFoundException when no page matches', async () => {
+  it('findBySlug propagates PageNotFoundError, unwrapped', async () => {
     pageRepository.findBySlug.mockResolvedValue(null);
 
     await expect(
       controller.findBySlug('site-1', 'it', 'missing'),
-    ).rejects.toThrow(NotFoundException);
+    ).rejects.toThrow(PageNotFoundError);
   });
 
   // The mapping to the right HTTP status now happens in the global
@@ -184,11 +183,11 @@ describe('PagesController (unit)', () => {
     expect(pageRepository.saveWithVersion).toHaveBeenCalled();
   });
 
-  it('createPreviewToken throws a NotFoundException when the page does not exist', async () => {
+  it('createPreviewToken propagates PageNotFoundError, unwrapped', async () => {
     pageRepository.findById.mockResolvedValue(null);
 
     await expect(controller.createPreviewToken('missing-id')).rejects.toThrow(
-      NotFoundException,
+      PageNotFoundError,
     );
     expect(previewTokenPort.createToken).not.toHaveBeenCalled();
   });

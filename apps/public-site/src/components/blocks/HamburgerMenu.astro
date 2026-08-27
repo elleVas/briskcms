@@ -38,10 +38,32 @@ const { position, visibility } = Astro.props;
     const toggle = root.querySelector<HTMLButtonElement>('.brisk-hamburger__toggle');
     if (!toggle) return;
 
+    function setOpen(isOpen: boolean) {
+      root.classList.toggle('brisk-hamburger--open', isOpen);
+      toggle?.setAttribute('aria-expanded', String(isOpen));
+      toggle?.setAttribute('aria-label', isOpen ? 'Chiudi il menu' : 'Apri il menu');
+    }
+
     toggle.addEventListener('click', () => {
-      const isOpen = root.classList.toggle('brisk-hamburger--open');
-      toggle.setAttribute('aria-expanded', String(isOpen));
-      toggle.setAttribute('aria-label', isOpen ? 'Chiudi il menu' : 'Apri il menu');
+      setOpen(!root.classList.contains('brisk-hamburger--open'));
+    });
+
+    // Security review 2026-08-24, accessibility: neither Esc nor a click
+    // outside the panel closed it before — only re-clicking the toggle
+    // itself did.
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape' && root.classList.contains('brisk-hamburger--open')) {
+        setOpen(false);
+        toggle?.focus();
+      }
+    });
+    document.addEventListener('click', (event) => {
+      if (
+        root.classList.contains('brisk-hamburger--open') &&
+        !root.contains(event.target as Node)
+      ) {
+        setOpen(false);
+      }
     });
   });
 </script>

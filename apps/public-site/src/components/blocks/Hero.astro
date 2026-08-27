@@ -8,7 +8,11 @@ const { title, subtitle, styleOverride } = Astro.props;
 const instanceStyle = buildBlockInstanceStyle(styleOverride);
 ---
 
-<header
+{/* <section>, not <header>: this block can be dropped anywhere in a
+    page's body (not just a site's actual header slot) — a bare <header>
+    there creates a second, ambiguous role="banner" landmark alongside the
+    real one from PageLayout.astro. Security review 2026-08-24, accessibility. */}
+<section
 	class="brisk-hero mx-auto max-w-3xl py-20 text-center sm:py-28"
 	style={instanceStyle}
 >
@@ -24,7 +28,7 @@ const instanceStyle = buildBlockInstanceStyle(styleOverride);
 	>
 		{subtitle}
 	</p>
-</header>
+</section>
 
 <style>
 	.brisk-hero {

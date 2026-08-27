@@ -88,12 +88,12 @@ if (form && form.steps.length > 0) {
   form && (
     <div class="brisk-form" style={instanceStyle}>
       {submitted && (
-        <p class="brisk-form__status brisk-form__status--success">
+        <p role="status" class="brisk-form__status brisk-form__status--success">
           Grazie! Il tuo messaggio è stato inviato.
         </p>
       )}
       {errored && (
-        <p class="brisk-form__status brisk-form__status--error">
+        <p role="alert" class="brisk-form__status brisk-form__status--error">
           Si è verificato un errore. Controlla i campi obbligatori e riprova.
         </p>
       )}

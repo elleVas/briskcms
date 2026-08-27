@@ -173,6 +173,48 @@ describe('DrizzlePageRepository (integration)', () => {
     expect(firstIds.some((id) => secondIds.includes(id))).toBe(false);
   });
 
+  it('listBySite never ships content/publishedContent, and computes hasUnpublishedChanges server-side', async () => {
+    // Security review 2026-08-24, database section: the list used to
+    // return full Page entities (content/publishedContent, the entire
+    // Puck block tree) just to render titles — the summary shape must
+    // never carry either field, and the "pending changes" indicator the
+    // editor UI shows must still work from a computed boolean instead.
+    const page = buildPage({
+      content: [{ type: 'Text', props: { body: 'draft' } }],
+    });
+    await pageRepository.save(page);
+
+    const beforePublish = await pageRepository.listBySite(tenantAId, siteAId, {
+      page: 1,
+      pageSize: 100,
+    });
+    const draftSummary = beforePublish.items.find((p) => p.id === page.id);
+    expect(draftSummary).not.toHaveProperty('content');
+    expect(draftSummary).not.toHaveProperty('publishedContent');
+    // Not yet published at all — never counts as "unpublished changes".
+    expect(draftSummary?.hasUnpublishedChanges).toBe(false);
+
+    page.publish();
+    await pageRepository.save(page);
+    const afterPublish = await pageRepository.listBySite(tenantAId, siteAId, {
+      page: 1,
+      pageSize: 100,
+    });
+    expect(
+      afterPublish.items.find((p) => p.id === page.id)?.hasUnpublishedChanges,
+    ).toBe(false);
+
+    page.saveDraft([{ type: 'Text', props: { body: 'edited after publish' } }]);
+    await pageRepository.save(page);
+    const afterDraftEdit = await pageRepository.listBySite(tenantAId, siteAId, {
+      page: 1,
+      pageSize: 100,
+    });
+    expect(
+      afterDraftEdit.items.find((p) => p.id === page.id)?.hasUnpublishedChanges,
+    ).toBe(true);
+  });
+
   it('save() upserts: a second save updates the same row instead of inserting a new one', async () => {
     const page = buildPage();
     await pageRepository.save(page);
