@@ -1,15 +1,15 @@
 ---
-import type { LanguageSwitcherProps } from '@brisk/shared-types';
 import type {
-  PublishedPageTranslationDto,
-  PublishedSiteDto,
-} from '../../lib/public-api-client.js';
+  LanguageSwitcherProps,
+  PublishedSite,
+} from '@brisk/shared-types';
+import type { PublishedPageTranslationDto } from '../../lib/public-api-client.js';
 import { localePath } from '../../lib/locale-path.js';
 
 interface Props extends LanguageSwitcherProps {
   locale: string;
   translations: PublishedPageTranslationDto[];
-  site: PublishedSiteDto;
+  site: PublishedSite;
 }
 
 const { position, visibility, locale, translations, site } = Astro.props;

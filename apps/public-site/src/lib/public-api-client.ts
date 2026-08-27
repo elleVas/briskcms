@@ -1,30 +1,12 @@
 import { requireEnv } from '@brisk/env-config';
-import type {
-  Block,
-  FormField,
-  FormStep,
-  OpeningHoursDay,
-  SeoMeta,
-  ThemeSettings,
-  ThemeTokens,
-  UntranslatedPageFallback,
+import {
+  publishedSiteSchema,
+  type Block,
+  type FormField,
+  type FormStep,
+  type PublishedSite,
+  type SeoMeta,
 } from '@brisk/shared-types';
-
-/** Only what OG tags + schema.org rendering, and the language switcher (docs/adr/0017), need — mirrors PublishedSite in the API. */
-export interface PublishedSiteDto {
-  name: string;
-  domain: string | null;
-  defaultLocale: string;
-  enabledLocales: string[];
-  untranslatedPageFallback: UntranslatedPageFallback;
-  businessAddress: string | null;
-  businessPhone: string | null;
-  businessType: string | null;
-  openingHours: OpeningHoursDay[] | null;
-  searchEngineIndexingEnabled: boolean;
-  themeSettings: ThemeSettings;
-  themeTokens: ThemeTokens;
-}
 
 /** One entry per published locale-translation of this page (docs/adr/0017), including itself. */
 export interface PublishedPageTranslationDto {
@@ -44,7 +26,7 @@ export interface PublishedPageDto {
   locale: string;
   translations: PublishedPageTranslationDto[];
   ancestors: PublishedPageAncestorDto[];
-  site: PublishedSiteDto;
+  site: PublishedSite;
   header: Block[] | null;
   footer: Block[] | null;
   headerSticky: boolean;
@@ -132,7 +114,11 @@ export async function getPublishedPageBySlug(
   if (!res.ok) {
     throw new Error(`Public pages API error: ${res.status}`);
   }
-  return { found: true, page: await res.json() };
+  const page: PublishedPageDto = await res.json();
+  return {
+    found: true,
+    page: { ...page, site: publishedSiteSchema.parse(page.site) },
+  };
 }
 
 /**
@@ -157,11 +143,12 @@ export async function getPreviewPageById(
   if (!res.ok) {
     throw new Error(`Public pages API error: ${res.status}`);
   }
-  return res.json();
+  const page: PublishedPageDto = await res.json();
+  return { ...page, site: publishedSiteSchema.parse(page.site) };
 }
 
 export interface PublishedSiteChromeDto {
-  site: PublishedSiteDto;
+  site: PublishedSite;
   header: Block[] | null;
   footer: Block[] | null;
   headerSticky: boolean;
@@ -188,7 +175,8 @@ export async function getPublishedSiteChrome(
   if (!res.ok) {
     throw new Error(`Public pages API error: ${res.status}`);
   }
-  return res.json();
+  const chrome: PublishedSiteChromeDto = await res.json();
+  return { ...chrome, site: publishedSiteSchema.parse(chrome.site) };
 }
 
 export interface PageTreeNodeDto {

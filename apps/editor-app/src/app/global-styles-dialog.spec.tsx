@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { QueryClientProvider } from '@tanstack/react-query';
 import type { BlockDescriptor } from '@brisk/block-registry';
 import * as api from '../lib/sites-api-client.js';
-import type { SiteDto } from '../lib/sites-api-client.js';
+import type { SiteRecord } from '@brisk/shared-types';
 import { createTestQueryClient } from '../test-query-client.js';
 import { GlobalStylesDialog } from './global-styles-dialog.js';
 
@@ -45,7 +45,7 @@ vi.mock('../lib/theme-api-client.js', () => ({
   fetchThemeIcons: vi.fn().mockResolvedValue([]),
 }));
 
-function buildSite(overrides: Partial<SiteDto> = {}): SiteDto {
+function buildSite(overrides: Partial<SiteRecord> = {}): SiteRecord {
   return {
     id: 'site-1',
     tenantId: 'tenant-1',
@@ -67,7 +67,7 @@ function buildSite(overrides: Partial<SiteDto> = {}): SiteDto {
     themeBodyScript: null,
     themeFaviconUrl: null,
     themeOverridesEnabled: true,
-    themeTokens: null,
+    themeTokens: { blockStyles: {} },
     createdAt: '',
     ...overrides,
   };

@@ -1,6 +1,7 @@
 ---
 import { getPreviewPageById } from '../../lib/public-api-client.js';
 import PublicPageContent from '../../components/PublicPageContent.astro';
+import { buildContentSecurityPolicy } from '../../lib/content-security-policy.js';
 import { editorAppUrl } from '../../lib/editor-app-url.js';
 
 // SSR, mai prerenderizzata — stessa ragione di [locale]/[...slug].astro:
@@ -23,7 +24,7 @@ if (!page) {
 Astro.response.headers.set('X-Robots-Tag', 'noindex');
 Astro.response.headers.set(
   'Content-Security-Policy',
-  `frame-ancestors ${editorAppUrl()}`,
+  buildContentSecurityPolicy(editorAppUrl()),
 );
 ---
 

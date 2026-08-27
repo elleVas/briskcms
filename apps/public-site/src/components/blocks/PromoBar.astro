@@ -5,6 +5,7 @@ import {
   type PromoBarProps,
 } from '@brisk/shared-types';
 import { localePath } from '../../lib/locale-path.js';
+import { PROMO_BAR_DISMISS_SCRIPT } from './promo-bar-dismiss-script.js';
 
 type Props = PromoBarProps & { styleOverride?: BlockStyleOverride };
 
@@ -30,25 +31,12 @@ const instanceStyle = buildBlockInstanceStyle(styleOverride);
        `document.currentScript.parentElement` rather than an id so it still
        finds the right bar if this component is ever placed twice on the
        same page (header + footer), matching HamburgerMenu/NavLink's own
-       querySelectorAll-over-id convention. */
+       querySelectorAll-over-id convention. Content lives in
+       promo-bar-dismiss-script.ts, not inline here — content-security-
+       policy.ts hashes that exact same string for `script-src`, so the two
+       can never drift apart. */
   }
-  <script is:inline>
-    (function () {
-      var bar = document.currentScript.parentElement;
-      // Nel canvas dell'editor la pagina gira in un iframe sandboxato senza
-      // allow-same-origin (vedi canvas-frame.tsx): localStorage vi lancia
-      // sempre un SecurityError. Non è un caso da gestire diversamente, solo
-      // da non far esplodere — l'anteprima semplicemente non persiste lo
-      // stato "dismesso" tra un caricamento e l'altro, non ne ha bisogno.
-      try {
-        if (localStorage.getItem('brisk-promo-bar-dismissed') === 'true') {
-          bar.style.display = 'none';
-        }
-      } catch {
-        // Storage non disponibile (anteprima sandboxata) — ignorato.
-      }
-    })();
-  </script>
+  <script is:inline set:html={PROMO_BAR_DISMISS_SCRIPT} />
   <p class="brisk-promo-bar__message">
     {hasLink ? (
       <a href={href} data-brisk-field="message">{message}</a>

@@ -1,6 +1,8 @@
 import { useState } from 'react';
+import { useForm, useWatch } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
+import type { SiteRecord } from '@brisk/shared-types';
 import { Button } from '../components/ui/button.js';
 import {
   Dialog,
@@ -12,12 +14,22 @@ import {
 import { Input } from '../components/ui/input.js';
 import { Label } from '../components/ui/label.js';
 import { siteQueryOptions } from './site-queries.js';
+import { useResetFormOnOpen } from './use-reset-form-on-open.js';
 import { useSiteGeneralSettings } from './use-site-general-settings.js';
 
 export interface GeneralSettingsDialogProps {
   siteId: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+}
+
+interface GeneralSettingsFormValues {
+  name: string;
+  domain: string;
+}
+
+function toFormValues(site: SiteRecord): GeneralSettingsFormValues {
+  return { name: site.name, domain: site.domain ?? '' };
 }
 
 export function GeneralSettingsDialog({
@@ -33,32 +45,24 @@ export function GeneralSettingsDialog({
     enabled: open,
   });
   const { updateGeneralSettings, isSaving } = useSiteGeneralSettings(siteId);
-
-  const [name, setName] = useState('');
-  const [domain, setDomain] = useState('');
   const [error, setError] = useState('');
 
-  // Same "adjust state during render" resync as BusinessInfoDialog — this
-  // dialog stays mounted between opens, only `open` toggles, and `site`
-  // loads asynchronously (gated on `open`), so the key changes the moment
-  // it arrives too, not just when `open` flips.
-  const [lastSyncKey, setLastSyncKey] = useState<string | null>(null);
-  const syncKey = open ? `open:${site?.id ?? 'loading'}` : 'closed';
-  if (syncKey !== lastSyncKey) {
-    setLastSyncKey(syncKey);
-    if (open && site) {
-      setName(site.name);
-      setDomain(site.domain ?? '');
-      setError('');
-    }
-  }
+  const { register, handleSubmit, reset, control } =
+    useForm<GeneralSettingsFormValues>({
+      defaultValues: { name: '', domain: '' },
+    });
+  useResetFormOnOpen(open, site, reset, (currentSite) => {
+    setError('');
+    return toFormValues(currentSite);
+  });
+  const name = useWatch({ control, name: 'name' });
 
-  async function handleSubmit() {
+  async function onSubmit(values: GeneralSettingsFormValues) {
     setError('');
     try {
       await updateGeneralSettings({
-        name: name.trim(),
-        domain: domain.trim() || null,
+        name: values.name.trim(),
+        domain: values.domain.trim() || null,
       });
       onOpenChange(false);
     } catch (err) {
@@ -75,7 +79,7 @@ export function GeneralSettingsDialog({
         {!site ? (
           <p className="text-sm text-muted-foreground">{t('common.loading')}</p>
         ) : (
-          <>
+          <form onSubmit={(event) => void handleSubmit(onSubmit)(event)}>
             <div className="flex flex-col gap-4">
               <div className="flex flex-col gap-2">
                 <Label htmlFor="general-settings-name">
@@ -83,9 +87,7 @@ export function GeneralSettingsDialog({
                 </Label>
                 <Input
                   id="general-settings-name"
-                  value={name}
-                  onChange={(event) => setName(event.target.value)}
-                  required
+                  {...register('name', { required: true })}
                 />
               </div>
               <div className="flex flex-col gap-2">
@@ -94,9 +96,8 @@ export function GeneralSettingsDialog({
                 </Label>
                 <Input
                   id="general-settings-domain"
-                  value={domain}
-                  onChange={(event) => setDomain(event.target.value)}
                   placeholder="www.iltuosito.it"
+                  {...register('domain')}
                 />
                 <p className="text-xs text-muted-foreground">
                   {t('generalSettings.domainDescription')}
@@ -117,16 +118,15 @@ export function GeneralSettingsDialog({
                 {t('generalSettings.cancel')}
               </Button>
               <Button
-                type="button"
+                type="submit"
                 disabled={isSaving || name.trim().length === 0}
-                onClick={() => void handleSubmit()}
               >
                 {isSaving
                   ? t('generalSettings.saving')
                   : t('generalSettings.save')}
               </Button>
             </DialogFooter>
-          </>
+          </form>
         )}
       </DialogContent>
     </Dialog>

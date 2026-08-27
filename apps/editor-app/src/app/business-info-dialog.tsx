@@ -1,7 +1,8 @@
 import { useState } from 'react';
+import { useForm, useWatch } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
-import type { OpeningHoursDay } from '@brisk/shared-types';
+import type { OpeningHoursDay, SiteRecord } from '@brisk/shared-types';
 import { Button } from '../components/ui/button.js';
 import {
   Dialog,
@@ -14,6 +15,7 @@ import { Input } from '../components/ui/input.js';
 import { Label } from '../components/ui/label.js';
 import { OpeningHoursEditor } from './opening-hours-editor.js';
 import { siteQueryOptions } from './site-queries.js';
+import { useResetFormOnOpen } from './use-reset-form-on-open.js';
 import { useSiteBusinessInfo } from './use-site-business-info.js';
 
 const DAYS_OF_WEEK: OpeningHoursDay['dayOfWeek'][] = [
@@ -36,6 +38,22 @@ export interface BusinessInfoDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
+interface BusinessInfoFormValues {
+  address: string;
+  phone: string;
+  businessType: string;
+  openingHours: OpeningHoursDay[];
+}
+
+function toFormValues(site: SiteRecord): BusinessInfoFormValues {
+  return {
+    address: site.businessAddress ?? '',
+    phone: site.businessPhone ?? '',
+    businessType: site.businessType ?? '',
+    openingHours: site.openingHours ?? emptyWeek(),
+  };
+}
+
 export function BusinessInfoDialog({
   siteId,
   open,
@@ -51,44 +69,33 @@ export function BusinessInfoDialog({
     enabled: open,
   });
   const { updateBusinessInfo, isSaving } = useSiteBusinessInfo(siteId);
-
-  const [address, setAddress] = useState('');
-  const [phone, setPhone] = useState('');
-  const [businessType, setBusinessType] = useState('');
-  const [openingHours, setOpeningHours] =
-    useState<OpeningHoursDay[]>(emptyWeek());
   const [error, setError] = useState('');
 
-  // Fills the form from the latest fetched site every time the dialog
-  // opens — it stays mounted between opens, only `open` toggles, so a
-  // previous edit session's local state would otherwise leak into the
-  // next one. Adjusts state during render (comparing against the last
-  // render's sync key) rather than in a useEffect, per
-  // https://react.dev/learn/you-might-not-need-an-effect — `site` loads
-  // asynchronously (the query is gated on `open`), so the key also
-  // changes the moment it arrives, not just when `open` flips.
-  const [lastSyncKey, setLastSyncKey] = useState<string | null>(null);
-  const syncKey = open ? `open:${site?.id ?? 'loading'}` : 'closed';
-  if (syncKey !== lastSyncKey) {
-    setLastSyncKey(syncKey);
-    if (open && site) {
-      setAddress(site.businessAddress ?? '');
-      setPhone(site.businessPhone ?? '');
-      setBusinessType(site.businessType ?? '');
-      setOpeningHours(site.openingHours ?? emptyWeek());
-      setError('');
-    }
-  }
+  const { register, handleSubmit, reset, control, setValue } =
+    useForm<BusinessInfoFormValues>({
+      defaultValues: {
+        address: '',
+        phone: '',
+        businessType: '',
+        openingHours: emptyWeek(),
+      },
+    });
+  useResetFormOnOpen(open, site, reset, (currentSite) => {
+    setError('');
+    return toFormValues(currentSite);
+  });
 
-  async function handleSubmit() {
+  const openingHours = useWatch({ control, name: 'openingHours' });
+
+  async function onSubmit(values: BusinessInfoFormValues) {
     setError('');
     try {
       await updateBusinessInfo({
-        businessAddress: address.trim() || null,
-        businessPhone: phone.trim() || null,
-        businessType: businessType.trim() || null,
-        openingHours: openingHours.some((day) => day.ranges.length > 0)
-          ? openingHours
+        businessAddress: values.address.trim() || null,
+        businessPhone: values.phone.trim() || null,
+        businessType: values.businessType.trim() || null,
+        openingHours: values.openingHours.some((day) => day.ranges.length > 0)
+          ? values.openingHours
           : null,
       });
       onOpenChange(false);
@@ -106,7 +113,7 @@ export function BusinessInfoDialog({
         {!site ? (
           <p className="text-sm text-muted-foreground">{t('common.loading')}</p>
         ) : (
-          <>
+          <form onSubmit={(event) => void handleSubmit(onSubmit)(event)}>
             <div className="flex max-h-[60vh] flex-col gap-4 overflow-y-auto pr-1">
               <p className="text-sm text-muted-foreground">
                 {t('businessInfo.description')}
@@ -115,21 +122,13 @@ export function BusinessInfoDialog({
                 <Label htmlFor="business-address">
                   {t('businessInfo.addressLabel')}
                 </Label>
-                <Input
-                  id="business-address"
-                  value={address}
-                  onChange={(event) => setAddress(event.target.value)}
-                />
+                <Input id="business-address" {...register('address')} />
               </div>
               <div className="flex flex-col gap-2">
                 <Label htmlFor="business-phone">
                   {t('businessInfo.phoneLabel')}
                 </Label>
-                <Input
-                  id="business-phone"
-                  value={phone}
-                  onChange={(event) => setPhone(event.target.value)}
-                />
+                <Input id="business-phone" {...register('phone')} />
               </div>
               <div className="flex flex-col gap-2">
                 <Label htmlFor="business-type">
@@ -137,16 +136,15 @@ export function BusinessInfoDialog({
                 </Label>
                 <Input
                   id="business-type"
-                  value={businessType}
-                  onChange={(event) => setBusinessType(event.target.value)}
                   placeholder={t('businessInfo.typePlaceholder')}
+                  {...register('businessType')}
                 />
               </div>
               <div className="flex flex-col gap-2">
                 <Label>{t('businessInfo.hoursLabel')}</Label>
                 <OpeningHoursEditor
                   value={openingHours}
-                  onChange={setOpeningHours}
+                  onChange={(next) => setValue('openingHours', next)}
                 />
               </div>
             </div>
@@ -163,15 +161,11 @@ export function BusinessInfoDialog({
               >
                 {t('businessInfo.cancel')}
               </Button>
-              <Button
-                type="button"
-                disabled={isSaving}
-                onClick={() => void handleSubmit()}
-              >
+              <Button type="submit" disabled={isSaving}>
                 {isSaving ? t('businessInfo.saving') : t('businessInfo.save')}
               </Button>
             </DialogFooter>
-          </>
+          </form>
         )}
       </DialogContent>
     </Dialog>

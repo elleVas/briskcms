@@ -13,13 +13,13 @@ import {
 } from '../components/ui/select.js';
 import { Switch } from '../components/ui/switch.js';
 import { Textarea } from '../components/ui/textarea.js';
-import type { SiteDto } from '../lib/sites-api-client.js';
+import type { SiteRecord } from '@brisk/shared-types';
 import { ToggleableColorField } from './toggleable-color-field.js';
 import { useSiteThemeSettings } from './use-site-theme-settings.js';
 
 export interface StyleViewProps {
   siteId: string;
-  site: SiteDto;
+  site: SiteRecord;
 }
 
 // Distinct from every curated value in CURATED_THEME_FONTS — selecting it

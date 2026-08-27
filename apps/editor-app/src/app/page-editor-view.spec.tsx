@@ -7,7 +7,7 @@ import { TooltipProvider } from '../components/ui/tooltip.js';
 import * as api from '../lib/pages-api-client.js';
 import type { PageDto } from '../lib/pages-api-client.js';
 import * as sitesApi from '../lib/sites-api-client.js';
-import type { SiteDto } from '../lib/sites-api-client.js';
+import type { SiteRecord } from '@brisk/shared-types';
 import * as previewTokenApi from '../lib/preview-token-api-client.js';
 import { createTestQueryClient } from '../test-query-client.js';
 import { pageQueryOptions } from './pages-queries.js';
@@ -80,7 +80,7 @@ const samplePage: PageDto = {
   updatedAt: '',
 };
 
-const sampleSite: SiteDto = {
+const sampleSite: SiteRecord = {
   id: 'site-1',
   tenantId: 'tenant-1',
   name: 'Il mio sito',
@@ -101,7 +101,7 @@ const sampleSite: SiteDto = {
   themeBodyScript: null,
   themeFaviconUrl: null,
   themeOverridesEnabled: true,
-  themeTokens: null,
+  themeTokens: { blockStyles: {} },
   createdAt: '',
 };
 

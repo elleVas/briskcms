@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
+import type { PublishedSite } from '@brisk/shared-types';
 import { buildSchemaOrgGraph } from './schema-org.js';
-import type { PublishedSiteDto } from './public-api-client.js';
 
-const baseSite: PublishedSiteDto = {
+const baseSite: PublishedSite = {
   name: 'Il mio sito',
   domain: 'example.com',
   defaultLocale: 'it',

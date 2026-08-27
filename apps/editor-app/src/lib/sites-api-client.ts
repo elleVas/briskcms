@@ -1,39 +1,22 @@
-import type {
-  BlockStyleOverride,
-  LocaleSettings,
-  OpeningHoursDay,
-  ThemeSettings,
-  ThemeTokens,
+import {
+  siteRecordSchema,
+  type BlockStyleOverride,
+  type LocaleSettings,
+  type OpeningHoursDay,
+  type SiteRecord,
+  type ThemeSettings,
 } from '@brisk/shared-types';
 import { request } from './http-client.js';
 
-export interface SiteDto {
-  id: string;
-  tenantId: string;
-  name: string;
-  domain: string | null;
-  defaultLocale: string;
-  enabledLocales: string[];
-  untranslatedPageFallback: LocaleSettings['untranslatedPageFallback'];
-  businessAddress: string | null;
-  businessPhone: string | null;
-  businessType: string | null;
-  openingHours: OpeningHoursDay[] | null;
-  searchEngineIndexingEnabled: boolean;
-  themePrimaryColor: string | null;
-  themeSecondaryColor: string | null;
-  themeFontFamily: string | null;
-  themeCustomCss: string | null;
-  themeHeadScript: string | null;
-  themeBodyScript: string | null;
-  themeFaviconUrl: string | null;
-  themeOverridesEnabled: boolean;
-  themeTokens: ThemeTokens | null;
-  createdAt: string;
+async function requestSite(
+  path: string,
+  init?: RequestInit,
+): Promise<SiteRecord> {
+  return siteRecordSchema.parse(await request(path, init));
 }
 
-export function getSite(id: string): Promise<SiteDto> {
-  return request(`/sites/${id}`);
+export function getSite(id: string): Promise<SiteRecord> {
+  return requestSite(`/sites/${id}`);
 }
 
 export interface UpdateBusinessInfoInput {
@@ -46,8 +29,8 @@ export interface UpdateBusinessInfoInput {
 export function updateBusinessInfo(
   id: string,
   input: UpdateBusinessInfoInput,
-): Promise<SiteDto> {
-  return request(`/sites/${id}/business-info`, {
+): Promise<SiteRecord> {
+  return requestSite(`/sites/${id}/business-info`, {
     method: 'PATCH',
     body: JSON.stringify(input),
   });
@@ -61,8 +44,8 @@ export interface UpdateGeneralSettingsInput {
 export function updateGeneralSettings(
   id: string,
   input: UpdateGeneralSettingsInput,
-): Promise<SiteDto> {
-  return request(`/sites/${id}/general-settings`, {
+): Promise<SiteRecord> {
+  return requestSite(`/sites/${id}/general-settings`, {
     method: 'PATCH',
     body: JSON.stringify(input),
   });
@@ -75,8 +58,8 @@ export interface UpdateSeoSettingsInput {
 export function updateSeoSettings(
   id: string,
   input: UpdateSeoSettingsInput,
-): Promise<SiteDto> {
-  return request(`/sites/${id}/seo-settings`, {
+): Promise<SiteRecord> {
+  return requestSite(`/sites/${id}/seo-settings`, {
     method: 'PATCH',
     body: JSON.stringify(input),
   });
@@ -85,8 +68,8 @@ export function updateSeoSettings(
 export function updateLocaleSettings(
   id: string,
   input: LocaleSettings,
-): Promise<SiteDto> {
-  return request(`/sites/${id}/locale-settings`, {
+): Promise<SiteRecord> {
+  return requestSite(`/sites/${id}/locale-settings`, {
     method: 'PATCH',
     body: JSON.stringify(input),
   });
@@ -95,8 +78,8 @@ export function updateLocaleSettings(
 export function updateThemeSettings(
   id: string,
   input: ThemeSettings,
-): Promise<SiteDto> {
-  return request(`/sites/${id}/theme-settings`, {
+): Promise<SiteRecord> {
+  return requestSite(`/sites/${id}/theme-settings`, {
     method: 'PATCH',
     body: JSON.stringify(input),
   });
@@ -106,8 +89,8 @@ export function updateThemeTokens(
   id: string,
   blockType: string,
   style: BlockStyleOverride,
-): Promise<SiteDto> {
-  return request(`/sites/${id}/theme-tokens`, {
+): Promise<SiteRecord> {
+  return requestSite(`/sites/${id}/theme-tokens`, {
     method: 'PATCH',
     body: JSON.stringify({ blockType, style }),
   });

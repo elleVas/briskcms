@@ -1,8 +1,9 @@
 import { useState } from 'react';
+import { Controller, useForm } from 'react-hook-form';
 import { useQuery } from '@tanstack/react-query';
 import { ChevronLeft } from 'lucide-react';
 import type { BlockDescriptor } from '@brisk/block-registry';
-import type { BlockStyleOverride } from '@brisk/shared-types';
+import type { BlockStyleOverride, SiteRecord } from '@brisk/shared-types';
 import {
   Accordion,
   AccordionContent,
@@ -22,6 +23,7 @@ import { BlockStyleFields } from './canvas/block-style-fields.js';
 import { useTranslation } from '../lib/use-translation.js';
 import { siteQueryOptions } from './site-queries.js';
 import { ToggleableColorField } from './toggleable-color-field.js';
+import { useResetFormOnOpen } from './use-reset-form-on-open.js';
 import { useSiteThemeSettings } from './use-site-theme-settings.js';
 
 export interface GlobalStylesDialogProps {
@@ -37,6 +39,22 @@ export interface GlobalStylesDialogProps {
     blockType: string,
     style: BlockStyleOverride,
   ) => Promise<void>;
+}
+
+interface ColorsFormValues {
+  primaryColorEnabled: boolean;
+  primaryColor: string;
+  secondaryColorEnabled: boolean;
+  secondaryColor: string;
+}
+
+function toFormValues(site: SiteRecord): ColorsFormValues {
+  return {
+    primaryColorEnabled: site.themePrimaryColor !== null,
+    primaryColor: site.themePrimaryColor ?? '#18181b',
+    secondaryColorEnabled: site.themeSecondaryColor !== null,
+    secondaryColor: site.themeSecondaryColor ?? '#71717a',
+  };
 }
 
 function hexOrNull(value: string): string | null {
@@ -71,45 +89,39 @@ export function GlobalStylesDialog({
   );
   const { updateThemeSettings, isSaving } = useSiteThemeSettings(siteId);
 
-  const [primaryColorEnabled, setPrimaryColorEnabled] = useState(false);
-  const [primaryColor, setPrimaryColor] = useState('#18181b');
-  const [secondaryColorEnabled, setSecondaryColorEnabled] = useState(false);
-  const [secondaryColor, setSecondaryColor] = useState('#71717a');
   const [error, setError] = useState('');
+  // Navigazione tra l'elenco e lo stile di un tipo — non dati di un form,
+  // riparte sempre dall'elenco (non dall'ultimo tipo aperto) perché
+  // riaprire il dialog è un'azione deliberata dell'utente, non una
+  // continuazione dell'ultima modifica.
   const [selectedType, setSelectedType] = useState<string | null>(null);
 
-  // Il dialog resta montato tra un'apertura e l'altra (stesso pattern di
-  // SeoPanelDialog), ma qui `site` arriva da una query async — la chiave
-  // combina "è aperto" ed "è già arrivato" (stesso approccio di
-  // canvas-editor-shell.tsx's syncKey) così i campi si risincronizzano sia
-  // quando si riapre con i dati già in cache, sia quando la query finisce
-  // di caricare mentre il dialog è già aperto. Riparte sempre dall'elenco
-  // (non dall'ultimo tipo aperto) — riaprire il dialog è un'azione
-  // deliberata dell'utente, non una continuazione dell'ultima modifica.
-  const syncKey = `${open}:${site ? 'ready' : 'loading'}`;
-  const [lastSyncKey, setLastSyncKey] = useState(syncKey);
-  if (syncKey !== lastSyncKey) {
-    setLastSyncKey(syncKey);
-    if (open && site) {
-      setPrimaryColorEnabled(site.themePrimaryColor !== null);
-      setPrimaryColor(site.themePrimaryColor ?? '#18181b');
-      setSecondaryColorEnabled(site.themeSecondaryColor !== null);
-      setSecondaryColor(site.themeSecondaryColor ?? '#71717a');
-      setError('');
-      setSelectedType(null);
-    }
-  }
+  const { control, handleSubmit, reset } = useForm<ColorsFormValues>({
+    defaultValues: {
+      primaryColorEnabled: false,
+      primaryColor: '#18181b',
+      secondaryColorEnabled: false,
+      secondaryColor: '#71717a',
+    },
+  });
+  useResetFormOnOpen(open, site, reset, (currentSite) => {
+    setError('');
+    setSelectedType(null);
+    return toFormValues(currentSite);
+  });
 
-  async function handleSave() {
+  async function onSubmit(values: ColorsFormValues) {
     if (!site) {
       return;
     }
     setError('');
     try {
       await updateThemeSettings({
-        primaryColor: primaryColorEnabled ? hexOrNull(primaryColor) : null,
-        secondaryColor: secondaryColorEnabled
-          ? hexOrNull(secondaryColor)
+        primaryColor: values.primaryColorEnabled
+          ? hexOrNull(values.primaryColor)
+          : null,
+        secondaryColor: values.secondaryColorEnabled
+          ? hexOrNull(values.secondaryColor)
           : null,
         fontFamily: site.themeFontFamily,
         customCss: site.themeCustomCss,
@@ -184,79 +196,108 @@ export function GlobalStylesDialog({
             />
           </div>
         ) : (
-          <div className="flex max-h-[min(32rem,70vh)] flex-col gap-6 overflow-y-auto">
-            <div className="flex flex-col gap-4">
-              <h3 className="text-sm font-medium">
-                {t('globalStyles.colorsTitle')}
-              </h3>
-              <ToggleableColorField
-                id="global-styles-primary-color"
-                label={t('themeSettings.primaryColorLabel')}
-                overrideLabel={t('themeSettings.override')}
-                enabled={primaryColorEnabled}
-                onEnabledChange={setPrimaryColorEnabled}
-                value={primaryColor}
-                onValueChange={setPrimaryColor}
-              />
-              <ToggleableColorField
-                id="global-styles-secondary-color"
-                label={t('themeSettings.secondaryColorLabel')}
-                overrideLabel={t('themeSettings.override')}
-                enabled={secondaryColorEnabled}
-                onEnabledChange={setSecondaryColorEnabled}
-                value={secondaryColor}
-                onValueChange={setSecondaryColor}
-              />
-              {error && (
-                <p role="alert" className="text-sm text-destructive">
-                  {error}
-                </p>
-              )}
-              <div className="flex justify-end gap-2">
-                <Button
-                  type="button"
-                  disabled={isSaving}
-                  onClick={() => void handleSave()}
-                >
-                  {isSaving ? t('globalStyles.saving') : t('globalStyles.save')}
-                </Button>
-              </div>
-            </div>
-            {styleableCategories.length > 0 && (
-              <div className="flex flex-col gap-2">
+          <form onSubmit={(event) => void handleSubmit(onSubmit)(event)}>
+            <div className="flex max-h-[min(32rem,70vh)] flex-col gap-6 overflow-y-auto">
+              <div className="flex flex-col gap-4">
                 <h3 className="text-sm font-medium">
-                  {t('globalStyles.blockStylesTitle')}
+                  {t('globalStyles.colorsTitle')}
                 </h3>
-                <p className="text-xs text-muted-foreground">
-                  {t('globalStyles.blockStylesHint')}
-                </p>
-                <Accordion type="multiple">
-                  {styleableCategories.map((category) => (
-                    <AccordionItem key={category.title} value={category.title}>
-                      <AccordionTrigger>
-                        {tLabel(category.title)}
-                      </AccordionTrigger>
-                      <AccordionContent>
-                        <ul className="flex flex-col gap-0.5">
-                          {category.descriptors.map((descriptor) => (
-                            <li key={descriptor.type}>
-                              <button
-                                type="button"
-                                onClick={() => setSelectedType(descriptor.type)}
-                                className="w-full rounded px-2 py-1.5 text-left text-sm hover:bg-muted hover:text-foreground"
-                              >
-                                {tLabel(descriptor.label)}
-                              </button>
-                            </li>
-                          ))}
-                        </ul>
-                      </AccordionContent>
-                    </AccordionItem>
-                  ))}
-                </Accordion>
+                <Controller
+                  control={control}
+                  name="primaryColor"
+                  render={({ field: colorField }) => (
+                    <Controller
+                      control={control}
+                      name="primaryColorEnabled"
+                      render={({ field: enabledField }) => (
+                        <ToggleableColorField
+                          id="global-styles-primary-color"
+                          label={t('themeSettings.primaryColorLabel')}
+                          overrideLabel={t('themeSettings.override')}
+                          enabled={enabledField.value}
+                          onEnabledChange={enabledField.onChange}
+                          value={colorField.value}
+                          onValueChange={colorField.onChange}
+                        />
+                      )}
+                    />
+                  )}
+                />
+                <Controller
+                  control={control}
+                  name="secondaryColor"
+                  render={({ field: colorField }) => (
+                    <Controller
+                      control={control}
+                      name="secondaryColorEnabled"
+                      render={({ field: enabledField }) => (
+                        <ToggleableColorField
+                          id="global-styles-secondary-color"
+                          label={t('themeSettings.secondaryColorLabel')}
+                          overrideLabel={t('themeSettings.override')}
+                          enabled={enabledField.value}
+                          onEnabledChange={enabledField.onChange}
+                          value={colorField.value}
+                          onValueChange={colorField.onChange}
+                        />
+                      )}
+                    />
+                  )}
+                />
+                {error && (
+                  <p role="alert" className="text-sm text-destructive">
+                    {error}
+                  </p>
+                )}
+                <div className="flex justify-end gap-2">
+                  <Button type="submit" disabled={isSaving}>
+                    {isSaving
+                      ? t('globalStyles.saving')
+                      : t('globalStyles.save')}
+                  </Button>
+                </div>
               </div>
-            )}
-          </div>
+              {styleableCategories.length > 0 && (
+                <div className="flex flex-col gap-2">
+                  <h3 className="text-sm font-medium">
+                    {t('globalStyles.blockStylesTitle')}
+                  </h3>
+                  <p className="text-xs text-muted-foreground">
+                    {t('globalStyles.blockStylesHint')}
+                  </p>
+                  <Accordion type="multiple">
+                    {styleableCategories.map((category) => (
+                      <AccordionItem
+                        key={category.title}
+                        value={category.title}
+                      >
+                        <AccordionTrigger>
+                          {tLabel(category.title)}
+                        </AccordionTrigger>
+                        <AccordionContent>
+                          <ul className="flex flex-col gap-0.5">
+                            {category.descriptors.map((descriptor) => (
+                              <li key={descriptor.type}>
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    setSelectedType(descriptor.type)
+                                  }
+                                  className="w-full rounded px-2 py-1.5 text-left text-sm hover:bg-muted hover:text-foreground"
+                                >
+                                  {tLabel(descriptor.label)}
+                                </button>
+                              </li>
+                            ))}
+                          </ul>
+                        </AccordionContent>
+                      </AccordionItem>
+                    ))}
+                  </Accordion>
+                </div>
+              )}
+            </div>
+          </form>
         )}
         {!selectedDescriptor && site && (
           <div className="flex justify-end">

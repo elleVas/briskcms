@@ -3,12 +3,12 @@ import {
 	buildBlockStyleOverridesCss,
 	DEFAULT_THEME_TOKENS,
 	type Block,
+	type PublishedSite,
 	type SeoMeta,
 } from '@brisk/shared-types';
 import type {
 	PublishedPageAncestorDto,
 	PublishedPageTranslationDto,
-	PublishedSiteDto,
 } from '../lib/public-api-client.js';
 import BlockRenderer from '../components/BlockRenderer.astro';
 import { editorAppUrl } from '../lib/editor-app-url.js';
@@ -30,7 +30,7 @@ interface Props {
 	seoMeta: SeoMeta;
 	locale: string;
 	translations: PublishedPageTranslationDto[];
-	site: PublishedSiteDto;
+	site: PublishedSite;
 	header: Block[] | null;
 	footer: Block[] | null;
 	headerSticky: boolean;

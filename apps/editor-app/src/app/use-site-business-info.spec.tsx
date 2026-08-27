@@ -3,7 +3,7 @@ import { act, renderHook } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { QueryClientProvider } from '@tanstack/react-query';
 import * as api from '../lib/sites-api-client.js';
-import type { SiteDto } from '../lib/sites-api-client.js';
+import type { SiteRecord } from '@brisk/shared-types';
 import { createTestQueryClient } from '../test-query-client.js';
 import { useSiteBusinessInfo } from './use-site-business-info.js';
 
@@ -13,7 +13,7 @@ vi.mock('../lib/sites-api-client.js', async (importOriginal) => {
   return { ...actual, updateBusinessInfo: vi.fn() };
 });
 
-const sampleSite: SiteDto = {
+const sampleSite: SiteRecord = {
   id: 'site-1',
   tenantId: 'tenant-1',
   name: 'Il mio sito',
@@ -34,7 +34,7 @@ const sampleSite: SiteDto = {
   themeBodyScript: null,
   themeFaviconUrl: null,
   themeOverridesEnabled: true,
-  themeTokens: null,
+  themeTokens: { blockStyles: {} },
   createdAt: '',
 };
 

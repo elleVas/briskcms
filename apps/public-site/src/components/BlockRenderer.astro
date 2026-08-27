@@ -48,11 +48,11 @@ import {
   videoEmbedPropsSchema,
   whatsAppButtonPropsSchema,
   type Block,
+  type PublishedSite,
 } from '@brisk/shared-types';
 import type {
   PublishedPageAncestorDto,
   PublishedPageTranslationDto,
-  PublishedSiteDto,
 } from '../lib/public-api-client.js';
 import { resolveThemeBlockOverride } from '../lib/resolve-theme-block-override.js';
 import AccordionCore from './blocks/Accordion.astro';
@@ -170,7 +170,7 @@ interface Props {
   block: Block;
   locale: string;
   translations: PublishedPageTranslationDto[];
-  site: PublishedSiteDto;
+  site: PublishedSite;
   ancestors: PublishedPageAncestorDto[];
   currentPageTitle: string;
   // Solo le rotte di preview (apps/public-site/src/pages/preview/[pageId].astro)
