@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import type { PageListItem, PageRecord } from '@brisk/shared-types';
 import {
   createPage,
   deletePage,
@@ -7,10 +8,9 @@ import {
   publishPage,
   saveDraft,
   updateSeoMeta,
-  type PageDto,
 } from './pages-api-client.js';
 
-const samplePage: PageDto = {
+const samplePage: PageRecord = {
   id: 'page-1',
   tenantId: 'tenant-1',
   siteId: 'site-1',
@@ -24,6 +24,21 @@ const samplePage: PageDto = {
   seoMeta: { title: 'Test', description: 'desc' },
   createdAt: '',
   updatedAt: '',
+};
+
+const samplePageListItem: PageListItem = {
+  id: 'page-1',
+  tenantId: 'tenant-1',
+  siteId: 'site-1',
+  groupId: 'group-1',
+  parentId: null,
+  locale: 'it',
+  slug: 'test-page',
+  status: 'draft',
+  seoMeta: { title: 'Test', description: 'desc' },
+  createdAt: '',
+  updatedAt: '',
+  hasUnpublishedChanges: false,
 };
 
 function jsonResponse(body: unknown) {
@@ -61,7 +76,7 @@ describe('pages-api-client', () => {
   });
 
   it('listPages fetches a page of results for a site', async () => {
-    const paginated = { items: [samplePage], total: 1 };
+    const paginated = { items: [samplePageListItem], total: 1 };
     vi.mocked(fetch).mockResolvedValue(jsonResponse(paginated));
 
     const result = await listPages('site-1', 1, 20);

@@ -1,11 +1,13 @@
 ---
-import type { BreadcrumbProps } from '@brisk/shared-types';
-import type { PublishedPageAncestorDto } from '../../lib/public-api-client.js';
+import type {
+  BreadcrumbProps,
+  PublishedPageAncestor,
+} from '@brisk/shared-types';
 import { localePath, localePathFromAncestors } from '../../lib/locale-path.js';
 
 interface Props extends BreadcrumbProps {
   locale: string;
-  ancestors: PublishedPageAncestorDto[];
+  ancestors: PublishedPageAncestor[];
   currentPageTitle: string;
 }
 

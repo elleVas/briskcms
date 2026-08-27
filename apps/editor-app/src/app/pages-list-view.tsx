@@ -13,7 +13,7 @@ import {
 import { Badge } from '../components/ui/badge.js';
 import { Button } from '../components/ui/button.js';
 import { cn } from '../lib/utils.js';
-import type { PageSummaryDto } from '../lib/pages-api-client.js';
+import type { PageListItem } from '../lib/pages-api-client.js';
 import { ConfirmDeleteDialog } from './confirm-delete-dialog.js';
 import { DuplicatePageDialog } from './duplicate-page-dialog.js';
 import { IconButton } from './icon-button.js';
@@ -28,7 +28,7 @@ import { usePagesList } from './use-pages-list.js';
 export interface PagesListViewProps {
   siteId: string;
   defaultLocale: string;
-  pages: PageSummaryDto[];
+  pages: PageListItem[];
   page: number;
   total: number;
 }

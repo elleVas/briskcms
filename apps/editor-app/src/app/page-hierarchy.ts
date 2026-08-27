@@ -1,7 +1,7 @@
-import type { PageSummaryDto } from '../lib/pages-api-client.js';
+import type { PageListItem } from '../lib/pages-api-client.js';
 
-function groupByParent(pages: PageSummaryDto[]): Map<string, PageSummaryDto[]> {
-  const childrenByParent = new Map<string, PageSummaryDto[]>();
+function groupByParent(pages: PageListItem[]): Map<string, PageListItem[]> {
+  const childrenByParent = new Map<string, PageListItem[]>();
   for (const page of pages) {
     if (!page.parentId) continue;
     const siblings = childrenByParent.get(page.parentId) ?? [];
@@ -13,7 +13,7 @@ function groupByParent(pages: PageSummaryDto[]): Map<string, PageSummaryDto[]> {
 
 /** Every descendant of `rootId` within `pages` (not including `rootId` itself) — used to keep a parent picker from offering an obviously cyclic choice. The backend (setPageParent) remains the real authority. */
 export function collectDescendantIds(
-  pages: PageSummaryDto[],
+  pages: PageListItem[],
   rootId: string,
 ): Set<string> {
   const childrenByParent = groupByParent(pages);
@@ -32,7 +32,7 @@ export function collectDescendantIds(
 }
 
 export interface PageTreeNode {
-  page: PageSummaryDto;
+  page: PageListItem;
   depth: number;
 }
 
@@ -44,7 +44,7 @@ export interface PageTreeNode {
  * as a root rather than dropped — same "5-15 pagine per sito, una pagina
  * di risultati" scale assumption already used elsewhere (PagePickerDialog).
  */
-export function buildPageTree(pages: PageSummaryDto[]): PageTreeNode[] {
+export function buildPageTree(pages: PageListItem[]): PageTreeNode[] {
   const childrenByParent = groupByParent(pages);
   const idsInList = new Set(pages.map((page) => page.id));
   const roots = pages.filter(
@@ -52,7 +52,7 @@ export function buildPageTree(pages: PageSummaryDto[]): PageTreeNode[] {
   );
 
   const result: PageTreeNode[] = [];
-  function visit(page: PageSummaryDto, depth: number) {
+  function visit(page: PageListItem, depth: number) {
     result.push({ page, depth });
     for (const child of childrenByParent.get(page.id) ?? []) {
       visit(child, depth + 1);

@@ -61,7 +61,7 @@ export const POST: APIRoute = async ({ params, request, redirect }) => {
   }
 
   // The public site doesn't track a page's own id yet (see
-  // public-api-client.ts's PublishedPageDto) — nullable by design for
+  // public-api-client.ts's PublishedPage) — nullable by design for
   // exactly this case, not a workaround.
   const result = await submitPublicForm(formId, {
     pageId: null,

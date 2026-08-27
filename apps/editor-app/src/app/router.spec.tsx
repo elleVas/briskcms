@@ -13,7 +13,7 @@ import * as api from '../lib/pages-api-client.js';
 import * as sectionsApi from '../lib/site-layout-sections-api-client.js';
 import * as sitesApi from '../lib/sites-api-client.js';
 import { ApiError } from '../lib/http-client.js';
-import type { PageDto } from '../lib/pages-api-client.js';
+import type { PageRecord } from '../lib/pages-api-client.js';
 import type { SiteLayoutSectionDto } from '../lib/site-layout-sections-api-client.js';
 import type { SiteRecord } from '@brisk/shared-types';
 import { routeTree } from '../routeTree.gen.js';
@@ -81,11 +81,11 @@ const sampleSite: SiteRecord = {
   createdAt: '',
 };
 
-// Not explicitly typed PageDto: used both as a full getPage() mock and as
-// a listPages() item (PageSummaryDto), so it carries every field either
+// Not explicitly typed PageRecord: used both as a full getPage() mock and as
+// a listPages() item (PageListItem), so it carries every field either
 // shape needs — TypeScript checks structural compatibility at each call
 // site, not against a single declared type here.
-const samplePage: PageDto & { hasUnpublishedChanges: boolean } = {
+const samplePage: PageRecord & { hasUnpublishedChanges: boolean } = {
   id: 'page-1',
   tenantId: 'tenant-1',
   siteId: 'site-1',

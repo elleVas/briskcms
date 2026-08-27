@@ -2,7 +2,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { ApiError } from '../lib/http-client.js';
-import type { PageDto } from '../lib/pages-api-client.js';
+import type { PageRecord } from '../lib/pages-api-client.js';
 import { createTestQueryClient } from '../test-query-client.js';
 import { NewPageDialog, type NewPageDialogProps } from './new-page-dialog.js';
 
@@ -17,7 +17,7 @@ vi.mock('../lib/pages-api-client.js', async (importOriginal) => {
   };
 });
 
-const samplePage: PageDto = {
+const samplePage: PageRecord = {
   id: 'page-1',
   tenantId: 'tenant-1',
   siteId: 'site-1',

@@ -12,17 +12,17 @@ import {
 import { Input } from '../components/ui/input.js';
 import { Label } from '../components/ui/label.js';
 import { ApiError } from '../lib/http-client.js';
-import type { PageDto, PageSummaryDto } from '../lib/pages-api-client.js';
+import type { PageRecord, PageListItem } from '../lib/pages-api-client.js';
 
 export interface DuplicatePageDialogProps {
-  sourcePage: PageSummaryDto;
+  sourcePage: PageListItem;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onDuplicate: (input: {
     slug: string;
     title: string;
     description: string;
-  }) => Promise<PageDto>;
+  }) => Promise<PageRecord>;
 }
 
 function defaultCopySlug(sourceSlug: string): string {

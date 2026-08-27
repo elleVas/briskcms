@@ -3,13 +3,11 @@ import {
 	buildBlockStyleOverridesCss,
 	DEFAULT_THEME_TOKENS,
 	type Block,
+	type PublishedPageAncestor,
+	type PublishedPageTranslation,
 	type PublishedSite,
 	type SeoMeta,
 } from '@brisk/shared-types';
-import type {
-	PublishedPageAncestorDto,
-	PublishedPageTranslationDto,
-} from '../lib/public-api-client.js';
 import BlockRenderer from '../components/BlockRenderer.astro';
 import { editorAppUrl } from '../lib/editor-app-url.js';
 import { localePath } from '../lib/locale-path.js';
@@ -29,12 +27,12 @@ import '../styles/visibility.css';
 interface Props {
 	seoMeta: SeoMeta;
 	locale: string;
-	translations: PublishedPageTranslationDto[];
+	translations: PublishedPageTranslation[];
 	site: PublishedSite;
 	header: Block[] | null;
 	footer: Block[] | null;
 	headerSticky: boolean;
-	ancestors: PublishedPageAncestorDto[];
+	ancestors: PublishedPageAncestor[];
 	// Solo la rotta di preview lo passa (vedi il piano dell'editor visuale,
 	// Giorno 2) — non influenza mai la rotta pubblicata reale.
 	editable?: boolean;

@@ -3,7 +3,7 @@ import { act, renderHook } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { QueryClientProvider } from '@tanstack/react-query';
 import * as api from '../lib/pages-api-client.js';
-import type { PageDto } from '../lib/pages-api-client.js';
+import type { PageRecord } from '../lib/pages-api-client.js';
 import { createTestQueryClient } from '../test-query-client.js';
 import { usePageSeo } from './use-page-seo.js';
 
@@ -13,7 +13,7 @@ vi.mock('../lib/pages-api-client.js', async (importOriginal) => {
   return { ...actual, updateSeoMeta: vi.fn() };
 });
 
-const samplePage: PageDto = {
+const samplePage: PageRecord = {
   id: 'page-1',
   tenantId: 'tenant-1',
   siteId: 'site-1',

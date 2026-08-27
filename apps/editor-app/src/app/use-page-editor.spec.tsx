@@ -14,7 +14,7 @@ vi.mock('../lib/pages-api-client.js', async (importOriginal) => {
   return { ...actual, saveDraft: vi.fn(), publishPage: vi.fn() };
 });
 
-const samplePage: api.PageDto = {
+const samplePage: api.PageRecord = {
   id: 'page-1',
   tenantId: 'tenant-1',
   siteId: 'site-1',
@@ -76,8 +76,8 @@ describe('usePageEditor', () => {
   });
 
   it('never sends two saveDraft requests in parallel — a second handleChange waits for the first to finish, even if the first is still pending', async () => {
-    let resolveFirst!: (page: api.PageDto) => void;
-    const firstCall = new Promise<api.PageDto>((resolve) => {
+    let resolveFirst!: (page: api.PageRecord) => void;
+    const firstCall = new Promise<api.PageRecord>((resolve) => {
       resolveFirst = resolve;
     });
     vi.mocked(api.saveDraft)

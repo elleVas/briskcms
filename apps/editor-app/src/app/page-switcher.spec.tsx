@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { QueryClientProvider } from '@tanstack/react-query';
 import * as router from '@tanstack/react-router';
 import * as api from '../lib/pages-api-client.js';
-import type { PageSummaryDto } from '../lib/pages-api-client.js';
+import type { PageListItem } from '../lib/pages-api-client.js';
 import { createTestQueryClient } from '../test-query-client.js';
 import { PageSwitcher } from './page-switcher.js';
 
@@ -19,7 +19,7 @@ vi.mock('../lib/pages-api-client.js', async (importOriginal) => {
   return { ...actual, listPages: vi.fn() };
 });
 
-function page(id: string, slug: string): PageSummaryDto {
+function page(id: string, slug: string): PageListItem {
   return {
     id,
     tenantId: 'tenant-1',

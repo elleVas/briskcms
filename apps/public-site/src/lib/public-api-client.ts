@@ -1,36 +1,13 @@
 import { requireEnv } from '@brisk/env-config';
 import {
+  publishedPageSchema,
   publishedSiteSchema,
   type Block,
   type FormField,
   type FormStep,
+  type PublishedPage,
   type PublishedSite,
-  type SeoMeta,
 } from '@brisk/shared-types';
-
-/** One entry per published locale-translation of this page (docs/adr/0017), including itself. */
-export interface PublishedPageTranslationDto {
-  locale: string;
-  slug: string;
-}
-
-/** Root-to-parent order (does not include the page itself). Empty for a root-level page. */
-export interface PublishedPageAncestorDto {
-  slug: string;
-  title: string;
-}
-
-export interface PublishedPageDto {
-  content: Block[];
-  seoMeta: SeoMeta;
-  locale: string;
-  translations: PublishedPageTranslationDto[];
-  ancestors: PublishedPageAncestorDto[];
-  site: PublishedSite;
-  header: Block[] | null;
-  footer: Block[] | null;
-  headerSticky: boolean;
-}
 
 /** Dove mandare il visitatore quando (locale, slug) non ha una pagina pubblicata — vedi resolveUntranslatedPageFallback lato applicazione. */
 export interface UntranslatedPageFallbackTargetDto {
@@ -39,7 +16,7 @@ export interface UntranslatedPageFallbackTargetDto {
 }
 
 export type PublishedPageLookupResult =
-  | { found: true; page: PublishedPageDto }
+  | { found: true; page: PublishedPage }
   | { found: false; fallback: UntranslatedPageFallbackTargetDto | null };
 
 // process.env, not import.meta.env: this must read the real deployment's
@@ -114,11 +91,7 @@ export async function getPublishedPageBySlug(
   if (!res.ok) {
     throw new Error(`Public pages API error: ${res.status}`);
   }
-  const page: PublishedPageDto = await res.json();
-  return {
-    found: true,
-    page: { ...page, site: publishedSiteSchema.parse(page.site) },
-  };
+  return { found: true, page: publishedPageSchema.parse(await res.json()) };
 }
 
 /**
@@ -131,7 +104,7 @@ export async function getPublishedPageBySlug(
 export async function getPreviewPageById(
   pageId: string,
   token: string,
-): Promise<PublishedPageDto | null> {
+): Promise<PublishedPage | null> {
   const params = new URLSearchParams({ token });
   const res = await timedFetcher.fetch(
     `${apiUrl()}/public/pages/${pageId}/preview?${params.toString()}`,
@@ -143,8 +116,7 @@ export async function getPreviewPageById(
   if (!res.ok) {
     throw new Error(`Public pages API error: ${res.status}`);
   }
-  const page: PublishedPageDto = await res.json();
-  return { ...page, site: publishedSiteSchema.parse(page.site) };
+  return publishedPageSchema.parse(await res.json());
 }
 
 export interface PublishedSiteChromeDto {
