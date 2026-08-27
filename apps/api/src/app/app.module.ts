@@ -1,8 +1,10 @@
 import { Module } from '@nestjs/common';
+import { ScheduleModule } from '@nestjs/schedule';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module.js';
 import { FormsModule } from './forms/forms.module.js';
+import { MaintenanceModule } from './maintenance/maintenance.module.js';
 import { MediaModule } from './media/media.module.js';
 import { PagesModule } from './pages/pages.module.js';
 import { PublicFormsModule } from './public-forms/public-forms.module.js';
@@ -15,7 +17,9 @@ import { UsersModule } from './users/users.module.js';
 
 @Module({
   imports: [
+    ScheduleModule.forRoot(),
     AuthModule,
+    MaintenanceModule,
     PagesModule,
     PublicPagesModule,
     MediaModule,
