@@ -14,4 +14,16 @@ describe('RouteError', () => {
     fireEvent.click(screen.getByRole('button', { name: /riprova/i }));
     expect(reset).toHaveBeenCalled();
   });
+
+  it('logs the error, so it does not disappear without a trace', () => {
+    const errorSpy = vi
+      .spyOn(console, 'error')
+      .mockImplementation(() => undefined);
+    const error = new Error('network down');
+
+    render(<RouteError error={error} reset={vi.fn()} />);
+
+    expect(errorSpy).toHaveBeenCalledWith('[route error]', error);
+    errorSpy.mockRestore();
+  });
 });
