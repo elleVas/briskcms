@@ -85,6 +85,44 @@ sessions — both share their random-token generation/hashing through
 verification — an explicitly tracked future decision, not an oversight (see
 ADR-0011).
 
+There is no public registration; new users only ever arrive via an
+admin-only invite (`inviteUser`, `apps/api`'s `UsersController`). Same
+`VerificationTokenPort` mechanism as above, purpose `'user-invite'`,
+7-day TTL: the `User` row is created immediately with `isActive: false` and
+an unguessable random password hash, so nobody can sign in until
+`acceptInvite` consumes the token, sets a real password, and activates the
+account. `resendInvite` mints a fresh token and re-sends the invite email
+for a still-pending invite — added because the original token had no
+cleanup job and no way to re-issue it, permanently blocking the invitee's
+email against `UserEmailAlreadyExistsError` once it expired. A second valid
+token for the same pending user is harmless (both work, whichever is used
+first wins); `resendInvite` does reject with `UserAlreadyActiveError` once
+the invite has already been accepted, since re-sending it at that point
+would let the holder reset a real, in-use password outside the
+forgot-password flow (which invalidates sessions; this doesn't).
+
+## Domain errors → HTTP mapping
+
+Domain errors (`libs/domain-core/src/lib/errors.ts`, one `Error` subclass
+per failure a use case can throw, e.g. `PageNotFoundError`,
+`UserEmailAlreadyExistsError`) are mapped to an HTTP status in exactly one
+place: `apps/api/src/app/domain-error-http-mapping.ts`'s
+`DOMAIN_ERROR_MAPPINGS` table, consumed by the global `HttpExceptionFilter`
+(`apps/api/src/app/http-exception.filter.ts`). Controllers never
+catch/map domain errors themselves — a use case throws, the filter maps it
+(or, if the error isn't in the table, logs it and returns a generic 500).
+This replaced seven near-identical private `handleDomainErrors`
+try/catch blocks, one per controller. **To add a new domain error**: add the class to
+`libs/domain-core`, add one `[ErrorClass, factory]` row to
+`DOMAIN_ERROR_MAPPINGS`, done — no controller change needed.
+
+`AuthController` deliberately doesn't go through this table: its three
+errors (`InvalidCredentialsError`, `UserNotActiveError`,
+`InvalidOrExpiredTokenError`) carry anti-enumeration logic (the same
+generic message for "wrong password" and "account disabled" — see
+`loginUser`) that a blanket per-class mapping would break, so it stays
+handled locally in that controller, unchanged.
+
 ## Content model
 
 A page's "content" is an array of blocks (`PageContent = Block[]`,

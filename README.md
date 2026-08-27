@@ -12,8 +12,10 @@ Nx monorepo, pnpm package manager, Ports & Adapters architecture.
 
 ```sh
 cp .env.example .env
-docker compose up -d postgres
+docker compose up -d postgres mailpit
 pnpm install
+pnpm --filter @brisk/postgres-db run db:migrate
+pnpm --filter @brisk/postgres-db run db:seed
 pnpm exec nx run-many -t build typecheck test lint
 ```
 
