@@ -5,7 +5,7 @@ import { BlockStyleRegistry } from '../block-style-registry.js';
 
 export const statsCounterBlock: BlockDescriptor<StatsCounterProps> = {
   type: 'StatsCounter',
-  label: 'Contatori/statistiche',
+  label: 'blocks.statsCounter.label',
   category: 'socialProof',
   defaultProps: {},
   fields: [],

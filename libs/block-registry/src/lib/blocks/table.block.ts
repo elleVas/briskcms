@@ -4,7 +4,7 @@ import { TableDataField } from '../fields/table-data-field.js';
 
 export const tableBlock: BlockDescriptor<TableProps> = {
   type: 'Table',
-  label: 'Tabella dati',
+  label: 'blocks.table.label',
   category: 'content',
   defaultProps: {
     rows: [
@@ -12,5 +12,11 @@ export const tableBlock: BlockDescriptor<TableProps> = {
       ['', ''],
     ],
   },
-  fields: [FieldBuilder.custom('rows', 'Righe', TableDataField)],
+  fields: [
+    FieldBuilder.custom(
+      'rows',
+      'blocks.table.fields.rows.fieldLabel',
+      TableDataField,
+    ),
+  ],
 };

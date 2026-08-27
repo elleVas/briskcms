@@ -21,7 +21,10 @@ import { VersionHistoryDialog } from './version-history-dialog.js';
 // separata esiste ancora per loro, un'unica sezione "Blocchi" basta finché
 // il registro resta piccolo (12 tipi).
 const headerFooterCategories = [
-  { title: 'Blocchi', types: headerFooterBlocks.map((block) => block.type) },
+  {
+    title: 'blocks.categories.headerFooter',
+    types: headerFooterBlocks.map((block) => block.type),
+  },
 ];
 
 export interface SiteLayoutSectionEditorViewProps {

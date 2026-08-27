@@ -6,12 +6,18 @@ import { BlockStyleRegistry } from '../block-style-registry.js';
 
 export const formBlock: BlockDescriptor<FormBlockProps> = {
   type: 'Form',
-  label: 'Modulo',
+  label: 'blocks.form.label',
   category: 'conversion',
   defaultProps: {
     form: null,
   },
-  fields: [FieldBuilder.custom('form', 'Modulo', FormPickerField)],
+  fields: [
+    FieldBuilder.custom(
+      'form',
+      'blocks.form.fields.form.fieldLabel',
+      FormPickerField,
+    ),
+  ],
   stylableProperties: BlockStyleRegistry.STANDARD,
   defaultStyle: BLOCK_STYLE_DEFAULTS.Form,
 };

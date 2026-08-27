@@ -5,7 +5,7 @@ import { BlockStyleRegistry } from '../block-style-registry.js';
 
 export const teamBlock: BlockDescriptor<TeamProps> = {
   type: 'Team',
-  label: 'Team/staff',
+  label: 'blocks.team.label',
   category: 'socialProof',
   defaultProps: {},
   fields: [],

@@ -6,6 +6,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '../../components/ui/accordion.js';
+import { useTranslation } from '../../lib/use-translation.js';
 
 export interface BlockPickerCategory {
   title: string;
@@ -42,6 +43,7 @@ function DraggableBlockButton({
   onInsert: (descriptor: BlockDescriptor) => void;
   drag?: BlockDragHandlers;
 }) {
+  const { tLabel } = useTranslation();
   const pendingRef = useRef<{ startX: number; startY: number } | null>(null);
   const isDraggingRef = useRef(false);
 
@@ -52,7 +54,7 @@ function DraggableBlockButton({
         onClick={() => onInsert(descriptor)}
         className="w-full rounded px-2 py-1.5 text-left text-sm hover:bg-muted hover:text-foreground"
       >
-        {descriptor.label}
+        {tLabel(descriptor.label)}
       </button>
     );
   }
@@ -105,7 +107,7 @@ function DraggableBlockButton({
       onPointerUp={handlePointerUp}
       className="w-full touch-none rounded px-2 py-1.5 text-left text-sm hover:bg-muted hover:text-foreground"
     >
-      {descriptor.label}
+      {tLabel(descriptor.label)}
     </button>
   );
 }
@@ -136,6 +138,7 @@ export function BlockPicker({
   onInsert,
   drag,
 }: BlockPickerProps) {
+  const { tLabel } = useTranslation();
   const nonEmptyCategories = categories
     .map((category) => ({
       ...category,
@@ -149,7 +152,7 @@ export function BlockPicker({
     <Accordion type="multiple">
       {nonEmptyCategories.map((category) => (
         <AccordionItem key={category.title} value={category.title}>
-          <AccordionTrigger>{category.title}</AccordionTrigger>
+          <AccordionTrigger>{tLabel(category.title)}</AccordionTrigger>
           <AccordionContent>
             <ul className="flex flex-col gap-0.5">
               {category.descriptors.map((descriptor) => (

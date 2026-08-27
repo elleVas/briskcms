@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import {
   Palette,
@@ -18,6 +17,7 @@ import { Button } from '../../components/ui/button.js';
 import { renderBlockFragment } from '../../lib/block-fragment-api-client.js';
 import { createPagePreviewToken } from '../../lib/preview-token-api-client.js';
 import { PUBLIC_SITE_URL } from '../../lib/public-site-url.js';
+import { useTranslation } from '../../lib/use-translation.js';
 import { GlobalStylesDialog } from '../global-styles-dialog.js';
 import { IconButton } from '../icon-button.js';
 import { LogoutButton } from '../logout-button.js';
@@ -137,7 +137,7 @@ export function CanvasEditorShell({
   restoredAt = 0,
   children,
 }: CanvasEditorShellProps) {
-  const { t } = useTranslation();
+  const { t, tLabel } = useTranslation();
   const { toast } = useToast();
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const bridge = usePreviewBridge(iframeRef, PUBLIC_SITE_URL);
@@ -939,7 +939,7 @@ export function CanvasEditorShell({
                 left: sidebarDrag.pointerX + 12,
               }}
             >
-              {sidebarDrag.descriptor.label}
+              {tLabel(sidebarDrag.descriptor.label)}
             </div>
           )}
         </div>

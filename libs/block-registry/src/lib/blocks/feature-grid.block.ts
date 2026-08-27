@@ -5,7 +5,7 @@ import { BlockStyleRegistry } from '../block-style-registry.js';
 
 export const featureGridBlock: BlockDescriptor<FeatureGridProps> = {
   type: 'FeatureGrid',
-  label: 'Feature grid',
+  label: 'blocks.featureGrid.label',
   category: 'interactive',
   defaultProps: {},
   fields: [],

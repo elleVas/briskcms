@@ -5,7 +5,7 @@ import { visibilityField } from '../fields/visibility-field.js';
 
 export const languageSwitcherBlock: BlockDescriptor<LanguageSwitcherProps> = {
   type: 'LanguageSwitcher',
-  label: 'Selettore lingua',
+  label: 'blocks.languageSwitcher.label',
   category: 'navigation',
   defaultProps: { position: 'left', visibility: 'always' },
   fields: [positionField, visibilityField],

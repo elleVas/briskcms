@@ -5,7 +5,7 @@ import { BlockStyleRegistry } from '../block-style-registry.js';
 
 export const featureBlock: BlockDescriptor<FeatureProps> = {
   type: 'Feature',
-  label: 'Feature',
+  label: 'blocks.feature.label',
   category: 'interactive',
   defaultProps: {
     icon: '🚀',
@@ -13,9 +13,24 @@ export const featureBlock: BlockDescriptor<FeatureProps> = {
     text: 'Descrizione della feature...',
   },
   fields: [
-    { kind: 'text', key: 'icon', label: 'Icona (emoji)', inlineEditable: true },
-    { kind: 'text', key: 'title', label: 'Titolo', inlineEditable: true },
-    { kind: 'textarea', key: 'text', label: 'Testo', inlineEditable: true },
+    {
+      kind: 'text',
+      key: 'icon',
+      label: 'blocks.feature.fields.icon.fieldLabel',
+      inlineEditable: true,
+    },
+    {
+      kind: 'text',
+      key: 'title',
+      label: 'blocks.feature.fields.title.fieldLabel',
+      inlineEditable: true,
+    },
+    {
+      kind: 'textarea',
+      key: 'text',
+      label: 'blocks.feature.fields.text.fieldLabel',
+      inlineEditable: true,
+    },
   ],
   stylableProperties: BlockStyleRegistry.STANDARD,
   defaultStyle: BLOCK_STYLE_DEFAULTS.Feature,

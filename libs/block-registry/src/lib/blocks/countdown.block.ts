@@ -7,7 +7,7 @@ const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
 
 export const countdownBlock: BlockDescriptor<CountdownProps> = {
   type: 'Countdown',
-  label: 'Countdown',
+  label: 'blocks.countdown.label',
   category: 'conversion',
   defaultProps: {
     targetDate: new Date(Date.now() + THIRTY_DAYS_MS)
@@ -22,10 +22,15 @@ export const countdownBlock: BlockDescriptor<CountdownProps> = {
     {
       kind: 'text',
       key: 'targetDate',
-      label: 'Data/ora obiettivo',
+      label: 'blocks.countdown.fields.targetDate.fieldLabel',
       placeholder: '2026-12-31T23:59',
     },
-    { kind: 'text', key: 'label', label: 'Etichetta', inlineEditable: true },
+    {
+      kind: 'text',
+      key: 'label',
+      label: 'blocks.countdown.fields.label.fieldLabel',
+      inlineEditable: true,
+    },
   ],
   stylableProperties: BlockStyleRegistry.STANDARD,
   defaultStyle: BLOCK_STYLE_DEFAULTS.Countdown,

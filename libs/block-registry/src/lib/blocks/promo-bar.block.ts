@@ -7,7 +7,7 @@ import { visibilityField } from '../fields/visibility-field.js';
 
 export const promoBarBlock: BlockDescriptor<PromoBarProps> = {
   type: 'PromoBar',
-  label: 'Barra annuncio/promo',
+  label: 'blocks.promoBar.label',
   category: 'chrome',
   defaultProps: {
     message: 'Messaggio promozionale...',
@@ -20,7 +20,7 @@ export const promoBarBlock: BlockDescriptor<PromoBarProps> = {
     {
       kind: 'textarea',
       key: 'message',
-      label: 'Messaggio',
+      label: 'blocks.promoBar.fields.message.fieldLabel',
       inlineEditable: true,
     },
     ...ctaLinkFields(),

@@ -5,12 +5,18 @@ import { GalleryPickerField } from '../fields/gallery-picker-field.js';
 
 export const logoStripBlock: BlockDescriptor<LogoStripProps> = {
   type: 'LogoStrip',
-  label: 'Loghi partner/clienti',
+  label: 'blocks.logoStrip.label',
   category: 'media',
   defaultProps: {
     logos: [],
   },
-  fields: [FieldBuilder.custom('logos', 'Loghi', GalleryPickerField)],
+  fields: [
+    FieldBuilder.custom(
+      'logos',
+      'blocks.logoStrip.fields.logos.fieldLabel',
+      GalleryPickerField,
+    ),
+  ],
   // Niente textColor: la striscia contiene solo immagini, nessun testo.
   stylableProperties: [
     'backgroundColor',

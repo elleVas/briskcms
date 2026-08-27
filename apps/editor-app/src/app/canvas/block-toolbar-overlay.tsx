@@ -1,5 +1,4 @@
 import { useState, type RefObject } from 'react';
-import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import {
   ChevronDown,
@@ -24,6 +23,7 @@ import {
   PopoverTrigger,
 } from '../../components/ui/popover.js';
 import { blockStyleDefaultsQueryOptions } from '../block-style-defaults-queries.js';
+import { useTranslation } from '../../lib/use-translation.js';
 import { BlockPicker, type BlockPickerCategory } from './block-picker.js';
 import { BlockStyleFields } from './block-style-fields.js';
 import { InspectorPanel } from './inspector-panel.js';
@@ -167,7 +167,7 @@ export function BlockToolbarOverlay({
   onInsertAfter,
   onAddChild,
 }: BlockToolbarOverlayProps) {
-  const { t } = useTranslation();
+  const { t, tLabel } = useTranslation();
   const geometry = useIframeGeometry(iframeRef);
   const [insertOpen, setInsertOpen] = useState<'before' | 'after' | null>(null);
   const { data: blockStyleDefaults } = useQuery(
@@ -203,7 +203,7 @@ export function BlockToolbarOverlay({
         className="pointer-events-auto flex items-center gap-1 rounded bg-primary px-2 py-1 text-xs font-medium text-primary-foreground shadow-sm"
         style={toPillStyle(geometry, rect)}
       >
-        {descriptor.label}
+        {tLabel(descriptor.label)}
       </div>
 
       {isRootLevel && (
@@ -263,7 +263,7 @@ export function BlockToolbarOverlay({
                 type="button"
                 className={iconButtonClass}
                 aria-label={t('canvas.style.editType', {
-                  type: descriptor.label,
+                  type: tLabel(descriptor.label),
                 })}
               >
                 <Paintbrush size={16} />
@@ -271,7 +271,9 @@ export function BlockToolbarOverlay({
             </PopoverTrigger>
             <PopoverContent side="right">
               <p className="mb-3 text-xs text-muted-foreground">
-                {t('canvas.style.editTypeHint', { type: descriptor.label })}
+                {t('canvas.style.editTypeHint', {
+                  type: tLabel(descriptor.label),
+                })}
               </p>
               <BlockStyleFields
                 properties={stylableProperties}

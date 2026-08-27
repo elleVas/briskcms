@@ -4,7 +4,7 @@ import { MediaPickerField } from '../fields/media-picker-field.js';
 
 export const beforeAfterBlock: BlockDescriptor<BeforeAfterProps> = {
   type: 'BeforeAfter',
-  label: 'Prima/dopo',
+  label: 'blocks.beforeAfter.label',
   category: 'media',
   defaultProps: {
     beforeImage: null,
@@ -13,18 +13,26 @@ export const beforeAfterBlock: BlockDescriptor<BeforeAfterProps> = {
     afterLabel: 'Dopo',
   },
   fields: [
-    FieldBuilder.custom('beforeImage', 'Immagine "prima"', MediaPickerField),
-    FieldBuilder.custom('afterImage', 'Immagine "dopo"', MediaPickerField),
+    FieldBuilder.custom(
+      'beforeImage',
+      'blocks.beforeAfter.fields.beforeImage.fieldLabel',
+      MediaPickerField,
+    ),
+    FieldBuilder.custom(
+      'afterImage',
+      'blocks.beforeAfter.fields.afterImage.fieldLabel',
+      MediaPickerField,
+    ),
     {
       kind: 'text',
       key: 'beforeLabel',
-      label: 'Etichetta "prima"',
+      label: 'blocks.beforeAfter.fields.beforeLabel.fieldLabel',
       inlineEditable: true,
     },
     {
       kind: 'text',
       key: 'afterLabel',
-      label: 'Etichetta "dopo"',
+      label: 'blocks.beforeAfter.fields.afterLabel.fieldLabel',
       inlineEditable: true,
     },
   ],

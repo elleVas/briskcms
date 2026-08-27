@@ -5,7 +5,7 @@ import { visibilityField } from '../fields/visibility-field.js';
 
 export const navDropdownBlock: BlockDescriptor<NavDropdownProps> = {
   type: 'NavDropdown',
-  label: 'Sottomenu',
+  label: 'blocks.navDropdown.label',
   category: 'navigation',
   defaultProps: {
     label: 'Sottomenu',
@@ -13,7 +13,12 @@ export const navDropdownBlock: BlockDescriptor<NavDropdownProps> = {
     visibility: 'always',
   },
   fields: [
-    { kind: 'text', key: 'label', label: 'Etichetta', inlineEditable: true },
+    {
+      kind: 'text',
+      key: 'label',
+      label: 'blocks.navDropdown.fields.label.fieldLabel',
+      inlineEditable: true,
+    },
     positionField,
     visibilityField,
   ],

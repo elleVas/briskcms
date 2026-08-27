@@ -5,6 +5,7 @@ import type {
 } from '@brisk/shared-types';
 import { Input } from '../../components/ui/input.js';
 import { Label } from '../../components/ui/label.js';
+import { useTranslation } from '../../lib/use-translation.js';
 
 export interface BlockStyleFieldsProps {
   /** `BlockDescriptor.stylableProperties` del tipo selezionato — decide quali campi mostrare, nello stesso ordine (docs/adr/0022). */
@@ -22,24 +23,24 @@ export interface BlockStyleFieldsProps {
 }
 
 const COLOR_FIELD_LABELS: Partial<Record<keyof BlockStyleOverride, string>> = {
-  backgroundColor: 'Colore di sfondo',
-  textColor: 'Colore testo',
+  backgroundColor: 'canvas.blockStyle.colors.backgroundColor',
+  textColor: 'canvas.blockStyle.colors.textColor',
 };
 
 const LENGTH_FIELD_LABELS: Partial<
   Record<keyof BlockStyleOverride, { label: string; placeholder: string }>
 > = {
   borderRadius: {
-    label: 'Raggio angoli',
-    placeholder: 'es. 6px, 9999px per un pill',
+    label: 'canvas.blockStyle.lengths.borderRadius.fieldLabel',
+    placeholder: 'canvas.blockStyle.lengths.borderRadius.placeholder',
   },
   paddingX: {
-    label: 'Padding orizzontale',
-    placeholder: 'es. 1.25rem — vuoto per il default',
+    label: 'canvas.blockStyle.lengths.paddingX.fieldLabel',
+    placeholder: 'canvas.blockStyle.lengths.paddingX.placeholder',
   },
   paddingY: {
-    label: 'Padding verticale',
-    placeholder: 'es. 1.25rem — vuoto per il default',
+    label: 'canvas.blockStyle.lengths.paddingY.fieldLabel',
+    placeholder: 'canvas.blockStyle.lengths.paddingY.placeholder',
   },
 };
 
@@ -58,6 +59,7 @@ export function BlockStyleFields({
   onChange,
   defaults,
 }: BlockStyleFieldsProps) {
+  const { tLabel } = useTranslation();
   function setField<K extends keyof BlockStyleOverride>(
     key: K,
     fieldValue: BlockStyleOverride[K],
@@ -72,7 +74,7 @@ export function BlockStyleFields({
         if (colorLabel) {
           return (
             <div key={property} className="flex flex-col gap-1.5">
-              <Label>{colorLabel}</Label>
+              <Label>{tLabel(colorLabel)}</Label>
               <ColorPickerField
                 value={(value[property] as string | null | undefined) ?? null}
                 onChange={(next) => setField(property, next)}
@@ -86,12 +88,14 @@ export function BlockStyleFields({
           return (
             <div key={property} className="flex flex-col gap-1.5">
               <Label htmlFor={`block-style-${property}`}>
-                {lengthField.label}
+                {tLabel(lengthField.label)}
               </Label>
               <Input
                 id={`block-style-${property}`}
                 value={(value[property] as string | null | undefined) ?? ''}
-                placeholder={defaults?.[property] ?? lengthField.placeholder}
+                placeholder={
+                  defaults?.[property] ?? tLabel(lengthField.placeholder)
+                }
                 onChange={(event) => {
                   const next = event.target.value;
                   setField(property, next.trim() === '' ? null : next);

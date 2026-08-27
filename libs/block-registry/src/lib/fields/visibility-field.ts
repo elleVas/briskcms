@@ -10,10 +10,16 @@ import type { FieldDescriptor } from '../field-types.js';
 export const visibilityField: FieldDescriptor = {
   kind: 'radio',
   key: 'visibility',
-  label: 'Visibilità',
+  label: 'blocks.shared.visibility.fieldLabel',
   options: [
-    { label: 'Sempre', value: 'always' },
-    { label: 'Solo desktop', value: 'desktop-only' },
-    { label: 'Solo mobile', value: 'mobile-only' },
+    { label: 'blocks.shared.visibility.options.always', value: 'always' },
+    {
+      label: 'blocks.shared.visibility.options.desktopOnly',
+      value: 'desktop-only',
+    },
+    {
+      label: 'blocks.shared.visibility.options.mobileOnly',
+      value: 'mobile-only',
+    },
   ],
 };

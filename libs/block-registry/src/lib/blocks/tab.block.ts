@@ -9,10 +9,16 @@ import { BlockStyleRegistry } from '../block-style-registry.js';
 // aggiuntiva come le *PuckProps di Puck.
 export const tabBlock: BlockDescriptor<{ label: string }> = {
   type: 'Tab',
-  label: 'Tab',
+  label: 'blocks.tab.label',
   category: 'interactive',
   defaultProps: { label: 'Tab' },
-  fields: [{ kind: 'text', key: 'label', label: 'Etichetta tab' }],
+  fields: [
+    {
+      kind: 'text',
+      key: 'label',
+      label: 'blocks.tab.fields.label.fieldLabel',
+    },
+  ],
   isContainer: true,
   allowedChildTypes: ['Hero', 'Text', 'Image', 'Gallery', 'Form'],
   stylableProperties: BlockStyleRegistry.STANDARD,

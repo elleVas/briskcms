@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import { ChevronLeft } from 'lucide-react';
 import type { BlockDescriptor } from '@brisk/block-registry';
@@ -20,6 +19,7 @@ import {
 import { blockStyleDefaultsQueryOptions } from './block-style-defaults-queries.js';
 import type { BlockPickerCategory } from './canvas/block-picker.js';
 import { BlockStyleFields } from './canvas/block-style-fields.js';
+import { useTranslation } from '../lib/use-translation.js';
 import { siteQueryOptions } from './site-queries.js';
 import { ToggleableColorField } from './toggleable-color-field.js';
 import { useSiteThemeSettings } from './use-site-theme-settings.js';
@@ -64,7 +64,7 @@ export function GlobalStylesDialog({
   categories,
   onSaveTypeStyle,
 }: GlobalStylesDialogProps) {
-  const { t } = useTranslation();
+  const { t, tLabel } = useTranslation();
   const { data: site } = useQuery(siteQueryOptions(siteId));
   const { data: blockStyleDefaults } = useQuery(
     blockStyleDefaultsQueryOptions(),
@@ -145,7 +145,9 @@ export function GlobalStylesDialog({
         <DialogHeader>
           <DialogTitle>
             {selectedDescriptor
-              ? t('canvas.style.editType', { type: selectedDescriptor.label })
+              ? t('canvas.style.editType', {
+                  type: tLabel(selectedDescriptor.label),
+                })
               : t('globalStyles.title')}
           </DialogTitle>
         </DialogHeader>
@@ -167,7 +169,7 @@ export function GlobalStylesDialog({
             </Button>
             <p className="text-xs text-muted-foreground">
               {t('canvas.style.editTypeHint', {
-                type: selectedDescriptor.label,
+                type: tLabel(selectedDescriptor.label),
               })}
             </p>
             <BlockStyleFields
@@ -231,7 +233,9 @@ export function GlobalStylesDialog({
                 <Accordion type="multiple">
                   {styleableCategories.map((category) => (
                     <AccordionItem key={category.title} value={category.title}>
-                      <AccordionTrigger>{category.title}</AccordionTrigger>
+                      <AccordionTrigger>
+                        {tLabel(category.title)}
+                      </AccordionTrigger>
                       <AccordionContent>
                         <ul className="flex flex-col gap-0.5">
                           {category.descriptors.map((descriptor) => (
@@ -241,7 +245,7 @@ export function GlobalStylesDialog({
                                 onClick={() => setSelectedType(descriptor.type)}
                                 className="w-full rounded px-2 py-1.5 text-left text-sm hover:bg-muted hover:text-foreground"
                               >
-                                {descriptor.label}
+                                {tLabel(descriptor.label)}
                               </button>
                             </li>
                           ))}

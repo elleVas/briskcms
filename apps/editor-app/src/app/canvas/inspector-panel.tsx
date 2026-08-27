@@ -2,6 +2,7 @@ import type { Block } from '@brisk/shared-types';
 import type { BlockDescriptor, FieldDescriptor } from '@brisk/block-registry';
 import { Input } from '../../components/ui/input.js';
 import { Textarea } from '../../components/ui/textarea.js';
+import { useTranslation } from '../../lib/use-translation.js';
 
 export interface InspectorPanelProps {
   block: Block;
@@ -20,6 +21,7 @@ const nativeFieldClass =
 
 /** Un input per kind — pannello guidato dal field descriptor, sostituisce Puck's Fields<T> sidebar (docs/adr/0007, vedi il piano dell'editor visuale, Giorno 3). */
 function FieldRow({ field, value, onChange }: FieldRowProps) {
+  const { tLabel } = useTranslation();
   switch (field.kind) {
     case 'text':
       return (
@@ -70,7 +72,7 @@ function FieldRow({ field, value, onChange }: FieldRowProps) {
         >
           {field.options.map((option) => (
             <option key={option.value} value={option.value}>
-              {option.label}
+              {tLabel(option.label)}
             </option>
           ))}
         </select>
@@ -94,17 +96,18 @@ export function InspectorPanel({
   descriptor,
   onChangeProp,
 }: InspectorPanelProps) {
+  const { tLabel } = useTranslation();
   if (descriptor.fields.length === 0) {
     return null;
   }
 
   return (
     <div className="flex flex-col gap-3">
-      <h3 className="text-sm font-semibold">{descriptor.label}</h3>
+      <h3 className="text-sm font-semibold">{tLabel(descriptor.label)}</h3>
       {descriptor.fields.map((field) => (
         <label key={field.key} className="flex flex-col gap-1.5">
           <span className="text-xs font-medium text-muted-foreground">
-            {field.label}
+            {tLabel(field.label)}
           </span>
           <FieldRow
             field={field}

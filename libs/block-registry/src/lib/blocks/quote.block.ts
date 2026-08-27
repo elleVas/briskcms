@@ -5,7 +5,7 @@ import { BlockStyleRegistry } from '../block-style-registry.js';
 
 export const quoteBlock: BlockDescriptor<QuoteProps> = {
   type: 'Quote',
-  label: 'Citazione',
+  label: 'blocks.quote.label',
   category: 'content',
   defaultProps: {
     quote: 'Testo della citazione...',
@@ -16,11 +16,21 @@ export const quoteBlock: BlockDescriptor<QuoteProps> = {
     {
       kind: 'textarea',
       key: 'quote',
-      label: 'Citazione',
+      label: 'blocks.quote.fields.quote.fieldLabel',
       inlineEditable: true,
     },
-    { kind: 'text', key: 'author', label: 'Autore', inlineEditable: true },
-    { kind: 'text', key: 'role', label: 'Ruolo', inlineEditable: true },
+    {
+      kind: 'text',
+      key: 'author',
+      label: 'blocks.quote.fields.author.fieldLabel',
+      inlineEditable: true,
+    },
+    {
+      kind: 'text',
+      key: 'role',
+      label: 'blocks.quote.fields.role.fieldLabel',
+      inlineEditable: true,
+    },
   ],
   stylableProperties: BlockStyleRegistry.STANDARD,
   defaultStyle: BLOCK_STYLE_DEFAULTS.Quote,

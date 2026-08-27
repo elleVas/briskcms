@@ -4,7 +4,7 @@ import { visibilityField } from '../fields/visibility-field.js';
 
 export const backToTopBlock: BlockDescriptor<BackToTopProps> = {
   type: 'BackToTop',
-  label: 'Bottone "torna su"',
+  label: 'blocks.backToTop.label',
   category: 'chrome',
   defaultProps: { visibility: 'always' },
   fields: [visibilityField],

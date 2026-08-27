@@ -5,7 +5,7 @@ import { BlockStyleRegistry } from '../block-style-registry.js';
 
 export const tabsBlock: BlockDescriptor<TabsProps> = {
   type: 'Tabs',
-  label: 'Tabs',
+  label: 'blocks.tabs.label',
   category: 'interactive',
   defaultProps: {},
   fields: [],

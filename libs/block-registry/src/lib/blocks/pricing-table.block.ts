@@ -5,7 +5,7 @@ import { BlockStyleRegistry } from '../block-style-registry.js';
 
 export const pricingTableBlock: BlockDescriptor<PricingTableProps> = {
   type: 'PricingTable',
-  label: 'Tabella prezzi',
+  label: 'blocks.pricingTable.label',
   category: 'socialProof',
   defaultProps: {},
   fields: [],

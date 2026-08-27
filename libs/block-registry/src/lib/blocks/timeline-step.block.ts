@@ -3,7 +3,7 @@ import type { BlockDescriptor } from '../field-types.js';
 
 export const timelineStepBlock: BlockDescriptor<TimelineStepProps> = {
   type: 'TimelineStep',
-  label: 'Fase',
+  label: 'blocks.timelineStep.label',
   category: 'socialProof',
   defaultProps: {
     label: 'Fase 1',
@@ -11,12 +11,22 @@ export const timelineStepBlock: BlockDescriptor<TimelineStepProps> = {
     description: 'Descrizione della fase...',
   },
   fields: [
-    { kind: 'text', key: 'label', label: 'Etichetta', inlineEditable: true },
-    { kind: 'text', key: 'title', label: 'Titolo', inlineEditable: true },
+    {
+      kind: 'text',
+      key: 'label',
+      label: 'blocks.timelineStep.fields.label.fieldLabel',
+      inlineEditable: true,
+    },
+    {
+      kind: 'text',
+      key: 'title',
+      label: 'blocks.timelineStep.fields.title.fieldLabel',
+      inlineEditable: true,
+    },
     {
       kind: 'textarea',
       key: 'description',
-      label: 'Descrizione',
+      label: 'blocks.timelineStep.fields.description.fieldLabel',
       inlineEditable: true,
     },
   ],

@@ -5,7 +5,7 @@ import { BlockStyleRegistry } from '../block-style-registry.js';
 
 export const accordionBlock: BlockDescriptor<AccordionProps> = {
   type: 'Accordion',
-  label: 'Accordion/FAQ',
+  label: 'blocks.accordion.label',
   category: 'interactive',
   defaultProps: {},
   fields: [],
