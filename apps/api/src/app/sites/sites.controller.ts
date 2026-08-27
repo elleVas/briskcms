@@ -40,10 +40,10 @@ import {
   type UpdateThemeTokensBody,
   updateThemeTokensBodySchema,
 } from './sites.schemas.js';
+import { TENANT_CONTEXT } from '../auth/auth.tokens.js';
 import {
   SITE_REPOSITORY,
   SITE_THEME_BLOCK_STYLES_REPOSITORY,
-  TENANT_CONTEXT,
 } from './sites.tokens.js';
 
 @Controller('sites')

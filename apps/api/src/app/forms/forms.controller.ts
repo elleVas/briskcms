@@ -21,7 +21,8 @@ import {
 import type { FormRepositoryPort, TenantContextPort } from '@brisk/ports';
 import { SessionAuthGuard } from '../auth/session-auth.guard.js';
 import { ZodValidationPipe } from '../zod-validation.pipe.js';
-import { FORM_REPOSITORY, TENANT_CONTEXT } from './forms.tokens.js';
+import { TENANT_CONTEXT } from '../auth/auth.tokens.js';
+import { FORM_REPOSITORY } from './forms.tokens.js';
 import {
   type CreateFormBody,
   createFormBodySchema,

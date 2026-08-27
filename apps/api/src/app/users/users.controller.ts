@@ -29,6 +29,7 @@ import {
   AUTH_PORT,
   EDITOR_APP_URL,
   EMAIL_PORT,
+  TENANT_CONTEXT,
   USER_REPOSITORY,
   VERIFICATION_TOKEN_PORT,
 } from '../auth/auth.tokens.js';
@@ -46,7 +47,6 @@ import {
   type UpdateUserRoleBody,
   updateUserRoleBodySchema,
 } from './users.schemas.js';
-import { TENANT_CONTEXT } from './users.tokens.js';
 
 // Every endpoint here is admin-only (Fase 5c: "Admin: tutto, incluse
 // gestione utenti") — gated at the controller level, not per-method,

@@ -38,12 +38,12 @@ import { Roles } from '../auth/roles.decorator.js';
 import { RolesGuard } from '../auth/roles.guard.js';
 import { SessionAuthGuard } from '../auth/session-auth.guard.js';
 import { ZodValidationPipe } from '../zod-validation.pipe.js';
+import { TENANT_CONTEXT } from '../auth/auth.tokens.js';
 import {
   PAGE_REPOSITORY,
   PAGE_VERSION_REPOSITORY,
   PREVIEW_TOKEN_PORT,
   SEARCH_REPOSITORY,
-  TENANT_CONTEXT,
 } from './pages.tokens.js';
 import {
   type CreatePageBody,

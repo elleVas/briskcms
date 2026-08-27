@@ -8,13 +8,8 @@ import { S3MediaStorageAdapter } from '@brisk/s3-media-storage';
 import type { MediaStoragePort } from '@brisk/ports';
 import { AuthModule } from '../auth/auth.module.js';
 import { DATABASE, DatabaseModule } from '../database.module.js';
-import { SessionTenantContextAdapter } from '../auth/session-tenant-context.adapter.js';
 import { MediaController } from './media.controller.js';
-import {
-  MEDIA_REPOSITORY,
-  MEDIA_STORAGE,
-  TENANT_CONTEXT,
-} from './media.tokens.js';
+import { MEDIA_REPOSITORY, MEDIA_STORAGE } from './media.tokens.js';
 
 /**
  * 'local' unless MEDIA_STORAGE_PROVIDER is explicitly set to 's3' — every
@@ -67,7 +62,6 @@ export function createMediaStorage(): MediaStoragePort {
       provide: MEDIA_STORAGE,
       useFactory: createMediaStorage,
     },
-    { provide: TENANT_CONTEXT, useClass: SessionTenantContextAdapter },
   ],
 })
 export class MediaModule {}

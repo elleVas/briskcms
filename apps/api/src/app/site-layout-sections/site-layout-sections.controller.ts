@@ -38,12 +38,12 @@ import {
   type StickyBody,
   stickyBodySchema,
 } from './site-layout-sections.schemas.js';
+import { TENANT_CONTEXT } from '../auth/auth.tokens.js';
 import {
   PREVIEW_TOKEN_PORT,
   SITE_LAYOUT_SECTION_REPOSITORY,
   SITE_LAYOUT_SECTION_VERSION_REPOSITORY,
   SITE_REPOSITORY,
-  TENANT_CONTEXT,
 } from './site-layout-sections.tokens.js';
 
 @Controller('site-layout-sections')
