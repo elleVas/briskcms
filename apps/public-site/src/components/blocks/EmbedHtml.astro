@@ -14,8 +14,7 @@ const instanceStyle = buildBlockInstanceStyle(styleOverride);
 // Permissive policy (confirmed with the user, 2026-08-19): script/iframe
 // stay allowed — that's what a free-embed block is for (YouTube, Calendly,
 // chat widgets, analytics snippets) — but every `on*` inline event-handler
-// attribute is stripped, since those are the one XSS vector that survives
-// even this permissive a policy (e.g. a pasted `<img onerror=...>`).
+// attribute is stripped as defense in depth even inside the sandbox below.
 const stripEventHandlers: sanitizeHtml.Transformer = (tagName, attribs) => {
   const safeAttribs: sanitizeHtml.Attributes = {};
   for (const [name, value] of Object.entries(attribs)) {
@@ -32,9 +31,73 @@ const safeHtml = sanitizeHtml(html, {
   allowVulnerableTags: true,
   transformTags: { '*': stripEventHandlers },
 });
+
+// Security review 2026-08-24 follow-up: the page's own CSP (see
+// content-security-policy.ts) now locks script-src down to 'self' — a
+// pasted third-party <script> would simply be blocked by the browser if it
+// ran in the main document. Rendered inside a sandboxed <iframe> instead:
+// isolated from the real page's cookies/localStorage/DOM (no
+// `allow-same-origin` — the one sandbox token that would undo that
+// isolation for a `srcdoc` frame, since it grants the *embedding* page's
+// origin rather than a truly opaque one). A `srcdoc` document inherits its
+// parent's CSP unless it declares its own via a <meta> tag (there is no
+// real HTTP response to carry a header) — the permissive policy below is
+// exactly what the top-level page's CSP no longer allows directly,
+// deliberately scoped to only this iframe's own isolated document.
+const srcDoc = `<!doctype html>
+<html>
+<head>
+<meta charset="utf-8" />
+<meta http-equiv="Content-Security-Policy" content="default-src * data: blob: 'unsafe-inline' 'unsafe-eval'; script-src * data: blob: 'unsafe-inline' 'unsafe-eval'; style-src * 'unsafe-inline';" />
+<style>html,body{margin:0;padding:0;}</style>
+</head>
+<body>
+${safeHtml}
+<script>
+  (function () {
+    function reportHeight() {
+      parent.postMessage(
+        { briskEmbedHtmlHeight: document.documentElement.scrollHeight },
+        '*',
+      );
+    }
+    new ResizeObserver(reportHeight).observe(document.body);
+    reportHeight();
+  })();
+</script>
+</body>
+</html>`;
 ---
 
-<div class="brisk-embed-html" style={instanceStyle} set:html={safeHtml} />
+<div class="brisk-embed-html" style={instanceStyle}>
+  <iframe
+    class="brisk-embed-html__frame"
+    sandbox="allow-scripts allow-popups allow-popups-to-escape-sandbox allow-forms"
+    loading="lazy"
+    title="Contenuto incorporato"
+    srcdoc={srcDoc}
+  />
+</div>
+
+<script>
+  // No framework here on purpose (docs/adr/0007) — matches every other
+  // block's own plain-script convention. One listener for the whole page:
+  // several embed-html blocks can coexist, each iframe reports its own
+  // height independently, matched back by `event.source`.
+  window.addEventListener('message', (event) => {
+    const data = event.data as { briskEmbedHtmlHeight?: unknown } | null;
+    if (!data || typeof data.briskEmbedHtmlHeight !== 'number') {
+      return;
+    }
+    document
+      .querySelectorAll<HTMLIFrameElement>('.brisk-embed-html__frame')
+      .forEach((frame) => {
+        if (frame.contentWindow === event.source) {
+          frame.style.height = `${data.briskEmbedHtmlHeight}px`;
+        }
+      });
+  });
+</script>
 
 <style>
   .brisk-embed-html {
@@ -42,15 +105,13 @@ const safeHtml = sanitizeHtml(html, {
     border-radius: var(--brisk-override-radius, 0);
     padding: var(--brisk-override-padding-y, 0) var(--brisk-override-padding-x, 0);
   }
-  /* `set:html` injects raw markup Astro never authored, so scoped styles
-     can't reach it without :global() — a pasted embed (map, video,
-     calendar widget) often ships with a fixed width/height attribute that
-     would otherwise overflow the page on narrow screens. */
-  .brisk-embed-html :global(iframe),
-  .brisk-embed-html :global(img),
-  .brisk-embed-html :global(video),
-  .brisk-embed-html :global(embed),
-  .brisk-embed-html :global(object) {
+  .brisk-embed-html__frame {
+    display: block;
+    width: 100%;
     max-width: 100%;
+    border: none;
+    /* Overwritten in px by the resize listener above once the iframe's
+       content reports its real height — this is only the pre-load guess. */
+    height: 150px;
   }
 </style>
