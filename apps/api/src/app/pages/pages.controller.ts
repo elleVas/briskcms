@@ -5,7 +5,6 @@ import {
   Get,
   HttpCode,
   Inject,
-  NotFoundException,
   Param,
   Post,
   Patch,
@@ -17,6 +16,8 @@ import {
   createPageTranslation,
   deletePage,
   duplicatePage,
+  getPageById,
+  getPageBySlug,
   listPages,
   listPageTranslations,
   listPageVersions,
@@ -133,29 +134,24 @@ export class PagesController {
     @Query('locale') locale: string,
     @Query('slug') slug: string,
   ) {
-    const page = await this.pageRepository.findBySlug(
-      this.tenantContext.getCurrentTenantId(),
-      siteId,
-      locale,
-      slug,
+    const page = await getPageBySlug(
+      { pageRepository: this.pageRepository },
+      {
+        tenantId: this.tenantContext.getCurrentTenantId(),
+        siteId,
+        locale,
+        slug,
+      },
     );
-    if (!page) {
-      throw new NotFoundException(
-        `Page not found: ${siteId}/${locale}/${slug}`,
-      );
-    }
     return page.toProps();
   }
 
   @Get(':id')
   async findById(@Param('id') id: string) {
-    const page = await this.pageRepository.findById(
-      this.tenantContext.getCurrentTenantId(),
-      id,
+    const page = await getPageById(
+      { pageRepository: this.pageRepository },
+      { tenantId: this.tenantContext.getCurrentTenantId(), pageId: id },
     );
-    if (!page) {
-      throw new NotFoundException(`Page not found: ${id}`);
-    }
     return page.toProps();
   }
 
@@ -163,13 +159,10 @@ export class PagesController {
   // stesso gate di saveDraft sotto, non ristretto come publish.
   @Post(':id/preview-token')
   async createPreviewToken(@Param('id') id: string) {
-    const page = await this.pageRepository.findById(
-      this.tenantContext.getCurrentTenantId(),
-      id,
+    await getPageById(
+      { pageRepository: this.pageRepository },
+      { tenantId: this.tenantContext.getCurrentTenantId(), pageId: id },
     );
-    if (!page) {
-      throw new NotFoundException(`Page not found: ${id}`);
-    }
     const { token, expiresAt } = await this.previewTokenPort.createToken(
       this.tenantContext.getCurrentTenantId(),
       'page',

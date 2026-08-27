@@ -5,7 +5,6 @@ import {
   Get,
   HttpCode,
   Inject,
-  NotFoundException,
   Param,
   Patch,
   Post,
@@ -15,6 +14,7 @@ import {
 import {
   createForm,
   deleteForm,
+  getFormById,
   listForms,
   updateForm,
 } from '@brisk/application';
@@ -73,13 +73,10 @@ export class FormsController {
 
   @Get(':id')
   async findById(@Param('id') id: string) {
-    const form = await this.formRepository.findById(
-      this.tenantContext.getCurrentTenantId(),
-      id,
+    const form = await getFormById(
+      { formRepository: this.formRepository },
+      { tenantId: this.tenantContext.getCurrentTenantId(), formId: id },
     );
-    if (!form) {
-      throw new NotFoundException(`Form not found: ${id}`);
-    }
     return form.toProps();
   }
 
