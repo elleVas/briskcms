@@ -1,9 +1,10 @@
 ---
 import type { BackToTopProps } from '@brisk/shared-types';
+import { t } from '../../lib/i18n.js';
 
-type Props = BackToTopProps;
+type Props = BackToTopProps & { locale: string };
 
-const { visibility } = Astro.props;
+const { visibility, locale } = Astro.props;
 ---
 
 <button
@@ -13,7 +14,7 @@ const { visibility } = Astro.props;
     { 'brisk-visibility-desktop-only': visibility === 'desktop-only' },
     { 'brisk-visibility-mobile-only': visibility === 'mobile-only' },
   ]}
-  aria-label="Torna su"
+  aria-label={t(locale, 'backToTop.label')}
 >
   <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
     <path

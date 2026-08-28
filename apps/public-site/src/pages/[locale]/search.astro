@@ -5,6 +5,7 @@ import {
   searchPublishedPages,
 } from '../../lib/public-api-client.js';
 import { localePath } from '../../lib/locale-path.js';
+import { t } from '../../lib/i18n.js';
 import PageLayoutCore from '../../layouts/PageLayout.astro';
 import { resolveThemeLayoutOverride } from '../../lib/resolve-theme-layout-override.js';
 const PageLayout = resolveThemeLayoutOverride(PageLayoutCore);
@@ -39,7 +40,9 @@ const results =
   chrome && locale ? (
     <PageLayout
       seoMeta={{
-        title: query ? `Ricerca: ${query}` : 'Ricerca',
+        title: query
+          ? t(locale, 'search.pageTitle', { query })
+          : t(locale, 'search.title'),
         description: '',
       }}
       locale={locale}
@@ -51,21 +54,26 @@ const results =
       ancestors={[]}
     >
       <main id="main-content" class="brisk-search-results">
-        <h1>Ricerca</h1>
+        <h1>{t(locale, 'search.title')}</h1>
         <form
           method="get"
           action={`/${locale}/search`}
           class="brisk-search-results__form"
         >
-          <input type="search" name="q" value={query} aria-label="Cerca nel sito" />
-          <button type="submit">Cerca</button>
+          <input
+            type="search"
+            name="q"
+            value={query}
+            aria-label={t(locale, 'search.inputLabel')}
+          />
+          <button type="submit">{t(locale, 'searchBox.submit')}</button>
         </form>
 
         {
           query.trim().length === 0 ? (
-            <p>Digita un termine di ricerca.</p>
+            <p>{t(locale, 'search.emptyQuery')}</p>
           ) : results.length === 0 ? (
-            <p>Nessun risultato per «{query}».</p>
+            <p>{t(locale, 'search.noResults', { query })}</p>
           ) : (
             <ul class="brisk-search-results__list">
               {results.map((result) => (
@@ -88,7 +96,7 @@ const results =
       </main>
     </PageLayout>
   ) : (
-    <NotFound />
+    <NotFound locale={locale ?? undefined} />
   )
 }
 

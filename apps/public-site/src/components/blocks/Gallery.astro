@@ -1,9 +1,10 @@
 ---
 import type { GalleryProps } from '@brisk/shared-types';
+import { t } from '../../lib/i18n.js';
 
-type Props = GalleryProps;
+type Props = GalleryProps & { locale: string };
 
-const { images } = Astro.props;
+const { images, locale } = Astro.props;
 ---
 
 <div class="gallery">
@@ -23,7 +24,7 @@ const { images } = Astro.props;
           ),
       )
     ) : (
-      <p>Nessuna immagine nella galleria.</p>
+      <p>{t(locale, 'gallery.empty')}</p>
     )
   }
 </div>

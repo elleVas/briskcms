@@ -1,9 +1,10 @@
 ---
 import type { NewsletterSignupProps } from '@brisk/shared-types';
+import { t } from '../../lib/i18n.js';
 
-type Props = NewsletterSignupProps;
+type Props = NewsletterSignupProps & { locale: string };
 
-const { title, buttonLabel } = Astro.props;
+const { title, buttonLabel, locale } = Astro.props;
 
 // Simple presence flags, not keyed by a block id the way Form.astro keys
 // by form.id — this block has no backing entity (docs/adr/0015's
@@ -26,14 +27,14 @@ const turnstileSiteKey = process.env['TURNSTILE_SITE_KEY'] ?? '';
   {
     subscribed && (
       <p class="brisk-newsletter-signup__status brisk-newsletter-signup__status--success">
-        Grazie! Controlla la tua email per confermare l'iscrizione.
+        {t(locale, 'newsletterSignup.submitSuccess')}
       </p>
     )
   }
   {
     errored && (
       <p class="brisk-newsletter-signup__status brisk-newsletter-signup__status--error">
-        Si è verificato un errore. Controlla l'indirizzo email e riprova.
+        {t(locale, 'newsletterSignup.submitError')}
       </p>
     )
   }
@@ -44,7 +45,7 @@ const turnstileSiteKey = process.env['TURNSTILE_SITE_KEY'] ?? '';
         <p class="brisk-newsletter-signup__title" data-brisk-field="title">{title}</p>
         {/* Honeypot: same reasoning as Form.astro's own. */}
         <div class="brisk-newsletter-signup__honeypot" aria-hidden="true">
-          <label for="newsletter-hp">Lascia questo campo vuoto</label>
+          <label for="newsletter-hp">{t(locale, 'form.honeypotLabel')}</label>
           <input
             type="text"
             id="newsletter-hp"
@@ -57,7 +58,7 @@ const turnstileSiteKey = process.env['TURNSTILE_SITE_KEY'] ?? '';
           <input
             type="email"
             name="email"
-            placeholder="La tua email"
+            placeholder={t(locale, 'newsletterSignup.emailPlaceholder')}
             required
           />
           <button type="submit" data-brisk-field="buttonLabel">{buttonLabel}</button>

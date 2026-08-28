@@ -1,9 +1,11 @@
 ---
 import type { BeforeAfterProps } from '@brisk/shared-types';
+import { t } from '../../lib/i18n.js';
 
-type Props = BeforeAfterProps;
+type Props = BeforeAfterProps & { locale: string };
 
-const { beforeImage, afterImage, beforeLabel, afterLabel } = Astro.props;
+const { beforeImage, afterImage, beforeLabel, afterLabel, locale } =
+  Astro.props;
 const canRender = beforeImage !== null && afterImage !== null;
 ---
 
@@ -46,11 +48,14 @@ const canRender = beforeImage !== null && afterImage !== null;
         max="100"
         value="50"
         class="brisk-before-after__slider"
-        aria-label={`Confronta ${beforeLabel} e ${afterLabel}`}
+        aria-label={t(locale, 'beforeAfter.compareLabel', {
+          before: beforeLabel,
+          after: afterLabel,
+        })}
       />
     </div>
   ) : (
-    <p>Seleziona entrambe le immagini per il confronto prima/dopo.</p>
+    <p>{t(locale, 'beforeAfter.empty')}</p>
   )
 }
 

@@ -4,10 +4,14 @@ import {
   type BlockStyleOverride,
   type CountdownProps,
 } from '@brisk/shared-types';
+import { t } from '../../lib/i18n.js';
 
-type Props = CountdownProps & { styleOverride?: BlockStyleOverride };
+type Props = CountdownProps & {
+  styleOverride?: BlockStyleOverride;
+  locale: string;
+};
 
-const { targetDate, label, styleOverride } = Astro.props;
+const { targetDate, label, styleOverride, locale } = Astro.props;
 const instanceStyle = buildBlockInstanceStyle(styleOverride);
 ---
 
@@ -16,22 +20,22 @@ const instanceStyle = buildBlockInstanceStyle(styleOverride);
   <div class="brisk-countdown__timer">
     <div class="brisk-countdown__unit">
       <span class="brisk-countdown__value" data-unit="days">00</span>
-      <span class="brisk-countdown__name">Giorni</span>
+      <span class="brisk-countdown__name">{t(locale, 'countdown.days')}</span>
     </div>
     <div class="brisk-countdown__unit">
       <span class="brisk-countdown__value" data-unit="hours">00</span>
-      <span class="brisk-countdown__name">Ore</span>
+      <span class="brisk-countdown__name">{t(locale, 'countdown.hours')}</span>
     </div>
     <div class="brisk-countdown__unit">
       <span class="brisk-countdown__value" data-unit="minutes">00</span>
-      <span class="brisk-countdown__name">Minuti</span>
+      <span class="brisk-countdown__name">{t(locale, 'countdown.minutes')}</span>
     </div>
     <div class="brisk-countdown__unit">
       <span class="brisk-countdown__value" data-unit="seconds">00</span>
-      <span class="brisk-countdown__name">Secondi</span>
+      <span class="brisk-countdown__name">{t(locale, 'countdown.seconds')}</span>
     </div>
   </div>
-  <p class="brisk-countdown__expired" hidden>Offerta scaduta</p>
+  <p class="brisk-countdown__expired" hidden>{t(locale, 'countdown.expired')}</p>
 </div>
 
 <script>

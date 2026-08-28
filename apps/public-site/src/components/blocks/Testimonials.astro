@@ -1,14 +1,16 @@
 ---
 import { buildBlockInstanceStyle, type BlockStyleOverride } from '@brisk/shared-types';
 import EmptyContainerHint from '../EmptyContainerHint.astro';
+import { t } from '../../lib/i18n.js';
 
 export interface Props {
   editable?: boolean;
   hasChildren?: boolean;
   styleOverride?: BlockStyleOverride;
+  locale: string;
 }
 
-const { editable, hasChildren, styleOverride } = Astro.props;
+const { editable, hasChildren, styleOverride, locale } = Astro.props;
 const instanceStyle = buildBlockInstanceStyle(styleOverride);
 ---
 
@@ -32,14 +34,14 @@ const instanceStyle = buildBlockInstanceStyle(styleOverride);
         <button
           type="button"
           class="brisk-testimonials__nav brisk-testimonials__nav--prev"
-          aria-label="Testimonianza precedente"
+          aria-label={t(locale, 'testimonials.prev')}
         >
           ‹
         </button>
         <button
           type="button"
           class="brisk-testimonials__nav brisk-testimonials__nav--next"
-          aria-label="Testimonianza successiva"
+          aria-label={t(locale, 'testimonials.next')}
         >
           ›
         </button>

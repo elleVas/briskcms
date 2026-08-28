@@ -1,10 +1,11 @@
 ---
 import type { MapEmbedProps } from '@brisk/shared-types';
 import ConsentGatedEmbed from '../ConsentGatedEmbed.astro';
+import { t } from '../../lib/i18n.js';
 
-type Props = MapEmbedProps;
+type Props = MapEmbedProps & { locale: string };
 
-const { address } = Astro.props;
+const { address, locale } = Astro.props;
 const src = address
   ? `https://www.google.com/maps?q=${encodeURIComponent(address)}&output=embed`
   : null;
@@ -14,10 +15,10 @@ const src = address
   src ? (
     <ConsentGatedEmbed
       src={src}
-      title={`Mappa: ${address}`}
-      buttonLabel="Mostra la mappa (Google Maps)"
+      title={t(locale, 'mapEmbed.title', { address: address ?? '' })}
+      buttonLabel={t(locale, 'mapEmbed.buttonLabel')}
     />
   ) : (
-    <p>Nessun indirizzo impostato.</p>
+    <p>{t(locale, 'mapEmbed.empty')}</p>
   )
 }
