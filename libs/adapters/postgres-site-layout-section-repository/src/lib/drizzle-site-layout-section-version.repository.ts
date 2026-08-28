@@ -6,6 +6,7 @@ import {
   siteLayoutSectionVersions,
   withTenant,
 } from '@brisk/postgres-db';
+import { saveSiteLayoutSectionVersionTx } from './save-site-layout-section-version-tx.js';
 
 function fromRow(
   row: typeof siteLayoutSectionVersions.$inferSelect,
@@ -19,7 +20,7 @@ export class DrizzleSiteLayoutSectionVersionRepository implements SiteLayoutSect
 
   async save(version: SiteLayoutSectionVersion): Promise<void> {
     await withTenant(this.db, version.tenantId, (tx) =>
-      tx.insert(siteLayoutSectionVersions).values(version),
+      saveSiteLayoutSectionVersionTx(tx, version),
     );
   }
 

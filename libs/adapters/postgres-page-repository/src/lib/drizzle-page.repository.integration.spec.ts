@@ -436,5 +436,32 @@ describe('DrizzlePageRepository (integration)', () => {
 
       expect(await pageRepository.findById(tenantAId, page.id)).toBeNull();
     });
+
+    it('prunes to the last 10 versions per page, oldest first', async () => {
+      const page = buildPage();
+      await pageRepository.save(page);
+
+      const versionIds: string[] = [];
+      for (let i = 0; i < 11; i++) {
+        const id = randomUUID();
+        versionIds.push(id);
+        await pageRepository.saveWithVersion(page, {
+          id,
+          tenantId: tenantAId,
+          pageId: page.id,
+          content: [{ type: 'Hero', props: { title: `v${i}` } }],
+          createdBy: null,
+          createdAt: new Date(Date.now() - (11 - i) * 1000),
+        });
+      }
+
+      const versions = await pageVersionRepository.listByPage(
+        tenantAId,
+        page.id,
+      );
+      expect(versions).toHaveLength(10);
+      // The very first save (oldest createdAt) is the one pruned.
+      expect(versions.map((v) => v.id)).toEqual(versionIds.slice(1));
+    });
   });
 });
