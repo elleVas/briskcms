@@ -1,12 +1,13 @@
 ---
 import type { BeforeAfterProps } from '@brisk/shared-types';
-import { t } from '../../lib/i18n.js';
+import { Translator } from '../../lib/i18n.js';
 
 type Props = BeforeAfterProps & { locale: string };
 
 const { beforeImage, afterImage, beforeLabel, afterLabel, locale } =
   Astro.props;
 const canRender = beforeImage !== null && afterImage !== null;
+const i18n = new Translator(locale);
 ---
 
 {
@@ -48,14 +49,14 @@ const canRender = beforeImage !== null && afterImage !== null;
         max="100"
         value="50"
         class="brisk-before-after__slider"
-        aria-label={t(locale, 'beforeAfter.compareLabel', {
+        aria-label={i18n.t('beforeAfter.compareLabel', {
           before: beforeLabel,
           after: afterLabel,
         })}
       />
     </div>
   ) : (
-    <p>{t(locale, 'beforeAfter.empty')}</p>
+    <p>{i18n.t('beforeAfter.empty')}</p>
   )
 }
 

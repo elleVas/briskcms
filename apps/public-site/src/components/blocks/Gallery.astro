@@ -1,10 +1,11 @@
 ---
 import type { GalleryProps } from '@brisk/shared-types';
-import { t } from '../../lib/i18n.js';
+import { Translator } from '../../lib/i18n.js';
 
 type Props = GalleryProps & { locale: string };
 
 const { images, locale } = Astro.props;
+const i18n = new Translator(locale);
 ---
 
 <div class="gallery">
@@ -24,7 +25,7 @@ const { images, locale } = Astro.props;
           ),
       )
     ) : (
-      <p>{t(locale, 'gallery.empty')}</p>
+      <p>{i18n.t('gallery.empty')}</p>
     )
   }
 </div>

@@ -1,10 +1,11 @@
 ---
 import type { ImageProps } from '@brisk/shared-types';
-import { t } from '../../lib/i18n.js';
+import { Translator } from '../../lib/i18n.js';
 
 type Props = ImageProps & { locale: string };
 
 const { media, alt, caption, locale } = Astro.props;
+const i18n = new Translator(locale);
 ---
 
 {
@@ -35,7 +36,7 @@ const { media, alt, caption, locale } = Astro.props;
       {caption && <figcaption data-brisk-field="caption">{caption}</figcaption>}
     </figure>
   ) : (
-    <p>{t(locale, 'image.empty')}</p>
+    <p>{i18n.t('image.empty')}</p>
   )
 }
 

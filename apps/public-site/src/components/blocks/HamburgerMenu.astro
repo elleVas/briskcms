@@ -1,12 +1,13 @@
 ---
 import type { HamburgerMenuProps } from '@brisk/shared-types';
-import { t } from '../../lib/i18n.js';
+import { Translator } from '../../lib/i18n.js';
 
 type Props = HamburgerMenuProps & { locale: string };
 
 const { position, visibility, locale } = Astro.props;
-const openLabel = t(locale, 'hamburgerMenu.open');
-const closeLabel = t(locale, 'hamburgerMenu.close');
+const i18n = new Translator(locale);
+const openLabel = i18n.t('hamburgerMenu.open');
+const closeLabel = i18n.t('hamburgerMenu.close');
 ---
 
 <div
