@@ -8,13 +8,17 @@ import {
 } from '@tanstack/react-router';
 import { TooltipProvider } from '../components/ui/tooltip.js';
 import * as authApi from '../lib/auth-api-client.js';
+import * as formsApi from '../lib/forms-api-client.js';
 import * as mediaApi from '../lib/media-api-client.js';
 import * as api from '../lib/pages-api-client.js';
 import * as sectionsApi from '../lib/site-layout-sections-api-client.js';
 import * as sitesApi from '../lib/sites-api-client.js';
+import * as usersApi from '../lib/users-api-client.js';
 import { ApiError } from '../lib/http-client.js';
+import type { FormDto } from '../lib/forms-api-client.js';
 import type { PageRecord } from '../lib/pages-api-client.js';
 import type { SiteLayoutSectionDto } from '../lib/site-layout-sections-api-client.js';
+import type { UserDto } from '../lib/users-api-client.js';
 import type { SiteRecord } from '@brisk/shared-types';
 import { routeTree } from '../routeTree.gen.js';
 import { createTestQueryClient } from '../test-query-client.js';
@@ -22,7 +26,13 @@ import { createTestQueryClient } from '../test-query-client.js';
 vi.mock('../lib/auth-api-client.js', async (importOriginal) => {
   const actual =
     await importOriginal<typeof import('../lib/auth-api-client.js')>();
-  return { ...actual, login: vi.fn(), logout: vi.fn(), verifyEmail: vi.fn() };
+  return {
+    ...actual,
+    login: vi.fn(),
+    logout: vi.fn(),
+    verifyEmail: vi.fn(),
+    acceptInvite: vi.fn(),
+  };
 });
 
 vi.mock('../lib/pages-api-client.js', async (importOriginal) => {
@@ -40,6 +50,18 @@ vi.mock('../lib/media-api-client.js', async (importOriginal) => {
   const actual =
     await importOriginal<typeof import('../lib/media-api-client.js')>();
   return { ...actual, listMedia: vi.fn() };
+});
+
+vi.mock('../lib/forms-api-client.js', async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import('../lib/forms-api-client.js')>();
+  return { ...actual, listForms: vi.fn(), getForm: vi.fn() };
+});
+
+vi.mock('../lib/users-api-client.js', async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import('../lib/users-api-client.js')>();
+  return { ...actual, listUsers: vi.fn() };
 });
 
 vi.mock('../lib/sites-api-client.js', async (importOriginal) => {
@@ -114,6 +136,35 @@ const sampleHeaderSection: SiteLayoutSectionDto = {
   sticky: false,
   createdAt: '',
   updatedAt: '',
+};
+
+const sampleFooterSection: SiteLayoutSectionDto = {
+  ...sampleHeaderSection,
+  id: 'section-2',
+  kind: 'footer',
+};
+
+const sampleForm: FormDto = {
+  id: 'form-1',
+  tenantId: 'tenant-1',
+  siteId: 'site-1',
+  name: 'Contact form',
+  fields: [],
+  steps: [],
+  notificationEmail: null,
+  createdAt: '',
+  updatedAt: '',
+};
+
+const sampleUser: UserDto = {
+  id: 'user-1',
+  tenantId: 'tenant-1',
+  email: 'editor@example.com',
+  displayName: 'Editor',
+  role: 'editor',
+  isActive: true,
+  emailVerifiedAt: '2026-01-01T00:00:00.000Z',
+  createdAt: '',
 };
 
 function renderApp(initialPath: string) {
@@ -287,5 +338,109 @@ describe('router', () => {
 
     expect(await screen.findByRole('heading', { name: 'Accedi' })).toBeTruthy();
     expect(authApi.logout).toHaveBeenCalled();
+  });
+
+  it('renders the forms list inside the shell when authenticated', async () => {
+    vi.mocked(formsApi.listForms).mockResolvedValue({
+      items: [sampleForm],
+      total: 1,
+    });
+
+    renderApp('/forms');
+
+    expect(await screen.findByRole('heading', { name: 'Moduli' })).toBeTruthy();
+    expect(screen.getByText('Contact form')).toBeTruthy();
+  });
+
+  it('redirects to /login when opening the forms list while unauthenticated', async () => {
+    vi.mocked(formsApi.listForms).mockRejectedValue(
+      new ApiError(401, { message: 'Unauthorized' }),
+    );
+
+    renderApp('/forms');
+
+    expect(await screen.findByRole('heading', { name: 'Accedi' })).toBeTruthy();
+  });
+
+  it('renders the form editor for a given formId when authenticated', async () => {
+    vi.mocked(formsApi.getForm).mockResolvedValue(sampleForm);
+
+    renderApp('/forms/form-1');
+
+    expect(await screen.findByLabelText('Nome modulo')).toHaveProperty(
+      'value',
+      'Contact form',
+    );
+  });
+
+  it('redirects to /login when opening a form editor while unauthenticated', async () => {
+    vi.mocked(formsApi.getForm).mockRejectedValue(
+      new ApiError(401, { message: 'Unauthorized' }),
+    );
+
+    renderApp('/forms/form-1');
+
+    expect(await screen.findByRole('heading', { name: 'Accedi' })).toBeTruthy();
+  });
+
+  it('renders the users list inside the shell when authenticated', async () => {
+    vi.mocked(usersApi.listUsers).mockResolvedValue({
+      items: [sampleUser],
+      total: 1,
+    });
+
+    renderApp('/users');
+
+    expect(await screen.findByRole('heading', { name: 'Utenti' })).toBeTruthy();
+    expect(screen.getByText('editor@example.com')).toBeTruthy();
+  });
+
+  it('renders the style settings page on direct navigation when authenticated', async () => {
+    renderApp('/style');
+
+    expect(
+      await screen.findByRole('heading', { name: /stile del sito/i }),
+    ).toBeTruthy();
+  });
+
+  it('renders the footer editor with the site default locale', async () => {
+    vi.mocked(api.listPages).mockResolvedValue({ items: [], total: 0 });
+    vi.mocked(sectionsApi.getOrCreateSiteLayoutSection).mockResolvedValue(
+      sampleFooterSection,
+    );
+
+    renderApp('/layout/footer');
+
+    expect(await screen.findByText(/Modifica Footer/)).toBeTruthy();
+    expect(sectionsApi.getOrCreateSiteLayoutSection).toHaveBeenCalledWith(
+      expect.any(String),
+      'it',
+      'footer',
+    );
+  });
+
+  it('renders the accept-invite form with the token from the URL', async () => {
+    vi.mocked(authApi.acceptInvite).mockResolvedValue({ success: true });
+
+    renderApp('/accept-invite?inviteToken=invite-abc');
+
+    expect(
+      await screen.findByRole('heading', { name: 'Completa la registrazione' }),
+    ).toBeTruthy();
+
+    fireEvent.change(screen.getByLabelText('Password'), {
+      target: { value: 'a-new-password' },
+    });
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Completa la registrazione' }),
+    );
+
+    expect(
+      await screen.findByText('Password impostata. Puoi accedere ora.'),
+    ).toBeTruthy();
+    expect(authApi.acceptInvite).toHaveBeenCalledWith(
+      'invite-abc',
+      'a-new-password',
+    );
   });
 });

@@ -39,8 +39,8 @@ doesn't yet justify one.
 
 `sites.searchEngineIndexingEnabled: boolean not null default false`.
 Defaults to `false` for every site, new or already seeded — explicitly
-opt-in, not opt-out, matching the user's own framing ("voglio essere io a
-decidere quando l'indicizzazione deve partire"): a site mid-build
+opt-in, not opt-out, matching the user's own framing ("I want to be the
+one who decides when indexing should start"): a site mid-build
 shouldn't be indexed until its owner deliberately flips it on, rather than
 being indexed by default and requiring the owner to notice and turn it
 off.

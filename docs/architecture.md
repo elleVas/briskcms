@@ -21,7 +21,7 @@ adapters/*    (concrete Port implementations: Postgres, local/S3 storage, auth)
     ^
     |
  apps/api     (NestJS — DI wiring: injects concrete adapters behind the Port
-               interfaces, exposes REST/tRPC)
+               interfaces, exposes REST)
 ```
 
 `shared-types` is cross-cutting: it defines the content model (`Block`,
@@ -127,13 +127,18 @@ handled locally in that controller, unchanged.
 
 A page's "content" is an array of blocks (`PageContent = Block[]`,
 `libs/shared-types`), each optionally holding nested `children: Block[]` for
-container-style blocks (e.g. columns) — Brisk's own nesting vocabulary, not
-Puck's `zones`. Puck stays isolated inside `apps/editor-app`: a mapping layer
-there converts Puck's own `Data` format (root/content/zones) to/from
-`Block[]`, so the domain, the Postgres schema, and `apps/public-site`'s
-renderer never need to know Puck's data format exists — see
-[ADR-0007](adr/0007-nested-block-content-model-independent-of-puck.md). Every
-page always has two copies of the content model:
+container-style blocks (e.g. columns) — Brisk's own nesting vocabulary.
+`apps/editor-app`'s custom canvas editor (`apps/editor-app/src/app/canvas/`)
+reads and writes `Block[]` directly; there is no third-party editor library
+and no data-format mapping layer to isolate anymore. `Block[]` was
+originally designed to stay independent of Puck's own data format
+(`root`/`content`/`zones`) while Puck was still in use as the editor —
+Puck has since been fully removed, and that independence is exactly why the
+removal cost the content model, the Postgres schema, and
+`apps/public-site`'s renderer nothing — see
+[ADR-0007](adr/0007-nested-block-content-model-independent-of-puck.md) for
+the original decision. Every page always has two copies of the content
+model:
 
 - `content` — the latest draft, editable.
 - `publishedContent` — the last version actually published, immutable until the
@@ -168,39 +173,69 @@ everywhere else that constant appears).
 Block rendering is Astro-native (`src/components/BlockRenderer.astro`,
 `src/components/blocks/`), walking `Block[]`/`children` directly — the
 "Astro-native renderer" [ADR-0007](adr/0007-nested-block-content-model-independent-of-puck.md)
-already anticipated, not Puck's own `<Render>`. Each block's Zod prop
-schema (`heroPropsSchema`, `textPropsSchema`) lives in `shared-types`
-specifically so `apps/public-site` can validate against it without
-depending on Puck or React at all.
+already anticipated. Each block's Zod prop schema (`heroPropsSchema`,
+`textPropsSchema`) lives in `shared-types` specifically so
+`apps/public-site` can validate against it without depending on the editor
+app at all.
+
+`apps/public-site` also serves a second, editor-only rendering mode: a
+preview route (`editable=true`) that injects `data-brisk-block-id`/
+`data-brisk-field` attributes and a small client script
+(`src/lib/preview-bridge-client.ts`) so `apps/editor-app`'s canvas can
+embed the real rendered page in an `<iframe>` and drive it via
+`postMessage` (hover, click, drag-reorder, insert/remove, inline text
+editing) instead of re-implementing block rendering a second time in
+React — see [ADR-0028](adr/0028-canvas-inline-text-editing-via-tiptap-in-preview-iframe.md).
 
 ## Monorepo
 
 ```
 apps/
-  api/            NestJS — REST/tRPC, DI wiring, TenantContext/auth guards
-  editor-app/     React + Puck (Phase 2) — drag-and-drop editor
-  public-site/    Astro (SSR, @astrojs/node) — public rendering, no Puck/React
+  api/            NestJS — REST, DI wiring, TenantContext/auth guards
+  editor-app/     React (TanStack Router) — authenticated admin SPA, the
+                   custom canvas editor (src/app/canvas/), no third-party
+                   page-builder library
+  public-site/    Astro (SSR, @astrojs/node) — public rendering, plus an
+                   editor-only preview mode embedded by editor-app's canvas
+                   (see ADR-0028)
 
 libs/
-  domain-core/    pure entities: Page, PageVersion, Site, User, Media, FormSubmission
+  domain-core/    pure entities: Page, PageVersion, Site, SiteLayoutSection,
+                   User, Media, Form, FormSubmission
   ports/          interfaces implemented by the adapters
   application/    use cases (orchestration, zero infrastructure)
-  adapters/
+  adapters/       one lib per Port implementation — not exhaustive here, see
+                   libs/adapters/ for the full current list. Notably:
     postgres-db/               Drizzle schema, client, tenant-scoping helper —
                                 shared by every Postgres adapter
     postgres-page-repository/  PageRepositoryPort + PageVersionRepositoryPort
     postgres-site-repository/  SiteRepositoryPort — domain lookup for public rendering
+    postgres-form-repository/  FormRepositoryPort + form submissions
     postgres-user-repository/  UserRepositoryPort
     session-auth-adapter/      AuthPort — argon2id hashing, DB-backed sessions
     verification-token-adapter/ VerificationTokenPort — single-use email
                                 verification/password-reset tokens
+    preview-token-adapter/     stateless HMAC-signed draft-preview tokens
     smtp-email-adapter/        EmailPort via nodemailer
-  puck-config/    editor block definitions (Phase 2)
-  shared-types/   shared content model (Block, PageContent, SeoMeta)
+    local-disk-media-storage/, s3-media-storage/  MediaStoragePort implementations
+    local-disk-attachment-storage/, s3-attachment-storage/  form file-upload storage
+    turnstile-captcha/         CaptchaPort — Cloudflare Turnstile
+    mailchimp-newsletter/, brevo-newsletter/  NewsletterPort implementations
+  block-registry/ editor block definitions (fields, defaults, container
+                   rules) — one file per block type in src/lib/blocks/,
+                   consumed by apps/editor-app's canvas
+  shared-types/   shared content model (Block, PageContent, SeoMeta) and the
+                   editor<->preview-iframe postMessage protocol
+                   (preview-bridge-protocol.ts)
   env-config/     requireEnv() — fail loudly on a missing required env var,
                    shared by every adapter/app/script that needs one
   opaque-token/   generateOpaqueToken()/hashOpaqueToken() — shared by
                    session-auth-adapter and verification-token-adapter
+
+themes/
+  <name>/         filesystem theme packages (theme.css design tokens,
+                   optional full-file component overrides) — selected
+                   per-deployment via BRISK_THEME, see ADR-0021
 
 db/
   init/           brisk_app role bootstrap (see docs/development.md);

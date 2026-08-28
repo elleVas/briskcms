@@ -1,6 +1,6 @@
 # 0019 — Canvas inline text editing via Puck's `contentEditable`
 
-**Status**: Accepted — 2026-08-20
+**Status**: Superseded by [ADR-0028](0028-canvas-inline-text-editing-via-tiptap-in-preview-iframe.md) — 2026-08-28
 
 ## Context
 

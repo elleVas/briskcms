@@ -92,7 +92,7 @@ reports "workspace out of sync":
 pnpm exec nx sync
 ```
 
-To use the Puck editor against real data, run the API and the editor
+To use the canvas editor against real data, run the API and the editor
 together (Postgres migrated and seeded first, see above):
 
 ```sh
@@ -105,11 +105,17 @@ Opening `http://localhost:4200` prompts for login first (the dev user from
 [ADR-0010](adr/0010-session-based-auth-foundations.md). Once logged in, it
 lands on `/pages`, the admin shell's list of pages for
 `VITE_DEFAULT_SITE_ID`; "Nuova pagina" creates one and opens it in the
-fullscreen Puck editor at `/pages/:id`. Puck stays isolated inside
-`apps/editor-app` —
-`src/lib/puck-data-mapper.ts` is the only place that translates between
-Puck's own data format and Brisk's own `Block[]` (see
-[ADR-0007](adr/0007-nested-block-content-model-independent-of-puck.md)).
+fullscreen canvas editor at `/pages/:id`
+(`apps/editor-app/src/app/canvas/canvas-editor-shell.tsx`), also requiring
+`apps/public-site` to be running (see below) — the canvas embeds the real
+page in an `<iframe>` and drives it via `postMessage`, it doesn't render
+blocks itself in React. There is no data-format mapping layer to isolate
+anymore: the canvas reads and writes Brisk's own `Block[]` directly (see
+[ADR-0007](adr/0007-nested-block-content-model-independent-of-puck.md) for
+why `Block[]` was designed independent of any editor library in the first
+place, and [ADR-0028](adr/0028-canvas-inline-text-editing-via-tiptap-in-preview-iframe.md)
+for how the iframe/`postMessage` canvas works, including inline text
+editing).
 
 The login screen's "Password dimenticata?" link leads to a password-reset
 request form; the actual reset link Brisk emails opens
@@ -150,9 +156,8 @@ special-case — renders whichever page is slugged `home`. Only
 a nonexistent slug both 404 identically, on purpose (see that use case's
 own comments on why). Block rendering here is Astro-native (`Hero.astro`,
 `Text.astro`, `BlockRenderer.astro`) and walks `Block[]`/`children`
-directly — same isolation principle as `puck-data-mapper.ts`, just from the
-other side: apps/public-site never depends on Puck at all (see
-[ADR-0007](adr/0007-nested-block-content-model-independent-of-puck.md)).
+directly — apps/public-site never depends on any editor-side library at
+all (see [ADR-0007](adr/0007-nested-block-content-model-independent-of-puck.md)).
 
 ## Connecting to Postgres
 

@@ -4,7 +4,7 @@
 
 ## Context
 
-Fase 4 (`piano-progetto-astro-cms.md`) needs a real `MediaStoragePort`
+Phase 4 (`piano-progetto-astro-cms.md`) needs a real `MediaStoragePort`
 implementation. The domain entity (`Media`), the port, the `media` DB
 table, and both adapter package shells (`local-disk-media-storage`,
 `s3-media-storage`) already existed from earlier planning, empty. Two real
@@ -18,7 +18,7 @@ conversion happens.
 
 Considered: (A) `apps/api` serves its own upload directory directly (a
 static-file route on the same container that receives uploads); (B) a
-shared Docker volume that the reverse proxy (Caddy/Traefik, per Fase 6)
+shared Docker volume that the reverse proxy (Caddy/Traefik, per Phase 6)
 serves directly, bypassing the API.
 
 Chose A, confirmed with the user — reasoned through explicitly as "a
@@ -26,7 +26,7 @@ generic VPS, Aruba Cloud, DigitalOcean, Hetzner, whatever a self-hoster
 already has," not a sophisticated ops setup. One container serving
 everything means zero extra reverse-proxy configuration for someone
 running `docker-compose up` without a dedicated ops team — matching the
-"self-hosting: `docker-compose up` and via" bar already set for Fase 6.
+"self-hosting: `docker-compose up` and via" bar already set for Phase 6.
 The latency saved by skipping one hop through Node is irrelevant at this
 traffic scale.
 
@@ -39,8 +39,8 @@ on-demand transformation via a query-param endpoint (e.g.
 
 Chose A, same reasoning as above — on-demand transformation needs a
 caching layer and adds a class of runtime load/failure this product
-doesn't need yet. Explicitly scoped to "siti vetrina" (brochure/showcase
-sites), confirmed with the user — not e-commerce-scale catalogs with
+doesn't need yet. Explicitly scoped to brochure/showcase sites,
+confirmed with the user — not e-commerce-scale catalogs with
 thousands of dynamically-sized product images.
 
 ## Consequences
@@ -52,7 +52,7 @@ thousands of dynamically-sized product images.
   code: "just store it as bytea" is an easy shortcut that would bloat
   backups and queries for no real benefit.
 - `apps/api`'s container needs a persistent volume mounted for LocalDisk
-  uploads (see Fase 6 Docker packaging) — losing that volume loses every
+  uploads (see Phase 6 Docker packaging) — losing that volume loses every
   locally-stored image, the same operational care already given to the
   Postgres volume.
 - **Explicitly not locked in.** This is the reasonable default for the

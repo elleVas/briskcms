@@ -1,18 +1,18 @@
-# 0017 — Multilingua: locale-prefixed URLs and page translations
+# 0017 — Multi-language: locale-prefixed URLs and page translations
 
 **Status**: Accepted — 2026-08-19
 
 ## Context
 
-Brisk sites are self-hosted, single-tenant-per-deployment "siti vetrina"
-(showcase sites) for Italian agencies, several of which need at least a
+Brisk sites are self-hosted, single-tenant-per-deployment brochure/showcase
+sites for Italian agencies, several of which need at least a
 second language (typically English) for the same content. `Page` already
 had a `groupId` column and a `(tenantId, siteId, groupId, locale)` unique
 constraint reserved for exactly this — "pages that are translations of
 each other share a `groupId`" — but nothing ever wrote or read it: every
 page was created with a fresh, unused `groupId` and `locale` was always
 whatever the (until now, hardcoded) default was. This ADR turns that
-dormant column into an actual multilingua feature.
+dormant column into an actual multi-language feature.
 
 Four design questions were resolved with the user before implementation
 (each against a stated alternative):

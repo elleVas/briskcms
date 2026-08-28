@@ -4,17 +4,17 @@
 
 ## Context
 
-Fase 5's "blocco form contatti" (`piano-progetto-astro-cms.md`) started as a
+Phase 5's "blocco form contatti" (`piano-progetto-astro-cms.md`) started as a
 single fixed-fields contact block. Mid-implementation the user asked for
 something closer to WordPress's Gravity Forms instead — a real form
 builder: forms are created and edited in the admin panel, and a Puck block
 lets a content editor pick _which_ form to embed on a page, rather than
 every page getting the same hardcoded name/email/message fields. This is a
 materially bigger feature than the original single-block plan, comparable
-in scope to Fase 4 (media pipeline) — worth its own ADR rather than folding
+in scope to Phase 4 (media pipeline) — worth its own ADR rather than folding
 the decisions into ADR-0014.
 
-`form_submissions` (table, domain entity) already existed from Fase 1,
+`form_submissions` (table, domain entity) already existed from Phase 1,
 unused — its `payload: Record<string, unknown>` JSONB shape happened to
 already be generic enough for arbitrary form fields, not just a fixed
 contact-form shape.
@@ -47,8 +47,8 @@ structure is closer to a shared, centrally-managed piece of content: the
 entire value of building a form once and reusing it across pages is
 undermined if editing it later doesn't propagate to pages already using
 it. The cost is a second API round-trip per page render when that page
-has a Form block — accepted at "siti vetrina" scale, same reasoning
-applied throughout this product's other scope calls.
+has a Form block — accepted at brochure/showcase-site scale, same
+reasoning applied throughout this product's other scope calls.
 
 ### Field type set: text, email, textarea, tel, checkbox, select
 
@@ -95,6 +95,6 @@ the bot with a distinguishing failure signal it could probe for.
   forgotten: revisit if email-only turns out to be insufficient once
   people are actually using this.
 - **Explicitly not locked in**, same framing as ADR-0014: if the product
-  outgrows "siti vetrina" scale, the live-fetch choice or the single
+  outgrows brochure/showcase-site scale, the live-fetch choice or the single
   notification address are the first things to revisit, not a sign this
   was the wrong call for today's shape.

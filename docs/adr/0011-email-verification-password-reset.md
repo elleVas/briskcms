@@ -4,7 +4,7 @@
 
 ## Context
 
-Last piece of Fase 3 deferred by ADR-0010: email verification, password
+Last piece of Phase 3 deferred by ADR-0010: email verification, password
 reset with expiring tokens, `EmailPort` + a generic SMTP adapter. Login and
 sessions (ADR-0010) already work. This PR also folds in the first real
 design-system decision for `apps/editor-app` — confirmed with the user
