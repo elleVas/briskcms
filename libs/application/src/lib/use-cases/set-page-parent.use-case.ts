@@ -3,6 +3,7 @@ import {
   PageHierarchyCycleError,
   PageHierarchyLocaleMismatchError,
   PageNotFoundError,
+  PageSlugAlreadyExistsError,
 } from '@brisk/domain-core';
 import type { PageRepositoryPort } from '@brisk/ports';
 
@@ -70,6 +71,24 @@ export async function setPageParent(
       );
       currentId = current?.parentId ?? null;
     }
+  }
+
+  // Slug uniqueness is sibling-scoped (schema.ts's `pages` unique
+  // constraints) — reparenting doesn't change `page.slug` itself, but
+  // moving it under a parent that already has a different child with that
+  // same slug would collide there for the first time. Not needed when
+  // `input.parentId === page.parentId` (no actual move), but harmless to
+  // check unconditionally — it just re-finds `page` itself in that case,
+  // filtered out by the id check below.
+  const collidingSibling = await deps.pageRepository.findByParentAndSlug(
+    input.tenantId,
+    page.siteId,
+    page.locale,
+    input.parentId,
+    page.slug,
+  );
+  if (collidingSibling && collidingSibling.id !== page.id) {
+    throw new PageSlugAlreadyExistsError(page.slug);
   }
 
   page.setParent(input.parentId);

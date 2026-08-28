@@ -1,0 +1,3 @@
+ALTER TABLE "pages" DROP CONSTRAINT "pages_tenant_id_site_id_locale_slug_unique";--> statement-breakpoint
+CREATE UNIQUE INDEX "pages_root_slug_unique" ON "pages" USING btree ("tenant_id","site_id","locale","slug") WHERE "pages"."parent_id" is null;--> statement-breakpoint
+ALTER TABLE "pages" ADD CONSTRAINT "pages_tenant_id_site_id_locale_parent_id_slug_unique" UNIQUE("tenant_id","site_id","locale","parent_id","slug");

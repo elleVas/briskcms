@@ -53,30 +53,13 @@ const i18n = new Translator(locale);
 
 <script>
   // Same "native scroll-snap first, buttons as progressive enhancement"
-  // pattern as ImageSlider.astro's own carousel.
-  document
-    .querySelectorAll<HTMLDivElement>('.brisk-testimonials')
-    .forEach((carousel) => {
-      const track = carousel.querySelector<HTMLDivElement>(
-        '.brisk-testimonials__track',
-      );
-      if (!track) return;
-
-      const card = track.querySelector<HTMLElement>(
-        '.brisk-testimonial',
-      );
-      const scrollByOneCard = (direction: 1 | -1) => {
-        const width = card?.offsetWidth ?? track.clientWidth;
-        track.scrollBy({ left: direction * (width + 24), behavior: 'smooth' });
-      };
-
-      carousel
-        .querySelector('.brisk-testimonials__nav--prev')
-        ?.addEventListener('click', () => scrollByOneCard(-1));
-      carousel
-        .querySelector('.brisk-testimonials__nav--next')
-        ?.addEventListener('click', () => scrollByOneCard(1));
-    });
+  // pattern as ImageSlider.astro's own carousel. Logic lives in a plain
+  // importable module (not inline here) so it can also be re-run after a
+  // live canvas insert/patch — see
+  // block-behaviors/run-block-behaviors-in-subtree.ts.
+  import { testimonialsBehaviors } from '../../lib/block-behaviors/testimonials.js';
+  import { runBlockBehaviors } from '../../lib/block-behaviors/run-block-behaviors.js';
+  runBlockBehaviors(document, testimonialsBehaviors);
 </script>
 
 <style>

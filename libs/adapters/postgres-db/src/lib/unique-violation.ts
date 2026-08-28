@@ -7,7 +7,7 @@ import postgres from 'postgres';
  * simultanee superano entrambe il check-then-act applicativo) è questo,
  * non l'use-case, il primo punto che vede il conflitto. `constraint_name`
  * combacia esattamente con quello generato da Drizzle in schema.ts (visibile
- * anche nelle migration SQL, es. `pages_tenant_id_site_id_locale_slug_unique`).
+ * anche nelle migration SQL, es. `pages_tenant_id_site_id_locale_parent_id_slug_unique`).
  *
  * Drizzle non lascia risalire il `PostgresError` grezzo: lo avvolge in un
  * proprio `DrizzleQueryError`, con l'originale in `.cause` (verificato dal

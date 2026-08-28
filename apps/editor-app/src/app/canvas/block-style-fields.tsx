@@ -42,6 +42,14 @@ const LENGTH_FIELD_LABELS: Partial<
     label: 'canvas.blockStyle.lengths.paddingY.fieldLabel',
     placeholder: 'canvas.blockStyle.lengths.paddingY.placeholder',
   },
+  marginTop: {
+    label: 'canvas.blockStyle.lengths.marginTop.fieldLabel',
+    placeholder: 'canvas.blockStyle.lengths.marginTop.placeholder',
+  },
+  marginBottom: {
+    label: 'canvas.blockStyle.lengths.marginBottom.fieldLabel',
+    placeholder: 'canvas.blockStyle.lengths.marginBottom.placeholder',
+  },
 };
 
 /**

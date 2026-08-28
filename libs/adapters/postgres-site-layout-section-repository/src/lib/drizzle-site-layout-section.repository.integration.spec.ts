@@ -214,4 +214,31 @@ describe('DrizzleSiteLayoutSectionRepository (integration)', () => {
     );
     expect(versionsFromOtherTenant).toHaveLength(0);
   });
+
+  it('prunes to the last 10 versions per section, oldest first', async () => {
+    const section = buildSection();
+    await sectionRepository.save(section);
+
+    const versionIds: string[] = [];
+    for (let i = 0; i < 11; i++) {
+      const id = randomUUID();
+      versionIds.push(id);
+      await versionRepository.save({
+        id,
+        tenantId: tenantAId,
+        siteLayoutSectionId: section.id,
+        content: [{ type: 'Header', props: { v: i } }],
+        createdBy: null,
+        createdAt: new Date(Date.now() - (11 - i) * 1000),
+      });
+    }
+
+    const versions = await versionRepository.listBySection(
+      tenantAId,
+      section.id,
+    );
+    expect(versions).toHaveLength(10);
+    // The very first save (oldest createdAt) is the one pruned.
+    expect(versions.map((v) => v.id)).toEqual(versionIds.slice(1));
+  });
 });

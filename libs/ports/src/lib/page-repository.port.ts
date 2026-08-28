@@ -54,10 +54,19 @@ export interface PageRepositoryPort {
    */
   saveWithVersion(page: Page, version: PageVersion): Promise<void>;
   findById(tenantId: string, pageId: string): Promise<Page | null>;
-  findBySlug(
+  /**
+   * Sibling-scoped (WP-style): `slug` is only unique within `parentId`
+   * (`null` = root-level), not site-wide — see schema.ts's own comment on
+   * `pages`' unique constraints. The public URL resolver walks a path
+   * segment-by-segment with this method (start at `parentId: null`, feed
+   * each match's own `id` as the next segment's `parentId`), rather than
+   * looking up the trailing slug alone.
+   */
+  findByParentAndSlug(
     tenantId: string,
     siteId: string,
     locale: string,
+    parentId: string | null,
     slug: string,
   ): Promise<Page | null>;
   listBySite(

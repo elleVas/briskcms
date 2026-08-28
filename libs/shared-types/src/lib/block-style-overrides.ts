@@ -11,9 +11,22 @@ import type { BlockStyleOverride } from './site-theme-tokens.js';
  * apps/public-site) perché editor-app la usa anche lei, per aggiornare
  * dal vivo il `<style>` dentro l'iframe del canvas quando il pulsante
  * "Stile" salva — stessa logica, non duplicata tra le due app.
+ *
+ * `marginTop`/`marginBottom` sono ESCLUSI di proposito da questa mappa —
+ * non diventano mai una custom property CSS scoped per-tipo: vedi il
+ * commento su di loro in `site-theme-tokens.ts` per il perché (una regola
+ * `.brisk-<type> { margin-bottom: ... }` toccherebbe anche le istanze
+ * annidate, dove lo spazio tra fratelli è già gestito dal contenitore).
+ * Restano solo un campo dati su `Block.styleOverride`, letti direttamente
+ * da `PublicPageContent.astro` per un blocco di primo livello.
  */
-export const BLOCK_STYLE_CUSTOM_PROPERTIES: Record<
+type CssOverridableProperty = Exclude<
   keyof BlockStyleOverride,
+  'marginTop' | 'marginBottom'
+>;
+
+export const BLOCK_STYLE_CUSTOM_PROPERTIES: Record<
+  CssOverridableProperty,
   string
 > = {
   backgroundColor: '--brisk-override-bg',
@@ -55,9 +68,7 @@ export function buildBlockStyleOverridesCss(
   return Object.entries(blockStyles)
     .map(([blockType, override]) => {
       const declarations = (
-        Object.keys(
-          BLOCK_STYLE_CUSTOM_PROPERTIES,
-        ) as (keyof BlockStyleOverride)[]
+        Object.keys(BLOCK_STYLE_CUSTOM_PROPERTIES) as CssOverridableProperty[]
       )
         .map((field) => {
           const value = override[field];
@@ -92,7 +103,7 @@ export function buildBlockInstanceStyle(
     return undefined;
   }
   const declarations = (
-    Object.keys(BLOCK_STYLE_CUSTOM_PROPERTIES) as (keyof BlockStyleOverride)[]
+    Object.keys(BLOCK_STYLE_CUSTOM_PROPERTIES) as CssOverridableProperty[]
   )
     .map((field) => {
       const value = override[field];

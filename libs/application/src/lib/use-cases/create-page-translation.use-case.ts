@@ -46,21 +46,13 @@ export async function createPageTranslation(
     throw new PageTranslationAlreadyExistsError(input.locale);
   }
 
-  const slugTaken = await deps.pageRepository.findBySlug(
-    input.tenantId,
-    source.siteId,
-    input.locale,
-    input.slug,
-  );
-  if (slugTaken) {
-    throw new PageSlugAlreadyExistsError(input.slug);
-  }
-
   // Inherit the source page's position in the hierarchy when possible —
   // same "copy from source, don't start blank" principle as content/SEO
   // above. If the parent has no translation in the target locale yet, the
   // new translation is created at the root rather than blocking creation
   // (same graceful-degradation precedent as untranslatedPageFallback).
+  // Resolved before the slug check below: slug uniqueness is scoped to
+  // THIS parent, so the check needs the real parentId, not a guess.
   let parentId: string | null = null;
   if (source.parentId) {
     const parent = await deps.pageRepository.findById(
@@ -77,6 +69,17 @@ export async function createPageTranslation(
         parentSiblings.find((sibling) => sibling.locale === input.locale)?.id ??
         null;
     }
+  }
+
+  const slugTaken = await deps.pageRepository.findByParentAndSlug(
+    input.tenantId,
+    source.siteId,
+    input.locale,
+    parentId,
+    input.slug,
+  );
+  if (slugTaken) {
+    throw new PageSlugAlreadyExistsError(input.slug);
   }
 
   const translation = Page.create({

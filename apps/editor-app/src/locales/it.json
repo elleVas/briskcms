@@ -452,6 +452,14 @@
         "paddingY": {
           "fieldLabel": "Padding verticale",
           "placeholder": "es. 1.25rem — vuoto per il default"
+        },
+        "marginTop": {
+          "fieldLabel": "Spazio sopra",
+          "placeholder": "es. 2rem — vuoto per il default"
+        },
+        "marginBottom": {
+          "fieldLabel": "Spazio sotto",
+          "placeholder": "es. 4rem — vuoto per il default"
         }
       }
     }

@@ -41,10 +41,11 @@ export async function duplicatePage(
     throw new PageNotFoundError(input.sourcePageId);
   }
 
-  const slugTaken = await deps.pageRepository.findBySlug(
+  const slugTaken = await deps.pageRepository.findByParentAndSlug(
     input.tenantId,
     source.siteId,
     source.locale,
+    source.parentId,
     input.slug,
   );
   if (slugTaken) {

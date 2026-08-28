@@ -106,7 +106,7 @@ describe('getPublishedPageBySlug', () => {
       tenantId,
       domain: 'example.com',
       locale: 'it',
-      slug: 'chi-siamo',
+      segments: ['chi-siamo'],
     });
 
     expect(result).toEqual({
@@ -148,7 +148,7 @@ describe('getPublishedPageBySlug', () => {
     });
   });
 
-  it('resolves ancestors root-to-parent by walking parentId, and returns an empty list for a root page', async () => {
+  it('resolves a nested page by its full path and returns its ancestors root-to-parent, empty for a root page', async () => {
     const deps = setup();
     await seedSite(deps.siteRepository);
     const servizi = await createAndPublish(deps, {
@@ -179,7 +179,7 @@ describe('getPublishedPageBySlug', () => {
       tenantId,
       domain: 'example.com',
       locale: 'it',
-      slug: 'idraulica',
+      segments: ['servizi', 'idraulica'],
     });
     expect(child?.ancestors).toEqual([{ slug: 'servizi', title: 'Servizi' }]);
 
@@ -187,9 +187,90 @@ describe('getPublishedPageBySlug', () => {
       tenantId,
       domain: 'example.com',
       locale: 'it',
-      slug: 'servizi',
+      segments: ['servizi'],
     });
     expect(root?.ancestors).toEqual([]);
+  });
+
+  it('disambiguates two pages sharing the same trailing slug under different parents', async () => {
+    const deps = setup();
+    await seedSite(deps.siteRepository);
+    const branchA = await createAndPublish(deps, {
+      groupId: 'group-a',
+      locale: 'it',
+      slug: 'ramo-a',
+      title: 'Ramo A',
+    });
+    const branchB = await createAndPublish(deps, {
+      groupId: 'group-b',
+      locale: 'it',
+      slug: 'ramo-b',
+      title: 'Ramo B',
+    });
+    const childOfA = await createPage(deps, {
+      tenantId,
+      siteId: 'site-1',
+      groupId: 'group-child-a',
+      locale: 'it',
+      slug: 'dettagli',
+      parentId: branchA.id,
+      seoMeta: { title: 'Dettagli A', description: '' },
+      createdBy: 'user-1',
+    });
+    await saveDraft(deps, {
+      tenantId,
+      pageId: childOfA.id,
+      content: [{ type: 'Text', props: { body: 'A' } }],
+      actorUserId: 'user-1',
+    });
+    await publishPage(deps, { tenantId, pageId: childOfA.id });
+    const childOfB = await createPage(deps, {
+      tenantId,
+      siteId: 'site-1',
+      groupId: 'group-child-b',
+      locale: 'it',
+      slug: 'dettagli',
+      parentId: branchB.id,
+      seoMeta: { title: 'Dettagli B', description: '' },
+      createdBy: 'user-1',
+    });
+    await saveDraft(deps, {
+      tenantId,
+      pageId: childOfB.id,
+      content: [{ type: 'Text', props: { body: 'B' } }],
+      actorUserId: 'user-1',
+    });
+    await publishPage(deps, { tenantId, pageId: childOfB.id });
+
+    const foundUnderA = await getPublishedPageBySlug(deps, {
+      tenantId,
+      domain: 'example.com',
+      locale: 'it',
+      segments: ['ramo-a', 'dettagli'],
+    });
+    expect(foundUnderA?.content).toEqual([
+      { type: 'Text', props: { body: 'A' } },
+    ]);
+
+    const foundUnderB = await getPublishedPageBySlug(deps, {
+      tenantId,
+      domain: 'example.com',
+      locale: 'it',
+      segments: ['ramo-b', 'dettagli'],
+    });
+    expect(foundUnderB?.content).toEqual([
+      { type: 'Text', props: { body: 'B' } },
+    ]);
+
+    // The trailing slug alone is ambiguous now — a mismatched leading
+    // segment must not accidentally match the OTHER branch's page.
+    const wrongBranch = await getPublishedPageBySlug(deps, {
+      tenantId,
+      domain: 'example.com',
+      locale: 'it',
+      segments: ['ramo-does-not-exist', 'dettagli'],
+    });
+    expect(wrongBranch).toBeNull();
   });
 
   it('lists every published locale-translation of the page, keyed by group', async () => {
@@ -212,7 +293,7 @@ describe('getPublishedPageBySlug', () => {
       tenantId,
       domain: 'example.com',
       locale: 'it',
-      slug: 'chi-siamo',
+      segments: ['chi-siamo'],
     });
 
     expect(
@@ -247,7 +328,7 @@ describe('getPublishedPageBySlug', () => {
       tenantId,
       domain: 'example.com',
       locale: 'it',
-      slug: 'chi-siamo',
+      segments: ['chi-siamo'],
     });
 
     expect(result?.translations).toEqual([{ locale: 'it', slug: 'chi-siamo' }]);
@@ -274,7 +355,7 @@ describe('getPublishedPageBySlug', () => {
       tenantId,
       domain: 'example.com',
       locale: 'it',
-      slug: 'chi-siamo',
+      segments: ['chi-siamo'],
     });
 
     expect(result?.site).toMatchObject({
@@ -301,7 +382,7 @@ describe('getPublishedPageBySlug', () => {
       tenantId,
       domain: 'example.com',
       locale: 'it',
-      slug: 'chi-siamo',
+      segments: ['chi-siamo'],
     });
 
     expect(result?.site.searchEngineIndexingEnabled).toBe(true);
@@ -340,7 +421,7 @@ describe('getPublishedPageBySlug', () => {
       tenantId,
       domain: 'example.com',
       locale: 'it',
-      slug: 'chi-siamo',
+      segments: ['chi-siamo'],
     });
 
     expect(result?.content).toEqual([
@@ -365,7 +446,7 @@ describe('getPublishedPageBySlug', () => {
       tenantId,
       domain: 'example.com',
       locale: 'it',
-      slug: 'bozza',
+      segments: ['bozza'],
     });
 
     expect(result).toBeNull();
@@ -379,7 +460,7 @@ describe('getPublishedPageBySlug', () => {
       tenantId,
       domain: 'nobody-has-this.test',
       locale: 'it',
-      slug: 'chi-siamo',
+      segments: ['chi-siamo'],
     });
 
     expect(result).toBeNull();
@@ -393,7 +474,7 @@ describe('getPublishedPageBySlug', () => {
       tenantId,
       domain: 'example.com',
       locale: 'it',
-      slug: 'non-esiste',
+      segments: ['non-esiste'],
     });
 
     expect(result).toBeNull();
@@ -416,7 +497,7 @@ describe('getPublishedPageBySlug', () => {
       tenantId,
       domain: 'example.com',
       locale: 'en',
-      slug: 'chi-siamo',
+      segments: ['chi-siamo'],
     });
 
     expect(result).toBeNull();
@@ -456,7 +537,7 @@ describe('getPublishedPageBySlug', () => {
       tenantId,
       domain: 'example.com',
       locale: 'it',
-      slug: 'chi-siamo',
+      segments: ['chi-siamo'],
     });
 
     expect(result?.header).toEqual([{ type: 'Header', props: {} }]);
@@ -489,7 +570,7 @@ describe('getPublishedPageBySlug', () => {
       tenantId,
       domain: 'example.com',
       locale: 'it',
-      slug: 'chi-siamo',
+      segments: ['chi-siamo'],
     });
 
     expect(result?.headerSticky).toBe(true);
@@ -519,7 +600,7 @@ describe('getPublishedPageBySlug', () => {
       tenantId,
       domain: 'example.com',
       locale: 'it',
-      slug: 'chi-siamo',
+      segments: ['chi-siamo'],
     });
 
     expect(result?.header).toBeNull();
@@ -539,7 +620,7 @@ describe('getPublishedPageBySlug', () => {
       tenantId,
       domain: 'example.com',
       locale: 'it',
-      slug: 'chi-siamo',
+      segments: ['chi-siamo'],
     });
 
     expect(result?.header).toBeNull();

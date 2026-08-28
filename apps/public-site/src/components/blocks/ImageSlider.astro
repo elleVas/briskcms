@@ -59,26 +59,13 @@ const i18n = new Translator(locale);
 <script>
   // Native CSS scroll-snap already makes this swipeable/scrollable with no
   // JS at all — the prev/next buttons are a progressive-enhancement layer
-  // on top (scrollBy one track width), not the only way to move it.
-  document
-    .querySelectorAll<HTMLDivElement>('.brisk-slider')
-    .forEach((slider) => {
-      const track = slider.querySelector<HTMLDivElement>(
-        '.brisk-slider__track',
-      );
-      if (!track) return;
-
-      const scrollByOneSlide = (direction: 1 | -1) => {
-        track.scrollBy({ left: direction * track.clientWidth, behavior: 'smooth' });
-      };
-
-      slider
-        .querySelector('.brisk-slider__nav--prev')
-        ?.addEventListener('click', () => scrollByOneSlide(-1));
-      slider
-        .querySelector('.brisk-slider__nav--next')
-        ?.addEventListener('click', () => scrollByOneSlide(1));
-    });
+  // on top (scrollBy one track width), not the only way to move it. Logic
+  // lives in a plain importable module (not inline here) so it can also
+  // be re-run after a live canvas insert/patch — see
+  // block-behaviors/run-block-behaviors-in-subtree.ts.
+  import { imageSliderBehaviors } from '../../lib/block-behaviors/image-slider.js';
+  import { runBlockBehaviors } from '../../lib/block-behaviors/run-block-behaviors.js';
+  runBlockBehaviors(document, imageSliderBehaviors);
 </script>
 
 <style>

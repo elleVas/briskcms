@@ -9,10 +9,11 @@ import {
   type PublishedSite,
 } from '@brisk/shared-types';
 
-/** Dove mandare il visitatore quando (locale, slug) non ha una pagina pubblicata — vedi resolveUntranslatedPageFallback lato applicazione. */
+/** Dove mandare il visitatore quando (locale, path) non ha una pagina pubblicata — vedi resolveUntranslatedPageFallback lato applicazione. */
 export interface UntranslatedPageFallbackTargetDto {
   locale: string;
-  slug: string;
+  /** Stesso percorso a segmenti dell'input, sotto `locale` — vedi resolvePageByPath. */
+  segments: string[];
 }
 
 export type PublishedPageLookupResult =
@@ -72,9 +73,13 @@ const timedFetcher = new TimedFetcher();
 export async function getPublishedPageBySlug(
   domain: string,
   locale: string,
-  slug: string,
+  segments: string[],
 ): Promise<PublishedPageLookupResult> {
-  const params = new URLSearchParams({ domain, locale, slug });
+  const params = new URLSearchParams({
+    domain,
+    locale,
+    path: segments.join('/'),
+  });
   const res = await timedFetcher.fetch(
     `${apiUrl()}/public/pages/by-slug?${params.toString()}`,
   );

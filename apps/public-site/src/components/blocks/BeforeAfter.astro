@@ -61,16 +61,12 @@ const i18n = new Translator(locale);
 }
 
 <script>
-  document
-    .querySelectorAll<HTMLDivElement>('.brisk-before-after')
-    .forEach((container) => {
-      const slider = container.querySelector<HTMLInputElement>(
-        '.brisk-before-after__slider',
-      );
-      slider?.addEventListener('input', () => {
-        container.style.setProperty('--reveal', `${slider.value}%`);
-      });
-    });
+  // Logic lives in a plain importable module (not inline here) so it can
+  // also be re-run after a live canvas insert/patch — see
+  // block-behaviors/run-block-behaviors-in-subtree.ts.
+  import { beforeAfterBehaviors } from '../../lib/block-behaviors/before-after.js';
+  import { runBlockBehaviors } from '../../lib/block-behaviors/run-block-behaviors.js';
+  runBlockBehaviors(document, beforeAfterBehaviors);
 </script>
 
 <style>

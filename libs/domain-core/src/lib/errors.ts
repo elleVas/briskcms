@@ -12,10 +12,10 @@ export class PageVersionNotFoundError extends Error {
   }
 }
 
-/** A page's (tenant, site, locale, slug) must be unique — see pages_tenant_site_idx sibling constraint in schema.ts. */
+/** A page's (tenant, site, locale, parentId, slug) must be unique, sibling-scoped (WP-style) — see the composite unique constraint + the pages_root_slug_unique partial index (root-level pages only) in schema.ts. */
 export class PageSlugAlreadyExistsError extends Error {
   constructor(slug: string) {
-    super(`A page with slug "${slug}" already exists for this site`);
+    super(`A page with slug "${slug}" already exists under this parent`);
     this.name = 'PageSlugAlreadyExistsError';
   }
 }

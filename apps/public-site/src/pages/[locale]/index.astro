@@ -1,16 +1,17 @@
 ---
 import { getPublishedPageBySlug } from '../../lib/public-api-client.js';
-import { localePath } from '../../lib/locale-path.js';
+import { localePathFromAncestors } from '../../lib/locale-path.js';
 import PublicPageContent from '../../components/PublicPageContent.astro';
 
 export const prerender = false;
 
-// A locale's own root (e.g. "/it/") answers whichever page is slugged
-// "home" within that locale, by convention (docs/adr/0017) — same as the
-// pre-multilingua single-locale "/" did.
+// A locale's own root (e.g. "/it/") answers whichever ROOT-level page is
+// slugged "home" within that locale, by convention (docs/adr/0017) — same
+// as the pre-multilingua single-locale "/" did. Always a single segment:
+// "home" is never nested under another page.
 const { locale } = Astro.params;
 const result = locale
-  ? await getPublishedPageBySlug(Astro.url.hostname, locale, 'home')
+  ? await getPublishedPageBySlug(Astro.url.hostname, locale, ['home'])
   : null;
 
 // Same fallback promise as [...slug].astro — an enabled locale with no
@@ -18,8 +19,11 @@ const result = locale
 // 'redirect-to-default'.
 if (result && !result.found && result.fallback) {
   return Astro.redirect(
-    localePath(result.fallback.locale, result.fallback.slug) +
-      Astro.url.search,
+    localePathFromAncestors(
+      result.fallback.locale,
+      result.fallback.segments.slice(0, -1),
+      result.fallback.segments.at(-1) ?? '',
+    ) + Astro.url.search,
     302,
   );
 }

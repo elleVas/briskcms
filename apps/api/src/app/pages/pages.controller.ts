@@ -147,6 +147,7 @@ export class PagesController {
     @Query('siteId') siteId: string,
     @Query('locale') locale: string,
     @Query('slug') slug: string,
+    @Query('parentId') parentId?: string,
   ) {
     const page = await getPageBySlug(
       { pageRepository: this.pageRepository },
@@ -154,6 +155,7 @@ export class PagesController {
         tenantId: this.tenantContext.getCurrentTenantId(),
         siteId,
         locale,
+        parentId: parentId ?? null,
         slug,
       },
     );

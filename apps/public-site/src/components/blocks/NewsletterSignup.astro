@@ -74,14 +74,14 @@ const turnstileSiteKey = process.env['TURNSTILE_SITE_KEY'] ?? '';
   }
 </div>
 
-{
-  // Same reasoning as Form.astro's own script tag — Astro dedupes an
-  // identical external <script src> across multiple blocks on one page,
-  // so this is safe even alongside a Form block that also loads it.
-  turnstileSiteKey && (
-    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer />
-  )
-}
+<script>
+  // Turnstile rendered explicitly, not via its own auto-scan — see
+  // block-behaviors/turnstile.ts for why (and for the same reasoning
+  // Form.astro's own widget uses).
+  import { turnstileBehaviors } from '../../lib/block-behaviors/turnstile.js';
+  import { runBlockBehaviors } from '../../lib/block-behaviors/run-block-behaviors.js';
+  runBlockBehaviors(document, turnstileBehaviors);
+</script>
 
 <style>
   .brisk-newsletter-signup {

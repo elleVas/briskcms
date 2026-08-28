@@ -62,18 +62,12 @@ const i18n = new Translator(locale);
   // No framework here on purpose (docs/adr/0007) — a plain click listener
   // is all a dismiss button needs. Single fixed key, no per-message
   // versioning (see promoBarPropsSchema's own comment for the trade-off).
-  document.querySelectorAll<HTMLElement>('.brisk-promo-bar').forEach((bar) => {
-    const closeButton = bar.querySelector<HTMLButtonElement>('.brisk-promo-bar__close');
-    closeButton?.addEventListener('click', () => {
-      try {
-        localStorage.setItem('brisk-promo-bar-dismissed', 'true');
-      } catch {
-        // Storage non disponibile (anteprima sandboxata) — la chiusura
-        // resta comunque visiva per questo caricamento, vedi sotto.
-      }
-      bar.style.display = 'none';
-    });
-  });
+  // Logic lives in a plain importable module (not inline here) so it can
+  // also be re-run after a live canvas insert/patch — see
+  // block-behaviors/run-block-behaviors-in-subtree.ts.
+  import { promoBarBehaviors } from '../../lib/block-behaviors/promo-bar.js';
+  import { runBlockBehaviors } from '../../lib/block-behaviors/run-block-behaviors.js';
+  runBlockBehaviors(document, promoBarBehaviors);
 </script>
 
 <style>
