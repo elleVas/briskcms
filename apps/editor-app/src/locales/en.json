@@ -110,7 +110,8 @@
     },
     "deleteDialog": {
       "title": "Delete this page?",
-      "description": "\"{{name}}\" and all of its versions will be permanently deleted. This action cannot be undone."
+      "description": "\"{{name}}\" and all of its versions will be permanently deleted. This action cannot be undone.",
+      "descriptionWithTranslations": "\"{{name}}\" and all of its versions will be permanently deleted. This page is the site's default locale and has translations in other languages ({{locales}}): after deletion, visitors requesting a language with no translation will no longer be redirected here automatically. This action cannot be undone."
     },
     "editor": {
       "backToList": "Pages",

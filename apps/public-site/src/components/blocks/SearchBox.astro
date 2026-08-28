@@ -1,6 +1,7 @@
 ---
 import type { SearchBoxProps } from '@brisk/shared-types';
 import { localePath } from '../../lib/locale-path.js';
+import { t } from '../../lib/i18n.js';
 
 interface Props extends SearchBoxProps {
   locale: string;
@@ -20,7 +21,7 @@ const { placeholder, visibility, locale } = Astro.props;
   role="search"
 >
   <input type="search" name="q" placeholder={placeholder} aria-label={placeholder} />
-  <button type="submit">Cerca</button>
+  <button type="submit">{t(locale, 'searchBox.submit')}</button>
 </form>
 
 <style>

@@ -1,9 +1,10 @@
 ---
 import type { ImageProps } from '@brisk/shared-types';
+import { t } from '../../lib/i18n.js';
 
-type Props = ImageProps;
+type Props = ImageProps & { locale: string };
 
-const { media, alt, caption } = Astro.props;
+const { media, alt, caption, locale } = Astro.props;
 ---
 
 {
@@ -34,7 +35,7 @@ const { media, alt, caption } = Astro.props;
       {caption && <figcaption data-brisk-field="caption">{caption}</figcaption>}
     </figure>
   ) : (
-    <p>Nessuna immagine selezionata.</p>
+    <p>{t(locale, 'image.empty')}</p>
   )
 }
 

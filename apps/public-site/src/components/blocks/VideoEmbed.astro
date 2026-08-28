@@ -2,10 +2,11 @@
 import type { VideoEmbedProps } from '@brisk/shared-types';
 import ConsentGatedEmbed from '../ConsentGatedEmbed.astro';
 import { parseVideoEmbedUrl } from '../../lib/video-embed.js';
+import { t } from '../../lib/i18n.js';
 
-type Props = VideoEmbedProps;
+type Props = VideoEmbedProps & { locale: string };
 
-const { url } = Astro.props;
+const { url, locale } = Astro.props;
 const parsed = url ? parseVideoEmbedUrl(url) : null;
 ---
 
@@ -13,12 +14,12 @@ const parsed = url ? parseVideoEmbedUrl(url) : null;
   parsed && (
     <ConsentGatedEmbed
       src={parsed.embedUrl}
-      title="Video"
-      buttonLabel={`Carica il video (${parsed.provider === 'youtube' ? 'YouTube' : 'Vimeo'})`}
+      title={t(locale, 'videoEmbed.title')}
+      buttonLabel={t(locale, 'videoEmbed.buttonLabel', {
+        provider: parsed.provider === 'youtube' ? 'YouTube' : 'Vimeo',
+      })}
     />
   )
 }
-{!url && <p>Nessun video selezionato.</p>}
-{url && !parsed && (
-  <p>URL video non riconosciuto (sono supportati solo link YouTube o Vimeo).</p>
-)}
+{!url && <p>{t(locale, 'videoEmbed.empty')}</p>}
+{url && !parsed && <p>{t(locale, 'videoEmbed.unrecognizedUrl')}</p>}

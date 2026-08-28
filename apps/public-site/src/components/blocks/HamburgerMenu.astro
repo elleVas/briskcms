@@ -1,9 +1,12 @@
 ---
 import type { HamburgerMenuProps } from '@brisk/shared-types';
+import { t } from '../../lib/i18n.js';
 
-type Props = HamburgerMenuProps;
+type Props = HamburgerMenuProps & { locale: string };
 
-const { position, visibility } = Astro.props;
+const { position, visibility, locale } = Astro.props;
+const openLabel = t(locale, 'hamburgerMenu.open');
+const closeLabel = t(locale, 'hamburgerMenu.close');
 ---
 
 <div
@@ -19,7 +22,9 @@ const { position, visibility } = Astro.props;
     class="brisk-hamburger__toggle"
     aria-expanded="false"
     aria-controls="brisk-hamburger__panel"
-    aria-label="Apri il menu"
+    aria-label={openLabel}
+    data-label-open={openLabel}
+    data-label-close={closeLabel}
   >
     <span class="brisk-hamburger__bar"></span>
   </button>
@@ -41,7 +46,10 @@ const { position, visibility } = Astro.props;
     function setOpen(isOpen: boolean) {
       root.classList.toggle('brisk-hamburger--open', isOpen);
       toggle?.setAttribute('aria-expanded', String(isOpen));
-      toggle?.setAttribute('aria-label', isOpen ? 'Chiudi il menu' : 'Apri il menu');
+      const label = isOpen
+        ? toggle?.dataset.labelClose
+        : toggle?.dataset.labelOpen;
+      if (label) toggle?.setAttribute('aria-label', label);
     }
 
     toggle.addEventListener('click', () => {

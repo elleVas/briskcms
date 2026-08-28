@@ -4,6 +4,7 @@ import type {
   PublishedPageAncestor,
 } from '@brisk/shared-types';
 import { localePath, localePathFromAncestors } from '../../lib/locale-path.js';
+import { t } from '../../lib/i18n.js';
 
 interface Props extends BreadcrumbProps {
   locale: string;
@@ -43,7 +44,7 @@ const crumbs: Crumb[] = [
     { 'brisk-visibility-desktop-only': visibility === 'desktop-only' },
     { 'brisk-visibility-mobile-only': visibility === 'mobile-only' },
   ]}
-  aria-label="Breadcrumb"
+  aria-label={t(locale, 'breadcrumb.label')}
 >
   <ol>
     {

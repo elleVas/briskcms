@@ -1,14 +1,24 @@
 ---
+import { t } from '../lib/i18n.js';
+
+// Same reasoning as NotFound.astro: rendered by Astro's own top-level
+// 500.astro, which has no locale context at all — an unhandled SSR
+// exception can happen before the request's locale was even parsed.
+interface Props {
+  locale?: string;
+}
+
+const { locale } = Astro.props;
 ---
 
-<html lang="it">
+<html lang={locale ?? 'it'}>
 	<head>
 		<meta charset="utf-8" />
-		<title>Errore del server</title>
+		<title>{t(locale ?? 'it', 'serverError.title')}</title>
 		<meta name="viewport" content="width=device-width" />
 	</head>
 	<body>
 		<h1>500</h1>
-		<p>Si è verificato un errore imprevisto. Riprova tra qualche istante.</p>
+		<p>{t(locale ?? 'it', 'serverError.message')}</p>
 	</body>
 </html>

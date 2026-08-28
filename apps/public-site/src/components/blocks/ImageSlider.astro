@@ -1,7 +1,8 @@
 ---
 import type { ImageSliderProps, PickedMedia } from '@brisk/shared-types';
+import { t } from '../../lib/i18n.js';
 
-type Props = ImageSliderProps;
+type Props = ImageSliderProps & { locale: string };
 type SliderImage = ImageSliderProps['images'][number];
 
 function isPictured(
@@ -10,7 +11,7 @@ function isPictured(
   return image.media !== null;
 }
 
-const { images } = Astro.props;
+const { images, locale } = Astro.props;
 const pictured = images.filter(isPictured);
 ---
 
@@ -35,14 +36,14 @@ const pictured = images.filter(isPictured);
           <button
             type="button"
             class="brisk-slider__nav brisk-slider__nav--prev"
-            aria-label="Immagine precedente"
+            aria-label={t(locale, 'imageSlider.prev')}
           >
             ‹
           </button>
           <button
             type="button"
             class="brisk-slider__nav brisk-slider__nav--next"
-            aria-label="Immagine successiva"
+            aria-label={t(locale, 'imageSlider.next')}
           >
             ›
           </button>
@@ -50,7 +51,7 @@ const pictured = images.filter(isPictured);
       )}
     </div>
   ) : (
-    <p>Nessuna immagine nello slider.</p>
+    <p>{t(locale, 'imageSlider.empty')}</p>
   )
 }
 

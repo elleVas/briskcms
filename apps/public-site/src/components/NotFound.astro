@@ -1,14 +1,26 @@
 ---
+import { t } from '../lib/i18n.js';
+
+// Rendered with no locale context in two cases: Astro's own top-level
+// 404.astro (a truly locale-less URL, no [locale] segment at all) and
+// search.astro when the requested locale/site couldn't be resolved —
+// t()'s own fallback-to-Italian covers both without this component
+// needing to guess.
+interface Props {
+  locale?: string;
+}
+
+const { locale } = Astro.props;
 ---
 
-<html lang="it">
+<html lang={locale ?? 'it'}>
 	<head>
 		<meta charset="utf-8" />
-		<title>Pagina non trovata</title>
+		<title>{t(locale ?? 'it', 'notFound.title')}</title>
 		<meta name="viewport" content="width=device-width" />
 	</head>
 	<body>
 		<h1>404</h1>
-		<p>La pagina che cerchi non esiste.</p>
+		<p>{t(locale ?? 'it', 'notFound.message')}</p>
 	</body>
 </html>

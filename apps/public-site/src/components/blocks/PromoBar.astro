@@ -5,11 +5,15 @@ import {
   type PromoBarProps,
 } from '@brisk/shared-types';
 import { localePath } from '../../lib/locale-path.js';
+import { t } from '../../lib/i18n.js';
 import { PROMO_BAR_DISMISS_SCRIPT } from './promo-bar-dismiss-script.js';
 
-type Props = PromoBarProps & { styleOverride?: BlockStyleOverride };
+type Props = PromoBarProps & {
+  styleOverride?: BlockStyleOverride;
+  locale: string;
+};
 
-const { message, linkType, page, url, visibility, styleOverride } =
+const { message, linkType, page, url, visibility, styleOverride, locale } =
   Astro.props;
 const href = linkType === 'page' && page ? localePath(page.locale, page.slug) : url;
 const hasLink = linkType === 'page' ? Boolean(page) : Boolean(url);
@@ -44,7 +48,13 @@ const instanceStyle = buildBlockInstanceStyle(styleOverride);
       <span data-brisk-field="message">{message}</span>
     )}
   </p>
-  <button type="button" class="brisk-promo-bar__close" aria-label="Chiudi">×</button>
+  <button
+    type="button"
+    class="brisk-promo-bar__close"
+    aria-label={t(locale, 'promoBar.close')}
+  >
+    ×
+  </button>
 </div>
 
 <script>

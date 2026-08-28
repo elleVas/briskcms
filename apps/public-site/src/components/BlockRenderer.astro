@@ -233,10 +233,14 @@ const wrapperProps = editable
     />
   )
 }
-{block.type === 'Image' && <Image {...imagePropsSchema.parse(block.props)} />}
+{
+  block.type === 'Image' && (
+    <Image {...imagePropsSchema.parse(block.props)} locale={locale} />
+  )
+}
 {
   block.type === 'Gallery' && (
-    <Gallery {...galleryPropsSchema.parse(block.props)} />
+    <Gallery {...galleryPropsSchema.parse(block.props)} locale={locale} />
   )
 }
 {
@@ -244,6 +248,7 @@ const wrapperProps = editable
     <Form
       {...formBlockPropsSchema.parse(block.props)}
       styleOverride={block.styleOverride}
+      locale={locale}
     />
   )
 }
@@ -268,6 +273,7 @@ const wrapperProps = editable
     <Countdown
       {...countdownPropsSchema.parse(block.props)}
       styleOverride={block.styleOverride}
+      locale={locale}
     />
   )
 }
@@ -333,7 +339,10 @@ const wrapperProps = editable
 }
 {
   block.type === 'HamburgerMenu' && (
-    <HamburgerMenu {...hamburgerMenuPropsSchema.parse(block.props)}>
+    <HamburgerMenu
+      {...hamburgerMenuPropsSchema.parse(block.props)}
+      locale={locale}
+    >
       {block.children?.map((child) => (
         <Astro.self
           block={child}
@@ -421,17 +430,24 @@ const wrapperProps = editable
     <PromoBar
       {...promoBarPropsSchema.parse(block.props)}
       styleOverride={block.styleOverride}
+      locale={locale}
     />
   )
 }
 {
   block.type === 'BackToTop' && (
-    <BackToTop {...backToTopPropsSchema.parse(block.props)} />
+    <BackToTop
+      {...backToTopPropsSchema.parse(block.props)}
+      locale={locale}
+    />
   )
 }
 {
   block.type === 'WhatsAppButton' && (
-    <WhatsAppButton {...whatsAppButtonPropsSchema.parse(block.props)} />
+    <WhatsAppButton
+      {...whatsAppButtonPropsSchema.parse(block.props)}
+      locale={locale}
+    />
   )
 }
 {
@@ -539,22 +555,31 @@ const wrapperProps = editable
 }
 {
   block.type === 'VideoEmbed' && (
-    <VideoEmbed {...videoEmbedPropsSchema.parse(block.props)} />
+    <VideoEmbed
+      {...videoEmbedPropsSchema.parse(block.props)}
+      locale={locale}
+    />
   )
 }
 {
   block.type === 'MapEmbed' && (
-    <MapEmbed {...mapEmbedPropsSchema.parse(block.props)} />
+    <MapEmbed {...mapEmbedPropsSchema.parse(block.props)} locale={locale} />
   )
 }
 {
   block.type === 'ImageSlider' && (
-    <ImageSlider {...imageSliderPropsSchema.parse(block.props)} />
+    <ImageSlider
+      {...imageSliderPropsSchema.parse(block.props)}
+      locale={locale}
+    />
   )
 }
 {
   block.type === 'BeforeAfter' && (
-    <BeforeAfter {...beforeAfterPropsSchema.parse(block.props)} />
+    <BeforeAfter
+      {...beforeAfterPropsSchema.parse(block.props)}
+      locale={locale}
+    />
   )
 }
 {
@@ -562,12 +587,13 @@ const wrapperProps = editable
     <LogoStrip
       {...logoStripPropsSchema.parse(block.props)}
       styleOverride={block.styleOverride}
+      locale={locale}
     />
   )
 }
 {
   block.type === 'Testimonials' && (
-    <Testimonials {...testimonialsPropsSchema.parse(block.props)} editable={editable} hasChildren={hasChildren} styleOverride={block.styleOverride}>
+    <Testimonials {...testimonialsPropsSchema.parse(block.props)} editable={editable} hasChildren={hasChildren} styleOverride={block.styleOverride} locale={locale}>
       {block.children?.map((child) => (
         <Astro.self
           block={child}
@@ -689,7 +715,10 @@ const wrapperProps = editable
 }
 {
   block.type === 'NewsletterSignup' && (
-    <NewsletterSignup {...newsletterSignupPropsSchema.parse(block.props)} />
+    <NewsletterSignup
+      {...newsletterSignupPropsSchema.parse(block.props)}
+      locale={locale}
+    />
   )
 }
 </Wrapper>

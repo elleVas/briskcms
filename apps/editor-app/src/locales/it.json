@@ -110,7 +110,8 @@
     },
     "deleteDialog": {
       "title": "Eliminare questa pagina?",
-      "description": "\"{{name}}\" e tutte le sue versioni verranno eliminate definitivamente. L'azione non può essere annullata."
+      "description": "\"{{name}}\" e tutte le sue versioni verranno eliminate definitivamente. L'azione non può essere annullata.",
+      "descriptionWithTranslations": "\"{{name}}\" e tutte le sue versioni verranno eliminate definitivamente. Questa pagina è nella lingua predefinita del sito e ha traduzioni in altre lingue ({{locales}}): dopo l'eliminazione, i visitatori che richiedono una lingua senza traduzione non verranno più reindirizzati qui automaticamente. L'azione non può essere annullata."
     },
     "editor": {
       "backToList": "Pagine",
