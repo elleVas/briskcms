@@ -88,7 +88,7 @@ export class PublicPagesController {
         tenantId: this.defaultTenantId,
         domain: query.domain,
         locale: query.locale,
-        slug: query.slug,
+        segments: query.path,
       },
     );
     // A draft page and a page that doesn't exist get the identical 404 —
@@ -111,7 +111,7 @@ export class PublicPagesController {
           tenantId: this.defaultTenantId,
           domain: query.domain,
           locale: query.locale,
-          slug: query.slug,
+          segments: query.path,
         },
       );
       throw new NotFoundException({ fallback });

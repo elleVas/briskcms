@@ -64,10 +64,11 @@ export class InMemoryPageRepository implements PageRepositoryPort {
     return page && page.tenantId === tenantId ? page : null;
   }
 
-  async findBySlug(
+  async findByParentAndSlug(
     tenantId: string,
     siteId: string,
     locale: string,
+    parentId: string | null,
     slug: string,
   ): Promise<Page | null> {
     for (const page of this.pages.values()) {
@@ -75,6 +76,7 @@ export class InMemoryPageRepository implements PageRepositoryPort {
         page.tenantId === tenantId &&
         page.siteId === siteId &&
         page.locale === locale &&
+        page.parentId === parentId &&
         page.slug === slug
       ) {
         return page;

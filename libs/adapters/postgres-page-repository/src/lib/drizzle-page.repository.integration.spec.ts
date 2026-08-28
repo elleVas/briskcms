@@ -107,25 +107,66 @@ describe('DrizzlePageRepository (integration)', () => {
     expect(found?.toProps()).not.toHaveProperty('searchText');
   });
 
-  it('findBySlug scopes by tenant, site, locale and slug', async () => {
+  it('findByParentAndSlug scopes by tenant, site, locale, parent and slug', async () => {
     const page = buildPage();
     await pageRepository.save(page);
 
-    const found = await pageRepository.findBySlug(
+    const found = await pageRepository.findByParentAndSlug(
       tenantAId,
       siteAId,
       page.locale,
+      page.parentId,
       page.slug,
     );
     expect(found?.id).toBe(page.id);
 
-    const foundFromOtherTenant = await pageRepository.findBySlug(
+    const foundFromOtherTenant = await pageRepository.findByParentAndSlug(
       tenantBId,
       siteAId,
       page.locale,
+      page.parentId,
       page.slug,
     );
     expect(foundFromOtherTenant).toBeNull();
+  });
+
+  it('findByParentAndSlug does not match a page with the same slug under a different parent', async () => {
+    const parentA = buildPage();
+    const parentB = buildPage();
+    await pageRepository.save(parentA);
+    await pageRepository.save(parentB);
+
+    const childOfA = buildPage({ slug: 'same-slug', parentId: parentA.id });
+    const childOfB = buildPage({ slug: 'same-slug', parentId: parentB.id });
+    await pageRepository.save(childOfA);
+    await pageRepository.save(childOfB);
+
+    const foundUnderA = await pageRepository.findByParentAndSlug(
+      tenantAId,
+      siteAId,
+      'it',
+      parentA.id,
+      'same-slug',
+    );
+    expect(foundUnderA?.id).toBe(childOfA.id);
+
+    const foundUnderB = await pageRepository.findByParentAndSlug(
+      tenantAId,
+      siteAId,
+      'it',
+      parentB.id,
+      'same-slug',
+    );
+    expect(foundUnderB?.id).toBe(childOfB.id);
+
+    const foundAtRoot = await pageRepository.findByParentAndSlug(
+      tenantAId,
+      siteAId,
+      'it',
+      null,
+      'same-slug',
+    );
+    expect(foundAtRoot).toBeNull();
   });
 
   it('listBySite scopes by tenant and site, most recently updated first', async () => {
@@ -352,7 +393,7 @@ describe('DrizzlePageRepository (integration)', () => {
   // the right domain error at the DB level, not a raw PostgresError. This
   // simulates the race by skipping the use-case's own check entirely and
   // saving two conflicting pages directly.
-  it('save() rejects a second page with the same tenant/site/locale/slug with PageSlugAlreadyExistsError', async () => {
+  it('save() rejects a second ROOT-level page with the same tenant/site/locale/slug with PageSlugAlreadyExistsError', async () => {
     const first = buildPage({ slug: 'stessa-slug' });
     await pageRepository.save(first);
 
@@ -360,6 +401,32 @@ describe('DrizzlePageRepository (integration)', () => {
     await expect(pageRepository.save(second)).rejects.toThrow(
       PageSlugAlreadyExistsError,
     );
+  });
+
+  it('save() rejects a second page with the same slug under the SAME non-root parent with PageSlugAlreadyExistsError', async () => {
+    const parent = buildPage();
+    await pageRepository.save(parent);
+
+    const first = buildPage({ slug: 'stessa-slug', parentId: parent.id });
+    await pageRepository.save(first);
+
+    const second = buildPage({ slug: 'stessa-slug', parentId: parent.id });
+    await expect(pageRepository.save(second)).rejects.toThrow(
+      PageSlugAlreadyExistsError,
+    );
+  });
+
+  it('save() allows the same slug for two pages under DIFFERENT parents (sibling-scoped uniqueness)', async () => {
+    const parentA = buildPage();
+    const parentB = buildPage();
+    await pageRepository.save(parentA);
+    await pageRepository.save(parentB);
+
+    const childOfA = buildPage({ slug: 'stessa-slug', parentId: parentA.id });
+    const childOfB = buildPage({ slug: 'stessa-slug', parentId: parentB.id });
+    await pageRepository.save(childOfA);
+
+    await expect(pageRepository.save(childOfB)).resolves.toBeUndefined();
   });
 
   it('save() rejects a second page in the same tenant/site/group with an already-used locale with PageTranslationAlreadyExistsError', async () => {

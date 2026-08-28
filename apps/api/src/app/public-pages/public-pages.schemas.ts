@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { pageSlugSchema } from '../pages/pages.schemas.js';
+import { pagePathSchema } from '../pages/pages.schemas.js';
 
 // Rejects anything that isn't a plausible hostname before it ever reaches a
 // query — a malformed Host header shouldn't get as far as the database.
@@ -20,7 +20,7 @@ export const publicPageBySlugQuerySchema = z.object({
   // Caller-supplied (from the URL's locale prefix, docs/adr/0017) rather
   // than always resolved to the site's own defaultLocale.
   locale: z.string().min(2),
-  slug: pageSlugSchema,
+  path: pagePathSchema,
 });
 export type PublicPageBySlugQuery = z.infer<typeof publicPageBySlugQuerySchema>;
 

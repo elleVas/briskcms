@@ -6,7 +6,7 @@ import type {
   SiteThemeBlockStylesPort,
 } from '@brisk/ports';
 import { resolveSiteChrome } from './resolve-site-chrome.js';
-import { resolvePageAncestors } from './resolve-page-ancestors.js';
+import { resolvePageByPath } from './resolve-page-by-path.js';
 
 export type { PublishedPage };
 
@@ -21,7 +21,8 @@ export interface GetPublishedPageBySlugInput {
   tenantId: string;
   domain: string;
   locale: string;
-  slug: string;
+  /** Full URL path, root to leaf (e.g. ['servizi', 'idraulica']) — sibling-scoped slugs mean the trailing segment alone is ambiguous, see resolvePageByPath. */
+  segments: string[];
 }
 
 /**
@@ -51,20 +52,24 @@ export async function getPublishedPageBySlug(
     return null;
   }
 
-  const page = await deps.pageRepository.findBySlug(
+  const resolved = await resolvePageByPath(
+    deps.pageRepository,
     input.tenantId,
     site.id,
     input.locale,
-    input.slug,
+    input.segments,
   );
-  if (!page || page.status !== 'published' || !page.publishedContent) {
+  if (!resolved) {
+    return null;
+  }
+  const { page, ancestors } = resolved;
+  if (page.status !== 'published' || !page.publishedContent) {
     return null;
   }
 
-  const [siblings, chrome, ancestors] = await Promise.all([
+  const [siblings, chrome] = await Promise.all([
     deps.pageRepository.listByGroup(input.tenantId, site.id, page.groupId),
     resolveSiteChrome(deps, input.tenantId, site, input.locale),
-    resolvePageAncestors(deps.pageRepository, input.tenantId, page.parentId),
   ]);
   const translations = siblings
     .filter((sibling) => sibling.status === 'published')

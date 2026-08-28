@@ -11,6 +11,7 @@ import {
   text,
   timestamp,
   unique,
+  uniqueIndex,
   uuid,
   type AnyPgColumn,
 } from 'drizzle-orm/pg-core';
@@ -219,7 +220,23 @@ export const pages = pgTable(
   },
   (table) => [
     unique().on(table.tenantId, table.siteId, table.groupId, table.locale),
-    unique().on(table.tenantId, table.siteId, table.locale, table.slug),
+    // Sibling-scoped (WP-style): the same slug can exist twice under
+    // different parents (docs/adr — page hierarchy slug scoping). This
+    // composite alone does NOT stop two ROOT-level pages (parent_id NULL)
+    // from sharing a slug — Postgres treats NULL <> NULL, so a plain
+    // unique constraint including a nullable column never fires when
+    // that column is null on both rows. The partial index right below
+    // closes exactly that gap.
+    unique().on(
+      table.tenantId,
+      table.siteId,
+      table.locale,
+      table.parentId,
+      table.slug,
+    ),
+    uniqueIndex('pages_root_slug_unique')
+      .on(table.tenantId, table.siteId, table.locale, table.slug)
+      .where(sql`${table.parentId} is null`),
     check('pages_status_check', sql`${table.status} in ('draft', 'published')`),
     index('pages_tenant_site_idx').on(table.tenantId, table.siteId),
   ],

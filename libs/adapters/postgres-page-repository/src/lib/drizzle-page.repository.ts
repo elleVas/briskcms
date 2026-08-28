@@ -1,4 +1,4 @@
-import { and, count, desc, eq, sql } from 'drizzle-orm';
+import { and, count, desc, eq, isNull, sql } from 'drizzle-orm';
 import {
   Page,
   PageSlugAlreadyExistsError,
@@ -22,7 +22,17 @@ import {
 } from '@brisk/postgres-db';
 import { savePageVersionTx } from './save-page-version-tx.js';
 
-const SLUG_UNIQUE_CONSTRAINT = 'pages_tenant_id_site_id_locale_slug_unique';
+// Sibling-scoped slug uniqueness needs two DB constraints, not one (see
+// schema.ts's own comment): the composite unique (tenant, site, locale,
+// parent_id, slug) catches a collision under the same non-null parent, but
+// Postgres treats NULL <> NULL, so it never fires between two ROOT-level
+// pages sharing a slug — pages_root_slug_unique (a partial unique index,
+// WHERE parent_id IS NULL) is what catches that case specifically. Both
+// map to the same domain error; the caller doesn't need to know which one
+// fired.
+const SLUG_UNIQUE_CONSTRAINT =
+  'pages_tenant_id_site_id_locale_parent_id_slug_unique';
+const ROOT_SLUG_UNIQUE_CONSTRAINT = 'pages_root_slug_unique';
 const TRANSLATION_UNIQUE_CONSTRAINT =
   'pages_tenant_id_site_id_group_id_locale_unique';
 
@@ -133,7 +143,10 @@ export class DrizzlePageRepository
     try {
       return await fn();
     } catch (error) {
-      if (isUniqueViolation(error, SLUG_UNIQUE_CONSTRAINT)) {
+      if (
+        isUniqueViolation(error, SLUG_UNIQUE_CONSTRAINT) ||
+        isUniqueViolation(error, ROOT_SLUG_UNIQUE_CONSTRAINT)
+      ) {
         throw new PageSlugAlreadyExistsError(row.slug);
       }
       if (isUniqueViolation(error, TRANSLATION_UNIQUE_CONSTRAINT)) {
@@ -143,10 +156,11 @@ export class DrizzlePageRepository
     }
   }
 
-  async findBySlug(
+  async findByParentAndSlug(
     tenantId: string,
     siteId: string,
     locale: string,
+    parentId: string | null,
     slug: string,
   ): Promise<Page | null> {
     const rows = await withTenant(this.db, tenantId, (tx) =>
@@ -158,6 +172,12 @@ export class DrizzlePageRepository
             eq(pages.tenantId, tenantId),
             eq(pages.siteId, siteId),
             eq(pages.locale, locale),
+            // Not `eq(pages.parentId, parentId)`: for a root-level lookup
+            // (parentId === null), SQL's `parent_id = NULL` is always
+            // unknown/false, never a match — `IS NULL` is required.
+            parentId === null
+              ? isNull(pages.parentId)
+              : eq(pages.parentId, parentId),
             eq(pages.slug, slug),
           ),
         )

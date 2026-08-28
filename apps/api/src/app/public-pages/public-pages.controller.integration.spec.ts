@@ -116,7 +116,7 @@ describe('PublicPagesController (integration)', () => {
 
     const res = await request(app.getHttpServer())
       .get('/public/pages/by-slug')
-      .query({ domain, locale: 'it', slug: 'chi-siamo' })
+      .query({ domain, locale: 'it', path: 'chi-siamo' })
       .expect(200);
 
     expect(res.body).toEqual({
@@ -183,7 +183,7 @@ describe('PublicPagesController (integration)', () => {
 
     const res = await request(app.getHttpServer())
       .get('/public/pages/by-slug')
-      .query({ domain, locale: 'it', slug: 'con-header' })
+      .query({ domain, locale: 'it', path: 'con-header' })
       .expect(200);
 
     expect(res.body.header).toEqual([{ type: 'Header', props: {} }]);
@@ -222,7 +222,7 @@ describe('PublicPagesController (integration)', () => {
 
     const res = await request(app.getHttpServer())
       .get('/public/pages/by-slug')
-      .query({ domain, locale: 'it', slug: 'con-header-sticky' })
+      .query({ domain, locale: 'it', path: 'con-header-sticky' })
       .expect(200);
 
     expect(res.body.headerSticky).toBe(true);
@@ -304,14 +304,14 @@ describe('PublicPagesController (integration)', () => {
 
     await request(app.getHttpServer())
       .get('/public/pages/by-slug')
-      .query({ domain, locale: 'it', slug: 'bozza-mai-pubblicata' })
+      .query({ domain, locale: 'it', path: 'bozza-mai-pubblicata' })
       .expect(404);
   });
 
   it('404s for a slug that does not exist', async () => {
     await request(app.getHttpServer())
       .get('/public/pages/by-slug')
-      .query({ domain, locale: 'it', slug: 'non-esiste-proprio' })
+      .query({ domain, locale: 'it', path: 'non-esiste-proprio' })
       .expect(404);
   });
 
@@ -342,12 +342,12 @@ describe('PublicPagesController (integration)', () => {
 
     const res = await request(app.getHttpServer())
       .get('/public/pages/by-slug')
-      .query({ domain, locale: 'en', slug: 'chi-siamo-fallback' })
+      .query({ domain, locale: 'en', path: 'chi-siamo-fallback' })
       .expect(404);
 
     expect(res.body.fallback).toEqual({
       locale: 'it',
-      slug: 'chi-siamo-fallback',
+      segments: ['chi-siamo-fallback'],
     });
   });
 
@@ -357,7 +357,7 @@ describe('PublicPagesController (integration)', () => {
       .query({
         domain,
         locale: 'en',
-        slug: 'davvero-non-esiste-da-nessuna-parte',
+        path: 'davvero-non-esiste-da-nessuna-parte',
       })
       .expect(404);
 
@@ -370,7 +370,7 @@ describe('PublicPagesController (integration)', () => {
       .query({
         domain: 'nobody-owns-this-domain.test',
         locale: 'it',
-        slug: 'chi-siamo',
+        path: 'chi-siamo',
       })
       .expect(404);
   });
@@ -378,7 +378,7 @@ describe('PublicPagesController (integration)', () => {
   it('400s on a malformed domain instead of hitting the database', async () => {
     await request(app.getHttpServer())
       .get('/public/pages/by-slug')
-      .query({ domain: 'not a valid host!!', locale: 'it', slug: 'chi-siamo' })
+      .query({ domain: 'not a valid host!!', locale: 'it', path: 'chi-siamo' })
       .expect(400);
   });
 

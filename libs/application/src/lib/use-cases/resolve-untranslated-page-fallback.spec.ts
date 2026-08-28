@@ -93,10 +93,10 @@ describe('resolveUntranslatedPageFallback', () => {
       tenantId,
       domain: 'example.com',
       locale: 'en',
-      slug: 'chi-siamo',
+      segments: ['chi-siamo'],
     });
 
-    expect(result).toEqual({ locale: 'it', slug: 'chi-siamo' });
+    expect(result).toEqual({ locale: 'it', segments: ['chi-siamo'] });
   });
 
   it("returns null when the site is set to 'not-available'", async () => {
@@ -115,7 +115,7 @@ describe('resolveUntranslatedPageFallback', () => {
       tenantId,
       domain: 'example.com',
       locale: 'en',
-      slug: 'chi-siamo',
+      segments: ['chi-siamo'],
     });
 
     expect(result).toBeNull();
@@ -139,10 +139,10 @@ describe('resolveUntranslatedPageFallback', () => {
       tenantId,
       domain: 'example.com',
       locale: 'fr',
-      slug: 'chi-siamo',
+      segments: ['chi-siamo'],
     });
 
-    expect(result).toEqual({ locale: 'en', slug: 'chi-siamo' });
+    expect(result).toEqual({ locale: 'en', segments: ['chi-siamo'] });
   });
 
   it('returns null when the default-locale page with that slug does not exist either', async () => {
@@ -153,7 +153,7 @@ describe('resolveUntranslatedPageFallback', () => {
       tenantId,
       domain: 'example.com',
       locale: 'en',
-      slug: 'nobody-home',
+      segments: ['nobody-home'],
     });
 
     expect(result).toBeNull();
@@ -176,7 +176,7 @@ describe('resolveUntranslatedPageFallback', () => {
       tenantId,
       domain: 'example.com',
       locale: 'en',
-      slug: 'chi-siamo',
+      segments: ['chi-siamo'],
     });
 
     expect(result).toBeNull();
@@ -190,7 +190,7 @@ describe('resolveUntranslatedPageFallback', () => {
       tenantId,
       domain: 'example.com',
       locale: 'it',
-      slug: 'chi-siamo',
+      segments: ['chi-siamo'],
     });
 
     expect(result).toBeNull();
@@ -203,7 +203,7 @@ describe('resolveUntranslatedPageFallback', () => {
       tenantId,
       domain: 'nobody.example',
       locale: 'en',
-      slug: 'chi-siamo',
+      segments: ['chi-siamo'],
     });
 
     expect(result).toBeNull();

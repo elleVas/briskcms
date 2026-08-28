@@ -40,7 +40,7 @@ describe('PagesController (unit)', () => {
       save: jest.fn(),
       saveWithVersion: jest.fn(),
       findById: jest.fn(),
-      findBySlug: jest.fn(),
+      findByParentAndSlug: jest.fn(),
       listBySite: jest.fn(),
       listByGroup: jest.fn(),
       delete: jest.fn(),
@@ -69,7 +69,7 @@ describe('PagesController (unit)', () => {
   });
 
   it('findBySlug propagates PageNotFoundError, unwrapped', async () => {
-    pageRepository.findBySlug.mockResolvedValue(null);
+    pageRepository.findByParentAndSlug.mockResolvedValue(null);
 
     await expect(
       controller.findBySlug('site-1', 'it', 'missing'),
@@ -117,7 +117,7 @@ describe('PagesController (unit)', () => {
   });
 
   it('create propagates PageSlugAlreadyExistsError, unwrapped', async () => {
-    pageRepository.findBySlug.mockResolvedValue(buildPage());
+    pageRepository.findByParentAndSlug.mockResolvedValue(buildPage());
 
     await expect(
       controller.create({
@@ -153,7 +153,9 @@ describe('PagesController (unit)', () => {
 
   it('duplicate propagates PageSlugAlreadyExistsError, unwrapped', async () => {
     pageRepository.findById.mockResolvedValue(buildPage());
-    pageRepository.findBySlug.mockResolvedValue(buildPage({ id: 'page-2' }));
+    pageRepository.findByParentAndSlug.mockResolvedValue(
+      buildPage({ id: 'page-2' }),
+    );
 
     await expect(
       controller.duplicate('page-1', {
@@ -169,7 +171,7 @@ describe('PagesController (unit)', () => {
       content: [{ type: 'Hero', props: { title: 'Ciao' } }],
     });
     pageRepository.findById.mockResolvedValue(source);
-    pageRepository.findBySlug.mockResolvedValue(null);
+    pageRepository.findByParentAndSlug.mockResolvedValue(null);
 
     const result = await controller.duplicate('page-1', {
       slug: 'home-copia',

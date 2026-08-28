@@ -65,22 +65,33 @@ describe('public-api-client', () => {
     vi.unstubAllGlobals();
   });
 
-  it('fetches the published page by domain, locale, and slug', async () => {
+  it('fetches the published page by domain, locale, and path', async () => {
     vi.mocked(fetch).mockResolvedValue(jsonResponse(samplePage));
 
-    const result = await getPublishedPageBySlug(
-      'example.com',
-      'it',
+    const result = await getPublishedPageBySlug('example.com', 'it', [
       'chi-siamo',
-    );
+    ]);
 
     expect(fetch).toHaveBeenCalledWith(
       expect.stringContaining(
-        '/public/pages/by-slug?domain=example.com&locale=it&slug=chi-siamo',
+        '/public/pages/by-slug?domain=example.com&locale=it&path=chi-siamo',
       ),
       expect.objectContaining({ signal: expect.anything() }),
     );
     expect(result).toEqual({ found: true, page: samplePage });
+  });
+
+  it('fetches the published page by a multi-segment path', async () => {
+    vi.mocked(fetch).mockResolvedValue(jsonResponse(samplePage));
+
+    await getPublishedPageBySlug('example.com', 'it', ['servizi', 'idraulica']);
+
+    expect(fetch).toHaveBeenCalledWith(
+      expect.stringContaining(
+        '/public/pages/by-slug?domain=example.com&locale=it&path=servizi%2Fidraulica',
+      ),
+      expect.objectContaining({ signal: expect.anything() }),
+    );
   });
 
   it('returns found: false with no fallback on a plain 404 instead of throwing', async () => {
@@ -88,29 +99,28 @@ describe('public-api-client', () => {
       jsonResponse({ message: 'Not Found' }, 404),
     );
 
-    const result = await getPublishedPageBySlug(
-      'example.com',
-      'it',
+    const result = await getPublishedPageBySlug('example.com', 'it', [
       'non-esiste',
-    );
+    ]);
 
     expect(result).toEqual({ found: false, fallback: null });
   });
 
-  it('surfaces the fallback locale/slug from a 404 body when the site redirects untranslated pages', async () => {
+  it('surfaces the fallback locale/path from a 404 body when the site redirects untranslated pages', async () => {
     vi.mocked(fetch).mockResolvedValue(
-      jsonResponse({ fallback: { locale: 'it', slug: 'chi-siamo' } }, 404),
+      jsonResponse(
+        { fallback: { locale: 'it', segments: ['chi-siamo'] } },
+        404,
+      ),
     );
 
-    const result = await getPublishedPageBySlug(
-      'example.com',
-      'en',
+    const result = await getPublishedPageBySlug('example.com', 'en', [
       'chi-siamo',
-    );
+    ]);
 
     expect(result).toEqual({
       found: false,
-      fallback: { locale: 'it', slug: 'chi-siamo' },
+      fallback: { locale: 'it', segments: ['chi-siamo'] },
     });
   });
 
@@ -118,7 +128,7 @@ describe('public-api-client', () => {
     vi.mocked(fetch).mockResolvedValue(jsonResponse({ message: 'boom' }, 500));
 
     await expect(
-      getPublishedPageBySlug('example.com', 'it', 'chi-siamo'),
+      getPublishedPageBySlug('example.com', 'it', ['chi-siamo']),
     ).rejects.toThrow('Public pages API error: 500');
   });
 
@@ -355,7 +365,7 @@ describe('public-api-client', () => {
     );
 
     await expect(
-      getPublishedPageBySlug('example.com', 'it', 'chi-siamo'),
+      getPublishedPageBySlug('example.com', 'it', ['chi-siamo']),
     ).rejects.toThrow(/timed out/i);
   });
 
@@ -363,7 +373,7 @@ describe('public-api-client', () => {
     vi.mocked(fetch).mockRejectedValue(new TypeError('Failed to fetch'));
 
     await expect(
-      getPublishedPageBySlug('example.com', 'it', 'chi-siamo'),
+      getPublishedPageBySlug('example.com', 'it', ['chi-siamo']),
     ).rejects.toThrow('Failed to fetch');
   });
 });

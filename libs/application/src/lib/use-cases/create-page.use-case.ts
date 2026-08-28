@@ -23,10 +23,11 @@ export async function createPage(
   deps: CreatePageDeps,
   input: CreatePageInput,
 ): Promise<Page> {
-  const existing = await deps.pageRepository.findBySlug(
+  const existing = await deps.pageRepository.findByParentAndSlug(
     input.tenantId,
     input.siteId,
     input.locale,
+    input.parentId ?? null,
     input.slug,
   );
   if (existing) {

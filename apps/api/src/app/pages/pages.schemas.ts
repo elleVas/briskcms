@@ -13,6 +13,25 @@ export const pageSlugSchema = z
     message: 'slug must be lowercase, alphanumeric, hyphen-separated',
   });
 
+// A full URL path, root to leaf (e.g. "servizi/idraulica") — sibling-scoped
+// slug uniqueness (schema.ts's `pages` unique constraints) means resolving
+// a public page needs the whole path, not just the trailing slug alone
+// (see resolvePageByPath). Each segment validated the same way a single
+// slug is.
+export const pagePathSchema = z
+  .string()
+  .min(1)
+  .transform((path) => path.split('/').filter(Boolean))
+  .refine(
+    (segments) =>
+      segments.length > 0 &&
+      segments.every((segment) => segment === slugify(segment)),
+    {
+      message:
+        'path segments must be lowercase, alphanumeric, hyphen-separated',
+    },
+  );
+
 export const createPageBodySchema = z.object({
   siteId: z.string().uuid(),
   groupId: z.string().uuid(),

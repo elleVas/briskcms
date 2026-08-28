@@ -1,6 +1,6 @@
 ---
 import { getPublishedPageBySlug } from '../../lib/public-api-client.js';
-import { localePath, localePathFromAncestors } from '../../lib/locale-path.js';
+import { localePathFromAncestors } from '../../lib/locale-path.js';
 import PublicPageContent from '../../components/PublicPageContent.astro';
 
 // A dynamic route ([locale]/[...slug]) with no getStaticPaths() is
@@ -15,21 +15,21 @@ export const prerender = false;
 
 // [...slug] is a rest param: Astro hands it back as one slash-joined
 // string (e.g. "servizi/idraulica"), or undefined for zero segments —
-// never an array. The page itself is looked up by only the LAST segment
-// (slug stays globally unique per site+locale, see the page-hierarchy
-// ADR — no per-parent scoping), so a request for any depth resolves with
-// one direct lookup, never a segment-by-segment walk down the tree.
+// never an array. The page is looked up by walking the WHOLE path
+// top-down, one segment at a time (see resolvePageByPath): slug
+// uniqueness is sibling-scoped, not site-wide, so the trailing segment
+// alone no longer identifies a page uniquely — two different pages under
+// two different parents can share the same final slug.
 const { locale } = Astro.params;
 const requestedPath = Astro.params.slug ?? '';
 const segments = requestedPath.split('/').filter(Boolean);
-const ownSlug = segments.at(-1);
 
 const result =
-  locale && ownSlug
-    ? await getPublishedPageBySlug(Astro.url.hostname, locale, ownSlug)
+  locale && segments.length > 0
+    ? await getPublishedPageBySlug(Astro.url.hostname, locale, segments)
     : null;
 
-// Direct navigation/old link/crawler on a (locale, slug) never translated —
+// Direct navigation/old link/crawler on a (locale, path) never translated —
 // `untranslatedPageFallback: 'redirect-to-default'` promises visitors land
 // somewhere instead of a bare 404 (the language switcher already does this
 // once a page IS found; this is the same promise for when it never loads
@@ -37,8 +37,11 @@ const result =
 // still end in a real 404, same as before this existed.
 if (result && !result.found && result.fallback) {
   return Astro.redirect(
-    localePath(result.fallback.locale, result.fallback.slug) +
-      Astro.url.search,
+    localePathFromAncestors(
+      result.fallback.locale,
+      result.fallback.segments.slice(0, -1),
+      result.fallback.segments.at(-1) ?? '',
+    ) + Astro.url.search,
     302,
   );
 }
@@ -49,22 +52,13 @@ if (!page) {
   Astro.response.status = 404;
 }
 
-// A page's ancestors (parentId chain) determine its one canonical URL —
-// if the requested path doesn't match it (most commonly: an old flat URL
-// for a page that has since been nested under a parent), redirect rather
-// than serving duplicate content at two URLs. Every page published before
-// this feature existed has no ancestors, so its canonical path is
-// unchanged and this never fires for it.
-if (page && locale) {
-  const canonicalPath = localePathFromAncestors(
-    locale,
-    page.ancestors.map((ancestor) => ancestor.slug),
-    ownSlug as string,
-  );
-  if (canonicalPath !== Astro.url.pathname) {
-    return Astro.redirect(canonicalPath + Astro.url.search, 301);
-  }
-}
+// Sibling-scoped slugs mean the top-down walk above only ever succeeds
+// for the page's actual, current path — there's no "found the right page
+// via a wrong intermediate segment" case left to correct with a redirect
+// (unlike before this ADR, when a page was found by its trailing slug
+// alone regardless of what came before it in the URL). A URL with the
+// wrong ancestor segments simply doesn't resolve, and 404s above like any
+// other not-found path.
 ---
 
 <PublicPageContent page={page} />
