@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from '@tanstack/react-router';
+import { useQuery } from '@tanstack/react-query';
 import {
   ChevronLeft,
   ChevronRight,
@@ -21,7 +22,10 @@ import { MediaPickerProvider } from './media-picker-provider.js';
 import { NewPageDialog } from './new-page-dialog.js';
 import { ParentPageSelect } from './parent-page-select.js';
 import { buildPageTree } from './page-hierarchy.js';
-import { PAGES_PAGE_SIZE } from './pages-queries.js';
+import {
+  PAGES_PAGE_SIZE,
+  pageTranslationsQueryOptions,
+} from './pages-queries.js';
 import { SeoPanelDialog } from './seo-panel-dialog.js';
 import { usePagesList } from './use-pages-list.js';
 
@@ -55,6 +59,23 @@ export function PagesListView({
 
   const selectedPage = pages.find((p) => p.id === selectedPageId) ?? null;
   const totalPages = Math.max(1, Math.ceil(total / PAGES_PAGE_SIZE));
+
+  // Only matters, and is only fetched, when deleting a page that IS the
+  // site's default locale: that's the one case where losing it also
+  // breaks the untranslated-page-fallback redirect (and the x-default
+  // hreflang) for every other locale in the same translation group, not
+  // just this one page's own content.
+  const isDeletingDefaultLocalePage =
+    isDeleteDialogOpen && selectedPage?.locale === defaultLocale;
+  const translationsQuery = useQuery({
+    ...pageTranslationsQueryOptions(selectedPage?.id ?? ''),
+    enabled: isDeletingDefaultLocalePage,
+  });
+  const otherLocalesInGroup = isDeletingDefaultLocalePage
+    ? (translationsQuery.data ?? [])
+        .filter((p) => p.id !== selectedPage?.id)
+        .map((p) => p.locale)
+    : [];
 
   function toggleSelected(pageId: string) {
     setSelectedPageId((current) => (current === pageId ? null : pageId));
@@ -262,9 +283,16 @@ export function PagesListView({
             open={isDeleteDialogOpen}
             onOpenChange={setIsDeleteDialogOpen}
             title={t('pages.deleteDialog.title')}
-            description={t('pages.deleteDialog.description', {
-              name: selectedPage.seoMeta.title,
-            })}
+            description={
+              otherLocalesInGroup.length > 0
+                ? t('pages.deleteDialog.descriptionWithTranslations', {
+                    name: selectedPage.seoMeta.title,
+                    locales: otherLocalesInGroup.join(', '),
+                  })
+                : t('pages.deleteDialog.description', {
+                    name: selectedPage.seoMeta.title,
+                  })
+            }
             onConfirm={() => void handleConfirmDelete()}
           />
         )}

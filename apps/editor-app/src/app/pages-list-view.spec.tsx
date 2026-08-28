@@ -27,6 +27,10 @@ vi.mock('../lib/pages-api-client.js', async (importOriginal) => {
     // immediately instead of hitting the real fetch().
     listPages: vi.fn().mockResolvedValue({ items: [], total: 0 }),
     setPageParent: vi.fn(),
+    // Only fetched when the delete dialog opens on a default-locale page
+    // (see pages-list-view.tsx); empty by default so unrelated tests never
+    // hit a real, unmocked fetch().
+    listTranslations: vi.fn().mockResolvedValue([]),
   };
 });
 
@@ -221,6 +225,68 @@ describe('PagesListView', () => {
     await waitFor(() =>
       expect(api.deletePage).toHaveBeenCalledWith(pageOne.id),
     );
+  });
+
+  it('warns when deleting a default-locale page that has translations in other locales', async () => {
+    vi.mocked(router.useNavigate).mockReturnValue(vi.fn());
+    const itRecord: PageRecord = {
+      id: pageOne.id,
+      tenantId: pageOne.tenantId,
+      siteId: pageOne.siteId,
+      groupId: pageOne.groupId,
+      parentId: pageOne.parentId,
+      locale: pageOne.locale,
+      slug: pageOne.slug,
+      status: pageOne.status,
+      seoMeta: pageOne.seoMeta,
+      createdAt: pageOne.createdAt,
+      updatedAt: pageOne.updatedAt,
+      content: [],
+      publishedContent: [],
+    };
+    const enRecord: PageRecord = {
+      ...itRecord,
+      id: 'page-2',
+      locale: 'en',
+      slug: 'home-en',
+    };
+    vi.mocked(api.listTranslations).mockResolvedValue([itRecord, enRecord]);
+
+    renderView([pageOne]);
+    fireEvent.click(screen.getByRole('button', { name: /home/i }));
+    fireEvent.click(screen.getByRole('button', { name: /^elimina$/i }));
+
+    expect(
+      await screen.findByText(/lingua predefinita del sito/i),
+    ).toBeTruthy();
+    expect(screen.getByText(/\(en\)/)).toBeTruthy();
+  });
+
+  it('does not warn when deleting a default-locale page that has no other translations', async () => {
+    vi.mocked(router.useNavigate).mockReturnValue(vi.fn());
+    const itRecord: PageRecord = {
+      id: pageOne.id,
+      tenantId: pageOne.tenantId,
+      siteId: pageOne.siteId,
+      groupId: pageOne.groupId,
+      parentId: pageOne.parentId,
+      locale: pageOne.locale,
+      slug: pageOne.slug,
+      status: pageOne.status,
+      seoMeta: pageOne.seoMeta,
+      createdAt: pageOne.createdAt,
+      updatedAt: pageOne.updatedAt,
+      content: [],
+      publishedContent: [],
+    };
+    vi.mocked(api.listTranslations).mockResolvedValue([itRecord]);
+
+    renderView([pageOne]);
+    fireEvent.click(screen.getByRole('button', { name: /home/i }));
+    fireEvent.click(screen.getByRole('button', { name: /^elimina$/i }));
+
+    expect(screen.getByText(/eliminare questa pagina/i)).toBeTruthy();
+    expect(screen.queryByText(/lingua predefinita del sito/i)).toBeNull();
   });
 
   it('opens the new page dialog', () => {

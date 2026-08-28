@@ -121,6 +121,30 @@ describe('resolveUntranslatedPageFallback', () => {
     expect(result).toBeNull();
   });
 
+  it('falls back to another enabled locale with the same slug when the default-locale sibling was deleted', async () => {
+    const deps = setup();
+    await seedSite(deps.siteRepository, {
+      enabledLocales: ['it', 'en', 'fr'],
+    });
+    // No 'it' page at all — as if the group's default-locale page had been
+    // deleted while its 'en' sibling survived.
+    await createAndPublish(deps, {
+      groupId: 'group-1',
+      locale: 'en',
+      slug: 'chi-siamo',
+      title: 'About us',
+    });
+
+    const result = await resolveUntranslatedPageFallback(deps, {
+      tenantId,
+      domain: 'example.com',
+      locale: 'fr',
+      slug: 'chi-siamo',
+    });
+
+    expect(result).toEqual({ locale: 'en', slug: 'chi-siamo' });
+  });
+
   it('returns null when the default-locale page with that slug does not exist either', async () => {
     const deps = setup();
     await seedSite(deps.siteRepository);
