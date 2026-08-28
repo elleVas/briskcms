@@ -9,6 +9,7 @@ import {
 	type SeoMeta,
 } from '@brisk/shared-types';
 import BlockRenderer from '../components/BlockRenderer.astro';
+import { injectScriptNonce } from '../lib/content-security-policy.js';
 import { editorAppUrl } from '../lib/editor-app-url.js';
 import { localePath } from '../lib/locale-path.js';
 import { buildSchemaOrgGraph } from '../lib/schema-org.js';
@@ -221,11 +222,24 @@ const blockStyleOverridesCss = buildBlockStyleOverridesCss(
 
 		{
 			// Raw injection, admin-trusted (docs/adr/0021) — same trust level as
-			// anyone who already edits pages/blocks; this project has no CSP to
-			// lower. theme.customCss/headScript are never escaped or sanitized.
+			// anyone who already edits pages/blocks. theme.customCss/headScript
+			// are never escaped or sanitized; headScript additionally gets a
+			// per-request nonce injected into each of its own <script> tags
+			// (see content-security-policy.ts) since ADR-0025's CSP is strict
+			// on script-src — style-src still allows 'unsafe-inline', so
+			// customCss needs no such treatment.
 			theme.customCss && <style set:html={theme.customCss} />
 		}
-		{theme.headScript && <Fragment set:html={theme.headScript} />}
+		{
+			theme.headScript && (
+				<Fragment
+					set:html={injectScriptNonce(
+						theme.headScript,
+						Astro.locals.cspNonce,
+					)}
+				/>
+			)
+		}
 	</head>
 	<body data-brisk-editor-app-url={editable ? editorAppUrl() : undefined}>
 		<a href="#main-content" class="brisk-skip-link">{i18n.t('skipLink')}</a>
@@ -279,7 +293,16 @@ const blockStyleOverridesCss = buildBlockStyleOverridesCss(
 				</footer>
 			)
 		}
-		{theme.bodyScript && <Fragment set:html={theme.bodyScript} />}
+		{
+			theme.bodyScript && (
+				<Fragment
+					set:html={injectScriptNonce(
+						theme.bodyScript,
+						Astro.locals.cspNonce,
+					)}
+				/>
+			)
+		}
 		{
 			editable && (
 				<script>

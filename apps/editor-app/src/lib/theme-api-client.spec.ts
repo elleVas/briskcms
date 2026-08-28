@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   fetchBlockStyleDefaults,
+  fetchThemeForegroundTokens,
   fetchThemeIcons,
 } from './theme-api-client.js';
 
@@ -58,6 +59,29 @@ describe('theme-api-client', () => {
 
     await expect(fetchBlockStyleDefaults()).rejects.toThrow(
       /themes\/current\/block-style-defaults API error: 404/,
+    );
+  });
+
+  it('fetchThemeForegroundTokens fetches and parses the two root tokens', async () => {
+    const tokens = {
+      primaryForeground: 'oklch(0.985 0 0)',
+      secondaryForeground: 'oklch(0.205 0 0)',
+    };
+    vi.mocked(fetch).mockResolvedValue(jsonResponse(tokens));
+
+    const result = await fetchThemeForegroundTokens();
+
+    expect(fetch).toHaveBeenCalledWith(
+      expect.stringContaining('/api/themes/current/foreground-tokens'),
+    );
+    expect(result).toEqual(tokens);
+  });
+
+  it('fetchThemeForegroundTokens throws on a non-ok response', async () => {
+    vi.mocked(fetch).mockResolvedValue(jsonResponse({}, false, 500));
+
+    await expect(fetchThemeForegroundTokens()).rejects.toThrow(
+      /themes\/current\/foreground-tokens API error: 500/,
     );
   });
 });

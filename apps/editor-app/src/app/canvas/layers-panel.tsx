@@ -2,6 +2,7 @@ import { useState } from 'react';
 import {
   closestCenter,
   DndContext,
+  KeyboardSensor,
   PointerSensor,
   useSensor,
   useSensors,
@@ -9,6 +10,7 @@ import {
 } from '@dnd-kit/core';
 import {
   arrayMove,
+  sortableKeyboardCoordinates,
   SortableContext,
   useSortable,
   verticalListSortingStrategy,
@@ -214,6 +216,14 @@ export function LayersPanel({
   // click normale da un vero drag.
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
+    // Spazio/Invio per afferrare la riga con il focus, frecce per
+    // spostarla, di nuovo Spazio/Invio per rilasciare, Esc per annullare —
+    // il pattern da tastiera standard di dnd-kit per una lista ordinabile
+    // (chiude il gap segnalato: prima solo il drag col mouse riordinava un
+    // blocco annidato qui dentro).
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    }),
   );
 
   if (blocks.length === 0) {

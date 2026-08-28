@@ -5,6 +5,23 @@
     <title>EditorApp</title>
     <base href="/" />
 
+    <!--
+      A static <meta> tag, not a server header: editor-app is a plain Vite
+      SPA with no per-request middleware layer (unlike public-site, see
+      apps/public-site/src/middleware.ts). `%VITE_API_URL%`/
+      `%VITE_PUBLIC_SITE_URL%` are Vite's built-in HTML env replacement
+      (no plugin needed) — same env vars http-client.ts/public-site-url.ts
+      already require at runtime, so this can't silently drift out of sync
+      with the real backend/preview origins. Known meta-tag limitation:
+      `frame-ancestors` isn't honored from a <meta> tag per spec (browsers
+      ignore it there) — not set here since it wouldn't do anything;
+      editor-app itself is never meant to be embedded in an iframe, unlike
+      the pages it renders inside its own canvas.
+    -->
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self' https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: %VITE_API_URL%; font-src 'self' data:; connect-src 'self' %VITE_API_URL% https://challenges.cloudflare.com; frame-src %VITE_PUBLIC_SITE_URL% https://challenges.cloudflare.com; object-src 'none'; base-uri 'self';"
+    />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="icon" type="image/x-icon" href="/favicon.ico" />
     <link rel="stylesheet" href="/src/styles.css" />

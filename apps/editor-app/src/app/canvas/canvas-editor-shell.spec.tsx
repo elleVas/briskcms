@@ -760,6 +760,73 @@ describe('CanvasEditorShell', () => {
     );
   });
 
+  it("moving a NESTED block via the toolbar's arrows re-patches its parent instead of editor:reorder-blocks", async () => {
+    vi.mocked(blockFragmentApi.renderBlockFragment).mockResolvedValue(
+      '<div data-brisk-block-id="columns-1" data-brisk-block-type="Columns">colonne riordinate</div>',
+    );
+    const { onChange } = renderShell({
+      blocks: [
+        {
+          id: 'columns-1',
+          type: 'Columns',
+          props: {},
+          children: [
+            { id: 'column-1', type: 'Column', props: {} },
+            { id: 'column-2', type: 'Column', props: {} },
+          ],
+        },
+      ],
+    });
+    const iframe = await getIframe();
+    const postMessageSpy = vi.spyOn(
+      iframe.contentWindow as Window,
+      'postMessage',
+    );
+
+    selectBlockWithRect(iframe, 'column-1', {
+      top: 0,
+      left: 0,
+      width: 400,
+      height: 40,
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Sposta giù' }));
+
+    expect(onChange).toHaveBeenCalledWith([
+      expect.objectContaining({
+        id: 'columns-1',
+        children: [
+          expect.objectContaining({ id: 'column-2' }),
+          expect.objectContaining({ id: 'column-1' }),
+        ],
+      }),
+    ]);
+    await waitFor(() =>
+      expect(blockFragmentApi.renderBlockFragment).toHaveBeenCalledWith(
+        expect.objectContaining({
+          blockId: 'columns-1',
+          blockType: 'Columns',
+          children: [
+            expect.objectContaining({ id: 'column-2' }),
+            expect.objectContaining({ id: 'column-1' }),
+          ],
+        }),
+      ),
+    );
+    await waitFor(() =>
+      expect(postMessageSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: 'editor:patch-block',
+          payload: expect.objectContaining({ blockId: 'columns-1' }),
+        }),
+        '*',
+      ),
+    );
+    expect(postMessageSpy).not.toHaveBeenCalledWith(
+      expect.objectContaining({ type: 'editor:reorder-blocks' }),
+      '*',
+    );
+  });
+
   it('publish sends the current local block tree', async () => {
     const { onPublish, blocks } = renderShell();
     await getIframe();

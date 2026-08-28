@@ -405,6 +405,25 @@ export function CanvasEditorShell({
     ? localBlocks.findIndex((b) => b.id === selectedBlock.id)
     : -1;
   const isSelectedRootLevel = selectedRootIndex !== -1;
+  // A differenza di `isSelectedRootLevel` sopra (che resta root-only: governa
+  // ANCORA inserisci-prima/dopo e i campi di spacing, entrambi validi solo
+  // per un blocco di primo livello) — sposta su/giù ora funziona a
+  // qualunque profondità, tramite `locateBlock` che trova il vero genitore
+  // anche per un blocco annidato (stesso meccanismo già usato da duplica).
+  const selectedLocation = selectedBlock?.id
+    ? locateBlock(localBlocks, selectedBlock.id)
+    : null;
+  const selectedSiblings = selectedLocation
+    ? ((selectedLocation.parentId
+        ? findBlockInTree(localBlocks, selectedLocation.parentId)?.children
+        : localBlocks) ?? [])
+    : [];
+  const canMoveSelectedUp = selectedLocation
+    ? selectedLocation.index > 0
+    : false;
+  const canMoveSelectedDown = selectedLocation
+    ? selectedLocation.index < selectedSiblings.length - 1
+    : false;
 
   function applyLocalChange(next: Block[]): void {
     setLocalBlocks(next);
@@ -636,32 +655,39 @@ export function CanvasEditorShell({
   }
 
   // Sposta su/giù, duplica, inserisci prima/dopo — azioni della toolbar
-  // contestuale (sostituisce l'Inspector a colonna fissa). Sposta/inserisci
-  // sono scoped ai blocchi di primo livello (stesso limite del riordino via
-  // drag, vedi compute-drop-target.ts); duplica funziona a qualunque
-  // livello via `locateBlock`, che trova il vero genitore anche per un
-  // blocco annidato.
+  // contestuale (sostituisce l'Inspector a colonna fissa). Inserisci resta
+  // scoped ai blocchi di primo livello (stesso limite del riordino via
+  // drag, vedi compute-drop-target.ts); sposta e duplica funzionano a
+  // qualunque livello via `locateBlock`, che trova il vero genitore anche
+  // per un blocco annidato.
   function handleMoveSelected(direction: -1 | 1): void {
     if (!selectedBlock?.id) {
       return;
     }
-    const index = localBlocks.findIndex((b) => b.id === selectedBlock.id);
-    if (index === -1) {
+    const location = locateBlock(localBlocks, selectedBlock.id);
+    if (!location) {
       return;
     }
-    const targetIndex = index + direction;
-    if (targetIndex < 0 || targetIndex >= localBlocks.length) {
+    const siblings = location.parentId
+      ? (findBlockInTree(localBlocks, location.parentId)?.children ?? [])
+      : localBlocks;
+    const targetIndex = location.index + direction;
+    if (targetIndex < 0 || targetIndex >= siblings.length) {
       return;
     }
     const next = moveBlock(localBlocks, selectedBlock.id, {
-      parentId: null,
+      parentId: location.parentId,
       index: targetIndex,
     });
     applyLocalChange(next);
-    bridge.reorderBlocks(
-      null,
-      next.map((block) => block.id as string),
-    );
+    if (location.parentId) {
+      void patchParentBlock(location.parentId, next);
+    } else {
+      bridge.reorderBlocks(
+        null,
+        next.map((block) => block.id as string),
+      );
+    }
   }
 
   function handleDuplicateSelected(): void {
@@ -901,11 +927,8 @@ export function CanvasEditorShell({
                 descriptor={selectedDescriptor}
                 rect={selectedRect}
                 isRootLevel={isSelectedRootLevel}
-                canMoveUp={isSelectedRootLevel && selectedRootIndex > 0}
-                canMoveDown={
-                  isSelectedRootLevel &&
-                  selectedRootIndex < localBlocks.length - 1
-                }
+                canMoveUp={canMoveSelectedUp}
+                canMoveDown={canMoveSelectedDown}
                 registry={registry}
                 categories={categories}
                 onChangeProp={handleChangeProp}

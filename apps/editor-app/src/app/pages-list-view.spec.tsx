@@ -6,7 +6,86 @@ import { TooltipProvider } from '../components/ui/tooltip.js';
 import * as api from '../lib/pages-api-client.js';
 import type { PageRecord, PageListItem } from '../lib/pages-api-client.js';
 import { createTestQueryClient } from '../test-query-client.js';
-import { PagesListView } from './pages-list-view.js';
+import { pagesListReducer, PagesListView } from './pages-list-view.js';
+
+const initialState = {
+  selectedPageId: null,
+  openDialog: 'none' as const,
+  actionError: '',
+};
+
+describe('pagesListReducer', () => {
+  it('selects a page and closes any open dialog', () => {
+    const state = { ...initialState, openDialog: 'seo' as const };
+
+    expect(
+      pagesListReducer(state, { type: 'TOGGLE_SELECTED', pageId: 'page-1' }),
+    ).toEqual({
+      selectedPageId: 'page-1',
+      openDialog: 'none',
+      actionError: '',
+    });
+  });
+
+  it('deselects (and closes any dialog) when toggling the already-selected page', () => {
+    const state = {
+      selectedPageId: 'page-1',
+      openDialog: 'delete' as const,
+      actionError: 'oops',
+    };
+
+    expect(
+      pagesListReducer(state, { type: 'TOGGLE_SELECTED', pageId: 'page-1' }),
+    ).toEqual({ selectedPageId: null, openDialog: 'none', actionError: '' });
+  });
+
+  it('switching selection clears a stale error from the previous page', () => {
+    const state = {
+      selectedPageId: 'page-1',
+      openDialog: 'none' as const,
+      actionError: 'network down',
+    };
+
+    expect(
+      pagesListReducer(state, { type: 'TOGGLE_SELECTED', pageId: 'page-2' }),
+    ).toEqual({
+      selectedPageId: 'page-2',
+      openDialog: 'none',
+      actionError: '',
+    });
+  });
+
+  it('opens the requested dialog', () => {
+    expect(
+      pagesListReducer(initialState, {
+        type: 'OPEN_DIALOG',
+        dialog: 'delete',
+      }),
+    ).toEqual({ ...initialState, openDialog: 'delete' });
+  });
+
+  it('closes whichever dialog is open', () => {
+    const state = { ...initialState, openDialog: 'duplicate' as const };
+
+    expect(pagesListReducer(state, { type: 'CLOSE_DIALOG' })).toEqual(
+      initialState,
+    );
+  });
+
+  it('sets and clears the action error independently of selection/dialog', () => {
+    const state = { ...initialState, selectedPageId: 'page-1' };
+
+    const withError = pagesListReducer(state, {
+      type: 'SET_ERROR',
+      error: 'boom',
+    });
+    expect(withError).toEqual({ ...state, actionError: 'boom' });
+
+    expect(
+      pagesListReducer(withError, { type: 'SET_ERROR', error: '' }),
+    ).toEqual(state);
+  });
+});
 
 vi.mock('@tanstack/react-router', async (importOriginal) => {
   const actual =
@@ -287,6 +366,29 @@ describe('PagesListView', () => {
 
     expect(screen.getByText(/eliminare questa pagina/i)).toBeTruthy();
     expect(screen.queryByText(/lingua predefinita del sito/i)).toBeNull();
+  });
+
+  it('selecting a different page after a successful delete does not reopen the delete dialog for it (regression: the dialog-open flag used to survive the delete)', async () => {
+    vi.mocked(router.useNavigate).mockReturnValue(vi.fn());
+    vi.mocked(api.deletePage).mockResolvedValue(undefined);
+    const pageTwo: PageListItem = {
+      ...pageOne,
+      id: 'page-2',
+      slug: 'chi-siamo',
+      seoMeta: { title: 'Chi Siamo', description: '' },
+    };
+
+    renderView([pageOne, pageTwo]);
+    fireEvent.click(screen.getByRole('button', { name: /home/i }));
+    fireEvent.click(screen.getByRole('button', { name: /^elimina$/i }));
+    fireEvent.click(screen.getByRole('button', { name: /^elimina$/i }));
+    await waitFor(() =>
+      expect(api.deletePage).toHaveBeenCalledWith(pageOne.id),
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /chi siamo/i }));
+
+    expect(screen.queryByText(/eliminare questa pagina/i)).toBeNull();
   });
 
   it('opens the new page dialog', () => {

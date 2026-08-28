@@ -12,6 +12,16 @@ vi.mock('../lib/sites-api-client.js', async (importOriginal) => {
   return { ...actual, updateThemeSettings: vi.fn() };
 });
 
+// Nessun default risolto in questi test — senza mock la query farebbe una
+// vera fetch di rete (stesso motivo del mock equivalente in
+// global-styles-dialog.spec.tsx).
+vi.mock('../lib/theme-api-client.js', () => ({
+  fetchThemeForegroundTokens: vi.fn().mockResolvedValue({
+    primaryForeground: '#ffffff',
+    secondaryForeground: '#000000',
+  }),
+}));
+
 const site: SiteRecord = {
   id: 'site-1',
   tenantId: 'tenant-1',
@@ -64,6 +74,20 @@ describe('StyleView', () => {
     renderView({ themePrimaryColor: '#123456' });
 
     expect(screen.getByDisplayValue('#123456')).toBeTruthy();
+  });
+
+  it('shows a contrast warning when the enabled primary color is too close to the theme foreground', async () => {
+    // Mocked theme foreground is #ffffff — a white primary color has zero
+    // contrast against it.
+    renderView({ themePrimaryColor: '#ffffff' });
+
+    expect(await screen.findByText(/Contrasto basso/)).toBeTruthy();
+  });
+
+  it('shows no contrast warning when no color is enabled', () => {
+    renderView();
+
+    expect(screen.queryByText(/Contrasto basso/)).toBeNull();
   });
 
   it('saves theme settings and shows a confirmation', async () => {

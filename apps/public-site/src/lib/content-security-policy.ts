@@ -54,18 +54,59 @@ const EMBEDDABLE_FRAME_ORIGINS = [
   'https://www.google.com',
 ];
 
-export function buildContentSecurityPolicy(frameAncestors: string): string {
+/**
+ * Curated allowlist for the Tier 1 head/body script field (ADR-0021) — the
+ * 3 trackers site owners actually ask for. Not a general-purpose mechanism
+ * (see the deferred admin-managed-whitelist idea): each of these needs
+ * BOTH a nonce (for the inline bootstrap snippet the owner pastes, see
+ * `injectScriptNonce` below) AND these origins (for what that snippet then
+ * loads/calls from Google's/Meta's own domains) — a nonce alone doesn't
+ * unblock the follow-up requests, and an origin allowlist alone doesn't
+ * unblock the pasted inline snippet itself.
+ */
+const GOOGLE_TAG_MANAGER_ORIGIN = 'https://www.googletagmanager.com';
+const GOOGLE_ANALYTICS_ORIGINS = [
+  'https://www.google-analytics.com',
+  'https://*.google-analytics.com',
+  'https://*.analytics.google.com',
+];
+const META_PIXEL_SCRIPT_ORIGIN = 'https://connect.facebook.net';
+// Also the noscript `<img>` fallback pixel Meta's own snippet includes.
+const META_PIXEL_BEACON_ORIGIN = 'https://www.facebook.com';
+
+export function buildContentSecurityPolicy(
+  frameAncestors: string,
+  nonce: string,
+): string {
   return [
     `default-src 'self'`,
-    `script-src 'self' ${TURNSTILE_ORIGIN} ${scriptHash(PROMO_BAR_DISMISS_SCRIPT)}`,
+    `script-src 'self' 'nonce-${nonce}' ${TURNSTILE_ORIGIN} ${GOOGLE_TAG_MANAGER_ORIGIN} ${META_PIXEL_SCRIPT_ORIGIN} ${scriptHash(PROMO_BAR_DISMISS_SCRIPT)}`,
     `style-src 'self' 'unsafe-inline' https:`,
-    `img-src 'self' data: https:`,
+    `img-src 'self' data: https: ${META_PIXEL_BEACON_ORIGIN}`,
     `font-src 'self' https: data:`,
     `frame-src ${EMBEDDABLE_FRAME_ORIGINS.join(' ')}`,
-    `connect-src 'self' ${TURNSTILE_ORIGIN}`,
+    `connect-src 'self' ${TURNSTILE_ORIGIN} ${GOOGLE_TAG_MANAGER_ORIGIN} ${GOOGLE_ANALYTICS_ORIGINS.join(' ')} ${META_PIXEL_BEACON_ORIGIN}`,
     `object-src 'none'`,
     `base-uri 'self'`,
     `frame-ancestors ${frameAncestors}`,
     `upgrade-insecure-requests`,
   ].join('; ');
+}
+
+/**
+ * Tier 1 head/body scripts (ADR-0021) are raw, admin-trusted HTML —
+ * verbatim third-party snippets (GTM/GA4/Meta Pixel, ...) the site owner
+ * pastes as-is, never parsed into Brisk's own template. A CSP `nonce` only
+ * has any effect when it's an attribute on the actual `<script>` tag
+ * itself (it doesn't propagate to a wrapping element or inherit down), so
+ * the pasted snippet's own `<script>` tags need it inserted directly.
+ * Regex-based rather than a full HTML parse: this content is already
+ * unsanitized/unescaped by design (same trust level as editing pages/
+ * blocks directly, see the comment where this is called), so a full
+ * parser would be defending against a threat model that doesn't apply
+ * here — it only needs to handle the shape every real analytics snippet
+ * actually has (one or more plain `<script>`/`<script ...>` tags).
+ */
+export function injectScriptNonce(html: string, nonce: string): string {
+  return html.replace(/<script(?![^>]*\snonce=)/gi, `<script nonce="${nonce}"`);
 }
