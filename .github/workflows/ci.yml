@@ -211,6 +211,56 @@ jobs:
         env:
           POSTGRES_HOST: localhost
 
+      # drizzle-kit (0.31.10, verified via --help) has no down-migration
+      # concept at all — `generate` only ever produces forward SQL, and
+      # `migrate` has no --to/--steps flag to target an earlier point. Real
+      # protection against a migration gone wrong is therefore "we can
+      # always get back to the last known-good backup", not "we can invert
+      # the SQL" — this proves that mechanism actually works against THIS
+      # schema (RLS policies, functions, sequences included), with real
+      # seeded data, not just that pg_dump/pg_restore exit 0 on an empty
+      # database. Runs against a second, throwaway database in the same
+      # cluster — never touches the one the rest of this job's tests use.
+      - name: Verify a pg_dump/pg_restore round-trip preserves the migrated schema and data
+        env:
+          PGPASSWORD: ${{ env.POSTGRES_PASSWORD }}
+        run: |
+          set -euo pipefail
+
+          # Every pg_* command runs INSIDE the "postgres" container from the
+          # "Start Postgres" step above, not via a client installed on the
+          # runner itself — pg_dump/pg_restore refuse to talk to a server
+          # newer than themselves (hit this exact error running the same
+          # commands locally: the runner's own postgresql-client version is
+          # whatever Ubuntu's default repo ships, not guaranteed to match
+          # postgres:16-alpine). Running inside the container guarantees a
+          # client that's always the exact same build as the server.
+          docker exec -e PGPASSWORD -u postgres postgres \
+            pg_dump --no-owner -U "$POSTGRES_USER" "$POSTGRES_DB" \
+            > /tmp/brisk-ci-backup.sql
+
+          restore_db=brisk_restore_check
+          docker exec -e PGPASSWORD -u postgres postgres \
+            createdb -U "$POSTGRES_USER" "$restore_db"
+          docker exec -i -e PGPASSWORD -u postgres postgres \
+            psql -U "$POSTGRES_USER" --dbname="$restore_db" -v ON_ERROR_STOP=1 -q \
+            < /tmp/brisk-ci-backup.sql
+
+          # `row_security` off, same as every other superuser-run check
+          # against this schema (docs/adr/0002) — this verifies the DATA
+          # round-tripped, not that RLS itself still behaves, which the
+          # dumped policies already prove by existing in the restored schema.
+          seeded_user_count=$(docker exec -e PGPASSWORD -u postgres postgres \
+            psql -U "$POSTGRES_USER" --dbname="$restore_db" --tuples-only --no-align -q \
+            -c "SET row_security = off; SELECT count(*) FROM users WHERE email = '$DEFAULT_USER_EMAIL';")
+          if [ "$seeded_user_count" -ne 1 ]; then
+            echo "::error::Restored database is missing the seeded user — the pg_dump/pg_restore round-trip did not preserve data."
+            exit 1
+          fi
+
+          docker exec -e PGPASSWORD -u postgres postgres \
+            dropdb -U "$POSTGRES_USER" "$restore_db"
+
       # Sequential, not --parallel: see
       # docs/adr/0009-enforced-coverage-thresholds.md.
       - run: pnpm exec nx run-many -t test --coverage --parallel=1

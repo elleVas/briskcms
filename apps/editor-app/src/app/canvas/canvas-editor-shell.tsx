@@ -6,6 +6,8 @@ import {
   PanelLeftOpen,
   PanelRightClose,
   PanelRightOpen,
+  Redo2,
+  Undo2,
 } from 'lucide-react';
 import {
   buildBlockStyleOverridesCss,
@@ -14,7 +16,6 @@ import {
 } from '@brisk/shared-types';
 import type { BlockDescriptor } from '@brisk/block-registry';
 import { Button } from '../../components/ui/button.js';
-import { renderBlockFragment } from '../../lib/block-fragment-api-client.js';
 import { createPagePreviewToken } from '../../lib/preview-token-api-client.js';
 import { PUBLIC_SITE_URL } from '../../lib/public-site-url.js';
 import { useTranslation } from '../../lib/use-translation.js';
@@ -34,26 +35,22 @@ import {
 } from './canvas-frame.js';
 import {
   computeDropTarget,
-  findContainerAtPoint,
   type DropCandidateRect,
 } from './compute-drop-target.js';
 import { LayersPanel } from './layers-panel.js';
 import { isRectVisibleInIframe, useIframeGeometry } from './overlay-layer.js';
 import {
-  cloneBlockWithNewIds,
-  createBlockFromDescriptor,
   findBlockInTree,
-  insertBlock,
   locateBlock,
   moveBlock,
-  removeBlock,
-  siblingsAt,
   updateBlockProps,
   updateBlockStyleOverride,
-  type BlockTreeTarget,
 } from './use-block-tree.js';
+import { useBlockTreeMutations } from './use-block-tree-mutations.js';
 import { usePreviewBridge } from './use-preview-bridge.js';
 import { usePropertyPatch } from './use-property-patch.js';
+import { useSidebarDrag } from './use-sidebar-drag.js';
+import { useTextEdit } from './use-text-edit.js';
 
 export interface CanvasEditorShellProps {
   backLink: ReactNode;
@@ -79,40 +76,6 @@ export interface CanvasEditorShellProps {
   /** Bumped solo su un rollback esplicito — stesso meccanismo di block-editor-shell.tsx (Puck) per resettare lo stato locale. */
   restoredAt?: number;
   children?: ReactNode;
-}
-
-/** Alla radice se il blocco selezionato non è un contenitore, altrimenti in coda ai suoi figli — regola "contenitore selezionato o radice" del piano dell'editor visuale, Giorno 3. */
-function resolveInsertTarget(
-  blocks: Block[],
-  registry: BlockDescriptor[],
-  selectedBlockId: string | null,
-): { parentId: string | null; index: number } {
-  if (selectedBlockId) {
-    const selected = findBlockInTree(blocks, selectedBlockId);
-    const descriptor = selected
-      ? registry.find((d) => d.type === selected.type)
-      : undefined;
-    if (selected && descriptor?.isContainer) {
-      return {
-        parentId: selected.id ?? null,
-        index: selected.children?.length ?? 0,
-      };
-    }
-  }
-  return { parentId: null, index: blocks.length };
-}
-
-/** Il field è testuale e marcato `inlineEditable` sul descrittore — l'unico caso in cui un doppio click deve montare TipTap. */
-function isInlineEditableField(
-  descriptor: BlockDescriptor | undefined,
-  field: string,
-): boolean {
-  const fieldDescriptor = descriptor?.fields.find((f) => f.key === field);
-  return (
-    (fieldDescriptor?.kind === 'text' ||
-      fieldDescriptor?.kind === 'textarea') &&
-    Boolean(fieldDescriptor.inlineEditable)
-  );
 }
 
 /**
@@ -165,19 +128,6 @@ export function CanvasEditorShell({
    */
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isLayersPanelCollapsed, setIsLayersPanelCollapsed] = useState(false);
-  // Drag di un blocco NUOVO dalla sidebar (BlockPicker) verso il canvas —
-  // a differenza di `bridge.activeDrag` (riordino di un blocco già
-  // esistente, tracciato dall'iframe) qui il drag nasce nel genitore
-  // stesso, quindi lo stato vive qui e non nel bridge. `pointer` è
-  // page-relative (coordinate native del puntatore nel documento del
-  // genitore), va convertito in coordinate iframe-relative prima di
-  // riusare compute-drop-target.ts (che si aspetta la stessa unità di
-  // bridge.blockRects).
-  const [sidebarDrag, setSidebarDrag] = useState<{
-    descriptor: BlockDescriptor;
-    pointerX: number;
-    pointerY: number;
-  } | null>(null);
 
   // Copia locale mutata otticamente (le mutazioni sull'albero devono
   // riflettersi subito su Layers/Inspector, non solo dopo il round-trip col
@@ -196,29 +146,6 @@ export function CanvasEditorShell({
   if (syncKey !== lastSyncKey) {
     setLastSyncKey(syncKey);
     setLocalBlocks(blocks);
-  }
-
-  // Stesso pattern "aggiusta lo stato durante il render" di sopra, applicato
-  // al testo digitato dal vivo in TipTap (Giorno 4): `bridge.lastTextChange`
-  // è già stato reso stato React da usePreviewBridge (il vero confine
-  // esterno — il listener `message` — vive lì, dentro il suo handler),
-  // quindi applicarlo qui è "stato derivato da una prop cambiata", non
-  // "sincronizzare con un sistema esterno" — la forma che la regola
-  // `react-hooks/set-state-in-effect` chiede di evitare in un effect. Solo
-  // l'aggiornamento OTTICO dell'albero vive qui — pianificare il salvataggio
-  // (scheduleTextChange, un vero side-effect: avvia un timer) resta in un
-  // effect a parte sotto.
-  const [lastAppliedTextChange, setLastAppliedTextChange] = useState(
-    bridge.lastTextChange,
-  );
-  if (bridge.lastTextChange !== lastAppliedTextChange) {
-    setLastAppliedTextChange(bridge.lastTextChange);
-    if (bridge.lastTextChange) {
-      const { blockId, field, text } = bridge.lastTextChange;
-      setLocalBlocks((prev) =>
-        updateBlockProps(prev, blockId, { [field]: text }),
-      );
-    }
   }
 
   const localBlocksRef = useRef(localBlocks);
@@ -264,48 +191,13 @@ export function CanvasEditorShell({
       patchBlock: bridge.patchBlock,
     });
 
-  // Pianifica il salvataggio debounced del testo digitato dal vivo (Giorno
-  // 4) — nessun setState qui (l'aggiornamento ottico vive nel blocco sopra),
-  // solo il vero side-effect (scheduleTextChange avvia un timer), quindi un
-  // effect è la sede corretta per questa parte.
-  useEffect(() => {
-    if (!bridge.lastTextChange) {
-      return;
-    }
-    const { blockId, field, text } = bridge.lastTextChange;
-    scheduleTextChange(blockId, field, text);
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- reagisce solo a un NUOVO lastTextChange — scheduleTextChange è letta dal valore corrente, non serve rieseguire per un suo cambio di riferimento.
-  }, [bridge.lastTextChange]);
-
-  // Trigger per l'editing testo inline (Giorno 4) — reagisce ad ogni nuovo
-  // doppio click riportato dal bridge (un oggetto nuovo per riferimento ad
-  // ogni messaggio, vedi use-preview-bridge.ts), verifica che il field sia
-  // davvero `inlineEditable` sul descrittore prima di montare TipTap.
-  useEffect(() => {
-    if (!bridge.lastDblClick?.field) {
-      return;
-    }
-    const { blockId, field } = bridge.lastDblClick;
-    const block = findBlockInTree(localBlocksRef.current, blockId);
-    const descriptor = block
-      ? registry.find((d) => d.type === block.type)
-      : undefined;
-    if (isInlineEditableField(descriptor, field)) {
-      bridge.enterTextEdit(blockId, field);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- reagisce solo a un NUOVO lastDblClick — bridge.enterTextEdit/registry sono letti dal valore corrente, non serve rieseguire per un loro cambio di riferimento.
-  }, [bridge.lastDblClick]);
-
-  useEffect(() => {
-    function handleKeyDown(event: KeyboardEvent): void {
-      if (event.key === 'Escape') {
-        bridge.exitTextEdit();
-      }
-    }
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- bridge.exitTextEdit ha identità stabile (vedi usePreviewBridge), non serve nelle dipendenze.
-  }, []);
+  useTextEdit({
+    bridge,
+    registry,
+    localBlocksRef,
+    setLocalBlocks,
+    scheduleTextChange,
+  });
 
   // Riordino diretto sul canvas (Giorno 3/4) — i rect dei soli blocchi di
   // primo livello, nello stesso ordine di `localBlocks` (non l'ordine
@@ -320,6 +212,116 @@ export function CanvasEditorShell({
     const rect = bridge.blockRects.find((r) => r.id === block.id);
     return rect ? [{ id: block.id, top: rect.top, height: rect.height }] : [];
   });
+
+  const selectedBlock = bridge.selectedBlockId
+    ? findBlockInTree(localBlocks, bridge.selectedBlockId)
+    : null;
+  const selectedDescriptor = selectedBlock
+    ? registry.find((d) => d.type === selectedBlock.type)
+    : undefined;
+  const selectedRect = bridge.selectedBlockId
+    ? bridge.blockRects.find((r) => r.id === bridge.selectedBlockId)
+    : undefined;
+  const selectedRootIndex = selectedBlock?.id
+    ? localBlocks.findIndex((b) => b.id === selectedBlock.id)
+    : -1;
+  const isSelectedRootLevel = selectedRootIndex !== -1;
+  // A differenza di `isSelectedRootLevel` sopra (che resta root-only: governa
+  // ANCORA inserisci-prima/dopo e i campi di spacing, entrambi validi solo
+  // per un blocco di primo livello) — sposta su/giù ora funziona a
+  // qualunque profondità, tramite `locateBlock` che trova il vero genitore
+  // anche per un blocco annidato (stesso meccanismo già usato da duplica).
+  const selectedLocation = selectedBlock?.id
+    ? locateBlock(localBlocks, selectedBlock.id)
+    : null;
+  const selectedSiblings = selectedLocation
+    ? ((selectedLocation.parentId
+        ? findBlockInTree(localBlocks, selectedLocation.parentId)?.children
+        : localBlocks) ?? [])
+    : [];
+  const canMoveSelectedUp = selectedLocation
+    ? selectedLocation.index > 0
+    : false;
+  const canMoveSelectedDown = selectedLocation
+    ? selectedLocation.index < selectedSiblings.length - 1
+    : false;
+
+  const {
+    handleInsert,
+    handleReorderRoot,
+    handleRemoveSelected,
+    handleMoveSelected,
+    handleDuplicateSelected,
+    handleAddChild,
+    handleInsertAtRoot,
+    insertNewBlockAt,
+    undo,
+    redo,
+    canUndo,
+    canRedo,
+  } = useBlockTreeMutations({
+    localBlocks,
+    setLocalBlocks,
+    onChange,
+    registry,
+    bridge,
+    token,
+    pageId,
+    selectedBlock,
+    selectedDescriptor,
+  });
+
+  const {
+    sidebarDrag,
+    handleSidebarDragStart,
+    handleSidebarDragMove,
+    handleSidebarDragEnd,
+  } = useSidebarDrag({
+    localBlocks,
+    registry,
+    iframeGeometry,
+    rootRects,
+    blockRects: bridge.blockRects,
+    insertNewBlockAt,
+  });
+
+  // Ctrl/Cmd+Z per annullare, Ctrl/Cmd+Shift+Z (o Ctrl+Y) per ripetere —
+  // scorciatoia standard di ogni editor con undo/redo. Mai in conflitto con
+  // l'editing testo TipTap: quello vive DENTRO l'iframe sandboxed
+  // (init-preview-bridge.ts), un documento separato i cui eventi da
+  // tastiera non arrivano affatto a questo listener sul genitore. La sola
+  // guardia utile qui è per gli input/textarea del GENITORE stesso (i vari
+  // dialog/pannelli dell'editor) — lasciare il loro undo nativo del browser
+  // invariato, non intercettarlo.
+  useEffect(() => {
+    function handleKeyDown(event: KeyboardEvent): void {
+      const isUndoRedoKey =
+        (event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'z';
+      const isRedoKey =
+        (isUndoRedoKey && event.shiftKey) ||
+        ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'y');
+      if (!isUndoRedoKey && !isRedoKey) {
+        return;
+      }
+      const active = document.activeElement;
+      const isEditingText =
+        active instanceof HTMLInputElement ||
+        active instanceof HTMLTextAreaElement ||
+        (active instanceof HTMLElement && active.isContentEditable);
+      if (isEditingText) {
+        return;
+      }
+      event.preventDefault();
+      if (isRedoKey) {
+        redo();
+      } else {
+        undo();
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- undo/redo sono ricreate ad ogni render da useBlockTreeMutations ma leggono già lo stato corrente al momento della chiamata — non serve riattaccare il listener per il loro cambio di riferimento.
+  }, []);
 
   // Calcolo puramente derivato (nessuno stato proprio) — si aggiorna ad ogni
   // render insieme a `bridge.activeDrag`/`sidebarDrag`, così l'indicatore
@@ -391,44 +393,6 @@ export function CanvasEditorShell({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- reagisce solo a un NUOVO pendingReorderCommit — onChange/bridge.reorderBlocks sono letti dal valore corrente, non serve rieseguire per un loro cambio di riferimento.
   }, [pendingReorderCommit]);
-
-  const selectedBlock = bridge.selectedBlockId
-    ? findBlockInTree(localBlocks, bridge.selectedBlockId)
-    : null;
-  const selectedDescriptor = selectedBlock
-    ? registry.find((d) => d.type === selectedBlock.type)
-    : undefined;
-  const selectedRect = bridge.selectedBlockId
-    ? bridge.blockRects.find((r) => r.id === bridge.selectedBlockId)
-    : undefined;
-  const selectedRootIndex = selectedBlock?.id
-    ? localBlocks.findIndex((b) => b.id === selectedBlock.id)
-    : -1;
-  const isSelectedRootLevel = selectedRootIndex !== -1;
-  // A differenza di `isSelectedRootLevel` sopra (che resta root-only: governa
-  // ANCORA inserisci-prima/dopo e i campi di spacing, entrambi validi solo
-  // per un blocco di primo livello) — sposta su/giù ora funziona a
-  // qualunque profondità, tramite `locateBlock` che trova il vero genitore
-  // anche per un blocco annidato (stesso meccanismo già usato da duplica).
-  const selectedLocation = selectedBlock?.id
-    ? locateBlock(localBlocks, selectedBlock.id)
-    : null;
-  const selectedSiblings = selectedLocation
-    ? ((selectedLocation.parentId
-        ? findBlockInTree(localBlocks, selectedLocation.parentId)?.children
-        : localBlocks) ?? [])
-    : [];
-  const canMoveSelectedUp = selectedLocation
-    ? selectedLocation.index > 0
-    : false;
-  const canMoveSelectedDown = selectedLocation
-    ? selectedLocation.index < selectedSiblings.length - 1
-    : false;
-
-  function applyLocalChange(next: Block[]): void {
-    setLocalBlocks(next);
-    onChange(next);
-  }
 
   function handleChangeProp(key: string, value: unknown): void {
     if (!selectedBlock?.id) {
@@ -507,137 +471,6 @@ export function CanvasEditorShell({
     void saveTypeStyle(selectedDescriptor.type, style);
   }
 
-  /**
-   * Rigenera e ripatcha per intero un blocco-contenitore (stesso
-   * `editor:patch-block` di un cambio proprietà) dopo che uno dei suoi
-   * figli è stato inserito/rimosso — non basta inserire/rimuovere SOLO quel
-   * figlio nel DOM: l'euristica di risoluzione del contenitore in
-   * preview-bridge-client.ts assume che `<slot/>` sia l'unico contenuto
-   * dell'elemento radice del blocco-contenitore, falsa per Testimonials
-   * (pulsanti di navigazione + segnaposto "contenitore vuoto" attorno allo
-   * slot) e fragile in generale per qualunque "cornice" che dipenda dalla
-   * presenza di figli. `treeWithUpdatedChildren` è l'albero già ricalcolato
-   * dal chiamante DOPO la modifica (a differenza di `localBlocks` altrove
-   * in questo file, che resta quello PRIMA finché serve).
-   */
-  async function patchParentBlock(
-    parentId: string,
-    treeWithUpdatedChildren: Block[],
-  ): Promise<void> {
-    if (!token) {
-      return;
-    }
-    const parent = findBlockInTree(treeWithUpdatedChildren, parentId);
-    if (!parent?.id) {
-      return;
-    }
-    try {
-      const html = await renderBlockFragment({
-        pageId,
-        token,
-        blockId: parent.id,
-        blockType: parent.type,
-        props: parent.props,
-        children: parent.children,
-      });
-      bridge.patchBlock(parent.id, html);
-    } catch {
-      // Resta nell'albero locale/nella bozza salvata, riappare corretto al
-      // prossimo reload — stesso comportamento del fallimento di rete negli
-      // altri rami di insertIntoCanvas sotto.
-    }
-  }
-
-  /**
-   * Renderizza il frammento del blocco APPENA creato (mai visto prima
-   * dall'iframe, a differenza di usePropertyPatch che ne sostituisce uno
-   * esistente) e lo inserisce nel canvas via `editor:insert-block` — senza
-   * questo, il blocco resterebbe nell'albero locale/nella bozza salvata ma
-   * invisibile finché l'iframe non si ricarica (il bug segnalato). I
-   * `children` del blocco sono già noti qui (appena costruiti o clonati),
-   * niente bisogno che il server li rilegga dalla bozza salvata — evita
-   * anche la race fra salvataggio e lettura per un contenitore.
-   * `beforeBlockId` è calcolato PRIMA di applicare l'inserimento
-   * all'albero: è l'id di chi oggi occupa la posizione target, che dopo
-   * l'inserimento si ritroverà spostato di uno.
-   *
-   * Per un inserimento ANNIDATO (`target.parentId` non nullo), vedi
-   * `patchParentBlock` sopra — si ripatcha il genitore, non si inserisce il
-   * figlio da solo.
-   */
-  async function insertIntoCanvas(
-    block: Block & { id: string },
-    target: BlockTreeTarget,
-    nextBlocks: Block[],
-  ): Promise<void> {
-    if (!token) {
-      return;
-    }
-    if (target.parentId !== null) {
-      await patchParentBlock(target.parentId, nextBlocks);
-      return;
-    }
-    const siblingsBefore = siblingsAt(localBlocks, target.parentId);
-    const beforeBlockId = siblingsBefore[target.index]?.id ?? null;
-    try {
-      const html = await renderBlockFragment({
-        pageId,
-        token,
-        blockId: block.id,
-        blockType: block.type,
-        props: block.props,
-        children: block.children,
-      });
-      bridge.insertBlock(html, target.parentId, beforeBlockId);
-    } catch {
-      // Il blocco resta comunque nell'albero locale e nella bozza salvata
-      // (applyLocalChange è già avvenuto) — ricomparirà nel canvas al
-      // prossimo reload dell'iframe, stesso comportamento di oggi per
-      // qualunque fallimento di rete.
-    }
-  }
-
-  function handleInsert(descriptor: BlockDescriptor): void {
-    const target = resolveInsertTarget(
-      localBlocks,
-      registry,
-      bridge.selectedBlockId,
-    );
-    const newBlock = createBlockFromDescriptor(descriptor, registry);
-    const next = insertBlock(localBlocks, newBlock, target);
-    applyLocalChange(next);
-    void insertIntoCanvas(newBlock, target, next);
-  }
-
-  function handleReorderRoot(orderedIds: string[]): void {
-    let next = localBlocks;
-    orderedIds.forEach((id, index) => {
-      next = moveBlock(next, id, { parentId: null, index });
-    });
-    applyLocalChange(next);
-    bridge.reorderBlocks(null, orderedIds);
-  }
-
-  function handleRemoveSelected(): void {
-    if (!selectedBlock?.id) {
-      return;
-    }
-    const location = locateBlock(localBlocks, selectedBlock.id);
-    const next = removeBlock(localBlocks, selectedBlock.id);
-    applyLocalChange(next);
-    // Un blocco annidato rimosso può cambiare la "cornice" del suo
-    // genitore (es. Testimonials nasconde di nuovo i pulsanti nav e
-    // rimostra il segnaposto vuoto quando perde il suo ultimo figlio) —
-    // stesso motivo per cui un inserimento annidato ripatcha il genitore
-    // invece di toccare solo il nodo rimosso (vedi patchParentBlock sopra).
-    // Un blocco di primo livello resta invece un semplice editor:remove-block.
-    if (location?.parentId) {
-      void patchParentBlock(location.parentId, next);
-    } else {
-      bridge.removeBlock(selectedBlock.id);
-    }
-  }
-
   function handlePublish(): void {
     onPublish(localBlocksRef.current);
   }
@@ -654,183 +487,6 @@ export function CanvasEditorShell({
     );
   }
 
-  // Sposta su/giù, duplica, inserisci prima/dopo — azioni della toolbar
-  // contestuale (sostituisce l'Inspector a colonna fissa). Inserisci resta
-  // scoped ai blocchi di primo livello (stesso limite del riordino via
-  // drag, vedi compute-drop-target.ts); sposta e duplica funzionano a
-  // qualunque livello via `locateBlock`, che trova il vero genitore anche
-  // per un blocco annidato.
-  function handleMoveSelected(direction: -1 | 1): void {
-    if (!selectedBlock?.id) {
-      return;
-    }
-    const location = locateBlock(localBlocks, selectedBlock.id);
-    if (!location) {
-      return;
-    }
-    const siblings = location.parentId
-      ? (findBlockInTree(localBlocks, location.parentId)?.children ?? [])
-      : localBlocks;
-    const targetIndex = location.index + direction;
-    if (targetIndex < 0 || targetIndex >= siblings.length) {
-      return;
-    }
-    const next = moveBlock(localBlocks, selectedBlock.id, {
-      parentId: location.parentId,
-      index: targetIndex,
-    });
-    applyLocalChange(next);
-    if (location.parentId) {
-      void patchParentBlock(location.parentId, next);
-    } else {
-      bridge.reorderBlocks(
-        null,
-        next.map((block) => block.id as string),
-      );
-    }
-  }
-
-  function handleDuplicateSelected(): void {
-    if (!selectedBlock?.id) {
-      return;
-    }
-    const location = locateBlock(localBlocks, selectedBlock.id);
-    if (!location) {
-      return;
-    }
-    const clone = cloneBlockWithNewIds(selectedBlock);
-    const target: BlockTreeTarget = {
-      parentId: location.parentId,
-      index: location.index + 1,
-    };
-    const next = insertBlock(localBlocks, clone, target);
-    applyLocalChange(next);
-    void insertIntoCanvas(clone, target, next);
-  }
-
-  /**
-   * "+" dentro a un contenitore-collezione selezionato (Testimonianze,
-   * Team, Accordion, ...) — aggiunge un altro figlio del suo UNICO tipo
-   * consentito (`allowedChildTypes[0]`) senza aprire il picker: non c'è
-   * ambiguità da chiedere, è l'unico tipo sensato per quel contenitore
-   * (stessa regola di createBlockFromDescriptor). Il pulsante compare solo
-   * quando `descriptor.allowedChildTypes` ha esattamente un elemento (vedi
-   * block-toolbar-overlay.tsx's canAddChild), quindi qui la ricerca nel
-   * registry non dovrebbe mai fallire — se fallisse comunque (registry
-   * disallineato), semplicemente non succede nulla.
-   */
-  function handleAddChild(): void {
-    if (!selectedBlock?.id || !selectedDescriptor) {
-      return;
-    }
-    const childType = selectedDescriptor.allowedChildTypes?.[0];
-    const childDescriptor = childType
-      ? registry.find((d) => d.type === childType)
-      : undefined;
-    if (!childDescriptor) {
-      return;
-    }
-    const newChild = createBlockFromDescriptor(childDescriptor, registry);
-    const target: BlockTreeTarget = {
-      parentId: selectedBlock.id,
-      index: selectedBlock.children?.length ?? 0,
-    };
-    const next = insertBlock(localBlocks, newChild, target);
-    applyLocalChange(next);
-    void insertIntoCanvas(newChild, target, next);
-  }
-
-  function handleInsertAtRoot(
-    descriptor: BlockDescriptor,
-    offset: 0 | 1,
-  ): void {
-    if (!selectedBlock?.id) {
-      return;
-    }
-    const index = localBlocks.findIndex((b) => b.id === selectedBlock.id);
-    if (index === -1) {
-      return;
-    }
-    const newBlock = createBlockFromDescriptor(descriptor, registry);
-    const target: BlockTreeTarget = { parentId: null, index: index + offset };
-    const next = insertBlock(localBlocks, newBlock, target);
-    applyLocalChange(next);
-    void insertIntoCanvas(newBlock, target, next);
-  }
-
-  /**
-   * Drag di un blocco nuovo dalla sidebar (BlockPicker) — mousedown+
-   * movimento oltre la soglia lì dentro innesca questi tre callback (vedi
-   * block-picker.tsx).
-   */
-  function handleSidebarDragStart(descriptor: BlockDescriptor): void {
-    setSidebarDrag({ descriptor, pointerX: 0, pointerY: 0 });
-  }
-
-  function handleSidebarDragMove(pageX: number, pageY: number): void {
-    setSidebarDrag((prev) =>
-      prev ? { ...prev, pointerX: pageX, pointerY: pageY } : prev,
-    );
-  }
-
-  /**
-   * A differenza del click-to-insert (resolveInsertTarget, basato sul
-   * blocco SELEZIONATO), un drag ha un vero punto di rilascio — usarlo per
-   * decidere il contenitore invece della selezione era il bug segnalato dal
-   * vivo: trascinare un blocco su un contenitore diverso da quello ancora
-   * selezionato in precedenza lo annidava comunque in quest'ultimo, non in
-   * quello visivamente sotto il puntatore, producendo un layout che sembrava
-   * rotto (contenuto/toolbar posizionati altrove rispetto al drop reale).
-   * `bridge.blockRects` include già ogni blocco annidato, non solo quelli di
-   * primo livello (a differenza di `rootRects` sotto, scoped al riordino tra
-   * fratelli) — qui si filtra ai soli blocchi che il registry marca come
-   * contenitori, poi si sceglie il rect più piccolo (il contenitore più
-   * profondo) che contiene il punto.
-   */
-  function handleSidebarDragEnd(
-    descriptor: BlockDescriptor,
-    pageX: number,
-    pageY: number,
-  ): void {
-    setSidebarDrag(null);
-    const isOverCanvas =
-      pageX >= iframeGeometry.left &&
-      pageX <= iframeGeometry.left + iframeGeometry.width &&
-      pageY >= iframeGeometry.top;
-    if (!isOverCanvas) {
-      return;
-    }
-    const iframeX = pageX - iframeGeometry.left;
-    const iframeY = pageY - iframeGeometry.top;
-    const containerRects = bridge.blockRects.filter((rect) => {
-      const block = findBlockInTree(localBlocks, rect.id);
-      const blockDescriptor = block
-        ? registry.find((d) => d.type === block.type)
-        : undefined;
-      return Boolean(blockDescriptor?.isContainer);
-    });
-    const hitContainerId = findContainerAtPoint(
-      containerRects,
-      iframeX,
-      iframeY,
-    );
-    const hitContainer = hitContainerId
-      ? findBlockInTree(localBlocks, hitContainerId)
-      : null;
-    const target: BlockTreeTarget = hitContainer?.id
-      ? { parentId: hitContainer.id, index: hitContainer.children?.length ?? 0 }
-      : {
-          parentId: null,
-          index:
-            computeDropTarget(rootRects, '', iframeY)?.index ??
-            localBlocks.length,
-        };
-    const newBlock = createBlockFromDescriptor(descriptor, registry);
-    const next = insertBlock(localBlocks, newBlock, target);
-    applyLocalChange(next);
-    void insertIntoCanvas(newBlock, target, next);
-  }
-
   return (
     <div style={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
       <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3 border-b px-3 py-1.5 text-xs text-muted-foreground">
@@ -841,6 +497,20 @@ export function CanvasEditorShell({
           {actions}
         </div>
         <div className="flex items-center justify-center gap-2">
+          <IconButton
+            label={t('canvas.undo')}
+            onClick={undo}
+            disabled={!canUndo}
+          >
+            <Undo2 />
+          </IconButton>
+          <IconButton
+            label={t('canvas.redo')}
+            onClick={redo}
+            disabled={!canRedo}
+          >
+            <Redo2 />
+          </IconButton>
           <BreakpointSelector value={breakpoint} onChange={setBreakpoint} />
           {siteId && (
             <IconButton
