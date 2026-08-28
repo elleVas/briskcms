@@ -1036,4 +1036,79 @@ describe('CanvasEditorShell', () => {
       '*',
     );
   });
+
+  it('the undo/redo buttons start disabled, and undo becomes enabled after a change', async () => {
+    const { onChange } = renderShell();
+    const iframe = await getIframe();
+    selectBlockWithRect(iframe, 'hero-1', HERO_RECT);
+
+    expect(
+      screen.getByRole('button', { name: 'Annulla' }).hasAttribute('disabled'),
+    ).toBe(true);
+    expect(
+      screen.getByRole('button', { name: 'Ripeti' }).hasAttribute('disabled'),
+    ).toBe(true);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Rimuovi blocco' }));
+
+    expect(onChange).toHaveBeenCalledWith([]);
+    expect(
+      screen.getByRole('button', { name: 'Annulla' }).hasAttribute('disabled'),
+    ).toBe(false);
+  });
+
+  it('clicking Annulla restores the block removed by the previous action', async () => {
+    const { onChange } = renderShell();
+    const iframe = await getIframe();
+    selectBlockWithRect(iframe, 'hero-1', HERO_RECT);
+    fireEvent.click(screen.getByRole('button', { name: 'Rimuovi blocco' }));
+    vi.mocked(onChange).mockClear();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Annulla' }));
+
+    expect(onChange).toHaveBeenCalledWith([
+      {
+        id: 'hero-1',
+        type: 'Hero',
+        props: { title: 'Titolo', subtitle: 'Sottotitolo' },
+      },
+    ]);
+  });
+
+  it('Ctrl+Z triggers undo', async () => {
+    const { onChange } = renderShell();
+    const iframe = await getIframe();
+    selectBlockWithRect(iframe, 'hero-1', HERO_RECT);
+    fireEvent.click(screen.getByRole('button', { name: 'Rimuovi blocco' }));
+    vi.mocked(onChange).mockClear();
+
+    fireEvent.keyDown(window, { key: 'z', ctrlKey: true });
+
+    expect(onChange).toHaveBeenCalledWith([
+      {
+        id: 'hero-1',
+        type: 'Hero',
+        props: { title: 'Titolo', subtitle: 'Sottotitolo' },
+      },
+    ]);
+  });
+
+  it('Ctrl+Z is ignored while typing in a text input, leaving the browser its own native undo', async () => {
+    renderShell();
+    const iframe = await getIframe();
+    selectBlockWithRect(iframe, 'hero-1', HERO_RECT);
+    fireEvent.click(screen.getByRole('button', { name: 'Rimuovi blocco' }));
+    const input = document.createElement('input');
+    document.body.append(input);
+    input.focus();
+
+    fireEvent.keyDown(window, { key: 'z', ctrlKey: true });
+
+    // Il bottone Annulla resta abilitato: la scorciatoia non è stata presa
+    // in carico da questo listener (altrimenti lo stack sarebbe già vuoto).
+    expect(
+      screen.getByRole('button', { name: 'Annulla' }).hasAttribute('disabled'),
+    ).toBe(false);
+    input.remove();
+  });
 });

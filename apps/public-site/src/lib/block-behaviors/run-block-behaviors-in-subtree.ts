@@ -1,7 +1,7 @@
 import { BLOCK_BEHAVIOR_REGISTRY } from './block-behavior-registry.js';
 import { runBlockBehaviors } from './run-block-behaviors.js';
 
-// Called by preview-bridge-client.ts right after a block is live-inserted
+// Called by init-preview-bridge.ts right after a block is live-inserted
 // or live-patched into the iframe's DOM. `root` is always a
 // [data-brisk-block-id] wrapper (RenderSingleBlock.astro/BlockRenderer.astro
 // stamp one on every block when editable=true, which the single-block-

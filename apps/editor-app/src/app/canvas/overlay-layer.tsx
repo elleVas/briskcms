@@ -98,6 +98,96 @@ export function toDropIndicatorStyle(
 }
 
 /**
+ * Le quattro funzioni sotto sono di `block-toolbar-overlay.tsx` (la
+ * toolbar contestuale del blocco selezionato) — spostate qui perché sono
+ * pure e fanno esattamente lo stesso genere di traduzione
+ * geometry+rect->CSSProperties di `toOverlayStyle`/`toDropIndicatorStyle`
+ * sopra, non perché appartengano concettualmente a "OverlayLayer": stesso
+ * co-locamento "matematica di posizionamento pura accanto a
+ * useIframeGeometry", non un'invenzione nuova per queste quattro.
+ */
+
+/**
+ * `position: 'fixed'` — la toolbar vive dentro un contenitore
+ * (canvas-editor-shell.tsx) che di per sé è già co-locato con il box
+ * dell'iframe, quindi un `absolute` sommerebbe l'offset dell'iframe una
+ * seconda volta sopra quello già dato dal genitore posizionato. `fixed`
+ * ignora la gerarchia degli antenati e usa direttamente le coordinate
+ * viewport di `geometry`/`rect` (stessa semantica di
+ * `getBoundingClientRect()`, vedi `useIframeGeometry`), l'unica cosa per
+ * cui questa traduzione è corretta.
+ */
+export function toPillStyle(
+  geometry: IframeGeometry,
+  rect: BlockRect,
+): CSSProperties {
+  return {
+    position: 'fixed',
+    top: geometry.top + rect.top - 28,
+    left: geometry.left + rect.left,
+  };
+}
+
+/** Larghezza approssimata della colonna di icone (28px bottone + padding/bordo) — serve solo a decidere se c'è spazio a destra del blocco, non per il layout reale. */
+const TOOLBAR_WIDTH_PX = 40;
+const TOOLBAR_GAP_PX = 8;
+
+/**
+ * Per un blocco a tutta larghezza (il caso comune per i blocchi di primo
+ * livello) posizionarla a `rect.left + rect.width + 8` la spingerebbe fuori
+ * dall'iframe — bloccata qui dentro al bordo destro dell'iframe stesso, che
+ * per un blocco full-width coincide con il bordo destro del blocco.
+ */
+export function toToolbarStyle(
+  geometry: IframeGeometry,
+  rect: BlockRect,
+): CSSProperties {
+  const preferredLeft = geometry.left + rect.left + rect.width + TOOLBAR_GAP_PX;
+  const maxLeft =
+    geometry.left + geometry.width - TOOLBAR_WIDTH_PX - TOOLBAR_GAP_PX;
+  return {
+    position: 'fixed',
+    top: geometry.top + rect.top,
+    left: Math.min(preferredLeft, maxLeft),
+  };
+}
+
+export function toInsertPointStyle(
+  geometry: IframeGeometry,
+  rect: BlockRect,
+  edge: 'top' | 'bottom',
+): CSSProperties {
+  return {
+    position: 'fixed',
+    top:
+      geometry.top + (edge === 'top' ? rect.top : rect.top + rect.height) - 12,
+    left: geometry.left + rect.left + rect.width / 2 - 12,
+  };
+}
+
+/**
+ * A differenza di `toInsertPointStyle` (che STRADDLES il bordo del blocco,
+ * per un fratello a livello di pagina — e per un blocco di primo livello
+ * compare proprio sul bordo INFERIORE), questo resta DENTRO al rettangolo
+ * del contenitore stesso, nell'angolo in alto a destra: visivamente
+ * "aggiungi qui dentro", non "inserisci un fratello altrove". Centrato sul
+ * bordo destro (invece che nell'angolo) finiva quasi sempre sovrapposto ai
+ * pulsanti di navigazione di Testimonianze (anch'essi centrati
+ * verticalmente lì); sul bordo inferiore finiva invece sovrapposto al "+"
+ * radice di un blocco di primo livello — entrambi osservati dal vivo.
+ */
+export function toAddChildStyle(
+  geometry: IframeGeometry,
+  rect: BlockRect,
+): CSSProperties {
+  return {
+    position: 'fixed',
+    top: geometry.top + rect.top + 4,
+    left: geometry.left + rect.left + rect.width - 32,
+  };
+}
+
+/**
  * Ricalcola la posizione/larghezza dell'iframe nel documento del genitore
  * ad ogni resize/scroll — l'overlay altrimenti va alla deriva se la pagina
  * del genitore stesso scrolla. Esportata: `block-toolbar-overlay.tsx` la

@@ -423,6 +423,8 @@
     "preview": "Anteprima",
     "moveUp": "Sposta su",
     "moveDown": "Sposta giù",
+    "undo": "Annulla",
+    "redo": "Ripeti",
     "editProperties": "Modifica proprietà",
     "duplicateBlock": "Duplica blocco",
     "breakpointGroup": "Larghezza anteprima",

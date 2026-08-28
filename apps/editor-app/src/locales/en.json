@@ -423,6 +423,8 @@
     "preview": "Preview",
     "moveUp": "Move up",
     "moveDown": "Move down",
+    "undo": "Undo",
+    "redo": "Redo",
     "editProperties": "Edit properties",
     "duplicateBlock": "Duplicate block",
     "breakpointGroup": "Preview width",

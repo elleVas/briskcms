@@ -52,6 +52,7 @@ import {
   type PublishedPageTranslation,
   type PublishedSite,
 } from '@brisk/shared-types';
+import type { AstroComponentFactory } from 'astro/runtime/server/index.js';
 import { resolveThemeBlockOverride } from '../lib/resolve-theme-block-override.js';
 import AccordionCore from './blocks/Accordion.astro';
 const Accordion = resolveThemeBlockOverride('Accordion', AccordionCore);
@@ -189,6 +190,243 @@ const {
   editable,
 } = Astro.props;
 
+interface BlockRenderContext {
+  locale: string;
+  translations: PublishedPageTranslation[];
+  site: PublishedSite;
+  ancestors: PublishedPageAncestor[];
+  currentPageTitle: string;
+  editable?: boolean;
+}
+
+/**
+ * Un'entry per ciascuno dei 48 tipi di blocco — sostituisce il vecchio
+ * dispatch `{block.type === 'X' && (<X .../>)}` ripetuto 48 volte
+ * (git history di questo file). La variazione tra i tipi è tutta metadata
+ * STATICA nota a scrittura del file (5 fatti indipendenti: ha
+ * styleOverride? ha locale? ha figli-contenitore? ha ancestors/
+ * currentPageTitle? ha translations/site?), non logica calcolata a
+ * runtime — da qui la scelta di una tabella dati invece di preservare il
+ * conditional. `extra` resta l'unica via di fuga, usata solo dai 2 tipi
+ * (Breadcrumb, LanguageSwitcher) con props davvero uniche a loro soli.
+ *
+ * `<Component />` con `Component` una variabile risolta a runtime da
+ * questa tabella è lo stesso pattern già usato da `Wrapper` poco sotto
+ * (`editable ? 'div' : Fragment`) — non una novità per Astro in questo
+ * progetto, solo applicata a un insieme di 48 invece che di 2.
+ */
+interface BlockDispatchEntry {
+  component: AstroComponentFactory;
+  schema?: { parse: (props: unknown) => Record<string, unknown> };
+  styleOverride?: boolean;
+  locale?: boolean;
+  /** Ricorre in `block.children` — vero anche per Nav/NavDropdown/HamburgerMenu/Tab, che però NON ricevono `editable`/`hasChildren` (non sono contenitori "a slot" nello stesso senso). */
+  recurseChildren?: boolean;
+  /** Solo i veri contenitori (Columns/Container/Accordion/ecc.) — passa anche `editable`+`hasChildren` oltre a ricorrere nei figli. */
+  containerProps?: boolean;
+  extra?: (context: BlockRenderContext) => Record<string, unknown>;
+}
+
+const BLOCK_REGISTRY: Record<string, BlockDispatchEntry> = {
+  Hero: { component: Hero, schema: heroPropsSchema, styleOverride: true },
+  Text: { component: Text, schema: textPropsSchema, styleOverride: true },
+  Image: { component: Image, schema: imagePropsSchema, locale: true },
+  Gallery: { component: Gallery, schema: galleryPropsSchema, locale: true },
+  Form: {
+    component: Form,
+    schema: formBlockPropsSchema,
+    styleOverride: true,
+    locale: true,
+  },
+  Quote: { component: Quote, schema: quotePropsSchema, styleOverride: true },
+  Rating: { component: Rating, schema: ratingPropsSchema, styleOverride: true },
+  Countdown: {
+    component: Countdown,
+    schema: countdownPropsSchema,
+    styleOverride: true,
+    locale: true,
+  },
+  EmbedHtml: {
+    component: EmbedHtml,
+    schema: embedHtmlPropsSchema,
+    styleOverride: true,
+  },
+  Table: { component: Table, schema: tablePropsSchema },
+  NavLink: { component: NavLink, schema: navLinkPropsSchema },
+  LanguageSwitcher: {
+    component: LanguageSwitcher,
+    schema: languageSwitcherPropsSchema,
+    locale: true,
+    extra: (ctx) => ({ translations: ctx.translations, site: ctx.site }),
+  },
+  Breadcrumb: {
+    component: Breadcrumb,
+    schema: breadcrumbPropsSchema,
+    locale: true,
+    extra: (ctx) => ({
+      ancestors: ctx.ancestors,
+      currentPageTitle: ctx.currentPageTitle,
+    }),
+  },
+  SearchBox: { component: SearchBox, schema: searchBoxPropsSchema, locale: true },
+  Nav: { component: Nav, schema: navPropsSchema, recurseChildren: true },
+  HamburgerMenu: {
+    component: HamburgerMenu,
+    schema: hamburgerMenuPropsSchema,
+    locale: true,
+    recurseChildren: true,
+  },
+  NavDropdown: {
+    component: NavDropdown,
+    schema: navDropdownPropsSchema,
+    recurseChildren: true,
+  },
+  Columns: {
+    component: Columns,
+    schema: columnsPropsSchema,
+    styleOverride: true,
+    recurseChildren: true,
+    containerProps: true,
+  },
+  Column: {
+    component: Column,
+    styleOverride: true,
+    recurseChildren: true,
+    containerProps: true,
+  },
+  Container: {
+    component: Container,
+    schema: containerPropsSchema,
+    styleOverride: true,
+    recurseChildren: true,
+    containerProps: true,
+  },
+  PromoBar: {
+    component: PromoBar,
+    schema: promoBarPropsSchema,
+    styleOverride: true,
+    locale: true,
+  },
+  BackToTop: { component: BackToTop, schema: backToTopPropsSchema, locale: true },
+  WhatsAppButton: {
+    component: WhatsAppButton,
+    schema: whatsAppButtonPropsSchema,
+    locale: true,
+  },
+  Accordion: {
+    component: Accordion,
+    schema: accordionPropsSchema,
+    styleOverride: true,
+    recurseChildren: true,
+    containerProps: true,
+  },
+  AccordionItem: {
+    component: AccordionItem,
+    schema: accordionItemPropsSchema,
+    styleOverride: true,
+  },
+  Tabs: {
+    component: Tabs,
+    schema: tabsPropsSchema,
+    styleOverride: true,
+    recurseChildren: true,
+    containerProps: true,
+  },
+  Tab: {
+    component: Tab,
+    schema: tabPropsSchema,
+    styleOverride: true,
+    recurseChildren: true,
+  },
+  Banner: { component: Banner, schema: bannerPropsSchema, styleOverride: true },
+  Button: { component: Button, schema: buttonPropsSchema, styleOverride: true },
+  Link: { component: Link, schema: linkPropsSchema },
+  FeatureGrid: {
+    component: FeatureGrid,
+    schema: featureGridPropsSchema,
+    styleOverride: true,
+    recurseChildren: true,
+    containerProps: true,
+  },
+  Feature: { component: Feature, schema: featurePropsSchema, styleOverride: true },
+  VideoEmbed: { component: VideoEmbed, schema: videoEmbedPropsSchema, locale: true },
+  MapEmbed: { component: MapEmbed, schema: mapEmbedPropsSchema, locale: true },
+  ImageSlider: {
+    component: ImageSlider,
+    schema: imageSliderPropsSchema,
+    locale: true,
+  },
+  BeforeAfter: {
+    component: BeforeAfter,
+    schema: beforeAfterPropsSchema,
+    locale: true,
+  },
+  LogoStrip: {
+    component: LogoStrip,
+    schema: logoStripPropsSchema,
+    styleOverride: true,
+    locale: true,
+  },
+  Testimonials: {
+    component: Testimonials,
+    schema: testimonialsPropsSchema,
+    styleOverride: true,
+    locale: true,
+    recurseChildren: true,
+    containerProps: true,
+  },
+  Testimonial: {
+    component: Testimonial,
+    schema: testimonialPropsSchema,
+    styleOverride: true,
+  },
+  Team: {
+    component: Team,
+    schema: teamPropsSchema,
+    styleOverride: true,
+    recurseChildren: true,
+    containerProps: true,
+  },
+  TeamMember: {
+    component: TeamMember,
+    schema: teamMemberPropsSchema,
+    styleOverride: true,
+  },
+  PricingTable: {
+    component: PricingTable,
+    schema: pricingTablePropsSchema,
+    styleOverride: true,
+    recurseChildren: true,
+    containerProps: true,
+  },
+  PricingPlan: {
+    component: PricingPlan,
+    schema: pricingPlanPropsSchema,
+    styleOverride: true,
+  },
+  StatsCounter: {
+    component: StatsCounter,
+    schema: statsCounterPropsSchema,
+    styleOverride: true,
+    recurseChildren: true,
+    containerProps: true,
+  },
+  Stat: { component: Stat, schema: statPropsSchema, styleOverride: true },
+  Timeline: {
+    component: Timeline,
+    schema: timelinePropsSchema,
+    styleOverride: true,
+    recurseChildren: true,
+    containerProps: true,
+  },
+  TimelineStep: { component: TimelineStep, schema: timelineStepPropsSchema },
+  NewsletterSignup: {
+    component: NewsletterSignup,
+    schema: newsletterSignupPropsSchema,
+    locale: true,
+  },
+};
+
 // `Astro.slots.has('default')` non basta per un contenitore appena creato
 // vuoto: canvas-editor-shell.tsx gli assegna `children: []` (array vuoto,
 // non `undefined`) — passarlo comunque come children (anche se `.map`
@@ -205,7 +443,7 @@ const hasChildren = Boolean(block.children?.length);
 // (Column.astro, min-width:auto) — un wrapper vero (es. un <div> senza
 // display:contents) qui romperebbe il layout di Columns/FeatureGrid/ecc.
 // Conseguenza nota: getBoundingClientRect() su un nodo display:contents è
-// vuoto — preview-bridge-client.ts usa Range.selectNodeContents invece.
+// vuoto — preview-bridge-client.ts (letto da init-preview-bridge.ts) usa Range.selectNodeContents invece.
 const Wrapper = editable ? 'div' : Fragment;
 const wrapperProps = editable
   ? {
@@ -214,511 +452,45 @@ const wrapperProps = editable
       style: 'display:contents',
     }
   : {};
+
+const entry = BLOCK_REGISTRY[block.type];
+const Component = entry?.component;
+const context: BlockRenderContext = {
+  locale,
+  translations,
+  site,
+  ancestors,
+  currentPageTitle,
+  editable,
+};
+const dispatchProps = entry
+  ? {
+      ...(entry.schema ? entry.schema.parse(block.props) : {}),
+      ...(entry.styleOverride ? { styleOverride: block.styleOverride } : {}),
+      ...(entry.locale ? { locale } : {}),
+      ...(entry.containerProps ? { editable, hasChildren } : {}),
+      ...(entry.extra ? entry.extra(context) : {}),
+    }
+  : {};
 ---
 
 <Wrapper {...wrapperProps}>
 {
-  block.type === 'Hero' && (
-    <Hero
-      {...heroPropsSchema.parse(block.props)}
-      styleOverride={block.styleOverride}
-    />
-  )
-}
-{
-  block.type === 'Text' && (
-    <Text
-      {...textPropsSchema.parse(block.props)}
-      styleOverride={block.styleOverride}
-    />
-  )
-}
-{
-  block.type === 'Image' && (
-    <Image {...imagePropsSchema.parse(block.props)} locale={locale} />
-  )
-}
-{
-  block.type === 'Gallery' && (
-    <Gallery {...galleryPropsSchema.parse(block.props)} locale={locale} />
-  )
-}
-{
-  block.type === 'Form' && (
-    <Form
-      {...formBlockPropsSchema.parse(block.props)}
-      styleOverride={block.styleOverride}
-      locale={locale}
-    />
-  )
-}
-{
-  block.type === 'Quote' && (
-    <Quote
-      {...quotePropsSchema.parse(block.props)}
-      styleOverride={block.styleOverride}
-    />
-  )
-}
-{
-  block.type === 'Rating' && (
-    <Rating
-      {...ratingPropsSchema.parse(block.props)}
-      styleOverride={block.styleOverride}
-    />
-  )
-}
-{
-  block.type === 'Countdown' && (
-    <Countdown
-      {...countdownPropsSchema.parse(block.props)}
-      styleOverride={block.styleOverride}
-      locale={locale}
-    />
-  )
-}
-{
-  block.type === 'EmbedHtml' && (
-    <EmbedHtml
-      {...embedHtmlPropsSchema.parse(block.props)}
-      styleOverride={block.styleOverride}
-    />
-  )
-}
-{
-  block.type === 'Table' && (
-    <Table {...tablePropsSchema.parse(block.props)} />
-  )
-}
-{
-  block.type === 'NavLink' && (
-    <NavLink {...navLinkPropsSchema.parse(block.props)} />
-  )
-}
-{
-  block.type === 'LanguageSwitcher' && (
-    <LanguageSwitcher
-      {...languageSwitcherPropsSchema.parse(block.props)}
-      locale={locale}
-      translations={translations}
-      site={site}
-    />
-  )
-}
-{
-  block.type === 'Breadcrumb' && (
-    <Breadcrumb
-      {...breadcrumbPropsSchema.parse(block.props)}
-      locale={locale}
-      ancestors={ancestors}
-      currentPageTitle={currentPageTitle}
-    />
-  )
-}
-{
-  block.type === 'SearchBox' && (
-    <SearchBox {...searchBoxPropsSchema.parse(block.props)} locale={locale} />
-  )
-}
-{
-  block.type === 'Nav' && (
-    <Nav {...navPropsSchema.parse(block.props)}>
-      {block.children?.map((child) => (
-        <Astro.self
-          block={child}
-          locale={locale}
-          translations={translations}
-          site={site}
-          ancestors={ancestors}
-          currentPageTitle={currentPageTitle}
-          editable={editable}
-        />
-      ))}
-    </Nav>
-  )
-}
-{
-  block.type === 'HamburgerMenu' && (
-    <HamburgerMenu
-      {...hamburgerMenuPropsSchema.parse(block.props)}
-      locale={locale}
-    >
-      {block.children?.map((child) => (
-        <Astro.self
-          block={child}
-          locale={locale}
-          translations={translations}
-          site={site}
-          ancestors={ancestors}
-          currentPageTitle={currentPageTitle}
-          editable={editable}
-        />
-      ))}
-    </HamburgerMenu>
-  )
-}
-{
-  block.type === 'NavDropdown' && (
-    <NavDropdown {...navDropdownPropsSchema.parse(block.props)}>
-      {block.children?.map((child) => (
-        <Astro.self
-          block={child}
-          locale={locale}
-          translations={translations}
-          site={site}
-          ancestors={ancestors}
-          currentPageTitle={currentPageTitle}
-          editable={editable}
-        />
-      ))}
-    </NavDropdown>
-  )
-}
-{
-  block.type === 'Columns' && (
-    <Columns {...columnsPropsSchema.parse(block.props)} editable={editable} hasChildren={hasChildren} styleOverride={block.styleOverride}>
-      {block.children?.map((child) => (
-        <Astro.self
-          block={child}
-          locale={locale}
-          translations={translations}
-          site={site}
-          ancestors={ancestors}
-          currentPageTitle={currentPageTitle}
-          editable={editable}
-        />
-      ))}
-    </Columns>
-  )
-}
-{
-  block.type === 'Column' && (
-    <Column editable={editable} hasChildren={hasChildren} styleOverride={block.styleOverride}>
-      {block.children?.map((child) => (
-        <Astro.self
-          block={child}
-          locale={locale}
-          translations={translations}
-          site={site}
-          ancestors={ancestors}
-          currentPageTitle={currentPageTitle}
-          editable={editable}
-        />
-      ))}
-    </Column>
-  )
-}
-{
-  block.type === 'Container' && (
-    <Container {...containerPropsSchema.parse(block.props)} editable={editable} hasChildren={hasChildren} styleOverride={block.styleOverride}>
-      {block.children?.map((child) => (
-        <Astro.self
-          block={child}
-          locale={locale}
-          translations={translations}
-          site={site}
-          ancestors={ancestors}
-          currentPageTitle={currentPageTitle}
-          editable={editable}
-        />
-      ))}
-    </Container>
-  )
-}
-{
-  block.type === 'PromoBar' && (
-    <PromoBar
-      {...promoBarPropsSchema.parse(block.props)}
-      styleOverride={block.styleOverride}
-      locale={locale}
-    />
-  )
-}
-{
-  block.type === 'BackToTop' && (
-    <BackToTop
-      {...backToTopPropsSchema.parse(block.props)}
-      locale={locale}
-    />
-  )
-}
-{
-  block.type === 'WhatsAppButton' && (
-    <WhatsAppButton
-      {...whatsAppButtonPropsSchema.parse(block.props)}
-      locale={locale}
-    />
-  )
-}
-{
-  block.type === 'Accordion' && (
-    <Accordion {...accordionPropsSchema.parse(block.props)} editable={editable} hasChildren={hasChildren} styleOverride={block.styleOverride}>
-      {block.children?.map((child) => (
-        <Astro.self
-          block={child}
-          locale={locale}
-          translations={translations}
-          site={site}
-          ancestors={ancestors}
-          currentPageTitle={currentPageTitle}
-          editable={editable}
-        />
-      ))}
-    </Accordion>
-  )
-}
-{
-  block.type === 'AccordionItem' && (
-    <AccordionItem
-      {...accordionItemPropsSchema.parse(block.props)}
-      styleOverride={block.styleOverride}
-    />
-  )
-}
-{
-  block.type === 'Tabs' && (
-    <Tabs {...tabsPropsSchema.parse(block.props)} editable={editable} hasChildren={hasChildren} styleOverride={block.styleOverride}>
-      {block.children?.map((child) => (
-        <Astro.self
-          block={child}
-          locale={locale}
-          translations={translations}
-          site={site}
-          ancestors={ancestors}
-          currentPageTitle={currentPageTitle}
-          editable={editable}
-        />
-      ))}
-    </Tabs>
-  )
-}
-{
-  block.type === 'Tab' && (
-    <Tab {...tabPropsSchema.parse(block.props)} styleOverride={block.styleOverride}>
-      {block.children?.map((child) => (
-        <Astro.self
-          block={child}
-          locale={locale}
-          translations={translations}
-          site={site}
-          ancestors={ancestors}
-          currentPageTitle={currentPageTitle}
-          editable={editable}
-        />
-      ))}
-    </Tab>
-  )
-}
-{
-  block.type === 'Banner' && (
-    <Banner
-      {...bannerPropsSchema.parse(block.props)}
-      styleOverride={block.styleOverride}
-    />
-  )
-}
-{
-  block.type === 'Button' && (
-    <Button
-      {...buttonPropsSchema.parse(block.props)}
-      styleOverride={block.styleOverride}
-    />
-  )
-}
-{
-  block.type === 'Link' && <Link {...linkPropsSchema.parse(block.props)} />
-}
-{
-  block.type === 'FeatureGrid' && (
-    <FeatureGrid {...featureGridPropsSchema.parse(block.props)} editable={editable} hasChildren={hasChildren} styleOverride={block.styleOverride}>
-      {block.children?.map((child) => (
-        <Astro.self
-          block={child}
-          locale={locale}
-          translations={translations}
-          site={site}
-          ancestors={ancestors}
-          currentPageTitle={currentPageTitle}
-          editable={editable}
-        />
-      ))}
-    </FeatureGrid>
-  )
-}
-{
-  block.type === 'Feature' && (
-    <Feature
-      {...featurePropsSchema.parse(block.props)}
-      styleOverride={block.styleOverride}
-    />
-  )
-}
-{
-  block.type === 'VideoEmbed' && (
-    <VideoEmbed
-      {...videoEmbedPropsSchema.parse(block.props)}
-      locale={locale}
-    />
-  )
-}
-{
-  block.type === 'MapEmbed' && (
-    <MapEmbed {...mapEmbedPropsSchema.parse(block.props)} locale={locale} />
-  )
-}
-{
-  block.type === 'ImageSlider' && (
-    <ImageSlider
-      {...imageSliderPropsSchema.parse(block.props)}
-      locale={locale}
-    />
-  )
-}
-{
-  block.type === 'BeforeAfter' && (
-    <BeforeAfter
-      {...beforeAfterPropsSchema.parse(block.props)}
-      locale={locale}
-    />
-  )
-}
-{
-  block.type === 'LogoStrip' && (
-    <LogoStrip
-      {...logoStripPropsSchema.parse(block.props)}
-      styleOverride={block.styleOverride}
-      locale={locale}
-    />
-  )
-}
-{
-  block.type === 'Testimonials' && (
-    <Testimonials {...testimonialsPropsSchema.parse(block.props)} editable={editable} hasChildren={hasChildren} styleOverride={block.styleOverride} locale={locale}>
-      {block.children?.map((child) => (
-        <Astro.self
-          block={child}
-          locale={locale}
-          translations={translations}
-          site={site}
-          ancestors={ancestors}
-          currentPageTitle={currentPageTitle}
-          editable={editable}
-        />
-      ))}
-    </Testimonials>
-  )
-}
-{
-  block.type === 'Testimonial' && (
-    <Testimonial
-      {...testimonialPropsSchema.parse(block.props)}
-      styleOverride={block.styleOverride}
-    />
-  )
-}
-{
-  block.type === 'Team' && (
-    <Team {...teamPropsSchema.parse(block.props)} editable={editable} hasChildren={hasChildren} styleOverride={block.styleOverride}>
-      {block.children?.map((child) => (
-        <Astro.self
-          block={child}
-          locale={locale}
-          translations={translations}
-          site={site}
-          ancestors={ancestors}
-          currentPageTitle={currentPageTitle}
-          editable={editable}
-        />
-      ))}
-    </Team>
-  )
-}
-{
-  block.type === 'TeamMember' && (
-    <TeamMember
-      {...teamMemberPropsSchema.parse(block.props)}
-      styleOverride={block.styleOverride}
-    />
-  )
-}
-{
-  block.type === 'PricingTable' && (
-    <PricingTable {...pricingTablePropsSchema.parse(block.props)} editable={editable} hasChildren={hasChildren} styleOverride={block.styleOverride}>
-      {block.children?.map((child) => (
-        <Astro.self
-          block={child}
-          locale={locale}
-          translations={translations}
-          site={site}
-          ancestors={ancestors}
-          currentPageTitle={currentPageTitle}
-          editable={editable}
-        />
-      ))}
-    </PricingTable>
-  )
-}
-{
-  block.type === 'PricingPlan' && (
-    <PricingPlan
-      {...pricingPlanPropsSchema.parse(block.props)}
-      styleOverride={block.styleOverride}
-    />
-  )
-}
-{
-  block.type === 'StatsCounter' && (
-    <StatsCounter {...statsCounterPropsSchema.parse(block.props)} editable={editable} hasChildren={hasChildren} styleOverride={block.styleOverride}>
-      {block.children?.map((child) => (
-        <Astro.self
-          block={child}
-          locale={locale}
-          translations={translations}
-          site={site}
-          ancestors={ancestors}
-          currentPageTitle={currentPageTitle}
-          editable={editable}
-        />
-      ))}
-    </StatsCounter>
-  )
-}
-{
-  block.type === 'Stat' && (
-    <Stat
-      {...statPropsSchema.parse(block.props)}
-      styleOverride={block.styleOverride}
-    />
-  )
-}
-{
-  block.type === 'Timeline' && (
-    <Timeline {...timelinePropsSchema.parse(block.props)} editable={editable} hasChildren={hasChildren} styleOverride={block.styleOverride}>
-      {block.children?.map((child) => (
-        <Astro.self
-          block={child}
-          locale={locale}
-          translations={translations}
-          site={site}
-          ancestors={ancestors}
-          currentPageTitle={currentPageTitle}
-          editable={editable}
-        />
-      ))}
-    </Timeline>
-  )
-}
-{
-  block.type === 'TimelineStep' && (
-    <TimelineStep {...timelineStepPropsSchema.parse(block.props)} />
-  )
-}
-{
-  block.type === 'NewsletterSignup' && (
-    <NewsletterSignup
-      {...newsletterSignupPropsSchema.parse(block.props)}
-      locale={locale}
-    />
+  Component && entry && (
+    <Component {...dispatchProps}>
+      {entry.recurseChildren &&
+        block.children?.map((child) => (
+          <Astro.self
+            block={child}
+            locale={locale}
+            translations={translations}
+            site={site}
+            ancestors={ancestors}
+            currentPageTitle={currentPageTitle}
+            editable={editable}
+          />
+        ))}
+    </Component>
   )
 }
 </Wrapper>
