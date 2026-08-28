@@ -51,6 +51,14 @@ describe('buildBlockStyleOverridesCss', () => {
   it('returns an empty string for an empty map', () => {
     expect(buildBlockStyleOverridesCss({})).toBe('');
   });
+
+  it('never emits a rule for marginTop/marginBottom — they are instance-only, not a per-type CSS override', () => {
+    const css = buildBlockStyleOverridesCss({
+      Button: { marginTop: '1rem', marginBottom: '2rem' },
+    });
+
+    expect(css).toBe('');
+  });
 });
 
 describe('buildBlockInstanceStyle', () => {
@@ -66,5 +74,11 @@ describe('buildBlockInstanceStyle', () => {
 
   it('returns undefined when every field is unset', () => {
     expect(buildBlockInstanceStyle({})).toBeUndefined();
+  });
+
+  it('never emits marginTop/marginBottom inline — they are applied directly by PublicPageContent.astro instead', () => {
+    expect(
+      buildBlockInstanceStyle({ marginTop: '1rem', marginBottom: '2rem' }),
+    ).toBeUndefined();
   });
 });

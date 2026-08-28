@@ -97,4 +97,30 @@ describe('BlockStyleFields', () => {
 
     expect(screen.getByPlaceholderText('Tema: oklch(0.205 0 0)')).toBeTruthy();
   });
+
+  it('renders marginTop/marginBottom as plain length fields, same as paddingX/paddingY', () => {
+    const onChange = vi.fn();
+    render(
+      <BlockStyleFields
+        properties={['marginTop', 'marginBottom']}
+        value={{ marginBottom: '2rem' }}
+        onChange={onChange}
+      />,
+    );
+
+    expect(screen.getByLabelText('Spazio sopra')).toHaveProperty('value', '');
+    expect(screen.getByLabelText('Spazio sotto')).toHaveProperty(
+      'value',
+      '2rem',
+    );
+
+    fireEvent.change(screen.getByLabelText('Spazio sopra'), {
+      target: { value: '1rem' },
+    });
+
+    expect(onChange).toHaveBeenCalledWith({
+      marginBottom: '2rem',
+      marginTop: '1rem',
+    });
+  });
 });

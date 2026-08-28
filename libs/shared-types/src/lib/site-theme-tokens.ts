@@ -26,6 +26,17 @@ export const blockStyleOverrideSchema = z.object({
   borderRadius: cssLengthTokenSchema.optional(),
   paddingX: cssLengthTokenSchema.optional(),
   paddingY: cssLengthTokenSchema.optional(),
+  // A differenza delle altre proprietà qui sopra, queste due sono
+  // deliberatamente ESCLUSE da BLOCK_STYLE_CUSTOM_PROPERTIES
+  // (block-style-overrides.ts) — non hanno senso come regola CSS per-TIPO
+  // scoped da `.brisk-<type>` (toccherebbe ogni istanza di quel tipo
+  // ovunque, anche annidata dentro un Container/Columns, dove lo spazio
+  // tra fratelli è già gestito dal gap del contenitore). Applicate invece
+  // SOLO per-istanza, e solo per un blocco di primo livello della pagina
+  // (PublicPageContent.astro) — vedi editor-app's block-toolbar-overlay.tsx
+  // `isRootLevel` per il gate lato editor.
+  marginTop: cssLengthTokenSchema.optional(),
+  marginBottom: cssLengthTokenSchema.optional(),
 });
 export type BlockStyleOverride = z.infer<typeof blockStyleOverrideSchema>;
 
@@ -78,6 +89,16 @@ export const blockStyleDefaultsSchema = z.object({
   borderRadius: z.string().min(1).optional(),
   paddingX: z.string().min(1).optional(),
   paddingY: z.string().min(1).optional(),
+  // marginTop/marginBottom non hanno un "default del tema" da risolvere
+  // (non dipendono da nessun tema — vedi il commento su di loro in
+  // `blockStyleOverrideSchema` sopra): questi due campi restano sempre
+  // `undefined` qui, mai popolati da resolve-theme-block-style-defaults.ts.
+  // Dichiarati comunque per allineare il tipo a `BlockStyleOverride` — la
+  // UI condivisa (editor-app's block-style-fields.tsx) indicizza
+  // `defaults` con `keyof BlockStyleOverride`, ometterli qui obbligherebbe
+  // quel codice a un cast invece di un tipo corretto.
+  marginTop: z.string().min(1).optional(),
+  marginBottom: z.string().min(1).optional(),
 });
 export type BlockStyleDefaults = z.infer<typeof blockStyleDefaultsSchema>;
 

@@ -452,6 +452,14 @@
         "paddingY": {
           "fieldLabel": "Vertical padding",
           "placeholder": "e.g. 1.25rem — empty for default"
+        },
+        "marginTop": {
+          "fieldLabel": "Space above",
+          "placeholder": "e.g. 2rem — empty for default"
+        },
+        "marginBottom": {
+          "fieldLabel": "Space below",
+          "placeholder": "e.g. 4rem — empty for default"
         }
       }
     }

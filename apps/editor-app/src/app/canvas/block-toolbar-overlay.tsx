@@ -181,7 +181,19 @@ export function BlockToolbarOverlay({
     stylableProperties.length > 0 &&
     typeStyle !== undefined &&
     onChangeTypeStyle !== undefined;
-  const canStyleInstance = stylableProperties.length > 0;
+  // marginTop/marginBottom sono solo per-ISTANZA (mai per-tipo, vedi il
+  // commento su blockStyleOverrideSchema in site-theme-tokens.ts) e solo
+  // per un blocco di primo livello: sono l'unico posto dove
+  // PublicPageContent.astro legge `styleOverride.marginTop/marginBottom`
+  // per lo spazio tra blocchi — su un blocco annidato non avrebbero alcun
+  // effetto visivo, quindi non li offriamo lì. Per questo il set di
+  // proprietà mostrate nel popover d'istanza può differere da quello del
+  // popover di tipo, che resta sempre `stylableProperties`.
+  const instanceStylableProperties: readonly (keyof BlockStyleOverride)[] =
+    isRootLevel
+      ? [...stylableProperties, 'marginTop', 'marginBottom']
+      : stylableProperties;
+  const canStyleInstance = instanceStylableProperties.length > 0;
   // L'override di TIPO (se presente e non null, cioè davvero personalizzato)
   // vince sul default del tema come anteprima per il popover d'istanza: è
   // quello che l'istanza sta effettivamente mostrando finché non viene
@@ -297,7 +309,7 @@ export function BlockToolbarOverlay({
             </PopoverTrigger>
             <PopoverContent side="right">
               <BlockStyleFields
-                properties={stylableProperties}
+                properties={instanceStylableProperties}
                 value={block.styleOverride ?? {}}
                 onChange={onChangeInstanceStyle}
                 defaults={instanceStyleDefaults}

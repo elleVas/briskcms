@@ -20,6 +20,28 @@ interface Props {
 }
 
 const { page, editable } = Astro.props;
+
+// Il gap fisso che questo valore sostituisce (vedi il commento sotto,
+// "Un blocco può personalizzare..."): un blocco di primo livello che non
+// personalizza `marginBottom` riceve esattamente lo stesso spazio di
+// prima, quindi l'HTML pubblicato di una pagina senza override resta
+// identico a prima di questo campo esistere.
+const DEFAULT_BLOCK_GAP = '4rem';
+
+function rootBlockSpacing(
+  styleOverride: PublishedPage['content'][number]['styleOverride'],
+  isLast: boolean,
+): string {
+  const marginTop = styleOverride?.marginTop ?? '0';
+  // L'ultimo blocco non riceve il gap di default sotto — `gap` non lo
+  // aggiungeva mai dopo l'ultimo figlio, e sostituirlo con un margin
+  // incondizionato avrebbe aggiunto uno spazio in fondo pagina che prima
+  // non c'era. Un override esplicito sull'ultimo blocco resta comunque
+  // rispettato: solo il DEFAULT viene azzerato, non la personalizzazione.
+  const marginBottom =
+    styleOverride?.marginBottom ?? (isLast ? '0' : DEFAULT_BLOCK_GAP);
+  return `margin-top: ${marginTop}; margin-bottom: ${marginBottom};`;
+}
 ---
 
 {
@@ -46,25 +68,37 @@ const { page, editable } = Astro.props;
         // deliberately wants full-bleed width (e.g. a future full-width
         // Container/Section) isn't supported by this default yet — that's
         // a real, separate case to design when a block actually needs it,
-        // not something to guess at now. A per-block spacing override is
-        // likewise a separate, not-yet-built editor field — this is only
-        // the default every block gets for free.
+        // not something to guess at now.
+        //
+        // The vertical gap itself is `margin`, not flex `gap`, on a
+        // one-per-block wrapper below (rootBlockSpacing) — this is what
+        // makes it possible for a root-level block to override its own
+        // spacing (docs/adr/0022's per-instance style popover,
+        // "Style this block" → editor-app's block-toolbar-overlay.tsx)
+        // without affecting spacing anywhere else on the page.
       }
       <main
         id="main-content"
-        class="mx-auto flex max-w-5xl flex-col gap-16 px-6"
+        class="mx-auto flex max-w-5xl flex-col px-6"
         data-brisk-root-blocks={editable ? 'page' : undefined}
       >
-        {page.content.map((block) => (
-          <BlockRenderer
-            block={block}
-            locale={page.locale}
-            translations={page.translations}
-            site={page.site}
-            ancestors={page.ancestors}
-            currentPageTitle={page.seoMeta.title}
-            editable={editable}
-          />
+        {page.content.map((block, index) => (
+          <div
+            style={rootBlockSpacing(
+              block.styleOverride,
+              index === page.content.length - 1,
+            )}
+          >
+            <BlockRenderer
+              block={block}
+              locale={page.locale}
+              translations={page.translations}
+              site={page.site}
+              ancestors={page.ancestors}
+              currentPageTitle={page.seoMeta.title}
+              editable={editable}
+            />
+          </div>
         ))}
       </main>
     </PageLayout>

@@ -83,16 +83,41 @@ function baseProps() {
 }
 
 describe('BlockToolbarOverlay style buttons', () => {
-  it('shows neither style button for a block with no stylableProperties', () => {
+  it('hides the type-level style button for a block with no stylableProperties', () => {
     renderOverlay(
       <BlockToolbarOverlay {...baseProps()} descriptor={heroDescriptor} />,
     );
 
     expect(
-      screen.queryByRole('button', { name: /Stile di questo blocco/ }),
-    ).toBeNull();
-    expect(
       screen.queryByRole('button', { name: /Stile di tutti i blocchi/ }),
+    ).toBeNull();
+  });
+
+  it('still shows the instance style button for a root-level block with no stylableProperties (marginTop/marginBottom are always offered there)', () => {
+    renderOverlay(
+      <BlockToolbarOverlay
+        {...baseProps()}
+        descriptor={heroDescriptor}
+        isRootLevel={true}
+      />,
+    );
+
+    expect(
+      screen.getByRole('button', { name: 'Stile di questo blocco' }),
+    ).toBeTruthy();
+  });
+
+  it('hides the instance style button for a NESTED block with no stylableProperties (marginTop/marginBottom only apply to a page-root block)', () => {
+    renderOverlay(
+      <BlockToolbarOverlay
+        {...baseProps()}
+        descriptor={heroDescriptor}
+        isRootLevel={false}
+      />,
+    );
+
+    expect(
+      screen.queryByRole('button', { name: /Stile di questo blocco/ }),
     ).toBeNull();
   });
 
@@ -190,5 +215,58 @@ describe('BlockToolbarOverlay style buttons', () => {
 
     expect(onChangeTypeStyle).toHaveBeenCalledWith({ borderRadius: '9999px' });
     expect(onChangeInstanceStyle).not.toHaveBeenCalled();
+  });
+
+  it('offers marginTop/marginBottom in the instance popover for a root-level block, and saves them via onChangeInstanceStyle', () => {
+    const onChangeInstanceStyle = vi.fn();
+    renderOverlay(
+      <BlockToolbarOverlay
+        {...baseProps()}
+        isRootLevel={true}
+        onChangeInstanceStyle={onChangeInstanceStyle}
+      />,
+    );
+
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Stile di questo blocco' }),
+    );
+    fireEvent.change(screen.getByLabelText('Spazio sotto'), {
+      target: { value: '2rem' },
+    });
+
+    expect(onChangeInstanceStyle).toHaveBeenCalledWith({
+      marginBottom: '2rem',
+    });
+  });
+
+  it('does not offer marginTop/marginBottom in the instance popover for a NESTED block, even when the type has other stylableProperties', () => {
+    renderOverlay(<BlockToolbarOverlay {...baseProps()} isRootLevel={false} />);
+
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Stile di questo blocco' }),
+    );
+
+    expect(screen.queryByLabelText('Spazio sopra')).toBeNull();
+    expect(screen.queryByLabelText('Spazio sotto')).toBeNull();
+  });
+
+  it('never offers marginTop/marginBottom in the type-level popover, even for a root-level block', () => {
+    renderOverlay(
+      <BlockToolbarOverlay
+        {...baseProps()}
+        isRootLevel={true}
+        typeStyle={{}}
+        onChangeTypeStyle={vi.fn()}
+      />,
+    );
+
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: 'Stile di tutti i blocchi Bottone (CTA)',
+      }),
+    );
+
+    expect(screen.queryByLabelText('Spazio sopra')).toBeNull();
+    expect(screen.queryByLabelText('Spazio sotto')).toBeNull();
   });
 });
