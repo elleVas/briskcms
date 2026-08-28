@@ -2,24 +2,25 @@
 import type { VideoEmbedProps } from '@brisk/shared-types';
 import ConsentGatedEmbed from '../ConsentGatedEmbed.astro';
 import { parseVideoEmbedUrl } from '../../lib/video-embed.js';
-import { t } from '../../lib/i18n.js';
+import { Translator } from '../../lib/i18n.js';
 
 type Props = VideoEmbedProps & { locale: string };
 
 const { url, locale } = Astro.props;
 const parsed = url ? parseVideoEmbedUrl(url) : null;
+const i18n = new Translator(locale);
 ---
 
 {
   parsed && (
     <ConsentGatedEmbed
       src={parsed.embedUrl}
-      title={t(locale, 'videoEmbed.title')}
-      buttonLabel={t(locale, 'videoEmbed.buttonLabel', {
+      title={i18n.t('videoEmbed.title')}
+      buttonLabel={i18n.t('videoEmbed.buttonLabel', {
         provider: parsed.provider === 'youtube' ? 'YouTube' : 'Vimeo',
       })}
     />
   )
 }
-{!url && <p>{t(locale, 'videoEmbed.empty')}</p>}
-{url && !parsed && <p>{t(locale, 'videoEmbed.unrecognizedUrl')}</p>}
+{!url && <p>{i18n.t('videoEmbed.empty')}</p>}
+{url && !parsed && <p>{i18n.t('videoEmbed.unrecognizedUrl')}</p>}

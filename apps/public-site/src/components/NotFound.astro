@@ -1,26 +1,27 @@
 ---
-import { t } from '../lib/i18n.js';
+import { Translator } from '../lib/i18n.js';
 
 // Rendered with no locale context in two cases: Astro's own top-level
 // 404.astro (a truly locale-less URL, no [locale] segment at all) and
 // search.astro when the requested locale/site couldn't be resolved —
-// t()'s own fallback-to-Italian covers both without this component
+// Translator's own fallback-to-Italian covers both without this component
 // needing to guess.
 interface Props {
   locale?: string;
 }
 
 const { locale } = Astro.props;
+const i18n = new Translator(locale ?? 'it');
 ---
 
 <html lang={locale ?? 'it'}>
 	<head>
 		<meta charset="utf-8" />
-		<title>{t(locale ?? 'it', 'notFound.title')}</title>
+		<title>{i18n.t('notFound.title')}</title>
 		<meta name="viewport" content="width=device-width" />
 	</head>
 	<body>
 		<h1>404</h1>
-		<p>{t(locale ?? 'it', 'notFound.message')}</p>
+		<p>{i18n.t('notFound.message')}</p>
 	</body>
 </html>

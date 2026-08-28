@@ -13,7 +13,7 @@ import { editorAppUrl } from '../lib/editor-app-url.js';
 import { localePath } from '../lib/locale-path.js';
 import { buildSchemaOrgGraph } from '../lib/schema-org.js';
 import { resolveThemeFont } from '../lib/theme-font.js';
-import { t } from '../lib/i18n.js';
+import { Translator } from '../lib/i18n.js';
 import '../styles/global.css';
 // ~theme resolves to themes/<BRISK_THEME>/theme.css (docs/adr/0021,
 // astro.config.mjs) — imported after global.css so its :root tokens win
@@ -50,6 +50,7 @@ const {
 	ancestors,
 	editable,
 } = Astro.props;
+const i18n = new Translator(locale);
 // The default locale's translation, if published, doubles as the
 // x-default alternate (docs/adr/0017) — the version search engines should
 // offer a visitor whose browser locale matches none of the site's.
@@ -227,7 +228,7 @@ const blockStyleOverridesCss = buildBlockStyleOverridesCss(
 		{theme.headScript && <Fragment set:html={theme.headScript} />}
 	</head>
 	<body data-brisk-editor-app-url={editable ? editorAppUrl() : undefined}>
-		<a href="#main-content" class="brisk-skip-link">{t(locale, 'skipLink')}</a>
+		<a href="#main-content" class="brisk-skip-link">{i18n.t('skipLink')}</a>
 		{
 			header && (
 				<header

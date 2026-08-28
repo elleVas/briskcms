@@ -1,7 +1,7 @@
 ---
 import type { MapEmbedProps } from '@brisk/shared-types';
 import ConsentGatedEmbed from '../ConsentGatedEmbed.astro';
-import { t } from '../../lib/i18n.js';
+import { Translator } from '../../lib/i18n.js';
 
 type Props = MapEmbedProps & { locale: string };
 
@@ -9,16 +9,17 @@ const { address, locale } = Astro.props;
 const src = address
   ? `https://www.google.com/maps?q=${encodeURIComponent(address)}&output=embed`
   : null;
+const i18n = new Translator(locale);
 ---
 
 {
   src ? (
     <ConsentGatedEmbed
       src={src}
-      title={t(locale, 'mapEmbed.title', { address: address ?? '' })}
-      buttonLabel={t(locale, 'mapEmbed.buttonLabel')}
+      title={i18n.t('mapEmbed.title', { address: address ?? '' })}
+      buttonLabel={i18n.t('mapEmbed.buttonLabel')}
     />
   ) : (
-    <p>{t(locale, 'mapEmbed.empty')}</p>
+    <p>{i18n.t('mapEmbed.empty')}</p>
   )
 }

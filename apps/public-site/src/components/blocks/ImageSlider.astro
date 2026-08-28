@@ -1,6 +1,6 @@
 ---
 import type { ImageSliderProps, PickedMedia } from '@brisk/shared-types';
-import { t } from '../../lib/i18n.js';
+import { Translator } from '../../lib/i18n.js';
 
 type Props = ImageSliderProps & { locale: string };
 type SliderImage = ImageSliderProps['images'][number];
@@ -13,6 +13,7 @@ function isPictured(
 
 const { images, locale } = Astro.props;
 const pictured = images.filter(isPictured);
+const i18n = new Translator(locale);
 ---
 
 {
@@ -36,14 +37,14 @@ const pictured = images.filter(isPictured);
           <button
             type="button"
             class="brisk-slider__nav brisk-slider__nav--prev"
-            aria-label={t(locale, 'imageSlider.prev')}
+            aria-label={i18n.t('imageSlider.prev')}
           >
             ‹
           </button>
           <button
             type="button"
             class="brisk-slider__nav brisk-slider__nav--next"
-            aria-label={t(locale, 'imageSlider.next')}
+            aria-label={i18n.t('imageSlider.next')}
           >
             ›
           </button>
@@ -51,7 +52,7 @@ const pictured = images.filter(isPictured);
       )}
     </div>
   ) : (
-    <p>{t(locale, 'imageSlider.empty')}</p>
+    <p>{i18n.t('imageSlider.empty')}</p>
   )
 }
 

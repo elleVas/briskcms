@@ -5,7 +5,7 @@ import {
   type LogoStripProps,
   type PickedMedia,
 } from '@brisk/shared-types';
-import { t } from '../../lib/i18n.js';
+import { Translator } from '../../lib/i18n.js';
 
 type Props = LogoStripProps & {
   styleOverride?: BlockStyleOverride;
@@ -20,6 +20,7 @@ function isPictured(logo: LogoItem): logo is LogoItem & { media: PickedMedia } {
 const { logos, styleOverride, locale } = Astro.props;
 const pictured = logos.filter(isPictured);
 const instanceStyle = buildBlockInstanceStyle(styleOverride);
+const i18n = new Translator(locale);
 ---
 
 {
@@ -38,7 +39,7 @@ const instanceStyle = buildBlockInstanceStyle(styleOverride);
       ))}
     </div>
   ) : (
-    <p>{t(locale, 'logoStrip.empty')}</p>
+    <p>{i18n.t('logoStrip.empty')}</p>
   )
 }
 
