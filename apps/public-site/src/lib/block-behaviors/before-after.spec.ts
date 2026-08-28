@@ -1,0 +1,50 @@
+// @vitest-environment jsdom
+import { describe, expect, it } from 'vitest';
+import { beforeAfterBehaviors } from './before-after.js';
+import { runBlockBehaviors } from './run-block-behaviors.js';
+
+function renderBeforeAfter(): HTMLElement {
+  document.body.innerHTML = `
+    <div class="brisk-before-after" style="--reveal: 50%">
+      <input type="range" class="brisk-before-after__slider" min="0" max="100" value="50" />
+    </div>
+  `;
+  return document.querySelector<HTMLElement>('.brisk-before-after')!;
+}
+
+describe('beforeAfterBehaviors', () => {
+  it('updates the --reveal custom property when the slider moves', () => {
+    const root = renderBeforeAfter();
+    const slider = root.querySelector<HTMLInputElement>(
+      '.brisk-before-after__slider',
+    )!;
+
+    runBlockBehaviors(document, beforeAfterBehaviors);
+    slider.value = '75';
+    slider.dispatchEvent(new Event('input'));
+
+    expect(root.style.getPropertyValue('--reveal')).toBe('75%');
+  });
+
+  it('does nothing when the block has no slider', () => {
+    document.body.innerHTML = '<div class="brisk-before-after"></div>';
+
+    expect(() =>
+      runBlockBehaviors(document, beforeAfterBehaviors),
+    ).not.toThrow();
+  });
+
+  it('is idempotent: a second run does not attach a duplicate listener', () => {
+    const root = renderBeforeAfter();
+    const slider = root.querySelector<HTMLInputElement>(
+      '.brisk-before-after__slider',
+    )!;
+
+    runBlockBehaviors(document, beforeAfterBehaviors);
+    runBlockBehaviors(document, beforeAfterBehaviors);
+    slider.value = '20';
+    slider.dispatchEvent(new Event('input'));
+
+    expect(root.style.getPropertyValue('--reveal')).toBe('20%');
+  });
+});
