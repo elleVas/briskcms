@@ -8,7 +8,7 @@
 point 6 ("Gestione temi/template" — what a "theme" even means here, not
 decided) and point 7 (Core/App separation, Bedrock/Sage-inspired — how an
 agency's customizations for one client survive a Brisk core update,
-blocking Fase 7 but not blocking Fase 0-6). Point 7 had concluded there
+blocking Phase 7 but not blocking Phase 0-6). Point 7 had concluded there
 was nothing to decide yet, because no "app" content existed to separate
 from "core" — every line of code in the repo was Brisk itself. This ADR
 is the first case where that stops being true: a per-site color panel is
@@ -110,7 +110,7 @@ about file-by-file.
    built with — the flagship, dogfooded example of the product, not a
    demo theme kept separate from what ships to real users.
 3. **`shop-showcase`** — a showcase storefront: products on display, no
-   cart/checkout/payment. Feeds directly into Fase 8's Catalog feature
+   cart/checkout/payment. Feeds directly into Phase 8's Catalog feature
    (`piano-progetto-astro-cms.md` point 8 — "solo esposizione, non
    vendita"), and is expected to be the theme that exercises the Catalog
    blocks (Griglia prodotti, Prodotti correlati) most directly once that
@@ -175,7 +175,7 @@ theme redefines for itself.
 
 - Resolves `piano-progetto-astro-cms.md` points 6 and 7 — both to be
   updated to reference this ADR instead of "not yet decided". Unblocks
-  Fase 7 (WordPress importer): migrated content lands as ordinary
+  Phase 7 (WordPress importer): migrated content lands as ordinary
   pages/data, never inside a theme package, so this decision doesn't
   constrain the importer's design, only removes the structural
   uncertainty that was blocking it from starting.

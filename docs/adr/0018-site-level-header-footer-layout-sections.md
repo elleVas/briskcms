@@ -4,7 +4,7 @@
 
 ## Context
 
-After Fase 5b (multilingua), `apps/public-site` still had no global chrome
+After Phase 5b (multi-language), `apps/public-site` still had no global chrome
 at all: every page is pure block content (ADR-0007), so there was nowhere
 to put a visible language switcher for real visitors — only search
 engines could discover translations, via hreflang. Separately, the
@@ -72,7 +72,7 @@ Header/Footer have nothing to ask the user before creating them (unlike a
 page, no slug/seoMeta to choose). If the site's default locale already
 has a published section of that kind, the new draft starts as a copy of
 its content — same "copy-on-translate" philosophy as
-`createPageTranslation` (Fase 5b): enabling a language shouldn't force
+`createPageTranslation` (Phase 5b): enabling a language shouldn't force
 rebuilding the header from scratch.
 
 ## Consequences

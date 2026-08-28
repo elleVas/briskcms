@@ -4,7 +4,7 @@
 
 ## Context
 
-Fase 5 (`piano-progetto-astro-cms.md`) needs real SEO: editable per-page
+Phase 5 (`piano-progetto-astro-cms.md`) needs real SEO: editable per-page
 metadata, OG tags, a sitemap, and structured data (schema.org). `seoMeta`
 (title/description/canonical) already exists on `Page` and already renders
 on apps/public-site, but nothing in the editor lets a content editor change

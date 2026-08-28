@@ -4,7 +4,7 @@
 
 ## Context
 
-Fase 2's public-rendering half (`piano-progetto-astro-cms.md`) was still a
+Phase 2's public-rendering half (`piano-progetto-astro-cms.md`) was still a
 static placeholder — `apps/public-site` read one hardcoded local JSON file,
 no route dynamic on the actual page slug, no connection to real data.
 Building it meant deciding how a publicly-reachable, unauthenticated Astro
@@ -106,5 +106,5 @@ _which page's content answers it_, not how the route itself resolves.
   accidentally change the other.
 - SEO-specific work (meta tags beyond title/description, `sitemap.xml`, OG
   tags, `schema.org` markup) stays out of this decision's scope — already
-  allocated to its own later phase (Fase 5) in the plan, confirmed with
+  allocated to its own later phase (Phase 5) in the plan, confirmed with
   the user rather than folded in here.

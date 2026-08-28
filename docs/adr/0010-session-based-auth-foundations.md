@@ -4,7 +4,7 @@
 
 ## Context
 
-The plan (`piano-progetto-astro-cms.md`) lists Fase 3 (auth) as: argon2id
+The plan (`piano-progetto-astro-cms.md`) lists Phase 3 (auth) as: argon2id
 hashing, email verification, password reset with expiring tokens, sessions
 via httpOnly+secure+sameSite cookies, rate limiting on login, backed by
 "Lucia Auth o Better-Auth come base."
@@ -117,11 +117,11 @@ question for later in the plan, not blocking here.
 ## Consequences
 
 - `apps/editor-app` requires login again (it had been running
-  passwordless since Fase 2, backed by the temporary
+  passwordless since Phase 2, backed by the temporary
   `StaticTenantContextAdapter`) — this was a conscious scope choice for
   this PR (confirmed with the user) over shipping the backend in isolation
   and leaving the editor broken until a follow-up integration PR.
-- `libs/adapters/lucia-auth-adapter` (empty stub since Fase 0 scaffolding)
+- `libs/adapters/lucia-auth-adapter` (empty stub since Phase 0 scaffolding)
   is renamed to `libs/adapters/session-auth-adapter` and now holds the real
   implementation.
 - New `libs/ports/src/lib/user-repository.port.ts` (`UserRepositoryPort`)
