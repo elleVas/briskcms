@@ -44,58 +44,12 @@ const i18n = new Translator(locale);
   // HamburgerMenu.astro) — the only difference from that block is that
   // this one updates on a timer (setInterval) instead of a click listener,
   // the first "tick" rather than "event" driven block in the public site.
-  document
-    .querySelectorAll<HTMLElement>('.brisk-countdown')
-    .forEach((root) => {
-      const targetDate = root.dataset.targetDate;
-      if (!targetDate) return;
-      const target = new Date(targetDate).getTime();
-      if (Number.isNaN(target)) return;
-
-      const timerEl = root.querySelector<HTMLElement>(
-        '.brisk-countdown__timer',
-      );
-      const expiredEl = root.querySelector<HTMLElement>(
-        '.brisk-countdown__expired',
-      );
-      const daysEl = root.querySelector<HTMLElement>('[data-unit="days"]');
-      const hoursEl = root.querySelector<HTMLElement>('[data-unit="hours"]');
-      const minutesEl = root.querySelector<HTMLElement>(
-        '[data-unit="minutes"]',
-      );
-      const secondsEl = root.querySelector<HTMLElement>(
-        '[data-unit="seconds"]',
-      );
-
-      function pad(value: number): string {
-        return String(value).padStart(2, '0');
-      }
-
-      // Returns true once the target has passed, so the caller knows when
-      // to stop ticking instead of the interval outliving its own timer.
-      function updateOrExpire(): boolean {
-        const remaining = target - Date.now();
-        if (remaining <= 0) {
-          if (timerEl) timerEl.hidden = true;
-          if (expiredEl) expiredEl.hidden = false;
-          return true;
-        }
-        const totalSeconds = Math.floor(remaining / 1000);
-        if (daysEl) daysEl.textContent = pad(Math.floor(totalSeconds / 86400));
-        if (hoursEl)
-          hoursEl.textContent = pad(Math.floor((totalSeconds % 86400) / 3600));
-        if (minutesEl)
-          minutesEl.textContent = pad(Math.floor((totalSeconds % 3600) / 60));
-        if (secondsEl) secondsEl.textContent = pad(totalSeconds % 60);
-        return false;
-      }
-
-      if (!updateOrExpire()) {
-        const intervalId = setInterval(() => {
-          if (updateOrExpire()) clearInterval(intervalId);
-        }, 1000);
-      }
-    });
+  // Logic lives in a plain importable module (not inline here) so it can
+  // also be re-run after a live canvas insert/patch — see
+  // block-behaviors/run-block-behaviors-in-subtree.ts.
+  import { countdownBehaviors } from '../../lib/block-behaviors/countdown.js';
+  import { runBlockBehaviors } from '../../lib/block-behaviors/run-block-behaviors.js';
+  runBlockBehaviors(document, countdownBehaviors);
 </script>
 
 <style>

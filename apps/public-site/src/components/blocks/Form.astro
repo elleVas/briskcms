@@ -176,99 +176,18 @@ if (form && form.steps.length > 0) {
   )
 }
 
-{
-  // Turnstile's own script auto-renders any .cf-turnstile element it finds
-  // on the page and injects its response token as a hidden input inside
-  // the enclosing <form> on completion — no glue JS needed here, same
-  // "prefer native/self-contained mechanisms" reasoning as NavDropdown's
-  // <details>/<summary>. Astro dedupes an identical external <script src>
-  // across multiple Form blocks on the same page, so this is safe even
-  // with more than one form on a page.
-  turnstileSiteKey && (
-    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer />
-  )
-}
-
 <script>
-  // No framework here on purpose (docs/adr/0007), same reasoning as
-  // ImageSlider/Testimonials' own carousels — one step's <div> visible at
-  // a time via the hidden attribute, Indietro/Avanti walk the index.
-  // Every step's markup stays in the DOM the whole time (all fields
-  // submit together in one POST at the end, unchanged from a flat form);
-  // only the currently-visible one is ever validated/interactive.
-  //
-  // A no-op for a plain single-step form: querySelectorAll('.brisk-form__step')
-  // finds nothing, the early return below skips the rest for that form.
-  document.querySelectorAll<HTMLFormElement>('.brisk-form form').forEach((form) => {
-    const steps = Array.from(
-      form.querySelectorAll<HTMLElement>('.brisk-form__step'),
-    );
-    if (steps.length === 0) return;
-
-    const prevButton = form.querySelector<HTMLButtonElement>('[data-step-prev]');
-    const nextButton = form.querySelector<HTMLButtonElement>('[data-step-next]');
-    const submitButton = form.querySelector<HTMLButtonElement>('[data-step-submit]');
-    const indicator = form.querySelector<HTMLElement>('[data-step-indicator]');
-    let current = 0;
-
-    function render() {
-      steps.forEach((step, index) => {
-        step.hidden = index !== current;
-      });
-      if (prevButton) prevButton.hidden = current === 0;
-      if (nextButton) nextButton.hidden = current === steps.length - 1;
-      if (submitButton) submitButton.hidden = current !== steps.length - 1;
-      if (indicator) {
-        const template = indicator.dataset.stepIndicatorTemplate ?? '';
-        indicator.textContent = template
-          .replace('{current}', String(current + 1))
-          .replace('{total}', String(steps.length));
-      }
-    }
-
-    // Runs the browser's own constraint validation (required, type=email,
-    // etc.) on just the step being left, reporting the first failure with
-    // the native bubble UI — a required field in an earlier, now-hidden
-    // step would otherwise never be checked at all, since browsers skip
-    // validating anything inside a hidden element on the final submit.
-    function currentStepIsValid(): boolean {
-      const fields = steps[current].querySelectorAll<
-        HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
-      >('input, textarea, select');
-      for (const field of fields) {
-        if (!field.reportValidity()) return false;
-      }
-      return true;
-    }
-
-    function goToNextStep() {
-      if (!currentStepIsValid()) return;
-      current = Math.min(current + 1, steps.length - 1);
-      render();
-    }
-
-    nextButton?.addEventListener('click', goToNextStep);
-    prevButton?.addEventListener('click', () => {
-      current = Math.max(current - 1, 0);
-      render();
-    });
-
-    // Pressing Enter in a text field fires a real `submit` event — same as
-    // clicking the (possibly hidden) submit button — regardless of which
-    // field triggered it and regardless of the submit button's own hidden
-    // state; confirmed empirically, not assumed. Intercepted here instead
-    // of relying on the submit button being unreachable, so Enter on any
-    // step but the last one just advances a step, exactly like clicking
-    // Avanti, rather than submitting mid-wizard.
-    form.addEventListener('submit', (event) => {
-      if (current !== steps.length - 1) {
-        event.preventDefault();
-        goToNextStep();
-      }
-    });
-
-    render();
-  });
+  // Multi-step nav (Indietro/Avanti) and the Turnstile widget (rendered
+  // explicitly, not via Turnstile's own auto-scan — see
+  // block-behaviors/turnstile.ts for why) both live in plain importable
+  // modules, not inline here, so they can also be re-run after a live
+  // canvas insert/patch — see
+  // block-behaviors/run-block-behaviors-in-subtree.ts. A no-op for a
+  // plain single-step form: formBehaviors' own selector finds nothing.
+  import { formBehaviors } from '../../lib/block-behaviors/form.js';
+  import { turnstileBehaviors } from '../../lib/block-behaviors/turnstile.js';
+  import { runBlockBehaviors } from '../../lib/block-behaviors/run-block-behaviors.js';
+  runBlockBehaviors(document, [...formBehaviors, ...turnstileBehaviors]);
 </script>
 
 <style>

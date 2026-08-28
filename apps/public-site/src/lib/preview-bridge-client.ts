@@ -10,6 +10,7 @@ import {
   type PreviewToParentMessage,
 } from '@brisk/shared-types';
 import { getBlockRect } from './get-block-rect.js';
+import { runBlockBehaviorsInSubtree } from './block-behaviors/run-block-behaviors-in-subtree.js';
 
 export type EditingSection = 'header' | 'footer';
 
@@ -610,6 +611,7 @@ export function initPreviewBridge(): void {
         const patched = applyBlockPatch(document, blockId, html);
         if (patched) {
           resizeObserver.observe(patched);
+          runBlockBehaviorsInSubtree(patched);
         }
         sendBlockRects();
         return;
@@ -625,6 +627,7 @@ export function initPreviewBridge(): void {
         );
         if (inserted) {
           resizeObserver.observe(inserted);
+          runBlockBehaviorsInSubtree(inserted);
         }
         sendBlockRects();
         return;

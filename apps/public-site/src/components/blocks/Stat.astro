@@ -23,54 +23,13 @@ const instanceStyle = buildBlockInstanceStyle(styleOverride);
 
 <script>
   // No framework here on purpose (docs/adr/0007), same reasoning as
-  // Countdown.astro/HamburgerMenu.astro — an IntersectionObserver triggers
-  // a requestAnimationFrame count-up from 0 to the target value the first
-  // time each stat scrolls into view, then stops watching it (a stat only
-  // needs to animate once). Jumps straight to the final value for visitors
-  // who prefer reduced motion, rather than skipping the animation silently.
-  const COUNT_UP_MS = 1500;
-  const prefersReducedMotion = window.matchMedia(
-    '(prefers-reduced-motion: reduce)',
-  ).matches;
-
-  function animateCount(el: HTMLElement, target: number) {
-    const numberEl = el.querySelector<HTMLElement>('.brisk-stat__number');
-    if (!numberEl) return;
-
-    if (prefersReducedMotion) {
-      numberEl.textContent = String(target);
-      return;
-    }
-
-    const start = performance.now();
-    // An arrow function expression, not a function declaration: TS only
-    // carries the `numberEl` null-narrowing from the check above into a
-    // closure created after it, not into a hoisted function declaration.
-    const tick = (now: number) => {
-      const progress = Math.min((now - start) / COUNT_UP_MS, 1);
-      numberEl.textContent = String(Math.round(target * progress));
-      if (progress < 1) requestAnimationFrame(tick);
-    };
-    requestAnimationFrame(tick);
-  }
-
-  const stats = document.querySelectorAll<HTMLElement>('.brisk-stat');
-  if (stats.length > 0) {
-    const observer = new IntersectionObserver(
-      (entries, obs) => {
-        for (const entry of entries) {
-          if (!entry.isIntersecting) continue;
-          const target = Number(entry.target.getAttribute('data-value'));
-          if (!Number.isNaN(target)) {
-            animateCount(entry.target as HTMLElement, target);
-          }
-          obs.unobserve(entry.target);
-        }
-      },
-      { threshold: 0.4 },
-    );
-    stats.forEach((stat) => observer.observe(stat));
-  }
+  // Countdown.astro/HamburgerMenu.astro. Logic lives in a plain
+  // importable module (not inline here) so it can also be re-run after a
+  // live canvas insert/patch — see
+  // block-behaviors/run-block-behaviors-in-subtree.ts.
+  import { statBehaviors } from '../../lib/block-behaviors/stat.js';
+  import { runBlockBehaviors } from '../../lib/block-behaviors/run-block-behaviors.js';
+  runBlockBehaviors(document, statBehaviors);
 </script>
 
 <style>

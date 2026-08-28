@@ -27,21 +27,13 @@ const i18n = new Translator(locale);
 
 <script>
   // No framework here on purpose (docs/adr/0007) — a plain scroll listener
-  // toggling one class is all a show/hide button needs.
-  const SCROLL_THRESHOLD = 300;
-
-  document.querySelectorAll<HTMLButtonElement>('.brisk-back-to-top').forEach((button) => {
-    const updateVisibility = () => {
-      button.classList.toggle('brisk-back-to-top--visible', window.scrollY > SCROLL_THRESHOLD);
-    };
-
-    updateVisibility();
-    window.addEventListener('scroll', updateVisibility, { passive: true });
-
-    button.addEventListener('click', () => {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    });
-  });
+  // toggling one class is all a show/hide button needs. Logic lives in a
+  // plain importable module (not inline here) so it can also be re-run
+  // after a live canvas insert/patch — see
+  // block-behaviors/run-block-behaviors-in-subtree.ts.
+  import { backToTopBehaviors } from '../../lib/block-behaviors/back-to-top.js';
+  import { runBlockBehaviors } from '../../lib/block-behaviors/run-block-behaviors.js';
+  runBlockBehaviors(document, backToTopBehaviors);
 </script>
 
 <style>

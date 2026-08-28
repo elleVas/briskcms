@@ -39,42 +39,12 @@ const closeLabel = i18n.t('hamburgerMenu.close');
 <script>
   // No framework here on purpose (docs/adr/0007: Puck/React stay isolated
   // to apps/editor-app) — a plain click listener toggling one class is
-  // all a show/hide dropdown needs.
-  document.querySelectorAll<HTMLElement>('.brisk-hamburger').forEach((root) => {
-    const toggle = root.querySelector<HTMLButtonElement>('.brisk-hamburger__toggle');
-    if (!toggle) return;
-
-    function setOpen(isOpen: boolean) {
-      root.classList.toggle('brisk-hamburger--open', isOpen);
-      toggle?.setAttribute('aria-expanded', String(isOpen));
-      const label = isOpen
-        ? toggle?.dataset.labelClose
-        : toggle?.dataset.labelOpen;
-      if (label) toggle?.setAttribute('aria-label', label);
-    }
-
-    toggle.addEventListener('click', () => {
-      setOpen(!root.classList.contains('brisk-hamburger--open'));
-    });
-
-    // Security review 2026-08-24, accessibility: neither Esc nor a click
-    // outside the panel closed it before — only re-clicking the toggle
-    // itself did.
-    document.addEventListener('keydown', (event) => {
-      if (event.key === 'Escape' && root.classList.contains('brisk-hamburger--open')) {
-        setOpen(false);
-        toggle?.focus();
-      }
-    });
-    document.addEventListener('click', (event) => {
-      if (
-        root.classList.contains('brisk-hamburger--open') &&
-        !root.contains(event.target as Node)
-      ) {
-        setOpen(false);
-      }
-    });
-  });
+  // all a show/hide dropdown needs. Logic lives in a plain importable
+  // module (not inline here) so it can also be re-run after a live canvas
+  // insert/patch — see block-behaviors/run-block-behaviors-in-subtree.ts.
+  import { hamburgerMenuBehaviors } from '../../lib/block-behaviors/hamburger-menu.js';
+  import { runBlockBehaviors } from '../../lib/block-behaviors/run-block-behaviors.js';
+  runBlockBehaviors(document, hamburgerMenuBehaviors);
 </script>
 
 <style>
