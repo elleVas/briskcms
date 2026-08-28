@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useReducer } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from '@tanstack/react-router';
 import { useQuery } from '@tanstack/react-query';
@@ -37,6 +37,57 @@ export interface PagesListViewProps {
   total: number;
 }
 
+type DialogKind = 'new' | 'delete' | 'seo' | 'duplicate';
+
+interface PagesListState {
+  selectedPageId: string | null;
+  openDialog: DialogKind | 'none';
+  actionError: string;
+}
+
+const initialPagesListState: PagesListState = {
+  selectedPageId: null,
+  openDialog: 'none',
+  actionError: '',
+};
+
+type PagesListAction =
+  | { type: 'TOGGLE_SELECTED'; pageId: string }
+  | { type: 'OPEN_DIALOG'; dialog: DialogKind }
+  | { type: 'CLOSE_DIALOG' }
+  | { type: 'SET_ERROR'; error: string };
+
+/**
+ * Prima erano 4 `useState` booleani indipendenti per i dialog + uno per la
+ * selezione — nulla impediva che restassero "vero" insieme (es. sintomo
+ * reale trovato rifattorizzando: dopo un'eliminazione riuscita
+ * `isDeleteDialogOpen` non veniva mai resettato a `false`, quindi
+ * selezionare una pagina diversa subito dopo faceva riapparire il dialog
+ * di conferma eliminazione per la NUOVA pagina, mai richiesto). Un solo
+ * `openDialog` esclusivo lo rende strutturalmente impossibile — cambiare
+ * selezione chiude sempre qualunque dialog aperto.
+ */
+export function pagesListReducer(
+  state: PagesListState,
+  action: PagesListAction,
+): PagesListState {
+  switch (action.type) {
+    case 'TOGGLE_SELECTED':
+      return {
+        selectedPageId:
+          state.selectedPageId === action.pageId ? null : action.pageId,
+        openDialog: 'none',
+        actionError: '',
+      };
+    case 'OPEN_DIALOG':
+      return { ...state, openDialog: action.dialog };
+    case 'CLOSE_DIALOG':
+      return { ...state, openDialog: 'none' };
+    case 'SET_ERROR':
+      return { ...state, actionError: action.error };
+  }
+}
+
 export function PagesListView({
   siteId,
   defaultLocale,
@@ -50,12 +101,8 @@ export function PagesListView({
     usePagesList(siteId, defaultLocale);
   const tree = buildPageTree(pages);
 
-  const [selectedPageId, setSelectedPageId] = useState<string | null>(null);
-  const [isNewPageDialogOpen, setIsNewPageDialogOpen] = useState(false);
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [isSeoOpen, setIsSeoOpen] = useState(false);
-  const [isDuplicateOpen, setIsDuplicateOpen] = useState(false);
-  const [actionError, setActionError] = useState('');
+  const [state, dispatch] = useReducer(pagesListReducer, initialPagesListState);
+  const { selectedPageId, openDialog, actionError } = state;
 
   const selectedPage = pages.find((p) => p.id === selectedPageId) ?? null;
   const totalPages = Math.max(1, Math.ceil(total / PAGES_PAGE_SIZE));
@@ -66,7 +113,7 @@ export function PagesListView({
   // hreflang) for every other locale in the same translation group, not
   // just this one page's own content.
   const isDeletingDefaultLocalePage =
-    isDeleteDialogOpen && selectedPage?.locale === defaultLocale;
+    openDialog === 'delete' && selectedPage?.locale === defaultLocale;
   const translationsQuery = useQuery({
     ...pageTranslationsQueryOptions(selectedPage?.id ?? ''),
     enabled: isDeletingDefaultLocalePage,
@@ -78,8 +125,11 @@ export function PagesListView({
     : [];
 
   function toggleSelected(pageId: string) {
-    setSelectedPageId((current) => (current === pageId ? null : pageId));
-    setActionError('');
+    dispatch({ type: 'TOGGLE_SELECTED', pageId });
+  }
+
+  function closeDialog() {
+    dispatch({ type: 'CLOSE_DIALOG' });
   }
 
   async function goToPage(target: number) {
@@ -96,22 +146,25 @@ export function PagesListView({
 
   async function handlePublishSelected() {
     if (!selectedPage) return;
-    setActionError('');
+    dispatch({ type: 'SET_ERROR', error: '' });
     try {
       await publishPage(selectedPage.id);
     } catch (err) {
-      setActionError(String(err));
+      dispatch({ type: 'SET_ERROR', error: String(err) });
     }
   }
 
   async function handleConfirmDelete() {
     if (!selectedPage) return;
-    setActionError('');
+    dispatch({ type: 'SET_ERROR', error: '' });
     try {
       await deletePage(selectedPage.id);
-      setSelectedPageId(null);
+      // Deseleziona E chiude il dialog in un colpo solo (vedi il commento
+      // sul reducer) — prima l'equivalente `setSelectedPageId(null)` non
+      // chiudeva mai esplicitamente `isDeleteDialogOpen`.
+      dispatch({ type: 'TOGGLE_SELECTED', pageId: selectedPage.id });
     } catch (err) {
-      setActionError(String(err));
+      dispatch({ type: 'SET_ERROR', error: String(err) });
     }
   }
 
@@ -131,7 +184,9 @@ export function PagesListView({
                 </IconButton>
                 <IconButton
                   label={t('pages.seo.open')}
-                  onClick={() => setIsSeoOpen(true)}
+                  onClick={() =>
+                    dispatch({ type: 'OPEN_DIALOG', dialog: 'seo' })
+                  }
                 >
                   <Search />
                 </IconButton>
@@ -143,19 +198,25 @@ export function PagesListView({
                 </IconButton>
                 <IconButton
                   label={t('pages.list.actions.delete')}
-                  onClick={() => setIsDeleteDialogOpen(true)}
+                  onClick={() =>
+                    dispatch({ type: 'OPEN_DIALOG', dialog: 'delete' })
+                  }
                 >
                   <Trash2 />
                 </IconButton>
                 <IconButton
                   label={t('pages.list.actions.duplicate')}
-                  onClick={() => setIsDuplicateOpen(true)}
+                  onClick={() =>
+                    dispatch({ type: 'OPEN_DIALOG', dialog: 'duplicate' })
+                  }
                 >
                   <Copy />
                 </IconButton>
               </>
             )}
-            <Button onClick={() => setIsNewPageDialogOpen(true)}>
+            <Button
+              onClick={() => dispatch({ type: 'OPEN_DIALOG', dialog: 'new' })}
+            >
               {t('pages.list.newPage')}
             </Button>
           </div>
@@ -240,7 +301,7 @@ export function PagesListView({
                       value={p.parentId}
                       onChange={(parentId) =>
                         void setPageParent(p.id, parentId).catch((err) =>
-                          setActionError(String(err)),
+                          dispatch({ type: 'SET_ERROR', error: String(err) }),
                         )
                       }
                     />
@@ -274,14 +335,14 @@ export function PagesListView({
         <NewPageDialog
           siteId={siteId}
           locale={defaultLocale}
-          open={isNewPageDialogOpen}
-          onOpenChange={setIsNewPageDialogOpen}
+          open={openDialog === 'new'}
+          onOpenChange={(open) => !open && closeDialog()}
           onCreate={createPage}
         />
         {selectedPage && (
           <ConfirmDeleteDialog
-            open={isDeleteDialogOpen}
-            onOpenChange={setIsDeleteDialogOpen}
+            open={openDialog === 'delete'}
+            onOpenChange={(open) => !open && closeDialog()}
             title={t('pages.deleteDialog.title')}
             description={
               otherLocalesInGroup.length > 0
@@ -300,15 +361,15 @@ export function PagesListView({
           <SeoPanelDialog
             pageId={selectedPage.id}
             seoMeta={selectedPage.seoMeta}
-            open={isSeoOpen}
-            onOpenChange={setIsSeoOpen}
+            open={openDialog === 'seo'}
+            onOpenChange={(open) => !open && closeDialog()}
           />
         )}
         {selectedPage && (
           <DuplicatePageDialog
             sourcePage={selectedPage}
-            open={isDuplicateOpen}
-            onOpenChange={setIsDuplicateOpen}
+            open={openDialog === 'duplicate'}
+            onOpenChange={(open) => !open && closeDialog()}
             onDuplicate={(input) => duplicatePage(selectedPage.id, input)}
           />
         )}

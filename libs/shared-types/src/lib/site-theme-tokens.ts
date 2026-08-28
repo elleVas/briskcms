@@ -110,3 +110,21 @@ export const blockStyleDefaultsResponseSchema = z.record(
 export type BlockStyleDefaultsResponse = z.infer<
   typeof blockStyleDefaultsResponseSchema
 >;
+
+/**
+ * Corpo di risposta di `GET /api/themes/current/foreground-tokens`
+ * (apps/public-site) — i due token radice `--primary-foreground`/
+ * `--secondary-foreground` del tema attivo, risolti (non `var(--x)`
+ * grezzo). Un endpoint a parte da `block-style-defaults` sopra: quei due
+ * token non sono il default di NESSUNA proprietà stilizzabile dichiarata
+ * per tipo di blocco (solo `Button`/`PromoBar` referenziano
+ * `--primary-foreground` di striscio, `--secondary-foreground` da
+ * nessuna parte) — servono invece per il controllo di contrasto WCAG sul
+ * color picker primario/secondario del tema stesso (GlobalStylesDialog),
+ * non per un blocco.
+ */
+export const themeForegroundTokensSchema = z.object({
+  primaryForeground: z.string().min(1),
+  secondaryForeground: z.string().min(1),
+});
+export type ThemeForegroundTokens = z.infer<typeof themeForegroundTokensSchema>;

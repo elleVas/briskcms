@@ -34,8 +34,9 @@ export interface BlockToolbarOverlayProps {
   block: Block;
   descriptor: BlockDescriptor;
   rect: BlockRect;
-  /** Vero solo per un blocco di primo livello — sposta/inserisci-fratello sono scoped a quello stesso livello del riordino via drag (vedi compute-drop-target.ts). */
+  /** Vero solo per un blocco di primo livello — governa inserisci-fratello (scoped a quel livello, come il riordino via drag, vedi compute-drop-target.ts) e i campi di spacing (marginTop/marginBottom). NON sposta su/giù: quello funziona a qualunque profondità, vedi canMoveUp/canMoveDown. */
   isRootLevel: boolean;
+  /** Vero a QUALUNQUE profondità — calcolato dalla posizione reale del blocco tra i suoi fratelli (root o annidati), non dal solo livello radice. */
   canMoveUp: boolean;
   canMoveDown: boolean;
   registry: BlockDescriptor[];
@@ -253,7 +254,7 @@ export function BlockToolbarOverlay({
         <button
           type="button"
           className={iconButtonClass}
-          disabled={!isRootLevel || !canMoveUp}
+          disabled={!canMoveUp}
           onClick={onMoveUp}
           aria-label={t('canvas.moveUp')}
         >
@@ -262,7 +263,7 @@ export function BlockToolbarOverlay({
         <button
           type="button"
           className={iconButtonClass}
-          disabled={!isRootLevel || !canMoveDown}
+          disabled={!canMoveDown}
           onClick={onMoveDown}
           aria-label={t('canvas.moveDown')}
         >

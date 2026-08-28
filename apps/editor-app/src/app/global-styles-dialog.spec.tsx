@@ -43,6 +43,10 @@ vi.mock('../lib/sites-api-client.js', async (importOriginal) => {
 vi.mock('../lib/theme-api-client.js', () => ({
   fetchBlockStyleDefaults: vi.fn().mockResolvedValue({}),
   fetchThemeIcons: vi.fn().mockResolvedValue([]),
+  fetchThemeForegroundTokens: vi.fn().mockResolvedValue({
+    primaryForeground: '#ffffff',
+    secondaryForeground: '#000000',
+  }),
 }));
 
 function buildSite(overrides: Partial<SiteRecord> = {}): SiteRecord {
@@ -124,6 +128,37 @@ describe('GlobalStylesDialog', () => {
     renderDialog(true);
 
     await waitFor(() => expect(screen.getByText('#ff0000')).toBeTruthy());
+  });
+
+  it('shows a contrast warning when the enabled primary color is too close to the theme foreground', async () => {
+    // Mocked theme foreground is #ffffff (see the theme-api-client mock
+    // above) — a white primary color has zero contrast against it.
+    vi.mocked(api.getSite).mockResolvedValue(
+      buildSite({ themePrimaryColor: '#ffffff' }),
+    );
+    renderDialog(true);
+
+    await waitFor(() =>
+      expect(screen.getByText(/Contrasto basso/)).toBeTruthy(),
+    );
+  });
+
+  it('shows no contrast warning when the color is not enabled', async () => {
+    vi.mocked(api.getSite).mockResolvedValue(buildSite());
+    renderDialog(true);
+
+    await waitFor(() => screen.getByText('Colore primario'));
+    expect(screen.queryByText(/Contrasto basso/)).toBeNull();
+  });
+
+  it('shows no contrast warning when the enabled color already passes AA', async () => {
+    vi.mocked(api.getSite).mockResolvedValue(
+      buildSite({ themePrimaryColor: '#000000' }),
+    );
+    renderDialog(true);
+
+    await waitFor(() => screen.getByText('#000000'));
+    expect(screen.queryByText(/Contrasto basso/)).toBeNull();
   });
 
   it('saves the colors category, passing through the other theme-settings fields unchanged', async () => {

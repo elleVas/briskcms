@@ -270,3 +270,70 @@ describe('BlockToolbarOverlay style buttons', () => {
     expect(screen.queryByLabelText('Spazio sotto')).toBeNull();
   });
 });
+
+describe('BlockToolbarOverlay move buttons', () => {
+  it('enables move up/down for a NESTED block when canMoveUp/canMoveDown are true (no longer gated by isRootLevel)', () => {
+    renderOverlay(
+      <BlockToolbarOverlay
+        {...baseProps()}
+        isRootLevel={false}
+        canMoveUp={true}
+        canMoveDown={true}
+      />,
+    );
+
+    expect(
+      screen
+        .getByRole('button', { name: 'Sposta su' })
+        .hasAttribute('disabled'),
+    ).toBe(false);
+    expect(
+      screen
+        .getByRole('button', { name: 'Sposta giù' })
+        .hasAttribute('disabled'),
+    ).toBe(false);
+  });
+
+  it('disables move up/down when canMoveUp/canMoveDown are false, root-level or not', () => {
+    renderOverlay(
+      <BlockToolbarOverlay
+        {...baseProps()}
+        isRootLevel={true}
+        canMoveUp={false}
+        canMoveDown={false}
+      />,
+    );
+
+    expect(
+      screen
+        .getByRole('button', { name: 'Sposta su' })
+        .hasAttribute('disabled'),
+    ).toBe(true);
+    expect(
+      screen
+        .getByRole('button', { name: 'Sposta giù' })
+        .hasAttribute('disabled'),
+    ).toBe(true);
+  });
+
+  it("calls onMoveUp/onMoveDown when a nested block's move buttons are clicked", () => {
+    const onMoveUp = vi.fn();
+    const onMoveDown = vi.fn();
+    renderOverlay(
+      <BlockToolbarOverlay
+        {...baseProps()}
+        isRootLevel={false}
+        canMoveUp={true}
+        canMoveDown={true}
+        onMoveUp={onMoveUp}
+        onMoveDown={onMoveDown}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Sposta su' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Sposta giù' }));
+
+    expect(onMoveUp).toHaveBeenCalledTimes(1);
+    expect(onMoveDown).toHaveBeenCalledTimes(1);
+  });
+});

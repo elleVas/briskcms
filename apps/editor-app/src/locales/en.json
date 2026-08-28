@@ -235,6 +235,7 @@
     "primaryColorLabel": "Primary color",
     "secondaryColorLabel": "Secondary color",
     "override": "Override",
+    "contrastWarning": "Low contrast: with this color, the theme's own text color reaches only a {{ratio}}:1 ratio against it (4.5:1 recommended) — text may be hard to read.",
     "fontLabel": "Font",
     "fontInherit": "Theme default",
     "fontCustom": "Custom (Google Fonts name)...",

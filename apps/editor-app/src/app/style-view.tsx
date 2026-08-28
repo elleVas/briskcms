@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useQuery } from '@tanstack/react-query';
 import { CURATED_THEME_FONTS } from '@brisk/shared-types';
 import { Button } from '../components/ui/button.js';
 import { Input } from '../components/ui/input.js';
@@ -14,6 +15,8 @@ import {
 import { Switch } from '../components/ui/switch.js';
 import { Textarea } from '../components/ui/textarea.js';
 import type { SiteRecord } from '@brisk/shared-types';
+import { checkContrastAgainstThemeForeground } from '../lib/color-contrast.js';
+import { themeForegroundTokensQueryOptions } from './theme-foreground-tokens-queries.js';
 import { ToggleableColorField } from './toggleable-color-field.js';
 import { useSiteThemeSettings } from './use-site-theme-settings.js';
 
@@ -54,6 +57,9 @@ function initialFontState(themeFontFamily: string | null) {
 export function StyleView({ siteId, site }: StyleViewProps) {
   const { t } = useTranslation();
   const { updateThemeSettings, isSaving } = useSiteThemeSettings(siteId);
+  const { data: foregroundTokens } = useQuery(
+    themeForegroundTokensQueryOptions(),
+  );
 
   const initialFont = initialFontState(site.themeFontFamily);
   const [overridesEnabled, setOverridesEnabled] = useState(
@@ -81,6 +87,25 @@ export function StyleView({ siteId, site }: StyleViewProps) {
   const [faviconUrl, setFaviconUrl] = useState(site.themeFaviconUrl ?? '');
   const [error, setError] = useState('');
   const [savedAt, setSavedAt] = useState(0);
+
+  // Stesso avviso non bloccante di GlobalStylesDialog (docs/adr/0022's
+  // follow-up sul contrasto) — duplicato qui perché questa vista duplica
+  // anche i campi colore stessi (state locale invece del form condiviso),
+  // non un secondo meccanismo.
+  const primaryContrast =
+    primaryColorEnabled && foregroundTokens
+      ? checkContrastAgainstThemeForeground(
+          primaryColor,
+          foregroundTokens.primaryForeground,
+        )
+      : null;
+  const secondaryContrast =
+    secondaryColorEnabled && foregroundTokens
+      ? checkContrastAgainstThemeForeground(
+          secondaryColor,
+          foregroundTokens.secondaryForeground,
+        )
+      : null;
 
   async function handleSubmit() {
     setError('');
@@ -136,25 +161,43 @@ export function StyleView({ siteId, site }: StyleViewProps) {
         inert={!overridesEnabled || undefined}
         aria-disabled={!overridesEnabled}
       >
-        <ToggleableColorField
-          id="theme-settings-primary-color"
-          label={t('themeSettings.primaryColorLabel')}
-          overrideLabel={t('themeSettings.override')}
-          enabled={primaryColorEnabled}
-          onEnabledChange={setPrimaryColorEnabled}
-          value={primaryColor}
-          onValueChange={setPrimaryColor}
-        />
+        <div className="flex flex-col gap-1.5">
+          <ToggleableColorField
+            id="theme-settings-primary-color"
+            label={t('themeSettings.primaryColorLabel')}
+            overrideLabel={t('themeSettings.override')}
+            enabled={primaryColorEnabled}
+            onEnabledChange={setPrimaryColorEnabled}
+            value={primaryColor}
+            onValueChange={setPrimaryColor}
+          />
+          {primaryContrast && !primaryContrast.passesAA && (
+            <p className="text-xs text-amber-600 dark:text-amber-500">
+              {t('themeSettings.contrastWarning', {
+                ratio: primaryContrast.ratio.toFixed(1),
+              })}
+            </p>
+          )}
+        </div>
 
-        <ToggleableColorField
-          id="theme-settings-secondary-color"
-          label={t('themeSettings.secondaryColorLabel')}
-          overrideLabel={t('themeSettings.override')}
-          enabled={secondaryColorEnabled}
-          onEnabledChange={setSecondaryColorEnabled}
-          value={secondaryColor}
-          onValueChange={setSecondaryColor}
-        />
+        <div className="flex flex-col gap-1.5">
+          <ToggleableColorField
+            id="theme-settings-secondary-color"
+            label={t('themeSettings.secondaryColorLabel')}
+            overrideLabel={t('themeSettings.override')}
+            enabled={secondaryColorEnabled}
+            onEnabledChange={setSecondaryColorEnabled}
+            value={secondaryColor}
+            onValueChange={setSecondaryColor}
+          />
+          {secondaryContrast && !secondaryContrast.passesAA && (
+            <p className="text-xs text-amber-600 dark:text-amber-500">
+              {t('themeSettings.contrastWarning', {
+                ratio: secondaryContrast.ratio.toFixed(1),
+              })}
+            </p>
+          )}
+        </div>
 
         <div className="flex flex-col gap-2">
           <Label htmlFor="theme-settings-font">

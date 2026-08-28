@@ -20,8 +20,10 @@ import {
 import { blockStyleDefaultsQueryOptions } from './block-style-defaults-queries.js';
 import type { BlockPickerCategory } from './canvas/block-picker.js';
 import { BlockStyleFields } from './canvas/block-style-fields.js';
+import { checkContrastAgainstThemeForeground } from '../lib/color-contrast.js';
 import { useTranslation } from '../lib/use-translation.js';
 import { siteQueryOptions } from './site-queries.js';
+import { themeForegroundTokensQueryOptions } from './theme-foreground-tokens-queries.js';
 import { ToggleableColorField } from './toggleable-color-field.js';
 import { useResetFormOnOpen } from './use-reset-form-on-open.js';
 import { useSiteThemeSettings } from './use-site-theme-settings.js';
@@ -87,6 +89,9 @@ export function GlobalStylesDialog({
   const { data: blockStyleDefaults } = useQuery(
     blockStyleDefaultsQueryOptions(),
   );
+  const { data: foregroundTokens } = useQuery(
+    themeForegroundTokensQueryOptions(),
+  );
   const { updateThemeSettings, isSaving } = useSiteThemeSettings(siteId);
 
   const [error, setError] = useState('');
@@ -96,7 +101,7 @@ export function GlobalStylesDialog({
   // continuazione dell'ultima modifica.
   const [selectedType, setSelectedType] = useState<string | null>(null);
 
-  const { control, handleSubmit, reset } = useForm<ColorsFormValues>({
+  const { control, handleSubmit, reset, watch } = useForm<ColorsFormValues>({
     defaultValues: {
       primaryColorEnabled: false,
       primaryColor: '#18181b',
@@ -104,6 +109,28 @@ export function GlobalStylesDialog({
       secondaryColor: '#71717a',
     },
   });
+  // Avviso dal vivo mentre l'utente sceglie il colore (docs/adr/0022's
+  // follow-up sul controllo di contrasto) — non bloccante, vedi
+  // color-contrast.ts per perché il confronto è contro il vero token
+  // `--*-foreground` del tema attivo, non un'ipotesi bianco/nero.
+  const primaryColorValue = watch('primaryColor');
+  const primaryColorEnabled = watch('primaryColorEnabled');
+  const secondaryColorValue = watch('secondaryColor');
+  const secondaryColorEnabled = watch('secondaryColorEnabled');
+  const primaryContrast =
+    primaryColorEnabled && foregroundTokens
+      ? checkContrastAgainstThemeForeground(
+          primaryColorValue,
+          foregroundTokens.primaryForeground,
+        )
+      : null;
+  const secondaryContrast =
+    secondaryColorEnabled && foregroundTokens
+      ? checkContrastAgainstThemeForeground(
+          secondaryColorValue,
+          foregroundTokens.secondaryForeground,
+        )
+      : null;
   useResetFormOnOpen(open, site, reset, (currentSite) => {
     setError('');
     setSelectedType(null);
@@ -210,15 +237,24 @@ export function GlobalStylesDialog({
                       control={control}
                       name="primaryColorEnabled"
                       render={({ field: enabledField }) => (
-                        <ToggleableColorField
-                          id="global-styles-primary-color"
-                          label={t('themeSettings.primaryColorLabel')}
-                          overrideLabel={t('themeSettings.override')}
-                          enabled={enabledField.value}
-                          onEnabledChange={enabledField.onChange}
-                          value={colorField.value}
-                          onValueChange={colorField.onChange}
-                        />
+                        <>
+                          <ToggleableColorField
+                            id="global-styles-primary-color"
+                            label={t('themeSettings.primaryColorLabel')}
+                            overrideLabel={t('themeSettings.override')}
+                            enabled={enabledField.value}
+                            onEnabledChange={enabledField.onChange}
+                            value={colorField.value}
+                            onValueChange={colorField.onChange}
+                          />
+                          {primaryContrast && !primaryContrast.passesAA && (
+                            <p className="text-xs text-amber-600 dark:text-amber-500">
+                              {t('themeSettings.contrastWarning', {
+                                ratio: primaryContrast.ratio.toFixed(1),
+                              })}
+                            </p>
+                          )}
+                        </>
                       )}
                     />
                   )}
@@ -231,15 +267,24 @@ export function GlobalStylesDialog({
                       control={control}
                       name="secondaryColorEnabled"
                       render={({ field: enabledField }) => (
-                        <ToggleableColorField
-                          id="global-styles-secondary-color"
-                          label={t('themeSettings.secondaryColorLabel')}
-                          overrideLabel={t('themeSettings.override')}
-                          enabled={enabledField.value}
-                          onEnabledChange={enabledField.onChange}
-                          value={colorField.value}
-                          onValueChange={colorField.onChange}
-                        />
+                        <>
+                          <ToggleableColorField
+                            id="global-styles-secondary-color"
+                            label={t('themeSettings.secondaryColorLabel')}
+                            overrideLabel={t('themeSettings.override')}
+                            enabled={enabledField.value}
+                            onEnabledChange={enabledField.onChange}
+                            value={colorField.value}
+                            onValueChange={colorField.onChange}
+                          />
+                          {secondaryContrast && !secondaryContrast.passesAA && (
+                            <p className="text-xs text-amber-600 dark:text-amber-500">
+                              {t('themeSettings.contrastWarning', {
+                                ratio: secondaryContrast.ratio.toFixed(1),
+                              })}
+                            </p>
+                          )}
+                        </>
                       )}
                     />
                   )}
