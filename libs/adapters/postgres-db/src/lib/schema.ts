@@ -1,11 +1,10 @@
-import { sql } from 'drizzle-orm';
 import {
   bigint,
   boolean,
-  check,
   index,
   integer,
   jsonb,
+  pgEnum,
   pgTable,
   primaryKey,
   text,
@@ -15,6 +14,7 @@ import {
   uuid,
   type AnyPgColumn,
 } from 'drizzle-orm/pg-core';
+import { sql } from 'drizzle-orm';
 import type {
   BlockStyleOverride,
   FormField,
@@ -22,16 +22,37 @@ import type {
   OpeningHoursDay,
   PageContent,
   SeoMeta,
-  UntranslatedPageFallback,
 } from '@brisk/shared-types';
-import type {
-  PageStatus,
-  SiteLayoutSectionKind,
-  SiteLayoutSectionStatus,
-  StorageProvider,
-  UserRole,
-  VerificationTokenPurpose,
-} from '@brisk/domain-core';
+
+// One native Postgres enum type per domain string-union, matching the
+// literal values of the corresponding domain-core/shared-types type
+// exactly — kept separate even where two enums share the same value set
+// (pageStatusEnum/siteLayoutSectionStatusEnum both 'draft'|'published')
+// because their domain types are deliberately distinct (Page vs.
+// SiteLayoutSection), see db-schema-cleanup-deferred-2026-08-28 memory.
+export const userRoleEnum = pgEnum('user_role', [
+  'admin',
+  'publisher',
+  'editor',
+]);
+export const untranslatedPageFallbackEnum = pgEnum(
+  'untranslated_page_fallback',
+  ['redirect-to-default', 'not-available'],
+);
+export const pageStatusEnum = pgEnum('page_status', ['draft', 'published']);
+export const siteLayoutSectionKindEnum = pgEnum('site_layout_section_kind', [
+  'header',
+  'footer',
+]);
+export const siteLayoutSectionStatusEnum = pgEnum(
+  'site_layout_section_status',
+  ['draft', 'published'],
+);
+export const storageProviderEnum = pgEnum('storage_provider', ['local', 's3']);
+export const verificationTokenPurposeEnum = pgEnum(
+  'verification_token_purpose',
+  ['email-verification', 'password-reset', 'user-invite'],
+);
 
 export const tenants = pgTable('tenants', {
   id: uuid('id').primaryKey().defaultRandom(),
@@ -54,7 +75,7 @@ export const users = pgTable(
     // pattern as `seoMeta.title || slug` elsewhere in this codebase.
     displayName: text('display_name'),
     passwordHash: text('password_hash').notNull(),
-    role: text('role').notNull().$type<UserRole>(),
+    role: userRoleEnum('role').notNull(),
     // False for a freshly-invited user who hasn't accepted yet, or an
     // admin-deactivated one — see the domain entity's own doc comment.
     isActive: boolean('is_active').notNull().default(true),
@@ -63,13 +84,7 @@ export const users = pgTable(
       .notNull()
       .defaultNow(),
   },
-  (table) => [
-    unique().on(table.tenantId, table.email),
-    check(
-      'users_role_check',
-      sql`${table.role} in ('admin', 'publisher', 'editor')`,
-    ),
-  ],
+  (table) => [unique().on(table.tenantId, table.email)],
 );
 
 export const sites = pgTable(
@@ -86,10 +101,11 @@ export const sites = pgTable(
     // What a visitor sees for a page not translated into their locale
     // (Fase 5b, docs/adr/0017) — 'redirect-to-default' is the friendlier
     // default for a fresh site over silently 404ing.
-    untranslatedPageFallback: text('untranslated_page_fallback')
+    untranslatedPageFallback: untranslatedPageFallbackEnum(
+      'untranslated_page_fallback',
+    )
       .notNull()
-      .default('redirect-to-default')
-      .$type<UntranslatedPageFallback>(),
+      .default('redirect-to-default'),
     // schema.org LocalBusiness fields (docs/adr/0014) — all nullable, a site
     // with none of them set renders plain WebSite/WebPage instead.
     businessAddress: text('business_address'),
@@ -122,10 +138,6 @@ export const sites = pgTable(
       .defaultNow(),
   },
   (table) => [
-    check(
-      'sites_untranslated_page_fallback_check',
-      sql`${table.untranslatedPageFallback} in ('redirect-to-default', 'not-available')`,
-    ),
     // findByDomain() è l'hot path di ogni richiesta pubblica (rendering
     // pagina, sitemap, ricerca, chrome del sito) — senza questo indice fa
     // scan sequenziale. Il vincolo UNIQUE che lo porta con sé è la parte
@@ -195,7 +207,7 @@ export const pages = pgTable(
     parentId: uuid('parent_id').references((): AnyPgColumn => pages.id, {
       onDelete: 'set null',
     }),
-    status: text('status').notNull().$type<PageStatus>(),
+    status: pageStatusEnum('status').notNull(),
     // latest draft (Puck content format)
     content: jsonb('content').notNull().default([]).$type<PageContent>(),
     // last actually published version
@@ -237,7 +249,6 @@ export const pages = pgTable(
     uniqueIndex('pages_root_slug_unique')
       .on(table.tenantId, table.siteId, table.locale, table.slug)
       .where(sql`${table.parentId} is null`),
-    check('pages_status_check', sql`${table.status} in ('draft', 'published')`),
     index('pages_tenant_site_idx').on(table.tenantId, table.siteId),
   ],
 );
@@ -286,8 +297,8 @@ export const siteLayoutSections = pgTable(
       .notNull()
       .references(() => sites.id, { onDelete: 'cascade' }),
     locale: text('locale').notNull(),
-    kind: text('kind').notNull().$type<SiteLayoutSectionKind>(),
-    status: text('status').notNull().$type<SiteLayoutSectionStatus>(),
+    kind: siteLayoutSectionKindEnum('kind').notNull(),
+    status: siteLayoutSectionStatusEnum('status').notNull(),
     content: jsonb('content').notNull().default([]).$type<PageContent>(),
     publishedContent: jsonb('published_content').$type<PageContent>(),
     // Meaningful for kind='header' only (stays pinned to the top of the
@@ -303,14 +314,6 @@ export const siteLayoutSections = pgTable(
   },
   (table) => [
     unique().on(table.tenantId, table.siteId, table.locale, table.kind),
-    check(
-      'site_layout_sections_kind_check',
-      sql`${table.kind} in ('header', 'footer')`,
-    ),
-    check(
-      'site_layout_sections_status_check',
-      sql`${table.status} in ('draft', 'published')`,
-    ),
     index('site_layout_sections_tenant_site_idx').on(
       table.tenantId,
       table.siteId,
@@ -360,9 +363,7 @@ export const media = pgTable(
       .references(() => sites.id, { onDelete: 'cascade' }),
     filename: text('filename').notNull(),
     storageKey: text('storage_key').notNull(),
-    storageProvider: text('storage_provider')
-      .notNull()
-      .$type<StorageProvider>(),
+    storageProvider: storageProviderEnum('storage_provider').notNull(),
     mimeType: text('mime_type').notNull(),
     size: bigint('size', { mode: 'number' }).notNull(),
     width: integer('width'),
@@ -371,13 +372,7 @@ export const media = pgTable(
       .notNull()
       .defaultNow(),
   },
-  (table) => [
-    check(
-      'media_storage_provider_check',
-      sql`${table.storageProvider} in ('local', 's3')`,
-    ),
-    index('media_tenant_site_idx').on(table.tenantId, table.siteId),
-  ],
+  (table) => [index('media_tenant_site_idx').on(table.tenantId, table.siteId)],
 );
 
 export const sessions = pgTable(
@@ -415,7 +410,7 @@ export const verificationTokens = pgTable(
     // one table, not two: both purposes share the exact same shape and
     // single-use/expiring lifecycle. See
     // docs/adr/0011-email-verification-password-reset.md.
-    purpose: text('purpose').notNull().$type<VerificationTokenPurpose>(),
+    purpose: verificationTokenPurposeEnum('purpose').notNull(),
     // SHA-256 of the token — same reasoning as `sessions.token_hash`.
     tokenHash: text('token_hash').notNull().unique(),
     expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
@@ -423,13 +418,7 @@ export const verificationTokens = pgTable(
       .notNull()
       .defaultNow(),
   },
-  (table) => [
-    check(
-      'verification_tokens_purpose_check',
-      sql`${table.purpose} in ('email-verification', 'password-reset', 'user-invite')`,
-    ),
-    index('verification_tokens_user_idx').on(table.userId),
-  ],
+  (table) => [index('verification_tokens_user_idx').on(table.userId)],
 );
 
 export const forms = pgTable(

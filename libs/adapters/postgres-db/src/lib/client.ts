@@ -51,7 +51,7 @@ export function createAppDb(): BriskDb {
 /**
  * Every Postgres adapter must go through this: RLS only filters rows once
  * `app.current_tenant_id` is set for the session (see db/init/000_roles.sh and
- * drizzle/0001_rls_and_grants.sql). Setting it inside a transaction with
+ * drizzle/0000_baseline_schema.sql). Setting it inside a transaction with
  * `is_local = true` scopes it to that transaction only — required because
  * connections are pooled and reused across requests for different tenants.
  */

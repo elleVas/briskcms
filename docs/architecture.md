@@ -45,7 +45,7 @@ Rule of thumb for where a new piece of code belongs:
 Every table with per-tenant data has `tenant_id` from day one (even in
 single-tenant mode) and Row Level Security enabled with a
 `tenant_id = current_tenant()` policy (see
-`libs/adapters/postgres-db/drizzle/0001_rls_and_grants.sql`).
+`libs/adapters/postgres-db/drizzle/0000_baseline_schema.sql`).
 `current_tenant()` reads the Postgres session variable `app.current_tenant_id`.
 Every Postgres adapter must set it via `withTenant()` (`libs/adapters/postgres-db`)
 before running a query — it sets the variable inside a transaction

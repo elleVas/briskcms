@@ -5,7 +5,7 @@ import { sites, tenants, users } from './schema.js';
 /**
  * Deletes throwaway tenants an integration spec created for itself in
  * `beforeAll` (never the app's real tenants) — every tenant-scoped table
- * cascades from `tenants.id` (see drizzle/0001_rls_and_grants.sql's FK
+ * cascades from `tenants.id` (see drizzle/0000_baseline_schema.sql's FK
  * definitions), so one call removes everything the spec created underneath.
  * No `withTenant` needed: unlike every table it cascades into, `tenants`
  * itself has no RLS policy, and Postgres FK cascades bypass RLS on the

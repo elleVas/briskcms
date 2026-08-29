@@ -70,3 +70,25 @@ db:generate`, with generated SQL reviewed before committing — RLS/grants
 - Local dev and CI both need `db:migrate` run explicitly after Postgres comes
   up (not automatic yet — automatic migration on app boot is Phase 6 scope per
   the plan, not before).
+
+## Update 2026-08-29 — migration history squashed
+
+By this date the incremental history above had grown to 31 files
+(`0000_initial_schema.sql` … `0030_pages_sibling_scoped_slug_uniqueness.sql`).
+With no production database yet to protect (pre-launch), the whole chain was
+squashed back down to a single `0000_baseline_schema.sql`, generated fresh
+from the then-current `schema.ts` and hand-extended with every piece no
+migration file could regenerate on its own: the RLS policies + grants
+(originally `0001_rls_and_grants.sql`, later extended per-table across
+`0003`/`0005`/`0008`/`0012`/`0025`) and the generated `pages.search_vector`
+tsvector column (originally `0017_pages_search_vector.sql`). Same session
+also converted the 7 `text` + `CHECK` enum-like columns to native `pgEnum`
+types (see [[db-schema-cleanup-deferred-2026-08-28]] persistent-memory note
+for why that had been deferred, and what changed the calculus). Verified
+identically to how this ADR's original decision was verified: fresh
+container, migrated schema, RLS/grants/enums/generated-column inspected live
+via `psql`, plus a real `pg_dump`/`pg_restore` round-trip. Every other
+migration file's _effect_ (as opposed to its literal SQL) is preserved
+because the baseline reflects the schema's final, current state — anything
+added and later reverted by a subsequent migration (e.g. `sites.theme_tokens`,
+added in `0023` and dropped in `0026`) correctly never appears at all.

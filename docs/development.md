@@ -56,7 +56,7 @@ pnpm --filter @brisk/postgres-db run db:seed
 After changing `libs/adapters/postgres-db/src/lib/schema.ts`, generate a new
 migration (review the generated SQL before committing it — Drizzle can't see
 RLS policies or grants, those stay hand-written in
-`libs/adapters/postgres-db/drizzle/0001_rls_and_grants.sql` and any future
+`libs/adapters/postgres-db/drizzle/0000_baseline_schema.sql` and any future
 custom migration needs the same treatment):
 
 ```sh

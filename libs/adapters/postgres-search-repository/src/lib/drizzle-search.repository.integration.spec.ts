@@ -16,7 +16,7 @@ import { DrizzleSearchRepository } from './drizzle-search.repository.js';
  * Runs against a real Postgres — see docs/development.md. Connects as
  * `brisk_app`, same as production code, so this also regression-tests RLS
  * isolation for `pages.search_vector` (the generated column
- * drizzle/0017_pages_search_vector.sql adds).
+ * drizzle/0000_baseline_schema.sql adds).
  */
 describe('DrizzleSearchRepository (integration)', () => {
   let db: BriskDb;
