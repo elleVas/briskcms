@@ -9,7 +9,9 @@ import tailwindcss from '@tailwindcss/vite';
 // (../../themes/<name>) this build resolves `~theme/*` imports to. Build-
 // time only, by design (never read per-request) — the Docker image is the
 // unit of distribution, so changing a site's theme means a rebuild, the
-// same cost as every other deployment-level config in this product.
+// same cost as every other deployment-level config in this product. Not a
+// gap: docs/adr/0032 confirms the deployment unit is one container per
+// site, so a container never needs to pick a theme per request.
 const themeName = process.env.BRISK_THEME || 'classic';
 const themeDir = fileURLToPath(
   new URL(`../../themes/${themeName}/`, import.meta.url),
