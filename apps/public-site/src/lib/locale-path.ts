@@ -24,3 +24,25 @@ export function localePathFromAncestors(
   }
   return `/${locale}/${[...ancestorSlugs, slug].join('/')}`;
 }
+
+// RTL scripts in actual use across Brisk's realistic locale range — matched
+// on the locale's base language subtag (`ar`/`ar-SA`/`ar-EG` all count),
+// since locale-list-editor.tsx accepts any 2+ char string with no ISO
+// validation (an agency's own naming convention is theirs to pick). Not
+// exhaustive of every RTL script that exists, just the ones a real client
+// site is plausible to need; add to this set if one comes up.
+const RTL_LANGUAGE_SUBTAGS = new Set([
+  'ar', // Arabic
+  'he', // Hebrew
+  'fa', // Persian/Farsi
+  'ur', // Urdu
+]);
+
+// Feeds PageLayout.astro's <html dir=...> — the one place a locale's
+// reading direction actually matters for rendering.
+export function localeDirection(locale: string): 'ltr' | 'rtl' {
+  const subtag = locale.split('-')[0]?.toLowerCase();
+  return subtag !== undefined && RTL_LANGUAGE_SUBTAGS.has(subtag)
+    ? 'rtl'
+    : 'ltr';
+}
