@@ -117,6 +117,48 @@ place, and [ADR-0028](adr/0028-canvas-inline-text-editing-via-tiptap-in-preview-
 for how the iframe/`postMessage` canvas works, including inline text
 editing).
 
+**Canvas rendering needs `public-site`'s production build, not `nx run
+@brisk/public-site:dev`.** Astro's dev server (v6.0+; this project is on
+7.2.2) hard-blocks every subresource request whose `Sec-Fetch-Site` isn't
+`same-origin`/`same-site`/`none` and whose `Origin` doesn't validate
+against `security.allowedDomains`
+(`node_modules/astro/dist/vite-plugin-astro-server/sec-fetch.js`). The
+canvas's preview `<iframe>` is sandboxed _without_ `allow-same-origin`
+(`apps/editor-app/src/app/canvas/canvas-frame.tsx`) — a deliberate fix
+against stored XSS via untrusted user-inserted blocks/scripts — which
+gives it an opaque origin (`Origin: null`). `new URL('null')` always
+throws, so that origin can never validate against `allowedDomains` no
+matter how it's configured — there is no config escape hatch for this.
+The initial page navigation into the iframe still works
+(`Sec-Fetch-Mode: navigate` is always allowed), but every script/CSS
+module the loaded page then fetches gets a flat `403 Cross-origin request
+blocked`. This is Astro's own dev-server hardening, not a bug in this
+codebase.
+
+This does **not** affect production — `server.mjs` (the real production
+entrypoint, see `apps/public-site/README.md`) has no such middleware.
+This is why `.env.example`'s `VITE_PUBLIC_SITE_URL` points at
+`http://localhost:4322` (`PUBLIC_SITE_PORT`, also in `.env.example`), not
+at `nx serve`'s `:4321` — the canvas needs the production build running
+locally, always, not just as an occasional workaround:
+
+```sh
+pnpm exec nx run @brisk/public-site:build
+pnpm exec nx run @brisk/public-site:start   # node server.mjs, :4322 (PUBLIC_SITE_PORT)
+```
+
+Keep that process running the same way you keep `api`/`editor-app`
+running, and rebuild it after every public-site content/block change you
+want reflected in the canvas — there's no live-reload here, unlike
+`nx serve`. `nx serve @brisk/public-site` (`:4321`) is still the right tool any time
+you're working on public-site itself without going through the canvas —
+styling a block, checking content changes live. The two servers can run
+side by side on their own ports. One consequence of `VITE_PUBLIC_SITE_URL`
+now pointing at the production build by default: the editor's "Visualizza
+pagina" link opens that same build too, so it can look stale until you
+rebuild — swap the env var to `:4321` locally if you want that link to
+always reflect your latest unbuilt changes instead.
+
 The login screen's "Password dimenticata?" link leads to a password-reset
 request form; the actual reset link Brisk emails opens
 `http://localhost:4200/reset-password?resetToken=...`, and a verification

@@ -22,10 +22,14 @@ export default defineConfig({
   // pages to know about at build time.
   output: 'server',
   adapter: node({
-    // Standalone: runs as its own Node HTTP server (see docs' "Dockerfile
-    // production (Node runtime)" plan) — no host app to attach a middleware
-    // to.
-    mode: 'standalone',
+    // Middleware (not standalone): the sandboxed canvas iframe's opaque
+    // origin needs Access-Control-Allow-Origin on the static asset bundles
+    // under `_astro/` (see the CORS comment below) — standalone's built-in
+    // static file server runs before any Astro middleware ever sees the
+    // request, so it can't add that header. `server.mjs` (the real
+    // production entrypoint, not `dist/server/entry.mjs` directly) wraps
+    // this exported handler with its own static serving via `sirv` instead.
+    mode: 'middleware',
   }),
   // Available to any theme (docs/adr/0021), not used by core's own blocks:
   // ADR-0019's "no framework" precedent stays the default for blocks we
@@ -41,13 +45,17 @@ export default defineConfig({
         // questa pagina in un iframe sandboxato SENZA allow-same-origin
         // (fix dello stored XSS via blocchi utente non fidati) — la sua
         // origine è quindi opaca, e il browser tratta OGNI richiesta che fa,
-        // anche verso questo stesso host, come cross-origin. Solo in dev
-        // questo rompe qualcosa di visibile: i chunk CSS/JS per-componente
-        // che Vite serve come fetch di modulo (HMR) vengono bloccati senza
-        // un Access-Control-Allow-Origin, e il canvas mostra i blocchi senza
-        // stile. In produzione non esiste — l'adapter Node standalone serve
-        // CSS/JS bundlati come file statici via <link>/<script src>, non
-        // come fetch di modulo Vite.
+        // anche verso questo stesso host, come cross-origin. Questo header
+        // resta necessario ma NON basta da solo in dev: il dev server di
+        // Astro (>= 6.0) blocca comunque queste richieste con un 403 fisso
+        // prima ancora che questo header conti, perché `Origin: null`
+        // (origine opaca) non passa mai la sua validazione interna — vedi
+        // "Canvas rendering needs public-site's production build" in
+        // docs/development.md per la spiegazione completa e il workaround
+        // (build + `server.mjs` invece di `nx serve` quando si lavora sul
+        // canvas). L'equivalente per la build di produzione (asset statici
+        // sotto `_astro/`, serviti da `sirv` non da Vite, dove il blocco di
+        // Astro non esiste) vive in `server.mjs`, non qui.
         // Esclude esplicitamente /api/*: render-block-fragment.ts ha il
         // proprio scoping CORS su EDITOR_APP_URL (vedi il commento su
         // `cors: false` sotto) e non deve mai essere sovrascritto qui.

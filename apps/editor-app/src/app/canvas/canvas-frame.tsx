@@ -58,6 +58,14 @@ export function buildPreviewUrl(
  * sandbox stessa. La comunicazione col genitore resta comunque intatta:
  * passa solo via postMessage (vedi use-preview-bridge.ts), che non
  * richiede same-origin.
+ * Questa stessa origine opaca (`Origin: null`) rompe il rendering quando
+ * `src` punta al dev server di Astro (`nx serve public-site`): il suo
+ * hardening interno (>= Astro 6.0) blocca con 403 fisso ogni script/CSS
+ * che la pagina carica dopo la navigazione iniziale, senza alcuna opzione
+ * di config per un'origine opaca — non è un bug di questo componente. In
+ * produzione (`server.mjs`) questo blocco non esiste. Vedi "Canvas
+ * rendering needs public-site's production build" in docs/development.md
+ * per la spiegazione completa e il workaround per testare in locale.
  */
 export function CanvasFrame({
   pageId,
