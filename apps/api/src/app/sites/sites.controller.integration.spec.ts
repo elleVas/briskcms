@@ -248,6 +248,7 @@ describe('SitesController (integration)', () => {
         bodyScript: null,
         faviconUrl: 'https://example.com/favicon.png',
         overridesEnabled: true,
+        allowedTrackerDomains: [],
       })
       .expect(200);
 
@@ -277,6 +278,7 @@ describe('SitesController (integration)', () => {
         bodyScript: null,
         faviconUrl: null,
         overridesEnabled: false,
+        allowedTrackerDomains: [],
       })
       .expect(200);
 
@@ -295,6 +297,7 @@ describe('SitesController (integration)', () => {
         bodyScript: null,
         faviconUrl: null,
         overridesEnabled: true,
+        allowedTrackerDomains: [],
       })
       .expect(400);
   });
@@ -311,6 +314,7 @@ describe('SitesController (integration)', () => {
         bodyScript: null,
         faviconUrl: null,
         overridesEnabled: true,
+        allowedTrackerDomains: [],
       })
       .expect(404);
   });
@@ -327,6 +331,7 @@ describe('SitesController (integration)', () => {
         bodyScript: null,
         faviconUrl: null,
         overridesEnabled: true,
+        allowedTrackerDomains: [],
       })
       .expect(403);
   });

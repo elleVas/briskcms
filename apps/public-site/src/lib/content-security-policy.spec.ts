@@ -84,6 +84,38 @@ describe('buildContentSecurityPolicy', () => {
     expect(policy).toContain(`object-src 'none'`);
     expect(policy).toContain(`base-uri 'self'`);
   });
+
+  it('adds ADR-0031 tracker whitelist domains to script-src/connect-src/frame-src, prefixed with https://', () => {
+    const policy = buildContentSecurityPolicy(`'self'`, 'abc123', [
+      { label: 'Hotjar', domain: 'static.hotjar.com' },
+      { label: 'Hotjar API', domain: '*.hotjar.io' },
+    ]);
+    const directive = (name: string) =>
+      policy.split(';').find((d) => d.trim().startsWith(name))!;
+
+    expect(directive('script-src')).toContain('https://static.hotjar.com');
+    expect(directive('connect-src')).toContain('https://*.hotjar.io');
+    expect(directive('frame-src')).toContain('https://static.hotjar.com');
+  });
+
+  it('does not add tracker whitelist domains to img-src/font-src/style-src (already https: wildcarded)', () => {
+    const policy = buildContentSecurityPolicy(`'self'`, 'abc123', [
+      { label: 'Hotjar', domain: 'static.hotjar.com' },
+    ]);
+    const directive = (name: string) =>
+      policy.split(';').find((d) => d.trim().startsWith(name))!;
+
+    expect(directive('img-src')).not.toContain('static.hotjar.com');
+    expect(directive('font-src')).not.toContain('static.hotjar.com');
+    expect(directive('style-src')).not.toContain('static.hotjar.com');
+  });
+
+  it('adds nothing extra when no tracker domains are configured', () => {
+    const withEmpty = buildContentSecurityPolicy(`'self'`, 'abc123', []);
+    const withDefault = buildContentSecurityPolicy(`'self'`, 'abc123');
+
+    expect(withEmpty).toBe(withDefault);
+  });
 });
 
 describe('injectScriptNonce', () => {

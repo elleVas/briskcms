@@ -38,6 +38,7 @@ const samplePage: PublishedPage = {
       bodyScript: null,
       faviconUrl: null,
       overridesEnabled: true,
+      allowedTrackerDomains: [],
     },
     themeTokens: {
       blockStyles: {},

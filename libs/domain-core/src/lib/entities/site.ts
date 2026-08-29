@@ -1,6 +1,7 @@
 import type {
   OpeningHoursDay,
   ThemeSettings,
+  TrackerDomainEntry,
   UntranslatedPageFallback,
 } from '@brisk/shared-types';
 
@@ -25,6 +26,7 @@ export interface SiteProps {
   themeBodyScript: string | null;
   themeFaviconUrl: string | null;
   themeOverridesEnabled: boolean;
+  themeAllowedTrackerDomains: TrackerDomainEntry[];
   createdAt: Date;
 }
 
@@ -140,6 +142,7 @@ export class Site {
       bodyScript: this.props.themeBodyScript,
       faviconUrl: this.props.themeFaviconUrl,
       overridesEnabled: this.props.themeOverridesEnabled,
+      allowedTrackerDomains: this.props.themeAllowedTrackerDomains,
     };
   }
 
@@ -188,5 +191,6 @@ export class Site {
     this.props.themeBodyScript = input.bodyScript;
     this.props.themeFaviconUrl = input.faviconUrl;
     this.props.themeOverridesEnabled = input.overridesEnabled;
+    this.props.themeAllowedTrackerDomains = input.allowedTrackerDomains;
   }
 }

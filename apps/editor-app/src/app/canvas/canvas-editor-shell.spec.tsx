@@ -192,14 +192,14 @@ describe('CanvasEditorShell', () => {
     vi.useRealTimers();
   });
 
-  it('renders the top bar (back link, status, publish, logout) and no toolbar when nothing is selected', async () => {
+  it('renders the top bar (back link, status, publish) and no toolbar when nothing is selected', async () => {
     renderShell();
     await getIframe();
 
     expect(screen.getByRole('link', { name: 'Pagine' })).toBeTruthy();
     expect(screen.getByText('Bozza salvata')).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Pubblica' })).toBeTruthy();
-    expect(screen.getByRole('button', { name: /^esci$/i })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: /^esci$/i })).toBeNull();
     expect(screen.queryByTestId('block-breadcrumb')).toBeNull();
   });
 

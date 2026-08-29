@@ -1,6 +1,7 @@
 ---
 import { getPublishedPageBySlug } from '../../lib/public-api-client.js';
 import { localePathFromAncestors } from '../../lib/locale-path.js';
+import { buildContentSecurityPolicy } from '../../lib/content-security-policy.js';
 import PublicPageContent from '../../components/PublicPageContent.astro';
 
 // A dynamic route ([locale]/[...slug]) with no getStaticPaths() is
@@ -51,6 +52,18 @@ const page = result?.found ? result.page : null;
 if (!page) {
   Astro.response.status = 404;
 }
+
+// ADR-0031: this site's own admin-managed tracker whitelist, on top of the
+// hardcoded default (see content-security-policy.ts) — a 404 here still
+// gets the strict default (no site resolved yet, nothing to widen it for).
+Astro.response.headers.set(
+  'Content-Security-Policy',
+  buildContentSecurityPolicy(
+    `'self'`,
+    Astro.locals.cspNonce,
+    page?.site.themeSettings.allowedTrackerDomains,
+  ),
+);
 
 // Sibling-scoped slugs mean the top-down walk above only ever succeeds
 // for the page's actual, current path — there's no "found the right page

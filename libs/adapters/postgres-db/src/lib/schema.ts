@@ -22,6 +22,7 @@ import type {
   OpeningHoursDay,
   PageContent,
   SeoMeta,
+  TrackerDomainEntry,
 } from '@brisk/shared-types';
 
 // One native Postgres enum type per domain string-union, matching the
@@ -133,6 +134,14 @@ export const sites = pgTable(
     themeOverridesEnabled: boolean('theme_overrides_enabled')
       .notNull()
       .default(true),
+    // ADR-0031 — admin-managed CSP domain whitelist for trackers beyond the
+    // hardcoded GTM/GA4/Meta Pixel allowlist. Independent of
+    // themeOverridesEnabled above: a tracker script shouldn't stop running
+    // just because someone toggled off color/font overrides.
+    themeAllowedTrackerDomains: jsonb('theme_allowed_tracker_domains')
+      .notNull()
+      .default([])
+      .$type<TrackerDomainEntry[]>(),
     createdAt: timestamp('created_at', { withTimezone: true })
       .notNull()
       .defaultNow(),

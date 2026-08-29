@@ -46,6 +46,26 @@ export const CURATED_THEME_FONTS = [
   },
 ] as const;
 
+// Bare hostname, optional `*.` wildcard subdomain prefix, no scheme/path —
+// CSP source-list shape (see content-security-policy.ts's own hardcoded
+// origins for the pattern this mirrors). Always rendered with an assumed
+// `https://` prefix at CSP-build time; never accept a scheme here so an
+// admin can't smuggle `http://` (or anything else) into the header.
+export const trackerDomainSchema = z
+  .string()
+  .regex(
+    /^(\*\.)?([a-z0-9]([a-z0-9-]*[a-z0-9])?\.)+[a-z]{2,}$/i,
+    'Must be a bare domain, e.g. static.hotjar.com or *.hotjar.io — no https:// prefix, no path',
+  );
+
+export const trackerDomainEntrySchema = z.object({
+  // For the admin's own reference in the list UI — never rendered into the
+  // CSP header itself, just labels which vendor a domain belongs to.
+  label: z.string().min(1).max(60),
+  domain: trackerDomainSchema,
+});
+export type TrackerDomainEntry = z.infer<typeof trackerDomainEntrySchema>;
+
 export const themeSettingsSchema = z.object({
   primaryColor: hexColorSchema.nullable(),
   secondaryColor: hexColorSchema.nullable(),
@@ -61,5 +81,10 @@ export const themeSettingsSchema = z.object({
   // field above to actually render; either one being false means "ignore
   // everything in this object except this flag itself".
   overridesEnabled: z.boolean(),
+  // ADR-0031's tracker whitelist: domains a site owner's own head/body
+  // script needs to talk to beyond the hardcoded GTM/GA4/Meta Pixel
+  // allowlist (content-security-policy.ts). Capped well above any realistic
+  // legitimate use so the CSP header itself can't grow unbounded.
+  allowedTrackerDomains: z.array(trackerDomainEntrySchema).max(20),
 });
 export type ThemeSettings = z.infer<typeof themeSettingsSchema>;

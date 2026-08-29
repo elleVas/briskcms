@@ -50,6 +50,7 @@ describe('SettingsMenu', () => {
       themeBodyScript: null,
       themeFaviconUrl: null,
       themeOverridesEnabled: true,
+      themeAllowedTrackerDomains: [],
       themeTokens: { blockStyles: {} },
       createdAt: '',
       ...overrides,

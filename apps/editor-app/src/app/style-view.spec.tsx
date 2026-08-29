@@ -43,6 +43,7 @@ const site: SiteRecord = {
   themeBodyScript: null,
   themeFaviconUrl: null,
   themeOverridesEnabled: true,
+  themeAllowedTrackerDomains: [],
   themeTokens: { blockStyles: {} },
   createdAt: '',
 };
@@ -94,6 +95,7 @@ describe('StyleView', () => {
     vi.mocked(api.updateThemeSettings).mockResolvedValue({
       ...site,
       themeOverridesEnabled: true,
+      themeAllowedTrackerDomains: [],
     });
 
     renderView();

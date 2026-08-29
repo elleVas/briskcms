@@ -59,6 +59,7 @@
       "forms": "Moduli",
       "layout": "Layout",
       "style": "Stile",
+      "integrations": "Integrazioni",
       "users": "Utenti"
     },
     "settings": {
@@ -242,9 +243,23 @@
     "fontCustomPlaceholder": "es. Space Grotesk",
     "faviconLabel": "URL favicon",
     "customCssLabel": "CSS personalizzato",
+    "save": "Salva",
+    "saving": "Salvataggio in corso...",
+    "saved": "Salvato"
+  },
+  "integrations": {
+    "title": "Integrazioni",
+    "intro": "Script di terze parti (analytics, chat, pixel di tracciamento...) e i domini a cui devono poter parlare.",
     "headScriptLabel": "Script personalizzato — <head>",
     "bodyScriptLabel": "Script personalizzato — fine <body>",
     "scriptDisclaimer": "Iniettato così com'è in ogni pagina del sito. Incolla solo codice da fonti di cui ti fidi.",
+    "trackerDomainsLabel": "Domini consentiti aggiuntivi",
+    "trackerDomainsDisclaimer": "Un dominio qui autorizzato può eseguire codice ed effettuare chiamate dal tuo sito esattamente come se lo avessi scritto tu stesso — aggiungi solo domini di provider di cui ti fidi (es. quello indicato nella documentazione dello script sopra).",
+    "domainLabelPlaceholder": "Nome, es. Hotjar",
+    "domainPlaceholder": "es. static.hotjar.com",
+    "addDomain": "Aggiungi dominio",
+    "removeDomain": "Rimuovi dominio",
+    "invalidDomain": "Dominio non valido — solo nome host, es. static.hotjar.com o *.hotjar.io (niente https://, niente percorso)",
     "save": "Salva",
     "saving": "Salvataggio in corso...",
     "saved": "Salvato"
@@ -268,8 +283,9 @@
     "defaultBadge": "Predefinita",
     "setDefault": "Imposta come predefinita",
     "removeLocale": "Rimuovi lingua",
-    "newLocalePlaceholder": "es. en",
-    "addLocale": "Aggiungi",
+    "newLocalePlaceholder": "Cerca una lingua...",
+    "noMatches": "Nessuna lingua trovata",
+    "addLocale": "Aggiungi lingua",
     "fallbackLabel": "Pagina non tradotta",
     "fallbackRedirectDescription": "Reindirizza alla versione nella lingua predefinita.",
     "fallbackNotAvailableDescription": "Mostra una pagina \"non disponibile in questa lingua\".",

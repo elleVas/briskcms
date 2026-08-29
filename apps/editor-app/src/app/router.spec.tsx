@@ -99,6 +99,7 @@ const sampleSite: SiteRecord = {
   themeBodyScript: null,
   themeFaviconUrl: null,
   themeOverridesEnabled: true,
+  themeAllowedTrackerDomains: [],
   themeTokens: { blockStyles: {} },
   createdAt: '',
 };
@@ -400,6 +401,14 @@ describe('router', () => {
 
     expect(
       await screen.findByRole('heading', { name: /stile del sito/i }),
+    ).toBeTruthy();
+  });
+
+  it('renders the integrations page on direct navigation when authenticated', async () => {
+    renderApp('/integrations');
+
+    expect(
+      await screen.findByRole('heading', { name: /integrazioni/i }),
     ).toBeTruthy();
   });
 

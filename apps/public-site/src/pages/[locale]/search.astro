@@ -6,6 +6,7 @@ import {
 } from '../../lib/public-api-client.js';
 import { localePath } from '../../lib/locale-path.js';
 import { Translator } from '../../lib/i18n.js';
+import { buildContentSecurityPolicy } from '../../lib/content-security-policy.js';
 import PageLayoutCore from '../../layouts/PageLayout.astro';
 import { resolveThemeLayoutOverride } from '../../lib/resolve-theme-layout-override.js';
 const PageLayout = resolveThemeLayoutOverride(PageLayoutCore);
@@ -29,6 +30,17 @@ const chrome = locale
 if (!chrome) {
   Astro.response.status = 404;
 }
+
+// ADR-0031: this site's own admin-managed tracker whitelist, on top of the
+// hardcoded default (see content-security-policy.ts).
+Astro.response.headers.set(
+  'Content-Security-Policy',
+  buildContentSecurityPolicy(
+    `'self'`,
+    Astro.locals.cspNonce,
+    chrome?.site.themeSettings.allowedTrackerDomains,
+  ),
+);
 
 const results =
   chrome && locale && query.trim().length > 0

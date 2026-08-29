@@ -71,6 +71,7 @@ function buildSite(overrides: Partial<SiteRecord> = {}): SiteRecord {
     themeBodyScript: null,
     themeFaviconUrl: null,
     themeOverridesEnabled: true,
+    themeAllowedTrackerDomains: [],
     themeTokens: { blockStyles: {} },
     createdAt: '',
     ...overrides,

@@ -7,6 +7,7 @@ import {
   Image,
   LayoutTemplate,
   Palette,
+  Plug,
   Users,
 } from 'lucide-react';
 import { AccountMenu } from './account-menu.js';
@@ -62,6 +63,13 @@ export function AdminShell({ children }: AdminShellProps) {
             >
               <Palette className="size-4" />
               {t('shell.nav.style')}
+            </Link>
+            <Link
+              to="/integrations"
+              className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm font-medium hover:bg-muted"
+            >
+              <Plug className="size-4" />
+              {t('shell.nav.integrations')}
             </Link>
             <Separator className="my-2" />
             <Link

@@ -31,6 +31,7 @@ function buildSite(
     themeBodyScript: null,
     themeFaviconUrl: null,
     themeOverridesEnabled: true,
+    themeAllowedTrackerDomains: [],
     createdAt: new Date(),
     ...overrides,
   });
@@ -170,6 +171,7 @@ describe('SitesController (unit)', () => {
         bodyScript: null,
         faviconUrl: null,
         overridesEnabled: true,
+        allowedTrackerDomains: [],
       }),
     ).rejects.toThrow(SiteNotFoundError);
   });
@@ -186,6 +188,7 @@ describe('SitesController (unit)', () => {
       bodyScript: null,
       faviconUrl: null,
       overridesEnabled: true,
+      allowedTrackerDomains: [],
     });
 
     expect(siteRepository.save).toHaveBeenCalled();

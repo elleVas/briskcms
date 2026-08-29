@@ -46,6 +46,7 @@ describe('getPublishedSiteChrome', () => {
         themeBodyScript: null,
         themeFaviconUrl: null,
         themeOverridesEnabled: true,
+        themeAllowedTrackerDomains: [],
         createdAt: new Date(),
       }),
     );

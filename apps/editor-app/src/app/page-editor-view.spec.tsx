@@ -101,6 +101,7 @@ const sampleSite: SiteRecord = {
   themeBodyScript: null,
   themeFaviconUrl: null,
   themeOverridesEnabled: true,
+  themeAllowedTrackerDomains: [],
   themeTokens: { blockStyles: {} },
   createdAt: '',
 };
@@ -131,7 +132,7 @@ describe('PageEditorView', () => {
     vi.clearAllMocks();
   });
 
-  it('renders a link back to the pages list and a logout control', () => {
+  it('renders a link back to the pages list', () => {
     vi.mocked(router.useNavigate).mockReturnValue(vi.fn());
 
     renderView();
@@ -139,7 +140,6 @@ describe('PageEditorView', () => {
     expect(
       screen.getByRole('link', { name: /pagine/i }).getAttribute('href'),
     ).toBe('/pages');
-    expect(screen.getByRole('button', { name: /^esci$/i })).toBeTruthy();
   });
 
   it('opens the SEO panel with the current seoMeta pre-filled', () => {

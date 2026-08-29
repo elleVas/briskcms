@@ -52,6 +52,7 @@ function buildSite(
     themeBodyScript: null,
     themeFaviconUrl: null,
     themeOverridesEnabled: true,
+    themeAllowedTrackerDomains: [],
     createdAt: new Date(),
     ...overrides,
   });
