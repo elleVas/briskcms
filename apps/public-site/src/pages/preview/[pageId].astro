@@ -24,7 +24,11 @@ if (!page) {
 Astro.response.headers.set('X-Robots-Tag', 'noindex');
 Astro.response.headers.set(
   'Content-Security-Policy',
-  buildContentSecurityPolicy(editorAppUrl(), Astro.locals.cspNonce),
+  buildContentSecurityPolicy(
+    editorAppUrl(),
+    Astro.locals.cspNonce,
+    page?.site.themeSettings.allowedTrackerDomains,
+  ),
 );
 ---
 

@@ -23,6 +23,7 @@ describe('Site entity', () => {
     themeBodyScript: null,
     themeFaviconUrl: null,
     themeOverridesEnabled: true,
+    themeAllowedTrackerDomains: [],
     createdAt: new Date('2026-01-01T00:00:00Z'),
   };
 
@@ -139,6 +140,7 @@ describe('Site entity', () => {
       bodyScript: null,
       faviconUrl: null,
       overridesEnabled: true,
+      allowedTrackerDomains: [],
     });
   });
 
@@ -154,6 +156,7 @@ describe('Site entity', () => {
       bodyScript: '<script>console.log("body")</script>',
       faviconUrl: 'https://example.com/favicon.png',
       overridesEnabled: false,
+      allowedTrackerDomains: [{ label: 'Hotjar', domain: 'static.hotjar.com' }],
     });
 
     expect(site.themeSettings).toEqual({
@@ -165,6 +168,7 @@ describe('Site entity', () => {
       bodyScript: '<script>console.log("body")</script>',
       faviconUrl: 'https://example.com/favicon.png',
       overridesEnabled: false,
+      allowedTrackerDomains: [{ label: 'Hotjar', domain: 'static.hotjar.com' }],
     });
   });
 });

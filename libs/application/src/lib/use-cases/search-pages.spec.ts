@@ -38,6 +38,7 @@ describe('searchPages', () => {
         themeBodyScript: null,
         themeFaviconUrl: null,
         themeOverridesEnabled: true,
+        themeAllowedTrackerDomains: [],
         createdAt: new Date(),
       }),
     );

@@ -239,6 +239,7 @@ export class SitesController {
       themeBodyScript: props.themeBodyScript,
       themeFaviconUrl: props.themeFaviconUrl,
       themeOverridesEnabled: props.themeOverridesEnabled,
+      themeAllowedTrackerDomains: props.themeAllowedTrackerDomains,
       // .toISOString(), not the raw Date: siteRecordSchema's createdAt is a
       // string (the shape the client actually parses off the wire) —
       // validating a live Date object against it would fail even though

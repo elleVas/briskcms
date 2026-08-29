@@ -29,6 +29,7 @@ export async function updateSiteThemeSettings(
     bodyScript: input.bodyScript,
     faviconUrl: input.faviconUrl,
     overridesEnabled: input.overridesEnabled,
+    allowedTrackerDomains: input.allowedTrackerDomains,
   });
   await deps.siteRepository.save(site);
 

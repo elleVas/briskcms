@@ -99,6 +99,7 @@ describe('updateSiteBusinessInfo', () => {
       themeBodyScript: null,
       themeFaviconUrl: null,
       themeOverridesEnabled: true,
+      themeAllowedTrackerDomains: [],
       createdAt: new Date(),
     });
     await siteRepository.save(site);
@@ -190,6 +191,7 @@ describe('updateSiteGeneralSettings', () => {
       themeBodyScript: null,
       themeFaviconUrl: null,
       themeOverridesEnabled: true,
+      themeAllowedTrackerDomains: [],
       createdAt: new Date(),
     });
     await siteRepository.save(site);
@@ -270,6 +272,7 @@ describe('updateSiteSeoSettings', () => {
       themeBodyScript: null,
       themeFaviconUrl: null,
       themeOverridesEnabled: true,
+      themeAllowedTrackerDomains: [],
       createdAt: new Date(),
     });
     await siteRepository.save(site);
@@ -346,6 +349,7 @@ describe('updateSiteThemeSettings', () => {
       themeBodyScript: null,
       themeFaviconUrl: null,
       themeOverridesEnabled: true,
+      themeAllowedTrackerDomains: [],
       createdAt: new Date(),
     });
     await siteRepository.save(site);
@@ -367,6 +371,7 @@ describe('updateSiteThemeSettings', () => {
       bodyScript: null,
       faviconUrl: null,
       overridesEnabled: true,
+      allowedTrackerDomains: [],
     });
 
     expect(updated.themeSettings.primaryColor).toBe('#18181b');
@@ -388,6 +393,7 @@ describe('updateSiteThemeSettings', () => {
         bodyScript: null,
         faviconUrl: null,
         overridesEnabled: true,
+        allowedTrackerDomains: [],
       }),
     ).rejects.toThrow(SiteNotFoundError);
   });
@@ -408,6 +414,7 @@ describe('updateSiteThemeSettings', () => {
         bodyScript: null,
         faviconUrl: null,
         overridesEnabled: true,
+        allowedTrackerDomains: [],
       }),
     ).rejects.toThrow(SiteNotFoundError);
   });
@@ -444,6 +451,7 @@ describe('updateSiteLocaleSettings', () => {
       themeBodyScript: null,
       themeFaviconUrl: null,
       themeOverridesEnabled: true,
+      themeAllowedTrackerDomains: [],
       createdAt: new Date(),
     });
     await siteRepository.save(site);

@@ -60,6 +60,7 @@ describe('getPublishedPageBySlug', () => {
       themeBodyScript: null,
       themeFaviconUrl: null,
       themeOverridesEnabled: true,
+      themeAllowedTrackerDomains: [],
       createdAt: new Date(),
       ...overrides,
     });
@@ -140,6 +141,7 @@ describe('getPublishedPageBySlug', () => {
           bodyScript: null,
           faviconUrl: null,
           overridesEnabled: true,
+          allowedTrackerDomains: [],
         },
         themeTokens: {
           blockStyles: {},

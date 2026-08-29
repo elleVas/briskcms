@@ -21,7 +21,6 @@ import { PUBLIC_SITE_URL } from '../../lib/public-site-url.js';
 import { useTranslation } from '../../lib/use-translation.js';
 import { GlobalStylesDialog } from '../global-styles-dialog.js';
 import { IconButton } from '../icon-button.js';
-import { LogoutButton } from '../logout-button.js';
 import { siteQueryOptions } from '../site-queries.js';
 import { useToast } from '../toast-provider.js';
 import { useSiteThemeTokens } from '../use-site-theme-tokens.js';
@@ -528,7 +527,6 @@ export function CanvasEditorShell({
           <Button size="sm" onClick={handlePublish}>
             {t('canvas.publish')}
           </Button>
-          <LogoutButton />
         </div>
       </div>
       {siteId && (

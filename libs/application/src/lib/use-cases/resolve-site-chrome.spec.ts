@@ -33,6 +33,7 @@ describe('resolveSiteChrome', () => {
       themeBodyScript: null,
       themeFaviconUrl: null,
       themeOverridesEnabled: true,
+      themeAllowedTrackerDomains: [],
       createdAt: new Date(),
       ...overrides,
     });

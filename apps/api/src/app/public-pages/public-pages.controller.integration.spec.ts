@@ -148,6 +148,7 @@ describe('PublicPagesController (integration)', () => {
           bodyScript: null,
           faviconUrl: null,
           overridesEnabled: true,
+          allowedTrackerDomains: [],
         },
         themeTokens: {
           blockStyles: {},

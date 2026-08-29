@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto';
+import type { TrackerDomainEntry } from '@brisk/shared-types';
 import { PROMO_BAR_DISMISS_SCRIPT } from '../components/blocks/promo-bar-dismiss-script.js';
 
 /**
@@ -74,18 +75,42 @@ const META_PIXEL_SCRIPT_ORIGIN = 'https://connect.facebook.net';
 // Also the noscript `<img>` fallback pixel Meta's own snippet includes.
 const META_PIXEL_BEACON_ORIGIN = 'https://www.facebook.com';
 
+/**
+ * ADR-0031's admin-managed tracker whitelist (`themeSettings.allowedTrackerDomains`)
+ * — each entry gets `https://` prepended (the schema only ever stores a bare
+ * host, see site-theme-settings.ts's trackerDomainSchema) and is added to
+ * `script-src`/`connect-src`/`frame-src` only. NOT `img-src`/`font-src`/
+ * `style-src`: those already allow any `https:` origin below (see their own
+ * entries), so adding a specific domain there would be strictly redundant —
+ * these 3 are the only directives in this policy narrow enough for a
+ * per-site addition to actually change anything.
+ */
+function trackerOrigins(allowedTrackerDomains: TrackerDomainEntry[]): string {
+  return allowedTrackerDomains
+    .map((entry) => `https://${entry.domain}`)
+    .join(' ');
+}
+
 export function buildContentSecurityPolicy(
   frameAncestors: string,
   nonce: string,
+  allowedTrackerDomains: TrackerDomainEntry[] = [],
 ): string {
+  const extra = trackerOrigins(allowedTrackerDomains);
+  const withExtra = (base: string) => (extra ? `${base} ${extra}` : base);
+
   return [
     `default-src 'self'`,
-    `script-src 'self' 'nonce-${nonce}' ${TURNSTILE_ORIGIN} ${GOOGLE_TAG_MANAGER_ORIGIN} ${META_PIXEL_SCRIPT_ORIGIN} ${scriptHash(PROMO_BAR_DISMISS_SCRIPT)}`,
+    withExtra(
+      `script-src 'self' 'nonce-${nonce}' ${TURNSTILE_ORIGIN} ${GOOGLE_TAG_MANAGER_ORIGIN} ${META_PIXEL_SCRIPT_ORIGIN} ${scriptHash(PROMO_BAR_DISMISS_SCRIPT)}`,
+    ),
     `style-src 'self' 'unsafe-inline' https:`,
     `img-src 'self' data: https: ${META_PIXEL_BEACON_ORIGIN}`,
     `font-src 'self' https: data:`,
-    `frame-src ${EMBEDDABLE_FRAME_ORIGINS.join(' ')}`,
-    `connect-src 'self' ${TURNSTILE_ORIGIN} ${GOOGLE_TAG_MANAGER_ORIGIN} ${GOOGLE_ANALYTICS_ORIGINS.join(' ')} ${META_PIXEL_BEACON_ORIGIN}`,
+    withExtra(`frame-src ${EMBEDDABLE_FRAME_ORIGINS.join(' ')}`),
+    withExtra(
+      `connect-src 'self' ${TURNSTILE_ORIGIN} ${GOOGLE_TAG_MANAGER_ORIGIN} ${GOOGLE_ANALYTICS_ORIGINS.join(' ')} ${META_PIXEL_BEACON_ORIGIN}`,
+    ),
     `object-src 'none'`,
     `base-uri 'self'`,
     `frame-ancestors ${frameAncestors}`,

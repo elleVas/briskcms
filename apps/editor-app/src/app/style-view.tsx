@@ -82,8 +82,6 @@ export function StyleView({ siteId, site }: StyleViewProps) {
     initialFont.customFontName,
   );
   const [customCss, setCustomCss] = useState(site.themeCustomCss ?? '');
-  const [headScript, setHeadScript] = useState(site.themeHeadScript ?? '');
-  const [bodyScript, setBodyScript] = useState(site.themeBodyScript ?? '');
   const [faviconUrl, setFaviconUrl] = useState(site.themeFaviconUrl ?? '');
   const [error, setError] = useState('');
   const [savedAt, setSavedAt] = useState(0);
@@ -122,8 +120,12 @@ export function StyleView({ siteId, site }: StyleViewProps) {
               ? customFontName.trim() || null
               : fontChoice,
         customCss: customCss.trim() || null,
-        headScript: headScript.trim() || null,
-        bodyScript: bodyScript.trim() || null,
+        // Owned by IntegrationsView now, not this page — round-tripped
+        // unchanged since updateThemeSettings always replaces the whole
+        // object (see Site.updateThemeSettings, no partial-patch support).
+        headScript: site.themeHeadScript,
+        bodyScript: site.themeBodyScript,
+        allowedTrackerDomains: site.themeAllowedTrackerDomains,
         faviconUrl: faviconUrl.trim() || null,
         overridesEnabled,
       });
@@ -253,35 +255,6 @@ export function StyleView({ siteId, site }: StyleViewProps) {
             rows={4}
             className="font-mono text-xs"
           />
-        </div>
-
-        <div className="flex flex-col gap-2">
-          <Label htmlFor="theme-settings-head-script">
-            {t('themeSettings.headScriptLabel')}
-          </Label>
-          <Textarea
-            id="theme-settings-head-script"
-            value={headScript}
-            onChange={(event) => setHeadScript(event.target.value)}
-            rows={3}
-            className="font-mono text-xs"
-          />
-        </div>
-
-        <div className="flex flex-col gap-2">
-          <Label htmlFor="theme-settings-body-script">
-            {t('themeSettings.bodyScriptLabel')}
-          </Label>
-          <Textarea
-            id="theme-settings-body-script"
-            value={bodyScript}
-            onChange={(event) => setBodyScript(event.target.value)}
-            rows={3}
-            className="font-mono text-xs"
-          />
-          <p className="text-xs text-muted-foreground">
-            {t('themeSettings.scriptDisclaimer')}
-          </p>
         </div>
       </div>
 

@@ -22,6 +22,7 @@ const baseSite: PublishedSite = {
     bodyScript: null,
     faviconUrl: null,
     overridesEnabled: true,
+    allowedTrackerDomains: [],
   },
   themeTokens: {
     blockStyles: {},

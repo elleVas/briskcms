@@ -1,6 +1,7 @@
 ---
 import { getPublishedPageBySlug } from '../../lib/public-api-client.js';
 import { localePathFromAncestors } from '../../lib/locale-path.js';
+import { buildContentSecurityPolicy } from '../../lib/content-security-policy.js';
 import PublicPageContent from '../../components/PublicPageContent.astro';
 
 export const prerender = false;
@@ -33,6 +34,17 @@ const page = result?.found ? result.page : null;
 if (!page) {
   Astro.response.status = 404;
 }
+
+// ADR-0031: this site's own admin-managed tracker whitelist, on top of the
+// hardcoded default (see content-security-policy.ts).
+Astro.response.headers.set(
+  'Content-Security-Policy',
+  buildContentSecurityPolicy(
+    `'self'`,
+    Astro.locals.cspNonce,
+    page?.site.themeSettings.allowedTrackerDomains,
+  ),
+);
 ---
 
 <PublicPageContent page={page} />

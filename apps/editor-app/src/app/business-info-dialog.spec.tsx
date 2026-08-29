@@ -34,6 +34,7 @@ const sampleSite: SiteRecord = {
   themeBodyScript: null,
   themeFaviconUrl: null,
   themeOverridesEnabled: true,
+  themeAllowedTrackerDomains: [],
   themeTokens: { blockStyles: {} },
   createdAt: '',
 };

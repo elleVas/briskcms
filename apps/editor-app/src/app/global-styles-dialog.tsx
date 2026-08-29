@@ -156,6 +156,7 @@ export function GlobalStylesDialog({
         bodyScript: site.themeBodyScript,
         faviconUrl: site.themeFaviconUrl,
         overridesEnabled: site.themeOverridesEnabled,
+        allowedTrackerDomains: site.themeAllowedTrackerDomains,
       });
     } catch (err) {
       setError(String(err));
