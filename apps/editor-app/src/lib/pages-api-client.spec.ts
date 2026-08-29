@@ -19,6 +19,7 @@ const samplePage: PageRecord = {
   locale: 'it',
   slug: 'test-page',
   status: 'draft',
+  syncedStructureSignature: null,
   content: [],
   publishedContent: null,
   seoMeta: { title: 'Test', description: 'desc' },

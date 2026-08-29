@@ -6,6 +6,7 @@ import {
   PageTranslationAlreadyExistsError,
 } from '@brisk/domain-core';
 import type { PageRepositoryPort } from '@brisk/ports';
+import { computeContentStructureSignature } from '@brisk/shared-types';
 
 export interface CreatePageTranslationDeps {
   pageRepository: PageRepositoryPort;
@@ -92,6 +93,12 @@ export async function createPageTranslation(
     parentId,
     seoMeta: source.seoMeta,
     content: source.content,
+    // Starts in sync: content is a 1:1 copy of the source at this exact
+    // moment (see the structural-drift indicator, content-structure-
+    // signature.ts) — not necessarily the site's default locale, but the
+    // drift check below only ever compares against that one, so a
+    // translation-of-a-translation still gets a meaningful starting point.
+    syncedStructureSignature: computeContentStructureSignature(source.content),
   });
 
   await deps.pageRepository.saveWithVersion(translation, {

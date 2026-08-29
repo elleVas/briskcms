@@ -163,4 +163,100 @@ describe('InspectorPanel', () => {
       url: '/m1.jpg',
     });
   });
+
+  it('shows a required-field warning for an empty required text field', () => {
+    const block: Block = {
+      id: 'img-1',
+      type: 'Image',
+      props: { alt: '', isDecorative: false },
+    };
+    const descriptor: BlockDescriptor = {
+      type: 'Image',
+      label: 'Immagine',
+      category: 'content',
+      defaultProps: { alt: '', isDecorative: false },
+      fields: [
+        {
+          kind: 'text',
+          key: 'alt',
+          label: 'Testo alternativo',
+          required: true,
+          requiredUnless: 'isDecorative',
+        },
+      ],
+    };
+    render(
+      <InspectorPanel
+        block={block}
+        descriptor={descriptor}
+        onChangeProp={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText('Campo obbligatorio')).toBeTruthy();
+  });
+
+  it('does not warn once the required field has a value', () => {
+    const block: Block = {
+      id: 'img-1',
+      type: 'Image',
+      props: { alt: 'Un gatto', isDecorative: false },
+    };
+    const descriptor: BlockDescriptor = {
+      type: 'Image',
+      label: 'Immagine',
+      category: 'content',
+      defaultProps: { alt: '', isDecorative: false },
+      fields: [
+        {
+          kind: 'text',
+          key: 'alt',
+          label: 'Testo alternativo',
+          required: true,
+          requiredUnless: 'isDecorative',
+        },
+      ],
+    };
+    render(
+      <InspectorPanel
+        block={block}
+        descriptor={descriptor}
+        onChangeProp={vi.fn()}
+      />,
+    );
+
+    expect(screen.queryByText('Campo obbligatorio')).toBeNull();
+  });
+
+  it("does not warn when requiredUnless's sibling prop is true (deliberately decorative)", () => {
+    const block: Block = {
+      id: 'img-1',
+      type: 'Image',
+      props: { alt: '', isDecorative: true },
+    };
+    const descriptor: BlockDescriptor = {
+      type: 'Image',
+      label: 'Immagine',
+      category: 'content',
+      defaultProps: { alt: '', isDecorative: false },
+      fields: [
+        {
+          kind: 'text',
+          key: 'alt',
+          label: 'Testo alternativo',
+          required: true,
+          requiredUnless: 'isDecorative',
+        },
+      ],
+    };
+    render(
+      <InspectorPanel
+        block={block}
+        descriptor={descriptor}
+        onChangeProp={vi.fn()}
+      />,
+    );
+
+    expect(screen.queryByText('Campo obbligatorio')).toBeNull();
+  });
 });

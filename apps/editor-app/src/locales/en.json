@@ -151,7 +151,10 @@
       "slugPreview": "URL: {{slug}}",
       "create": "Create translation",
       "creating": "Creating...",
-      "conflict": "A translation in this language already exists for this page."
+      "conflict": "A translation in this language already exists for this page.",
+      "drift": "Structure out of sync",
+      "driftWarning": "The original (default locale) has different blocks than when this translation was last created or updated.",
+      "markSynced": "Mark as synced"
     },
     "picker": {
       "title": "Choose a page",
@@ -425,6 +428,7 @@
     }
   },
   "canvas": {
+    "requiredField": "Required field",
     "previewFrameTitle": "Page preview",
     "previewTokenError": "Couldn't load the preview. Try again.",
     "layersTitle": "Layers",
@@ -667,6 +671,9 @@
       "fields": {
         "media": { "fieldLabel": "Image" },
         "alt": { "fieldLabel": "Alt text" },
+        "isDecorative": {
+          "fieldLabel": "Decorative image (no alt text needed)"
+        },
         "caption": { "fieldLabel": "Caption" }
       }
     },

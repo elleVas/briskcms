@@ -76,6 +76,13 @@ export const createTranslationBodySchema = z.object({
 });
 export type CreateTranslationBody = z.infer<typeof createTranslationBodySchema>;
 
+export const markTranslationSyncedBodySchema = z.object({
+  structureSignature: z.string(),
+});
+export type MarkTranslationSyncedBody = z.infer<
+  typeof markTranslationSyncedBodySchema
+>;
+
 export const duplicatePageBodySchema = z.object({
   slug: pageSlugSchema,
   title: z.string().min(1),

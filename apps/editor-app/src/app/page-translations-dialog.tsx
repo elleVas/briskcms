@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from '@tanstack/react-router';
+import { TriangleAlert } from 'lucide-react';
 import { slugify } from '@brisk/shared-types';
 import { Button } from '../components/ui/button.js';
 import {
@@ -37,6 +38,8 @@ export function PageTranslationsDialog({
     enabledLocales,
     createTranslation,
     isCreating,
+    markSynced,
+    isMarkingSynced,
   } = usePageTranslations(pageId, siteId, open);
 
   const [newLocale, setNewLocale] = useState('');
@@ -102,21 +105,43 @@ export function PageTranslationsDialog({
                     <span className="text-muted-foreground">
                       {translation.slug}
                     </span>
+                    {translation.hasStructuralDrift && (
+                      <span
+                        title={t('pages.translations.driftWarning')}
+                        className="flex items-center gap-1 text-xs text-amber-600 dark:text-amber-500"
+                      >
+                        <TriangleAlert className="size-3.5" />
+                        {t('pages.translations.drift')}
+                      </span>
+                    )}
                   </span>
-                  {translation.id === pageId ? (
-                    <span className="text-xs text-muted-foreground">
-                      {t('pages.translations.current')}
-                    </span>
-                  ) : (
-                    <Link
-                      to="/pages/$pageId"
-                      params={{ pageId: translation.id }}
-                      onClick={() => onOpenChange(false)}
-                      className="text-xs hover:underline"
-                    >
-                      {t('pages.translations.edit')}
-                    </Link>
-                  )}
+                  <span className="flex items-center gap-2">
+                    {translation.hasStructuralDrift && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        disabled={isMarkingSynced}
+                        onClick={() => void markSynced(translation.id)}
+                      >
+                        {t('pages.translations.markSynced')}
+                      </Button>
+                    )}
+                    {translation.id === pageId ? (
+                      <span className="text-xs text-muted-foreground">
+                        {t('pages.translations.current')}
+                      </span>
+                    ) : (
+                      <Link
+                        to="/pages/$pageId"
+                        params={{ pageId: translation.id }}
+                        onClick={() => onOpenChange(false)}
+                        className="text-xs hover:underline"
+                      >
+                        {t('pages.translations.edit')}
+                      </Link>
+                    )}
+                  </span>
                 </li>
               ))}
             </ul>

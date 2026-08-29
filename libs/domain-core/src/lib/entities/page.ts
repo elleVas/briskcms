@@ -14,6 +14,8 @@ export interface PageProps {
   content: PageContent;
   publishedContent: PageContent | null;
   seoMeta: SeoMeta;
+  /** See PageRecord's own field doc (libs/shared-types/page-record.ts) — same meaning. */
+  syncedStructureSignature: string | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -28,6 +30,7 @@ export interface CreatePageProps {
   parentId?: string | null;
   seoMeta: SeoMeta;
   content?: PageContent;
+  syncedStructureSignature?: string | null;
   now?: Date;
 }
 
@@ -54,6 +57,7 @@ export class Page {
       content: input.content ?? [],
       publishedContent: null,
       seoMeta: input.seoMeta,
+      syncedStructureSignature: input.syncedStructureSignature ?? null,
       createdAt: now,
       updatedAt: now,
     });
@@ -111,6 +115,10 @@ export class Page {
     return this.props.seoMeta;
   }
 
+  get syncedStructureSignature(): string | null {
+    return this.props.syncedStructureSignature;
+  }
+
   get createdAt(): Date {
     return this.props.createdAt;
   }
@@ -136,6 +144,17 @@ export class Page {
   saveDraft(content: PageContent, now: Date = new Date()): void {
     this.props.content = content;
     this.props.updatedAt = now;
+  }
+
+  /**
+   * Dichiara questa traduzione allineata alla struttura corrente della
+   * pagina nella lingua predefinita del sito (l'admin l'ha rivista dopo un
+   * avviso di drift, o l'accetta così com'è). Non tocca `content`/
+   * `updatedAt`: è solo metadato di sincronizzazione, non una modifica
+   * reale alla pagina.
+   */
+  markStructureSynced(signature: string): void {
+    this.props.syncedStructureSignature = signature;
   }
 
   /**

@@ -9,6 +9,7 @@ export const imageBlock: BlockDescriptor<ImageProps> = {
   defaultProps: {
     media: null,
     alt: '',
+    isDecorative: false,
     caption: '',
   },
   fields: [
@@ -23,6 +24,13 @@ export const imageBlock: BlockDescriptor<ImageProps> = {
       kind: 'text',
       key: 'alt',
       label: 'blocks.image.fields.alt.fieldLabel',
+      required: true,
+      requiredUnless: 'isDecorative',
+    },
+    {
+      kind: 'boolean',
+      key: 'isDecorative',
+      label: 'blocks.image.fields.isDecorative.fieldLabel',
     },
     {
       kind: 'text',

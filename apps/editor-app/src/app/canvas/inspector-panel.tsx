@@ -85,6 +85,23 @@ function FieldRow({ field, value, onChange }: FieldRowProps) {
 }
 
 /**
+ * A soft nudge, never a save/publish blocker (see docs/adr for the
+ * alt-text accessibility gap this exists for) — `requiredUnless` lets a
+ * sibling boolean prop (e.g. "isDecorative") waive it legitimately,
+ * instead of every empty value being flagged as an oversight.
+ */
+function isRequiredFieldEmpty(
+  field: FieldDescriptor,
+  props: Record<string, unknown>,
+): boolean {
+  if (field.kind !== 'text' && field.kind !== 'textarea') return false;
+  if (!field.required) return false;
+  if (field.requiredUnless && props[field.requiredUnless]) return false;
+  const value = props[field.key];
+  return typeof value !== 'string' || value.trim().length === 0;
+}
+
+/**
  * Sostituisce il pannello Fields<T> di Puck (docs/adr/0007) — un input per
  * campo, guidato dal `BlockDescriptor` del blocco selezionato. `inlineEditable`
  * qui non ha ancora effetto (il montaggio TipTap sul canvas è Giorno 4): per
@@ -96,7 +113,7 @@ export function InspectorPanel({
   descriptor,
   onChangeProp,
 }: InspectorPanelProps) {
-  const { tLabel } = useTranslation();
+  const { t, tLabel } = useTranslation();
   if (descriptor.fields.length === 0) {
     return null;
   }
@@ -104,18 +121,28 @@ export function InspectorPanel({
   return (
     <div className="flex flex-col gap-3">
       <h3 className="text-sm font-semibold">{tLabel(descriptor.label)}</h3>
-      {descriptor.fields.map((field) => (
-        <label key={field.key} className="flex flex-col gap-1.5">
-          <span className="text-xs font-medium text-muted-foreground">
-            {tLabel(field.label)}
-          </span>
-          <FieldRow
-            field={field}
-            value={block.props[field.key]}
-            onChange={(value) => onChangeProp(field.key, value)}
-          />
-        </label>
-      ))}
+      {descriptor.fields.map((field) => {
+        const showRequiredWarning = isRequiredFieldEmpty(field, block.props);
+        return (
+          <label key={field.key} className="flex flex-col gap-1.5">
+            <span className="text-xs font-medium text-muted-foreground">
+              {tLabel(field.label)}
+              {(field.kind === 'text' || field.kind === 'textarea') &&
+                field.required && <span className="text-destructive"> *</span>}
+            </span>
+            <FieldRow
+              field={field}
+              value={block.props[field.key]}
+              onChange={(value) => onChangeProp(field.key, value)}
+            />
+            {showRequiredWarning && (
+              <span className="text-xs text-amber-600 dark:text-amber-500">
+                {t('canvas.requiredField')}
+              </span>
+            )}
+          </label>
+        );
+      })}
     </div>
   );
 }

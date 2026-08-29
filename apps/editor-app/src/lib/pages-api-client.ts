@@ -142,3 +142,16 @@ export function createTranslation(
     body: JSON.stringify(input),
   });
 }
+
+// See use-page-translations.ts: `structureSignature` is always the
+// default-locale sibling's CURRENT signature, computed client-side from
+// the same translations list the drift badge itself is derived from.
+export function markTranslationSynced(
+  pageId: string,
+  structureSignature: string,
+): Promise<PageRecord> {
+  return requestPage(`/pages/${pageId}/mark-translation-synced`, {
+    method: 'PATCH',
+    body: JSON.stringify({ structureSignature }),
+  });
+}

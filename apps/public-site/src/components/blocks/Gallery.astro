@@ -16,7 +16,7 @@ const i18n = new Translator(locale);
           image.media && (
             <img
               src={image.media.url}
-              alt={image.alt}
+              alt={image.isDecorative ? '' : image.alt}
               width={image.media.width ?? undefined}
               height={image.media.height ?? undefined}
               loading="lazy"

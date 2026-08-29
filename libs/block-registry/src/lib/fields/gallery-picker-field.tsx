@@ -4,6 +4,7 @@ import { useMediaPicker } from '../media-picker-context.js';
 export interface GalleryImageItem {
   media: PickedMedia | null;
   alt: string;
+  isDecorative: boolean;
 }
 
 export interface GalleryPickerFieldProps {
@@ -53,12 +54,18 @@ export function GalleryPickerField({
     onChange(next);
   }
 
+  function handleDecorativeChange(index: number, isDecorative: boolean) {
+    const next = value.slice();
+    next[index] = { ...next[index], isDecorative };
+    onChange(next);
+  }
+
   function handleRemove(index: number) {
     onChange(value.filter((_, i) => i !== index));
   }
 
   function handleAdd() {
-    onChange([...value, { media: null, alt: '' }]);
+    onChange([...value, { media: null, alt: '', isDecorative: false }]);
   }
 
   return (
@@ -98,9 +105,32 @@ export function GalleryPickerField({
             type="text"
             placeholder="Testo alternativo"
             value={item.alt}
+            disabled={item.isDecorative}
             onChange={(event) => handleAltChange(index, event.target.value)}
             style={inputStyle}
           />
+          <label
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+              fontSize: 13,
+            }}
+          >
+            <input
+              type="checkbox"
+              checked={item.isDecorative}
+              onChange={(event) =>
+                handleDecorativeChange(index, event.target.checked)
+              }
+            />
+            Immagine decorativa (nessun testo alternativo necessario)
+          </label>
+          {!item.isDecorative && item.alt.trim().length === 0 && (
+            <p style={{ fontSize: 12, color: '#b45309', margin: 0 }}>
+              Testo alternativo richiesto (o segna come decorativa)
+            </p>
+          )}
           <button
             type="button"
             onClick={() => handleRemove(index)}

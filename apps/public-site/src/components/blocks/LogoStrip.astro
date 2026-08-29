@@ -29,7 +29,7 @@ const i18n = new Translator(locale);
       {pictured.map((logo) => (
         <img
           src={logo.media.url}
-          alt={logo.alt}
+          alt={logo.isDecorative ? '' : logo.alt}
           width={logo.media.width ?? undefined}
           height={logo.media.height ?? undefined}
           class="brisk-logo-strip__logo"
