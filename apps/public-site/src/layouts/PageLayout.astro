@@ -11,6 +11,7 @@ import {
 import BlockRenderer from '../components/BlockRenderer.astro';
 import { injectScriptNonce } from '../lib/content-security-policy.js';
 import { editorAppUrl } from '../lib/editor-app-url.js';
+import { localeDirection } from '../lib/locale-direction.js';
 import { localePath } from '../lib/locale-path.js';
 import { buildSchemaOrgGraph } from '../lib/schema-org.js';
 import { resolveThemeFont } from '../lib/theme-font.js';
@@ -138,7 +139,7 @@ const blockStyleOverridesCss = buildBlockStyleOverridesCss(
 );
 ---
 
-<html lang={locale}>
+<html lang={locale} dir={localeDirection(locale)}>
 	<head>
 		<meta charset="utf-8" />
 		{

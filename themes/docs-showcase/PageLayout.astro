@@ -26,6 +26,7 @@ import {
 	localePath,
 	localePathFromAncestors,
 } from '../../apps/public-site/src/lib/locale-path.js';
+import { localeDirection } from '../../apps/public-site/src/lib/locale-direction.js';
 import { buildSchemaOrgGraph } from '../../apps/public-site/src/lib/schema-org.js';
 import { resolveThemeFont } from '../../apps/public-site/src/lib/theme-font.js';
 import '../../apps/public-site/src/styles/global.css';
@@ -162,7 +163,7 @@ if (site.domain) {
 const hasSidebar = sidebarItems.length > 0;
 ---
 
-<html lang={locale}>
+<html lang={locale} dir={localeDirection(locale)}>
 	<head>
 		<meta charset="utf-8" />
 		{
