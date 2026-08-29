@@ -2,6 +2,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import { createRef } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import * as previewTokenApi from '../../lib/preview-token-api-client.js';
+import { PUBLIC_SITE_URL } from '../../lib/public-site-url.js';
 import { buildPreviewUrl, CanvasFrame } from './canvas-frame.js';
 import type { PreviewBridgeState } from './use-preview-bridge.js';
 
@@ -35,13 +36,13 @@ const emptyBridge: PreviewBridgeState = {
 describe('buildPreviewUrl', () => {
   it('builds a plain page preview URL with just the token', () => {
     const url = buildPreviewUrl('page-1', 'tok123');
-    expect(url).toBe('http://localhost:4321/preview/page-1?token=tok123');
+    expect(url).toBe(`${PUBLIC_SITE_URL}/preview/page-1?token=tok123`);
   });
 
   it('adds editingSection when editing header/footer', () => {
     const url = buildPreviewUrl('page-1', 'tok123', 'header');
     expect(url).toBe(
-      'http://localhost:4321/preview/page-1?token=tok123&editingSection=header',
+      `${PUBLIC_SITE_URL}/preview/page-1?token=tok123&editingSection=header`,
     );
   });
 });
@@ -73,7 +74,7 @@ describe('CanvasFrame', () => {
 
     await waitFor(() =>
       expect(screen.getByTitle('Anteprima pagina').getAttribute('src')).toBe(
-        'http://localhost:4321/preview/page-1?token=tok123',
+        `${PUBLIC_SITE_URL}/preview/page-1?token=tok123`,
       ),
     );
     expect(previewTokenApi.createPagePreviewToken).toHaveBeenCalledWith(
@@ -106,7 +107,7 @@ describe('CanvasFrame', () => {
 
     await waitFor(() =>
       expect(screen.getByTitle('Anteprima pagina').getAttribute('src')).toBe(
-        'http://localhost:4321/preview/page-1?token=tok123&editingSection=footer',
+        `${PUBLIC_SITE_URL}/preview/page-1?token=tok123&editingSection=footer`,
       ),
     );
   });

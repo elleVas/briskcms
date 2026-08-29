@@ -79,6 +79,7 @@ exported `t()` function.
 ```sh
 pnpm exec nx run @brisk/public-site:dev         # dev server, http://localhost:4321
 pnpm exec nx run @brisk/public-site:build       # production build (SSR, @astrojs/node)
+pnpm exec nx run @brisk/public-site:start       # run the production build (node server.mjs)
 pnpm exec nx run @brisk/public-site:typecheck   # astro check
 pnpm exec nx run @brisk/public-site:test        # vitest
 pnpm exec nx run @brisk/public-site:lint        # eslint
@@ -87,3 +88,17 @@ pnpm exec nx run @brisk/public-site:lint        # eslint
 Needs `apps/api` running and `API_URL` pointing at it (see `.env.example`)
 — there is no build-time list of pages to prerender, content is fetched
 per-request.
+
+### Production entrypoint is `server.mjs`, not `dist/server/entry.mjs`
+
+The adapter (`astro.config.mjs`) is configured with `mode: 'middleware'`, so
+the build output only exports a request handler — it doesn't start a server
+or serve static files by itself. `server.mjs` wraps that handler with its
+own static file serving (`sirv`) so it can add
+`Access-Control-Allow-Origin` to the `_astro/*` asset bundles: the canvas
+editor's live-preview iframe is sandboxed without `allow-same-origin`,
+giving it an opaque origin, so every module/CSS request it makes needs a
+CORS check even against this same host. `@astrojs/node`'s default
+`standalone` mode serves those files before any Astro middleware ever sees
+the request, so that header can't be added from within Astro itself —
+hence the custom entrypoint.

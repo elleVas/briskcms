@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { renderBlockFragment } from './block-fragment-api-client.js';
+import { PUBLIC_SITE_URL } from './public-site-url.js';
 
 function jsonResponse(body: unknown, status = 200) {
   return {
@@ -30,7 +31,7 @@ describe('renderBlockFragment', () => {
     });
 
     expect(fetch).toHaveBeenCalledWith(
-      'http://localhost:4321/api/render-block-fragment',
+      `${PUBLIC_SITE_URL}/api/render-block-fragment`,
       expect.objectContaining({
         method: 'POST',
         body: JSON.stringify({

@@ -18,6 +18,7 @@ import { TooltipProvider } from '../../components/ui/tooltip.js';
 import { createTestQueryClient } from '../../test-query-client.js';
 import * as blockFragmentApi from '../../lib/block-fragment-api-client.js';
 import * as previewTokenApi from '../../lib/preview-token-api-client.js';
+import { PUBLIC_SITE_URL } from '../../lib/public-site-url.js';
 import { ToastProvider } from '../toast-provider.js';
 import { CanvasEditorShell } from './canvas-editor-shell.js';
 
@@ -152,7 +153,7 @@ function dispatchFromIframe(
       type,
       payload,
     },
-    origin: 'http://localhost:4321',
+    origin: PUBLIC_SITE_URL,
   });
   Object.defineProperty(event, 'source', { value: iframe.contentWindow });
   window.dispatchEvent(event);
