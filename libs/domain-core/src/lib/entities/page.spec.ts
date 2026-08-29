@@ -86,6 +86,7 @@ describe('Page entity', () => {
       status: 'published' as const,
       content: [{ type: 'Hero', props: { title: 'v1' } }],
       publishedContent: [{ type: 'Hero', props: { title: 'v1' } }],
+      syncedStructureSignature: null,
       createdAt: new Date('2025-12-01T00:00:00Z'),
       updatedAt: new Date('2026-01-01T00:00:00Z'),
     };
@@ -93,5 +94,29 @@ describe('Page entity', () => {
     const page = Page.fromProps(props);
 
     expect(page.toProps()).toEqual(props);
+  });
+
+  it('starts with syncedStructureSignature null unless given one at creation', () => {
+    const page = Page.create(baseInput);
+    expect(page.syncedStructureSignature).toBeNull();
+  });
+
+  it('create() accepts an initial syncedStructureSignature (translation created in sync with its source)', () => {
+    const page = Page.create({
+      ...baseInput,
+      syncedStructureSignature: 'sig-1',
+    });
+    expect(page.syncedStructureSignature).toBe('sig-1');
+  });
+
+  it('markStructureSynced replaces the signature without touching content or updatedAt', () => {
+    const page = Page.create(baseInput);
+    const before = page.updatedAt;
+
+    page.markStructureSynced('sig-2');
+
+    expect(page.syncedStructureSignature).toBe('sig-2');
+    expect(page.updatedAt).toEqual(before);
+    expect(page.content).toEqual([]);
   });
 });

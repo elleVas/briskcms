@@ -232,6 +232,11 @@ export const pages = pgTable(
     // package ever needs to read/write it directly — see
     // drizzle/0016_pages_search_vector.sql.
     searchText: text('search_text'),
+    // Translation structural-drift indicator — the block-structure
+    // signature (see @brisk/shared-types' content-structure-signature.ts)
+    // this page's content was last confirmed aligned to. `null` for a
+    // page never tracked under this mechanism.
+    syncedStructureSignature: text('synced_structure_signature'),
     createdAt: timestamp('created_at', { withTimezone: true })
       .notNull()
       .defaultNow(),

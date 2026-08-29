@@ -49,6 +49,7 @@ function toRow(props: PageProps) {
     content: props.content,
     publishedContent: props.publishedContent,
     seoMeta: props.seoMeta,
+    syncedStructureSignature: props.syncedStructureSignature,
     createdAt: props.createdAt,
     updatedAt: props.updatedAt,
   };
@@ -72,6 +73,7 @@ function fromRow(row: typeof pages.$inferSelect): Page {
     content: row.content,
     publishedContent: row.publishedContent,
     seoMeta: row.seoMeta,
+    syncedStructureSignature: row.syncedStructureSignature,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   });

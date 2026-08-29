@@ -42,6 +42,7 @@ export * from './lib/use-cases/update-site-theme-tokens.use-case.js';
 export * from './lib/use-cases/update-site-locale-settings.use-case.js';
 export * from './lib/use-cases/create-page-translation.use-case.js';
 export * from './lib/use-cases/list-page-translations.use-case.js';
+export * from './lib/use-cases/mark-translation-synced.use-case.js';
 export * from './lib/use-cases/duplicate-page.use-case.js';
 export * from './lib/use-cases/create-form.use-case.js';
 export * from './lib/use-cases/update-form.use-case.js';

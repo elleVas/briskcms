@@ -33,6 +33,7 @@ const samplePage: api.PageRecord = {
   locale: 'it',
   slug: 'chi-siamo',
   status: 'draft',
+  syncedStructureSignature: null,
   content: [],
   publishedContent: null,
   seoMeta: { title: 'Chi siamo', description: '' },

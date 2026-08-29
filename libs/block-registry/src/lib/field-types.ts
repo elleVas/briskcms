@@ -18,6 +18,10 @@ export type FieldDescriptor =
       label: string;
       inlineEditable?: boolean;
       placeholder?: string;
+      /** Shows a required marker + inline warning when empty — a soft nudge, never blocks saving/publishing (see docs/adr for the alt-text accessibility gap this exists for). */
+      required?: boolean;
+      /** Name of a sibling boolean prop that, when true, waives `required` — e.g. an "isDecorative" flag legitimately making an empty alt correct (WCAG), not an oversight. */
+      requiredUnless?: string;
     }
   | {
       kind: 'textarea';
@@ -25,6 +29,8 @@ export type FieldDescriptor =
       label: string;
       inlineEditable?: boolean;
       placeholder?: string;
+      required?: boolean;
+      requiredUnless?: string;
     }
   | {
       kind: 'radio' | 'select';

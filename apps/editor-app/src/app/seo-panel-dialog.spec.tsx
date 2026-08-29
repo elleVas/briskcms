@@ -24,6 +24,7 @@ const samplePage: PageRecord = {
   locale: 'it',
   slug: 'chi-siamo',
   status: 'draft',
+  syncedStructureSignature: null,
   content: [],
   publishedContent: null,
   seoMeta: {

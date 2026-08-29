@@ -23,6 +23,13 @@ export const pageRecordSchema = z.object({
   content: z.array(blockSchema),
   publishedContent: z.array(blockSchema).nullable(),
   seoMeta: seoMetaSchema,
+  // The block-structure signature (see content-structure-signature.ts)
+  // this page's content was last confirmed aligned to — for a translation,
+  // that of its group's default-locale page at the time it was created or
+  // last explicitly marked synced; `null` for a page never tracked under
+  // this mechanism (pre-existing translations, or a group's own
+  // default-locale page, which never drifts from itself).
+  syncedStructureSignature: z.string().nullable(),
   createdAt: z.string(),
   updatedAt: z.string(),
 });

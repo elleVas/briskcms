@@ -4,9 +4,11 @@ import {
   PageTranslationAlreadyExistsError,
   PageSlugAlreadyExistsError,
 } from '@brisk/domain-core';
+import { computeContentStructureSignature } from '@brisk/shared-types';
 import { createPage } from './create-page.use-case.js';
 import { createPageTranslation } from './create-page-translation.use-case.js';
 import { listPageTranslations } from './list-page-translations.use-case.js';
+import { markTranslationSynced } from './mark-translation-synced.use-case.js';
 import {
   InMemoryPageRepository,
   InMemoryPageVersionRepository,
@@ -57,6 +59,23 @@ describe('createPageTranslation', () => {
       description: 'La nostra storia',
     });
     expect(translation.status).toBe('draft');
+  });
+
+  it('starts in sync with the source content it was copied from', async () => {
+    const deps = setup();
+    const source = await createSourcePage(deps);
+
+    const translation = await createPageTranslation(deps, {
+      tenantId,
+      sourcePageId: source.id,
+      locale: 'en',
+      slug: 'about-us',
+      createdBy: 'user-1',
+    });
+
+    expect(translation.syncedStructureSignature).toBe(
+      computeContentStructureSignature(source.content),
+    );
   });
 
   it('records an initial version for the new translation', async () => {
@@ -183,6 +202,56 @@ describe('listPageTranslations', () => {
 
     await expect(
       listPageTranslations(deps, { tenantId, pageId: 'does-not-exist' }),
+    ).rejects.toThrow(PageNotFoundError);
+  });
+});
+
+describe('markTranslationSynced', () => {
+  const tenantId = 'tenant-1';
+
+  function setup() {
+    const pageVersionRepository = new InMemoryPageVersionRepository();
+    const pageRepository = new InMemoryPageRepository(pageVersionRepository);
+    return { pageRepository, pageVersionRepository };
+  }
+
+  it('replaces the signature with the one the caller provides', async () => {
+    const deps = setup();
+    const source = await createPage(deps, {
+      tenantId,
+      siteId: 'site-1',
+      groupId: 'group-1',
+      locale: 'it',
+      slug: 'chi-siamo',
+      seoMeta: { title: 'Chi siamo', description: '' },
+      createdBy: 'user-1',
+    });
+    const translation = await createPageTranslation(deps, {
+      tenantId,
+      sourcePageId: source.id,
+      locale: 'en',
+      slug: 'about-us',
+      createdBy: 'user-1',
+    });
+
+    const updated = await markTranslationSynced(deps, {
+      tenantId,
+      pageId: translation.id,
+      structureSignature: 'new-signature',
+    });
+
+    expect(updated.syncedStructureSignature).toBe('new-signature');
+  });
+
+  it('throws PageNotFoundError for a nonexistent page', async () => {
+    const deps = setup();
+
+    await expect(
+      markTranslationSynced(deps, {
+        tenantId,
+        pageId: 'does-not-exist',
+        structureSignature: 'sig',
+      }),
     ).rejects.toThrow(PageNotFoundError);
   });
 });

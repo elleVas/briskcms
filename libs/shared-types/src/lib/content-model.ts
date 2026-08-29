@@ -103,6 +103,12 @@ export type PickedMedia = z.infer<typeof pickedMediaSchema>;
 export const imagePropsSchema = z.object({
   media: pickedMediaSchema.nullable(),
   alt: z.string(),
+  // WCAG: a purely decorative image should have an empty alt on purpose,
+  // not a filler string typed just to satisfy a "required" nudge in the
+  // editor (InspectorPanel) — this flag is the deliberate-choice escape
+  // hatch, authoritative at render time (Image.astro ignores `alt`
+  // entirely when this is true, even if it's non-empty from before).
+  isDecorative: z.boolean(),
   caption: z.string(),
 });
 export type ImageProps = z.infer<typeof imagePropsSchema>;
@@ -112,6 +118,7 @@ export const galleryPropsSchema = z.object({
     z.object({
       media: pickedMediaSchema.nullable(),
       alt: z.string(),
+      isDecorative: z.boolean(),
     }),
   ),
 });
@@ -587,6 +594,7 @@ export const imageSliderPropsSchema = z.object({
     z.object({
       media: pickedMediaSchema.nullable(),
       alt: z.string(),
+      isDecorative: z.boolean(),
     }),
   ),
 });
@@ -616,6 +624,7 @@ export const logoStripPropsSchema = z.object({
     z.object({
       media: pickedMediaSchema.nullable(),
       alt: z.string(),
+      isDecorative: z.boolean(),
     }),
   ),
 });

@@ -1,0 +1,1 @@
+ALTER TABLE "pages" ADD COLUMN "synced_structure_signature" text;

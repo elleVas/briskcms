@@ -23,7 +23,7 @@ const i18n = new Translator(locale);
         {pictured.map((image, index) => (
           <img
             src={image.media.url}
-            alt={image.alt}
+            alt={image.isDecorative ? '' : image.alt}
             width={image.media.width ?? undefined}
             height={image.media.height ?? undefined}
             class="brisk-slider__slide"

@@ -15,6 +15,13 @@
       "when": 1788035364809,
       "tag": "0001_theme_allowed_tracker_domains",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1788040216321,
+      "tag": "0002_pages_synced_structure_signature",
+      "breakpoints": true
     }
   ]
 }

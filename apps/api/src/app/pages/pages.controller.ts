@@ -21,6 +21,7 @@ import {
   listPages,
   listPageTranslations,
   listPageVersions,
+  markTranslationSynced,
   publishPage,
   rollbackToVersion,
   saveDraft,
@@ -58,6 +59,8 @@ import {
   createPageBodySchema,
   type CreateTranslationBody,
   createTranslationBodySchema,
+  type MarkTranslationSyncedBody,
+  markTranslationSyncedBodySchema,
   type DuplicatePageBody,
   duplicatePageBodySchema,
   type ListPagesQuery,
@@ -273,6 +276,23 @@ export class PagesController {
     return this.toDto(translation);
   }
 
+  @Patch(':id/mark-translation-synced')
+  async markTranslationSynced(
+    @Param('id') id: string,
+    @Body(new ZodValidationPipe(markTranslationSyncedBodySchema))
+    body: MarkTranslationSyncedBody,
+  ) {
+    const page = await markTranslationSynced(
+      { pageRepository: this.pageRepository },
+      {
+        tenantId: this.tenantContext.getCurrentTenantId(),
+        pageId: id,
+        structureSignature: body.structureSignature,
+      },
+    );
+    return this.toDto(page);
+  }
+
   @Post(':id/duplicate')
   async duplicate(
     @Param('id') id: string,
@@ -346,6 +366,7 @@ export class PagesController {
       content: props.content,
       publishedContent: props.publishedContent,
       seoMeta: props.seoMeta,
+      syncedStructureSignature: props.syncedStructureSignature,
       createdAt: props.createdAt.toISOString(),
       updatedAt: props.updatedAt.toISOString(),
     });

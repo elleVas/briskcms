@@ -4,8 +4,12 @@ import { Translator } from '../../lib/i18n.js';
 
 type Props = ImageProps & { locale: string };
 
-const { media, alt, caption, locale } = Astro.props;
+const { media, alt, isDecorative, caption, locale } = Astro.props;
 const i18n = new Translator(locale);
+// Authoritative regardless of what's saved in `alt` — a decorative image
+// gets alt="" per WCAG even if a value was typed there before this flag
+// existed (see imagePropsSchema's own comment).
+const resolvedAlt = isDecorative ? '' : alt;
 ---
 
 {
@@ -28,7 +32,7 @@ const i18n = new Translator(locale);
       }
       <img
         src={media.url}
-        alt={alt}
+        alt={resolvedAlt}
         width={media.width ?? undefined}
         height={media.height ?? undefined}
         decoding="async"

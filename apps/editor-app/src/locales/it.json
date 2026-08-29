@@ -151,7 +151,10 @@
       "slugPreview": "URL: {{slug}}",
       "create": "Crea traduzione",
       "creating": "Creazione in corso...",
-      "conflict": "Esiste già una traduzione in questa lingua per questa pagina."
+      "conflict": "Esiste già una traduzione in questa lingua per questa pagina.",
+      "drift": "Struttura non allineata",
+      "driftWarning": "L'originale (lingua predefinita) ha blocchi diversi da quando questa traduzione è stata creata o aggiornata l'ultima volta.",
+      "markSynced": "Segna come allineata"
     },
     "picker": {
       "title": "Scegli una pagina",
@@ -425,6 +428,7 @@
     }
   },
   "canvas": {
+    "requiredField": "Campo obbligatorio",
     "previewFrameTitle": "Anteprima pagina",
     "previewTokenError": "Impossibile caricare l'anteprima. Riprova.",
     "layersTitle": "Livelli",
@@ -667,6 +671,9 @@
       "fields": {
         "media": { "fieldLabel": "Immagine" },
         "alt": { "fieldLabel": "Testo alternativo" },
+        "isDecorative": {
+          "fieldLabel": "Immagine decorativa (nessun testo alternativo necessario)"
+        },
         "caption": { "fieldLabel": "Didascalia" }
       }
     },

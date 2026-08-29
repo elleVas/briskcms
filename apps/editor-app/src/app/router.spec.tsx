@@ -117,6 +117,7 @@ const samplePage: PageRecord & { hasUnpublishedChanges: boolean } = {
   locale: 'it',
   slug: 'home',
   status: 'published',
+  syncedStructureSignature: null,
   content: [],
   publishedContent: [],
   seoMeta: { title: 'Home', description: '' },

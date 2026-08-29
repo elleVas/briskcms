@@ -276,6 +276,7 @@ describe('PagesListView', () => {
       ...pageOne,
       content: [],
       publishedContent: [],
+      syncedStructureSignature: null,
     };
     vi.mocked(api.publishPage).mockResolvedValue(publishedPage);
 
@@ -322,6 +323,7 @@ describe('PagesListView', () => {
       updatedAt: pageOne.updatedAt,
       content: [],
       publishedContent: [],
+      syncedStructureSignature: null,
     };
     const enRecord: PageRecord = {
       ...itRecord,
@@ -357,6 +359,7 @@ describe('PagesListView', () => {
       updatedAt: pageOne.updatedAt,
       content: [],
       publishedContent: [],
+      syncedStructureSignature: null,
     };
     vi.mocked(api.listTranslations).mockResolvedValue([itRecord]);
 

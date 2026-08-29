@@ -70,6 +70,7 @@ describe('usePageVersions', () => {
       slug: 'chi-siamo',
       parentId: null,
       status: 'published',
+      syncedStructureSignature: null,
       content: [],
       publishedContent: [],
       seoMeta: { title: 'Chi siamo', description: '' },

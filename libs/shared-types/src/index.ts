@@ -1,6 +1,7 @@
 export * from './lib/backfill-block-ids.js';
 export * from './lib/business-info.js';
 export * from './lib/content-model.js';
+export * from './lib/content-structure-signature.js';
 export * from './lib/search-excerpt.js';
 export * from './lib/search-text.js';
 export * from './lib/form-fields.js';
