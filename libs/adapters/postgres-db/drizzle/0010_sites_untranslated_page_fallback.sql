@@ -1,2 +1,0 @@
-ALTER TABLE "sites" ADD COLUMN "untranslated_page_fallback" text DEFAULT 'redirect-to-default' NOT NULL;--> statement-breakpoint
-ALTER TABLE "sites" ADD CONSTRAINT "sites_untranslated_page_fallback_check" CHECK ("sites"."untranslated_page_fallback" in ('redirect-to-default', 'not-available'));

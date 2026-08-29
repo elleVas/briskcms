@@ -42,7 +42,7 @@ describe('withTenant (integration)', () => {
   });
 
   it('rows inserted under one tenant are invisible under another (RLS)', async () => {
-    // tenants itself carries no RLS policy (see drizzle/0001_rls_and_grants.sql
+    // tenants itself carries no RLS policy (see drizzle/0000_baseline_schema.sql
     // — it lists tenants, not tenant-owned data), so exercise the policy via
     // `sites`, which does.
     const [tenantA] = await db

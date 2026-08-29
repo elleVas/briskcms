@@ -1,1 +1,0 @@
-ALTER TABLE "sites" ADD CONSTRAINT "sites_tenant_id_domain_unique" UNIQUE("tenant_id","domain");

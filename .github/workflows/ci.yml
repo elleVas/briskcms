@@ -81,12 +81,13 @@ jobs:
   # static analysis / bundling, nothing executes against a real DB) — only
   # `test` starts Postgres/Mailpit.
   #
-  # build/test gated on typecheck+lint (`needs:` below), not fully parallel:
-  # typecheck/lint are the cheapest checks (seconds, mostly Nx cache hits)
-  # and catch the most common failures (type errors, lint violations) —
-  # failing fast on those saves runner-minutes on the two expensive jobs
-  # (build actually bundles; test pays Postgres/Mailpit startup) instead of
-  # running everything simultaneously regardless of the cheap checks' outcome.
+  # Only `test` is gated on typecheck+lint (`needs:` below) — it's by far
+  # the most expensive job (spins up Postgres+Mailpit, runs migrations,
+  # seed, a pg_dump/pg_restore round-trip check, then the full coverage
+  # suite), so failing fast on the cheap checks first avoids paying that
+  # cost on a PR that already has a trivial lint/type error. `build` is
+  # comparatively cheap with Nx caching, so it now runs fully parallel
+  # alongside typecheck/lint rather than waiting on them.
   typecheck:
     runs-on: ubuntu-latest
     steps:
@@ -127,7 +128,6 @@ jobs:
       - run: pnpm exec nx run-many -t lint --parallel=1
 
   build:
-    needs: [typecheck, lint]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -266,3 +266,23 @@ jobs:
       - run: pnpm exec nx run-many -t test --coverage --parallel=1
         env:
           POSTGRES_HOST: localhost
+
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: 'pnpm'
+      - run: pnpm install --frozen-lockfile
+
+      # Non-blocking for now (continue-on-error): as of 2026-08-28 this
+      # finds 5 advisories (2 moderate, 3 high), all in transitive
+      # toolchain deps (nx/webpack, drizzle-kit's esbuild, webpack-dev-
+      # server's sockjs/uuid) — not in code that ships to users. Surfacing
+      # them without failing the build until they're cleaned up; flip to
+      # blocking once `pnpm audit --audit-level moderate` is clean.
+      - run: pnpm audit --audit-level moderate
+        continue-on-error: true

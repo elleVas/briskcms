@@ -1,1 +1,0 @@
-ALTER TABLE "sites" DROP COLUMN "theme_tokens";

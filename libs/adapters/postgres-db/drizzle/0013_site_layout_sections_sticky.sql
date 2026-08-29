@@ -1,1 +1,0 @@
-ALTER TABLE "site_layout_sections" ADD COLUMN "sticky" boolean DEFAULT false NOT NULL;
