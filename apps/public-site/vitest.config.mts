@@ -14,7 +14,19 @@ export default defineConfig(() => ({
       reportsDirectory: './test-output/vitest/coverage',
       provider: 'v8' as const,
       include: ['src/**/*.ts'],
-      exclude: ['src/**/*.spec.ts'],
+      exclude: [
+        'src/**/*.spec.ts',
+        // @vitest/coverage-v8's rolldown-based remap step can't parse these
+        // three — `import type { X }` and a generic type argument on
+        // `import.meta.glob<...>()` both trip it up (confirmed: neither a
+        // `import { type X }` rewrite nor a vitest/rolldown patch bump
+        // fixed it, so this is an upstream parser gap, not a local fix).
+        // Their logic is still fully covered by their own spec files —
+        // this only removes them from the coverage %, not from testing.
+        'src/lib/resolve-theme-icons.ts',
+        'src/lib/resolve-theme-block-override.ts',
+        'src/lib/resolve-theme-layout-override.ts',
+      ],
       thresholds: {
         statements: 60,
         branches: 60,
