@@ -199,7 +199,8 @@ apps/
                    editor-only preview mode embedded by editor-app's canvas
                    (see ADR-0028)
 
-libs/
+libs/            see docs/libs.md for the full index (every lib's README,
+                   grouped by which app actually imports it)
   domain-core/    pure entities: Page, PageVersion, Site, SiteLayoutSection,
                    User, Media, Form, FormSubmission
   ports/          interfaces implemented by the adapters
