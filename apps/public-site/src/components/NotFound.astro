@@ -1,27 +1,45 @@
 ---
 import { Translator } from '../lib/i18n.js';
+import { localePath } from '../lib/locale-path.js';
 
-// Rendered with no locale context in two cases: Astro's own top-level
-// 404.astro (a truly locale-less URL, no [locale] segment at all) and
-// search.astro when the requested locale/site couldn't be resolved —
-// Translator's own fallback-to-Italian covers both without this component
-// needing to guess.
+// Content-only (no <html>/<body> of its own, see ErrorPageShell.astro for
+// why): renders either inside ErrorPageShell (site chrome unavailable) or
+// inside a real PageLayout with the site's own header/footer
+// (PublicPageContent.astro, when getPublishedSiteChrome succeeds) — same
+// markup either way, so a theme's own PageLayout override already
+// determines the look of a themed 404 without this component needing to
+// know anything about themes itself.
 interface Props {
   locale?: string;
 }
 
 const { locale } = Astro.props;
 const i18n = new Translator(locale ?? 'it');
+// No locale at all (a truly locale-less URL) has nowhere real to send
+// "back home" to — falls back to the bare domain root rather than a
+// broken link.
+const homeHref = locale ? localePath(locale, 'home') : '/';
 ---
 
-<html lang={locale ?? 'it'}>
-	<head>
-		<meta charset="utf-8" />
-		<title>{i18n.t('notFound.title')}</title>
-		<meta name="viewport" content="width=device-width" />
-	</head>
-	<body>
-		<h1>404</h1>
-		<p>{i18n.t('notFound.message')}</p>
-	</body>
-</html>
+<div class="brisk-error-page">
+	<h1>404</h1>
+	<p>{i18n.t('notFound.message')}</p>
+	<a href={homeHref}>{i18n.t('notFound.backHome')}</a>
+</div>
+
+<style>
+	.brisk-error-page {
+		max-width: 32rem;
+		margin: 4rem auto;
+		padding: 0 1.5rem;
+		text-align: center;
+	}
+	.brisk-error-page h1 {
+		font-size: 3rem;
+		margin: 0 0 0.5rem;
+	}
+	.brisk-error-page a {
+		display: inline-block;
+		margin-top: 1.5rem;
+	}
+</style>

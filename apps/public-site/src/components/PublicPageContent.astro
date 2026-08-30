@@ -4,7 +4,9 @@ import PageLayoutCore from '../layouts/PageLayout.astro';
 import { resolveThemeLayoutOverride } from '../lib/resolve-theme-layout-override.js';
 const PageLayout = resolveThemeLayoutOverride(PageLayoutCore);
 import BlockRenderer from './BlockRenderer.astro';
+import ErrorPageShell from './ErrorPageShell.astro';
 import NotFound from './NotFound.astro';
+import { getPublishedSiteChrome } from '../lib/public-api-client.js';
 
 // Purely presentational — the 404 status itself must be set by the calling
 // page route (src/pages/index.astro, src/pages/[slug].astro), not here:
@@ -17,9 +19,43 @@ interface Props {
   // Giorno 2) — la rotta pubblicata reale non lo passa mai, quindi resta
   // undefined e l'HTML pubblicato è byte-identico a prima.
   editable?: boolean;
+  // Solo le rotte pubbliche reali la passano ([locale]/[...slug].astro,
+  // [locale]/index.astro) — preview/[pageId].astro no (un token scaduto
+  // non garantisce un locale/dominio affidabile da cui ricavare il site
+  // chrome, e non è comunque un percorso che un visitatore reale vede).
+  // Usata SOLO per il ramo `page === null` sotto: recupera l'header/
+  // footer reale del sito così una 404 mostra la navigazione vera invece
+  // di una pagina spoglia — se manca, o se il recupero fallisce, resta il
+  // comportamento di sempre.
+  locale?: string;
 }
 
-const { page, editable } = Astro.props;
+const { page, editable, locale } = Astro.props;
+
+// Best-effort, non un secondo punto di fallimento: se il sito/dominio non
+// esiste o l'API non risponde, `chrome` resta `null` e sotto si ricade sul
+// <NotFound /> spoglio di sempre — stessa "nothing to show" collapse già
+// usata da search.astro per lo stesso identico problema (una rotta senza
+// una vera Page dietro).
+const chrome =
+  !page && locale
+    ? await getPublishedSiteChrome(Astro.url.hostname, locale).catch(
+        () => null,
+      )
+    : null;
+
+// LanguageSwitcher resolves its links from `translations`, matched against
+// `site.enabledLocales` — there's no real Page here to have real
+// translations, but "switch language on a 404" only ever makes sense as
+// "go to that language's Home" anyway, so this fakes exactly that: one
+// fabricated translation entry per enabled locale, all pointing at "home".
+// Without this the switcher silently renders nothing (0 links) on every
+// themed error page — found live-testing this exact fix, not guessed.
+const errorPageTranslations =
+  chrome?.site.enabledLocales.map((enabledLocale) => ({
+    locale: enabledLocale,
+    slug: 'home',
+  })) ?? [];
 
 // Il gap fisso che questo valore sostituisce (vedi il commento sotto,
 // "Un blocco può personalizzare..."): un blocco di primo livello che non
@@ -102,7 +138,22 @@ function rootBlockSpacing(
         ))}
       </main>
     </PageLayout>
+  ) : chrome && locale ? (
+    <PageLayout
+      seoMeta={{ title: '404', description: '' }}
+      locale={locale}
+      translations={errorPageTranslations}
+      site={chrome.site}
+      header={chrome.header}
+      footer={chrome.footer}
+      headerSticky={chrome.headerSticky}
+      ancestors={[]}
+    >
+      <NotFound locale={locale} />
+    </PageLayout>
   ) : (
-    <NotFound />
+    <ErrorPageShell title="404" locale={locale}>
+      <NotFound locale={locale} />
+    </ErrorPageShell>
   )
 }

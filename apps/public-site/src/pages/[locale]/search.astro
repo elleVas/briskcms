@@ -10,6 +10,7 @@ import { buildContentSecurityPolicy } from '../../lib/content-security-policy.js
 import PageLayoutCore from '../../layouts/PageLayout.astro';
 import { resolveThemeLayoutOverride } from '../../lib/resolve-theme-layout-override.js';
 const PageLayout = resolveThemeLayoutOverride(PageLayoutCore);
+import ErrorPageShell from '../../components/ErrorPageShell.astro';
 import NotFound from '../../components/NotFound.astro';
 
 // SSR (see astro.config.mjs) — content is fetched per-request, matching
@@ -112,7 +113,9 @@ const i18n = new Translator(locale ?? 'it');
       </main>
     </PageLayout>
   ) : (
-    <NotFound locale={locale ?? undefined} />
+    <ErrorPageShell title="404" locale={locale ?? undefined}>
+      <NotFound locale={locale ?? undefined} />
+    </ErrorPageShell>
   )
 }
 
