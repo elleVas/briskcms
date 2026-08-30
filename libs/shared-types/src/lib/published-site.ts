@@ -1,8 +1,8 @@
 import { z } from 'zod';
-import { businessInfoSchema } from './business-info.js';
-import { untranslatedPageFallbackSchema } from './locale-settings.js';
-import { themeSettingsSchema } from './site-theme-settings.js';
-import { themeTokensSchema } from './site-theme-tokens.js';
+import { businessInfoSchema } from './business-info';
+import { untranslatedPageFallbackSchema } from './locale-settings';
+import { themeSettingsSchema } from './site-theme-settings';
+import { themeTokensSchema } from './site-theme-tokens';
 
 /**
  * Only what the public renderer needs for OG tags + schema.org (docs/adr/0014)

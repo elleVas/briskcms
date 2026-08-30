@@ -3,20 +3,20 @@ import { useForm, useWatch } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import type { OpeningHoursDay, SiteRecord } from '@brisk/shared-types';
-import { Button } from '../components/ui/button.js';
+import { Button } from '../components/ui/button';
 import {
   Dialog,
   DialogContent,
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '../components/ui/dialog.js';
-import { Input } from '../components/ui/input.js';
-import { Label } from '../components/ui/label.js';
-import { OpeningHoursEditor } from './opening-hours-editor.js';
-import { siteQueryOptions } from './site-queries.js';
-import { useResetFormOnOpen } from './use-reset-form-on-open.js';
-import { useSiteBusinessInfo } from './use-site-business-info.js';
+} from '../components/ui/dialog';
+import { Input } from '../components/ui/input';
+import { Label } from '../components/ui/label';
+import { OpeningHoursEditor } from './opening-hours-editor';
+import { siteQueryOptions } from './site-queries';
+import { useResetFormOnOpen } from './use-reset-form-on-open';
+import { useSiteBusinessInfo } from './use-site-business-info';
 
 const DAYS_OF_WEEK: OpeningHoursDay['dayOfWeek'][] = [
   'monday',

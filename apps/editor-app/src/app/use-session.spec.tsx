@@ -3,9 +3,9 @@ import { act, renderHook } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { QueryClientProvider } from '@tanstack/react-query';
 import * as router from '@tanstack/react-router';
-import * as authApi from '../lib/auth-api-client.js';
-import { createTestQueryClient } from '../test-query-client.js';
-import { useSession } from './use-session.js';
+import * as authApi from '../lib/auth-api-client';
+import { createTestQueryClient } from '../test-query-client';
+import { useSession } from './use-session';
 
 vi.mock('@tanstack/react-router', async (importOriginal) => {
   const actual =
@@ -13,9 +13,9 @@ vi.mock('@tanstack/react-router', async (importOriginal) => {
   return { ...actual, useNavigate: vi.fn() };
 });
 
-vi.mock('../lib/auth-api-client.js', async (importOriginal) => {
+vi.mock('../lib/auth-api-client', async (importOriginal) => {
   const actual =
-    await importOriginal<typeof import('../lib/auth-api-client.js')>();
+    await importOriginal<typeof import('../lib/auth-api-client')>();
   return {
     ...actual,
     login: vi.fn(),

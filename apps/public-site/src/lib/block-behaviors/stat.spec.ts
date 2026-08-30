@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { statBehaviors } from './stat.js';
-import { runBlockBehaviors } from './run-block-behaviors.js';
+import { statBehaviors } from './stat';
+import { runBlockBehaviors } from './run-block-behaviors';
 
 type ObserverCallback = (
   entries: Array<{ isIntersecting: boolean; target: Element }>,

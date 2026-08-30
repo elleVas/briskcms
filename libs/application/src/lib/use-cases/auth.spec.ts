@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { InvalidCredentialsError, User } from '@brisk/domain-core';
-import { loginUser } from './login-user.use-case.js';
-import { logoutUser } from './logout-user.use-case.js';
-import { InMemoryUserRepository } from './in-memory-repositories.test-fixture.js';
-import { FakeAuthPort } from './fake-auth-port.test-fixture.js';
-import { FakeCaptchaPort } from './fake-captcha-port.test-fixture.js';
+import { loginUser } from './login-user.use-case';
+import { logoutUser } from './logout-user.use-case';
+import { InMemoryUserRepository } from './in-memory-repositories.test-fixture';
+import { FakeAuthPort } from './fake-auth-port.test-fixture';
+import { FakeCaptchaPort } from './fake-captcha-port.test-fixture';
 
 const tenantId = 'tenant-1';
 

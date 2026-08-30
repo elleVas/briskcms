@@ -25,7 +25,7 @@ import type {
   SiteRepositoryPort,
   SiteThemeBlockStylesPort,
 } from '@brisk/ports';
-import { ZodValidationPipe } from '../zod-validation.pipe.js';
+import { ZodValidationPipe } from '../zod-validation.pipe';
 import {
   type PublicPageBySlugQuery,
   publicPageBySlugQuerySchema,
@@ -39,7 +39,7 @@ import {
   publicPagesSitemapQuerySchema,
   type PublicPagesTreeQuery,
   publicPagesTreeQuerySchema,
-} from './public-pages.schemas.js';
+} from './public-pages.schemas';
 import {
   DEFAULT_TENANT_ID,
   PAGE_REPOSITORY,
@@ -48,7 +48,7 @@ import {
   SITE_LAYOUT_SECTION_REPOSITORY,
   SITE_REPOSITORY,
   SITE_THEME_BLOCK_STYLES_REPOSITORY,
-} from './public-pages.tokens.js';
+} from './public-pages.tokens';
 
 // No SessionAuthGuard on this controller — it's the public, unauthenticated
 // read path apps/public-site's SSR calls. Deliberately read-only: there is

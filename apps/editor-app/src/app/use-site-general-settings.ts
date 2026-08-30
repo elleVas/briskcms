@@ -2,8 +2,8 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   updateGeneralSettings as apiUpdateGeneralSettings,
   type UpdateGeneralSettingsInput,
-} from '../lib/sites-api-client.js';
-import { siteQueryOptions } from './site-queries.js';
+} from '../lib/sites-api-client';
+import { siteQueryOptions } from './site-queries';
 
 export function useSiteGeneralSettings(siteId: string) {
   const queryClient = useQueryClient();

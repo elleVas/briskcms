@@ -4,12 +4,12 @@ import {
   PageHierarchyLocaleMismatchError,
   PageNotFoundError,
 } from '@brisk/domain-core';
-import { createPage } from './create-page.use-case.js';
-import { setPageParent } from './set-page-parent.use-case.js';
+import { createPage } from './create-page.use-case';
+import { setPageParent } from './set-page-parent.use-case';
 import {
   InMemoryPageRepository,
   InMemoryPageVersionRepository,
-} from './in-memory-repositories.test-fixture.js';
+} from './in-memory-repositories.test-fixture';
 
 describe('setPageParent', () => {
   const tenantId = 'tenant-1';

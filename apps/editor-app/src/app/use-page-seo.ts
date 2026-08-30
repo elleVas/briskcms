@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import type { SeoMeta } from '@brisk/shared-types';
-import { updateSeoMeta as apiUpdateSeoMeta } from '../lib/pages-api-client.js';
-import { pageQueryOptions } from './pages-queries.js';
+import { updateSeoMeta as apiUpdateSeoMeta } from '../lib/pages-api-client';
+import { pageQueryOptions } from './pages-queries';
 
 export function usePageSeo(pageId: string) {
   const queryClient = useQueryClient();

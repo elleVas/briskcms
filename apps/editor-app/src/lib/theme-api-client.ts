@@ -8,7 +8,7 @@ import {
   type ThemeBaseTokens,
   type ThemeForegroundTokens,
 } from '@brisk/shared-types';
-import { PUBLIC_SITE_URL } from './public-site-url.js';
+import { PUBLIC_SITE_URL } from './public-site-url';
 
 /**
  * Chiama apps/public-site direttamente (mai apps/api) — stesso motivo di

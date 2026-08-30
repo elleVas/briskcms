@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { backfillBlockIds } from './backfill-block-ids.js';
-import type { Block } from './content-model.js';
+import { backfillBlockIds } from './backfill-block-ids';
+import type { Block } from './content-model';
 
 describe('backfillBlockIds', () => {
   it('assigns an id to a block missing one', () => {

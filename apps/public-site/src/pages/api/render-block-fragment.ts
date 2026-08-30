@@ -1,12 +1,12 @@
 import type { APIRoute } from 'astro';
 import { experimental_AstroContainer as AstroContainer } from 'astro/container';
 import type { Block } from '@brisk/shared-types';
-import { getPreviewPageById } from '../../lib/public-api-client.js';
-import { findBlockById } from '../../lib/find-block-by-id.js';
+import { getPreviewPageById } from '../../lib/public-api-client';
+import { findBlockById } from '../../lib/find-block-by-id';
 import {
   isValidRenderBlockFragmentBody,
   renderBlockFragmentCorsHeaders,
-} from '../../lib/render-block-fragment-helpers.js';
+} from '../../lib/render-block-fragment-helpers';
 import RenderSingleBlock from '../../components/RenderSingleBlock.astro';
 
 // Chiamato da apps/editor-app (canvas-frame.tsx/block-fragment-api-client.ts),

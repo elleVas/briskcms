@@ -10,8 +10,8 @@ import {
   DrizzleSiteRepository,
   DrizzleSiteThemeBlockStylesRepository,
 } from '@brisk/postgres-site-repository';
-import { DATABASE, DatabaseModule } from '../database.module.js';
-import { PublicPagesController } from './public-pages.controller.js';
+import { DATABASE, DatabaseModule } from '../database.module';
+import { PublicPagesController } from './public-pages.controller';
 import {
   DEFAULT_TENANT_ID,
   PAGE_REPOSITORY,
@@ -20,7 +20,7 @@ import {
   SITE_LAYOUT_SECTION_REPOSITORY,
   SITE_REPOSITORY,
   SITE_THEME_BLOCK_STYLES_REPOSITORY,
-} from './public-pages.tokens.js';
+} from './public-pages.tokens';
 
 @Module({
   imports: [

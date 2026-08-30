@@ -12,7 +12,7 @@ import {
   promoBarPropsSchema,
   seoMetaSchema,
   whatsAppButtonPropsSchema,
-} from './content-model.js';
+} from './content-model';
 
 describe('content-model schemas', () => {
   it('accepts a valid block', () => {

@@ -1,4 +1,4 @@
-import { requireViteEnv } from './require-vite-env.js';
+import { requireViteEnv } from './require-vite-env';
 
 // Not VITE_API_URL: this is the public site's own origin (apps/public-site),
 // where both the "Visualizza pagina" link and the preview canvas iframe

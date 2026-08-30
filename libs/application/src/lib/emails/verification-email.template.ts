@@ -1,5 +1,5 @@
 import type { EmailMessage } from '@brisk/ports';
-import { ctaButtonHtml, renderEmailLayout } from './email-layout.js';
+import { ctaButtonHtml, renderEmailLayout } from './email-layout';
 
 export function buildVerificationEmail(
   verifyUrl: string,

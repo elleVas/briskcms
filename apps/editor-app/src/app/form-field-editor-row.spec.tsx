@@ -1,8 +1,8 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import type { FormField, FormStep } from '@brisk/shared-types';
-import { TooltipProvider } from '../components/ui/tooltip.js';
-import { FormFieldEditorRow } from './form-field-editor-row.js';
+import { TooltipProvider } from '../components/ui/tooltip';
+import { FormFieldEditorRow } from './form-field-editor-row';
 
 function renderRow(
   field: FormField,

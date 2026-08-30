@@ -13,7 +13,7 @@ import type {
   FormSubmissionRepositoryPort,
   NewsletterPort,
 } from '@brisk/ports';
-import { buildFormSubmissionNotificationEmail } from '../emails/form-submission-notification-email.template.js';
+import { buildFormSubmissionNotificationEmail } from '../emails/form-submission-notification-email.template';
 
 export interface SubmitFormDeps {
   formRepository: FormRepositoryPort;

@@ -6,7 +6,7 @@ import {
   updateUserRole as apiUpdateUserRole,
   type InviteUserInput,
   type UserRole,
-} from '../lib/users-api-client.js';
+} from '../lib/users-api-client';
 
 // Same split as usePagesList/useMediaLibrary: fetching the list is the
 // route loader's job (see routes/_shell.users.index.tsx), this hook only

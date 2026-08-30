@@ -2,14 +2,14 @@ import type { ReactNode } from 'react';
 import { act, renderHook } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { QueryClientProvider } from '@tanstack/react-query';
-import * as api from '../lib/pages-api-client.js';
-import type { PageRecord } from '../lib/pages-api-client.js';
-import { createTestQueryClient } from '../test-query-client.js';
-import { usePageSeo } from './use-page-seo.js';
+import * as api from '../lib/pages-api-client';
+import type { PageRecord } from '../lib/pages-api-client';
+import { createTestQueryClient } from '../test-query-client';
+import { usePageSeo } from './use-page-seo';
 
-vi.mock('../lib/pages-api-client.js', async (importOriginal) => {
+vi.mock('../lib/pages-api-client', async (importOriginal) => {
   const actual =
-    await importOriginal<typeof import('../lib/pages-api-client.js')>();
+    await importOriginal<typeof import('../lib/pages-api-client')>();
   return { ...actual, updateSeoMeta: vi.fn() };
 });
 

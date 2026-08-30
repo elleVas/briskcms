@@ -10,7 +10,7 @@ import {
   tenants,
   withTenant,
 } from '@brisk/postgres-db';
-import { DrizzleSearchRepository } from './drizzle-search.repository.js';
+import { DrizzleSearchRepository } from './drizzle-search.repository';
 
 /**
  * Runs against a real Postgres — see docs/development.md. Connects as

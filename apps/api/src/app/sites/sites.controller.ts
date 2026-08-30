@@ -23,10 +23,10 @@ import type {
   TenantContextPort,
 } from '@brisk/ports';
 import { siteRecordSchema, type SiteRecord } from '@brisk/shared-types';
-import { Roles } from '../auth/roles.decorator.js';
-import { RolesGuard } from '../auth/roles.guard.js';
-import { SessionAuthGuard } from '../auth/session-auth.guard.js';
-import { ZodValidationPipe } from '../zod-validation.pipe.js';
+import { Roles } from '../auth/roles.decorator';
+import { RolesGuard } from '../auth/roles.guard';
+import { SessionAuthGuard } from '../auth/session-auth.guard';
+import { ZodValidationPipe } from '../zod-validation.pipe';
 import {
   type UpdateBusinessInfoBody,
   updateBusinessInfoBodySchema,
@@ -40,12 +40,12 @@ import {
   updateThemeSettingsBodySchema,
   type UpdateThemeTokensBody,
   updateThemeTokensBodySchema,
-} from './sites.schemas.js';
-import { TENANT_CONTEXT } from '../auth/auth.tokens.js';
+} from './sites.schemas';
+import { TENANT_CONTEXT } from '../auth/auth.tokens';
 import {
   SITE_REPOSITORY,
   SITE_THEME_BLOCK_STYLES_REPOSITORY,
-} from './sites.tokens.js';
+} from './sites.tokens';
 
 @Controller('sites')
 @UseGuards(SessionAuthGuard)

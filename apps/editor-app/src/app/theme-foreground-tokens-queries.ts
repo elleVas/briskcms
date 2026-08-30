@@ -1,5 +1,5 @@
 import { queryOptions } from '@tanstack/react-query';
-import { fetchThemeForegroundTokens } from '../lib/theme-api-client.js';
+import { fetchThemeForegroundTokens } from '../lib/theme-api-client';
 
 /**
  * Stesso motivo/pattern di `blockStyleDefaultsQueryOptions` — il tema

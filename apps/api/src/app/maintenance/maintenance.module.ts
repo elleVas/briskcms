@@ -1,8 +1,8 @@
 import { Module } from '@nestjs/common';
 import { requireEnv } from '@brisk/env-config';
 import { type BriskDb } from '@brisk/postgres-db';
-import { DATABASE, DatabaseModule } from '../database.module.js';
-import { ExpiredTokensCleanupService } from './expired-tokens-cleanup.service.js';
+import { DATABASE, DatabaseModule } from '../database.module';
+import { ExpiredTokensCleanupService } from './expired-tokens-cleanup.service';
 
 @Module({
   imports: [DatabaseModule],

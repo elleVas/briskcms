@@ -1,4 +1,4 @@
-import type { BlockBehavior } from './types.js';
+import type { BlockBehavior } from './types';
 
 // No framework here on purpose (docs/adr/0007) — an IntersectionObserver
 // triggers a requestAnimationFrame count-up from 0 to the target value the

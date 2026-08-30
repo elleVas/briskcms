@@ -1,7 +1,7 @@
 import { renderHook } from '@testing-library/react';
 import { useForm } from 'react-hook-form';
 import { describe, expect, it } from 'vitest';
-import { useResetFormOnOpen } from './use-reset-form-on-open.js';
+import { useResetFormOnOpen } from './use-reset-form-on-open';
 
 interface Source {
   id: string;

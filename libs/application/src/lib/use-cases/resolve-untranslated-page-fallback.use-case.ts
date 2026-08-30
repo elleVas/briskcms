@@ -1,5 +1,5 @@
 import type { PageRepositoryPort, SiteRepositoryPort } from '@brisk/ports';
-import { resolvePageByPath } from './resolve-page-by-path.js';
+import { resolvePageByPath } from './resolve-page-by-path';
 
 export interface ResolveUntranslatedPageFallbackDeps {
   siteRepository: SiteRepositoryPort;

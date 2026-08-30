@@ -1,6 +1,6 @@
 import type { BeforeAfterProps } from '@brisk/shared-types';
-import { FieldBuilder, type BlockDescriptor } from '../field-types.js';
-import { MediaPickerField } from '../fields/media-picker-field.js';
+import { FieldBuilder, type BlockDescriptor } from '../field-types';
+import { MediaPickerField } from '../fields/media-picker-field';
 
 export const beforeAfterBlock: BlockDescriptor<BeforeAfterProps> = {
   type: 'BeforeAfter',

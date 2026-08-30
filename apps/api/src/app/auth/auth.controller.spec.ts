@@ -10,9 +10,9 @@ import type {
   VerificationToken,
   VerificationTokenPort,
 } from '@brisk/ports';
-import { AuthController } from './auth.controller.js';
-import { SESSION_COOKIE_NAME } from './session-cookie.constants.js';
-import type { AuthenticatedRequest } from './session-auth.guard.js';
+import { AuthController } from './auth.controller';
+import { SESSION_COOKIE_NAME } from './session-cookie.constants';
+import type { AuthenticatedRequest } from './session-auth.guard';
 
 const tenantId = 'tenant-1';
 const editorAppUrl = 'https://editor.example.com';

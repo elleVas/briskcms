@@ -8,7 +8,7 @@ import {
   tenants,
   withTenant,
 } from '@brisk/postgres-db';
-import { DrizzleSiteRepository } from './drizzle-site.repository.js';
+import { DrizzleSiteRepository } from './drizzle-site.repository';
 
 /**
  * Runs against a real Postgres — see docs/development.md. Connects as

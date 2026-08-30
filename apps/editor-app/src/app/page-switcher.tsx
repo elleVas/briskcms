@@ -7,9 +7,9 @@ import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from '../components/ui/popover.js';
-import { cn } from '../lib/utils.js';
-import { pagesQueryOptions } from './pages-queries.js';
+} from '../components/ui/popover';
+import { cn } from '../lib/utils';
+import { pagesQueryOptions } from './pages-queries';
 
 export interface PageSwitcherProps {
   siteId: string;

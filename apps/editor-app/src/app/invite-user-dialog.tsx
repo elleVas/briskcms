@@ -1,21 +1,21 @@
 import { useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button } from '../components/ui/button.js';
+import { Button } from '../components/ui/button';
 import {
   Dialog,
   DialogContent,
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '../components/ui/dialog.js';
-import { Input } from '../components/ui/input.js';
-import { Label } from '../components/ui/label.js';
-import { ApiError } from '../lib/http-client.js';
+} from '../components/ui/dialog';
+import { Input } from '../components/ui/input';
+import { Label } from '../components/ui/label';
+import { ApiError } from '../lib/http-client';
 import type {
   InviteUserInput,
   UserDto,
   UserRole,
-} from '../lib/users-api-client.js';
+} from '../lib/users-api-client';
 
 export interface InviteUserDialogProps {
   open: boolean;

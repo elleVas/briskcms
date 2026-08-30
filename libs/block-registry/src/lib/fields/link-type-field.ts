@@ -1,5 +1,5 @@
-import { FieldBuilder, type FieldDescriptor } from '../field-types.js';
-import { PagePickerField } from './page-picker-field.js';
+import { FieldBuilder, type FieldDescriptor } from '../field-types';
+import { PagePickerField } from './page-picker-field';
 
 /**
  * Shared da ogni blocco con un prop "page o url" (NavLink, Button, Link,

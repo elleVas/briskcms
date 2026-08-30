@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro';
-import { subscribeNewsletter } from '../../../lib/public-api-client.js';
+import { subscribeNewsletter } from '../../../lib/public-api-client';
 
 // Same-origin proxy (docs/adr/0015's pattern, applied here for
 // NewsletterSignup's own decoupled path) — the browser only ever POSTs to

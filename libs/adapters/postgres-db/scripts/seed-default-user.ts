@@ -8,8 +8,8 @@
  */
 import { hash } from '@node-rs/argon2';
 import { requireEnv } from '@brisk/env-config';
-import { createAppDb, withTenant } from '../src/lib/client.js';
-import { users } from '../src/lib/schema.js';
+import { createAppDb, withTenant } from '../src/lib/client';
+import { users } from '../src/lib/schema';
 
 async function main() {
   const tenantId = requireEnv('DEFAULT_TENANT_ID');

@@ -1,1 +1,1 @@
-export * from './lib/brevo-newsletter.adapter.js';
+export * from './lib/brevo-newsletter.adapter';

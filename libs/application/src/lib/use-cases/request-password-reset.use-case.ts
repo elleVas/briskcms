@@ -1,5 +1,5 @@
 import { InvalidCaptchaError } from '@brisk/domain-core';
-import { buildPasswordResetEmail } from '../emails/password-reset-email.template.js';
+import { buildPasswordResetEmail } from '../emails/password-reset-email.template';
 import type {
   CaptchaPort,
   EmailPort,

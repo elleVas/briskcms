@@ -6,8 +6,8 @@ import {
   UserNotActiveError,
 } from '@brisk/domain-core';
 import type { AuthPort, Session, UserRepositoryPort } from '@brisk/ports';
-import { FakeCaptchaPort } from './fake-captcha-port.test-fixture.js';
-import { loginUser } from './login-user.use-case.js';
+import { FakeCaptchaPort } from './fake-captcha-port.test-fixture';
+import { loginUser } from './login-user.use-case';
 
 const tenantId = 'tenant-1';
 

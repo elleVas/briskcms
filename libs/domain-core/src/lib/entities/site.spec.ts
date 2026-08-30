@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { Site } from './site.js';
+import { Site } from './site';
 
 describe('Site entity', () => {
   const props = {

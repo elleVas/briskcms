@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { Site, SiteLayoutSection } from '@brisk/domain-core';
-import { createPage } from './create-page.use-case.js';
-import { saveDraft } from './save-draft.use-case.js';
-import { publishPage } from './publish-page.use-case.js';
-import { getPreviewPageById } from './get-preview-page-by-id.use-case.js';
+import { createPage } from './create-page.use-case';
+import { saveDraft } from './save-draft.use-case';
+import { publishPage } from './publish-page.use-case';
+import { getPreviewPageById } from './get-preview-page-by-id.use-case';
 import {
   InMemoryPageRepository,
   InMemoryPageVersionRepository,
@@ -12,7 +12,7 @@ import {
   InMemorySiteLayoutSectionRepository,
   InMemorySiteRepository,
   InMemorySiteThemeBlockStylesRepository,
-} from './in-memory-repositories.test-fixture.js';
+} from './in-memory-repositories.test-fixture';
 
 describe('getPreviewPageById', () => {
   const tenantId = 'tenant-1';

@@ -1,4 +1,4 @@
-import type { BlockBehavior } from './types.js';
+import type { BlockBehavior } from './types';
 
 // Idempotency guard: re-running this would attach a second 'input'
 // listener to the same slider. See run-block-behaviors.ts.

@@ -1,6 +1,6 @@
 import { inArray } from 'drizzle-orm';
-import { type BriskDb, withTenant } from './client.js';
-import { sites, tenants, users } from './schema.js';
+import { type BriskDb, withTenant } from './client';
+import { sites, tenants, users } from './schema';
 
 /**
  * Deletes throwaway tenants an integration spec created for itself in

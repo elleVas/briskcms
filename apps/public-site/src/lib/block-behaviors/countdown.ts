@@ -1,4 +1,4 @@
-import type { BlockBehavior } from './types.js';
+import type { BlockBehavior } from './types';
 
 // Idempotency guard: without it, re-running this on an already-ticking
 // countdown would attach a second, independent setInterval — harmless to

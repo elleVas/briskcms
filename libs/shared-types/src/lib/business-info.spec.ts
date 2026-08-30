@@ -3,7 +3,7 @@ import {
   businessInfoSchema,
   openingHoursDaySchema,
   openingHoursRangeSchema,
-} from './business-info.js';
+} from './business-info';
 
 describe('business-info schemas', () => {
   it('accepts a valid opening hours range', () => {

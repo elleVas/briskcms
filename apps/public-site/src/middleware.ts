@@ -1,6 +1,6 @@
 import { randomBytes } from 'node:crypto';
 import { defineMiddleware } from 'astro:middleware';
-import { buildContentSecurityPolicy } from './lib/content-security-policy.js';
+import { buildContentSecurityPolicy } from './lib/content-security-policy';
 
 // Default for every route: embeddable only by itself. The one route that
 // needs something else (the editor's live-preview iframe,

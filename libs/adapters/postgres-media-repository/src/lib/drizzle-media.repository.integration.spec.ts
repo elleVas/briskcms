@@ -9,7 +9,7 @@ import {
   tenants,
   withTenant,
 } from '@brisk/postgres-db';
-import { DrizzleMediaRepository } from './drizzle-media.repository.js';
+import { DrizzleMediaRepository } from './drizzle-media.repository';
 
 /**
  * Runs against a real Postgres — see docs/development.md. Connects as

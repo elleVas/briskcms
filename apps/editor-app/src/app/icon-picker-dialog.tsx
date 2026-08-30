@@ -7,8 +7,8 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from '../components/ui/dialog.js';
-import { themeIconsQueryOptions } from './theme-icons-queries.js';
+} from '../components/ui/dialog';
+import { themeIconsQueryOptions } from './theme-icons-queries';
 
 export interface IconPickerDialogProps {
   open: boolean;

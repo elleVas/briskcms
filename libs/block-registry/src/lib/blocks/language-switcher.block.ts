@@ -1,7 +1,7 @@
 import type { LanguageSwitcherProps } from '@brisk/shared-types';
-import type { BlockDescriptor } from '../field-types.js';
-import { positionField } from '../fields/position-field.js';
-import { visibilityField } from '../fields/visibility-field.js';
+import type { BlockDescriptor } from '../field-types';
+import { positionField } from '../fields/position-field';
+import { visibilityField } from '../fields/visibility-field';
 
 export const languageSwitcherBlock: BlockDescriptor<LanguageSwitcherProps> = {
   type: 'LanguageSwitcher',

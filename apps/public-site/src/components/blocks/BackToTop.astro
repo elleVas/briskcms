@@ -1,6 +1,6 @@
 ---
 import type { BackToTopProps } from '@brisk/shared-types';
-import { Translator } from '../../lib/i18n.js';
+import { Translator } from '../../lib/i18n';
 
 type Props = BackToTopProps & { locale: string };
 
@@ -31,8 +31,8 @@ const i18n = new Translator(locale);
   // plain importable module (not inline here) so it can also be re-run
   // after a live canvas insert/patch — see
   // block-behaviors/run-block-behaviors-in-subtree.ts.
-  import { backToTopBehaviors } from '../../lib/block-behaviors/back-to-top.js';
-  import { runBlockBehaviors } from '../../lib/block-behaviors/run-block-behaviors.js';
+  import { backToTopBehaviors } from '../../lib/block-behaviors/back-to-top';
+  import { runBlockBehaviors } from '../../lib/block-behaviors/run-block-behaviors';
   runBlockBehaviors(document, backToTopBehaviors);
 </script>
 

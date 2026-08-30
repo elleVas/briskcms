@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { describe, expect, it } from 'vitest';
-import { PreviewTokenAdapter } from './preview-token.adapter.js';
+import { PreviewTokenAdapter } from './preview-token.adapter';
 
 /**
  * Puro unit test, niente Postgres: la validazione è solo firma HMAC +

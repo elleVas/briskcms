@@ -8,9 +8,9 @@ import {
   createTranslation as apiCreateTranslation,
   markTranslationSynced as apiMarkTranslationSynced,
   type CreateTranslationInput,
-} from '../lib/pages-api-client.js';
-import { pageTranslationsQueryOptions } from './pages-queries.js';
-import { siteQueryOptions } from './site-queries.js';
+} from '../lib/pages-api-client';
+import { pageTranslationsQueryOptions } from './pages-queries';
+import { siteQueryOptions } from './site-queries';
 
 export interface PageTranslationSummary extends PageRecord {
   /**

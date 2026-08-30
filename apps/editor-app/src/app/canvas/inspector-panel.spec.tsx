@@ -2,7 +2,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import type { Block } from '@brisk/shared-types';
 import type { BlockDescriptor } from '@brisk/block-registry';
-import { InspectorPanel } from './inspector-panel.js';
+import { InspectorPanel } from './inspector-panel';
 
 describe('InspectorPanel', () => {
   it('renders nothing for a block with no fields (e.g. a pure layout container)', () => {

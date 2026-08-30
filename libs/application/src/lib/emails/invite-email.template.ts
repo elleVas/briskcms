@@ -1,5 +1,5 @@
 import type { EmailMessage } from '@brisk/ports';
-import { ctaButtonHtml, renderEmailLayout } from './email-layout.js';
+import { ctaButtonHtml, renderEmailLayout } from './email-layout';
 
 export function buildInviteEmail(inviteUrl: string): Omit<EmailMessage, 'to'> {
   const subject = 'Sei stato invitato su Brisk';

@@ -21,19 +21,19 @@ import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from '../../components/ui/popover.js';
-import { blockStyleDefaultsQueryOptions } from '../block-style-defaults-queries.js';
-import { useTranslation } from '../../lib/use-translation.js';
-import { BlockPicker, type BlockPickerCategory } from './block-picker.js';
-import { BlockStyleFields } from './block-style-fields.js';
-import { InspectorPanel } from './inspector-panel.js';
+} from '../../components/ui/popover';
+import { blockStyleDefaultsQueryOptions } from '../block-style-defaults-queries';
+import { useTranslation } from '../../lib/use-translation';
+import { BlockPicker, type BlockPickerCategory } from './block-picker';
+import { BlockStyleFields } from './block-style-fields';
+import { InspectorPanel } from './inspector-panel';
 import {
   toAddChildStyle,
   toInsertPointStyle,
   toPillStyle,
   toToolbarStyle,
   useIframeGeometry,
-} from './overlay-layer.js';
+} from './overlay-layer';
 
 export interface BlockToolbarOverlayProps {
   iframeRef: RefObject<HTMLIFrameElement | null>;

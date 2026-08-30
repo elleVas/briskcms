@@ -7,11 +7,11 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from '../components/ui/dialog.js';
-import { cn } from '../lib/utils.js';
-import type { PageListItem } from '../lib/pages-api-client.js';
-import { PAGES_PAGE_SIZE, pagesQueryOptions } from './pages-queries.js';
-import { IconButton } from './icon-button.js';
+} from '../components/ui/dialog';
+import { cn } from '../lib/utils';
+import type { PageListItem } from '../lib/pages-api-client';
+import { PAGES_PAGE_SIZE, pagesQueryOptions } from './pages-queries';
+import { IconButton } from './icon-button';
 
 export interface PagePickerDialogProps {
   siteId: string;

@@ -2,17 +2,17 @@ import type { ReactNode } from 'react';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { QueryClientProvider } from '@tanstack/react-query';
-import * as sectionsApi from '../lib/site-layout-sections-api-client.js';
-import type { SiteLayoutSectionDto } from '../lib/site-layout-sections-api-client.js';
-import * as pagesApi from '../lib/pages-api-client.js';
-import type { PageListItem } from '../lib/pages-api-client.js';
-import * as previewTokenApi from '../lib/preview-token-api-client.js';
-import { TooltipProvider } from '../components/ui/tooltip.js';
-import { createTestQueryClient } from '../test-query-client.js';
-import { pagesQueryOptions } from './pages-queries.js';
-import { siteLayoutSectionQueryOptions } from './site-layout-sections-queries.js';
-import { SiteLayoutSectionEditorView } from './site-layout-section-editor-view.js';
-import { ToastProvider } from './toast-provider.js';
+import * as sectionsApi from '../lib/site-layout-sections-api-client';
+import type { SiteLayoutSectionDto } from '../lib/site-layout-sections-api-client';
+import * as pagesApi from '../lib/pages-api-client';
+import type { PageListItem } from '../lib/pages-api-client';
+import * as previewTokenApi from '../lib/preview-token-api-client';
+import { TooltipProvider } from '../components/ui/tooltip';
+import { createTestQueryClient } from '../test-query-client';
+import { pagesQueryOptions } from './pages-queries';
+import { siteLayoutSectionQueryOptions } from './site-layout-sections-queries';
+import { SiteLayoutSectionEditorView } from './site-layout-section-editor-view';
+import { ToastProvider } from './toast-provider';
 
 vi.mock('@tanstack/react-router', async (importOriginal) => {
   const actual =
@@ -35,10 +35,10 @@ vi.mock('@tanstack/react-router', async (importOriginal) => {
   };
 });
 
-vi.mock('../lib/site-layout-sections-api-client.js', async (importOriginal) => {
+vi.mock('../lib/site-layout-sections-api-client', async (importOriginal) => {
   const actual =
     await importOriginal<
-      typeof import('../lib/site-layout-sections-api-client.js')
+      typeof import('../lib/site-layout-sections-api-client')
     >();
   return {
     ...actual,
@@ -48,17 +48,17 @@ vi.mock('../lib/site-layout-sections-api-client.js', async (importOriginal) => {
   };
 });
 
-vi.mock('../lib/pages-api-client.js', async (importOriginal) => {
+vi.mock('../lib/pages-api-client', async (importOriginal) => {
   const actual =
-    await importOriginal<typeof import('../lib/pages-api-client.js')>();
+    await importOriginal<typeof import('../lib/pages-api-client')>();
   return { ...actual, listPages: vi.fn() };
 });
 
 // CanvasEditorShell/CanvasFrame mint a real preview token on mount — mocked
 // here so these tests never make a real network call to apps/api.
-vi.mock('../lib/preview-token-api-client.js', async (importOriginal) => {
+vi.mock('../lib/preview-token-api-client', async (importOriginal) => {
   const actual =
-    await importOriginal<typeof import('../lib/preview-token-api-client.js')>();
+    await importOriginal<typeof import('../lib/preview-token-api-client')>();
   return { ...actual, createPagePreviewToken: vi.fn() };
 });
 

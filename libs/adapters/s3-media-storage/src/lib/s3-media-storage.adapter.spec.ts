@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import sharp from 'sharp';
 import { S3Client } from '@aws-sdk/client-s3';
 import { UnsupportedMediaTypeError } from '@brisk/domain-core';
-import { S3MediaStorageAdapter } from './s3-media-storage.adapter.js';
+import { S3MediaStorageAdapter } from './s3-media-storage.adapter';
 
 const sendMock = vi.fn();
 

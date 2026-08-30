@@ -8,8 +8,8 @@ import {
   type ExceptionFilter,
 } from '@nestjs/common';
 import type { Response } from 'express';
-import { mapDomainErrorToHttpException } from './domain-error-http-mapping.js';
-import type { RequestWithId } from './request-id.middleware.js';
+import { mapDomainErrorToHttpException } from './domain-error-http-mapping';
+import type { RequestWithId } from './request-id.middleware';
 
 /**
  * Filtro globale (security review 2026-08-24, punti 14+17) — due problemi

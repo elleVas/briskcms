@@ -8,10 +8,10 @@ import {
 } from '@brisk/postgres-form-repository';
 import { SmtpEmailAdapter } from '@brisk/smtp-email-adapter';
 import { TurnstileCaptchaAdapter } from '@brisk/turnstile-captcha';
-import { DATABASE, DatabaseModule } from '../database.module.js';
-import { createAttachmentStorage } from '../attachment-storage.factory.js';
-import { createNewsletterPort } from '../newsletter-port.factory.js';
-import { PublicFormsController } from './public-forms.controller.js';
+import { DATABASE, DatabaseModule } from '../database.module';
+import { createAttachmentStorage } from '../attachment-storage.factory';
+import { createNewsletterPort } from '../newsletter-port.factory';
+import { PublicFormsController } from './public-forms.controller';
 import {
   ATTACHMENT_STORAGE,
   CAPTCHA_PORT,
@@ -20,7 +20,7 @@ import {
   FORM_REPOSITORY,
   FORM_SUBMISSION_REPOSITORY,
   NEWSLETTER_PORT,
-} from './public-forms.tokens.js';
+} from './public-forms.tokens';
 
 @Module({
   imports: [

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildVerificationEmail } from './verification-email.template.js';
+import { buildVerificationEmail } from './verification-email.template';
 
 describe('buildVerificationEmail', () => {
   it('includes the verification URL in both the HTML and text bodies', () => {

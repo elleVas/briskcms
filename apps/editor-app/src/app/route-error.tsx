@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { ErrorComponentProps } from '@tanstack/react-router';
-import { Button } from '../components/ui/button.js';
+import { Button } from '../components/ui/button';
 
 export function RouteError({ error, reset }: ErrorComponentProps) {
   const { t } = useTranslation();

@@ -13,8 +13,8 @@ import {
   tenants,
   withTenant,
 } from '@brisk/postgres-db';
-import { DrizzlePageRepository } from './drizzle-page.repository.js';
-import { DrizzlePageVersionRepository } from './drizzle-page-version.repository.js';
+import { DrizzlePageRepository } from './drizzle-page.repository';
+import { DrizzlePageVersionRepository } from './drizzle-page-version.repository';
 
 /**
  * Runs against a real Postgres — see docs/development.md ("docker compose up

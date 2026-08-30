@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { FieldBuilder } from './field-types.js';
+import { FieldBuilder } from './field-types';
 
 function DummyField({ value }: { value: string | null }) {
   return value;

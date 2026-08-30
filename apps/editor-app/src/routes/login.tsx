@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
-import { ForgotPasswordForm } from '../app/forgot-password-form.js';
-import { LoginForm } from '../app/login-form.js';
-import { useSession } from '../app/use-session.js';
+import { ForgotPasswordForm } from '../app/forgot-password-form';
+import { LoginForm } from '../app/login-form';
+import { useSession } from '../app/use-session';
 
 export const Route = createFileRoute('/login')({
   component: LoginRoute,

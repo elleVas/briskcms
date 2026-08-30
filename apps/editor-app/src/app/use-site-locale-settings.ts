@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import type { LocaleSettings } from '@brisk/shared-types';
-import { updateLocaleSettings as apiUpdateLocaleSettings } from '../lib/sites-api-client.js';
-import { siteQueryOptions } from './site-queries.js';
+import { updateLocaleSettings as apiUpdateLocaleSettings } from '../lib/sites-api-client';
+import { siteQueryOptions } from './site-queries';
 
 export function useSiteLocaleSettings(siteId: string) {
   const queryClient = useQueryClient();

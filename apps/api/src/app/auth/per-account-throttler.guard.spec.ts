@@ -1,7 +1,7 @@
 import type { ExecutionContext } from '@nestjs/common';
 import type { ThrottlerStorage } from '@nestjs/throttler';
 import { ThrottlerException } from '@nestjs/throttler';
-import { PerAccountThrottlerGuard } from './per-account-throttler.guard.js';
+import { PerAccountThrottlerGuard } from './per-account-throttler.guard';
 
 /** Same increment/limit semantics as the real in-memory storage this guard is built on — `totalHits` accumulates per key, `isBlocked` is unused by this guard (it reads `totalHits` directly instead). */
 class FakeThrottlerStorage implements ThrottlerStorage {

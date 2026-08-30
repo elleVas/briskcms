@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { blockSchema, seoMetaSchema } from './content-model.js';
+import { blockSchema, seoMetaSchema } from './content-model';
 
 export const pageStatusSchema = z.enum(['draft', 'published']);
 export type PageStatus = z.infer<typeof pageStatusSchema>;

@@ -1,11 +1,11 @@
 import { z } from 'zod';
-import { businessInfoSchema } from './business-info.js';
-import { untranslatedPageFallbackSchema } from './locale-settings.js';
+import { businessInfoSchema } from './business-info';
+import { untranslatedPageFallbackSchema } from './locale-settings';
 import {
   hexColorSchema,
   trackerDomainEntrySchema,
-} from './site-theme-settings.js';
-import { themeTokensSchema } from './site-theme-tokens.js';
+} from './site-theme-settings';
+import { themeTokensSchema } from './site-theme-tokens';
 
 /**
  * The full site record as the editor CRUD surface sees it (`GET /sites/:id`

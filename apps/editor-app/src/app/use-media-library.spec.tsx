@@ -2,13 +2,13 @@ import type { ReactNode } from 'react';
 import { act, renderHook } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { QueryClientProvider } from '@tanstack/react-query';
-import * as api from '../lib/media-api-client.js';
-import { createTestQueryClient } from '../test-query-client.js';
-import { useMediaLibrary } from './use-media-library.js';
+import * as api from '../lib/media-api-client';
+import { createTestQueryClient } from '../test-query-client';
+import { useMediaLibrary } from './use-media-library';
 
-vi.mock('../lib/media-api-client.js', async (importOriginal) => {
+vi.mock('../lib/media-api-client', async (importOriginal) => {
   const actual =
-    await importOriginal<typeof import('../lib/media-api-client.js')>();
+    await importOriginal<typeof import('../lib/media-api-client')>();
   return { ...actual, uploadMedia: vi.fn(), deleteMedia: vi.fn() };
 });
 

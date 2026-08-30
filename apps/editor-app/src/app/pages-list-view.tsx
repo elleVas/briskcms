@@ -11,23 +11,20 @@ import {
   Send,
   Trash2,
 } from 'lucide-react';
-import { Badge } from '../components/ui/badge.js';
-import { Button } from '../components/ui/button.js';
-import { cn } from '../lib/utils.js';
-import type { PageListItem } from '../lib/pages-api-client.js';
-import { ConfirmDeleteDialog } from './confirm-delete-dialog.js';
-import { DuplicatePageDialog } from './duplicate-page-dialog.js';
-import { IconButton } from './icon-button.js';
-import { MediaPickerProvider } from './media-picker-provider.js';
-import { NewPageDialog } from './new-page-dialog.js';
-import { ParentPageSelect } from './parent-page-select.js';
-import { buildPageTree } from './page-hierarchy.js';
-import {
-  PAGES_PAGE_SIZE,
-  pageTranslationsQueryOptions,
-} from './pages-queries.js';
-import { SeoPanelDialog } from './seo-panel-dialog.js';
-import { usePagesList } from './use-pages-list.js';
+import { Badge } from '../components/ui/badge';
+import { Button } from '../components/ui/button';
+import { cn } from '../lib/utils';
+import type { PageListItem } from '../lib/pages-api-client';
+import { ConfirmDeleteDialog } from './confirm-delete-dialog';
+import { DuplicatePageDialog } from './duplicate-page-dialog';
+import { IconButton } from './icon-button';
+import { MediaPickerProvider } from './media-picker-provider';
+import { NewPageDialog } from './new-page-dialog';
+import { ParentPageSelect } from './parent-page-select';
+import { buildPageTree } from './page-hierarchy';
+import { PAGES_PAGE_SIZE, pageTranslationsQueryOptions } from './pages-queries';
+import { SeoPanelDialog } from './seo-panel-dialog';
+import { usePagesList } from './use-pages-list';
 
 export interface PagesListViewProps {
   siteId: string;

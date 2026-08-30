@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { InvalidOrExpiredTokenError, User } from '@brisk/domain-core';
-import { requestEmailVerification } from './request-email-verification.use-case.js';
-import { verifyEmail } from './verify-email.use-case.js';
-import { InMemoryUserRepository } from './in-memory-repositories.test-fixture.js';
-import { FakeVerificationTokenPort } from './fake-verification-token-port.test-fixture.js';
-import { FakeEmailPort } from './fake-email-port.test-fixture.js';
+import { requestEmailVerification } from './request-email-verification.use-case';
+import { verifyEmail } from './verify-email.use-case';
+import { InMemoryUserRepository } from './in-memory-repositories.test-fixture';
+import { FakeVerificationTokenPort } from './fake-verification-token-port.test-fixture';
+import { FakeEmailPort } from './fake-email-port.test-fixture';
 
 const tenantId = 'tenant-1';
 

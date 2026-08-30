@@ -1,4 +1,4 @@
-import type { PageListItem } from '../lib/pages-api-client.js';
+import type { PageListItem } from '../lib/pages-api-client';
 
 function groupByParent(pages: PageListItem[]): Map<string, PageListItem[]> {
   const childrenByParent = new Map<string, PageListItem[]>();

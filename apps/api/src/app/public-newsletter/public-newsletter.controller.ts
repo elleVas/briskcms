@@ -11,12 +11,12 @@ import { ThrottlerGuard } from '@nestjs/throttler';
 import { subscribeNewsletter } from '@brisk/application';
 import { InvalidCaptchaError } from '@brisk/domain-core';
 import type { CaptchaPort, NewsletterPort } from '@brisk/ports';
-import { ZodValidationPipe } from '../zod-validation.pipe.js';
+import { ZodValidationPipe } from '../zod-validation.pipe';
 import {
   type SubscribeNewsletterBody,
   subscribeNewsletterBodySchema,
-} from './public-newsletter.schemas.js';
-import { CAPTCHA_PORT, NEWSLETTER_PORT } from './public-newsletter.tokens.js';
+} from './public-newsletter.schemas';
+import { CAPTCHA_PORT, NEWSLETTER_PORT } from './public-newsletter.tokens';
 
 // Same reasoning as PublicFormsController: no SessionAuthGuard (the public,
 // unauthenticated path apps/public-site's NewsletterSignup block posts

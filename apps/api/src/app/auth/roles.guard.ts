@@ -9,9 +9,9 @@ import {
 import { Reflector } from '@nestjs/core';
 import type { UserRole } from '@brisk/domain-core';
 import type { UserRepositoryPort } from '@brisk/ports';
-import { USER_REPOSITORY } from './auth.tokens.js';
-import { ROLES_KEY } from './roles.decorator.js';
-import type { AuthenticatedRequest } from './session-auth.guard.js';
+import { USER_REPOSITORY } from './auth.tokens';
+import { ROLES_KEY } from './roles.decorator';
+import type { AuthenticatedRequest } from './session-auth.guard';
 
 /**
  * Must run after SessionAuthGuard in the same @UseGuards() chain — reads

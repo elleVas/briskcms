@@ -2,14 +2,14 @@ import type { ReactNode } from 'react';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { QueryClientProvider } from '@tanstack/react-query';
-import * as api from '../lib/site-layout-sections-api-client.js';
-import { createTestQueryClient } from '../test-query-client.js';
-import { useSiteLayoutSectionVersions } from './use-site-layout-section-versions.js';
+import * as api from '../lib/site-layout-sections-api-client';
+import { createTestQueryClient } from '../test-query-client';
+import { useSiteLayoutSectionVersions } from './use-site-layout-section-versions';
 
-vi.mock('../lib/site-layout-sections-api-client.js', async (importOriginal) => {
+vi.mock('../lib/site-layout-sections-api-client', async (importOriginal) => {
   const actual =
     await importOriginal<
-      typeof import('../lib/site-layout-sections-api-client.js')
+      typeof import('../lib/site-layout-sections-api-client')
     >();
   return {
     ...actual,

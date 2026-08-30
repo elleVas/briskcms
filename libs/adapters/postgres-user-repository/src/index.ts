@@ -1,1 +1,1 @@
-export * from './lib/drizzle-user.repository.js';
+export * from './lib/drizzle-user.repository';

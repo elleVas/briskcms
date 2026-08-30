@@ -5,11 +5,11 @@ import type { PickedMedia } from '@brisk/shared-types';
 import {
   MediaPickerContext,
   type MediaPickerPort,
-} from '../media-picker-context.js';
+} from '../media-picker-context';
 import {
   GalleryPickerField,
   type GalleryImageItem,
-} from './gallery-picker-field.js';
+} from './gallery-picker-field';
 
 const media: PickedMedia = { mediaId: 'm1', url: '/m1.jpg' };
 

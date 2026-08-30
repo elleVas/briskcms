@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import type { ThemeSettings } from '@brisk/shared-types';
-import { updateThemeSettings as apiUpdateThemeSettings } from '../lib/sites-api-client.js';
-import { siteQueryOptions } from './site-queries.js';
+import { updateThemeSettings as apiUpdateThemeSettings } from '../lib/sites-api-client';
+import { siteQueryOptions } from './site-queries';
 
 export function useSiteThemeSettings(siteId: string) {
   const queryClient = useQueryClient();

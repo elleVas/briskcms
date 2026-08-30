@@ -18,24 +18,24 @@ import {
 	DEFAULT_THEME_TOKENS,
 	type Block,
 	type SeoMeta,
-} from '../../libs/shared-types/src/index.js';
+} from '../../libs/shared-types/src/index';
 import {
 	listPublishedPageTree,
 	type PageTreeNodeDto,
 	type PublishedPageAncestorDto,
 	type PublishedPageTranslationDto,
 	type PublishedSiteDto,
-} from '../../apps/public-site/src/lib/public-api-client.js';
+} from '../../apps/public-site/src/lib/public-api-client';
 import BlockRenderer from '../../apps/public-site/src/components/BlockRenderer.astro';
-import { editorAppUrl } from '../../apps/public-site/src/lib/editor-app-url.js';
+import { editorAppUrl } from '../../apps/public-site/src/lib/editor-app-url';
 import {
 	localeDirection,
 	localePath,
 	localePathFromAncestors,
-} from '../../apps/public-site/src/lib/locale-path.js';
-import { buildSchemaOrgGraph } from '../../apps/public-site/src/lib/schema-org.js';
-import { resolveThemeFont } from '../../apps/public-site/src/lib/theme-font.js';
-import { Translator } from '../../apps/public-site/src/lib/i18n.js';
+} from '../../apps/public-site/src/lib/locale-path';
+import { buildSchemaOrgGraph } from '../../apps/public-site/src/lib/schema-org';
+import { resolveThemeFont } from '../../apps/public-site/src/lib/theme-font';
+import { Translator } from '../../apps/public-site/src/lib/i18n';
 import '../../apps/public-site/src/styles/global.css';
 import './theme.css';
 import themeManifest from './theme.json';
@@ -386,7 +386,7 @@ const nextDoc =
 		{
 			editable && (
 				<script>
-					import { initPreviewBridge } from '../../apps/public-site/src/lib/init-preview-bridge.js';
+					import { initPreviewBridge } from '../../apps/public-site/src/lib/init-preview-bridge';
 					initPreviewBridge();
 				</script>
 			)

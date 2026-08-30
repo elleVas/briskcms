@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { isRedirect } from '@tanstack/react-router';
-import { requireAuth } from './-require-auth.js';
-import { ApiError } from '../lib/http-client.js';
+import { requireAuth } from './-require-auth';
+import { ApiError } from '../lib/http-client';
 
 describe('requireAuth', () => {
   it('resolves with the loader result when it succeeds', async () => {

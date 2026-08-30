@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { describe, expect, it, vi } from 'vitest';
-import { testimonialsBehaviors } from './testimonials.js';
-import { runBlockBehaviors } from './run-block-behaviors.js';
+import { testimonialsBehaviors } from './testimonials';
+import { runBlockBehaviors } from './run-block-behaviors';
 
 function renderCarousel(): HTMLElement {
   document.body.innerHTML = `

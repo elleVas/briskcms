@@ -1,10 +1,10 @@
 import { Module } from '@nestjs/common';
 import { type BriskDb } from '@brisk/postgres-db';
 import { DrizzleFormRepository } from '@brisk/postgres-form-repository';
-import { AuthModule } from '../auth/auth.module.js';
-import { DATABASE, DatabaseModule } from '../database.module.js';
-import { FormsController } from './forms.controller.js';
-import { FORM_REPOSITORY } from './forms.tokens.js';
+import { AuthModule } from '../auth/auth.module';
+import { DATABASE, DatabaseModule } from '../database.module';
+import { FormsController } from './forms.controller';
+import { FORM_REPOSITORY } from './forms.tokens';
 
 @Module({
   imports: [DatabaseModule, AuthModule],

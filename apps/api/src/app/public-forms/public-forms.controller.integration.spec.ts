@@ -1,8 +1,8 @@
 import { randomUUID } from 'node:crypto';
 import { type INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
-import { HttpExceptionFilter } from '../http-exception.filter.js';
-import { requestIdMiddleware } from '../request-id.middleware.js';
+import { HttpExceptionFilter } from '../http-exception.filter';
+import { requestIdMiddleware } from '../request-id.middleware';
 import cookieParser from 'cookie-parser';
 import request from 'supertest';
 import type { AuthPort, CaptchaPort, NewsletterPort } from '@brisk/ports';
@@ -13,11 +13,11 @@ import {
   users,
   withTenant,
 } from '@brisk/postgres-db';
-import { AUTH_PORT } from '../auth/auth.tokens.js';
-import { DATABASE } from '../database.module.js';
-import { FormsModule } from '../forms/forms.module.js';
-import { PublicFormsModule } from './public-forms.module.js';
-import { CAPTCHA_PORT, NEWSLETTER_PORT } from './public-forms.tokens.js';
+import { AUTH_PORT } from '../auth/auth.tokens';
+import { DATABASE } from '../database.module';
+import { FormsModule } from '../forms/forms.module';
+import { PublicFormsModule } from './public-forms.module';
+import { CAPTCHA_PORT, NEWSLETTER_PORT } from './public-forms.tokens';
 
 /** Unlike Postgres/Mailpit (real local infra this repo already runs for
  * every integration test), Cloudflare's siteverify API is a live

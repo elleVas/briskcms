@@ -7,15 +7,15 @@ import {
 } from '@brisk/postgres-page-repository';
 import { PreviewTokenAdapter } from '@brisk/preview-token-adapter';
 import { DrizzleSearchRepository } from '@brisk/postgres-search-repository';
-import { AuthModule } from '../auth/auth.module.js';
-import { DATABASE, DatabaseModule } from '../database.module.js';
-import { PagesController } from './pages.controller.js';
+import { AuthModule } from '../auth/auth.module';
+import { DATABASE, DatabaseModule } from '../database.module';
+import { PagesController } from './pages.controller';
 import {
   PAGE_REPOSITORY,
   PAGE_VERSION_REPOSITORY,
   PREVIEW_TOKEN_PORT,
   SEARCH_REPOSITORY,
-} from './pages.tokens.js';
+} from './pages.tokens';
 
 @Module({
   imports: [DatabaseModule, AuthModule],

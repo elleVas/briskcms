@@ -8,7 +8,7 @@ import {
   tenants,
   withTenant,
 } from '@brisk/postgres-db';
-import { DrizzleSiteThemeBlockStylesRepository } from './drizzle-site-theme-block-styles.repository.js';
+import { DrizzleSiteThemeBlockStylesRepository } from './drizzle-site-theme-block-styles.repository';
 
 /** Runs against a real Postgres — see docs/development.md. */
 describe('DrizzleSiteThemeBlockStylesRepository (integration)', () => {

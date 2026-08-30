@@ -1,4 +1,4 @@
-import type { BlockStyleDefaults } from './site-theme-tokens.js';
+import type { BlockStyleDefaults } from './site-theme-tokens';
 
 /**
  * L'espressione CSS di default per ciascuna proprietà stilizzabile

@@ -1,4 +1,4 @@
-import type { BlockBehavior } from './types.js';
+import type { BlockBehavior } from './types';
 
 // Idempotency guard: re-running this would attach a second set of
 // prev/next/submit listeners to the same form. See

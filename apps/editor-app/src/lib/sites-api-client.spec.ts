@@ -6,7 +6,7 @@ import {
   updateGeneralSettings,
   updateLocaleSettings,
   updateSeoSettings,
-} from './sites-api-client.js';
+} from './sites-api-client';
 
 const sampleSite: SiteRecord = {
   id: 'site-1',

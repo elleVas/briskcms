@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { rollbackToVersion } from '../lib/pages-api-client.js';
-import { pageQueryOptions, pageVersionsQueryOptions } from './pages-queries.js';
+import { rollbackToVersion } from '../lib/pages-api-client';
+import { pageQueryOptions, pageVersionsQueryOptions } from './pages-queries';
 
 // `enabled` keeps this lazy: the list is only fetched once the version
 // history dialog is actually opened, not on every editor page load.

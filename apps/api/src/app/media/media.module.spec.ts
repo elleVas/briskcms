@@ -1,6 +1,6 @@
 import { LocalDiskMediaStorageAdapter } from '@brisk/local-disk-media-storage';
 import { S3MediaStorageAdapter } from '@brisk/s3-media-storage';
-import { createMediaStorage } from './media.module.js';
+import { createMediaStorage } from './media.module';
 
 // Tests the storage-provider selection in isolation from the rest of the
 // Nest module graph — compiling the whole MediaModule (via AuthModule)

@@ -5,7 +5,7 @@ import {
   themeSettingsSchema,
   updateThemeTokensBodySchema as sharedUpdateThemeTokensBodySchema,
 } from '@brisk/shared-types';
-import { domainSchema } from '../public-pages/public-pages.schemas.js';
+import { domainSchema } from '../public-pages/public-pages.schemas';
 
 export const updateBusinessInfoBodySchema = z.object({
   businessAddress: z.string().nullable(),

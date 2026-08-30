@@ -1,4 +1,4 @@
-import type { BlockBehavior } from './types.js';
+import type { BlockBehavior } from './types';
 
 // Idempotency guard: re-running this would attach a second click listener
 // to the same close button. See run-block-behaviors.ts.

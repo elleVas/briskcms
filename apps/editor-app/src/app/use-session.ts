@@ -1,10 +1,7 @@
 import { useCallback } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
-import {
-  login as apiLogin,
-  logout as apiLogout,
-} from '../lib/auth-api-client.js';
+import { login as apiLogin, logout as apiLogout } from '../lib/auth-api-client';
 
 export function useSession() {
   const navigate = useNavigate();

@@ -1,7 +1,7 @@
 import type { QueryClient } from '@tanstack/react-query';
 import { createRootRouteWithContext, Outlet } from '@tanstack/react-router';
-import { RouteError } from '../app/route-error.js';
-import { RoutePending } from '../app/route-pending.js';
+import { RouteError } from '../app/route-error';
+import { RoutePending } from '../app/route-pending';
 
 export interface RouterContext {
   queryClient: QueryClient;

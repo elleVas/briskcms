@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { describe, expect, it } from 'vitest';
-import { runBlockBehaviors } from './run-block-behaviors.js';
-import { tabsBehaviors } from './tabs.js';
+import { runBlockBehaviors } from './run-block-behaviors';
+import { tabsBehaviors } from './tabs';
 
 function renderTabs(): HTMLElement {
   document.body.innerHTML = `

@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
-import { RoutePending } from './route-pending.js';
+import { RoutePending } from './route-pending';
 
 describe('RoutePending', () => {
   it('shows a loading message', () => {

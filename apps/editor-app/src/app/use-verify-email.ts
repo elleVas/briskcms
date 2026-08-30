@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useMutation } from '@tanstack/react-query';
-import { verifyEmail } from '../lib/auth-api-client.js';
+import { verifyEmail } from '../lib/auth-api-client';
 
 export function useVerifyEmail(token: string) {
   const { mutate, status } = useMutation({

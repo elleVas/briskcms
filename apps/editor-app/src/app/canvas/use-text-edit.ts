@@ -7,8 +7,8 @@ import {
 } from 'react';
 import type { Block } from '@brisk/shared-types';
 import type { BlockDescriptor } from '@brisk/block-registry';
-import { findBlockInTree, updateBlockProps } from './use-block-tree.js';
-import type { PreviewBridgeState } from './use-preview-bridge.js';
+import { findBlockInTree, updateBlockProps } from './use-block-tree';
+import type { PreviewBridgeState } from './use-preview-bridge';
 
 /** Il field è testuale e marcato `inlineEditable` sul descrittore — l'unico caso in cui un doppio click deve montare TipTap. */
 function isInlineEditableField(

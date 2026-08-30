@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 import { useMutation } from '@tanstack/react-query';
-import { requestPasswordReset } from '../lib/auth-api-client.js';
+import { requestPasswordReset } from '../lib/auth-api-client';
 
 export function useForgotPasswordRequest() {
   const mutation = useMutation({

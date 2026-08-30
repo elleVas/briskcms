@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupGlobalErrorHandlers } from './global-error-handlers.js';
+import { setupGlobalErrorHandlers } from './global-error-handlers';
 
 describe('setupGlobalErrorHandlers', () => {
   let errorSpy: ReturnType<typeof vi.spyOn>;

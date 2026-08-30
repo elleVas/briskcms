@@ -4,20 +4,20 @@ import {
   InvalidCaptchaError,
   InvalidFormSubmissionError,
 } from '@brisk/domain-core';
-import { createForm } from './create-form.use-case.js';
-import { updateForm } from './update-form.use-case.js';
-import { getPublicForm } from './get-public-form.use-case.js';
-import { submitForm } from './submit-form.use-case.js';
+import { createForm } from './create-form.use-case';
+import { updateForm } from './update-form.use-case';
+import { getPublicForm } from './get-public-form.use-case';
+import { submitForm } from './submit-form.use-case';
 import {
   InMemoryFormRepository,
   InMemoryFormSubmissionRepository,
-} from './in-memory-repositories.test-fixture.js';
-import { FakeEmailPort } from './fake-email-port.test-fixture.js';
-import { FakeCaptchaPort } from './fake-captcha-port.test-fixture.js';
+} from './in-memory-repositories.test-fixture';
+import { FakeEmailPort } from './fake-email-port.test-fixture';
+import { FakeCaptchaPort } from './fake-captcha-port.test-fixture';
 import {
   FailingNewsletterPort,
   FakeNewsletterPort,
-} from './fake-newsletter-port.test-fixture.js';
+} from './fake-newsletter-port.test-fixture';
 
 describe('getPublicForm and submitForm', () => {
   const tenantId = 'tenant-1';

@@ -1,4 +1,4 @@
-import type { Block, PageContent, SeoMeta } from './content-model.js';
+import type { Block, PageContent, SeoMeta } from './content-model';
 
 /**
  * Builds the plain-text blob a SearchPort adapter indexes for a page —

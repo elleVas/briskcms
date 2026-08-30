@@ -1,7 +1,7 @@
 import { Inject, Injectable, Scope } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
 import type { TenantContextPort } from '@brisk/ports';
-import type { AuthenticatedRequest } from './session-auth.guard.js';
+import type { AuthenticatedRequest } from './session-auth.guard';
 
 /**
  * Replaces StaticTenantContextAdapter (see docs/adr/0006 and 0010): derives

@@ -1,8 +1,8 @@
 import type { FormBlockProps } from '@brisk/shared-types';
 import { BLOCK_STYLE_DEFAULTS } from '@brisk/shared-types';
-import { FieldBuilder, type BlockDescriptor } from '../field-types.js';
-import { FormPickerField } from '../fields/form-picker-field.js';
-import { BlockStyleRegistry } from '../block-style-registry.js';
+import { FieldBuilder, type BlockDescriptor } from '../field-types';
+import { FormPickerField } from '../fields/form-picker-field';
+import { BlockStyleRegistry } from '../block-style-registry';
 
 export const formBlock: BlockDescriptor<FormBlockProps> = {
   type: 'Form',

@@ -8,7 +8,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '../components/ui/alert-dialog.js';
+} from '../components/ui/alert-dialog';
 
 export interface ConfirmDeleteDialogProps {
   open: boolean;

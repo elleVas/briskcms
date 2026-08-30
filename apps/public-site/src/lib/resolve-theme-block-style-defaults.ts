@@ -6,7 +6,7 @@ import {
 import {
   parseRootCustomProperties,
   resolveBlockStyleDefaults,
-} from './resolve-theme-block-style-defaults-helpers.js';
+} from './resolve-theme-block-style-defaults-helpers';
 
 let cached: BlockStyleDefaultsResponse | null = null;
 

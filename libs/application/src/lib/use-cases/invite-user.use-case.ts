@@ -7,7 +7,7 @@ import type {
   UserRepositoryPort,
   VerificationTokenPort,
 } from '@brisk/ports';
-import { buildInviteEmail } from '../emails/invite-email.template.js';
+import { buildInviteEmail } from '../emails/invite-email.template';
 
 // Longer than password-reset's 1h: accepting an invite isn't a
 // time-sensitive security action, and an admin realistically expects a

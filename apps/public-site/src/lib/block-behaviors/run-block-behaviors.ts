@@ -1,4 +1,4 @@
-import type { BlockBehavior } from './types.js';
+import type { BlockBehavior } from './types';
 
 // Shared by every block's own <script> (at initial page load, root =
 // document) and by the preview-bridge dispatcher (root = one

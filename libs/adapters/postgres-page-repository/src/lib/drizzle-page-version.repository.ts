@@ -2,7 +2,7 @@ import { and, asc, eq } from 'drizzle-orm';
 import type { PageVersion } from '@brisk/domain-core';
 import type { PageVersionRepositoryPort } from '@brisk/ports';
 import { type BriskDb, pageVersions, withTenant } from '@brisk/postgres-db';
-import { savePageVersionTx } from './save-page-version-tx.js';
+import { savePageVersionTx } from './save-page-version-tx';
 
 function fromRow(row: typeof pageVersions.$inferSelect): PageVersion {
   return row;

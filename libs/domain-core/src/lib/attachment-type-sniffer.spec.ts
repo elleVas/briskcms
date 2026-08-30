@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { sniffAttachmentType } from './attachment-type-sniffer.js';
-import { UnsupportedAttachmentTypeError } from './errors.js';
+import { sniffAttachmentType } from './attachment-type-sniffer';
+import { UnsupportedAttachmentTypeError } from './errors';
 
 function bytes(...values: number[]): Uint8Array {
   return new Uint8Array(values);

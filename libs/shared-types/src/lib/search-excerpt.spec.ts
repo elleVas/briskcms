@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { parseSearchExcerpt } from './search-excerpt.js';
+import { parseSearchExcerpt } from './search-excerpt';
 
 describe('parseSearchExcerpt', () => {
   it('returns a single unmatched segment when there are no markers', () => {

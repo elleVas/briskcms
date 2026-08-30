@@ -3,18 +3,18 @@ import { useTranslation } from 'react-i18next';
 import { Link } from '@tanstack/react-router';
 import { ExternalLink, History, Languages, Search } from 'lucide-react';
 import { pageBlockCategories, pageBlocks } from '@brisk/block-registry';
-import { CanvasEditorShell } from './canvas/canvas-editor-shell.js';
-import { FormListProvider } from './form-list-provider.js';
-import { IconButton } from './icon-button.js';
-import { IconListProvider } from './icon-list-provider.js';
-import { MediaPickerProvider } from './media-picker-provider.js';
-import { PageSwitcher } from './page-switcher.js';
-import { PageTranslationsDialog } from './page-translations-dialog.js';
-import { SeoPanelDialog } from './seo-panel-dialog.js';
-import { PUBLIC_SITE_URL } from '../lib/public-site-url.js';
-import { usePageEditor, type SaveStatus } from './use-page-editor.js';
-import { usePageVersions } from './use-page-versions.js';
-import { VersionHistoryDialog } from './version-history-dialog.js';
+import { CanvasEditorShell } from './canvas/canvas-editor-shell';
+import { FormListProvider } from './form-list-provider';
+import { IconButton } from './icon-button';
+import { IconListProvider } from './icon-list-provider';
+import { MediaPickerProvider } from './media-picker-provider';
+import { PageSwitcher } from './page-switcher';
+import { PageTranslationsDialog } from './page-translations-dialog';
+import { SeoPanelDialog } from './seo-panel-dialog';
+import { PUBLIC_SITE_URL } from '../lib/public-site-url';
+import { usePageEditor, type SaveStatus } from './use-page-editor';
+import { usePageVersions } from './use-page-versions';
+import { VersionHistoryDialog } from './version-history-dialog';
 
 // Mirrors apps/public-site/src/lib/locale-path.ts's own convention (docs/adr/0017)
 // — every locale gets a URL prefix, and "home" collapses to the bare

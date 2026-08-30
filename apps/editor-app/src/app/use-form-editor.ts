@@ -3,9 +3,9 @@ import {
   useQueryClient,
   useSuspenseQuery,
 } from '@tanstack/react-query';
-import type { UpdateFormInput } from '../lib/forms-api-client.js';
-import { updateForm } from '../lib/forms-api-client.js';
-import { formQueryOptions } from './forms-queries.js';
+import type { UpdateFormInput } from '../lib/forms-api-client';
+import { updateForm } from '../lib/forms-api-client';
+import { formQueryOptions } from './forms-queries';
 
 // Reads through the same query the route loader already warmed (see
 // routes/_shell.forms.$formId.tsx) — same pattern as usePageEditor.

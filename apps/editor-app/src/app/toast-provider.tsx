@@ -8,7 +8,7 @@ import {
 } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
-import { cn } from '../lib/utils.js';
+import { cn } from '../lib/utils';
 
 export type ToastVariant = 'default' | 'destructive' | 'success';
 

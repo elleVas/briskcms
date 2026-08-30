@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { FormSubmission } from './form-submission.js';
+import { FormSubmission } from './form-submission';
 
 describe('FormSubmission entity', () => {
   const baseInput = {

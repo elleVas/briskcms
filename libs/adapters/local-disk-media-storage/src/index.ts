@@ -1,1 +1,1 @@
-export * from './lib/local-disk-media-storage.adapter.js';
+export * from './lib/local-disk-media-storage.adapter';

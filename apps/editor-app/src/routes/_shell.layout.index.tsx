@@ -1,9 +1,9 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { useSuspenseQuery } from '@tanstack/react-query';
 import { z } from 'zod';
-import { LayoutView } from '../app/layout-view.js';
-import { siteQueryOptions } from '../app/site-queries.js';
-import { requireAuth } from './-require-auth.js';
+import { LayoutView } from '../app/layout-view';
+import { siteQueryOptions } from '../app/site-queries';
+import { requireAuth } from './-require-auth';
 
 const DEFAULT_SITE_ID = import.meta.env['VITE_DEFAULT_SITE_ID'] as string;
 

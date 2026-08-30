@@ -1,4 +1,4 @@
-import type { FieldDescriptor } from '../field-types.js';
+import type { FieldDescriptor } from '../field-types';
 
 /**
  * Shared by ogni blocco con un prop `Visibility` (Nav, HamburgerMenu,

@@ -3,19 +3,19 @@ import { useForm, useWatch } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import type { SiteRecord } from '@brisk/shared-types';
-import { Button } from '../components/ui/button.js';
+import { Button } from '../components/ui/button';
 import {
   Dialog,
   DialogContent,
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '../components/ui/dialog.js';
-import { Input } from '../components/ui/input.js';
-import { Label } from '../components/ui/label.js';
-import { siteQueryOptions } from './site-queries.js';
-import { useResetFormOnOpen } from './use-reset-form-on-open.js';
-import { useSiteGeneralSettings } from './use-site-general-settings.js';
+} from '../components/ui/dialog';
+import { Input } from '../components/ui/input';
+import { Label } from '../components/ui/label';
+import { siteQueryOptions } from './site-queries';
+import { useResetFormOnOpen } from './use-reset-form-on-open';
+import { useSiteGeneralSettings } from './use-site-general-settings';
 
 export interface GeneralSettingsDialogProps {
   siteId: string;

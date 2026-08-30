@@ -1,5 +1,5 @@
 import type { TimelineStepProps } from '@brisk/shared-types';
-import type { BlockDescriptor } from '../field-types.js';
+import type { BlockDescriptor } from '../field-types';
 
 export const timelineStepBlock: BlockDescriptor<TimelineStepProps> = {
   type: 'TimelineStep',

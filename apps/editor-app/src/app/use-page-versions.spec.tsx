@@ -2,13 +2,13 @@ import type { ReactNode } from 'react';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { QueryClientProvider } from '@tanstack/react-query';
-import * as api from '../lib/pages-api-client.js';
-import { createTestQueryClient } from '../test-query-client.js';
-import { usePageVersions } from './use-page-versions.js';
+import * as api from '../lib/pages-api-client';
+import { createTestQueryClient } from '../test-query-client';
+import { usePageVersions } from './use-page-versions';
 
-vi.mock('../lib/pages-api-client.js', async (importOriginal) => {
+vi.mock('../lib/pages-api-client', async (importOriginal) => {
   const actual =
-    await importOriginal<typeof import('../lib/pages-api-client.js')>();
+    await importOriginal<typeof import('../lib/pages-api-client')>();
   return {
     ...actual,
     listPageVersions: vi.fn(),

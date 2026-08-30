@@ -1,8 +1,8 @@
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import { cn } from '@/lib/utils';
-import { pagesQueryOptions } from './pages-queries.js';
-import { collectDescendantIds } from './page-hierarchy.js';
+import { pagesQueryOptions } from './pages-queries';
+import { collectDescendantIds } from './page-hierarchy';
 
 export interface ParentPageSelectProps {
   id?: string;

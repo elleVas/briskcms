@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { SiteLayoutSection } from './site-layout-section.js';
+import { SiteLayoutSection } from './site-layout-section';
 
 describe('SiteLayoutSection entity', () => {
   const baseInput = {

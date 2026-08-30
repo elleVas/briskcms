@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import { BlockStyleFields } from './block-style-fields.js';
+import { BlockStyleFields } from './block-style-fields';
 
 describe('BlockStyleFields', () => {
   it('renders only the fields listed in properties, in that order', () => {

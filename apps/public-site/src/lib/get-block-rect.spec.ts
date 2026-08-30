@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { getBlockRect } from './get-block-rect.js';
+import { getBlockRect } from './get-block-rect';
 
 describe('getBlockRect', () => {
   afterEach(() => {

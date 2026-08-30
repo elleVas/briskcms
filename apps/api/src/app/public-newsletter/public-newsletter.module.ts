@@ -2,9 +2,9 @@ import { Module } from '@nestjs/common';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { requireEnv } from '@brisk/env-config';
 import { TurnstileCaptchaAdapter } from '@brisk/turnstile-captcha';
-import { createNewsletterPort } from '../newsletter-port.factory.js';
-import { PublicNewsletterController } from './public-newsletter.controller.js';
-import { CAPTCHA_PORT, NEWSLETTER_PORT } from './public-newsletter.tokens.js';
+import { createNewsletterPort } from '../newsletter-port.factory';
+import { PublicNewsletterController } from './public-newsletter.controller';
+import { CAPTCHA_PORT, NEWSLETTER_PORT } from './public-newsletter.tokens';
 
 @Module({
   imports: [

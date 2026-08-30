@@ -15,41 +15,41 @@ import {
   type BlockStyleOverride,
 } from '@brisk/shared-types';
 import type { BlockDescriptor } from '@brisk/block-registry';
-import { Button } from '../../components/ui/button.js';
-import { createPagePreviewToken } from '../../lib/preview-token-api-client.js';
-import { PUBLIC_SITE_URL } from '../../lib/public-site-url.js';
-import { useTranslation } from '../../lib/use-translation.js';
-import { GlobalStylesDialog } from '../global-styles-dialog.js';
-import { IconButton } from '../icon-button.js';
-import { siteQueryOptions } from '../site-queries.js';
-import { useToast } from '../toast-provider.js';
-import { useSiteThemeTokens } from '../use-site-theme-tokens.js';
-import { BlockPicker, type BlockPickerCategory } from './block-picker.js';
-import { BlockToolbarOverlay } from './block-toolbar-overlay.js';
-import { BreakpointSelector, type Breakpoint } from './breakpoint-selector.js';
+import { Button } from '../../components/ui/button';
+import { createPagePreviewToken } from '../../lib/preview-token-api-client';
+import { PUBLIC_SITE_URL } from '../../lib/public-site-url';
+import { useTranslation } from '../../lib/use-translation';
+import { GlobalStylesDialog } from '../global-styles-dialog';
+import { IconButton } from '../icon-button';
+import { siteQueryOptions } from '../site-queries';
+import { useToast } from '../toast-provider';
+import { useSiteThemeTokens } from '../use-site-theme-tokens';
+import { BlockPicker, type BlockPickerCategory } from './block-picker';
+import { BlockToolbarOverlay } from './block-toolbar-overlay';
+import { BreakpointSelector, type Breakpoint } from './breakpoint-selector';
 import {
   buildPreviewUrl,
   CanvasFrame,
   type EditingSection,
-} from './canvas-frame.js';
+} from './canvas-frame';
 import {
   computeDropTarget,
   type DropCandidateRect,
-} from './compute-drop-target.js';
-import { LayersPanel } from './layers-panel.js';
-import { isRectVisibleInIframe, useIframeGeometry } from './overlay-layer.js';
+} from './compute-drop-target';
+import { LayersPanel } from './layers-panel';
+import { isRectVisibleInIframe, useIframeGeometry } from './overlay-layer';
 import {
   findBlockInTree,
   locateBlock,
   moveBlock,
   updateBlockProps,
   updateBlockStyleOverride,
-} from './use-block-tree.js';
-import { useBlockTreeMutations } from './use-block-tree-mutations.js';
-import { usePreviewBridge } from './use-preview-bridge.js';
-import { usePropertyPatch } from './use-property-patch.js';
-import { useSidebarDrag } from './use-sidebar-drag.js';
-import { useTextEdit } from './use-text-edit.js';
+} from './use-block-tree';
+import { useBlockTreeMutations } from './use-block-tree-mutations';
+import { usePreviewBridge } from './use-preview-bridge';
+import { usePropertyPatch } from './use-property-patch';
+import { useSidebarDrag } from './use-sidebar-drag';
+import { useTextEdit } from './use-text-edit';
 
 export interface CanvasEditorShellProps {
   backLink: ReactNode;

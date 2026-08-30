@@ -1,5 +1,5 @@
 import type { MapEmbedProps } from '@brisk/shared-types';
-import type { BlockDescriptor } from '../field-types.js';
+import type { BlockDescriptor } from '../field-types';
 
 export const mapEmbedBlock: BlockDescriptor<MapEmbedProps> = {
   type: 'MapEmbed',

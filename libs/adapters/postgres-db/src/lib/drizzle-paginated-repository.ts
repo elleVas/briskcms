@@ -1,6 +1,6 @@
 import { and, count, desc, eq, type SQL } from 'drizzle-orm';
 import type { AnyPgColumn, PgTable } from 'drizzle-orm/pg-core';
-import { type BriskDb, type BriskTx, withTenant } from './client.js';
+import { type BriskDb, type BriskTx, withTenant } from './client';
 
 export interface Pagination {
   page: number;

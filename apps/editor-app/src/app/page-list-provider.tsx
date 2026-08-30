@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useRef, useState, type ReactNode } from 'react';
 import { PageListContext, type PageListPort } from '@brisk/block-registry';
 import type { PickedPage } from '@brisk/shared-types';
-import { PagePickerDialog } from './page-picker-dialog.js';
+import { PagePickerDialog } from './page-picker-dialog';
 
 export interface PageListProviderProps {
   siteId: string;

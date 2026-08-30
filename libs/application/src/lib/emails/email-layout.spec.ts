@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ctaButtonHtml, renderEmailLayout } from './email-layout.js';
+import { ctaButtonHtml, renderEmailLayout } from './email-layout';
 
 describe('ctaButtonHtml', () => {
   it('renders a link with the given URL and label', () => {

@@ -1,1 +1,1 @@
-export * from './lib/s3-attachment-storage.adapter.js';
+export * from './lib/s3-attachment-storage.adapter';

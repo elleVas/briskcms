@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildFormSubmissionNotificationEmail } from './form-submission-notification-email.template.js';
+import { buildFormSubmissionNotificationEmail } from './form-submission-notification-email.template';
 
 describe('buildFormSubmissionNotificationEmail', () => {
   it('includes the form name and field entries in both bodies', () => {

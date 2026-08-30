@@ -12,7 +12,7 @@ import {
   siblingsAt,
   updateBlockProps,
   updateBlockStyleOverride,
-} from './use-block-tree.js';
+} from './use-block-tree';
 
 function tree(): Block[] {
   return [

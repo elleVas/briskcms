@@ -24,11 +24,11 @@ import type {
   FormSubmissionRepositoryPort,
   NewsletterPort,
 } from '@brisk/ports';
-import { ZodValidationPipe } from '../zod-validation.pipe.js';
+import { ZodValidationPipe } from '../zod-validation.pipe';
 import {
   type SubmitFormBody,
   submitFormBodySchema,
-} from './public-forms.schemas.js';
+} from './public-forms.schemas';
 import {
   ATTACHMENT_STORAGE,
   CAPTCHA_PORT,
@@ -37,7 +37,7 @@ import {
   FORM_REPOSITORY,
   FORM_SUBMISSION_REPOSITORY,
   NEWSLETTER_PORT,
-} from './public-forms.tokens.js';
+} from './public-forms.tokens';
 
 const MAX_ATTACHMENT_BYTES = 10 * 1024 * 1024; // same cap as MediaController's own upload
 

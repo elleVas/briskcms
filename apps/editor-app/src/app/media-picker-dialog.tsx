@@ -6,10 +6,10 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from '../components/ui/dialog.js';
-import type { MediaDto } from '../lib/media-api-client.js';
-import { MediaGrid } from './media-grid.js';
-import { mediaQueryOptions } from './media-queries.js';
+} from '../components/ui/dialog';
+import type { MediaDto } from '../lib/media-api-client';
+import { MediaGrid } from './media-grid';
+import { mediaQueryOptions } from './media-queries';
 
 export interface MediaPickerDialogProps {
   siteId: string;

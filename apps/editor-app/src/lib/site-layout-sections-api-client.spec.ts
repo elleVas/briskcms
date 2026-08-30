@@ -7,7 +7,7 @@ import {
   saveDraft,
   updateSticky,
   type SiteLayoutSectionDto,
-} from './site-layout-sections-api-client.js';
+} from './site-layout-sections-api-client';
 
 const sampleSection: SiteLayoutSectionDto = {
   id: 'section-1',

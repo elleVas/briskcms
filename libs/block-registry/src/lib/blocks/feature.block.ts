@@ -1,8 +1,8 @@
 import type { FeatureProps } from '@brisk/shared-types';
 import { BLOCK_STYLE_DEFAULTS } from '@brisk/shared-types';
-import { FieldBuilder, type BlockDescriptor } from '../field-types.js';
-import { BlockStyleRegistry } from '../block-style-registry.js';
-import { IconPickerField } from '../fields/icon-picker-field.js';
+import { FieldBuilder, type BlockDescriptor } from '../field-types';
+import { BlockStyleRegistry } from '../block-style-registry';
+import { IconPickerField } from '../fields/icon-picker-field';
 
 export const featureBlock: BlockDescriptor<FeatureProps> = {
   type: 'Feature',

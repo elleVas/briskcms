@@ -5,7 +5,7 @@ import type {
   SiteThemeBlockStylesPort,
   TenantContextPort,
 } from '@brisk/ports';
-import { SitesController } from './sites.controller.js';
+import { SitesController } from './sites.controller';
 
 function buildSite(
   overrides: Partial<Parameters<typeof Site.fromProps>[0]> = {},

@@ -1,6 +1,6 @@
 import type { APIRoute } from 'astro';
-import { listThemeIcons } from '../../../../lib/resolve-theme-icons.js';
-import { themesApiCorsHeaders } from '../../../../lib/themes-api-cors.js';
+import { listThemeIcons } from '../../../../lib/resolve-theme-icons';
+import { themesApiCorsHeaders } from '../../../../lib/themes-api-cors';
 
 // docs/adr/0023: resolved server-side here (apps/public-site is the only
 // app with a real ~theme alias, editor-app/apps/api have no concept of

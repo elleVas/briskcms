@@ -2,15 +2,15 @@ import type { ComponentProps } from 'react';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { QueryClientProvider } from '@tanstack/react-query';
-import { TooltipProvider } from '../components/ui/tooltip.js';
-import * as api from '../lib/media-api-client.js';
-import type { MediaDto } from '../lib/media-api-client.js';
-import { createTestQueryClient } from '../test-query-client.js';
-import { MediaGrid } from './media-grid.js';
+import { TooltipProvider } from '../components/ui/tooltip';
+import * as api from '../lib/media-api-client';
+import type { MediaDto } from '../lib/media-api-client';
+import { createTestQueryClient } from '../test-query-client';
+import { MediaGrid } from './media-grid';
 
-vi.mock('../lib/media-api-client.js', async (importOriginal) => {
+vi.mock('../lib/media-api-client', async (importOriginal) => {
   const actual =
-    await importOriginal<typeof import('../lib/media-api-client.js')>();
+    await importOriginal<typeof import('../lib/media-api-client')>();
   return { ...actual, uploadMedia: vi.fn(), deleteMedia: vi.fn() };
 });
 

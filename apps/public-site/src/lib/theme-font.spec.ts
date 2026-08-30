@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { resolveThemeFont } from './theme-font.js';
+import { resolveThemeFont } from './theme-font';
 
 describe('resolveThemeFont', () => {
   it('returns null when no font is set (Tier 1 not touched)', () => {

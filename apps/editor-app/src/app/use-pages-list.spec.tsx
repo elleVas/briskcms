@@ -3,9 +3,9 @@ import { act, renderHook, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { QueryClientProvider } from '@tanstack/react-query';
 import * as router from '@tanstack/react-router';
-import * as api from '../lib/pages-api-client.js';
-import { createTestQueryClient } from '../test-query-client.js';
-import { usePagesList } from './use-pages-list.js';
+import * as api from '../lib/pages-api-client';
+import { createTestQueryClient } from '../test-query-client';
+import { usePagesList } from './use-pages-list';
 
 vi.mock('@tanstack/react-router', async (importOriginal) => {
   const actual =
@@ -13,9 +13,9 @@ vi.mock('@tanstack/react-router', async (importOriginal) => {
   return { ...actual, useNavigate: vi.fn() };
 });
 
-vi.mock('../lib/pages-api-client.js', async (importOriginal) => {
+vi.mock('../lib/pages-api-client', async (importOriginal) => {
   const actual =
-    await importOriginal<typeof import('../lib/pages-api-client.js')>();
+    await importOriginal<typeof import('../lib/pages-api-client')>();
   return {
     ...actual,
     createPage: vi.fn(),

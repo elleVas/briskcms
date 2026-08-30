@@ -1,7 +1,7 @@
 // Every component under test may call useTranslation() — initialize the
 // real i18next instance once here instead of in every spec file.
 import { afterEach } from 'vitest';
-import i18next from './i18n.js';
+import i18next from './i18n';
 
 // i18next is a global singleton: a test that switches language (see
 // language-switcher.spec.tsx) would otherwise leak that choice into every

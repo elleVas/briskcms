@@ -1,8 +1,8 @@
 import { Logger, NotFoundException } from '@nestjs/common';
 import type { ArgumentsHost } from '@nestjs/common';
 import { PageNotFoundError } from '@brisk/domain-core';
-import { HttpExceptionFilter } from './http-exception.filter.js';
-import type { RequestWithId } from './request-id.middleware.js';
+import { HttpExceptionFilter } from './http-exception.filter';
+import type { RequestWithId } from './request-id.middleware';
 
 function buildHost(request: Partial<RequestWithId>) {
   const json = jest.fn();

@@ -1,5 +1,5 @@
-import type { BlockBehavior } from './types.js';
-import { carouselScrollSign } from './carousel-scroll-direction.js';
+import type { BlockBehavior } from './types';
+import { carouselScrollSign } from './carousel-scroll-direction';
 
 // Idempotency guard: re-running this on an already-wired slider would
 // attach a second pair of click listeners to the same nav buttons. See

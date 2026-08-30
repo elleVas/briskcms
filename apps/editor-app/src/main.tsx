@@ -4,12 +4,12 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { createRouter, RouterProvider } from '@tanstack/react-router';
 import './i18n';
 import './styles.css';
-import { TooltipProvider } from './components/ui/tooltip.js';
-import { setupGlobalErrorHandlers } from './global-error-handlers.js';
-import { ApiError } from './lib/http-client.js';
+import { TooltipProvider } from './components/ui/tooltip';
+import { setupGlobalErrorHandlers } from './global-error-handlers';
+import { ApiError } from './lib/http-client';
 import { routeTree } from './routeTree.gen';
-import { ToastProvider } from './app/toast-provider.js';
-import { applyTheme, getInitialTheme } from './theme.js';
+import { ToastProvider } from './app/toast-provider';
+import { applyTheme, getInitialTheme } from './theme';
 
 setupGlobalErrorHandlers();
 

@@ -1,4 +1,4 @@
-import type { Block } from './content-model.js';
+import type { Block } from './content-model';
 
 // Web Crypto (`globalThis.crypto`), non `node:crypto` — questo file è
 // esportato dal barrel di @brisk/shared-types, che apps/public-site importa

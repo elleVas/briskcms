@@ -3,9 +3,9 @@ import type {
   BlockStyleDefaults,
   BlockStyleOverride,
 } from '@brisk/shared-types';
-import { Input } from '../../components/ui/input.js';
-import { Label } from '../../components/ui/label.js';
-import { useTranslation } from '../../lib/use-translation.js';
+import { Input } from '../../components/ui/input';
+import { Label } from '../../components/ui/label';
+import { useTranslation } from '../../lib/use-translation';
 
 export interface BlockStyleFieldsProps {
   /** `BlockDescriptor.stylableProperties` del tipo selezionato — decide quali campi mostrare, nello stesso ordine (docs/adr/0022). */

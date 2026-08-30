@@ -4,13 +4,13 @@ import { requireEnv } from '@brisk/env-config';
 import { type BriskDb } from '@brisk/postgres-db';
 import { DrizzleSiteLayoutSectionRepository } from '@brisk/postgres-site-layout-section-repository';
 import { PreviewTokenAdapter } from '@brisk/preview-token-adapter';
-import { DATABASE, DatabaseModule } from '../database.module.js';
-import { PublicSiteLayoutSectionsController } from './public-site-layout-sections.controller.js';
+import { DATABASE, DatabaseModule } from '../database.module';
+import { PublicSiteLayoutSectionsController } from './public-site-layout-sections.controller';
 import {
   DEFAULT_TENANT_ID,
   PREVIEW_TOKEN_PORT,
   SITE_LAYOUT_SECTION_REPOSITORY,
-} from './public-site-layout-sections.tokens.js';
+} from './public-site-layout-sections.tokens';
 
 @Module({
   imports: [

@@ -3,12 +3,12 @@ import { parseSearchExcerpt } from '@brisk/shared-types';
 import {
   getPublishedSiteChrome,
   searchPublishedPages,
-} from '../../lib/public-api-client.js';
-import { localePath } from '../../lib/locale-path.js';
-import { Translator } from '../../lib/i18n.js';
-import { buildContentSecurityPolicy } from '../../lib/content-security-policy.js';
+} from '../../lib/public-api-client';
+import { localePath } from '../../lib/locale-path';
+import { Translator } from '../../lib/i18n';
+import { buildContentSecurityPolicy } from '../../lib/content-security-policy';
 import PageLayoutCore from '../../layouts/PageLayout.astro';
-import { resolveThemeLayoutOverride } from '../../lib/resolve-theme-layout-override.js';
+import { resolveThemeLayoutOverride } from '../../lib/resolve-theme-layout-override';
 const PageLayout = resolveThemeLayoutOverride(PageLayoutCore);
 import ErrorPageShell from '../../components/ErrorPageShell.astro';
 import NotFound from '../../components/NotFound.astro';

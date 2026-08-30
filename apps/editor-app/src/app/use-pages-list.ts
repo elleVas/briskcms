@@ -9,7 +9,7 @@ import {
   publishPage as apiPublishPage,
   setPageParent as apiSetPageParent,
   type DuplicatePageInput,
-} from '../lib/pages-api-client.js';
+} from '../lib/pages-api-client';
 
 // Fetching the list itself is the route loader's job (see
 // routes/_shell.pages.index.tsx) so the auth guard (redirect to /login on a

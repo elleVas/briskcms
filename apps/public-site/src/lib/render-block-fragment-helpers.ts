@@ -1,5 +1,5 @@
 import type { Block, BlockStyleOverride } from '@brisk/shared-types';
-import { editorAppUrl } from './editor-app-url.js';
+import { editorAppUrl } from './editor-app-url';
 
 export interface RenderBlockFragmentBody {
   pageId: string;

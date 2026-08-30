@@ -1,10 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import * as api from '../lib/public-api-client.js';
-import { GET } from './sitemap.xml.js';
+import * as api from '../lib/public-api-client';
+import { GET } from './sitemap.xml';
 
-vi.mock('../lib/public-api-client.js', async (importOriginal) => {
+vi.mock('../lib/public-api-client', async (importOriginal) => {
   const actual =
-    await importOriginal<typeof import('../lib/public-api-client.js')>();
+    await importOriginal<typeof import('../lib/public-api-client')>();
   return { ...actual, listPublishedPagesForSitemap: vi.fn() };
 });
 

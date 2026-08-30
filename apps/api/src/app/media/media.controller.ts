@@ -23,16 +23,16 @@ import type {
   MediaStoragePort,
   TenantContextPort,
 } from '@brisk/ports';
-import { SessionAuthGuard } from '../auth/session-auth.guard.js';
-import { ZodValidationPipe } from '../zod-validation.pipe.js';
+import { SessionAuthGuard } from '../auth/session-auth.guard';
+import { ZodValidationPipe } from '../zod-validation.pipe';
 import {
   type ListMediaQuery,
   listMediaQuerySchema,
   type UploadMediaBody,
   uploadMediaBodySchema,
-} from './media.schemas.js';
-import { TENANT_CONTEXT } from '../auth/auth.tokens.js';
-import { MEDIA_REPOSITORY, MEDIA_STORAGE } from './media.tokens.js';
+} from './media.schemas';
+import { TENANT_CONTEXT } from '../auth/auth.tokens';
+import { MEDIA_REPOSITORY, MEDIA_STORAGE } from './media.tokens';
 
 const MAX_UPLOAD_BYTES = 10 * 1024 * 1024; // 10MB — a generous photo, not a video/archive
 

@@ -8,7 +8,7 @@ import {
   publishPage,
   saveDraft,
   updateSeoMeta,
-} from './pages-api-client.js';
+} from './pages-api-client';
 
 const samplePage: PageRecord = {
   id: 'page-1',

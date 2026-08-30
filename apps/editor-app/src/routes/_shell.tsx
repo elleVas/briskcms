@@ -1,5 +1,5 @@
 import { createFileRoute, Outlet } from '@tanstack/react-router';
-import { AdminShell } from '../app/admin-shell.js';
+import { AdminShell } from '../app/admin-shell';
 
 export const Route = createFileRoute('/_shell')({
   component: ShellLayout,

@@ -3,7 +3,7 @@ import {
   parseRootCustomProperties,
   resolveBlockStyleDefaults,
   resolveDefaultStyleExpression,
-} from './resolve-theme-block-style-defaults-helpers.js';
+} from './resolve-theme-block-style-defaults-helpers';
 
 describe('parseRootCustomProperties', () => {
   it('extracts every custom property declared inside :root', () => {

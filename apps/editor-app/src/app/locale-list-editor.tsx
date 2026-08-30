@@ -5,14 +5,14 @@ import {
   CURATED_LOCALE_CODES,
   getLocaleDisplayName,
 } from '@brisk/shared-types';
-import { Badge } from '../components/ui/badge.js';
-import { Button } from '../components/ui/button.js';
+import { Badge } from '../components/ui/badge';
+import { Button } from '../components/ui/button';
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from '../components/ui/popover.js';
-import { IconButton } from './icon-button.js';
+} from '../components/ui/popover';
+import { IconButton } from './icon-button';
 
 export interface LocaleListEditorProps {
   enabledLocales: string[];

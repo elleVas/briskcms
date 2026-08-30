@@ -20,10 +20,10 @@ import {
 } from '@brisk/application';
 import type { Form } from '@brisk/domain-core';
 import type { FormRepositoryPort, TenantContextPort } from '@brisk/ports';
-import { SessionAuthGuard } from '../auth/session-auth.guard.js';
-import { ZodValidationPipe } from '../zod-validation.pipe.js';
-import { TENANT_CONTEXT } from '../auth/auth.tokens.js';
-import { FORM_REPOSITORY } from './forms.tokens.js';
+import { SessionAuthGuard } from '../auth/session-auth.guard';
+import { ZodValidationPipe } from '../zod-validation.pipe';
+import { TENANT_CONTEXT } from '../auth/auth.tokens';
+import { FORM_REPOSITORY } from './forms.tokens';
 import {
   type CreateFormBody,
   createFormBodySchema,
@@ -31,7 +31,7 @@ import {
   listFormsQuerySchema,
   type UpdateFormBody,
   updateFormBodySchema,
-} from './forms.schemas.js';
+} from './forms.schemas';
 
 @Controller('forms')
 @UseGuards(SessionAuthGuard)

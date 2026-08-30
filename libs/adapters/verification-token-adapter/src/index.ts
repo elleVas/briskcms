@@ -1,1 +1,1 @@
-export * from './lib/verification-token.adapter.js';
+export * from './lib/verification-token.adapter';

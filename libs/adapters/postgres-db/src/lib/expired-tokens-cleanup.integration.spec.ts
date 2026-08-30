@@ -1,10 +1,10 @@
 import { randomUUID } from 'node:crypto';
 import { eq } from 'drizzle-orm';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { type BriskDb, createAppDb, withTenant } from './client.js';
-import { deleteExpiredTokens } from './expired-tokens-cleanup.js';
-import { deleteIntegrationTenants } from './integration-test-cleanup.js';
-import { sessions, tenants, users, verificationTokens } from './schema.js';
+import { type BriskDb, createAppDb, withTenant } from './client';
+import { deleteExpiredTokens } from './expired-tokens-cleanup';
+import { deleteIntegrationTenants } from './integration-test-cleanup';
+import { sessions, tenants, users, verificationTokens } from './schema';
 
 /**
  * Runs against a real Postgres — see docs/development.md. Own throwaway

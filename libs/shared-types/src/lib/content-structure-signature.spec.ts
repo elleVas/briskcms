@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { computeContentStructureSignature } from './content-structure-signature.js';
-import type { PageContent } from './content-model.js';
+import { computeContentStructureSignature } from './content-structure-signature';
+import type { PageContent } from './content-model';
 
 describe('computeContentStructureSignature', () => {
   it('is identical for the same block types regardless of prop values', () => {

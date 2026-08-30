@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import { ColorPickerField } from './color-picker-field.js';
+import { ColorPickerField } from './color-picker-field';
 
 describe('ColorPickerField', () => {
   it('renders the theme-default swatch and empty text input when value is null', () => {

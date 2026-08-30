@@ -1,6 +1,6 @@
 import { render } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { TurnstileWidget } from './turnstile-widget.js';
+import { TurnstileWidget } from './turnstile-widget';
 
 describe('TurnstileWidget', () => {
   const realTurnstile = window.turnstile;

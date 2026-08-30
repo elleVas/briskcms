@@ -1,1 +1,1 @@
-export * from './lib/smtp-email.adapter.js';
+export * from './lib/smtp-email.adapter';

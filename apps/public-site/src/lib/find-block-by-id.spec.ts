@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Block } from '@brisk/shared-types';
-import { findBlockById } from './find-block-by-id.js';
+import { findBlockById } from './find-block-by-id';
 
 describe('findBlockById', () => {
   it('finds a top-level block by id', () => {

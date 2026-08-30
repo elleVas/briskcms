@@ -12,7 +12,7 @@ import type {
   SearchPort,
   TenantContextPort,
 } from '@brisk/ports';
-import { PagesController } from './pages.controller.js';
+import { PagesController } from './pages.controller';
 
 function buildPage(overrides: Partial<Parameters<typeof Page.create>[0]> = {}) {
   return Page.create({

@@ -1,7 +1,7 @@
 import type { StatsCounterProps } from '@brisk/shared-types';
 import { BLOCK_STYLE_DEFAULTS } from '@brisk/shared-types';
-import type { BlockDescriptor } from '../field-types.js';
-import { BlockStyleRegistry } from '../block-style-registry.js';
+import type { BlockDescriptor } from '../field-types';
+import { BlockStyleRegistry } from '../block-style-registry';
 
 export const statsCounterBlock: BlockDescriptor<StatsCounterProps> = {
   type: 'StatsCounter',

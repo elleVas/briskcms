@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import type { Block } from '@brisk/shared-types';
-import { computeReorderedIds, LayersPanel } from './layers-panel.js';
+import { computeReorderedIds, LayersPanel } from './layers-panel';
 
 describe('computeReorderedIds', () => {
   it('moves the active id to the position of the over id', () => {

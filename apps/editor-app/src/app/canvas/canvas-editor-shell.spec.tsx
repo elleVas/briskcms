@@ -14,13 +14,13 @@ import {
   PREVIEW_BRIDGE_VERSION,
 } from '@brisk/shared-types';
 import type { BlockDescriptor } from '@brisk/block-registry';
-import { TooltipProvider } from '../../components/ui/tooltip.js';
-import { createTestQueryClient } from '../../test-query-client.js';
-import * as blockFragmentApi from '../../lib/block-fragment-api-client.js';
-import * as previewTokenApi from '../../lib/preview-token-api-client.js';
-import { PUBLIC_SITE_URL } from '../../lib/public-site-url.js';
-import { ToastProvider } from '../toast-provider.js';
-import { CanvasEditorShell } from './canvas-editor-shell.js';
+import { TooltipProvider } from '../../components/ui/tooltip';
+import { createTestQueryClient } from '../../test-query-client';
+import * as blockFragmentApi from '../../lib/block-fragment-api-client';
+import * as previewTokenApi from '../../lib/preview-token-api-client';
+import { PUBLIC_SITE_URL } from '../../lib/public-site-url';
+import { ToastProvider } from '../toast-provider';
+import { CanvasEditorShell } from './canvas-editor-shell';
 
 vi.mock('@tanstack/react-router', async (importOriginal) => {
   const actual =
@@ -28,18 +28,16 @@ vi.mock('@tanstack/react-router', async (importOriginal) => {
   return { ...actual, useNavigate: vi.fn() };
 });
 
-vi.mock('../../lib/preview-token-api-client.js', async (importOriginal) => {
+vi.mock('../../lib/preview-token-api-client', async (importOriginal) => {
   const actual =
-    await importOriginal<
-      typeof import('../../lib/preview-token-api-client.js')
-    >();
+    await importOriginal<typeof import('../../lib/preview-token-api-client')>();
   return { ...actual, createPagePreviewToken: vi.fn() };
 });
 
-vi.mock('../../lib/block-fragment-api-client.js', async (importOriginal) => {
+vi.mock('../../lib/block-fragment-api-client', async (importOriginal) => {
   const actual =
     await importOriginal<
-      typeof import('../../lib/block-fragment-api-client.js')
+      typeof import('../../lib/block-fragment-api-client')
     >();
   return { ...actual, renderBlockFragment: vi.fn() };
 });

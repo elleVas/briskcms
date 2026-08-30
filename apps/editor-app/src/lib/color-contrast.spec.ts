@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { checkContrastAgainstThemeForeground } from './color-contrast.js';
+import { checkContrastAgainstThemeForeground } from './color-contrast';
 
 describe('checkContrastAgainstThemeForeground', () => {
   it('gives the well-known 21:1 ratio for pure white vs pure black', () => {

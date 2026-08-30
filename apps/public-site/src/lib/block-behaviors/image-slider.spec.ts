@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { describe, expect, it, vi } from 'vitest';
-import { imageSliderBehaviors } from './image-slider.js';
-import { runBlockBehaviors } from './run-block-behaviors.js';
+import { imageSliderBehaviors } from './image-slider';
+import { runBlockBehaviors } from './run-block-behaviors';
 
 function renderSlider(): HTMLElement {
   document.body.innerHTML = `

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { Form, FormNotFoundError } from '@brisk/domain-core';
-import { getFormById } from './get-form-by-id.use-case.js';
-import { InMemoryFormRepository } from './in-memory-repositories.test-fixture.js';
+import { getFormById } from './get-form-by-id.use-case';
+import { InMemoryFormRepository } from './in-memory-repositories.test-fixture';
 
 const tenantId = 'tenant-1';
 

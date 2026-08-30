@@ -5,14 +5,14 @@ import {
   PageSlugAlreadyExistsError,
 } from '@brisk/domain-core';
 import { computeContentStructureSignature } from '@brisk/shared-types';
-import { createPage } from './create-page.use-case.js';
-import { createPageTranslation } from './create-page-translation.use-case.js';
-import { listPageTranslations } from './list-page-translations.use-case.js';
-import { markTranslationSynced } from './mark-translation-synced.use-case.js';
+import { createPage } from './create-page.use-case';
+import { createPageTranslation } from './create-page-translation.use-case';
+import { listPageTranslations } from './list-page-translations.use-case';
+import { markTranslationSynced } from './mark-translation-synced.use-case';
 import {
   InMemoryPageRepository,
   InMemoryPageVersionRepository,
-} from './in-memory-repositories.test-fixture.js';
+} from './in-memory-repositories.test-fixture';
 
 describe('createPageTranslation', () => {
   const tenantId = 'tenant-1';

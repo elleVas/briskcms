@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import { TooltipProvider } from '../components/ui/tooltip.js';
-import { LocaleListEditor } from './locale-list-editor.js';
+import { TooltipProvider } from '../components/ui/tooltip';
+import { LocaleListEditor } from './locale-list-editor';
 
 function renderEditor(
   enabledLocales: string[],

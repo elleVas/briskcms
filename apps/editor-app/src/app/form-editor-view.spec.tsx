@@ -1,12 +1,12 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { QueryClientProvider } from '@tanstack/react-query';
-import { TooltipProvider } from '../components/ui/tooltip.js';
-import * as api from '../lib/forms-api-client.js';
-import type { FormDto } from '../lib/forms-api-client.js';
-import { createTestQueryClient } from '../test-query-client.js';
-import { formQueryOptions } from './forms-queries.js';
-import { FormEditorView } from './form-editor-view.js';
+import { TooltipProvider } from '../components/ui/tooltip';
+import * as api from '../lib/forms-api-client';
+import type { FormDto } from '../lib/forms-api-client';
+import { createTestQueryClient } from '../test-query-client';
+import { formQueryOptions } from './forms-queries';
+import { FormEditorView } from './form-editor-view';
 
 vi.mock('@tanstack/react-router', async (importOriginal) => {
   const actual =
@@ -19,9 +19,9 @@ vi.mock('@tanstack/react-router', async (importOriginal) => {
   };
 });
 
-vi.mock('../lib/forms-api-client.js', async (importOriginal) => {
+vi.mock('../lib/forms-api-client', async (importOriginal) => {
   const actual =
-    await importOriginal<typeof import('../lib/forms-api-client.js')>();
+    await importOriginal<typeof import('../lib/forms-api-client')>();
   return { ...actual, updateForm: vi.fn() };
 });
 

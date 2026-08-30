@@ -5,7 +5,7 @@ import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import sharp from 'sharp';
 import { UnsupportedMediaTypeError } from '@brisk/domain-core';
-import { LocalDiskMediaStorageAdapter } from './local-disk-media-storage.adapter.js';
+import { LocalDiskMediaStorageAdapter } from './local-disk-media-storage.adapter';
 
 async function fileExists(path: string): Promise<boolean> {
   return access(path)

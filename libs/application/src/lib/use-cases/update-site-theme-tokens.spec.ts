@@ -3,8 +3,8 @@ import { Site, SiteNotFoundError } from '@brisk/domain-core';
 import {
   InMemorySiteRepository,
   InMemorySiteThemeBlockStylesRepository,
-} from './in-memory-repositories.test-fixture.js';
-import { updateSiteThemeTokens } from './update-site-theme-tokens.use-case.js';
+} from './in-memory-repositories.test-fixture';
+import { updateSiteThemeTokens } from './update-site-theme-tokens.use-case';
 
 describe('updateSiteThemeTokens', () => {
   const tenantId = 'tenant-1';

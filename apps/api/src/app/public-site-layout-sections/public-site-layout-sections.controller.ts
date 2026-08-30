@@ -13,16 +13,16 @@ import type {
   PreviewTokenPort,
   SiteLayoutSectionRepositoryPort,
 } from '@brisk/ports';
-import { ZodValidationPipe } from '../zod-validation.pipe.js';
+import { ZodValidationPipe } from '../zod-validation.pipe';
 import {
   type PublicSiteLayoutSectionPreviewQuery,
   publicSiteLayoutSectionPreviewQuerySchema,
-} from './public-site-layout-sections.schemas.js';
+} from './public-site-layout-sections.schemas';
 import {
   DEFAULT_TENANT_ID,
   PREVIEW_TOKEN_PORT,
   SITE_LAYOUT_SECTION_REPOSITORY,
-} from './public-site-layout-sections.tokens.js';
+} from './public-site-layout-sections.tokens';
 
 // No SessionAuthGuard on this controller — same public, unauthenticated
 // read path as PublicPagesController, gated entirely by the preview token

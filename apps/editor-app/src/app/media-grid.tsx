@@ -1,12 +1,12 @@
 import { useRef, useState, type ChangeEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ChevronLeft, ChevronRight, Trash2 } from 'lucide-react';
-import { Button } from '../components/ui/button.js';
-import type { MediaDto } from '../lib/media-api-client.js';
-import { ConfirmDeleteDialog } from './confirm-delete-dialog.js';
-import { IconButton } from './icon-button.js';
-import { MEDIA_PAGE_SIZE } from './media-queries.js';
-import { useMediaLibrary } from './use-media-library.js';
+import { Button } from '../components/ui/button';
+import type { MediaDto } from '../lib/media-api-client';
+import { ConfirmDeleteDialog } from './confirm-delete-dialog';
+import { IconButton } from './icon-button';
+import { MEDIA_PAGE_SIZE } from './media-queries';
+import { useMediaLibrary } from './use-media-library';
 
 export interface MediaGridProps {
   siteId: string;

@@ -4,15 +4,15 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { useMediaPicker } from '@brisk/block-registry';
 import type { PickedMedia } from '@brisk/shared-types';
-import { TooltipProvider } from '../components/ui/tooltip.js';
-import * as api from '../lib/media-api-client.js';
-import type { MediaDto } from '../lib/media-api-client.js';
-import { createTestQueryClient } from '../test-query-client.js';
-import { MediaPickerProvider } from './media-picker-provider.js';
+import { TooltipProvider } from '../components/ui/tooltip';
+import * as api from '../lib/media-api-client';
+import type { MediaDto } from '../lib/media-api-client';
+import { createTestQueryClient } from '../test-query-client';
+import { MediaPickerProvider } from './media-picker-provider';
 
-vi.mock('../lib/media-api-client.js', async (importOriginal) => {
+vi.mock('../lib/media-api-client', async (importOriginal) => {
   const actual =
-    await importOriginal<typeof import('../lib/media-api-client.js')>();
+    await importOriginal<typeof import('../lib/media-api-client')>();
   return { ...actual, listMedia: vi.fn(), uploadMedia: vi.fn() };
 });
 

@@ -1,8 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  resolveAncestorSlugs,
-  type PageHierarchyNode,
-} from './page-hierarchy.js';
+import { resolveAncestorSlugs, type PageHierarchyNode } from './page-hierarchy';
 
 function nodeMap(nodes: PageHierarchyNode[]): Map<string, PageHierarchyNode> {
   return new Map(nodes.map((node) => [node.id, node]));

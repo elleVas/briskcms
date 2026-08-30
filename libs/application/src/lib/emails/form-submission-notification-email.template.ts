@@ -1,5 +1,5 @@
 import type { EmailMessage } from '@brisk/ports';
-import { escapeHtml, renderEmailLayout } from './email-layout.js';
+import { escapeHtml, renderEmailLayout } from './email-layout';
 
 export interface FormSubmissionEntry {
   label: string;

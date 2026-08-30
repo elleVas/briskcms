@@ -4,13 +4,13 @@ import {
   DrizzleSiteRepository,
   DrizzleSiteThemeBlockStylesRepository,
 } from '@brisk/postgres-site-repository';
-import { AuthModule } from '../auth/auth.module.js';
-import { DATABASE, DatabaseModule } from '../database.module.js';
-import { SitesController } from './sites.controller.js';
+import { AuthModule } from '../auth/auth.module';
+import { DATABASE, DatabaseModule } from '../database.module';
+import { SitesController } from './sites.controller';
 import {
   SITE_REPOSITORY,
   SITE_THEME_BLOCK_STYLES_REPOSITORY,
-} from './sites.tokens.js';
+} from './sites.tokens';
 
 @Module({
   imports: [DatabaseModule, AuthModule],

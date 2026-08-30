@@ -1,4 +1,4 @@
-import type { BlockBehavior } from './types.js';
+import type { BlockBehavior } from './types';
 
 // Idempotency guard: re-running this on an already-wired toggle would
 // attach a second click listener (and a second document-level

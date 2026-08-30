@@ -5,8 +5,8 @@ import type {
   SiteRepositoryPort,
   SiteThemeBlockStylesPort,
 } from '@brisk/ports';
-import { resolveSiteChrome } from './resolve-site-chrome.js';
-import { resolvePageByPath } from './resolve-page-by-path.js';
+import { resolveSiteChrome } from './resolve-site-chrome';
+import { resolvePageByPath } from './resolve-page-by-path';
 
 export type { PublishedPage };
 

@@ -3,18 +3,18 @@ import { Controller, useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import type { SiteRecord } from '@brisk/shared-types';
-import { Button } from '../components/ui/button.js';
+import { Button } from '../components/ui/button';
 import {
   Dialog,
   DialogContent,
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '../components/ui/dialog.js';
-import { Switch } from '../components/ui/switch.js';
-import { siteQueryOptions } from './site-queries.js';
-import { useResetFormOnOpen } from './use-reset-form-on-open.js';
-import { useSiteSeoSettings } from './use-site-seo-settings.js';
+} from '../components/ui/dialog';
+import { Switch } from '../components/ui/switch';
+import { siteQueryOptions } from './site-queries';
+import { useResetFormOnOpen } from './use-reset-form-on-open';
+import { useSiteSeoSettings } from './use-site-seo-settings';
 
 export interface SeoSettingsDialogProps {
   siteId: string;

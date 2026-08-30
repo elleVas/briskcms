@@ -3,12 +3,12 @@ import {
   PageNotFoundError,
   PageSlugAlreadyExistsError,
 } from '@brisk/domain-core';
-import { createPage } from './create-page.use-case.js';
-import { duplicatePage } from './duplicate-page.use-case.js';
+import { createPage } from './create-page.use-case';
+import { duplicatePage } from './duplicate-page.use-case';
 import {
   InMemoryPageRepository,
   InMemoryPageVersionRepository,
-} from './in-memory-repositories.test-fixture.js';
+} from './in-memory-repositories.test-fixture';
 
 describe('duplicatePage', () => {
   const tenantId = 'tenant-1';

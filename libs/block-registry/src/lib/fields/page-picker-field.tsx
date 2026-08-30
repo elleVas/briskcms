@@ -1,5 +1,5 @@
 import type { PickedPage } from '@brisk/shared-types';
-import { usePageList } from '../page-list-context.js';
+import { usePageList } from '../page-list-context';
 
 export interface PagePickerFieldProps {
   value: PickedPage | null;

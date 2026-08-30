@@ -1,6 +1,6 @@
 import type { BreadcrumbProps } from '@brisk/shared-types';
-import type { BlockDescriptor } from '../field-types.js';
-import { visibilityField } from '../fields/visibility-field.js';
+import type { BlockDescriptor } from '../field-types';
+import { visibilityField } from '../fields/visibility-field';
 
 export const breadcrumbBlock: BlockDescriptor<BreadcrumbProps> = {
   type: 'Breadcrumb',

@@ -1,6 +1,6 @@
 import type { APIRoute } from 'astro';
-import { resolveThemeForegroundTokens } from '../../../../lib/resolve-theme-foreground-tokens.js';
-import { themesApiCorsHeaders } from '../../../../lib/themes-api-cors.js';
+import { resolveThemeForegroundTokens } from '../../../../lib/resolve-theme-foreground-tokens';
+import { themesApiCorsHeaders } from '../../../../lib/themes-api-cors';
 
 // Stesso pattern/motivo di block-style-defaults.ts: solo apps/public-site
 // conosce il tema attivo (~theme) — l'editor lo consuma per il controllo

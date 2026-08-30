@@ -1,14 +1,14 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { QueryClientProvider } from '@tanstack/react-query';
-import { ApiError } from '../lib/http-client.js';
-import type { PageRecord } from '../lib/pages-api-client.js';
-import { createTestQueryClient } from '../test-query-client.js';
-import { NewPageDialog, type NewPageDialogProps } from './new-page-dialog.js';
+import { ApiError } from '../lib/http-client';
+import type { PageRecord } from '../lib/pages-api-client';
+import { createTestQueryClient } from '../test-query-client';
+import { NewPageDialog, type NewPageDialogProps } from './new-page-dialog';
 
-vi.mock('../lib/pages-api-client.js', async (importOriginal) => {
+vi.mock('../lib/pages-api-client', async (importOriginal) => {
   const actual =
-    await importOriginal<typeof import('../lib/pages-api-client.js')>();
+    await importOriginal<typeof import('../lib/pages-api-client')>();
   // ParentPageSelect queries listPages on its own — mocked so it resolves
   // immediately instead of hitting the real fetch().
   return {

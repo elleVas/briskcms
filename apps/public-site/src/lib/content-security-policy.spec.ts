@@ -1,10 +1,10 @@
 import { createHash } from 'node:crypto';
 import { describe, expect, it } from 'vitest';
-import { PROMO_BAR_DISMISS_SCRIPT } from '../components/blocks/promo-bar-dismiss-script.js';
+import { PROMO_BAR_DISMISS_SCRIPT } from '../components/blocks/promo-bar-dismiss-script';
 import {
   buildContentSecurityPolicy,
   injectScriptNonce,
-} from './content-security-policy.js';
+} from './content-security-policy';
 
 describe('buildContentSecurityPolicy', () => {
   it('includes the exact hash of the promo bar dismiss script', () => {

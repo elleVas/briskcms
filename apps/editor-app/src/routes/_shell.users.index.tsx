@@ -1,9 +1,9 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { useSuspenseQuery } from '@tanstack/react-query';
 import { z } from 'zod';
-import { usersQueryOptions } from '../app/users-queries.js';
-import { UsersListView } from '../app/users-list-view.js';
-import { requireAuth } from './-require-auth.js';
+import { usersQueryOptions } from '../app/users-queries';
+import { UsersListView } from '../app/users-list-view';
+import { requireAuth } from './-require-auth';
 
 // Same reasoning as pagesListSearchSchema/mediaListSearchSchema: keeps
 // `page` optional at the type level for every plain <Link to="/users">

@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { Site, SiteLayoutSection } from '@brisk/domain-core';
-import { createPage } from './create-page.use-case.js';
-import { publishPage } from './publish-page.use-case.js';
-import { saveDraft } from './save-draft.use-case.js';
-import { getPublishedPageBySlug } from './get-published-page-by-slug.use-case.js';
+import { createPage } from './create-page.use-case';
+import { publishPage } from './publish-page.use-case';
+import { saveDraft } from './save-draft.use-case';
+import { getPublishedPageBySlug } from './get-published-page-by-slug.use-case';
 import {
   InMemoryPageRepository,
   InMemoryPageVersionRepository,
@@ -11,7 +11,7 @@ import {
   InMemorySiteLayoutSectionRepository,
   InMemorySiteRepository,
   InMemorySiteThemeBlockStylesRepository,
-} from './in-memory-repositories.test-fixture.js';
+} from './in-memory-repositories.test-fixture';
 
 describe('getPublishedPageBySlug', () => {
   const tenantId = 'tenant-1';

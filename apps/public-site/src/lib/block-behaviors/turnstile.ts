@@ -1,4 +1,4 @@
-import type { BlockBehavior } from './types.js';
+import type { BlockBehavior } from './types';
 
 interface TurnstileGlobal {
   render: (container: HTMLElement, options: { sitekey: string }) => string;

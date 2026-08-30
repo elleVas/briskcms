@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { Page, PageNotFoundError } from '@brisk/domain-core';
-import { getPageById } from './get-page-by-id.use-case.js';
-import { InMemoryPageRepository } from './in-memory-repositories.test-fixture.js';
+import { getPageById } from './get-page-by-id.use-case';
+import { InMemoryPageRepository } from './in-memory-repositories.test-fixture';
 
 const tenantId = 'tenant-1';
 

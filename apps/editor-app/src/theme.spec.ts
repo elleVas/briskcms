@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { applyTheme, getInitialTheme } from './theme.js';
+import { applyTheme, getInitialTheme } from './theme';
 
 describe('theme', () => {
   beforeEach(() => {

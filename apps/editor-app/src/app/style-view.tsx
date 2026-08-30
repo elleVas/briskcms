@@ -2,23 +2,23 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import { CURATED_THEME_FONTS } from '@brisk/shared-types';
-import { Button } from '../components/ui/button.js';
-import { Input } from '../components/ui/input.js';
-import { Label } from '../components/ui/label.js';
+import { Button } from '../components/ui/button';
+import { Input } from '../components/ui/input';
+import { Label } from '../components/ui/label';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '../components/ui/select.js';
-import { Switch } from '../components/ui/switch.js';
-import { Textarea } from '../components/ui/textarea.js';
+} from '../components/ui/select';
+import { Switch } from '../components/ui/switch';
+import { Textarea } from '../components/ui/textarea';
 import type { SiteRecord } from '@brisk/shared-types';
-import { checkContrastAgainstThemeForeground } from '../lib/color-contrast.js';
-import { themeForegroundTokensQueryOptions } from './theme-foreground-tokens-queries.js';
-import { ToggleableColorField } from './toggleable-color-field.js';
-import { useSiteThemeSettings } from './use-site-theme-settings.js';
+import { checkContrastAgainstThemeForeground } from '../lib/color-contrast';
+import { themeForegroundTokensQueryOptions } from './theme-foreground-tokens-queries';
+import { ToggleableColorField } from './toggleable-color-field';
+import { useSiteThemeSettings } from './use-site-theme-settings';
 
 export interface StyleViewProps {
   siteId: string;

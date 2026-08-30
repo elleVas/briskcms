@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { MediaNotFoundError } from '@brisk/domain-core';
-import { uploadMedia } from './upload-media.use-case.js';
-import { listMedia } from './list-media.use-case.js';
-import { deleteMedia } from './delete-media.use-case.js';
+import { uploadMedia } from './upload-media.use-case';
+import { listMedia } from './list-media.use-case';
+import { deleteMedia } from './delete-media.use-case';
 import {
   InMemoryMediaRepository,
   InMemoryMediaStorage,
-} from './in-memory-repositories.test-fixture.js';
+} from './in-memory-repositories.test-fixture';
 
 describe('media lifecycle: upload -> list -> delete', () => {
   const tenantId = 'tenant-1';

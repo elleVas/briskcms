@@ -4,7 +4,7 @@ import {
   type MediaPickerPort,
 } from '@brisk/block-registry';
 import type { PickedMedia } from '@brisk/shared-types';
-import { MediaPickerDialog } from './media-picker-dialog.js';
+import { MediaPickerDialog } from './media-picker-dialog';
 
 export interface MediaPickerProviderProps {
   siteId: string;

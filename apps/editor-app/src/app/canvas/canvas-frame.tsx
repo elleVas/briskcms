@@ -1,10 +1,10 @@
 import { useEffect, useState, type RefObject } from 'react';
 import { useTranslation } from 'react-i18next';
-import { createPagePreviewToken } from '../../lib/preview-token-api-client.js';
-import { PUBLIC_SITE_URL } from '../../lib/public-site-url.js';
-import { BREAKPOINT_WIDTHS, type Breakpoint } from './breakpoint-selector.js';
-import { OverlayLayer } from './overlay-layer.js';
-import type { PreviewBridgeState } from './use-preview-bridge.js';
+import { createPagePreviewToken } from '../../lib/preview-token-api-client';
+import { PUBLIC_SITE_URL } from '../../lib/public-site-url';
+import { BREAKPOINT_WIDTHS, type Breakpoint } from './breakpoint-selector';
+import { OverlayLayer } from './overlay-layer';
+import type { PreviewBridgeState } from './use-preview-bridge';
 
 export type EditingSection = 'header' | 'footer';
 

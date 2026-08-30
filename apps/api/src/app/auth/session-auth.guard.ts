@@ -7,8 +7,8 @@ import {
 } from '@nestjs/common';
 import type { Request } from 'express';
 import type { AuthPort } from '@brisk/ports';
-import { AUTH_PORT } from './auth.tokens.js';
-import { SESSION_COOKIE_NAME } from './session-cookie.constants.js';
+import { AUTH_PORT } from './auth.tokens';
+import { SESSION_COOKIE_NAME } from './session-cookie.constants';
 
 export interface AuthenticatedRequest extends Request {
   tenantId: string;

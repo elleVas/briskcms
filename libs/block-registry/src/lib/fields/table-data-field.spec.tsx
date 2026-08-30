@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import { TableDataField } from './table-data-field.js';
+import { TableDataField } from './table-data-field';
 
 describe('TableDataField', () => {
   it('renders one input per cell, with header-row placeholders on the first row', () => {

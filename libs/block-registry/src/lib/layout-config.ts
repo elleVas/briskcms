@@ -1,15 +1,15 @@
-import type { BlockDescriptor } from './field-types.js';
-import { backToTopBlock } from './blocks/back-to-top.block.js';
-import { hamburgerMenuBlock } from './blocks/hamburger-menu.block.js';
-import { languageSwitcherBlock } from './blocks/language-switcher.block.js';
-import { navDropdownBlock } from './blocks/nav-dropdown.block.js';
-import { navLinkBlock } from './blocks/nav-link.block.js';
-import { navBlock } from './blocks/nav.block.js';
-import { promoBarBlock } from './blocks/promo-bar.block.js';
-import { whatsAppButtonBlock } from './blocks/whatsapp-button.block.js';
-import { imageBlock } from './blocks/image.block.js';
-import { searchBoxBlock } from './blocks/search-box.block.js';
-import { textBlock } from './blocks/text.block.js';
+import type { BlockDescriptor } from './field-types';
+import { backToTopBlock } from './blocks/back-to-top.block';
+import { hamburgerMenuBlock } from './blocks/hamburger-menu.block';
+import { languageSwitcherBlock } from './blocks/language-switcher.block';
+import { navDropdownBlock } from './blocks/nav-dropdown.block';
+import { navLinkBlock } from './blocks/nav-link.block';
+import { navBlock } from './blocks/nav.block';
+import { promoBarBlock } from './blocks/promo-bar.block';
+import { whatsAppButtonBlock } from './blocks/whatsapp-button.block';
+import { imageBlock } from './blocks/image.block';
+import { searchBoxBlock } from './blocks/search-box.block';
+import { textBlock } from './blocks/text.block';
 
 export {
   backToTopBlock,
