@@ -102,10 +102,14 @@ const i18n = new Translator(locale);
      button past the page's own right edge and caused horizontal overflow
      (found via Playwright's scrollWidth check on a real preview page). */
   .brisk-testimonials__nav--prev {
-    left: 0.5rem;
+    inset-inline-start: 0.5rem;
   }
   .brisk-testimonials__nav--next {
-    right: 0.5rem;
+    inset-inline-end: 0.5rem;
+  }
+  /* Same glyph-mirroring reasoning as ImageSlider.astro's own nav. */
+  .brisk-testimonials__nav:dir(rtl) {
+    transform: translateY(-50%) scaleX(-1);
   }
   /* Solo nell'editor, e solo con contenuto — stesso pattern di
      Column.astro/Container.astro. */

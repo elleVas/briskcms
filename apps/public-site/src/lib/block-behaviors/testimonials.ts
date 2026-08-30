@@ -1,4 +1,5 @@
 import type { BlockBehavior } from './types.js';
+import { carouselScrollSign } from './carousel-scroll-direction.js';
 
 // Idempotency guard, same reasoning as image-slider.ts's own.
 const INITIALIZED_ATTR = 'data-brisk-testimonials-initialized';
@@ -17,7 +18,10 @@ function wireTestimonials(carousel: HTMLElement): void {
   const card = track.querySelector<HTMLElement>('.brisk-testimonial');
   const scrollByOneCard = (direction: 1 | -1) => {
     const width = card?.offsetWidth ?? track.clientWidth;
-    track.scrollBy({ left: direction * (width + 24), behavior: 'smooth' });
+    track.scrollBy({
+      left: carouselScrollSign(track, direction) * (width + 24),
+      behavior: 'smooth',
+    });
   };
 
   carousel

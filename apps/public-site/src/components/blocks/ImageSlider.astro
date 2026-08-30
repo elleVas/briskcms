@@ -105,9 +105,16 @@ const i18n = new Translator(locale);
     cursor: pointer;
   }
   .brisk-slider__nav--prev {
-    left: 0.75rem;
+    inset-inline-start: 0.75rem;
   }
   .brisk-slider__nav--next {
-    right: 0.75rem;
+    inset-inline-end: 0.75rem;
+  }
+  /* Mirror the ‹/› glyph itself under RTL: prev now sits on the visual
+     right and moves the track rightward, so its chevron should point
+     right too (and vice versa for next) — :dir() reads the resolved
+     directionality, no locale prop needs to be threaded down for this. */
+  .brisk-slider__nav:dir(rtl) {
+    transform: translateY(-50%) scaleX(-1);
   }
 </style>

@@ -1,4 +1,5 @@
 import type { BlockBehavior } from './types.js';
+import { carouselScrollSign } from './carousel-scroll-direction.js';
 
 // Idempotency guard: re-running this on an already-wired slider would
 // attach a second pair of click listeners to the same nav buttons. See
@@ -17,7 +18,7 @@ function wireImageSlider(slider: HTMLElement): void {
 
   const scrollByOneSlide = (direction: 1 | -1) => {
     track.scrollBy({
-      left: direction * track.clientWidth,
+      left: carouselScrollSign(track, direction) * track.clientWidth,
       behavior: 'smooth',
     });
   };
