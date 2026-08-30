@@ -52,5 +52,6 @@
   "search.noResults": "No results for «{query}».",
   "notFound.title": "Page not found",
   "notFound.message": "The page you're looking for doesn't exist.",
+  "notFound.backHome": "Back to home",
   "skipLink": "Skip to main content"
 }

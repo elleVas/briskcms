@@ -1,25 +1,36 @@
 ---
 import { Translator } from '../lib/i18n.js';
+import { localePath } from '../lib/locale-path.js';
 
-// Same reasoning as NotFound.astro: rendered by Astro's own top-level
-// 500.astro, which has no locale context at all — an unhandled SSR
-// exception can happen before the request's locale was even parsed.
+// Content-only, same reasoning as NotFound.astro — see ErrorPageShell.astro.
 interface Props {
   locale?: string;
 }
 
 const { locale } = Astro.props;
 const i18n = new Translator(locale ?? 'it');
+const homeHref = locale ? localePath(locale, 'home') : '/';
 ---
 
-<html lang={locale ?? 'it'}>
-	<head>
-		<meta charset="utf-8" />
-		<title>{i18n.t('serverError.title')}</title>
-		<meta name="viewport" content="width=device-width" />
-	</head>
-	<body>
-		<h1>500</h1>
-		<p>{i18n.t('serverError.message')}</p>
-	</body>
-</html>
+<div class="brisk-error-page">
+	<h1>500</h1>
+	<p>{i18n.t('serverError.message')}</p>
+	<a href={homeHref}>{i18n.t('notFound.backHome')}</a>
+</div>
+
+<style>
+	.brisk-error-page {
+		max-width: 32rem;
+		margin: 4rem auto;
+		padding: 0 1.5rem;
+		text-align: center;
+	}
+	.brisk-error-page h1 {
+		font-size: 3rem;
+		margin: 0 0 0.5rem;
+	}
+	.brisk-error-page a {
+		display: inline-block;
+		margin-top: 1.5rem;
+	}
+</style>
