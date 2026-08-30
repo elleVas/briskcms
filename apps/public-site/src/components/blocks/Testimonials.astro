@@ -1,7 +1,7 @@
 ---
 import { buildBlockInstanceStyle, type BlockStyleOverride } from '@brisk/shared-types';
 import EmptyContainerHint from '../EmptyContainerHint.astro';
-import { Translator } from '../../lib/i18n.js';
+import { Translator } from '../../lib/i18n';
 
 export interface Props {
   editable?: boolean;
@@ -57,8 +57,8 @@ const i18n = new Translator(locale);
   // importable module (not inline here) so it can also be re-run after a
   // live canvas insert/patch — see
   // block-behaviors/run-block-behaviors-in-subtree.ts.
-  import { testimonialsBehaviors } from '../../lib/block-behaviors/testimonials.js';
-  import { runBlockBehaviors } from '../../lib/block-behaviors/run-block-behaviors.js';
+  import { testimonialsBehaviors } from '../../lib/block-behaviors/testimonials';
+  import { runBlockBehaviors } from '../../lib/block-behaviors/run-block-behaviors';
   runBlockBehaviors(document, testimonialsBehaviors);
 </script>
 

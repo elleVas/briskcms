@@ -1,6 +1,6 @@
-import type { BlockDescriptor } from '../field-types.js';
+import type { BlockDescriptor } from '../field-types';
 import { BLOCK_STYLE_DEFAULTS } from '@brisk/shared-types';
-import { BlockStyleRegistry } from '../block-style-registry.js';
+import { BlockStyleRegistry } from '../block-style-registry';
 
 // `label` non fa parte di `TabProps` nel dominio (content-model.ts) — in
 // realtà lo fa: TabProps = { label: string }. Nessun tipo Puck-only extra

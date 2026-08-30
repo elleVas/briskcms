@@ -3,10 +3,10 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { QueryClientProvider } from '@tanstack/react-query';
 import type { PageRecord, SiteRecord } from '@brisk/shared-types';
-import * as pagesApi from '../lib/pages-api-client.js';
-import * as sitesApi from '../lib/sites-api-client.js';
-import { createTestQueryClient } from '../test-query-client.js';
-import { PageTranslationsDialog } from './page-translations-dialog.js';
+import * as pagesApi from '../lib/pages-api-client';
+import * as sitesApi from '../lib/sites-api-client';
+import { createTestQueryClient } from '../test-query-client';
+import { PageTranslationsDialog } from './page-translations-dialog';
 
 vi.mock('@tanstack/react-router', async (importOriginal) => {
   const actual =
@@ -36,9 +36,9 @@ vi.mock('@tanstack/react-router', async (importOriginal) => {
   };
 });
 
-vi.mock('../lib/pages-api-client.js', async (importOriginal) => {
+vi.mock('../lib/pages-api-client', async (importOriginal) => {
   const actual =
-    await importOriginal<typeof import('../lib/pages-api-client.js')>();
+    await importOriginal<typeof import('../lib/pages-api-client')>();
   return {
     ...actual,
     listTranslations: vi.fn(),
@@ -47,9 +47,9 @@ vi.mock('../lib/pages-api-client.js', async (importOriginal) => {
   };
 });
 
-vi.mock('../lib/sites-api-client.js', async (importOriginal) => {
+vi.mock('../lib/sites-api-client', async (importOriginal) => {
   const actual =
-    await importOriginal<typeof import('../lib/sites-api-client.js')>();
+    await importOriginal<typeof import('../lib/sites-api-client')>();
   return { ...actual, getSite: vi.fn() };
 });
 

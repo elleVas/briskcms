@@ -1,5 +1,5 @@
-import type { AuthenticatedRequest } from './session-auth.guard.js';
-import { SessionTenantContextAdapter } from './session-tenant-context.adapter.js';
+import type { AuthenticatedRequest } from './session-auth.guard';
+import { SessionTenantContextAdapter } from './session-tenant-context.adapter';
 
 describe('SessionTenantContextAdapter', () => {
   it('reads the tenantId the guard attached to the request', () => {

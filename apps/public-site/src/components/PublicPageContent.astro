@@ -1,12 +1,12 @@
 ---
 import type { PublishedPage } from '@brisk/shared-types';
 import PageLayoutCore from '../layouts/PageLayout.astro';
-import { resolveThemeLayoutOverride } from '../lib/resolve-theme-layout-override.js';
+import { resolveThemeLayoutOverride } from '../lib/resolve-theme-layout-override';
 const PageLayout = resolveThemeLayoutOverride(PageLayoutCore);
 import BlockRenderer from './BlockRenderer.astro';
 import ErrorPageShell from './ErrorPageShell.astro';
 import NotFound from './NotFound.astro';
-import { getPublishedSiteChrome } from '../lib/public-api-client.js';
+import { getPublishedSiteChrome } from '../lib/public-api-client';
 
 // Purely presentational — the 404 status itself must be set by the calling
 // page route (src/pages/index.astro, src/pages/[slug].astro), not here:

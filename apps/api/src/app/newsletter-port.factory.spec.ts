@@ -1,7 +1,7 @@
 import { BrevoNewsletterAdapter } from '@brisk/brevo-newsletter';
 import { MailchimpNewsletterAdapter } from '@brisk/mailchimp-newsletter';
 import { NoopNewsletterPort } from '@brisk/ports';
-import { createNewsletterPort } from './newsletter-port.factory.js';
+import { createNewsletterPort } from './newsletter-port.factory';
 
 // Same "test the branch in isolation" reasoning as media.module.spec.ts's
 // createMediaStorage tests.

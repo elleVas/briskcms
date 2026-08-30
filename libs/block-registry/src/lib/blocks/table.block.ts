@@ -1,6 +1,6 @@
 import type { TableProps } from '@brisk/shared-types';
-import { FieldBuilder, type BlockDescriptor } from '../field-types.js';
-import { TableDataField } from '../fields/table-data-field.js';
+import { FieldBuilder, type BlockDescriptor } from '../field-types';
+import { TableDataField } from '../fields/table-data-field';
 
 export const tableBlock: BlockDescriptor<TableProps> = {
   type: 'Table',

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef } from 'react';
 import type { Block, BlockStyleOverride } from '@brisk/shared-types';
-import { renderBlockFragment } from '../../lib/block-fragment-api-client.js';
+import { renderBlockFragment } from '../../lib/block-fragment-api-client';
 
 export interface UsePropertyPatchInput {
   pageId: string;

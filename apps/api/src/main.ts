@@ -11,8 +11,8 @@ import express from 'express';
 import helmet from 'helmet';
 import { requireEnv } from '@brisk/env-config';
 import { AppModule } from './app/app.module';
-import { HttpExceptionFilter } from './app/http-exception.filter.js';
-import { requestIdMiddleware } from './app/request-id.middleware.js';
+import { HttpExceptionFilter } from './app/http-exception.filter';
+import { requestIdMiddleware } from './app/request-id.middleware';
 
 // Security review 2026-08-24, "terzo giro": nessun handler globale — un
 // reject non gestito o un throw fuori da qualunque try/catch spariva nel

@@ -1,9 +1,9 @@
 import { randomUUID } from 'node:crypto';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { sql } from 'drizzle-orm';
-import { type BriskDb, createAppDb, withTenant } from './client.js';
-import { deleteIntegrationTenants } from './integration-test-cleanup.js';
-import { sites, tenants } from './schema.js';
+import { type BriskDb, createAppDb, withTenant } from './client';
+import { deleteIntegrationTenants } from './integration-test-cleanup';
+import { sites, tenants } from './schema';
 
 /**
  * Runs against a real Postgres — see docs/development.md ("docker compose up

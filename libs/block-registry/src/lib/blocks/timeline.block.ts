@@ -1,6 +1,6 @@
 import type { TimelineProps } from '@brisk/shared-types';
 import { BLOCK_STYLE_DEFAULTS } from '@brisk/shared-types';
-import type { BlockDescriptor } from '../field-types.js';
+import type { BlockDescriptor } from '../field-types';
 
 export const timelineBlock: BlockDescriptor<TimelineProps> = {
   type: 'Timeline',

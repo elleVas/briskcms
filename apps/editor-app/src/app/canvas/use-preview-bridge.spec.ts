@@ -5,7 +5,7 @@ import {
   PREVIEW_BRIDGE_SOURCE,
   PREVIEW_BRIDGE_VERSION,
 } from '@brisk/shared-types';
-import { usePreviewBridge } from './use-preview-bridge.js';
+import { usePreviewBridge } from './use-preview-bridge';
 
 const EXPECTED_ORIGIN = 'http://localhost:4321';
 

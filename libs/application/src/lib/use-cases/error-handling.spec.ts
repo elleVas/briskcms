@@ -7,21 +7,21 @@ import {
   SiteLayoutSectionNotFoundError,
   SiteLayoutSectionVersionNotFoundError,
 } from '@brisk/domain-core';
-import { createPage } from './create-page.use-case.js';
-import { deletePage } from './delete-page.use-case.js';
-import { saveDraft } from './save-draft.use-case.js';
-import { publishPage } from './publish-page.use-case.js';
-import { rollbackToVersion } from './rollback-to-version.use-case.js';
-import { saveSiteLayoutSectionDraft } from './save-site-layout-section-draft.use-case.js';
-import { publishSiteLayoutSection } from './publish-site-layout-section.use-case.js';
-import { rollbackSiteLayoutSectionToVersion } from './rollback-site-layout-section-to-version.use-case.js';
+import { createPage } from './create-page.use-case';
+import { deletePage } from './delete-page.use-case';
+import { saveDraft } from './save-draft.use-case';
+import { publishPage } from './publish-page.use-case';
+import { rollbackToVersion } from './rollback-to-version.use-case';
+import { saveSiteLayoutSectionDraft } from './save-site-layout-section-draft.use-case';
+import { publishSiteLayoutSection } from './publish-site-layout-section.use-case';
+import { rollbackSiteLayoutSectionToVersion } from './rollback-site-layout-section-to-version.use-case';
 import {
   InMemoryPageRepository,
   InMemoryPageVersionRepository,
   InMemorySearchPort,
   InMemorySiteLayoutSectionRepository,
   InMemorySiteLayoutSectionVersionRepository,
-} from './in-memory-repositories.test-fixture.js';
+} from './in-memory-repositories.test-fixture';
 
 const tenantId = 'tenant-1';
 

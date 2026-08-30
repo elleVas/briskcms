@@ -1,5 +1,5 @@
 import { queryOptions } from '@tanstack/react-query';
-import { getForm, listForms } from '../lib/forms-api-client.js';
+import { getForm, listForms } from '../lib/forms-api-client';
 
 export const FORMS_PAGE_SIZE = 20;
 

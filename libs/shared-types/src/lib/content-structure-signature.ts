@@ -1,4 +1,4 @@
-import type { Block, PageContent } from './content-model.js';
+import type { Block, PageContent } from './content-model';
 
 interface StructureShape {
   type: string;

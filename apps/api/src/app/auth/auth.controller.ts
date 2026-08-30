@@ -12,7 +12,7 @@ import {
 } from '@nestjs/common';
 import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
 import type { Request, Response } from 'express';
-import { PerAccountThrottlerGuard } from './per-account-throttler.guard.js';
+import { PerAccountThrottlerGuard } from './per-account-throttler.guard';
 import {
   acceptInvite,
   loginUser,
@@ -35,7 +35,7 @@ import type {
   UserRepositoryPort,
   VerificationTokenPort,
 } from '@brisk/ports';
-import { ZodValidationPipe } from '../zod-validation.pipe.js';
+import { ZodValidationPipe } from '../zod-validation.pipe';
 import {
   AUTH_PORT,
   CAPTCHA_PORT,
@@ -44,7 +44,7 @@ import {
   EMAIL_PORT,
   USER_REPOSITORY,
   VERIFICATION_TOKEN_PORT,
-} from './auth.tokens.js';
+} from './auth.tokens';
 import {
   acceptInviteBodySchema,
   type AcceptInviteBody,
@@ -56,13 +56,13 @@ import {
   type ResetPasswordBody,
   verifyEmailBodySchema,
   type VerifyEmailBody,
-} from './auth.schemas.js';
-import type { AuthenticatedRequest } from './session-auth.guard.js';
-import { SessionAuthGuard } from './session-auth.guard.js';
+} from './auth.schemas';
+import type { AuthenticatedRequest } from './session-auth.guard';
+import { SessionAuthGuard } from './session-auth.guard';
 import {
   SESSION_COOKIE_MAX_AGE_MS,
   SESSION_COOKIE_NAME,
-} from './session-cookie.constants.js';
+} from './session-cookie.constants';
 
 @Controller('auth')
 export class AuthController {

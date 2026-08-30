@@ -1,18 +1,18 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { slugify } from '@brisk/shared-types';
-import { Button } from '../components/ui/button.js';
+import { Button } from '../components/ui/button';
 import {
   Dialog,
   DialogContent,
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '../components/ui/dialog.js';
-import { Input } from '../components/ui/input.js';
-import { Label } from '../components/ui/label.js';
-import { ApiError } from '../lib/http-client.js';
-import type { PageRecord, PageListItem } from '../lib/pages-api-client.js';
+} from '../components/ui/dialog';
+import { Input } from '../components/ui/input';
+import { Label } from '../components/ui/label';
+import { ApiError } from '../lib/http-client';
+import type { PageRecord, PageListItem } from '../lib/pages-api-client';
 
 export interface DuplicatePageDialogProps {
   sourcePage: PageListItem;

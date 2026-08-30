@@ -1,5 +1,5 @@
 import type { NewsletterSignupProps } from '@brisk/shared-types';
-import type { BlockDescriptor } from '../field-types.js';
+import type { BlockDescriptor } from '../field-types';
 
 export const newsletterSignupBlock: BlockDescriptor<NewsletterSignupProps> = {
   type: 'NewsletterSignup',

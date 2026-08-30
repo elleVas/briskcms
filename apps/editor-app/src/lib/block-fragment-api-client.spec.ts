@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { renderBlockFragment } from './block-fragment-api-client.js';
-import { PUBLIC_SITE_URL } from './public-site-url.js';
+import { renderBlockFragment } from './block-fragment-api-client';
+import { PUBLIC_SITE_URL } from './public-site-url';
 
 function jsonResponse(body: unknown, status = 200) {
   return {

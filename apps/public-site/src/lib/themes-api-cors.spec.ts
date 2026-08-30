@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { themesApiCorsHeaders } from './themes-api-cors.js';
+import { themesApiCorsHeaders } from './themes-api-cors';
 
 describe('themesApiCorsHeaders', () => {
   it('allows only GET/OPTIONS and only the editor-app origin', () => {

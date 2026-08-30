@@ -1,1 +1,1 @@
-export * from './lib/opaque-token.js';
+export * from './lib/opaque-token';

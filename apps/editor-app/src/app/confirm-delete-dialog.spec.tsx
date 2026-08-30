@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import { ConfirmDeleteDialog } from './confirm-delete-dialog.js';
+import { ConfirmDeleteDialog } from './confirm-delete-dialog';
 
 describe('ConfirmDeleteDialog', () => {
   it('shows the given title and description', () => {

@@ -3,7 +3,7 @@ import {
   blockTypeToClassName,
   buildBlockInstanceStyle,
   buildBlockStyleOverridesCss,
-} from './block-style-overrides.js';
+} from './block-style-overrides';
 
 describe('blockTypeToClassName', () => {
   it('converts a simple PascalCase type', () => {

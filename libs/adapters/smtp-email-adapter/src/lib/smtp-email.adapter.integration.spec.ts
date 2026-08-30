@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { SmtpEmailAdapter } from './smtp-email.adapter.js';
+import { SmtpEmailAdapter } from './smtp-email.adapter';
 
 /**
  * Runs against Mailpit (docker-compose) — see

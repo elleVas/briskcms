@@ -2,8 +2,8 @@ import { randomUUID } from 'node:crypto';
 import { unlink } from 'node:fs/promises';
 import { type INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
-import { HttpExceptionFilter } from '../http-exception.filter.js';
-import { requestIdMiddleware } from '../request-id.middleware.js';
+import { HttpExceptionFilter } from '../http-exception.filter';
+import { requestIdMiddleware } from '../request-id.middleware';
 import cookieParser from 'cookie-parser';
 import express from 'express';
 import request from 'supertest';
@@ -16,9 +16,9 @@ import {
   users,
   withTenant,
 } from '@brisk/postgres-db';
-import { AUTH_PORT } from '../auth/auth.tokens.js';
-import { DATABASE } from '../database.module.js';
-import { MediaModule } from './media.module.js';
+import { AUTH_PORT } from '../auth/auth.tokens';
+import { DATABASE } from '../database.module';
+import { MediaModule } from './media.module';
 
 /**
  * Runs against a real Postgres and writes real files under MEDIA_UPLOAD_DIR

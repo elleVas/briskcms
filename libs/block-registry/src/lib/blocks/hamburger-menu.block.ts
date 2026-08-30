@@ -1,6 +1,6 @@
-import type { BlockDescriptor } from '../field-types.js';
-import { positionField } from '../fields/position-field.js';
-import { visibilityField } from '../fields/visibility-field.js';
+import type { BlockDescriptor } from '../field-types';
+import { positionField } from '../fields/position-field';
+import { visibilityField } from '../fields/visibility-field';
 
 // `position`/`visibility` invece di HamburgerMenuProps direttamente: a
 // livello di dominio questo blocco combina navItemPositionSchema (la sua

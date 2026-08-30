@@ -5,9 +5,9 @@ import type {
   SiteRepositoryPort,
   SiteThemeBlockStylesPort,
 } from '@brisk/ports';
-import { resolveSiteChrome } from './resolve-site-chrome.js';
-import { resolvePageAncestors } from './resolve-page-ancestors.js';
-import type { PublishedPage } from './get-published-page-by-slug.use-case.js';
+import { resolveSiteChrome } from './resolve-site-chrome';
+import { resolvePageAncestors } from './resolve-page-ancestors';
+import type { PublishedPage } from './get-published-page-by-slug.use-case';
 
 export interface GetPreviewPageByIdDeps {
   pageRepository: PageRepositoryPort;

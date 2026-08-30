@@ -1,10 +1,10 @@
 import { useTranslation } from 'react-i18next';
 import { ArrowDown, ArrowUp, Trash2 } from 'lucide-react';
 import type { FormField, FormFieldType, FormStep } from '@brisk/shared-types';
-import { Input } from '../components/ui/input.js';
-import { Label } from '../components/ui/label.js';
-import { Switch } from '../components/ui/switch.js';
-import { IconButton } from './icon-button.js';
+import { Input } from '../components/ui/input';
+import { Label } from '../components/ui/label';
+import { Switch } from '../components/ui/switch';
+import { IconButton } from './icon-button';
 
 // The literal value a plain <select> submits for its "no step assigned"
 // option — never a real step id (crypto.randomUUID() strings, see

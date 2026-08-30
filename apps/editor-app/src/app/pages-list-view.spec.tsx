@@ -2,11 +2,11 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { QueryClientProvider } from '@tanstack/react-query';
 import * as router from '@tanstack/react-router';
-import { TooltipProvider } from '../components/ui/tooltip.js';
-import * as api from '../lib/pages-api-client.js';
-import type { PageRecord, PageListItem } from '../lib/pages-api-client.js';
-import { createTestQueryClient } from '../test-query-client.js';
-import { pagesListReducer, PagesListView } from './pages-list-view.js';
+import { TooltipProvider } from '../components/ui/tooltip';
+import * as api from '../lib/pages-api-client';
+import type { PageRecord, PageListItem } from '../lib/pages-api-client';
+import { createTestQueryClient } from '../test-query-client';
+import { pagesListReducer, PagesListView } from './pages-list-view';
 
 const initialState = {
   selectedPageId: null,
@@ -93,9 +93,9 @@ vi.mock('@tanstack/react-router', async (importOriginal) => {
   return { ...actual, useNavigate: vi.fn() };
 });
 
-vi.mock('../lib/pages-api-client.js', async (importOriginal) => {
+vi.mock('../lib/pages-api-client', async (importOriginal) => {
   const actual =
-    await importOriginal<typeof import('../lib/pages-api-client.js')>();
+    await importOriginal<typeof import('../lib/pages-api-client')>();
   return {
     ...actual,
     createPage: vi.fn(),

@@ -1,7 +1,7 @@
 import type { LogoStripProps } from '@brisk/shared-types';
 import { BLOCK_STYLE_DEFAULTS } from '@brisk/shared-types';
-import { FieldBuilder, type BlockDescriptor } from '../field-types.js';
-import { GalleryPickerField } from '../fields/gallery-picker-field.js';
+import { FieldBuilder, type BlockDescriptor } from '../field-types';
+import { GalleryPickerField } from '../fields/gallery-picker-field';
 
 export const logoStripBlock: BlockDescriptor<LogoStripProps> = {
   type: 'LogoStrip',

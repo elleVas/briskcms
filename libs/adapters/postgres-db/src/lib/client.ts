@@ -2,7 +2,7 @@ import { sql } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
 import { requireEnv } from '@brisk/env-config';
-import * as schema from './schema.js';
+import * as schema from './schema';
 
 // Security review 2026-08-24, database section: postgres() ran with no
 // options at all — the driver's own default (max: 10) was baked in,

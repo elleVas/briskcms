@@ -1,6 +1,6 @@
 import themeCssRaw from '~theme/theme.css?raw';
 import type { ThemeBaseTokens } from '@brisk/shared-types';
-import { parseRootCustomProperties } from './resolve-theme-block-style-defaults-helpers.js';
+import { parseRootCustomProperties } from './resolve-theme-block-style-defaults-helpers';
 
 let cached: ThemeBaseTokens | null = null;
 

@@ -3,7 +3,7 @@ import {
   isPreviewBridgeMessage,
   PREVIEW_BRIDGE_SOURCE,
   PREVIEW_BRIDGE_VERSION,
-} from './preview-bridge-protocol.js';
+} from './preview-bridge-protocol';
 
 describe('isPreviewBridgeMessage', () => {
   it('accepts a well-formed envelope', () => {

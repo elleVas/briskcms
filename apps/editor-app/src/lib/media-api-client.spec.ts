@@ -4,7 +4,7 @@ import {
   listMedia,
   uploadMedia,
   type MediaDto,
-} from './media-api-client.js';
+} from './media-api-client';
 
 const sampleMedia: MediaDto = {
   id: 'media-1',

@@ -6,7 +6,7 @@ import {
   type SiteRecord,
   type ThemeSettings,
 } from '@brisk/shared-types';
-import { request } from './http-client.js';
+import { request } from './http-client';
 
 async function requestSite(
   path: string,

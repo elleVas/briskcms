@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { Page } from './page.js';
+import { Page } from './page';
 
 describe('Page entity', () => {
   const baseInput = {

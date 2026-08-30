@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { BLOCK_STYLE_DEFAULTS } from '@brisk/shared-types';
-import { pageBlockCategories, pageBlocks } from './config.js';
-import { headerFooterBlocks } from './layout-config.js';
+import { pageBlockCategories, pageBlocks } from './config';
+import { headerFooterBlocks } from './layout-config';
 
 describe('pageBlocks', () => {
   // Security review 2026-08-24: not a literal count — that broke for the

@@ -2,14 +2,14 @@ import type { ReactNode } from 'react';
 import { act, renderHook } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { QueryClientProvider } from '@tanstack/react-query';
-import * as api from '../lib/sites-api-client.js';
+import * as api from '../lib/sites-api-client';
 import type { SiteRecord } from '@brisk/shared-types';
-import { createTestQueryClient } from '../test-query-client.js';
-import { useSiteBusinessInfo } from './use-site-business-info.js';
+import { createTestQueryClient } from '../test-query-client';
+import { useSiteBusinessInfo } from './use-site-business-info';
 
-vi.mock('../lib/sites-api-client.js', async (importOriginal) => {
+vi.mock('../lib/sites-api-client', async (importOriginal) => {
   const actual =
-    await importOriginal<typeof import('../lib/sites-api-client.js')>();
+    await importOriginal<typeof import('../lib/sites-api-client')>();
   return { ...actual, updateBusinessInfo: vi.fn() };
 });
 

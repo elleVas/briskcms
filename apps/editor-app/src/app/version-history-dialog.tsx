@@ -1,12 +1,12 @@
 import { useTranslation } from 'react-i18next';
-import { Button } from '../components/ui/button.js';
+import { Button } from '../components/ui/button';
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from '../components/ui/dialog.js';
+} from '../components/ui/dialog';
 
 // Minimal shape shared by PageVersionRecord and SiteLayoutSectionVersionDto —
 // this dialog is presentational only (docs/adr/0018): it doesn't know or

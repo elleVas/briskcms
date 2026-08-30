@@ -1,5 +1,5 @@
 import { queryOptions } from '@tanstack/react-query';
-import { listMedia } from '../lib/media-api-client.js';
+import { listMedia } from '../lib/media-api-client';
 
 export const MEDIA_PAGE_SIZE = 24;
 

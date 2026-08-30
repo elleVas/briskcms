@@ -2,7 +2,7 @@ import { renderHook } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import type { Block } from '@brisk/shared-types';
 import type { BlockDescriptor } from '@brisk/block-registry';
-import { useTextEdit } from './use-text-edit.js';
+import { useTextEdit } from './use-text-edit';
 
 const heroDescriptor: BlockDescriptor = {
   type: 'Hero',

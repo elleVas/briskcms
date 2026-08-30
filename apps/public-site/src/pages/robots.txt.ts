@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro';
-import { listPublishedPagesForSitemap } from '../lib/public-api-client.js';
+import { listPublishedPagesForSitemap } from '../lib/public-api-client';
 
 export const prerender = false;
 

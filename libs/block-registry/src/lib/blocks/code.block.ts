@@ -1,6 +1,6 @@
 import type { CodeProps } from '@brisk/shared-types';
 import { BLOCK_STYLE_DEFAULTS } from '@brisk/shared-types';
-import type { BlockDescriptor } from '../field-types.js';
+import type { BlockDescriptor } from '../field-types';
 
 // Lista breve e curata (non ogni lingua che Shiki supporta) — stessa
 // ragione di columns.block.ts's layout radio: poche opzioni chiare battono

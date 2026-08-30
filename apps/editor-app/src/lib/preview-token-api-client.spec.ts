@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   createPagePreviewToken,
   createSiteLayoutSectionPreviewToken,
-} from './preview-token-api-client.js';
+} from './preview-token-api-client';
 
 function jsonResponse(body: unknown) {
   return {

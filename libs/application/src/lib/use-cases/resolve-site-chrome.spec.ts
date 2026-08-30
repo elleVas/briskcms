@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { Site, SiteLayoutSection } from '@brisk/domain-core';
-import { resolveSiteChrome } from './resolve-site-chrome.js';
+import { resolveSiteChrome } from './resolve-site-chrome';
 import {
   InMemorySiteLayoutSectionRepository,
   InMemorySiteThemeBlockStylesRepository,
-} from './in-memory-repositories.test-fixture.js';
+} from './in-memory-repositories.test-fixture';
 
 describe('resolveSiteChrome', () => {
   const tenantId = 'tenant-1';

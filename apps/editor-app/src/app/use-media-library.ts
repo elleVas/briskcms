@@ -3,7 +3,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   deleteMedia as apiDeleteMedia,
   uploadMedia as apiUploadMedia,
-} from '../lib/media-api-client.js';
+} from '../lib/media-api-client';
 
 // Same split as usePagesList: fetching the list is the route loader's job
 // (see routes/_shell.media.index.tsx), this hook only owns the actions

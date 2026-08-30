@@ -1,1 +1,1 @@
-export * from './lib/turnstile-captcha.adapter.js';
+export * from './lib/turnstile-captcha.adapter';

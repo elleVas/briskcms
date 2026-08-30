@@ -1,4 +1,4 @@
-import type { BlockStyleOverride } from './site-theme-tokens.js';
+import type { BlockStyleOverride } from './site-theme-tokens';
 
 /**
  * Un solo nome di custom property per campo, condiviso da ogni tipo di

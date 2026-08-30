@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { adminConnectionString, createAppDb, createDb } from './client.js';
+import { adminConnectionString, createAppDb, createDb } from './client';
 
 const ENV_KEYS = [
   'POSTGRES_HOST',

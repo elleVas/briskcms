@@ -13,7 +13,7 @@ import type {
   SiteRepositoryPort,
   TenantContextPort,
 } from '@brisk/ports';
-import { SiteLayoutSectionsController } from './site-layout-sections.controller.js';
+import { SiteLayoutSectionsController } from './site-layout-sections.controller';
 
 function buildSection(
   overrides: Partial<Parameters<typeof SiteLayoutSection.create>[0]> = {},

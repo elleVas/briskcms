@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import { InvalidCaptchaError } from '@brisk/domain-core';
-import { subscribeNewsletter } from './subscribe-newsletter.use-case.js';
-import { FakeCaptchaPort } from './fake-captcha-port.test-fixture.js';
+import { subscribeNewsletter } from './subscribe-newsletter.use-case';
+import { FakeCaptchaPort } from './fake-captcha-port.test-fixture';
 import {
   FailingNewsletterPort,
   FakeNewsletterPort,
-} from './fake-newsletter-port.test-fixture.js';
+} from './fake-newsletter-port.test-fixture';
 
 describe('subscribeNewsletter', () => {
   function setup() {

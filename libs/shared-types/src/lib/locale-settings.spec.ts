@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { localeSettingsSchema } from './locale-settings.js';
+import { localeSettingsSchema } from './locale-settings';
 
 describe('localeSettingsSchema', () => {
   it('accepts valid locale settings', () => {

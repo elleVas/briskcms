@@ -1,5 +1,5 @@
 import { redirect } from '@tanstack/react-router';
-import { ApiError } from '../lib/http-client.js';
+import { ApiError } from '../lib/http-client';
 
 /**
  * Every guarded loader shares this: no dedicated "am I logged in" endpoint

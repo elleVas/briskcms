@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { MailchimpNewsletterAdapter } from './mailchimp-newsletter.adapter.js';
+import { MailchimpNewsletterAdapter } from './mailchimp-newsletter.adapter';
 
 function jsonResponse(ok: boolean) {
   return { ok } as Response;

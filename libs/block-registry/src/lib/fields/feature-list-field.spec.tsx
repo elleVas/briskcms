@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import { FeatureListField } from './feature-list-field.js';
+import { FeatureListField } from './feature-list-field';
 
 describe('FeatureListField', () => {
   it('joins the value array into newline-separated textarea content', () => {

@@ -1,9 +1,9 @@
 import type { APIRoute } from 'astro';
-import { localePathFromAncestors } from '../lib/locale-path.js';
+import { localePathFromAncestors } from '../lib/locale-path';
 import {
   listPublishedPagesForSitemap,
   type SitemapEntryDto,
-} from '../lib/public-api-client.js';
+} from '../lib/public-api-client';
 
 // Explicit even though this route has no dynamic [param] segment (see
 // [locale]/[slug].astro's own comment on why a bracketed route needs it) —

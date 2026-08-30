@@ -3,8 +3,8 @@ import type { ExecutionContext } from '@nestjs/common';
 import type { Reflector } from '@nestjs/core';
 import { User } from '@brisk/domain-core';
 import type { UserRepositoryPort } from '@brisk/ports';
-import { RolesGuard } from './roles.guard.js';
-import type { AuthenticatedRequest } from './session-auth.guard.js';
+import { RolesGuard } from './roles.guard';
+import type { AuthenticatedRequest } from './session-auth.guard';
 
 const tenantId = 'tenant-1';
 

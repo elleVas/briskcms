@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildPasswordResetEmail } from './password-reset-email.template.js';
+import { buildPasswordResetEmail } from './password-reset-email.template';
 
 describe('buildPasswordResetEmail', () => {
   it('includes the reset URL in both the HTML and text bodies', () => {

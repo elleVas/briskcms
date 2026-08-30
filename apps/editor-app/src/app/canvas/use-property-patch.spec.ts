@@ -1,12 +1,12 @@
 import { act, renderHook } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import * as blockFragmentApi from '../../lib/block-fragment-api-client.js';
-import { usePropertyPatch } from './use-property-patch.js';
+import * as blockFragmentApi from '../../lib/block-fragment-api-client';
+import { usePropertyPatch } from './use-property-patch';
 
-vi.mock('../../lib/block-fragment-api-client.js', async (importOriginal) => {
+vi.mock('../../lib/block-fragment-api-client', async (importOriginal) => {
   const actual =
     await importOriginal<
-      typeof import('../../lib/block-fragment-api-client.js')
+      typeof import('../../lib/block-fragment-api-client')
     >();
   return { ...actual, renderBlockFragment: vi.fn() };
 });

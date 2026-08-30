@@ -1,13 +1,13 @@
 import { randomUUID } from 'node:crypto';
 import { eq } from 'drizzle-orm';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { type BriskDb, createAppDb } from './client.js';
+import { type BriskDb, createAppDb } from './client';
 import {
   deleteIntegrationFixtures,
   deleteIntegrationTenants,
-} from './integration-test-cleanup.js';
-import { sites, tenants, users } from './schema.js';
-import { withTenant } from './client.js';
+} from './integration-test-cleanup';
+import { sites, tenants, users } from './schema';
+import { withTenant } from './client';
 
 /** Runs against a real Postgres — see docs/development.md. */
 describe('integration-test-cleanup (integration)', () => {

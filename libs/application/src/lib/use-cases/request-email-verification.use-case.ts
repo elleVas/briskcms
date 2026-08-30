@@ -1,4 +1,4 @@
-import { buildVerificationEmail } from '../emails/verification-email.template.js';
+import { buildVerificationEmail } from '../emails/verification-email.template';
 import type {
   EmailPort,
   UserRepositoryPort,

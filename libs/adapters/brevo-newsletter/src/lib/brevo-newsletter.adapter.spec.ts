@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { BrevoNewsletterAdapter } from './brevo-newsletter.adapter.js';
+import { BrevoNewsletterAdapter } from './brevo-newsletter.adapter';
 
 function jsonResponse(ok: boolean) {
   return { ok } as Response;

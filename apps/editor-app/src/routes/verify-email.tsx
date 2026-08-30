@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { z } from 'zod';
-import { VerifyEmailView } from '../app/verify-email-view.js';
+import { VerifyEmailView } from '../app/verify-email-view';
 
 const verifyEmailSearchSchema = z.object({
   verifyToken: z.string(),

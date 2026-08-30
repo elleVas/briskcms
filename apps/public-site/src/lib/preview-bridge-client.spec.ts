@@ -15,7 +15,7 @@ import {
   isRootLevelBlock,
   parseEditingSection,
   toBlockRects,
-} from './preview-bridge-client.js';
+} from './preview-bridge-client';
 
 function requireElement(id: string): Element {
   const el = document.getElementById(id);

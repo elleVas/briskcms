@@ -1,5 +1,5 @@
 import { type BlockRect } from '@brisk/shared-types';
-import { getBlockRect } from './get-block-rect.js';
+import { getBlockRect } from './get-block-rect';
 
 /**
  * Funzioni pure di parsing/predicati e di patch DOM — deliberatamente

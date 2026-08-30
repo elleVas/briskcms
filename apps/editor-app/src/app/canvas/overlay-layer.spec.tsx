@@ -9,7 +9,7 @@ import {
   toOverlayStyle,
   toPillStyle,
   toToolbarStyle,
-} from './overlay-layer.js';
+} from './overlay-layer';
 
 describe('toOverlayStyle', () => {
   it("adds the iframe's own offset to a viewport-relative block rect", () => {

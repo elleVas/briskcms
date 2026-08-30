@@ -1,10 +1,10 @@
 import type { ComponentProps, ReactNode } from 'react';
-import { Button } from '../components/ui/button.js';
+import { Button } from '../components/ui/button';
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from '../components/ui/tooltip.js';
+} from '../components/ui/tooltip';
 
 export interface IconButtonProps extends ComponentProps<typeof Button> {
   label: string;

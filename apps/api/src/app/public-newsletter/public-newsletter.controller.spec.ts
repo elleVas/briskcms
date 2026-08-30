@@ -2,8 +2,8 @@ import { type INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import request from 'supertest';
 import type { CaptchaPort, NewsletterPort } from '@brisk/ports';
-import { PublicNewsletterModule } from './public-newsletter.module.js';
-import { CAPTCHA_PORT, NEWSLETTER_PORT } from './public-newsletter.tokens.js';
+import { PublicNewsletterModule } from './public-newsletter.module';
+import { CAPTCHA_PORT, NEWSLETTER_PORT } from './public-newsletter.tokens';
 
 // No real Cloudflare/Mailchimp/Brevo calls in tests — same "don't depend on
 // a live third party's uptime" reasoning as

@@ -2,18 +2,18 @@ import { Module } from '@nestjs/common';
 import { ScheduleModule } from '@nestjs/schedule';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { AuthModule } from './auth/auth.module.js';
-import { FormsModule } from './forms/forms.module.js';
-import { MaintenanceModule } from './maintenance/maintenance.module.js';
-import { MediaModule } from './media/media.module.js';
-import { PagesModule } from './pages/pages.module.js';
-import { PublicFormsModule } from './public-forms/public-forms.module.js';
-import { PublicNewsletterModule } from './public-newsletter/public-newsletter.module.js';
-import { PublicPagesModule } from './public-pages/public-pages.module.js';
-import { PublicSiteLayoutSectionsModule } from './public-site-layout-sections/public-site-layout-sections.module.js';
-import { SiteLayoutSectionsModule } from './site-layout-sections/site-layout-sections.module.js';
-import { SitesModule } from './sites/sites.module.js';
-import { UsersModule } from './users/users.module.js';
+import { AuthModule } from './auth/auth.module';
+import { FormsModule } from './forms/forms.module';
+import { MaintenanceModule } from './maintenance/maintenance.module';
+import { MediaModule } from './media/media.module';
+import { PagesModule } from './pages/pages.module';
+import { PublicFormsModule } from './public-forms/public-forms.module';
+import { PublicNewsletterModule } from './public-newsletter/public-newsletter.module';
+import { PublicPagesModule } from './public-pages/public-pages.module';
+import { PublicSiteLayoutSectionsModule } from './public-site-layout-sections/public-site-layout-sections.module';
+import { SiteLayoutSectionsModule } from './site-layout-sections/site-layout-sections.module';
+import { SitesModule } from './sites/sites.module';
+import { UsersModule } from './users/users.module';
 
 @Module({
   imports: [

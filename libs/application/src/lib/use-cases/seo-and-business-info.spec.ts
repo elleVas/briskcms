@@ -1,17 +1,17 @@
 import { describe, expect, it } from 'vitest';
 import { PageNotFoundError, SiteNotFoundError, Site } from '@brisk/domain-core';
-import { createPage } from './create-page.use-case.js';
-import { updateSeoMeta } from './update-seo-meta.use-case.js';
-import { updateSiteBusinessInfo } from './update-site-business-info.use-case.js';
-import { updateSiteGeneralSettings } from './update-site-general-settings.use-case.js';
-import { updateSiteSeoSettings } from './update-site-seo-settings.use-case.js';
-import { updateSiteThemeSettings } from './update-site-theme-settings.use-case.js';
-import { updateSiteLocaleSettings } from './update-site-locale-settings.use-case.js';
+import { createPage } from './create-page.use-case';
+import { updateSeoMeta } from './update-seo-meta.use-case';
+import { updateSiteBusinessInfo } from './update-site-business-info.use-case';
+import { updateSiteGeneralSettings } from './update-site-general-settings.use-case';
+import { updateSiteSeoSettings } from './update-site-seo-settings.use-case';
+import { updateSiteThemeSettings } from './update-site-theme-settings.use-case';
+import { updateSiteLocaleSettings } from './update-site-locale-settings.use-case';
 import {
   InMemoryPageRepository,
   InMemoryPageVersionRepository,
   InMemorySiteRepository,
-} from './in-memory-repositories.test-fixture.js';
+} from './in-memory-repositories.test-fixture';
 
 describe('updateSeoMeta', () => {
   const tenantId = 'tenant-1';

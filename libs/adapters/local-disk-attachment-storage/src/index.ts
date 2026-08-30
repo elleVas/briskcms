@@ -1,1 +1,1 @@
-export * from './lib/local-disk-attachment-storage.adapter.js';
+export * from './lib/local-disk-attachment-storage.adapter';

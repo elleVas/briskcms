@@ -4,13 +4,13 @@ import {
   InvalidOrExpiredTokenError,
   User,
 } from '@brisk/domain-core';
-import { requestPasswordReset } from './request-password-reset.use-case.js';
-import { resetPassword } from './reset-password.use-case.js';
-import { InMemoryUserRepository } from './in-memory-repositories.test-fixture.js';
-import { FakeVerificationTokenPort } from './fake-verification-token-port.test-fixture.js';
-import { FakeEmailPort } from './fake-email-port.test-fixture.js';
-import { FakeAuthPort } from './fake-auth-port.test-fixture.js';
-import { FakeCaptchaPort } from './fake-captcha-port.test-fixture.js';
+import { requestPasswordReset } from './request-password-reset.use-case';
+import { resetPassword } from './reset-password.use-case';
+import { InMemoryUserRepository } from './in-memory-repositories.test-fixture';
+import { FakeVerificationTokenPort } from './fake-verification-token-port.test-fixture';
+import { FakeEmailPort } from './fake-email-port.test-fixture';
+import { FakeAuthPort } from './fake-auth-port.test-fixture';
+import { FakeCaptchaPort } from './fake-captcha-port.test-fixture';
 
 const tenantId = 'tenant-1';
 

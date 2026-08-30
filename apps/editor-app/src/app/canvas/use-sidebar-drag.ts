@@ -5,9 +5,9 @@ import {
   computeDropTarget,
   findContainerAtPoint,
   type DropCandidateRect,
-} from './compute-drop-target.js';
-import type { IframeGeometry } from './overlay-layer.js';
-import { findBlockInTree, type BlockTreeTarget } from './use-block-tree.js';
+} from './compute-drop-target';
+import type { IframeGeometry } from './overlay-layer';
+import { findBlockInTree, type BlockTreeTarget } from './use-block-tree';
 
 export interface SidebarDragState {
   descriptor: BlockDescriptor;

@@ -1,5 +1,5 @@
 import { useMutation } from '@tanstack/react-query';
-import { resetPassword } from '../lib/auth-api-client.js';
+import { resetPassword } from '../lib/auth-api-client';
 
 export function useResetPassword(token: string) {
   return useMutation({

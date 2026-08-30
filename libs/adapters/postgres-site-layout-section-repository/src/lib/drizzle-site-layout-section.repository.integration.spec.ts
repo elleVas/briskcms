@@ -9,8 +9,8 @@ import {
   tenants,
   withTenant,
 } from '@brisk/postgres-db';
-import { DrizzleSiteLayoutSectionRepository } from './drizzle-site-layout-section.repository.js';
-import { DrizzleSiteLayoutSectionVersionRepository } from './drizzle-site-layout-section-version.repository.js';
+import { DrizzleSiteLayoutSectionRepository } from './drizzle-site-layout-section.repository';
+import { DrizzleSiteLayoutSectionVersionRepository } from './drizzle-site-layout-section-version.repository';
 
 /**
  * Runs against a real Postgres — see docs/development.md ("docker compose up

@@ -3,18 +3,18 @@ import { useTranslation } from 'react-i18next';
 import { Link } from '@tanstack/react-router';
 import { History } from 'lucide-react';
 import { headerFooterBlocks } from '@brisk/block-registry';
-import type { SaveStatus } from './use-page-editor.js';
-import { CanvasEditorShell } from './canvas/canvas-editor-shell.js';
-import { IconButton } from './icon-button.js';
-import { IconListProvider } from './icon-list-provider.js';
-import { MediaPickerProvider } from './media-picker-provider.js';
-import { PageListProvider } from './page-list-provider.js';
-import type { SiteLayoutSectionKind } from '../lib/site-layout-sections-api-client.js';
-import { Switch } from '../components/ui/switch.js';
-import { useRepresentativePage } from './use-representative-page.js';
-import { useSiteLayoutSectionEditor } from './use-site-layout-section-editor.js';
-import { useSiteLayoutSectionVersions } from './use-site-layout-section-versions.js';
-import { VersionHistoryDialog } from './version-history-dialog.js';
+import type { SaveStatus } from './use-page-editor';
+import { CanvasEditorShell } from './canvas/canvas-editor-shell';
+import { IconButton } from './icon-button';
+import { IconListProvider } from './icon-list-provider';
+import { MediaPickerProvider } from './media-picker-provider';
+import { PageListProvider } from './page-list-provider';
+import type { SiteLayoutSectionKind } from '../lib/site-layout-sections-api-client';
+import { Switch } from '../components/ui/switch';
+import { useRepresentativePage } from './use-representative-page';
+import { useSiteLayoutSectionEditor } from './use-site-layout-section-editor';
+import { useSiteLayoutSectionVersions } from './use-site-layout-section-versions';
+import { VersionHistoryDialog } from './version-history-dialog';
 
 // Header/footer condividono un unico registro (docs/adr/0018, vedi il
 // commento su headerFooterBlocks stesso) — nessuna categorizzazione

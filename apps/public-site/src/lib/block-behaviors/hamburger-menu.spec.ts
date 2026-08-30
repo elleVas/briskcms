@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { describe, expect, it } from 'vitest';
-import { hamburgerMenuBehaviors } from './hamburger-menu.js';
-import { runBlockBehaviors } from './run-block-behaviors.js';
+import { hamburgerMenuBehaviors } from './hamburger-menu';
+import { runBlockBehaviors } from './run-block-behaviors';
 
 function renderMenu(): { root: HTMLElement; toggle: HTMLButtonElement } {
   document.body.innerHTML = `

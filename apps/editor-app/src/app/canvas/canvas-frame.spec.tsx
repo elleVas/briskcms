@@ -1,16 +1,14 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import { createRef } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import * as previewTokenApi from '../../lib/preview-token-api-client.js';
-import { PUBLIC_SITE_URL } from '../../lib/public-site-url.js';
-import { buildPreviewUrl, CanvasFrame } from './canvas-frame.js';
-import type { PreviewBridgeState } from './use-preview-bridge.js';
+import * as previewTokenApi from '../../lib/preview-token-api-client';
+import { PUBLIC_SITE_URL } from '../../lib/public-site-url';
+import { buildPreviewUrl, CanvasFrame } from './canvas-frame';
+import type { PreviewBridgeState } from './use-preview-bridge';
 
-vi.mock('../../lib/preview-token-api-client.js', async (importOriginal) => {
+vi.mock('../../lib/preview-token-api-client', async (importOriginal) => {
   const actual =
-    await importOriginal<
-      typeof import('../../lib/preview-token-api-client.js')
-    >();
+    await importOriginal<typeof import('../../lib/preview-token-api-client')>();
   return { ...actual, createPagePreviewToken: vi.fn() };
 });
 

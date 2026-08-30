@@ -1,5 +1,5 @@
-import type { BlockBehavior } from './types.js';
-import { carouselScrollSign } from './carousel-scroll-direction.js';
+import type { BlockBehavior } from './types';
+import { carouselScrollSign } from './carousel-scroll-direction';
 
 // Idempotency guard, same reasoning as image-slider.ts's own.
 const INITIALIZED_ATTR = 'data-brisk-testimonials-initialized';

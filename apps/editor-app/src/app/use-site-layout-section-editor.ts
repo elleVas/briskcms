@@ -10,9 +10,9 @@ import {
   saveDraft,
   updateSticky,
   type SiteLayoutSectionKind,
-} from '../lib/site-layout-sections-api-client.js';
-import { siteLayoutSectionQueryOptions } from './site-layout-sections-queries.js';
-import type { SaveStatus } from './use-page-editor.js';
+} from '../lib/site-layout-sections-api-client';
+import { siteLayoutSectionQueryOptions } from './site-layout-sections-queries';
+import type { SaveStatus } from './use-page-editor';
 
 // No debounce here (unlike the old Puck-backed version) — same reasoning
 // as usePageEditor.ts: canvas-editor-shell.tsx already debounces

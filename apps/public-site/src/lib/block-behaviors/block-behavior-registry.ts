@@ -1,15 +1,15 @@
-import { backToTopBehaviors } from './back-to-top.js';
-import { beforeAfterBehaviors } from './before-after.js';
-import { countdownBehaviors } from './countdown.js';
-import { formBehaviors } from './form.js';
-import { hamburgerMenuBehaviors } from './hamburger-menu.js';
-import { imageSliderBehaviors } from './image-slider.js';
-import { promoBarBehaviors } from './promo-bar.js';
-import { statBehaviors } from './stat.js';
-import { tabsBehaviors } from './tabs.js';
-import { testimonialsBehaviors } from './testimonials.js';
-import { turnstileBehaviors } from './turnstile.js';
-import type { BlockBehavior } from './types.js';
+import { backToTopBehaviors } from './back-to-top';
+import { beforeAfterBehaviors } from './before-after';
+import { countdownBehaviors } from './countdown';
+import { formBehaviors } from './form';
+import { hamburgerMenuBehaviors } from './hamburger-menu';
+import { imageSliderBehaviors } from './image-slider';
+import { promoBarBehaviors } from './promo-bar';
+import { statBehaviors } from './stat';
+import { tabsBehaviors } from './tabs';
+import { testimonialsBehaviors } from './testimonials';
+import { turnstileBehaviors } from './turnstile';
+import type { BlockBehavior } from './types';
 
 // Keyed by Block.type (see @brisk/shared-types), for the preview-bridge
 // dispatcher (run-block-behaviors-in-subtree.ts) — re-runs a live-inserted

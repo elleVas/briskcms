@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import { RouteError } from './route-error.js';
+import { RouteError } from './route-error';
 
 describe('RouteError', () => {
   it('shows the error and calls reset when retrying', () => {

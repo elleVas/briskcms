@@ -7,7 +7,7 @@ import {
   deleteIntegrationTenants,
   tenants,
 } from '@brisk/postgres-db';
-import { DrizzleUserRepository } from './drizzle-user.repository.js';
+import { DrizzleUserRepository } from './drizzle-user.repository';
 
 /**
  * Runs against a real Postgres — see docs/development.md. Connects as

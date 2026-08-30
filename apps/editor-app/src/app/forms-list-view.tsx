@@ -2,14 +2,14 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from '@tanstack/react-router';
 import { ChevronLeft, ChevronRight, Pencil, Trash2 } from 'lucide-react';
-import { Button } from '../components/ui/button.js';
-import { cn } from '../lib/utils.js';
-import type { FormDto } from '../lib/forms-api-client.js';
-import { ConfirmDeleteDialog } from './confirm-delete-dialog.js';
-import { FORMS_PAGE_SIZE } from './forms-queries.js';
-import { IconButton } from './icon-button.js';
-import { NewFormDialog } from './new-form-dialog.js';
-import { useFormsList } from './use-forms-list.js';
+import { Button } from '../components/ui/button';
+import { cn } from '../lib/utils';
+import type { FormDto } from '../lib/forms-api-client';
+import { ConfirmDeleteDialog } from './confirm-delete-dialog';
+import { FORMS_PAGE_SIZE } from './forms-queries';
+import { IconButton } from './icon-button';
+import { NewFormDialog } from './new-form-dialog';
+import { useFormsList } from './use-forms-list';
 
 export interface FormsListViewProps {
   siteId: string;

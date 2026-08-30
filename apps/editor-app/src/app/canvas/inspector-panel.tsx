@@ -1,8 +1,8 @@
 import type { Block } from '@brisk/shared-types';
 import type { BlockDescriptor, FieldDescriptor } from '@brisk/block-registry';
-import { Input } from '../../components/ui/input.js';
-import { Textarea } from '../../components/ui/textarea.js';
-import { useTranslation } from '../../lib/use-translation.js';
+import { Input } from '../../components/ui/input';
+import { Textarea } from '../../components/ui/textarea';
+import { useTranslation } from '../../lib/use-translation';
 
 export interface InspectorPanelProps {
   block: Block;

@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import type { BlockStyleOverride } from '@brisk/shared-types';
-import { updateThemeTokens as apiUpdateThemeTokens } from '../lib/sites-api-client.js';
-import { siteQueryOptions } from './site-queries.js';
+import { updateThemeTokens as apiUpdateThemeTokens } from '../lib/sites-api-client';
+import { siteQueryOptions } from './site-queries';
 
 export function useSiteThemeTokens(siteId: string) {
   const queryClient = useQueryClient();

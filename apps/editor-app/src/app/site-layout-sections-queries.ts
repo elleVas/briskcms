@@ -3,7 +3,7 @@ import {
   getOrCreateSiteLayoutSection,
   listVersions,
   type SiteLayoutSectionKind,
-} from '../lib/site-layout-sections-api-client.js';
+} from '../lib/site-layout-sections-api-client';
 
 export function siteLayoutSectionQueryOptions(
   siteId: string,

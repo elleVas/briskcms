@@ -2,8 +2,8 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   updateBusinessInfo as apiUpdateBusinessInfo,
   type UpdateBusinessInfoInput,
-} from '../lib/sites-api-client.js';
-import { siteQueryOptions } from './site-queries.js';
+} from '../lib/sites-api-client';
+import { siteQueryOptions } from './site-queries';
 
 export function useSiteBusinessInfo(siteId: string) {
   const queryClient = useQueryClient();

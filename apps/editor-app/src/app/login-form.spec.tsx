@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { LoginForm } from './login-form.js';
+import { LoginForm } from './login-form';
 
 function fillAndSubmit(email: string, password: string) {
   fireEvent.change(screen.getByLabelText('Email'), {

@@ -5,7 +5,7 @@ import {
   requestPasswordReset,
   resetPassword,
   verifyEmail,
-} from './auth-api-client.js';
+} from './auth-api-client';
 
 function jsonResponse(body: unknown) {
   return {

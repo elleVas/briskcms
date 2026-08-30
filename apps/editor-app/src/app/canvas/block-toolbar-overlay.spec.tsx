@@ -4,14 +4,14 @@ import { describe, expect, it, vi } from 'vitest';
 import { QueryClientProvider } from '@tanstack/react-query';
 import type { Block, BlockRect } from '@brisk/shared-types';
 import type { BlockDescriptor } from '@brisk/block-registry';
-import { createTestQueryClient } from '../../test-query-client.js';
-import { BlockToolbarOverlay } from './block-toolbar-overlay.js';
+import { createTestQueryClient } from '../../test-query-client';
+import { BlockToolbarOverlay } from './block-toolbar-overlay';
 
 // Nessun default risolto in questi test — non è il loro oggetto, e senza
 // mock la query farebbe una vera fetch di rete (comportamento non
 // deterministico). Vuoto = i campi mostrano il valore/placeholder com'era
 // prima di docs/adr/0022's follow-up sul pre-fill.
-vi.mock('../../lib/theme-api-client.js', () => ({
+vi.mock('../../lib/theme-api-client', () => ({
   fetchBlockStyleDefaults: vi.fn().mockResolvedValue({}),
   fetchThemeIcons: vi.fn().mockResolvedValue([]),
 }));

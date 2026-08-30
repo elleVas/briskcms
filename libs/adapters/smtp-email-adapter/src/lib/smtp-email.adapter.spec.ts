@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { SmtpEmailAdapter } from './smtp-email.adapter.js';
+import { SmtpEmailAdapter } from './smtp-email.adapter';
 
 describe('SmtpEmailAdapter construction', () => {
   // nodemailer's SMTP transport connects lazily on first send, so

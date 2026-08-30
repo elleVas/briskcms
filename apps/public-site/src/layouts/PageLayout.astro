@@ -9,12 +9,12 @@ import {
 	type SeoMeta,
 } from '@brisk/shared-types';
 import BlockRenderer from '../components/BlockRenderer.astro';
-import { injectScriptNonce } from '../lib/content-security-policy.js';
-import { editorAppUrl } from '../lib/editor-app-url.js';
-import { localeDirection, localePath } from '../lib/locale-path.js';
-import { buildSchemaOrgGraph } from '../lib/schema-org.js';
-import { resolveThemeFont } from '../lib/theme-font.js';
-import { Translator } from '../lib/i18n.js';
+import { injectScriptNonce } from '../lib/content-security-policy';
+import { editorAppUrl } from '../lib/editor-app-url';
+import { localeDirection, localePath } from '../lib/locale-path';
+import { buildSchemaOrgGraph } from '../lib/schema-org';
+import { resolveThemeFont } from '../lib/theme-font';
+import { Translator } from '../lib/i18n';
 import '../styles/global.css';
 // ~theme resolves to themes/<BRISK_THEME>/theme.css (docs/adr/0021,
 // astro.config.mjs) — imported after global.css so its :root tokens win
@@ -306,7 +306,7 @@ const blockStyleOverridesCss = buildBlockStyleOverridesCss(
 		{
 			editable && (
 				<script>
-					import { initPreviewBridge } from '../lib/init-preview-bridge.js';
+					import { initPreviewBridge } from '../lib/init-preview-bridge';
 					initPreviewBridge();
 				</script>
 			)

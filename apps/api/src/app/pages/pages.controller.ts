@@ -42,18 +42,18 @@ import {
   paginatedPagesSchema,
   type PageRecord,
 } from '@brisk/shared-types';
-import { PREVIEW_TOKEN_TTL_MS } from '../preview-token-ttl.constant.js';
-import { Roles } from '../auth/roles.decorator.js';
-import { RolesGuard } from '../auth/roles.guard.js';
-import { SessionAuthGuard } from '../auth/session-auth.guard.js';
-import { ZodValidationPipe } from '../zod-validation.pipe.js';
-import { TENANT_CONTEXT } from '../auth/auth.tokens.js';
+import { PREVIEW_TOKEN_TTL_MS } from '../preview-token-ttl.constant';
+import { Roles } from '../auth/roles.decorator';
+import { RolesGuard } from '../auth/roles.guard';
+import { SessionAuthGuard } from '../auth/session-auth.guard';
+import { ZodValidationPipe } from '../zod-validation.pipe';
+import { TENANT_CONTEXT } from '../auth/auth.tokens';
 import {
   PAGE_REPOSITORY,
   PAGE_VERSION_REPOSITORY,
   PREVIEW_TOKEN_PORT,
   SEARCH_REPOSITORY,
-} from './pages.tokens.js';
+} from './pages.tokens';
 import {
   type CreatePageBody,
   createPageBodySchema,
@@ -73,7 +73,7 @@ import {
   setPageParentBodySchema,
   type UpdateSeoMetaBody,
   updateSeoMetaBodySchema,
-} from './pages.schemas.js';
+} from './pages.schemas';
 
 @Controller('pages')
 @UseGuards(SessionAuthGuard)

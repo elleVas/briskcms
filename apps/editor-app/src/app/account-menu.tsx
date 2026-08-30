@@ -1,12 +1,12 @@
 import { useTranslation } from 'react-i18next';
 import { User } from 'lucide-react';
-import { Button } from '../components/ui/button.js';
+import { Button } from '../components/ui/button';
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from '../components/ui/popover.js';
-import { useSession } from './use-session.js';
+} from '../components/ui/popover';
+import { useSession } from './use-session';
 
 // Just logout for now — room for real profile settings later, separate
 // from SettingsMenu (language/theme), which is app-level, not account-level.

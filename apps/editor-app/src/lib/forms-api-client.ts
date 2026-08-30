@@ -1,5 +1,5 @@
 import type { FormField, FormStep } from '@brisk/shared-types';
-import { request } from './http-client.js';
+import { request } from './http-client';
 
 export interface FormDto {
   id: string;

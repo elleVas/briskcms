@@ -10,7 +10,7 @@ import {
   users,
   withTenant,
 } from '@brisk/postgres-db';
-import { SessionAuthAdapter } from './session-auth.adapter.js';
+import { SessionAuthAdapter } from './session-auth.adapter';
 
 /**
  * Runs against a real Postgres — see docs/development.md. Connects as

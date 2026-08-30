@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { pageBlocks } from './config.js';
-import { headerFooterBlocks } from './layout-config.js';
+import { pageBlocks } from './config';
+import { headerFooterBlocks } from './layout-config';
 
 describe('headerFooterBlocks', () => {
   it('registers all 11 header/footer blocks, each with a unique type', () => {

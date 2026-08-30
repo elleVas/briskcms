@@ -1,7 +1,7 @@
 import { renderHook } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import type { ReactNode } from 'react';
-import { MediaPickerContext, useMediaPicker } from './media-picker-context.js';
+import { MediaPickerContext, useMediaPicker } from './media-picker-context';
 
 describe('useMediaPicker', () => {
   it('throws when called outside a MediaPickerContext.Provider', () => {

@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { SiteLayoutSection } from '@brisk/domain-core';
-import { getPreviewSiteLayoutSectionById } from './get-preview-site-layout-section-by-id.use-case.js';
+import { getPreviewSiteLayoutSectionById } from './get-preview-site-layout-section-by-id.use-case';
 import {
   InMemoryPreviewTokenPort,
   InMemorySiteLayoutSectionRepository,
-} from './in-memory-repositories.test-fixture.js';
+} from './in-memory-repositories.test-fixture';
 
 describe('getPreviewSiteLayoutSectionById', () => {
   const tenantId = 'tenant-1';

@@ -8,7 +8,7 @@ import {
   PREVIEW_BRIDGE_VERSION,
   type PreviewToParentMessage,
 } from '@brisk/shared-types';
-import { runBlockBehaviorsInSubtree } from './block-behaviors/run-block-behaviors-in-subtree.js';
+import { runBlockBehaviorsInSubtree } from './block-behaviors/run-block-behaviors-in-subtree';
 import {
   applyBlockInsert,
   applyBlockPatch,
@@ -25,7 +25,7 @@ import {
   isRootLevelBlock,
   parseEditingSection,
   toBlockRects,
-} from './preview-bridge-client.js';
+} from './preview-bridge-client';
 
 function postToParent(
   targetOrigin: string,

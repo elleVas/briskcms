@@ -1,9 +1,9 @@
 import type { PricingPlanProps } from '@brisk/shared-types';
 import { BLOCK_STYLE_DEFAULTS } from '@brisk/shared-types';
-import { FieldBuilder, type BlockDescriptor } from '../field-types.js';
-import { BlockStyleRegistry } from '../block-style-registry.js';
-import { FeatureListField } from '../fields/feature-list-field.js';
-import { ctaLinkFields } from '../fields/link-type-field.js';
+import { FieldBuilder, type BlockDescriptor } from '../field-types';
+import { BlockStyleRegistry } from '../block-style-registry';
+import { FeatureListField } from '../fields/feature-list-field';
+import { ctaLinkFields } from '../fields/link-type-field';
 
 export const pricingPlanBlock: BlockDescriptor<PricingPlanProps> = {
   type: 'PricingPlan',

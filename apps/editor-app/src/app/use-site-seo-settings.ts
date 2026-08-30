@@ -2,8 +2,8 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   updateSeoSettings as apiUpdateSeoSettings,
   type UpdateSeoSettingsInput,
-} from '../lib/sites-api-client.js';
-import { siteQueryOptions } from './site-queries.js';
+} from '../lib/sites-api-client';
+import { siteQueryOptions } from './site-queries';
 
 export function useSiteSeoSettings(siteId: string) {
   const queryClient = useQueryClient();

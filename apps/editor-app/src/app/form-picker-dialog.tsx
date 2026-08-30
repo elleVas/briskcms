@@ -7,11 +7,11 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from '../components/ui/dialog.js';
-import { cn } from '../lib/utils.js';
-import type { FormDto } from '../lib/forms-api-client.js';
-import { FORMS_PAGE_SIZE, formsQueryOptions } from './forms-queries.js';
-import { IconButton } from './icon-button.js';
+} from '../components/ui/dialog';
+import { cn } from '../lib/utils';
+import type { FormDto } from '../lib/forms-api-client';
+import { FORMS_PAGE_SIZE, formsQueryOptions } from './forms-queries';
+import { IconButton } from './icon-button';
 
 export interface FormPickerDialogProps {
   siteId: string;

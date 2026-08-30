@@ -1,9 +1,9 @@
 import { UnauthorizedException } from '@nestjs/common';
 import type { ExecutionContext } from '@nestjs/common';
 import type { AuthPort, Session } from '@brisk/ports';
-import { SessionAuthGuard } from './session-auth.guard.js';
-import { SESSION_COOKIE_NAME } from './session-cookie.constants.js';
-import type { AuthenticatedRequest } from './session-auth.guard.js';
+import { SessionAuthGuard } from './session-auth.guard';
+import { SESSION_COOKIE_NAME } from './session-cookie.constants';
+import type { AuthenticatedRequest } from './session-auth.guard';
 
 // Express's Request has 100+ members — a real instance isn't needed, only
 // the `cookies` field the guard reads and the `tenantId`/`userId` fields it

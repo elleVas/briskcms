@@ -1,5 +1,5 @@
 import type { VideoEmbedProps } from '@brisk/shared-types';
-import type { BlockDescriptor } from '../field-types.js';
+import type { BlockDescriptor } from '../field-types';
 
 export const videoEmbedBlock: BlockDescriptor<VideoEmbedProps> = {
   type: 'VideoEmbed',

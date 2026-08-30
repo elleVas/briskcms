@@ -1,6 +1,6 @@
 import { z } from 'zod';
-import { blockSchema, seoMetaSchema } from './content-model.js';
-import { publishedSiteSchema } from './published-site.js';
+import { blockSchema, seoMetaSchema } from './content-model';
+import { publishedSiteSchema } from './published-site';
 
 /** One entry per published locale-translation of this page (docs/adr/0017), including itself. */
 export const publishedPageTranslationSchema = z.object({

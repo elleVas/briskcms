@@ -1,8 +1,8 @@
 import type { TestimonialProps } from '@brisk/shared-types';
 import { BLOCK_STYLE_DEFAULTS } from '@brisk/shared-types';
-import { FieldBuilder, type BlockDescriptor } from '../field-types.js';
-import { MediaPickerField } from '../fields/media-picker-field.js';
-import { BlockStyleRegistry } from '../block-style-registry.js';
+import { FieldBuilder, type BlockDescriptor } from '../field-types';
+import { MediaPickerField } from '../fields/media-picker-field';
+import { BlockStyleRegistry } from '../block-style-registry';
 
 export const testimonialBlock: BlockDescriptor<TestimonialProps> = {
   type: 'Testimonial',

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   isValidRenderBlockFragmentBody,
   renderBlockFragmentCorsHeaders,
-} from './render-block-fragment-helpers.js';
+} from './render-block-fragment-helpers';
 
 describe('isValidRenderBlockFragmentBody', () => {
   const valid = {

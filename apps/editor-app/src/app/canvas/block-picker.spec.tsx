@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import type { BlockDescriptor } from '@brisk/block-registry';
-import { BlockPicker } from './block-picker.js';
+import { BlockPicker } from './block-picker';
 
 const heroDescriptor: BlockDescriptor = {
   type: 'Hero',

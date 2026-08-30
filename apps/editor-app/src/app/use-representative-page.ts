@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { pagesQueryOptions } from './pages-queries.js';
+import { pagesQueryOptions } from './pages-queries';
 
 /**
  * L'editor Header/Footer non ha una pagina propria — canvas-editor-shell.tsx

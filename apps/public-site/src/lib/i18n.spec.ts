@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { Translator } from './i18n.js';
+import { Translator } from './i18n';
 
 describe('Translator', () => {
   it('returns the Italian string for a known key and locale', () => {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { generateOpaqueToken, hashOpaqueToken } from './opaque-token.js';
+import { generateOpaqueToken, hashOpaqueToken } from './opaque-token';
 
 describe('generateOpaqueToken', () => {
   it('generates a high-entropy, non-empty token', () => {

@@ -2,13 +2,13 @@ import { act, renderHook } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { Block } from '@brisk/shared-types';
 import type { BlockDescriptor } from '@brisk/block-registry';
-import * as blockFragmentApi from '../../lib/block-fragment-api-client.js';
-import { useBlockTreeMutations } from './use-block-tree-mutations.js';
+import * as blockFragmentApi from '../../lib/block-fragment-api-client';
+import { useBlockTreeMutations } from './use-block-tree-mutations';
 
-vi.mock('../../lib/block-fragment-api-client.js', async (importOriginal) => {
+vi.mock('../../lib/block-fragment-api-client', async (importOriginal) => {
   const actual =
     await importOriginal<
-      typeof import('../../lib/block-fragment-api-client.js')
+      typeof import('../../lib/block-fragment-api-client')
     >();
   return { ...actual, renderBlockFragment: vi.fn() };
 });

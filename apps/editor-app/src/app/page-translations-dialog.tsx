@@ -3,17 +3,17 @@ import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from '@tanstack/react-router';
 import { TriangleAlert } from 'lucide-react';
 import { slugify } from '@brisk/shared-types';
-import { Button } from '../components/ui/button.js';
+import { Button } from '../components/ui/button';
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from '../components/ui/dialog.js';
-import { Input } from '../components/ui/input.js';
-import { Label } from '../components/ui/label.js';
-import { ApiError } from '../lib/http-client.js';
-import { usePageTranslations } from './use-page-translations.js';
+} from '../components/ui/dialog';
+import { Input } from '../components/ui/input';
+import { Label } from '../components/ui/label';
+import { ApiError } from '../lib/http-client';
+import { usePageTranslations } from './use-page-translations';
 
 export interface PageTranslationsDialogProps {
   pageId: string;

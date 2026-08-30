@@ -1,1 +1,1 @@
-export * from './lib/mailchimp-newsletter.adapter.js';
+export * from './lib/mailchimp-newsletter.adapter';

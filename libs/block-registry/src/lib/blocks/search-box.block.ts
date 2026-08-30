@@ -1,6 +1,6 @@
 import type { SearchBoxProps } from '@brisk/shared-types';
-import type { BlockDescriptor } from '../field-types.js';
-import { visibilityField } from '../fields/visibility-field.js';
+import type { BlockDescriptor } from '../field-types';
+import { visibilityField } from '../fields/visibility-field';
 
 export const searchBoxBlock: BlockDescriptor<SearchBoxProps> = {
   type: 'SearchBox',

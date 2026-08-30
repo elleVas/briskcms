@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { POST } from './subscribe.js';
+import { POST } from './subscribe';
 
 function jsonResponse(body: unknown, status = 200) {
   return {

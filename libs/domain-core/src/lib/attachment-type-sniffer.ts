@@ -1,4 +1,4 @@
-import { UnsupportedAttachmentTypeError } from './errors.js';
+import { UnsupportedAttachmentTypeError } from './errors';
 
 export interface SniffedAttachmentType {
   mimeType: string;

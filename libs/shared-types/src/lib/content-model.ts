@@ -2,7 +2,7 @@ import { z } from 'zod';
 import {
   blockStyleOverrideSchema,
   type BlockStyleOverride,
-} from './site-theme-tokens.js';
+} from './site-theme-tokens';
 
 /**
  * Formato generico di un blocco di contenuto (output editor Puck, Fase 2).

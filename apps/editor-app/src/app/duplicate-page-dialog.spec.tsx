@@ -1,8 +1,8 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import { ApiError } from '../lib/http-client.js';
-import type { PageListItem } from '../lib/pages-api-client.js';
-import { DuplicatePageDialog } from './duplicate-page-dialog.js';
+import { ApiError } from '../lib/http-client';
+import type { PageListItem } from '../lib/pages-api-client';
+import { DuplicatePageDialog } from './duplicate-page-dialog';
 
 const sourcePage: PageListItem = {
   id: 'page-1',

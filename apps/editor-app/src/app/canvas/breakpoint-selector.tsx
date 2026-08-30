@@ -1,6 +1,6 @@
 import { Monitor, Smartphone, Tablet } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { IconButton } from '../icon-button.js';
+import { IconButton } from '../icon-button';
 
 export type Breakpoint = 'desktop' | 'tablet' | 'mobile';
 

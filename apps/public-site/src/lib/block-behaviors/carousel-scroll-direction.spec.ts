@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, expect, it } from 'vitest';
-import { carouselScrollSign } from './carousel-scroll-direction.js';
+import { carouselScrollSign } from './carousel-scroll-direction';
 
 describe('carouselScrollSign', () => {
   it('keeps the sign unchanged under ltr', () => {

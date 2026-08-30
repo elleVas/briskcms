@@ -1,6 +1,6 @@
 import type { Page } from '@brisk/domain-core';
 import type { PageRepositoryPort } from '@brisk/ports';
-import type { PageAncestor } from './resolve-page-ancestors.js';
+import type { PageAncestor } from './resolve-page-ancestors';
 
 // Same safety net as resolvePageAncestors' own MAX_ANCESTOR_WALK — real
 // sites are 1-3 levels deep.

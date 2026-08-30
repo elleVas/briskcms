@@ -6,16 +6,16 @@ import {
   UserEmailAlreadyExistsError,
   UserNotFoundError,
 } from '@brisk/domain-core';
-import { inviteUser } from './invite-user.use-case.js';
-import { resendInvite } from './resend-invite.use-case.js';
-import { acceptInvite } from './accept-invite.use-case.js';
-import { updateUserRole } from './update-user-role.use-case.js';
-import { setUserActive } from './set-user-active.use-case.js';
-import { listUsers } from './list-users.use-case.js';
-import { InMemoryUserRepository } from './in-memory-repositories.test-fixture.js';
-import { FakeVerificationTokenPort } from './fake-verification-token-port.test-fixture.js';
-import { FakeEmailPort } from './fake-email-port.test-fixture.js';
-import { FakeAuthPort } from './fake-auth-port.test-fixture.js';
+import { inviteUser } from './invite-user.use-case';
+import { resendInvite } from './resend-invite.use-case';
+import { acceptInvite } from './accept-invite.use-case';
+import { updateUserRole } from './update-user-role.use-case';
+import { setUserActive } from './set-user-active.use-case';
+import { listUsers } from './list-users.use-case';
+import { InMemoryUserRepository } from './in-memory-repositories.test-fixture';
+import { FakeVerificationTokenPort } from './fake-verification-token-port.test-fixture';
+import { FakeEmailPort } from './fake-email-port.test-fixture';
+import { FakeAuthPort } from './fake-auth-port.test-fixture';
 
 const tenantId = 'tenant-1';
 

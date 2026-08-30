@@ -1,8 +1,8 @@
 import { useCallback, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { IconListContext, type IconListPort } from '@brisk/block-registry';
-import { themeIconsQueryOptions } from './theme-icons-queries.js';
-import { IconPickerDialog } from './icon-picker-dialog.js';
+import { themeIconsQueryOptions } from './theme-icons-queries';
+import { IconPickerDialog } from './icon-picker-dialog';
 
 export interface IconListProviderProps {
   children: ReactNode;

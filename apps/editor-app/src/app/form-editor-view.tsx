@@ -3,12 +3,12 @@ import { useTranslation } from 'react-i18next';
 import { Link } from '@tanstack/react-router';
 import { Plus, Trash2 } from 'lucide-react';
 import type { FormField, FormStep } from '@brisk/shared-types';
-import { Button } from '../components/ui/button.js';
-import { Input } from '../components/ui/input.js';
-import { Label } from '../components/ui/label.js';
-import { FormFieldEditorRow } from './form-field-editor-row.js';
-import { IconButton } from './icon-button.js';
-import { useFormEditor } from './use-form-editor.js';
+import { Button } from '../components/ui/button';
+import { Input } from '../components/ui/input';
+import { Label } from '../components/ui/label';
+import { FormFieldEditorRow } from './form-field-editor-row';
+import { IconButton } from './icon-button';
+import { useFormEditor } from './use-form-editor';
 
 export interface FormEditorViewProps {
   formId: string;

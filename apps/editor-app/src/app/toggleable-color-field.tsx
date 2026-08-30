@@ -1,4 +1,4 @@
-import { Label } from '../components/ui/label.js';
+import { Label } from '../components/ui/label';
 
 export interface ToggleableColorFieldProps {
   id: string;

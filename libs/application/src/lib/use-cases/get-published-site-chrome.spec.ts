@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import { Site, SiteLayoutSection } from '@brisk/domain-core';
-import { getPublishedSiteChrome } from './get-published-site-chrome.use-case.js';
+import { getPublishedSiteChrome } from './get-published-site-chrome.use-case';
 import {
   InMemorySiteLayoutSectionRepository,
   InMemorySiteRepository,
   InMemorySiteThemeBlockStylesRepository,
-} from './in-memory-repositories.test-fixture.js';
+} from './in-memory-repositories.test-fixture';
 
 describe('getPublishedSiteChrome', () => {
   const tenantId = 'tenant-1';

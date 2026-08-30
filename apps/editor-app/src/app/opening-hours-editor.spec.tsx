@@ -1,8 +1,8 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import type { OpeningHoursDay } from '@brisk/shared-types';
-import { TooltipProvider } from '../components/ui/tooltip.js';
-import { OpeningHoursEditor } from './opening-hours-editor.js';
+import { TooltipProvider } from '../components/ui/tooltip';
+import { OpeningHoursEditor } from './opening-hours-editor';
 
 const emptyWeek: OpeningHoursDay[] = [
   { dayOfWeek: 'monday', ranges: [] },

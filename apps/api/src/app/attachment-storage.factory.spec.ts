@@ -1,6 +1,6 @@
 import { LocalDiskAttachmentStorageAdapter } from '@brisk/local-disk-attachment-storage';
 import { S3AttachmentStorageAdapter } from '@brisk/s3-attachment-storage';
-import { createAttachmentStorage } from './attachment-storage.factory.js';
+import { createAttachmentStorage } from './attachment-storage.factory';
 
 // Same "test the branch in isolation" reasoning as media.module.spec.ts's
 // createMediaStorage tests.

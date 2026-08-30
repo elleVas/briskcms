@@ -6,7 +6,7 @@ import {
   siteLayoutSectionVersions,
   withTenant,
 } from '@brisk/postgres-db';
-import { saveSiteLayoutSectionVersionTx } from './save-site-layout-section-version-tx.js';
+import { saveSiteLayoutSectionVersionTx } from './save-site-layout-section-version-tx';
 
 function fromRow(
   row: typeof siteLayoutSectionVersions.$inferSelect,

@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { runBlockBehaviorsInSubtree } from './run-block-behaviors-in-subtree.js';
+import { runBlockBehaviorsInSubtree } from './run-block-behaviors-in-subtree';
 
 describe('runBlockBehaviorsInSubtree', () => {
   afterEach(() => {

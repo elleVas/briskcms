@@ -13,25 +13,25 @@ import {
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
-} from '../components/ui/accordion.js';
-import { Button } from '../components/ui/button.js';
+} from '../components/ui/accordion';
+import { Button } from '../components/ui/button';
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from '../components/ui/dialog.js';
-import { blockStyleDefaultsQueryOptions } from './block-style-defaults-queries.js';
-import type { BlockPickerCategory } from './canvas/block-picker.js';
-import { BlockStyleFields } from './canvas/block-style-fields.js';
-import { checkContrastAgainstThemeForeground } from '../lib/color-contrast.js';
-import { useTranslation } from '../lib/use-translation.js';
-import { siteQueryOptions } from './site-queries.js';
-import { themeBaseTokensQueryOptions } from './theme-base-tokens-queries.js';
-import { themeForegroundTokensQueryOptions } from './theme-foreground-tokens-queries.js';
-import { ToggleableColorField } from './toggleable-color-field.js';
-import { useResetFormOnOpen } from './use-reset-form-on-open.js';
-import { useSiteThemeSettings } from './use-site-theme-settings.js';
+} from '../components/ui/dialog';
+import { blockStyleDefaultsQueryOptions } from './block-style-defaults-queries';
+import type { BlockPickerCategory } from './canvas/block-picker';
+import { BlockStyleFields } from './canvas/block-style-fields';
+import { checkContrastAgainstThemeForeground } from '../lib/color-contrast';
+import { useTranslation } from '../lib/use-translation';
+import { siteQueryOptions } from './site-queries';
+import { themeBaseTokensQueryOptions } from './theme-base-tokens-queries';
+import { themeForegroundTokensQueryOptions } from './theme-foreground-tokens-queries';
+import { ToggleableColorField } from './toggleable-color-field';
+import { useResetFormOnOpen } from './use-reset-form-on-open';
+import { useSiteThemeSettings } from './use-site-theme-settings';
 
 export interface GlobalStylesDialogProps {
   siteId: string;

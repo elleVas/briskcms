@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { Form } from './form.js';
+import { Form } from './form';
 
 describe('Form entity', () => {
   it('create starts with no fields, no steps, and no notification email', () => {

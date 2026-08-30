@@ -1,4 +1,4 @@
-import { editorAppUrl } from './editor-app-url.js';
+import { editorAppUrl } from './editor-app-url';
 
 // Stesso motivo di renderBlockFragmentCorsHeaders (render-block-fragment-
 // helpers.ts): editor-app (apps/editor-app) gira su un'origine diversa in

@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from '@tanstack/react-router';
-import type { MediaDto } from '../lib/media-api-client.js';
-import { MediaGrid } from './media-grid.js';
+import type { MediaDto } from '../lib/media-api-client';
+import { MediaGrid } from './media-grid';
 
 export interface MediaLibraryViewProps {
   siteId: string;

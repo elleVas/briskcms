@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { S3Client } from '@aws-sdk/client-s3';
-import { S3AttachmentStorageAdapter } from './s3-attachment-storage.adapter.js';
+import { S3AttachmentStorageAdapter } from './s3-attachment-storage.adapter';
 
 const sendMock = vi.fn();
 

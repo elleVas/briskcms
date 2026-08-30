@@ -1,8 +1,8 @@
 ---
-import { getPreviewPageById } from '../../lib/public-api-client.js';
+import { getPreviewPageById } from '../../lib/public-api-client';
 import PublicPageContent from '../../components/PublicPageContent.astro';
-import { buildContentSecurityPolicy } from '../../lib/content-security-policy.js';
-import { editorAppUrl } from '../../lib/editor-app-url.js';
+import { buildContentSecurityPolicy } from '../../lib/content-security-policy';
+import { editorAppUrl } from '../../lib/editor-app-url';
 
 // SSR, mai prerenderizzata — stessa ragione di [locale]/[...slug].astro:
 // il contenuto (qui, la bozza dietro un token) non è mai noto a build time.

@@ -1,6 +1,6 @@
 ---
 import type { NewsletterSignupProps } from '@brisk/shared-types';
-import { Translator } from '../../lib/i18n.js';
+import { Translator } from '../../lib/i18n';
 
 type Props = NewsletterSignupProps & { locale: string };
 
@@ -78,8 +78,8 @@ const turnstileSiteKey = process.env['TURNSTILE_SITE_KEY'] ?? '';
   // Turnstile rendered explicitly, not via its own auto-scan — see
   // block-behaviors/turnstile.ts for why (and for the same reasoning
   // Form.astro's own widget uses).
-  import { turnstileBehaviors } from '../../lib/block-behaviors/turnstile.js';
-  import { runBlockBehaviors } from '../../lib/block-behaviors/run-block-behaviors.js';
+  import { turnstileBehaviors } from '../../lib/block-behaviors/turnstile';
+  import { runBlockBehaviors } from '../../lib/block-behaviors/run-block-behaviors';
   runBlockBehaviors(document, turnstileBehaviors);
 </script>
 

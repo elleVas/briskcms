@@ -5,8 +5,8 @@ import {
   useSuspenseQuery,
 } from '@tanstack/react-query';
 import type { Block } from '@brisk/shared-types';
-import { publishPage, saveDraft } from '../lib/pages-api-client.js';
-import { pageQueryOptions } from './pages-queries.js';
+import { publishPage, saveDraft } from '../lib/pages-api-client';
+import { pageQueryOptions } from './pages-queries';
 
 export type SaveStatus =
   | { kind: 'idle' }

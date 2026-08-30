@@ -10,7 +10,7 @@ import {
   verificationTokens,
   withTenant,
 } from '@brisk/postgres-db';
-import { VerificationTokenAdapter } from './verification-token.adapter.js';
+import { VerificationTokenAdapter } from './verification-token.adapter';
 
 /**
  * Runs against a real Postgres — see docs/development.md. Connects as

@@ -1,9 +1,9 @@
 import type { PromoBarProps } from '@brisk/shared-types';
 import { BLOCK_STYLE_DEFAULTS } from '@brisk/shared-types';
-import type { BlockDescriptor } from '../field-types.js';
-import { BlockStyleRegistry } from '../block-style-registry.js';
-import { ctaLinkFields } from '../fields/link-type-field.js';
-import { visibilityField } from '../fields/visibility-field.js';
+import type { BlockDescriptor } from '../field-types';
+import { BlockStyleRegistry } from '../block-style-registry';
+import { ctaLinkFields } from '../fields/link-type-field';
+import { visibilityField } from '../fields/visibility-field';
 
 export const promoBarBlock: BlockDescriptor<PromoBarProps> = {
   type: 'PromoBar',

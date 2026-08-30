@@ -1,6 +1,6 @@
 import { lt } from 'drizzle-orm';
-import { type BriskDb, withTenant } from './client.js';
-import { sessions, verificationTokens } from './schema.js';
+import { type BriskDb, withTenant } from './client';
+import { sessions, verificationTokens } from './schema';
 
 export interface ExpiredTokensCleanupResult {
   deletedSessions: number;

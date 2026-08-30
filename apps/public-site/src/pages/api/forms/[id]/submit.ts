@@ -2,7 +2,7 @@ import type { APIRoute } from 'astro';
 import {
   submitPublicForm,
   uploadFormAttachment,
-} from '../../../../lib/public-api-client.js';
+} from '../../../../lib/public-api-client';
 
 // Same-origin proxy (docs/adr/0015): the browser only ever POSTs to this
 // app's own origin, never directly to the API — avoids touching ADR-0010's

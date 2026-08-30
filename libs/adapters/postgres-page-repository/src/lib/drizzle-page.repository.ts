@@ -20,7 +20,7 @@ import {
   pages,
   withTenant,
 } from '@brisk/postgres-db';
-import { savePageVersionTx } from './save-page-version-tx.js';
+import { savePageVersionTx } from './save-page-version-tx';
 
 // Sibling-scoped slug uniqueness needs two DB constraints, not one (see
 // schema.ts's own comment): the composite unique (tenant, site, locale,

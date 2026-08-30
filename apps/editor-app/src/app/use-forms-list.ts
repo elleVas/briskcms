@@ -4,7 +4,7 @@ import { useNavigate } from '@tanstack/react-router';
 import {
   createForm as apiCreateForm,
   deleteForm as apiDeleteForm,
-} from '../lib/forms-api-client.js';
+} from '../lib/forms-api-client';
 
 // Same split as usePagesList: fetching the list is the route loader's job
 // (see routes/_shell.forms.index.tsx), this hook only owns the actions

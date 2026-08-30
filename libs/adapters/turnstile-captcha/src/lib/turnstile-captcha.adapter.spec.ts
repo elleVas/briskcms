@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { TurnstileCaptchaAdapter } from './turnstile-captcha.adapter.js';
+import { TurnstileCaptchaAdapter } from './turnstile-captcha.adapter';
 
 function jsonResponse(body: unknown, ok = true) {
   return { ok, json: () => Promise.resolve(body) } as Response;

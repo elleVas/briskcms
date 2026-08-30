@@ -6,26 +6,26 @@ import {
   createRouter,
   RouterProvider,
 } from '@tanstack/react-router';
-import { TooltipProvider } from '../components/ui/tooltip.js';
-import * as authApi from '../lib/auth-api-client.js';
-import * as formsApi from '../lib/forms-api-client.js';
-import * as mediaApi from '../lib/media-api-client.js';
-import * as api from '../lib/pages-api-client.js';
-import * as sectionsApi from '../lib/site-layout-sections-api-client.js';
-import * as sitesApi from '../lib/sites-api-client.js';
-import * as usersApi from '../lib/users-api-client.js';
-import { ApiError } from '../lib/http-client.js';
-import type { FormDto } from '../lib/forms-api-client.js';
-import type { PageRecord } from '../lib/pages-api-client.js';
-import type { SiteLayoutSectionDto } from '../lib/site-layout-sections-api-client.js';
-import type { UserDto } from '../lib/users-api-client.js';
+import { TooltipProvider } from '../components/ui/tooltip';
+import * as authApi from '../lib/auth-api-client';
+import * as formsApi from '../lib/forms-api-client';
+import * as mediaApi from '../lib/media-api-client';
+import * as api from '../lib/pages-api-client';
+import * as sectionsApi from '../lib/site-layout-sections-api-client';
+import * as sitesApi from '../lib/sites-api-client';
+import * as usersApi from '../lib/users-api-client';
+import { ApiError } from '../lib/http-client';
+import type { FormDto } from '../lib/forms-api-client';
+import type { PageRecord } from '../lib/pages-api-client';
+import type { SiteLayoutSectionDto } from '../lib/site-layout-sections-api-client';
+import type { UserDto } from '../lib/users-api-client';
 import type { SiteRecord } from '@brisk/shared-types';
-import { routeTree } from '../routeTree.gen.js';
-import { createTestQueryClient } from '../test-query-client.js';
+import { routeTree } from '../routeTree.gen';
+import { createTestQueryClient } from '../test-query-client';
 
-vi.mock('../lib/auth-api-client.js', async (importOriginal) => {
+vi.mock('../lib/auth-api-client', async (importOriginal) => {
   const actual =
-    await importOriginal<typeof import('../lib/auth-api-client.js')>();
+    await importOriginal<typeof import('../lib/auth-api-client')>();
   return {
     ...actual,
     login: vi.fn(),
@@ -35,9 +35,9 @@ vi.mock('../lib/auth-api-client.js', async (importOriginal) => {
   };
 });
 
-vi.mock('../lib/pages-api-client.js', async (importOriginal) => {
+vi.mock('../lib/pages-api-client', async (importOriginal) => {
   const actual =
-    await importOriginal<typeof import('../lib/pages-api-client.js')>();
+    await importOriginal<typeof import('../lib/pages-api-client')>();
   return {
     ...actual,
     listPages: vi.fn(),
@@ -46,34 +46,34 @@ vi.mock('../lib/pages-api-client.js', async (importOriginal) => {
   };
 });
 
-vi.mock('../lib/media-api-client.js', async (importOriginal) => {
+vi.mock('../lib/media-api-client', async (importOriginal) => {
   const actual =
-    await importOriginal<typeof import('../lib/media-api-client.js')>();
+    await importOriginal<typeof import('../lib/media-api-client')>();
   return { ...actual, listMedia: vi.fn() };
 });
 
-vi.mock('../lib/forms-api-client.js', async (importOriginal) => {
+vi.mock('../lib/forms-api-client', async (importOriginal) => {
   const actual =
-    await importOriginal<typeof import('../lib/forms-api-client.js')>();
+    await importOriginal<typeof import('../lib/forms-api-client')>();
   return { ...actual, listForms: vi.fn(), getForm: vi.fn() };
 });
 
-vi.mock('../lib/users-api-client.js', async (importOriginal) => {
+vi.mock('../lib/users-api-client', async (importOriginal) => {
   const actual =
-    await importOriginal<typeof import('../lib/users-api-client.js')>();
+    await importOriginal<typeof import('../lib/users-api-client')>();
   return { ...actual, listUsers: vi.fn() };
 });
 
-vi.mock('../lib/sites-api-client.js', async (importOriginal) => {
+vi.mock('../lib/sites-api-client', async (importOriginal) => {
   const actual =
-    await importOriginal<typeof import('../lib/sites-api-client.js')>();
+    await importOriginal<typeof import('../lib/sites-api-client')>();
   return { ...actual, getSite: vi.fn() };
 });
 
-vi.mock('../lib/site-layout-sections-api-client.js', async (importOriginal) => {
+vi.mock('../lib/site-layout-sections-api-client', async (importOriginal) => {
   const actual =
     await importOriginal<
-      typeof import('../lib/site-layout-sections-api-client.js')
+      typeof import('../lib/site-layout-sections-api-client')
     >();
   return { ...actual, getOrCreateSiteLayoutSection: vi.fn() };
 });

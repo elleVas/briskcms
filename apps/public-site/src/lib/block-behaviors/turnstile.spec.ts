@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { runBlockBehaviors } from './run-block-behaviors.js';
-import type { turnstileBehaviors as TurnstileBehaviors } from './turnstile.js';
+import { runBlockBehaviors } from './run-block-behaviors';
+import type { turnstileBehaviors as TurnstileBehaviors } from './turnstile';
 
 // turnstile.ts caches its script-load promise at module scope (deliberately
 // — the real script must only ever load once per page). Each test needs a
@@ -11,7 +11,7 @@ async function importFreshTurnstileBehaviors(): Promise<
   typeof TurnstileBehaviors
 > {
   vi.resetModules();
-  const mod = await import('./turnstile.js');
+  const mod = await import('./turnstile');
   return mod.turnstileBehaviors;
 }
 

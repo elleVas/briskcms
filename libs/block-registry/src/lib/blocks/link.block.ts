@@ -1,6 +1,6 @@
 import type { LinkProps } from '@brisk/shared-types';
-import type { BlockDescriptor } from '../field-types.js';
-import { ctaLinkFields } from '../fields/link-type-field.js';
+import type { BlockDescriptor } from '../field-types';
+import { ctaLinkFields } from '../fields/link-type-field';
 
 export const linkBlock: BlockDescriptor<LinkProps> = {
   type: 'Link',

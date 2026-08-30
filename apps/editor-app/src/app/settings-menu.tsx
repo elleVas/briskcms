@@ -9,19 +9,19 @@ import {
   Settings,
   Sun,
 } from 'lucide-react';
-import { Button } from '../components/ui/button.js';
+import { Button } from '../components/ui/button';
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from '../components/ui/popover.js';
-import { Separator } from '../components/ui/separator.js';
-import { Switch } from '../components/ui/switch.js';
-import { BusinessInfoDialog } from './business-info-dialog.js';
-import { GeneralSettingsDialog } from './general-settings-dialog.js';
-import { LocaleSettingsDialog } from './locale-settings-dialog.js';
-import { SeoSettingsDialog } from './seo-settings-dialog.js';
-import { useTheme } from './use-theme.js';
+} from '../components/ui/popover';
+import { Separator } from '../components/ui/separator';
+import { Switch } from '../components/ui/switch';
+import { BusinessInfoDialog } from './business-info-dialog';
+import { GeneralSettingsDialog } from './general-settings-dialog';
+import { LocaleSettingsDialog } from './locale-settings-dialog';
+import { SeoSettingsDialog } from './seo-settings-dialog';
+import { useTheme } from './use-theme';
 
 const DEFAULT_SITE_ID = import.meta.env['VITE_DEFAULT_SITE_ID'] as string;
 

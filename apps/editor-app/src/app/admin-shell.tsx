@@ -10,9 +10,9 @@ import {
   Plug,
   Users,
 } from 'lucide-react';
-import { AccountMenu } from './account-menu.js';
-import { SettingsMenu } from './settings-menu.js';
-import { Separator } from '../components/ui/separator.js';
+import { AccountMenu } from './account-menu';
+import { SettingsMenu } from './settings-menu';
+import { Separator } from '../components/ui/separator';
 
 export interface AdminShellProps {
   children: ReactNode;

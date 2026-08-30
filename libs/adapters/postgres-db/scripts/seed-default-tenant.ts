@@ -6,8 +6,8 @@
  * Idempotent: safe to run on every deploy/dev startup.
  */
 import { requireEnv } from '@brisk/env-config';
-import { createAppDb, withTenant } from '../src/lib/client.js';
-import { sites, tenants } from '../src/lib/schema.js';
+import { createAppDb, withTenant } from '../src/lib/client';
+import { sites, tenants } from '../src/lib/schema';
 
 async function main() {
   const tenantId = requireEnv('DEFAULT_TENANT_ID');

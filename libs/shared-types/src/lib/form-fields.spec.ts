@@ -5,7 +5,7 @@ import {
   formFieldsSchema,
   formStepSchema,
   formStepsSchema,
-} from './form-fields.js';
+} from './form-fields';
 
 describe('form-fields schemas', () => {
   it('accepts a valid text field', () => {

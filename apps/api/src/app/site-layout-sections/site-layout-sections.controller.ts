@@ -25,9 +25,9 @@ import type {
   SiteRepositoryPort,
   TenantContextPort,
 } from '@brisk/ports';
-import { PREVIEW_TOKEN_TTL_MS } from '../preview-token-ttl.constant.js';
-import { SessionAuthGuard } from '../auth/session-auth.guard.js';
-import { ZodValidationPipe } from '../zod-validation.pipe.js';
+import { PREVIEW_TOKEN_TTL_MS } from '../preview-token-ttl.constant';
+import { SessionAuthGuard } from '../auth/session-auth.guard';
+import { ZodValidationPipe } from '../zod-validation.pipe';
 import {
   type GetOrCreateQuery,
   getOrCreateQuerySchema,
@@ -37,14 +37,14 @@ import {
   saveDraftBodySchema,
   type StickyBody,
   stickyBodySchema,
-} from './site-layout-sections.schemas.js';
-import { TENANT_CONTEXT } from '../auth/auth.tokens.js';
+} from './site-layout-sections.schemas';
+import { TENANT_CONTEXT } from '../auth/auth.tokens';
 import {
   PREVIEW_TOKEN_PORT,
   SITE_LAYOUT_SECTION_REPOSITORY,
   SITE_LAYOUT_SECTION_VERSION_REPOSITORY,
   SITE_REPOSITORY,
-} from './site-layout-sections.tokens.js';
+} from './site-layout-sections.tokens';
 
 @Controller('site-layout-sections')
 @UseGuards(SessionAuthGuard)

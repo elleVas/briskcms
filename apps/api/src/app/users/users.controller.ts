@@ -32,11 +32,11 @@ import {
   TENANT_CONTEXT,
   USER_REPOSITORY,
   VERIFICATION_TOKEN_PORT,
-} from '../auth/auth.tokens.js';
-import { Roles } from '../auth/roles.decorator.js';
-import { RolesGuard } from '../auth/roles.guard.js';
-import { SessionAuthGuard } from '../auth/session-auth.guard.js';
-import { ZodValidationPipe } from '../zod-validation.pipe.js';
+} from '../auth/auth.tokens';
+import { Roles } from '../auth/roles.decorator';
+import { RolesGuard } from '../auth/roles.guard';
+import { SessionAuthGuard } from '../auth/session-auth.guard';
+import { ZodValidationPipe } from '../zod-validation.pipe';
 import {
   type InviteUserBody,
   inviteUserBodySchema,
@@ -46,7 +46,7 @@ import {
   setUserActiveBodySchema,
   type UpdateUserRoleBody,
   updateUserRoleBodySchema,
-} from './users.schemas.js';
+} from './users.schemas';
 
 // Every endpoint here is admin-only (Fase 5c: "Admin: tutto, incluse
 // gestione utenti") — gated at the controller level, not per-method,

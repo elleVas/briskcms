@@ -8,20 +8,20 @@ import {
   type LocaleSettings,
   type SiteRecord,
 } from '@brisk/shared-types';
-import { Button } from '../components/ui/button.js';
+import { Button } from '../components/ui/button';
 import {
   Dialog,
   DialogContent,
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '../components/ui/dialog.js';
-import { Label } from '../components/ui/label.js';
-import { Switch } from '../components/ui/switch.js';
-import { LocaleListEditor } from './locale-list-editor.js';
-import { siteQueryOptions } from './site-queries.js';
-import { useResetFormOnOpen } from './use-reset-form-on-open.js';
-import { useSiteLocaleSettings } from './use-site-locale-settings.js';
+} from '../components/ui/dialog';
+import { Label } from '../components/ui/label';
+import { Switch } from '../components/ui/switch';
+import { LocaleListEditor } from './locale-list-editor';
+import { siteQueryOptions } from './site-queries';
+import { useResetFormOnOpen } from './use-reset-form-on-open';
+import { useSiteLocaleSettings } from './use-site-locale-settings';
 
 export interface LocaleSettingsDialogProps {
   siteId: string;

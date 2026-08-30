@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { Media } from './media.js';
+import { Media } from './media';
 
 describe('Media entity', () => {
   const baseInput = {

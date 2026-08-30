@@ -1,5 +1,5 @@
 import type { PickedForm } from '@brisk/shared-types';
-import { useFormList } from '../form-list-context.js';
+import { useFormList } from '../form-list-context';
 
 export interface FormPickerFieldProps {
   value: PickedForm | null;

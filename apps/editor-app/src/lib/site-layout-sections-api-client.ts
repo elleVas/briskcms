@@ -1,5 +1,5 @@
 import type { Block } from '@brisk/shared-types';
-import { request } from './http-client.js';
+import { request } from './http-client';
 
 export type SiteLayoutSectionKind = 'header' | 'footer';
 

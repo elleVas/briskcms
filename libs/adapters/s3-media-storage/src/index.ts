@@ -1,1 +1,1 @@
-export * from './lib/s3-media-storage.adapter.js';
+export * from './lib/s3-media-storage.adapter';

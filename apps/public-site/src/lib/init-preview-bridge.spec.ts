@@ -4,7 +4,7 @@ import {
   PREVIEW_BRIDGE_SOURCE,
   PREVIEW_BRIDGE_VERSION,
 } from '@brisk/shared-types';
-import { initPreviewBridge } from './init-preview-bridge.js';
+import { initPreviewBridge } from './init-preview-bridge';
 
 const EDITOR_APP_URL = 'http://localhost:4200';
 

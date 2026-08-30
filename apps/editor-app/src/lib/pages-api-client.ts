@@ -9,7 +9,7 @@ import {
   type PaginatedPages,
   type SeoMeta,
 } from '@brisk/shared-types';
-import { request } from './http-client.js';
+import { request } from './http-client';
 
 export type { PageListItem, PageRecord, PageVersionRecord, PaginatedPages };
 

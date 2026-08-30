@@ -1,8 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  computeDropTarget,
-  findContainerAtPoint,
-} from './compute-drop-target.js';
+import { computeDropTarget, findContainerAtPoint } from './compute-drop-target';
 
 const rects = [
   { id: 'a', top: 0, height: 100 },

@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { countdownBehaviors } from './countdown.js';
-import { runBlockBehaviors } from './run-block-behaviors.js';
+import { countdownBehaviors } from './countdown';
+import { runBlockBehaviors } from './run-block-behaviors';
 
 function renderCountdown(targetDate: string): HTMLElement {
   document.body.innerHTML = `

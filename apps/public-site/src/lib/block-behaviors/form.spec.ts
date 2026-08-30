@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { describe, expect, it } from 'vitest';
-import { formBehaviors } from './form.js';
-import { runBlockBehaviors } from './run-block-behaviors.js';
+import { formBehaviors } from './form';
+import { runBlockBehaviors } from './run-block-behaviors';
 
 function renderMultiStepForm(): HTMLFormElement {
   document.body.innerHTML = `

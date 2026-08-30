@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { createDb } from '@brisk/postgres-db';
-import { SessionAuthAdapter } from './session-auth.adapter.js';
+import { SessionAuthAdapter } from './session-auth.adapter';
 
 describe('SessionAuthAdapter password hashing', () => {
   // postgres.js connects lazily (see postgres-db's own client.spec.ts), so a

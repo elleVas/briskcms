@@ -1,5 +1,5 @@
 import type { Media } from '@brisk/domain-core';
-import type { PaginatedResult, Pagination } from './page-repository.port.js';
+import type { PaginatedResult, Pagination } from './page-repository.port';
 
 /**
  * Ogni metodo richiede esplicitamente tenantId: nessuna query può

@@ -4,7 +4,7 @@ import {
   listPages,
   listPageVersions,
   listTranslations,
-} from '../lib/pages-api-client.js';
+} from '../lib/pages-api-client';
 
 export const PAGES_PAGE_SIZE = 20;
 

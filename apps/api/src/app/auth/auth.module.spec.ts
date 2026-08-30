@@ -1,6 +1,6 @@
 import { Test } from '@nestjs/testing';
-import { AuthController } from './auth.controller.js';
-import { AuthModule } from './auth.module.js';
+import { AuthController } from './auth.controller';
+import { AuthModule } from './auth.module';
 
 // Not an integration test: SessionAuthAdapter/DrizzleUserRepository's
 // DATABASE dependency constructs a postgres.js client, which connects

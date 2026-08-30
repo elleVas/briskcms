@@ -1,7 +1,7 @@
 import { renderHook } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import type { ReactNode } from 'react';
-import { PageListContext, usePageList } from './page-list-context.js';
+import { PageListContext, usePageList } from './page-list-context';
 
 describe('usePageList', () => {
   it('throws when called outside a PageListContext.Provider', () => {

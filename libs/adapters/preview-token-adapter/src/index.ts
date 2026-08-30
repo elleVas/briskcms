@@ -1,1 +1,1 @@
-export * from './lib/preview-token.adapter.js';
+export * from './lib/preview-token.adapter';

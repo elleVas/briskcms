@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import { TooltipProvider } from '../../components/ui/tooltip.js';
-import { BreakpointSelector } from './breakpoint-selector.js';
+import { TooltipProvider } from '../../components/ui/tooltip';
+import { BreakpointSelector } from './breakpoint-selector';
 
 describe('BreakpointSelector', () => {
   it('renders one button per breakpoint, marking the current one pressed', () => {

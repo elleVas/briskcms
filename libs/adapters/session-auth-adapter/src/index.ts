@@ -1,1 +1,1 @@
-export * from './lib/session-auth.adapter.js';
+export * from './lib/session-auth.adapter';

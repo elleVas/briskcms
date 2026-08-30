@@ -8,9 +8,9 @@
 // un try/catch ad hoc in ognuna.
 import ErrorPageShell from '../components/ErrorPageShell.astro';
 import ServerError from '../components/ServerError.astro';
-import { getPublishedSiteChrome } from '../lib/public-api-client.js';
+import { getPublishedSiteChrome } from '../lib/public-api-client';
 import PageLayoutCore from '../layouts/PageLayout.astro';
-import { resolveThemeLayoutOverride } from '../lib/resolve-theme-layout-override.js';
+import { resolveThemeLayoutOverride } from '../lib/resolve-theme-layout-override';
 const PageLayout = resolveThemeLayoutOverride(PageLayoutCore);
 
 Astro.response.status = 500;

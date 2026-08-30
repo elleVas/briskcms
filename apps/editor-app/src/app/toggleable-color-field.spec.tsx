@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import { ToggleableColorField } from './toggleable-color-field.js';
+import { ToggleableColorField } from './toggleable-color-field';
 
 describe('ToggleableColorField', () => {
   it('hides the color picker when disabled', () => {

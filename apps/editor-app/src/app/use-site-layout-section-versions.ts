@@ -2,11 +2,11 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   rollbackToVersion,
   type SiteLayoutSectionKind,
-} from '../lib/site-layout-sections-api-client.js';
+} from '../lib/site-layout-sections-api-client';
 import {
   siteLayoutSectionQueryOptions,
   siteLayoutSectionVersionsQueryOptions,
-} from './site-layout-sections-queries.js';
+} from './site-layout-sections-queries';
 
 // `enabled` keeps this lazy: the list is only fetched once the version
 // history dialog is actually opened, not on every editor page load — same

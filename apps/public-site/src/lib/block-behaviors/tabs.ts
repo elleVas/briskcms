@@ -1,4 +1,4 @@
-import type { BlockBehavior } from './types.js';
+import type { BlockBehavior } from './types';
 
 // Idempotency guard: a live-patched Tabs block would otherwise get a
 // SECOND tablist inserted (see run-block-behaviors.ts's own doc comment)

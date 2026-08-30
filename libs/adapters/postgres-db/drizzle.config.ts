@@ -1,5 +1,5 @@
 import { defineConfig } from 'drizzle-kit';
-import { adminConnectionString } from './src/lib/client.js';
+import { adminConnectionString } from './src/lib/client';
 
 // Migrations always run as the Postgres admin/superuser (creating RLS
 // policies and granting privileges to brisk_app requires table-owner rights)

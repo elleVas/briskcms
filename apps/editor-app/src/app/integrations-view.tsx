@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { SiteRecord, TrackerDomainEntry } from '@brisk/shared-types';
-import { Button } from '../components/ui/button.js';
-import { Label } from '../components/ui/label.js';
-import { Textarea } from '../components/ui/textarea.js';
-import { TrackerDomainListEditor } from './tracker-domain-list-editor.js';
-import { useSiteThemeSettings } from './use-site-theme-settings.js';
+import { Button } from '../components/ui/button';
+import { Label } from '../components/ui/label';
+import { Textarea } from '../components/ui/textarea';
+import { TrackerDomainListEditor } from './tracker-domain-list-editor';
+import { useSiteThemeSettings } from './use-site-theme-settings';
 
 export interface IntegrationsViewProps {
   siteId: string;

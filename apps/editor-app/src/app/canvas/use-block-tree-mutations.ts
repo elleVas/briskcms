@@ -1,8 +1,8 @@
 import { useState, type Dispatch, type SetStateAction } from 'react';
 import type { Block } from '@brisk/shared-types';
 import type { BlockDescriptor } from '@brisk/block-registry';
-import { renderBlockFragment } from '../../lib/block-fragment-api-client.js';
-import type { PreviewBridgeState } from './use-preview-bridge.js';
+import { renderBlockFragment } from '../../lib/block-fragment-api-client';
+import type { PreviewBridgeState } from './use-preview-bridge';
 import {
   cloneBlockWithNewIds,
   createBlockFromDescriptor,
@@ -13,7 +13,7 @@ import {
   removeBlock,
   siblingsAt,
   type BlockTreeTarget,
-} from './use-block-tree.js';
+} from './use-block-tree';
 
 /** Alla radice se il blocco selezionato non è un contenitore, altrimenti in coda ai suoi figli — regola "contenitore selezionato o radice" del piano dell'editor visuale, Giorno 3. */
 function resolveInsertTarget(

@@ -9,8 +9,8 @@ import {
   tenants,
   withTenant,
 } from '@brisk/postgres-db';
-import { DrizzleFormRepository } from './drizzle-form.repository.js';
-import { DrizzleFormSubmissionRepository } from './drizzle-form-submission.repository.js';
+import { DrizzleFormRepository } from './drizzle-form.repository';
+import { DrizzleFormSubmissionRepository } from './drizzle-form-submission.repository';
 
 /**
  * Runs against a real Postgres — see docs/development.md ("docker compose up

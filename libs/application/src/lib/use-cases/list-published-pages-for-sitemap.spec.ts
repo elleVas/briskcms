@@ -1,15 +1,15 @@
 import { describe, expect, it } from 'vitest';
 import { Site } from '@brisk/domain-core';
-import { createPage } from './create-page.use-case.js';
-import { publishPage } from './publish-page.use-case.js';
-import { saveDraft } from './save-draft.use-case.js';
-import { listPublishedPagesForSitemap } from './list-published-pages-for-sitemap.use-case.js';
+import { createPage } from './create-page.use-case';
+import { publishPage } from './publish-page.use-case';
+import { saveDraft } from './save-draft.use-case';
+import { listPublishedPagesForSitemap } from './list-published-pages-for-sitemap.use-case';
 import {
   InMemoryPageRepository,
   InMemoryPageVersionRepository,
   InMemorySearchPort,
   InMemorySiteRepository,
-} from './in-memory-repositories.test-fixture.js';
+} from './in-memory-repositories.test-fixture';
 
 describe('listPublishedPagesForSitemap', () => {
   const tenantId = 'tenant-1';

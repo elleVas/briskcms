@@ -1,6 +1,6 @@
 import postgres from 'postgres';
 import { describe, expect, it } from 'vitest';
-import { isUniqueViolation } from './unique-violation.js';
+import { isUniqueViolation } from './unique-violation';
 
 function buildPostgresError(
   overrides: Partial<{ code: string; constraint_name: string }> = {},

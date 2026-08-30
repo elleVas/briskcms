@@ -1,6 +1,6 @@
 import type { APIRoute } from 'astro';
-import { resolveThemeBaseTokens } from '../../../../lib/resolve-theme-base-tokens.js';
-import { themesApiCorsHeaders } from '../../../../lib/themes-api-cors.js';
+import { resolveThemeBaseTokens } from '../../../../lib/resolve-theme-base-tokens';
+import { themesApiCorsHeaders } from '../../../../lib/themes-api-cors';
 
 // Stesso pattern/motivo di foreground-tokens.ts: solo apps/public-site
 // conosce il tema attivo (~theme) — l'editor lo consuma per mostrare i

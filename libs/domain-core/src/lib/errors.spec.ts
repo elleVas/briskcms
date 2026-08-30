@@ -12,7 +12,7 @@ import {
   SiteLayoutSectionNotFoundError,
   SiteLayoutSectionVersionNotFoundError,
   SiteNotFoundError,
-} from './errors.js';
+} from './errors';
 
 describe('PageNotFoundError', () => {
   it('carries the missing page id in its message and is a real Error', () => {

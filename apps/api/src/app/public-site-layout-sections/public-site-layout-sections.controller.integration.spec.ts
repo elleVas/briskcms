@@ -1,8 +1,8 @@
 import { randomUUID } from 'node:crypto';
 import { type INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
-import { HttpExceptionFilter } from '../http-exception.filter.js';
-import { requestIdMiddleware } from '../request-id.middleware.js';
+import { HttpExceptionFilter } from '../http-exception.filter';
+import { requestIdMiddleware } from '../request-id.middleware';
 import cookieParser from 'cookie-parser';
 import request from 'supertest';
 import type { AuthPort } from '@brisk/ports';
@@ -13,10 +13,10 @@ import {
   users,
   withTenant,
 } from '@brisk/postgres-db';
-import { AUTH_PORT } from '../auth/auth.tokens.js';
-import { DATABASE } from '../database.module.js';
-import { SiteLayoutSectionsModule } from '../site-layout-sections/site-layout-sections.module.js';
-import { PublicSiteLayoutSectionsModule } from './public-site-layout-sections.module.js';
+import { AUTH_PORT } from '../auth/auth.tokens';
+import { DATABASE } from '../database.module';
+import { SiteLayoutSectionsModule } from '../site-layout-sections/site-layout-sections.module';
+import { PublicSiteLayoutSectionsModule } from './public-site-layout-sections.module';
 
 /**
  * Runs against a real Postgres — see docs/development.md. Combines

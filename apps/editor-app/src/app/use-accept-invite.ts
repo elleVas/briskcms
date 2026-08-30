@@ -1,5 +1,5 @@
 import { useMutation } from '@tanstack/react-query';
-import { acceptInvite } from '../lib/auth-api-client.js';
+import { acceptInvite } from '../lib/auth-api-client';
 
 export function useAcceptInvite(token: string) {
   return useMutation({

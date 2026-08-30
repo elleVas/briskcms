@@ -3,7 +3,7 @@ import {
   fetchBlockStyleDefaults,
   fetchThemeForegroundTokens,
   fetchThemeIcons,
-} from './theme-api-client.js';
+} from './theme-api-client';
 
 function jsonResponse(body: unknown, ok = true, status = 200) {
   return {

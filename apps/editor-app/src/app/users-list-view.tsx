@@ -2,13 +2,13 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from '@tanstack/react-router';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { Badge } from '../components/ui/badge.js';
-import { Button } from '../components/ui/button.js';
-import type { UserDto, UserRole } from '../lib/users-api-client.js';
-import { IconButton } from './icon-button.js';
-import { InviteUserDialog } from './invite-user-dialog.js';
-import { USERS_PAGE_SIZE } from './users-queries.js';
-import { useUsers } from './use-users.js';
+import { Badge } from '../components/ui/badge';
+import { Button } from '../components/ui/button';
+import type { UserDto, UserRole } from '../lib/users-api-client';
+import { IconButton } from './icon-button';
+import { InviteUserDialog } from './invite-user-dialog';
+import { USERS_PAGE_SIZE } from './users-queries';
+import { useUsers } from './use-users';
 
 export interface UsersListViewProps {
   items: UserDto[];

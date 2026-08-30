@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { applyTheme, getInitialTheme, type Theme } from '../theme.js';
+import { applyTheme, getInitialTheme, type Theme } from '../theme';
 
 export function useTheme() {
   const [theme, setThemeState] = useState<Theme>(getInitialTheme);

@@ -2,7 +2,7 @@ import { act, renderHook } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import type { Block } from '@brisk/shared-types';
 import type { BlockDescriptor } from '@brisk/block-registry';
-import { useSidebarDrag } from './use-sidebar-drag.js';
+import { useSidebarDrag } from './use-sidebar-drag';
 
 const heroDescriptor: BlockDescriptor = {
   type: 'Hero',

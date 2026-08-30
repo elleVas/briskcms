@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
 import type { TrackerDomainEntry } from '@brisk/shared-types';
-import { PROMO_BAR_DISMISS_SCRIPT } from '../components/blocks/promo-bar-dismiss-script.js';
+import { PROMO_BAR_DISMISS_SCRIPT } from '../components/blocks/promo-bar-dismiss-script';
 
 /**
  * Every core block's own `<script>` (no `is:inline`) gets bundled by Astro

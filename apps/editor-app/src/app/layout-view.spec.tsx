@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import { LayoutView } from './layout-view.js';
+import { LayoutView } from './layout-view';
 
 vi.mock('@tanstack/react-router', async (importOriginal) => {
   const actual =

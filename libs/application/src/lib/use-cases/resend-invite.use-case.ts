@@ -4,7 +4,7 @@ import type {
   UserRepositoryPort,
   VerificationTokenPort,
 } from '@brisk/ports';
-import { buildInviteEmail } from '../emails/invite-email.template.js';
+import { buildInviteEmail } from '../emails/invite-email.template';
 
 // Same TTL as the original invite (inviteUser) — a re-invite is just a
 // fresh shot at the same 7-day window, not a different policy.

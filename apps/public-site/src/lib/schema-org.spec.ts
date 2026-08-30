@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { PublishedSite } from '@brisk/shared-types';
-import { buildSchemaOrgGraph } from './schema-org.js';
+import { buildSchemaOrgGraph } from './schema-org';
 
 const baseSite: PublishedSite = {
   name: 'Il mio sito',

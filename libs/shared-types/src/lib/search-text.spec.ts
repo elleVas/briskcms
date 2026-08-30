@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { extractSearchableText } from './search-text.js';
-import type { PageContent, SeoMeta } from './content-model.js';
+import { extractSearchableText } from './search-text';
+import type { PageContent, SeoMeta } from './content-model';
 
 const seoMeta: SeoMeta = {
   title: 'Chi siamo',

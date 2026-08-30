@@ -6,8 +6,8 @@ import {
   type FormField,
   type FormStep,
 } from '@brisk/shared-types';
-import { getPublicForm } from '../../lib/public-api-client.js';
-import { Translator } from '../../lib/i18n.js';
+import { getPublicForm } from '../../lib/public-api-client';
+import { Translator } from '../../lib/i18n';
 import FormFieldComponent from './FormField.astro';
 
 type Props = FormBlockProps & {
@@ -184,9 +184,9 @@ if (form && form.steps.length > 0) {
   // canvas insert/patch — see
   // block-behaviors/run-block-behaviors-in-subtree.ts. A no-op for a
   // plain single-step form: formBehaviors' own selector finds nothing.
-  import { formBehaviors } from '../../lib/block-behaviors/form.js';
-  import { turnstileBehaviors } from '../../lib/block-behaviors/turnstile.js';
-  import { runBlockBehaviors } from '../../lib/block-behaviors/run-block-behaviors.js';
+  import { formBehaviors } from '../../lib/block-behaviors/form';
+  import { turnstileBehaviors } from '../../lib/block-behaviors/turnstile';
+  import { runBlockBehaviors } from '../../lib/block-behaviors/run-block-behaviors';
   runBlockBehaviors(document, [...formBehaviors, ...turnstileBehaviors]);
 </script>
 

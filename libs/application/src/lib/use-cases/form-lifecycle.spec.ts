@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { FormNotFoundError } from '@brisk/domain-core';
-import { createForm } from './create-form.use-case.js';
-import { updateForm } from './update-form.use-case.js';
-import { listForms } from './list-forms.use-case.js';
-import { deleteForm } from './delete-form.use-case.js';
-import { InMemoryFormRepository } from './in-memory-repositories.test-fixture.js';
+import { createForm } from './create-form.use-case';
+import { updateForm } from './update-form.use-case';
+import { listForms } from './list-forms.use-case';
+import { deleteForm } from './delete-form.use-case';
+import { InMemoryFormRepository } from './in-memory-repositories.test-fixture';
 
 describe('form lifecycle: create -> update -> list -> delete', () => {
   const tenantId = 'tenant-1';

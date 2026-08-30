@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { localeDirection, localePath } from './locale-path.js';
+import { localeDirection, localePath } from './locale-path';
 
 describe('localePath', () => {
   it('maps the "home" slug to the bare locale root', () => {

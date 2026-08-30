@@ -1,15 +1,15 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { QueryClientProvider } from '@tanstack/react-query';
-import { TooltipProvider } from '../components/ui/tooltip.js';
-import * as api from '../lib/sites-api-client.js';
+import { TooltipProvider } from '../components/ui/tooltip';
+import * as api from '../lib/sites-api-client';
 import type { SiteRecord } from '@brisk/shared-types';
-import { createTestQueryClient } from '../test-query-client.js';
-import { BusinessInfoDialog } from './business-info-dialog.js';
+import { createTestQueryClient } from '../test-query-client';
+import { BusinessInfoDialog } from './business-info-dialog';
 
-vi.mock('../lib/sites-api-client.js', async (importOriginal) => {
+vi.mock('../lib/sites-api-client', async (importOriginal) => {
   const actual =
-    await importOriginal<typeof import('../lib/sites-api-client.js')>();
+    await importOriginal<typeof import('../lib/sites-api-client')>();
   return { ...actual, getSite: vi.fn(), updateBusinessInfo: vi.fn() };
 });
 

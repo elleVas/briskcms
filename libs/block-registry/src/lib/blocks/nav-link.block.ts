@@ -1,9 +1,9 @@
 import type { NavLinkProps } from '@brisk/shared-types';
-import { FieldBuilder, type BlockDescriptor } from '../field-types.js';
-import { IconPickerField } from '../fields/icon-picker-field.js';
-import { ctaLinkFields } from '../fields/link-type-field.js';
-import { positionField } from '../fields/position-field.js';
-import { visibilityField } from '../fields/visibility-field.js';
+import { FieldBuilder, type BlockDescriptor } from '../field-types';
+import { IconPickerField } from '../fields/icon-picker-field';
+import { ctaLinkFields } from '../fields/link-type-field';
+import { positionField } from '../fields/position-field';
+import { visibilityField } from '../fields/visibility-field';
 
 export const navLinkBlock: BlockDescriptor<NavLinkProps> = {
   type: 'NavLink',

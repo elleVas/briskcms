@@ -1,13 +1,13 @@
 import { randomUUID } from 'node:crypto';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { eq } from 'drizzle-orm';
-import { type BriskDb, createAppDb } from './client.js';
-import { deleteIntegrationTenants } from './integration-test-cleanup.js';
-import { sites, tenants } from './schema.js';
+import { type BriskDb, createAppDb } from './client';
+import { deleteIntegrationTenants } from './integration-test-cleanup';
+import { sites, tenants } from './schema';
 import {
   DrizzlePaginatedRepository,
   type Pagination,
-} from './drizzle-paginated-repository.js';
+} from './drizzle-paginated-repository';
 
 interface TestSite {
   id: string;

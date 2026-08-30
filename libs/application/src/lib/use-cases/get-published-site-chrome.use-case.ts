@@ -3,7 +3,7 @@ import {
   resolveSiteChrome,
   type PublishedSiteChrome,
   type ResolveSiteChromeDeps,
-} from './resolve-site-chrome.js';
+} from './resolve-site-chrome';
 
 export interface GetPublishedSiteChromeDeps extends ResolveSiteChromeDeps {
   siteRepository: SiteRepositoryPort;

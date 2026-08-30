@@ -5,9 +5,9 @@ import {
   trackerDomainSchema,
   type TrackerDomainEntry,
 } from '@brisk/shared-types';
-import { Button } from '../components/ui/button.js';
-import { Input } from '../components/ui/input.js';
-import { IconButton } from './icon-button.js';
+import { Button } from '../components/ui/button';
+import { Input } from '../components/ui/input';
+import { IconButton } from './icon-button';
 
 export interface TrackerDomainListEditorProps {
   entries: TrackerDomainEntry[];

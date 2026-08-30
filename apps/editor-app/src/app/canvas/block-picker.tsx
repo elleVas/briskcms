@@ -5,8 +5,8 @@ import {
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
-} from '../../components/ui/accordion.js';
-import { useTranslation } from '../../lib/use-translation.js';
+} from '../../components/ui/accordion';
+import { useTranslation } from '../../lib/use-translation';
 
 export interface BlockPickerCategory {
   title: string;

@@ -1,4 +1,4 @@
-import { request } from './http-client.js';
+import { request } from './http-client';
 
 export interface MediaDto {
   id: string;

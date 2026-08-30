@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { Site } from '@brisk/domain-core';
-import { searchPages } from './search-pages.use-case.js';
+import { searchPages } from './search-pages.use-case';
 import {
   InMemorySearchPort,
   InMemorySiteRepository,
-} from './in-memory-repositories.test-fixture.js';
+} from './in-memory-repositories.test-fixture';
 
 describe('searchPages', () => {
   const tenantId = 'tenant-1';

@@ -1,4 +1,4 @@
-import { requireViteEnv } from './require-vite-env.js';
+import { requireViteEnv } from './require-vite-env';
 
 const API_BASE_URL = requireViteEnv('VITE_API_URL');
 

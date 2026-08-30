@@ -1,7 +1,7 @@
 import type { ColumnProps } from '@brisk/shared-types';
 import { BLOCK_STYLE_DEFAULTS } from '@brisk/shared-types';
-import type { BlockDescriptor } from '../field-types.js';
-import { BlockStyleRegistry } from '../block-style-registry.js';
+import type { BlockDescriptor } from '../field-types';
+import { BlockStyleRegistry } from '../block-style-registry';
 
 // Nessuna allowedChildTypes — una Colonna è pensata per contenere qualunque
 // cosa serva alla pagina fianco a fianco con le sue sorelle, stessa

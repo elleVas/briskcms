@@ -1,9 +1,9 @@
 import { useTranslation } from 'react-i18next';
 import { Plus, Trash2 } from 'lucide-react';
 import type { DayOfWeek, OpeningHoursDay } from '@brisk/shared-types';
-import { Button } from '../components/ui/button.js';
-import { Input } from '../components/ui/input.js';
-import { IconButton } from './icon-button.js';
+import { Button } from '../components/ui/button';
+import { Input } from '../components/ui/input';
+import { IconButton } from './icon-button';
 
 const DAYS: DayOfWeek[] = [
   'monday',

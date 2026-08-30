@@ -5,8 +5,8 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-} from '../components/ui/card.js';
-import { useVerifyEmail } from './use-verify-email.js';
+} from '../components/ui/card';
+import { useVerifyEmail } from './use-verify-email';
 
 export interface VerifyEmailViewProps {
   token: string;

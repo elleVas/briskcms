@@ -6,10 +6,10 @@ import { DrizzleMediaRepository } from '@brisk/postgres-media-repository';
 import { LocalDiskMediaStorageAdapter } from '@brisk/local-disk-media-storage';
 import { S3MediaStorageAdapter } from '@brisk/s3-media-storage';
 import type { MediaStoragePort } from '@brisk/ports';
-import { AuthModule } from '../auth/auth.module.js';
-import { DATABASE, DatabaseModule } from '../database.module.js';
-import { MediaController } from './media.controller.js';
-import { MEDIA_REPOSITORY, MEDIA_STORAGE } from './media.tokens.js';
+import { AuthModule } from '../auth/auth.module';
+import { DATABASE, DatabaseModule } from '../database.module';
+import { MediaController } from './media.controller';
+import { MEDIA_REPOSITORY, MEDIA_STORAGE } from './media.tokens';
 
 /**
  * 'local' unless MEDIA_STORAGE_PROVIDER is explicitly set to 's3' — every

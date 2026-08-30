@@ -1,16 +1,16 @@
 import { describe, expect, it } from 'vitest';
-import { createPage } from './create-page.use-case.js';
-import { deletePage } from './delete-page.use-case.js';
-import { saveDraft } from './save-draft.use-case.js';
-import { publishPage } from './publish-page.use-case.js';
-import { listPageVersions } from './list-page-versions.use-case.js';
-import { listPages } from './list-pages.use-case.js';
-import { rollbackToVersion } from './rollback-to-version.use-case.js';
+import { createPage } from './create-page.use-case';
+import { deletePage } from './delete-page.use-case';
+import { saveDraft } from './save-draft.use-case';
+import { publishPage } from './publish-page.use-case';
+import { listPageVersions } from './list-page-versions.use-case';
+import { listPages } from './list-pages.use-case';
+import { rollbackToVersion } from './rollback-to-version.use-case';
 import {
   InMemoryPageRepository,
   InMemoryPageVersionRepository,
   InMemorySearchPort,
-} from './in-memory-repositories.test-fixture.js';
+} from './in-memory-repositories.test-fixture';
 
 describe('page lifecycle: create -> draft -> publish -> rollback', () => {
   const tenantId = 'tenant-1';

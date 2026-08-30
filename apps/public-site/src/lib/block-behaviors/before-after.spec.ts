@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { describe, expect, it } from 'vitest';
-import { beforeAfterBehaviors } from './before-after.js';
-import { runBlockBehaviors } from './run-block-behaviors.js';
+import { beforeAfterBehaviors } from './before-after';
+import { runBlockBehaviors } from './run-block-behaviors';
 
 function renderBeforeAfter(): HTMLElement {
   document.body.innerHTML = `

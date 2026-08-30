@@ -23,14 +23,14 @@ import {
   withTenant,
   type BriskDb,
   type BriskTx,
-} from '../src/lib/client.js';
+} from '../src/lib/client';
 import {
   pages,
   pageVersions,
   siteLayoutSections,
   siteLayoutSectionVersions,
   tenants,
-} from '../src/lib/schema.js';
+} from '../src/lib/schema';
 
 let backfilled = 0;
 let untouched = 0;

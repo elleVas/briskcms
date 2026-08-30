@@ -1,5 +1,5 @@
-import { BLOCK_BEHAVIOR_REGISTRY } from './block-behavior-registry.js';
-import { runBlockBehaviors } from './run-block-behaviors.js';
+import { BLOCK_BEHAVIOR_REGISTRY } from './block-behavior-registry';
+import { runBlockBehaviors } from './run-block-behaviors';
 
 // Called by init-preview-bridge.ts right after a block is live-inserted
 // or live-patched into the iframe's DOM. `root` is always a

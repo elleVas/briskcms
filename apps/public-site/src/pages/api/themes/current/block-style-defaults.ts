@@ -1,6 +1,6 @@
 import type { APIRoute } from 'astro';
-import { listBlockStyleDefaults } from '../../../../lib/resolve-theme-block-style-defaults.js';
-import { themesApiCorsHeaders } from '../../../../lib/themes-api-cors.js';
+import { listBlockStyleDefaults } from '../../../../lib/resolve-theme-block-style-defaults';
+import { themesApiCorsHeaders } from '../../../../lib/themes-api-cors';
 
 // docs/adr/0022's follow-up: il valore RISOLTO (non il token grezzo) di
 // ogni proprietà stilizzabile per tipo di blocco, contro il tema attivo —

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { User } from './user.js';
+import { User } from './user';
 
 describe('User entity', () => {
   const baseInput = {

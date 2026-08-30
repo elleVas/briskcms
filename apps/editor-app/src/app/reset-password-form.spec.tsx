@@ -1,13 +1,13 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { QueryClientProvider } from '@tanstack/react-query';
-import * as api from '../lib/auth-api-client.js';
-import { createTestQueryClient } from '../test-query-client.js';
-import { ResetPasswordForm } from './reset-password-form.js';
+import * as api from '../lib/auth-api-client';
+import { createTestQueryClient } from '../test-query-client';
+import { ResetPasswordForm } from './reset-password-form';
 
-vi.mock('../lib/auth-api-client.js', async (importOriginal) => {
+vi.mock('../lib/auth-api-client', async (importOriginal) => {
   const actual =
-    await importOriginal<typeof import('../lib/auth-api-client.js')>();
+    await importOriginal<typeof import('../lib/auth-api-client')>();
   return { ...actual, resetPassword: vi.fn() };
 });
 

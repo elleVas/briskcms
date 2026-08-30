@@ -1,4 +1,4 @@
-import type { FieldDescriptor } from '../field-types.js';
+import type { FieldDescriptor } from '../field-types';
 
 /**
  * Shared by every block che ha un prop `NavItemPosition` (NavLink,

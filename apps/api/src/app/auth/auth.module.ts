@@ -7,8 +7,8 @@ import { SessionAuthAdapter } from '@brisk/session-auth-adapter';
 import { VerificationTokenAdapter } from '@brisk/verification-token-adapter';
 import { SmtpEmailAdapter } from '@brisk/smtp-email-adapter';
 import { TurnstileCaptchaAdapter } from '@brisk/turnstile-captcha';
-import { DATABASE, DatabaseModule } from '../database.module.js';
-import { AuthController } from './auth.controller.js';
+import { DATABASE, DatabaseModule } from '../database.module';
+import { AuthController } from './auth.controller';
 import {
   AUTH_PORT,
   CAPTCHA_PORT,
@@ -18,11 +18,11 @@ import {
   TENANT_CONTEXT,
   USER_REPOSITORY,
   VERIFICATION_TOKEN_PORT,
-} from './auth.tokens.js';
-import { PerAccountThrottlerGuard } from './per-account-throttler.guard.js';
-import { RolesGuard } from './roles.guard.js';
-import { SessionAuthGuard } from './session-auth.guard.js';
-import { SessionTenantContextAdapter } from './session-tenant-context.adapter.js';
+} from './auth.tokens';
+import { PerAccountThrottlerGuard } from './per-account-throttler.guard';
+import { RolesGuard } from './roles.guard';
+import { SessionAuthGuard } from './session-auth.guard';
+import { SessionTenantContextAdapter } from './session-tenant-context.adapter';
 
 @Module({
   imports: [

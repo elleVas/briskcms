@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { formQueryOptions } from '../app/forms-queries.js';
-import { FormEditorView } from '../app/form-editor-view.js';
-import { requireAuth } from './-require-auth.js';
+import { formQueryOptions } from '../app/forms-queries';
+import { FormEditorView } from '../app/form-editor-view';
+import { requireAuth } from './-require-auth';
 
 // Unlike pages.$pageId (fullscreen Puck canvas, outside the shell), the form
 // editor is just a settings-style form (name, fields, notification email) —

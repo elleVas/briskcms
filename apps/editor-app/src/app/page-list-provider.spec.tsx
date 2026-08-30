@@ -4,14 +4,14 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { usePageList } from '@brisk/block-registry';
 import type { PickedPage } from '@brisk/shared-types';
-import * as api from '../lib/pages-api-client.js';
-import type { PageListItem } from '../lib/pages-api-client.js';
-import { createTestQueryClient } from '../test-query-client.js';
-import { PageListProvider } from './page-list-provider.js';
+import * as api from '../lib/pages-api-client';
+import type { PageListItem } from '../lib/pages-api-client';
+import { createTestQueryClient } from '../test-query-client';
+import { PageListProvider } from './page-list-provider';
 
-vi.mock('../lib/pages-api-client.js', async (importOriginal) => {
+vi.mock('../lib/pages-api-client', async (importOriginal) => {
   const actual =
-    await importOriginal<typeof import('../lib/pages-api-client.js')>();
+    await importOriginal<typeof import('../lib/pages-api-client')>();
   return { ...actual, listPages: vi.fn() };
 });
 

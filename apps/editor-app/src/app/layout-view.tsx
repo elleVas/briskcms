@@ -1,8 +1,8 @@
 import { useTranslation } from 'react-i18next';
 import { Link } from '@tanstack/react-router';
 import { PanelBottom, PanelTop } from 'lucide-react';
-import { Badge } from '../components/ui/badge.js';
-import { cn } from '../lib/utils.js';
+import { Badge } from '../components/ui/badge';
+import { cn } from '../lib/utils';
 
 export interface LayoutViewProps {
   enabledLocales: string[];

@@ -4,17 +4,17 @@ import {
   SiteLayoutSectionNotFoundError,
   SiteNotFoundError,
 } from '@brisk/domain-core';
-import { getOrCreateSiteLayoutSection } from './get-or-create-site-layout-section.use-case.js';
-import { saveSiteLayoutSectionDraft } from './save-site-layout-section-draft.use-case.js';
-import { publishSiteLayoutSection } from './publish-site-layout-section.use-case.js';
-import { listSiteLayoutSectionVersions } from './list-site-layout-section-versions.use-case.js';
-import { rollbackSiteLayoutSectionToVersion } from './rollback-site-layout-section-to-version.use-case.js';
-import { updateSiteLayoutSectionSticky } from './update-site-layout-section-sticky.use-case.js';
+import { getOrCreateSiteLayoutSection } from './get-or-create-site-layout-section.use-case';
+import { saveSiteLayoutSectionDraft } from './save-site-layout-section-draft.use-case';
+import { publishSiteLayoutSection } from './publish-site-layout-section.use-case';
+import { listSiteLayoutSectionVersions } from './list-site-layout-section-versions.use-case';
+import { rollbackSiteLayoutSectionToVersion } from './rollback-site-layout-section-to-version.use-case';
+import { updateSiteLayoutSectionSticky } from './update-site-layout-section-sticky.use-case';
 import {
   InMemorySiteLayoutSectionRepository,
   InMemorySiteLayoutSectionVersionRepository,
   InMemorySiteRepository,
-} from './in-memory-repositories.test-fixture.js';
+} from './in-memory-repositories.test-fixture';
 
 describe('site layout section lifecycle: get-or-create -> draft -> publish -> rollback', () => {
   const tenantId = 'tenant-1';

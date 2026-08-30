@@ -2,20 +2,20 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { QueryClientProvider } from '@tanstack/react-query';
 import type { SiteRecord } from '@brisk/shared-types';
-import * as api from '../lib/sites-api-client.js';
-import { createTestQueryClient } from '../test-query-client.js';
-import { StyleView } from './style-view.js';
+import * as api from '../lib/sites-api-client';
+import { createTestQueryClient } from '../test-query-client';
+import { StyleView } from './style-view';
 
-vi.mock('../lib/sites-api-client.js', async (importOriginal) => {
+vi.mock('../lib/sites-api-client', async (importOriginal) => {
   const actual =
-    await importOriginal<typeof import('../lib/sites-api-client.js')>();
+    await importOriginal<typeof import('../lib/sites-api-client')>();
   return { ...actual, updateThemeSettings: vi.fn() };
 });
 
 // Nessun default risolto in questi test — senza mock la query farebbe una
 // vera fetch di rete (stesso motivo del mock equivalente in
 // global-styles-dialog.spec.tsx).
-vi.mock('../lib/theme-api-client.js', () => ({
+vi.mock('../lib/theme-api-client', () => ({
   fetchThemeForegroundTokens: vi.fn().mockResolvedValue({
     primaryForeground: '#ffffff',
     secondaryForeground: '#000000',
