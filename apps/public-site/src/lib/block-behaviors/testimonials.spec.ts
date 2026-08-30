@@ -46,6 +46,33 @@ describe('testimonialsBehaviors', () => {
     ).not.toThrow();
   });
 
+  it('flips the physical scroll direction under rtl', () => {
+    const root = renderCarousel();
+    const track = root.querySelector<HTMLDivElement>(
+      '.brisk-testimonials__track',
+    )!;
+    const card = track.querySelector<HTMLElement>('.brisk-testimonial')!;
+    track.style.direction = 'rtl';
+    Object.defineProperty(card, 'offsetWidth', { value: 300 });
+    const scrollBy = vi.fn();
+    track.scrollBy = scrollBy;
+
+    runBlockBehaviors(document, testimonialsBehaviors);
+    root
+      .querySelector<HTMLButtonElement>('.brisk-testimonials__nav--next')!
+      .click();
+    expect(scrollBy).toHaveBeenCalledWith(
+      expect.objectContaining({ left: -324 }),
+    );
+
+    root
+      .querySelector<HTMLButtonElement>('.brisk-testimonials__nav--prev')!
+      .click();
+    expect(scrollBy).toHaveBeenCalledWith(
+      expect.objectContaining({ left: 324 }),
+    );
+  });
+
   it('is idempotent: a second run does not double-fire on click', () => {
     const root = renderCarousel();
     const track = root.querySelector<HTMLDivElement>(

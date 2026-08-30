@@ -40,6 +40,26 @@ describe('imageSliderBehaviors', () => {
     ).not.toThrow();
   });
 
+  it('flips the physical scroll direction under rtl', () => {
+    const root = renderSlider();
+    const track = root.querySelector<HTMLDivElement>('.brisk-slider__track')!;
+    track.style.direction = 'rtl';
+    Object.defineProperty(track, 'clientWidth', { value: 400 });
+    const scrollBy = vi.fn();
+    track.scrollBy = scrollBy;
+
+    runBlockBehaviors(document, imageSliderBehaviors);
+    root.querySelector<HTMLButtonElement>('.brisk-slider__nav--next')!.click();
+    expect(scrollBy).toHaveBeenCalledWith(
+      expect.objectContaining({ left: -400 }),
+    );
+
+    root.querySelector<HTMLButtonElement>('.brisk-slider__nav--prev')!.click();
+    expect(scrollBy).toHaveBeenCalledWith(
+      expect.objectContaining({ left: 400 }),
+    );
+  });
+
   it('is idempotent: a second run does not double-fire on click', () => {
     const root = renderSlider();
     const track = root.querySelector<HTMLDivElement>('.brisk-slider__track')!;

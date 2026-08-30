@@ -18,18 +18,21 @@ const { label, title, description } = Astro.props;
 <style>
   .brisk-timeline-step {
     position: relative;
-    padding: 0 0 1.5rem 1rem;
+    padding-block-end: 1.5rem;
+    padding-inline-start: 1rem;
   }
   .brisk-timeline-step:last-child {
-    padding-bottom: 0;
+    padding-block-end: 0;
   }
   /* No dedicated "accent" token distinct from primary — a timeline marker
      uses the same "draw attention" role as a primary CTA. Changes the
      default marker color from the original indigo to the classic theme's
-     primary (near-black); still fully theme-responsive going forward. */
+     primary (near-black); still fully theme-responsive going forward.
+     inset-inline-start (not left) so the marker stays on the rail side
+     under dir="rtl". */
   .brisk-timeline-step__marker {
     position: absolute;
-    left: -1.75rem;
+    inset-inline-start: -1.75rem;
     top: 0.375rem;
     width: 0.75rem;
     height: 0.75rem;
