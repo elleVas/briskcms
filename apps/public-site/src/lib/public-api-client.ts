@@ -162,6 +162,7 @@ export interface PageTreeNodeDto {
   slug: string;
   title: string;
   ancestorSlugs: string[];
+  createdAt: string;
 }
 
 // Built for a theme's own sidebar/tree navigation (docs-showcase,

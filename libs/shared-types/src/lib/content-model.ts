@@ -391,6 +391,12 @@ export const embedHtmlPropsSchema = z.object({
 });
 export type EmbedHtmlProps = z.infer<typeof embedHtmlPropsSchema>;
 
+export const codePropsSchema = z.object({
+  code: z.string(),
+  language: z.string(),
+});
+export type CodeProps = z.infer<typeof codePropsSchema>;
+
 /**
  * `rows` is a plain matrix, first row always treated as the header
  * (`<thead>`) by both renders (table.block.tsx and Table.astro) — no
@@ -529,8 +535,9 @@ export type LinkProps = z.infer<typeof linkPropsSchema>;
  * icon dependency by design (docs/adr/0007 isolation), and adding one just
  * for this would be a new dependency, not a detail worth making on its own.
  */
+/** `icon` resolves against the active theme's icon set (docs/adr/0023), same nullable-name pattern as NavLink's own `icon` — `null` = no icon. */
 export const featurePropsSchema = z.object({
-  icon: z.string(),
+  icon: z.string().nullable().default(null),
   title: z.string(),
   text: z.string(),
 });

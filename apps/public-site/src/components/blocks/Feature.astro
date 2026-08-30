@@ -4,15 +4,17 @@ import {
   type BlockStyleOverride,
   type FeatureProps,
 } from '@brisk/shared-types';
+import { resolveIconSvg } from '../../lib/resolve-theme-icons.js';
 
 type Props = FeatureProps & { styleOverride?: BlockStyleOverride };
 
 const { icon, title, text, styleOverride } = Astro.props;
 const instanceStyle = buildBlockInstanceStyle(styleOverride);
+const iconSvg = resolveIconSvg(icon);
 ---
 
 <div class="brisk-feature" style={instanceStyle}>
-  <div class="brisk-feature__icon" aria-hidden="true" data-brisk-field="icon">{icon}</div>
+  {iconSvg && <div class="brisk-feature__icon" aria-hidden="true" data-brisk-field="icon" set:html={iconSvg} />}
   <h3 class="brisk-feature__title" data-brisk-field="title">{title}</h3>
   <p class="brisk-feature__text" data-brisk-field="text">{text}</p>
 </div>
@@ -26,7 +28,16 @@ const instanceStyle = buildBlockInstanceStyle(styleOverride);
     padding: var(--brisk-override-padding-y, 0) var(--brisk-override-padding-x, 0);
   }
   .brisk-feature__icon {
-    font-size: 2rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.5rem;
+    height: 2.5rem;
+    color: var(--primary);
+  }
+  .brisk-feature__icon :global(svg) {
+    width: 100%;
+    height: 100%;
   }
   .brisk-feature__title {
     margin: 0.5rem 0 0;

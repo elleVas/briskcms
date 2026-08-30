@@ -1,9 +1,11 @@
 import {
   blockStyleDefaultsResponseSchema,
   iconManifestSchema,
+  themeBaseTokensSchema,
   themeForegroundTokensSchema,
   type BlockStyleDefaultsResponse,
   type IconEntry,
+  type ThemeBaseTokens,
   type ThemeForegroundTokens,
 } from '@brisk/shared-types';
 import { PUBLIC_SITE_URL } from './public-site-url.js';
@@ -53,5 +55,12 @@ export async function fetchThemeForegroundTokens(): Promise<ThemeForegroundToken
   return themeApiFetcher.fetchAndParse(
     '/api/themes/current/foreground-tokens',
     themeForegroundTokensSchema,
+  );
+}
+
+export async function fetchThemeBaseTokens(): Promise<ThemeBaseTokens> {
+  return themeApiFetcher.fetchAndParse(
+    '/api/themes/current/base-tokens',
+    themeBaseTokensSchema,
   );
 }

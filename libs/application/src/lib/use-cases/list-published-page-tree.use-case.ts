@@ -21,6 +21,10 @@ export interface PageTreeNode {
   slug: string;
   title: string;
   ancestorSlugs: string[];
+  // ISO string, not a `Date` — this crosses the public HTTP boundary as
+  // JSON, and a caller (a theme's sidebar) only ever needs it for stable
+  // ascending sort among siblings, never date arithmetic.
+  createdAt: string;
 }
 
 // Same "5-15 pagine, siti vetrina" scale assumption as
@@ -84,5 +88,6 @@ export async function listPublishedPageTree(
       slug: page.slug,
       title: page.seoMeta.title,
       ancestorSlugs: resolveAncestorSlugs(nodesById, page.id),
+      createdAt: page.createdAt.toISOString(),
     }));
 }

@@ -51,6 +51,12 @@ export const BLOCK_STYLE_DEFAULTS: Record<string, BlockStyleDefaults> = {
     paddingX: '1.25rem',
     paddingY: '0.5rem',
   },
+  Code: {
+    backgroundColor: 'transparent',
+    borderRadius: '0',
+    paddingX: '0',
+    paddingY: '0',
+  },
   Column: {
     backgroundColor: 'transparent',
     textColor: 'inherit',

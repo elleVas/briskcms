@@ -5,6 +5,7 @@ import { bannerBlock } from './blocks/banner.block.js';
 import { beforeAfterBlock } from './blocks/before-after.block.js';
 import { breadcrumbBlock } from './blocks/breadcrumb.block.js';
 import { buttonBlock } from './blocks/button.block.js';
+import { codeBlock } from './blocks/code.block.js';
 import { columnBlock } from './blocks/column.block.js';
 import { columnsBlock } from './blocks/columns.block.js';
 import { containerBlock } from './blocks/container.block.js';
@@ -47,6 +48,7 @@ export {
   beforeAfterBlock,
   breadcrumbBlock,
   buttonBlock,
+  codeBlock,
   columnBlock,
   columnsBlock,
   containerBlock,
@@ -106,6 +108,7 @@ export const pageBlocks: BlockDescriptor[] = [
   ratingBlock,
   countdownBlock,
   embedHtmlBlock,
+  codeBlock,
   tableBlock,
   accordionBlock,
   accordionItemBlock,
@@ -151,6 +154,7 @@ export const pageBlockCategories: { title: string; types: string[] }[] = [
       'Quote',
       'Table',
       'EmbedHtml',
+      'Code',
       'Breadcrumb',
     ],
   },

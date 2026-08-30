@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { QueryClientProvider } from '@tanstack/react-query';
 import type { BlockDescriptor } from '@brisk/block-registry';
 import * as api from '../lib/sites-api-client.js';
+import * as themeApi from '../lib/theme-api-client.js';
 import type { SiteRecord } from '@brisk/shared-types';
 import { createTestQueryClient } from '../test-query-client.js';
 import { GlobalStylesDialog } from './global-styles-dialog.js';
@@ -47,6 +48,7 @@ vi.mock('../lib/theme-api-client.js', () => ({
     primaryForeground: '#ffffff',
     secondaryForeground: '#000000',
   }),
+  fetchThemeBaseTokens: vi.fn().mockResolvedValue({}),
 }));
 
 function buildSite(overrides: Partial<SiteRecord> = {}): SiteRecord {
@@ -120,6 +122,42 @@ describe('GlobalStylesDialog', () => {
       expect(screen.getByText('Colore primario')).toBeTruthy(),
     );
     expect(screen.queryByDisplayValue('#18181b')).toBeNull();
+  });
+
+  it("shows the active theme's own base color as a hint when no site override is set", async () => {
+    // *Once*, not a lasting `mockResolvedValue` — this suite's `afterEach`
+    // only calls `clearAllMocks` (usage data), not `resetAllMocks`, so a
+    // persistent override here would leak into every test after this one.
+    vi.mocked(themeApi.fetchThemeBaseTokens).mockResolvedValueOnce({
+      primary: '#5b9bd5',
+      secondary: '#151b23',
+      fontSansValue: 'Sora, sans-serif',
+      radius: '1rem',
+    });
+    vi.mocked(api.getSite).mockResolvedValue(buildSite());
+    renderDialog(true);
+
+    await waitFor(() =>
+      expect(
+        screen.getAllByText(
+          'Valore di base del tema attivo — personalizzalo qui o modificando il tema stesso',
+        ).length,
+      ).toBe(2),
+    );
+  });
+
+  it('keeps the old generic placeholder when the theme has no base tokens (e.g. still on oklch(), like classic)', async () => {
+    vi.mocked(api.getSite).mockResolvedValue(buildSite());
+    renderDialog(true);
+
+    await waitFor(() =>
+      expect(screen.getByText('Colore primario')).toBeTruthy(),
+    );
+    expect(
+      screen.queryByText(
+        'Valore di base del tema attivo — personalizzalo qui o modificando il tema stesso',
+      ),
+    ).toBeNull();
   });
 
   it('pre-fills the enabled color from the current site', async () => {

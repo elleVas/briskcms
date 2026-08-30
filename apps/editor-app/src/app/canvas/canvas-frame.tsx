@@ -33,15 +33,32 @@ export interface CanvasFrameProps {
   breakpoint?: Breakpoint;
 }
 
-/** Esportata per essere testata in isolamento — il pezzo che compone URL, token ed editingSection nell'unico posto in cui vanno assemblati. */
+/**
+ * Esportata per essere testata in isolamento — il pezzo che compone URL,
+ * token ed editingSection nell'unico posto in cui vanno assemblati.
+ *
+ * `embedded` distingue i due contesti che riusano questa stessa rotta di
+ * preview: l'iframe del canvas (`CanvasFrame` sotto, `embedded: true`) ha
+ * bisogno del click-to-select — è tutto il punto di quell'iframe — mentre
+ * il bottone "Anteprima" standalone (canvas-editor-shell.tsx) apre la
+ * stessa URL in una scheda normale del browser, dove non c'è nessun
+ * editor attorno a cui inviare i click: senza questo flag la pagina
+ * intercetta comunque ogni click (stessa initPreviewBridge()) e la
+ * navigazione risulta rotta — bug reale, scoperto costruendo un sito con
+ * link header veri e riportato dall'utente.
+ */
 export function buildPreviewUrl(
   pageId: string,
   token: string,
   editingSection?: EditingSection,
+  embedded?: boolean,
 ): string {
   const params = new URLSearchParams({ token });
   if (editingSection) {
     params.set('editingSection', editingSection);
+  }
+  if (embedded) {
+    params.set('embedded', '1');
   }
   return `${PUBLIC_SITE_URL}/preview/${pageId}?${params.toString()}`;
 }
@@ -84,7 +101,7 @@ export function CanvasFrame({
     createPagePreviewToken(pageId)
       .then((preview) => {
         if (!cancelled) {
-          setSrc(buildPreviewUrl(pageId, preview.token, editingSection));
+          setSrc(buildPreviewUrl(pageId, preview.token, editingSection, true));
           setError(null);
         }
       })

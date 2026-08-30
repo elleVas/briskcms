@@ -7,6 +7,7 @@ import {
   beforeAfterPropsSchema,
   breadcrumbPropsSchema,
   buttonPropsSchema,
+  codePropsSchema,
   columnsPropsSchema,
   containerPropsSchema,
   countdownPropsSchema,
@@ -68,6 +69,8 @@ import BreadcrumbCore from './blocks/Breadcrumb.astro';
 const Breadcrumb = resolveThemeBlockOverride('Breadcrumb', BreadcrumbCore);
 import ButtonCore from './blocks/Button.astro';
 const Button = resolveThemeBlockOverride('Button', ButtonCore);
+import CodeCore from './blocks/Code.astro';
+const Code = resolveThemeBlockOverride('Code', CodeCore);
 import ColumnCore from './blocks/Column.astro';
 const Column = resolveThemeBlockOverride('Column', ColumnCore);
 import ColumnsCore from './blocks/Columns.astro';
@@ -249,6 +252,11 @@ const BLOCK_REGISTRY: Record<string, BlockDispatchEntry> = {
   EmbedHtml: {
     component: EmbedHtml,
     schema: embedHtmlPropsSchema,
+    styleOverride: true,
+  },
+  Code: {
+    component: Code,
+    schema: codePropsSchema,
     styleOverride: true,
   },
   Table: { component: Table, schema: tablePropsSchema },

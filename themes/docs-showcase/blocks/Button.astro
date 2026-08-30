@@ -1,0 +1,56 @@
+---
+// Override of apps/public-site/src/components/blocks/Button.astro,
+// resolved via resolveThemeBlockOverride (docs/adr/0021's per-block
+// escalation) — same props/markup as core, the ONE difference is layout:
+// every standalone Button under this theme centers itself in its
+// container, regardless of how/where the editor placed it. Deliberate
+// demonstration that a theme's own CSS can override a layout decision
+// the editor/content author never made explicit (user's own framing,
+// 2026-08-30) — content stays theme-agnostic, the theme still gets the
+// final say on presentation.
+import {
+  buildBlockInstanceStyle,
+  type BlockStyleOverride,
+  type ButtonProps,
+} from '../../../libs/shared-types/src/index.js';
+import { localePath } from '../../../apps/public-site/src/lib/locale-path.js';
+
+type Props = ButtonProps & { styleOverride?: BlockStyleOverride };
+
+const { label, linkType, page, url, variant, styleOverride } = Astro.props;
+const href =
+  linkType === 'page' && page ? localePath(page.locale, page.slug) : url;
+
+const instanceStyle = buildBlockInstanceStyle(styleOverride);
+---
+
+<a
+  class:list={[
+    'brisk-button',
+    { 'brisk-button--secondary': variant === 'secondary' },
+  ]}
+  href={href}
+  style={instanceStyle}
+  data-brisk-field="label"
+>
+  {label}
+</a>
+
+<style>
+  .brisk-button {
+    display: block;
+    width: fit-content;
+    margin-inline: auto;
+    padding: var(--brisk-override-padding-y, 0.5rem)
+      var(--brisk-override-padding-x, 1.25rem);
+    border-radius: var(--brisk-override-radius, var(--radius));
+    background: var(--brisk-override-bg, var(--primary));
+    color: var(--brisk-override-text, var(--primary-foreground));
+    text-decoration: none;
+    border: 1px solid var(--brisk-override-bg, var(--primary));
+  }
+  .brisk-button--secondary {
+    background: transparent;
+    color: var(--brisk-override-bg, var(--primary));
+  }
+</style>
