@@ -1,0 +1,93 @@
+---
+// Override of apps/public-site/src/components/blocks/Code.astro
+// (docs/adr/0021's per-block escalation) — same props/Shiki rendering as
+// core, the difference is purely presentational: a macOS-style terminal
+// window chrome (traffic-light dots + title bar showing the language)
+// around the snippet, reference https://ellevas.dev/docs (user's own
+// site, 2026-08-30). Restyle only, no new fields — same boundary as every
+// other theme block override here.
+import { Code as ShikiCode } from 'astro:components';
+import type { CodeLanguage } from 'astro';
+import {
+  buildBlockInstanceStyle,
+  type BlockStyleOverride,
+  type CodeProps,
+} from '../../../libs/shared-types/src/index.js';
+
+type Props = CodeProps & { styleOverride?: BlockStyleOverride };
+
+const { code, language, styleOverride } = Astro.props;
+const instanceStyle = buildBlockInstanceStyle(styleOverride);
+
+// Same reasoning as core Code.astro's own cast: `language` is a plain
+// `string` in the domain schema, the curated options in code.block.ts are
+// all valid Shiki language ids.
+const shikiLang = language as CodeLanguage;
+---
+
+<div class="brisk-code" style={instanceStyle}>
+  <div class="brisk-code__titlebar" aria-hidden="true">
+    <span class="brisk-code__dot brisk-code__dot--red"></span>
+    <span class="brisk-code__dot brisk-code__dot--yellow"></span>
+    <span class="brisk-code__dot brisk-code__dot--green"></span>
+    {language && <span class="brisk-code__lang">{language}</span>}
+  </div>
+  <div class="brisk-code__body">
+    <ShikiCode code={code} lang={shikiLang} />
+  </div>
+</div>
+
+<style>
+  /* #24292e matches Shiki's own github-dark <pre> background exactly
+     (verified against its rendered inline style) — the title bar and body
+     share one continuous surface, no seam between them. */
+  .brisk-code {
+    border-radius: var(--brisk-override-radius, var(--radius));
+    overflow: hidden;
+    border: 1px solid rgb(255 255 255 / 10%);
+    background: #24292e;
+  }
+  .brisk-code__titlebar {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+    background: color-mix(in oklab, #24292e 85%, white 6%);
+    border-bottom: 1px solid rgb(255 255 255 / 8%);
+  }
+  .brisk-code__dot {
+    width: 0.75rem;
+    height: 0.75rem;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  /* Classic macOS traffic-light colors, the whole point of this chrome
+     being instantly recognizable as "a window", not chosen from the
+     theme's own palette. */
+  .brisk-code__dot--red {
+    background: #ff5f56;
+  }
+  .brisk-code__dot--yellow {
+    background: #ffbd2e;
+  }
+  .brisk-code__dot--green {
+    background: #27c93f;
+  }
+  .brisk-code__lang {
+    margin-left: auto;
+    font-family: var(--font-sans-value);
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: rgb(255 255 255 / 45%);
+  }
+  .brisk-code__body {
+    padding: var(--brisk-override-padding-y, 1rem)
+      var(--brisk-override-padding-x, 1.25rem);
+    overflow-x: auto;
+  }
+  .brisk-code__body :global(pre) {
+    margin: 0;
+  }
+</style>

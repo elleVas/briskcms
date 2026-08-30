@@ -128,3 +128,24 @@ export const themeForegroundTokensSchema = z.object({
   secondaryForeground: z.string().min(1),
 });
 export type ThemeForegroundTokens = z.infer<typeof themeForegroundTokensSchema>;
+
+/**
+ * Corpo di risposta di `GET /api/themes/current/base-tokens`
+ * (apps/public-site) — i valori grezzi che il `theme.css` del tema
+ * attivo dichiara per `--primary`/`--secondary`/`--font-sans-value`/
+ * `--radius`. A differenza di `themeForegroundTokensSchema` sopra (che
+ * serve solo al controllo di contrasto), questi alimentano i valori di
+ * partenza mostrati in GlobalStylesDialog: prima di questo endpoint,
+ * "nessun override Tier 1 impostato" mostrava un fallback hardcoded
+ * generico (`#18181b`) invece del vero colore/font del tema attivo — un
+ * tema non aveva modo di far vedere all'editor i propri valori di base.
+ * Sola lettura: l'editor non scrive mai questi campi, sono un punto di
+ * partenza, non un override (quello resta `site.themePrimaryColor` ecc.).
+ */
+export const themeBaseTokensSchema = z.object({
+  primary: z.string().min(1),
+  secondary: z.string().min(1),
+  fontSansValue: z.string().min(1),
+  radius: z.string().min(1),
+});
+export type ThemeBaseTokens = z.infer<typeof themeBaseTokensSchema>;

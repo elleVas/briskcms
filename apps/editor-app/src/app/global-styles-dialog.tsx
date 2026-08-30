@@ -3,7 +3,11 @@ import { Controller, useForm } from 'react-hook-form';
 import { useQuery } from '@tanstack/react-query';
 import { ChevronLeft } from 'lucide-react';
 import type { BlockDescriptor } from '@brisk/block-registry';
-import type { BlockStyleOverride, SiteRecord } from '@brisk/shared-types';
+import type {
+  BlockStyleOverride,
+  SiteRecord,
+  ThemeBaseTokens,
+} from '@brisk/shared-types';
 import {
   Accordion,
   AccordionContent,
@@ -23,6 +27,7 @@ import { BlockStyleFields } from './canvas/block-style-fields.js';
 import { checkContrastAgainstThemeForeground } from '../lib/color-contrast.js';
 import { useTranslation } from '../lib/use-translation.js';
 import { siteQueryOptions } from './site-queries.js';
+import { themeBaseTokensQueryOptions } from './theme-base-tokens-queries.js';
 import { themeForegroundTokensQueryOptions } from './theme-foreground-tokens-queries.js';
 import { ToggleableColorField } from './toggleable-color-field.js';
 import { useResetFormOnOpen } from './use-reset-form-on-open.js';
@@ -50,12 +55,30 @@ interface ColorsFormValues {
   secondaryColor: string;
 }
 
-function toFormValues(site: SiteRecord): ColorsFormValues {
+/**
+ * When no Tier 1 override exists yet, show the active THEME's own color as
+ * the starting value instead of a generic hardcoded one — this is the
+ * actual point of `fetchThemeBaseTokens()`: a theme's base tokens should
+ * be visible in the editor, not just baked invisibly into the public
+ * render, so picking a theme and opening its style settings shows that
+ * theme's real values as a starting point for further customization
+ * (either here, or by editing the theme's own theme.css). Only applied
+ * when the theme's token is a real hex color — themes whose theme.css
+ * still uses oklch() (classic, unchanged) fall back to the old generic
+ * default exactly as before, since a native `<input type="color">` can't
+ * render an oklch() value.
+ */
+function toFormValues(
+  site: SiteRecord,
+  baseTokens: ThemeBaseTokens | undefined,
+): ColorsFormValues {
+  const themePrimary = baseTokens ? hexOrNull(baseTokens.primary) : null;
+  const themeSecondary = baseTokens ? hexOrNull(baseTokens.secondary) : null;
   return {
     primaryColorEnabled: site.themePrimaryColor !== null,
-    primaryColor: site.themePrimaryColor ?? '#18181b',
+    primaryColor: site.themePrimaryColor ?? themePrimary ?? '#18181b',
     secondaryColorEnabled: site.themeSecondaryColor !== null,
-    secondaryColor: site.themeSecondaryColor ?? '#71717a',
+    secondaryColor: site.themeSecondaryColor ?? themeSecondary ?? '#71717a',
   };
 }
 
@@ -92,6 +115,7 @@ export function GlobalStylesDialog({
   const { data: foregroundTokens } = useQuery(
     themeForegroundTokensQueryOptions(),
   );
+  const { data: baseTokens } = useQuery(themeBaseTokensQueryOptions());
   const { updateThemeSettings, isSaving } = useSiteThemeSettings(siteId);
 
   const [error, setError] = useState('');
@@ -134,7 +158,7 @@ export function GlobalStylesDialog({
   useResetFormOnOpen(open, site, reset, (currentSite) => {
     setError('');
     setSelectedType(null);
-    return toFormValues(currentSite);
+    return toFormValues(currentSite, baseTokens);
   });
 
   async function onSubmit(values: ColorsFormValues) {
@@ -248,6 +272,12 @@ export function GlobalStylesDialog({
                             value={colorField.value}
                             onValueChange={colorField.onChange}
                           />
+                          {!enabledField.value &&
+                            hexOrNull(baseTokens?.primary ?? '') && (
+                              <p className="text-xs text-muted-foreground">
+                                {t('themeSettings.currentThemeValue')}
+                              </p>
+                            )}
                           {primaryContrast && !primaryContrast.passesAA && (
                             <p className="text-xs text-amber-600 dark:text-amber-500">
                               {t('themeSettings.contrastWarning', {
@@ -278,6 +308,12 @@ export function GlobalStylesDialog({
                             value={colorField.value}
                             onValueChange={colorField.onChange}
                           />
+                          {!enabledField.value &&
+                            hexOrNull(baseTokens?.secondary ?? '') && (
+                              <p className="text-xs text-muted-foreground">
+                                {t('themeSettings.currentThemeValue')}
+                              </p>
+                            )}
                           {secondaryContrast && !secondaryContrast.passesAA && (
                             <p className="text-xs text-amber-600 dark:text-amber-500">
                               {t('themeSettings.contrastWarning', {

@@ -1,24 +1,24 @@
 import type { FeatureProps } from '@brisk/shared-types';
 import { BLOCK_STYLE_DEFAULTS } from '@brisk/shared-types';
-import type { BlockDescriptor } from '../field-types.js';
+import { FieldBuilder, type BlockDescriptor } from '../field-types.js';
 import { BlockStyleRegistry } from '../block-style-registry.js';
+import { IconPickerField } from '../fields/icon-picker-field.js';
 
 export const featureBlock: BlockDescriptor<FeatureProps> = {
   type: 'Feature',
   label: 'blocks.feature.label',
   category: 'interactive',
   defaultProps: {
-    icon: '🚀',
+    icon: null,
     title: 'Titolo della feature',
     text: 'Descrizione della feature...',
   },
   fields: [
-    {
-      kind: 'text',
-      key: 'icon',
-      label: 'blocks.feature.fields.icon.fieldLabel',
-      inlineEditable: true,
-    },
+    FieldBuilder.custom(
+      'icon',
+      'blocks.feature.fields.icon.fieldLabel',
+      IconPickerField,
+    ),
     {
       kind: 'text',
       key: 'title',

@@ -238,6 +238,7 @@
     "overridesEnabledDescription": "Se disattivato, ogni campo qui sotto viene ignorato e si usano i valori predefiniti del tema, anche se hai salvato dei valori in passato. Il tema attivo può anche bloccare questa opzione del tutto — consulta la sua documentazione.",
     "primaryColorLabel": "Colore primario",
     "secondaryColorLabel": "Colore secondario",
+    "currentThemeValue": "Valore di base del tema attivo — personalizzalo qui o modificando il tema stesso",
     "override": "Personalizza",
     "contrastWarning": "Contrasto basso: con questo colore, il testo del tema raggiunge solo un rapporto di {{ratio}}:1 (consigliato 4.5:1) — potrebbe risultare difficile da leggere.",
     "fontLabel": "Font",
@@ -571,6 +572,25 @@
           "options": {
             "primary": "Primario",
             "secondary": "Secondario"
+          }
+        }
+      }
+    },
+    "code": {
+      "label": "Codice",
+      "fields": {
+        "code": { "fieldLabel": "Snippet di codice" },
+        "language": {
+          "fieldLabel": "Linguaggio",
+          "options": {
+            "typescript": "TypeScript",
+            "tsx": "TSX",
+            "javascript": "JavaScript",
+            "bash": "Bash",
+            "json": "JSON",
+            "html": "HTML",
+            "css": "CSS",
+            "plaintext": "Testo semplice"
           }
         }
       }

@@ -10,6 +10,12 @@ export const prerender = false;
 
 const { pageId } = Astro.params;
 const token = Astro.url.searchParams.get('token');
+// Solo l'iframe del canvas (canvas-frame.tsx) passa questo flag — vedi il
+// commento su buildPreviewUrl() per perché: senza distinguerlo dal
+// bottone "Anteprima" standalone (che apre questa stessa rotta in una
+// scheda normale), i link della pagina restavano rotti anche fuori
+// dall'editor.
+const isEmbedded = Astro.url.searchParams.get('embedded') === '1';
 
 const page =
   pageId && token ? await getPreviewPageById(pageId, token) : null;
@@ -32,4 +38,4 @@ Astro.response.headers.set(
 );
 ---
 
-<PublicPageContent page={page} editable />
+<PublicPageContent page={page} editable={isEmbedded} />

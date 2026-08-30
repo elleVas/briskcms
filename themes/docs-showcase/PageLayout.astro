@@ -7,12 +7,18 @@
 // difference is inside <body>: a docs-style sidebar next to the content
 // for any page that's part of a multi-page section, nothing for a
 // standalone page (the home included) — see the sidebar logic below.
+// Path relativo (non il bare specifier "@brisk/shared-types"): themes/ non
+// è un pacchetto workspace pnpm con il proprio node_modules come ogni
+// apps/*/libs/*, quindi un import bare da qui non si risolve mai — cammina
+// verso l'alto nel filesystem e non trova nulla (il node_modules di ogni
+// pacchetto è isolato per pacchetto). Stesso motivo per cui ogni altro
+// import in questo file è già relativo.
 import {
 	buildBlockStyleOverridesCss,
 	DEFAULT_THEME_TOKENS,
 	type Block,
 	type SeoMeta,
-} from '@brisk/shared-types';
+} from '../../libs/shared-types/src/index.js';
 import {
 	listPublishedPageTree,
 	type PageTreeNodeDto,
@@ -29,6 +35,7 @@ import {
 } from '../../apps/public-site/src/lib/locale-path.js';
 import { buildSchemaOrgGraph } from '../../apps/public-site/src/lib/schema-org.js';
 import { resolveThemeFont } from '../../apps/public-site/src/lib/theme-font.js';
+import { Translator } from '../../apps/public-site/src/lib/i18n.js';
 import '../../apps/public-site/src/styles/global.css';
 import './theme.css';
 import themeManifest from './theme.json';
@@ -64,6 +71,7 @@ const {
 const defaultTranslation = translations.find(
 	(translation) => translation.locale === site.defaultLocale,
 );
+const i18n = new Translator(locale);
 
 const pageUrl = seoMeta.canonical || Astro.url.href;
 const ogImage = seoMeta.ogTags?.['image'];
@@ -98,19 +106,31 @@ const blockStyleOverridesCss = buildBlockStyleOverridesCss(
 	tokens.blockStyles,
 );
 
-// --- Sidebar: only for a page that's part of a multi-page section ---
-// (see this file's own top comment). Built from the flat page tree
-// (docs/adr/0021's own list-published-page-tree endpoint, added for this
-// theme) rather than `ancestors`: `ancestors` alone can't tell a section's
-// *root* page (which has no ancestors of its own, being top-level) that
-// it should still show its own siblings/children.
+// --- Sidebar: a docs section is a 2-level hierarchy (root → category →
+// doc page), all categories shown simultaneously (like inertiajs.com's own
+// /docs), not just the current page's own siblings. Built from the flat
+// page tree (docs/adr/0021's own list-published-page-tree endpoint, added
+// for this theme) rather than `ancestors`: `ancestors` alone can't tell a
+// section's *root* page (which has no ancestors of its own, being
+// top-level) that it should still show its own category tree.
 interface SidebarNode {
 	slug: string;
 	title: string;
 	href: string;
 }
-let sidebarSectionTitle: string | null = null;
-let sidebarItems: SidebarNode[] = [];
+interface SidebarGroup {
+	title: string;
+	items: SidebarNode[];
+}
+const byCreatedAtAsc = (a: PageTreeNodeDto, b: PageTreeNodeDto) =>
+	a.createdAt.localeCompare(b.createdAt);
+const toSidebarNode = (node: PageTreeNodeDto): SidebarNode => ({
+	slug: node.slug,
+	title: node.title,
+	href: localePathFromAncestors(locale, node.ancestorSlugs, node.slug),
+});
+
+let sidebarGroups: SidebarGroup[] = [];
 let currentSlug: string | null = null;
 
 if (site.domain) {
@@ -129,38 +149,40 @@ if (site.domain) {
 
 	const currentNode = tree.find((node) => node.slug === currentSlug) ?? null;
 	if (currentNode) {
-		// Walk up to this section's root (parentId === null) — that root's
-		// direct children are the sidebar's own entries. The root itself
-		// might *be* the current page (visiting the section's landing page)
-		// or one of its descendants.
-		let root = currentNode;
-		const visited = new Set<string>([root.id]);
-		while (root.parentId) {
-			const parent = tree.find((node) => node.id === root.parentId);
+		// Walk up to the docs root (parentId === null). The root itself
+		// might *be* the current page (visiting the section's landing
+		// page), a category, or a leaf doc page.
+		let docsRoot = currentNode;
+		const visited = new Set<string>([docsRoot.id]);
+		while (docsRoot.parentId) {
+			const parent = tree.find((node) => node.id === docsRoot.parentId);
 			if (!parent || visited.has(parent.id)) break;
-			root = parent;
-			visited.add(root.id);
+			docsRoot = parent;
+			visited.add(docsRoot.id);
 		}
 
-		const siblings = tree.filter((node) => node.parentId === root.id);
-		if (siblings.length > 0) {
-			sidebarSectionTitle = root.title;
-			sidebarItems = [
-				{
-					slug: root.slug,
-					title: root.title,
-					href: localePathFromAncestors(locale, root.ancestorSlugs, root.slug),
-				},
-				...siblings.map((node) => ({
-					slug: node.slug,
-					title: node.title,
-					href: localePathFromAncestors(locale, node.ancestorSlugs, node.slug),
-				})),
-			];
-		}
+		const categories = tree
+			.filter((node) => node.parentId === docsRoot.id)
+			.sort(byCreatedAtAsc);
+		sidebarGroups = categories
+			.map((category) => ({
+				title: category.title,
+				items: tree
+					.filter((node) => node.parentId === category.id)
+					.sort(byCreatedAtAsc)
+					.map(toSidebarNode),
+			}))
+			.filter((group) => group.items.length > 0);
 	}
 }
-const hasSidebar = sidebarItems.length > 0;
+const hasSidebar = sidebarGroups.length > 0;
+const flatDocs = sidebarGroups.flatMap((group) => group.items);
+const currentDocIndex = flatDocs.findIndex((node) => node.slug === currentSlug);
+const prevDoc = currentDocIndex > 0 ? flatDocs[currentDocIndex - 1] : null;
+const nextDoc =
+	currentDocIndex >= 0 && currentDocIndex < flatDocs.length - 1
+		? flatDocs[currentDocIndex + 1]
+		: null;
 ---
 
 <html lang={locale} dir={localeDirection(locale)}>
@@ -177,6 +199,28 @@ const hasSidebar = sidebarItems.length > 0;
 			)
 		}
 		<meta name="viewport" content="width=device-width" />
+		{
+			// This theme's own default font (Sora, theme.css's --font-sans-value)
+			// — themes ship no font-loading mechanism of their own, only the
+			// Tier 1 site-override path below does, so without this the token
+			// would silently fall back to the system stack. Skipped when the
+			// site has its own Tier 1 font override (themeFont below already
+			// covers that case, no reason to load both families).
+			!themeFont && (
+				<>
+					<link rel="preconnect" href="https://fonts.googleapis.com" />
+					<link
+						rel="preconnect"
+						href="https://fonts.gstatic.com"
+						crossorigin
+					/>
+					<link
+						rel="stylesheet"
+						href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&display=swap"
+					/>
+				</>
+			)
+		}
 		{
 			themeFont && (
 				<>
@@ -276,23 +320,43 @@ const hasSidebar = sidebarItems.length > 0;
 		{
 			hasSidebar ? (
 				<div class="brisk-docs-shell">
-					<nav class="brisk-docs-sidebar" aria-label={sidebarSectionTitle ?? undefined}>
-						<div class="brisk-docs-sidebar__title">{sidebarSectionTitle}</div>
-						<ul class="brisk-docs-sidebar__list">
-							{sidebarItems.map((item) => (
-								<li>
-									<a
-										href={item.href}
-										aria-current={item.slug === currentSlug ? 'page' : undefined}
-									>
-										{item.title}
-									</a>
-								</li>
-							))}
-						</ul>
+					<nav class="brisk-docs-sidebar" aria-label={i18n.t('docs.sidebarLabel')}>
+						{sidebarGroups.map((group) => (
+							<div class="brisk-docs-sidebar__group">
+								<div class="brisk-docs-sidebar__title">{group.title}</div>
+								<ul class="brisk-docs-sidebar__list">
+									{group.items.map((item) => (
+										<li>
+											<a
+												href={item.href}
+												aria-current={item.slug === currentSlug ? 'page' : undefined}
+											>
+												{item.title}
+											</a>
+										</li>
+									))}
+								</ul>
+							</div>
+						))}
 					</nav>
 					<div class="brisk-docs-shell__content">
 						<slot />
+						<nav class="brisk-docs-pagination" aria-label={i18n.t('docsPagination.navLabel')}>
+							{prevDoc ? (
+								<a class="brisk-docs-pagination__link brisk-docs-pagination__link--prev" href={prevDoc.href}>
+									<span class="brisk-docs-pagination__label">{i18n.t('docsPagination.prev')}</span>
+									<span class="brisk-docs-pagination__title">{prevDoc.title}</span>
+								</a>
+							) : (
+								<span />
+							)}
+							{nextDoc && (
+								<a class="brisk-docs-pagination__link brisk-docs-pagination__link--next" href={nextDoc.href}>
+									<span class="brisk-docs-pagination__label">{i18n.t('docsPagination.next')}</span>
+									<span class="brisk-docs-pagination__title">{nextDoc.title}</span>
+								</a>
+							)}
+						</nav>
 					</div>
 				</div>
 			) : (
@@ -301,7 +365,7 @@ const hasSidebar = sidebarItems.length > 0;
 		}
 		{
 			footer && (
-				<footer class="border-t border-border bg-secondary px-6 py-12">
+				<footer class="brisk-footer border-t border-border bg-secondary px-6 py-12">
 					<div class="flex flex-col gap-3">
 						{footer.map((block) => (
 							<BlockRenderer
@@ -330,6 +394,28 @@ const hasSidebar = sidebarItems.length > 0;
 	</body>
 </html>
 
+<style is:global>
+	/* Standard sticky-footer trick: a short page's content (many docs pages
+	   have just a few short paragraphs) previously left the footer sitting
+	   right below the content instead of pinned to the viewport bottom —
+	   `<body>` had no flex layout at all, so there was nothing pushing it
+	   down. `margin-top: auto` on the footer does the pushing; `min-height:
+	   100vh` gives it room to push into on a short page, and doesn't
+	   interfere on a tall one (flex only grows, never shrinks content). Not
+	   scoped (`is:global` on this style block) because `<body>` itself
+	   lives above the `---` fence in this same file, not inside a
+	   component Astro would apply a scope attribute to as a child.
+	*/
+	body {
+		display: flex;
+		flex-direction: column;
+		min-height: 100vh;
+	}
+	.brisk-footer {
+		margin-top: auto;
+	}
+</style>
+
 <style>
 	.brisk-header--sticky {
 		position: sticky;
@@ -343,6 +429,9 @@ const hasSidebar = sidebarItems.length > 0;
 		max-width: 72rem;
 		margin: 0 auto;
 		padding: 2.5rem 1.5rem;
+	}
+	.brisk-docs-sidebar__group + .brisk-docs-sidebar__group {
+		margin-top: 1.5rem;
 	}
 	.brisk-docs-sidebar__title {
 		font-weight: 700;
@@ -374,6 +463,40 @@ const hasSidebar = sidebarItems.length > 0;
 		border-left-color: var(--primary);
 		color: var(--primary);
 		font-weight: 600;
+	}
+	.brisk-docs-pagination {
+		display: flex;
+		justify-content: space-between;
+		gap: 1rem;
+		margin-top: 3rem;
+		padding-top: 1.5rem;
+		border-top: 1px solid var(--border);
+	}
+	.brisk-docs-pagination__link {
+		display: flex;
+		flex-direction: column;
+		gap: 0.25rem;
+		max-width: 45%;
+		text-decoration: none;
+		padding: 0.75rem 1rem;
+		border-radius: 0.5rem;
+		border: 1px solid var(--border);
+	}
+	.brisk-docs-pagination__link:hover {
+		border-color: var(--primary);
+	}
+	.brisk-docs-pagination__link--next {
+		margin-left: auto;
+		text-align: right;
+		align-items: flex-end;
+	}
+	.brisk-docs-pagination__label {
+		font-size: 0.75rem;
+		color: var(--muted-foreground);
+	}
+	.brisk-docs-pagination__title {
+		font-weight: 600;
+		color: var(--primary);
 	}
 	@media (max-width: 800px) {
 		.brisk-docs-shell {

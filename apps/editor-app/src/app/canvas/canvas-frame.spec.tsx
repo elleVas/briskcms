@@ -45,6 +45,16 @@ describe('buildPreviewUrl', () => {
       `${PUBLIC_SITE_URL}/preview/page-1?token=tok123&editingSection=header`,
     );
   });
+
+  it('adds embedded=1 only when explicitly true (the canvas iframe, not the standalone preview button)', () => {
+    const embeddedUrl = buildPreviewUrl('page-1', 'tok123', undefined, true);
+    expect(embeddedUrl).toBe(
+      `${PUBLIC_SITE_URL}/preview/page-1?token=tok123&embedded=1`,
+    );
+
+    const standaloneUrl = buildPreviewUrl('page-1', 'tok123');
+    expect(standaloneUrl).not.toContain('embedded');
+  });
 });
 
 describe('CanvasFrame', () => {
@@ -74,7 +84,7 @@ describe('CanvasFrame', () => {
 
     await waitFor(() =>
       expect(screen.getByTitle('Anteprima pagina').getAttribute('src')).toBe(
-        `${PUBLIC_SITE_URL}/preview/page-1?token=tok123`,
+        `${PUBLIC_SITE_URL}/preview/page-1?token=tok123&embedded=1`,
       ),
     );
     expect(previewTokenApi.createPagePreviewToken).toHaveBeenCalledWith(
@@ -107,7 +117,7 @@ describe('CanvasFrame', () => {
 
     await waitFor(() =>
       expect(screen.getByTitle('Anteprima pagina').getAttribute('src')).toBe(
-        `${PUBLIC_SITE_URL}/preview/page-1?token=tok123&editingSection=footer`,
+        `${PUBLIC_SITE_URL}/preview/page-1?token=tok123&editingSection=footer&embedded=1`,
       ),
     );
   });

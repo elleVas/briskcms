@@ -1,9 +1,11 @@
 /**
- * "docs-showcase" — tech/documentation site look (docs/adr/0021), styled
- * after astro.build's own docs section: light, indigo-accented pages with
- * a dark, gradient hero on the homepage only (see blocks/Hero.astro's own
- * override — that dark background is scoped to the Hero component itself,
- * not a site-wide dark mode, so these :root tokens stay light throughout).
+ * "docs-showcase" — dark, developer-tool aesthetic (docs/adr/0021),
+ * explicitly all-dark by design (unlike inertiajs.com's own light home +
+ * dark docs + toggle — this theme has no toggle, every page is dark).
+ * Accent is a "carta da zucchero" (sugar-paper) blue; the Hero block
+ * (blocks/Hero.astro) reads `--primary` directly for its own background
+ * rather than duplicating the color, so the two stay in sync by
+ * construction.
  *
  * Design tokens only, same contract as classic/theme.css — every block in
  * apps/public-site/src/components/blocks reads these same Tailwind v4
@@ -27,19 +29,55 @@
 }
 
 :root {
-  --font-sans-value: 'Inter Variable', ui-sans-serif, system-ui, sans-serif;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  /* Indigo, not classic's neutral near-black — the one token every block
-     already reads for its accent surface (buttons, links, highlighted
-     borders), so this alone re-themes the whole site to "docs" without
-     touching a single block. */
-  --primary: oklch(0.457 0.24 264);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --border: oklch(0.922 0 0);
-  --radius: 0.5rem;
+  /* Loaded via a Google Fonts <link> in this theme's own PageLayout.astro
+     <head> — themes ship no font-loading mechanism of their own, so this
+     token alone would silently fall back to the system stack without it
+     (same trap noted for classic's own 'Inter Variable', which nothing
+     ever loads either). */
+  --font-sans-value: 'Sora', ui-sans-serif, system-ui, sans-serif;
+
+  --background: #0b0f14;
+  --foreground: #f3f5f7;
+
+  /* "Carta da zucchero" — the one token every block already reads for its
+     accent surface (buttons, links, highlighted borders), so this alone
+     re-themes the whole site's accent without touching a single block.
+     Dark text on this specific blue, not white — measured contrast is
+     ~8.5:1 against #0b0f14 vs ~2.2:1 against white, so primary-foreground
+     goes dark here, unlike a typical light-theme primary. */
+  --primary: #5b9bd5;
+  --primary-foreground: #0b0f14;
+
+  --secondary: #151b23;
+  --secondary-foreground: #e4e7eb;
+  --muted: #1b222b;
+  --muted-foreground: #94a3b8;
+  --border: #263140;
+
+  /* Rounded, deliberately more than classic's 0.5rem — this is the
+     theme's own visual identity choice, not a per-block one, so it lives
+     here rather than as a per-block style override. */
+  --radius: 1rem;
+
+  /* This is the actual mechanism that makes "rounded corners" apply
+     site-wide: every block's own scoped style already reads
+     `var(--brisk-override-radius, <literal fallback>)` (docs/adr/0022) —
+     normally only ever set inline, per-instance, by a real style
+     override. Defining it here at :root gives every block that has no
+     instance/site-level override of its own a themed default instead of
+     that literal fallback, via ordinary CSS custom-property inheritance
+     — an inline instance override (higher specificity) still wins over
+     this exactly like it always did. */
+  --brisk-override-radius: var(--radius);
+}
+
+/* Breathing room between the header/footer and the page's own first/last
+   block (Hero, Banner, ...) — #main-content is core (PublicPageContent.astro,
+   shared by every theme), so this rule lives here rather than editing that
+   shared file: only this theme gets the extra space, every other theme is
+   unaffected. Applies to any page (Home, docs, category — not just the
+   specific Hero/Banner pairing that prompted it), since #main-content wraps
+   every page's own content regardless of which blocks it starts/ends with. */
+#main-content {
+  padding-block: 3rem;
 }

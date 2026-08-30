@@ -1,0 +1,37 @@
+---
+import { Code as ShikiCode } from 'astro:components';
+import type { CodeLanguage } from 'astro';
+import {
+  buildBlockInstanceStyle,
+  type BlockStyleOverride,
+  type CodeProps,
+} from '@brisk/shared-types';
+
+type Props = CodeProps & { styleOverride?: BlockStyleOverride };
+
+const { code, language, styleOverride } = Astro.props;
+const instanceStyle = buildBlockInstanceStyle(styleOverride);
+
+// `language` is a plain `string` in the domain schema (shared-types has no
+// reason to depend on Shiki's bundled-language union) but the curated
+// options in code.block.ts are all valid Shiki language ids — this cast
+// encodes that invariant at the one place it's actually consumed, rather
+// than leaking Shiki's type into the domain model.
+const shikiLang = language as CodeLanguage;
+---
+
+<div class="brisk-code" style={instanceStyle}>
+  <ShikiCode code={code} lang={shikiLang} />
+</div>
+
+<style>
+  .brisk-code {
+    background: var(--brisk-override-bg, transparent);
+    border-radius: var(--brisk-override-radius, 0);
+    padding: var(--brisk-override-padding-y, 0) var(--brisk-override-padding-x, 0);
+    overflow-x: auto;
+  }
+  .brisk-code :global(pre) {
+    margin: 0;
+  }
+</style>

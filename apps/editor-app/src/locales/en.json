@@ -238,6 +238,7 @@
     "overridesEnabledDescription": "When off, every field below is ignored and the theme's own defaults are used, even if you've saved values here before. The active theme can also lock this off entirely — see its own documentation.",
     "primaryColorLabel": "Primary color",
     "secondaryColorLabel": "Secondary color",
+    "currentThemeValue": "The active theme's own base value — customize it here, or by editing the theme itself",
     "override": "Override",
     "contrastWarning": "Low contrast: with this color, the theme's own text color reaches only a {{ratio}}:1 ratio against it (4.5:1 recommended) — text may be hard to read.",
     "fontLabel": "Font",
@@ -571,6 +572,25 @@
           "options": {
             "primary": "Primary",
             "secondary": "Secondary"
+          }
+        }
+      }
+    },
+    "code": {
+      "label": "Code",
+      "fields": {
+        "code": { "fieldLabel": "Code snippet" },
+        "language": {
+          "fieldLabel": "Language",
+          "options": {
+            "typescript": "TypeScript",
+            "tsx": "TSX",
+            "javascript": "JavaScript",
+            "bash": "Bash",
+            "json": "JSON",
+            "html": "HTML",
+            "css": "CSS",
+            "plaintext": "Plain text"
           }
         }
       }
