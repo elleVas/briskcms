@@ -33,7 +33,7 @@
     "@brisk/env-config": "workspace:*",
     "@brisk/shared-types": "workspace:*",
     "@tiptap/core": "^3.30.2",
-    "@tiptap/extension-document": "^3.30.2",
+    "@tiptap/extension-document": "^3.30.5",
     "@tiptap/extension-paragraph": "^3.30.2",
     "@tiptap/extension-text": "^3.30.2",
     "astro": "^7.2.2",
