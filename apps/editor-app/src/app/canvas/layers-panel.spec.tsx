@@ -1,27 +1,87 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import type { Block } from '@brisk/shared-types';
-import { computeReorderedIds, LayersPanel } from './layers-panel';
+import { computeNestedReorder, LayersPanel } from './layers-panel';
 
-describe('computeReorderedIds', () => {
-  it('moves the active id to the position of the over id', () => {
-    expect(computeReorderedIds(['a', 'b', 'c'], 'a', 'c')).toEqual([
-      'b',
-      'c',
-      'a',
-    ]);
+describe('computeNestedReorder', () => {
+  it('moves the active block to the position of the over block, among root siblings', () => {
+    const blocks: Block[] = [
+      { id: 'a', type: 'Text', props: {} },
+      { id: 'b', type: 'Text', props: {} },
+      { id: 'c', type: 'Text', props: {} },
+    ];
+    expect(computeNestedReorder(blocks, 'a', 'c')).toEqual({
+      parentId: null,
+      orderedIds: ['b', 'c', 'a'],
+    });
   });
 
-  it('returns null when dropped on itself (no-op)', () => {
-    expect(computeReorderedIds(['a', 'b', 'c'], 'a', 'a')).toBeNull();
+  it('moves the active block among its nested siblings, inside the same container', () => {
+    const blocks: Block[] = [
+      {
+        id: 'container-1',
+        type: 'Container',
+        props: {},
+        children: [
+          { id: 'child-a', type: 'Text', props: {} },
+          { id: 'child-b', type: 'Text', props: {} },
+          { id: 'child-c', type: 'Text', props: {} },
+        ],
+      },
+    ];
+    expect(computeNestedReorder(blocks, 'child-a', 'child-c')).toEqual({
+      parentId: 'container-1',
+      orderedIds: ['child-b', 'child-c', 'child-a'],
+    });
+  });
+
+  it('returns null when dropped on itself', () => {
+    const blocks: Block[] = [
+      { id: 'a', type: 'Text', props: {} },
+      { id: 'b', type: 'Text', props: {} },
+    ];
+    expect(computeNestedReorder(blocks, 'a', 'a')).toBeNull();
   });
 
   it('returns null when there is no drop target', () => {
-    expect(computeReorderedIds(['a', 'b', 'c'], 'a', null)).toBeNull();
+    const blocks: Block[] = [{ id: 'a', type: 'Text', props: {} }];
+    expect(computeNestedReorder(blocks, 'a', null)).toBeNull();
   });
 
-  it('returns null for an id not present in the list', () => {
-    expect(computeReorderedIds(['a', 'b', 'c'], 'a', 'ghost')).toBeNull();
+  it('returns null for a block id not present in the tree', () => {
+    const blocks: Block[] = [{ id: 'a', type: 'Text', props: {} }];
+    expect(computeNestedReorder(blocks, 'a', 'ghost')).toBeNull();
+  });
+
+  it("rejects a drop across different parents (reparenting via drag isn't supported)", () => {
+    const blocks: Block[] = [
+      { id: 'root-a', type: 'Text', props: {} },
+      {
+        id: 'container-1',
+        type: 'Container',
+        props: {},
+        children: [{ id: 'child-a', type: 'Text', props: {} }],
+      },
+    ];
+    expect(computeNestedReorder(blocks, 'root-a', 'child-a')).toBeNull();
+  });
+
+  it('rejects a drop between children of two different containers, even at the same depth', () => {
+    const blocks: Block[] = [
+      {
+        id: 'container-1',
+        type: 'Container',
+        props: {},
+        children: [{ id: 'child-a', type: 'Text', props: {} }],
+      },
+      {
+        id: 'container-2',
+        type: 'Container',
+        props: {},
+        children: [{ id: 'child-b', type: 'Text', props: {} }],
+      },
+    ];
+    expect(computeNestedReorder(blocks, 'child-a', 'child-b')).toBeNull();
   });
 });
 

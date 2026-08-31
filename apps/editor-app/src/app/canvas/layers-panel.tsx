@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { type ReactNode, useState } from 'react';
 import {
   closestCenter,
   DndContext,
@@ -18,27 +18,31 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import type { Block } from '@brisk/shared-types';
+import { locateBlock, siblingsAt } from './use-block-tree';
 
 export interface LayersPanelProps {
   blocks: Block[];
   hoveredBlockId: string | null;
   selectedBlockId: string | null;
   /**
-   * Chiamato con il nuovo ordine (id dei blocchi di primo livello) dopo un
-   * drag completato. Il riordino tra fratelli annidati (dentro un
-   * Container/Columns/ecc.) non è ancora cablato qui — resta un TODO
-   * separato, non necessario perché il pannello Layers stesso resti "la
-   * via sempre affidabile" per il caso comune (vedi il piano dell'editor
-   * visuale, Giorno 3: il drag diretto sul canvas copre il resto).
+   * Chiamato con `(parentId, orderedIds)` dopo un drag completato, a
+   * qualunque profondità — `parentId: null` per i fratelli di primo
+   * livello, altrimenti l'id del blocco-contenitore i cui figli sono stati
+   * riordinati. Ogni riga visibile (root o annidata) condivide lo stesso
+   * `SortableContext`; `computeNestedReorder` sotto rifiuta un drop tra
+   * fratelli di genitori diversi invece di riparentare — stesso principio
+   * di `computeSiblingReorder` (`compute-sibling-reorder.ts`,
+   * pages-list-view.tsx) per lo stesso identico problema di lista piatta
+   * multi-gruppo.
    */
-  onReorderRoot?: (orderedIds: string[]) => void;
+  onReorder?: (parentId: string | null, orderedIds: string[]) => void;
   /**
    * Seleziona un blocco cliccando direttamente la sua riga — l'unico modo
    * affidabile di selezionare un blocco-contenitore quando un suo figlio
    * lo copre per intero sul canvas (es. una Colonna con dentro una sola
    * Galleria a tutta larghezza: nessun pixel del canvas appartiene più
    * alla Colonna, ogni click lì selezionerebbe sempre la Galleria).
-   * Prima di questa prop il pannello Livelli mostrava hover/selezione ma
+   * Prima di questa prop il pannello Layers mostrava hover/selezione ma
    * non offriva alcun modo di AGIRE su una riga (bug segnalato dal vivo).
    */
   onSelect: (blockId: string) => void;
@@ -62,21 +66,74 @@ function rowClassName(isSelected: boolean, isHovered: boolean): string {
   return `${base} px-2 py-1 text-sm text-muted-foreground`;
 }
 
-/** Isolata per essere testata senza dover simulare un drag reale di dnd-kit (pointer events + misura del DOM) in jsdom. `null` = drop senza effetto (nessun target, stesso punto, id sconosciuto). */
-export function computeReorderedIds(
-  ids: string[],
+/**
+ * Isolata per essere testata senza dover simulare un drag reale di dnd-kit
+ * (pointer events + misura del DOM) in jsdom. `null` = drop senza effetto
+ * (nessun target, stesso punto, id sconosciuto, O un drop tra fratelli di
+ * genitori diversi — riparentare via drag non è supportato, stesso limite
+ * di `computeSiblingReorder`). `locateBlock`/`siblingsAt` (già usate da
+ * "sposta su/giù"/"duplica" per lo stesso problema) trovano il vero
+ * genitore e i veri fratelli a qualunque profondità, root incluso
+ * (`parentId: null`).
+ */
+export function computeNestedReorder(
+  blocks: Block[],
   activeId: string,
   overId: string | null,
-): string[] | null {
+): { parentId: string | null; orderedIds: string[] } | null {
   if (!overId || activeId === overId) {
     return null;
   }
-  const oldIndex = ids.indexOf(activeId);
-  const newIndex = ids.indexOf(overId);
+  const activeLocation = locateBlock(blocks, activeId);
+  const overLocation = locateBlock(blocks, overId);
+  if (!activeLocation || !overLocation) {
+    return null;
+  }
+  if (activeLocation.parentId !== overLocation.parentId) {
+    return null;
+  }
+
+  const siblingIds = siblingsAt(blocks, activeLocation.parentId)
+    .map((block) => block.id)
+    .filter((id): id is string => id !== undefined);
+  const oldIndex = siblingIds.indexOf(activeId);
+  const newIndex = siblingIds.indexOf(overId);
   if (oldIndex === -1 || newIndex === -1) {
     return null;
   }
-  return arrayMove(ids, oldIndex, newIndex);
+
+  return {
+    parentId: activeLocation.parentId,
+    orderedIds: arrayMove(siblingIds, oldIndex, newIndex),
+  };
+}
+
+/**
+ * Ogni id visibile (root e annidato, root incluso), rispettando lo stato
+ * collassato — un figlio dentro un contenitore collassato non è renderizzato
+ * quindi non deve comparire negli `items` del `SortableContext` (dnd-kit si
+ * aspetta che ogni id dichiarato corrisponda a un nodo davvero montato). Un
+ * blocco senza id è escluso: non c'è nulla su cui `useSortable` possa
+ * agganciarsi, la sua riga resta comunque visibile ma non trascinabile (vedi
+ * `renderRow`).
+ */
+function collectSortableIds(
+  blocks: Block[],
+  collapsedIds: ReadonlySet<string>,
+): string[] {
+  return blocks.flatMap((block) => {
+    if (!block.id) {
+      return [];
+    }
+    const showChildren =
+      Boolean(block.children?.length) && !collapsedIds.has(block.id);
+    return [
+      block.id,
+      ...(showChildren
+        ? collectSortableIds(block.children ?? [], collapsedIds)
+        : []),
+    ];
+  });
 }
 
 function LayerRow({
@@ -131,18 +188,20 @@ function LayerRow({
       </div>
       {hasChildren && !isCollapsed && (
         <ul>
-          {block.children?.map((child, index) => (
-            <LayerRow
-              key={child.id ?? index}
-              block={child}
-              hoveredBlockId={hoveredBlockId}
-              selectedBlockId={selectedBlockId}
-              depth={depth + 1}
-              onSelect={onSelect}
-              collapsedIds={collapsedIds}
-              onToggleCollapsed={onToggleCollapsed}
-            />
-          ))}
+          {block.children?.map((child, index) =>
+            renderRow(
+              {
+                block: child,
+                hoveredBlockId,
+                selectedBlockId,
+                depth: depth + 1,
+                onSelect,
+                collapsedIds,
+                onToggleCollapsed,
+              },
+              index,
+            ),
+          )}
         </ul>
       )}
     </li>
@@ -173,18 +232,36 @@ function SortableLayerRow({ id, ...rowProps }: SortableLayerRowProps) {
 }
 
 /**
+ * Sceglie tra riga trascinabile e riga semplice in base alla presenza di un
+ * id — condiviso dal livello radice (`LayersPanel`) e da ogni livello
+ * annidato (`LayerRow`'s stessa funzione), così ogni profondità dell'albero
+ * diventa trascinabile allo stesso modo, non solo la radice. `fallbackKey`
+ * è l'indice nella lista dei fratelli, usato solo quando il blocco non ha
+ * un id (stesso fallback di prima del riordino annidato).
+ */
+function renderRow(props: LayerRowProps, fallbackKey: number): ReactNode {
+  return props.block.id ? (
+    <SortableLayerRow key={props.block.id} id={props.block.id} {...props} />
+  ) : (
+    <LayerRow key={fallbackKey} {...props} />
+  );
+}
+
+/**
  * Albero dei blocchi (vedi il piano dell'editor visuale, Giorno 2/3) — mostra
  * hover/selezione che arrivano dal canvas via usePreviewBridge, e permette
- * di riordinare i blocchi di primo livello via drag-and-drop nel documento
- * del genitore (dnd-kit): sempre affidabile multi-browser, indipendente dal
- * drag diretto sul canvas (cross-iframe, con vincoli nativi diversi da
- * browser a browser).
+ * di riordinare i blocchi via drag-and-drop nel documento del genitore
+ * (dnd-kit), a QUALUNQUE profondità — root e annidato (dentro un
+ * Container/Colonne/ecc.) condividono lo stesso meccanismo, non solo la
+ * radice. Sempre affidabile multi-browser, indipendente dal drag diretto
+ * sul canvas (cross-iframe, con vincoli nativi diversi da browser a
+ * browser).
  */
 export function LayersPanel({
   blocks,
   hoveredBlockId,
   selectedBlockId,
-  onReorderRoot,
+  onReorder,
   onSelect,
 }: LayersPanelProps) {
   // Espansi di default (nessuna sorpresa per chi già usa il pannello) — un
@@ -230,44 +307,18 @@ export function LayersPanel({
     return null;
   }
 
-  // Blocchi senza id (non dovrebbe succedere dopo il backfill del Giorno 1)
-  // non sono ordinabili — esclusi dal drag invece di far crashare l'intero
-  // pannello, ma comunque non renderizzati qui: un pannello che mostra un
-  // sottoinsieme silenzioso dei blocchi sarebbe peggio di un errore visibile.
-  const ids = blocks.map((block) => block.id).filter((id) => id !== undefined);
-  const isFullyOrderable = ids.length === blocks.length;
-
   function handleDragEnd(event: DragEndEvent): void {
-    if (!onReorderRoot) {
+    if (!onReorder) {
       return;
     }
-    const reordered = computeReorderedIds(
-      ids,
+    const result = computeNestedReorder(
+      blocks,
       String(event.active.id),
       event.over ? String(event.over.id) : null,
     );
-    if (reordered) {
-      onReorderRoot(reordered);
+    if (result) {
+      onReorder(result.parentId, result.orderedIds);
     }
-  }
-
-  if (!isFullyOrderable) {
-    return (
-      <ul>
-        {blocks.map((block, index) => (
-          <LayerRow
-            key={block.id ?? index}
-            block={block}
-            hoveredBlockId={hoveredBlockId}
-            selectedBlockId={selectedBlockId}
-            depth={0}
-            onSelect={onSelect}
-            collapsedIds={collapsedIds}
-            onToggleCollapsed={toggleCollapsed}
-          />
-        ))}
-      </ul>
-    );
   }
 
   return (
@@ -276,21 +327,25 @@ export function LayersPanel({
       collisionDetection={closestCenter}
       onDragEnd={handleDragEnd}
     >
-      <SortableContext items={ids} strategy={verticalListSortingStrategy}>
+      <SortableContext
+        items={collectSortableIds(blocks, collapsedIds)}
+        strategy={verticalListSortingStrategy}
+      >
         <ul>
-          {blocks.map((block) => (
-            <SortableLayerRow
-              key={block.id}
-              id={block.id as string}
-              block={block}
-              hoveredBlockId={hoveredBlockId}
-              selectedBlockId={selectedBlockId}
-              depth={0}
-              onSelect={onSelect}
-              collapsedIds={collapsedIds}
-              onToggleCollapsed={toggleCollapsed}
-            />
-          ))}
+          {blocks.map((block, index) =>
+            renderRow(
+              {
+                block,
+                hoveredBlockId,
+                selectedBlockId,
+                depth: 0,
+                onSelect,
+                collapsedIds,
+                onToggleCollapsed: toggleCollapsed,
+              },
+              index,
+            ),
+          )}
         </ul>
       </SortableContext>
     </DndContext>
