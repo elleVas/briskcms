@@ -75,6 +75,8 @@ export interface PreviewBridgeState {
   selectBlock: (blockId: string | null) => void;
   /** Aggiorna il `<style>` degli override "a livello di componente" nell'iframe (docs/adr/0022, pulsante "Stile") — `css` è già pronto (buildBlockStyleOverridesCss), l'iframe si limita a scriverlo. */
   updateBlockStyleCss: (css: string) => void;
+  /** Porta in vista il blocco `blockId` nel documento dell'iframe (pannello Livelli) — vedi EditorScrollToBlockMessage. */
+  scrollToBlock: (blockId: string) => void;
 }
 
 type PreviewBridgeMessageState = Omit<
@@ -87,6 +89,7 @@ type PreviewBridgeMessageState = Omit<
   | 'exitTextEdit'
   | 'selectBlock'
   | 'updateBlockStyleCss'
+  | 'scrollToBlock'
 >;
 
 const initialState: PreviewBridgeMessageState = {
@@ -223,6 +226,7 @@ export function usePreviewBridge(
         case 'editor:remove-block':
         case 'editor:reorder-blocks':
         case 'editor:update-block-style-css':
+        case 'editor:scroll-to-block':
           // Genitore -> iframe: mai attesi in arrivo qui, il genitore è chi
           // li invia (vedi patchBlock/enterTextEdit/exitTextEdit sotto).
           // Ignorati difensivamente.
@@ -345,6 +349,21 @@ export function usePreviewBridge(
     [iframeRef],
   );
 
+  const scrollToBlock = useCallback(
+    (blockId: string) => {
+      iframeRef.current?.contentWindow?.postMessage(
+        {
+          source: PREVIEW_BRIDGE_SOURCE,
+          v: PREVIEW_BRIDGE_VERSION,
+          type: 'editor:scroll-to-block',
+          payload: { blockId },
+        },
+        '*',
+      );
+    },
+    [iframeRef],
+  );
+
   return {
     ...state,
     patchBlock,
@@ -355,5 +374,6 @@ export function usePreviewBridge(
     exitTextEdit,
     selectBlock,
     updateBlockStyleCss,
+    scrollToBlock,
   };
 }

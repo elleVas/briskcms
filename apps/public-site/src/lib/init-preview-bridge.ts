@@ -24,6 +24,7 @@ import {
   isBlockInteractive,
   isRootLevelBlock,
   parseEditingSection,
+  scrollBlockIntoView,
   toBlockRects,
 } from './preview-bridge-client';
 
@@ -388,6 +389,9 @@ export function initPreviewBridge(): void {
         return;
       case 'editor:update-block-style-css':
         applyBlockStyleCss(document, event.data.payload.css);
+        return;
+      case 'editor:scroll-to-block':
+        scrollBlockIntoView(document, event.data.payload.blockId);
         return;
       default:
         return;

@@ -664,7 +664,10 @@ export function CanvasEditorShell({
                 hoveredBlockId={bridge.hoveredBlockId}
                 selectedBlockId={bridge.selectedBlockId}
                 onReorderRoot={handleReorderRoot}
-                onSelect={bridge.selectBlock}
+                onSelect={(blockId) => {
+                  bridge.selectBlock(blockId);
+                  bridge.scrollToBlock(blockId);
+                }}
               />
             </>
           )}

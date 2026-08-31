@@ -360,6 +360,40 @@ describe('initPreviewBridge', () => {
     );
   });
 
+  it('scrolls the window to center the matching block on editor:scroll-to-block, ignoring a message from the wrong origin', () => {
+    initPreviewBridge();
+    // heroFixture's block is measured via the shared Range mock from
+    // beforeEach (top: 0, height: 20) — a direct scrollIntoView on it would
+    // be a no-op (display:contents wrapper), see scrollBlockIntoView's own
+    // comment in preview-bridge-client.ts.
+    vi.spyOn(window, 'scrollY', 'get').mockReturnValue(500);
+    vi.spyOn(window, 'innerHeight', 'get').mockReturnValue(800);
+    const scrollToSpy = vi
+      .spyOn(window, 'scrollTo')
+      .mockImplementation(() => undefined);
+
+    dispatchPostMessage(
+      {
+        source: PREVIEW_BRIDGE_SOURCE,
+        v: PREVIEW_BRIDGE_VERSION,
+        type: 'editor:scroll-to-block',
+        payload: { blockId: 'hero-1' },
+      },
+      'http://evil.example',
+    );
+    expect(scrollToSpy).not.toHaveBeenCalled();
+
+    dispatchPostMessage({
+      source: PREVIEW_BRIDGE_SOURCE,
+      v: PREVIEW_BRIDGE_VERSION,
+      type: 'editor:scroll-to-block',
+      payload: { blockId: 'hero-1' },
+    });
+
+    // scrollY(500) + rect.top(0) - (innerHeight(800) - rect.height(20)) / 2
+    expect(scrollToSpy).toHaveBeenCalledWith({ top: 110, behavior: 'smooth' });
+  });
+
   it('prevents the default form submission', () => {
     document.body.innerHTML = '<form></form>';
     initPreviewBridge();

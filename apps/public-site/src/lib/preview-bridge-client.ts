@@ -289,6 +289,37 @@ export function findFieldElement(
   return blockEl.querySelector(`[data-brisk-field="${field}"]`);
 }
 
+/**
+ * Porta in vista il blocco `blockId` (pannello Livelli, colonna destra) —
+ * `true` se il blocco è stato trovato e lo scroll è partito, `false` se non
+ * è (più) nel DOM (es. appena rimosso da un'altra azione): stesso caso
+ * "non un errore da segnalare" di `applyBlockPatch`/`applyBlockRemove`.
+ *
+ * NON un semplice `target.scrollIntoView()`: `target` è il wrapper
+ * `display:contents` di BlockRenderer.astro (vedi get-block-rect.ts),
+ * quindi non ha mai un box proprio — `scrollIntoView()` su un elemento del
+ * genere è un no-op nella maggior parte dei browser (bug live-verificato:
+ * il click sul pannello Livelli selezionava il blocco ma il canvas non si
+ * muoveva mai). `getBlockRect` misura invece il contenuto renderizzato via
+ * `Range` (funziona identicamente per un elemento normale), poi lo
+ * scroll è calcolato a mano per centrarlo in verticale — stessa semantica
+ * di `scrollIntoView({block:'center'})` su un elemento con un box vero.
+ */
+export function scrollBlockIntoView(
+  root: ParentNode,
+  blockId: string,
+): boolean {
+  const target = root.querySelector(`[data-brisk-block-id="${blockId}"]`);
+  if (!target) {
+    return false;
+  }
+  const rect = getBlockRect(target);
+  const targetTop =
+    window.scrollY + rect.top - (window.innerHeight - rect.height) / 2;
+  window.scrollTo({ top: Math.max(targetTop, 0), behavior: 'smooth' });
+  return true;
+}
+
 /** TipTap analizza `content` come HTML — un titolo che contenga `&`/`<`/`>` va escaped prima, altrimenti verrebbe interpretato come markup invece che testo letterale. */
 export function escapeHtml(text: string): string {
   return text
