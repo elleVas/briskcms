@@ -41,6 +41,7 @@ describe('PagesController (integration)', () => {
   let agent: ReturnType<typeof request.agent>;
   let siteId: string;
   let tenantId: string;
+  let loggedInUserEmail: string;
   const createdUserIds: string[] = [];
 
   beforeAll(async () => {
@@ -80,6 +81,7 @@ describe('PagesController (integration)', () => {
         .returning({ id: users.id }),
     );
     createdUserIds.push(user.id);
+    loggedInUserEmail = email;
 
     agent = request.agent(app.getHttpServer());
     await agent
@@ -147,6 +149,86 @@ describe('PagesController (integration)', () => {
     expect(rollbackRes.body.publishedContent).toEqual([
       { type: 'Hero', props: { title: 'v1' } },
     ]);
+  });
+
+  it('records the logged-in user as createdBy, resolved to their email in the list endpoint (no displayName set)', async () => {
+    const createRes = await agent
+      .post('/pages')
+      .send(createPageBody())
+      .expect(201);
+
+    const listRes = await agent
+      .get('/pages')
+      .query({ siteId, pageSize: 100 })
+      .expect(200);
+    const listed = listRes.body.items.find(
+      (item: { id: string }) => item.id === createRes.body.id,
+    );
+    expect(listed.createdByName).toBe(loggedInUserEmail);
+    expect(typeof listed.order).toBe('number');
+  });
+
+  describe('reorder', () => {
+    // A dedicated parent scopes the sibling group to exactly its own
+    // children — this describe block shares `siteId` with every other test
+    // in this file, so a root-level group (parentId: null) would include
+    // an unpredictable number of unrelated root pages from other tests,
+    // making the exact-permutation check below fail for the wrong reason.
+    async function createSiblingGroup() {
+      const parent = await agent
+        .post('/pages')
+        .send(createPageBody())
+        .expect(201);
+      const a = await agent
+        .post('/pages')
+        .send(createPageBody({ parentId: parent.body.id }))
+        .expect(201);
+      const b = await agent
+        .post('/pages')
+        .send(createPageBody({ parentId: parent.body.id }))
+        .expect(201);
+      return { parentId: parent.body.id, a: a.body, b: b.body };
+    }
+
+    it('reorders a sibling group over HTTP, reflected in the next list call', async () => {
+      const { parentId, a, b } = await createSiblingGroup();
+
+      await agent
+        .patch('/pages/reorder')
+        .send({
+          siteId,
+          locale: 'it',
+          parentId,
+          orderedPageIds: [b.id, a.id],
+        })
+        .expect(204);
+
+      const listRes = await agent
+        .get('/pages')
+        .query({ siteId, pageSize: 100 })
+        .expect(200);
+      const byId = new Map<string, { order: number }>(
+        listRes.body.items.map((item: { id: string; order: number }) => [
+          item.id,
+          item,
+        ]),
+      );
+      expect(byId.get(b.id)!.order).toBeLessThan(byId.get(a.id)!.order);
+    });
+
+    it('400s when orderedPageIds does not match the real sibling group', async () => {
+      const { parentId, a } = await createSiblingGroup();
+
+      await agent
+        .patch('/pages/reorder')
+        .send({
+          siteId,
+          locale: 'it',
+          parentId,
+          orderedPageIds: [a.id, randomUUID()],
+        })
+        .expect(400);
+    });
   });
 
   it('duplicates a published page into an independent draft over HTTP', async () => {

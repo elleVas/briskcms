@@ -57,6 +57,13 @@ export const pageListItemSchema = z.object({
   parentId: z.string().nullable(),
   status: pageStatusSchema,
   seoMeta: seoMetaSchema,
+  // Sibling-scoped position (drag-to-reorder) — see PageSummary's own doc
+  // comment in libs/ports.
+  order: z.number(),
+  // Resolved server-side (displayName, falling back to email), not a raw
+  // user id — this DTO is display-only, same reasoning as
+  // hasUnpublishedChanges below.
+  createdByName: z.string().nullable(),
   createdAt: z.string(),
   updatedAt: z.string(),
   hasUnpublishedChanges: z.boolean(),

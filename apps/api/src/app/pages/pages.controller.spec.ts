@@ -43,6 +43,7 @@ describe('PagesController (unit)', () => {
       findByParentAndSlug: jest.fn(),
       listBySite: jest.fn(),
       listByGroup: jest.fn(),
+      listSiblings: jest.fn(),
       delete: jest.fn(),
     };
     pageVersionRepository = {
@@ -54,7 +55,10 @@ describe('PagesController (unit)', () => {
       indexPage: jest.fn(),
       search: jest.fn(),
     };
-    tenantContext = { getCurrentTenantId: () => 'tenant-1' };
+    tenantContext = {
+      getCurrentTenantId: () => 'tenant-1',
+      getCurrentUserId: () => 'user-1',
+    };
     previewTokenPort = {
       createToken: jest.fn(),
       validateToken: jest.fn(),

@@ -23,6 +23,7 @@ import {
   listPageVersions,
   markTranslationSynced,
   publishPage,
+  reorderSiblingPages,
   rollbackToVersion,
   saveDraft,
   setPageParent,
@@ -65,6 +66,8 @@ import {
   duplicatePageBodySchema,
   type ListPagesQuery,
   listPagesQuerySchema,
+  type ReorderPagesBody,
+  reorderPagesBodySchema,
   type RollbackBody,
   rollbackBodySchema,
   type SaveDraftBody,
@@ -98,11 +101,29 @@ export class PagesController {
       { pageRepository: this.pageRepository },
       {
         ...body,
-        createdBy: null,
+        createdBy: this.tenantContext.getCurrentUserId(),
         tenantId: this.tenantContext.getCurrentTenantId(),
       },
     );
     return this.toDto(page);
+  }
+
+  @Patch('reorder')
+  @HttpCode(204)
+  async reorder(
+    @Body(new ZodValidationPipe(reorderPagesBodySchema))
+    body: ReorderPagesBody,
+  ): Promise<void> {
+    await reorderSiblingPages(
+      { pageRepository: this.pageRepository },
+      {
+        tenantId: this.tenantContext.getCurrentTenantId(),
+        siteId: body.siteId,
+        locale: body.locale,
+        parentId: body.parentId,
+        orderedPageIds: body.orderedPageIds,
+      },
+    );
   }
 
   @Patch(':id/parent')

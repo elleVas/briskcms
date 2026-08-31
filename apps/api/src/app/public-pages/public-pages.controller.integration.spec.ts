@@ -316,15 +316,21 @@ describe('PublicPagesController (integration)', () => {
       .expect(404);
   });
 
-  // Regression: this is exactly the "fallback linguistico ingannevole" the
-  // security review flagged — untranslatedPageFallback defaults to
-  // 'redirect-to-default' (schema.ts), but nothing consumed it for direct
-  // navigation/crawlers, only the language switcher (which needs a page to
-  // already be found). A locale never enabled on this test site still
-  // resolves the fallback: it's a same-slug/default-locale lookup, not
-  // gated on enabledLocales (that list only decides what the switcher
-  // renders as a link).
-  it('404s with the default-locale fallback in the body for a locale that was never translated', async () => {
+  // Regression, later revised: an earlier version of this fallback did NOT
+  // check `enabledLocales` at all — any string in the locale segment
+  // triggered a same-slug/default-locale lookup, "helpfully" redirecting
+  // even a locale that was never real for this site. That broke
+  // [locale]/index.astro specifically: since a "home" page exists on
+  // nearly every site, ANY made-up first path segment (not just a real,
+  // disabled locale) silently redirected to the homepage instead of
+  // 404ing — found live-testing a themed 404 page. The rule is now
+  // unconditional: a locale not in `site.enabledLocales` never gets a
+  // fallback, whether it's a real language code that was removed or pure
+  // garbage — a clean 404 either way (see
+  // resolve-untranslated-page-fallback.spec.ts for the still-legitimate
+  // case this doesn't affect: an ENABLED locale with no translation for
+  // one specific page falls back to the default locale's same page).
+  it('404s with fallback: null for a locale never enabled on this site, even if the same slug exists under the default locale', async () => {
     const createRes = await agent
       .post('/pages')
       .send({
@@ -346,10 +352,7 @@ describe('PublicPagesController (integration)', () => {
       .query({ domain, locale: 'en', path: 'chi-siamo-fallback' })
       .expect(404);
 
-    expect(res.body.fallback).toEqual({
-      locale: 'it',
-      segments: ['chi-siamo-fallback'],
-    });
+    expect(res.body.fallback).toBeNull();
   });
 
   it('404s with fallback: null when there is no default-locale page with that slug either', async () => {

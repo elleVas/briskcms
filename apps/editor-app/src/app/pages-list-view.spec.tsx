@@ -123,6 +123,8 @@ const pageOne: PageListItem = {
   slug: 'home',
   status: 'published',
   seoMeta: { title: 'Home', description: '' },
+  order: 0,
+  createdByName: null,
   createdAt: '',
   updatedAt: '2026-01-01T00:00:00.000Z',
   hasUnpublishedChanges: false,

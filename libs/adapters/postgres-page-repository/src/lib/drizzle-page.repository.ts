@@ -1,4 +1,4 @@
-import { and, count, desc, eq, isNull, sql } from 'drizzle-orm';
+import { and, asc, count, eq, isNull, sql } from 'drizzle-orm';
 import {
   Page,
   PageSlugAlreadyExistsError,
@@ -18,6 +18,7 @@ import {
   type BriskTx,
   isUniqueViolation,
   pages,
+  users,
   withTenant,
 } from '@brisk/postgres-db';
 import { savePageVersionTx } from './save-page-version-tx';
@@ -50,6 +51,8 @@ function toRow(props: PageProps) {
     publishedContent: props.publishedContent,
     seoMeta: props.seoMeta,
     syncedStructureSignature: props.syncedStructureSignature,
+    order: props.order,
+    createdBy: props.createdBy,
     createdAt: props.createdAt,
     updatedAt: props.updatedAt,
   };
@@ -74,6 +77,8 @@ function fromRow(row: typeof pages.$inferSelect): Page {
     publishedContent: row.publishedContent,
     seoMeta: row.seoMeta,
     syncedStructureSignature: row.syncedStructureSignature,
+    order: row.order,
+    createdBy: row.createdBy,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   });
@@ -189,11 +194,14 @@ export class DrizzlePageRepository
   }
 
   /**
-   * Most recently updated first — matches "wp-admin style" page list
-   * usage. Bespoke query, not `listPaginatedTx`: the list needs a lean
-   * projection (no `content`/`publishedContent`, see `PageSummary`'s own
-   * doc comment) plus a computed `hasUnpublishedChanges`, neither of which
-   * the shared base method's generic `select()` can express.
+   * Ordered by the sibling-scoped `order` column (drag-to-reorder in the
+   * pages list), createdAt as a tiebreak — replaces the old "most recently
+   * updated first" sort, which would otherwise re-shuffle a manually
+   * ordered list on every unrelated edit. Bespoke query, not
+   * `listPaginatedTx`: the list needs a lean projection (no `content`/
+   * `publishedContent`, see `PageSummary`'s own doc comment) plus computed
+   * `hasUnpublishedChanges`/`createdByName`, neither of which the shared
+   * base method's generic `select()` can express.
    */
   async listBySite(
     tenantId: string,
@@ -214,19 +222,67 @@ export class DrizzlePageRepository
             parentId: pages.parentId,
             status: pages.status,
             seoMeta: pages.seoMeta,
+            order: pages.order,
+            createdByName: sql<
+              string | null
+            >`coalesce(${users.displayName}, ${users.email})`,
             createdAt: pages.createdAt,
             updatedAt: pages.updatedAt,
             hasUnpublishedChanges: sql<boolean>`${pages.status} = 'published' and ${pages.publishedContent} is distinct from ${pages.content}`,
           })
           .from(pages)
+          .leftJoin(users, eq(users.id, pages.createdBy))
           .where(scope)
-          .orderBy(desc(pages.updatedAt))
+          .orderBy(asc(pages.order), asc(pages.createdAt))
           .limit(pagination.pageSize)
           .offset((pagination.page - 1) * pagination.pageSize),
         tx.select({ total: count() }).from(pages).where(scope),
       ]),
     );
     return { items: rows, total: totalRows[0].total };
+  }
+
+  /** See `PageRepositoryPort.listSiblings`'s own doc comment. */
+  async listSiblings(
+    tenantId: string,
+    siteId: string,
+    locale: string,
+    parentId: string | null,
+  ): Promise<PageSummary[]> {
+    return withTenant(this.db, tenantId, (tx) =>
+      tx
+        .select({
+          id: pages.id,
+          tenantId: pages.tenantId,
+          siteId: pages.siteId,
+          groupId: pages.groupId,
+          locale: pages.locale,
+          slug: pages.slug,
+          parentId: pages.parentId,
+          status: pages.status,
+          seoMeta: pages.seoMeta,
+          order: pages.order,
+          createdByName: sql<
+            string | null
+          >`coalesce(${users.displayName}, ${users.email})`,
+          createdAt: pages.createdAt,
+          updatedAt: pages.updatedAt,
+          hasUnpublishedChanges: sql<boolean>`${pages.status} = 'published' and ${pages.publishedContent} is distinct from ${pages.content}`,
+        })
+        .from(pages)
+        .leftJoin(users, eq(users.id, pages.createdBy))
+        .where(
+          and(
+            eq(pages.tenantId, tenantId),
+            eq(pages.siteId, siteId),
+            eq(pages.locale, locale),
+            parentId === null
+              ? isNull(pages.parentId)
+              : eq(pages.parentId, parentId),
+          ),
+        )
+        .orderBy(asc(pages.order), asc(pages.createdAt)),
+    );
   }
 
   async listByGroup(

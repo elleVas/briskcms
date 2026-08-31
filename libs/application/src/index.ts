@@ -1,5 +1,6 @@
 export * from './lib/use-cases/create-page.use-case';
 export * from './lib/use-cases/set-page-parent.use-case';
+export * from './lib/use-cases/reorder-sibling-pages.use-case';
 export * from './lib/use-cases/delete-page.use-case';
 export * from './lib/use-cases/save-draft.use-case';
 export * from './lib/use-cases/publish-page.use-case';

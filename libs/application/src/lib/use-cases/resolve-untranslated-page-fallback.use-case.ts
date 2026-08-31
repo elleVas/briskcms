@@ -63,6 +63,14 @@ export async function resolveUntranslatedPageFallback(
     // ripiegare, il 404 è reale.
     return null;
   }
+  if (!site.enabledLocales.includes(input.locale)) {
+    // `input.locale` isn't a real locale for this site — not "a page not
+    // yet translated into a valid locale," but a made-up URL segment (e.g.
+    // /qualcosa-a-caso on [locale]/index.astro). Without this check the
+    // fallback fired for any string at all, turning a clean 404 into a 302
+    // redirect to the default-locale home.
+    return null;
+  }
 
   const candidateLocales = [
     site.defaultLocale,

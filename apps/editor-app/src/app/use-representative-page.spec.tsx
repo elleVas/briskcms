@@ -23,6 +23,8 @@ function page(overrides: Partial<api.PageListItem>): api.PageListItem {
     slug: 'home',
     status: 'published',
     seoMeta: { title: 'Home', description: '' },
+    order: 0,
+    createdByName: null,
     createdAt: '',
     updatedAt: '',
     hasUnpublishedChanges: false,

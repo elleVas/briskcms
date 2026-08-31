@@ -11,6 +11,7 @@ import {
   deleteIntegrationTenants,
   sites,
   tenants,
+  users,
   withTenant,
 } from '@brisk/postgres-db';
 import { DrizzlePageRepository } from './drizzle-page.repository';
@@ -29,6 +30,8 @@ describe('DrizzlePageRepository (integration)', () => {
   let tenantAId: string;
   let tenantBId: string;
   let siteAId: string;
+  let userWithDisplayNameId: string;
+  let userWithoutDisplayNameId: string;
 
   beforeAll(async () => {
     db = createAppDb();
@@ -53,6 +56,32 @@ describe('DrizzlePageRepository (integration)', () => {
         .returning({ id: sites.id }),
     );
     siteAId = siteA.id;
+
+    const [userWithDisplayName, userWithoutDisplayName] = await withTenant(
+      db,
+      tenantAId,
+      (tx) =>
+        tx
+          .insert(users)
+          .values([
+            {
+              tenantId: tenantAId,
+              email: `named-${randomUUID()}@example.com`,
+              displayName: 'Ada Lovelace',
+              passwordHash: 'hash',
+              role: 'admin',
+            },
+            {
+              tenantId: tenantAId,
+              email: `unnamed-${randomUUID()}@example.com`,
+              passwordHash: 'hash',
+              role: 'editor',
+            },
+          ])
+          .returning({ id: users.id }),
+    );
+    userWithDisplayNameId = userWithDisplayName.id;
+    userWithoutDisplayNameId = userWithoutDisplayName.id;
   });
 
   afterAll(async () => {
@@ -169,7 +198,9 @@ describe('DrizzlePageRepository (integration)', () => {
     expect(foundAtRoot).toBeNull();
   });
 
-  it('listBySite scopes by tenant and site, most recently updated first', async () => {
+  it('listBySite scopes by tenant and site, ordered by sibling position then createdAt', async () => {
+    // Same default order (0, untouched by drag-to-reorder) — createdAt
+    // breaks the tie, oldest first.
     const older = buildPage({ now: new Date(Date.now() - 1000) });
     const newer = buildPage({ now: new Date() });
     await pageRepository.save(older);
@@ -180,7 +211,7 @@ describe('DrizzlePageRepository (integration)', () => {
       pageSize: 100,
     });
     const foundIds = found.items.map((page) => page.id);
-    expect(foundIds.indexOf(newer.id)).toBeLessThan(foundIds.indexOf(older.id));
+    expect(foundIds.indexOf(older.id)).toBeLessThan(foundIds.indexOf(newer.id));
 
     const foundFromOtherTenant = await pageRepository.listBySite(
       tenantBId,
@@ -189,6 +220,77 @@ describe('DrizzlePageRepository (integration)', () => {
     );
     expect(foundFromOtherTenant.items).toHaveLength(0);
     expect(foundFromOtherTenant.total).toBe(0);
+  });
+
+  it('listBySite: a lower `order` wins over createdAt, even for an older row', async () => {
+    const olderButOrderedLast = buildPage({
+      now: new Date(Date.now() - 1000),
+      order: 1,
+    });
+    const newerButOrderedFirst = buildPage({ now: new Date(), order: 0 });
+    await pageRepository.save(olderButOrderedLast);
+    await pageRepository.save(newerButOrderedFirst);
+
+    const found = await pageRepository.listBySite(tenantAId, siteAId, {
+      page: 1,
+      pageSize: 100,
+    });
+    const foundIds = found.items.map((page) => page.id);
+    expect(foundIds.indexOf(newerButOrderedFirst.id)).toBeLessThan(
+      foundIds.indexOf(olderButOrderedLast.id),
+    );
+  });
+
+  it('listBySite resolves createdByName from displayName, falling back to email, and null when unset', async () => {
+    const withDisplayName = buildPage({ createdBy: userWithDisplayNameId });
+    const withoutDisplayName = buildPage({
+      createdBy: userWithoutDisplayNameId,
+    });
+    const withNoCreator = buildPage({});
+    await pageRepository.save(withDisplayName);
+    await pageRepository.save(withoutDisplayName);
+    await pageRepository.save(withNoCreator);
+
+    const found = await pageRepository.listBySite(tenantAId, siteAId, {
+      page: 1,
+      pageSize: 100,
+    });
+    const byId = new Map(found.items.map((page) => [page.id, page]));
+    expect(byId.get(withDisplayName.id)?.createdByName).toBe('Ada Lovelace');
+    expect(byId.get(withoutDisplayName.id)?.createdByName).toMatch(
+      /^unnamed-.*@example\.com$/,
+    );
+    expect(byId.get(withNoCreator.id)?.createdByName).toBeNull();
+  });
+
+  it('listSiblings scopes to one exact (locale, parentId) group, ordered by position', async () => {
+    const root = buildPage({});
+    await pageRepository.save(root);
+    const childA = buildPage({ parentId: root.id, order: 1 });
+    const childB = buildPage({ parentId: root.id, order: 0 });
+    const otherLocaleChild = buildPage({ parentId: root.id, locale: 'en' });
+    const grandchild = buildPage({ parentId: childA.id });
+    await pageRepository.save(childA);
+    await pageRepository.save(childB);
+    await pageRepository.save(otherLocaleChild);
+    await pageRepository.save(grandchild);
+
+    const siblings = await pageRepository.listSiblings(
+      tenantAId,
+      siteAId,
+      'it',
+      root.id,
+    );
+    expect(siblings.map((page) => page.id)).toEqual([childB.id, childA.id]);
+
+    const rootLevel = await pageRepository.listSiblings(
+      tenantAId,
+      siteAId,
+      'it',
+      null,
+    );
+    expect(rootLevel.map((page) => page.id)).toContain(root.id);
+    expect(rootLevel.map((page) => page.id)).not.toContain(childA.id);
   });
 
   it('listBySite paginates with limit/offset and reports the total', async () => {

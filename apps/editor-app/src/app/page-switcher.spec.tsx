@@ -30,6 +30,8 @@ function page(id: string, slug: string): PageListItem {
     slug,
     status: 'draft',
     seoMeta: { title: slug, description: '' },
+    order: 0,
+    createdByName: null,
     createdAt: '',
     updatedAt: '',
     hasUnpublishedChanges: false,

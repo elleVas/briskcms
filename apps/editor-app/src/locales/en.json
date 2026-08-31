@@ -82,6 +82,8 @@
       "pageIndicator": "Page {{page}} of {{totalPages}}",
       "previousPage": "Previous page",
       "nextPage": "Next page",
+      "createdBy": "Created by {{name}}",
+      "dragHandle": "Drag to reorder",
       "actions": {
         "edit": "Open editor",
         "publish": "Publish",
