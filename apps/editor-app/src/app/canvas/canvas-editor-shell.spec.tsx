@@ -251,6 +251,30 @@ describe('CanvasEditorShell', () => {
     expect(screen.getByDisplayValue('Titolo')).toBeTruthy();
   });
 
+  it('clicking a block in the Layers panel selects it and asks the iframe to scroll it into view', async () => {
+    renderShell();
+    const iframe = await getIframe();
+    if (!iframe.contentWindow) {
+      throw new Error('Test fixture iframe has no contentWindow');
+    }
+    const postMessageSpy = vi.spyOn(iframe.contentWindow, 'postMessage');
+
+    fireEvent.click(screen.getByTestId('layer-row'));
+
+    expect(screen.getByTestId('layer-row').getAttribute('data-state')).toBe(
+      'selected',
+    );
+    expect(postMessageSpy).toHaveBeenCalledWith(
+      {
+        source: PREVIEW_BRIDGE_SOURCE,
+        v: PREVIEW_BRIDGE_VERSION,
+        type: 'editor:scroll-to-block',
+        payload: { blockId: 'hero-1' },
+      },
+      '*',
+    );
+  });
+
   it('changing a property in the Inspector updates onChange after the debounce, and patches the fragment', async () => {
     vi.mocked(blockFragmentApi.renderBlockFragment).mockResolvedValue(
       '<div>patched</div>',

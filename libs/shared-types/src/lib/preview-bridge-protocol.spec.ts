@@ -46,6 +46,17 @@ describe('isPreviewBridgeMessage', () => {
     expect(isPreviewBridgeMessage(42)).toBe(false);
   });
 
+  it('accepts an editor:scroll-to-block envelope', () => {
+    expect(
+      isPreviewBridgeMessage({
+        source: PREVIEW_BRIDGE_SOURCE,
+        v: PREVIEW_BRIDGE_VERSION,
+        type: 'editor:scroll-to-block',
+        payload: { blockId: 'block-1' },
+      }),
+    ).toBe(true);
+  });
+
   it('rejects an object missing a type', () => {
     expect(
       isPreviewBridgeMessage({

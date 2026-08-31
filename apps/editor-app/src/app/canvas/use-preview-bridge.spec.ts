@@ -53,6 +53,7 @@ describe('usePreviewBridge', () => {
       exitTextEdit: expect.any(Function),
       selectBlock: expect.any(Function),
       updateBlockStyleCss: expect.any(Function),
+      scrollToBlock: expect.any(Function),
     });
   });
 
@@ -241,6 +242,7 @@ describe('usePreviewBridge', () => {
       exitTextEdit: expect.any(Function),
       selectBlock: expect.any(Function),
       updateBlockStyleCss: expect.any(Function),
+      scrollToBlock: expect.any(Function),
     });
   });
 
@@ -486,6 +488,27 @@ describe('usePreviewBridge', () => {
     });
 
     expect(result.current.selectedBlockId).toBeNull();
+  });
+
+  it('scrollToBlock posts editor:scroll-to-block to the iframe, at "*" (the iframe is sandboxed without allow-same-origin, its origin is opaque)', () => {
+    const { ref, contentWindow } = buildIframeRef();
+    if (!contentWindow) {
+      throw new Error('Test fixture iframe has no contentWindow');
+    }
+    const postMessageSpy = vi.spyOn(contentWindow, 'postMessage');
+    const { result } = renderHook(() => usePreviewBridge(ref, EXPECTED_ORIGIN));
+
+    result.current.scrollToBlock('hero-1');
+
+    expect(postMessageSpy).toHaveBeenCalledWith(
+      {
+        source: PREVIEW_BRIDGE_SOURCE,
+        v: PREVIEW_BRIDGE_VERSION,
+        type: 'editor:scroll-to-block',
+        payload: { blockId: 'hero-1' },
+      },
+      '*',
+    );
   });
 
   it('reorderBlocks posts editor:reorder-blocks to the iframe, at "*" (the iframe is sandboxed without allow-same-origin, its origin is opaque)', () => {
