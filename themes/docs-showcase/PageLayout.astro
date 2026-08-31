@@ -122,8 +122,13 @@ interface SidebarGroup {
 	title: string;
 	items: SidebarNode[];
 }
-const byCreatedAtAsc = (a: PageTreeNodeDto, b: PageTreeNodeDto) =>
-	a.createdAt.localeCompare(b.createdAt);
+// `order` (drag-to-reorder in the editor's pages list) is the sort key to
+// use now — `createdAt` is only a tiebreak for pages that predate manual
+// ordering, all sharing the same default `order` value (see
+// list-published-page-tree.use-case.ts), same "order asc, createdAt asc"
+// semantics as the editor's own pages list.
+const byOrderThenCreatedAtAsc = (a: PageTreeNodeDto, b: PageTreeNodeDto) =>
+	a.order - b.order || a.createdAt.localeCompare(b.createdAt);
 const toSidebarNode = (node: PageTreeNodeDto): SidebarNode => ({
 	slug: node.slug,
 	title: node.title,
@@ -163,13 +168,13 @@ if (site.domain) {
 
 		const categories = tree
 			.filter((node) => node.parentId === docsRoot.id)
-			.sort(byCreatedAtAsc);
+			.sort(byOrderThenCreatedAtAsc);
 		sidebarGroups = categories
 			.map((category) => ({
 				title: category.title,
 				items: tree
 					.filter((node) => node.parentId === category.id)
-					.sort(byCreatedAtAsc)
+					.sort(byOrderThenCreatedAtAsc)
 					.map(toSidebarNode),
 			}))
 			.filter((group) => group.items.length > 0);
