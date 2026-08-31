@@ -77,7 +77,7 @@ export interface UseBlockTreeMutationsParams {
 
 export interface UseBlockTreeMutationsResult {
   handleInsert: (descriptor: BlockDescriptor) => void;
-  handleReorderRoot: (orderedIds: string[]) => void;
+  handleReorder: (parentId: string | null, orderedIds: string[]) => void;
   handleRemoveSelected: () => void;
   handleMoveSelected: (direction: -1 | 1) => void;
   handleDuplicateSelected: () => void;
@@ -285,19 +285,27 @@ export function useBlockTreeMutations({
     performInsert(createBlockFromDescriptor(descriptor, registry), target);
   }
 
-  function handleReorderRoot(orderedIds: string[]): void {
+  /**
+   * Riordina i fratelli a QUALUNQUE profondità — `parentId: null` per la
+   * radice, altrimenti l'id del blocco-contenitore i cui figli sono stati
+   * trascinati (vedi `computeNestedReorder` in layers-panel.tsx, l'unico
+   * chiamante). `moveBlock` con lo stesso `parentId` per ogni id già
+   * gestisce sia il caso radice sia quello annidato, nessun ramo separato
+   * serve qui — stesso motivo per cui `handleMoveSelected` sotto funziona
+   * già a qualunque profondità tramite `locateBlock`.
+   */
+  function handleReorder(parentId: string | null, orderedIds: string[]): void {
     const before = localBlocks;
     let next = before;
     orderedIds.forEach((id, index) => {
-      next = moveBlock(next, id, { parentId: null, index });
+      next = moveBlock(next, id, { parentId, index });
     });
     applyLocalChange(next);
-    const syncForward = () => bridge.reorderBlocks(null, orderedIds);
-    const syncBackward = () =>
-      bridge.reorderBlocks(
-        null,
-        before.map((block) => block.id as string),
-      );
+    const beforeSiblingIds = siblingsAt(before, parentId).map(
+      (block) => block.id as string,
+    );
+    const syncForward = () => bridge.reorderBlocks(parentId, orderedIds);
+    const syncBackward = () => bridge.reorderBlocks(parentId, beforeSiblingIds);
     syncForward();
     recordHistory({ before, after: next, syncForward, syncBackward });
   }
@@ -461,7 +469,7 @@ export function useBlockTreeMutations({
 
   return {
     handleInsert,
-    handleReorderRoot,
+    handleReorder,
     handleRemoveSelected,
     handleMoveSelected,
     handleDuplicateSelected,

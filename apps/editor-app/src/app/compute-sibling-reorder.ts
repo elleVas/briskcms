@@ -10,7 +10,7 @@ export interface SiblingReorderResult {
 /**
  * Isolated for testing without simulating a real dnd-kit drag (pointer
  * events + DOM measurement) in jsdom — same reasoning as
- * canvas/layers-panel.tsx's own computeReorderedIds.
+ * canvas/layers-panel.tsx's own computeNestedReorder.
  *
  * The pages list mixes every locale and every depth of the site's page
  * tree in one flat, drag-orderable list — a drop is only ever meaningful

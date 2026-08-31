@@ -247,7 +247,7 @@ export function CanvasEditorShell({
 
   const {
     handleInsert,
-    handleReorderRoot,
+    handleReorder,
     handleRemoveSelected,
     handleMoveSelected,
     handleDuplicateSelected,
@@ -369,7 +369,7 @@ export function CanvasEditorShell({
           index: dropTarget.index,
         });
         // Rilasciato dove già si trovava (nessuno spostamento reale) — stessa
-        // cortesia di computeReorderedIds in layers-panel.tsx: non salvare
+        // cortesia di computeNestedReorder in layers-panel.tsx: non salvare
         // una bozza identica solo perché moveBlock restituisce sempre un
         // nuovo array per costruzione.
         const orderUnchanged = next.every(
@@ -663,7 +663,7 @@ export function CanvasEditorShell({
                 blocks={localBlocks}
                 hoveredBlockId={bridge.hoveredBlockId}
                 selectedBlockId={bridge.selectedBlockId}
-                onReorderRoot={handleReorderRoot}
+                onReorder={handleReorder}
                 onSelect={(blockId) => {
                   bridge.selectBlock(blockId);
                   bridge.scrollToBlock(blockId);

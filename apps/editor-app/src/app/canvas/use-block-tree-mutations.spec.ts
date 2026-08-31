@@ -209,6 +209,76 @@ describe('useBlockTreeMutations undo/redo', () => {
     expect(result.current.canRedo).toBe(false);
   });
 
+  it('handleReorder(null, ...) reorders root blocks and syncs the canvas', () => {
+    const heroBlock: Block = { id: 'hero-1', type: 'Hero', props: {} };
+    const textBlock: Block = { id: 'text-1', type: 'Text', props: {} };
+    const { result, onChange, bridge } = setup([heroBlock, textBlock]);
+
+    act(() => {
+      result.current.handleReorder(null, ['text-1', 'hero-1']);
+    });
+
+    expect(onChange).toHaveBeenCalledWith([textBlock, heroBlock]);
+    expect(bridge.reorderBlocks).toHaveBeenCalledWith(null, [
+      'text-1',
+      'hero-1',
+    ]);
+  });
+
+  it('handleReorder(containerId, ...) reorders nested children only, leaving root order untouched', () => {
+    const childA: Block = { id: 'child-a', type: 'Text', props: {} };
+    const childB: Block = { id: 'child-b', type: 'Text', props: {} };
+    const container: Block = {
+      id: 'container-1',
+      type: 'Container',
+      props: {},
+      children: [childA, childB],
+    };
+    const sibling: Block = { id: 'sibling-1', type: 'Hero', props: {} };
+    const { result, onChange, bridge } = setup([container, sibling]);
+
+    act(() => {
+      result.current.handleReorder('container-1', ['child-b', 'child-a']);
+    });
+
+    expect(onChange).toHaveBeenCalledWith([
+      { ...container, children: [childB, childA] },
+      sibling,
+    ]);
+    expect(bridge.reorderBlocks).toHaveBeenCalledWith('container-1', [
+      'child-b',
+      'child-a',
+    ]);
+  });
+
+  it('undo after a nested reorder restores the original child order and canvas sync', () => {
+    const childA: Block = { id: 'child-a', type: 'Text', props: {} };
+    const childB: Block = { id: 'child-b', type: 'Text', props: {} };
+    const container: Block = {
+      id: 'container-1',
+      type: 'Container',
+      props: {},
+      children: [childA, childB],
+    };
+    const { result, onChange, bridge } = setup([container]);
+
+    act(() => {
+      result.current.handleReorder('container-1', ['child-b', 'child-a']);
+    });
+    bridge.reorderBlocks.mockClear();
+    onChange.mockClear();
+
+    act(() => {
+      result.current.undo();
+    });
+
+    expect(onChange).toHaveBeenCalledWith([container]);
+    expect(bridge.reorderBlocks).toHaveBeenCalledWith('container-1', [
+      'child-a',
+      'child-b',
+    ]);
+  });
+
   it('undo does nothing when there is no history', () => {
     const { result, onChange } = setup([]);
 
