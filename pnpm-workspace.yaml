@@ -2,3 +2,17 @@ packages:
   - 'apps/*'
   - 'libs/*'
   - 'libs/adapters/*'
+
+# Astro's own vite peer dependency was bumped to 8.2.2 by the astro
+# 7.2.2->7.2.9 update, but apps/editor-app's own vite devDependency stayed
+# resolved to 8.2.1 — two coexisting vite instances in the same pnpm store.
+# TypeScript then sees @tanstack/router-plugin's Plugin (built against
+# 8.2.2) as a nominally different type from editor-app's own vite import's
+# Plugin (8.2.1), and the resulting deep structural comparison overflows
+# ("Excessive stack depth comparing types 'Plugin<any>[]' and
+# 'Plugin<any>[]'" in vite.config.mts). Forcing one single vite version
+# workspace-wide is the real fix (not a vite.config.mts type workaround,
+# which was tried and didn't help — the mismatch is between two different
+# vite installs, not an inference depth limit on one).
+overrides:
+  vite: 8.2.2
