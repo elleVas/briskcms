@@ -14,6 +14,7 @@ import {
   isBlockInteractive,
   isRootLevelBlock,
   parseEditingSection,
+  scrollBlockIntoView,
   toBlockRects,
 } from './preview-bridge-client';
 
@@ -516,6 +517,50 @@ describe('isRootLevelBlock', () => {
       '<div data-brisk-block-id="text-1" id="text-1"></div>' +
       '</div>';
     expect(isRootLevelBlock(requireElement('text-1'))).toBe(false);
+  });
+});
+
+describe('scrollBlockIntoView', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("scrolls the window to center the block, measured via a Range (a direct scrollIntoView on the block's display:contents wrapper would be a no-op)", () => {
+    document.body.innerHTML = '<div data-brisk-block-id="a">block</div>';
+    Range.prototype.getBoundingClientRect = vi.fn(
+      () => ({ top: 500, left: 0, width: 100, height: 50 }) as DOMRect,
+    );
+    vi.spyOn(window, 'scrollY', 'get').mockReturnValue(200);
+    vi.spyOn(window, 'innerHeight', 'get').mockReturnValue(800);
+    const scrollToSpy = vi
+      .spyOn(window, 'scrollTo')
+      .mockImplementation(() => undefined);
+
+    expect(scrollBlockIntoView(document, 'a')).toBe(true);
+
+    // scrollY(200) + rect.top(500) - (innerHeight(800) - rect.height(50)) / 2
+    expect(scrollToSpy).toHaveBeenCalledWith({ top: 325, behavior: 'smooth' });
+  });
+
+  it('clamps the scroll target to 0 instead of going negative for a block already near the top', () => {
+    document.body.innerHTML = '<div data-brisk-block-id="a">block</div>';
+    Range.prototype.getBoundingClientRect = vi.fn(
+      () => ({ top: 10, left: 0, width: 100, height: 50 }) as DOMRect,
+    );
+    vi.spyOn(window, 'scrollY', 'get').mockReturnValue(0);
+    vi.spyOn(window, 'innerHeight', 'get').mockReturnValue(800);
+    const scrollToSpy = vi
+      .spyOn(window, 'scrollTo')
+      .mockImplementation(() => undefined);
+
+    scrollBlockIntoView(document, 'a');
+
+    expect(scrollToSpy).toHaveBeenCalledWith({ top: 0, behavior: 'smooth' });
+  });
+
+  it('returns false without throwing when the block id is not in the document', () => {
+    document.body.innerHTML = '<div data-brisk-block-id="a">block</div>';
+    expect(scrollBlockIntoView(document, 'missing')).toBe(false);
   });
 });
 

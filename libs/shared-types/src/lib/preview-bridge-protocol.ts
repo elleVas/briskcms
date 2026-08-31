@@ -208,6 +208,19 @@ export type EditorUpdateBlockStyleCssMessage = PreviewBridgeEnvelope<
   { css: string }
 >;
 
+/**
+ * Selezione di un blocco dal pannello Livelli (colonna destra) — a
+ * differenza degli altri messaggi genitore -> iframe, non modifica il DOM:
+ * chiede solo all'iframe di portare in vista il blocco `blockId`, così la
+ * selezione nel pannello resta visibile anche su una pagina lunga con molti
+ * blocchi. No-op silenzioso se il blocco non è (più) nel DOM, stessa
+ * disciplina di `editor:patch-block`/`editor:remove-block`.
+ */
+export type EditorScrollToBlockMessage = PreviewBridgeEnvelope<
+  'editor:scroll-to-block',
+  { blockId: string }
+>;
+
 export type ParentToPreviewMessage =
   | EditorPatchBlockMessage
   | EditorEnterTextEditMessage
@@ -215,7 +228,8 @@ export type ParentToPreviewMessage =
   | EditorRemoveBlockMessage
   | EditorReorderBlocksMessage
   | EditorInsertBlockMessage
-  | EditorUpdateBlockStyleCssMessage;
+  | EditorUpdateBlockStyleCssMessage
+  | EditorScrollToBlockMessage;
 
 export type AnyPreviewBridgeMessage =
   PreviewToParentMessage | ParentToPreviewMessage;
