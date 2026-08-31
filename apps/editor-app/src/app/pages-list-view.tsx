@@ -3,9 +3,26 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from '@tanstack/react-router';
 import { useQuery } from '@tanstack/react-query';
 import {
+  closestCenter,
+  DndContext,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import {
   ChevronLeft,
   ChevronRight,
   Copy,
+  GripVertical,
   Pencil,
   Search,
   Send,
@@ -16,6 +33,7 @@ import { Button } from '../components/ui/button';
 import { cn } from '../lib/utils';
 import type { PageListItem } from '../lib/pages-api-client';
 import { ConfirmDeleteDialog } from './confirm-delete-dialog';
+import { computeSiblingReorder } from './compute-sibling-reorder';
 import { DuplicatePageDialog } from './duplicate-page-dialog';
 import { IconButton } from './icon-button';
 import { MediaPickerProvider } from './media-picker-provider';
@@ -85,6 +103,116 @@ export function pagesListReducer(
   }
 }
 
+interface SortablePageRowProps {
+  page: PageListItem;
+  depth: number;
+  isSelected: boolean;
+  siteId: string;
+  onToggleSelected: () => void;
+  onSetParent: (parentId: string | null) => void;
+}
+
+/**
+ * A drag handle (not the whole row) drives dnd-kit here — the row already
+ * has a select button AND a ParentPageSelect dropdown, both of which need
+ * their own click handling untouched. See compute-sibling-reorder.ts for
+ * why a drop is only meaningful within the same (locale, parentId) group.
+ */
+function SortablePageRow({
+  page: p,
+  depth,
+  isSelected,
+  siteId,
+  onToggleSelected,
+  onSetParent,
+}: SortablePageRowProps) {
+  const { t, i18n } = useTranslation();
+  const { attributes, listeners, setNodeRef, transform, transition } =
+    useSortable({ id: p.id });
+
+  return (
+    <li
+      ref={setNodeRef}
+      style={{
+        transform: CSS.Transform.toString(transform),
+        transition: transition ?? undefined,
+      }}
+      className="flex items-center gap-2 px-3"
+    >
+      <button
+        type="button"
+        aria-label={t('pages.list.dragHandle')}
+        className="cursor-grab touch-none text-muted-foreground hover:text-foreground active:cursor-grabbing"
+        {...attributes}
+        {...listeners}
+      >
+        <GripVertical size={16} />
+      </button>
+      <button
+        type="button"
+        onClick={onToggleSelected}
+        aria-pressed={isSelected}
+        style={{ paddingLeft: depth * 20 }}
+        className={cn(
+          'flex flex-1 items-center justify-between py-2 text-left text-sm hover:bg-muted',
+          isSelected && 'bg-muted',
+        )}
+      >
+        <span className="flex items-center gap-3">
+          <span
+            aria-hidden
+            className={cn(
+              'size-3 shrink-0 rounded-full border',
+              isSelected
+                ? 'border-primary bg-primary'
+                : 'border-muted-foreground',
+            )}
+          />
+          <span className="flex flex-col">
+            <span className="font-medium">{p.seoMeta.title || p.slug}</span>
+            <span className="text-xs text-muted-foreground">{p.slug}</span>
+          </span>
+        </span>
+        <span className="flex items-center gap-3">
+          <Badge variant="outline" className="uppercase">
+            {p.locale}
+          </Badge>
+          {p.hasUnpublishedChanges && (
+            <Badge
+              variant="outline"
+              className="border-amber-600/30 text-amber-600 dark:border-amber-400/30 dark:text-amber-400"
+            >
+              {t('pages.list.pendingChanges')}
+            </Badge>
+          )}
+          <Badge variant={p.status === 'published' ? 'default' : 'outline'}>
+            {p.status === 'published'
+              ? t('pages.list.statusPublished')
+              : t('pages.list.statusDraft')}
+          </Badge>
+          {p.createdByName && (
+            <span className="text-muted-foreground">
+              {t('pages.list.createdBy', { name: p.createdByName })}
+            </span>
+          )}
+          <span className="text-muted-foreground">
+            {new Date(p.updatedAt).toLocaleDateString(i18n.language)}
+          </span>
+        </span>
+      </button>
+      <div className="w-40 shrink-0">
+        <ParentPageSelect
+          siteId={siteId}
+          locale={p.locale}
+          currentPageId={p.id}
+          value={p.parentId}
+          onChange={onSetParent}
+        />
+      </div>
+    </li>
+  );
+}
+
 export function PagesListView({
   siteId,
   defaultLocale,
@@ -92,11 +220,27 @@ export function PagesListView({
   page,
   total,
 }: PagesListViewProps) {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const navigate = useNavigate();
-  const { createPage, deletePage, duplicatePage, publishPage, setPageParent } =
-    usePagesList(siteId, defaultLocale);
+  const {
+    createPage,
+    deletePage,
+    duplicatePage,
+    publishPage,
+    setPageParent,
+    reorderPages,
+  } = usePagesList(siteId, defaultLocale);
   const tree = buildPageTree(pages);
+
+  // Same click-vs-drag distinction as canvas/layers-panel.tsx: without an
+  // activation distance, dnd-kit would capture the pointer on a plain
+  // click too, breaking the row's own select button.
+  const dragSensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    }),
+  );
 
   const [state, dispatch] = useReducer(pagesListReducer, initialPagesListState);
   const { selectedPageId, openDialog, actionError } = state;
@@ -127,6 +271,21 @@ export function PagesListView({
 
   function closeDialog() {
     dispatch({ type: 'CLOSE_DIALOG' });
+  }
+
+  function handleDragEnd(event: DragEndEvent) {
+    const result = computeSiblingReorder(
+      pages,
+      String(event.active.id),
+      event.over ? String(event.over.id) : null,
+    );
+    if (result) {
+      void reorderPages(
+        result.locale,
+        result.parentId,
+        result.orderedPageIds,
+      ).catch((err) => dispatch({ type: 'SET_ERROR', error: String(err) }));
+    }
   }
 
   async function goToPage(target: number) {
@@ -228,85 +387,34 @@ export function PagesListView({
             {t('pages.list.empty')}
           </p>
         ) : (
-          <ul className="divide-y rounded-md border">
-            {tree.map(({ page: p, depth }) => {
-              const isSelected = p.id === selectedPageId;
-              return (
-                <li key={p.id} className="flex items-center gap-2 px-3">
-                  <button
-                    type="button"
-                    onClick={() => toggleSelected(p.id)}
-                    aria-pressed={isSelected}
-                    style={{ paddingLeft: depth * 20 }}
-                    className={cn(
-                      'flex flex-1 items-center justify-between py-2 text-left text-sm hover:bg-muted',
-                      isSelected && 'bg-muted',
-                    )}
-                  >
-                    <span className="flex items-center gap-3">
-                      <span
-                        aria-hidden
-                        className={cn(
-                          'size-3 shrink-0 rounded-full border',
-                          isSelected
-                            ? 'border-primary bg-primary'
-                            : 'border-muted-foreground',
-                        )}
-                      />
-                      <span className="flex flex-col">
-                        <span className="font-medium">
-                          {p.seoMeta.title || p.slug}
-                        </span>
-                        <span className="text-xs text-muted-foreground">
-                          {p.slug}
-                        </span>
-                      </span>
-                    </span>
-                    <span className="flex items-center gap-3">
-                      <Badge variant="outline" className="uppercase">
-                        {p.locale}
-                      </Badge>
-                      {p.hasUnpublishedChanges && (
-                        <Badge
-                          variant="outline"
-                          className="border-amber-600/30 text-amber-600 dark:border-amber-400/30 dark:text-amber-400"
-                        >
-                          {t('pages.list.pendingChanges')}
-                        </Badge>
-                      )}
-                      <Badge
-                        variant={
-                          p.status === 'published' ? 'default' : 'outline'
-                        }
-                      >
-                        {p.status === 'published'
-                          ? t('pages.list.statusPublished')
-                          : t('pages.list.statusDraft')}
-                      </Badge>
-                      <span className="text-muted-foreground">
-                        {new Date(p.updatedAt).toLocaleDateString(
-                          i18n.language,
-                        )}
-                      </span>
-                    </span>
-                  </button>
-                  <div className="w-40 shrink-0">
-                    <ParentPageSelect
-                      siteId={siteId}
-                      locale={p.locale}
-                      currentPageId={p.id}
-                      value={p.parentId}
-                      onChange={(parentId) =>
-                        void setPageParent(p.id, parentId).catch((err) =>
-                          dispatch({ type: 'SET_ERROR', error: String(err) }),
-                        )
-                      }
-                    />
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
+          <DndContext
+            sensors={dragSensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
+          >
+            <SortableContext
+              items={tree.map(({ page: p }) => p.id)}
+              strategy={verticalListSortingStrategy}
+            >
+              <ul className="divide-y rounded-md border">
+                {tree.map(({ page: p, depth }) => (
+                  <SortablePageRow
+                    key={p.id}
+                    page={p}
+                    depth={depth}
+                    isSelected={p.id === selectedPageId}
+                    siteId={siteId}
+                    onToggleSelected={() => toggleSelected(p.id)}
+                    onSetParent={(parentId) =>
+                      void setPageParent(p.id, parentId).catch((err) =>
+                        dispatch({ type: 'SET_ERROR', error: String(err) }),
+                      )
+                    }
+                  />
+                ))}
+              </ul>
+            </SortableContext>
+          </DndContext>
         )}
         {totalPages > 1 && (
           <div className="flex items-center justify-center gap-3">

@@ -14,6 +14,8 @@ const sourcePage: PageListItem = {
   slug: 'chi-siamo',
   status: 'published',
   seoMeta: { title: 'Chi siamo', description: 'La nostra storia' },
+  order: 0,
+  createdByName: null,
   createdAt: '',
   updatedAt: '',
   hasUnpublishedChanges: false,

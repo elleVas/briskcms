@@ -82,7 +82,10 @@ describe('SiteLayoutSectionsController (unit)', () => {
       findById: jest.fn(),
       findByDomain: jest.fn(),
     };
-    tenantContext = { getCurrentTenantId: () => 'tenant-1' };
+    tenantContext = {
+      getCurrentTenantId: () => 'tenant-1',
+      getCurrentUserId: () => 'user-1',
+    };
     previewTokenPort = {
       createToken: jest.fn(),
       validateToken: jest.fn(),

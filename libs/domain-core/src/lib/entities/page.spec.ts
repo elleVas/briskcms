@@ -87,6 +87,8 @@ describe('Page entity', () => {
       content: [{ type: 'Hero', props: { title: 'v1' } }],
       publishedContent: [{ type: 'Hero', props: { title: 'v1' } }],
       syncedStructureSignature: null,
+      order: 2,
+      createdBy: 'user-1',
       createdAt: new Date('2025-12-01T00:00:00Z'),
       updatedAt: new Date('2026-01-01T00:00:00Z'),
     };

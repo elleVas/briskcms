@@ -25,6 +25,8 @@ const italianPage: PageListItem = {
   slug: 'chi-siamo',
   status: 'published',
   seoMeta: { title: 'Chi siamo', description: '' },
+  order: 0,
+  createdByName: null,
   createdAt: '',
   updatedAt: '',
   hasUnpublishedChanges: false,

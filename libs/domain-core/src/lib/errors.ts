@@ -46,6 +46,14 @@ export class PageHierarchyLocaleMismatchError extends Error {
   }
 }
 
+/** reorderSiblingPages was given a page id list that isn't an exact permutation of the actual current sibling group — missing, extra, or foreign ids. */
+export class PageReorderMismatchError extends Error {
+  constructor() {
+    super('The provided page order does not match the actual sibling group');
+    this.name = 'PageReorderMismatchError';
+  }
+}
+
 /**
  * Deliberately generic: never reveals whether the email exists or the
  * password was wrong (prevents user enumeration via the login endpoint).

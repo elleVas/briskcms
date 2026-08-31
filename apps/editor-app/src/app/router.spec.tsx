@@ -108,7 +108,11 @@ const sampleSite: SiteRecord = {
 // a listPages() item (PageListItem), so it carries every field either
 // shape needs — TypeScript checks structural compatibility at each call
 // site, not against a single declared type here.
-const samplePage: PageRecord & { hasUnpublishedChanges: boolean } = {
+const samplePage: PageRecord & {
+  order: number;
+  createdByName: string | null;
+  hasUnpublishedChanges: boolean;
+} = {
   id: 'page-1',
   tenantId: 'tenant-1',
   siteId: 'site-1',
@@ -121,6 +125,8 @@ const samplePage: PageRecord & { hasUnpublishedChanges: boolean } = {
   content: [],
   publishedContent: [],
   seoMeta: { title: 'Home', description: '' },
+  order: 0,
+  createdByName: null,
   createdAt: '',
   updatedAt: '2026-01-01T00:00:00.000Z',
   hasUnpublishedChanges: false,

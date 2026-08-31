@@ -53,7 +53,10 @@ describe('SitesController (unit)', () => {
       listBySite: jest.fn().mockResolvedValue({}),
       upsert: jest.fn(),
     };
-    tenantContext = { getCurrentTenantId: () => 'tenant-1' };
+    tenantContext = {
+      getCurrentTenantId: () => 'tenant-1',
+      getCurrentUserId: () => 'user-1',
+    };
     controller = new SitesController(
       siteRepository,
       siteThemeBlockStylesRepository,

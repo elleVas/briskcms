@@ -82,6 +82,8 @@
       "pageIndicator": "Pagina {{page}} di {{totalPages}}",
       "previousPage": "Pagina precedente",
       "nextPage": "Pagina successiva",
+      "createdBy": "Creata da {{name}}",
+      "dragHandle": "Trascina per riordinare",
       "actions": {
         "edit": "Apri editor",
         "publish": "Pubblica",

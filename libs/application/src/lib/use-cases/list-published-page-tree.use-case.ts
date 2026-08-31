@@ -21,9 +21,12 @@ export interface PageTreeNode {
   slug: string;
   title: string;
   ancestorSlugs: string[];
+  // Sibling-scoped position (see reorderSiblingPages) — the sort key a
+  // theme's sidebar should actually use now; createdAt below stays only as
+  // a legacy tiebreak for pages that predate manual ordering.
+  order: number;
   // ISO string, not a `Date` — this crosses the public HTTP boundary as
-  // JSON, and a caller (a theme's sidebar) only ever needs it for stable
-  // ascending sort among siblings, never date arithmetic.
+  // JSON, only ever needed as a stable tiebreak, never date arithmetic.
   createdAt: string;
 }
 
@@ -88,6 +91,7 @@ export async function listPublishedPageTree(
       slug: page.slug,
       title: page.seoMeta.title,
       ancestorSlugs: resolveAncestorSlugs(nodesById, page.id),
+      order: page.order,
       createdAt: page.createdAt.toISOString(),
     }));
 }

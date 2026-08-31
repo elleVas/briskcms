@@ -6,4 +6,6 @@
  */
 export interface TenantContextPort {
   getCurrentTenantId(): string;
+  /** The authenticated user making the current request — same session SessionAuthGuard already validated. */
+  getCurrentUserId(): string;
 }

@@ -114,6 +114,11 @@ export class InMemoryPageRepository implements PageRepositoryPort {
       parentId: props.parentId,
       status: props.status,
       seoMeta: props.seoMeta,
+      order: props.order,
+      // No user repository wired into this fixture — business-logic specs
+      // don't need a real name, only the real Drizzle adapter resolves
+      // this (see its own integration tests).
+      createdByName: null,
       createdAt: props.createdAt,
       updatedAt: props.updatedAt,
       hasUnpublishedChanges:
@@ -121,6 +126,27 @@ export class InMemoryPageRepository implements PageRepositoryPort {
         JSON.stringify(props.publishedContent) !==
           JSON.stringify(props.content),
     };
+  }
+
+  async listSiblings(
+    tenantId: string,
+    siteId: string,
+    locale: string,
+    parentId: string | null,
+  ): Promise<PageSummary[]> {
+    return [...this.pages.values()]
+      .filter(
+        (page) =>
+          page.tenantId === tenantId &&
+          page.siteId === siteId &&
+          page.locale === locale &&
+          page.parentId === parentId,
+      )
+      .map((page) => this.toSummary(page))
+      .sort(
+        (a, b) =>
+          a.order - b.order || a.createdAt.getTime() - b.createdAt.getTime(),
+      );
   }
 
   async listByGroup(

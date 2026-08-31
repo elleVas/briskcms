@@ -48,6 +48,14 @@ export const setPageParentBodySchema = z.object({
 });
 export type SetPageParentBody = z.infer<typeof setPageParentBodySchema>;
 
+export const reorderPagesBodySchema = z.object({
+  siteId: z.string().uuid(),
+  locale: z.string(),
+  parentId: z.string().uuid().nullable(),
+  orderedPageIds: z.array(z.string().uuid()).min(1),
+});
+export type ReorderPagesBody = z.infer<typeof reorderPagesBodySchema>;
+
 export const listPagesQuerySchema = z.object({
   siteId: z.string().uuid(),
   page: z.coerce.number().int().min(1).default(1),

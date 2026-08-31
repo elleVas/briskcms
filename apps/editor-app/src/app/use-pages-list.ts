@@ -7,6 +7,7 @@ import {
   deletePage as apiDeletePage,
   duplicatePage as apiDuplicatePage,
   publishPage as apiPublishPage,
+  reorderPages as apiReorderPages,
   setPageParent as apiSetPageParent,
   type DuplicatePageInput,
 } from '../lib/pages-api-client';
@@ -90,6 +91,19 @@ export function usePagesList(siteId: string, defaultLocale: string) {
     onSuccess: invalidateList,
   });
 
+  const reorderPagesMutation = useMutation({
+    mutationFn: ({
+      locale,
+      parentId,
+      orderedPageIds,
+    }: {
+      locale: string;
+      parentId: string | null;
+      orderedPageIds: string[];
+    }) => apiReorderPages(siteId, locale, parentId, orderedPageIds),
+    onSuccess: invalidateList,
+  });
+
   return {
     createPage: (name: string, parentId: string | null) =>
       createPageMutation.mutateAsync({ name, parentId }),
@@ -104,5 +118,10 @@ export function usePagesList(siteId: string, defaultLocale: string) {
     setPageParent: (pageId: string, parentId: string | null) =>
       setPageParentMutation.mutateAsync({ pageId, parentId }),
     isSettingParent: setPageParentMutation.isPending,
+    reorderPages: (
+      locale: string,
+      parentId: string | null,
+      orderedPageIds: string[],
+    ) => reorderPagesMutation.mutateAsync({ locale, parentId, orderedPageIds }),
   };
 }

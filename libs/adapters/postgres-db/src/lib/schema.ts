@@ -237,6 +237,21 @@ export const pages = pgTable(
     // this page's content was last confirmed aligned to. `null` for a
     // page never tracked under this mechanism.
     syncedStructureSignature: text('synced_structure_signature'),
+    // Sibling-scoped position (drag-to-reorder) — unique only within
+    // (tenant_id, site_id, locale, parent_id), not enforced as a DB
+    // constraint (a temporary duplicate mid-reorder is harmless, see
+    // reorderSiblingPages). Defaults to 0 for every pre-existing row —
+    // combined with createdAt as an ORDER BY tiebreak, this preserves
+    // today's implicit creation-order sort until a group is actually
+    // dragged for the first time, no backfill migration needed.
+    order: integer('order').notNull().default(0),
+    // Set once at creation, never updated afterward — see Page entity's
+    // own field doc. Nullable: null for every row that predates this
+    // column, and ON DELETE SET NULL rather than restricting user
+    // deletion over a purely informational attribution field.
+    createdBy: uuid('created_by').references(() => users.id, {
+      onDelete: 'set null',
+    }),
     createdAt: timestamp('created_at', { withTimezone: true })
       .notNull()
       .defaultNow(),

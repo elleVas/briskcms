@@ -32,6 +32,15 @@ export interface PageSummary {
   parentId: string | null;
   status: PageStatus;
   seoMeta: SeoMeta;
+  order: number;
+  /**
+   * Resolved at query time (users.displayName, falling back to users.email
+   * — same fallback the rest of the app uses), not the raw user id: this
+   * projection is display-only, same reasoning as hasUnpublishedChanges
+   * above. Null when the page predates the createdBy column, or its
+   * creator has since been deleted.
+   */
+  createdByName: string | null;
   createdAt: Date;
   updatedAt: Date;
   hasUnpublishedChanges: boolean;
@@ -80,5 +89,20 @@ export interface PageRepositoryPort {
     siteId: string,
     groupId: string,
   ): Promise<Page[]>;
+  /**
+   * The literal sibling group `order` is scoped to — same (parentId, null
+   * = root-level) semantics as findByParentAndSlug. Ordered by `order`
+   * ascending (createdAt as a tiebreak for rows sharing the same value,
+   * e.g. every page created before this column existed defaults to 0).
+   * Used both to compute a new page's initial order (append at the end)
+   * and to validate a reorder request is an exact permutation of the real
+   * group, not a mechanism for listing children generically.
+   */
+  listSiblings(
+    tenantId: string,
+    siteId: string,
+    locale: string,
+    parentId: string | null,
+  ): Promise<PageSummary[]>;
   delete(tenantId: string, pageId: string): Promise<void>;
 }

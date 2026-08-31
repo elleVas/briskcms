@@ -34,6 +34,17 @@ export async function createPage(
     throw new PageSlugAlreadyExistsError(input.slug);
   }
 
+  // Appends at the end of the real sibling group (drag-to-reorder, see
+  // reorderSiblingPages) — Math.max over an empty array is -Infinity, not
+  // a sensible "no siblings yet" default, hence the explicit -1 seed.
+  const siblings = await deps.pageRepository.listSiblings(
+    input.tenantId,
+    input.siteId,
+    input.locale,
+    input.parentId ?? null,
+  );
+  const order = Math.max(-1, ...siblings.map((sibling) => sibling.order)) + 1;
+
   const page = Page.create({
     id: randomUUID(),
     tenantId: input.tenantId,
@@ -44,6 +55,8 @@ export async function createPage(
     parentId: input.parentId,
     seoMeta: input.seoMeta,
     content: input.content,
+    order,
+    createdBy: input.createdBy,
   });
 
   await deps.pageRepository.saveWithVersion(page, {

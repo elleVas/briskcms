@@ -37,6 +37,8 @@ const samplePageListItem: PageListItem = {
   slug: 'test-page',
   status: 'draft',
   seoMeta: { title: 'Test', description: 'desc' },
+  order: 0,
+  createdByName: null,
   createdAt: '',
   updatedAt: '',
   hasUnpublishedChanges: false,

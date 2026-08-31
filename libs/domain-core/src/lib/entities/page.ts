@@ -16,6 +16,10 @@ export interface PageProps {
   seoMeta: SeoMeta;
   /** See PageRecord's own field doc (libs/shared-types/page-record.ts) — same meaning. */
   syncedStructureSignature: string | null;
+  /** Sibling-scoped position (see setPageOrder's own comment) — unique only within (tenantId, siteId, locale, parentId), not site-wide. */
+  order: number;
+  /** The user who created this page, or null if they've since been deleted (FK is ON DELETE SET NULL) or the page predates this column. Set once at creation, never changed afterward. */
+  createdBy: string | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -31,6 +35,9 @@ export interface CreatePageProps {
   seoMeta: SeoMeta;
   content?: PageContent;
   syncedStructureSignature?: string | null;
+  /** Computed by the caller (create-page use-case) from the target sibling group's current max — defaults to 0 for a lone/first sibling. */
+  order?: number;
+  createdBy?: string | null;
   now?: Date;
 }
 
@@ -58,6 +65,8 @@ export class Page {
       publishedContent: null,
       seoMeta: input.seoMeta,
       syncedStructureSignature: input.syncedStructureSignature ?? null,
+      order: input.order ?? 0,
+      createdBy: input.createdBy ?? null,
       createdAt: now,
       updatedAt: now,
     });
@@ -119,6 +128,14 @@ export class Page {
     return this.props.syncedStructureSignature;
   }
 
+  get order(): number {
+    return this.props.order;
+  }
+
+  get createdBy(): string | null {
+    return this.props.createdBy;
+  }
+
   get createdAt(): Date {
     return this.props.createdAt;
   }
@@ -137,6 +154,19 @@ export class Page {
    */
   setParent(parentId: string | null, now: Date = new Date()): void {
     this.props.parentId = parentId;
+    this.props.updatedAt = now;
+  }
+
+  /**
+   * Reassigns this page's position among its siblings (drag-to-reorder in
+   * the pages list). Same reasoning as setParent: a position in the tree,
+   * not content — takes effect immediately, no version row. Validating that
+   * the new value actually reflects a real permutation of the sibling group
+   * is the reorderSiblingPages use-case's job (it has repository access);
+   * the pure entity just stores whatever value it's given.
+   */
+  reorder(order: number, now: Date = new Date()): void {
+    this.props.order = order;
     this.props.updatedAt = now;
   }
 

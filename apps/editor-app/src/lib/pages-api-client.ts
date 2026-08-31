@@ -62,6 +62,21 @@ export function setPageParent(
   });
 }
 
+// `orderedPageIds` must be the exact current sibling group (same siteId,
+// locale, parentId) — the backend rejects anything else as a
+// PageReorderMismatchError (400), see reorderSiblingPages.
+export function reorderPages(
+  siteId: string,
+  locale: string,
+  parentId: string | null,
+  orderedPageIds: string[],
+): Promise<void> {
+  return request('/pages/reorder', {
+    method: 'PATCH',
+    body: JSON.stringify({ siteId, locale, parentId, orderedPageIds }),
+  });
+}
+
 export function saveDraft(id: string, content: Block[]): Promise<PageRecord> {
   return requestPage(`/pages/${id}/draft`, {
     method: 'PATCH',

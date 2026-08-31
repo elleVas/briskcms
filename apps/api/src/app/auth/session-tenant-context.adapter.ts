@@ -19,4 +19,8 @@ export class SessionTenantContextAdapter implements TenantContextPort {
   getCurrentTenantId(): string {
     return this.request.tenantId;
   }
+
+  getCurrentUserId(): string {
+    return this.request.userId;
+  }
 }

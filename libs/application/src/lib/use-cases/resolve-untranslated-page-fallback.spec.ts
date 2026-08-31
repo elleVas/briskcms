@@ -197,6 +197,26 @@ describe('resolveUntranslatedPageFallback', () => {
     expect(result).toBeNull();
   });
 
+  it('returns null when the requested locale is not an enabled locale for the site at all (made-up URL segment, not an untranslated page)', async () => {
+    const deps = setup();
+    await seedSite(deps.siteRepository);
+    await createAndPublish(deps, {
+      groupId: 'group-1',
+      locale: 'it',
+      slug: 'home',
+      title: 'Home',
+    });
+
+    const result = await resolveUntranslatedPageFallback(deps, {
+      tenantId,
+      domain: 'example.com',
+      locale: 'qualcosa-a-caso',
+      segments: ['home'],
+    });
+
+    expect(result).toBeNull();
+  });
+
   it('returns null when the domain does not resolve to any site', async () => {
     const deps = setup();
 
