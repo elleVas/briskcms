@@ -3,15 +3,16 @@ packages:
   - 'libs/*'
   - 'libs/adapters/*'
 
-# Un bump di @nx/vite (o di astro) tira dentro una propria risoluzione di
-# vite separata da quella usata direttamente da apps/editor-app, lasciando
-# due istanze coesistenti nello store pnpm. TypeScript vede allora il
-# Plugin di @tanstack/router-plugin (costruito contro l'istanza nuova)
-# come nominalmente diverso dal Plugin importato da editor-app (istanza
-# vecchia), e il confronto strutturale va in "Excessive stack depth"
-# (vite.config.mts). Forzare una singola versione di vite in tutto il
-# workspace è il fix reale, non un workaround sui tipi in vite.config.mts
-# (già provato, non risolve: il problema è tra due install diverse, non
-# un limite di profondità dell'inferenza).
+# A bump of astro or @nx/vite pulls in its own vite resolution, separate
+# from the one apps/editor-app imports directly — two coexisting vite
+# instances in the same pnpm store. TypeScript then sees
+# @tanstack/router-plugin's Plugin (built against the new instance) as
+# nominally different from editor-app's own Plugin import (old instance),
+# and the resulting structural comparison overflows ("Excessive stack
+# depth comparing types 'Plugin<any>[]' and 'Plugin<any>[]'" in
+# vite.config.mts). Forcing one single vite version workspace-wide is the
+# real fix (a vite.config.mts type workaround was tried and didn't help —
+# the mismatch is between two different vite installs, not an inference
+# depth limit on one).
 overrides:
   vite: 8.2.2
