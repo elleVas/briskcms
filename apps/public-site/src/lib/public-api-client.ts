@@ -162,6 +162,11 @@ export interface PageTreeNodeDto {
   slug: string;
   title: string;
   ancestorSlugs: string[];
+  // Sibling-scoped manual position (drag-to-reorder in the pages list) —
+  // the sort key a theme's sidebar should use; createdAt below is only a
+  // legacy tiebreak for pages that predate manual ordering (see
+  // list-published-page-tree.use-case.ts).
+  order: number;
   createdAt: string;
 }
 

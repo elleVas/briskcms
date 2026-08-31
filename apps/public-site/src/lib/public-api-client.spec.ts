@@ -179,6 +179,8 @@ describe('public-api-client', () => {
         slug: 'guide',
         title: 'Guide',
         ancestorSlugs: [],
+        order: 0,
+        createdAt: '2026-01-01T00:00:00.000Z',
       },
     ];
     vi.mocked(fetch).mockResolvedValue(jsonResponse({ items }));
