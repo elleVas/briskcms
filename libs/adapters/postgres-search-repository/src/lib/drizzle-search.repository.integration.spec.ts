@@ -109,6 +109,8 @@ describe('DrizzleSearchRepository (integration)', () => {
       publishedContent: row.publishedContent,
       seoMeta: row.seoMeta,
       syncedStructureSignature: row.syncedStructureSignature,
+      order: row.order,
+      createdBy: row.createdBy,
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,
     });
