@@ -231,6 +231,9 @@ importers:
       '@brisk/ports':
         specifier: workspace:*
         version: link:../../libs/ports
+      '@brisk/postgres-dashboard-stats-repository':
+        specifier: workspace:*
+        version: link:../../libs/adapters/postgres-dashboard-stats-repository
       '@brisk/postgres-db':
         specifier: workspace:*
         version: link:../../libs/adapters/postgres-db
@@ -516,6 +519,22 @@ importers:
       '@brisk/ports':
         specifier: workspace:*
         version: link:../../ports
+
+  libs/adapters/postgres-dashboard-stats-repository:
+    dependencies:
+      '@brisk/ports':
+        specifier: workspace:*
+        version: link:../../ports
+      '@brisk/postgres-db':
+        specifier: workspace:*
+        version: link:../postgres-db
+      drizzle-orm:
+        specifier: ^0.45.2
+        version: 0.45.2(postgres@3.4.9)
+    devDependencies:
+      dotenv:
+        specifier: ^17.4.2
+        version: 17.4.2
 
   libs/adapters/postgres-db:
     dependencies:

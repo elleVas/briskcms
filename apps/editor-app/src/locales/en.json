@@ -54,6 +54,7 @@
   },
   "shell": {
     "nav": {
+      "dashboard": "Dashboard",
       "pages": "Pages",
       "media": "Media",
       "forms": "Forms",
@@ -70,6 +71,34 @@
     "account": {
       "label": "Account"
     }
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "stats": {
+      "pages": {
+        "title": "Pages",
+        "description": "{{count}} total across every language",
+        "breakdown": "{{published}} published, {{draft}} in draft"
+      },
+      "media": {
+        "title": "Media",
+        "description": "{{count}} files uploaded"
+      },
+      "published": {
+        "title": "Published",
+        "description": "Live on the public site right now"
+      }
+    },
+    "recentActivity": {
+      "title": "Recent activity",
+      "description": "The most recently updated pages",
+      "empty": "Nothing edited yet.",
+      "status": {
+        "draft": "Draft",
+        "published": "Published"
+      }
+    },
+    "emptyState": "This site doesn't have any pages or media yet — start from the Pages section."
   },
   "pages": {
     "list": {

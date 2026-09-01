@@ -71,6 +71,9 @@
       "path": "../../libs/adapters/postgres-media-repository/tsconfig.lib.json"
     },
     {
+      "path": "../../libs/adapters/postgres-dashboard-stats-repository/tsconfig.lib.json"
+    },
+    {
       "path": "../../libs/adapters/postgres-form-repository/tsconfig.lib.json"
     },
     {

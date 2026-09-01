@@ -94,6 +94,7 @@
     "@brisk/local-disk-media-storage": "workspace:*",
     "@brisk/mailchimp-newsletter": "workspace:*",
     "@brisk/ports": "workspace:*",
+    "@brisk/postgres-dashboard-stats-repository": "workspace:*",
     "@brisk/postgres-db": "workspace:*",
     "@brisk/postgres-form-repository": "workspace:*",
     "@brisk/postgres-media-repository": "workspace:*",
