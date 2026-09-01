@@ -19,6 +19,15 @@ import { UsersModule } from './users.module';
 
 const MAILPIT_URL = `http://localhost:${process.env['MAILPIT_UI_PORT'] ?? '8025'}`;
 
+// 'resends the invite' below chains three of fetchInviteToken/
+// waitForMessageCount's own polling loops back to back, each internally
+// capped at 5s — its own realistic worst case (~15s, before adding real
+// HTTP/Postgres/SMTP overhead) already exceeds Jest's 5000ms default test
+// timeout even with zero CI contention, which is exactly the intermittent
+// CI failure this caused. Not a masked slowdown: every other test in this
+// file does at most one such poll and comfortably fits the default.
+jest.setTimeout(20000);
+
 /**
  * Runs the full invite -> accept-invite cycle through the real HTTP stack,
  * a real Postgres, and a real SMTP relay (Mailpit in dev, see
