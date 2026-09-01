@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { ChevronLeft, ChevronRight, Trash2 } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import type { MediaDto } from '../lib/media-api-client';
-import { ConfirmDeleteDialog } from './confirm-delete-dialog';
+import { ConfirmActionDialog } from './confirm-action-dialog';
 import { IconButton } from './icon-button';
 import { MEDIA_PAGE_SIZE } from './media-queries';
 import { useMediaLibrary } from './use-media-library';
@@ -150,7 +150,7 @@ export function MediaGrid({
         </div>
       )}
       {mediaToDelete && (
-        <ConfirmDeleteDialog
+        <ConfirmActionDialog
           open={Boolean(mediaToDelete)}
           onOpenChange={(open) => !open && setMediaToDelete(null)}
           title={t('media.deleteDialog.title')}

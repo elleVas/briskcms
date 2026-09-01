@@ -20,6 +20,7 @@ export const whatsAppButtonBlock: BlockDescriptor<WhatsAppButtonProps> = {
     {
       kind: 'text',
       key: 'message',
+      translatable: true,
       label: 'blocks.whatsAppButton.fields.message.fieldLabel',
     },
     visibilityField,

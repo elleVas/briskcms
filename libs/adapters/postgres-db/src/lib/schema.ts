@@ -17,6 +17,7 @@ import {
 import { sql } from 'drizzle-orm';
 import type {
   BlockStyleOverride,
+  FieldValueOverlay,
   FormField,
   FormStep,
   OpeningHoursDay,
@@ -28,9 +29,10 @@ import type {
 // One native Postgres enum type per domain string-union, matching the
 // literal values of the corresponding domain-core/shared-types type
 // exactly — kept separate even where two enums share the same value set
-// (pageStatusEnum/siteLayoutSectionStatusEnum both 'draft'|'published')
-// because their domain types are deliberately distinct (Page vs.
-// SiteLayoutSection), see db-schema-cleanup-deferred-2026-08-28 memory.
+// (pageTranslationStatusEnum/siteLayoutSectionStatusEnum both
+// 'draft'|'published') because their domain types are deliberately
+// distinct (PageTranslation vs. SiteLayoutSection), see
+// db-schema-cleanup-deferred-2026-08-28 memory.
 export const userRoleEnum = pgEnum('user_role', [
   'admin',
   'publisher',
@@ -40,7 +42,10 @@ export const untranslatedPageFallbackEnum = pgEnum(
   'untranslated_page_fallback',
   ['redirect-to-default', 'not-available'],
 );
-export const pageStatusEnum = pgEnum('page_status', ['draft', 'published']);
+export const pageTranslationStatusEnum = pgEnum('page_translation_status', [
+  'draft',
+  'published',
+]);
 export const siteLayoutSectionKindEnum = pgEnum('site_layout_section_kind', [
   'header',
   'footer',
@@ -195,8 +200,13 @@ export const siteThemeBlockStyles = pgTable(
   ],
 );
 
-export const pages = pgTable(
-  'pages',
+// i18n a livello di campo (struttura condivisa + override per-locale) —
+// pageGroups/pageTranslations hanno sostituito la vecchia `pages`
+// (rimossa in Fase 5 del piano). Un PageGroup possiede la struttura
+// CONDIVISA tra tutte le lingue; una PageTranslation possiede il testo
+// per-locale.
+export const pageGroups = pgTable(
+  'page_groups',
   {
     id: uuid('id').primaryKey().defaultRandom(),
     tenantId: uuid('tenant_id')
@@ -205,50 +215,22 @@ export const pages = pgTable(
     siteId: uuid('site_id')
       .notNull()
       .references(() => sites.id, { onDelete: 'cascade' }),
-    // links the translations of the same page together
-    groupId: uuid('group_id').notNull(),
-    locale: text('locale').notNull(),
-    slug: text('slug').notNull(),
-    // Self-reference (page hierarchy, WP-style) — nullable, no cascade: a
-    // deleted parent orphans its children (parentId -> null) rather than
-    // deleting the whole subtree, matching how WordPress treats
-    // post_parent on delete.
-    parentId: uuid('parent_id').references((): AnyPgColumn => pages.id, {
+    // Gerarchia CONDIVISA tra tutte le lingue — a differenza della vecchia
+    // pages.parentId (per-locale), non ha senso che due lingue della
+    // stessa pagina vivano in punti diversi dell'albero del sito.
+    parentId: uuid('parent_id').references((): AnyPgColumn => pageGroups.id, {
       onDelete: 'set null',
     }),
-    status: pageStatusEnum('status').notNull(),
-    // latest draft (Puck content format)
+    // L'albero blocchi canonico — per un campo marcato `translatable`
+    // (FieldDescriptor in @brisk/block-registry), il valore qui è quello
+    // della lingua di default del sito, fallback quando una
+    // pageTranslation non ha ancora un proprio override (vedi
+    // mergeTranslatedContent in @brisk/shared-types).
     content: jsonb('content').notNull().default([]).$type<PageContent>(),
-    // last actually published version
-    publishedContent: jsonb('published_content').$type<PageContent>(),
-    // title, description, og tags, canonical
-    seoMeta: jsonb('seo_meta').notNull().default({}).$type<SeoMeta>(),
-    // Plain extracted text (SearchPort's indexPage, see
-    // @brisk/postgres-search-repository) — never read/written by
-    // PageRepositoryPort itself, kept here only so it lives on the same
-    // row a page's other content does. `search_vector` (tsvector,
-    // generated from this column) isn't modeled here at all: Drizzle has
-    // no first-class generated-column DSL for it, and nothing in this
-    // package ever needs to read/write it directly — see
-    // drizzle/0016_pages_search_vector.sql.
-    searchText: text('search_text'),
-    // Translation structural-drift indicator — the block-structure
-    // signature (see @brisk/shared-types' content-structure-signature.ts)
-    // this page's content was last confirmed aligned to. `null` for a
-    // page never tracked under this mechanism.
-    syncedStructureSignature: text('synced_structure_signature'),
-    // Sibling-scoped position (drag-to-reorder) — unique only within
-    // (tenant_id, site_id, locale, parent_id), not enforced as a DB
-    // constraint (a temporary duplicate mid-reorder is harmless, see
-    // reorderSiblingPages). Defaults to 0 for every pre-existing row —
-    // combined with createdAt as an ORDER BY tiebreak, this preserves
-    // today's implicit creation-order sort until a group is actually
-    // dragged for the first time, no backfill migration needed.
+    // Sibling-scoped, condiviso per lo stesso motivo di parentId — stessa
+    // non-unicità a livello DB della vecchia pages.order (un duplicato
+    // temporaneo a metà riordino è innocuo, vedi reorderSiblingPages).
     order: integer('order').notNull().default(0),
-    // Set once at creation, never updated afterward — see Page entity's
-    // own field doc. Nullable: null for every row that predates this
-    // column, and ON DELETE SET NULL rather than restricting user
-    // deletion over a purely informational attribution field.
     createdBy: uuid('created_by').references(() => users.id, {
       onDelete: 'set null',
     }),
@@ -260,38 +242,108 @@ export const pages = pgTable(
       .defaultNow(),
   },
   (table) => [
-    unique().on(table.tenantId, table.siteId, table.groupId, table.locale),
-    // Sibling-scoped (WP-style): the same slug can exist twice under
-    // different parents (docs/adr — page hierarchy slug scoping). This
-    // composite alone does NOT stop two ROOT-level pages (parent_id NULL)
-    // from sharing a slug — Postgres treats NULL <> NULL, so a plain
-    // unique constraint including a nullable column never fires when
-    // that column is null on both rows. The partial index right below
-    // closes exactly that gap.
-    unique().on(
-      table.tenantId,
-      table.siteId,
-      table.locale,
-      table.parentId,
-      table.slug,
-    ),
-    uniqueIndex('pages_root_slug_unique')
-      .on(table.tenantId, table.siteId, table.locale, table.slug)
-      .where(sql`${table.parentId} is null`),
-    index('pages_tenant_site_idx').on(table.tenantId, table.siteId),
+    index('page_groups_tenant_site_idx').on(table.tenantId, table.siteId),
   ],
 );
 
-export const pageVersions = pgTable(
-  'page_versions',
+export const pageTranslations = pgTable(
+  'page_translations',
   {
     id: uuid('id').primaryKey().defaultRandom(),
     tenantId: uuid('tenant_id')
       .notNull()
       .references(() => tenants.id, { onDelete: 'cascade' }),
-    pageId: uuid('page_id')
+    // Denormalizzato da pageGroups.siteId, scritto solo alla creazione
+    // (una pagina non cambia mai sito) — serve per il vincolo di
+    // unicità dello slug e per la risoluzione pubblica senza un join,
+    // vedi PageTranslationRepositoryPort.findByParentGroupAndLocaleSlug.
+    siteId: uuid('site_id')
       .notNull()
-      .references(() => pages.id, { onDelete: 'cascade' }),
+      .references(() => sites.id, { onDelete: 'cascade' }),
+    pageGroupId: uuid('page_group_id')
+      .notNull()
+      .references(() => pageGroups.id, { onDelete: 'cascade' }),
+    // Denormalizzato da pageGroups.parentId, RI-SINCRONIZZATO su ogni
+    // riparento del gruppo (stessa transazione — vedi il use-case che
+    // sposta un PageGroup) su OGNI sua traduzione. Un vincolo di unicità
+    // dello slug sibling-scoped non può referenziare una colonna di
+    // un'altra tabella via join in Postgres — questa denormalizzazione è
+    // il prezzo per mantenere la stessa garanzia forte a livello DB che
+    // esisteva su pages.parentId, invece di affidarsi solo a un controllo
+    // applicativo.
+    parentGroupId: uuid('parent_group_id'),
+    locale: text('locale').notNull(),
+    slug: text('slug').notNull(),
+    seoMeta: jsonb('seo_meta').notNull().default({}).$type<SeoMeta>(),
+    // Override di SOLI campi `translatable`, chiavati per blocco — un
+    // campo assente eredita il valore condiviso di pageGroups.content.
+    // Ignorato quando isDiverged è true.
+    fieldValues: jsonb('field_values')
+      .notNull()
+      .default({})
+      .$type<FieldValueOverlay>(),
+    status: pageTranslationStatusEnum('status').notNull(),
+    // Merge congelato (struttura + fieldValues di questa lingua, o
+    // divergedContent se scollegata) all'ultima publish() — stessa forma
+    // e stesso consumatore (risoluzione pubblica) di pages.publishedContent
+    // di ieri.
+    publishedSnapshot: jsonb('published_snapshot').$type<PageContent>(),
+    // Lo "scollega": quando true, questa traduzione non riceve più le
+    // modifiche strutturali propagate da pageGroups.content — ha una
+    // propria struttura+testo indipendente in divergedContent.
+    isDiverged: boolean('is_diverged').notNull().default(false),
+    divergedContent: jsonb('diverged_content').$type<PageContent>(),
+    // Plain extracted text (SearchPort's indexPage, see
+    // @brisk/postgres-search-repository) — never read/written by
+    // PageTranslationRepositoryPort itself, kept here only so it lives on
+    // the same row a translation's other content does. `search_vector`
+    // (tsvector, generated from this column) isn't modeled here at all:
+    // Drizzle has no first-class generated-column DSL for it — see the
+    // migration that added this column (Fase 5, replaces pages.searchText).
+    searchText: text('search_text'),
+    createdBy: uuid('created_by').references(() => users.id, {
+      onDelete: 'set null',
+    }),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    unique().on(table.tenantId, table.pageGroupId, table.locale),
+    // Sibling-scoped (stesso schema di pages sopra) ma chiavato su
+    // parentGroupId invece di parentId per-locale — vedi il commento sulla
+    // colonna. Stesso gap NULL <> NULL di Postgres, stessa chiusura via
+    // indice parziale sotto.
+    unique().on(
+      table.tenantId,
+      table.siteId,
+      table.locale,
+      table.parentGroupId,
+      table.slug,
+    ),
+    uniqueIndex('page_translations_root_slug_unique')
+      .on(table.tenantId, table.siteId, table.locale, table.slug)
+      .where(sql`${table.parentGroupId} is null`),
+    index('page_translations_tenant_group_idx').on(
+      table.tenantId,
+      table.pageGroupId,
+    ),
+  ],
+);
+
+export const pageGroupVersions = pgTable(
+  'page_group_versions',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    tenantId: uuid('tenant_id')
+      .notNull()
+      .references(() => tenants.id, { onDelete: 'cascade' }),
+    pageGroupId: uuid('page_group_id')
+      .notNull()
+      .references(() => pageGroups.id, { onDelete: 'cascade' }),
     content: jsonb('content').notNull().$type<PageContent>(),
     createdBy: uuid('created_by').references(() => users.id, {
       onDelete: 'set null',
@@ -299,16 +351,39 @@ export const pageVersions = pgTable(
     createdAt: timestamp('created_at', { withTimezone: true })
       .notNull()
       .defaultNow(),
-    // every save creates a row here, never a destructive overwrite
   },
   (table) => [
-    // Composite, not just on pageId: every listing query is
-    // `WHERE page_id = ? ORDER BY created_at ASC` (see
-    // drizzle-page-version.repository.ts) — a pageId-only index still
-    // needs a separate sort step, this one serves the query as a pure
-    // index scan. The pageId-only lookups (if any) are still served by
-    // this index's leading column.
-    index('page_versions_page_created_idx').on(table.pageId, table.createdAt),
+    index('page_group_versions_group_created_idx').on(
+      table.pageGroupId,
+      table.createdAt,
+    ),
+  ],
+);
+
+export const pageTranslationVersions = pgTable(
+  'page_translation_versions',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    tenantId: uuid('tenant_id')
+      .notNull()
+      .references(() => tenants.id, { onDelete: 'cascade' }),
+    pageTranslationId: uuid('page_translation_id')
+      .notNull()
+      .references(() => pageTranslations.id, { onDelete: 'cascade' }),
+    fieldValues: jsonb('field_values').notNull().$type<FieldValueOverlay>(),
+    seoMeta: jsonb('seo_meta').notNull().$type<SeoMeta>(),
+    createdBy: uuid('created_by').references(() => users.id, {
+      onDelete: 'set null',
+    }),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    index('page_translation_versions_translation_created_idx').on(
+      table.pageTranslationId,
+      table.createdAt,
+    ),
   ],
 );
 
@@ -488,8 +563,11 @@ export const formSubmissions = pgTable(
     siteId: uuid('site_id')
       .notNull()
       .references(() => sites.id, { onDelete: 'cascade' }),
-    // preserves history even if the page is later removed
-    pageId: uuid('page_id').references(() => pages.id, {
+    // preserves history even if the page is later removed — i18n a livello
+    // di campo (Fase 5): repointed from the old pages.id to
+    // pageTranslations.id (nothing populates this column yet either way,
+    // see apps/public-site's forms submit proxy).
+    pageId: uuid('page_id').references(() => pageTranslations.id, {
       onDelete: 'set null',
     }),
     // preserves history even if the form is later deleted (docs/adr/0015)

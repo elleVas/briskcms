@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { Site, SiteLayoutSection } from '@brisk/domain-core';
 import { resolveSiteChrome } from './resolve-site-chrome';
 import {
+  InMemoryPageTranslationRepository,
   InMemorySiteLayoutSectionRepository,
   InMemorySiteThemeBlockStylesRepository,
 } from './in-memory-repositories.test-fixture';
@@ -80,6 +81,7 @@ describe('resolveSiteChrome', () => {
         siteLayoutSectionRepository: repository,
         siteThemeBlockStylesRepository:
           new InMemorySiteThemeBlockStylesRepository(),
+        pageTranslationRepository: new InMemoryPageTranslationRepository(),
       },
       tenantId,
       site,
@@ -114,6 +116,7 @@ describe('resolveSiteChrome', () => {
         siteLayoutSectionRepository: repository,
         siteThemeBlockStylesRepository:
           new InMemorySiteThemeBlockStylesRepository(),
+        pageTranslationRepository: new InMemoryPageTranslationRepository(),
       },
       tenantId,
       site,
@@ -140,6 +143,7 @@ describe('resolveSiteChrome', () => {
         siteLayoutSectionRepository: repository,
         siteThemeBlockStylesRepository:
           new InMemorySiteThemeBlockStylesRepository(),
+        pageTranslationRepository: new InMemoryPageTranslationRepository(),
       },
       tenantId,
       site,
@@ -179,6 +183,7 @@ describe('resolveSiteChrome', () => {
         siteLayoutSectionRepository: repository,
         siteThemeBlockStylesRepository:
           new InMemorySiteThemeBlockStylesRepository(),
+        pageTranslationRepository: new InMemoryPageTranslationRepository(),
       },
       tenantId,
       site,
@@ -209,6 +214,7 @@ describe('resolveSiteChrome', () => {
         siteLayoutSectionRepository: repository,
         siteThemeBlockStylesRepository:
           new InMemorySiteThemeBlockStylesRepository(),
+        pageTranslationRepository: new InMemoryPageTranslationRepository(),
       },
       tenantId,
       site,

@@ -10,7 +10,7 @@ type Props = ButtonProps & { styleOverride?: BlockStyleOverride };
 
 const { label, linkType, page, url, variant, styleOverride } = Astro.props;
 const href =
-  linkType === 'page' && page ? localePath(page.locale, page.slug) : url;
+  linkType === 'page' && page?.locale && page?.slug ? localePath(page.locale, page.slug) : url;
 
 // Override per-istanza (docs/adr/0022) — inline sull'elemento reale, non
 // su un wrapper: funziona identico in editor e sul sito pubblicato.

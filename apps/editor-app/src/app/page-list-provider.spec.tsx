@@ -4,40 +4,45 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { usePageList } from '@brisk/block-registry';
 import type { PickedPage } from '@brisk/shared-types';
-import * as api from '../lib/pages-api-client';
-import type { PageListItem } from '../lib/pages-api-client';
+import * as api from '../lib/page-groups-api-client';
+import type { PageGroupListItemRecord } from '../lib/page-groups-api-client';
 import { createTestQueryClient } from '../test-query-client';
 import { PageListProvider } from './page-list-provider';
 
-vi.mock('../lib/pages-api-client', async (importOriginal) => {
+vi.mock('../lib/page-groups-api-client', async (importOriginal) => {
   const actual =
-    await importOriginal<typeof import('../lib/pages-api-client')>();
-  return { ...actual, listPages: vi.fn() };
+    await importOriginal<typeof import('../lib/page-groups-api-client')>();
+  return { ...actual, listPageGroups: vi.fn() };
 });
 
-const italianPage: PageListItem = {
-  id: 'page-1',
+// One group with both an it and an en translation — exercises the picker's
+// own per-locale translation lookup (group.translations.find), not just
+// display of whatever the mock hands it.
+const bilingualGroup: PageGroupListItemRecord = {
+  id: 'group-1',
   tenantId: 'tenant-1',
   siteId: 'site-1',
-  groupId: 'group-1',
   parentId: null,
-  locale: 'it',
-  slug: 'chi-siamo',
-  status: 'published',
-  seoMeta: { title: 'Chi siamo', description: '' },
   order: 0,
   createdByName: null,
   createdAt: '',
   updatedAt: '',
-  hasUnpublishedChanges: false,
-};
-
-const englishPage: PageListItem = {
-  ...italianPage,
-  id: 'page-2',
-  locale: 'en',
-  slug: 'about-us',
-  seoMeta: { title: 'About us', description: '' },
+  translations: [
+    {
+      locale: 'it',
+      slug: 'chi-siamo',
+      title: 'Chi siamo',
+      status: 'published',
+      isDiverged: false,
+    },
+    {
+      locale: 'en',
+      slug: 'about-us',
+      title: 'About us',
+      status: 'published',
+      isDiverged: false,
+    },
+  ],
 };
 
 function PickerConsumer() {
@@ -75,10 +80,10 @@ describe('PageListProvider', () => {
     vi.clearAllMocks();
   });
 
-  it('opens the dialog on pick(), offering only pages in the given locale', async () => {
-    vi.mocked(api.listPages).mockResolvedValue({
-      items: [italianPage, englishPage],
-      total: 2,
+  it("opens the dialog on pick(), offering only the given locale's translation of each page", async () => {
+    vi.mocked(api.listPageGroups).mockResolvedValue({
+      items: [bilingualGroup],
+      total: 1,
     });
 
     renderProvider('it');
@@ -89,8 +94,8 @@ describe('PageListProvider', () => {
   });
 
   it('resolves with the picked page and closes the dialog', async () => {
-    vi.mocked(api.listPages).mockResolvedValue({
-      items: [italianPage],
+    vi.mocked(api.listPageGroups).mockResolvedValue({
+      items: [bilingualGroup],
       total: 1,
     });
 
@@ -103,7 +108,7 @@ describe('PageListProvider', () => {
   });
 
   it('resolves with null when the dialog is dismissed without a selection', async () => {
-    vi.mocked(api.listPages).mockResolvedValue({ items: [], total: 0 });
+    vi.mocked(api.listPageGroups).mockResolvedValue({ items: [], total: 0 });
 
     renderProvider('it');
     fireEvent.click(screen.getByRole('button', { name: 'Apri picker' }));

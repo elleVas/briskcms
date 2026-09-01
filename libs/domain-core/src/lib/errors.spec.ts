@@ -4,33 +4,37 @@ import {
   InvalidCredentialsError,
   InvalidFormSubmissionError,
   InvalidOrExpiredTokenError,
-  PageHierarchyCycleError,
-  PageHierarchyLocaleMismatchError,
-  PageNotFoundError,
-  PageTranslationAlreadyExistsError,
-  PageVersionNotFoundError,
+  PageGroupNotFoundError,
+  PageGroupReorderMismatchError,
+  PageGroupVersionNotFoundError,
+  PageTranslationDivergedError,
+  PageTranslationLocaleAlreadyExistsError,
+  PageTranslationNotDivergedError,
+  PageTranslationNotFoundError,
   SiteLayoutSectionNotFoundError,
   SiteLayoutSectionVersionNotFoundError,
   SiteNotFoundError,
 } from './errors';
 
-describe('PageNotFoundError', () => {
-  it('carries the missing page id in its message and is a real Error', () => {
-    const error = new PageNotFoundError('page-1');
+describe('PageGroupVersionNotFoundError', () => {
+  it('carries the missing version id in its message and is a real Error', () => {
+    const error = new PageGroupVersionNotFoundError('version-1');
 
     expect(error).toBeInstanceOf(Error);
-    expect(error.name).toBe('PageNotFoundError');
-    expect(error.message).toBe('Page not found: page-1');
+    expect(error.name).toBe('PageGroupVersionNotFoundError');
+    expect(error.message).toBe('Page group version not found: version-1');
   });
 });
 
-describe('PageVersionNotFoundError', () => {
-  it('carries the missing version id in its message and is a real Error', () => {
-    const error = new PageVersionNotFoundError('version-1');
+describe('PageGroupReorderMismatchError', () => {
+  it('is a real Error with a fixed message', () => {
+    const error = new PageGroupReorderMismatchError();
 
     expect(error).toBeInstanceOf(Error);
-    expect(error.name).toBe('PageVersionNotFoundError');
-    expect(error.message).toBe('Page version not found: version-1');
+    expect(error.name).toBe('PageGroupReorderMismatchError');
+    expect(error.message).toBe(
+      'The provided page group order does not match the actual sibling group',
+    );
   });
 });
 
@@ -86,40 +90,6 @@ describe('InvalidFormSubmissionError', () => {
   });
 });
 
-describe('PageTranslationAlreadyExistsError', () => {
-  it('carries the locale in its message and is a real Error', () => {
-    const error = new PageTranslationAlreadyExistsError('en');
-
-    expect(error).toBeInstanceOf(Error);
-    expect(error.name).toBe('PageTranslationAlreadyExistsError');
-    expect(error.message).toBe('This page already has a translation in "en"');
-  });
-});
-
-describe('PageHierarchyCycleError', () => {
-  it('carries the page id in its message and is a real Error', () => {
-    const error = new PageHierarchyCycleError('page-1');
-
-    expect(error).toBeInstanceOf(Error);
-    expect(error.name).toBe('PageHierarchyCycleError');
-    expect(error.message).toBe(
-      'Setting this parent would create a cycle for page page-1',
-    );
-  });
-});
-
-describe('PageHierarchyLocaleMismatchError', () => {
-  it('carries both page ids in its message and is a real Error', () => {
-    const error = new PageHierarchyLocaleMismatchError('page-1', 'page-2');
-
-    expect(error).toBeInstanceOf(Error);
-    expect(error.name).toBe('PageHierarchyLocaleMismatchError');
-    expect(error.message).toBe(
-      'Page page-1 and proposed parent page-2 must share the same site and locale',
-    );
-  });
-});
-
 describe('SiteLayoutSectionNotFoundError', () => {
   it('carries the missing section id in its message and is a real Error', () => {
     const error = new SiteLayoutSectionNotFoundError('section-1');
@@ -127,6 +97,62 @@ describe('SiteLayoutSectionNotFoundError', () => {
     expect(error).toBeInstanceOf(Error);
     expect(error.name).toBe('SiteLayoutSectionNotFoundError');
     expect(error.message).toBe('Site layout section not found: section-1');
+  });
+});
+
+describe('PageGroupNotFoundError', () => {
+  it('carries the missing group id in its message and is a real Error', () => {
+    const error = new PageGroupNotFoundError('group-1');
+
+    expect(error).toBeInstanceOf(Error);
+    expect(error.name).toBe('PageGroupNotFoundError');
+    expect(error.message).toBe('Page group not found: group-1');
+  });
+});
+
+describe('PageTranslationNotFoundError', () => {
+  it('carries the missing translation id in its message and is a real Error', () => {
+    const error = new PageTranslationNotFoundError('translation-1');
+
+    expect(error).toBeInstanceOf(Error);
+    expect(error.name).toBe('PageTranslationNotFoundError');
+    expect(error.message).toBe('Page translation not found: translation-1');
+  });
+});
+
+describe('PageTranslationLocaleAlreadyExistsError', () => {
+  it('carries the locale in its message and is a real Error', () => {
+    const error = new PageTranslationLocaleAlreadyExistsError('en');
+
+    expect(error).toBeInstanceOf(Error);
+    expect(error.name).toBe('PageTranslationLocaleAlreadyExistsError');
+    expect(error.message).toBe(
+      'This page group already has a translation in "en"',
+    );
+  });
+});
+
+describe('PageTranslationDivergedError', () => {
+  it('carries the translation id in its message and is a real Error', () => {
+    const error = new PageTranslationDivergedError('translation-1');
+
+    expect(error).toBeInstanceOf(Error);
+    expect(error.name).toBe('PageTranslationDivergedError');
+    expect(error.message).toBe(
+      'Page translation translation-1 is diverged from the shared structure',
+    );
+  });
+});
+
+describe('PageTranslationNotDivergedError', () => {
+  it('carries the translation id in its message and is a real Error', () => {
+    const error = new PageTranslationNotDivergedError('translation-1');
+
+    expect(error).toBeInstanceOf(Error);
+    expect(error.name).toBe('PageTranslationNotDivergedError');
+    expect(error.message).toBe(
+      'Page translation translation-1 has not diverged from the shared structure',
+    );
   });
 });
 

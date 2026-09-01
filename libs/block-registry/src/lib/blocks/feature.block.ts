@@ -22,12 +22,14 @@ export const featureBlock: BlockDescriptor<FeatureProps> = {
     {
       kind: 'text',
       key: 'title',
+      translatable: true,
       label: 'blocks.feature.fields.title.fieldLabel',
       inlineEditable: true,
     },
     {
       kind: 'textarea',
       key: 'text',
+      translatable: true,
       label: 'blocks.feature.fields.text.fieldLabel',
       inlineEditable: true,
     },

@@ -19,6 +19,7 @@ export const buttonBlock: BlockDescriptor<ButtonProps> = {
     {
       kind: 'text',
       key: 'label',
+      translatable: true,
       label: 'blocks.button.fields.label.fieldLabel',
       inlineEditable: true,
     },

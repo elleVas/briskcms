@@ -1,5 +1,5 @@
 import type { Form } from '@brisk/domain-core';
-import type { PaginatedResult, Pagination } from './page-repository.port';
+import type { PaginatedResult, Pagination } from './pagination';
 
 /**
  * Ogni metodo richiede esplicitamente tenantId: nessuna query può

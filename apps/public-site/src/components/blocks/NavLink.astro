@@ -6,7 +6,7 @@ import { resolveIconSvg } from '../../lib/resolve-theme-icons';
 type Props = NavLinkProps;
 
 const { label, linkType, page, url, icon, position, visibility } = Astro.props;
-const href = linkType === 'page' && page ? localePath(page.locale, page.slug) : url;
+const href = linkType === 'page' && page?.locale && page?.slug ? localePath(page.locale, page.slug) : url;
 const iconSvg = resolveIconSvg(icon);
 ---
 

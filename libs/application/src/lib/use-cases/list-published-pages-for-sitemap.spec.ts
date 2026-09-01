@@ -1,12 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import { Site } from '@brisk/domain-core';
-import { createPage } from './create-page.use-case';
-import { publishPage } from './publish-page.use-case';
-import { saveDraft } from './save-draft.use-case';
+import { createPageGroup } from './create-page-group.use-case';
+import { createPageGroupTranslation } from './create-page-group-translation.use-case';
+import { publishPageTranslation } from './publish-page-translation.use-case';
 import { listPublishedPagesForSitemap } from './list-published-pages-for-sitemap.use-case';
 import {
-  InMemoryPageRepository,
-  InMemoryPageVersionRepository,
+  InMemoryPageGroupRepository,
+  InMemoryPageGroupVersionRepository,
+  InMemoryPageTranslationRepository,
+  InMemoryPageTranslationVersionRepository,
   InMemorySearchPort,
   InMemorySiteRepository,
 } from './in-memory-repositories.test-fixture';
@@ -15,15 +17,20 @@ describe('listPublishedPagesForSitemap', () => {
   const tenantId = 'tenant-1';
 
   function setup() {
-    const pageRepository = new InMemoryPageRepository();
-    const pageVersionRepository = new InMemoryPageVersionRepository();
-    const siteRepository = new InMemorySiteRepository();
-    const searchPort = new InMemorySearchPort();
+    const pageGroupVersionRepository = new InMemoryPageGroupVersionRepository();
+    const pageTranslationVersionRepository =
+      new InMemoryPageTranslationVersionRepository();
     return {
-      pageRepository,
-      pageVersionRepository,
-      siteRepository,
-      searchPort,
+      pageGroupRepository: new InMemoryPageGroupRepository(
+        pageGroupVersionRepository,
+      ),
+      pageGroupVersionRepository,
+      pageTranslationRepository: new InMemoryPageTranslationRepository(
+        pageTranslationVersionRepository,
+      ),
+      pageTranslationVersionRepository,
+      siteRepository: new InMemorySiteRepository(),
+      searchPort: new InMemorySearchPort(),
     };
   }
 
@@ -60,26 +67,43 @@ describe('listPublishedPagesForSitemap', () => {
     return site;
   }
 
-  async function createAndPublish(
+  async function createGroupAndTranslation(
     deps: ReturnType<typeof setup>,
+    locale: string,
     slug: string,
+    parentGroupId: string | null = null,
   ) {
-    const page = await createPage(deps, {
+    const group = await createPageGroup(deps, {
       tenantId,
       siteId: 'site-1',
-      groupId: `group-${slug}`,
-      locale: 'it',
+      parentId: parentGroupId,
+      createdBy: 'user-1',
+    });
+    const translation = await createPageGroupTranslation(deps, {
+      tenantId,
+      pageGroupId: group.id,
+      locale,
       slug,
       seoMeta: { title: slug, description: '' },
       createdBy: 'user-1',
     });
-    await saveDraft(deps, {
+    return { group, translation };
+  }
+
+  async function createAndPublish(
+    deps: ReturnType<typeof setup>,
+    slug: string,
+  ) {
+    const { group, translation } = await createGroupAndTranslation(
+      deps,
+      'it',
+      slug,
+    );
+    await publishPageTranslation(deps, {
       tenantId,
-      pageId: page.id,
-      content: [],
-      actorUserId: 'user-1',
+      pageTranslationId: translation.id,
     });
-    await publishPage(deps, { tenantId, pageId: page.id });
+    return group;
   }
 
   it('lists only published pages for the domain, skipping drafts', async () => {
@@ -87,15 +111,7 @@ describe('listPublishedPagesForSitemap', () => {
     await seedSite(deps.siteRepository);
     await createAndPublish(deps, 'chi-siamo');
     await createAndPublish(deps, 'contatti');
-    await createPage(deps, {
-      tenantId,
-      siteId: 'site-1',
-      groupId: 'group-bozza',
-      locale: 'it',
-      slug: 'bozza',
-      seoMeta: { title: 'Bozza', description: '' },
-      createdBy: 'user-1',
-    });
+    await createGroupAndTranslation(deps, 'it', 'bozza');
 
     const result = await listPublishedPagesForSitemap(deps, {
       tenantId,
@@ -150,32 +166,21 @@ describe('listPublishedPagesForSitemap', () => {
     // "Servizi" stays a draft — its slug is still a structural fact for
     // "Idraulica"'s canonical URL, independent of whether Servizi itself
     // is published yet.
-    const servizi = await createPage(deps, {
+    const { group: servizi } = await createGroupAndTranslation(
+      deps,
+      'it',
+      'servizi',
+    );
+    const { translation: idraulica } = await createGroupAndTranslation(
+      deps,
+      'it',
+      'idraulica',
+      servizi.id,
+    );
+    await publishPageTranslation(deps, {
       tenantId,
-      siteId: 'site-1',
-      groupId: 'group-servizi',
-      locale: 'it',
-      slug: 'servizi',
-      seoMeta: { title: 'Servizi', description: '' },
-      createdBy: 'user-1',
+      pageTranslationId: idraulica.id,
     });
-    const idraulica = await createPage(deps, {
-      tenantId,
-      siteId: 'site-1',
-      groupId: 'group-idraulica',
-      locale: 'it',
-      slug: 'idraulica',
-      parentId: servizi.id,
-      seoMeta: { title: 'Idraulica', description: '' },
-      createdBy: 'user-1',
-    });
-    await saveDraft(deps, {
-      tenantId,
-      pageId: idraulica.id,
-      content: [],
-      actorUserId: 'user-1',
-    });
-    await publishPage(deps, { tenantId, pageId: idraulica.id });
 
     const result = await listPublishedPagesForSitemap(deps, {
       tenantId,
@@ -190,10 +195,41 @@ describe('listPublishedPagesForSitemap', () => {
     ]);
   });
 
+  it('skips a published leaf whose ancestor has no translation in the same locale (not actually reachable at a real URL)', async () => {
+    const deps = setup();
+    await seedSite(deps.siteRepository, { enabledLocales: ['it', 'en'] });
+    // "Servizi" only has an 'it' translation — an 'en' leaf under it would
+    // 404 walking down (resolvePageGroupByPath needs an 'en' slug at every
+    // level), so it must not appear in the sitemap even though it is
+    // itself marked published.
+    const { group: servizi } = await createGroupAndTranslation(
+      deps,
+      'it',
+      'servizi',
+    );
+    const { translation: idraulicaEn } = await createGroupAndTranslation(
+      deps,
+      'en',
+      'plumbing',
+      servizi.id,
+    );
+    await publishPageTranslation(deps, {
+      tenantId,
+      pageTranslationId: idraulicaEn.id,
+    });
+
+    const result = await listPublishedPagesForSitemap(deps, {
+      tenantId,
+      domain: 'example.com',
+    });
+
+    expect(result?.items).toEqual([]);
+  });
+
   it("includes the site's default locale, and each entry's locale/groupId", async () => {
     const deps = setup();
     await seedSite(deps.siteRepository, { defaultLocale: 'en' });
-    await createAndPublish(deps, 'chi-siamo');
+    const group = await createAndPublish(deps, 'chi-siamo');
 
     const result = await listPublishedPagesForSitemap(deps, {
       tenantId,
@@ -204,7 +240,7 @@ describe('listPublishedPagesForSitemap', () => {
     expect(result?.items[0]).toMatchObject({
       slug: 'chi-siamo',
       locale: 'it',
-      groupId: 'group-chi-siamo',
+      groupId: group.id,
     });
   });
 });

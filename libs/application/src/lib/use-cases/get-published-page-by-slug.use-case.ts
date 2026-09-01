@@ -1,18 +1,21 @@
 import type { PublishedPage } from '@brisk/shared-types';
 import type {
-  PageRepositoryPort,
+  PageGroupRepositoryPort,
+  PageTranslationRepositoryPort,
   SiteLayoutSectionRepositoryPort,
   SiteRepositoryPort,
   SiteThemeBlockStylesPort,
 } from '@brisk/ports';
 import { resolveSiteChrome } from './resolve-site-chrome';
-import { resolvePageByPath } from './resolve-page-by-path';
+import { resolvePageGroupByPath } from './resolve-page-group-by-path';
+import { resolvePageContentReferences } from './resolve-page-content-references';
 
 export type { PublishedPage };
 
 export interface GetPublishedPageBySlugDeps {
   siteRepository: SiteRepositoryPort;
-  pageRepository: PageRepositoryPort;
+  pageGroupRepository: PageGroupRepositoryPort;
+  pageTranslationRepository: PageTranslationRepositoryPort;
   siteLayoutSectionRepository: SiteLayoutSectionRepositoryPort;
   siteThemeBlockStylesRepository: SiteThemeBlockStylesPort;
 }
@@ -21,24 +24,22 @@ export interface GetPublishedPageBySlugInput {
   tenantId: string;
   domain: string;
   locale: string;
-  /** Full URL path, root to leaf (e.g. ['servizi', 'idraulica']) — sibling-scoped slugs mean the trailing segment alone is ambiguous, see resolvePageByPath. */
+  /** Full URL path, root to leaf (e.g. ['servizi', 'idraulica']) — sibling-scoped slugs mean the trailing segment alone is ambiguous, see resolvePageGroupByPath. */
   segments: string[];
 }
 
 /**
- * The public, unauthenticated read path (see apps/api's PublicPagesModule):
- * only ever returns `publishedContent`, never the draft `content`, and only
- * for a page whose status is actually 'published' — a page that exists but
- * is still a draft is indistinguishable from one that doesn't exist at all,
- * on purpose (no oracle for probing unpublished slugs). Resolves the site
- * from `domain` rather than trusting a client-supplied siteId/tenantId.
- * `locale` is caller-supplied (from the URL's locale prefix, docs/adr/0017)
- * rather than always the site's `defaultLocale` — if that exact
- * (locale, slug) pair has no published page, this returns `null` just like
- * any other not-found slug; it does NOT search sibling locales for the
- * same content, since there is no way to know a not-found page's `groupId`.
- * The language switcher (apps/public-site) instead uses `translations`
- * below, computed only once a page IS found.
+ * i18n a livello di campo (see the plan) — replaces the old Page-based
+ * implementation. `content` is always `translation.publishedSnapshot`
+ * (frozen at the last publish(), see PageTranslation's own doc comment),
+ * NEVER a live merge of PageGroup.content + fieldValues: a draft
+ * structural edit on the group must not leak into what a visitor sees
+ * before that translation is explicitly republished, same "draft vs.
+ * published" wall the old model had. Same public-read posture as before
+ * otherwise: only ever published content, resolves the site from `domain`
+ * rather than trusting a client-supplied id, `locale` is caller-supplied
+ * and never searches sibling locales itself (see
+ * resolveUntranslatedPageFallback for that).
  */
 export async function getPublishedPageBySlug(
   deps: GetPublishedPageBySlugDeps,
@@ -52,8 +53,11 @@ export async function getPublishedPageBySlug(
     return null;
   }
 
-  const resolved = await resolvePageByPath(
-    deps.pageRepository,
+  const resolved = await resolvePageGroupByPath(
+    {
+      pageGroupRepository: deps.pageGroupRepository,
+      pageTranslationRepository: deps.pageTranslationRepository,
+    },
     input.tenantId,
     site.id,
     input.locale,
@@ -62,23 +66,29 @@ export async function getPublishedPageBySlug(
   if (!resolved) {
     return null;
   }
-  const { page, ancestors } = resolved;
-  if (page.status !== 'published' || !page.publishedContent) {
+  const { translation, ancestors } = resolved;
+  if (translation.status !== 'published' || !translation.publishedSnapshot) {
     return null;
   }
 
-  const [siblings, chrome] = await Promise.all([
-    deps.pageRepository.listByGroup(input.tenantId, site.id, page.groupId),
+  const [siblings, chrome, [resolvedContent]] = await Promise.all([
+    deps.pageTranslationRepository.listByGroup(
+      input.tenantId,
+      translation.pageGroupId,
+    ),
     resolveSiteChrome(deps, input.tenantId, site, input.locale),
+    resolvePageContentReferences(deps, input.tenantId, input.locale, [
+      translation.publishedSnapshot,
+    ]),
   ]);
   const translations = siblings
     .filter((sibling) => sibling.status === 'published')
     .map((sibling) => ({ locale: sibling.locale, slug: sibling.slug }));
 
   return {
-    content: page.publishedContent,
-    seoMeta: page.seoMeta,
-    locale: page.locale,
+    content: resolvedContent,
+    seoMeta: translation.seoMeta,
+    locale: translation.locale,
     translations,
     ancestors,
     header: chrome.header,

@@ -219,17 +219,25 @@ export const languageSwitcherPropsSchema = navItemPositionSchema.extend({
 export type LanguageSwitcherProps = z.infer<typeof languageSwitcherPropsSchema>;
 
 /**
- * `locale`/`slug` are denormalized so a NavLink never needs a live lookup
- * to resolve where it points (same reasoning as PickedMedia's `url`) —
- * apps/public-site builds the href directly via localePath(locale, slug).
- * `title` is denormalized purely for the editor canvas/picker label (same
- * reasoning as PickedForm's `formName`), never used for rendering.
+ * i18n a livello di campo (see the plan) — `pageGroupId` is locale-
+ * independent by construction (a group, not one specific translation), on
+ * purpose: `locale`/`slug` used to be denormalized here at PICK time, which
+ * meant a link picked while editing one language pointed at THAT
+ * language's path even when the containing block is shared across every
+ * locale of the group (`page` isn't a `translatable` field — real bug,
+ * found live: an IT reader could get an EN link). `locale`/`slug` are now
+ * `.optional()` — present ONLY on a RESOLVED reference (added by
+ * `resolvePageReferences` in page-reference.ts, at publish/preview render
+ * time, for the locale actually being rendered), absent on the raw STORED
+ * value the editor picker writes. `title` stays denormalized purely for
+ * the editor canvas/picker label (same reasoning as PickedForm's
+ * `formName`), never used for rendering either way.
  */
 export const pickedPageSchema = z.object({
-  pageId: z.string(),
-  locale: z.string(),
-  slug: z.string(),
+  pageGroupId: z.string(),
   title: z.string(),
+  locale: z.string().optional(),
+  slug: z.string().optional(),
 });
 export type PickedPage = z.infer<typeof pickedPageSchema>;
 

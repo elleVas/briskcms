@@ -15,12 +15,14 @@ export const accordionItemBlock: BlockDescriptor<AccordionItemProps> = {
     {
       kind: 'text',
       key: 'question',
+      translatable: true,
       label: 'blocks.accordionItem.fields.question.fieldLabel',
       inlineEditable: true,
     },
     {
       kind: 'textarea',
       key: 'answer',
+      translatable: true,
       label: 'blocks.accordionItem.fields.answer.fieldLabel',
       inlineEditable: true,
     },

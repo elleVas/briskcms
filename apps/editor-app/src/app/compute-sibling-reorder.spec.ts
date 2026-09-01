@@ -1,79 +1,53 @@
 import { describe, expect, it } from 'vitest';
-import type { PageListItem } from '../lib/pages-api-client';
+import type { HierarchyItem } from './page-hierarchy';
 import { computeSiblingReorder } from './compute-sibling-reorder';
 
-function page(overrides: Partial<PageListItem>): PageListItem {
-  return {
-    id: 'id',
-    tenantId: 't',
-    siteId: 's',
-    groupId: 'g',
-    locale: 'it',
-    slug: 'slug',
-    parentId: null,
-    status: 'draft',
-    seoMeta: { title: 'Title', description: '' },
-    order: 0,
-    createdByName: null,
-    createdAt: '2026-01-01T00:00:00.000Z',
-    updatedAt: '2026-01-01T00:00:00.000Z',
-    hasUnpublishedChanges: false,
-    ...overrides,
-  };
+function item(overrides: Partial<HierarchyItem>): HierarchyItem {
+  return { id: 'id', parentId: null, ...overrides };
 }
 
 describe('computeSiblingReorder', () => {
-  it('moves the active page to the position of the over page, within the same (locale, parentId) group', () => {
-    const pages = [
-      page({ id: 'a', parentId: null, locale: 'it' }),
-      page({ id: 'b', parentId: null, locale: 'it' }),
-      page({ id: 'c', parentId: null, locale: 'it' }),
+  it('moves the active item to the position of the over item, within the same parentId group', () => {
+    const items = [
+      item({ id: 'a', parentId: null }),
+      item({ id: 'b', parentId: null }),
+      item({ id: 'c', parentId: null }),
     ];
-    expect(computeSiblingReorder(pages, 'a', 'c')).toEqual({
-      locale: 'it',
+    expect(computeSiblingReorder(items, 'a', 'c')).toEqual({
       parentId: null,
-      orderedPageIds: ['b', 'c', 'a'],
+      orderedIds: ['b', 'c', 'a'],
     });
   });
 
   it('returns null when dropped on itself', () => {
-    const pages = [page({ id: 'a' }), page({ id: 'b' })];
-    expect(computeSiblingReorder(pages, 'a', 'a')).toBeNull();
+    const items = [item({ id: 'a' }), item({ id: 'b' })];
+    expect(computeSiblingReorder(items, 'a', 'a')).toBeNull();
   });
 
   it('returns null when there is no drop target', () => {
-    const pages = [page({ id: 'a' })];
-    expect(computeSiblingReorder(pages, 'a', null)).toBeNull();
+    const items = [item({ id: 'a' })];
+    expect(computeSiblingReorder(items, 'a', null)).toBeNull();
   });
 
-  it("rejects a drop across different parents (reparenting is ParentPageSelect's job, not drag)", () => {
-    const pages = [
-      page({ id: 'a', parentId: null }),
-      page({ id: 'root' }),
-      page({ id: 'b', parentId: 'root' }),
+  it('rejects a drop across different parents (reparenting has no UI yet)', () => {
+    const items = [
+      item({ id: 'a', parentId: null }),
+      item({ id: 'root' }),
+      item({ id: 'b', parentId: 'root' }),
     ];
-    expect(computeSiblingReorder(pages, 'a', 'b')).toBeNull();
+    expect(computeSiblingReorder(items, 'a', 'b')).toBeNull();
   });
 
-  it('rejects a drop across different locales, even under the same parentId value', () => {
-    const pages = [
-      page({ id: 'a', locale: 'it', parentId: null }),
-      page({ id: 'b', locale: 'en', parentId: null }),
+  it('only reorders within the dragged group, ignoring items from other groups mixed into the flat list', () => {
+    const items = [
+      item({ id: 'root' }),
+      item({ id: 'a', parentId: 'root' }),
+      item({ id: 'x', parentId: null }), // unrelated sibling, different group
+      item({ id: 'b', parentId: 'root' }),
     ];
-    expect(computeSiblingReorder(pages, 'a', 'b')).toBeNull();
-  });
-
-  it('only reorders within the dragged group, ignoring pages from other groups mixed into the flat list', () => {
-    const pages = [
-      page({ id: 'root' }),
-      page({ id: 'a', parentId: 'root', locale: 'it' }),
-      page({ id: 'x', parentId: null, locale: 'it' }), // unrelated sibling, different group
-      page({ id: 'b', parentId: 'root', locale: 'it' }),
-    ];
-    expect(computeSiblingReorder(pages, 'a', 'b')).toEqual({
-      locale: 'it',
+    expect(computeSiblingReorder(items, 'a', 'b')).toEqual({
       parentId: 'root',
-      orderedPageIds: ['b', 'a'],
+      orderedIds: ['b', 'a'],
     });
   });
 });

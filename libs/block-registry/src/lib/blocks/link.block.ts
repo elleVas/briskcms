@@ -16,6 +16,7 @@ export const linkBlock: BlockDescriptor<LinkProps> = {
     {
       kind: 'text',
       key: 'label',
+      translatable: true,
       label: 'blocks.link.fields.label.fieldLabel',
       inlineEditable: true,
     },

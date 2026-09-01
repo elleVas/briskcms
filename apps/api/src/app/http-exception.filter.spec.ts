@@ -1,6 +1,6 @@
 import { Logger, NotFoundException } from '@nestjs/common';
 import type { ArgumentsHost } from '@nestjs/common';
-import { PageNotFoundError } from '@brisk/domain-core';
+import { PageGroupNotFoundError } from '@brisk/domain-core';
 import { HttpExceptionFilter } from './http-exception.filter';
 import type { RequestWithId } from './request-id.middleware';
 
@@ -58,7 +58,7 @@ describe('HttpExceptionFilter', () => {
       originalUrl: '/pages/abc',
     });
 
-    filter.catch(new PageNotFoundError('abc'), host);
+    filter.catch(new PageGroupNotFoundError('abc'), host);
 
     expect(status).toHaveBeenCalledWith(404);
     expect(json).toHaveBeenCalledWith(
@@ -107,7 +107,7 @@ describe('HttpExceptionFilter', () => {
       originalUrl: '/pages/missing',
     });
 
-    filter.catch(new PageNotFoundError('missing'), host);
+    filter.catch(new PageGroupNotFoundError('missing'), host);
 
     expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('req-5'));
     expect(errorSpy).not.toHaveBeenCalled();

@@ -19,6 +19,7 @@ export const testimonialBlock: BlockDescriptor<TestimonialProps> = {
     {
       kind: 'textarea',
       key: 'quote',
+      translatable: true,
       label: 'blocks.testimonial.fields.quote.fieldLabel',
       inlineEditable: true,
     },
@@ -31,6 +32,7 @@ export const testimonialBlock: BlockDescriptor<TestimonialProps> = {
     {
       kind: 'text',
       key: 'role',
+      translatable: true,
       label: 'blocks.testimonial.fields.role.fieldLabel',
       inlineEditable: true,
     },

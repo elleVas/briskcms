@@ -28,6 +28,7 @@ export const countdownBlock: BlockDescriptor<CountdownProps> = {
     {
       kind: 'text',
       key: 'label',
+      translatable: true,
       label: 'blocks.countdown.fields.label.fieldLabel',
       inlineEditable: true,
     },

@@ -14,6 +14,7 @@ export const searchBoxBlock: BlockDescriptor<SearchBoxProps> = {
     {
       kind: 'text',
       key: 'placeholder',
+      translatable: true,
       label: 'blocks.searchBox.fields.placeholder.fieldLabel',
     },
     visibilityField,

@@ -13,12 +13,14 @@ export const newsletterSignupBlock: BlockDescriptor<NewsletterSignupProps> = {
     {
       kind: 'text',
       key: 'title',
+      translatable: true,
       label: 'blocks.newsletterSignup.fields.title.fieldLabel',
       inlineEditable: true,
     },
     {
       kind: 'text',
       key: 'buttonLabel',
+      translatable: true,
       label: 'blocks.newsletterSignup.fields.buttonLabel.fieldLabel',
       inlineEditable: true,
     },

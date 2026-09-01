@@ -45,6 +45,81 @@ describe('pageBlockCategories', () => {
   });
 });
 
+// i18n a livello di campo (struttura condivisa + override per-locale):
+// `translatable` è opt-in esplicito, mai dedotto da `kind`/`inlineEditable`
+// (Image.alt è traducibile ma non inlineEditable — nessuna euristica
+// automatica è affidabile). Spot-check sulle decisioni meno ovvie
+// dell'audit, non esaustivo: il resto è auto-documentato nei singoli
+// *.block.ts.
+describe('translatable field audit spot-checks', () => {
+  function fieldOf(type: string, key: string) {
+    const block = pageBlocks.find((b) => b.type === type);
+    if (!block) throw new Error(`Test fixture is missing block type "${type}"`);
+    const field = block.fields.find(
+      (f): f is Extract<typeof f, { key: string }> => f.key === key,
+    );
+    if (!field)
+      throw new Error(`Test fixture is missing field "${key}" on "${type}"`);
+    return field;
+  }
+
+  it('marks ordinary text content as translatable', () => {
+    expect(
+      (fieldOf('Hero', 'title') as { translatable?: boolean }).translatable,
+    ).toBe(true);
+    expect(
+      (fieldOf('Text', 'body') as { translatable?: boolean }).translatable,
+    ).toBe(true);
+    expect(
+      (fieldOf('Image', 'alt') as { translatable?: boolean }).translatable,
+    ).toBe(true);
+  });
+
+  it("leaves a person's proper name untranslated (shared across locales)", () => {
+    expect(
+      (fieldOf('Testimonial', 'author') as { translatable?: boolean })
+        .translatable,
+    ).not.toBe(true);
+    expect(
+      (fieldOf('TeamMember', 'name') as { translatable?: boolean })
+        .translatable,
+    ).not.toBe(true);
+  });
+
+  it('leaves structural/data fields (video/date) untranslated', () => {
+    expect(
+      (fieldOf('VideoEmbed', 'url') as { translatable?: boolean }).translatable,
+    ).not.toBe(true);
+    expect(
+      (fieldOf('Countdown', 'targetDate') as { translatable?: boolean })
+        .translatable,
+    ).not.toBe(true);
+  });
+
+  // Found live during the i18n backfill against real docs-showcase content
+  // (not just theorized): a real site used ctaLinkFields()'s `url` for a
+  // hand-typed internal path ("/it/docs"), not just a true external link —
+  // marked translatable after the fact, this locks the correction in.
+  it("marks ctaLinkFields()'s shared `url` field as translatable — internal relative paths must vary by locale", () => {
+    expect(
+      (fieldOf('Button', 'url') as { translatable?: boolean }).translatable,
+    ).toBe(true);
+    expect(
+      (fieldOf('Banner', 'url') as { translatable?: boolean }).translatable,
+    ).toBe(true);
+  });
+
+  // Found live during round-trip verification of the i18n backfill (not
+  // just theorized): real Code blocks embed human-language comments in the
+  // snippet (e.g. "# overrides Hero") that were hand-translated per locale
+  // under the old duplicated-page model — locks the correction in.
+  it('marks Code.code as translatable — snippets can embed human-language comments', () => {
+    expect(
+      (fieldOf('Code', 'code') as { translatable?: boolean }).translatable,
+    ).toBe(true);
+  });
+});
+
 // Security review 2026-08-24, point 16: nulla verificava che
 // `stylableProperties` di un blocco corrispondesse alle chiavi presenti in
 // `BLOCK_STYLE_DEFAULTS` — un disallineamento (es. un blocco dichiara

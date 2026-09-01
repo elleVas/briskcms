@@ -1,27 +1,35 @@
 import { eq, sql } from 'drizzle-orm';
-import type { Page } from '@brisk/domain-core';
+import type { PageTranslation } from '@brisk/domain-core';
 import type { PageSearchResult, SearchPort } from '@brisk/ports';
 import { extractSearchableText } from '@brisk/shared-types';
-import { type BriskDb, pages, withTenant } from '@brisk/postgres-db';
+import { type BriskDb, pageTranslations, withTenant } from '@brisk/postgres-db';
 
 /**
  * Postgres-specific SearchPort implementation: `search_text` is a plain
  * column indexPage() writes to, `search_vector` (tsvector) is a generated
- * column Postgres derives from it automatically (see
- * drizzle/0000_baseline_schema.sql) — this class never reads or
- * writes search_vector directly, only search_text and (read-only)
- * search_vector's own GIN index via raw SQL in search().
+ * column Postgres derives from it automatically (see the migration that
+ * added it, Fase 5 of the i18n plan — replaces the old pages.search_text)
+ * — this class never reads or writes search_vector directly, only
+ * search_text and (read-only) search_vector's own GIN index via raw SQL in
+ * search().
  */
 export class DrizzleSearchRepository implements SearchPort {
   constructor(private readonly db: BriskDb) {}
 
-  async indexPage(tenantId: string, siteId: string, page: Page): Promise<void> {
+  async indexPage(
+    tenantId: string,
+    siteId: string,
+    translation: PageTranslation,
+  ): Promise<void> {
     const searchText = extractSearchableText(
-      page.seoMeta,
-      page.publishedContent ?? [],
+      translation.seoMeta,
+      translation.publishedSnapshot ?? [],
     );
     await withTenant(this.db, tenantId, (tx) =>
-      tx.update(pages).set({ searchText }).where(eq(pages.id, page.id)),
+      tx
+        .update(pageTranslations)
+        .set({ searchText })
+        .where(eq(pageTranslations.id, translation.id)),
     );
   }
 
@@ -61,7 +69,7 @@ export class DrizzleSearchRepository implements SearchPort {
             plainto_tsquery('italian', ${query}),
             E'StartSel=\\x01, StopSel=\\x02, MaxFragments=1, MaxWords=30, MinWords=15'
           ) as excerpt
-        from pages
+        from page_translations
         where site_id = ${siteId}
           and locale = ${locale}
           and status = 'published'

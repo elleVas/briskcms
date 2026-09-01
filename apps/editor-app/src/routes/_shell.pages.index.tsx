@@ -1,9 +1,20 @@
+import { useState } from 'react';
 import { createFileRoute } from '@tanstack/react-router';
-import { useSuspenseQuery } from '@tanstack/react-query';
+import {
+  keepPreviousData,
+  useQuery,
+  useSuspenseQuery,
+} from '@tanstack/react-query';
 import { z } from 'zod';
-import { pagesQueryOptions } from '../app/pages-queries';
-import { PagesListView } from '../app/pages-list-view';
+import type { ListPageGroupsFilters } from '../lib/page-groups-api-client';
+import { pageGroupsQueryOptions } from '../app/page-groups-queries';
+import { PageGroupsListView } from '../app/page-groups-list-view';
+import {
+  EMPTY_PAGES_LIST_FILTERS,
+  type PagesListFilterValues,
+} from '../app/pages-list-filter-bar';
 import { siteQueryOptions } from '../app/site-queries';
+import { useDebouncedValue } from '../app/use-debounced-value';
 import { requireAuth } from './-require-auth';
 
 const DEFAULT_SITE_ID = import.meta.env['VITE_DEFAULT_SITE_ID'] as string;
@@ -12,7 +23,8 @@ const DEFAULT_SITE_ID = import.meta.env['VITE_DEFAULT_SITE_ID'] as string;
 // doesn't care what page it lands on (TanStack Router requires a search
 // param at the type level unless the schema marks it optional/defaulted);
 // .catch(1) on top covers a garbled value (?page=abc, ?page=-5) the same
-// way, not just a missing one.
+// way, not just a missing one. Filters themselves are deliberately NOT
+// URL-synced (see PagesListRoute's own comment) — only pagination is.
 const pagesListSearchSchema = z.object({
   page: z.coerce.number().int().min(1).default(1).catch(1),
 });
@@ -23,8 +35,12 @@ export const Route = createFileRoute('/_shell/pages/')({
   loader: ({ context, deps }) =>
     requireAuth(() =>
       Promise.all([
+        // Warms only the unfiltered page-1(+N)-equivalent fetch (no
+        // filters applied yet at first paint) — once the user actually
+        // touches the filter bar, the component below refetches via a
+        // plain (non-suspense) useQuery instead, see its own comment.
         context.queryClient.ensureQueryData(
-          pagesQueryOptions(DEFAULT_SITE_ID, deps.page),
+          pageGroupsQueryOptions(DEFAULT_SITE_ID, deps.page),
         ),
         context.queryClient.ensureQueryData(siteQueryOptions(DEFAULT_SITE_ID)),
       ]),
@@ -32,18 +48,62 @@ export const Route = createFileRoute('/_shell/pages/')({
   component: PagesListRoute,
 });
 
+function toApiFilters(
+  filters: PagesListFilterValues,
+  debouncedSearch: string,
+): ListPageGroupsFilters {
+  return {
+    search: debouncedSearch || undefined,
+    createdAfter: filters.createdAfter
+      ? new Date(filters.createdAfter)
+      : undefined,
+    createdBefore: filters.createdBefore
+      ? new Date(filters.createdBefore)
+      : undefined,
+    createdBy: filters.createdBy || undefined,
+    locale: filters.locale || undefined,
+  };
+}
+
 function PagesListRoute() {
   const { page } = Route.useSearch();
-  const { data } = useSuspenseQuery(pagesQueryOptions(DEFAULT_SITE_ID, page));
   const { data: site } = useSuspenseQuery(siteQueryOptions(DEFAULT_SITE_ID));
+  // Local, not URL-synced (unlike `page`): the filter bar's own text input
+  // needs to update on every keystroke, and syncing that straight into the
+  // route search params would mean a full loader re-run (and, worse, a
+  // Suspense re-render blanking the whole list including the input itself)
+  // on every character typed. Only the SEARCH text is debounced before it
+  // reaches the query — the other filters are discrete selections
+  // (date/creator/locale), not typed text, so there's nothing to debounce
+  // there.
+  const [filters, setFilters] = useState(EMPTY_PAGES_LIST_FILTERS);
+  const debouncedSearch = useDebouncedValue(filters.search, 300);
+
+  // A plain (non-suspense) query, not useSuspenseQuery like the initial
+  // loader fetch above: filtering/paginating after the first paint must
+  // update in place, not blank the screen back to a Suspense fallback.
+  // `placeholderData: keepPreviousData` keeps the OLD rows on screen
+  // (with `isFetching` true) while a new filter combination loads, instead
+  // of flashing empty.
+  const { data } = useQuery({
+    ...pageGroupsQueryOptions(
+      DEFAULT_SITE_ID,
+      page,
+      toApiFilters(filters, debouncedSearch),
+    ),
+    placeholderData: keepPreviousData,
+  });
 
   return (
-    <PagesListView
+    <PageGroupsListView
       siteId={DEFAULT_SITE_ID}
       defaultLocale={site.defaultLocale}
-      pages={data.items}
+      enabledLocales={site.enabledLocales}
+      groups={data?.items ?? []}
       page={page}
-      total={data.total}
+      total={data?.total ?? 0}
+      filters={filters}
+      onFiltersChange={setFilters}
     />
   );
 }

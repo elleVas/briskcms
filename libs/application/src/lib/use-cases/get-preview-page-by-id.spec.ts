@@ -1,12 +1,15 @@
 import { describe, expect, it } from 'vitest';
 import { Site, SiteLayoutSection } from '@brisk/domain-core';
-import { createPage } from './create-page.use-case';
-import { saveDraft } from './save-draft.use-case';
-import { publishPage } from './publish-page.use-case';
+import { createPageGroup } from './create-page-group.use-case';
+import { createPageGroupTranslation } from './create-page-group-translation.use-case';
+import { publishPageTranslation } from './publish-page-translation.use-case';
+import { savePageGroupContent } from './save-page-group-content.use-case';
 import { getPreviewPageById } from './get-preview-page-by-id.use-case';
 import {
-  InMemoryPageRepository,
-  InMemoryPageVersionRepository,
+  InMemoryPageGroupRepository,
+  InMemoryPageGroupVersionRepository,
+  InMemoryPageTranslationRepository,
+  InMemoryPageTranslationVersionRepository,
   InMemoryPreviewTokenPort,
   InMemorySearchPort,
   InMemorySiteLayoutSectionRepository,
@@ -18,23 +21,24 @@ describe('getPreviewPageById', () => {
   const tenantId = 'tenant-1';
 
   function setup() {
-    const pageRepository = new InMemoryPageRepository();
-    const pageVersionRepository = new InMemoryPageVersionRepository();
-    const siteRepository = new InMemorySiteRepository();
-    const siteLayoutSectionRepository =
-      new InMemorySiteLayoutSectionRepository();
-    const siteThemeBlockStylesRepository =
-      new InMemorySiteThemeBlockStylesRepository();
-    const searchPort = new InMemorySearchPort();
-    const previewTokenPort = new InMemoryPreviewTokenPort();
+    const pageGroupVersionRepository = new InMemoryPageGroupVersionRepository();
+    const pageTranslationVersionRepository =
+      new InMemoryPageTranslationVersionRepository();
     return {
-      pageRepository,
-      pageVersionRepository,
-      siteRepository,
-      siteLayoutSectionRepository,
-      siteThemeBlockStylesRepository,
-      searchPort,
-      previewTokenPort,
+      pageGroupRepository: new InMemoryPageGroupRepository(
+        pageGroupVersionRepository,
+      ),
+      pageGroupVersionRepository,
+      pageTranslationRepository: new InMemoryPageTranslationRepository(
+        pageTranslationVersionRepository,
+      ),
+      pageTranslationVersionRepository,
+      siteRepository: new InMemorySiteRepository(),
+      siteLayoutSectionRepository: new InMemorySiteLayoutSectionRepository(),
+      siteThemeBlockStylesRepository:
+        new InMemorySiteThemeBlockStylesRepository(),
+      previewTokenPort: new InMemoryPreviewTokenPort(),
+      searchPort: new InMemorySearchPort(),
     };
   }
 
@@ -67,34 +71,48 @@ describe('getPreviewPageById', () => {
     return site;
   }
 
+  async function createGroupAndTranslation(
+    deps: ReturnType<typeof setup>,
+    slug: string,
+    title: string,
+    content: Parameters<typeof createPageGroup>[1]['content'] = [],
+  ) {
+    const group = await createPageGroup(deps, {
+      tenantId,
+      siteId: 'site-1',
+      content,
+      createdBy: 'user-1',
+    });
+    const translation = await createPageGroupTranslation(deps, {
+      tenantId,
+      pageGroupId: group.id,
+      locale: 'it',
+      slug,
+      seoMeta: { title, description: '' },
+      createdBy: 'user-1',
+    });
+    return { group, translation };
+  }
+
   it('returns the draft content behind a valid token, even for a never-published page', async () => {
     const deps = setup();
     await seedSite(deps.siteRepository);
-    const page = await createPage(deps, {
-      tenantId,
-      siteId: 'site-1',
-      groupId: 'group-1',
-      locale: 'it',
-      slug: 'bozza',
-      seoMeta: { title: 'Bozza', description: '' },
-      createdBy: 'user-1',
-    });
-    await saveDraft(deps, {
-      tenantId,
-      pageId: page.id,
-      content: [{ type: 'Hero', props: { title: 'In lavorazione' } }],
-      actorUserId: 'user-1',
-    });
+    const { translation } = await createGroupAndTranslation(
+      deps,
+      'bozza',
+      'Bozza',
+      [{ type: 'Hero', props: { title: 'In lavorazione' } }],
+    );
     const { token } = await deps.previewTokenPort.createToken(
       tenantId,
       'page',
-      page.id,
+      translation.id,
       60_000,
     );
 
     const result = await getPreviewPageById(deps, {
       tenantId,
-      pageId: page.id,
+      pageId: translation.id,
       token,
     });
 
@@ -106,38 +124,35 @@ describe('getPreviewPageById', () => {
   it('shows unpublished draft edits made after the last publish', async () => {
     const deps = setup();
     await seedSite(deps.siteRepository);
-    const page = await createPage(deps, {
+    const { group, translation } = await createGroupAndTranslation(
+      deps,
+      'chi-siamo',
+      'Chi siamo',
+      [{ type: 'Text', props: { body: 'published version' } }],
+    );
+    await publishPageTranslation(deps, {
       tenantId,
-      siteId: 'site-1',
-      groupId: 'group-1',
-      locale: 'it',
-      slug: 'chi-siamo',
-      seoMeta: { title: 'Chi siamo', description: '' },
-      createdBy: 'user-1',
+      pageTranslationId: translation.id,
     });
-    await saveDraft(deps, {
+    // Edited again after publishing — unlike getPublishedPageBySlug's
+    // frozen publishedSnapshot, preview always shows the CURRENT live
+    // merge of PageGroup.content (see the use case's own comment).
+    await savePageGroupContent(deps, {
       tenantId,
-      pageId: page.id,
-      content: [{ type: 'Text', props: { body: 'published version' } }],
-      actorUserId: 'user-1',
-    });
-    await publishPage(deps, { tenantId, pageId: page.id });
-    await saveDraft(deps, {
-      tenantId,
-      pageId: page.id,
+      pageGroupId: group.id,
       content: [{ type: 'Text', props: { body: 'unpublished draft edit' } }],
       actorUserId: 'user-1',
     });
     const { token } = await deps.previewTokenPort.createToken(
       tenantId,
       'page',
-      page.id,
+      translation.id,
       60_000,
     );
 
     const result = await getPreviewPageById(deps, {
       tenantId,
-      pageId: page.id,
+      pageId: translation.id,
       token,
     });
 
@@ -149,15 +164,11 @@ describe('getPreviewPageById', () => {
   it('shows the real draft of header/footer, not just what is published', async () => {
     const deps = setup();
     await seedSite(deps.siteRepository);
-    const page = await createPage(deps, {
-      tenantId,
-      siteId: 'site-1',
-      groupId: 'group-1',
-      locale: 'it',
-      slug: 'chi-siamo',
-      seoMeta: { title: 'Chi siamo', description: '' },
-      createdBy: 'user-1',
-    });
+    const { translation } = await createGroupAndTranslation(
+      deps,
+      'chi-siamo',
+      'Chi siamo',
+    );
     const header = SiteLayoutSection.create({
       id: 'header-1',
       tenantId,
@@ -171,13 +182,13 @@ describe('getPreviewPageById', () => {
     const { token } = await deps.previewTokenPort.createToken(
       tenantId,
       'page',
-      page.id,
+      translation.id,
       60_000,
     );
 
     const result = await getPreviewPageById(deps, {
       tenantId,
-      pageId: page.id,
+      pageId: translation.id,
       token,
     });
 
@@ -189,20 +200,16 @@ describe('getPreviewPageById', () => {
   it('returns null for a missing/expired/mismatched token', async () => {
     const deps = setup();
     await seedSite(deps.siteRepository);
-    const page = await createPage(deps, {
-      tenantId,
-      siteId: 'site-1',
-      groupId: 'group-1',
-      locale: 'it',
-      slug: 'chi-siamo',
-      seoMeta: { title: 'Chi siamo', description: '' },
-      createdBy: 'user-1',
-    });
+    const { translation } = await createGroupAndTranslation(
+      deps,
+      'chi-siamo',
+      'Chi siamo',
+    );
 
     expect(
       await getPreviewPageById(deps, {
         tenantId,
-        pageId: page.id,
+        pageId: translation.id,
         token: 'not-a-real-token',
       }),
     ).toBeNull();
@@ -211,15 +218,11 @@ describe('getPreviewPageById', () => {
   it('returns null when the token belongs to a different page', async () => {
     const deps = setup();
     await seedSite(deps.siteRepository);
-    const page = await createPage(deps, {
-      tenantId,
-      siteId: 'site-1',
-      groupId: 'group-1',
-      locale: 'it',
-      slug: 'chi-siamo',
-      seoMeta: { title: 'Chi siamo', description: '' },
-      createdBy: 'user-1',
-    });
+    const { translation } = await createGroupAndTranslation(
+      deps,
+      'chi-siamo',
+      'Chi siamo',
+    );
     const { token } = await deps.previewTokenPort.createToken(
       tenantId,
       'page',
@@ -228,31 +231,35 @@ describe('getPreviewPageById', () => {
     );
 
     expect(
-      await getPreviewPageById(deps, { tenantId, pageId: page.id, token }),
+      await getPreviewPageById(deps, {
+        tenantId,
+        pageId: translation.id,
+        token,
+      }),
     ).toBeNull();
   });
 
   it('returns null for a token belonging to a different tenant', async () => {
     const deps = setup();
     await seedSite(deps.siteRepository);
-    const page = await createPage(deps, {
-      tenantId,
-      siteId: 'site-1',
-      groupId: 'group-1',
-      locale: 'it',
-      slug: 'chi-siamo',
-      seoMeta: { title: 'Chi siamo', description: '' },
-      createdBy: 'user-1',
-    });
+    const { translation } = await createGroupAndTranslation(
+      deps,
+      'chi-siamo',
+      'Chi siamo',
+    );
     const { token } = await deps.previewTokenPort.createToken(
       'another-tenant',
       'page',
-      page.id,
+      translation.id,
       60_000,
     );
 
     expect(
-      await getPreviewPageById(deps, { tenantId, pageId: page.id, token }),
+      await getPreviewPageById(deps, {
+        tenantId,
+        pageId: translation.id,
+        token,
+      }),
     ).toBeNull();
   });
 

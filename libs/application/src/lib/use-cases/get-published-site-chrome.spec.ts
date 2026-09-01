@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { Site, SiteLayoutSection } from '@brisk/domain-core';
 import { getPublishedSiteChrome } from './get-published-site-chrome.use-case';
 import {
+  InMemoryPageTranslationRepository,
   InMemorySiteLayoutSectionRepository,
   InMemorySiteRepository,
   InMemorySiteThemeBlockStylesRepository,
@@ -16,10 +17,12 @@ describe('getPublishedSiteChrome', () => {
       new InMemorySiteLayoutSectionRepository();
     const siteThemeBlockStylesRepository =
       new InMemorySiteThemeBlockStylesRepository();
+    const pageTranslationRepository = new InMemoryPageTranslationRepository();
     return {
       siteRepository,
       siteLayoutSectionRepository,
       siteThemeBlockStylesRepository,
+      pageTranslationRepository,
     };
   }
 

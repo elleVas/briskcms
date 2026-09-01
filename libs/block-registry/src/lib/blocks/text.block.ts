@@ -13,6 +13,7 @@ export const textBlock: BlockDescriptor<TextProps> = {
     {
       kind: 'textarea',
       key: 'body',
+      translatable: true,
       label: 'blocks.text.fields.body.fieldLabel',
       inlineEditable: true,
     },

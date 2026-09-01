@@ -9,16 +9,24 @@ import {
   DialogTitle,
 } from '../components/ui/dialog';
 import { cn } from '../lib/utils';
-import type { PageListItem } from '../lib/pages-api-client';
-import { PAGES_PAGE_SIZE, pagesQueryOptions } from './pages-queries';
+import {
+  PAGE_GROUPS_PAGE_SIZE,
+  pageGroupsQueryOptions,
+} from './page-groups-queries';
 import { IconButton } from './icon-button';
+
+export interface PagePickerOption {
+  pageGroupId: string;
+  title: string;
+  slug: string;
+}
 
 export interface PagePickerDialogProps {
   siteId: string;
   locale: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSelect: (page: PageListItem) => void;
+  onSelect: (page: PagePickerOption) => void;
 }
 
 export function PagePickerDialog({
@@ -32,19 +40,29 @@ export function PagePickerDialog({
   const [page, setPage] = useState(1);
   // Gated on `open`: same reasoning as FormPickerDialog/MediaPickerDialog —
   // this dialog is mounted for the lifetime of the section editor, not
-  // just while visible.
+  // just while visible. `locale` filters server-side (only groups that
+  // actually have a translation in this locale come back), unlike the old
+  // client-side filter this replaced — a NavLink only ever offers pages in
+  // its own locale (docs/adr/0018).
   const { data } = useQuery({
-    ...pagesQueryOptions(siteId, page),
+    ...pageGroupsQueryOptions(siteId, page, { locale }),
     enabled: open,
   });
-  // Client-side, not a new `locale` query param on GET /pages: at the
-  // "5-15 pages per site" scale every page already fits on one server
-  // page, so filtering here is enough and doesn't need a backend change
-  // (docs/adr/0018) — a NavLink only ever offers pages in its own locale.
-  const items = data?.items.filter((p) => p.locale === locale) ?? [];
+  const items: PagePickerOption[] = (data?.items ?? []).flatMap((group) => {
+    const translation = group.translations.find((t) => t.locale === locale);
+    return translation
+      ? [
+          {
+            pageGroupId: group.id,
+            title: translation.title || translation.slug,
+            slug: translation.slug,
+          },
+        ]
+      : [];
+  });
   const totalPages = Math.max(
     1,
-    Math.ceil((data?.total ?? 0) / PAGES_PAGE_SIZE),
+    Math.ceil((data?.total ?? 0) / PAGE_GROUPS_PAGE_SIZE),
   );
 
   function handleOpenChange(next: boolean) {
@@ -66,7 +84,7 @@ export function PagePickerDialog({
         {items.length > 0 && (
           <ul className="divide-y rounded-md border">
             {items.map((p) => (
-              <li key={p.id}>
+              <li key={p.pageGroupId}>
                 <button
                   type="button"
                   onClick={() => onSelect(p)}
@@ -74,9 +92,7 @@ export function PagePickerDialog({
                     'flex w-full items-center justify-between px-3 py-2 text-left text-sm hover:bg-muted',
                   )}
                 >
-                  <span className="font-medium">
-                    {p.seoMeta.title || p.slug}
-                  </span>
+                  <span className="font-medium">{p.title}</span>
                   <span className="text-xs text-muted-foreground">
                     {p.slug}
                   </span>

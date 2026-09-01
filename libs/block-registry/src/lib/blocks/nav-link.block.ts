@@ -22,6 +22,7 @@ export const navLinkBlock: BlockDescriptor<NavLinkProps> = {
     {
       kind: 'text',
       key: 'label',
+      translatable: true,
       label: 'blocks.navLink.fields.label.fieldLabel',
       inlineEditable: true,
     },

@@ -22,6 +22,18 @@ export type FieldDescriptor =
       required?: boolean;
       /** Name of a sibling boolean prop that, when true, waives `required` — e.g. an "isDecorative" flag legitimately making an empty alt correct (WCAG), not an oversight. */
       requiredUnless?: string;
+      /**
+       * Opt-in, explicit — never derived from `inlineEditable` or `kind`.
+       * A field can be free text without being locale-specific content
+       * (e.g. an external URL typed via `kind: 'text'`), and conversely can
+       * be translatable without being inline-editable (e.g. `alt`, an
+       * attribute rather than a visible canvas node) — neither existing
+       * flag is a reliable proxy, so this is its own field. `false`/absent
+       * = the value lives on the shared page-group structure, same for
+       * every locale; `true` = per-locale override (see
+       * `mergeTranslatedContent`).
+       */
+      translatable?: boolean;
     }
   | {
       kind: 'textarea';
@@ -31,6 +43,7 @@ export type FieldDescriptor =
       placeholder?: string;
       required?: boolean;
       requiredUnless?: string;
+      translatable?: boolean;
     }
   | {
       kind: 'radio' | 'select';

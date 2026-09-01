@@ -15,7 +15,7 @@ type Props = PromoBarProps & {
 
 const { message, linkType, page, url, visibility, styleOverride, locale } =
   Astro.props;
-const href = linkType === 'page' && page ? localePath(page.locale, page.slug) : url;
+const href = linkType === 'page' && page?.locale && page?.slug ? localePath(page.locale, page.slug) : url;
 const hasLink = linkType === 'page' ? Boolean(page) : Boolean(url);
 const instanceStyle = buildBlockInstanceStyle(styleOverride);
 const i18n = new Translator(locale);

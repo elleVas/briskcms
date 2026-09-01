@@ -2,7 +2,10 @@ import { Module } from '@nestjs/common';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { requireEnv } from '@brisk/env-config';
 import { type BriskDb } from '@brisk/postgres-db';
-import { DrizzlePageRepository } from '@brisk/postgres-page-repository';
+import {
+  DrizzlePageGroupRepository,
+  DrizzlePageTranslationRepository,
+} from '@brisk/postgres-page-repository';
 import { PreviewTokenAdapter } from '@brisk/preview-token-adapter';
 import { DrizzleSearchRepository } from '@brisk/postgres-search-repository';
 import { DrizzleSiteLayoutSectionRepository } from '@brisk/postgres-site-layout-section-repository';
@@ -14,7 +17,8 @@ import { DATABASE, DatabaseModule } from '../database.module';
 import { PublicPagesController } from './public-pages.controller';
 import {
   DEFAULT_TENANT_ID,
-  PAGE_REPOSITORY,
+  PAGE_GROUP_REPOSITORY,
+  PAGE_TRANSLATION_REPOSITORY,
   PREVIEW_TOKEN_PORT,
   SEARCH_REPOSITORY,
   SITE_LAYOUT_SECTION_REPOSITORY,
@@ -42,8 +46,13 @@ import {
       useFactory: (): string => requireEnv('DEFAULT_TENANT_ID'),
     },
     {
-      provide: PAGE_REPOSITORY,
-      useFactory: (db: BriskDb) => new DrizzlePageRepository(db),
+      provide: PAGE_GROUP_REPOSITORY,
+      useFactory: (db: BriskDb) => new DrizzlePageGroupRepository(db),
+      inject: [DATABASE],
+    },
+    {
+      provide: PAGE_TRANSLATION_REPOSITORY,
+      useFactory: (db: BriskDb) => new DrizzlePageTranslationRepository(db),
       inject: [DATABASE],
     },
     {

@@ -29,6 +29,20 @@
       "when": 1788131647511,
       "tag": "0003_pages_order_created_by",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1788199665840,
+      "tag": "0004_page_groups_translations",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1788212827758,
+      "tag": "0005_page_translations_search_drop_pages",
+      "breakpoints": true
     }
   ]
 }

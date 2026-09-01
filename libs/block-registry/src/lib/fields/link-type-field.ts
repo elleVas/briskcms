@@ -31,6 +31,19 @@ export function ctaLinkFields(): FieldDescriptor[] {
       'blocks.shared.linkType.pageFieldLabel',
       PagePickerField,
     ),
-    { kind: 'text', key: 'url', label: 'blocks.shared.linkType.urlFieldLabel' },
+    {
+      kind: 'text',
+      key: 'url',
+      label: 'blocks.shared.linkType.urlFieldLabel',
+      // Trovato dal vivo durante il backfill i18n (non solo teorizzato):
+      // un sito reale usa spesso questo campo per un percorso interno
+      // relativo scritto a mano (es. "/it/docs") invece del PagePickerField
+      // vero e proprio — un url del genere DEVE variare per lingua, non è
+      // solo un link esterno "sempre uguale ovunque". Un vero url esterno
+      // (raro il bisogno di differenziarlo per lingua) resta comunque
+      // modificabile per-locale con questo flag, costo minimo per evitare
+      // di rompere silenziosamente la navigazione interna.
+      translatable: true,
+    },
   ];
 }

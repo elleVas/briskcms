@@ -29,12 +29,14 @@ export const teamMemberBlock: BlockDescriptor<TeamMemberProps> = {
     {
       kind: 'text',
       key: 'role',
+      translatable: true,
       label: 'blocks.teamMember.fields.role.fieldLabel',
       inlineEditable: true,
     },
     {
       kind: 'textarea',
       key: 'bio',
+      translatable: true,
       label: 'blocks.teamMember.fields.bio.fieldLabel',
       inlineEditable: true,
     },

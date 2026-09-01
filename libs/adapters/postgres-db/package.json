@@ -11,7 +11,8 @@
     "db:seed-tenant": "dotenv -e ../../../.env -- tsx scripts/seed-default-tenant.ts",
     "db:seed-user": "dotenv -e ../../../.env -- tsx scripts/seed-default-user.ts",
     "db:seed": "pnpm run db:seed-tenant && pnpm run db:seed-user",
-    "db:backfill-block-ids": "dotenv -e ../../../.env -- tsx scripts/backfill-block-ids.ts"
+    "db:backfill-block-ids": "dotenv -e ../../../.env -- tsx scripts/backfill-block-ids.ts",
+    "db:backfill-page-groups": "dotenv -e ../../../.env -- tsx scripts/backfill-page-groups.ts"
   },
   "nx": {
     "tags": [

@@ -14,6 +14,7 @@ export const breadcrumbBlock: BlockDescriptor<BreadcrumbProps> = {
     {
       kind: 'text',
       key: 'homeLabel',
+      translatable: true,
       label: 'blocks.breadcrumb.fields.homeLabel.fieldLabel',
       inlineEditable: true,
     },

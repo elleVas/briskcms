@@ -18,7 +18,8 @@ import {
   searchPages,
 } from '@brisk/application';
 import type {
-  PageRepositoryPort,
+  PageGroupRepositoryPort,
+  PageTranslationRepositoryPort,
   PreviewTokenPort,
   SearchPort,
   SiteLayoutSectionRepositoryPort,
@@ -42,7 +43,8 @@ import {
 } from './public-pages.schemas';
 import {
   DEFAULT_TENANT_ID,
-  PAGE_REPOSITORY,
+  PAGE_GROUP_REPOSITORY,
+  PAGE_TRANSLATION_REPOSITORY,
   PREVIEW_TOKEN_PORT,
   SEARCH_REPOSITORY,
   SITE_LAYOUT_SECTION_REPOSITORY,
@@ -57,8 +59,10 @@ import {
 @UseGuards(ThrottlerGuard)
 export class PublicPagesController {
   constructor(
-    @Inject(PAGE_REPOSITORY)
-    private readonly pageRepository: PageRepositoryPort,
+    @Inject(PAGE_GROUP_REPOSITORY)
+    private readonly pageGroupRepository: PageGroupRepositoryPort,
+    @Inject(PAGE_TRANSLATION_REPOSITORY)
+    private readonly pageTranslationRepository: PageTranslationRepositoryPort,
     @Inject(SITE_REPOSITORY)
     private readonly siteRepository: SiteRepositoryPort,
     @Inject(SITE_LAYOUT_SECTION_REPOSITORY)
@@ -80,7 +84,8 @@ export class PublicPagesController {
     const result = await getPublishedPageBySlug(
       {
         siteRepository: this.siteRepository,
-        pageRepository: this.pageRepository,
+        pageGroupRepository: this.pageGroupRepository,
+        pageTranslationRepository: this.pageTranslationRepository,
         siteLayoutSectionRepository: this.siteLayoutSectionRepository,
         siteThemeBlockStylesRepository: this.siteThemeBlockStylesRepository,
       },
@@ -105,7 +110,8 @@ export class PublicPagesController {
       const fallback = await resolveUntranslatedPageFallback(
         {
           siteRepository: this.siteRepository,
-          pageRepository: this.pageRepository,
+          pageGroupRepository: this.pageGroupRepository,
+          pageTranslationRepository: this.pageTranslationRepository,
         },
         {
           tenantId: this.defaultTenantId,
@@ -127,7 +133,8 @@ export class PublicPagesController {
   ) {
     const result = await getPreviewPageById(
       {
-        pageRepository: this.pageRepository,
+        pageGroupRepository: this.pageGroupRepository,
+        pageTranslationRepository: this.pageTranslationRepository,
         siteRepository: this.siteRepository,
         siteLayoutSectionRepository: this.siteLayoutSectionRepository,
         siteThemeBlockStylesRepository: this.siteThemeBlockStylesRepository,
@@ -158,6 +165,7 @@ export class PublicPagesController {
         siteRepository: this.siteRepository,
         siteLayoutSectionRepository: this.siteLayoutSectionRepository,
         siteThemeBlockStylesRepository: this.siteThemeBlockStylesRepository,
+        pageTranslationRepository: this.pageTranslationRepository,
       },
       {
         tenantId: this.defaultTenantId,
@@ -184,7 +192,8 @@ export class PublicPagesController {
     const result = await listPublishedPageTree(
       {
         siteRepository: this.siteRepository,
-        pageRepository: this.pageRepository,
+        pageGroupRepository: this.pageGroupRepository,
+        pageTranslationRepository: this.pageTranslationRepository,
       },
       {
         tenantId: this.defaultTenantId,
@@ -226,7 +235,8 @@ export class PublicPagesController {
     const result = await listPublishedPagesForSitemap(
       {
         siteRepository: this.siteRepository,
-        pageRepository: this.pageRepository,
+        pageGroupRepository: this.pageGroupRepository,
+        pageTranslationRepository: this.pageTranslationRepository,
       },
       { tenantId: this.defaultTenantId, domain: query.domain },
     );

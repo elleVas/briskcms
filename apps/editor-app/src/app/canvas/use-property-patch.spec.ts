@@ -42,7 +42,9 @@ describe('usePropertyPatch', () => {
     const { result, onSaveDraft } = setup();
 
     act(() => {
-      result.current.scheduleChange('hero-1', 'Hero', { title: 'New' });
+      result.current.scheduleChange('hero-1', 'Hero', 'title', {
+        title: 'New',
+      });
     });
     act(() => {
       vi.advanceTimersByTime(299);
@@ -58,7 +60,9 @@ describe('usePropertyPatch', () => {
     const { result, onSaveDraft, patchBlock } = setup();
 
     act(() => {
-      result.current.scheduleChange('hero-1', 'Hero', { title: 'New' });
+      result.current.scheduleChange('hero-1', 'Hero', 'title', {
+        title: 'New',
+      });
     });
     await act(async () => {
       vi.advanceTimersByTime(300);
@@ -68,7 +72,9 @@ describe('usePropertyPatch', () => {
       await Promise.resolve();
     });
 
-    expect(onSaveDraft).toHaveBeenCalledWith('hero-1', { title: 'New' });
+    expect(onSaveDraft).toHaveBeenCalledWith('hero-1', 'title', {
+      title: 'New',
+    });
     expect(blockFragmentApi.renderBlockFragment).toHaveBeenCalledWith({
       pageId: 'page-1',
       token: 'tok',
@@ -83,13 +89,13 @@ describe('usePropertyPatch', () => {
     const { result, onSaveDraft } = setup();
 
     act(() => {
-      result.current.scheduleChange('hero-1', 'Hero', { title: 'A' });
+      result.current.scheduleChange('hero-1', 'Hero', 'title', { title: 'A' });
     });
     act(() => {
       vi.advanceTimersByTime(200);
     });
     act(() => {
-      result.current.scheduleChange('hero-1', 'Hero', { title: 'AB' });
+      result.current.scheduleChange('hero-1', 'Hero', 'title', { title: 'AB' });
     });
     act(() => {
       vi.advanceTimersByTime(200);
@@ -104,21 +110,23 @@ describe('usePropertyPatch', () => {
     const { result, onSaveDraft } = setup();
 
     act(() => {
-      result.current.scheduleChange('hero-1', 'Hero', { title: 'A' });
+      result.current.scheduleChange('hero-1', 'Hero', 'title', { title: 'A' });
     });
     act(() => {
       vi.advanceTimersByTime(150);
     });
     act(() => {
-      result.current.scheduleChange('text-1', 'Text', { body: 'B' });
+      result.current.scheduleChange('text-1', 'Text', 'body', { body: 'B' });
     });
     act(() => {
       vi.advanceTimersByTime(150);
     });
 
     // hero-1's own 300ms have elapsed (150 + 150); text-1's own 150ms have not.
-    expect(onSaveDraft).toHaveBeenCalledWith('hero-1', { title: 'A' });
-    expect(onSaveDraft).not.toHaveBeenCalledWith('text-1', { body: 'B' });
+    expect(onSaveDraft).toHaveBeenCalledWith('hero-1', 'title', { title: 'A' });
+    expect(onSaveDraft).not.toHaveBeenCalledWith('text-1', 'body', {
+      body: 'B',
+    });
   });
 
   it('scheduleTextChange saves the draft after its own debounce, without touching render-block-fragment', async () => {
@@ -136,7 +144,7 @@ describe('usePropertyPatch', () => {
       vi.advanceTimersByTime(1);
     });
 
-    expect(onSaveDraft).toHaveBeenCalledWith('hero-1', {
+    expect(onSaveDraft).toHaveBeenCalledWith('hero-1', 'title', {
       title: 'Nuovo titolo',
     });
     expect(blockFragmentApi.renderBlockFragment).not.toHaveBeenCalled();
@@ -147,7 +155,9 @@ describe('usePropertyPatch', () => {
     const { result, onSaveDraft } = setup();
 
     act(() => {
-      result.current.scheduleChange('hero-1', 'Hero', { title: 'Prop change' });
+      result.current.scheduleChange('hero-1', 'Hero', 'title', {
+        title: 'Prop change',
+      });
     });
     act(() => {
       vi.advanceTimersByTime(200);
@@ -161,10 +171,10 @@ describe('usePropertyPatch', () => {
 
     // scheduleChange's own 300ms have elapsed (200 + 100); scheduleTextChange's
     // own 100ms have not — the two timers didn't reset each other.
-    expect(onSaveDraft).toHaveBeenCalledWith('hero-1', {
+    expect(onSaveDraft).toHaveBeenCalledWith('hero-1', 'title', {
       title: 'Prop change',
     });
-    expect(onSaveDraft).not.toHaveBeenCalledWith('hero-1', {
+    expect(onSaveDraft).not.toHaveBeenCalledWith('hero-1', 'subtitle', {
       subtitle: 'Text change',
     });
   });
@@ -176,7 +186,9 @@ describe('usePropertyPatch', () => {
     const { result, onSaveDraft, patchBlock } = setup();
 
     act(() => {
-      result.current.scheduleChange('hero-1', 'Hero', { title: 'New' });
+      result.current.scheduleChange('hero-1', 'Hero', 'title', {
+        title: 'New',
+      });
     });
     await act(async () => {
       vi.advanceTimersByTime(300);
@@ -185,8 +197,57 @@ describe('usePropertyPatch', () => {
       await Promise.resolve();
     });
 
-    expect(onSaveDraft).toHaveBeenCalledWith('hero-1', { title: 'New' });
+    expect(onSaveDraft).toHaveBeenCalledWith('hero-1', 'title', {
+      title: 'New',
+    });
     expect(patchBlock).not.toHaveBeenCalled();
+  });
+
+  it('flushAll fires every pending save immediately, without waiting out its debounce', () => {
+    const { result, onSaveDraft } = setup();
+
+    act(() => {
+      result.current.scheduleChange('hero-1', 'Hero', 'title', { title: 'A' });
+      result.current.scheduleTextChange('text-1', 'body', 'B');
+    });
+    expect(onSaveDraft).not.toHaveBeenCalled();
+
+    act(() => {
+      result.current.flushAll();
+    });
+
+    expect(onSaveDraft).toHaveBeenCalledWith('hero-1', 'title', { title: 'A' });
+    expect(onSaveDraft).toHaveBeenCalledWith('text-1', 'body', { body: 'B' });
+  });
+
+  it('flushAll does nothing when nothing is pending', () => {
+    const { result, onSaveDraft } = setup();
+
+    act(() => {
+      result.current.flushAll();
+    });
+
+    expect(onSaveDraft).not.toHaveBeenCalled();
+  });
+
+  it("a change scheduled again after flushAll gets its own fresh debounce window (flushAll doesn't leave a stale timer key behind)", () => {
+    const { result, onSaveDraft } = setup();
+
+    act(() => {
+      result.current.scheduleChange('hero-1', 'Hero', 'title', { title: 'A' });
+      result.current.flushAll();
+      result.current.scheduleChange('hero-1', 'Hero', 'title', { title: 'B' });
+    });
+    expect(onSaveDraft).toHaveBeenCalledTimes(1);
+
+    act(() => {
+      vi.advanceTimersByTime(300);
+    });
+
+    expect(onSaveDraft).toHaveBeenCalledTimes(2);
+    expect(onSaveDraft).toHaveBeenLastCalledWith('hero-1', 'title', {
+      title: 'B',
+    });
   });
 
   it('scheduleStyleOverrideChange saves the override and renders+patches the fragment once the debounce elapses', async () => {
@@ -229,7 +290,7 @@ describe('usePropertyPatch', () => {
     const { result, onSaveDraft, onSaveStyleOverride } = setup();
 
     act(() => {
-      result.current.scheduleChange('button-1', 'Button', {
+      result.current.scheduleChange('button-1', 'Button', 'label', {
         label: 'Prop change',
       });
     });
@@ -248,7 +309,7 @@ describe('usePropertyPatch', () => {
       vi.advanceTimersByTime(100);
     });
 
-    expect(onSaveDraft).toHaveBeenCalledWith('button-1', {
+    expect(onSaveDraft).toHaveBeenCalledWith('button-1', 'label', {
       label: 'Prop change',
     });
     expect(onSaveStyleOverride).not.toHaveBeenCalled();
