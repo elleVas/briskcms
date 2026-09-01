@@ -5,6 +5,7 @@ import { bannerBlock } from './blocks/banner.block';
 import { beforeAfterBlock } from './blocks/before-after.block';
 import { breadcrumbBlock } from './blocks/breadcrumb.block';
 import { buttonBlock } from './blocks/button.block';
+import { calloutBlock } from './blocks/callout.block';
 import { codeBlock } from './blocks/code.block';
 import { columnBlock } from './blocks/column.block';
 import { columnsBlock } from './blocks/columns.block';
@@ -48,6 +49,7 @@ export {
   beforeAfterBlock,
   breadcrumbBlock,
   buttonBlock,
+  calloutBlock,
   codeBlock,
   columnBlock,
   columnsBlock,
@@ -103,6 +105,7 @@ export const pageBlocks: BlockDescriptor[] = [
   columnsBlock,
   columnBlock,
   containerBlock,
+  calloutBlock,
   linkBlock,
   quoteBlock,
   ratingBlock,
@@ -152,6 +155,7 @@ export const pageBlockCategories: { title: string; types: string[] }[] = [
       'Image',
       'Gallery',
       'Quote',
+      'Callout',
       'Table',
       'EmbedHtml',
       'Code',

@@ -1,5 +1,5 @@
 {
-  "name": "@brisk/block-registry",
+  "name": "@brisk/block-sdk",
   "version": "0.0.1",
   "private": true,
   "type": "module",
@@ -7,7 +7,7 @@
   "types": "./src/index.ts",
   "nx": {
     "tags": [
-      "adapter"
+      "domain"
     ]
   },
   "exports": {
@@ -19,12 +19,8 @@
     "./package.json": "./package.json"
   },
   "dependencies": {
-    "@brisk/block-sdk": "workspace:*",
     "@brisk/shared-types": "workspace:*",
-    "react": "^19.2.8"
-  },
-  "devDependencies": {
-    "@testing-library/react": "^16.3.2",
-    "react-dom": "^19.0.0"
+    "react": "^19.2.8",
+    "zod": "^4.4.3"
   }
 }

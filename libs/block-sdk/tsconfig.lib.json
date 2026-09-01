@@ -6,15 +6,10 @@
     "tsBuildInfoFile": "dist/tsconfig.lib.tsbuildinfo",
     "emitDeclarationOnly": true,
     "forceConsistentCasingInFileNames": true,
-    "jsx": "react-jsx",
-    "lib": ["dom", "es2022"],
     "types": ["node"]
   },
   "include": ["src/**/*.ts", "src/**/*.tsx"],
   "references": [
-    {
-      "path": "../block-sdk/tsconfig.lib.json"
-    },
     {
       "path": "../shared-types/tsconfig.lib.json"
     }

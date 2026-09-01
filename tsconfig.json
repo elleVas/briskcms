@@ -86,6 +86,9 @@
     },
     {
       "path": "./libs/block-registry"
+    },
+    {
+      "path": "./libs/block-sdk"
     }
   ],
   "compilerOptions": {}

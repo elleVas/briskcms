@@ -598,6 +598,20 @@
         }
       }
     },
+    "callout": {
+      "label": "Riquadro avviso",
+      "fields": {
+        "message": { "fieldLabel": "Messaggio" },
+        "tone": {
+          "fieldLabel": "Tono",
+          "options": {
+            "info": "Info",
+            "warning": "Avviso",
+            "success": "Successo"
+          }
+        }
+      }
+    },
     "code": {
       "label": "Codice",
       "fields": {

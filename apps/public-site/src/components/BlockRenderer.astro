@@ -7,6 +7,7 @@ import {
   beforeAfterPropsSchema,
   breadcrumbPropsSchema,
   buttonPropsSchema,
+  calloutPropsSchema,
   codePropsSchema,
   columnsPropsSchema,
   containerPropsSchema,
@@ -69,6 +70,8 @@ import BreadcrumbCore from './blocks/Breadcrumb.astro';
 const Breadcrumb = resolveThemeBlockOverride('Breadcrumb', BreadcrumbCore);
 import ButtonCore from './blocks/Button.astro';
 const Button = resolveThemeBlockOverride('Button', ButtonCore);
+import CalloutCore from './blocks/Callout.astro';
+const Callout = resolveThemeBlockOverride('Callout', CalloutCore);
 import CodeCore from './blocks/Code.astro';
 const Code = resolveThemeBlockOverride('Code', CodeCore);
 import ColumnCore from './blocks/Column.astro';
@@ -242,6 +245,7 @@ const BLOCK_REGISTRY: Record<string, BlockDispatchEntry> = {
     locale: true,
   },
   Quote: { component: Quote, schema: quotePropsSchema, styleOverride: true },
+  Callout: { component: Callout, schema: calloutPropsSchema },
   Rating: { component: Rating, schema: ratingPropsSchema, styleOverride: true },
   Countdown: {
     component: Countdown,
