@@ -54,13 +54,16 @@ const TRACKER_SIGNATURES: TrackerSignature[] = [
 // this pattern and stays in remainingHtml, unextracted — a known,
 // documented limitation (docs/adr/0039), not an oversight.
 //
-// `<\/script\s*>` (not the literal `<\/script>`), because a closing tag
-// with whitespace before `>` (e.g. `</script >`) is still a valid closing
-// tag to a real parser — CodeQL flagged the tighter version (js/incomplete-
-// html-attribute-sanitization-2) since a script this pattern fails to fully
-// match leaves a bare `<script` fragment in `remainingHtml`, which is later
-// re-injected via `set:html` in PageLayout.astro.
-const SCRIPT_TAG_PATTERN = /<script\b[^>]*>[\s\S]*?<\/script\s*>/gi;
+// The closing tag is `<\/script\b[^>]*>` — mirroring the opening tag's own
+// `<script\b[^>]*>` — not the literal `<\/script>` or even `<\/script\s*>`.
+// A real HTML parser treats ANY `</script` followed by a word boundary and
+// arbitrary non-`>` content (not just whitespace, e.g. `</script data-x>`
+// or `</script\t\nbar>`) as the closing tag. CodeQL flagged both narrower
+// versions (js/incomplete-html-attribute-sanitization-2): a script this
+// pattern fails to fully match leaves a bare `<script` fragment in
+// `remainingHtml`, which is later re-injected via `set:html` in
+// PageLayout.astro.
+const SCRIPT_TAG_PATTERN = /<script\b[^>]*>[\s\S]*?<\/script\b[^>]*>/gi;
 
 /**
  * Scans a free-text head/body script blob (themeHeadScript/themeBodyScript)
