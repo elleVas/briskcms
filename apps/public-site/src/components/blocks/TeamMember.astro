@@ -4,6 +4,7 @@ import {
   type BlockStyleOverride,
   type TeamMemberProps,
 } from '@brisk/shared-types';
+import OptimizedImage from '../OptimizedImage.astro';
 
 type Props = TeamMemberProps & { styleOverride?: BlockStyleOverride };
 
@@ -14,15 +15,7 @@ const instanceStyle = buildBlockInstanceStyle(styleOverride);
 <div class="brisk-team-member" style={instanceStyle}>
   {
     photo ? (
-      <img
-        src={photo.url}
-        alt=""
-        width={photo.width ?? undefined}
-        height={photo.height ?? undefined}
-        class="brisk-team-member__photo"
-        loading="lazy"
-        decoding="async"
-      />
+      <OptimizedImage media={photo} alt="" class="brisk-team-member__photo" />
     ) : (
       <div class="brisk-team-member__photo brisk-team-member__photo--placeholder" />
     )
@@ -39,7 +32,9 @@ const instanceStyle = buildBlockInstanceStyle(styleOverride);
     border-radius: var(--brisk-override-radius, 0);
     padding: var(--brisk-override-padding-y, 0) var(--brisk-override-padding-x, 0);
   }
-  .brisk-team-member__photo {
+  /* :global() because OptimizedImage (a child component) renders the
+  actual <img> — see Image.astro's own style block for the full reasoning. */
+  :global(.brisk-team-member__photo) {
     width: 6rem;
     height: 6rem;
     border-radius: 50%;

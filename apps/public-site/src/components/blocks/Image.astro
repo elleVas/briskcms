@@ -1,6 +1,7 @@
 ---
 import type { ImageProps } from '@brisk/shared-types';
 import { Translator } from '../../lib/i18n';
+import OptimizedImage from '../OptimizedImage.astro';
 
 type Props = ImageProps & { locale: string };
 
@@ -16,26 +17,16 @@ const resolvedAlt = isDecorative ? '' : alt;
   media ? (
     <figure>
       {
-        /* No loading="lazy" here (unlike the other image blocks): this is
+        /* loading="eager" here (unlike the other image blocks): this is
         the one block type a page can use as a full-width hero at the very
         top — lazily loading a real LCP element actively delays it, the
-        opposite of the Core Web Vitals fix this is for. decoding="async"
-        is always safe (doesn't block the main thread on decode either way). */
+        opposite of the Core Web Vitals fix this is for. */
       }
-      {
-        /* width/height set the intrinsic aspect ratio the browser reserves
-        space for before the image loads (prevents layout shift) — CSS's
-        height: auto below still makes the rendered size fully responsive,
-        these two don't fight each other. undefined, not 0, when absent
-        (media picked before this field existed): an explicit 0 would
-        collapse the reserved space to nothing, worse than reserving none. */
-      }
-      <img
-        src={media.url}
+      <OptimizedImage
+        media={media}
         alt={resolvedAlt}
-        width={media.width ?? undefined}
-        height={media.height ?? undefined}
-        decoding="async"
+        class="brisk-image"
+        loading="eager"
       />
       {caption && <figcaption data-brisk-field="caption">{caption}</figcaption>}
     </figure>
@@ -45,7 +36,12 @@ const resolvedAlt = isDecorative ? '' : alt;
 }
 
 <style>
-  img {
+  /* :global() because the actual <img> (or astro:assets' transformed
+  <img>) is rendered by OptimizedImage, a child component — Astro's scoped
+  styles don't cross that boundary, so a plain `.brisk-image` selector here
+  would silently never match. Same reasoning applies in every other block
+  below that styles an OptimizedImage by class. */
+  :global(.brisk-image) {
     max-width: 100%;
     height: auto;
   }

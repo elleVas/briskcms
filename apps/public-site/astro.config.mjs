@@ -39,6 +39,19 @@ export default defineConfig({
   // and hydrating it with a client: directive — Astro islands mean it costs
   // nothing on a page that never uses one.
   integrations: [react()],
+  image: {
+    // astro:assets needs remotePatterns pinned at build time, but the media
+    // host (API_PUBLIC_URL / S3_MEDIA_PUBLIC_BASE_URL, see
+    // local-disk-media-storage/s3-media-storage adapters) is deliberately a
+    // runtime-only, per-deployment value here (.env.example, unlike
+    // BRISK_THEME above) — reading it into this build-time config would just
+    // add a second silent-drift trap. Open wildcard instead: every
+    // media.url this app ever passes to <Image> is produced server-side by
+    // a trusted MediaStoragePort adapter, never raw visitor input, so this
+    // doesn't expand what an already-privileged CMS admin could already do
+    // via an embed-HTML block.
+    remotePatterns: [{ protocol: 'https' }, { protocol: 'http' }],
+  },
   vite: {
     plugins: [
       tailwindcss(),

@@ -1,6 +1,7 @@
 ---
 import type { ImageSliderProps, PickedMedia } from '@brisk/shared-types';
 import { Translator } from '../../lib/i18n';
+import OptimizedImage from '../OptimizedImage.astro';
 
 type Props = ImageSliderProps & { locale: string };
 type SliderImage = ImageSliderProps['images'][number];
@@ -21,14 +22,11 @@ const i18n = new Translator(locale);
     <div class="brisk-slider">
       <div class="brisk-slider__track">
         {pictured.map((image, index) => (
-          <img
-            src={image.media.url}
+          <OptimizedImage
+            media={image.media}
             alt={image.isDecorative ? '' : image.alt}
-            width={image.media.width ?? undefined}
-            height={image.media.height ?? undefined}
             class="brisk-slider__slide"
-            loading={index === 0 ? undefined : 'lazy'}
-            decoding="async"
+            loading={index === 0 ? 'eager' : 'lazy'}
           />
         ))}
       </div>
@@ -81,7 +79,9 @@ const i18n = new Translator(locale);
   .brisk-slider__track::-webkit-scrollbar {
     display: none;
   }
-  .brisk-slider__slide {
+  /* :global() because OptimizedImage (a child component) renders the
+  actual <img> — see Image.astro's own style block for the full reasoning. */
+  :global(.brisk-slider__slide) {
     flex: 0 0 100%;
     width: 100%;
     max-width: 100%;
