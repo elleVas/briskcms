@@ -1,7 +1,9 @@
 import type {
+  CookieBannerSettings,
   OpeningHoursDay,
   ThemeSettings,
   TrackerDomainEntry,
+  TrackerScriptEntry,
   UntranslatedPageFallback,
 } from '@brisk/shared-types';
 
@@ -29,6 +31,10 @@ export interface SiteProps {
   themeAllowedTrackerDomains: TrackerDomainEntry[];
   /** GDPR/privacy: `null` keeps every form_submissions row forever (default, unchanged from before this field existed). A positive integer is how many days a submission survives past its createdAt before the scheduled cleanup deletes it. */
   formSubmissionRetentionDays: number | null;
+  /** Categorized tracker snippets (docs/adr/0039) — see themeSettings getter. */
+  themeTrackerScripts: TrackerScriptEntry[];
+  /** Cookie consent banner config (docs/adr/0039) — separate from ThemeSettings above: inert config, not admin-trusted raw HTML, so it lives behind its own non-admin-gated endpoint. */
+  cookieBannerSettings: CookieBannerSettings;
   createdAt: Date;
 }
 
@@ -60,6 +66,8 @@ export interface UpdateFormSubmissionRetentionInput {
   /** `null` = keep forever. A number must be a positive integer (validated at the schema layer, apps/api/src/app/sites/sites.schemas.ts). */
   formSubmissionRetentionDays: number | null;
 }
+
+export type UpdateCookieBannerSettingsInput = CookieBannerSettings;
 
 export class Site {
   private constructor(private props: SiteProps) {}
@@ -155,7 +163,13 @@ export class Site {
       faviconUrl: this.props.themeFaviconUrl,
       overridesEnabled: this.props.themeOverridesEnabled,
       allowedTrackerDomains: this.props.themeAllowedTrackerDomains,
+      trackerScripts: this.props.themeTrackerScripts,
     };
+  }
+
+  /** Cookie consent banner config (docs/adr/0039) — enabled defaults to `false`, see DEFAULT_COOKIE_BANNER_SETTINGS. */
+  get cookieBannerSettings(): CookieBannerSettings {
+    return this.props.cookieBannerSettings;
   }
 
   /**
@@ -210,5 +224,10 @@ export class Site {
     this.props.themeFaviconUrl = input.faviconUrl;
     this.props.themeOverridesEnabled = input.overridesEnabled;
     this.props.themeAllowedTrackerDomains = input.allowedTrackerDomains;
+    this.props.themeTrackerScripts = input.trackerScripts;
+  }
+
+  updateCookieBannerSettings(input: UpdateCookieBannerSettingsInput): void {
+    this.props.cookieBannerSettings = input;
   }
 }

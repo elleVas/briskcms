@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import type { PublishedSite } from '@brisk/shared-types';
+import {
+  DEFAULT_COOKIE_BANNER_SETTINGS,
+  type PublishedSite,
+} from '@brisk/shared-types';
 import { buildSchemaOrgGraph } from './schema-org';
 
 const baseSite: PublishedSite = {
@@ -23,10 +26,14 @@ const baseSite: PublishedSite = {
     faviconUrl: null,
     overridesEnabled: true,
     allowedTrackerDomains: [],
+    trackerScripts: [],
   },
   themeTokens: {
     blockStyles: {},
   },
+  cookieBannerSettings: DEFAULT_COOKIE_BANNER_SETTINGS,
+  privacyPolicySlug: null,
+  cookiePolicySlug: null,
 };
 
 const seoMeta = { title: 'Chi siamo', description: 'La nostra storia' };

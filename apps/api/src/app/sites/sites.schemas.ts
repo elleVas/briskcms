@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import {
+  cookieBannerSettingsSchema,
   localeSettingsSchema,
   openingHoursSchema,
   themeSettingsSchema,
@@ -66,3 +67,11 @@ export type UpdateThemeSettingsBody = z.infer<
 // parte 2).
 export const updateThemeTokensBodySchema = sharedUpdateThemeTokensBodySchema;
 export type UpdateThemeTokensBody = z.infer<typeof updateThemeTokensBodySchema>;
+
+// Cookie consent banner config (docs/adr/0039) — inert config (no raw
+// script), unlike theme-settings above, so this one has no @Roles('admin')
+// gate on its controller endpoint.
+export const updateCookieBannerSettingsBodySchema = cookieBannerSettingsSchema;
+export type UpdateCookieBannerSettingsBody = z.infer<
+  typeof updateCookieBannerSettingsBodySchema
+>;

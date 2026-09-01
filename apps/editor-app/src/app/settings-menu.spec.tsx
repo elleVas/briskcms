@@ -2,6 +2,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { QueryClientProvider } from '@tanstack/react-query';
 import type { SiteRecord } from '@brisk/shared-types';
+import { DEFAULT_COOKIE_BANNER_SETTINGS } from '@brisk/shared-types';
 import { TooltipProvider } from '../components/ui/tooltip';
 import * as api from '../lib/sites-api-client';
 import { createTestQueryClient } from '../test-query-client';
@@ -52,6 +53,8 @@ describe('SettingsMenu', () => {
       themeOverridesEnabled: true,
       themeAllowedTrackerDomains: [],
       formSubmissionRetentionDays: null,
+      themeTrackerScripts: [],
+      cookieBannerSettings: DEFAULT_COOKIE_BANNER_SETTINGS,
       themeTokens: { blockStyles: {} },
       createdAt: '',
       ...overrides,

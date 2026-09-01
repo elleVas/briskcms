@@ -5,6 +5,7 @@ import type {
   SiteThemeBlockStylesPort,
   TenantContextPort,
 } from '@brisk/ports';
+import { DEFAULT_COOKIE_BANNER_SETTINGS } from '@brisk/shared-types';
 import { SitesController } from './sites.controller';
 
 function buildSite(
@@ -33,6 +34,8 @@ function buildSite(
     themeOverridesEnabled: true,
     themeAllowedTrackerDomains: [],
     formSubmissionRetentionDays: null,
+    themeTrackerScripts: [],
+    cookieBannerSettings: DEFAULT_COOKIE_BANNER_SETTINGS,
     createdAt: new Date(),
     ...overrides,
   });
@@ -197,6 +200,7 @@ describe('SitesController (unit)', () => {
         faviconUrl: null,
         overridesEnabled: true,
         allowedTrackerDomains: [],
+        trackerScripts: [],
       }),
     ).rejects.toThrow(SiteNotFoundError);
   });
@@ -214,11 +218,36 @@ describe('SitesController (unit)', () => {
       faviconUrl: null,
       overridesEnabled: true,
       allowedTrackerDomains: [],
+      trackerScripts: [],
     });
 
     expect(siteRepository.save).toHaveBeenCalled();
     expect(result.themePrimaryColor).toBe('#18181b');
     expect(result.themeFontFamily).toBe('inter');
+  });
+
+  it('updateCookieBannerSettings propagates SiteNotFoundError, unwrapped', async () => {
+    siteRepository.findById.mockResolvedValue(null);
+
+    await expect(
+      controller.updateCookieBannerSettings('missing', {
+        ...DEFAULT_COOKIE_BANNER_SETTINGS,
+      }),
+    ).rejects.toThrow(SiteNotFoundError);
+  });
+
+  it('updateCookieBannerSettings saves the updated site', async () => {
+    siteRepository.findById.mockResolvedValue(buildSite());
+
+    const result = await controller.updateCookieBannerSettings('site-1', {
+      ...DEFAULT_COOKIE_BANNER_SETTINGS,
+      enabled: true,
+      position: 'bottom-right',
+    });
+
+    expect(siteRepository.save).toHaveBeenCalled();
+    expect(result.cookieBannerSettings.enabled).toBe(true);
+    expect(result.cookieBannerSettings.position).toBe('bottom-right');
   });
 
   it('updateThemeTokens propagates SiteNotFoundError, unwrapped', async () => {

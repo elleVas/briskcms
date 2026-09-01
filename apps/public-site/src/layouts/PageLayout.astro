@@ -9,6 +9,13 @@ import {
 	type SeoMeta,
 } from '@brisk/shared-types';
 import BlockRenderer from '../components/BlockRenderer.astro';
+import CookieConsent from '../components/CookieConsent.astro';
+import { buildCookieConsentBootstrap } from '../components/cookie-consent-bootstrap';
+import {
+	partitionTrackerScripts,
+	renderGatedScripts,
+	renderUngatedScripts,
+} from '../lib/consent-script-blocking';
 import { injectScriptNonce } from '../lib/content-security-policy';
 import { editorAppUrl } from '../lib/editor-app-url';
 import { localeDirection, localePath } from '../lib/locale-path';
@@ -113,11 +120,26 @@ const theme = allowStyleOverrides
 			secondaryColor: null,
 			fontFamily: null,
 			customCss: null,
-			headScript: null,
-			bodyScript: null,
 			faviconUrl: null,
 			overridesEnabled: false,
 		};
+// headScript/bodyScript (ADR-0031) are deliberately NOT part of the
+// allowStyleOverrides collapse above — a tracker (GTM/GA4/Meta Pixel, ...)
+// shouldn't stop running just because someone toggled off color/font
+// overrides in the Style dialog; those are two independent switches.
+const { headScript, bodyScript } = site.themeSettings;
+// Cookie consent (docs/adr/0039): categorized tracker scripts partitioned
+// by placement, each split into "necessary" (ungated, nonce'd like
+// headScript/bodyScript above) and everything else (wrapped inert in a
+// <template>, activated client-side only once its category is granted).
+const headTrackerScripts = partitionTrackerScripts(
+	site.themeSettings.trackerScripts,
+	'head',
+);
+const bodyTrackerScripts = partitionTrackerScripts(
+	site.themeSettings.trackerScripts,
+	'body',
+);
 const themeFont = resolveThemeFont(theme.fontFamily);
 // Global Styles Editor (Fase 2a) — stessa gate di sopra: nessun token
 // personalizzato emesso quando gli override sono disabilitati.
@@ -231,15 +253,24 @@ const blockStyleOverridesCss = buildBlockStyleOverridesCss(
 			theme.customCss && <style set:html={theme.customCss} />
 		}
 		{
-			theme.headScript && (
+			headScript && (
 				<Fragment
-					set:html={injectScriptNonce(
-						theme.headScript,
-						Astro.locals.cspNonce,
-					)}
+					set:html={injectScriptNonce(headScript, Astro.locals.cspNonce)}
 				/>
 			)
 		}
+		<Fragment
+			set:html={renderUngatedScripts(
+				headTrackerScripts.ungated,
+				Astro.locals.cspNonce,
+			)}
+		/>
+		<Fragment set:html={renderGatedScripts(headTrackerScripts.gated)} />
+		<script
+			is:inline
+			nonce={Astro.locals.cspNonce}
+			set:html={buildCookieConsentBootstrap(Astro.locals.cspNonce)}
+		/>
 	</head>
 	<body data-brisk-editor-app-url={editable ? editorAppUrl() : undefined}>
 		<a href="#main-content" class="brisk-skip-link">{i18n.t('skipLink')}</a>
@@ -294,12 +325,26 @@ const blockStyleOverridesCss = buildBlockStyleOverridesCss(
 			)
 		}
 		{
-			theme.bodyScript && (
+			bodyScript && (
 				<Fragment
-					set:html={injectScriptNonce(
-						theme.bodyScript,
-						Astro.locals.cspNonce,
-					)}
+					set:html={injectScriptNonce(bodyScript, Astro.locals.cspNonce)}
+				/>
+			)
+		}
+		<Fragment
+			set:html={renderUngatedScripts(
+				bodyTrackerScripts.ungated,
+				Astro.locals.cspNonce,
+			)}
+		/>
+		<Fragment set:html={renderGatedScripts(bodyTrackerScripts.gated)} />
+		{
+			site.cookieBannerSettings.enabled && (
+				<CookieConsent
+					settings={site.cookieBannerSettings}
+					locale={locale}
+					privacyPolicySlug={site.privacyPolicySlug}
+					cookiePolicySlug={site.cookiePolicySlug}
 				/>
 			)
 		}

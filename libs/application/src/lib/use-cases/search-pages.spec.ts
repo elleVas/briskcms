@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { DEFAULT_COOKIE_BANNER_SETTINGS } from '@brisk/shared-types';
 import { Site } from '@brisk/domain-core';
 import { searchPages } from './search-pages.use-case';
 import {
@@ -40,6 +41,8 @@ describe('searchPages', () => {
         themeOverridesEnabled: true,
         themeAllowedTrackerDomains: [],
         formSubmissionRetentionDays: null,
+        themeTrackerScripts: [],
+        cookieBannerSettings: DEFAULT_COOKIE_BANNER_SETTINGS,
         createdAt: new Date(),
       }),
     );

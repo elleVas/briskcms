@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { DEFAULT_COOKIE_BANNER_SETTINGS } from '@brisk/shared-types';
 import { Site } from './site';
 
 describe('Site entity', () => {
@@ -25,6 +26,8 @@ describe('Site entity', () => {
     themeOverridesEnabled: true,
     themeAllowedTrackerDomains: [],
     formSubmissionRetentionDays: null,
+    themeTrackerScripts: [],
+    cookieBannerSettings: DEFAULT_COOKIE_BANNER_SETTINGS,
     createdAt: new Date('2026-01-01T00:00:00Z'),
   };
 
@@ -152,10 +155,11 @@ describe('Site entity', () => {
       faviconUrl: null,
       overridesEnabled: true,
       allowedTrackerDomains: [],
+      trackerScripts: [],
     });
   });
 
-  it('updateThemeSettings replaces every theme field', () => {
+  it('updateThemeSettings replaces every theme field, including trackerScripts', () => {
     const site = Site.fromProps(props);
 
     site.updateThemeSettings({
@@ -168,6 +172,15 @@ describe('Site entity', () => {
       faviconUrl: 'https://example.com/favicon.png',
       overridesEnabled: false,
       allowedTrackerDomains: [{ label: 'Hotjar', domain: 'static.hotjar.com' }],
+      trackerScripts: [
+        {
+          id: 'a1',
+          label: 'Google Analytics',
+          category: 'measurement',
+          placement: 'head',
+          html: '<script>gtag("config", "G-XXXX")</script>',
+        },
+      ],
     });
 
     expect(site.themeSettings).toEqual({
@@ -180,6 +193,37 @@ describe('Site entity', () => {
       faviconUrl: 'https://example.com/favicon.png',
       overridesEnabled: false,
       allowedTrackerDomains: [{ label: 'Hotjar', domain: 'static.hotjar.com' }],
+      trackerScripts: [
+        {
+          id: 'a1',
+          label: 'Google Analytics',
+          category: 'measurement',
+          placement: 'head',
+          html: '<script>gtag("config", "G-XXXX")</script>',
+        },
+      ],
+    });
+  });
+
+  it('cookieBannerSettings defaults to disabled', () => {
+    const site = Site.fromProps(props);
+
+    expect(site.cookieBannerSettings).toEqual(DEFAULT_COOKIE_BANNER_SETTINGS);
+  });
+
+  it('updateCookieBannerSettings replaces the banner config', () => {
+    const site = Site.fromProps(props);
+
+    site.updateCookieBannerSettings({
+      ...DEFAULT_COOKIE_BANNER_SETTINGS,
+      enabled: true,
+      position: 'bottom-right',
+    });
+
+    expect(site.cookieBannerSettings).toEqual({
+      ...DEFAULT_COOKIE_BANNER_SETTINGS,
+      enabled: true,
+      position: 'bottom-right',
     });
   });
 });

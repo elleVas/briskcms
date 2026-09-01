@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { DEFAULT_COOKIE_BANNER_SETTINGS } from '@brisk/shared-types';
 import { Site } from '@brisk/domain-core';
 import { createPageGroup } from './create-page-group.use-case';
 import { createPageGroupTranslation } from './create-page-group-translation.use-case';
@@ -58,6 +59,8 @@ describe('listPublishedPageTree', () => {
       themeOverridesEnabled: true,
       themeAllowedTrackerDomains: [],
       formSubmissionRetentionDays: null,
+      themeTrackerScripts: [],
+      cookieBannerSettings: DEFAULT_COOKIE_BANNER_SETTINGS,
       createdAt: new Date(),
     });
     await siteRepository.save(site);

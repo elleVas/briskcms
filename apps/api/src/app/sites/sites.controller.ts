@@ -10,6 +10,7 @@ import {
 } from '@nestjs/common';
 import {
   updateSiteBusinessInfo,
+  updateSiteCookieBannerSettings,
   updateSiteFormSubmissionRetention,
   updateSiteGeneralSettings,
   updateSiteLocaleSettings,
@@ -43,6 +44,8 @@ import {
   updateThemeSettingsBodySchema,
   type UpdateThemeTokensBody,
   updateThemeTokensBodySchema,
+  type UpdateCookieBannerSettingsBody,
+  updateCookieBannerSettingsBodySchema,
 } from './sites.schemas';
 import { TENANT_CONTEXT } from '../auth/auth.tokens';
 import {
@@ -182,6 +185,23 @@ export class SitesController {
     return this.toDto(site);
   }
 
+  @Patch(':id/cookie-banner-settings')
+  async updateCookieBannerSettings(
+    @Param('id') id: string,
+    @Body(new ZodValidationPipe(updateCookieBannerSettingsBodySchema))
+    body: UpdateCookieBannerSettingsBody,
+  ) {
+    const site = await updateSiteCookieBannerSettings(
+      { siteRepository: this.siteRepository },
+      {
+        tenantId: this.tenantContext.getCurrentTenantId(),
+        siteId: id,
+        ...body,
+      },
+    );
+    return this.toDto(site);
+  }
+
   @Patch(':id/theme-tokens')
   async updateThemeTokens(
     @Param('id') id: string,
@@ -261,6 +281,8 @@ export class SitesController {
       themeFaviconUrl: props.themeFaviconUrl,
       themeOverridesEnabled: props.themeOverridesEnabled,
       themeAllowedTrackerDomains: props.themeAllowedTrackerDomains,
+      themeTrackerScripts: props.themeTrackerScripts,
+      cookieBannerSettings: props.cookieBannerSettings,
       // .toISOString(), not the raw Date: siteRecordSchema's createdAt is a
       // string (the shape the client actually parses off the wire) —
       // validating a live Date object against it would fail even though

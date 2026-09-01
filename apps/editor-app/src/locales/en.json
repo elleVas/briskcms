@@ -61,6 +61,7 @@
       "layout": "Layout",
       "style": "Style",
       "integrations": "Integrations",
+      "cookies": "Cookie banner",
       "users": "Users"
     },
     "settings": {
@@ -286,6 +287,48 @@
     "save": "Save",
     "saving": "Saving..."
   },
+  "cookieConsent": {
+    "category": {
+      "necessary": "Necessary",
+      "functionality": "Functionality",
+      "measurement": "Measurement",
+      "experience": "Experience"
+    }
+  },
+  "cookieBanner": {
+    "title": "Cookie banner",
+    "intro": "Configure the GDPR cookie consent banner shown on every page of the public site.",
+    "enabledLabel": "Show the cookie banner",
+    "positionLabel": "Position",
+    "position": {
+      "bottomBar": "Bottom bar (full width)",
+      "bottomLeft": "Bottom left",
+      "bottomRight": "Bottom right",
+      "centerModal": "Centered"
+    },
+    "acceptButtonSideLabel": "Accept button side",
+    "side": {
+      "left": "Left",
+      "right": "Right"
+    },
+    "showReopenTabLabel": "Show a reopen tab after a choice is made",
+    "reopenPositionLabel": "Reopen tab position",
+    "privacyPolicyLabel": "Privacy Policy page",
+    "cookiePolicyLabel": "Cookie Policy page",
+    "selectPage": "Select a page",
+    "pageSelected": "Page selected",
+    "clearSelection": "Clear selection",
+    "copyOverridesLabel": "Text overrides per language",
+    "copyOverridesHint": "Leave blank to use the built-in text for that language.",
+    "titlePlaceholder": "Title",
+    "bodyPlaceholder": "Body text",
+    "acceptAllPlaceholder": "Accept all button",
+    "rejectAllPlaceholder": "Reject all button",
+    "customizePlaceholder": "Customize button",
+    "save": "Save",
+    "saving": "Saving...",
+    "saved": "Saved"
+  },
   "themeSettings": {
     "title": "Site style",
     "intro": "These settings apply on top of the site's active theme — leave a field off to keep the theme's own default.",
@@ -319,6 +362,17 @@
     "addDomain": "Add domain",
     "removeDomain": "Remove domain",
     "invalidDomain": "Invalid domain — bare hostname only, e.g. static.hotjar.com or *.hotjar.io (no https://, no path)",
+    "trackerScriptsLabel": "Categorized scripts",
+    "trackerScriptsDisclaimer": "A known vendor (Google Tag Manager, Google Analytics, Meta Pixel) pasted above is detected automatically and moved here on save, gated by consent category. Anything else stays in the fields above, running for every visitor regardless of consent.",
+    "detectAgain": "Detect again",
+    "trackerScriptLabelPlaceholder": "Name, e.g. Google Analytics",
+    "trackerScriptHtmlPlaceholder": "<script>...</script>",
+    "addTrackerScript": "Add script",
+    "removeTrackerScript": "Remove script",
+    "placement": {
+      "head": "<head>",
+      "body": "End of <body>"
+    },
     "save": "Save",
     "saving": "Saving...",
     "saved": "Saved"

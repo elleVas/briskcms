@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from '@tanstack/react-router';
 import {
+  Cookie,
   FileText,
   FormInput,
   Image,
@@ -78,6 +79,13 @@ export function AdminShell({ children }: AdminShellProps) {
             >
               <Plug className="size-4" />
               {t('shell.nav.integrations')}
+            </Link>
+            <Link
+              to="/cookies"
+              className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm font-medium hover:bg-muted"
+            >
+              <Cookie className="size-4" />
+              {t('shell.nav.cookies')}
             </Link>
             <Separator className="my-2" />
             <Link

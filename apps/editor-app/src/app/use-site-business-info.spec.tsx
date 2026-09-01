@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { QueryClientProvider } from '@tanstack/react-query';
 import * as api from '../lib/sites-api-client';
 import type { SiteRecord } from '@brisk/shared-types';
+import { DEFAULT_COOKIE_BANNER_SETTINGS } from '@brisk/shared-types';
 import { createTestQueryClient } from '../test-query-client';
 import { useSiteBusinessInfo } from './use-site-business-info';
 
@@ -36,6 +37,8 @@ const sampleSite: SiteRecord = {
   themeOverridesEnabled: true,
   themeAllowedTrackerDomains: [],
   formSubmissionRetentionDays: null,
+  themeTrackerScripts: [],
+  cookieBannerSettings: DEFAULT_COOKIE_BANNER_SETTINGS,
   themeTokens: { blockStyles: {} },
   createdAt: '',
 };

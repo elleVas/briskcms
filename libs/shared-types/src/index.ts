@@ -13,6 +13,8 @@ export * from './lib/page-reference';
 export * from './lib/preview-bridge-protocol';
 export * from './lib/site-theme-settings';
 export * from './lib/site-theme-tokens';
+export * from './lib/cookie-consent';
+export * from './lib/tracker-signature-detector';
 export * from './lib/block-style-overrides';
 export * from './lib/block-style-defaults';
 export * from './lib/icons';

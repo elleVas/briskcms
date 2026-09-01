@@ -1,10 +1,15 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { SiteRecord, TrackerDomainEntry } from '@brisk/shared-types';
+import type {
+  SiteRecord,
+  TrackerDomainEntry,
+  TrackerScriptEntry,
+} from '@brisk/shared-types';
 import { Button } from '../components/ui/button';
 import { Label } from '../components/ui/label';
 import { Textarea } from '../components/ui/textarea';
 import { TrackerDomainListEditor } from './tracker-domain-list-editor';
+import { TrackerScriptListEditor } from './tracker-script-list-editor';
 import { useSiteThemeSettings } from './use-site-theme-settings';
 
 export interface IntegrationsViewProps {
@@ -31,13 +36,16 @@ export function IntegrationsView({ siteId, site }: IntegrationsViewProps) {
   const [allowedTrackerDomains, setAllowedTrackerDomains] = useState<
     TrackerDomainEntry[]
   >(site.themeAllowedTrackerDomains);
+  const [trackerScripts, setTrackerScripts] = useState<TrackerScriptEntry[]>(
+    site.themeTrackerScripts,
+  );
   const [error, setError] = useState('');
   const [savedAt, setSavedAt] = useState(0);
 
   async function handleSubmit() {
     setError('');
     try {
-      await updateThemeSettings({
+      const updated = await updateThemeSettings({
         // Owned by StyleView, not this page — round-tripped unchanged
         // since updateThemeSettings always replaces the whole object (see
         // Site.updateThemeSettings, no partial-patch support).
@@ -50,7 +58,16 @@ export function IntegrationsView({ siteId, site }: IntegrationsViewProps) {
         headScript: headScript.trim() || null,
         bodyScript: bodyScript.trim() || null,
         allowedTrackerDomains,
+        trackerScripts,
       });
+      // The save may have auto-detected a known vendor (docs/adr/0039) and
+      // moved it out of headScript/bodyScript into themeTrackerScripts —
+      // re-sync local state from the server's actual result instead of
+      // what was submitted, or the form would keep showing the
+      // now-duplicated snippet until a full remount.
+      setHeadScript(updated.themeHeadScript ?? '');
+      setBodyScript(updated.themeBodyScript ?? '');
+      setTrackerScripts(updated.themeTrackerScripts);
       setSavedAt(Date.now());
     } catch (err) {
       setError(String(err));
@@ -99,6 +116,28 @@ export function IntegrationsView({ siteId, site }: IntegrationsViewProps) {
         />
         <p className="text-xs text-muted-foreground">
           {t('integrations.trackerDomainsDisclaimer')}
+        </p>
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <div className="flex items-center justify-between">
+          <Label>{t('integrations.trackerScriptsLabel')}</Label>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            disabled={isSaving}
+            onClick={() => void handleSubmit()}
+          >
+            {t('integrations.detectAgain')}
+          </Button>
+        </div>
+        <TrackerScriptListEditor
+          entries={trackerScripts}
+          onChange={setTrackerScripts}
+        />
+        <p className="text-xs text-muted-foreground">
+          {t('integrations.trackerScriptsDisclaimer')}
         </p>
       </div>
 

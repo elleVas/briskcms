@@ -1,0 +1,2 @@
+ALTER TABLE "sites" ADD COLUMN "theme_tracker_scripts" jsonb DEFAULT '[]'::jsonb NOT NULL;--> statement-breakpoint
+ALTER TABLE "sites" ADD COLUMN "cookie_banner_settings" jsonb DEFAULT '{"enabled":false,"position":"bottom-bar","acceptButtonSide":"left","showReopenTab":true,"reopenPosition":"bottom-left","privacyPolicyPageGroupId":null,"cookiePolicyPageGroupId":null,"copyOverrides":{}}'::jsonb NOT NULL;

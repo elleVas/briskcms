@@ -25,6 +25,7 @@ import type {
   PageTranslationRecord,
   SiteRecord,
 } from '@brisk/shared-types';
+import { DEFAULT_COOKIE_BANNER_SETTINGS } from '@brisk/shared-types';
 import { routeTree } from '../routeTree.gen';
 import { createTestQueryClient } from '../test-query-client';
 import { ToastProvider } from './toast-provider';
@@ -116,6 +117,8 @@ const sampleSite: SiteRecord = {
   themeOverridesEnabled: true,
   themeAllowedTrackerDomains: [],
   formSubmissionRetentionDays: null,
+  themeTrackerScripts: [],
+  cookieBannerSettings: DEFAULT_COOKIE_BANNER_SETTINGS,
   themeTokens: { blockStyles: {} },
   createdAt: '',
 };

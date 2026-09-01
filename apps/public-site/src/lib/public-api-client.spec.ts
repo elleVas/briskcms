@@ -1,5 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { PublishedPage } from '@brisk/shared-types';
+import {
+  DEFAULT_COOKIE_BANNER_SETTINGS,
+  type PublishedPage,
+} from '@brisk/shared-types';
 import type { PublishedSiteChromeDto } from './public-api-client';
 import {
   getPublicForm,
@@ -39,10 +42,14 @@ const samplePage: PublishedPage = {
       faviconUrl: null,
       overridesEnabled: true,
       allowedTrackerDomains: [],
+      trackerScripts: [],
     },
     themeTokens: {
       blockStyles: {},
     },
+    cookieBannerSettings: DEFAULT_COOKIE_BANNER_SETTINGS,
+    privacyPolicySlug: null,
+    cookiePolicySlug: null,
   },
   header: null,
   footer: null,

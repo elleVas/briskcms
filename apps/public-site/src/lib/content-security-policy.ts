@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
 import type { TrackerDomainEntry } from '@brisk/shared-types';
 import { PROMO_BAR_DISMISS_SCRIPT } from '../components/blocks/promo-bar-dismiss-script';
+import { COOKIE_CONSENT_DISMISS_SCRIPT } from '../components/cookie-consent-dismiss-script';
 
 /**
  * Every core block's own `<script>` (no `is:inline`) gets bundled by Astro
@@ -102,7 +103,7 @@ export function buildContentSecurityPolicy(
   return [
     `default-src 'self'`,
     withExtra(
-      `script-src 'self' 'nonce-${nonce}' ${TURNSTILE_ORIGIN} ${GOOGLE_TAG_MANAGER_ORIGIN} ${META_PIXEL_SCRIPT_ORIGIN} ${scriptHash(PROMO_BAR_DISMISS_SCRIPT)}`,
+      `script-src 'self' 'nonce-${nonce}' ${TURNSTILE_ORIGIN} ${GOOGLE_TAG_MANAGER_ORIGIN} ${META_PIXEL_SCRIPT_ORIGIN} ${scriptHash(PROMO_BAR_DISMISS_SCRIPT)} ${scriptHash(COOKIE_CONSENT_DISMISS_SCRIPT)}`,
     ),
     `style-src 'self' 'unsafe-inline' https:`,
     `img-src 'self' data: https: ${META_PIXEL_BEACON_ORIGIN}`,

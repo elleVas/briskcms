@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { DEFAULT_COOKIE_BANNER_SETTINGS } from '@brisk/shared-types';
 import { Site, SiteLayoutSection } from '@brisk/domain-core';
 import { getPublishedSiteChrome } from './get-published-site-chrome.use-case';
 import {
@@ -51,6 +52,8 @@ describe('getPublishedSiteChrome', () => {
         themeOverridesEnabled: true,
         themeAllowedTrackerDomains: [],
         formSubmissionRetentionDays: null,
+        themeTrackerScripts: [],
+        cookieBannerSettings: DEFAULT_COOKIE_BANNER_SETTINGS,
         createdAt: new Date(),
       }),
     );

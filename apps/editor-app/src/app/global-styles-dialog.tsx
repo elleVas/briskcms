@@ -181,6 +181,7 @@ export function GlobalStylesDialog({
         faviconUrl: site.themeFaviconUrl,
         overridesEnabled: site.themeOverridesEnabled,
         allowedTrackerDomains: site.themeAllowedTrackerDomains,
+        trackerScripts: site.themeTrackerScripts,
       });
     } catch (err) {
       setError(String(err));
