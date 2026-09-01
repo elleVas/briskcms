@@ -16,9 +16,9 @@ export const countdownBlock: BlockDescriptor<CountdownProps> = {
     label: 'Offerta valida fino a',
   },
   fields: [
-    // Non inlineEditable: deve restare una data ISO in formato stretto
-    // (Countdown.astro la fa il parse diretto) — il digitare libero
-    // sul canvas non ha alcun controllo di formato.
+    // Not inlineEditable: it must stay a strict-format ISO date
+    // (Countdown.astro parses it directly) — free typing on the canvas
+    // has no format control.
     {
       kind: 'text',
       key: 'targetDate',

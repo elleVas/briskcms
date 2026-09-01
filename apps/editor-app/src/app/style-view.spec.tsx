@@ -44,6 +44,7 @@ const site: SiteRecord = {
   themeFaviconUrl: null,
   themeOverridesEnabled: true,
   themeAllowedTrackerDomains: [],
+  formSubmissionRetentionDays: null,
   themeTokens: { blockStyles: {} },
   createdAt: '',
 };
@@ -96,6 +97,7 @@ describe('StyleView', () => {
       ...site,
       themeOverridesEnabled: true,
       themeAllowedTrackerDomains: [],
+      formSubmissionRetentionDays: null,
     });
 
     renderView();

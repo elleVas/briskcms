@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Building2,
+  Clock,
   Globe,
   Languages,
   Moon,
@@ -18,6 +19,7 @@ import {
 import { Separator } from '../components/ui/separator';
 import { Switch } from '../components/ui/switch';
 import { BusinessInfoDialog } from './business-info-dialog';
+import { FormSubmissionRetentionDialog } from './form-submission-retention-dialog';
 import { GeneralSettingsDialog } from './general-settings-dialog';
 import { LocaleSettingsDialog } from './locale-settings-dialog';
 import { SeoSettingsDialog } from './seo-settings-dialog';
@@ -32,6 +34,8 @@ export function SettingsMenu() {
   const [isGeneralSettingsOpen, setIsGeneralSettingsOpen] = useState(false);
   const [isSeoSettingsOpen, setIsSeoSettingsOpen] = useState(false);
   const [isLocaleSettingsOpen, setIsLocaleSettingsOpen] = useState(false);
+  const [isFormSubmissionRetentionOpen, setIsFormSubmissionRetentionOpen] =
+    useState(false);
 
   return (
     <>
@@ -113,6 +117,14 @@ export function SettingsMenu() {
             <Building2 className="size-4" />
             {t('businessInfo.menuLabel')}
           </Button>
+          <Button
+            variant="ghost"
+            className="w-full justify-start gap-2 px-1 py-1.5 text-sm"
+            onClick={() => setIsFormSubmissionRetentionOpen(true)}
+          >
+            <Clock className="size-4" />
+            {t('formSubmissionRetention.menuLabel')}
+          </Button>
         </PopoverContent>
       </Popover>
       <GeneralSettingsDialog
@@ -134,6 +146,11 @@ export function SettingsMenu() {
         siteId={DEFAULT_SITE_ID}
         open={isBusinessInfoOpen}
         onOpenChange={setIsBusinessInfoOpen}
+      />
+      <FormSubmissionRetentionDialog
+        siteId={DEFAULT_SITE_ID}
+        open={isFormSubmissionRetentionOpen}
+        onOpenChange={setIsFormSubmissionRetentionOpen}
       />
     </>
   );

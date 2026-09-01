@@ -1,18 +1,18 @@
 import { createContext, useContext } from 'react';
 
 /**
- * Stessa inversione di PageListContext/MediaPickerContext: i blocchi che
- * offrono un campo icona (docs/adr/0023) hanno bisogno di un modo per far
- * scegliere all'editor un'icona del tema attivo, ma questo package
- * definisce solo descrittori di blocco e non ha un client HTTP o UI a
- * livello applicativo. Il dialog reale (che chiama
- * `GET /api/themes/current/icons` su apps/public-site) è di proprietà di
- * apps/editor-app e fornito tramite questo context.
+ * Same inversion as PageListContext/MediaPickerContext: blocks that
+ * offer an icon field (docs/adr/0023) need a way to let the editor pick
+ * an icon from the active theme, but this package only defines block
+ * descriptors and has no HTTP client or application-level UI. The real
+ * dialog (which calls `GET /api/themes/current/icons` on
+ * apps/public-site) is owned by apps/editor-app and provided through
+ * this context.
  *
- * A differenza di PageListPort/MediaPickerPort, il valore salvato sul
- * blocco è un semplice nome stringa (non un oggetto denormalizzato con già
- * dentro l'anteprima) — `resolve()` dà al field il markup SVG per
- * mostrare l'icona già scelta senza dover riaprire il dialog.
+ * Unlike PageListPort/MediaPickerPort, the value saved on the block is
+ * a plain string name (not a denormalized object already carrying the
+ * preview) — `resolve()` gives the field the SVG markup to show the
+ * already-chosen icon without having to reopen the dialog.
  */
 export interface IconListPort {
   pick(): Promise<string | null>;
@@ -25,7 +25,7 @@ export function useIconList(): IconListPort {
   const port = useContext(IconListContext);
   if (!port) {
     throw new Error(
-      "useIconList() chiamato fuori da un IconListContext.Provider — avvolgi il canvas con l'icon list provider (apps/editor-app) prima di renderizzare blocchi con un campo icona.",
+      'useIconList() called outside an IconListContext.Provider — wrap the canvas with the icon list provider (apps/editor-app) before rendering blocks with an icon field.',
     );
   }
   return port;

@@ -3,6 +3,7 @@ import { requireEnv } from '@brisk/env-config';
 import { type BriskDb } from '@brisk/postgres-db';
 import { DATABASE, DatabaseModule } from '../database.module';
 import { ExpiredTokensCleanupService } from './expired-tokens-cleanup.service';
+import { FormSubmissionsRetentionCleanupService } from './form-submissions-retention-cleanup.service';
 
 @Module({
   imports: [DatabaseModule],
@@ -11,6 +12,15 @@ import { ExpiredTokensCleanupService } from './expired-tokens-cleanup.service';
       provide: ExpiredTokensCleanupService,
       useFactory: (db: BriskDb) =>
         new ExpiredTokensCleanupService(db, requireEnv('DEFAULT_TENANT_ID')),
+      inject: [DATABASE],
+    },
+    {
+      provide: FormSubmissionsRetentionCleanupService,
+      useFactory: (db: BriskDb) =>
+        new FormSubmissionsRetentionCleanupService(
+          db,
+          requireEnv('DEFAULT_TENANT_ID'),
+        ),
       inject: [DATABASE],
     },
   ],

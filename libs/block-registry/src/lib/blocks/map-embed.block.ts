@@ -9,10 +9,10 @@ export const mapEmbedBlock: BlockDescriptor<MapEmbedProps> = {
     address: 'Via Roma 1, Milano',
   },
   fields: [
-    // Non inlineEditable: l'indirizzo non è mai un nodo di testo visibile
-    // in MapEmbed.astro — alimenta solo l'URL della mappa incorporata e
-    // l'attributo title del suo iframe (ConsentGatedEmbed), mai il DOM
-    // renderizzato direttamente.
+    // Not inlineEditable: the address is never a visible text node in
+    // MapEmbed.astro — it only feeds the embedded map URL and the title
+    // attribute of its iframe (ConsentGatedEmbed), never the rendered
+    // DOM directly.
     {
       kind: 'text',
       key: 'address',

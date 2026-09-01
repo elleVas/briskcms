@@ -1,0 +1,1 @@
+ALTER TABLE "sites" ADD COLUMN "form_submission_retention_days" integer;

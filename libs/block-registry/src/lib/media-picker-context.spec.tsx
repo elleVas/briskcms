@@ -6,7 +6,7 @@ import { MediaPickerContext, useMediaPicker } from './media-picker-context';
 describe('useMediaPicker', () => {
   it('throws when called outside a MediaPickerContext.Provider', () => {
     expect(() => renderHook(() => useMediaPicker())).toThrow(
-      /useMediaPicker\(\) chiamato fuori da un MediaPickerContext\.Provider/,
+      /useMediaPicker\(\) called outside a MediaPickerContext\.Provider/,
     );
   });
 

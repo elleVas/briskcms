@@ -2,11 +2,11 @@ import type { BlockDescriptor } from '../field-types';
 import { positionField } from '../fields/position-field';
 import { visibilityField } from '../fields/visibility-field';
 
-// `position`/`visibility` invece di HamburgerMenuProps direttamente: a
-// livello di dominio questo blocco combina navItemPositionSchema (la sua
-// posizione dentro il Nav) con la propria visibility, esattamente come
-// hamburgerMenuPropsSchema in content-model.ts. Nessun tipo Puck-only
-// extra serve qui: Block.children è già reale.
+// `position`/`visibility` instead of HamburgerMenuProps directly: at the
+// domain level this block combines navItemPositionSchema (its position
+// within the Nav) with its own visibility, exactly like
+// hamburgerMenuPropsSchema in content-model.ts. No extra Puck-only type
+// is needed here: Block.children is already real.
 export const hamburgerMenuBlock: BlockDescriptor<{
   position: 'left' | 'right';
   visibility: 'always' | 'desktop-only' | 'mobile-only';

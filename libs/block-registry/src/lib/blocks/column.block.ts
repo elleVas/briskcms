@@ -3,9 +3,8 @@ import { BLOCK_STYLE_DEFAULTS } from '@brisk/shared-types';
 import type { BlockDescriptor } from '../field-types';
 import { BlockStyleRegistry } from '../block-style-registry';
 
-// Nessuna allowedChildTypes — una Colonna è pensata per contenere qualunque
-// cosa serva alla pagina fianco a fianco con le sue sorelle, stessa
-// ragione del Contenitore.
+// No allowedChildTypes — a Column is meant to hold whatever the page
+// needs side by side with its siblings, same reason as the Container.
 export const columnBlock: BlockDescriptor<ColumnProps> = {
   type: 'Column',
   label: 'blocks.column.label',

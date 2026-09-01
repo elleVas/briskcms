@@ -65,6 +65,20 @@ export function updateSeoSettings(
   });
 }
 
+export interface UpdateFormSubmissionRetentionInput {
+  formSubmissionRetentionDays: number | null;
+}
+
+export function updateFormSubmissionRetention(
+  id: string,
+  input: UpdateFormSubmissionRetentionInput,
+): Promise<SiteRecord> {
+  return requestSite(`/sites/${id}/form-submission-retention`, {
+    method: 'PATCH',
+    body: JSON.stringify(input),
+  });
+}
+
 export function updateLocaleSettings(
   id: string,
   input: LocaleSettings,

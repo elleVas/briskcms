@@ -10,6 +10,7 @@ import {
 } from '@nestjs/common';
 import {
   updateSiteBusinessInfo,
+  updateSiteFormSubmissionRetention,
   updateSiteGeneralSettings,
   updateSiteLocaleSettings,
   updateSiteSeoSettings,
@@ -36,6 +37,8 @@ import {
   updateLocaleSettingsBodySchema,
   type UpdateSeoSettingsBody,
   updateSeoSettingsBodySchema,
+  type UpdateFormSubmissionRetentionBody,
+  updateFormSubmissionRetentionBodySchema,
   type UpdateThemeSettingsBody,
   updateThemeSettingsBodySchema,
   type UpdateThemeTokensBody,
@@ -111,6 +114,23 @@ export class SitesController {
     body: UpdateSeoSettingsBody,
   ) {
     const site = await updateSiteSeoSettings(
+      { siteRepository: this.siteRepository },
+      {
+        tenantId: this.tenantContext.getCurrentTenantId(),
+        siteId: id,
+        ...body,
+      },
+    );
+    return this.toDto(site);
+  }
+
+  @Patch(':id/form-submission-retention')
+  async updateFormSubmissionRetention(
+    @Param('id') id: string,
+    @Body(new ZodValidationPipe(updateFormSubmissionRetentionBodySchema))
+    body: UpdateFormSubmissionRetentionBody,
+  ) {
+    const site = await updateSiteFormSubmissionRetention(
       { siteRepository: this.siteRepository },
       {
         tenantId: this.tenantContext.getCurrentTenantId(),
@@ -231,6 +251,7 @@ export class SitesController {
       businessType: props.businessType,
       openingHours: props.openingHours,
       searchEngineIndexingEnabled: props.searchEngineIndexingEnabled,
+      formSubmissionRetentionDays: props.formSubmissionRetentionDays,
       themePrimaryColor: props.themePrimaryColor,
       themeSecondaryColor: props.themeSecondaryColor,
       themeFontFamily: props.themeFontFamily,

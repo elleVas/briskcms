@@ -3,7 +3,7 @@ export interface FeatureListFieldProps {
   onChange: (value: string[]) => void;
 }
 
-/** Un piano tariffario non ha un campo nativo per una lista di stringhe — una singola `<textarea>`, una caratteristica per riga, split/join su "\n". */
+/** A pricing plan has no native field for a list of strings — a single `<textarea>`, one feature per line, split/join on "\n". */
 export function FeatureListField({ value, onChange }: FeatureListFieldProps) {
   return (
     <textarea

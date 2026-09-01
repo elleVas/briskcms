@@ -24,6 +24,7 @@ describe('Site entity', () => {
     themeFaviconUrl: null,
     themeOverridesEnabled: true,
     themeAllowedTrackerDomains: [],
+    formSubmissionRetentionDays: null,
     createdAt: new Date('2026-01-01T00:00:00Z'),
   };
 
@@ -112,6 +113,16 @@ describe('Site entity', () => {
     site.updateSeoSettings({ searchEngineIndexingEnabled: true });
 
     expect(site.searchEngineIndexingEnabled).toBe(true);
+  });
+
+  it('updateFormSubmissionRetention replaces the retention days, including back to null', () => {
+    const site = Site.fromProps(props);
+
+    site.updateFormSubmissionRetention({ formSubmissionRetentionDays: 30 });
+    expect(site.formSubmissionRetentionDays).toBe(30);
+
+    site.updateFormSubmissionRetention({ formSubmissionRetentionDays: null });
+    expect(site.formSubmissionRetentionDays).toBeNull();
   });
 
   it('updateLocaleSettings replaces default/enabled locales and the fallback', () => {

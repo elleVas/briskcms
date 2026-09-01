@@ -2,9 +2,9 @@ import type { CodeProps } from '@brisk/shared-types';
 import { BLOCK_STYLE_DEFAULTS } from '@brisk/shared-types';
 import type { BlockDescriptor } from '../field-types';
 
-// Lista breve e curata (non ogni lingua che Shiki supporta) — stessa
-// ragione di columns.block.ts's layout radio: poche opzioni chiare battono
-// un elenco esaustivo in un editor di contenuto.
+// Short, curated list (not every language Shiki supports) — same reason
+// as columns.block.ts's layout radio: a few clear options beat an
+// exhaustive list in a content editor.
 const LANGUAGE_OPTIONS = [
   'typescript',
   'tsx',
@@ -26,14 +26,14 @@ export const codeBlock: BlockDescriptor<CodeProps> = {
       kind: 'textarea',
       key: 'code',
       label: 'blocks.code.fields.code.fieldLabel',
-      // Trovato dal vivo durante la verifica round-trip del backfill i18n
-      // (non solo teorizzato): i blocchi Code reali di docs-showcase
-      // contengono spesso commenti in linguaggio umano dentro lo snippet
-      // (es. "# overrides Hero" / "# sovrascrive Hero") che erano stati
-      // tradotti a mano per locale sotto il vecchio modello a pagina
-      // duplicata. Marcato traducibile per non perdere quella differenza
-      // silenziosamente: il codice vero e proprio resta comunque
-      // shared-by-default, l'editor sovrascrive solo quando serve.
+      // Found live during the i18n backfill's round-trip verification
+      // (not just theorized): real docs-showcase Code blocks often
+      // contain human-language comments inside the snippet (e.g.
+      // "# overrides Hero" / "# sovrascrive Hero") that had been
+      // hand-translated per locale under the old duplicated-page model.
+      // Marked translatable so that difference isn't silently lost: the
+      // actual code still stays shared-by-default, the editor only
+      // overrides when needed.
       translatable: true,
     },
     {
@@ -46,8 +46,8 @@ export const codeBlock: BlockDescriptor<CodeProps> = {
       })),
     },
   ],
-  // Niente textColor: il tema di Shiki (github-dark) imposta già i colori
-  // della sintassi, stessa ragione di EmbedHtml per il contenuto libero.
+  // No textColor: the Shiki theme (github-dark) already sets the syntax
+  // colors, same reason as EmbedHtml for free-form content.
   stylableProperties: [
     'backgroundColor',
     'borderRadius',

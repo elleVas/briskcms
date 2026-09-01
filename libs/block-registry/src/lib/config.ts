@@ -88,12 +88,12 @@ export {
 };
 
 /**
- * I 40 blocchi pagina (docs/adr/0007) — "non registrato = non droppabile",
- * nessuna deny-list. Solo dati (fields/defaultProps), nessun `render`: il
- * vero componente Astro in apps/public-site è l'unico renderer, mostrato
- * dal vivo nel canvas dentro un iframe (vedi il piano dell'editor visuale).
- * Breadcrumb è qui (non tra i blocchi Header/Footer di layout-config.ts,
- * vedi il commento lì) perché è contenuto intrinsecamente per-pagina.
+ * The 40 page blocks (docs/adr/0007) — "not registered = not droppable",
+ * no deny-list. Data only (fields/defaultProps), no `render`: the real
+ * Astro component in apps/public-site is the only renderer, shown live
+ * in the canvas inside an iframe (see the visual editor plan). Breadcrumb
+ * is here (not among the Header/Footer blocks in layout-config.ts, see
+ * the comment there) because it's intrinsically per-page content.
  */
 export const pageBlocks: BlockDescriptor[] = [
   heroBlock,
@@ -140,7 +140,7 @@ export const pageBlocks: BlockDescriptor[] = [
   newsletterSignupBlock,
 ];
 
-/** Raggruppamento per il selettore blocchi — ogni blocco sopra compare in esattamente una categoria qui, nessun bucket di fallback automatico per uno dimenticato. */
+/** Grouping for the block picker — every block above appears in exactly one category here, no automatic fallback bucket for a forgotten one. */
 export const pageBlockCategories: { title: string; types: string[] }[] = [
   {
     title: 'blocks.categories.layout',

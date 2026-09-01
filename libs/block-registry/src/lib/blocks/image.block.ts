@@ -18,8 +18,8 @@ export const imageBlock: BlockDescriptor<ImageProps> = {
       'blocks.image.fields.media.fieldLabel',
       MediaPickerField,
     ),
-    // alt non è inlineEditable: è un attributo (nessun nodo di testo
-    // visibile nel DOM), non un contenuto che si possa editare sul canvas.
+    // alt is not inlineEditable: it's an attribute (no visible text node
+    // in the DOM), not content that can be edited on the canvas.
     {
       kind: 'text',
       key: 'alt',

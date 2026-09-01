@@ -55,12 +55,12 @@ export const containerBlock: BlockDescriptor<ContainerProps> = {
       ],
     },
   ],
-  // Nessuna allowedChildTypes — a differenza di Column (lista fissa per
-  // un track di griglia), un Contenitore è pensato per contenere
-  // qualunque cosa, incluso un altro Contenitore o Colonne.
+  // No allowedChildTypes — unlike Column (a fixed list for a grid
+  // track), a Container is meant to hold anything, including another
+  // Container or Columns.
   isContainer: true,
-  // Solo radius e colore testo: background/padding hanno già i propri
-  // campi dedicati sopra, non vanno duplicati qui.
+  // Only radius and text color: background/padding already have their
+  // own dedicated fields above, they shouldn't be duplicated here.
   stylableProperties: ['textColor', 'borderRadius'],
   defaultStyle: BLOCK_STYLE_DEFAULTS.Container,
 };

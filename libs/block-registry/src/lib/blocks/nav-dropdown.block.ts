@@ -23,8 +23,8 @@ export const navDropdownBlock: BlockDescriptor<NavDropdownProps> = {
     positionField,
     visibilityField,
   ],
-  // Capped a un livello (docs/adr/0018 follow-up): solo NavLink, non un
-  // altro NavDropdown.
+  // Capped at one level (docs/adr/0018 follow-up): only NavLink, not
+  // another NavDropdown.
   isContainer: true,
   allowedChildTypes: ['NavLink'],
 };

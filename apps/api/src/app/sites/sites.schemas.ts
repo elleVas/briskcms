@@ -34,6 +34,17 @@ export const updateSeoSettingsBodySchema = z.object({
 });
 export type UpdateSeoSettingsBody = z.infer<typeof updateSeoSettingsBodySchema>;
 
+// GDPR/privacy (piano-progetto-astro-cms.md's "Considerazioni aggiuntive").
+// `null` keeps every submission forever; a number must be a whole number of
+// days, at least 1 — "delete after 0 days" isn't a real retention policy,
+// it's the delete-form-submissions feature wearing a disguise.
+export const updateFormSubmissionRetentionBodySchema = z.object({
+  formSubmissionRetentionDays: z.number().int().positive().nullable(),
+});
+export type UpdateFormSubmissionRetentionBody = z.infer<
+  typeof updateFormSubmissionRetentionBodySchema
+>;
+
 // Reuses @brisk/shared-types' schema wholesale (docs/adr/0017) — it already
 // encodes the one real invariant (defaultLocale must be one of
 // enabledLocales), no reason to redeclare it here.

@@ -274,6 +274,18 @@
     "save": "Salva",
     "saving": "Salvataggio in corso..."
   },
+  "formSubmissionRetention": {
+    "menuLabel": "Conservazione dati",
+    "title": "Conservazione delle risposte ai moduli",
+    "description": "Cancella automaticamente le risposte ai moduli dopo un numero di giorni impostato. Lascia vuoto per conservarle per sempre.",
+    "fieldLabel": "Cancella le risposte dopo (giorni)",
+    "placeholder": "Conserva per sempre",
+    "hint": "Si applica a tutti i moduli di questo sito. Le risposte cancellate non sono recuperabili.",
+    "invalidValue": "Inserisci un numero intero di giorni maggiore di 0, oppure lascia vuoto per conservare le risposte per sempre.",
+    "cancel": "Annulla",
+    "save": "Salva",
+    "saving": "Salvataggio in corso..."
+  },
   "themeSettings": {
     "title": "Stile del sito",
     "intro": "Queste impostazioni si applicano sopra il tema attivo del sito — lascia un campo disattivato per mantenere il valore predefinito del tema.",

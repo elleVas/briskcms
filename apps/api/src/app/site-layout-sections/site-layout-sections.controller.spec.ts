@@ -53,6 +53,7 @@ function buildSite(
     themeFaviconUrl: null,
     themeOverridesEnabled: true,
     themeAllowedTrackerDomains: [],
+    formSubmissionRetentionDays: null,
     createdAt: new Date(),
     ...overrides,
   });

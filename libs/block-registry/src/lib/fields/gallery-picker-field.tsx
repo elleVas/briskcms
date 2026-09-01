@@ -33,7 +33,7 @@ const inputStyle = {
   fontSize: 14,
 };
 
-/** Ogni slot (picker, alt text, rimuovi) è sempre visibile, nessuno step di espansione. */
+/** Every slot (picker, alt text, remove) is always visible, no expansion step. */
 export function GalleryPickerField({
   value,
   onChange,
@@ -70,7 +70,7 @@ export function GalleryPickerField({
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-      {/* No stable id per item — index as key va bene, le righe vengono solo aggiunte/rimosse qui, mai riordinate. */}
+      {/* No stable id per item — index as key is fine, rows are only added/removed here, never reordered. */}
       {value.map((item, index) => (
         <div
           key={index}
