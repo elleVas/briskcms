@@ -5,6 +5,7 @@ import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { FormsModule } from './forms/forms.module';
+import { LegalDocumentsModule } from './legal-documents/legal-documents.module';
 import { MaintenanceModule } from './maintenance/maintenance.module';
 import { MediaModule } from './media/media.module';
 import { PagesModule } from './pages/pages.module';
@@ -23,6 +24,7 @@ import { UsersModule } from './users/users.module';
     DashboardModule,
     MaintenanceModule,
     PagesModule,
+    LegalDocumentsModule,
     PublicPagesModule,
     MediaModule,
     SitesModule,

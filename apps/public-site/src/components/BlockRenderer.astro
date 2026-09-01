@@ -18,6 +18,7 @@ import {
   formBlockPropsSchema,
   galleryPropsSchema,
   hamburgerMenuPropsSchema,
+  headingPropsSchema,
   heroPropsSchema,
   imagePropsSchema,
   imageSliderPropsSchema,
@@ -96,6 +97,8 @@ import HamburgerMenuCore from './blocks/HamburgerMenu.astro';
 const HamburgerMenu = resolveThemeBlockOverride('HamburgerMenu', HamburgerMenuCore);
 import HeroCore from './blocks/Hero.astro';
 const Hero = resolveThemeBlockOverride('Hero', HeroCore);
+import HeadingCore from './blocks/Heading.astro';
+const Heading = resolveThemeBlockOverride('Heading', HeadingCore);
 import ImageCore from './blocks/Image.astro';
 const Image = resolveThemeBlockOverride('Image', ImageCore);
 import ImageSliderCore from './blocks/ImageSlider.astro';
@@ -235,6 +238,11 @@ interface BlockDispatchEntry {
 
 const BLOCK_REGISTRY: Record<string, BlockDispatchEntry> = {
   Hero: { component: Hero, schema: heroPropsSchema, styleOverride: true },
+  Heading: {
+    component: Heading,
+    schema: headingPropsSchema,
+    styleOverride: true,
+  },
   Text: { component: Text, schema: textPropsSchema, styleOverride: true },
   Image: { component: Image, schema: imagePropsSchema, locale: true },
   Gallery: { component: Gallery, schema: galleryPropsSchema, locale: true },

@@ -114,6 +114,9 @@ export const BLOCK_STYLE_DEFAULTS: Record<string, BlockStyleDefaults> = {
     textColor: 'var(--foreground)',
     borderRadius: '0',
   },
+  Heading: {
+    textColor: 'inherit',
+  },
   LogoStrip: {
     backgroundColor: 'transparent',
     borderRadius: '0',

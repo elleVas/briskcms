@@ -8,6 +8,7 @@ import type {
   PageGroupRepositoryPort,
   PageTranslationRepositoryPort,
 } from '@brisk/ports';
+import { findAvailableSlug } from './find-available-slug';
 
 export interface DuplicatePageGroupDeps {
   pageGroupRepository: PageGroupRepositoryPort;
@@ -25,35 +26,9 @@ export interface DuplicatePageGroupResult {
   translations: PageTranslation[];
 }
 
-const MAX_SLUG_SUFFIX_ATTEMPTS = 50;
-
-/** `${baseSlug}-copy`, then `-copy-2`, `-copy-3`, ... — same sibling-scoped uniqueness createPageGroupTranslation itself enforces, just resolved proactively here instead of retried after a 409. */
-async function findAvailableSlug(
-  deps: DuplicatePageGroupDeps,
-  tenantId: string,
-  siteId: string,
-  locale: string,
-  parentGroupId: string | null,
-  baseSlug: string,
-): Promise<string> {
-  for (let attempt = 1; attempt <= MAX_SLUG_SUFFIX_ATTEMPTS; attempt++) {
-    const candidate =
-      attempt === 1 ? `${baseSlug}-copy` : `${baseSlug}-copy-${attempt}`;
-    const taken =
-      await deps.pageTranslationRepository.findByParentGroupAndLocaleSlug(
-        tenantId,
-        siteId,
-        locale,
-        parentGroupId,
-        candidate,
-      );
-    if (!taken) {
-      return candidate;
-    }
-  }
-  // Extremely unlikely at any real sibling-group size — falls back to a
-  // slug guaranteed unique rather than looping forever.
-  return `${baseSlug}-copy-${randomUUID().slice(0, 8)}`;
+// `${baseSlug}-copy`, then `-copy-2`, `-copy-3`, ...
+function buildCopySlugCandidate(baseSlug: string, attempt: number): string {
+  return attempt === 1 ? `${baseSlug}-copy` : `${baseSlug}-copy-${attempt}`;
 }
 
 /**
@@ -113,12 +88,13 @@ export async function duplicatePageGroup(
   const translations: PageTranslation[] = [];
   for (const sourceTranslation of sourceTranslations) {
     const slug = await findAvailableSlug(
-      deps,
+      deps.pageTranslationRepository,
       input.tenantId,
       group.siteId,
       sourceTranslation.locale,
       group.parentId,
       sourceTranslation.slug,
+      buildCopySlugCandidate,
     );
     const translation = PageTranslation.fromProps({
       id: randomUUID(),

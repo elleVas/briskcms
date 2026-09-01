@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { QueryClientProvider } from '@tanstack/react-query';
@@ -12,6 +13,29 @@ vi.mock('../lib/sites-api-client', async (importOriginal) => {
   const actual =
     await importOriginal<typeof import('../lib/sites-api-client')>();
   return { ...actual, updateCookieBannerSettings: vi.fn() };
+});
+
+// Same mock as admin-shell.spec.tsx: `Link` needs a real router context to
+// resolve `useLinkProps`, which this component-only render doesn't provide.
+vi.mock('@tanstack/react-router', async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import('@tanstack/react-router')>();
+  return {
+    ...actual,
+    Link: ({
+      children,
+      to,
+      className,
+    }: {
+      children: ReactNode;
+      to: string;
+      className?: string;
+    }) => (
+      <a href={to} className={className}>
+        {children}
+      </a>
+    ),
+  };
 });
 
 const site: SiteRecord = {
