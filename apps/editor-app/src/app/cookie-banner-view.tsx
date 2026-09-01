@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { X } from 'lucide-react';
+import { Link } from '@tanstack/react-router';
+import { FileText, X } from 'lucide-react';
 import type {
   CookieBannerCopy,
   CookieBannerPosition,
@@ -131,6 +132,14 @@ export function CookieBannerView({ siteId, site }: CookieBannerViewProps) {
           {t('cookieBanner.intro')}
         </p>
       </div>
+
+      <Link
+        to="/cookies/legal-documents"
+        className="flex w-fit items-center gap-2 rounded-md border px-3 py-2 text-sm text-primary hover:bg-accent"
+      >
+        <FileText className="size-4" />
+        {t('cookieBanner.legalDocumentsLink')}
+      </Link>
 
       <div className="flex items-center gap-2">
         <Switch

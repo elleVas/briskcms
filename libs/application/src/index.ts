@@ -12,6 +12,8 @@ export * from './lib/use-cases/list-page-groups.use-case';
 export * from './lib/use-cases/delete-page-group.use-case';
 export * from './lib/use-cases/reorder-sibling-page-groups.use-case';
 export * from './lib/use-cases/duplicate-page-group.use-case';
+export * from './lib/use-cases/generate-legal-documents.use-case';
+export * from './lib/legal-documents';
 export * from './lib/use-cases/get-page-translation-by-id.use-case';
 export * from './lib/use-cases/list-page-group-translations.use-case';
 export * from './lib/use-cases/list-page-group-versions.use-case';

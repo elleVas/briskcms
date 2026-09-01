@@ -16,6 +16,7 @@ import { featureBlock } from './blocks/feature.block';
 import { featureGridBlock } from './blocks/feature-grid.block';
 import { formBlock } from './blocks/form.block';
 import { galleryBlock } from './blocks/gallery.block';
+import { headingBlock } from './blocks/heading.block';
 import { heroBlock } from './blocks/hero.block';
 import { imageSliderBlock } from './blocks/image-slider.block';
 import { imageBlock } from './blocks/image.block';
@@ -60,6 +61,7 @@ export {
   featureGridBlock,
   formBlock,
   galleryBlock,
+  headingBlock,
   heroBlock,
   imageSliderBlock,
   imageBlock,
@@ -97,6 +99,7 @@ export {
  */
 export const pageBlocks: BlockDescriptor[] = [
   heroBlock,
+  headingBlock,
   textBlock,
   imageBlock,
   galleryBlock,
@@ -150,6 +153,7 @@ export const pageBlockCategories: { title: string; types: string[] }[] = [
     title: 'blocks.categories.content',
     types: [
       'Hero',
+      'Heading',
       'Text',
       'Link',
       'Image',

@@ -327,7 +327,58 @@
     "customizePlaceholder": "Bottone personalizza",
     "save": "Salva",
     "saving": "Salvataggio in corso...",
-    "saved": "Salvato"
+    "saved": "Salvato",
+    "legalDocumentsLink": "Genera bozze di Privacy Policy, Cookie Policy e Termini"
+  },
+  "legalDocuments": {
+    "title": "Generatore documenti legali",
+    "intro": "Genera bozze di Privacy Policy, Cookie Policy e Termini e Condizioni a partire dai dati già presenti sul sito. Vengono sempre create come bozze — fai revisionare da un legale prima di pubblicare.",
+    "step": {
+      "identity": "Chi sei",
+      "usage": "Cosa raccogli",
+      "documents": "Documenti",
+      "review": "Riepilogo"
+    },
+    "legalEntityNameLabel": "Ragione sociale",
+    "contactEmailLabel": "Email di contatto privacy",
+    "vatIdLabel": "Partita IVA (opzionale)",
+    "domainLabel": "Dominio del sito",
+    "addressLabel": "Indirizzo (opzionale)",
+    "phoneLabel": "Telefono (opzionale)",
+    "dataCollectedLabel": "Dati raccolti",
+    "dataCollectedHint": "Attiva solo quello che il sito raccoglie davvero — questo testo finisce nella policy generata.",
+    "dataCollected": {
+      "contactForm": "Invii del modulo di contatto",
+      "newsletter": "Iscrizioni alla newsletter",
+      "accounts": "Account utente"
+    },
+    "thirdPartyServicesLabel": "Servizi di terze parti",
+    "thirdPartyServicesHint": "Precompilato dagli script tracker e dai domini consentiti — aggiungi o rimuovi liberamente.",
+    "thirdPartyServicePlaceholder": "es. Google Analytics",
+    "addThirdParty": "Aggiungi",
+    "removeThirdParty": "Rimuovi {{service}}",
+    "retentionDaysLabel": "Conservazione moduli inviati (giorni)",
+    "retentionDaysPlaceholder": "Lascia vuoto per conservarli per sempre",
+    "retentionDaysHint": "Precompilato dall'impostazione di conservazione dei moduli inviati.",
+    "documentsLabel": "Quali documenti generare",
+    "kind": {
+      "privacy-policy": "Privacy Policy",
+      "cookie-policy": "Cookie Policy",
+      "terms-conditions": "Termini e Condizioni"
+    },
+    "localesLabel": "Quali lingue",
+    "jurisdictionLabel": "Giurisdizione competente",
+    "jurisdictionHint": "Usata per il documento Termini e Condizioni.",
+    "disclaimer": "Questi documenti sono un punto di partenza generato automaticamente, non una consulenza legale. Fai revisionare da un legale prima di pubblicare.",
+    "loadingPreview": "Generazione anteprima in corso...",
+    "confirmLabel": "Ho capito che sono bozze e verranno revisionate prima della pubblicazione",
+    "back": "Indietro",
+    "next": "Avanti",
+    "generate": "Genera bozze",
+    "generating": "Generazione in corso...",
+    "successTitle": "Bozze create",
+    "successHint": "Ogni documento è stato creato come pagina bozza, mai pubblicata automaticamente.",
+    "openDraft": "Apri bozza"
   },
   "themeSettings": {
     "title": "Stile del sito",

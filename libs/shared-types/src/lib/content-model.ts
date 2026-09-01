@@ -73,6 +73,16 @@ export const textPropsSchema = z.object({
 });
 export type TextProps = z.infer<typeof textPropsSchema>;
 
+// A semantic section heading — no existing block filled this gap (Hero's
+// title/subtitle are a different intent, Feature's title is centered
+// card copy). Added for the generated legal document pages (docs/adr/0040)
+// but generally useful on any page needing a real <h2>/<h3>.
+export const headingPropsSchema = z.object({
+  text: z.string(),
+  level: z.enum(['h2', 'h3']),
+});
+export type HeadingProps = z.infer<typeof headingPropsSchema>;
+
 /**
  * The picked media's `url` is denormalized into the block props (not just
  * `mediaId`) so rendering — both the editor canvas and apps/public-site —

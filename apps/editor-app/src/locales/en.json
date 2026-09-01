@@ -327,7 +327,58 @@
     "customizePlaceholder": "Customize button",
     "save": "Save",
     "saving": "Saving...",
-    "saved": "Saved"
+    "saved": "Saved",
+    "legalDocumentsLink": "Generate Privacy Policy, Cookie Policy & Terms drafts"
+  },
+  "legalDocuments": {
+    "title": "Legal document generator",
+    "intro": "Generate draft Privacy Policy, Cookie Policy and Terms & Conditions pages from your site's own data. Always created as drafts — review with a lawyer before publishing.",
+    "step": {
+      "identity": "Who you are",
+      "usage": "What you collect",
+      "documents": "Documents",
+      "review": "Review"
+    },
+    "legalEntityNameLabel": "Legal entity name",
+    "contactEmailLabel": "Privacy contact email",
+    "vatIdLabel": "VAT number (optional)",
+    "domainLabel": "Site domain",
+    "addressLabel": "Address (optional)",
+    "phoneLabel": "Phone (optional)",
+    "dataCollectedLabel": "Data collected",
+    "dataCollectedHint": "Only enable what this site actually collects — this text ends up in the generated policy.",
+    "dataCollected": {
+      "contactForm": "Contact form submissions",
+      "newsletter": "Newsletter sign-ups",
+      "accounts": "User accounts"
+    },
+    "thirdPartyServicesLabel": "Third-party services",
+    "thirdPartyServicesHint": "Pre-filled from your tracker scripts and allowed domains — add or remove as needed.",
+    "thirdPartyServicePlaceholder": "e.g. Google Analytics",
+    "addThirdParty": "Add",
+    "removeThirdParty": "Remove {{service}}",
+    "retentionDaysLabel": "Form submission retention (days)",
+    "retentionDaysPlaceholder": "Leave empty to keep forever",
+    "retentionDaysHint": "Pre-filled from your form submission retention setting.",
+    "documentsLabel": "Which documents to generate",
+    "kind": {
+      "privacy-policy": "Privacy Policy",
+      "cookie-policy": "Cookie Policy",
+      "terms-conditions": "Terms & Conditions"
+    },
+    "localesLabel": "Which languages",
+    "jurisdictionLabel": "Governing jurisdiction",
+    "jurisdictionHint": "Used for the Terms & Conditions document.",
+    "disclaimer": "These documents are a generated starting point, not legal advice. Have a lawyer review them before publishing.",
+    "loadingPreview": "Generating a preview...",
+    "confirmLabel": "I understand these are drafts and will be reviewed before publishing",
+    "back": "Back",
+    "next": "Next",
+    "generate": "Generate drafts",
+    "generating": "Generating...",
+    "successTitle": "Drafts created",
+    "successHint": "Each document was created as a draft page, never published automatically.",
+    "openDraft": "Open draft"
   },
   "themeSettings": {
     "title": "Site style",
