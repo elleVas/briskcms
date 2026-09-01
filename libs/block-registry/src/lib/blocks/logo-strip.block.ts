@@ -17,7 +17,7 @@ export const logoStripBlock: BlockDescriptor<LogoStripProps> = {
       GalleryPickerField,
     ),
   ],
-  // Niente textColor: la striscia contiene solo immagini, nessun testo.
+  // No textColor: the strip only contains images, no text.
   stylableProperties: [
     'backgroundColor',
     'borderRadius',

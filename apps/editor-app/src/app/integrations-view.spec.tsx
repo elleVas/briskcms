@@ -35,6 +35,7 @@ const site: SiteRecord = {
   themeFaviconUrl: null,
   themeOverridesEnabled: true,
   themeAllowedTrackerDomains: [],
+  formSubmissionRetentionDays: null,
   themeTokens: { blockStyles: {} },
   createdAt: '',
 };

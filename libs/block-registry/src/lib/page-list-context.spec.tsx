@@ -6,7 +6,7 @@ import { PageListContext, usePageList } from './page-list-context';
 describe('usePageList', () => {
   it('throws when called outside a PageListContext.Provider', () => {
     expect(() => renderHook(() => usePageList())).toThrow(
-      /usePageList\(\) chiamato fuori da un PageListContext\.Provider/,
+      /usePageList\(\) called outside a PageListContext\.Provider/,
     );
   });
 

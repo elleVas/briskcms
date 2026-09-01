@@ -27,7 +27,7 @@ export const promoBarBlock: BlockDescriptor<PromoBarProps> = {
     ...ctaLinkFields(),
     visibilityField,
   ],
-  // Sostituisce il vecchio `colorOverride` — vedi button.block.ts.
+  // Replaces the old `colorOverride` — see button.block.ts.
   stylableProperties: BlockStyleRegistry.STANDARD,
   defaultStyle: BLOCK_STYLE_DEFAULTS.PromoBar,
 };

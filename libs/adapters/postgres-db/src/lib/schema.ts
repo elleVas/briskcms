@@ -147,6 +147,12 @@ export const sites = pgTable(
       .notNull()
       .default([])
       .$type<TrackerDomainEntry[]>(),
+    // GDPR/privacy: `null` (default) keeps every submission forever, same
+    // behavior as before this column existed. A positive integer is the
+    // number of days a form_submissions row survives past its createdAt
+    // before the scheduled cleanup (FormSubmissionsRetentionCleanupService)
+    // deletes it — see deleteExpiredFormSubmissions.
+    formSubmissionRetentionDays: integer('form_submission_retention_days'),
     createdAt: timestamp('created_at', { withTimezone: true })
       .notNull()
       .defaultNow(),

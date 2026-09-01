@@ -27,6 +27,8 @@ export interface SiteProps {
   themeFaviconUrl: string | null;
   themeOverridesEnabled: boolean;
   themeAllowedTrackerDomains: TrackerDomainEntry[];
+  /** GDPR/privacy: `null` keeps every form_submissions row forever (default, unchanged from before this field existed). A positive integer is how many days a submission survives past its createdAt before the scheduled cleanup deletes it. */
+  formSubmissionRetentionDays: number | null;
   createdAt: Date;
 }
 
@@ -53,6 +55,11 @@ export interface UpdateLocaleSettingsInput {
 }
 
 export type UpdateThemeSettingsInput = ThemeSettings;
+
+export interface UpdateFormSubmissionRetentionInput {
+  /** `null` = keep forever. A number must be a positive integer (validated at the schema layer, apps/api/src/app/sites/sites.schemas.ts). */
+  formSubmissionRetentionDays: number | null;
+}
 
 export class Site {
   private constructor(private props: SiteProps) {}
@@ -123,6 +130,11 @@ export class Site {
     return this.props.createdAt;
   }
 
+  /** `null` = keep every form_submissions row forever. See UpdateFormSubmissionRetentionInput. */
+  get formSubmissionRetentionDays(): number | null {
+    return this.props.formSubmissionRetentionDays;
+  }
+
   /**
    * Tier 1 of docs/adr/0021's two-tier theming model — live, DB-backed,
    * layered on top of whichever filesystem theme (Tier 2) is active for
@@ -180,6 +192,12 @@ export class Site {
     this.props.defaultLocale = input.defaultLocale;
     this.props.enabledLocales = input.enabledLocales;
     this.props.untranslatedPageFallback = input.untranslatedPageFallback;
+  }
+
+  updateFormSubmissionRetention(
+    input: UpdateFormSubmissionRetentionInput,
+  ): void {
+    this.props.formSubmissionRetentionDays = input.formSubmissionRetentionDays;
   }
 
   updateThemeSettings(input: UpdateThemeSettingsInput): void {

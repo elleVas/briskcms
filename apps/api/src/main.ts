@@ -13,6 +13,7 @@ import { requireEnv } from '@brisk/env-config';
 import { AppModule } from './app/app.module';
 import { HttpExceptionFilter } from './app/http-exception.filter';
 import { requestIdMiddleware } from './app/request-id.middleware';
+import { validateApiEnv } from './env-schema';
 
 // Security review 2026-08-24, "terzo giro": nessun handler globale — un
 // reject non gestito o un throw fuori da qualunque try/catch spariva nel
@@ -33,6 +34,12 @@ process.on('uncaughtException', (error) => {
 });
 
 async function bootstrap() {
+  // Fail fast on every missing/invalid env var at once, before any module
+  // wiring starts — see env-schema.ts. Otherwise a deployment missing
+  // several variables discovers them one restart at a time, in whatever
+  // order NestJS happens to instantiate the module that first calls
+  // requireEnv() for each of them.
+  validateApiEnv();
   const app = await NestFactory.create(AppModule);
   const globalPrefix = 'api';
   app.setGlobalPrefix(globalPrefix);

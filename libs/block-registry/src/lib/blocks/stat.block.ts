@@ -14,8 +14,9 @@ export const statBlock: BlockDescriptor<StatProps> = {
     label: 'Etichetta',
   },
   fields: [
-    // Non inlineEditable: guida l'animazione count-up sul sito pubblico
-    // (StatsCounter.astro la fa il parse diretto), deve restare un numero.
+    // Not inlineEditable: it drives the count-up animation on the
+    // public site (StatsCounter.astro parses it directly), it must
+    // stay a number.
     {
       kind: 'number',
       key: 'value',

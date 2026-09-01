@@ -6,7 +6,7 @@ import { FormListContext, useFormList } from './form-list-context';
 describe('useFormList', () => {
   it('throws when called outside a FormListContext.Provider', () => {
     expect(() => renderHook(() => useFormList())).toThrow(
-      /useFormList\(\) chiamato fuori da un FormListContext\.Provider/,
+      /useFormList\(\) called outside a FormListContext\.Provider/,
     );
   });
 

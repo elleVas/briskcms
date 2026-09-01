@@ -23,28 +23,27 @@ export {
 };
 
 /**
- * Condiviso da entrambi gli editor Header e Footer (docs/adr/0018): il
- * `content` di un site_layout_section per kind='header'/'footer' è
- * direttamente questa lista di blocchi — non esiste un blocco
- * wrapper Header/Footer, il tag <header>/<footer> è fornito da
- * apps/public-site (PR3), mai salvato come Block. Un solo registro, non
- * due, perché entrambi gli editor offrono la stessa identica palette;
- * cosa rende uno "l'header" e l'altro "il footer" è il `kind` sull'entità
- * in editing, non qualcosa di visibile qui. Un editor non tecnico non può
- * strutturalmente trascinare un Hero/Gallery/Form (o un blocco "footer" —
- * non esiste un componente simile) in nessuno dei due: semplicemente non è
- * in questa lista, nessuna validazione a runtime da tenere sincronizzata a
- * parte.
+ * Shared by both the Header and Footer editors (docs/adr/0018): the
+ * `content` of a site_layout_section for kind='header'/'footer' is
+ * directly this list of blocks — there's no wrapper Header/Footer
+ * block, the <header>/<footer> tag is provided by apps/public-site
+ * (PR3), never saved as a Block. A single registry, not two, because
+ * both editors offer the exact same palette; what makes one "the
+ * header" and the other "the footer" is the `kind` on the entity being
+ * edited, not anything visible here. A non-technical editor
+ * structurally cannot drag a Hero/Gallery/Form (or a "footer" block —
+ * no such component exists) into either one: it simply isn't in this
+ * list, no separate runtime validation to keep in sync.
  *
- * 11 blocchi totali: 8 esclusivi (sotto) + Text/Image/SearchBox riusati
- * da @brisk/block-registry's config.ts (stessi descrittori, stesso
- * componente Astro — nessuna duplicazione). Breadcrumb NON è più qui
- * (spostato tra i blocchi pagina in config.ts, 2026-08-22): è contenuto
- * intrinsecamente per-pagina (dipende dalla posizione della pagina nella
- * gerarchia), editarlo come parte dell'Header/Footer condiviso — pur
- * "funzionando" grazie ad ancestors/currentPageTitle passati dinamicamente
- * da BlockRenderer — lo rendeva concettualmente un blocco di pagina
- * travestito da blocco di sezione condivisa.
+ * 11 blocks total: 8 exclusive (below) + Text/Image/SearchBox reused
+ * from @brisk/block-registry's config.ts (same descriptors, same Astro
+ * component — no duplication). Breadcrumb is NO LONGER here (moved
+ * among the page blocks in config.ts, 2026-08-22): it's intrinsically
+ * per-page content (depends on the page's position in the hierarchy),
+ * editing it as part of the shared Header/Footer — even though it
+ * "worked" thanks to ancestors/currentPageTitle passed dynamically by
+ * BlockRenderer — conceptually made it a page block disguised as a
+ * shared section block.
  */
 export const headerFooterBlocks: BlockDescriptor[] = [
   navBlock,

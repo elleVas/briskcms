@@ -4,26 +4,26 @@ export interface ColorPickerFieldProps {
   value: string | null;
   onChange: (value: string | null) => void;
   /**
-   * Il valore RISOLTO del tema attivo per questo campo (docs/adr/0022's
-   * follow-up sul pre-fill) — `null`/assente = non ancora caricato o
-   * nessun default noto. Mostrato come anteprima quando `value` non è
-   * impostato, così il campo parte già dall'aspetto reale attuale invece
-   * che vuoto. Non sempre un hex (spesso `oklch(...)`, come i token dei
-   * temi di questo progetto): `<input type="color">` accetta solo hex,
-   * quindi quello resta nero finché non è un match; il quadratino di
-   * anteprima sotto invece accetta qualunque sintassi colore CSS valida.
+   * The RESOLVED value of the active theme for this field (docs/adr/0022's
+   * follow-up on pre-fill) — `null`/absent = not loaded yet or no known
+   * default. Shown as a preview when `value` isn't set, so the field
+   * already starts from the current real appearance instead of being
+   * empty. Not always a hex value (often `oklch(...)`, like this
+   * project's theme tokens): `<input type="color">` only accepts hex, so
+   * that stays black until it's a match; the preview swatch below
+   * instead accepts any valid CSS color syntax.
    */
   defaultValue?: string | null;
 }
 
 /**
- * Per-instance color override — `null`/assente significa "eredita dal
- * tema" (il block renderer applica un wrapper di scoping via CSS-var solo
- * quando questo è non-vuoto). Il controllo è un check di verità, non
- * `!== null`: `value` può arrivare `undefined` (proprietà mai
- * personalizzata, quindi assente dall'oggetto sparso), e `undefined !==
- * null` è `true` in JS — con `!== null` il pulsante "torna al tema"
- * comparirebbe anche senza nessuna personalizzazione reale.
+ * Per-instance color override — `null`/absent means "inherit from the
+ * theme" (the block renderer only applies a CSS-var scoping wrapper when
+ * this is non-empty). The check is a truthiness check, not `!== null`:
+ * `value` can arrive as `undefined` (property never customized, so
+ * absent from the sparse object), and `undefined !== null` is `true` in
+ * JS — with `!== null` the "back to theme" button would show up even
+ * without any real customization.
  */
 export function ColorPickerField({
   value,

@@ -65,6 +65,7 @@ describe('getPreviewPageById', () => {
       themeFaviconUrl: null,
       themeOverridesEnabled: true,
       themeAllowedTrackerDomains: [],
+      formSubmissionRetentionDays: null,
       createdAt: new Date(),
     });
     await siteRepository.save(site);

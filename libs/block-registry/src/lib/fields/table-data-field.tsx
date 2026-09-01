@@ -25,7 +25,7 @@ const inputStyle = {
   width: 120,
 };
 
-/** Ogni cella è un <input> sempre visibile, nessuna riga collassata da scoprire. La prima riga è sempre l'intestazione (content-model.ts's own comment). */
+/** Every cell is an always-visible <input>, no collapsed row to discover. The first row is always the header (content-model.ts's own comment). */
 export function TableDataField({ value, onChange }: TableDataFieldProps) {
   const columnCount = value[0]?.length ?? 0;
 

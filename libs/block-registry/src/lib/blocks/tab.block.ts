@@ -2,11 +2,11 @@ import type { BlockDescriptor } from '../field-types';
 import { BLOCK_STYLE_DEFAULTS } from '@brisk/shared-types';
 import { BlockStyleRegistry } from '../block-style-registry';
 
-// `label` non fa parte di `TabProps` nel dominio (content-model.ts) — in
-// realtà lo fa: TabProps = { label: string }. Nessun tipo Puck-only extra
-// serve qui, a differenza di Nav/Column/ecc: Tab non ha un prop "children"
-// separato dal Block.children reale, quindi non serve un'interfaccia
-// aggiuntiva come le *PuckProps di Puck.
+// `label` is not part of `TabProps` in the domain (content-model.ts) —
+// actually it is: TabProps = { label: string }. No extra Puck-only type
+// is needed here, unlike Nav/Column/etc: Tab has no `children` prop
+// separate from the real Block.children, so no extra interface like
+// Puck's *PuckProps is needed.
 export const tabBlock: BlockDescriptor<{ label: string }> = {
   type: 'Tab',
   label: 'blocks.tab.label',

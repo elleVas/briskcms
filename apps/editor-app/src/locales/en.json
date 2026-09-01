@@ -274,6 +274,18 @@
     "save": "Save",
     "saving": "Saving..."
   },
+  "formSubmissionRetention": {
+    "menuLabel": "Data retention",
+    "title": "Form submission retention",
+    "description": "Automatically delete form submissions after a set number of days. Leave empty to keep every submission forever.",
+    "fieldLabel": "Delete submissions after (days)",
+    "placeholder": "Keep forever",
+    "hint": "Applies to every form on this site. Deleted submissions can't be recovered.",
+    "invalidValue": "Enter a whole number of days greater than 0, or leave it empty to keep submissions forever.",
+    "cancel": "Cancel",
+    "save": "Save",
+    "saving": "Saving..."
+  },
   "themeSettings": {
     "title": "Site style",
     "intro": "These settings apply on top of the site's active theme — leave a field off to keep the theme's own default.",

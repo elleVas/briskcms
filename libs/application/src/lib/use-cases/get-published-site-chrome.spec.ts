@@ -50,6 +50,7 @@ describe('getPublishedSiteChrome', () => {
         themeFaviconUrl: null,
         themeOverridesEnabled: true,
         themeAllowedTrackerDomains: [],
+        formSubmissionRetentionDays: null,
         createdAt: new Date(),
       }),
     );

@@ -32,6 +32,7 @@ function buildSite(
     themeFaviconUrl: null,
     themeOverridesEnabled: true,
     themeAllowedTrackerDomains: [],
+    formSubmissionRetentionDays: null,
     createdAt: new Date(),
     ...overrides,
   });
@@ -159,6 +160,27 @@ describe('SitesController (unit)', () => {
 
     expect(siteRepository.save).toHaveBeenCalled();
     expect(result.searchEngineIndexingEnabled).toBe(true);
+  });
+
+  it('updateFormSubmissionRetention propagates SiteNotFoundError, unwrapped', async () => {
+    siteRepository.findById.mockResolvedValue(null);
+
+    await expect(
+      controller.updateFormSubmissionRetention('missing', {
+        formSubmissionRetentionDays: 30,
+      }),
+    ).rejects.toThrow(SiteNotFoundError);
+  });
+
+  it('updateFormSubmissionRetention saves the updated site', async () => {
+    siteRepository.findById.mockResolvedValue(buildSite());
+
+    const result = await controller.updateFormSubmissionRetention('site-1', {
+      formSubmissionRetentionDays: 30,
+    });
+
+    expect(siteRepository.save).toHaveBeenCalled();
+    expect(result.formSubmissionRetentionDays).toBe(30);
   });
 
   it('updateThemeSettings propagates SiteNotFoundError, unwrapped', async () => {

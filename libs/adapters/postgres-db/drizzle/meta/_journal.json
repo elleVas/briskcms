@@ -43,6 +43,13 @@
       "when": 1788212827758,
       "tag": "0005_page_translations_search_drop_pages",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1788275798756,
+      "tag": "0006_form_submission_retention_days",
+      "breakpoints": true
     }
   ]
 }

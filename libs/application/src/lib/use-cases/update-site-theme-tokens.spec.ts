@@ -39,6 +39,7 @@ describe('updateSiteThemeTokens', () => {
       themeFaviconUrl: null,
       themeOverridesEnabled: true,
       themeAllowedTrackerDomains: [],
+      formSubmissionRetentionDays: null,
       createdAt: new Date('2026-01-01T00:00:00Z'),
     });
     await deps.siteRepository.save(site);

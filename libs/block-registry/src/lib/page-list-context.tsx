@@ -2,13 +2,13 @@ import { createContext, useContext } from 'react';
 import type { PickedPage } from '@brisk/shared-types';
 
 /**
- * Stessa inversione di FormListContext/MediaPickerContext: i blocchi
- * NavLink/Button/Link/Banner/PromoBar/PricingPlan hanno bisogno di un modo
- * per far scegliere all'editor una pagina del sito, ma questo package
- * definisce solo descrittori di blocco e non ha un client HTTP o UI a
- * livello applicativo. Il dialog reale (che lista le pagine dall'API vera,
- * filtrate alla locale della sezione in editing) è di proprietà di
- * apps/editor-app e fornito tramite questo context.
+ * Same inversion as FormListContext/MediaPickerContext: the
+ * NavLink/Button/Link/Banner/PromoBar/PricingPlan blocks need a way to
+ * let the editor pick a page of the site, but this package only defines
+ * block descriptors and has no HTTP client or application-level UI. The
+ * real dialog (which lists pages from the real API, filtered to the
+ * locale of the section being edited) is owned by apps/editor-app and
+ * provided through this context.
  */
 export interface PageListPort {
   pick(): Promise<PickedPage | null>;
@@ -20,7 +20,7 @@ export function usePageList(): PageListPort {
   const port = useContext(PageListContext);
   if (!port) {
     throw new Error(
-      'usePageList() chiamato fuori da un PageListContext.Provider — avvolgi il canvas con il page list provider (apps/editor-app) prima di renderizzare i blocchi con un link a pagina.',
+      'usePageList() called outside a PageListContext.Provider — wrap the canvas with the page list provider (apps/editor-app) before rendering blocks with a page link.',
     );
   }
   return port;

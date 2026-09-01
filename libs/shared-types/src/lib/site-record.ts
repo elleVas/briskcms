@@ -25,6 +25,8 @@ export const siteRecordSchema = businessInfoSchema.extend({
   enabledLocales: z.array(z.string()),
   untranslatedPageFallback: untranslatedPageFallbackSchema,
   searchEngineIndexingEnabled: z.boolean(),
+  // GDPR/privacy: `null` keeps every form_submissions row forever.
+  formSubmissionRetentionDays: z.number().int().positive().nullable(),
   themePrimaryColor: hexColorSchema.nullable(),
   themeSecondaryColor: hexColorSchema.nullable(),
   themeFontFamily: z.string().nullable(),

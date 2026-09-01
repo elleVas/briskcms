@@ -1,11 +1,11 @@
 import type { FieldDescriptor } from '../field-types';
 
 /**
- * Shared by ogni blocco con un prop `Visibility` (Nav, HamburgerMenu,
+ * Shared by every block with a `Visibility` prop (Nav, HamburgerMenu,
  * NavLink, LanguageSwitcher, Breadcrumb, SearchBox, BackToTop,
- * WhatsAppButton, PromoBar) così le opzioni non sono duplicate per blocco —
- * vedi visibilitySchema in @brisk/shared-types per cosa mappa ciascun
- * valore a render time (apps/public-site's visibility.css).
+ * WhatsAppButton, PromoBar) so the options aren't duplicated per block —
+ * see visibilitySchema in @brisk/shared-types for what each value maps
+ * to at render time (apps/public-site's visibility.css).
  */
 export const visibilityField: FieldDescriptor = {
   kind: 'radio',

@@ -16,9 +16,9 @@ export const embedHtmlBlock: BlockDescriptor<EmbedHtmlProps> = {
       label: 'blocks.embedHtml.fields.html.fieldLabel',
     },
   ],
-  // Niente textColor: il contenuto è HTML arbitrario incollato dall'utente,
-  // che spesso porta già il proprio colore — solo lo spazio "cornice"
-  // (sfondo/angoli/padding) ha senso qui.
+  // No textColor: the content is arbitrary HTML pasted by the user,
+  // which often already carries its own color — only the "frame" space
+  // (background/corners/padding) makes sense here.
   stylableProperties: [
     'backgroundColor',
     'borderRadius',

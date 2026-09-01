@@ -2,11 +2,11 @@ import { createContext, useContext } from 'react';
 import type { PickedForm } from '@brisk/shared-types';
 
 /**
- * Stessa inversione di MediaPickerContext: il blocco Form ha bisogno di un
- * modo per far scegliere all'editor un modulo esistente, ma questo package
- * definisce solo descrittori di blocco e non ha un client HTTP o UI a
- * livello applicativo. Il dialog reale (che lista i moduli dall'API vera) è
- * di proprietà di apps/editor-app e fornito tramite questo context.
+ * Same inversion as MediaPickerContext: the Form block needs a way to
+ * let the editor pick an existing form, but this package only defines
+ * block descriptors and has no HTTP client or application-level UI. The
+ * real dialog (which lists forms from the real API) is owned by
+ * apps/editor-app and provided through this context.
  */
 export interface FormListPort {
   pick(): Promise<PickedForm | null>;
@@ -18,7 +18,7 @@ export function useFormList(): FormListPort {
   const port = useContext(FormListContext);
   if (!port) {
     throw new Error(
-      'useFormList() chiamato fuori da un FormListContext.Provider — avvolgi il canvas con il form list provider (apps/editor-app) prima di renderizzare il blocco Form.',
+      'useFormList() called outside a FormListContext.Provider — wrap the canvas with the form list provider (apps/editor-app) before rendering the Form block.',
     );
   }
   return port;

@@ -2,11 +2,11 @@ import { FieldBuilder, type FieldDescriptor } from '../field-types';
 import { PagePickerField } from './page-picker-field';
 
 /**
- * Shared da ogni blocco con un prop "page o url" (NavLink, Button, Link,
- * Banner, PromoBar, PricingPlan) — guida quale tra `page`/`url` l'editor
- * sta effettivamente compilando. Entrambi i campi restano sempre visibili
- * nell'Inspector (niente visibilità condizionale per ora), non solo quello
- * scelto.
+ * Shared by every block with a "page or url" prop (NavLink, Button, Link,
+ * Banner, PromoBar, PricingPlan) — drives which of `page`/`url` the
+ * editor is actually filling in. Both fields always stay visible in the
+ * Inspector (no conditional visibility for now), not just the chosen
+ * one.
  */
 export const linkTypeField: FieldDescriptor = {
   kind: 'radio',
@@ -19,9 +19,10 @@ export const linkTypeField: FieldDescriptor = {
 };
 
 /**
- * Security review 2026-08-24, point 16: `linkTypeField` + il picker pagina
- * + il campo URL comparivano copiati identici in 6 blocchi (Banner, Button,
- * Link, NavLink, PricingPlan, PromoBar) — un solo punto da cui derivano.
+ * Security review 2026-08-24, point 16: `linkTypeField` + the page picker
+ * + the URL field showed up copy-pasted identically across 6 blocks
+ * (Banner, Button, Link, NavLink, PricingPlan, PromoBar) — a single
+ * place they're derived from.
  */
 export function ctaLinkFields(): FieldDescriptor[] {
   return [
@@ -35,14 +36,14 @@ export function ctaLinkFields(): FieldDescriptor[] {
       kind: 'text',
       key: 'url',
       label: 'blocks.shared.linkType.urlFieldLabel',
-      // Trovato dal vivo durante il backfill i18n (non solo teorizzato):
-      // un sito reale usa spesso questo campo per un percorso interno
-      // relativo scritto a mano (es. "/it/docs") invece del PagePickerField
-      // vero e proprio — un url del genere DEVE variare per lingua, non è
-      // solo un link esterno "sempre uguale ovunque". Un vero url esterno
-      // (raro il bisogno di differenziarlo per lingua) resta comunque
-      // modificabile per-locale con questo flag, costo minimo per evitare
-      // di rompere silenziosamente la navigazione interna.
+      // Found live during the i18n backfill (not just theorized): a real
+      // site often uses this field for a hand-written relative internal
+      // path (e.g. "/it/docs") instead of the actual PagePickerField — a
+      // url like that MUST vary per language, it's not just an external
+      // link that's "always the same everywhere". A genuinely external
+      // url (rarely needs to differ per language) still stays editable
+      // per-locale with this flag, minimal cost to avoid silently
+      // breaking internal navigation.
       translatable: true,
     },
   ];

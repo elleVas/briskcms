@@ -40,9 +40,9 @@ export const buttonBlock: BlockDescriptor<ButtonProps> = {
       ],
     },
   ],
-  // Colore/bordi/padding — editabili per TUTTI i Button del sito (pulsante
-  // "Stile" nella toolbar) o solo per questa istanza (popover sul blocco
-  // selezionato), docs/adr/0022. Sostituisce il vecchio `colorOverride`.
+  // Color/borders/padding — editable for ALL Buttons on the site (the
+  // "Style" button in the toolbar) or only for this instance (popover on
+  // the selected block), docs/adr/0022. Replaces the old `colorOverride`.
   stylableProperties: BlockStyleRegistry.STANDARD,
   defaultStyle: BLOCK_STYLE_DEFAULTS.Button,
 };

@@ -3,6 +3,7 @@ import { SiteNotFoundError, Site } from '@brisk/domain-core';
 import { updateSiteBusinessInfo } from './update-site-business-info.use-case';
 import { updateSiteGeneralSettings } from './update-site-general-settings.use-case';
 import { updateSiteSeoSettings } from './update-site-seo-settings.use-case';
+import { updateSiteFormSubmissionRetention } from './update-site-form-submission-retention.use-case';
 import { updateSiteThemeSettings } from './update-site-theme-settings.use-case';
 import { updateSiteLocaleSettings } from './update-site-locale-settings.use-case';
 import { InMemorySiteRepository } from './in-memory-repositories.test-fixture';
@@ -39,6 +40,7 @@ describe('updateSiteBusinessInfo', () => {
       themeFaviconUrl: null,
       themeOverridesEnabled: true,
       themeAllowedTrackerDomains: [],
+      formSubmissionRetentionDays: null,
       createdAt: new Date(),
     });
     await siteRepository.save(site);
@@ -131,6 +133,7 @@ describe('updateSiteGeneralSettings', () => {
       themeFaviconUrl: null,
       themeOverridesEnabled: true,
       themeAllowedTrackerDomains: [],
+      formSubmissionRetentionDays: null,
       createdAt: new Date(),
     });
     await siteRepository.save(site);
@@ -212,6 +215,7 @@ describe('updateSiteSeoSettings', () => {
       themeFaviconUrl: null,
       themeOverridesEnabled: true,
       themeAllowedTrackerDomains: [],
+      formSubmissionRetentionDays: null,
       createdAt: new Date(),
     });
     await siteRepository.save(site);
@@ -257,6 +261,99 @@ describe('updateSiteSeoSettings', () => {
   });
 });
 
+describe('updateSiteFormSubmissionRetention', () => {
+  const tenantId = 'tenant-1';
+  const otherTenantId = 'tenant-2';
+
+  function setup() {
+    const siteRepository = new InMemorySiteRepository();
+    return { siteRepository };
+  }
+
+  async function seedSite(siteRepository: InMemorySiteRepository) {
+    const site = Site.fromProps({
+      id: 'site-1',
+      tenantId,
+      name: 'Il mio sito',
+      domain: 'localhost',
+      defaultLocale: 'it',
+      enabledLocales: ['it'],
+      untranslatedPageFallback: 'redirect-to-default',
+      businessAddress: null,
+      businessPhone: null,
+      businessType: null,
+      openingHours: null,
+      searchEngineIndexingEnabled: false,
+      themePrimaryColor: null,
+      themeSecondaryColor: null,
+      themeFontFamily: null,
+      themeCustomCss: null,
+      themeHeadScript: null,
+      themeBodyScript: null,
+      themeFaviconUrl: null,
+      themeOverridesEnabled: true,
+      themeAllowedTrackerDomains: [],
+      formSubmissionRetentionDays: null,
+      createdAt: new Date(),
+    });
+    await siteRepository.save(site);
+    return site;
+  }
+
+  it('sets the retention window in days', async () => {
+    const deps = setup();
+    await seedSite(deps.siteRepository);
+
+    const updated = await updateSiteFormSubmissionRetention(deps, {
+      tenantId,
+      siteId: 'site-1',
+      formSubmissionRetentionDays: 30,
+    });
+
+    expect(updated.formSubmissionRetentionDays).toBe(30);
+  });
+
+  it('clears the retention window back to null (keep forever)', async () => {
+    const deps = setup();
+    const site = await seedSite(deps.siteRepository);
+    site.updateFormSubmissionRetention({ formSubmissionRetentionDays: 30 });
+    await deps.siteRepository.save(site);
+
+    const updated = await updateSiteFormSubmissionRetention(deps, {
+      tenantId,
+      siteId: 'site-1',
+      formSubmissionRetentionDays: null,
+    });
+
+    expect(updated.formSubmissionRetentionDays).toBeNull();
+  });
+
+  it('throws SiteNotFoundError for a nonexistent site', async () => {
+    const deps = setup();
+
+    await expect(
+      updateSiteFormSubmissionRetention(deps, {
+        tenantId,
+        siteId: 'does-not-exist',
+        formSubmissionRetentionDays: 30,
+      }),
+    ).rejects.toThrow(SiteNotFoundError);
+  });
+
+  it('does not update a site belonging to a different tenant', async () => {
+    const deps = setup();
+    await seedSite(deps.siteRepository);
+
+    await expect(
+      updateSiteFormSubmissionRetention(deps, {
+        tenantId: otherTenantId,
+        siteId: 'site-1',
+        formSubmissionRetentionDays: 30,
+      }),
+    ).rejects.toThrow(SiteNotFoundError);
+  });
+});
+
 describe('updateSiteThemeSettings', () => {
   const tenantId = 'tenant-1';
   const otherTenantId = 'tenant-2';
@@ -289,6 +386,7 @@ describe('updateSiteThemeSettings', () => {
       themeFaviconUrl: null,
       themeOverridesEnabled: true,
       themeAllowedTrackerDomains: [],
+      formSubmissionRetentionDays: null,
       createdAt: new Date(),
     });
     await siteRepository.save(site);
@@ -391,6 +489,7 @@ describe('updateSiteLocaleSettings', () => {
       themeFaviconUrl: null,
       themeOverridesEnabled: true,
       themeAllowedTrackerDomains: [],
+      formSubmissionRetentionDays: null,
       createdAt: new Date(),
     });
     await siteRepository.save(site);
