@@ -76,6 +76,7 @@
       "title": "Pagine",
       "newPage": "Nuova pagina",
       "empty": "Nessuna pagina ancora.",
+      "noMatches": "Nessuna pagina corrisponde a questi filtri.",
       "statusPublished": "Pubblicata",
       "statusDraft": "Bozza",
       "pendingChanges": "Modifiche non pubblicate",
@@ -89,6 +90,17 @@
         "publish": "Pubblica",
         "delete": "Elimina",
         "duplicate": "Duplica pagina"
+      },
+      "filters": {
+        "search": "Titolo",
+        "searchPlaceholder": "Cerca per titolo…",
+        "createdAfter": "Da",
+        "createdBefore": "A",
+        "createdBy": "Creata da",
+        "anyCreator": "Chiunque",
+        "locale": "Lingua",
+        "anyLocale": "Qualunque lingua",
+        "clear": "Rimuovi filtri"
       }
     },
     "newPageDialog": {
@@ -455,6 +467,14 @@
     "breakpointTablet": "Tablet",
     "breakpointMobile": "Mobile",
     "switchPage": "Cambia pagina",
+    "language": {
+      "switch": "Cambia lingua",
+      "diverged": "Scollegata dalla struttura condivisa",
+      "divergeAction": "Scollega questa lingua",
+      "divergeConfirmTitle": "Scollegare {{locale}} dalla struttura condivisa?",
+      "divergeConfirmBody": "Questa lingua non riceverà più le modifiche strutturali (blocchi aggiunti, rimossi o riordinati) fatte nelle altre lingue. Non si può annullare.",
+      "divergeConfirmAction": "Scollega"
+    },
     "style": {
       "editType": "Stile di tutti i blocchi {{type}}",
       "editTypeHint": "Questi valori si applicano a OGNI blocco {{type}} del sito.",

@@ -24,18 +24,21 @@ export const pricingPlanBlock: BlockDescriptor<PricingPlanProps> = {
     {
       kind: 'text',
       key: 'name',
+      translatable: true,
       label: 'blocks.pricingPlan.fields.name.fieldLabel',
       inlineEditable: true,
     },
     {
       kind: 'text',
       key: 'price',
+      translatable: true,
       label: 'blocks.pricingPlan.fields.price.fieldLabel',
       inlineEditable: true,
     },
     {
       kind: 'text',
       key: 'period',
+      translatable: true,
       label: 'blocks.pricingPlan.fields.period.fieldLabel',
       inlineEditable: true,
     },
@@ -54,6 +57,7 @@ export const pricingPlanBlock: BlockDescriptor<PricingPlanProps> = {
     {
       kind: 'text',
       key: 'buttonLabel',
+      translatable: true,
       label: 'blocks.pricingPlan.fields.buttonLabel.fieldLabel',
       inlineEditable: true,
     },

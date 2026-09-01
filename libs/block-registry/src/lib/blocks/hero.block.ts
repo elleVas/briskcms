@@ -14,12 +14,14 @@ export const heroBlock: BlockDescriptor<HeroProps> = {
     {
       kind: 'text',
       key: 'title',
+      translatable: true,
       label: 'blocks.hero.fields.title.fieldLabel',
       inlineEditable: true,
     },
     {
       kind: 'textarea',
       key: 'subtitle',
+      translatable: true,
       label: 'blocks.hero.fields.subtitle.fieldLabel',
       inlineEditable: true,
     },

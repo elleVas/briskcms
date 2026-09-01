@@ -1,12 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import { Site } from '@brisk/domain-core';
-import { createPage } from './create-page.use-case';
-import { publishPage } from './publish-page.use-case';
-import { saveDraft } from './save-draft.use-case';
+import { createPageGroup } from './create-page-group.use-case';
+import { createPageGroupTranslation } from './create-page-group-translation.use-case';
+import { publishPageTranslation } from './publish-page-translation.use-case';
 import { listPublishedPageTree } from './list-published-page-tree.use-case';
 import {
-  InMemoryPageRepository,
-  InMemoryPageVersionRepository,
+  InMemoryPageGroupRepository,
+  InMemoryPageGroupVersionRepository,
+  InMemoryPageTranslationRepository,
+  InMemoryPageTranslationVersionRepository,
   InMemorySearchPort,
   InMemorySiteRepository,
 } from './in-memory-repositories.test-fixture';
@@ -15,9 +17,18 @@ describe('listPublishedPageTree', () => {
   const tenantId = 'tenant-1';
 
   function setup() {
+    const pageGroupVersionRepository = new InMemoryPageGroupVersionRepository();
+    const pageTranslationVersionRepository =
+      new InMemoryPageTranslationVersionRepository();
     return {
-      pageRepository: new InMemoryPageRepository(),
-      pageVersionRepository: new InMemoryPageVersionRepository(),
+      pageGroupRepository: new InMemoryPageGroupRepository(
+        pageGroupVersionRepository,
+      ),
+      pageGroupVersionRepository,
+      pageTranslationRepository: new InMemoryPageTranslationRepository(
+        pageTranslationVersionRepository,
+      ),
+      pageTranslationVersionRepository,
       siteRepository: new InMemorySiteRepository(),
       searchPort: new InMemorySearchPort(),
     };
@@ -52,30 +63,48 @@ describe('listPublishedPageTree', () => {
     return site;
   }
 
+  async function createGroupAndTranslation(
+    deps: ReturnType<typeof setup>,
+    locale: string,
+    slug: string,
+    title: string,
+    parentGroupId: string | null = null,
+  ) {
+    const group = await createPageGroup(deps, {
+      tenantId,
+      siteId: 'site-1',
+      parentId: parentGroupId,
+      createdBy: 'user-1',
+    });
+    const translation = await createPageGroupTranslation(deps, {
+      tenantId,
+      pageGroupId: group.id,
+      locale,
+      slug,
+      seoMeta: { title, description: '' },
+      createdBy: 'user-1',
+    });
+    return { group, translation };
+  }
+
   async function createAndPublish(
     deps: ReturnType<typeof setup>,
     slug: string,
     title: string,
-    parentId: string | null = null,
+    parentGroupId: string | null = null,
   ) {
-    const page = await createPage(deps, {
-      tenantId,
-      siteId: 'site-1',
-      groupId: `group-${slug}`,
-      locale: 'it',
+    const { group, translation } = await createGroupAndTranslation(
+      deps,
+      'it',
       slug,
-      parentId,
-      seoMeta: { title, description: '' },
-      createdBy: 'user-1',
-    });
-    await saveDraft(deps, {
+      title,
+      parentGroupId,
+    );
+    await publishPageTranslation(deps, {
       tenantId,
-      pageId: page.id,
-      content: [],
-      actorUserId: 'user-1',
+      pageTranslationId: translation.id,
     });
-    await publishPage(deps, { tenantId, pageId: page.id });
-    return page;
+    return group;
   }
 
   it('lists only published pages for the domain and locale, with title/parentId', async () => {
@@ -83,15 +112,7 @@ describe('listPublishedPageTree', () => {
     await seedSite(deps.siteRepository);
     const guide = await createAndPublish(deps, 'guide', 'Guide');
     await createAndPublish(deps, 'installazione', 'Installazione', guide.id);
-    await createPage(deps, {
-      tenantId,
-      siteId: 'site-1',
-      groupId: 'group-bozza',
-      locale: 'it',
-      slug: 'bozza',
-      seoMeta: { title: 'Bozza', description: '' },
-      createdBy: 'user-1',
-    });
+    await createGroupAndTranslation(deps, 'it', 'bozza', 'Bozza');
 
     const result = await listPublishedPageTree(deps, {
       tenantId,
@@ -131,15 +152,12 @@ describe('listPublishedPageTree', () => {
     // for "Figlia"'s ancestry (same reasoning as the sitemap use case's own
     // "even through an unpublished ancestor" test), but there's no
     // published page for a sidebar to actually link/nest it under.
-    const draftParent = await createPage(deps, {
-      tenantId,
-      siteId: 'site-1',
-      groupId: 'group-bozza-parent',
-      locale: 'it',
-      slug: 'bozza-parent',
-      seoMeta: { title: 'Bozza parent', description: '' },
-      createdBy: 'user-1',
-    });
+    const { group: draftParent } = await createGroupAndTranslation(
+      deps,
+      'it',
+      'bozza-parent',
+      'Bozza parent',
+    );
     await createAndPublish(deps, 'figlia', 'Figlia', draftParent.id);
 
     const result = await listPublishedPageTree(deps, {
@@ -160,22 +178,16 @@ describe('listPublishedPageTree', () => {
   it('filters by locale, ignoring pages published in another locale', async () => {
     const deps = setup();
     await seedSite(deps.siteRepository);
-    const page = await createPage(deps, {
+    const { translation } = await createGroupAndTranslation(
+      deps,
+      'en',
+      'guide-en',
+      'Guide EN',
+    );
+    await publishPageTranslation(deps, {
       tenantId,
-      siteId: 'site-1',
-      groupId: 'group-en',
-      locale: 'en',
-      slug: 'guide-en',
-      seoMeta: { title: 'Guide EN', description: '' },
-      createdBy: 'user-1',
+      pageTranslationId: translation.id,
     });
-    await saveDraft(deps, {
-      tenantId,
-      pageId: page.id,
-      content: [],
-      actorUserId: 'user-1',
-    });
-    await publishPage(deps, { tenantId, pageId: page.id });
 
     const result = await listPublishedPageTree(deps, {
       tenantId,

@@ -1,12 +1,14 @@
-import type { PageRepositoryPort, SiteRepositoryPort } from '@brisk/ports';
-import {
-  resolveAncestorSlugs,
-  type PageHierarchyNode,
-} from '@brisk/shared-types';
+import type {
+  PageGroupRepositoryPort,
+  PageTranslationRepositoryPort,
+  SiteRepositoryPort,
+} from '@brisk/ports';
+import type { PageTranslation } from '@brisk/domain-core';
 
 export interface ListPublishedPagesForSitemapDeps {
   siteRepository: SiteRepositoryPort;
-  pageRepository: PageRepositoryPort;
+  pageGroupRepository: PageGroupRepositoryPort;
+  pageTranslationRepository: PageTranslationRepositoryPort;
 }
 
 export interface ListPublishedPagesForSitemapInput {
@@ -17,9 +19,10 @@ export interface ListPublishedPagesForSitemapInput {
 export interface SitemapEntry {
   slug: string;
   locale: string;
-  // Links locale-siblings together (docs/adr/0017) so apps/public-site can
-  // group entries into one <url> block with hreflang alternates per group,
-  // instead of one flat <loc> per page regardless of translation.
+  // Links locale-siblings together so apps/public-site can group entries
+  // into one <url> block with hreflang alternates per group, instead of
+  // one flat <loc> per page regardless of translation. Was the old Page's
+  // denormalized `groupId` field — now this IS the PageGroup's own id.
   groupId: string;
   // Root-to-parent slugs (page hierarchy) — lets the sitemap list the
   // canonical nested URL directly instead of a flat one that would just
@@ -30,28 +33,54 @@ export interface SitemapEntry {
 
 export interface SitemapListing {
   items: SitemapEntry[];
-  // Bundled with the page list rather than a separate lookup: both
-  // sitemap.xml and robots.txt (apps/public-site, docs/adr/0016) need
-  // "what does this domain's site say about crawling", and both already
-  // need this same site resolved by domain.
   searchEngineIndexingEnabled: boolean;
-  // apps/public-site's bare "/" route needs this to redirect to the site's
-  // locale-prefixed home (docs/adr/0017) before it knows any slug at all.
   defaultLocale: string;
 }
 
-// Same "5-15 pagine, siti vetrina" scale assumption as everywhere else in
-// the product (piano-progetto-astro-cms.md) — one page of results is
-// always enough, no real pagination needed for a sitemap at this scale.
+// Same "5-15 pagine, siti vetrina" scale assumption as everywhere else.
 const SITEMAP_PAGE_SIZE = 1000;
+const MAX_ANCESTOR_WALK = 20;
 
 /**
- * Public, unauthenticated — same domain-resolution pattern as
- * getPublishedPageBySlug (never trusts a client-supplied siteId). Returns
- * null when the domain matches no site at all; the controller renders that
- * as an empty, indexing-allowed sitemap/robots response rather than an
- * error, since a misconfigured domain producing a broken sitemap.xml is
- * worse for SEO than a technically-empty-but-valid one.
+ * `null` when the FULL ancestor chain for `groupId` has a translation in
+ * `locale` at every level, `null`-returning early otherwise — unlike the
+ * old single-locale Page hierarchy (where an ancestor was always
+ * guaranteed to exist in the same locale by construction), the shared
+ * PageGroup hierarchy makes it possible for a leaf translation to be
+ * published while an ANCESTOR group has no translation in that same
+ * locale. Such a leaf isn't actually reachable at any real URL
+ * (resolvePageGroupByPath would 404 walking down to it) even though it's
+ * individually "published" — listing it in the sitemap would just hand
+ * search engines a dead link, so the caller skips the whole entry instead
+ * of emitting a wrong/partial path.
+ */
+function resolveAncestorSlugsOrNull(
+  parentIdByGroup: Map<string, string | null>,
+  translationsByGroupAndLocale: Map<string, PageTranslation>,
+  groupId: string,
+  locale: string,
+): string[] | null {
+  const slugs: string[] = [];
+  let currentParentId = parentIdByGroup.get(groupId) ?? null;
+  for (
+    let hops = 0;
+    currentParentId !== null && hops < MAX_ANCESTOR_WALK;
+    hops += 1
+  ) {
+    const translation = translationsByGroupAndLocale.get(
+      `${currentParentId}:${locale}`,
+    );
+    if (!translation) return null;
+    slugs.unshift(translation.slug);
+    currentParentId = parentIdByGroup.get(currentParentId) ?? null;
+  }
+  return slugs;
+}
+
+/**
+ * i18n a livello di campo (see the plan) — replaces the old Page-based
+ * implementation. Public, unauthenticated, same domain-resolution and
+ * "empty listing on unknown domain, not an error" posture as before.
  */
 export async function listPublishedPagesForSitemap(
   deps: ListPublishedPagesForSitemapDeps,
@@ -65,32 +94,49 @@ export async function listPublishedPagesForSitemap(
     return null;
   }
 
-  const { items } = await deps.pageRepository.listBySite(
+  const { items: groups } = await deps.pageGroupRepository.listBySite(
     input.tenantId,
     site.id,
     { page: 1, pageSize: SITEMAP_PAGE_SIZE },
   );
+  const translationLists = await Promise.all(
+    groups.map((group) =>
+      deps.pageTranslationRepository.listByGroup(input.tenantId, group.id),
+    ),
+  );
+  const translations = translationLists.flat();
 
-  // Built from every page (draft included) — a page's ancestors are a
-  // structural fact of the hierarchy, independent of whether an ancestor
-  // itself happens to be published yet.
-  const nodesById = new Map<string, PageHierarchyNode>(
-    items.map((page) => [
-      page.id,
-      { id: page.id, parentId: page.parentId, slug: page.slug },
+  const parentIdByGroup = new Map<string, string | null>(
+    groups.map((group) => [group.id, group.parentId]),
+  );
+  const translationsByGroupAndLocale = new Map<string, PageTranslation>(
+    translations.map((translation) => [
+      `${translation.pageGroupId}:${translation.locale}`,
+      translation,
     ]),
   );
 
+  const items: SitemapEntry[] = [];
+  for (const translation of translations) {
+    if (translation.status !== 'published') continue;
+    const ancestorSlugs = resolveAncestorSlugsOrNull(
+      parentIdByGroup,
+      translationsByGroupAndLocale,
+      translation.pageGroupId,
+      translation.locale,
+    );
+    if (ancestorSlugs === null) continue;
+    items.push({
+      slug: translation.slug,
+      locale: translation.locale,
+      groupId: translation.pageGroupId,
+      ancestorSlugs,
+      updatedAt: translation.updatedAt,
+    });
+  }
+
   return {
-    items: items
-      .filter((page) => page.status === 'published')
-      .map((page) => ({
-        slug: page.slug,
-        locale: page.locale,
-        groupId: page.groupId,
-        ancestorSlugs: resolveAncestorSlugs(nodesById, page.id),
-        updatedAt: page.updatedAt,
-      })),
+    items,
     searchEngineIndexingEnabled: site.searchEngineIndexingEnabled,
     defaultLocale: site.defaultLocale,
   };

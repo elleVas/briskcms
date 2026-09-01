@@ -1,6 +1,10 @@
 import type { APIRoute } from 'astro';
 import { experimental_AstroContainer as AstroContainer } from 'astro/container';
-import type { Block } from '@brisk/shared-types';
+import {
+  collectResolvedPageRefs,
+  resolvePageReferences,
+  type Block,
+} from '@brisk/shared-types';
 import { getPreviewPageById } from '../../lib/public-api-client';
 import { findBlockById } from '../../lib/find-block-by-id';
 import {
@@ -56,13 +60,29 @@ export const POST: APIRoute = async ({ request }) => {
     findBlockById(page.header ?? [], body.blockId)?.children ??
     findBlockById(page.footer ?? [], body.blockId)?.children;
 
-  const block: Block = {
+  const rawBlock: Block = {
     id: body.blockId,
     type: body.blockType,
     props: body.props,
     ...(children ? { children } : {}),
     ...(body.styleOverride ? { styleOverride: body.styleOverride } : {}),
   };
+
+  // i18n a livello di campo (see the plan) — `body.props.page` (Link/
+  // NavLink/etc.'s picked destination) arrives here as the editor's raw,
+  // UNRESOLVED `{pageGroupId, title}` (see the plan's PagePickerField
+  // fix): reuse whatever this exact group already resolved to elsewhere on
+  // the SAME page (content/header/footer, already fetched above) rather
+  // than a second round-trip just for this one block's own preview. A
+  // brand-new reference not seen anywhere else on the page yet resolves to
+  // `null` (a dead link, same as a field that was never picked at all)
+  // until the next full reload — narrow, accepted gap, not a broken href.
+  const resolvedRefs = new Map([
+    ...collectResolvedPageRefs(page.content),
+    ...collectResolvedPageRefs(page.header ?? []),
+    ...collectResolvedPageRefs(page.footer ?? []),
+  ]);
+  const [block] = resolvePageReferences([rawBlock], resolvedRefs);
 
   const container = await AstroContainer.create();
   const html = await container.renderToString(RenderSingleBlock, {

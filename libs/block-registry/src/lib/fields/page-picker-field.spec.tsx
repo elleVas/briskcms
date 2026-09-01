@@ -6,9 +6,7 @@ import { PageListContext, type PageListPort } from '../page-list-context';
 import { PagePickerField } from './page-picker-field';
 
 const page: PickedPage = {
-  pageId: 'p1',
-  locale: 'it',
-  slug: 'chi-siamo',
+  pageGroupId: 'group-1',
   title: 'Chi siamo',
 };
 

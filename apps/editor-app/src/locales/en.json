@@ -76,6 +76,7 @@
       "title": "Pages",
       "newPage": "New page",
       "empty": "No pages yet.",
+      "noMatches": "No pages match these filters.",
       "statusPublished": "Published",
       "statusDraft": "Draft",
       "pendingChanges": "Unpublished changes",
@@ -89,6 +90,17 @@
         "publish": "Publish",
         "delete": "Delete",
         "duplicate": "Duplicate page"
+      },
+      "filters": {
+        "search": "Title",
+        "searchPlaceholder": "Search by title…",
+        "createdAfter": "From",
+        "createdBefore": "To",
+        "createdBy": "Created by",
+        "anyCreator": "Anyone",
+        "locale": "Language",
+        "anyLocale": "Any language",
+        "clear": "Clear filters"
       }
     },
     "newPageDialog": {
@@ -455,6 +467,14 @@
     "breakpointTablet": "Tablet",
     "breakpointMobile": "Mobile",
     "switchPage": "Switch page",
+    "language": {
+      "switch": "Switch language",
+      "diverged": "Diverged from the shared structure",
+      "divergeAction": "Unlink this language",
+      "divergeConfirmTitle": "Unlink {{locale}} from the shared structure?",
+      "divergeConfirmBody": "This language will stop receiving structural changes (blocks added, removed, or reordered) made in other languages. This can't be undone.",
+      "divergeConfirmAction": "Unlink"
+    },
     "style": {
       "editType": "Style all {{type}} blocks",
       "editTypeHint": "These values apply to EVERY {{type}} block on the site.",

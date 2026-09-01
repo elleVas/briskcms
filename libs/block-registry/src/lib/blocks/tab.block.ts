@@ -16,6 +16,7 @@ export const tabBlock: BlockDescriptor<{ label: string }> = {
     {
       kind: 'text',
       key: 'label',
+      translatable: true,
       label: 'blocks.tab.fields.label.fieldLabel',
     },
   ],

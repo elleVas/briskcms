@@ -1,6 +1,6 @@
 import { useEffect, useState, type RefObject } from 'react';
 import { useTranslation } from 'react-i18next';
-import { createPagePreviewToken } from '../../lib/preview-token-api-client';
+import { createTranslationPreviewToken } from '../../lib/preview-token-api-client';
 import { PUBLIC_SITE_URL } from '../../lib/public-site-url';
 import { BREAKPOINT_WIDTHS, type Breakpoint } from './breakpoint-selector';
 import { OverlayLayer } from './overlay-layer';
@@ -10,11 +10,12 @@ export type EditingSection = 'header' | 'footer';
 
 export interface CanvasFrameProps {
   /**
-   * Sempre l'id di UNA PAGINA, anche quando si sta editando header/footer
-   * (vedi il piano dell'editor visuale, Giorno 1: "la stessa rotta di
-   * preview pagina basta") — `editingSection` distingue i due casi, il
-   * chiamante (canvas-editor-shell.tsx) sceglie quale pagina usare come
-   * contesto quando il context è 'header'/'footer'.
+   * Sempre l'id di UNA PageTranslation (i18n a livello di campo), anche
+   * quando si sta editando header/footer (vedi il piano dell'editor
+   * visuale, Giorno 1: "la stessa rotta di preview pagina basta") —
+   * `editingSection` distingue i due casi, il chiamante
+   * (canvas-editor-shell.tsx) sceglie quale traduzione usare come contesto
+   * quando il context è 'header'/'footer'.
    */
   pageId: string;
   editingSection?: EditingSection;
@@ -98,7 +99,7 @@ export function CanvasFrame({
 
   useEffect(() => {
     let cancelled = false;
-    createPagePreviewToken(pageId)
+    createTranslationPreviewToken(pageId)
       .then((preview) => {
         if (!cancelled) {
           setSrc(buildPreviewUrl(pageId, preview.token, editingSection, true));

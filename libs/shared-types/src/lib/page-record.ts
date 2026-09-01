@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { blockSchema, seoMetaSchema } from './content-model';
+import { fieldValueOverlaySchema } from './field-value-overlay';
 
 export const pageStatusSchema = z.enum(['draft', 'published']);
 export type PageStatus = z.infer<typeof pageStatusSchema>;
@@ -76,6 +77,38 @@ export const paginatedPagesSchema = z.object({
 });
 export type PaginatedPages = z.infer<typeof paginatedPagesSchema>;
 
+/** One translation, projected down to what a page-groups list row's locale badge needs — see pageGroupListItemSchema. */
+export const pageGroupListItemTranslationSchema = z.object({
+  locale: z.string(),
+  slug: z.string(),
+  title: z.string(),
+  status: pageStatusSchema,
+  isDiverged: z.boolean(),
+});
+export type PageGroupListItemTranslation = z.infer<
+  typeof pageGroupListItemTranslationSchema
+>;
+
+/** `GET /page-groups` (Fase 4's pages-list view) — one row per PageGroup, every locale's translation summarized for the row's availability badges. */
+export const pageGroupListItemSchema = z.object({
+  id: z.string(),
+  tenantId: z.string(),
+  siteId: z.string(),
+  parentId: z.string().nullable(),
+  order: z.number(),
+  createdByName: z.string().nullable(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+  translations: z.array(pageGroupListItemTranslationSchema),
+});
+export type PageGroupListItemRecord = z.infer<typeof pageGroupListItemSchema>;
+
+export const paginatedPageGroupsSchema = z.object({
+  items: z.array(pageGroupListItemSchema),
+  total: z.number(),
+});
+export type PaginatedPageGroups = z.infer<typeof paginatedPageGroupsSchema>;
+
 /** `GET /pages/:id/versions` — mirrors the plain `PageVersion` domain interface (libs/domain-core), which has no extra fields to whitelist against. */
 export const pageVersionRecordSchema = z.object({
   id: z.string(),
@@ -86,3 +119,70 @@ export const pageVersionRecordSchema = z.object({
   createdAt: z.string(),
 });
 export type PageVersionRecord = z.infer<typeof pageVersionRecordSchema>;
+
+/**
+ * i18n a livello di campo (vedi ADR pendente/il piano) — wire shape del
+ * `PageGroup` domain entity (libs/domain-core), non ancora servita da
+ * alcun endpoint (Fase 1 del piano). Affianca `pageRecordSchema` sopra
+ * (vecchio modello a pagina duplicata) finché la Fase 5 non rimuove
+ * quest'ultimo — le due coesistono deliberatamente durante la migrazione.
+ */
+export const pageGroupRecordSchema = z.object({
+  id: z.string(),
+  tenantId: z.string(),
+  siteId: z.string(),
+  parentId: z.string().nullable(),
+  order: z.number(),
+  content: z.array(blockSchema),
+  createdBy: z.string().nullable(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+});
+export type PageGroupRecord = z.infer<typeof pageGroupRecordSchema>;
+
+/** Wire shape del `PageTranslation` domain entity — vedi `pageGroupRecordSchema` sopra per il contesto della coesistenza col vecchio modello. */
+export const pageTranslationRecordSchema = z.object({
+  id: z.string(),
+  tenantId: z.string(),
+  siteId: z.string(),
+  pageGroupId: z.string(),
+  locale: z.string(),
+  slug: z.string(),
+  seoMeta: seoMetaSchema,
+  fieldValues: fieldValueOverlaySchema,
+  status: pageStatusSchema,
+  publishedSnapshot: z.array(blockSchema).nullable(),
+  isDiverged: z.boolean(),
+  divergedContent: z.array(blockSchema).nullable(),
+  createdBy: z.string().nullable(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+});
+export type PageTranslationRecord = z.infer<typeof pageTranslationRecordSchema>;
+
+/** `GET /page-groups/:id/versions` — mirrors `PageGroupVersion` (libs/domain-core). */
+export const pageGroupVersionRecordSchema = z.object({
+  id: z.string(),
+  tenantId: z.string(),
+  pageGroupId: z.string(),
+  content: z.array(blockSchema),
+  createdBy: z.string().nullable(),
+  createdAt: z.string(),
+});
+export type PageGroupVersionRecord = z.infer<
+  typeof pageGroupVersionRecordSchema
+>;
+
+/** `GET /page-translations/:id/versions` — mirrors `PageTranslationVersion` (libs/domain-core). */
+export const pageTranslationVersionRecordSchema = z.object({
+  id: z.string(),
+  tenantId: z.string(),
+  pageTranslationId: z.string(),
+  fieldValues: fieldValueOverlaySchema,
+  seoMeta: seoMetaSchema,
+  createdBy: z.string().nullable(),
+  createdAt: z.string(),
+});
+export type PageTranslationVersionRecord = z.infer<
+  typeof pageTranslationVersionRecordSchema
+>;

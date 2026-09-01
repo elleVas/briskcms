@@ -26,6 +26,15 @@ export const codeBlock: BlockDescriptor<CodeProps> = {
       kind: 'textarea',
       key: 'code',
       label: 'blocks.code.fields.code.fieldLabel',
+      // Trovato dal vivo durante la verifica round-trip del backfill i18n
+      // (non solo teorizzato): i blocchi Code reali di docs-showcase
+      // contengono spesso commenti in linguaggio umano dentro lo snippet
+      // (es. "# overrides Hero" / "# sovrascrive Hero") che erano stati
+      // tradotti a mano per locale sotto il vecchio modello a pagina
+      // duplicata. Marcato traducibile per non perdere quella differenza
+      // silenziosamente: il codice vero e proprio resta comunque
+      // shared-by-default, l'editor sovrascrive solo quando serve.
+      translatable: true,
     },
     {
       kind: 'select',

@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Link } from '@tanstack/react-router';
 import { History } from 'lucide-react';
 import { headerFooterBlocks } from '@brisk/block-registry';
-import type { SaveStatus } from './use-page-editor';
+import type { SaveStatus } from './save-status';
 import { CanvasEditorShell } from './canvas/canvas-editor-shell';
 import { IconButton } from './icon-button';
 import { IconListProvider } from './icon-list-provider';

@@ -9,7 +9,7 @@ import type { PreviewBridgeState } from './use-preview-bridge';
 vi.mock('../../lib/preview-token-api-client', async (importOriginal) => {
   const actual =
     await importOriginal<typeof import('../../lib/preview-token-api-client')>();
-  return { ...actual, createPagePreviewToken: vi.fn() };
+  return { ...actual, createTranslationPreviewToken: vi.fn() };
 });
 
 const emptyBridge: PreviewBridgeState = {
@@ -74,7 +74,7 @@ describe('CanvasFrame', () => {
   }
 
   it('creates a preview token and loads the iframe at the resulting URL', async () => {
-    vi.mocked(previewTokenApi.createPagePreviewToken).mockResolvedValue({
+    vi.mocked(previewTokenApi.createTranslationPreviewToken).mockResolvedValue({
       token: 'tok123',
       expiresAt: new Date().toISOString(),
     });
@@ -86,13 +86,13 @@ describe('CanvasFrame', () => {
         `${PUBLIC_SITE_URL}/preview/page-1?token=tok123&embedded=1`,
       ),
     );
-    expect(previewTokenApi.createPagePreviewToken).toHaveBeenCalledWith(
+    expect(previewTokenApi.createTranslationPreviewToken).toHaveBeenCalledWith(
       'page-1',
     );
   });
 
   it('sandboxes the iframe without allow-same-origin — the preview can render untrusted user-authored blocks, and allow-same-origin combined with allow-scripts would neutralize the sandbox', async () => {
-    vi.mocked(previewTokenApi.createPagePreviewToken).mockResolvedValue({
+    vi.mocked(previewTokenApi.createTranslationPreviewToken).mockResolvedValue({
       token: 'tok123',
       expiresAt: new Date().toISOString(),
     });
@@ -107,7 +107,7 @@ describe('CanvasFrame', () => {
   });
 
   it('passes editingSection through to the iframe URL', async () => {
-    vi.mocked(previewTokenApi.createPagePreviewToken).mockResolvedValue({
+    vi.mocked(previewTokenApi.createTranslationPreviewToken).mockResolvedValue({
       token: 'tok123',
       expiresAt: new Date().toISOString(),
     });
@@ -122,7 +122,7 @@ describe('CanvasFrame', () => {
   });
 
   it('shows an error instead of a stuck blank iframe when the token request fails', async () => {
-    vi.mocked(previewTokenApi.createPagePreviewToken).mockRejectedValue(
+    vi.mocked(previewTokenApi.createTranslationPreviewToken).mockRejectedValue(
       new Error('boom'),
     );
 
@@ -137,7 +137,7 @@ describe('CanvasFrame', () => {
   });
 
   it('defaults to full width when no breakpoint is given', async () => {
-    vi.mocked(previewTokenApi.createPagePreviewToken).mockResolvedValue({
+    vi.mocked(previewTokenApi.createTranslationPreviewToken).mockResolvedValue({
       token: 'tok123',
       expiresAt: new Date().toISOString(),
     });
@@ -149,7 +149,7 @@ describe('CanvasFrame', () => {
   });
 
   it('constrains the iframe to a fixed width for the tablet breakpoint', async () => {
-    vi.mocked(previewTokenApi.createPagePreviewToken).mockResolvedValue({
+    vi.mocked(previewTokenApi.createTranslationPreviewToken).mockResolvedValue({
       token: 'tok123',
       expiresAt: new Date().toISOString(),
     });
@@ -161,7 +161,7 @@ describe('CanvasFrame', () => {
   });
 
   it('constrains the iframe to a fixed width for the mobile breakpoint', async () => {
-    vi.mocked(previewTokenApi.createPagePreviewToken).mockResolvedValue({
+    vi.mocked(previewTokenApi.createTranslationPreviewToken).mockResolvedValue({
       token: 'tok123',
       expiresAt: new Date().toISOString(),
     });

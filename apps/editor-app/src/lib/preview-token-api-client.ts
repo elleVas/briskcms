@@ -20,3 +20,12 @@ export function createSiteLayoutSectionPreviewToken(
     method: 'POST',
   });
 }
+
+/** Vedi POST /page-groups/translations/:id/preview-token — i18n a livello di campo, stesso meccanismo scoped a UNA traduzione invece che alla vecchia Page. */
+export function createTranslationPreviewToken(
+  translationId: string,
+): Promise<PreviewTokenDto> {
+  return request(`/page-groups/translations/${translationId}/preview-token`, {
+    method: 'POST',
+  });
+}

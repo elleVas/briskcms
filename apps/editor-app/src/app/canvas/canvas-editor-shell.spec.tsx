@@ -31,7 +31,7 @@ vi.mock('@tanstack/react-router', async (importOriginal) => {
 vi.mock('../../lib/preview-token-api-client', async (importOriginal) => {
   const actual =
     await importOriginal<typeof import('../../lib/preview-token-api-client')>();
-  return { ...actual, createPagePreviewToken: vi.fn() };
+  return { ...actual, createTranslationPreviewToken: vi.fn() };
 });
 
 vi.mock('../../lib/block-fragment-api-client', async (importOriginal) => {
@@ -95,7 +95,7 @@ function renderShell(
   } = {},
 ) {
   vi.mocked(router.useNavigate).mockReturnValue(vi.fn());
-  vi.mocked(previewTokenApi.createPagePreviewToken).mockResolvedValue({
+  vi.mocked(previewTokenApi.createTranslationPreviewToken).mockResolvedValue({
     token: 'tok123',
     expiresAt: new Date().toISOString(),
   });

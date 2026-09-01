@@ -10,18 +10,23 @@ import { TooltipProvider } from '../components/ui/tooltip';
 import * as authApi from '../lib/auth-api-client';
 import * as formsApi from '../lib/forms-api-client';
 import * as mediaApi from '../lib/media-api-client';
-import * as api from '../lib/pages-api-client';
+import * as pageGroupsApi from '../lib/page-groups-api-client';
 import * as sectionsApi from '../lib/site-layout-sections-api-client';
 import * as sitesApi from '../lib/sites-api-client';
 import * as usersApi from '../lib/users-api-client';
 import { ApiError } from '../lib/http-client';
 import type { FormDto } from '../lib/forms-api-client';
-import type { PageRecord } from '../lib/pages-api-client';
 import type { SiteLayoutSectionDto } from '../lib/site-layout-sections-api-client';
 import type { UserDto } from '../lib/users-api-client';
-import type { SiteRecord } from '@brisk/shared-types';
+import type {
+  PageGroupListItemRecord,
+  PageGroupRecord,
+  PageTranslationRecord,
+  SiteRecord,
+} from '@brisk/shared-types';
 import { routeTree } from '../routeTree.gen';
 import { createTestQueryClient } from '../test-query-client';
+import { ToastProvider } from './toast-provider';
 
 vi.mock('../lib/auth-api-client', async (importOriginal) => {
   const actual =
@@ -35,14 +40,17 @@ vi.mock('../lib/auth-api-client', async (importOriginal) => {
   };
 });
 
-vi.mock('../lib/pages-api-client', async (importOriginal) => {
+vi.mock('../lib/page-groups-api-client', async (importOriginal) => {
   const actual =
-    await importOriginal<typeof import('../lib/pages-api-client')>();
+    await importOriginal<typeof import('../lib/page-groups-api-client')>();
   return {
     ...actual,
-    listPages: vi.fn(),
-    getPage: vi.fn(),
-    createPage: vi.fn(),
+    listPageGroups: vi.fn(),
+    getPageGroup: vi.fn(),
+    listPageGroupTranslations: vi.fn(),
+    createPageGroup: vi.fn(),
+    createPageGroupTranslation: vi.fn(),
+    deletePageGroup: vi.fn(),
   };
 });
 
@@ -104,32 +112,54 @@ const sampleSite: SiteRecord = {
   createdAt: '',
 };
 
-// Not explicitly typed PageRecord: used both as a full getPage() mock and as
-// a listPages() item (PageListItem), so it carries every field either
-// shape needs — TypeScript checks structural compatibility at each call
-// site, not against a single declared type here.
-const samplePage: PageRecord & {
-  order: number;
-  createdByName: string | null;
-  hasUnpublishedChanges: boolean;
-} = {
-  id: 'page-1',
+const samplePageGroupListItem: PageGroupListItemRecord = {
+  id: 'group-1',
   tenantId: 'tenant-1',
   siteId: 'site-1',
-  groupId: 'group-1',
   parentId: null,
-  locale: 'it',
-  slug: 'home',
-  status: 'published',
-  syncedStructureSignature: null,
-  content: [],
-  publishedContent: [],
-  seoMeta: { title: 'Home', description: '' },
   order: 0,
   createdByName: null,
   createdAt: '',
-  updatedAt: '2026-01-01T00:00:00.000Z',
-  hasUnpublishedChanges: false,
+  updatedAt: '',
+  translations: [
+    {
+      locale: 'it',
+      slug: 'home',
+      title: 'home',
+      status: 'published',
+      isDiverged: false,
+    },
+  ],
+};
+
+const samplePageGroup: PageGroupRecord = {
+  id: 'group-1',
+  tenantId: 'tenant-1',
+  siteId: 'site-1',
+  parentId: null,
+  order: 0,
+  content: [],
+  createdBy: null,
+  createdAt: '',
+  updatedAt: '',
+};
+
+const samplePageGroupTranslation: PageTranslationRecord = {
+  id: 'translation-1',
+  tenantId: 'tenant-1',
+  siteId: 'site-1',
+  pageGroupId: 'group-1',
+  locale: 'it',
+  slug: 'home',
+  seoMeta: { title: 'Home', description: '' },
+  fieldValues: {},
+  status: 'published',
+  publishedSnapshot: [],
+  isDiverged: false,
+  divergedContent: null,
+  createdBy: null,
+  createdAt: '',
+  updatedAt: '',
 };
 
 const sampleHeaderSection: SiteLayoutSectionDto = {
@@ -185,7 +215,9 @@ function renderApp(initialPath: string) {
   return render(
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <RouterProvider router={router} />
+        <ToastProvider>
+          <RouterProvider router={router} />
+        </ToastProvider>
       </TooltipProvider>
     </QueryClientProvider>,
   );
@@ -201,7 +233,7 @@ describe('router', () => {
   });
 
   it('redirects an unauthenticated visitor from / to /login', async () => {
-    vi.mocked(api.listPages).mockRejectedValue(
+    vi.mocked(pageGroupsApi.listPageGroups).mockRejectedValue(
       new ApiError(401, { message: 'Unauthorized' }),
     );
 
@@ -211,8 +243,8 @@ describe('router', () => {
   });
 
   it('renders the pages list inside the shell when authenticated', async () => {
-    vi.mocked(api.listPages).mockResolvedValue({
-      items: [samplePage],
+    vi.mocked(pageGroupsApi.listPageGroups).mockResolvedValue({
+      items: [samplePageGroupListItem],
       total: 1,
     });
 
@@ -231,22 +263,28 @@ describe('router', () => {
     expect(await screen.findByRole('heading', { name: 'Media' })).toBeTruthy();
   });
 
-  it('redirects to /login when opening a page editor while unauthenticated', async () => {
-    vi.mocked(api.getPage).mockRejectedValue(
+  it('redirects to /login when opening a page group editor while unauthenticated', async () => {
+    vi.mocked(pageGroupsApi.getPageGroup).mockRejectedValue(
+      new ApiError(401, { message: 'Unauthorized' }),
+    );
+    vi.mocked(pageGroupsApi.listPageGroupTranslations).mockRejectedValue(
       new ApiError(401, { message: 'Unauthorized' }),
     );
 
-    renderApp('/pages/page-1');
+    renderApp('/page-groups/group-1');
 
     expect(await screen.findByRole('heading', { name: 'Accedi' })).toBeTruthy();
   });
 
   it('navigates from the pages list to the editor and back', async () => {
-    vi.mocked(api.listPages).mockResolvedValue({
-      items: [samplePage],
+    vi.mocked(pageGroupsApi.listPageGroups).mockResolvedValue({
+      items: [samplePageGroupListItem],
       total: 1,
     });
-    vi.mocked(api.getPage).mockResolvedValue(samplePage);
+    vi.mocked(pageGroupsApi.getPageGroup).mockResolvedValue(samplePageGroup);
+    vi.mocked(pageGroupsApi.listPageGroupTranslations).mockResolvedValue([
+      samplePageGroupTranslation,
+    ]);
 
     renderApp('/pages');
     fireEvent.click(await screen.findByRole('button', { name: /home/i }));
@@ -281,7 +319,10 @@ describe('router', () => {
 
   it('logs in and lands on the pages list', async () => {
     vi.mocked(authApi.login).mockResolvedValue({ userId: 'user-1' });
-    vi.mocked(api.listPages).mockResolvedValue({ items: [], total: 0 });
+    vi.mocked(pageGroupsApi.listPageGroups).mockResolvedValue({
+      items: [],
+      total: 0,
+    });
 
     renderApp('/login');
 
@@ -302,7 +343,13 @@ describe('router', () => {
   });
 
   it('navigates from Layout to the Header editor and back', async () => {
-    vi.mocked(api.listPages).mockResolvedValue({ items: [], total: 0 });
+    vi.mocked(pageGroupsApi.listPageGroups).mockResolvedValue({
+      items: [samplePageGroupListItem],
+      total: 1,
+    });
+    vi.mocked(pageGroupsApi.listPageGroupTranslations).mockResolvedValue([
+      samplePageGroupTranslation,
+    ]);
     vi.mocked(sectionsApi.getOrCreateSiteLayoutSection).mockResolvedValue(
       sampleHeaderSection,
     );
@@ -324,7 +371,10 @@ describe('router', () => {
   });
 
   it('navigates to the dedicated Stile page from the sidebar', async () => {
-    vi.mocked(api.listPages).mockResolvedValue({ items: [], total: 0 });
+    vi.mocked(pageGroupsApi.listPageGroups).mockResolvedValue({
+      items: [],
+      total: 0,
+    });
 
     renderApp('/pages');
     expect(await screen.findByRole('heading', { name: 'Pagine' })).toBeTruthy();
@@ -337,7 +387,10 @@ describe('router', () => {
   });
 
   it('logs out from the shell and returns to /login', async () => {
-    vi.mocked(api.listPages).mockResolvedValue({ items: [], total: 0 });
+    vi.mocked(pageGroupsApi.listPageGroups).mockResolvedValue({
+      items: [],
+      total: 0,
+    });
     vi.mocked(authApi.logout).mockResolvedValue({ success: true });
 
     renderApp('/pages');
@@ -420,7 +473,11 @@ describe('router', () => {
   });
 
   it('renders the footer editor with the site default locale', async () => {
-    vi.mocked(api.listPages).mockResolvedValue({ items: [], total: 0 });
+    // No representative page mocked (listPageGroups resolves undefined via
+    // the unconfigured vi.fn()) — this test deliberately exercises the
+    // "no page to preview yet" empty state, not the real canvas, so the
+    // section label ("Modifica Footer") only needs to show up interpolated
+    // into that fallback message.
     vi.mocked(sectionsApi.getOrCreateSiteLayoutSection).mockResolvedValue(
       sampleFooterSection,
     );

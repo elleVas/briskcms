@@ -16,6 +16,7 @@ export const navDropdownBlock: BlockDescriptor<NavDropdownProps> = {
     {
       kind: 'text',
       key: 'label',
+      translatable: true,
       label: 'blocks.navDropdown.fields.label.fieldLabel',
       inlineEditable: true,
     },

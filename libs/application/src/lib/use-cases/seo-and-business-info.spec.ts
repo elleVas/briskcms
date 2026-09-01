@@ -1,72 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { PageNotFoundError, SiteNotFoundError, Site } from '@brisk/domain-core';
-import { createPage } from './create-page.use-case';
-import { updateSeoMeta } from './update-seo-meta.use-case';
+import { SiteNotFoundError, Site } from '@brisk/domain-core';
 import { updateSiteBusinessInfo } from './update-site-business-info.use-case';
 import { updateSiteGeneralSettings } from './update-site-general-settings.use-case';
 import { updateSiteSeoSettings } from './update-site-seo-settings.use-case';
 import { updateSiteThemeSettings } from './update-site-theme-settings.use-case';
 import { updateSiteLocaleSettings } from './update-site-locale-settings.use-case';
-import {
-  InMemoryPageRepository,
-  InMemoryPageVersionRepository,
-  InMemorySiteRepository,
-} from './in-memory-repositories.test-fixture';
-
-describe('updateSeoMeta', () => {
-  const tenantId = 'tenant-1';
-
-  function setup() {
-    const pageRepository = new InMemoryPageRepository();
-    const pageVersionRepository = new InMemoryPageVersionRepository();
-    return { pageRepository, pageVersionRepository };
-  }
-
-  it('replaces a page seoMeta without touching its content', async () => {
-    const deps = setup();
-    const page = await createPage(deps, {
-      tenantId,
-      siteId: 'site-1',
-      groupId: 'group-1',
-      locale: 'it',
-      slug: 'chi-siamo',
-      seoMeta: { title: 'Chi siamo', description: '' },
-      content: [{ type: 'Text', props: { body: 'ciao' } }],
-      createdBy: 'user-1',
-    });
-
-    const updated = await updateSeoMeta(deps, {
-      tenantId,
-      pageId: page.id,
-      seoMeta: {
-        title: 'Chi siamo - La nostra storia',
-        description: 'Scopri chi siamo',
-        canonical: 'https://example.com/chi-siamo',
-      },
-    });
-
-    expect(updated.seoMeta).toEqual({
-      title: 'Chi siamo - La nostra storia',
-      description: 'Scopri chi siamo',
-      canonical: 'https://example.com/chi-siamo',
-    });
-    expect(updated.content).toEqual([
-      { type: 'Text', props: { body: 'ciao' } },
-    ]);
-  });
-
-  it('throws PageNotFoundError for a nonexistent page', async () => {
-    const deps = setup();
-
-    await expect(
-      updateSeoMeta(deps, {
-        tenantId,
-        pageId: 'does-not-exist',
-        seoMeta: { title: 'x', description: '' },
-      }),
-    ).rejects.toThrow(PageNotFoundError);
-  });
-});
+import { InMemorySiteRepository } from './in-memory-repositories.test-fixture';
 
 describe('updateSiteBusinessInfo', () => {
   const tenantId = 'tenant-1';

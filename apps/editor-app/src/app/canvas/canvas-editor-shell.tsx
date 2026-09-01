@@ -16,7 +16,7 @@ import {
 } from '@brisk/shared-types';
 import type { BlockDescriptor } from '@brisk/block-registry';
 import { Button } from '../../components/ui/button';
-import { createPagePreviewToken } from '../../lib/preview-token-api-client';
+import { createTranslationPreviewToken } from '../../lib/preview-token-api-client';
 import { PUBLIC_SITE_URL } from '../../lib/public-site-url';
 import { useTranslation } from '../../lib/use-translation';
 import { GlobalStylesDialog } from '../global-styles-dialog';
@@ -55,6 +55,22 @@ export interface CanvasEditorShellProps {
   backLink: ReactNode;
   /** Dropdown per passare ad un'altra pagina senza uscire dall'editor (barra in alto, vicino a `backLink`) — solo l'editor di pagina lo passa, l'editor Header/Footer no (non ha un concetto di "altre pagine tra cui scegliere"). */
   pageSwitcher?: ReactNode;
+  /** i18n a livello di campo (see the plan) — dropdown per passare a un'altra lingua della STESSA PageGroup senza uscire dall'editor, accanto a `pageSwitcher`. Solo PageGroupEditorView lo passa. */
+  languageSwitcher?: ReactNode;
+  /**
+   * i18n a livello di campo — presente solo quando si sta editando una
+   * PageTranslation COLLEGATA (non diverged) di un PageGroup: decide se un
+   * campo `translatable` cambiato va scritto sull'overlay `fieldValues`
+   * della traduzione attiva invece che sulla struttura condivisa. Assente
+   * per il vecchio editor Page, per l'editor Header/Footer, e per una
+   * traduzione già scollegata (si comporta come il vecchio modello: sempre
+   * `onChange`, mai un overlay separato).
+   */
+  translationRouting?: {
+    activeLocale: string;
+    defaultLocale: string;
+    onSaveFieldValue: (blockId: string, field: string, value: string) => void;
+  };
   /** Se presente, mostra l'icona "Stile globale" nella barra in alto (Fase 2a del piano editor visuale, parte 2) — entrambi gli editor (pagina, Header/Footer) hanno un site a cui applicare lo stile. */
   siteId?: string;
   statusText: string;
@@ -66,9 +82,11 @@ export interface CanvasEditorShellProps {
   onChange: (blocks: Block[]) => void;
   onPublish: (blocks: Block[]) => unknown;
   /**
-   * Sempre l'id di UNA PAGINA, anche quando si sta editando header/footer
-   * (vedi canvas-frame.tsx) — il chiamante sceglie quale pagina usare come
-   * contesto quando `editingSection` è presente.
+   * Sempre l'id di UNA PageTranslation (i18n a livello di campo), anche
+   * quando si sta editando header/footer (vedi canvas-frame.tsx) — il
+   * chiamante sceglie quale traduzione usare come contesto quando
+   * `editingSection` è presente (site-layout-section-editor-view.tsx usa la
+   * traduzione "rappresentativa" di use-representative-page.ts).
    */
   pageId: string;
   editingSection?: EditingSection;
@@ -86,6 +104,8 @@ export interface CanvasEditorShellProps {
 export function CanvasEditorShell({
   backLink,
   pageSwitcher,
+  languageSwitcher,
+  translationRouting,
   siteId,
   statusText,
   actions,
@@ -159,7 +179,7 @@ export function CanvasEditorShell({
   const [token, setToken] = useState<string | null>(null);
   useEffect(() => {
     let cancelled = false;
-    createPagePreviewToken(pageId).then((preview) => {
+    createTranslationPreviewToken(pageId).then((preview) => {
       if (!cancelled) {
         setToken(preview.token);
       }
@@ -169,26 +189,58 @@ export function CanvasEditorShell({
     };
   }, [pageId]);
 
-  const { scheduleChange, scheduleTextChange, scheduleStyleOverrideChange } =
-    usePropertyPatch({
-      pageId,
-      token: token ?? '',
-      onSaveDraft: (blockId, props) => {
-        const next = updateBlockProps(localBlocksRef.current, blockId, props);
-        setLocalBlocks(next);
+  const {
+    scheduleChange,
+    scheduleTextChange,
+    scheduleStyleOverrideChange,
+    flushAll,
+  } = usePropertyPatch({
+    pageId,
+    token: token ?? '',
+    onSaveDraft: (blockId, changedKey, props) => {
+      const next = updateBlockProps(localBlocksRef.current, blockId, props);
+      setLocalBlocks(next);
+
+      // i18n a livello di campo: a una lingua LINKED diversa da quella di
+      // default, un campo `translatable` non tocca mai la struttura
+      // condivisa — va invece sull'overlay `fieldValues` di questa
+      // traduzione. Guarda il tipo del blocco/il descrittore campo nel
+      // momento del salvataggio effettivo (non al momento del render che
+      // ha schedulato il debounce): la selezione può essere cambiata nel
+      // frattempo.
+      const changedValue = props[changedKey];
+      const block = findBlockInTree(next, blockId);
+      const descriptor = block
+        ? registry.find((d) => d.type === block.type)
+        : undefined;
+      const fieldDescriptor = descriptor?.fields.find(
+        (f) => f.key === changedKey,
+      );
+      const isTranslatableFieldValue =
+        translationRouting &&
+        translationRouting.activeLocale !== translationRouting.defaultLocale &&
+        fieldDescriptor &&
+        'translatable' in fieldDescriptor &&
+        fieldDescriptor.translatable &&
+        typeof changedValue === 'string';
+
+      if (isTranslatableFieldValue) {
+        translationRouting.onSaveFieldValue(blockId, changedKey, changedValue);
+      } else {
         onChange(next);
-      },
-      onSaveStyleOverride: (blockId, styleOverride) => {
-        const next = updateBlockStyleOverride(
-          localBlocksRef.current,
-          blockId,
-          styleOverride,
-        );
-        setLocalBlocks(next);
-        onChange(next);
-      },
-      patchBlock: bridge.patchBlock,
-    });
+      }
+    },
+    onSaveStyleOverride: (blockId, styleOverride) => {
+      const next = updateBlockStyleOverride(
+        localBlocksRef.current,
+        blockId,
+        styleOverride,
+      );
+      setLocalBlocks(next);
+      onChange(next);
+    },
+    patchBlock: bridge.patchBlock,
+  });
 
   useTextEdit({
     bridge,
@@ -404,6 +456,7 @@ export function CanvasEditorShell({
     scheduleChange(
       selectedBlock.id,
       selectedBlock.type,
+      key,
       nextProps,
       selectedBlock.children,
     );
@@ -470,7 +523,21 @@ export function CanvasEditorShell({
     void saveTypeStyle(selectedDescriptor.type, style);
   }
 
+  /**
+   * Firing any still-pending debounced save NOW (instead of waiting out its
+   * timer) narrows, but doesn't fully close, the gap between "last
+   * keystroke" and "what gets published": the old Page model's onPublish
+   * re-sent the whole current tree directly (bypassing the debounce
+   * entirely), which the new i18n split model can't safely replicate — a
+   * translatable field's value can't be reconstructed as either
+   * PageGroup.content or a fieldValues overlay from the merged, currently-
+   * displayed tree alone (see the plan / usePageGroupEditor's own comment).
+   * A residual, narrow race remains: publishing in the same tick as a
+   * keystroke could still race the just-flushed save's own network
+   * round-trip.
+   */
   function handlePublish(): void {
+    flushAll();
     onPublish(localBlocksRef.current);
   }
 
@@ -492,6 +559,7 @@ export function CanvasEditorShell({
         <div className="flex items-center gap-3">
           {backLink}
           {pageSwitcher}
+          {languageSwitcher}
           <span>{statusText}</span>
           {actions}
         </div>

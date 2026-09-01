@@ -1,12 +1,14 @@
 import { describe, expect, it } from 'vitest';
-import { Site } from '@brisk/domain-core';
-import { createPage } from './create-page.use-case';
-import { publishPage } from './publish-page.use-case';
-import { saveDraft } from './save-draft.use-case';
+import { Site, type PageGroup } from '@brisk/domain-core';
+import { createPageGroup } from './create-page-group.use-case';
+import { createPageGroupTranslation } from './create-page-group-translation.use-case';
+import { publishPageTranslation } from './publish-page-translation.use-case';
 import { resolveUntranslatedPageFallback } from './resolve-untranslated-page-fallback.use-case';
 import {
-  InMemoryPageRepository,
-  InMemoryPageVersionRepository,
+  InMemoryPageGroupRepository,
+  InMemoryPageGroupVersionRepository,
+  InMemoryPageTranslationRepository,
+  InMemoryPageTranslationVersionRepository,
   InMemorySearchPort,
   InMemorySiteRepository,
 } from './in-memory-repositories.test-fixture';
@@ -15,11 +17,24 @@ describe('resolveUntranslatedPageFallback', () => {
   const tenantId = 'tenant-1';
 
   function setup() {
-    const pageVersionRepository = new InMemoryPageVersionRepository();
-    const pageRepository = new InMemoryPageRepository(pageVersionRepository);
+    const pageGroupVersionRepository = new InMemoryPageGroupVersionRepository();
+    const pageGroupRepository = new InMemoryPageGroupRepository(
+      pageGroupVersionRepository,
+    );
+    const pageTranslationVersionRepository =
+      new InMemoryPageTranslationVersionRepository();
+    const pageTranslationRepository = new InMemoryPageTranslationRepository(
+      pageTranslationVersionRepository,
+    );
     const siteRepository = new InMemorySiteRepository();
-    const searchPort = new InMemorySearchPort();
-    return { pageRepository, siteRepository, searchPort };
+    return {
+      pageGroupRepository,
+      pageGroupVersionRepository,
+      pageTranslationRepository,
+      pageTranslationVersionRepository,
+      siteRepository,
+      searchPort: new InMemorySearchPort(),
+    };
   }
 
   async function seedSite(
@@ -55,36 +70,39 @@ describe('resolveUntranslatedPageFallback', () => {
     return site;
   }
 
-  async function createAndPublish(
-    deps: ReturnType<typeof setup>,
-    input: { groupId: string; locale: string; slug: string; title: string },
-  ) {
-    const page = await createPage(deps, {
+  async function createGroup(deps: ReturnType<typeof setup>) {
+    return createPageGroup(deps, {
       tenantId,
       siteId: 'site-1',
-      groupId: input.groupId,
+      content: [{ type: 'Hero', props: { title: 'x', subtitle: 'sub' } }],
+      createdBy: 'user-1',
+    });
+  }
+
+  async function createAndPublishTranslation(
+    deps: ReturnType<typeof setup>,
+    group: PageGroup,
+    input: { locale: string; slug: string; title: string },
+  ) {
+    const translation = await createPageGroupTranslation(deps, {
+      tenantId,
+      pageGroupId: group.id,
       locale: input.locale,
       slug: input.slug,
       seoMeta: { title: input.title, description: '' },
       createdBy: 'user-1',
     });
-    await saveDraft(deps, {
+    return publishPageTranslation(deps, {
       tenantId,
-      pageId: page.id,
-      content: [
-        { type: 'Hero', props: { title: input.title, subtitle: 'sub' } },
-      ],
-      actorUserId: 'user-1',
+      pageTranslationId: translation.id,
     });
-    await publishPage(deps, { tenantId, pageId: page.id });
-    return page;
   }
 
   it("falls back to the default-locale page with the same slug when the requested locale has none, and the site is set to 'redirect-to-default'", async () => {
     const deps = setup();
     await seedSite(deps.siteRepository);
-    await createAndPublish(deps, {
-      groupId: 'group-1',
+    const group = await createGroup(deps);
+    await createAndPublishTranslation(deps, group, {
       locale: 'it',
       slug: 'chi-siamo',
       title: 'Chi siamo',
@@ -105,8 +123,8 @@ describe('resolveUntranslatedPageFallback', () => {
     await seedSite(deps.siteRepository, {
       untranslatedPageFallback: 'not-available',
     });
-    await createAndPublish(deps, {
-      groupId: 'group-1',
+    const group = await createGroup(deps);
+    await createAndPublishTranslation(deps, group, {
       locale: 'it',
       slug: 'chi-siamo',
       title: 'Chi siamo',
@@ -127,10 +145,10 @@ describe('resolveUntranslatedPageFallback', () => {
     await seedSite(deps.siteRepository, {
       enabledLocales: ['it', 'en', 'fr'],
     });
-    // No 'it' page at all — as if the group's default-locale page had been
-    // deleted while its 'en' sibling survived.
-    await createAndPublish(deps, {
-      groupId: 'group-1',
+    const group = await createGroup(deps);
+    // No 'it' translation at all — as if the group's default-locale
+    // translation had been deleted while its 'en' sibling survived.
+    await createAndPublishTranslation(deps, group, {
       locale: 'en',
       slug: 'chi-siamo',
       title: 'About us',
@@ -163,10 +181,10 @@ describe('resolveUntranslatedPageFallback', () => {
   it('returns null when the default-locale page with that slug exists but is only a draft', async () => {
     const deps = setup();
     await seedSite(deps.siteRepository);
-    await createPage(deps, {
+    const group = await createGroup(deps);
+    await createPageGroupTranslation(deps, {
       tenantId,
-      siteId: 'site-1',
-      groupId: 'group-1',
+      pageGroupId: group.id,
       locale: 'it',
       slug: 'chi-siamo',
       seoMeta: { title: 'Chi siamo', description: '' },
@@ -200,8 +218,8 @@ describe('resolveUntranslatedPageFallback', () => {
   it('returns null when the requested locale is not an enabled locale for the site at all (made-up URL segment, not an untranslated page)', async () => {
     const deps = setup();
     await seedSite(deps.siteRepository);
-    await createAndPublish(deps, {
-      groupId: 'group-1',
+    const group = await createGroup(deps);
+    await createAndPublishTranslation(deps, group, {
       locale: 'it',
       slug: 'home',
       title: 'Home',

@@ -24,18 +24,21 @@ export const statBlock: BlockDescriptor<StatProps> = {
     {
       kind: 'text',
       key: 'prefix',
+      translatable: true,
       label: 'blocks.stat.fields.prefix.fieldLabel',
       inlineEditable: true,
     },
     {
       kind: 'text',
       key: 'suffix',
+      translatable: true,
       label: 'blocks.stat.fields.suffix.fieldLabel',
       inlineEditable: true,
     },
     {
       kind: 'text',
       key: 'label',
+      translatable: true,
       label: 'blocks.stat.fields.label.fieldLabel',
       inlineEditable: true,
     },

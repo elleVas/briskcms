@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { pagePathSchema } from '../pages/pages.schemas';
+import { pagePathSchema } from '../pages/page-slug.schemas';
 
 // Rejects anything that isn't a plausible hostname before it ever reaches a
 // query — a malformed Host header shouldn't get as far as the database.

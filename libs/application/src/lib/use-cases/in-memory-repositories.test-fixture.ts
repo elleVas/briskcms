@@ -2,8 +2,10 @@ import type {
   Form,
   FormSubmission,
   Media,
-  Page,
-  PageVersion,
+  PageGroup,
+  PageGroupVersion,
+  PageTranslation,
+  PageTranslationVersion,
   PreviewContentType,
   Site,
   SiteLayoutSection,
@@ -19,10 +21,14 @@ import type {
   MediaStoragePort,
   PaginatedResult,
   Pagination,
-  PageRepositoryPort,
+  PageGroupListFilters,
+  PageGroupListItem,
+  PageGroupRepositoryPort,
+  PageGroupSummary,
+  PageGroupVersionRepositoryPort,
   PageSearchResult,
-  PageSummary,
-  PageVersionRepositoryPort,
+  PageTranslationRepositoryPort,
+  PageTranslationVersionRepositoryPort,
   PreviewToken,
   PreviewTokenPort,
   SearchPort,
@@ -35,152 +41,178 @@ import type {
   UserRepositoryPort,
 } from '@brisk/ports';
 
-export class InMemoryPageRepository implements PageRepositoryPort {
-  private pages = new Map<string, Page>();
+export class InMemoryPageGroupRepository implements PageGroupRepositoryPort {
+  private groups = new Map<string, PageGroup>();
 
-  /**
-   * Il repository delle versioni è un collaboratore opzionale, non un
-   * secondo store interno — `saveWithVersion` deve scrivere nello STESSO
-   * `InMemoryPageVersionRepository` che il test costruisce e interroga
-   * (`listByPage`/`findById`), altrimenti la versione "sparirebbe" agli
-   * occhi delle asserzioni pur essendo stata scritta. Rispecchia
-   * `DrizzlePageRepository.saveWithVersion`, che scrive nella stessa
-   * tabella `page_versions` di `DrizzlePageVersionRepository`, solo nella
-   * stessa transazione invece che nello stesso Map.
-   */
-  constructor(private readonly versionRepository?: PageVersionRepositoryPort) {}
+  // Same reasoning as InMemoryPageRepository's own comment: both
+  // repositories are shared collaborators, not a second internal store.
+  // `translationRepository` is only needed for listBySiteFiltered (Fase 4)
+  // — every other method predates it and doesn't touch translations at
+  // all, hence it staying optional here too.
+  constructor(
+    private readonly versionRepository?: PageGroupVersionRepositoryPort,
+    private readonly translationRepository?: PageTranslationRepositoryPort,
+  ) {}
 
-  async save(page: Page): Promise<void> {
-    this.pages.set(page.id, page);
+  async save(group: PageGroup): Promise<void> {
+    this.groups.set(group.id, group);
   }
 
-  async saveWithVersion(page: Page, version: PageVersion): Promise<void> {
-    this.pages.set(page.id, page);
+  async saveWithVersion(
+    group: PageGroup,
+    version: PageGroupVersion,
+  ): Promise<void> {
+    this.groups.set(group.id, group);
     await this.versionRepository?.save(version);
   }
 
-  async findById(tenantId: string, pageId: string): Promise<Page | null> {
-    const page = this.pages.get(pageId);
-    return page && page.tenantId === tenantId ? page : null;
-  }
-
-  async findByParentAndSlug(
+  async findById(
     tenantId: string,
-    siteId: string,
-    locale: string,
-    parentId: string | null,
-    slug: string,
-  ): Promise<Page | null> {
-    for (const page of this.pages.values()) {
-      if (
-        page.tenantId === tenantId &&
-        page.siteId === siteId &&
-        page.locale === locale &&
-        page.parentId === parentId &&
-        page.slug === slug
-      ) {
-        return page;
-      }
-    }
-    return null;
+    pageGroupId: string,
+  ): Promise<PageGroup | null> {
+    const group = this.groups.get(pageGroupId);
+    return group && group.tenantId === tenantId ? group : null;
   }
 
   async listBySite(
     tenantId: string,
     siteId: string,
     pagination: Pagination,
-  ): Promise<PaginatedResult<PageSummary>> {
-    const matching = [...this.pages.values()].filter(
-      (page) => page.tenantId === tenantId && page.siteId === siteId,
+  ): Promise<PaginatedResult<PageGroupSummary>> {
+    const matching = [...this.groups.values()].filter(
+      (group) => group.tenantId === tenantId && group.siteId === siteId,
     );
     const start = (pagination.page - 1) * pagination.pageSize;
     return {
       items: matching
         .slice(start, start + pagination.pageSize)
-        .map((page) => this.toSummary(page)),
+        .map((group) => this.toSummary(group)),
       total: matching.length,
     };
   }
 
-  private toSummary(page: Page): PageSummary {
-    const props = page.toProps();
+  async listBySiteFiltered(
+    tenantId: string,
+    siteId: string,
+    pagination: Pagination,
+    filters: PageGroupListFilters,
+  ): Promise<PaginatedResult<PageGroupListItem>> {
+    let matching = [...this.groups.values()].filter(
+      (group) => group.tenantId === tenantId && group.siteId === siteId,
+    );
+    if (filters.createdAfter) {
+      const after = filters.createdAfter;
+      matching = matching.filter((group) => group.createdAt >= after);
+    }
+    if (filters.createdBefore) {
+      const before = filters.createdBefore;
+      matching = matching.filter((group) => group.createdAt <= before);
+    }
+    if (filters.createdBy) {
+      matching = matching.filter(
+        (group) => group.createdBy === filters.createdBy,
+      );
+    }
+
+    const translationsByGroup = new Map<string, PageTranslation[]>();
+    for (const group of matching) {
+      translationsByGroup.set(
+        group.id,
+        this.translationRepository
+          ? await this.translationRepository.listByGroup(tenantId, group.id)
+          : [],
+      );
+    }
+
+    if (filters.search) {
+      const needle = filters.search.toLowerCase();
+      matching = matching.filter((group) =>
+        (translationsByGroup.get(group.id) ?? []).some((translation) =>
+          translation.seoMeta.title.toLowerCase().includes(needle),
+        ),
+      );
+    }
+    if (filters.locale) {
+      matching = matching.filter((group) =>
+        (translationsByGroup.get(group.id) ?? []).some(
+          (translation) => translation.locale === filters.locale,
+        ),
+      );
+    }
+
+    const start = (pagination.page - 1) * pagination.pageSize;
+    return {
+      items: matching
+        .slice(start, start + pagination.pageSize)
+        .map((group) => ({
+          ...this.toSummary(group),
+          createdByName: null,
+          translations: (translationsByGroup.get(group.id) ?? []).map(
+            (translation) => ({
+              locale: translation.locale,
+              slug: translation.slug,
+              title: translation.seoMeta.title,
+              status: translation.status,
+              isDiverged: translation.isDiverged,
+            }),
+          ),
+        })),
+      total: matching.length,
+    };
+  }
+
+  private toSummary(group: PageGroup): PageGroupSummary {
+    const props = group.toProps();
     return {
       id: props.id,
       tenantId: props.tenantId,
       siteId: props.siteId,
-      groupId: props.groupId,
-      locale: props.locale,
-      slug: props.slug,
       parentId: props.parentId,
-      status: props.status,
-      seoMeta: props.seoMeta,
       order: props.order,
-      // No user repository wired into this fixture — business-logic specs
-      // don't need a real name, only the real Drizzle adapter resolves
-      // this (see its own integration tests).
-      createdByName: null,
+      createdBy: props.createdBy,
       createdAt: props.createdAt,
       updatedAt: props.updatedAt,
-      hasUnpublishedChanges:
-        props.status === 'published' &&
-        JSON.stringify(props.publishedContent) !==
-          JSON.stringify(props.content),
     };
   }
 
   async listSiblings(
     tenantId: string,
     siteId: string,
-    locale: string,
     parentId: string | null,
-  ): Promise<PageSummary[]> {
-    return [...this.pages.values()]
+  ): Promise<PageGroupSummary[]> {
+    return [...this.groups.values()]
       .filter(
-        (page) =>
-          page.tenantId === tenantId &&
-          page.siteId === siteId &&
-          page.locale === locale &&
-          page.parentId === parentId,
+        (group) =>
+          group.tenantId === tenantId &&
+          group.siteId === siteId &&
+          group.parentId === parentId,
       )
-      .map((page) => this.toSummary(page))
+      .map((group) => this.toSummary(group))
       .sort(
         (a, b) =>
           a.order - b.order || a.createdAt.getTime() - b.createdAt.getTime(),
       );
   }
 
-  async listByGroup(
-    tenantId: string,
-    siteId: string,
-    groupId: string,
-  ): Promise<Page[]> {
-    return [...this.pages.values()].filter(
-      (page) =>
-        page.tenantId === tenantId &&
-        page.siteId === siteId &&
-        page.groupId === groupId,
-    );
-  }
-
-  async delete(tenantId: string, pageId: string): Promise<void> {
-    const page = this.pages.get(pageId);
-    if (page && page.tenantId === tenantId) {
-      this.pages.delete(pageId);
+  async delete(tenantId: string, pageGroupId: string): Promise<void> {
+    const group = this.groups.get(pageGroupId);
+    if (group && group.tenantId === tenantId) {
+      this.groups.delete(pageGroupId);
     }
   }
 }
 
-export class InMemoryPageVersionRepository implements PageVersionRepositoryPort {
-  private versions: PageVersion[] = [];
+export class InMemoryPageGroupVersionRepository implements PageGroupVersionRepositoryPort {
+  private versions: PageGroupVersion[] = [];
 
-  async save(version: PageVersion): Promise<void> {
+  async save(version: PageGroupVersion): Promise<void> {
     this.versions.push(version);
   }
 
   async findById(
     tenantId: string,
     versionId: string,
-  ): Promise<PageVersion | null> {
+  ): Promise<PageGroupVersion | null> {
     return (
       this.versions.find(
         (v) => v.tenantId === tenantId && v.id === versionId,
@@ -188,9 +220,137 @@ export class InMemoryPageVersionRepository implements PageVersionRepositoryPort 
     );
   }
 
-  async listByPage(tenantId: string, pageId: string): Promise<PageVersion[]> {
+  async listByGroup(
+    tenantId: string,
+    pageGroupId: string,
+  ): Promise<PageGroupVersion[]> {
     return this.versions.filter(
-      (v) => v.tenantId === tenantId && v.pageId === pageId,
+      (v) => v.tenantId === tenantId && v.pageGroupId === pageGroupId,
+    );
+  }
+}
+
+export class InMemoryPageTranslationRepository implements PageTranslationRepositoryPort {
+  private translations = new Map<string, PageTranslation>();
+  // parentGroupId isn't stored on PageTranslation itself (see the port's
+  // own doc comment) — the fake mirrors that by keeping it alongside the
+  // entity instead of pretending it's a getter the entity has.
+  private parentGroupIds = new Map<string, string | null>();
+
+  constructor(
+    private readonly versionRepository?: PageTranslationVersionRepositoryPort,
+  ) {}
+
+  async save(
+    translation: PageTranslation,
+    parentGroupId: string | null,
+  ): Promise<void> {
+    this.translations.set(translation.id, translation);
+    this.parentGroupIds.set(translation.id, parentGroupId);
+  }
+
+  async saveWithVersion(
+    translation: PageTranslation,
+    version: PageTranslationVersion,
+    parentGroupId: string | null,
+  ): Promise<void> {
+    await this.save(translation, parentGroupId);
+    await this.versionRepository?.save(version);
+  }
+
+  async findById(
+    tenantId: string,
+    pageTranslationId: string,
+  ): Promise<PageTranslation | null> {
+    const translation = this.translations.get(pageTranslationId);
+    return translation && translation.tenantId === tenantId
+      ? translation
+      : null;
+  }
+
+  async findByGroupAndLocale(
+    tenantId: string,
+    pageGroupId: string,
+    locale: string,
+  ): Promise<PageTranslation | null> {
+    for (const translation of this.translations.values()) {
+      if (
+        translation.tenantId === tenantId &&
+        translation.pageGroupId === pageGroupId &&
+        translation.locale === locale
+      ) {
+        return translation;
+      }
+    }
+    return null;
+  }
+
+  async listByGroup(
+    tenantId: string,
+    pageGroupId: string,
+  ): Promise<PageTranslation[]> {
+    return [...this.translations.values()].filter(
+      (translation) =>
+        translation.tenantId === tenantId &&
+        translation.pageGroupId === pageGroupId,
+    );
+  }
+
+  async findByParentGroupAndLocaleSlug(
+    tenantId: string,
+    siteId: string,
+    locale: string,
+    parentGroupId: string | null,
+    slug: string,
+  ): Promise<PageTranslation | null> {
+    for (const translation of this.translations.values()) {
+      if (
+        translation.tenantId === tenantId &&
+        translation.siteId === siteId &&
+        translation.locale === locale &&
+        translation.slug === slug &&
+        this.parentGroupIds.get(translation.id) === parentGroupId
+      ) {
+        return translation;
+      }
+    }
+    return null;
+  }
+
+  async delete(tenantId: string, pageTranslationId: string): Promise<void> {
+    const translation = this.translations.get(pageTranslationId);
+    if (translation && translation.tenantId === tenantId) {
+      this.translations.delete(pageTranslationId);
+      this.parentGroupIds.delete(pageTranslationId);
+    }
+  }
+}
+
+export class InMemoryPageTranslationVersionRepository implements PageTranslationVersionRepositoryPort {
+  private versions: PageTranslationVersion[] = [];
+
+  async save(version: PageTranslationVersion): Promise<void> {
+    this.versions.push(version);
+  }
+
+  async findById(
+    tenantId: string,
+    versionId: string,
+  ): Promise<PageTranslationVersion | null> {
+    return (
+      this.versions.find(
+        (v) => v.tenantId === tenantId && v.id === versionId,
+      ) ?? null
+    );
+  }
+
+  async listByTranslation(
+    tenantId: string,
+    pageTranslationId: string,
+  ): Promise<PageTranslationVersion[]> {
+    return this.versions.filter(
+      (v) =>
+        v.tenantId === tenantId && v.pageTranslationId === pageTranslationId,
     );
   }
 }
@@ -450,11 +610,19 @@ export class InMemoryMediaStorage implements MediaStoragePort {
 }
 
 export class InMemorySearchPort implements SearchPort {
-  indexed: { tenantId: string; siteId: string; page: Page }[] = [];
+  indexed: {
+    tenantId: string;
+    siteId: string;
+    translation: PageTranslation;
+  }[] = [];
   results: PageSearchResult[] = [];
 
-  async indexPage(tenantId: string, siteId: string, page: Page): Promise<void> {
-    this.indexed.push({ tenantId, siteId, page });
+  async indexPage(
+    tenantId: string,
+    siteId: string,
+    translation: PageTranslation,
+  ): Promise<void> {
+    this.indexed.push({ tenantId, siteId, translation });
   }
 
   async search(): Promise<PageSearchResult[]> {

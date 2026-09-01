@@ -20,6 +20,7 @@ export const promoBarBlock: BlockDescriptor<PromoBarProps> = {
     {
       kind: 'textarea',
       key: 'message',
+      translatable: true,
       label: 'blocks.promoBar.fields.message.fieldLabel',
       inlineEditable: true,
     },

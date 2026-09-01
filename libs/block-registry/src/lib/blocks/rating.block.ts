@@ -23,6 +23,7 @@ export const ratingBlock: BlockDescriptor<RatingProps> = {
     {
       kind: 'text',
       key: 'label',
+      translatable: true,
       label: 'blocks.rating.fields.label.fieldLabel',
       inlineEditable: true,
     },

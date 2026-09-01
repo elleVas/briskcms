@@ -14,18 +14,21 @@ export const timelineStepBlock: BlockDescriptor<TimelineStepProps> = {
     {
       kind: 'text',
       key: 'label',
+      translatable: true,
       label: 'blocks.timelineStep.fields.label.fieldLabel',
       inlineEditable: true,
     },
     {
       kind: 'text',
       key: 'title',
+      translatable: true,
       label: 'blocks.timelineStep.fields.title.fieldLabel',
       inlineEditable: true,
     },
     {
       kind: 'textarea',
       key: 'description',
+      translatable: true,
       label: 'blocks.timelineStep.fields.description.fieldLabel',
       inlineEditable: true,
     },

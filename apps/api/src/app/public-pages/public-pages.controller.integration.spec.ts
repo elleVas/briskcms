@@ -21,7 +21,8 @@ import { PublicPagesModule } from './public-pages.module';
 
 /**
  * Runs against a real Postgres — see docs/development.md. Combines
- * PagesModule (to create/publish pages the normal, authenticated way) with
+ * PagesModule (to create/publish page GROUPS the normal, authenticated way
+ * — via /page-groups, i18n a livello di campo, see the plan) with
  * PublicPagesModule under test, then reads them back through the public
  * endpoint with NO session at all — that's the actual thing being verified:
  * a real visitor, not the admin agent, can reach published content and
@@ -97,22 +98,32 @@ describe('PublicPagesController (integration)', () => {
     await db.$client.end();
   });
 
-  it('serves published content for a slug on the matching domain, without a session', async () => {
-    const createRes = await agent
-      .post('/pages')
-      .send({
-        siteId,
-        groupId: randomUUID(),
-        locale: 'it',
-        slug: 'chi-siamo',
-        seoMeta: { title: 'Chi siamo', description: 'La nostra storia' },
-      })
+  /** Creates a group + one 'it' translation, publishes it, returns both ids. */
+  async function createAndPublishPage(
+    slug: string,
+    content: unknown[] = [],
+    title = 'Title',
+  ) {
+    const groupRes = await agent
+      .post('/page-groups')
+      .send({ siteId, content })
+      .expect(201);
+    const translationRes = await agent
+      .post(`/page-groups/${groupRes.body.id}/translations`)
+      .send({ locale: 'it', slug, seoMeta: { title, description: '' } })
       .expect(201);
     await agent
-      .patch(`/pages/${createRes.body.id}/draft`)
-      .send({ content: [{ type: 'Hero', props: { title: 'Ciao' } }] })
-      .expect(200);
-    await agent.post(`/pages/${createRes.body.id}/publish`).expect(201);
+      .post(`/page-groups/translations/${translationRes.body.id}/publish`)
+      .expect(201);
+    return { groupId: groupRes.body.id, translationId: translationRes.body.id };
+  }
+
+  it('serves published content for a slug on the matching domain, without a session', async () => {
+    await createAndPublishPage(
+      'chi-siamo',
+      [{ type: 'Hero', props: { title: 'Ciao' } }],
+      'Chi siamo',
+    );
 
     const res = await request(app.getHttpServer())
       .get('/public/pages/by-slug')
@@ -121,7 +132,7 @@ describe('PublicPagesController (integration)', () => {
 
     expect(res.body).toEqual({
       content: [{ type: 'Hero', props: { title: 'Ciao' } }],
-      seoMeta: { title: 'Chi siamo', description: 'La nostra storia' },
+      seoMeta: { title: 'Chi siamo', description: '' },
       locale: 'it',
       translations: [{ locale: 'it', slug: 'chi-siamo' }],
       ancestors: [],
@@ -157,18 +168,105 @@ describe('PublicPagesController (integration)', () => {
     });
   });
 
-  it("bundles the published header/footer for the page's (site, locale), without a session", async () => {
-    const createRes = await agent
-      .post('/pages')
+  it("resolves a NavLink's page reference to the CURRENT locale's own path over the real public HTTP endpoint", async () => {
+    // Real bug, found live during this session's own investigation: `page`
+    // isn't a translatable field, so a locale-specific slug baked in at
+    // pick time got reused verbatim for every locale of the containing
+    // block — an IT reader could get an EN link. `page` is now
+    // locale-independent ({pageGroupId, title}), resolved fresh for
+    // whichever locale is actually being rendered.
+    const docsGroupRes = await agent
+      .post('/page-groups')
+      .send({ siteId, content: [] })
+      .expect(201);
+    const docsItRes = await agent
+      .post(`/page-groups/${docsGroupRes.body.id}/translations`)
       .send({
-        siteId,
-        groupId: randomUUID(),
         locale: 'it',
-        slug: 'con-header',
-        seoMeta: { title: 'Con header', description: '' },
+        slug: 'documentazione',
+        seoMeta: { title: 'Documentazione', description: '' },
       })
       .expect(201);
-    await agent.post(`/pages/${createRes.body.id}/publish`).expect(201);
+    await agent
+      .post(`/page-groups/translations/${docsItRes.body.id}/publish`)
+      .expect(201);
+    const docsEnRes = await agent
+      .post(`/page-groups/${docsGroupRes.body.id}/translations`)
+      .send({
+        locale: 'en',
+        slug: 'docs',
+        seoMeta: { title: 'Docs', description: '' },
+      })
+      .expect(201);
+    await agent
+      .post(`/page-groups/translations/${docsEnRes.body.id}/publish`)
+      .expect(201);
+
+    const homeGroupRes = await agent
+      .post('/page-groups')
+      .send({
+        siteId,
+        content: [
+          {
+            id: 'nav-1',
+            type: 'NavLink',
+            props: {
+              label: 'Docs',
+              linkType: 'page',
+              page: {
+                pageGroupId: docsGroupRes.body.id,
+                title: 'Documentazione',
+              },
+              url: '',
+            },
+          },
+        ],
+      })
+      .expect(201);
+    const homeItRes = await agent
+      .post(`/page-groups/${homeGroupRes.body.id}/translations`)
+      .send({
+        locale: 'it',
+        slug: `home-it-${randomUUID()}`,
+        seoMeta: { title: 'Home', description: '' },
+      })
+      .expect(201);
+    await agent
+      .post(`/page-groups/translations/${homeItRes.body.id}/publish`)
+      .expect(201);
+    const homeEnRes = await agent
+      .post(`/page-groups/${homeGroupRes.body.id}/translations`)
+      .send({
+        locale: 'en',
+        slug: `home-en-${randomUUID()}`,
+        seoMeta: { title: 'Home', description: '' },
+      })
+      .expect(201);
+    await agent
+      .post(`/page-groups/translations/${homeEnRes.body.id}/publish`)
+      .expect(201);
+
+    const itRes = await request(app.getHttpServer())
+      .get('/public/pages/by-slug')
+      .query({ domain, locale: 'it', path: homeItRes.body.slug })
+      .expect(200);
+    const enRes = await request(app.getHttpServer())
+      .get('/public/pages/by-slug')
+      .query({ domain, locale: 'en', path: homeEnRes.body.slug })
+      .expect(200);
+
+    expect(itRes.body.content[0].props.page).toMatchObject({
+      locale: 'it',
+      slug: 'documentazione',
+    });
+    expect(enRes.body.content[0].props.page).toMatchObject({
+      locale: 'en',
+      slug: 'docs',
+    });
+  });
+
+  it("bundles the published header/footer for the page's (site, locale), without a session", async () => {
+    await createAndPublishPage('con-header', [], 'Con header');
 
     const headerRes = await agent
       .get('/site-layout-sections')
@@ -193,17 +291,7 @@ describe('PublicPagesController (integration)', () => {
   });
 
   it('propagates a published sticky header over the public HTTP endpoint', async () => {
-    const createRes = await agent
-      .post('/pages')
-      .send({
-        siteId,
-        groupId: randomUUID(),
-        locale: 'it',
-        slug: 'con-header-sticky',
-        seoMeta: { title: 'Con header sticky', description: '' },
-      })
-      .expect(201);
-    await agent.post(`/pages/${createRes.body.id}/publish`).expect(201);
+    await createAndPublishPage('con-header-sticky', [], 'Con header sticky');
 
     const headerRes = await agent
       .get('/site-layout-sections')
@@ -292,11 +380,13 @@ describe('PublicPagesController (integration)', () => {
   });
 
   it('404s for a page that has never been published, same as a nonexistent one', async () => {
+    const groupRes = await agent
+      .post('/page-groups')
+      .send({ siteId, content: [] })
+      .expect(201);
     await agent
-      .post('/pages')
+      .post(`/page-groups/${groupRes.body.id}/translations`)
       .send({
-        siteId,
-        groupId: randomUUID(),
         locale: 'it',
         slug: 'bozza-mai-pubblicata',
         seoMeta: { title: 'Bozza', description: '' },
@@ -331,21 +421,11 @@ describe('PublicPagesController (integration)', () => {
   // case this doesn't affect: an ENABLED locale with no translation for
   // one specific page falls back to the default locale's same page).
   it('404s with fallback: null for a locale never enabled on this site, even if the same slug exists under the default locale', async () => {
-    const createRes = await agent
-      .post('/pages')
-      .send({
-        siteId,
-        groupId: randomUUID(),
-        locale: 'it',
-        slug: 'chi-siamo-fallback',
-        seoMeta: { title: 'Chi siamo', description: '' },
-      })
-      .expect(201);
-    await agent
-      .patch(`/pages/${createRes.body.id}/draft`)
-      .send({ content: [{ type: 'Hero', props: { title: 'Ciao' } }] })
-      .expect(200);
-    await agent.post(`/pages/${createRes.body.id}/publish`).expect(201);
+    await createAndPublishPage(
+      'chi-siamo-fallback',
+      [{ type: 'Hero', props: { title: 'Ciao' } }],
+      'Chi siamo',
+    );
 
     const res = await request(app.getHttpServer())
       .get('/public/pages/by-slug')
@@ -387,28 +467,20 @@ describe('PublicPagesController (integration)', () => {
   });
 
   it('lists only published pages for the sitemap, skipping drafts, without a session', async () => {
+    const draftGroupRes = await agent
+      .post('/page-groups')
+      .send({ siteId, content: [] })
+      .expect(201);
     await agent
-      .post('/pages')
+      .post(`/page-groups/${draftGroupRes.body.id}/translations`)
       .send({
-        siteId,
-        groupId: randomUUID(),
         locale: 'it',
         slug: 'sitemap-bozza',
         seoMeta: { title: 'Bozza', description: '' },
       })
       .expect(201);
 
-    const publishedRes = await agent
-      .post('/pages')
-      .send({
-        siteId,
-        groupId: randomUUID(),
-        locale: 'it',
-        slug: 'sitemap-pubblicata',
-        seoMeta: { title: 'Pubblicata', description: '' },
-      })
-      .expect(201);
-    await agent.post(`/pages/${publishedRes.body.id}/publish`).expect(201);
+    await createAndPublishPage('sitemap-pubblicata', [], 'Pubblicata');
 
     const res = await request(app.getHttpServer())
       .get('/public/pages')
@@ -436,28 +508,29 @@ describe('PublicPagesController (integration)', () => {
 
   describe('preview', () => {
     it('serves the real draft, unpublished, behind a valid preview token — without a session', async () => {
-      const createRes = await agent
-        .post('/pages')
+      const groupRes = await agent
+        .post('/page-groups')
         .send({
           siteId,
-          groupId: randomUUID(),
+          content: [{ type: 'Hero', props: { title: 'Bozza' } }],
+        })
+        .expect(201);
+      const translationRes = await agent
+        .post(`/page-groups/${groupRes.body.id}/translations`)
+        .send({
           locale: 'it',
           slug: `preview-${randomUUID()}`,
           seoMeta: { title: 'In lavorazione', description: '...' },
         })
         .expect(201);
-      const pageId = createRes.body.id;
-      await agent
-        .patch(`/pages/${pageId}/draft`)
-        .send({ content: [{ type: 'Hero', props: { title: 'Bozza' } }] })
-        .expect(200);
+      const translationId = translationRes.body.id;
       // Deliberately never published.
       const tokenRes = await agent
-        .post(`/pages/${pageId}/preview-token`)
+        .post(`/page-groups/translations/${translationId}/preview-token`)
         .expect(201);
 
       const res = await request(app.getHttpServer())
-        .get(`/public/pages/${pageId}/preview`)
+        .get(`/public/pages/${translationId}/preview`)
         .query({ token: tokenRes.body.token })
         .expect(200);
 
@@ -467,11 +540,13 @@ describe('PublicPagesController (integration)', () => {
     });
 
     it('404s a preview request with a wrong/mismatched token', async () => {
-      const createRes = await agent
-        .post('/pages')
+      const groupRes = await agent
+        .post('/page-groups')
+        .send({ siteId, content: [] })
+        .expect(201);
+      const translationRes = await agent
+        .post(`/page-groups/${groupRes.body.id}/translations`)
         .send({
-          siteId,
-          groupId: randomUUID(),
           locale: 'it',
           slug: `preview-${randomUUID()}`,
           seoMeta: { title: 'In lavorazione', description: '...' },
@@ -479,34 +554,34 @@ describe('PublicPagesController (integration)', () => {
         .expect(201);
 
       await request(app.getHttpServer())
-        .get(`/public/pages/${createRes.body.id}/preview`)
+        .get(`/public/pages/${translationRes.body.id}/preview`)
         .query({ token: 'not-a-real-token' })
         .expect(404);
     });
 
     it('404s a preview request whose token belongs to a different page', async () => {
+      const groupRes = await agent
+        .post('/page-groups')
+        .send({ siteId, content: [] })
+        .expect(201);
       const first = await agent
-        .post('/pages')
+        .post(`/page-groups/${groupRes.body.id}/translations`)
         .send({
-          siteId,
-          groupId: randomUUID(),
           locale: 'it',
           slug: `preview-${randomUUID()}`,
           seoMeta: { title: 'Prima', description: '...' },
         })
         .expect(201);
       const second = await agent
-        .post('/pages')
+        .post(`/page-groups/${groupRes.body.id}/translations`)
         .send({
-          siteId,
-          groupId: randomUUID(),
-          locale: 'it',
+          locale: 'en',
           slug: `preview-${randomUUID()}`,
           seoMeta: { title: 'Seconda', description: '...' },
         })
         .expect(201);
       const tokenForFirst = await agent
-        .post(`/pages/${first.body.id}/preview-token`)
+        .post(`/page-groups/translations/${first.body.id}/preview-token`)
         .expect(201);
 
       await request(app.getHttpServer())

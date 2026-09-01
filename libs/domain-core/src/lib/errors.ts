@@ -1,56 +1,67 @@
-export class PageNotFoundError extends Error {
-  constructor(pageId: string) {
-    super(`Page not found: ${pageId}`);
-    this.name = 'PageNotFoundError';
+export class PageGroupNotFoundError extends Error {
+  constructor(pageGroupId: string) {
+    super(`Page group not found: ${pageGroupId}`);
+    this.name = 'PageGroupNotFoundError';
   }
 }
 
-export class PageVersionNotFoundError extends Error {
+export class PageGroupVersionNotFoundError extends Error {
   constructor(versionId: string) {
-    super(`Page version not found: ${versionId}`);
-    this.name = 'PageVersionNotFoundError';
+    super(`Page group version not found: ${versionId}`);
+    this.name = 'PageGroupVersionNotFoundError';
   }
 }
 
-/** A page's (tenant, site, locale, parentId, slug) must be unique, sibling-scoped (WP-style) — see the composite unique constraint + the pages_root_slug_unique partial index (root-level pages only) in schema.ts. */
+/** reorderSiblingPageGroups was given a group id list that isn't an exact permutation of the actual current sibling group — missing, extra, or foreign ids. */
+export class PageGroupReorderMismatchError extends Error {
+  constructor() {
+    super(
+      'The provided page group order does not match the actual sibling group',
+    );
+    this.name = 'PageGroupReorderMismatchError';
+  }
+}
+
+export class PageTranslationNotFoundError extends Error {
+  constructor(pageTranslationId: string) {
+    super(`Page translation not found: ${pageTranslationId}`);
+    this.name = 'PageTranslationNotFoundError';
+  }
+}
+
+/** A page group can only have one translation per locale — see the (tenant, pageGroupId, locale) unique constraint in schema.ts. */
+export class PageTranslationLocaleAlreadyExistsError extends Error {
+  constructor(locale: string) {
+    super(`This page group already has a translation in "${locale}"`);
+    this.name = 'PageTranslationLocaleAlreadyExistsError';
+  }
+}
+
+/** Raised when a use-case tries to write a structural mutation (block insert/remove/reorder) meant for the shared PageGroup.content onto a translation that has isDiverged — those go through saveDivergedContent instead. */
+export class PageTranslationDivergedError extends Error {
+  constructor(pageTranslationId: string) {
+    super(
+      `Page translation ${pageTranslationId} is diverged from the shared structure`,
+    );
+    this.name = 'PageTranslationDivergedError';
+  }
+}
+
+/** The mirror image of PageTranslationDivergedError — raised when a use-case tries to write to a translation's own `divergedContent` (saveDivergedContent) while it is still linked to the shared structure. */
+export class PageTranslationNotDivergedError extends Error {
+  constructor(pageTranslationId: string) {
+    super(
+      `Page translation ${pageTranslationId} has not diverged from the shared structure`,
+    );
+    this.name = 'PageTranslationNotDivergedError';
+  }
+}
+
+/** A page's (tenant, site, locale, parentId, slug) must be unique, sibling-scoped (WP-style) — see the composite unique constraint + the page_translations_root_slug_unique partial index (root-level pages only) in schema.ts. */
 export class PageSlugAlreadyExistsError extends Error {
   constructor(slug: string) {
     super(`A page with slug "${slug}" already exists under this parent`);
     this.name = 'PageSlugAlreadyExistsError';
-  }
-}
-
-/** A page group (Fase 5b) can only have one page per locale — see the (tenant, site, group, locale) unique constraint in schema.ts. */
-export class PageTranslationAlreadyExistsError extends Error {
-  constructor(locale: string) {
-    super(`This page already has a translation in "${locale}"`);
-    this.name = 'PageTranslationAlreadyExistsError';
-  }
-}
-
-/** The proposed parent is the page itself or one of its own descendants — would create a cycle in the page hierarchy. */
-export class PageHierarchyCycleError extends Error {
-  constructor(pageId: string) {
-    super(`Setting this parent would create a cycle for page ${pageId}`);
-    this.name = 'PageHierarchyCycleError';
-  }
-}
-
-/** A page's parent must live in the same site and locale — no cross-site/cross-language nesting. */
-export class PageHierarchyLocaleMismatchError extends Error {
-  constructor(pageId: string, parentId: string) {
-    super(
-      `Page ${pageId} and proposed parent ${parentId} must share the same site and locale`,
-    );
-    this.name = 'PageHierarchyLocaleMismatchError';
-  }
-}
-
-/** reorderSiblingPages was given a page id list that isn't an exact permutation of the actual current sibling group — missing, extra, or foreign ids. */
-export class PageReorderMismatchError extends Error {
-  constructor() {
-    super('The provided page order does not match the actual sibling group');
-    this.name = 'PageReorderMismatchError';
   }
 }
 

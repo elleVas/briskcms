@@ -1,9 +1,11 @@
 import type { Block, PublishedSite } from '@brisk/shared-types';
 import type { Site, SiteLayoutSection } from '@brisk/domain-core';
 import type {
+  PageTranslationRepositoryPort,
   SiteLayoutSectionRepositoryPort,
   SiteThemeBlockStylesPort,
 } from '@brisk/ports';
+import { resolvePageContentReferences } from './resolve-page-content-references';
 
 export type { PublishedSite };
 
@@ -17,6 +19,7 @@ export interface PublishedSiteChrome {
 export interface ResolveSiteChromeDeps {
   siteLayoutSectionRepository: SiteLayoutSectionRepositoryPort;
   siteThemeBlockStylesRepository: SiteThemeBlockStylesPort;
+  pageTranslationRepository: PageTranslationRepositoryPort;
 }
 
 /**
@@ -106,9 +109,20 @@ export async function resolveSiteChrome(
         : null;
   }
 
+  const header = resolveContent(headerSection);
+  const footer = resolveContent(footerSection);
+  // NavLink lives in header/footer above all else — resolve any `page`
+  // reference in both for this locale (see resolve-page-content-references.ts).
+  const [resolvedHeader, resolvedFooter] = await resolvePageContentReferences(
+    deps,
+    tenantId,
+    locale,
+    [header ?? [], footer ?? []],
+  );
+
   return {
-    header: resolveContent(headerSection),
-    footer: resolveContent(footerSection),
+    header: header ? resolvedHeader : null,
+    footer: footer ? resolvedFooter : null,
     headerSticky: preview
       ? (headerSection?.sticky ?? false)
       : headerSection?.status === 'published'

@@ -5,8 +5,20 @@ import { renderBlockFragment } from '../../lib/block-fragment-api-client';
 export interface UsePropertyPatchInput {
   pageId: string;
   token: string;
-  /** Chiamato con le props già fuse (il chiamante possiede l'albero, vedi use-block-tree.ts) — persiste la bozza reale. */
-  onSaveDraft: (blockId: string, props: Record<string, unknown>) => void;
+  /**
+   * Chiamato con le props già fuse (il chiamante possiede l'albero, vedi
+   * use-block-tree.ts) — persiste la bozza reale. `changedKey` è la SINGOLA
+   * chiave che questa chiamata sta effettivamente cambiando (`props` resta
+   * l'intero oggetto fuso, serve comunque per il render server-side del
+   * frammento) — permette al chiamante (canvas-editor-shell.tsx, i18n a
+   * livello di campo) di instradare SOLO quella chiave verso l'overlay di
+   * una traduzione quando serve, senza dover ridurre `props` da solo.
+   */
+  onSaveDraft: (
+    blockId: string,
+    changedKey: string,
+    props: Record<string, unknown>,
+  ) => void;
   /** Come `onSaveDraft` ma per l'override per-istanza (docs/adr/0022) — un valore separato da `props`, sostituito per intero (vedi use-block-tree.ts's updateBlockStyleOverride), non fuso campo-per-campo. */
   onSaveStyleOverride: (
     blockId: string,
@@ -22,6 +34,7 @@ export interface UsePropertyPatchResult {
   scheduleChange: (
     blockId: string,
     blockType: string,
+    changedKey: string,
     props: Record<string, unknown>,
     children?: Block[],
   ) => void;
@@ -42,6 +55,14 @@ export interface UsePropertyPatchResult {
     styleOverride: BlockStyleOverride,
     children?: Block[],
   ) => void;
+  /**
+   * Fires every still-pending debounced save right now, instead of waiting
+   * out its timer — called before Publish (canvas-editor-shell.tsx's own
+   * handlePublish) so the last keystroke within the debounce window is
+   * never silently dropped from what gets published. Safe to call with
+   * nothing pending (no-op).
+   */
+  flushAll: () => void;
 }
 
 const DEFAULT_DEBOUNCE_MS = 300;
@@ -63,13 +84,18 @@ export function usePropertyPatch({
   patchBlock,
   debounceMs = DEFAULT_DEBOUNCE_MS,
 }: UsePropertyPatchInput): UsePropertyPatchResult {
-  const timers = useRef(new Map<string, ReturnType<typeof setTimeout>>());
+  const timers = useRef(
+    new Map<
+      string,
+      { timeout: ReturnType<typeof setTimeout>; fire: () => void }
+    >(),
+  );
 
   useEffect(() => {
     const timersAtMount = timers.current;
     return () => {
-      for (const timer of timersAtMount.values()) {
-        clearTimeout(timer);
+      for (const { timeout } of timersAtMount.values()) {
+        clearTimeout(timeout);
       }
       timersAtMount.clear();
     };
@@ -78,28 +104,39 @@ export function usePropertyPatch({
   // Chiave di debounce distinta da un plain blockId (vedi scheduleTextChange
   // sotto) — un cambio di proprietà non testuale e un testo in editing sullo
   // stesso blocco hanno timer indipendenti, l'uno non azzera il debounce
-  // dell'altro.
+  // dell'altro. `fire` è tenuto insieme al timeout (non solo quest'ultimo)
+  // così flushAll sotto può invocarlo subito, invece di aspettare che scada.
   function schedule(timerKey: string, fire: () => void): void {
     const existing = timers.current.get(timerKey);
     if (existing) {
-      clearTimeout(existing);
+      clearTimeout(existing.timeout);
     }
-    const timer = setTimeout(() => {
+    const timeout = setTimeout(() => {
       timers.current.delete(timerKey);
       fire();
     }, debounceMs);
-    timers.current.set(timerKey, timer);
+    timers.current.set(timerKey, { timeout, fire });
   }
+
+  const flushAll = useCallback(() => {
+    const pending = [...timers.current.values()];
+    timers.current.clear();
+    for (const { timeout, fire } of pending) {
+      clearTimeout(timeout);
+      fire();
+    }
+  }, []);
 
   const scheduleChange = useCallback(
     (
       blockId: string,
       blockType: string,
+      changedKey: string,
       props: Record<string, unknown>,
       children?: Block[],
     ) => {
       schedule(blockId, () => {
-        onSaveDraft(blockId, props);
+        onSaveDraft(blockId, changedKey, props);
         renderBlockFragment({
           pageId,
           token,
@@ -121,7 +158,7 @@ export function usePropertyPatch({
   const scheduleTextChange = useCallback(
     (blockId: string, field: string, text: string) => {
       schedule(`text:${blockId}`, () => {
-        onSaveDraft(blockId, { [field]: text });
+        onSaveDraft(blockId, field, { [field]: text });
       });
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps -- vedi scheduleChange sopra.
@@ -161,5 +198,6 @@ export function usePropertyPatch({
     scheduleChange,
     scheduleTextChange,
     scheduleStyleOverrideChange,
+    flushAll,
   };
 }

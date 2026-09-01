@@ -50,11 +50,15 @@ export function PageListProvider({
           if (!next) resolveAndClose(null);
         }}
         onSelect={(page) =>
+          // Deliberately no `locale`/`slug` stored on the picked value:
+          // baking those in at pick time was the bug (a link picked while
+          // editing one language pointed at THAT language's path even for
+          // every OTHER locale of the shared block) — resolved fresh per
+          // rendering locale server-side instead
+          // (resolve-page-content-references.ts).
           resolveAndClose({
-            pageId: page.id,
-            locale: page.locale,
-            slug: page.slug,
-            title: page.seoMeta.title || page.slug,
+            pageGroupId: page.pageGroupId,
+            title: page.title,
           })
         }
       />

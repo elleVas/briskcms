@@ -5,7 +5,7 @@ import { ChevronLeft, ChevronRight, Pencil, Trash2 } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { cn } from '../lib/utils';
 import type { FormDto } from '../lib/forms-api-client';
-import { ConfirmDeleteDialog } from './confirm-delete-dialog';
+import { ConfirmActionDialog } from './confirm-action-dialog';
 import { FORMS_PAGE_SIZE } from './forms-queries';
 import { IconButton } from './icon-button';
 import { NewFormDialog } from './new-form-dialog';
@@ -165,7 +165,7 @@ export function FormsListView({
         onCreate={createForm}
       />
       {selectedForm && (
-        <ConfirmDeleteDialog
+        <ConfirmActionDialog
           open={isDeleteDialogOpen}
           onOpenChange={setIsDeleteDialogOpen}
           title={t('forms.deleteDialog.title')}

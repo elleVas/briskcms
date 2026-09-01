@@ -26,12 +26,14 @@ export const beforeAfterBlock: BlockDescriptor<BeforeAfterProps> = {
     {
       kind: 'text',
       key: 'beforeLabel',
+      translatable: true,
       label: 'blocks.beforeAfter.fields.beforeLabel.fieldLabel',
       inlineEditable: true,
     },
     {
       kind: 'text',
       key: 'afterLabel',
+      translatable: true,
       label: 'blocks.beforeAfter.fields.afterLabel.fieldLabel',
       inlineEditable: true,
     },

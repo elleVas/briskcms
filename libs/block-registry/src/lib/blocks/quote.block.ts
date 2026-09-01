@@ -16,6 +16,7 @@ export const quoteBlock: BlockDescriptor<QuoteProps> = {
     {
       kind: 'textarea',
       key: 'quote',
+      translatable: true,
       label: 'blocks.quote.fields.quote.fieldLabel',
       inlineEditable: true,
     },
@@ -28,6 +29,7 @@ export const quoteBlock: BlockDescriptor<QuoteProps> = {
     {
       kind: 'text',
       key: 'role',
+      translatable: true,
       label: 'blocks.quote.fields.role.fieldLabel',
       inlineEditable: true,
     },

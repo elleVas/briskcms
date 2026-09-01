@@ -1,16 +1,21 @@
-import type { PageRepositoryPort, SiteRepositoryPort } from '@brisk/ports';
-import { resolvePageByPath } from './resolve-page-by-path';
+import type {
+  PageGroupRepositoryPort,
+  PageTranslationRepositoryPort,
+  SiteRepositoryPort,
+} from '@brisk/ports';
+import { resolvePageGroupByPath } from './resolve-page-group-by-path';
 
 export interface ResolveUntranslatedPageFallbackDeps {
   siteRepository: SiteRepositoryPort;
-  pageRepository: PageRepositoryPort;
+  pageGroupRepository: PageGroupRepositoryPort;
+  pageTranslationRepository: PageTranslationRepositoryPort;
 }
 
 export interface ResolveUntranslatedPageFallbackInput {
   tenantId: string;
   domain: string;
   locale: string;
-  /** Full URL path, root to leaf — see resolvePageByPath. */
+  /** Full URL path, root to leaf — see resolvePageGroupByPath. */
   segments: string[];
 }
 
@@ -21,28 +26,13 @@ export interface UntranslatedPageFallbackTarget {
 }
 
 /**
- * Chiamata SOLO quando `getPublishedPageBySlug` ha già restituito `null` per
- * (locale, segments) — navigazione diretta, link vecchio o crawler su una
- * pagina mai tradotta in quel locale, non passata dal language switcher
- * (che invece calcola il fallback da `translations`, note solo una volta
- * trovata una pagina). Senza `groupId` non c'è modo di risalire alle
- * traduzioni sorelle: l'unica euristica praticabile è "stesso percorso in un
- * altro locale abilitato" — copre il caso comune (URL identico tranne il
- * prefisso di locale), non quello di uno slug tradotto ad hoc, che resta
- * un 404 vero (non c'è comunque un modo di indovinarlo). Con slug scoped ai
- * fratelli (vedi resolvePageByPath), il percorso intero — non solo lo slug
- * finale — è ciò che deve corrispondere sotto l'altro locale: due pagine in
- * rami diversi possono avere lo stesso slug finale ma percorsi diversi, e
- * solo un match sull'intero percorso è univoco.
- *
- * Prova PRIMA il locale di default del sito (il comportamento previsto,
- * intenzionale nella maggioranza dei casi), poi — se quella pagina
- * specifica non esiste più — gli altri locale abilitati nell'ordine in cui
- * sono elencati. Necessario perché la pagina in locale di default di un
- * gruppo può essere cancellata mentre le sue sorelle in altri locale
- * restano pubblicate: ancorare il fallback a un solo locale fisso
- * romperebbe il redirect per l'intero gruppo in quel caso, anche se una
- * sorella con lo stesso percorso è ancora viva altrove.
+ * i18n a livello di campo (see the plan) — replaces the old Page-based
+ * implementation, same behavior otherwise (see the original's own doc
+ * comment for the full reasoning, unchanged): called only when
+ * getPublishedPageBySlug already returned null for (locale, segments),
+ * tries the site's default locale first, then its other enabled locales
+ * in order, redirecting only when the SAME full path resolves to an
+ * actually-published translation elsewhere.
  */
 export async function resolveUntranslatedPageFallback(
   deps: ResolveUntranslatedPageFallbackDeps,
@@ -59,16 +49,9 @@ export async function resolveUntranslatedPageFallback(
     return null;
   }
   if (input.locale === site.defaultLocale) {
-    // Già nel locale di default: non c'è un locale "più di default" a cui
-    // ripiegare, il 404 è reale.
     return null;
   }
   if (!site.enabledLocales.includes(input.locale)) {
-    // `input.locale` isn't a real locale for this site — not "a page not
-    // yet translated into a valid locale," but a made-up URL segment (e.g.
-    // /qualcosa-a-caso on [locale]/index.astro). Without this check the
-    // fallback fired for any string at all, turning a clean 404 into a 302
-    // redirect to the default-locale home.
     return null;
   }
 
@@ -80,8 +63,11 @@ export async function resolveUntranslatedPageFallback(
   ];
 
   for (const candidateLocale of candidateLocales) {
-    const resolved = await resolvePageByPath(
-      deps.pageRepository,
+    const resolved = await resolvePageGroupByPath(
+      {
+        pageGroupRepository: deps.pageGroupRepository,
+        pageTranslationRepository: deps.pageTranslationRepository,
+      },
       input.tenantId,
       site.id,
       candidateLocale,
@@ -89,10 +75,10 @@ export async function resolveUntranslatedPageFallback(
     );
     if (
       resolved &&
-      resolved.page.status === 'published' &&
-      resolved.page.publishedContent
+      resolved.translation.status === 'published' &&
+      resolved.translation.publishedSnapshot
     ) {
-      return { locale: resolved.page.locale, segments: input.segments };
+      return { locale: resolved.translation.locale, segments: input.segments };
     }
   }
 

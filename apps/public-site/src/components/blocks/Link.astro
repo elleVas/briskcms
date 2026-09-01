@@ -6,7 +6,7 @@ type Props = LinkProps;
 
 const { label, linkType, page, url } = Astro.props;
 const href =
-	linkType === 'page' && page ? localePath(page.locale, page.slug) : url;
+	linkType === 'page' && page?.locale && page?.slug ? localePath(page.locale, page.slug) : url;
 ---
 
 <a href={href} data-brisk-field="label">{label}</a>

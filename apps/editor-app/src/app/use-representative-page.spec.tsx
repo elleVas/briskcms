@@ -2,32 +2,68 @@ import type { ReactNode } from 'react';
 import { renderHook, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { QueryClientProvider } from '@tanstack/react-query';
-import * as api from '../lib/pages-api-client';
+import * as api from '../lib/page-groups-api-client';
+import type {
+  PageGroupListItemRecord,
+  PageTranslationRecord,
+} from '../lib/page-groups-api-client';
 import { createTestQueryClient } from '../test-query-client';
 import { useRepresentativePage } from './use-representative-page';
 
-vi.mock('../lib/pages-api-client', async (importOriginal) => {
+vi.mock('../lib/page-groups-api-client', async (importOriginal) => {
   const actual =
-    await importOriginal<typeof import('../lib/pages-api-client')>();
-  return { ...actual, listPages: vi.fn() };
+    await importOriginal<typeof import('../lib/page-groups-api-client')>();
+  return {
+    ...actual,
+    listPageGroups: vi.fn(),
+    listPageGroupTranslations: vi.fn(),
+  };
 });
 
-function page(overrides: Partial<api.PageListItem>): api.PageListItem {
+function group(
+  overrides: Partial<PageGroupListItemRecord> = {},
+): PageGroupListItemRecord {
   return {
-    id: 'page-1',
+    id: 'group-1',
     tenantId: 'tenant-1',
     siteId: 'site-1',
-    groupId: 'group-1',
     parentId: null,
-    locale: 'it',
-    slug: 'home',
-    status: 'published',
-    seoMeta: { title: 'Home', description: '' },
     order: 0,
     createdByName: null,
     createdAt: '',
     updatedAt: '',
-    hasUnpublishedChanges: false,
+    translations: [
+      {
+        locale: 'it',
+        slug: 'home',
+        title: 'Home',
+        status: 'published',
+        isDiverged: false,
+      },
+    ],
+    ...overrides,
+  };
+}
+
+function translation(
+  overrides: Partial<PageTranslationRecord> = {},
+): PageTranslationRecord {
+  return {
+    id: 'translation-1',
+    tenantId: 'tenant-1',
+    siteId: 'site-1',
+    pageGroupId: 'group-1',
+    locale: 'it',
+    slug: 'home',
+    seoMeta: { title: 'Home', description: '' },
+    fieldValues: {},
+    status: 'published',
+    publishedSnapshot: [],
+    isDiverged: false,
+    divergedContent: null,
+    createdBy: null,
+    createdAt: '',
+    updatedAt: '',
     ...overrides,
   };
 }
@@ -47,15 +83,15 @@ describe('useRepresentativePage', () => {
     vi.clearAllMocks();
   });
 
-  it('returns the first page matching the requested locale', async () => {
-    vi.mocked(api.listPages).mockResolvedValue({
-      items: [
-        page({ id: 'en-page', locale: 'en' }),
-        page({ id: 'it-page-1', locale: 'it' }),
-        page({ id: 'it-page-2', locale: 'it' }),
-      ],
-      total: 3,
+  it('returns the first matching-locale translation of the first group', async () => {
+    vi.mocked(api.listPageGroups).mockResolvedValue({
+      items: [group({ id: 'group-1' })],
+      total: 1,
     });
+    vi.mocked(api.listPageGroupTranslations).mockResolvedValue([
+      translation({ id: 'it-translation-1', locale: 'it' }),
+      translation({ id: 'it-translation-2', locale: 'it' }),
+    ]);
     const { wrapper } = renderWithClient();
 
     const { result } = renderHook(() => useRepresentativePage('site-1', 'it'), {
@@ -63,14 +99,12 @@ describe('useRepresentativePage', () => {
     });
 
     await waitFor(() => expect(result.current.isLoading).toBe(false));
-    expect(result.current.page?.id).toBe('it-page-1');
+    expect(result.current.page?.id).toBe('it-translation-1');
+    expect(api.listPageGroupTranslations).toHaveBeenCalledWith('group-1');
   });
 
-  it('returns null when no page exists in that locale', async () => {
-    vi.mocked(api.listPages).mockResolvedValue({
-      items: [page({ id: 'en-page', locale: 'en' })],
-      total: 1,
-    });
+  it('returns null when no group has a translation in that locale', async () => {
+    vi.mocked(api.listPageGroups).mockResolvedValue({ items: [], total: 0 });
     const { wrapper } = renderWithClient();
 
     const { result } = renderHook(() => useRepresentativePage('site-1', 'it'), {
@@ -79,5 +113,6 @@ describe('useRepresentativePage', () => {
 
     await waitFor(() => expect(result.current.isLoading).toBe(false));
     expect(result.current.page).toBeNull();
+    expect(api.listPageGroupTranslations).not.toHaveBeenCalled();
   });
 });

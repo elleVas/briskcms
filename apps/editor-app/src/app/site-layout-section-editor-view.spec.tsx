@@ -4,12 +4,18 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { QueryClientProvider } from '@tanstack/react-query';
 import * as sectionsApi from '../lib/site-layout-sections-api-client';
 import type { SiteLayoutSectionDto } from '../lib/site-layout-sections-api-client';
-import * as pagesApi from '../lib/pages-api-client';
-import type { PageListItem } from '../lib/pages-api-client';
+import * as pageGroupsApi from '../lib/page-groups-api-client';
+import type {
+  PageGroupListItemRecord,
+  PageTranslationRecord,
+} from '../lib/page-groups-api-client';
 import * as previewTokenApi from '../lib/preview-token-api-client';
 import { TooltipProvider } from '../components/ui/tooltip';
 import { createTestQueryClient } from '../test-query-client';
-import { pagesQueryOptions } from './pages-queries';
+import {
+  pageGroupsQueryOptions,
+  pageGroupTranslationsQueryOptions,
+} from './page-groups-queries';
 import { siteLayoutSectionQueryOptions } from './site-layout-sections-queries';
 import { SiteLayoutSectionEditorView } from './site-layout-section-editor-view';
 import { ToastProvider } from './toast-provider';
@@ -48,10 +54,14 @@ vi.mock('../lib/site-layout-sections-api-client', async (importOriginal) => {
   };
 });
 
-vi.mock('../lib/pages-api-client', async (importOriginal) => {
+vi.mock('../lib/page-groups-api-client', async (importOriginal) => {
   const actual =
-    await importOriginal<typeof import('../lib/pages-api-client')>();
-  return { ...actual, listPages: vi.fn() };
+    await importOriginal<typeof import('../lib/page-groups-api-client')>();
+  return {
+    ...actual,
+    listPageGroups: vi.fn(),
+    listPageGroupTranslations: vi.fn(),
+  };
 });
 
 // CanvasEditorShell/CanvasFrame mint a real preview token on mount — mocked
@@ -59,24 +69,45 @@ vi.mock('../lib/pages-api-client', async (importOriginal) => {
 vi.mock('../lib/preview-token-api-client', async (importOriginal) => {
   const actual =
     await importOriginal<typeof import('../lib/preview-token-api-client')>();
-  return { ...actual, createPagePreviewToken: vi.fn() };
+  return { ...actual, createTranslationPreviewToken: vi.fn() };
 });
 
-const representativePage: PageListItem = {
-  id: 'page-1',
+const representativeGroup: PageGroupListItemRecord = {
+  id: 'group-1',
   tenantId: 'tenant-1',
   siteId: 'site-1',
-  groupId: 'group-1',
   parentId: null,
-  locale: 'it',
-  slug: 'home',
-  status: 'published',
-  seoMeta: { title: 'Home', description: '' },
   order: 0,
   createdByName: null,
   createdAt: '',
   updatedAt: '',
-  hasUnpublishedChanges: false,
+  translations: [
+    {
+      locale: 'it',
+      slug: 'home',
+      title: 'Home',
+      status: 'published',
+      isDiverged: false,
+    },
+  ],
+};
+
+const representativeTranslation: PageTranslationRecord = {
+  id: 'translation-1',
+  tenantId: 'tenant-1',
+  siteId: 'site-1',
+  pageGroupId: 'group-1',
+  locale: 'it',
+  slug: 'home',
+  seoMeta: { title: 'Home', description: '' },
+  fieldValues: {},
+  status: 'published',
+  publishedSnapshot: [],
+  isDiverged: false,
+  divergedContent: null,
+  createdBy: null,
+  createdAt: '',
+  updatedAt: '',
 };
 
 const sampleSection: SiteLayoutSectionDto = {
@@ -105,10 +136,19 @@ function renderView(
   // Pre-seeded, same reasoning as siteLayoutSectionQueryOptions above — lets
   // these tests assert synchronously instead of awaiting the representative-
   // page fetch on every single one of them.
-  queryClient.setQueryData(pagesQueryOptions('site-1', 1).queryKey, {
-    items: hasRepresentativePage ? [representativePage] : [],
-    total: hasRepresentativePage ? 1 : 0,
-  });
+  queryClient.setQueryData(
+    pageGroupsQueryOptions('site-1', 1, { locale: 'it' }).queryKey,
+    {
+      items: hasRepresentativePage ? [representativeGroup] : [],
+      total: hasRepresentativePage ? 1 : 0,
+    },
+  );
+  if (hasRepresentativePage) {
+    queryClient.setQueryData(
+      pageGroupTranslationsQueryOptions('group-1').queryKey,
+      [representativeTranslation],
+    );
+  }
   return render(
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
@@ -126,11 +166,14 @@ function renderView(
 
 describe('SiteLayoutSectionEditorView', () => {
   beforeEach(() => {
-    vi.mocked(pagesApi.listPages).mockResolvedValue({
-      items: [representativePage],
+    vi.mocked(pageGroupsApi.listPageGroups).mockResolvedValue({
+      items: [representativeGroup],
       total: 1,
     });
-    vi.mocked(previewTokenApi.createPagePreviewToken).mockResolvedValue({
+    vi.mocked(pageGroupsApi.listPageGroupTranslations).mockResolvedValue([
+      representativeTranslation,
+    ]);
+    vi.mocked(previewTokenApi.createTranslationPreviewToken).mockResolvedValue({
       token: 'tok123',
       expiresAt: new Date().toISOString(),
     });

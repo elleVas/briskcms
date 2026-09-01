@@ -20,18 +20,21 @@ export const bannerBlock: BlockDescriptor<BannerProps> = {
     {
       kind: 'text',
       key: 'title',
+      translatable: true,
       label: 'blocks.banner.fields.title.fieldLabel',
       inlineEditable: true,
     },
     {
       kind: 'textarea',
       key: 'text',
+      translatable: true,
       label: 'blocks.banner.fields.text.fieldLabel',
       inlineEditable: true,
     },
     {
       kind: 'text',
       key: 'buttonLabel',
+      translatable: true,
       label: 'blocks.banner.fields.buttonLabel.fieldLabel',
       inlineEditable: true,
     },

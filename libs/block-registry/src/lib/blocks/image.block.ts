@@ -23,6 +23,7 @@ export const imageBlock: BlockDescriptor<ImageProps> = {
     {
       kind: 'text',
       key: 'alt',
+      translatable: true,
       label: 'blocks.image.fields.alt.fieldLabel',
       required: true,
       requiredUnless: 'isDecorative',
@@ -35,6 +36,7 @@ export const imageBlock: BlockDescriptor<ImageProps> = {
     {
       kind: 'text',
       key: 'caption',
+      translatable: true,
       label: 'blocks.image.fields.caption.fieldLabel',
       inlineEditable: true,
     },
