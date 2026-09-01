@@ -53,7 +53,14 @@ const TRACKER_SIGNATURES: TrackerSignature[] = [
 // vendor's own <noscript> fallback (e.g. GTM's iframe) is NOT matched by
 // this pattern and stays in remainingHtml, unextracted — a known,
 // documented limitation (docs/adr/0039), not an oversight.
-const SCRIPT_TAG_PATTERN = /<script\b[^>]*>[\s\S]*?<\/script>/gi;
+//
+// `<\/script\s*>` (not the literal `<\/script>`), because a closing tag
+// with whitespace before `>` (e.g. `</script >`) is still a valid closing
+// tag to a real parser — CodeQL flagged the tighter version (js/incomplete-
+// html-attribute-sanitization-2) since a script this pattern fails to fully
+// match leaves a bare `<script` fragment in `remainingHtml`, which is later
+// re-injected via `set:html` in PageLayout.astro.
+const SCRIPT_TAG_PATTERN = /<script\b[^>]*>[\s\S]*?<\/script\s*>/gi;
 
 /**
  * Scans a free-text head/body script blob (themeHeadScript/themeBodyScript)

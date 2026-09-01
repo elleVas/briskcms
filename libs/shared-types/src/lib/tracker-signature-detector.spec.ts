@@ -75,4 +75,18 @@ describe('detectKnownTrackers', () => {
     expect(result.detected).toEqual([]);
     expect(result.remainingHtml).toBe('');
   });
+
+  it('extracts a recognized snippet even when its closing tag has whitespace before ">" (CodeQL js/incomplete-html-attribute-sanitization-2)', () => {
+    const gtm = '<script >gtag("config", "G-XXXX")</script >';
+
+    const result = detectKnownTrackers(gtm);
+
+    expect(result.detected).toHaveLength(1);
+    expect(result.remainingHtml).toBe('');
+    // The regression this guards against: a closing-tag pattern that only
+    // matches the literal `</script>` leaves a bare, unclosed `<script`
+    // fragment in remainingHtml when it doesn't — which is later
+    // re-injected into the page via `set:html` in PageLayout.astro.
+    expect(result.remainingHtml).not.toContain('<script');
+  });
 });
