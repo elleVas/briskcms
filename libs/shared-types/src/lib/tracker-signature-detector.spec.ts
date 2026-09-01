@@ -54,8 +54,11 @@ describe('detectKnownTrackers', () => {
     const result = detectKnownTrackers(html);
 
     expect(result.detected).toHaveLength(1);
+    // A single space where the removed match was, not nothing — see
+    // detectKnownTrackers's own doc comment for why deleting to '' is
+    // unsafe.
     expect(result.remainingHtml).toBe(
-      '<script>console.log("before")</script><script>console.log("after")</script>',
+      '<script>console.log("before")</script> <script>console.log("after")</script>',
     );
   });
 
@@ -88,6 +91,24 @@ describe('detectKnownTrackers', () => {
     // leaves a bare, unclosed `<script` fragment in remainingHtml when it
     // doesn't — which is later re-injected into the page via `set:html`
     // in PageLayout.astro.
+    expect(result.remainingHtml).not.toContain('<script');
+  });
+
+  it('does not let a removed match splice its leftovers into a new one (CodeQL js/incomplete-multi-character-sanitization)', () => {
+    // Deleting only the inner, complete `<script>...</script>` to '' would
+    // splice "<scri" + "pt>" back into a literal, never-there-before
+    // "<script>" — the classic single-pass sanitizer bug. A fixed-point
+    // retry loop alone would NOT catch this: the reconstructed "<script>"
+    // has no matching close tag anywhere in the string, so it can never
+    // become a match on a later pass either. Only replacing with a
+    // non-empty separator (a space) prevents the splice from ever forming
+    // a tag-like sequence in the first place.
+    const adversarial = '<scri<script>gtag("config", "G-XXXX")</script>pt>';
+
+    const result = detectKnownTrackers(adversarial);
+
+    expect(result.detected).toHaveLength(1);
+    expect(result.remainingHtml).toBe('<scri pt>');
     expect(result.remainingHtml).not.toContain('<script');
   });
 });

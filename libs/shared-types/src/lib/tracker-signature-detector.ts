@@ -71,6 +71,22 @@ const SCRIPT_TAG_PATTERN = /<script\b[^>]*>[\s\S]*?<\/script\b[^>]*>/gi;
  * order-preserving within `remainingHtml`; called from
  * update-site-theme-settings.use-case.ts on every save, and on demand from
  * the "Rileva di nuovo" button in Integrazioni.
+ *
+ * A detected match is replaced with a single space, never `''` — deleting
+ * to nothing risks splicing the surrounding leftovers into a brand new
+ * `<script` sequence that was never in the original input (the classic
+ * "incomplete multi-character sanitization" bug, CodeQL
+ * js/incomplete-multi-character-sanitization: e.g. `<scri` immediately
+ * followed by a removed `<script>...</script>` immediately followed by
+ * `pt>` — deleting only the middle leaves `<scri` + `pt>` = a literal
+ * `<script>` that was never there before). HTML tag names can't contain
+ * whitespace, so a single space between two leftover fragments makes that
+ * reconstruction impossible regardless of what precedes or follows the
+ * removed match — a stronger guarantee than a fixed-point retry loop
+ * gives (a loop only catches a reconstruction that happens to form a
+ * *complete* new open+close pair; it can't catch one that only
+ * reconstructs a bare, unclosed `<script` opening tag, which is exactly
+ * what the `<scri`+`pt>` case above produces).
  */
 export function detectKnownTrackers(html: string): TrackerDetectionResult {
   const detected: DetectedTracker[] = [];
@@ -88,7 +104,7 @@ export function detectKnownTrackers(html: string): TrackerDetectionResult {
         category: signature.category,
         html: scriptTag,
       });
-      return '';
+      return ' ';
     })
     .trim();
 
