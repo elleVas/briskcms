@@ -180,8 +180,8 @@ describe('extractSearchableText', () => {
     expect(text).not.toContain('🚀');
   });
 
-  it('extracts message from PromoBar and WhatsAppButton', () => {
-    for (const type of ['PromoBar', 'WhatsAppButton']) {
+  it('extracts message from PromoBar, WhatsAppButton, and Callout', () => {
+    for (const type of ['PromoBar', 'WhatsAppButton', 'Callout']) {
       const text = extractSearchableText(seoMeta, [
         { type, props: { message: `Messaggio ${type}` } },
       ]);

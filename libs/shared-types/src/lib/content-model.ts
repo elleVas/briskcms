@@ -760,3 +760,17 @@ export const newsletterSignupPropsSchema = z.object({
   buttonLabel: z.string(),
 });
 export type NewsletterSignupProps = z.infer<typeof newsletterSignupPropsSchema>;
+
+/**
+ * The worked example for `@brisk/block-sdk`'s `defineBlock()` (see
+ * libs/block-sdk/README.md) — a real, first-party block like any other
+ * above, not a special case. Its schema lives here for the same reason
+ * every other block's does: `BlockRenderer.astro` needs the same schema
+ * `defineBlock()` already validated `defaultProps` against, to validate
+ * `block.props` again at render time.
+ */
+export const calloutPropsSchema = z.object({
+  message: z.string(),
+  tone: z.enum(['info', 'warning', 'success']),
+});
+export type CalloutProps = z.infer<typeof calloutPropsSchema>;

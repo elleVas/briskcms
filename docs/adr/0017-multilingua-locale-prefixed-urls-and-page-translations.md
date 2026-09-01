@@ -1,8 +1,14 @@
 # 0017 — Multi-language: locale-prefixed URLs and page translations
 
-**Status**: Accepted — 2026-08-19
+**Status**: Partially superseded by [0034](0034-page-group-translation-shared-structure-model.md) (domain model only — URL shape and fallback config unchanged)
 
 ## Context
+
+> **2026-09-01 note**: the `Page.groupId`/per-locale-`Page`-row domain
+> model described below was replaced by `PageGroup`/`PageTranslation`
+> (see ADR-0034) — this ADR's URL-shape and untranslated-fallback
+> decisions are still accurate and in effect, only the storage model
+> changed.
 
 Brisk sites are self-hosted, single-tenant-per-deployment brochure/showcase
 sites for Italian agencies, several of which need at least a

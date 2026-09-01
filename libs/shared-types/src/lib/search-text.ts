@@ -82,6 +82,7 @@ function proseFieldsFor(block: Block): string[] {
       return [asString(props['title']), asString(props['text'])];
     case 'PromoBar':
     case 'WhatsAppButton':
+    case 'Callout':
       return [asString(props['message'])];
     case 'NavLink':
     case 'NavDropdown':

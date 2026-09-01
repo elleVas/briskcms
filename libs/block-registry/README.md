@@ -24,9 +24,14 @@ pulling in this package's React dependency at all — see `shared-types`'
 own README for the concrete TypeScript resolution conflict that happened
 when it briefly did.
 
-## `BlockDescriptor` (`field-types.ts`)
+## `BlockDescriptor` (now `@brisk/block-sdk`'s `field-types.ts`)
 
-The core data shape:
+The core data shape — moved to `@brisk/block-sdk` 2026-09-01 so a
+third-party block author only needs that package, not this one (see
+[ADR-0037](../../docs/adr/0037-block-sdk-third-party-block-extensions.md)
+and `block-sdk`'s own README). `libs/block-registry/src/lib/field-types.ts`
+now just re-exports it, so every existing `import type { BlockDescriptor }
+from '../field-types'` below kept working unchanged:
 
 ```ts
 interface BlockDescriptor<Props = Record<string, unknown>> {
@@ -52,7 +57,11 @@ purely to contain, in one documented place, the single unavoidable
 `unknown`-cast a `kind: 'custom'` field needs — a heterogeneous
 `FieldDescriptor[]` array can't otherwise express "this component's value
 is really a `PickedPage`", so the alternative would be repeating that cast
-at every call site instead of once here.
+at every call site instead of once here. Every block below is still defined
+as a plain `BlockDescriptor` object literal, unchanged — `defineBlock()`
+(`@brisk/block-sdk`) is a validated-factory alternative available to new
+blocks (see `blocks/callout.block.ts` for this package's own one example),
+not a rewrite requirement for the existing ~49.
 
 `stylableProperties` + `defaultStyle` are this block's opt-in to the
 component/instance style-override system

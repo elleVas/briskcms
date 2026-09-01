@@ -1,0 +1,43 @@
+---
+import type { CalloutProps } from '@brisk/shared-types';
+
+type Props = CalloutProps;
+
+const { message, tone } = Astro.props;
+---
+
+<div class={`brisk-callout brisk-callout--${tone}`} role="note">
+  <p class="brisk-callout__message" data-brisk-field="message">{message}</p>
+</div>
+
+<style>
+  .brisk-callout {
+    padding: 1rem 1.25rem;
+    border-radius: var(--radius);
+    border-left: 4px solid;
+  }
+  .brisk-callout__message {
+    margin: 0;
+  }
+  /*
+    Tone colors are literal, not theme tokens on purpose — same reasoning
+    as Testimonial's filled-star amber or BeforeAfter's divider white: an
+    info/warning/success signal has to stay recognizable across every
+    theme, not shift with whatever a theme happens to call --primary.
+  */
+  .brisk-callout--info {
+    background: #eff6ff;
+    border-color: #3b82f6;
+    color: #1e3a8a;
+  }
+  .brisk-callout--warning {
+    background: #fffbeb;
+    border-color: #f59e0b;
+    color: #78350f;
+  }
+  .brisk-callout--success {
+    background: #f0fdf4;
+    border-color: #22c55e;
+    color: #14532d;
+  }
+</style>
