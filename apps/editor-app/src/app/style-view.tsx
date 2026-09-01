@@ -126,6 +126,7 @@ export function StyleView({ siteId, site }: StyleViewProps) {
         headScript: site.themeHeadScript,
         bodyScript: site.themeBodyScript,
         allowedTrackerDomains: site.themeAllowedTrackerDomains,
+        trackerScripts: site.themeTrackerScripts,
         faviconUrl: faviconUrl.trim() || null,
         overridesEnabled,
       });

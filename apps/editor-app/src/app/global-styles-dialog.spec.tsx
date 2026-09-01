@@ -5,6 +5,7 @@ import type { BlockDescriptor } from '@brisk/block-registry';
 import * as api from '../lib/sites-api-client';
 import * as themeApi from '../lib/theme-api-client';
 import type { SiteRecord } from '@brisk/shared-types';
+import { DEFAULT_COOKIE_BANNER_SETTINGS } from '@brisk/shared-types';
 import { createTestQueryClient } from '../test-query-client';
 import { GlobalStylesDialog } from './global-styles-dialog';
 
@@ -75,6 +76,8 @@ function buildSite(overrides: Partial<SiteRecord> = {}): SiteRecord {
     themeOverridesEnabled: true,
     themeAllowedTrackerDomains: [],
     formSubmissionRetentionDays: null,
+    themeTrackerScripts: [],
+    cookieBannerSettings: DEFAULT_COOKIE_BANNER_SETTINGS,
     themeTokens: { blockStyles: {} },
     createdAt: '',
     ...overrides,

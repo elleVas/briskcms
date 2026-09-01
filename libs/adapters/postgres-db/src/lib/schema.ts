@@ -17,6 +17,7 @@ import {
 import { sql } from 'drizzle-orm';
 import type {
   BlockStyleOverride,
+  CookieBannerSettings,
   FieldValueOverlay,
   FormField,
   FormStep,
@@ -24,7 +25,9 @@ import type {
   PageContent,
   SeoMeta,
   TrackerDomainEntry,
+  TrackerScriptEntry,
 } from '@brisk/shared-types';
+import { DEFAULT_COOKIE_BANNER_SETTINGS } from '@brisk/shared-types';
 
 // One native Postgres enum type per domain string-union, matching the
 // literal values of the corresponding domain-core/shared-types type
@@ -153,6 +156,23 @@ export const sites = pgTable(
     // before the scheduled cleanup (FormSubmissionsRetentionCleanupService)
     // deletes it — see deleteExpiredFormSubmissions.
     formSubmissionRetentionDays: integer('form_submission_retention_days'),
+    // Cookie consent (docs/adr/0039): categorized tracker snippets, gated
+    // by consent category at render time — the structured alternative to
+    // the always-on themeHeadScript/themeBodyScript above. Lives under the
+    // same admin-gated PATCH /sites/:id/theme-settings endpoint since it's
+    // still admin-trusted raw HTML, unlike cookieBannerSettings below.
+    themeTrackerScripts: jsonb('theme_tracker_scripts')
+      .notNull()
+      .default([])
+      .$type<TrackerScriptEntry[]>(),
+    // Cookie consent banner config (docs/adr/0039) — inert config (position/
+    // copy/toggles), not raw HTML, so it lives behind its own endpoint with
+    // no role gate. Defaults to disabled: an existing site never gains a
+    // banner it didn't ask for just because this column exists.
+    cookieBannerSettings: jsonb('cookie_banner_settings')
+      .notNull()
+      .default(DEFAULT_COOKIE_BANNER_SETTINGS)
+      .$type<CookieBannerSettings>(),
     createdAt: timestamp('created_at', { withTimezone: true })
       .notNull()
       .defaultNow(),

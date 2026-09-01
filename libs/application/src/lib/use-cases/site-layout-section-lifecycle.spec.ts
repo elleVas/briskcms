@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { DEFAULT_COOKIE_BANNER_SETTINGS } from '@brisk/shared-types';
 import {
   Site,
   SiteLayoutSectionNotFoundError,
@@ -60,6 +61,8 @@ describe('site layout section lifecycle: get-or-create -> draft -> publish -> ro
       themeOverridesEnabled: true,
       themeAllowedTrackerDomains: [],
       formSubmissionRetentionDays: null,
+      themeTrackerScripts: [],
+      cookieBannerSettings: DEFAULT_COOKIE_BANNER_SETTINGS,
       createdAt: new Date(),
       ...overrides,
     });

@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { DEFAULT_COOKIE_BANNER_SETTINGS } from '@brisk/shared-types';
 import { Site, SiteNotFoundError } from '@brisk/domain-core';
 import {
   InMemorySiteRepository,
@@ -40,6 +41,8 @@ describe('updateSiteThemeTokens', () => {
       themeOverridesEnabled: true,
       themeAllowedTrackerDomains: [],
       formSubmissionRetentionDays: null,
+      themeTrackerScripts: [],
+      cookieBannerSettings: DEFAULT_COOKIE_BANNER_SETTINGS,
       createdAt: new Date('2026-01-01T00:00:00Z'),
     });
     await deps.siteRepository.save(site);

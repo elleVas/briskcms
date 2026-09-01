@@ -61,6 +61,7 @@
       "layout": "Layout",
       "style": "Stile",
       "integrations": "Integrazioni",
+      "cookies": "Cookie banner",
       "users": "Utenti"
     },
     "settings": {
@@ -286,6 +287,48 @@
     "save": "Salva",
     "saving": "Salvataggio in corso..."
   },
+  "cookieConsent": {
+    "category": {
+      "necessary": "Necessari",
+      "functionality": "Funzionalità",
+      "measurement": "Misurazione",
+      "experience": "Esperienza"
+    }
+  },
+  "cookieBanner": {
+    "title": "Cookie banner",
+    "intro": "Configura il banner di consenso cookie GDPR mostrato su ogni pagina del sito pubblico.",
+    "enabledLabel": "Mostra il cookie banner",
+    "positionLabel": "Posizione",
+    "position": {
+      "bottomBar": "Barra in basso (larghezza piena)",
+      "bottomLeft": "In basso a sinistra",
+      "bottomRight": "In basso a destra",
+      "centerModal": "Centrato"
+    },
+    "acceptButtonSideLabel": "Lato del bottone di accettazione",
+    "side": {
+      "left": "Sinistra",
+      "right": "Destra"
+    },
+    "showReopenTabLabel": "Mostra una linguetta per riaprire dopo la scelta",
+    "reopenPositionLabel": "Posizione della linguetta di riapertura",
+    "privacyPolicyLabel": "Pagina Privacy Policy",
+    "cookiePolicyLabel": "Pagina Cookie Policy",
+    "selectPage": "Seleziona una pagina",
+    "pageSelected": "Pagina selezionata",
+    "clearSelection": "Rimuovi selezione",
+    "copyOverridesLabel": "Testi personalizzati per lingua",
+    "copyOverridesHint": "Lascia vuoto per usare il testo predefinito per quella lingua.",
+    "titlePlaceholder": "Titolo",
+    "bodyPlaceholder": "Testo",
+    "acceptAllPlaceholder": "Bottone accetta tutti",
+    "rejectAllPlaceholder": "Bottone rifiuta tutti",
+    "customizePlaceholder": "Bottone personalizza",
+    "save": "Salva",
+    "saving": "Salvataggio in corso...",
+    "saved": "Salvato"
+  },
   "themeSettings": {
     "title": "Stile del sito",
     "intro": "Queste impostazioni si applicano sopra il tema attivo del sito — lascia un campo disattivato per mantenere il valore predefinito del tema.",
@@ -319,6 +362,17 @@
     "addDomain": "Aggiungi dominio",
     "removeDomain": "Rimuovi dominio",
     "invalidDomain": "Dominio non valido — solo nome host, es. static.hotjar.com o *.hotjar.io (niente https://, niente percorso)",
+    "trackerScriptsLabel": "Script categorizzati",
+    "trackerScriptsDisclaimer": "Un fornitore riconosciuto (Google Tag Manager, Google Analytics, Meta Pixel) incollato sopra viene rilevato automaticamente e spostato qui al salvataggio, controllato in base alla categoria di consenso. Tutto il resto resta nei campi sopra, eseguito per ogni visitatore indipendentemente dal consenso.",
+    "detectAgain": "Rileva di nuovo",
+    "trackerScriptLabelPlaceholder": "Nome, es. Google Analytics",
+    "trackerScriptHtmlPlaceholder": "<script>...</script>",
+    "addTrackerScript": "Aggiungi script",
+    "removeTrackerScript": "Rimuovi script",
+    "placement": {
+      "head": "<head>",
+      "body": "Fine <body>"
+    },
     "save": "Salva",
     "saving": "Salvataggio in corso...",
     "saved": "Salvato"

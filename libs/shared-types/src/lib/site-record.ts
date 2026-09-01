@@ -1,5 +1,9 @@
 import { z } from 'zod';
 import { businessInfoSchema } from './business-info';
+import {
+  cookieBannerSettingsSchema,
+  trackerScriptEntrySchema,
+} from './cookie-consent';
 import { untranslatedPageFallbackSchema } from './locale-settings';
 import {
   hexColorSchema,
@@ -36,6 +40,8 @@ export const siteRecordSchema = businessInfoSchema.extend({
   themeFaviconUrl: z.string().nullable(),
   themeOverridesEnabled: z.boolean(),
   themeAllowedTrackerDomains: z.array(trackerDomainEntrySchema),
+  themeTrackerScripts: z.array(trackerScriptEntrySchema),
+  cookieBannerSettings: cookieBannerSettingsSchema,
   themeTokens: themeTokensSchema,
   // Date over the wire, always an ISO string — never revived to a Date on
   // the client (see http-client.ts's plain JSON.parse).

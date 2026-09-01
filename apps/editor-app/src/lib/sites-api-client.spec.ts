@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { SiteRecord } from '@brisk/shared-types';
+import { DEFAULT_COOKIE_BANNER_SETTINGS } from '@brisk/shared-types';
 import {
   getSite,
   updateBusinessInfo,
@@ -31,6 +32,8 @@ const sampleSite: SiteRecord = {
   themeOverridesEnabled: true,
   themeAllowedTrackerDomains: [],
   formSubmissionRetentionDays: null,
+  themeTrackerScripts: [],
+  cookieBannerSettings: DEFAULT_COOKIE_BANNER_SETTINGS,
   themeTokens: { blockStyles: {} },
   createdAt: '',
 };

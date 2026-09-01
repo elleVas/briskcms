@@ -23,6 +23,29 @@ export interface ResolveSiteChromeDeps {
 }
 
 /**
+ * Resolves a cookie banner policy link (docs/adr/0039) to THIS locale's own
+ * published slug — `null` when unset, not yet translated into this locale,
+ * or still a draft: a link to an unpublished page must never leak to the
+ * public site, same rule already applied to header/footer sections above.
+ */
+async function resolvePolicySlug(
+  pageTranslationRepository: PageTranslationRepositoryPort,
+  tenantId: string,
+  pageGroupId: string | null,
+  locale: string,
+): Promise<string | null> {
+  if (!pageGroupId) {
+    return null;
+  }
+  const translation = await pageTranslationRepository.findByGroupAndLocale(
+    tenantId,
+    pageGroupId,
+    locale,
+  );
+  return translation?.status === 'published' ? translation.slug : null;
+}
+
+/**
  * Una sezione (header/footer) esiste per (sito, locale, kind) — se una
  * locale non ne ha mai avuta una propria (creata solo per la locale di
  * default, es. durante il setup iniziale del sito), senza questo fallback
@@ -120,6 +143,21 @@ export async function resolveSiteChrome(
     [header ?? [], footer ?? []],
   );
 
+  const [privacyPolicySlug, cookiePolicySlug] = await Promise.all([
+    resolvePolicySlug(
+      deps.pageTranslationRepository,
+      tenantId,
+      site.cookieBannerSettings.privacyPolicyPageGroupId,
+      locale,
+    ),
+    resolvePolicySlug(
+      deps.pageTranslationRepository,
+      tenantId,
+      site.cookieBannerSettings.cookiePolicyPageGroupId,
+      locale,
+    ),
+  ]);
+
   return {
     header: header ? resolvedHeader : null,
     footer: footer ? resolvedFooter : null,
@@ -141,6 +179,9 @@ export async function resolveSiteChrome(
       searchEngineIndexingEnabled: site.searchEngineIndexingEnabled,
       themeSettings: site.themeSettings,
       themeTokens: { blockStyles },
+      cookieBannerSettings: site.cookieBannerSettings,
+      privacyPolicySlug,
+      cookiePolicySlug,
     },
   };
 }

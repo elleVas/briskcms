@@ -27,6 +27,14 @@ import {
 	type PublishedSiteDto,
 } from '../../apps/public-site/src/lib/public-api-client';
 import BlockRenderer from '../../apps/public-site/src/components/BlockRenderer.astro';
+import CookieConsent from '../../apps/public-site/src/components/CookieConsent.astro';
+import { buildCookieConsentBootstrap } from '../../apps/public-site/src/components/cookie-consent-bootstrap';
+import {
+	partitionTrackerScripts,
+	renderGatedScripts,
+	renderUngatedScripts,
+} from '../../apps/public-site/src/lib/consent-script-blocking';
+import { injectScriptNonce } from '../../apps/public-site/src/lib/content-security-policy';
 import { editorAppUrl } from '../../apps/public-site/src/lib/editor-app-url';
 import {
 	localeDirection,
@@ -88,11 +96,21 @@ const theme = allowStyleOverrides
 			secondaryColor: null,
 			fontFamily: null,
 			customCss: null,
-			headScript: null,
-			bodyScript: null,
 			faviconUrl: null,
 			overridesEnabled: false,
 		};
+// headScript/bodyScript (ADR-0031) are deliberately NOT part of the
+// allowStyleOverrides collapse above — same reasoning as core PageLayout.astro.
+const { headScript, bodyScript } = site.themeSettings;
+// Cookie consent (docs/adr/0039) — same logic as core PageLayout.astro.
+const headTrackerScripts = partitionTrackerScripts(
+	site.themeSettings.trackerScripts,
+	'head',
+);
+const bodyTrackerScripts = partitionTrackerScripts(
+	site.themeSettings.trackerScripts,
+	'body',
+);
 const themeFont = resolveThemeFont(theme.fontFamily);
 const themeOverrideDeclarations = [
 	theme.primaryColor && `--primary: ${theme.primaryColor} !important;`,
@@ -295,7 +313,25 @@ const nextDoc =
 		<script is:inline type="application/ld+json" set:html={schemaOrgJson} />
 
 		{theme.customCss && <style set:html={theme.customCss} />}
-		{theme.headScript && <Fragment set:html={theme.headScript} />}
+		{
+			headScript && (
+				<Fragment
+					set:html={injectScriptNonce(headScript, Astro.locals.cspNonce)}
+				/>
+			)
+		}
+		<Fragment
+			set:html={renderUngatedScripts(
+				headTrackerScripts.ungated,
+				Astro.locals.cspNonce,
+			)}
+		/>
+		<Fragment set:html={renderGatedScripts(headTrackerScripts.gated)} />
+		<script
+			is:inline
+			nonce={Astro.locals.cspNonce}
+			set:html={buildCookieConsentBootstrap(Astro.locals.cspNonce)}
+		/>
 	</head>
 	<body data-brisk-editor-app-url={editable ? editorAppUrl() : undefined}>
 		{
@@ -387,7 +423,30 @@ const nextDoc =
 				</footer>
 			)
 		}
-		{theme.bodyScript && <Fragment set:html={theme.bodyScript} />}
+		{
+			bodyScript && (
+				<Fragment
+					set:html={injectScriptNonce(bodyScript, Astro.locals.cspNonce)}
+				/>
+			)
+		}
+		<Fragment
+			set:html={renderUngatedScripts(
+				bodyTrackerScripts.ungated,
+				Astro.locals.cspNonce,
+			)}
+		/>
+		<Fragment set:html={renderGatedScripts(bodyTrackerScripts.gated)} />
+		{
+			site.cookieBannerSettings.enabled && (
+				<CookieConsent
+					settings={site.cookieBannerSettings}
+					locale={locale}
+					privacyPolicySlug={site.privacyPolicySlug}
+					cookiePolicySlug={site.cookiePolicySlug}
+				/>
+			)
+		}
 		{
 			editable && (
 				<script>

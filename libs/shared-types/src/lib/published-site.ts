@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { businessInfoSchema } from './business-info';
+import { cookieBannerSettingsSchema } from './cookie-consent';
 import { untranslatedPageFallbackSchema } from './locale-settings';
 import { themeSettingsSchema } from './site-theme-settings';
 import { themeTokensSchema } from './site-theme-tokens';
@@ -23,5 +24,15 @@ export const publishedSiteSchema = businessInfoSchema.extend({
   themeSettings: themeSettingsSchema,
   /** Global Styles Editor (Fase 2a) — categorie di stile oltre ai colori (Bottoni oggi). */
   themeTokens: themeTokensSchema,
+  /** Cookie consent banner config (docs/adr/0039). */
+  cookieBannerSettings: cookieBannerSettingsSchema,
+  // Resolved from cookieBannerSettings.privacyPolicyPageGroupId/
+  // cookiePolicyPageGroupId to THIS locale's own published slug
+  // (resolve-site-chrome.ts) — `null` when unset, not yet translated into
+  // this locale, or not yet published. A bare slug, not a full path: both
+  // generated pages are always created at site root (parentId: null), so
+  // apps/public-site's localePath(locale, slug) is enough to build the href.
+  privacyPolicySlug: z.string().nullable(),
+  cookiePolicySlug: z.string().nullable(),
 });
 export type PublishedSite = z.infer<typeof publishedSiteSchema>;

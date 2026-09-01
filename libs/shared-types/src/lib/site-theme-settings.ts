@@ -1,4 +1,8 @@
 import { z } from 'zod';
+import {
+  MAX_TRACKER_SCRIPTS,
+  trackerScriptEntrySchema,
+} from './cookie-consent';
 
 export const hexColorSchema = z
   .string()
@@ -86,5 +90,10 @@ export const themeSettingsSchema = z.object({
   // allowlist (content-security-policy.ts). Capped well above any realistic
   // legitimate use so the CSP header itself can't grow unbounded.
   allowedTrackerDomains: z.array(trackerDomainEntrySchema).max(20),
+  // Cookie consent (docs/adr/0039): categorized tracker snippets, gated by
+  // consent category at render time (apps/public-site/src/lib/consent-script-blocking.ts)
+  // — separate from the always-on headScript/bodyScript above, and from
+  // allowedTrackerDomains (a CSP allowlist, not a gating mechanism).
+  trackerScripts: z.array(trackerScriptEntrySchema).max(MAX_TRACKER_SCRIPTS),
 });
 export type ThemeSettings = z.infer<typeof themeSettingsSchema>;

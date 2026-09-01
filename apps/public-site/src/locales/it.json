@@ -53,5 +53,22 @@
   "notFound.title": "Pagina non trovata",
   "notFound.message": "La pagina che cerchi non esiste.",
   "notFound.backHome": "Torna alla home",
-  "skipLink": "Vai al contenuto principale"
+  "skipLink": "Vai al contenuto principale",
+  "cookieConsent.title": "Utilizziamo i cookie",
+  "cookieConsent.body": "Usiamo i cookie per far funzionare questo sito e, con il tuo consenso, per misurare il traffico e migliorare la tua esperienza. Puoi cambiare la tua scelta in qualsiasi momento.",
+  "cookieConsent.acceptAll": "Accetta tutti",
+  "cookieConsent.rejectAll": "Rifiuta tutti",
+  "cookieConsent.customize": "Personalizza",
+  "cookieConsent.save": "Salva preferenze",
+  "cookieConsent.reopenLabel": "Preferenze cookie",
+  "cookieConsent.categoryNecessary": "Necessari",
+  "cookieConsent.categoryNecessaryDescription": "Indispensabili per il funzionamento del sito. Sempre attivi.",
+  "cookieConsent.categoryFunctionality": "Funzionalità",
+  "cookieConsent.categoryFunctionalityDescription": "Ricordano le tue scelte per offrirti un'esperienza migliore.",
+  "cookieConsent.categoryMeasurement": "Misurazione",
+  "cookieConsent.categoryMeasurementDescription": "Ci aiutano a capire come i visitatori usano il sito.",
+  "cookieConsent.categoryExperience": "Esperienza",
+  "cookieConsent.categoryExperienceDescription": "Personalizzano i contenuti mostrati da questo sito e dai suoi partner.",
+  "cookieConsent.privacyPolicyLink": "Privacy Policy",
+  "cookieConsent.cookiePolicyLink": "Cookie Policy"
 }

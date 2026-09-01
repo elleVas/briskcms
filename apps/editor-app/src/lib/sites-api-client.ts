@@ -1,6 +1,7 @@
 import {
   siteRecordSchema,
   type BlockStyleOverride,
+  type CookieBannerSettings,
   type LocaleSettings,
   type OpeningHoursDay,
   type SiteRecord,
@@ -94,6 +95,16 @@ export function updateThemeSettings(
   input: ThemeSettings,
 ): Promise<SiteRecord> {
   return requestSite(`/sites/${id}/theme-settings`, {
+    method: 'PATCH',
+    body: JSON.stringify(input),
+  });
+}
+
+export function updateCookieBannerSettings(
+  id: string,
+  input: CookieBannerSettings,
+): Promise<SiteRecord> {
+  return requestSite(`/sites/${id}/cookie-banner-settings`, {
     method: 'PATCH',
     body: JSON.stringify(input),
   });

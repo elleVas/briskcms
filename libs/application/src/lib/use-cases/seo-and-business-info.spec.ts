@@ -1,10 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { SiteNotFoundError, Site } from '@brisk/domain-core';
+import { DEFAULT_COOKIE_BANNER_SETTINGS } from '@brisk/shared-types';
 import { updateSiteBusinessInfo } from './update-site-business-info.use-case';
 import { updateSiteGeneralSettings } from './update-site-general-settings.use-case';
 import { updateSiteSeoSettings } from './update-site-seo-settings.use-case';
 import { updateSiteFormSubmissionRetention } from './update-site-form-submission-retention.use-case';
 import { updateSiteThemeSettings } from './update-site-theme-settings.use-case';
+import { updateSiteCookieBannerSettings } from './update-site-cookie-banner-settings.use-case';
 import { updateSiteLocaleSettings } from './update-site-locale-settings.use-case';
 import { InMemorySiteRepository } from './in-memory-repositories.test-fixture';
 
@@ -41,6 +43,8 @@ describe('updateSiteBusinessInfo', () => {
       themeOverridesEnabled: true,
       themeAllowedTrackerDomains: [],
       formSubmissionRetentionDays: null,
+      themeTrackerScripts: [],
+      cookieBannerSettings: DEFAULT_COOKIE_BANNER_SETTINGS,
       createdAt: new Date(),
     });
     await siteRepository.save(site);
@@ -134,6 +138,8 @@ describe('updateSiteGeneralSettings', () => {
       themeOverridesEnabled: true,
       themeAllowedTrackerDomains: [],
       formSubmissionRetentionDays: null,
+      themeTrackerScripts: [],
+      cookieBannerSettings: DEFAULT_COOKIE_BANNER_SETTINGS,
       createdAt: new Date(),
     });
     await siteRepository.save(site);
@@ -216,6 +222,8 @@ describe('updateSiteSeoSettings', () => {
       themeOverridesEnabled: true,
       themeAllowedTrackerDomains: [],
       formSubmissionRetentionDays: null,
+      themeTrackerScripts: [],
+      cookieBannerSettings: DEFAULT_COOKIE_BANNER_SETTINGS,
       createdAt: new Date(),
     });
     await siteRepository.save(site);
@@ -294,6 +302,8 @@ describe('updateSiteFormSubmissionRetention', () => {
       themeOverridesEnabled: true,
       themeAllowedTrackerDomains: [],
       formSubmissionRetentionDays: null,
+      themeTrackerScripts: [],
+      cookieBannerSettings: DEFAULT_COOKIE_BANNER_SETTINGS,
       createdAt: new Date(),
     });
     await siteRepository.save(site);
@@ -387,6 +397,8 @@ describe('updateSiteThemeSettings', () => {
       themeOverridesEnabled: true,
       themeAllowedTrackerDomains: [],
       formSubmissionRetentionDays: null,
+      themeTrackerScripts: [],
+      cookieBannerSettings: DEFAULT_COOKIE_BANNER_SETTINGS,
       createdAt: new Date(),
     });
     await siteRepository.save(site);
@@ -409,6 +421,7 @@ describe('updateSiteThemeSettings', () => {
       faviconUrl: null,
       overridesEnabled: true,
       allowedTrackerDomains: [],
+      trackerScripts: [],
     });
 
     expect(updated.themeSettings.primaryColor).toBe('#18181b');
@@ -431,6 +444,7 @@ describe('updateSiteThemeSettings', () => {
         faviconUrl: null,
         overridesEnabled: true,
         allowedTrackerDomains: [],
+        trackerScripts: [],
       }),
     ).rejects.toThrow(SiteNotFoundError);
   });
@@ -452,6 +466,161 @@ describe('updateSiteThemeSettings', () => {
         faviconUrl: null,
         overridesEnabled: true,
         allowedTrackerDomains: [],
+        trackerScripts: [],
+      }),
+    ).rejects.toThrow(SiteNotFoundError);
+  });
+
+  it('auto-extracts a known tracker from headScript into trackerScripts, gated', async () => {
+    const deps = setup();
+    await seedSite(deps.siteRepository);
+
+    const updated = await updateSiteThemeSettings(deps, {
+      tenantId,
+      siteId: 'site-1',
+      primaryColor: null,
+      secondaryColor: null,
+      fontFamily: null,
+      customCss: null,
+      headScript:
+        '<script>console.log("custom")</script><script>gtag("config", "G-XXXX")</script>',
+      bodyScript: null,
+      faviconUrl: null,
+      overridesEnabled: true,
+      allowedTrackerDomains: [],
+      trackerScripts: [],
+    });
+
+    // The recognized GA4 snippet is gone from the free-text field...
+    expect(updated.themeSettings.headScript).toBe(
+      '<script>console.log("custom")</script>',
+    );
+    // ...and now lives as a categorized, gated entry instead.
+    expect(updated.themeSettings.trackerScripts).toHaveLength(1);
+    expect(updated.themeSettings.trackerScripts[0]).toMatchObject({
+      label: 'Google Analytics (GA4)',
+      category: 'measurement',
+      placement: 'head',
+    });
+  });
+
+  it('keeps existing trackerScripts entries when saving unrelated fields', async () => {
+    const deps = setup();
+    const site = await seedSite(deps.siteRepository);
+    site.updateThemeSettings({
+      ...site.themeSettings,
+      trackerScripts: [
+        {
+          id: 'existing-1',
+          label: 'Hotjar',
+          category: 'experience',
+          placement: 'head',
+          html: '<script>console.log("hotjar")</script>',
+        },
+      ],
+    });
+    await deps.siteRepository.save(site);
+
+    const updated = await updateSiteThemeSettings(deps, {
+      tenantId,
+      siteId: 'site-1',
+      primaryColor: '#18181b',
+      secondaryColor: null,
+      fontFamily: null,
+      customCss: null,
+      headScript: null,
+      bodyScript: null,
+      faviconUrl: null,
+      overridesEnabled: true,
+      allowedTrackerDomains: [],
+      trackerScripts: site.themeSettings.trackerScripts,
+    });
+
+    expect(updated.themeSettings.trackerScripts).toEqual(
+      site.themeSettings.trackerScripts,
+    );
+  });
+});
+
+describe('updateSiteCookieBannerSettings', () => {
+  const tenantId = 'tenant-1';
+  const otherTenantId = 'tenant-2';
+
+  function setup() {
+    const siteRepository = new InMemorySiteRepository();
+    return { siteRepository };
+  }
+
+  async function seedSite(siteRepository: InMemorySiteRepository) {
+    const site = Site.fromProps({
+      id: 'site-1',
+      tenantId,
+      name: 'Il mio sito',
+      domain: 'localhost',
+      defaultLocale: 'it',
+      enabledLocales: ['it'],
+      untranslatedPageFallback: 'redirect-to-default',
+      businessAddress: null,
+      businessPhone: null,
+      businessType: null,
+      openingHours: null,
+      searchEngineIndexingEnabled: false,
+      themePrimaryColor: null,
+      themeSecondaryColor: null,
+      themeFontFamily: null,
+      themeCustomCss: null,
+      themeHeadScript: null,
+      themeBodyScript: null,
+      themeFaviconUrl: null,
+      themeOverridesEnabled: true,
+      themeAllowedTrackerDomains: [],
+      formSubmissionRetentionDays: null,
+      themeTrackerScripts: [],
+      cookieBannerSettings: DEFAULT_COOKIE_BANNER_SETTINGS,
+      createdAt: new Date(),
+    });
+    await siteRepository.save(site);
+    return site;
+  }
+
+  it('enables the banner and sets its config', async () => {
+    const deps = setup();
+    await seedSite(deps.siteRepository);
+
+    const updated = await updateSiteCookieBannerSettings(deps, {
+      tenantId,
+      siteId: 'site-1',
+      ...DEFAULT_COOKIE_BANNER_SETTINGS,
+      enabled: true,
+      position: 'bottom-right',
+    });
+
+    expect(updated.cookieBannerSettings.enabled).toBe(true);
+    expect(updated.cookieBannerSettings.position).toBe('bottom-right');
+  });
+
+  it('throws SiteNotFoundError for a nonexistent site', async () => {
+    const deps = setup();
+
+    await expect(
+      updateSiteCookieBannerSettings(deps, {
+        tenantId,
+        siteId: 'does-not-exist',
+        ...DEFAULT_COOKIE_BANNER_SETTINGS,
+      }),
+    ).rejects.toThrow(SiteNotFoundError);
+  });
+
+  it('does not update a site belonging to a different tenant', async () => {
+    const deps = setup();
+    await seedSite(deps.siteRepository);
+
+    await expect(
+      updateSiteCookieBannerSettings(deps, {
+        tenantId: otherTenantId,
+        siteId: 'site-1',
+        ...DEFAULT_COOKIE_BANNER_SETTINGS,
+        enabled: true,
       }),
     ).rejects.toThrow(SiteNotFoundError);
   });
@@ -490,6 +659,8 @@ describe('updateSiteLocaleSettings', () => {
       themeOverridesEnabled: true,
       themeAllowedTrackerDomains: [],
       formSubmissionRetentionDays: null,
+      themeTrackerScripts: [],
+      cookieBannerSettings: DEFAULT_COOKIE_BANNER_SETTINGS,
       createdAt: new Date(),
     });
     await siteRepository.save(site);

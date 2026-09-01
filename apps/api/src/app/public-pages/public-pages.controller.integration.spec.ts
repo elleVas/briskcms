@@ -6,6 +6,7 @@ import { requestIdMiddleware } from '../request-id.middleware';
 import cookieParser from 'cookie-parser';
 import request from 'supertest';
 import type { AuthPort } from '@brisk/ports';
+import { DEFAULT_COOKIE_BANNER_SETTINGS } from '@brisk/shared-types';
 import {
   type BriskDb,
   deleteIntegrationFixtures,
@@ -160,10 +161,14 @@ describe('PublicPagesController (integration)', () => {
           faviconUrl: null,
           overridesEnabled: true,
           allowedTrackerDomains: [],
+          trackerScripts: [],
         },
         themeTokens: {
           blockStyles: {},
         },
+        cookieBannerSettings: DEFAULT_COOKIE_BANNER_SETTINGS,
+        privacyPolicySlug: null,
+        cookiePolicySlug: null,
       },
     });
   });

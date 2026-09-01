@@ -13,6 +13,7 @@ import type {
   SiteRepositoryPort,
   TenantContextPort,
 } from '@brisk/ports';
+import { DEFAULT_COOKIE_BANNER_SETTINGS } from '@brisk/shared-types';
 import { SiteLayoutSectionsController } from './site-layout-sections.controller';
 
 function buildSection(
@@ -54,6 +55,8 @@ function buildSite(
     themeOverridesEnabled: true,
     themeAllowedTrackerDomains: [],
     formSubmissionRetentionDays: null,
+    themeTrackerScripts: [],
+    cookieBannerSettings: DEFAULT_COOKIE_BANNER_SETTINGS,
     createdAt: new Date(),
     ...overrides,
   });

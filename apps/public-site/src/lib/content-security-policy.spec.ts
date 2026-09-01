@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
 import { describe, expect, it } from 'vitest';
 import { PROMO_BAR_DISMISS_SCRIPT } from '../components/blocks/promo-bar-dismiss-script';
+import { COOKIE_CONSENT_DISMISS_SCRIPT } from '../components/cookie-consent-dismiss-script';
 import {
   buildContentSecurityPolicy,
   injectScriptNonce,
@@ -10,6 +11,16 @@ describe('buildContentSecurityPolicy', () => {
   it('includes the exact hash of the promo bar dismiss script', () => {
     const expectedHash = createHash('sha256')
       .update(PROMO_BAR_DISMISS_SCRIPT)
+      .digest('base64');
+
+    expect(buildContentSecurityPolicy(`'self'`, 'abc123')).toContain(
+      `'sha256-${expectedHash}'`,
+    );
+  });
+
+  it('includes the exact hash of the cookie consent dismiss script', () => {
+    const expectedHash = createHash('sha256')
+      .update(COOKIE_CONSENT_DISMISS_SCRIPT)
       .digest('base64');
 
     expect(buildContentSecurityPolicy(`'self'`, 'abc123')).toContain(

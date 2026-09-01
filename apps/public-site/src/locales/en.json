@@ -53,5 +53,22 @@
   "notFound.title": "Page not found",
   "notFound.message": "The page you're looking for doesn't exist.",
   "notFound.backHome": "Back to home",
-  "skipLink": "Skip to main content"
+  "skipLink": "Skip to main content",
+  "cookieConsent.title": "We use cookies",
+  "cookieConsent.body": "We use cookies to run this site and, with your permission, to measure traffic and improve your experience. You can change your choice at any time.",
+  "cookieConsent.acceptAll": "Accept all",
+  "cookieConsent.rejectAll": "Reject all",
+  "cookieConsent.customize": "Customize",
+  "cookieConsent.save": "Save preferences",
+  "cookieConsent.reopenLabel": "Cookie preferences",
+  "cookieConsent.categoryNecessary": "Necessary",
+  "cookieConsent.categoryNecessaryDescription": "Required for the site to work. Always active.",
+  "cookieConsent.categoryFunctionality": "Functionality",
+  "cookieConsent.categoryFunctionalityDescription": "Remembers your choices to provide a better experience.",
+  "cookieConsent.categoryMeasurement": "Measurement",
+  "cookieConsent.categoryMeasurementDescription": "Helps us understand how visitors use the site.",
+  "cookieConsent.categoryExperience": "Experience",
+  "cookieConsent.categoryExperienceDescription": "Personalizes content shown by this site and its partners.",
+  "cookieConsent.privacyPolicyLink": "Privacy Policy",
+  "cookieConsent.cookiePolicyLink": "Cookie Policy"
 }
