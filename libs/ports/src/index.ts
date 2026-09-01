@@ -21,3 +21,4 @@ export * from './lib/captcha.port';
 export * from './lib/newsletter.port';
 export * from './lib/attachment-storage.port';
 export * from './lib/preview-token.port';
+export * from './lib/dashboard-stats.port';

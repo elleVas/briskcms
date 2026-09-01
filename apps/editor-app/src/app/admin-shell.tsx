@@ -5,6 +5,7 @@ import {
   FileText,
   FormInput,
   Image,
+  LayoutDashboard,
   LayoutTemplate,
   Palette,
   Plug,
@@ -29,6 +30,13 @@ export function AdminShell({ children }: AdminShellProps) {
       <div className="flex min-h-0 flex-1">
         <nav className="flex w-48 shrink-0 flex-col border-r p-3">
           <div className="flex flex-1 flex-col gap-1">
+            <Link
+              to="/"
+              className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm font-medium hover:bg-muted"
+            >
+              <LayoutDashboard className="size-4" />
+              {t('shell.nav.dashboard')}
+            </Link>
             <Link
               to="/pages"
               className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm font-medium hover:bg-muted"

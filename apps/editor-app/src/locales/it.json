@@ -54,6 +54,7 @@
   },
   "shell": {
     "nav": {
+      "dashboard": "Dashboard",
       "pages": "Pagine",
       "media": "Media",
       "forms": "Moduli",
@@ -70,6 +71,34 @@
     "account": {
       "label": "Account"
     }
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "stats": {
+      "pages": {
+        "title": "Pagine",
+        "description": "{{count}} totali in tutte le lingue",
+        "breakdown": "{{published}} pubblicate, {{draft}} in bozza"
+      },
+      "media": {
+        "title": "Media",
+        "description": "{{count}} file caricati"
+      },
+      "published": {
+        "title": "Pubblicate",
+        "description": "Live sul sito pubblico in questo momento"
+      }
+    },
+    "recentActivity": {
+      "title": "Attività recente",
+      "description": "Le pagine modificate più di recente",
+      "empty": "Ancora nessuna modifica.",
+      "status": {
+        "draft": "Bozza",
+        "published": "Pubblicata"
+      }
+    },
+    "emptyState": "Questo sito non ha ancora pagine o media — inizia dalla sezione Pagine."
   },
   "pages": {
     "list": {

@@ -1,0 +1,1 @@
+export const DASHBOARD_STATS_PORT = Symbol('DASHBOARD_STATS_PORT');

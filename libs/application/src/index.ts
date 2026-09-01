@@ -62,3 +62,4 @@ export * from './lib/use-cases/publish-site-layout-section.use-case';
 export * from './lib/use-cases/list-site-layout-section-versions.use-case';
 export * from './lib/use-cases/rollback-site-layout-section-to-version.use-case';
 export * from './lib/use-cases/update-site-layout-section-sticky.use-case';
+export * from './lib/use-cases/get-dashboard-stats.use-case';

@@ -3,6 +3,7 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
+import { DashboardModule } from './dashboard/dashboard.module';
 import { FormsModule } from './forms/forms.module';
 import { MaintenanceModule } from './maintenance/maintenance.module';
 import { MediaModule } from './media/media.module';
@@ -19,6 +20,7 @@ import { UsersModule } from './users/users.module';
   imports: [
     ScheduleModule.forRoot(),
     AuthModule,
+    DashboardModule,
     MaintenanceModule,
     PagesModule,
     PublicPagesModule,

@@ -85,6 +85,9 @@
       "path": "./libs/adapters/preview-token-adapter"
     },
     {
+      "path": "./libs/adapters/postgres-dashboard-stats-repository"
+    },
+    {
       "path": "./libs/block-registry"
     },
     {

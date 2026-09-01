@@ -8,6 +8,7 @@ import {
 } from '@tanstack/react-router';
 import { TooltipProvider } from '../components/ui/tooltip';
 import * as authApi from '../lib/auth-api-client';
+import * as dashboardApi from '../lib/dashboard-api-client';
 import * as formsApi from '../lib/forms-api-client';
 import * as mediaApi from '../lib/media-api-client';
 import * as pageGroupsApi from '../lib/page-groups-api-client';
@@ -58,6 +59,12 @@ vi.mock('../lib/media-api-client', async (importOriginal) => {
   const actual =
     await importOriginal<typeof import('../lib/media-api-client')>();
   return { ...actual, listMedia: vi.fn() };
+});
+
+vi.mock('../lib/dashboard-api-client', async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import('../lib/dashboard-api-client')>();
+  return { ...actual, getDashboardStats: vi.fn() };
 });
 
 vi.mock('../lib/forms-api-client', async (importOriginal) => {
@@ -233,7 +240,7 @@ describe('router', () => {
   });
 
   it('redirects an unauthenticated visitor from / to /login', async () => {
-    vi.mocked(pageGroupsApi.listPageGroups).mockRejectedValue(
+    vi.mocked(dashboardApi.getDashboardStats).mockRejectedValue(
       new ApiError(401, { message: 'Unauthorized' }),
     );
 
