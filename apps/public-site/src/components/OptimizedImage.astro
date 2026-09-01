@@ -1,0 +1,48 @@
+---
+import { Image } from 'astro:assets';
+import type { PickedMedia } from '@brisk/shared-types';
+
+interface Props {
+  media: PickedMedia;
+  alt: string;
+  class?: string;
+  /** Defaults to 'lazy' (astro:assets' own default) — pass 'eager' for a block that can be the page's own LCP element. */
+  loading?: 'lazy' | 'eager';
+  decoding?: 'async' | 'sync' | 'auto';
+}
+
+const {
+  media,
+  alt,
+  class: className,
+  loading = 'lazy',
+  decoding = 'async',
+} = Astro.props;
+
+// astro:assets' <Image> requires explicit width/height for a remote src
+// (it has no filesystem access to infer them) — media picked before that
+// field existed on PickedMedia can still have null/undefined width/height,
+// so those fall back to a plain <img>, same as every block did before this
+// component existed.
+function hasKnownDimensions(
+  m: PickedMedia,
+): m is PickedMedia & { width: number; height: number } {
+  return m.width != null && m.height != null;
+}
+---
+
+{
+  hasKnownDimensions(media) ? (
+    <Image
+      src={media.url}
+      alt={alt}
+      width={media.width}
+      height={media.height}
+      class={className}
+      loading={loading}
+      decoding={decoding}
+    />
+  ) : (
+    <img src={media.url} alt={alt} class={className} loading={loading} decoding={decoding} />
+  )
+}

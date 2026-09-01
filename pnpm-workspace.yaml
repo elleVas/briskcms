@@ -16,3 +16,10 @@ packages:
 # depth limit on one).
 overrides:
   vite: 8.2.2
+
+# sharp is astro:assets' default image service (apps/public-site) — its
+# install script wires up the prebuilt native binary for the current
+# platform, no compilation involved. Without this, pnpm silently skips
+# that script and astro:assets fails at request time with MissingSharp.
+onlyBuiltDependencies:
+  - sharp

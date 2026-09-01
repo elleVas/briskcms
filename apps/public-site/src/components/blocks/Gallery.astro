@@ -1,6 +1,7 @@
 ---
 import type { GalleryProps } from '@brisk/shared-types';
 import { Translator } from '../../lib/i18n';
+import OptimizedImage from '../OptimizedImage.astro';
 
 type Props = GalleryProps & { locale: string };
 
@@ -14,13 +15,10 @@ const i18n = new Translator(locale);
       images.map(
         (image) =>
           image.media && (
-            <img
-              src={image.media.url}
+            <OptimizedImage
+              media={image.media}
               alt={image.isDecorative ? '' : image.alt}
-              width={image.media.width ?? undefined}
-              height={image.media.height ?? undefined}
-              loading="lazy"
-              decoding="async"
+              class="gallery-image"
             />
           ),
       )
@@ -36,7 +34,9 @@ const i18n = new Translator(locale);
     grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
     gap: 0.5rem;
   }
-  .gallery img {
+  /* :global() because OptimizedImage (a child component) renders the
+  actual <img> — see Image.astro's own style block for the full reasoning. */
+  :global(.gallery-image) {
     width: 100%;
     aspect-ratio: 1 / 1;
     object-fit: cover;

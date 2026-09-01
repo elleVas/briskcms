@@ -1,6 +1,7 @@
 ---
 import type { BeforeAfterProps } from '@brisk/shared-types';
 import { Translator } from '../../lib/i18n';
+import OptimizedImage from '../OptimizedImage.astro';
 
 type Props = BeforeAfterProps & { locale: string };
 
@@ -14,26 +15,22 @@ const i18n = new Translator(locale);
   canRender ? (
     <div class="brisk-before-after" style="--reveal: 50%">
       {
-        /* No loading="lazy" (same reasoning as Image.astro): full-width,
+        /* loading="eager" (same reasoning as Image.astro): full-width,
         can be the first block on a page, so it can be the page's own LCP
         element — lazy-loading that would delay it instead of helping CWV. */
       }
-      <img
-        src={afterImage.url}
+      <OptimizedImage
+        media={afterImage}
         alt={afterLabel}
-        width={afterImage.width ?? undefined}
-        height={afterImage.height ?? undefined}
         class="brisk-before-after__image"
-        decoding="async"
+        loading="eager"
       />
       <div class="brisk-before-after__reveal">
-        <img
-          src={beforeImage.url}
+        <OptimizedImage
+          media={beforeImage}
           alt={beforeLabel}
-          width={beforeImage.width ?? undefined}
-          height={beforeImage.height ?? undefined}
           class="brisk-before-after__image"
-          decoding="async"
+          loading="eager"
         />
       </div>
       <div class="brisk-before-after__divider" aria-hidden="true" />
@@ -77,7 +74,9 @@ const i18n = new Translator(locale);
     overflow: hidden;
     border-radius: 8px;
   }
-  .brisk-before-after__image {
+  /* :global() because OptimizedImage (a child component) renders the
+  actual <img> — see Image.astro's own style block for the full reasoning. */
+  :global(.brisk-before-after__image) {
     position: absolute;
     inset: 0;
     width: 100%;
