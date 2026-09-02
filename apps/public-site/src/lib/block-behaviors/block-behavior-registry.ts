@@ -1,6 +1,8 @@
 import { backToTopBehaviors } from './back-to-top';
 import { beforeAfterBehaviors } from './before-after';
+import { consentGatedEmbedBehaviors } from './consent-gated-embed';
 import { countdownBehaviors } from './countdown';
+import { embedHtmlBehaviors } from './embed-html';
 import { formBehaviors } from './form';
 import { hamburgerMenuBehaviors } from './hamburger-menu';
 import { imageSliderBehaviors } from './image-slider';
@@ -33,4 +35,7 @@ export const BLOCK_BEHAVIOR_REGISTRY: Record<string, BlockBehavior[]> = {
   Stat: statBehaviors,
   Form: [...formBehaviors, ...turnstileBehaviors],
   NewsletterSignup: turnstileBehaviors,
+  VideoEmbed: consentGatedEmbedBehaviors,
+  MapEmbed: consentGatedEmbedBehaviors,
+  EmbedHtml: embedHtmlBehaviors,
 };

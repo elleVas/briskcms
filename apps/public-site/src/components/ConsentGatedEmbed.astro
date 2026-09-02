@@ -26,23 +26,16 @@ const { src, title, buttonLabel } = Astro.props;
 </div>
 
 <script>
-  document
-    .querySelectorAll<HTMLButtonElement>('.brisk-consent-embed__trigger')
-    .forEach((button) => {
-      button.addEventListener(
-        'click',
-        () => {
-          const iframe = document.createElement('iframe');
-          iframe.src = button.dataset.embedSrc ?? '';
-          iframe.title = button.dataset.embedTitle ?? '';
-          iframe.loading = 'lazy';
-          iframe.allowFullscreen = true;
-          iframe.className = 'brisk-consent-embed__iframe';
-          button.replaceWith(iframe);
-        },
-        { once: true },
-      );
-    });
+  // Logic lives in a plain importable module, not inline here — a
+  // self-contained inline script (no `import`, only one consumer) gets
+  // inlined by Astro directly into the SSR HTML instead of hoisted to an
+  // external file, and the strict CSP then blocks it with no visible
+  // error (see cookie-consent-panel-script.ts's own comment, PR #125,
+  // for the confirmed root cause). Also lets this re-run after a live
+  // canvas insert/patch — see block-behaviors/run-block-behaviors-in-subtree.ts.
+  import { consentGatedEmbedBehaviors } from '../lib/block-behaviors/consent-gated-embed';
+  import { runBlockBehaviors } from '../lib/block-behaviors/run-block-behaviors';
+  runBlockBehaviors(document, consentGatedEmbedBehaviors);
 </script>
 
 <style>
