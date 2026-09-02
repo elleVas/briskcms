@@ -1,11 +1,7 @@
-/**
- * This is not a production server yet!
- * This is only a minimal backend to get started.
- */
-
 import { join } from 'node:path';
 import { Logger } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
+import compression from 'compression';
 import cookieParser from 'cookie-parser';
 import express from 'express';
 import helmet from 'helmet';
@@ -41,11 +37,28 @@ async function bootstrap() {
   // requireEnv() for each of them.
   validateApiEnv();
   const app = await NestFactory.create(AppModule);
+  // `docker stop`/`docker-compose down` send SIGTERM — without
+  // enableShutdownHooks(), Nest never runs OnModuleDestroy (the Postgres
+  // pool gets yanked instead of closed cleanly). enableShutdownHooks()
+  // alone runs those hooks but does not itself end the process afterward
+  // — verified directly against a real container: without an explicit
+  // exit, something (the pg pool's own open socket) keeps the event loop
+  // alive, so `docker stop` has to wait out its full grace period and
+  // SIGKILL. Same log-and-exit posture as the unhandledRejection/
+  // uncaughtException handlers above.
+  app.enableShutdownHooks();
+  for (const signal of ['SIGTERM', 'SIGINT'] as const) {
+    process.on(signal, () => {
+      Logger.log(`${signal} received, shutting down`);
+      void app.close().finally(() => process.exit(0));
+    });
+  }
   const globalPrefix = 'api';
   app.setGlobalPrefix(globalPrefix);
   // crossOriginResourcePolicy off: media/attachments are meant to be
   // embedded cross-origin by apps/public-site and apps/editor-app.
   app.use(helmet({ crossOriginResourcePolicy: false }));
+  app.use(compression());
   app.use(cookieParser());
   app.use(requestIdMiddleware);
   app.useGlobalFilters(new HttpExceptionFilter());

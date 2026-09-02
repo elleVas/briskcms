@@ -218,3 +218,15 @@ not by an added exclusion.
   without a rebuild, and any change to the "Docker image is the unit
   of distribution" posture (docs/adr/0021/0032). Adding a theme block
   still means rebuilding and redeploying that theme's image.
+
+## Amendment — 2026-09-02: which theme a site uses becomes runtime-selectable
+
+[ADR-0042](0042-self-hosting-distribution-and-runtime-theme-selection.md)
+deliberately, narrowly crosses the "Docker image is the unit of
+distribution" boundary named above — not by removing it, but by bundling
+every theme a deployment ships into one image and letting a site pick
+among them at runtime. Adding a _new_ block type, or a genuinely new,
+not-yet-bundled theme, still requires a rebuild exactly as described
+above — this amendment only changes which _already-bundled_ theme a
+given site renders, not how a theme or block gets built in the first
+place.

@@ -67,3 +67,13 @@ export async function withTenant<T>(
     return fn(tx);
   });
 }
+
+/**
+ * A trivial round-trip query, for health checks (docs/adr/0042) — kept
+ * here rather than having a caller import `sql` from `drizzle-orm`
+ * directly: every other raw-SQL-tag use in this codebase already lives
+ * inside this package, not in apps/api.
+ */
+export async function pingDatabase(db: BriskDb): Promise<void> {
+  await db.execute(sql`select 1`);
+}
