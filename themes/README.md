@@ -9,17 +9,30 @@ a new theme (a Brisk core theme or an agency's own).
 
 A directory under `themes/`, selected for a deployment via the
 `BRISK_THEME` env var (default `classic`), resolved by
-`apps/public-site/astro.config.mjs` into a `~theme` Vite alias. Nothing
-outside `apps/public-site` reads this directory — editor-app and apps/api
-have no concept of which theme is active.
+`apps/public-site/astro.config.mjs` into a `~theme` Vite alias. Only
+`apps/public-site` reads the filesystem directly — apps/api has no
+concept of which theme is active, and editor-app never gets filesystem
+access to a theme package either; it learns what a theme declares only
+through the `GET /api/themes/current/*` routes apps/public-site serves
+(icons, style defaults, and — since ADR-0041 — a theme's own extra
+block types).
+
+Also, since ADR-0041, every theme under here is a real Nx/pnpm package
+(`@brisk/theme-<name>`, `nx.tags: ["app"]`) — it has its own
+`package.json`/`tsconfig*.json`/`eslint.config.mjs`/`vitest.config.mts`
+and real `typecheck`/`lint`/`test` targets that run in CI, not just when
+it happens to be the active `BRISK_THEME` for a given build.
 
 ```
 themes/<name>/
   theme.css      # required — design tokens
   theme.json      # required — manifest
   icons/*.svg      # optional — icon set (docs/adr/0023)
-  blocks/*.astro    # optional — full-file block overrides
   PageLayout.astro   # optional — full layout override (not wired yet, see below)
+  blocks/
+    *.astro       # optional — full-file overrides of an existing core block
+    *.block.ts     # optional — a genuinely NEW block type (ADR-0041), needs a matching .astro
+    *.locales.json  # required alongside a .block.ts — that block's own i18n
 ```
 
 ## `theme.css` — the common case
@@ -93,6 +106,25 @@ PageLayout's two importers (`PublicPageContent.astro`,
 ever needed tokens — so this remains unexercised by any real theme today,
 but the resolution mechanism itself is no longer aspirational.
 
+## Adding a genuinely new block type (ADR-0041)
+
+A `blocks/<Type>.astro` with no matching `.block.ts` is an override, per
+above — same type, different render. Adding a `.block.ts` next to it
+(same basename) declares a brand-new block type instead, one core
+doesn't know about at all: `blocks/Faq.block.ts` + `blocks/Faq.astro` +
+`blocks/Faq.locales.json` together register a `Faq` block that shows up
+in the editor's picker, under the category its descriptor declares,
+translated, with zero edits to `libs/block-registry`,
+`BlockRenderer.astro`, or `apps/editor-app`'s locale files. See
+[libs/block-sdk/README.md](../libs/block-sdk/README.md#adding-a-block-from-a-theme-without-touching-core)
+for the authoring contract itself (schema, descriptor, i18n key
+convention) — this file only covers the theme-package side: your
+theme's own `blocks/blocks.spec.ts` (copy `themes/docs-showcase/blocks/blocks.spec.ts`
+if you're starting from `classic`, which ships none) is what actually
+runs `validateThemeBlockSet()` against everything under `blocks/` in CI,
+on every build. `themes/docs-showcase/blocks/StatusBadge.*` is a real,
+live worked example if you want to trace one end to end.
+
 ## `icons/` — the icon set (docs/adr/0023)
 
 Optional. One `.svg` file per icon, filename (minus extension) is the
@@ -116,22 +148,31 @@ instead.
 
 ## The boundary you can't cross
 
-A theme can restyle or rewrite anything in the rendering layer. It
-cannot introduce a new _data field_ on an existing block — that requires
-extending the block's Zod schema in `libs/puck-config`, which is core,
-shared by every theme. A theme renders the canonical `Block[]` content
-model (ADR-0007); it doesn't get to redefine what that model contains.
+A theme can restyle or rewrite anything in the rendering layer, and
+(since ADR-0041) add genuinely new block types of its own. What it still
+cannot do is introduce a new _data field_ on an **existing** block type
+— that requires extending that block's own Zod schema in
+`libs/shared-types`, which is core, shared by every theme. A theme
+renders the canonical `Block[]` content model (ADR-0007); it doesn't get
+to redefine what an existing block's `props` shape contains, only add
+block types with shapes of their own.
 
 ## Checklist for a new theme
 
-1. Copy `themes/classic/` as a starting point.
-2. Rewrite `theme.css`'s `:root` values — every token listed above,
+1. Copy `themes/classic/` as a starting point — including its
+   `package.json`/`tsconfig*.json`/`eslint.config.mjs`/`vitest.config.mts`
+   (rename the package to `@brisk/theme-<name>`) and its
+   `blocks/blocks.spec.ts`, even if you're not adding any `.block.ts`
+   files yet (see ADR-0041) — it's what makes this theme's own files
+   real, `nx run-many`-visible `typecheck`/`lint`/`test` targets.
+2. `pnpm install` — new workspace packages need it to link.
+3. Rewrite `theme.css`'s `:root` values — every token listed above,
    `--font-sans-value` included.
-3. Decide `allowStyleOverrides` in `theme.json` — `true` unless you have
+4. Decide `allowStyleOverrides` in `theme.json` — `true` unless you have
    a specific reason (see above) to lock it down.
-4. Set `BRISK_THEME=<name>` and restart `apps/public-site`'s dev server —
+5. Set `BRISK_THEME=<name>` and restart `apps/public-site`'s dev server —
    `astro.config.mjs` changes require a full restart, not just a file
    save (Vite doesn't hot-reload alias config).
-5. Verify live in a browser, not just `astro check` — see docs/adr/0021's
+6. Verify live in a browser, not just `astro check` — see docs/adr/0021's
    Consequences for two real bugs (a CSS cascade surprise and a font-token
    naming trap) that only static checks missed.

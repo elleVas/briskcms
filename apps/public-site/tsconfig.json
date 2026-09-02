@@ -16,6 +16,9 @@
   "exclude": ["dist"],
   "references": [
     {
+      "path": "../../libs/block-sdk"
+    },
+    {
       "path": "../../libs/shared-types"
     },
     {

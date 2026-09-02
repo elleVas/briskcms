@@ -73,6 +73,16 @@ describe('extractSearchableText', () => {
     expect(text).not.toContain('evil');
   });
 
+  it('extracts text from Heading', () => {
+    const blocks: PageContent = [
+      { type: 'Heading', props: { text: 'Domande frequenti', level: 'h2' } },
+    ];
+
+    expect(extractSearchableText(seoMeta, blocks)).toContain(
+      'Domande frequenti',
+    );
+  });
+
   it('extracts alt text from every image in a Gallery', () => {
     const blocks: PageContent = [
       {

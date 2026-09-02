@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { BLOCK_STYLE_DEFAULTS } from '@brisk/shared-types';
+import {
+  BLOCK_STYLE_DEFAULTS,
+  BLOCKS_WITHOUT_SEARCHABLE_TEXT,
+  SEARCHABLE_BLOCK_TYPES,
+} from '@brisk/shared-types';
 import { pageBlockCategories, pageBlocks } from './config';
 import { headerFooterBlocks } from './layout-config';
 
@@ -145,5 +149,39 @@ describe('stylableProperties / BLOCK_STYLE_DEFAULTS alignment', () => {
         [...block.stylableProperties].sort(),
       );
     }
+  });
+});
+
+// Same session: search-text.ts used to be a plain `switch` with a silent
+// `default: return []` — a new block with real prose (again, Heading)
+// could ship invisible to on-site search with nothing failing. Now
+// `PROSE_FIELD_EXTRACTORS`' keys (exposed as `SEARCHABLE_BLOCK_TYPES`) and
+// the explicit `BLOCKS_WITHOUT_SEARCHABLE_TEXT` allowlist must together
+// account for every real block type, with no leftovers either way — an
+// unlisted type fails loudly instead of silently indexing nothing.
+describe('search-text.ts prose-field coverage', () => {
+  it('accounts for every registered block type as either searchable or explicitly excluded', () => {
+    const allTypes = new Set([
+      ...pageBlocks.map((block) => block.type),
+      ...headerFooterBlocks.map((block) => block.type),
+    ]);
+    const accountedFor = new Set([
+      ...SEARCHABLE_BLOCK_TYPES,
+      ...BLOCKS_WITHOUT_SEARCHABLE_TEXT,
+    ]);
+
+    for (const type of allTypes) {
+      expect(
+        accountedFor.has(type),
+        `"${type}" is neither in SEARCHABLE_BLOCK_TYPES nor BLOCKS_WITHOUT_SEARCHABLE_TEXT`,
+      ).toBe(true);
+    }
+  });
+
+  it('never double-counts a type as both searchable and explicitly excluded', () => {
+    const overlap = SEARCHABLE_BLOCK_TYPES.filter((type) =>
+      (BLOCKS_WITHOUT_SEARCHABLE_TEXT as readonly string[]).includes(type),
+    );
+    expect(overlap).toEqual([]);
   });
 });

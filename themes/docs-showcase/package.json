@@ -1,0 +1,17 @@
+{
+  "name": "@brisk/theme-docs-showcase",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "nx": {
+    "tags": [
+      "app"
+    ]
+  },
+  "dependencies": {
+    "@brisk/block-registry": "workspace:*",
+    "@brisk/block-sdk": "workspace:*",
+    "@brisk/shared-types": "workspace:*",
+    "zod": "^4.4.3"
+  }
+}

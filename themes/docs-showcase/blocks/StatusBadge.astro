@@ -1,0 +1,77 @@
+---
+import type { StatusBadgeProps } from './StatusBadge.block';
+
+// `themes/` isn't a pnpm-resolvable-by-others package for apps/public-site
+// (see themes/README.md) but a theme's OWN `.astro` files here import
+// from a sibling `.block.ts` in this same package freely — this file
+// only needs the type, not a cross-package import.
+type BlockStyleOverride = {
+  backgroundColor?: string | null;
+  textColor?: string | null;
+};
+
+interface Props extends StatusBadgeProps {
+  styleOverride?: BlockStyleOverride;
+}
+
+const { label, tone, styleOverride } = Astro.props;
+
+// Same instance-style-override convention every core block already uses
+// (see Heading.astro) — `--brisk-override-bg`/`--brisk-override-text` are
+// the fixed, shared custom-property names every stylable block reads
+// (libs/shared-types/src/lib/block-style-overrides.ts), reproduced here
+// directly since this file can't import that helper (different package).
+const instanceStyle = [
+  styleOverride?.backgroundColor
+    ? `--brisk-override-bg: ${styleOverride.backgroundColor};`
+    : null,
+  styleOverride?.textColor
+    ? `--brisk-override-text: ${styleOverride.textColor};`
+    : null,
+]
+  .filter(Boolean)
+  .join(' ');
+---
+
+<span
+  class="brisk-status-badge"
+  data-tone={tone}
+  data-brisk-field="label"
+  style={instanceStyle || undefined}
+>
+  <span class="brisk-status-badge__dot" aria-hidden="true"></span>
+  {label}
+</span>
+
+<style>
+  .brisk-status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.15rem 0.65rem;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    line-height: 1.4;
+    background: var(--brisk-override-bg, var(--muted));
+    color: var(--brisk-override-text, var(--muted-foreground));
+  }
+  .brisk-status-badge__dot {
+    width: 0.4rem;
+    height: 0.4rem;
+    border-radius: 50%;
+    /* Fixed per-tone colors, not theme tokens — same reasoning as
+       Callout.astro's own tone colors: an info/success/warning signal
+       has to stay recognizable regardless of the active theme's palette. */
+    background: #3b82f6;
+  }
+  .brisk-status-badge[data-tone='success'] .brisk-status-badge__dot {
+    background: #22c55e;
+  }
+  .brisk-status-badge[data-tone='warning'] .brisk-status-badge__dot {
+    background: #f59e0b;
+  }
+  .brisk-status-badge[data-tone='neutral'] .brisk-status-badge__dot {
+    background: #94a3b8;
+  }
+</style>

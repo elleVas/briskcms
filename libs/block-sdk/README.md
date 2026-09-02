@@ -84,20 +84,21 @@ stays there to avoid duplicating it in two READMEs).
 
 ## What `defineBlock()` deliberately does NOT do
 
-It cannot unify block _registration_ into one call, because a block's
-render component is a separate Astro file in `apps/public-site`, and
-Brisk's distribution model is build-time-only — one Docker image per
-deployment, no runtime plugin loading
+`defineBlock()` alone cannot unify block _registration_ into one call —
+a block's render component is a separate Astro file, and Brisk's
+distribution model is build-time-only — one Docker image per deployment,
+no runtime plugin loading
 ([ADR-0021](../../docs/adr/0021-site-theming-filesystem-packages-and-style-settings.md),
 [ADR-0032](../../docs/adr/0032-one-container-per-site-deployment-unit.md)).
-Adding a block — first-party or third-party — still means a rebuild and
-still means touching a small, fixed set of places by hand. `defineBlock()`
-narrows that list; it doesn't remove it. A future **Extension Manifest**
-(dynamic runtime block/plugin discovery) is explicitly out of scope here —
-deferred post-launch, see `piano-progetto-astro-cms.md`'s "Considerazioni
-aggiuntive" point 2 and ADR-0037's Consequences.
+Adding a **core** block (inside `libs/block-registry`) still means a
+rebuild and still means touching the fixed set of places the walk-through
+below lists. But if what you actually want is to add a block _without_
+touching any of those core files at all — the common case for a theme,
+including Brisk's own `themes/docs-showcase` — see "Adding a block from a
+theme, without touching core" below instead: that path exists precisely
+so you don't need this section.
 
-### The full registration walk-through (worked example: `Callout`)
+### The full registration walk-through (worked example: `Callout`, a core block)
 
 `libs/block-registry/src/lib/blocks/callout.block.ts` is a real, live block
 built with `defineBlock()` — not a standalone, unregistered sample — so you
@@ -125,6 +126,92 @@ a block of your own, in order:
 6. Optional: `libs/shared-types/src/lib/search-text.ts`'s `proseFieldsFor()`
    if the block carries prose text that should be full-text searchable (see
    its own doc comment for why this is an explicit allowlist, not automatic).
+
+## Adding a block from a theme, without touching core
+
+The Extension Manifest ([ADR-0041](../../docs/adr/0041-theme-defined-block-extensions.md))
+— referenced above as deferred in ADR-0037, now built. Drop three files
+under `themes/<name>/blocks/`, named after the block's own `type`:
+
+```
+themes/<name>/blocks/
+  Faq.block.ts        # defineBlock() descriptor + the raw schema, re-exported
+  Faq.astro             # render component — same file the public site actually renders
+  Faq.locales.json      # {"en": {...}, "it": {...}} — what would sit under blocks.faq
+```
+
+`Faq.block.ts` exports the `defineBlock()` result as `default`, and the
+schema it validated against as a separate named export (`defineBlock()`
+still doesn't store the schema on the descriptor):
+
+```ts
+import { z } from 'zod';
+import { defineBlock } from '@brisk/block-sdk';
+
+const faqPropsSchema = z.object({ question: z.string(), answer: z.string() });
+
+export default defineBlock({
+  type: 'Faq',
+  label: 'blocks.faq.label',
+  category: 'content',
+  schema: faqPropsSchema,
+  defaultProps: { question: '', answer: '' },
+  fields: [
+    {
+      kind: 'text',
+      key: 'question',
+      label: 'blocks.faq.fields.question.fieldLabel',
+    },
+    {
+      kind: 'textarea',
+      key: 'answer',
+      label: 'blocks.faq.fields.answer.fieldLabel',
+    },
+  ],
+});
+
+export { faqPropsSchema as schema };
+```
+
+`label`/every field's `label`/every option's `label` must be exactly
+`blocks.<type with its first letter lowercased>...` (`Faq` -> `blocks.faq`,
+a multi-word type like `StatusBadge` -> `blocks.statusBadge`, same
+convention core blocks use) — checked mechanically, not just by
+convention: a mismatched key is a validation error, not a silent raw-key
+leak in the picker. `Faq.locales.json` supplies the actual English/Italian
+text at that same key path:
+
+```json
+{
+  "en": {
+    "label": "FAQ",
+    "fields": {
+      "question": { "fieldLabel": "Question" },
+      "answer": { "fieldLabel": "Answer" }
+    }
+  },
+  "it": {
+    "label": "FAQ",
+    "fields": {
+      "question": { "fieldLabel": "Domanda" },
+      "answer": { "fieldLabel": "Risposta" }
+    }
+  }
+}
+```
+
+That's it — no edit to `libs/block-registry/src/lib/config.ts`, no edit
+to `BlockRenderer.astro`, no edit to `apps/editor-app`'s locale files.
+Each theme's own `blocks/blocks.spec.ts` (see
+`themes/docs-showcase/blocks/blocks.spec.ts`) runs `validateThemeBlockSet()`
+against everything under its `blocks/` folder in CI, on every build,
+regardless of which theme is active — the same rules a `.block.ts` file
+without a matching core-type collision must pass before it can ship. A
+`kind: 'custom'` field (carrying a live React component) isn't supported
+here — it can't cross the JSON boundary to `apps/editor-app`, so it fails
+validation instead of silently breaking. `themes/README.md` covers the
+theme-package side of this (how `blocks/blocks.spec.ts` is wired up);
+this section is the block-authoring contract itself.
 
 ## Running unit tests
 

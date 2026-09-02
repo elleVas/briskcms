@@ -5,6 +5,7 @@ export * from './lib/content-structure-signature';
 export * from './lib/field-value-overlay';
 export * from './lib/search-excerpt';
 export * from './lib/search-text';
+export * from './lib/theme-blocks';
 export * from './lib/form-fields';
 export * from './lib/locale-settings';
 export * from './lib/locale-codes';

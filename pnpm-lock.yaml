@@ -428,6 +428,9 @@ importers:
       '@astrojs/react':
         specifier: ^6.0.4
         version: 6.0.4(@types/node@26.4.0)(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(esbuild@0.28.2)(jiti@2.7.0)(less@4.8.1)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(sass-embedded@1.103.1)(sass@1.103.1)(terser@5.51.2)(tsx@4.23.12)(yaml@2.9.0)
+      '@brisk/block-sdk':
+        specifier: workspace:*
+        version: link:../../libs/block-sdk
       '@brisk/env-config':
         specifier: workspace:*
         version: link:../../libs/env-config
@@ -875,6 +878,36 @@ importers:
 
   libs/shared-types:
     dependencies:
+      zod:
+        specifier: ^4.4.3
+        version: 4.4.3
+
+  themes/classic:
+    dependencies:
+      '@brisk/block-registry':
+        specifier: workspace:*
+        version: link:../../libs/block-registry
+      '@brisk/block-sdk':
+        specifier: workspace:*
+        version: link:../../libs/block-sdk
+      '@brisk/shared-types':
+        specifier: workspace:*
+        version: link:../../libs/shared-types
+      zod:
+        specifier: ^4.4.3
+        version: 4.4.3
+
+  themes/docs-showcase:
+    dependencies:
+      '@brisk/block-registry':
+        specifier: workspace:*
+        version: link:../../libs/block-registry
+      '@brisk/block-sdk':
+        specifier: workspace:*
+        version: link:../../libs/block-sdk
+      '@brisk/shared-types':
+        specifier: workspace:*
+        version: link:../../libs/shared-types
       zod:
         specifier: ^4.4.3
         version: 4.4.3

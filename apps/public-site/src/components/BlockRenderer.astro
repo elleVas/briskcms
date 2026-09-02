@@ -57,6 +57,7 @@ import {
 } from '@brisk/shared-types';
 import type { AstroComponentFactory } from 'astro/runtime/server/index.js';
 import { resolveThemeBlockOverride } from '../lib/resolve-theme-block-override';
+import { themeBlockRegistry } from '../lib/resolve-theme-page-blocks';
 import AccordionCore from './blocks/Accordion.astro';
 const Accordion = resolveThemeBlockOverride('Accordion', AccordionCore);
 import AccordionItemCore from './blocks/AccordionItem.astro';
@@ -446,6 +447,13 @@ const BLOCK_REGISTRY: Record<string, BlockDispatchEntry> = {
     locale: true,
   },
 };
+// Docs/adr/0041 — the one, one-time edit this file needs for a theme to
+// add its own genuinely new block types (`themes/<name>/blocks/*.block.ts`)
+// with zero further changes here going forward: every other line above is
+// untouched by this. `Object.assign` (not a `const` reassignment) since
+// `BLOCK_REGISTRY` stays a single object identity referenced by the
+// dispatch code below.
+Object.assign(BLOCK_REGISTRY, themeBlockRegistry(Object.keys(BLOCK_REGISTRY)));
 
 // `Astro.slots.has('default')` non basta per un contenitore appena creato
 // vuoto: canvas-editor-shell.tsx gli assegna `children: []` (array vuoto,
