@@ -8,7 +8,6 @@ import {
   Languages,
   Search,
 } from 'lucide-react';
-import { pageBlockCategories, pageBlocks } from '@brisk/block-registry';
 import { CanvasEditorShell } from './canvas/canvas-editor-shell';
 import { LanguageSwitcher } from './canvas/language-switcher';
 import { ConfirmActionDialog } from './confirm-action-dialog';
@@ -21,6 +20,7 @@ import { PageGroupTranslationsDialog } from './page-group-translations-dialog';
 import { PageListProvider } from './page-list-provider';
 import { publicPagePath } from '../lib/public-page-path';
 import { PUBLIC_SITE_URL } from '../lib/public-site-url';
+import { usePageBlockRegistry } from './use-page-block-registry';
 import { usePageGroupEditor, type SaveStatus } from './use-page-group-editor';
 import { usePageGroupVersions } from './use-page-group-versions';
 import { VersionHistoryDialog } from './version-history-dialog';
@@ -79,6 +79,7 @@ export function PageGroupEditorView({
   enabledLocales,
 }: PageGroupEditorViewProps) {
   const { t } = useTranslation();
+  const { registry, categories } = usePageBlockRegistry();
   const {
     group,
     translations,
@@ -193,8 +194,8 @@ export function PageGroupEditorView({
                   )}
                 </>
               }
-              registry={pageBlocks}
-              categories={pageBlockCategories}
+              registry={registry}
+              categories={categories}
               blocks={displayedBlocks}
               onChange={onChange}
               onPublish={handlePublish}

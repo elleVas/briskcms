@@ -2,6 +2,7 @@ packages:
   - 'apps/*'
   - 'libs/*'
   - 'libs/adapters/*'
+  - 'themes/*'
 
 # A bump of astro or @nx/vite pulls in its own vite resolution, separate
 # from the one apps/editor-app imports directly — two coexisting vite

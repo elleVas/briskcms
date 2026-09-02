@@ -92,6 +92,12 @@
     },
     {
       "path": "./libs/block-sdk"
+    },
+    {
+      "path": "./themes/docs-showcase"
+    },
+    {
+      "path": "./themes/classic"
     }
   ],
   "compilerOptions": {}

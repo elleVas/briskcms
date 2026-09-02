@@ -852,6 +852,19 @@
         "images": { "fieldLabel": "Images" }
       }
     },
+    "heading": {
+      "label": "Heading",
+      "fields": {
+        "text": { "fieldLabel": "Text" },
+        "level": {
+          "fieldLabel": "Level",
+          "options": {
+            "h2": "Heading 2",
+            "h3": "Heading 3"
+          }
+        }
+      }
+    },
     "hamburgerMenu": {
       "label": "Mobile menu (hamburger)"
     },

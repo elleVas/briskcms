@@ -7,6 +7,7 @@ import {
   parseRootCustomProperties,
   resolveBlockStyleDefaults,
 } from './resolve-theme-block-style-defaults-helpers';
+import { listThemePageBlocks } from './resolve-theme-page-blocks';
 
 let cached: BlockStyleDefaultsResponse | null = null;
 
@@ -29,6 +30,20 @@ export function listBlockStyleDefaults(): BlockStyleDefaultsResponse {
   const result: BlockStyleDefaultsResponse = {};
   for (const [type, declared] of Object.entries(BLOCK_STYLE_DEFAULTS)) {
     result[type] = resolveBlockStyleDefaults(declared, themeVars);
+  }
+  // Docs/adr/0041: a theme block's own `defaultStyle` (declared right in
+  // its `.block.ts`, same shape as BLOCK_STYLE_DEFAULTS' own entries)
+  // folds into this same response — `block-style-fields.tsx` already
+  // looks up every block's resolved defaults generically by type string
+  // against this one endpoint, core or theme-defined alike, so it needs
+  // no changes of its own for a theme block's style popover to work.
+  for (const entry of listThemePageBlocks([])) {
+    if (entry.descriptor.defaultStyle) {
+      result[entry.descriptor.type] = resolveBlockStyleDefaults(
+        entry.descriptor.defaultStyle,
+        themeVars,
+      );
+    }
   }
   cached = result;
   return result;
