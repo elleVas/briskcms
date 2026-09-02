@@ -10,6 +10,7 @@ import type { CookieBannerSettings } from '@brisk/shared-types';
 import { localePath } from '../lib/locale-path';
 import { Translator, type TranslationKey } from '../lib/i18n';
 import { COOKIE_CONSENT_DISMISS_SCRIPT } from './cookie-consent-dismiss-script';
+import { COOKIE_CONSENT_PANEL_SCRIPT } from './cookie-consent-panel-script';
 
 interface Props {
   settings: CookieBannerSettings;
@@ -167,84 +168,7 @@ const CATEGORIES: Array<{
   )
 }
 
-<script>
-  const CONSENT_CATEGORIES = ['functionality', 'measurement', 'experience'] as const;
-
-  const banner = document.querySelector<HTMLElement>('[data-brisk-cookie-consent]');
-  const panel = banner?.querySelector<HTMLElement>('[data-brisk-consent-panel]');
-  const reopenTab = document.querySelector<HTMLElement>('.brisk-cookie-consent-reopen');
-
-  function syncPanelCheckboxes() {
-    const record = window.briskConsent.get();
-    for (const category of CONSENT_CATEGORIES) {
-      const input = banner?.querySelector<HTMLInputElement>(
-        `[data-brisk-consent-category="${category}"]`,
-      );
-      if (input) {
-        input.checked = record?.cats[category] ?? false;
-      }
-    }
-  }
-
-  function showBanner() {
-    if (banner) banner.hidden = false;
-    if (reopenTab) reopenTab.hidden = true;
-  }
-
-  function hideBanner() {
-    if (banner) banner.hidden = true;
-    if (panel) panel.hidden = true;
-    if (reopenTab) reopenTab.hidden = false;
-  }
-
-  banner?.addEventListener('click', (event) => {
-    const action = (event.target as HTMLElement)
-      .closest<HTMLElement>('[data-brisk-consent-action]')
-      ?.dataset.briskConsentAction;
-    if (!action) return;
-
-    if (action === 'accept') {
-      window.briskConsent.apply({
-        functionality: true,
-        measurement: true,
-        experience: true,
-      });
-      hideBanner();
-    } else if (action === 'reject') {
-      window.briskConsent.apply({
-        functionality: false,
-        measurement: false,
-        experience: false,
-      });
-      hideBanner();
-    } else if (action === 'customize') {
-      syncPanelCheckboxes();
-      if (panel) panel.hidden = false;
-    } else if (action === 'save') {
-      const prefs = { functionality: false, measurement: false, experience: false };
-      for (const category of CONSENT_CATEGORIES) {
-        const input = banner?.querySelector<HTMLInputElement>(
-          `[data-brisk-consent-category="${category}"]`,
-        );
-        prefs[category] = input?.checked ?? false;
-      }
-      window.briskConsent.apply(prefs);
-      hideBanner();
-    }
-  });
-
-  reopenTab?.addEventListener('click', () => {
-    showBanner();
-    syncPanelCheckboxes();
-    if (panel) panel.hidden = false;
-  });
-
-  document.addEventListener('brisk-consent-open-preferences', () => {
-    showBanner();
-    syncPanelCheckboxes();
-    if (panel) panel.hidden = false;
-  });
-</script>
+<script is:inline set:html={COOKIE_CONSENT_PANEL_SCRIPT} />
 
 <style>
   .brisk-cookie-consent {

@@ -2,16 +2,22 @@ import { createHash } from 'node:crypto';
 import type { TrackerDomainEntry } from '@brisk/shared-types';
 import { PROMO_BAR_DISMISS_SCRIPT } from '../components/blocks/promo-bar-dismiss-script';
 import { COOKIE_CONSENT_DISMISS_SCRIPT } from '../components/cookie-consent-dismiss-script';
+import { COOKIE_CONSENT_PANEL_SCRIPT } from '../components/cookie-consent-panel-script';
 
 /**
- * Every core block's own `<script>` (no `is:inline`) gets bundled by Astro
- * into an external, same-origin file — already covered by `'self'`.
- * PromoBar.astro's dismiss-check is the one exception, kept `is:inline` on
- * purpose (must run before first paint, or a visitor who already dismissed
- * the bar sees a flash of it) — a hash entry admits exactly that one known
- * script instead of a blanket `'unsafe-inline'`. Computed from the same
- * string the component renders (see promo-bar-dismiss-script.ts), so it
- * can never drift out of sync with the actual script content.
+ * Most core blocks' own `<script>` (no `is:inline`) get bundled by Astro
+ * into an external, same-origin file — already covered by `'self'`. That
+ * only holds when the script's module is reachable from a second entry
+ * point too (Tabs/HamburgerMenu's behavior modules are also imported by
+ * the live-canvas re-init system) — a script imported from exactly one
+ * place gets inlined directly into the SSR HTML regardless of `import`
+ * statements (confirmed the hard way against a real `astro build`, not
+ * just `astro dev` — see cookie-consent-panel-script.ts's own comment).
+ * `is:inline` scripts with no per-request data (PromoBar's/CookieConsent's
+ * own pre-paint dismiss-checks, and CookieConsent's click-delegation
+ * script) go through this hash allowlist instead of a blanket
+ * `'unsafe-inline'` — each computed from the same string its component
+ * renders, so it can never drift out of sync with the actual content.
  */
 function scriptHash(source: string): string {
   const digest = createHash('sha256').update(source).digest('base64');
@@ -20,7 +26,7 @@ function scriptHash(source: string): string {
 
 /**
  * `script-src`/`style-src` stay otherwise as tight as `'self'` (plus the
- * one hash above) allows: `embed-html` (see EmbedHtml.astro) is a
+ * hashes above) allows: `embed-html` (see EmbedHtml.astro) is a
  * deliberate product feature letting a site owner paste arbitrary
  * third-party HTML/JS (analytics snippets, chat widgets, Calendly, ...).
  * It runs isolated in a sandboxed `<iframe>` with its own permissive CSP
@@ -103,7 +109,7 @@ export function buildContentSecurityPolicy(
   return [
     `default-src 'self'`,
     withExtra(
-      `script-src 'self' 'nonce-${nonce}' ${TURNSTILE_ORIGIN} ${GOOGLE_TAG_MANAGER_ORIGIN} ${META_PIXEL_SCRIPT_ORIGIN} ${scriptHash(PROMO_BAR_DISMISS_SCRIPT)} ${scriptHash(COOKIE_CONSENT_DISMISS_SCRIPT)}`,
+      `script-src 'self' 'nonce-${nonce}' ${TURNSTILE_ORIGIN} ${GOOGLE_TAG_MANAGER_ORIGIN} ${META_PIXEL_SCRIPT_ORIGIN} ${scriptHash(PROMO_BAR_DISMISS_SCRIPT)} ${scriptHash(COOKIE_CONSENT_DISMISS_SCRIPT)} ${scriptHash(COOKIE_CONSENT_PANEL_SCRIPT)}`,
     ),
     `style-src 'self' 'unsafe-inline' https:`,
     `img-src 'self' data: https: ${META_PIXEL_BEACON_ORIGIN}`,
