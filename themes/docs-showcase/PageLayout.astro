@@ -154,12 +154,18 @@ const toSidebarNode = (node: PageTreeNodeDto): SidebarNode => ({
 });
 
 let sidebarGroups: SidebarGroup[] = [];
-let currentSlug: string | null = null;
+// The full pathname, not just its last segment: sibling-scoped slug
+// uniqueness (docs/adr/0029) is intentional, so two docs pages under
+// *different* parents legitimately sharing a leaf slug (e.g. two pages
+// both named "overview") is expected, not a bug — matching on the bare
+// slug alone previously picked whichever one happened to appear first in
+// the flattened tree, silently mis-highlighting the sidebar and pointing
+// the prev/next pager at the wrong node's siblings. A node's own `href`
+// (built the same way, from `locale` + `ancestorSlugs` + `slug`) is
+// unique per node, so comparing full paths is the actual fix.
+const currentPath = Astro.url.pathname.replace(/\/+$/, '') || '/';
 
 if (site.domain) {
-	const currentPathSegments = Astro.url.pathname.split('/').filter(Boolean);
-	currentSlug = currentPathSegments.at(-1) ?? null;
-
 	let tree: PageTreeNodeDto[] = [];
 	try {
 		tree = await listPublishedPageTree(site.domain, locale);
@@ -170,7 +176,12 @@ if (site.domain) {
 		tree = [];
 	}
 
-	const currentNode = tree.find((node) => node.slug === currentSlug) ?? null;
+	const currentNode =
+		tree.find(
+			(node) =>
+				localePathFromAncestors(locale, node.ancestorSlugs, node.slug) ===
+				currentPath,
+		) ?? null;
 	if (currentNode) {
 		// Walk up to the docs root (parentId === null). The root itself
 		// might *be* the current page (visiting the section's landing
@@ -200,7 +211,7 @@ if (site.domain) {
 }
 const hasSidebar = sidebarGroups.length > 0;
 const flatDocs = sidebarGroups.flatMap((group) => group.items);
-const currentDocIndex = flatDocs.findIndex((node) => node.slug === currentSlug);
+const currentDocIndex = flatDocs.findIndex((node) => node.href === currentPath);
 const prevDoc = currentDocIndex > 0 ? flatDocs[currentDocIndex - 1] : null;
 const nextDoc =
 	currentDocIndex >= 0 && currentDocIndex < flatDocs.length - 1
@@ -370,7 +381,7 @@ const nextDoc =
 										<li>
 											<a
 												href={item.href}
-												aria-current={item.slug === currentSlug ? 'page' : undefined}
+												aria-current={item.href === currentPath ? 'page' : undefined}
 											>
 												{item.title}
 											</a>
