@@ -80,23 +80,16 @@ ${safeHtml}
 </div>
 
 <script>
-  // No framework here on purpose (docs/adr/0007) — matches every other
-  // block's own plain-script convention. One listener for the whole page:
-  // several embed-html blocks can coexist, each iframe reports its own
-  // height independently, matched back by `event.source`.
-  window.addEventListener('message', (event) => {
-    const data = event.data as { briskEmbedHtmlHeight?: unknown } | null;
-    if (!data || typeof data.briskEmbedHtmlHeight !== 'number') {
-      return;
-    }
-    document
-      .querySelectorAll<HTMLIFrameElement>('.brisk-embed-html__frame')
-      .forEach((frame) => {
-        if (frame.contentWindow === event.source) {
-          frame.style.height = `${data.briskEmbedHtmlHeight}px`;
-        }
-      });
-  });
+  // Logic lives in a plain importable module, not inline here — a
+  // self-contained inline script (no `import`, only one consumer) gets
+  // inlined by Astro directly into the SSR HTML instead of hoisted to an
+  // external file, and the strict CSP then blocks it with no visible
+  // error (see cookie-consent-panel-script.ts's own comment, PR #125,
+  // for the confirmed root cause). Also lets this re-run after a live
+  // canvas insert/patch — see block-behaviors/run-block-behaviors-in-subtree.ts.
+  import { embedHtmlBehaviors } from '../../lib/block-behaviors/embed-html';
+  import { runBlockBehaviors } from '../../lib/block-behaviors/run-block-behaviors';
+  runBlockBehaviors(document, embedHtmlBehaviors);
 </script>
 
 <style>
