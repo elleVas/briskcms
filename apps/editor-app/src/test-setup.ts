@@ -57,6 +57,11 @@ Element.prototype.setPointerCapture ??= () => undefined;
 Element.prototype.releasePointerCapture ??= () => undefined;
 Element.prototype.hasPointerCapture ??= () => false;
 
+// jsdom doesn't implement scrollIntoView either — Radix's Select scrolls
+// the highlighted item into view when its dropdown opens, real or
+// simulated.
+Element.prototype.scrollIntoView ??= () => undefined;
+
 // jsdom never loads the real Cloudflare Turnstile script (login/forgot-
 // password widget, security review 2026-08-24, point 13) — this fires the
 // widget's callback immediately with a fixed fake token on render, so every

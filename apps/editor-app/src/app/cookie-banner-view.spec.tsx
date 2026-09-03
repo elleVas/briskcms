@@ -43,6 +43,7 @@ const site: SiteRecord = {
   tenantId: 'tenant-1',
   name: 'Il mio sito',
   domain: null,
+  themeName: 'classic',
   defaultLocale: 'it',
   enabledLocales: ['it', 'en'],
   untranslatedPageFallback: 'redirect-to-default',

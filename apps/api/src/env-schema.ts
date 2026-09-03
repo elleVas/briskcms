@@ -31,6 +31,10 @@ const apiEnvBaseSchema = z.object({
   SMTP_FROM_ADDRESS: z.string().min(1),
   MEDIA_UPLOAD_DIR: z.string().min(1),
   API_PUBLIC_URL: z.string().url(),
+  // docs/adr/0042 — where FilesystemThemeCatalogAdapter scans for bundled
+  // themes; see libs/adapters/filesystem-theme-catalog's own README for why
+  // this differs between local dev and this app's pruned production image.
+  THEMES_DIR: z.string().min(1),
   TURNSTILE_SECRET_KEY: z.string().min(1),
   // Both groups below are opt-in (ADR-0013's LocalDisk-by-default, and
   // "no NEWSLETTER_PROVIDER = newsletter signup is a harmless no-op") —

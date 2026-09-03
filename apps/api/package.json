@@ -93,6 +93,7 @@
     "@brisk/brevo-newsletter": "workspace:*",
     "@brisk/domain-core": "workspace:*",
     "@brisk/env-config": "workspace:*",
+    "@brisk/filesystem-theme-catalog": "workspace:*",
     "@brisk/local-disk-attachment-storage": "workspace:*",
     "@brisk/local-disk-media-storage": "workspace:*",
     "@brisk/mailchimp-newsletter": "workspace:*",

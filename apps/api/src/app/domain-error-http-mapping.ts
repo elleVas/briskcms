@@ -9,6 +9,7 @@ import {
   FormNotFoundError,
   InvalidCaptchaError,
   InvalidFormSubmissionError,
+  InvalidThemeNameError,
   MediaNotFoundError,
   PageGroupNotFoundError,
   PageGroupReorderMismatchError,
@@ -65,6 +66,7 @@ const DOMAIN_ERROR_MAPPINGS: Array<[Type<Error>, DomainErrorFactory]> = [
   [InvalidCaptchaError, (m) => new BadRequestException(m)],
   [UnsupportedAttachmentTypeError, (m) => new BadRequestException(m)],
   [UnsupportedMediaTypeError, (m) => new BadRequestException(m)],
+  [InvalidThemeNameError, (m) => new BadRequestException(m)],
 ];
 
 /** `null` quando `error` non è uno degli errori di dominio noti qui — il chiamante (HttpExceptionFilter) lo tratta allora come un 500 grezzo. */

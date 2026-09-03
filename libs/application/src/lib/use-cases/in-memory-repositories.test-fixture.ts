@@ -36,6 +36,8 @@ import type {
   SiteLayoutSectionVersionRepositoryPort,
   SiteRepositoryPort,
   SiteThemeBlockStylesPort,
+  AvailableTheme,
+  ThemeCatalogPort,
   UploadMediaInput,
   UploadMediaResult,
   UserRepositoryPort,
@@ -410,6 +412,16 @@ export class InMemorySiteRepository implements SiteRepositoryPort {
   async findById(tenantId: string, id: string): Promise<Site | null> {
     const site = this.sites.get(id);
     return site && site.tenantId === tenantId ? site : null;
+  }
+}
+
+export class InMemoryThemeCatalog implements ThemeCatalogPort {
+  constructor(
+    private readonly themes: AvailableTheme[] = [{ name: 'classic' }],
+  ) {}
+
+  async listAvailableThemes(): Promise<AvailableTheme[]> {
+    return this.themes;
   }
 }
 

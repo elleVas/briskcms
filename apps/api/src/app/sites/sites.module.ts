@@ -7,9 +7,11 @@ import {
 import { AuthModule } from '../auth/auth.module';
 import { DATABASE, DatabaseModule } from '../database.module';
 import { SitesController } from './sites.controller';
+import { createThemeCatalog } from '../themes/theme-catalog.factory';
 import {
   SITE_REPOSITORY,
   SITE_THEME_BLOCK_STYLES_REPOSITORY,
+  THEME_CATALOG,
 } from './sites.tokens';
 
 @Module({
@@ -26,6 +28,10 @@ import {
       useFactory: (db: BriskDb) =>
         new DrizzleSiteThemeBlockStylesRepository(db),
       inject: [DATABASE],
+    },
+    {
+      provide: THEME_CATALOG,
+      useFactory: createThemeCatalog,
     },
   ],
 })

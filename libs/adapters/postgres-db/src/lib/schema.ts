@@ -126,6 +126,15 @@ export const sites = pgTable(
     searchEngineIndexingEnabled: boolean('search_engine_indexing_enabled')
       .notNull()
       .default(false),
+    // Tier 2 of docs/adr/0021's theming model (docs/adr/0042) — which
+    // bundled filesystem theme this site renders, resolved per-request.
+    // Distinct from the Tier 1 theme* columns below (those layer style
+    // overrides ON TOP of whichever theme this field names). Defaults to
+    // 'classic' so an existing site gets the same behavior it always had
+    // the moment this column appears — not a nullable "inherit" field
+    // like Tier 1, since Tier 2 has no equivalent lower layer to fall
+    // back to.
+    themeName: text('theme_name').notNull().default('classic'),
     // Tier 1 of docs/adr/0021's theming model — all nullable, `null` means
     // "inherit the active filesystem theme's own default" (Tier 2), not a
     // value coerced here at the DB layer. See Site.themeSettings.

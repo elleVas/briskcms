@@ -23,6 +23,7 @@ describe('updateSiteThemeTokens', () => {
       tenantId,
       name: 'Il mio sito',
       domain: null,
+      themeName: 'classic',
       defaultLocale: 'it',
       enabledLocales: ['it'],
       untranslatedPageFallback: 'redirect-to-default',

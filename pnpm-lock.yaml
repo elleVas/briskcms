@@ -219,6 +219,9 @@ importers:
       '@brisk/env-config':
         specifier: workspace:*
         version: link:../../libs/env-config
+      '@brisk/filesystem-theme-catalog':
+        specifier: workspace:*
+        version: link:../../libs/adapters/filesystem-theme-catalog
       '@brisk/local-disk-attachment-storage':
         specifier: workspace:*
         version: link:../../libs/adapters/local-disk-attachment-storage
@@ -503,6 +506,12 @@ importers:
         version: 6.0.3
 
   libs/adapters/brevo-newsletter:
+    dependencies:
+      '@brisk/ports':
+        specifier: workspace:*
+        version: link:../../ports
+
+  libs/adapters/filesystem-theme-catalog:
     dependencies:
       '@brisk/ports':
         specifier: workspace:*

@@ -26,11 +26,26 @@ RUN pnpm nx run @brisk/api:build
 # runtime stage below can `pnpm install` a self-contained, minimal dist/
 # without the rest of the monorepo present.
 RUN pnpm nx run @brisk/api:prune
+# docs/adr/0042 — FilesystemThemeCatalogAdapter (ThemeCatalogPort) needs
+# somewhere to scan for bundled themes, but this image otherwise carries
+# none of themes/'s Astro source (that's public-site's job). Just each
+# theme's own theme.json manifest, preserving its directory name — `COPY
+# --from=build themes/*/theme.json` alone would collide, every theme.json
+# sharing that same basename once flattened into one destination dir.
+RUN mkdir -p /workspace/theme-manifests && \
+  for dir in /workspace/themes/*/; do \
+  name=$(basename "$dir"); \
+  if [ -f "$dir/theme.json" ]; then \
+  mkdir -p "/workspace/theme-manifests/$name" && \
+  cp "$dir/theme.json" "/workspace/theme-manifests/$name/theme.json"; \
+  fi; \
+  done
 
 FROM node:22-alpine AS runtime
 WORKDIR /app
 RUN addgroup -S brisk && adduser -S brisk -G brisk
 COPY --from=build /workspace/apps/api/dist/ ./
+COPY --from=build /workspace/theme-manifests/ ./themes/
 # Nx's prune-lockfile/copy-workspace-modules don't carry the workspace
 # root's pnpm-workspace.yaml into the pruned dist/ — but its `overrides`
 # (a pinned vite version, unrelated to this app but part of what the

@@ -48,6 +48,7 @@ export * from './lib/use-cases/update-site-business-info.use-case';
 export * from './lib/use-cases/update-site-general-settings.use-case';
 export * from './lib/use-cases/update-site-seo-settings.use-case';
 export * from './lib/use-cases/update-site-theme-settings.use-case';
+export * from './lib/use-cases/update-site-theme-package.use-case';
 export * from './lib/use-cases/update-site-theme-tokens.use-case';
 export * from './lib/use-cases/update-site-locale-settings.use-case';
 export * from './lib/use-cases/create-form.use-case';

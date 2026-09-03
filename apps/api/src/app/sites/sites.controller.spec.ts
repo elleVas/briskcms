@@ -1,9 +1,14 @@
 import { NotFoundException } from '@nestjs/common';
-import { Site, SiteNotFoundError } from '@brisk/domain-core';
+import {
+  InvalidThemeNameError,
+  Site,
+  SiteNotFoundError,
+} from '@brisk/domain-core';
 import type {
   SiteRepositoryPort,
   SiteThemeBlockStylesPort,
   TenantContextPort,
+  ThemeCatalogPort,
 } from '@brisk/ports';
 import { DEFAULT_COOKIE_BANNER_SETTINGS } from '@brisk/shared-types';
 import { SitesController } from './sites.controller';
@@ -16,6 +21,7 @@ function buildSite(
     tenantId: 'tenant-1',
     name: 'Il mio sito',
     domain: 'example.com',
+    themeName: 'classic',
     defaultLocale: 'it',
     enabledLocales: ['it'],
     untranslatedPageFallback: 'redirect-to-default',
@@ -44,6 +50,7 @@ function buildSite(
 describe('SitesController (unit)', () => {
   let siteRepository: jest.Mocked<SiteRepositoryPort>;
   let siteThemeBlockStylesRepository: jest.Mocked<SiteThemeBlockStylesPort>;
+  let themeCatalog: jest.Mocked<ThemeCatalogPort>;
   let tenantContext: TenantContextPort;
   let controller: SitesController;
 
@@ -57,6 +64,11 @@ describe('SitesController (unit)', () => {
       listBySite: jest.fn().mockResolvedValue({}),
       upsert: jest.fn(),
     };
+    themeCatalog = {
+      listAvailableThemes: jest
+        .fn()
+        .mockResolvedValue([{ name: 'classic' }, { name: 'docs-showcase' }]),
+    };
     tenantContext = {
       getCurrentTenantId: () => 'tenant-1',
       getCurrentUserId: () => 'user-1',
@@ -64,6 +76,7 @@ describe('SitesController (unit)', () => {
     controller = new SitesController(
       siteRepository,
       siteThemeBlockStylesRepository,
+      themeCatalog,
       tenantContext,
     );
   });
@@ -184,6 +197,40 @@ describe('SitesController (unit)', () => {
 
     expect(siteRepository.save).toHaveBeenCalled();
     expect(result.formSubmissionRetentionDays).toBe(30);
+  });
+
+  it('listAvailableThemes returns the theme catalog', async () => {
+    const result = await controller.listAvailableThemes();
+
+    expect(result).toEqual([{ name: 'classic' }, { name: 'docs-showcase' }]);
+  });
+
+  it('updateThemePackage propagates SiteNotFoundError, unwrapped', async () => {
+    siteRepository.findById.mockResolvedValue(null);
+
+    await expect(
+      controller.updateThemePackage('missing', { themeName: 'classic' }),
+    ).rejects.toThrow(SiteNotFoundError);
+  });
+
+  it('updateThemePackage rejects a themeName not in the catalog', async () => {
+    siteRepository.findById.mockResolvedValue(buildSite());
+
+    await expect(
+      controller.updateThemePackage('site-1', { themeName: 'not-bundled' }),
+    ).rejects.toThrow(InvalidThemeNameError);
+    expect(siteRepository.save).not.toHaveBeenCalled();
+  });
+
+  it('updateThemePackage saves the updated site', async () => {
+    siteRepository.findById.mockResolvedValue(buildSite());
+
+    const result = await controller.updateThemePackage('site-1', {
+      themeName: 'docs-showcase',
+    });
+
+    expect(siteRepository.save).toHaveBeenCalled();
+    expect(result.themeName).toBe('docs-showcase');
   });
 
   it('updateThemeSettings propagates SiteNotFoundError, unwrapped', async () => {

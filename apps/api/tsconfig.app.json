@@ -23,6 +23,9 @@
   ],
   "references": [
     {
+      "path": "../../libs/adapters/filesystem-theme-catalog/tsconfig.lib.json"
+    },
+    {
       "path": "../../libs/adapters/verification-token-adapter/tsconfig.lib.json"
     },
     {
@@ -30,12 +33,6 @@
     },
     {
       "path": "../../libs/adapters/smtp-email-adapter/tsconfig.lib.json"
-    },
-    {
-      "path": "../../libs/adapters/mailchimp-newsletter/tsconfig.lib.json"
-    },
-    {
-      "path": "../../libs/adapters/brevo-newsletter/tsconfig.lib.json"
     },
     {
       "path": "../../libs/shared-types/tsconfig.lib.json"
@@ -71,16 +68,19 @@
       "path": "../../libs/adapters/postgres-media-repository/tsconfig.lib.json"
     },
     {
-      "path": "../../libs/adapters/postgres-dashboard-stats-repository/tsconfig.lib.json"
-    },
-    {
       "path": "../../libs/adapters/postgres-form-repository/tsconfig.lib.json"
     },
     {
       "path": "../../libs/adapters/postgres-db/tsconfig.lib.json"
     },
     {
+      "path": "../../libs/adapters/postgres-dashboard-stats-repository/tsconfig.lib.json"
+    },
+    {
       "path": "../../libs/ports/tsconfig.lib.json"
+    },
+    {
+      "path": "../../libs/adapters/mailchimp-newsletter/tsconfig.lib.json"
     },
     {
       "path": "../../libs/adapters/local-disk-media-storage/tsconfig.lib.json"
@@ -93,6 +93,9 @@
     },
     {
       "path": "../../libs/domain-core/tsconfig.lib.json"
+    },
+    {
+      "path": "../../libs/adapters/brevo-newsletter/tsconfig.lib.json"
     },
     {
       "path": "../../libs/application/tsconfig.lib.json"

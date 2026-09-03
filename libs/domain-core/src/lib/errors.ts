@@ -203,3 +203,13 @@ export class UserNotActiveError extends Error {
     this.name = 'UserNotActiveError';
   }
 }
+
+/** Raised by updateSiteThemePackage when `themeName` isn't one of this
+ * deployment's bundled themes (ThemeCatalogPort, docs/adr/0042) — a stale
+ * dropdown option, or a direct API call for a theme this image never shipped. */
+export class InvalidThemeNameError extends Error {
+  constructor(themeName: string) {
+    super(`Theme not available in this deployment: ${themeName}`);
+    this.name = 'InvalidThemeNameError';
+  }
+}

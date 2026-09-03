@@ -34,6 +34,7 @@ describe('getPublishedSiteChrome', () => {
         tenantId,
         name: 'Sito di prova',
         domain: 'example.com',
+        themeName: 'classic',
         defaultLocale: 'it',
         enabledLocales: ['it'],
         untranslatedPageFallback: 'redirect-to-default',

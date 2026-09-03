@@ -15,6 +15,7 @@ function buildSite() {
     tenantId: 'tenant-1',
     name: 'Il mio sito',
     domain: 'example.com',
+    themeName: 'classic',
     defaultLocale: 'it',
     enabledLocales: ['it', 'en'],
     untranslatedPageFallback: 'redirect-to-default',

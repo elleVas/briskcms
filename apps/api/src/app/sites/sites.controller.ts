@@ -15,6 +15,7 @@ import {
   updateSiteGeneralSettings,
   updateSiteLocaleSettings,
   updateSiteSeoSettings,
+  updateSiteThemePackage,
   updateSiteThemeSettings,
   updateSiteThemeTokens,
 } from '@brisk/application';
@@ -23,8 +24,13 @@ import type {
   SiteRepositoryPort,
   SiteThemeBlockStylesPort,
   TenantContextPort,
+  ThemeCatalogPort,
 } from '@brisk/ports';
-import { siteRecordSchema, type SiteRecord } from '@brisk/shared-types';
+import {
+  availableThemesResponseSchema,
+  siteRecordSchema,
+  type SiteRecord,
+} from '@brisk/shared-types';
 import { Roles } from '../auth/roles.decorator';
 import { RolesGuard } from '../auth/roles.guard';
 import { SessionAuthGuard } from '../auth/session-auth.guard';
@@ -46,11 +52,14 @@ import {
   updateThemeTokensBodySchema,
   type UpdateCookieBannerSettingsBody,
   updateCookieBannerSettingsBodySchema,
+  type UpdateThemePackageBody,
+  updateThemePackageBodySchema,
 } from './sites.schemas';
 import { TENANT_CONTEXT } from '../auth/auth.tokens';
 import {
   SITE_REPOSITORY,
   SITE_THEME_BLOCK_STYLES_REPOSITORY,
+  THEME_CATALOG,
 } from './sites.tokens';
 
 @Controller('sites')
@@ -61,8 +70,17 @@ export class SitesController {
     private readonly siteRepository: SiteRepositoryPort,
     @Inject(SITE_THEME_BLOCK_STYLES_REPOSITORY)
     private readonly siteThemeBlockStylesRepository: SiteThemeBlockStylesPort,
+    @Inject(THEME_CATALOG)
+    private readonly themeCatalog: ThemeCatalogPort,
     @Inject(TENANT_CONTEXT) private readonly tenantContext: TenantContextPort,
   ) {}
+
+  @Get('themes/available')
+  async listAvailableThemes() {
+    return availableThemesResponseSchema.parse(
+      await this.themeCatalog.listAvailableThemes(),
+    );
+  }
 
   @Get(':id')
   async findById(@Param('id') id: string) {
@@ -185,6 +203,28 @@ export class SitesController {
     return this.toDto(site);
   }
 
+  // Tier 2 selection (docs/adr/0021/0042) — admin-gated for the same reason
+  // as theme-settings above: which theme a site's visitors see is at least
+  // as consequential as its style overrides.
+  @Patch(':id/theme-package')
+  @UseGuards(RolesGuard)
+  @Roles('admin')
+  async updateThemePackage(
+    @Param('id') id: string,
+    @Body(new ZodValidationPipe(updateThemePackageBodySchema))
+    body: UpdateThemePackageBody,
+  ) {
+    const site = await updateSiteThemePackage(
+      { siteRepository: this.siteRepository, themeCatalog: this.themeCatalog },
+      {
+        tenantId: this.tenantContext.getCurrentTenantId(),
+        siteId: id,
+        ...body,
+      },
+    );
+    return this.toDto(site);
+  }
+
   @Patch(':id/cookie-banner-settings')
   async updateCookieBannerSettings(
     @Param('id') id: string,
@@ -263,6 +303,7 @@ export class SitesController {
       tenantId: props.tenantId,
       name: props.name,
       domain: props.domain,
+      themeName: props.themeName,
       defaultLocale: props.defaultLocale,
       enabledLocales: props.enabledLocales,
       untranslatedPageFallback: props.untranslatedPageFallback,

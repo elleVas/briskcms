@@ -8,6 +8,7 @@ describe('Site entity', () => {
     tenantId: 'tenant-1',
     name: 'Il mio sito',
     domain: 'example.com',
+    themeName: 'classic',
     defaultLocale: 'it',
     enabledLocales: ['it', 'en'],
     untranslatedPageFallback: 'redirect-to-default' as const,
@@ -38,6 +39,7 @@ describe('Site entity', () => {
     expect(site.tenantId).toBe('tenant-1');
     expect(site.name).toBe('Il mio sito');
     expect(site.domain).toBe('example.com');
+    expect(site.themeName).toBe('classic');
     expect(site.defaultLocale).toBe('it');
     expect(site.enabledLocales).toEqual(['it', 'en']);
     expect(site.untranslatedPageFallback).toBe('redirect-to-default');
@@ -108,6 +110,14 @@ describe('Site entity', () => {
     site.updateGeneralSettings({ name: props.name, domain: null });
 
     expect(site.domain).toBeNull();
+  });
+
+  it('updateThemePackage replaces themeName', () => {
+    const site = Site.fromProps(props);
+
+    site.updateThemePackage({ themeName: 'docs-showcase' });
+
+    expect(site.themeName).toBe('docs-showcase');
   });
 
   it('updateSeoSettings replaces the search engine indexing flag', () => {

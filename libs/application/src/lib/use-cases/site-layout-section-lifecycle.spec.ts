@@ -43,6 +43,7 @@ describe('site layout section lifecycle: get-or-create -> draft -> publish -> ro
       tenantId,
       name: 'Sito di prova',
       domain: 'example.com',
+      themeName: 'classic',
       defaultLocale: 'it',
       enabledLocales: ['it', 'en'],
       untranslatedPageFallback: 'redirect-to-default',
