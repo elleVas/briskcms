@@ -1,0 +1,25 @@
+# docs/adr/0042. Automatic HTTPS via Let's Encrypt — Caddy issues and
+# renews certificates for each of these on its own, no separate certbot
+# step. Requires DOMAIN's DNS (and the admin./api. subdomains) to already
+# point at this server before it starts, or issuance fails.
+#
+# Not the only way to front this stack: anyone with their own reverse
+# proxy (Traefik, nginx, an existing shared one) can drop this whole
+# `caddy` service from docker-compose.prod.yml and point their own proxy
+# at the api/public-site/editor-app containers' internal ports instead
+# (3000/4321/80).
+{
+	email {$ACME_EMAIL}
+}
+
+{$DOMAIN}, www.{$DOMAIN} {
+	reverse_proxy public-site:4321
+}
+
+admin.{$DOMAIN} {
+	reverse_proxy editor-app:80
+}
+
+api.{$DOMAIN} {
+	reverse_proxy api:3000
+}

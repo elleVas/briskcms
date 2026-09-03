@@ -109,6 +109,8 @@ built and published end to end.
   structure, multi-tenant/RLS, content model
 - [docs/development.md](docs/development.md) — local setup, commands, DB
   connection
+- [docs/self-hosting.md](docs/self-hosting.md) — running Brisk in
+  production, on your own server
 - [docs/git-workflow.md](docs/git-workflow.md) — branches, PRs, what requires
   sign-off before implementing
 - [docs/adr/](docs/adr/) — Architecture Decision Records

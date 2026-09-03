@@ -1,0 +1,186 @@
+# docs/adr/0042 — production stack for one site. Separate from the root
+# docker-compose.yml (that one's dev-only: Postgres + Mailpit, nothing
+# else). Run this one directly: `docker compose -f docker-compose.prod.yml
+# up -d --build` (or omit --build once images are pulled from ghcr.io —
+# see docs/self-hosting.md).
+#
+# Same conventions as the dev compose file: restart: unless-stopped on
+# every service, ${VAR:?message} for secrets with no safe default, named
+# volumes for persistent data, no explicit `networks:` block (every
+# service reaches every other one by its service name on Compose's own
+# default network).
+#
+# `env_file: ${ENV_FILE:-.env}` (not a long hand-copied `environment:` list) supplies
+# apps/api's own config — verified directly why: an explicit
+# `environment: { MEDIA_STORAGE_PROVIDER: ${MEDIA_STORAGE_PROVIDER:-} }`
+# still sets the key, to an empty string, once Compose interpolates it —
+# apps/api's own Zod schema treats `''` and "genuinely unset" differently
+# (`z.enum(...).default(...)` only fires on `undefined`), so a var that's
+# correctly *absent* from .env broke validation once it was declared here
+# with an empty-string fallback. `env_file` only passes through variables
+# that are actually assigned in the file — a commented-out optional var
+# in .env.prod.example stays genuinely absent in the container too.
+# `environment:` below layers on top of `env_file:` only for the values
+# that must be container-network-internal (POSTGRES_HOST, service-to-
+# service URLs) rather than whatever a self-hoster's own .env says.
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-brisk}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env, see .env.prod.example}
+      POSTGRES_DB: ${POSTGRES_DB:-brisk}
+      POSTGRES_APP_PASSWORD: ${POSTGRES_APP_PASSWORD:?Set POSTGRES_APP_PASSWORD in .env, see .env.prod.example}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./db/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-brisk}']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # One-shot: applies pending migrations, then exits. `api` waits for it to
+  # exit 0 before starting — explicit, no self-migration-on-boot race to
+  # reason about (see docs/adr/0042). Reuses apps/api/Dockerfile's own
+  # `build` stage (full monorepo + devDependencies already installed
+  # there) rather than a separate Dockerfile just for this. Also doubles
+  # as the one-off admin command runner for the seed step
+  # (docs/self-hosting.md, `docker compose run --rm migrate <command>`).
+  migrate:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+      target: build
+    command:
+      [
+        'pnpm',
+        '--filter',
+        '@brisk/postgres-db',
+        'exec',
+        'drizzle-kit',
+        'migrate',
+      ]
+    env_file: ${ENV_FILE:-.env}
+    environment:
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: '5432'
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    restart: unless-stopped
+    env_file: ${ENV_FILE:-.env}
+    environment:
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: '5432'
+      # Public origins — browsers hit these, so they must be the real
+      # public URLs (through Caddy), never an internal service name.
+      EDITOR_APP_URL: https://admin.${DOMAIN:?Set DOMAIN in .env}
+      API_PUBLIC_URL: https://api.${DOMAIN:?Set DOMAIN in .env}/api
+      MEDIA_UPLOAD_DIR: /app/uploads
+    volumes:
+      - media-uploads:/app/uploads
+    healthcheck:
+      # 127.0.0.1, not localhost — verified directly that this container's
+      # `localhost` resolves ::1 first, which server.mjs's explicit
+      # IPv4-only 0.0.0.0 bind (below) never accepts, causing "connection
+      # refused" against an actually-healthy, actually-listening server.
+      test: ['CMD', 'wget', '-qO-', 'http://127.0.0.1:3000/api/health']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    depends_on:
+      postgres:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+
+  public-site:
+    build:
+      context: .
+      dockerfile: apps/public-site/Dockerfile
+      args:
+        BRISK_THEME: ${BRISK_THEME:-classic}
+    restart: unless-stopped
+    env_file: ${ENV_FILE:-.env}
+    environment:
+      # Internal service-to-service call, not through Caddy — this is a
+      # server-side fetch (SSR), never a browser request, so CORS doesn't
+      # apply and there's no reason to round-trip through the public
+      # internet for it.
+      API_URL: http://api:3000/api
+      PORT: '4321'
+      EDITOR_APP_URL: https://admin.${DOMAIN:?Set DOMAIN in .env}
+    healthcheck:
+      test: ['CMD', 'wget', '-qO-', 'http://127.0.0.1:4321/api/health']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    depends_on:
+      api:
+        condition: service_healthy
+
+  editor-app:
+    build:
+      context: .
+      dockerfile: apps/editor-app/Dockerfile
+      args:
+        # Browser-facing, baked into the static bundle at build time —
+        # changing DOMAIN later means rebuilding this one image (docs/adr/0042).
+        VITE_API_URL: https://api.${DOMAIN:?Set DOMAIN in .env}/api
+        VITE_PUBLIC_SITE_URL: https://${DOMAIN:?Set DOMAIN in .env}
+        VITE_DEFAULT_SITE_ID: ${DEFAULT_SITE_ID:?Set DEFAULT_SITE_ID in .env, see .env.prod.example}
+        VITE_TURNSTILE_SITE_KEY: ${TURNSTILE_SITE_KEY:-1x00000000000000000000AA}
+    restart: unless-stopped
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - '80:80'
+      - '443:443'
+    environment:
+      DOMAIN: ${DOMAIN:?Set DOMAIN in .env}
+      ACME_EMAIL: ${ACME_EMAIL:?Set ACME_EMAIL in .env, Let's Encrypt needs a contact address}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      - api
+      - public-site
+      - editor-app
+
+  postgres-backup:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_HOST: postgres
+      POSTGRES_DB: ${POSTGRES_DB:-brisk}
+      POSTGRES_USER: ${POSTGRES_USER:-brisk}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env, see .env.prod.example}
+      BACKUP_INTERVAL_SECONDS: ${BACKUP_INTERVAL_SECONDS:-86400}
+      BACKUP_RETENTION_DAYS: ${BACKUP_RETENTION_DAYS:-14}
+    volumes:
+      - postgres-backups:/backups
+      - ./docker/pg-backup/backup.sh:/backup.sh:ro
+    entrypoint: ['/bin/sh', '/backup.sh']
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  postgres-data:
+  postgres-backups:
+  media-uploads:
+  caddy-data:
+  caddy-config:
