@@ -1,10 +1,21 @@
 import { useState } from 'react';
-import { createFileRoute, useNavigate } from '@tanstack/react-router';
+import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router';
 import { ForgotPasswordForm } from '../app/forgot-password-form';
 import { LoginForm } from '../app/login-form';
 import { useSession } from '../app/use-session';
+import { fetchSetupStatus } from '../lib/setup-api-client';
 
 export const Route = createFileRoute('/login')({
+  // A deployment nobody has set up yet has no account to log into, so
+  // showing this form would be showing a door with no key. The wizard's own
+  // route sends people back here once it has run, so the two guards are a
+  // pair rather than a redirect loop.
+  beforeLoad: async () => {
+    const { hasBeenSetUp } = await fetchSetupStatus();
+    if (!hasBeenSetUp) {
+      throw redirect({ to: '/setup' });
+    }
+  },
   component: LoginRoute,
 });
 

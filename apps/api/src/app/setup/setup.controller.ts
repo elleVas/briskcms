@@ -1,4 +1,5 @@
-import { Body, Controller, Get, Inject, Post } from '@nestjs/common';
+import { Body, Controller, Get, Inject, Post, Res } from '@nestjs/common';
+import type { Response } from 'express';
 import { bootstrapDeployment } from '@brisk/application';
 import type { AuthPort, DeploymentBootstrapPort } from '@brisk/ports';
 import { AUTH_PORT } from '../auth/auth.tokens';
@@ -6,6 +7,10 @@ import {
   DEPLOYMENT_TENANT_RESOLVER,
   DeploymentTenantResolver,
 } from '../deployment-tenant.resolver';
+import {
+  SESSION_COOKIE_MAX_AGE_MS,
+  SESSION_COOKIE_NAME,
+} from '../auth/session-cookie.constants';
 import { ZodValidationPipe } from '../zod-validation.pipe';
 import {
   bootstrapDeploymentBodySchema,
@@ -47,10 +52,25 @@ export class SetupController {
     return { hasBeenSetUp: await this.deploymentBootstrapPort.hasBeenSetUp() };
   }
 
+  /**
+   * Signs the new admin in as part of the same request, rather than
+   * bouncing them to the login form with the credentials they typed ten
+   * seconds ago.
+   *
+   * It is not a convenience: logging in separately would have to pass
+   * Turnstile, whose keys are configured through the very env file this
+   * wizard exists so a self-hoster does not have to edit. A fresh
+   * deployment would send an empty token to a real secret key and be
+   * refused, leaving someone locked out of the installation they just
+   * created. Issuing the session here needs no captcha to be meaningful:
+   * whoever completed setup demonstrably controlled an unclaimed
+   * installation, which is a stronger proof than the one login asks for.
+   */
   @Post()
   async bootstrap(
     @Body(new ZodValidationPipe(bootstrapDeploymentBodySchema))
     body: BootstrapDeploymentBody,
+    @Res({ passthrough: true }) response: Response,
   ): Promise<{ tenantId: string; siteId: string; userId: string }> {
     const result = await bootstrapDeployment(
       {
@@ -64,6 +84,17 @@ export class SetupController {
     // this, the login the wizard performs next would fail against a tenant
     // that demonstrably exists — see DeploymentTenantResolver.refresh().
     this.tenant.refresh();
+
+    const session = await this.authPort.createSession(
+      result.userId,
+      result.tenantId,
+    );
+    response.cookie(SESSION_COOKIE_NAME, session.token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: SESSION_COOKIE_MAX_AGE_MS,
+    });
 
     return result;
   }
