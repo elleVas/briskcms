@@ -21,3 +21,13 @@ export const updateFormBodySchema = z.object({
   notificationEmail: z.string().email().nullable(),
 });
 export type UpdateFormBody = z.infer<typeof updateFormBodySchema>;
+
+export const listFormSubmissionsQuerySchema = z.object({
+  page: z.coerce.number().int().min(1).default(1),
+  // Lower than the forms list's own cap: a submission row carries a whole
+  // payload, not a name and a date.
+  pageSize: z.coerce.number().int().min(1).max(50).default(20),
+});
+export type ListFormSubmissionsQuery = z.infer<
+  typeof listFormSubmissionsQuerySchema
+>;
