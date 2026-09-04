@@ -26,10 +26,10 @@ describe('theme-api-client', () => {
     const icons = [{ name: 'star', svg: '<svg></svg>' }];
     vi.mocked(fetch).mockResolvedValue(jsonResponse(icons));
 
-    const result = await fetchThemeIcons();
+    const result = await fetchThemeIcons('docs-showcase');
 
     expect(fetch).toHaveBeenCalledWith(
-      expect.stringContaining('/api/themes/current/icons'),
+      expect.stringContaining('/api/themes/current/icons?theme=docs-showcase'),
     );
     expect(result).toEqual(icons);
   });
@@ -37,7 +37,7 @@ describe('theme-api-client', () => {
   it('fetchThemeIcons throws on a non-ok response', async () => {
     vi.mocked(fetch).mockResolvedValue(jsonResponse({}, false, 500));
 
-    await expect(fetchThemeIcons()).rejects.toThrow(
+    await expect(fetchThemeIcons('classic')).rejects.toThrow(
       /themes\/current\/icons API error: 500/,
     );
   });
@@ -46,7 +46,7 @@ describe('theme-api-client', () => {
     const defaults = { Button: { backgroundColor: 'var(--primary)' } };
     vi.mocked(fetch).mockResolvedValue(jsonResponse(defaults));
 
-    const result = await fetchBlockStyleDefaults();
+    const result = await fetchBlockStyleDefaults('classic');
 
     expect(fetch).toHaveBeenCalledWith(
       expect.stringContaining('/api/themes/current/block-style-defaults'),
@@ -57,7 +57,7 @@ describe('theme-api-client', () => {
   it('fetchBlockStyleDefaults throws on a non-ok response', async () => {
     vi.mocked(fetch).mockResolvedValue(jsonResponse({}, false, 404));
 
-    await expect(fetchBlockStyleDefaults()).rejects.toThrow(
+    await expect(fetchBlockStyleDefaults('classic')).rejects.toThrow(
       /themes\/current\/block-style-defaults API error: 404/,
     );
   });
@@ -69,7 +69,7 @@ describe('theme-api-client', () => {
     };
     vi.mocked(fetch).mockResolvedValue(jsonResponse(tokens));
 
-    const result = await fetchThemeForegroundTokens();
+    const result = await fetchThemeForegroundTokens('classic');
 
     expect(fetch).toHaveBeenCalledWith(
       expect.stringContaining('/api/themes/current/foreground-tokens'),
@@ -80,7 +80,7 @@ describe('theme-api-client', () => {
   it('fetchThemeForegroundTokens throws on a non-ok response', async () => {
     vi.mocked(fetch).mockResolvedValue(jsonResponse({}, false, 500));
 
-    await expect(fetchThemeForegroundTokens()).rejects.toThrow(
+    await expect(fetchThemeForegroundTokens('classic')).rejects.toThrow(
       /themes\/current\/foreground-tokens API error: 500/,
     );
   });

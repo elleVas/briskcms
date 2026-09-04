@@ -2,7 +2,6 @@
 import type { PublishedPage } from '@brisk/shared-types';
 import PageLayoutCore from '../layouts/PageLayout.astro';
 import { resolveThemeLayoutOverride } from '../lib/resolve-theme-layout-override';
-const PageLayout = resolveThemeLayoutOverride(PageLayoutCore);
 import BlockRenderer from './BlockRenderer.astro';
 import ErrorPageShell from './ErrorPageShell.astro';
 import NotFound from './NotFound.astro';
@@ -43,6 +42,15 @@ const chrome =
         () => null,
       )
     : null;
+
+// docs/adr/0042 — whichever site is actually being rendered below (a real
+// page, or the 404 chrome fallback) decides which bundled theme's own
+// PageLayout override (if any) applies; neither existing means nothing
+// below renders PageLayout at all, so the fallback value here is moot.
+const PageLayout = resolveThemeLayoutOverride(
+  PageLayoutCore,
+  page?.site.themeName ?? chrome?.site.themeName ?? '',
+);
 
 // LanguageSwitcher resolves its links from `translations`, matched against
 // `site.enabledLocales` — there's no real Page here to have real

@@ -58,122 +58,6 @@ import {
 import type { AstroComponentFactory } from 'astro/runtime/server/index.js';
 import { resolveThemeBlockOverride } from '../lib/resolve-theme-block-override';
 import { themeBlockRegistry } from '../lib/resolve-theme-page-blocks';
-import AccordionCore from './blocks/Accordion.astro';
-const Accordion = resolveThemeBlockOverride('Accordion', AccordionCore);
-import AccordionItemCore from './blocks/AccordionItem.astro';
-const AccordionItem = resolveThemeBlockOverride('AccordionItem', AccordionItemCore);
-import BackToTopCore from './blocks/BackToTop.astro';
-const BackToTop = resolveThemeBlockOverride('BackToTop', BackToTopCore);
-import BannerCore from './blocks/Banner.astro';
-const Banner = resolveThemeBlockOverride('Banner', BannerCore);
-import BeforeAfterCore from './blocks/BeforeAfter.astro';
-const BeforeAfter = resolveThemeBlockOverride('BeforeAfter', BeforeAfterCore);
-import BreadcrumbCore from './blocks/Breadcrumb.astro';
-const Breadcrumb = resolveThemeBlockOverride('Breadcrumb', BreadcrumbCore);
-import ButtonCore from './blocks/Button.astro';
-const Button = resolveThemeBlockOverride('Button', ButtonCore);
-import CalloutCore from './blocks/Callout.astro';
-const Callout = resolveThemeBlockOverride('Callout', CalloutCore);
-import CodeCore from './blocks/Code.astro';
-const Code = resolveThemeBlockOverride('Code', CodeCore);
-import ColumnCore from './blocks/Column.astro';
-const Column = resolveThemeBlockOverride('Column', ColumnCore);
-import ColumnsCore from './blocks/Columns.astro';
-const Columns = resolveThemeBlockOverride('Columns', ColumnsCore);
-import ContainerCore from './blocks/Container.astro';
-const Container = resolveThemeBlockOverride('Container', ContainerCore);
-import CountdownCore from './blocks/Countdown.astro';
-const Countdown = resolveThemeBlockOverride('Countdown', CountdownCore);
-import EmbedHtmlCore from './blocks/EmbedHtml.astro';
-const EmbedHtml = resolveThemeBlockOverride('EmbedHtml', EmbedHtmlCore);
-import FeatureCore from './blocks/Feature.astro';
-const Feature = resolveThemeBlockOverride('Feature', FeatureCore);
-import FeatureGridCore from './blocks/FeatureGrid.astro';
-const FeatureGrid = resolveThemeBlockOverride('FeatureGrid', FeatureGridCore);
-import FormCore from './blocks/Form.astro';
-const Form = resolveThemeBlockOverride('Form', FormCore);
-import GalleryCore from './blocks/Gallery.astro';
-const Gallery = resolveThemeBlockOverride('Gallery', GalleryCore);
-import HamburgerMenuCore from './blocks/HamburgerMenu.astro';
-const HamburgerMenu = resolveThemeBlockOverride('HamburgerMenu', HamburgerMenuCore);
-import HeroCore from './blocks/Hero.astro';
-const Hero = resolveThemeBlockOverride('Hero', HeroCore);
-import HeadingCore from './blocks/Heading.astro';
-const Heading = resolveThemeBlockOverride('Heading', HeadingCore);
-import ImageCore from './blocks/Image.astro';
-const Image = resolveThemeBlockOverride('Image', ImageCore);
-import ImageSliderCore from './blocks/ImageSlider.astro';
-const ImageSlider = resolveThemeBlockOverride('ImageSlider', ImageSliderCore);
-import LanguageSwitcherCore from './blocks/LanguageSwitcher.astro';
-const LanguageSwitcher = resolveThemeBlockOverride('LanguageSwitcher', LanguageSwitcherCore);
-import LinkCore from './blocks/Link.astro';
-const Link = resolveThemeBlockOverride('Link', LinkCore);
-import LogoStripCore from './blocks/LogoStrip.astro';
-const LogoStrip = resolveThemeBlockOverride('LogoStrip', LogoStripCore);
-import MapEmbedCore from './blocks/MapEmbed.astro';
-const MapEmbed = resolveThemeBlockOverride('MapEmbed', MapEmbedCore);
-import NavCore from './blocks/Nav.astro';
-const Nav = resolveThemeBlockOverride('Nav', NavCore);
-import NavDropdownCore from './blocks/NavDropdown.astro';
-const NavDropdown = resolveThemeBlockOverride('NavDropdown', NavDropdownCore);
-import NavLinkCore from './blocks/NavLink.astro';
-const NavLink = resolveThemeBlockOverride('NavLink', NavLinkCore);
-import NewsletterSignupCore from './blocks/NewsletterSignup.astro';
-const NewsletterSignup = resolveThemeBlockOverride('NewsletterSignup', NewsletterSignupCore);
-import PricingPlanCore from './blocks/PricingPlan.astro';
-const PricingPlan = resolveThemeBlockOverride('PricingPlan', PricingPlanCore);
-import PricingTableCore from './blocks/PricingTable.astro';
-const PricingTable = resolveThemeBlockOverride('PricingTable', PricingTableCore);
-import QuoteCore from './blocks/Quote.astro';
-const Quote = resolveThemeBlockOverride('Quote', QuoteCore);
-import RatingCore from './blocks/Rating.astro';
-const Rating = resolveThemeBlockOverride('Rating', RatingCore);
-import StatCore from './blocks/Stat.astro';
-const Stat = resolveThemeBlockOverride('Stat', StatCore);
-import StatsCounterCore from './blocks/StatsCounter.astro';
-const StatsCounter = resolveThemeBlockOverride('StatsCounter', StatsCounterCore);
-import TabCore from './blocks/Tab.astro';
-const Tab = resolveThemeBlockOverride('Tab', TabCore);
-import TabsCore from './blocks/Tabs.astro';
-const Tabs = resolveThemeBlockOverride('Tabs', TabsCore);
-import TableCore from './blocks/Table.astro';
-const Table = resolveThemeBlockOverride('Table', TableCore);
-import TeamCore from './blocks/Team.astro';
-const Team = resolveThemeBlockOverride('Team', TeamCore);
-import TeamMemberCore from './blocks/TeamMember.astro';
-const TeamMember = resolveThemeBlockOverride('TeamMember', TeamMemberCore);
-import TestimonialCore from './blocks/Testimonial.astro';
-const Testimonial = resolveThemeBlockOverride('Testimonial', TestimonialCore);
-import TestimonialsCore from './blocks/Testimonials.astro';
-const Testimonials = resolveThemeBlockOverride('Testimonials', TestimonialsCore);
-import TimelineCore from './blocks/Timeline.astro';
-const Timeline = resolveThemeBlockOverride('Timeline', TimelineCore);
-import TimelineStepCore from './blocks/TimelineStep.astro';
-const TimelineStep = resolveThemeBlockOverride('TimelineStep', TimelineStepCore);
-import PromoBarCore from './blocks/PromoBar.astro';
-const PromoBar = resolveThemeBlockOverride('PromoBar', PromoBarCore);
-import SearchBoxCore from './blocks/SearchBox.astro';
-const SearchBox = resolveThemeBlockOverride('SearchBox', SearchBoxCore);
-import TextCore from './blocks/Text.astro';
-const Text = resolveThemeBlockOverride('Text', TextCore);
-import VideoEmbedCore from './blocks/VideoEmbed.astro';
-const VideoEmbed = resolveThemeBlockOverride('VideoEmbed', VideoEmbedCore);
-import WhatsAppButtonCore from './blocks/WhatsAppButton.astro';
-const WhatsAppButton = resolveThemeBlockOverride('WhatsAppButton', WhatsAppButtonCore);
-
-// Walks `Block[]`/`children` directly — no dependency on Puck's own data
-// format here, by design (see docs/adr/0007: "any consumer of page content
-// that isn't the editor... can walk children directly without knowing
-// anything about Puck"). Each block's own Zod schema (shared with
-// @brisk/puck-config, same source of truth) validates `props` at this
-// boundary instead of an `as` cast — content comes from the API as
-// unvalidated JSON as far as this component is concerned.
-//
-// `locale`/`translations`/`site` are only used by LanguageSwitcher, which
-// can be nested inside a Nav (docs/adr/0018) — threaded through every
-// recursive call rather than looked up again per block, since a leaf has
-// no way to reach back up to the page-level values otherwise.
-// `ancestors`/`currentPageTitle` follow the same reasoning for Breadcrumb.
 
 interface Props {
   block: Block;
@@ -199,6 +83,129 @@ const {
   currentPageTitle,
   editable,
 } = Astro.props;
+// docs/adr/0042 — read here, before any of the resolveThemeBlockOverride
+// calls below, since every one of them needs it. Derived from `site`
+// (already threaded through every recursive <Astro.self> call further
+// down) rather than a second, parallel prop — a block never needs a
+// theme different from the site it's rendering for.
+const themeName = site.themeName;
+
+import AccordionCore from './blocks/Accordion.astro';
+const Accordion = resolveThemeBlockOverride('Accordion', AccordionCore, themeName);
+import AccordionItemCore from './blocks/AccordionItem.astro';
+const AccordionItem = resolveThemeBlockOverride('AccordionItem', AccordionItemCore, themeName);
+import BackToTopCore from './blocks/BackToTop.astro';
+const BackToTop = resolveThemeBlockOverride('BackToTop', BackToTopCore, themeName);
+import BannerCore from './blocks/Banner.astro';
+const Banner = resolveThemeBlockOverride('Banner', BannerCore, themeName);
+import BeforeAfterCore from './blocks/BeforeAfter.astro';
+const BeforeAfter = resolveThemeBlockOverride('BeforeAfter', BeforeAfterCore, themeName);
+import BreadcrumbCore from './blocks/Breadcrumb.astro';
+const Breadcrumb = resolveThemeBlockOverride('Breadcrumb', BreadcrumbCore, themeName);
+import ButtonCore from './blocks/Button.astro';
+const Button = resolveThemeBlockOverride('Button', ButtonCore, themeName);
+import CalloutCore from './blocks/Callout.astro';
+const Callout = resolveThemeBlockOverride('Callout', CalloutCore, themeName);
+import CodeCore from './blocks/Code.astro';
+const Code = resolveThemeBlockOverride('Code', CodeCore, themeName);
+import ColumnCore from './blocks/Column.astro';
+const Column = resolveThemeBlockOverride('Column', ColumnCore, themeName);
+import ColumnsCore from './blocks/Columns.astro';
+const Columns = resolveThemeBlockOverride('Columns', ColumnsCore, themeName);
+import ContainerCore from './blocks/Container.astro';
+const Container = resolveThemeBlockOverride('Container', ContainerCore, themeName);
+import CountdownCore from './blocks/Countdown.astro';
+const Countdown = resolveThemeBlockOverride('Countdown', CountdownCore, themeName);
+import EmbedHtmlCore from './blocks/EmbedHtml.astro';
+const EmbedHtml = resolveThemeBlockOverride('EmbedHtml', EmbedHtmlCore, themeName);
+import FeatureCore from './blocks/Feature.astro';
+const Feature = resolveThemeBlockOverride('Feature', FeatureCore, themeName);
+import FeatureGridCore from './blocks/FeatureGrid.astro';
+const FeatureGrid = resolveThemeBlockOverride('FeatureGrid', FeatureGridCore, themeName);
+import FormCore from './blocks/Form.astro';
+const Form = resolveThemeBlockOverride('Form', FormCore, themeName);
+import GalleryCore from './blocks/Gallery.astro';
+const Gallery = resolveThemeBlockOverride('Gallery', GalleryCore, themeName);
+import HamburgerMenuCore from './blocks/HamburgerMenu.astro';
+const HamburgerMenu = resolveThemeBlockOverride('HamburgerMenu', HamburgerMenuCore, themeName);
+import HeroCore from './blocks/Hero.astro';
+const Hero = resolveThemeBlockOverride('Hero', HeroCore, themeName);
+import HeadingCore from './blocks/Heading.astro';
+const Heading = resolveThemeBlockOverride('Heading', HeadingCore, themeName);
+import ImageCore from './blocks/Image.astro';
+const Image = resolveThemeBlockOverride('Image', ImageCore, themeName);
+import ImageSliderCore from './blocks/ImageSlider.astro';
+const ImageSlider = resolveThemeBlockOverride('ImageSlider', ImageSliderCore, themeName);
+import LanguageSwitcherCore from './blocks/LanguageSwitcher.astro';
+const LanguageSwitcher = resolveThemeBlockOverride('LanguageSwitcher', LanguageSwitcherCore, themeName);
+import LinkCore from './blocks/Link.astro';
+const Link = resolveThemeBlockOverride('Link', LinkCore, themeName);
+import LogoStripCore from './blocks/LogoStrip.astro';
+const LogoStrip = resolveThemeBlockOverride('LogoStrip', LogoStripCore, themeName);
+import MapEmbedCore from './blocks/MapEmbed.astro';
+const MapEmbed = resolveThemeBlockOverride('MapEmbed', MapEmbedCore, themeName);
+import NavCore from './blocks/Nav.astro';
+const Nav = resolveThemeBlockOverride('Nav', NavCore, themeName);
+import NavDropdownCore from './blocks/NavDropdown.astro';
+const NavDropdown = resolveThemeBlockOverride('NavDropdown', NavDropdownCore, themeName);
+import NavLinkCore from './blocks/NavLink.astro';
+const NavLink = resolveThemeBlockOverride('NavLink', NavLinkCore, themeName);
+import NewsletterSignupCore from './blocks/NewsletterSignup.astro';
+const NewsletterSignup = resolveThemeBlockOverride('NewsletterSignup', NewsletterSignupCore, themeName);
+import PricingPlanCore from './blocks/PricingPlan.astro';
+const PricingPlan = resolveThemeBlockOverride('PricingPlan', PricingPlanCore, themeName);
+import PricingTableCore from './blocks/PricingTable.astro';
+const PricingTable = resolveThemeBlockOverride('PricingTable', PricingTableCore, themeName);
+import QuoteCore from './blocks/Quote.astro';
+const Quote = resolveThemeBlockOverride('Quote', QuoteCore, themeName);
+import RatingCore from './blocks/Rating.astro';
+const Rating = resolveThemeBlockOverride('Rating', RatingCore, themeName);
+import StatCore from './blocks/Stat.astro';
+const Stat = resolveThemeBlockOverride('Stat', StatCore, themeName);
+import StatsCounterCore from './blocks/StatsCounter.astro';
+const StatsCounter = resolveThemeBlockOverride('StatsCounter', StatsCounterCore, themeName);
+import TabCore from './blocks/Tab.astro';
+const Tab = resolveThemeBlockOverride('Tab', TabCore, themeName);
+import TabsCore from './blocks/Tabs.astro';
+const Tabs = resolveThemeBlockOverride('Tabs', TabsCore, themeName);
+import TableCore from './blocks/Table.astro';
+const Table = resolveThemeBlockOverride('Table', TableCore, themeName);
+import TeamCore from './blocks/Team.astro';
+const Team = resolveThemeBlockOverride('Team', TeamCore, themeName);
+import TeamMemberCore from './blocks/TeamMember.astro';
+const TeamMember = resolveThemeBlockOverride('TeamMember', TeamMemberCore, themeName);
+import TestimonialCore from './blocks/Testimonial.astro';
+const Testimonial = resolveThemeBlockOverride('Testimonial', TestimonialCore, themeName);
+import TestimonialsCore from './blocks/Testimonials.astro';
+const Testimonials = resolveThemeBlockOverride('Testimonials', TestimonialsCore, themeName);
+import TimelineCore from './blocks/Timeline.astro';
+const Timeline = resolveThemeBlockOverride('Timeline', TimelineCore, themeName);
+import TimelineStepCore from './blocks/TimelineStep.astro';
+const TimelineStep = resolveThemeBlockOverride('TimelineStep', TimelineStepCore, themeName);
+import PromoBarCore from './blocks/PromoBar.astro';
+const PromoBar = resolveThemeBlockOverride('PromoBar', PromoBarCore, themeName);
+import SearchBoxCore from './blocks/SearchBox.astro';
+const SearchBox = resolveThemeBlockOverride('SearchBox', SearchBoxCore, themeName);
+import TextCore from './blocks/Text.astro';
+const Text = resolveThemeBlockOverride('Text', TextCore, themeName);
+import VideoEmbedCore from './blocks/VideoEmbed.astro';
+const VideoEmbed = resolveThemeBlockOverride('VideoEmbed', VideoEmbedCore, themeName);
+import WhatsAppButtonCore from './blocks/WhatsAppButton.astro';
+const WhatsAppButton = resolveThemeBlockOverride('WhatsAppButton', WhatsAppButtonCore, themeName);
+
+// Walks `Block[]`/`children` directly — no dependency on Puck's own data
+// format here, by design (see docs/adr/0007: "any consumer of page content
+// that isn't the editor... can walk children directly without knowing
+// anything about Puck"). Each block's own Zod schema (shared with
+// @brisk/puck-config, same source of truth) validates `props` at this
+// boundary instead of an `as` cast — content comes from the API as
+// unvalidated JSON as far as this component is concerned.
+//
+// `locale`/`translations`/`site` are only used by LanguageSwitcher, which
+// can be nested inside a Nav (docs/adr/0018) — threaded through every
+// recursive call rather than looked up again per block, since a leaf has
+// no way to reach back up to the page-level values otherwise.
+// `ancestors`/`currentPageTitle` follow the same reasoning for Breadcrumb.
 
 interface BlockRenderContext {
   locale: string;
@@ -453,7 +460,10 @@ const BLOCK_REGISTRY: Record<string, BlockDispatchEntry> = {
 // untouched by this. `Object.assign` (not a `const` reassignment) since
 // `BLOCK_REGISTRY` stays a single object identity referenced by the
 // dispatch code below.
-Object.assign(BLOCK_REGISTRY, themeBlockRegistry(Object.keys(BLOCK_REGISTRY)));
+Object.assign(
+  BLOCK_REGISTRY,
+  themeBlockRegistry(Object.keys(BLOCK_REGISTRY), themeName),
+);
 
 // `Astro.slots.has('default')` non basta per un contenitore appena creato
 // vuoto: canvas-editor-shell.tsx gli assegna `children: []` (array vuoto,
@@ -497,6 +507,13 @@ const dispatchProps = entry
       ...(entry.styleOverride ? { styleOverride: block.styleOverride } : {}),
       ...(entry.locale ? { locale } : {}),
       ...(entry.containerProps ? { editable, hasChildren } : {}),
+      // docs/adr/0042 — always included, not gated by a dispatch-entry
+      // flag like styleOverride/locale above: cheap to pass to every
+      // block (a plain string already resolved once per render), and
+      // more than one block type may want it over time (NavLink/Feature
+      // do today, for icon resolution) without this table needing a new
+      // capability flag added per consumer.
+      themeName,
       ...(entry.extra ? entry.extra(context) : {}),
     }
   : {};

@@ -8,6 +8,7 @@ import { buildSchemaOrgGraph } from './schema-org';
 const baseSite: PublishedSite = {
   name: 'Il mio sito',
   domain: 'example.com',
+  themeName: 'classic',
   defaultLocale: 'it',
   enabledLocales: ['it'],
   untranslatedPageFallback: 'redirect-to-default',

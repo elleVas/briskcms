@@ -169,6 +169,7 @@ export async function resolveSiteChrome(
     site: {
       name: site.name,
       domain: site.domain,
+      themeName: site.themeName,
       defaultLocale: site.defaultLocale,
       enabledLocales: site.enabledLocales,
       untranslatedPageFallback: site.untranslatedPageFallback,

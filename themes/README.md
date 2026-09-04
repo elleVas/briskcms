@@ -7,28 +7,39 @@ a new theme (a Brisk core theme or an agency's own).
 
 ## What a theme is
 
-A directory under `themes/`, selected for a deployment via the
-`BRISK_THEME` env var (default `classic`), resolved by
-`apps/public-site/astro.config.mjs` into a `~theme` Vite alias. Only
+A directory under `themes/`. Since docs/adr/0042, every theme here
+bundles into the same `apps/public-site` image — which one a given
+site actually renders with is `Site.themeName` (DB-backed), picked live
+from editor-app's Style dialog, resolved fresh per request in
+`apps/public-site/src/lib/theme-registry.ts` and every `resolve-theme-
+*.ts` file built on it. There is no more single build-time `~theme`
+alias to point at one theme. `BRISK_THEME` still exists, but its role
+shrank to an optional, comma-separated allow-list read at **runtime** by
+`theme-registry.ts` — it restricts which of the bundled themes a given
+deployment will serve at all (an agency shipping an image whose client
+can only ever pick the agency's own theme), not which one renders for a
+given site. Every theme on disk always ends up bundled either way: a
+glob pattern has to be a static literal, so it can't be narrowed by
+config. Only
 `apps/public-site` reads the filesystem directly — apps/api has no
-concept of which theme is active, and editor-app never gets filesystem
-access to a theme package either; it learns what a theme declares only
-through the `GET /api/themes/current/*` routes apps/public-site serves
+concept of theme files, and editor-app never gets filesystem access to
+a theme package either; it learns what a theme declares only through the
+`GET /api/themes/current/*?theme=<name>` routes apps/public-site serves
 (icons, style defaults, and — since ADR-0041 — a theme's own extra
 block types).
 
 Also, since ADR-0041, every theme under here is a real Nx/pnpm package
 (`@brisk/theme-<name>`, `nx.tags: ["app"]`) — it has its own
 `package.json`/`tsconfig*.json`/`eslint.config.mjs`/`vitest.config.mts`
-and real `typecheck`/`lint`/`test` targets that run in CI, not just when
-it happens to be the active `BRISK_THEME` for a given build.
+and real `typecheck`/`lint`/`test` targets that run in CI, whether or
+not any site currently renders with it.
 
 ```
 themes/<name>/
   theme.css      # required — design tokens
   theme.json      # required — manifest
   icons/*.svg      # optional — icon set (docs/adr/0023)
-  PageLayout.astro   # optional — full layout override (not wired yet, see below)
+  PageLayout.astro   # optional — full layout override (see below)
   blocks/
     *.astro       # optional — full-file overrides of an existing core block
     *.block.ts     # optional — a genuinely NEW block type (ADR-0041), needs a matching .astro
@@ -38,8 +49,14 @@ themes/<name>/
 ## `theme.css` — the common case
 
 Design tokens only, no markup. `apps/public-site/src/layouts/PageLayout.astro`
-imports it after `../styles/global.css`, so a theme's `:root` values win
-the cascade over that file's bare fallback defaults. Every block under
+reads this file's `:root` block per request (via `theme-registry.ts`'s
+`getThemeCssRaw`) and re-emits it as an inline `<style>` with every
+declaration marked `!important`, so a theme's values win over
+`../styles/global.css`'s bare fallback defaults regardless of the order
+Astro happens to inject that stylesheet — see docs/adr/0042 and
+PageLayout.astro's own comments for why a plain `import './theme.css'`
+can't do this anymore now that the theme is chosen per request rather
+than per build. Every block under
 `apps/public-site/src/components/blocks` is meant to be restyled entirely
 by swapping these tokens — the same way shadcn/ui components are themed:
 one shared implementation, restyled via CSS custom properties, never
@@ -85,26 +102,35 @@ the _agency's_ design intent from the client themselves).
 ## Going past tokens: full-file overrides
 
 A theme that wants more than a restyle — a genuinely different `Hero`
-layout, a custom Puck block — can ship its own `blocks/Hero.astro`; it
-wins over core's own component, resolved at build time via the same
-`~theme` alias mechanism. This is an escalation on top of the token-only
-default, not the expected common case — most themes should need `theme.css`
-and `theme.json` alone.
+layout, a custom block — can ship its own `blocks/Hero.astro`; it wins
+over core's own component for any site running that theme. This is an
+escalation on top of the token-only default, not the expected common
+case — most themes should need `theme.css` and `theme.json` alone.
 
-**Wired** (2026-08-21): `~theme/blocks/<Name>.astro` overrides the matching
-core component, resolved via `import.meta.glob('~theme/blocks/*.astro')`
-in `apps/public-site/src/lib/resolve-theme-block-override.ts`, called once
-per block import in `BlockRenderer.astro` — a theme that ships nothing
-there falls back to core with zero error (`import.meta.glob` against an
-empty/missing directory just matches nothing). A full page-shell override
-works the same way one level up: ship `~theme/PageLayout.astro` at the
-theme's own root (next to `theme.css`/`theme.json`, not inside `blocks/`)
-and it replaces `apps/public-site/src/layouts/PageLayout.astro` wholesale
-— resolved in `resolve-theme-layout-override.ts`, wired into both of
-PageLayout's two importers (`PublicPageContent.astro`,
-`pages/[locale]/search.astro`). `classic` still ships neither — it only
-ever needed tokens — so this remains unexercised by any real theme today,
-but the resolution mechanism itself is no longer aspirational.
+**Wired** (2026-08-21, made per-theme by docs/adr/0042):
+`blocks/<Name>.astro` overrides the matching core component. Every
+bundled theme's overrides are globbed together once
+(`import.meta.glob('.../themes/*/blocks/*.astro')` in
+`apps/public-site/src/lib/resolve-theme-block-override.ts`) and looked up
+by `(themeName, blockType)` per render, from `BlockRenderer.astro`'s own
+`site.themeName` — a theme that ships nothing there falls back to core
+with zero error (a glob matching nothing is just an empty map, and an
+unknown theme name falls back to a bundled one rather than rendering
+blank). A full page-shell override works the same way one level up: ship
+`PageLayout.astro` at the theme's own root (next to
+`theme.css`/`theme.json`, not inside `blocks/`) and it replaces
+`apps/public-site/src/layouts/PageLayout.astro` wholesale for that theme
+— resolved in `resolve-theme-layout-override.ts`, wired into all three
+of PageLayout's importers (`PublicPageContent.astro`,
+`pages/[locale]/search.astro`, `pages/500.astro`). `docs-showcase` ships
+a real one (a docs sidebar); `classic` ships neither, needing only
+tokens.
+
+Note for a full `PageLayout.astro` override: it only ever renders for
+the theme it lives in, so it can import its own `./theme.css` directly
+and skip core's per-request token resolution — but that also means it
+won't automatically pick up changes made to core's own PageLayout later.
+It is a copy, and stays one.
 
 ## Adding a genuinely new block type (ADR-0041)
 
@@ -144,7 +170,9 @@ automatically whenever that dependency is bumped. See
 editor-app's icon picker never reads this directory directly (it can't —
 separate app, no filesystem access to a theme package at runtime); it
 fetches the resolved manifest from `GET /api/themes/current/icons`
-instead.
+instead. That route (like its four siblings) takes an optional
+`?theme=<name>` since docs/adr/0042 — without it, it answers for a
+fallback theme rather than erroring.
 
 ## The boundary you can't cross
 
@@ -170,9 +198,12 @@ block types with shapes of their own.
    `--font-sans-value` included.
 4. Decide `allowStyleOverrides` in `theme.json` — `true` unless you have
    a specific reason (see above) to lock it down.
-5. Set `BRISK_THEME=<name>` and restart `apps/public-site`'s dev server —
-   `astro.config.mjs` changes require a full restart, not just a file
-   save (Vite doesn't hot-reload alias config).
+5. Restart `apps/public-site`'s dev server once — a brand-new directory
+   under `themes/` is only picked up when the eager globs re-evaluate at
+   process start, not on a file save. After that, point a site at it by
+   picking it in editor-app's Style dialog ("Tema"), which writes
+   `Site.themeName`; switching between already-bundled themes needs
+   nothing but a page reload (docs/adr/0042).
 6. Verify live in a browser, not just `astro check` — see docs/adr/0021's
    Consequences for two real bugs (a CSS cascade surprise and a font-token
    naming trap) that only static checks missed.

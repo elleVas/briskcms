@@ -9,6 +9,7 @@ import {
   DialogTitle,
 } from '../components/ui/dialog';
 import { themeIconsQueryOptions } from './theme-icons-queries';
+import { useActiveThemeName } from './use-active-theme-name';
 
 export interface IconPickerDialogProps {
   open: boolean;
@@ -34,7 +35,7 @@ export function IconPickerDialog({
   // appena il provider monta, sia per la prima apertura del dialog sia
   // per l'anteprima sincrona che IconPickerField mostra per un'icona già
   // scelta — vedi IconListProvider.
-  const { data } = useQuery(themeIconsQueryOptions());
+  const { data } = useQuery(themeIconsQueryOptions(useActiveThemeName()));
 
   const filtered = useMemo(() => {
     if (!data) return [];

@@ -108,8 +108,6 @@ services:
     build:
       context: .
       dockerfile: apps/public-site/Dockerfile
-      args:
-        BRISK_THEME: ${BRISK_THEME:-classic}
     restart: unless-stopped
     env_file: ${ENV_FILE:-.env}
     environment:

@@ -57,13 +57,20 @@ routing, or you already have your own reverse proxy, you can replace
 
 ## Choosing a theme
 
-`BRISK_THEME` in `.env` picks which bundled theme (`themes/classic`,
-`themes/docs-showcase`, ...) `public-site` renders — see
-[docs/adr/0042](adr/0042-self-hosting-distribution-and-runtime-theme-selection.md).
-Changing it means rebuilding that one image:
+Every bundled theme (`themes/classic`, `themes/docs-showcase`, ...) ships
+in the `public-site` image by default — pick which one your site actually
+uses live, from editor-app's Style dialog ("Tema"), no rebuild needed.
+See [docs/adr/0042](adr/0042-self-hosting-distribution-and-runtime-theme-selection.md).
+
+`BRISK_THEME` in `.env` is a separate, optional knob: a comma-separated
+allow-list (`BRISK_THEME=classic`) restricting which of the bundled
+themes this deployment will serve at all — what an agency sets so its
+client can only ever pick the agency's own theme. Leave it unset to keep
+every bundled theme selectable. It's read at runtime, so changing it
+needs a restart, not a rebuild:
 
 ```sh
-docker compose -f docker-compose.prod.yml up -d --build public-site
+docker compose -f docker-compose.prod.yml up -d public-site
 ```
 
 ## Backups

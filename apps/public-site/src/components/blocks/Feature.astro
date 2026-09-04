@@ -6,11 +6,14 @@ import {
 } from '@brisk/shared-types';
 import { resolveIconSvg } from '../../lib/resolve-theme-icons';
 
-type Props = FeatureProps & { styleOverride?: BlockStyleOverride };
+type Props = FeatureProps & {
+  styleOverride?: BlockStyleOverride;
+  themeName: string;
+};
 
-const { icon, title, text, styleOverride } = Astro.props;
+const { icon, title, text, styleOverride, themeName } = Astro.props;
 const instanceStyle = buildBlockInstanceStyle(styleOverride);
-const iconSvg = resolveIconSvg(icon);
+const iconSvg = resolveIconSvg(icon, themeName);
 ---
 
 <div class="brisk-feature" style={instanceStyle}>

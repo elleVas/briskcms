@@ -22,15 +22,9 @@ import { localeDirection, localePath } from '../lib/locale-path';
 import { buildSchemaOrgGraph } from '../lib/schema-org';
 import { resolveThemeFont } from '../lib/theme-font';
 import { Translator } from '../lib/i18n';
+import { parseRootCustomProperties } from '../lib/resolve-theme-block-style-defaults-helpers';
+import { getThemeCssRaw, getThemeManifest } from '../lib/theme-registry';
 import '../styles/global.css';
-// ~theme resolves to themes/<BRISK_THEME>/theme.css (docs/adr/0021,
-// astro.config.mjs) — imported after global.css so its :root tokens win
-// the cascade over that file's bare fallback defaults.
-import '~theme/theme.css';
-// The theme's own manifest — see themeManifest.allowStyleOverrides below
-// for why this exists (docs/adr/0021's later amendment: the theme, not the
-// site, has final say over whether Tier 1 is even allowed to apply).
-import themeManifest from '~theme/theme.json';
 import '../styles/visibility.css';
 
 interface Props {
@@ -58,6 +52,13 @@ const {
 	ancestors,
 	editable,
 } = Astro.props;
+// docs/adr/0042 — every theme ships in the same image now; `site.themeName`
+// (Tier 2, DB-backed) picks which one this request renders, resolved
+// fresh per request instead of a single build-time `~theme` alias.
+const themeManifest = getThemeManifest(site.themeName);
+const themeBaseTokens = parseRootCustomProperties(
+	getThemeCssRaw(site.themeName),
+);
 const i18n = new Translator(locale);
 // The default locale's translation, if published, doubles as the
 // x-default alternate (docs/adr/0017) — the version search engines should
@@ -81,8 +82,8 @@ const schemaOrgGraph = buildSchemaOrgGraph({ site, seoMeta, pageUrl });
 const schemaOrgJson = JSON.stringify(schemaOrgGraph).replace(/</g, '\\u003c');
 
 // Tier 1 of docs/adr/0021's theming model — layered on top of the active
-// filesystem theme (Tier 2, imported above) via a plain <style> block, but
-// only when BOTH gates allow it:
+// filesystem theme (Tier 2, resolved above from site.themeName) via a
+// plain <style> block, but only when BOTH gates allow it:
 //   1. `themeManifest.allowStyleOverrides` (theme.json) — the theme
 //      author's own ceiling, defaults to true if the field is missing. A
 //      bespoke agency theme can set this to false so *no* site can ever
@@ -96,15 +97,20 @@ const schemaOrgJson = JSON.stringify(schemaOrgGraph).replace(/</g, '\\u003c');
 //
 // Every declaration below is !important, found necessary by testing this
 // live rather than assumed: Astro's dev server injects `import '*.css'`
-// side-effect styles (global.css, ~theme/theme.css) as their own <style
-// data-vite-dev-id> tags positioned *after* this component's own inline
-// markup in the rendered HTML, regardless of where those imports appear in
-// the frontmatter above — so a same-specificity `:root { --font-sans-value:
-// ... }` here would silently lose to the theme's own `:root` rule despite
+// side-effect styles (global.css) as their own <style data-vite-dev-id>
+// tag positioned *after* this component's own inline markup in the
+// rendered HTML, regardless of where that import appears in the
+// frontmatter above — so a same-specificity `:root { --font-sans-value:
+// ... }` here would silently lose to global.css's bare fallback despite
 // looking earlier in the source. !important is the explicit, order-
-// independent way to say "Tier 1 wins over Tier 2's own default when both
-// gates allow it", which is the whole point of this block when active, not
-// a specificity workaround.
+// independent way to say "this wins over global.css's fallback", which is
+// the whole point of this block when active, not a specificity
+// workaround. The same reasoning is why Tier 2's own base tokens
+// (themeBaseTokenDeclarations below) get the identical !important
+// treatment now that they're emitted as an inline <style> instead of a
+// second static CSS import (docs/adr/0042 — a per-request `site.themeName`
+// can't be a static `import` target, Vite only resolves those once at
+// build time).
 // `theme` below is the *effective* Tier 1 settings for this render: every
 // field forced to its "not set" value when either gate disallows
 // overrides, rather than checking both gates at each usage site further
@@ -151,6 +157,12 @@ const themeOverrideDeclarations = [
 ]
 	.filter(Boolean)
 	.join(' ');
+// The active theme's own :root tokens (Tier 2) — see the comment above
+// `allowStyleOverrides` for why this needs !important now instead of
+// relying on source order like a static CSS import could.
+const themeBaseTokenDeclarations = [...themeBaseTokens.entries()]
+	.map(([name, value]) => `${name}: ${value} !important;`)
+	.join(' ');
 // Override "a livello di componente" (docs/adr/0022) — una regola CSS per
 // tipo di blocco stilizzato, non un `:root` unico come sopra: ogni tipo
 // ha il proprio scoping via `[data-brisk-block-type]`, così solo i
@@ -163,6 +175,11 @@ const blockStyleOverridesCss = buildBlockStyleOverridesCss(
 <html lang={locale} dir={localeDirection(locale)}>
 	<head>
 		<meta charset="utf-8" />
+		{
+			themeBaseTokenDeclarations && (
+				<style set:html={`:root { ${themeBaseTokenDeclarations} }`} />
+			)
+		}
 		{
 			theme.faviconUrl ? (
 				<link rel="icon" href={theme.faviconUrl} />

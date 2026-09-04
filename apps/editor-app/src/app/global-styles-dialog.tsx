@@ -117,13 +117,19 @@ export function GlobalStylesDialog({
 }: GlobalStylesDialogProps) {
   const { t, tLabel } = useTranslation();
   const { data: site } = useQuery(siteQueryOptions(siteId));
+  // Il tema del sito che questo dialog sta editando, non quello di
+  // default dell'app: i token/default mostrati devono essere quelli che
+  // il visitatore vedrà davvero (docs/adr/0042).
+  const activeThemeName = site?.themeName ?? '';
   const { data: blockStyleDefaults } = useQuery(
-    blockStyleDefaultsQueryOptions(),
+    blockStyleDefaultsQueryOptions(activeThemeName),
   );
   const { data: foregroundTokens } = useQuery(
-    themeForegroundTokensQueryOptions(),
+    themeForegroundTokensQueryOptions(activeThemeName),
   );
-  const { data: baseTokens } = useQuery(themeBaseTokensQueryOptions());
+  const { data: baseTokens } = useQuery(
+    themeBaseTokensQueryOptions(activeThemeName),
+  );
   const { data: availableThemes } = useQuery(availableThemesQueryOptions());
   const { updateThemeSettings, isSaving } = useSiteThemeSettings(siteId);
   const { updateThemePackage, isSaving: isSavingThemePackage } =

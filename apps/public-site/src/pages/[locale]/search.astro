@@ -9,7 +9,6 @@ import { Translator } from '../../lib/i18n';
 import { buildContentSecurityPolicy } from '../../lib/content-security-policy';
 import PageLayoutCore from '../../layouts/PageLayout.astro';
 import { resolveThemeLayoutOverride } from '../../lib/resolve-theme-layout-override';
-const PageLayout = resolveThemeLayoutOverride(PageLayoutCore);
 import ErrorPageShell from '../../components/ErrorPageShell.astro';
 import NotFound from '../../components/NotFound.astro';
 
@@ -31,6 +30,12 @@ const chrome = locale
 if (!chrome) {
   Astro.response.status = 404;
 }
+
+// docs/adr/0042 — see PublicPageContent.astro's own comment on the same pattern.
+const PageLayout = resolveThemeLayoutOverride(
+  PageLayoutCore,
+  chrome?.site.themeName ?? '',
+);
 
 // ADR-0031: this site's own admin-managed tracker whitelist, on top of the
 // hardcoded default (see content-security-policy.ts).

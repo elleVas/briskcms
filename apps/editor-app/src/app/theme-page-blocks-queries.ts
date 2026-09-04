@@ -5,8 +5,9 @@ import { fetchThemePageBlocks } from '../lib/theme-api-client';
 
 /**
  * Docs/adr/0041 — same `staleTime: Infinity` posture as the other
- * theme-* queries (a theme's own blocks don't change at runtime,
- * `BRISK_THEME` is build-time-only, docs/adr/0021). This queryFn also
+ * theme-* queries (a given theme's own blocks don't change at runtime;
+ * since docs/adr/0042 `themeName` is part of the key, so switching a
+ * site's theme refetches instead of reusing the old theme's). This queryFn also
  * does the one thing every sibling query doesn't need: merge each
  * entry's `locales` fragment into i18next itself, `deep`+`overwrite`
  * (i18next's own params for this) so it layers over — never clobbers —
@@ -34,14 +35,15 @@ function registerThemeBlockLocales(entries: ThemeBlockEntry[]): void {
   }
 }
 
-export function themePageBlocksQueryOptions() {
+export function themePageBlocksQueryOptions(themeName: string) {
   return queryOptions({
-    queryKey: ['theme-page-blocks'] as const,
+    queryKey: ['theme-page-blocks', themeName] as const,
     queryFn: async () => {
-      const entries = await fetchThemePageBlocks();
+      const entries = await fetchThemePageBlocks(themeName);
       registerThemeBlockLocales(entries);
       return entries;
     },
+    enabled: themeName !== '',
     staleTime: Infinity,
   });
 }

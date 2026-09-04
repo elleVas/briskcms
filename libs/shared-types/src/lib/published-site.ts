@@ -16,6 +16,8 @@ import { themeTokensSchema } from './site-theme-tokens';
 export const publishedSiteSchema = businessInfoSchema.extend({
   name: z.string(),
   domain: z.string().nullable(),
+  /** Tier 2 selection (docs/adr/0021/0042) — which bundled filesystem theme apps/public-site renders this site with. */
+  themeName: z.string(),
   defaultLocale: z.string(),
   enabledLocales: z.array(z.string()),
   untranslatedPageFallback: untranslatedPageFallbackSchema,

@@ -1,21 +1,25 @@
 // @ts-check
-import { fileURLToPath } from 'node:url';
 import { defineConfig } from 'astro/config';
 import node from '@astrojs/node';
 import react from '@astrojs/react';
 import tailwindcss from '@tailwindcss/vite';
 
-// Tier 2 of docs/adr/0021's theming model: which filesystem theme package
-// (../../themes/<name>) this build resolves `~theme/*` imports to. Build-
-// time only, by design (never read per-request) — the Docker image is the
-// unit of distribution, so changing a site's theme means a rebuild, the
-// same cost as every other deployment-level config in this product. Not a
-// gap: docs/adr/0032 confirms the deployment unit is one container per
-// site, so a container never needs to pick a theme per request.
-const themeName = process.env.BRISK_THEME || 'classic';
-const themeDir = fileURLToPath(
-  new URL(`../../themes/${themeName}/`, import.meta.url),
-);
+// docs/adr/0021's original two-tier theming model paired Tier 2 (which
+// filesystem theme package) with a single build-time `~theme` Vite alias,
+// on the assumption (then correct, per ADR-0032's "one container per
+// site") that a container never needs to pick a theme per request. That
+// assumption is amended by docs/adr/0042: every theme under themes/*
+// bundles into this same image, and `Site.themeName` (DB-backed) picks
+// which one a given request renders — see theme-registry.ts and every
+// resolve-theme-*.ts file, which glob `../../../../themes/*/...` (every
+// bundled theme) instead of a single aliased directory. `BRISK_THEME`
+// still exists, but only as an optional, comma-separated allow-list read
+// by apps/public-site/Dockerfile *before* this build runs (pruning
+// themes/ on disk, since import.meta.glob's pattern must be a static
+// literal — it can't itself read an env var) — this file no longer needs
+// to know about it at all. The deployment unit is still one container
+// per site, unchanged (docs/adr/0032's own 2026-09-02 amendment); only
+// *which theme* that one site uses is no longer fixed at image build.
 
 // https://astro.build/config
 export default defineConfig({
@@ -86,11 +90,6 @@ export default defineConfig({
         },
       },
     ],
-    resolve: {
-      alias: {
-        '~theme': themeDir,
-      },
-    },
     server: {
       // Il dev server di Vite intercetta ogni preflight OPTIONS con la
       // propria risposta CORS generica, prima ancora che raggiunga la

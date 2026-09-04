@@ -2,6 +2,7 @@ import { useCallback, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { IconListContext, type IconListPort } from '@brisk/block-registry';
 import { themeIconsQueryOptions } from './theme-icons-queries';
+import { useActiveThemeName } from './use-active-theme-name';
 import { IconPickerDialog } from './icon-picker-dialog';
 
 export interface IconListProviderProps {
@@ -17,7 +18,7 @@ export interface IconListProviderProps {
  * round trip.
  */
 export function IconListProvider({ children }: IconListProviderProps) {
-  const { data } = useQuery(themeIconsQueryOptions());
+  const { data } = useQuery(themeIconsQueryOptions(useActiveThemeName()));
   const [open, setOpen] = useState(false);
   const resolveRef = useRef<((value: string | null) => void) | null>(null);
 

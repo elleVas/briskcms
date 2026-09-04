@@ -58,7 +58,7 @@ export function StyleView({ siteId, site }: StyleViewProps) {
   const { t } = useTranslation();
   const { updateThemeSettings, isSaving } = useSiteThemeSettings(siteId);
   const { data: foregroundTokens } = useQuery(
-    themeForegroundTokensQueryOptions(),
+    themeForegroundTokensQueryOptions(site.themeName),
   );
 
   const initialFont = initialFontState(site.themeFontFamily);
