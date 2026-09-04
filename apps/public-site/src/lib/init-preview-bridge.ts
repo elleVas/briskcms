@@ -39,20 +39,20 @@ function postToParent(
 }
 
 /**
- * Montato solo dalle rotte di preview (PageLayout.astro, quando
- * editable=true) — mai sulla rotta pubblicata reale. `targetOrigin` viene da
- * `<body data-brisk-editor-app-url>` (impostato server-side dalla stessa env
- * var usata per l'header CSP frame-ancestors della rotta), mai da
- * `event.origin` in entrata: questo file per ora invia soltanto, non riceve
- * (i messaggi genitore -> iframe arrivano dal Giorno 3 in poi e dovranno
- * verificare `event.origin` a loro volta).
+ * Mounted only by the preview routes (PageLayout.astro, when editable=true)
+ * — never on the real published route. `targetOrigin` comes from
+ * `<body data-brisk-editor-app-url>` (set server-side from the same env var
+ * used for the route's CSP frame-ancestors header), never from an incoming
+ * `event.origin`: this file only sends for now, it does not receive (parent
+ * -> iframe messages arrive from Day 3 onwards and will have to check
+ * `event.origin` themselves).
  *
- * L'orchestratore vero e proprio — i predicati/le funzioni pure di parsing e
- * patch DOM (usate anche qui) vivono in preview-bridge-client.ts, separate
- * apposta per essere testabili senza dover montare l'intero bridge (vedi
- * preview-bridge-client.spec.ts, che le testa una per una, contro
- * init-preview-bridge.spec.ts che testa invece questa funzione come
- * orchestratore/integrazione).
+ * The orchestrator proper — the predicates and the pure parsing/DOM-patching
+ * functions (used here too) live in preview-bridge-client.ts, kept separate
+ * so they can be tested without mounting the whole bridge (see
+ * preview-bridge-client.spec.ts, which tests them one by one, against
+ * init-preview-bridge.spec.ts, which tests this function as an
+ * orchestrator/integration instead).
  */
 export function initPreviewBridge(): void {
   const editorAppUrl = document.body.dataset['briskEditorAppUrl'];
@@ -74,12 +74,11 @@ export function initPreviewBridge(): void {
     element: HTMLElement;
   } | null = null;
 
-  // Stato del drag simulato lato genitore (Giorno 3/4) — vedi
-  // PreviewDragStartMessage per il perché non è un vero drag HTML5.
-  // `pendingDrag` copre la finestra tra mousedown e la soglia di movimento:
-  // un click semplice (mousedown+mouseup senza muovere abbastanza) non deve
-  // MAI diventare un drag, altrimenti la normale selezione via click si
-  // romperebbe.
+  // The state of the drag simulated on the parent side (Day 3/4) — see
+  // PreviewDragStartMessage for why it is not a real HTML5 drag.
+  // `pendingDrag` covers the window between mousedown and the movement
+  // threshold: a plain click (mousedown+mouseup without moving far enough)
+  // must NEVER become a drag, or ordinary click selection would break.
   const DRAG_START_THRESHOLD_PX = 4;
   let pendingDrag: { blockId: string; startX: number; startY: number } | null =
     null;
@@ -87,12 +86,11 @@ export function initPreviewBridge(): void {
   let dragMoveRaf: number | null = null;
   let latestDragPointer: { x: number; y: number } | null = null;
 
-  // Smonta l'istanza TipTap corrente, se c'è — su blur, Escape, o quando il
-  // genitore chiede di entrare in editing di un altro field. Un solo field
-  // alla volta è montato, mai due contemporaneamente. Il testo finale
-  // digitato resta visibile (diventa di nuovo un nodo statico) — nessuna
-  // patch a frammento serve per il testo, il DOM mostra già dal vivo
-  // quello che l'editor ha digitato.
+  // Unmounts the current TipTap instance, if there is one — on blur, on
+  // Escape, or when the parent asks to start editing another field. Only
+  // one field is mounted at a time, never two at once. The final text typed
+  // stays visible (it becomes a static node again) — no fragment patch is
+  // needed for text, the DOM already shows live what the editor typed.
   function exitTextEdit(): void {
     if (!activeTextEditor) {
       return;
@@ -104,23 +102,23 @@ export function initPreviewBridge(): void {
     activeTextEditor = null;
   }
 
-  // Monta TipTap "sul posto" sul nodo `data-brisk-field` — prende possesso
-  // della sua reconciliazione, fix strutturale del bug del cursore di Puck
-  // (Giorno 3/4 del piano): nessun re-render React guida più quel nodo.
-  // Vincolato a Document/Paragraph/Text (un singolo paragrafo, niente
-  // marks): ogni field inlineEditable è un `z.string()` semplice a livello
-  // di dominio, mai HTML — vedi PreviewTextChangedMessage.
+  // Mounts TipTap "in place" on the `data-brisk-field` node — it takes
+  // ownership of that node's reconciliation, a structural fix for Puck's
+  // caret bug (Day 3/4 of the plan): no React re-render drives that node any
+  // more. Constrained to Document/Paragraph/Text (a single paragraph, no
+  // marks): every inlineEditable field is a plain `z.string()` at the domain
+  // level, never HTML — see PreviewTextChangedMessage.
   function enterTextEdit(blockId: string, field: string): void {
     exitTextEdit();
     const element = findFieldElement(document, blockId, field);
     if (!element) {
       return;
     }
-    // TipTap non sostituisce il contenuto esistente da solo — monta il
-    // proprio DOM gestito da ProseMirror COME FIGLIO del nodo, accanto al
-    // testo statico già renderizzato da Astro, se non viene svuotato
-    // prima. Verificato dal vivo: senza questa riga il testo appariva
-    // duplicato (statico + ProseMirror insieme).
+    // TipTap does not replace the existing content by itself — it mounts
+    // its own ProseMirror-managed DOM AS A CHILD of the node, next to the
+    // static text Astro already rendered, unless that is emptied first.
+    // Verified live: without this line the text appeared duplicated (static
+    // plus ProseMirror together).
     const initialText = element.textContent ?? '';
     element.innerHTML = '';
     const editor = new Editor({
@@ -189,9 +187,9 @@ export function initPreviewBridge(): void {
     true,
   );
 
-  // Capture-phase, sempre attivo in edit mode: senza, il primo click su un
-  // <a>/<button>/<form>/<details> reale navigherebbe via l'iframe,
-  // uccidendo la sessione di editing — vedi il piano, Giorno 2.
+  // Capture-phase, always on in edit mode: without it, the first click on a
+  // real <a>/<button>/<form>/<details> would navigate the iframe away,
+  // killing the editing session — see the plan, Day 2.
   document.addEventListener(
     'click',
     (event) => {
@@ -212,9 +210,9 @@ export function initPreviewBridge(): void {
   );
   document.addEventListener('submit', (event) => event.preventDefault(), true);
 
-  // Trigger per entrare in editing testo inline (Giorno 4) — la navigazione
-  // reale su un doppio click è già bloccata dall'handler `click` sopra
-  // (ogni click che compone il doppio click passa comunque da lì).
+  // The trigger for entering inline text editing (Day 4) — real navigation
+  // on a double click is already blocked by the `click` handler above (each
+  // click making up the double click still goes through it).
   document.addEventListener(
     'dblclick',
     (event) => {
@@ -239,11 +237,11 @@ export function initPreviewBridge(): void {
     true,
   );
 
-  // Riordino diretto sul canvas (Giorno 3/4) — mousedown apre solo
-  // un'INTENZIONE di drag (`pendingDrag`), mai un drag vero e proprio subito:
-  // un mousedown+mouseup senza spostarsi abbastanza deve restare un click
-  // normale (selezione), non un drag. Capture-phase, stessa ragione di
-  // click/dblclick sopra.
+  // Direct reordering on the canvas (Day 3/4) — mousedown only opens an
+  // INTENT to drag (`pendingDrag`), never a real drag straight away: a
+  // mousedown+mouseup without moving far enough has to stay an ordinary
+  // click (selection), not a drag. Capture-phase, for the same reason as
+  // click/dblclick above.
   document.addEventListener(
     'mousedown',
     (event) => {
@@ -283,10 +281,10 @@ export function initPreviewBridge(): void {
           return;
         }
         isDragging = true;
-        // Impedisce la selezione di testo nativa mentre si trascina — un
-        // vero drag HTML5 non serve (vedi sopra), ma il browser selezionerebbe
-        // comunque il testo sotto il puntatore durante un mousemove tenuto
-        // premuto se non intercettato qui.
+        // Prevents native text selection while dragging — a real HTML5 drag
+        // is not needed (see above), but the browser would still select the
+        // text under the pointer during a held-down mousemove if it were not
+        // intercepted here.
         event.preventDefault();
         postToParent(targetOrigin, {
           type: 'preview:drag-start',
@@ -330,10 +328,10 @@ export function initPreviewBridge(): void {
     }
   });
 
-  // Genitore -> iframe: editor:patch-block (Giorno 3), editor:enter/exit-text-edit
-  // (Giorno 4). Stessa verifica dell'origine del lato genitore
-  // (use-preview-bridge.ts) — un postMessage con l'envelope giusto ma da
-  // un'origine diversa va ignorato.
+  // Parent -> iframe: editor:patch-block (Day 3), editor:enter/exit-text-edit
+  // (Day 4). The same origin check as the parent side
+  // (use-preview-bridge.ts) — a postMessage with the right envelope but from
+  // a different origin is ignored.
   window.addEventListener('message', (event) => {
     if (event.origin !== targetOrigin) {
       return;

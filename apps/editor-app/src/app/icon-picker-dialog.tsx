@@ -30,11 +30,11 @@ export function IconPickerDialog({
 }: IconPickerDialogProps) {
   const { t } = useTranslation();
   const [search, setSearch] = useState('');
-  // Non gated su `open` (a differenza di Page/MediaPickerDialog): il tema
-  // attivo non cambia mai a runtime, quindi conviene precaricarla non
-  // appena il provider monta, sia per la prima apertura del dialog sia
-  // per l'anteprima sincrona che IconPickerField mostra per un'icona già
-  // scelta — vedi IconListProvider.
+  // Not gated on `open` (unlike Page/MediaPickerDialog): the active theme
+  // never changes at runtime, so it is worth preloading as soon as the
+  // provider mounts, both for the dialog's first opening and for the
+  // synchronous preview IconPickerField shows for an already-chosen icon —
+  // see IconListProvider.
   const { data } = useQuery(themeIconsQueryOptions(useActiveThemeName()));
 
   const filtered = useMemo(() => {

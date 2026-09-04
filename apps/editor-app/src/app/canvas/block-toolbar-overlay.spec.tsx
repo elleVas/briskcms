@@ -7,10 +7,10 @@ import type { BlockDescriptor } from '@brisk/block-registry';
 import { createTestQueryClient } from '../../test-query-client';
 import { BlockToolbarOverlay } from './block-toolbar-overlay';
 
-// Nessun default risolto in questi test — non è il loro oggetto, e senza
-// mock la query farebbe una vera fetch di rete (comportamento non
-// deterministico). Vuoto = i campi mostrano il valore/placeholder com'era
-// prima di docs/adr/0022's follow-up sul pre-fill.
+// No resolved defaults in these tests — they are not what these tests are
+// about, and without a mock the query would make a real network fetch
+// (non-deterministic behaviour). Empty = the fields show the
+// value/placeholder as it was before docs/adr/0022's pre-fill follow-up.
 vi.mock('../../lib/theme-api-client', () => ({
   fetchBlockStyleDefaults: vi.fn().mockResolvedValue({}),
   fetchThemeIcons: vi.fn().mockResolvedValue([]),

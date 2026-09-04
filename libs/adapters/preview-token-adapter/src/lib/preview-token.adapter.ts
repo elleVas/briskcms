@@ -14,26 +14,26 @@ function sign(payloadB64: string, secret: string): string {
 }
 
 /**
- * Stateless, non-consumante per costruzione: nessuna riga da persistere o
- * ripulire (era `content_preview_tokens`, la tabella a crescita più rapida
- * delle tre trovate dalla review 2026-08-24, senza alcun meccanismo di
- * pulizia). Il token stesso porta (tenantId, contentType, contentId,
- * expiresAt) più una firma HMAC — validare significa solo ricalcolare la
- * firma e controllare la scadenza, mai una query.
+ * Stateless and non-consuming by construction: there is no row to persist
+ * or clean up (it used to be `content_preview_tokens`, the fastest-growing
+ * of the three tables the 2026-08-24 review found, with no cleanup
+ * mechanism at all). The token itself carries (tenantId, contentType,
+ * contentId, expiresAt) plus an HMAC signature — validating means only
+ * recomputing the signature and checking the expiry, never a query.
  *
- * A differenza di sessions/verification_tokens, qui non serve né la revoca
- * anticipata (un preview link vive un'ora, solo dentro la stessa sessione
- * browser dell'editor) né il single-use (il canvas ricarica l'iframe più
- * volte con lo stesso token) — le due proprietà che invece giustificano il
- * meccanismo DB-backed di quegli altri due Port.
+ * Unlike sessions and verification_tokens, neither early revocation (a
+ * preview link lives an hour, only within the editor's own browser session)
+ * nor single use (the canvas reloads the iframe several times with the same
+ * token) is needed here — the two properties that do justify those other
+ * two Ports' DB-backed mechanism.
  *
- * Nota di sicurezza: il payload è firmato ma non cifrato — tenantId/
- * contentType/contentId restano leggibili da chi ha il token (decodificando
- * il base64url), anche se non falsificabili senza il secret. Accettabile
- * qui: tenantId non è trattato come segreto altrove in questo codebase
- * (single-tenant-per-deployment, docs/adr/0010), e chi possiede il token è
- * già, per costruzione, l'iframe autorizzato a vedere esattamente quel
- * contentId.
+ * A security note: the payload is signed but not encrypted — tenantId,
+ * contentType and contentId stay readable to anyone holding the token (by
+ * decoding the base64url), though not forgeable without the secret.
+ * Acceptable here: tenantId is not treated as a secret anywhere else in
+ * this codebase (single-tenant-per-deployment, docs/adr/0010), and whoever
+ * holds the token is already, by construction, the iframe authorized to see
+ * exactly that contentId.
  */
 export class PreviewTokenAdapter implements PreviewTokenPort {
   constructor(private readonly secret: string) {}

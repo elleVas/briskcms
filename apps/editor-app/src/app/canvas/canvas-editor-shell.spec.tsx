@@ -157,7 +157,7 @@ function dispatchFromIframe(
   window.dispatchEvent(event);
 }
 
-/** La toolbar contestuale compare solo per un blocco di cui il bridge conosce già il rect — selezionarlo in un test richiede prima un `preview:ready`/`preview:block-rects` con quel rect, non solo il click. */
+/** The contextual toolbar only appears for a block whose rect the bridge already knows — selecting one in a test requires a `preview:ready`/`preview:block-rects` carrying that rect first, not just the click. */
 function selectBlockWithRect(
   iframe: HTMLIFrameElement,
   blockId: string,
@@ -404,10 +404,10 @@ describe('CanvasEditorShell', () => {
     await getIframe();
 
     fireEvent.click(screen.getByRole('button', { name: 'Contenuto' }));
-    // Il bottone-blocco è trascinabile (block-picker.tsx) — usa Pointer
-    // Events, non un semplice click: un down+up senza movimento in mezzo è
-    // la simulazione corretta di un click normale (nessuna soglia di drag
-    // superata).
+    // The block button is draggable (block-picker.tsx) — it uses Pointer
+    // Events rather than a plain click: a down+up with no movement in
+    // between is the correct simulation of an ordinary click (no drag
+    // threshold crossed).
     const testoButton = screen.getByRole('button', { name: 'Testo' });
     fireEvent.pointerDown(testoButton, { pointerId: 1 });
     fireEvent.pointerUp(testoButton, { pointerId: 1 });
@@ -514,11 +514,12 @@ describe('CanvasEditorShell', () => {
       });
     });
 
-    // La sidebar/BlockPicker misura sempre {top:0,left:0,width:0} in questo
-    // ambiente di test (nessun layout reale in jsdom, e questo file non
-    // mocka getBoundingClientRect dell'iframe come fa invece
-    // overlay-layer.spec.tsx) — pageX 0 è quindi "dentro" al canvas per
-    // costruzione, coerente con isOverCanvas in canvas-editor-shell.tsx.
+    // The sidebar/BlockPicker always measures {top:0,left:0,width:0} in
+    // this test environment (no real layout in jsdom, and this file does
+    // not mock the iframe's getBoundingClientRect the way
+    // overlay-layer.spec.tsx does) — pageX 0 is therefore "inside" the
+    // canvas by construction, consistent with isOverCanvas in
+    // canvas-editor-shell.tsx.
     fireEvent.click(screen.getByRole('button', { name: 'Contenuto' }));
     const testoButton = screen.getByRole('button', { name: 'Testo' });
     fireEvent.pointerDown(testoButton, {
@@ -587,11 +588,11 @@ describe('CanvasEditorShell', () => {
       clientX: 0,
       clientY: 0,
     });
-    // Stesso punto (0,0) del test di inserimento a radice sopra — "dentro
-    // al canvas" per costruzione in questo ambiente di test. Il punto qui
-    // non conta per la posizione (un contenitore selezionato annida sempre
-    // in coda ai suoi figli, stessa regola di resolveInsertTarget per il
-    // click), solo per superare la soglia di 4px che avvia il drag.
+    // The same (0,0) point as the root-insert test above — "inside the
+    // canvas" by construction in this test environment. The point does not
+    // matter here for the position (a selected container always nests at
+    // the end of its children, the same rule resolveInsertTarget uses for a
+    // click), only for crossing the 4px threshold that starts the drag.
     fireEvent.pointerMove(colonnaButton, {
       pointerId: 1,
       clientX: 0,
@@ -612,12 +613,12 @@ describe('CanvasEditorShell', () => {
         }),
       ]),
     );
-    // Non "editor:insert-block" per il nuovo figlio da solo: il GENITORE
-    // (Columns) va rigenerato e ripatchato per intero via "editor:patch-block"
-    // — l'euristica di risoluzione del contenitore in preview-bridge-client.ts
-    // assumerebbe altrimenti che <slot/> sia l'unico contenuto della radice
-    // del blocco-contenitore, falsa per blocchi come Testimonials (pulsanti
-    // di navigazione + segnaposto attorno allo slot).
+    // Not "editor:insert-block" for the new child on its own: the PARENT
+    // (Columns) has to be regenerated and re-patched in full through
+    // "editor:patch-block" — otherwise the container-resolution heuristic
+    // in preview-bridge-client.ts would assume <slot/> is the sole content
+    // of the container block's root, which is false for blocks like
+    // Testimonials (navigation buttons plus a placeholder around the slot).
     await waitFor(() =>
       expect(blockFragmentApi.renderBlockFragment).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -728,8 +729,8 @@ describe('CanvasEditorShell', () => {
       clientX: 0,
       clientY: 0,
     });
-    // width dell'iframe è 0 in questo ambiente di test — qualunque clientX
-    // positivo cade quindi fuori dai suoi confini per costruzione.
+    // The iframe's width is 0 in this test environment — any positive
+    // clientX therefore falls outside its bounds by construction.
     fireEvent.pointerMove(testoButton, {
       pointerId: 1,
       clientX: 999,
@@ -1127,8 +1128,8 @@ describe('CanvasEditorShell', () => {
 
     fireEvent.keyDown(window, { key: 'z', ctrlKey: true });
 
-    // Il bottone Annulla resta abilitato: la scorciatoia non è stata presa
-    // in carico da questo listener (altrimenti lo stack sarebbe già vuoto).
+    // The Undo button stays enabled: the shortcut was not taken up by this
+    // listener (or the stack would already be empty).
     expect(
       screen.getByRole('button', { name: 'Annulla' }).hasAttribute('disabled'),
     ).toBe(false);

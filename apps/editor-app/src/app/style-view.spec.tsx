@@ -13,8 +13,8 @@ vi.mock('../lib/sites-api-client', async (importOriginal) => {
   return { ...actual, updateThemeSettings: vi.fn() };
 });
 
-// Nessun default risolto in questi test — senza mock la query farebbe una
-// vera fetch di rete (stesso motivo del mock equivalente in
+// No resolved defaults in these tests — without a mock the query would make
+// a real network fetch (the same reason as the equivalent mock in
 // global-styles-dialog.spec.tsx).
 vi.mock('../lib/theme-api-client', () => ({
   fetchThemeForegroundTokens: vi.fn().mockResolvedValue({

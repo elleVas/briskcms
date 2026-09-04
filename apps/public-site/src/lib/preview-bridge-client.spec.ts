@@ -397,7 +397,7 @@ describe('applyBlockReorder', () => {
         '<div data-brisk-block-id="b">second</div>' +
         '</div>',
     );
-    // Lo stesso nodo, solo spostato — mai clonato via innerHTML.
+    // The same node, only moved — never cloned through innerHTML.
     expect(document.querySelector('[data-brisk-block-id="a"]')).toBe(originalA);
   });
 

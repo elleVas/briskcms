@@ -19,7 +19,7 @@ interface ToastItem {
 }
 
 interface ToastContextValue {
-  /** Aggiunge un toast, si auto-chiude dopo pochi secondi (chiudibile anche a mano). Non blocca né richiede conferma — per errori che DEVONO fermare l'utente, un dialog resta la scelta giusta. */
+  /** Adds a toast, which auto-dismisses after a few seconds (and can also be closed by hand). It neither blocks nor asks for confirmation — for errors that MUST stop the user, a dialog remains the right choice. */
   toast: (message: string, variant?: ToastVariant) => void;
 }
 
@@ -28,12 +28,11 @@ const ToastContext = createContext<ToastContextValue | null>(null);
 const TOAST_DURATION_MS = 6000;
 
 /**
- * Nato dal punto 12 della review di sicurezza: salvataggi che fallivano in
- * silenzio (`.catch(() => {})` su stili globali/tipo-blocco) lasciavano
- * l'utente convinto che fosse andato tutto bene. Componente in-house, non
- * una libreria (decisione presa esplicitamente) — un caso d'uso semplice
- * (mostra messaggio, auto-dismiss, chiusura manuale) non giustifica una
- * nuova dipendenza.
+ * Born from point 12 of the security review: saves that failed silently
+ * (`.catch(() => {})` on global and block-type styles) left the user
+ * believing everything had gone through. An in-house component rather than
+ * a library (an explicit decision) — a simple use case (show a message,
+ * auto-dismiss, close by hand) does not justify a new dependency.
  */
 export function ToastProvider({ children }: { children: ReactNode }) {
   const { t } = useTranslation();
@@ -57,9 +56,9 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     <ToastContext.Provider value={{ toast }}>
       {children}
       {createPortal(
-        // role="status"/aria-live="polite": annunciato a uno screen reader
-        // senza rubare il focus, coerente con la stessa lacuna WCAG 4.1.3
-        // segnalata per Form.astro lato public-site.
+        // role="status"/aria-live="polite": announced to a screen reader
+        // without stealing focus, consistent with the same WCAG 4.1.3 gap
+        // reported for Form.astro on the public-site side.
         <div
           role="status"
           aria-live="polite"

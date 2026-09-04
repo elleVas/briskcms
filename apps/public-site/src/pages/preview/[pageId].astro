@@ -4,17 +4,16 @@ import PublicPageContent from '../../components/PublicPageContent.astro';
 import { buildContentSecurityPolicy } from '../../lib/content-security-policy';
 import { editorAppUrl } from '../../lib/editor-app-url';
 
-// SSR, mai prerenderizzata — stessa ragione di [locale]/[...slug].astro:
-// il contenuto (qui, la bozza dietro un token) non è mai noto a build time.
+// SSR, never prerendered — the same reason as [locale]/[...slug].astro: the
+// content (here, the draft behind a token) is never known at build time.
 export const prerender = false;
 
 const { pageId } = Astro.params;
 const token = Astro.url.searchParams.get('token');
-// Solo l'iframe del canvas (canvas-frame.tsx) passa questo flag — vedi il
-// commento su buildPreviewUrl() per perché: senza distinguerlo dal
-// bottone "Anteprima" standalone (che apre questa stessa rotta in una
-// scheda normale), i link della pagina restavano rotti anche fuori
-// dall'editor.
+// Only the canvas iframe (canvas-frame.tsx) passes this flag — see the
+// comment on buildPreviewUrl() for why: without distinguishing it from the
+// standalone "Preview" button (which opens this same route in an ordinary
+// tab), the page's links stayed broken even outside the editor.
 const isEmbedded = Astro.url.searchParams.get('embedded') === '1';
 
 const page =
@@ -24,9 +23,9 @@ if (!page) {
   Astro.response.status = 404;
 }
 
-// Mai indicizzabile, e imbarcabile in iframe solo dall'editor-app — questa
-// rotta esiste unicamente perché il canvas dell'editor (Giorno 2+) la
-// carica in un <iframe>, non è mai un link pubblico da seguire.
+// Never indexable, and embeddable in an iframe only by editor-app — this
+// route exists solely because the editor's canvas (Day 2 onwards) loads it
+// in an <iframe>, it is never a public link to follow.
 Astro.response.headers.set('X-Robots-Tag', 'noindex');
 Astro.response.headers.set(
   'Content-Security-Policy',

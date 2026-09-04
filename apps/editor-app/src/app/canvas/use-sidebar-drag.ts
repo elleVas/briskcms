@@ -19,7 +19,7 @@ export interface UseSidebarDragParams {
   localBlocks: Block[];
   registry: BlockDescriptor[];
   iframeGeometry: IframeGeometry;
-  /** Rect dei blocchi di primo livello, stesso array già calcolato dal chiamante per il riordino nativo sul canvas — evita di ricalcolarlo una seconda volta qui. */
+  /** The rects of top-level blocks, the same array the caller already computed for native canvas reordering — this avoids recomputing it a second time here. */
   rootRects: DropCandidateRect[];
   blockRects: {
     id: string;
@@ -28,7 +28,7 @@ export interface UseSidebarDragParams {
     width: number;
     height: number;
   }[];
-  /** Da use-block-tree-mutations.ts — stesso meccanismo di ogni altro inserimento, con un target già calcolato qui invece che da una posizione selezionata. */
+  /** From use-block-tree-mutations.ts — the same mechanism as every other insert, with a target computed here rather than from a selected position. */
   insertNewBlockAt: (
     descriptor: BlockDescriptor,
     target: BlockTreeTarget,
@@ -47,13 +47,13 @@ export interface UseSidebarDragResult {
 }
 
 /**
- * Drag di un blocco NUOVO dalla sidebar (BlockPicker) verso il canvas —
- * a differenza di `bridge.activeDrag` (riordino di un blocco già
- * esistente, tracciato dall'iframe) qui il drag nasce nel genitore
- * stesso, quindi lo stato vive qui e non nel bridge. `pointer` è
- * page-relative (coordinate native del puntatore nel documento del
- * genitore), va convertito in coordinate iframe-relative prima di
- * riusare compute-drop-target.ts (che si aspetta la stessa unità di
+ * Dragging a NEW block from the sidebar (BlockPicker) onto the canvas —
+ * unlike `bridge.activeDrag` (reordering a block that already exists,
+ * tracked by the iframe), this drag originates in the parent itself, so its
+ * state lives here rather than in the bridge. `pointer` is page-relative
+ * (the pointer's native coordinates in the parent's document) and has to be
+ * converted to iframe-relative coordinates before reusing
+ * compute-drop-target.ts (which expects the same unit as
  * bridge.blockRects).
  */
 export function useSidebarDrag({
@@ -77,18 +77,18 @@ export function useSidebarDrag({
   }
 
   /**
-   * A differenza del click-to-insert (resolveInsertTarget, basato sul
-   * blocco SELEZIONATO), un drag ha un vero punto di rilascio — usarlo per
-   * decidere il contenitore invece della selezione era il bug segnalato dal
-   * vivo: trascinare un blocco su un contenitore diverso da quello ancora
-   * selezionato in precedenza lo annidava comunque in quest'ultimo, non in
-   * quello visivamente sotto il puntatore, producendo un layout che sembrava
-   * rotto (contenuto/toolbar posizionati altrove rispetto al drop reale).
-   * `blockRects` include già ogni blocco annidato, non solo quelli di
-   * primo livello (a differenza di `rootRects`, scoped al riordino tra
-   * fratelli) — qui si filtra ai soli blocchi che il registry marca come
-   * contenitori, poi si sceglie il rect più piccolo (il contenitore più
-   * profondo) che contiene il punto.
+   * Unlike click-to-insert (resolveInsertTarget, based on the SELECTED
+   * block), a drag has a real release point — using it to decide the
+   * container instead of the selection is what fixed the bug reported from
+   * live use: dragging a block onto a container other than the one still
+   * selected previously nested it in the latter anyway, not in the one
+   * visually under the pointer, producing a layout that looked broken
+   * (content and toolbar positioned somewhere other than the real drop).
+   * `blockRects` already includes every nested block, not only top-level
+   * ones (unlike `rootRects`, which is scoped to sibling reordering) — here
+   * it is filtered down to the blocks the registry marks as containers, and
+   * then the smallest rect (the deepest container) containing the point is
+   * picked.
    */
   function handleSidebarDragEnd(
     descriptor: BlockDescriptor,

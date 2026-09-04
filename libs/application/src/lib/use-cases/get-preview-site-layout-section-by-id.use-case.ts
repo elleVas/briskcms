@@ -24,16 +24,16 @@ export interface PreviewSiteLayoutSection {
 }
 
 /**
- * L'editing draft, unauthenticated read path per header/footer (vedi il
- * piano dell'editor visuale, Giorno 1) — mostra sempre `content` (la
- * bozza), a prescindere da `status`. `kind` ('header'/'footer') è
- * `contentType` per PreviewTokenPort: si legge la riga per primo per
- * saperlo, poi si valida il token contro (kind, sectionId) — un token
- * emesso per l'header non convalida mai una richiesta sul footer, anche
- * con lo stesso id (non può succedere per costruzione: id diversi per
- * riga), ma soprattutto rifiuta un token con contentType sbagliato per
- * questo stesso id. Stessa postura "indistinguibile dal non-esistente" di
- * getPreviewPageById per qualunque fallimento.
+ * The draft-editing, unauthenticated read path for the header and footer
+ * (see the visual editor plan, Day 1) — it always shows `content` (the
+ * draft), regardless of `status`. `kind` ('header'/'footer') is
+ * `contentType` for PreviewTokenPort: the row is read first to learn it,
+ * and the token is then validated against (kind, sectionId) — a token
+ * issued for the header never validates a request for the footer, even with
+ * the same id (which cannot happen by construction: different ids per row),
+ * but above all it rejects a token with the wrong contentType for this same
+ * id. The same "indistinguishable from non-existent" posture as
+ * getPreviewPageById for any failure.
  */
 export async function getPreviewSiteLayoutSectionById(
   deps: GetPreviewSiteLayoutSectionByIdDeps,

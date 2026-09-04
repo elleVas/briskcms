@@ -6,7 +6,7 @@ export interface OverlayLayerProps {
   blockRects: BlockRect[];
   hoveredBlockId: string | null;
   selectedBlockId: string | null;
-  /** Y (iframe-relative, vedi compute-drop-target.ts) su cui disegnare la linea di drop durante un riordino diretto sul canvas — `null`/assente quando nessun drag è in corso. */
+  /** The Y (iframe-relative, see compute-drop-target.ts) at which to draw the drop line during a direct canvas reorder — `null`/absent when no drag is in progress. */
   dropIndicatorTop?: number | null;
 }
 
@@ -20,23 +20,23 @@ export interface IframeGeometry {
 const ZERO_GEOMETRY: IframeGeometry = { top: 0, left: 0, width: 0, height: 0 };
 
 /**
- * `rect` è viewport-relative DENTRO l'iframe (stesso sistema di coordinate
- * di `getBoundingClientRect()` lì dentro) — resta valido anche quando il
- * blocco è scrollato fuori dalla parte visibile dell'iframe (una pagina
- * lunga scrolla DENTRO l'iframe stesso, che ha un'altezza fissa, vedi
- * canvas-frame.tsx). Senza questo controllo, un overlay `position: fixed`
- * (bordo di selezione, indicatore di drop, o l'intera toolbar contestuale)
- * per un blocco così finiva renderizzato fuori dal riquadro del canvas,
- * sopra il resto della pagina dell'editor — bug trovato dal vivo popolando
- * un contenitore in fondo a una pagina lunga: il pulsante "Aggiungi
- * elemento" appariva staccato, lontano dal contenitore a cui apparteneva.
+ * `rect` is viewport-relative INSIDE the iframe (the same coordinate system
+ * `getBoundingClientRect()` uses in there) — it stays valid even when the
+ * block is scrolled out of the iframe's visible area (a long page scrolls
+ * INSIDE the iframe itself, which has a fixed height, see canvas-frame.tsx).
+ * Without this check, a `position: fixed` overlay (the selection border, the
+ * drop indicator, or the whole contextual toolbar) for such a block ended up
+ * rendered outside the canvas frame, on top of the rest of the editor's page
+ * — a bug found live while filling a container at the bottom of a long page:
+ * the "Add element" button appeared detached, far from the container it
+ * belonged to.
  *
- * `geometry` ancora a `ZERO_GEOMETRY` (mai misurata — al primo render,
- * prima che `useIframeGeometry` trovi l'iframe nel DOM, o in jsdom nei test
- * che non mockano `getBoundingClientRect`) è trattata come "visibilità
- * sconosciuta" e passa sempre: un falso negativo qui (nascondere la toolbar
- * quando in realtà l'iframe è a piena dimensione ma non ancora misurato)
- * sarebbe peggio del falso positivo opposto.
+ * A `geometry` still at `ZERO_GEOMETRY` (never measured — on the first
+ * render, before `useIframeGeometry` finds the iframe in the DOM, or in
+ * jsdom tests that do not mock `getBoundingClientRect`) is treated as
+ * "visibility unknown" and always passes: a false negative here (hiding the
+ * toolbar when the iframe is in fact full-size but not yet measured) would
+ * be worse than the opposite false positive.
  */
 export function isRectVisibleInIframe(
   geometry: IframeGeometry,
@@ -54,21 +54,21 @@ export function isRectVisibleInIframe(
 }
 
 /**
- * Ogni `BlockRect` arriva viewport-relative rispetto al DOCUMENTO DENTRO
- * l'iframe (stessa semantica di `getBoundingClientRect()`, vedi
- * apps/public-site/src/lib/get-block-rect.ts) — va sommato alla posizione
- * dell'iframe stesso nella pagina del genitore per disegnare l'overlay nel
- * punto giusto.
+ * Every `BlockRect` arrives viewport-relative to the DOCUMENT INSIDE the
+ * iframe (the same semantics as `getBoundingClientRect()`, see
+ * apps/public-site/src/lib/get-block-rect.ts) — it has to be added to the
+ * iframe's own position in the parent page to draw the overlay in the right
+ * place.
  */
 /**
- * `position: 'fixed'`, non `'absolute'` — l'overlay vive dentro un
- * contenitore che di per sé è già co-locato con il box dell'iframe (nessun
- * padding/margine fra i due), quindi un `absolute` sommerebbe l'offset
- * dell'iframe una seconda volta sopra quello già dato dal genitore
- * posizionato. `fixed` ignora la gerarchia degli antenati e usa
- * direttamente le coordinate viewport di `geometry`/`rect` (stessa
- * semantica di `getBoundingClientRect()`), l'unica cosa per cui la
- * traduzione qui sotto è corretta.
+ * `position: 'fixed'`, not `'absolute'` — the overlay lives inside a
+ * container that is itself already co-located with the iframe's box (no
+ * padding or margin between the two), so an `absolute` would add the
+ * iframe's offset a second time on top of the one the positioned parent
+ * already gives. `fixed` ignores the ancestor hierarchy and uses
+ * `geometry`/`rect`'s viewport coordinates directly (the same semantics as
+ * `getBoundingClientRect()`), which is the only thing that makes the
+ * translation below correct.
  */
 export function toOverlayStyle(
   geometry: IframeGeometry,
@@ -83,7 +83,7 @@ export function toOverlayStyle(
   };
 }
 
-/** Stessa traduzione di `toOverlayStyle` ma per una linea orizzontale a tutta larghezza dell'iframe invece di un box — l'indicatore di drop del riordino diretto sul canvas. */
+/** The same translation as `toOverlayStyle` but for a horizontal line spanning the iframe's full width rather than a box — the drop indicator for direct canvas reordering. */
 export function toDropIndicatorStyle(
   geometry: IframeGeometry,
   top: number,
@@ -98,24 +98,24 @@ export function toDropIndicatorStyle(
 }
 
 /**
- * Le quattro funzioni sotto sono di `block-toolbar-overlay.tsx` (la
- * toolbar contestuale del blocco selezionato) — spostate qui perché sono
- * pure e fanno esattamente lo stesso genere di traduzione
- * geometry+rect->CSSProperties di `toOverlayStyle`/`toDropIndicatorStyle`
- * sopra, non perché appartengano concettualmente a "OverlayLayer": stesso
- * co-locamento "matematica di posizionamento pura accanto a
- * useIframeGeometry", non un'invenzione nuova per queste quattro.
+ * The four functions below come from `block-toolbar-overlay.tsx` (the
+ * selected block's contextual toolbar) — moved here because they are pure
+ * and do exactly the same kind of geometry+rect->CSSProperties translation
+ * as `toOverlayStyle`/`toDropIndicatorStyle` above, not because they
+ * conceptually belong to "OverlayLayer": the same "pure positioning maths
+ * next to useIframeGeometry" co-location, not a new invention for these
+ * four.
  */
 
 /**
- * `position: 'fixed'` — la toolbar vive dentro un contenitore
- * (canvas-editor-shell.tsx) che di per sé è già co-locato con il box
- * dell'iframe, quindi un `absolute` sommerebbe l'offset dell'iframe una
- * seconda volta sopra quello già dato dal genitore posizionato. `fixed`
- * ignora la gerarchia degli antenati e usa direttamente le coordinate
- * viewport di `geometry`/`rect` (stessa semantica di
- * `getBoundingClientRect()`, vedi `useIframeGeometry`), l'unica cosa per
- * cui questa traduzione è corretta.
+ * `position: 'fixed'` — the toolbar lives inside a container
+ * (canvas-editor-shell.tsx) that is itself already co-located with the
+ * iframe's box, so an `absolute` would add the iframe's offset a second
+ * time on top of the one the positioned parent already gives. `fixed`
+ * ignores the ancestor hierarchy and uses `geometry`/`rect`'s viewport
+ * coordinates directly (the same semantics as `getBoundingClientRect()`,
+ * see `useIframeGeometry`), which is the only thing that makes this
+ * translation correct.
  */
 export function toPillStyle(
   geometry: IframeGeometry,
@@ -128,15 +128,15 @@ export function toPillStyle(
   };
 }
 
-/** Larghezza approssimata della colonna di icone (28px bottone + padding/bordo) — serve solo a decidere se c'è spazio a destra del blocco, non per il layout reale. */
+/** An approximate width for the icon column (a 28px button plus padding/border) — used only to decide whether there is room to the right of the block, never for real layout. */
 const TOOLBAR_WIDTH_PX = 40;
 const TOOLBAR_GAP_PX = 8;
 
 /**
- * Per un blocco a tutta larghezza (il caso comune per i blocchi di primo
- * livello) posizionarla a `rect.left + rect.width + 8` la spingerebbe fuori
- * dall'iframe — bloccata qui dentro al bordo destro dell'iframe stesso, che
- * per un blocco full-width coincide con il bordo destro del blocco.
+ * For a full-width block (the common case for top-level blocks) placing it
+ * at `rect.left + rect.width + 8` would push it outside the iframe — it is
+ * clamped here to the iframe's own right edge, which for a full-width block
+ * coincides with the block's right edge.
  */
 export function toToolbarStyle(
   geometry: IframeGeometry,
@@ -166,15 +166,14 @@ export function toInsertPointStyle(
 }
 
 /**
- * A differenza di `toInsertPointStyle` (che STRADDLES il bordo del blocco,
- * per un fratello a livello di pagina — e per un blocco di primo livello
- * compare proprio sul bordo INFERIORE), questo resta DENTRO al rettangolo
- * del contenitore stesso, nell'angolo in alto a destra: visivamente
- * "aggiungi qui dentro", non "inserisci un fratello altrove". Centrato sul
- * bordo destro (invece che nell'angolo) finiva quasi sempre sovrapposto ai
- * pulsanti di navigazione di Testimonianze (anch'essi centrati
- * verticalmente lì); sul bordo inferiore finiva invece sovrapposto al "+"
- * radice di un blocco di primo livello — entrambi osservati dal vivo.
+ * Unlike `toInsertPointStyle` (which STRADDLES the block's edge, for a
+ * page-level sibling — and for a top-level block appears right on the
+ * BOTTOM edge), this one stays INSIDE the container's own rectangle, in the
+ * top-right corner: visually "add in here", not "insert a sibling
+ * elsewhere". Centred on the right edge (rather than in the corner) it
+ * almost always ended up overlapping Testimonials' navigation buttons
+ * (which are vertically centred there too); on the bottom edge it
+ * overlapped a top-level block's root "+" instead — both observed live.
  */
 export function toAddChildStyle(
   geometry: IframeGeometry,
@@ -188,10 +187,10 @@ export function toAddChildStyle(
 }
 
 /**
- * Ricalcola la posizione/larghezza dell'iframe nel documento del genitore
- * ad ogni resize/scroll — l'overlay altrimenti va alla deriva se la pagina
- * del genitore stesso scrolla. Esportata: `block-toolbar-overlay.tsx` la
- * condivide invece di ricalcolare la stessa cosa una seconda volta.
+ * Recomputes the iframe's position and width within the parent's document
+ * on every resize/scroll — otherwise the overlay drifts whenever the
+ * parent's own page scrolls. Exported: `block-toolbar-overlay.tsx` shares
+ * it rather than recomputing the same thing a second time.
  */
 export function useIframeGeometry(
   iframeRef: RefObject<HTMLIFrameElement | null>,
@@ -215,12 +214,12 @@ export function useIframeGeometry(
     }
 
     /**
-     * CanvasFrame monta l'`<iframe>` solo dopo che il token di preview
-     * arriva (async) — al primo run di questo effect `iframeRef.current`
-     * è quasi sempre ancora `null`. Senza questo retry `recompute()` non
-     * troverebbe nulla e resterebbe bloccato su ZERO_GEOMETRY per sempre
-     * (i listener di resize/scroll da soli non se ne accorgono, perché
-     * nessuno dei due si attiva quando l'iframe compare in seguito).
+     * CanvasFrame mounts the `<iframe>` only after the preview token
+     * arrives (async) — on this effect's first run `iframeRef.current` is
+     * almost always still `null`. Without this retry `recompute()` would
+     * find nothing and stay stuck on ZERO_GEOMETRY forever (the
+     * resize/scroll listeners alone never notice, because neither fires
+     * when the iframe appears later).
      */
     function attach(): void {
       const el = iframeRef.current;
@@ -250,10 +249,10 @@ export function useIframeGeometry(
 }
 
 /**
- * Disegna il box di hover/selezione sopra l'iframe — sola lettura per ora
- * (Giorno 2): nessuna interazione propria, mostra solo lo stato che arriva
- * dal bridge (usePreviewBridge). `pointer-events-none` sul contenitore
- * lascia passare ogni click/hover reale fino all'iframe sottostante.
+ * Draws the hover/selection box on top of the iframe — read-only for now
+ * (Day 2): no interaction of its own, it just shows the state arriving from
+ * the bridge (usePreviewBridge). `pointer-events-none` on the container
+ * lets every real click and hover through to the iframe underneath.
  */
 export function OverlayLayer({
   iframeRef,

@@ -10,10 +10,10 @@ import {
   type PublishedSite,
 } from '@brisk/shared-types';
 
-/** Dove mandare il visitatore quando (locale, path) non ha una pagina pubblicata — vedi resolveUntranslatedPageFallback lato applicazione. */
+/** Where to send the visitor when (locale, path) has no published page — see resolveUntranslatedPageFallback on the application side. */
 export interface UntranslatedPageFallbackTargetDto {
   locale: string;
-  /** Stesso percorso a segmenti dell'input, sotto `locale` — vedi resolvePageByPath. */
+  /** The same segmented path as the input, under `locale` — see resolvePageByPath. */
   segments: string[];
 }
 
@@ -101,11 +101,11 @@ export async function getPublishedPageBySlug(
 }
 
 /**
- * L'editing draft, unauthenticated read path (vedi il piano dell'editor
- * visuale, Giorno 1) — usata solo dalla rotta di preview
- * (src/pages/preview/[pageId].astro), mai dalla rotta pubblica reale.
- * Stesso collasso 404 -> null di getPublishedPageBySlug: un token
- * mancante/scaduto/mismatch è indistinguibile da una pagina che non esiste.
+ * The draft-editing, unauthenticated read path (see the visual editor plan,
+ * Day 1) — used only by the preview route
+ * (src/pages/preview/[pageId].astro), never by the real public route. The
+ * same 404 -> null collapse as getPublishedPageBySlug: a missing, expired
+ * or mismatched token is indistinguishable from a page that does not exist.
  */
 export async function getPreviewPageById(
   pageId: string,

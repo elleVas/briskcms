@@ -23,7 +23,7 @@ const textDescriptor: BlockDescriptor = {
   category: 'content',
   defaultProps: { body: '' },
   fields: [],
-  // Nessuna stylableProperties: non deve comparire nell'elenco "Stile per blocco".
+  // No stylableProperties: it must not appear in the "Style per block" list.
 };
 const registry = [heroDescriptor, textDescriptor];
 const categories = [{ title: 'Contenuto', types: ['Hero', 'Text'] }];
@@ -42,10 +42,11 @@ vi.mock('../lib/sites-api-client', async (importOriginal) => {
   };
 });
 
-// Nessun default risolto in questi test — non è il loro oggetto, e senza
-// mock la query farebbe una vera fetch di rete (comportamento non
-// deterministico, dipendente da cosa gira sulla macchina di chi lancia i
-// test). Vuoto = i campi mostrano il placeholder generico com'era prima.
+// No resolved defaults in these tests — they are not what these tests are
+// about, and without a mock the query would make a real network fetch
+// (non-deterministic behaviour, dependent on what is running on the
+// machine running the tests). Empty = the fields show the generic
+// placeholder as before.
 vi.mock('../lib/theme-api-client', () => ({
   fetchBlockStyleDefaults: vi.fn().mockResolvedValue({}),
   fetchThemeIcons: vi.fn().mockResolvedValue([]),

@@ -1,9 +1,9 @@
 import { z } from 'zod';
 
 /**
- * Una singola icona risolta dal tema attivo (docs/adr/0023) — `svg` è il
- * markup grezzo (niente riferimento a file, editor-app e apps/public-site
- * sono due applicazioni separate e non condividono un filesystem a runtime).
+ * A single icon resolved from the active theme (docs/adr/0023) — `svg` is
+ * the raw markup (no file reference: editor-app and apps/public-site are
+ * two separate applications and share no filesystem at runtime).
  */
 export const iconEntrySchema = z.object({
   name: z.string().min(1),

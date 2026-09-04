@@ -12,17 +12,16 @@ import { getThemeCssRaw, resolveBundledThemeName } from './theme-registry';
 const cacheByTheme = new Map<string, BlockStyleDefaultsResponse>();
 
 /**
- * Un'entry per ogni tipo di blocco dichiarato in
- * `BLOCK_STYLE_DEFAULTS` (shared-types — docs/adr/0022). Non legge
- * `@brisk/block-registry` direttamente: quel pacchetto è orientato ai
- * componenti React dell'editor (picker, dialog, contesti), e farlo
- * dipendere da apps/public-site ha causato un conflitto reale di
- * risoluzione TypeScript tra la configurazione di Astro e i file di test
- * React del registro — vedi la history di questo file. `BLOCK_STYLE_
- * DEFAULTS` in shared-types è la stessa identica sorgente di verità
- * (BlockDescriptor.defaultStyle la legge da lì anche lui), senza quel
- * problema. Calcolata una sola volta per tema (docs/adr/0042 — ogni tema
- * bundlato ha i propri token, memoizzata per tema una volta risolta).
+ * One entry per block type declared in `BLOCK_STYLE_DEFAULTS`
+ * (shared-types — docs/adr/0022). It does not read `@brisk/block-registry`
+ * directly: that package is oriented around the editor's React components
+ * (picker, dialogs, contexts), and making apps/public-site depend on it
+ * caused a real TypeScript resolution conflict between Astro's
+ * configuration and the registry's own React test files — see this file's
+ * history. `BLOCK_STYLE_DEFAULTS` in shared-types is the exact same source
+ * of truth (BlockDescriptor.defaultStyle reads it from there too), without
+ * that problem. Computed once per theme (docs/adr/0042 — every bundled
+ * theme has its own tokens, memoized per theme once resolved).
  */
 export function listBlockStyleDefaults(
   themeName: string,

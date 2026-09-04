@@ -45,11 +45,11 @@ export interface GlobalStylesDialogProps {
   siteId: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  /** Serve a costruire l'elenco "Stile per blocco" sotto — solo i tipi con `stylableProperties` non vuoto vi compaiono (docs/adr/0022). */
+  /** Needed to build the "Style per block" list below — only types with a non-empty `stylableProperties` appear in it (docs/adr/0022). */
   registry: BlockDescriptor[];
   /** Stesse categorie/etichette del BlockPicker di inserimento, per un raggruppamento coerente in tutto l'editor. */
   categories: BlockPickerCategory[];
-  /** Scrive su `site.themeTokens.blockStyles[blockType]` e aggiorna dal vivo il CSS nell'iframe — condivisa con il pulsante "Stile" della toolbar (vedi canvas-editor-shell.tsx's saveTypeStyle). */
+  /** Writes to `site.themeTokens.blockStyles[blockType]` and updates the CSS in the iframe live — shared with the toolbar's "Style" button (see canvas-editor-shell.tsx's saveTypeStyle). */
   onSaveTypeStyle: (
     blockType: string,
     style: BlockStyleOverride,
@@ -95,17 +95,17 @@ function hexOrNull(value: string): string | null {
 }
 
 /**
- * Editor di stile globale (Fase 2a del piano editor visuale, parte 2;
- * estesa in docs/adr/0022 parte 2) — aperto da un'icona nella barra in
- * alto del canvas, non una pagina a sé. Due sezioni:
- * - "Colori": i due colori site-wide (primario/secondario), invariata.
- * - "Stile per blocco": elenco di OGNI tipo di blocco stilizzabile del
- *   sito, cliccabile per modificarne lo stile di TIPO (stesso meccanismo
- *   del pulsante "Stile" nella toolbar del blocco selezionato, vedi
- *   BlockToolbarOverlay) — ma qui accessibile per qualunque tipo, anche
- *   senza averne già un'istanza selezionata sul canvas. Font/CSS
- *   personalizzato/script restano editabili per intero nella pagina
- *   "Stile" — fuori scope per un pannello pensato per essere veloce.
+ * The global style editor (phase 2a of the visual editor plan, part 2;
+ * extended in docs/adr/0022 part 2) — opened from an icon in the canvas's
+ * top bar, not a page of its own. Two sections:
+ * - "Colours": the two site-wide colours (primary/secondary), unchanged.
+ * - "Style per block": a list of EVERY stylable block type on the site,
+ *   clickable to edit its TYPE style (the same mechanism as the "Style"
+ *   button in the selected block's toolbar, see BlockToolbarOverlay) — but
+ *   reachable here for any type, even without already having an instance of
+ *   it selected on the canvas. Font, custom CSS and scripts stay fully
+ *   editable in the "Style" page — out of scope for a panel meant to be
+ *   quick.
  */
 export function GlobalStylesDialog({
   siteId,
@@ -117,9 +117,9 @@ export function GlobalStylesDialog({
 }: GlobalStylesDialogProps) {
   const { t, tLabel } = useTranslation();
   const { data: site } = useQuery(siteQueryOptions(siteId));
-  // Il tema del sito che questo dialog sta editando, non quello di
-  // default dell'app: i token/default mostrati devono essere quelli che
-  // il visitatore vedrà davvero (docs/adr/0042).
+  // The theme of the site this dialog is editing, not the app's default
+  // one: the tokens and defaults shown have to be the ones the visitor will
+  // actually see (docs/adr/0042).
   const activeThemeName = site?.themeName ?? '';
   const { data: blockStyleDefaults } = useQuery(
     blockStyleDefaultsQueryOptions(activeThemeName),
@@ -137,10 +137,10 @@ export function GlobalStylesDialog({
 
   const [error, setError] = useState('');
   const [themeError, setThemeError] = useState('');
-  // Navigazione tra l'elenco e lo stile di un tipo — non dati di un form,
-  // riparte sempre dall'elenco (non dall'ultimo tipo aperto) perché
-  // riaprire il dialog è un'azione deliberata dell'utente, non una
-  // continuazione dell'ultima modifica.
+  // Navigation between the list and one type's style — not form data, and
+  // it always restarts from the list (not from the last type opened)
+  // because reopening the dialog is a deliberate user action, not a
+  // continuation of the last edit.
   const [selectedType, setSelectedType] = useState<string | null>(null);
 
   const { control, handleSubmit, reset, watch } = useForm<ColorsFormValues>({
@@ -151,10 +151,10 @@ export function GlobalStylesDialog({
       secondaryColor: '#71717a',
     },
   });
-  // Avviso dal vivo mentre l'utente sceglie il colore (docs/adr/0022's
-  // follow-up sul controllo di contrasto) — non bloccante, vedi
-  // color-contrast.ts per perché il confronto è contro il vero token
-  // `--*-foreground` del tema attivo, non un'ipotesi bianco/nero.
+  // A live warning while the user picks the colour (docs/adr/0022's
+  // contrast-check follow-up) — non-blocking; see color-contrast.ts for why
+  // the comparison is against the active theme's real `--*-foreground`
+  // token rather than a black/white guess.
   const primaryColorValue = watch('primaryColor');
   const primaryColorEnabled = watch('primaryColorEnabled');
   const secondaryColorValue = watch('secondaryColor');

@@ -7,19 +7,19 @@ export interface RenderBlockFragmentInput {
   blockId: string;
   blockType: string;
   props: Record<string, unknown>;
-  /** I figli correnti del blocco (se contenitore), noti già lato client — evita che il server li ricostruisca leggendo la bozza salvata, che può non aver ancora recepito il salvataggio in corso in parallelo. */
+  /** The block's current children (when it is a container), already known on the client — this saves the server rebuilding them by reading the saved draft, which may not yet have taken in a save happening in parallel. */
   children?: Block[];
-  /** Override per-istanza (docs/adr/0022) — senza questo, un cambio di stile dal canvas non si vedrebbe nel frammento appena patchato. */
+  /** The per-instance override (docs/adr/0022) — without this, a style change from the canvas would not show in the freshly patched fragment. */
   styleOverride?: BlockStyleOverride;
 }
 
 /**
- * Chiama apps/public-site direttamente (mai attraverso apps/api): è
- * l'unica app capace di renderizzare un componente .astro — vedi il piano
- * dell'editor visuale, Giorno 3. Cross-origin in dev (porta 4321 vs 4200 di
- * editor-app), per questo quella rotta ha il proprio CORS scoped a questa
- * origine (vedi render-block-fragment.ts). Non passa da http-client.ts:
- * quella base URL punta ad apps/api, non ad apps/public-site.
+ * Calls apps/public-site directly (never through apps/api): it is the only
+ * app able to render an .astro component — see the visual editor plan, Day
+ * 3. Cross-origin in dev (port 4321 against editor-app's 4200), which is
+ * why that route has its own CORS scoped to this origin (see
+ * render-block-fragment.ts). It does not go through http-client.ts: that
+ * base URL points at apps/api, not at apps/public-site.
  */
 export async function renderBlockFragment(
   input: RenderBlockFragmentInput,

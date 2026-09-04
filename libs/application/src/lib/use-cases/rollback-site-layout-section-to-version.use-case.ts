@@ -22,9 +22,9 @@ export interface RollbackSiteLayoutSectionToVersionInput {
 }
 
 /**
- * Ripristina il draft al contenuto di una versione precedente e registra
- * a sua volta il rollback come nuova versione (mai un overwrite
- * distruttivo). Non ripubblica: vedi SiteLayoutSection.restoreContent().
+ * Restores the draft to a previous version's content and records the
+ * rollback itself as a new version (never a destructive overwrite). It does
+ * not republish: see SiteLayoutSection.restoreContent().
  */
 export async function rollbackSiteLayoutSectionToVersion(
   deps: RollbackSiteLayoutSectionToVersionDeps,

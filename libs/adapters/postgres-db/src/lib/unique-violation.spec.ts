@@ -5,14 +5,14 @@ import { isUniqueViolation } from './unique-violation';
 function buildPostgresError(
   overrides: Partial<{ code: string; constraint_name: string }> = {},
 ) {
-  // Il tipo pubblico di `PostgresError` (da `postgres`'s .d.ts) espone solo
-  // il costruttore ereditato da `Error` (message, options) — non riflette il
-  // vero costruttore a runtime (`Object.assign(this, x)`, vedi
-  // node_modules/postgres/src/errors.js), che è come il driver costruisce
-  // davvero questi errori (confermato dal vivo contro Postgres reale in
-  // drizzle-page.repository.integration.spec.ts). Cast isolato, commentato,
-  // per colmare esattamente questo scarto tipo/runtime — non c'è un modo
-  // "tipizzato" di costruire questo fixture.
+  // `PostgresError`'s public type (from `postgres`'s .d.ts) exposes only the
+  // constructor inherited from `Error` (message, options) — it does not
+  // reflect the real runtime constructor (`Object.assign(this, x)`, see
+  // node_modules/postgres/src/errors.js), which is how the driver actually
+  // builds these errors (confirmed live against a real Postgres in
+  // drizzle-page.repository.integration.spec.ts). An isolated, commented
+  // cast bridging exactly that type/runtime gap — there is no "typed" way
+  // to construct this fixture.
   const error = new postgres.PostgresError(
     'duplicate key value violates unique constraint',
   );

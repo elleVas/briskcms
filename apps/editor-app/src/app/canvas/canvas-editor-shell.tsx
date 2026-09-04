@@ -53,18 +53,18 @@ import { useTextEdit } from './use-text-edit';
 
 export interface CanvasEditorShellProps {
   backLink: ReactNode;
-  /** Dropdown per passare ad un'altra pagina senza uscire dall'editor (barra in alto, vicino a `backLink`) — solo l'editor di pagina lo passa, l'editor Header/Footer no (non ha un concetto di "altre pagine tra cui scegliere"). */
+  /** Dropdown for switching to another page without leaving the editor (top bar, next to `backLink`) — only the page editor passes it; the Header/Footer editor does not (it has no notion of "other pages to choose between"). */
   pageSwitcher?: ReactNode;
-  /** i18n a livello di campo (see the plan) — dropdown per passare a un'altra lingua della STESSA PageGroup senza uscire dall'editor, accanto a `pageSwitcher`. Solo PageGroupEditorView lo passa. */
+  /** Field-level i18n (see the plan) — dropdown for switching to another language of the SAME PageGroup without leaving the editor, next to `pageSwitcher`. Only PageGroupEditorView passes it. */
   languageSwitcher?: ReactNode;
   /**
-   * i18n a livello di campo — presente solo quando si sta editando una
-   * PageTranslation COLLEGATA (non diverged) di un PageGroup: decide se un
-   * campo `translatable` cambiato va scritto sull'overlay `fieldValues`
-   * della traduzione attiva invece che sulla struttura condivisa. Assente
-   * per il vecchio editor Page, per l'editor Header/Footer, e per una
-   * traduzione già scollegata (si comporta come il vecchio modello: sempre
-   * `onChange`, mai un overlay separato).
+   * Field-level i18n — present only while editing a LINKED (not diverged)
+   * PageTranslation of a PageGroup: it decides whether a changed
+   * `translatable` field is written to the active translation's
+   * `fieldValues` overlay instead of to the shared structure. Absent for
+   * the old Page editor, for the Header/Footer editor, and for an already
+   * unlinked translation (which behaves like the old model: always
+   * `onChange`, never a separate overlay).
    */
   translationRouting?: {
     activeLocale: string;
@@ -82,15 +82,15 @@ export interface CanvasEditorShellProps {
   onChange: (blocks: Block[]) => void;
   onPublish: (blocks: Block[]) => unknown;
   /**
-   * Sempre l'id di UNA PageTranslation (i18n a livello di campo), anche
-   * quando si sta editando header/footer (vedi canvas-frame.tsx) — il
-   * chiamante sceglie quale traduzione usare come contesto quando
-   * `editingSection` è presente (site-layout-section-editor-view.tsx usa la
-   * traduzione "rappresentativa" di use-representative-page.ts).
+   * Always the id of ONE PageTranslation (field-level i18n), even while
+   * editing the header/footer (see canvas-frame.tsx) — the caller picks
+   * which translation to use as context when `editingSection` is present
+   * (site-layout-section-editor-view.tsx uses the "representative"
+   * translation from use-representative-page.ts).
    */
   pageId: string;
   editingSection?: EditingSection;
-  /** Bumped solo su un rollback esplicito — stesso meccanismo di block-editor-shell.tsx (Puck) per resettare lo stato locale. */
+  /** Bumped only on an explicit rollback — the same mechanism block-editor-shell.tsx (Puck) used to reset local state. */
   restoredAt?: number;
   children?: ReactNode;
 }
@@ -126,39 +126,39 @@ export function CanvasEditorShell({
   const iframeGeometry = useIframeGeometry(iframeRef);
   const [breakpoint, setBreakpoint] = useState<Breakpoint>('desktop');
   const [isGlobalStylesOpen, setIsGlobalStylesOpen] = useState(false);
-  // Serve solo per l'override "a livello di componente" (docs/adr/0022,
-  // pulsante "Stile" nella toolbar) — l'unico altro consumer di questa
-  // query, global-styles-dialog.tsx, ne ha già una propria indipendente,
-  // stessa queryKey quindi la cache di React Query le tiene comunque in
-  // sync tra loro. `enabled: Boolean(siteId)` perché siteId è opzionale
-  // qui (l'editor Header/Footer lo passa sempre, ma la prop resta
-  // opzionale nel tipo) — niente fetch con un id vuoto.
+  // Only needed for the "component-level" override (docs/adr/0022, the
+  // toolbar's "Style" button) — this query's only other consumer,
+  // global-styles-dialog.tsx, already has an independent one of its own,
+  // with the same queryKey, so React Query's cache keeps them in sync
+  // anyway. `enabled: Boolean(siteId)` because siteId is optional here
+  // (the Header/Footer editor always passes it, but the prop stays
+  // optional in the type) — no fetch with an empty id.
   const { data: site } = useQuery({
     ...siteQueryOptions(siteId ?? ''),
     enabled: Boolean(siteId),
   });
   const { updateThemeTokens } = useSiteThemeTokens(siteId ?? '');
   /**
-   * Richiesto dal vivo: su pagine lunghe/con molti blocchi, poter chiudere
-   * ciascuna barra laterale per dare più spazio al canvas — due stati
-   * indipendenti (sinistra: Inserisci blocco; destra: Livelli), nessuno
-   * persistito, riparte sempre tutto aperto a un nuovo mount (stesso
-   * comportamento di breakpoint/isGlobalStylesOpen sopra).
+   * Asked for from live use: on long pages with many blocks, being able to
+   * collapse each sidebar to give the canvas more room — two independent
+   * states (left: Insert block; right: Layers), neither persisted, both
+   * starting open again on a new mount (the same behaviour as
+   * breakpoint/isGlobalStylesOpen above).
    */
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isLayersPanelCollapsed, setIsLayersPanelCollapsed] = useState(false);
 
-  // Copia locale mutata otticamente (le mutazioni sull'albero devono
-  // riflettersi subito su Layers/Inspector, non solo dopo il round-trip col
-  // server) — risincronizzata dalle props solo su un cambio di pagina o un
-  // rollback esplicito (restoredAt), mai su ogni `blocks` in arrivo: il
-  // chiamante scrive lo stesso valore appena rimandato da onChange,
-  // risincronizzare anche lì rimonterebbe l'albero locale ad ogni salvataggio
-  // riuscito, perdendo lo stato ottimistico più recente in caso di round-trip
-  // lento. "Aggiusta lo stato durante il render" (pattern raccomandato da
-  // React per resettare stato derivato da una prop-chiave cambiata) invece
-  // di un `useEffect` con `setState` al suo interno — evita un render in più
-  // a vuoto prima che l'albero locale rifletta il nuovo pageId/restoredAt.
+  // A locally mutated optimistic copy (tree mutations have to show up in
+  // Layers/Inspector immediately, not only after the server round-trip) —
+  // resynced from props only on a page change or an explicit rollback
+  // (restoredAt), never on every incoming `blocks`: the caller writes back
+  // the same value onChange just sent, and resyncing there too would remount
+  // the local tree on every successful save, losing the most recent
+  // optimistic state whenever the round-trip is slow. "Adjust state during
+  // render" (React's recommended pattern for resetting state derived from a
+  // changed key prop) rather than a `useEffect` with a `setState` inside —
+  // it avoids one wasted render before the local tree reflects the new
+  // pageId/restoredAt.
   const syncKey = `${pageId}:${restoredAt}`;
   const [lastSyncKey, setLastSyncKey] = useState(syncKey);
   const [localBlocks, setLocalBlocks] = useState(blocks);
@@ -172,10 +172,10 @@ export function CanvasEditorShell({
     localBlocksRef.current = localBlocks;
   });
 
-  // Token separato da quello che canvas-frame.tsx si procura per il proprio
-  // `src` — non consumante (vedi PreviewTokenPort), un secondo conio è
-  // economico e non richiede di rifattorizzare l'interfaccia già testata di
-  // CanvasFrame per farglielo esporre in su.
+  // A separate token from the one canvas-frame.tsx mints for its own `src`
+  // — non-consuming (see PreviewTokenPort), so a second minting is cheap
+  // and does not require refactoring CanvasFrame's already-tested interface
+  // to expose it upwards.
   const [token, setToken] = useState<string | null>(null);
   useEffect(() => {
     let cancelled = false;
@@ -201,13 +201,12 @@ export function CanvasEditorShell({
       const next = updateBlockProps(localBlocksRef.current, blockId, props);
       setLocalBlocks(next);
 
-      // i18n a livello di campo: a una lingua LINKED diversa da quella di
-      // default, un campo `translatable` non tocca mai la struttura
-      // condivisa — va invece sull'overlay `fieldValues` di questa
-      // traduzione. Guarda il tipo del blocco/il descrittore campo nel
-      // momento del salvataggio effettivo (non al momento del render che
-      // ha schedulato il debounce): la selezione può essere cambiata nel
-      // frattempo.
+      // Field-level i18n: in a LINKED language other than the default, a
+      // `translatable` field never touches the shared structure — it goes
+      // to this translation's own `fieldValues` overlay instead. It reads
+      // the block type and field descriptor at the moment of the actual
+      // save (not at the render that scheduled the debounce): the
+      // selection may have changed in between.
       const changedValue = props[changedKey];
       const block = findBlockInTree(next, blockId);
       const descriptor = block
@@ -250,12 +249,12 @@ export function CanvasEditorShell({
     scheduleTextChange,
   });
 
-  // Riordino diretto sul canvas (Giorno 3/4) — i rect dei soli blocchi di
-  // primo livello, nello stesso ordine di `localBlocks` (non l'ordine
-  // documento grezzo di `bridge.blockRects`, che include anche i blocchi
-  // annidati): l'unico elenco su cui compute-drop-target.ts ha senso, dato
-  // che il riordino resta scoped ai fratelli di primo livello (stessa
-  // scelta di layers-panel.tsx).
+  // Direct reordering on the canvas (Day 3/4) — the rects of top-level
+  // blocks only, in the same order as `localBlocks` (not the raw document
+  // order of `bridge.blockRects`, which also includes nested blocks): the
+  // only list compute-drop-target.ts makes sense against, given that
+  // reordering stays scoped to top-level siblings (the same choice
+  // layers-panel.tsx made).
   const rootRects: DropCandidateRect[] = localBlocks.flatMap((block) => {
     if (!block.id) {
       return [];
@@ -277,11 +276,11 @@ export function CanvasEditorShell({
     ? localBlocks.findIndex((b) => b.id === selectedBlock.id)
     : -1;
   const isSelectedRootLevel = selectedRootIndex !== -1;
-  // A differenza di `isSelectedRootLevel` sopra (che resta root-only: governa
-  // ANCORA inserisci-prima/dopo e i campi di spacing, entrambi validi solo
-  // per un blocco di primo livello) — sposta su/giù ora funziona a
-  // qualunque profondità, tramite `locateBlock` che trova il vero genitore
-  // anche per un blocco annidato (stesso meccanismo già usato da duplica).
+  // Unlike `isSelectedRootLevel` above (which stays root-only: it STILL
+  // governs insert-before/after and the spacing fields, both valid for a
+  // top-level block alone) — move up/down now works at any depth, through
+  // `locateBlock`, which finds the real parent even for a nested block (the
+  // same mechanism duplicate already used).
   const selectedLocation = selectedBlock?.id
     ? locateBlock(localBlocks, selectedBlock.id)
     : null;
@@ -336,14 +335,14 @@ export function CanvasEditorShell({
     insertNewBlockAt,
   });
 
-  // Ctrl/Cmd+Z per annullare, Ctrl/Cmd+Shift+Z (o Ctrl+Y) per ripetere —
-  // scorciatoia standard di ogni editor con undo/redo. Mai in conflitto con
-  // l'editing testo TipTap: quello vive DENTRO l'iframe sandboxed
-  // (init-preview-bridge.ts), un documento separato i cui eventi da
-  // tastiera non arrivano affatto a questo listener sul genitore. La sola
-  // guardia utile qui è per gli input/textarea del GENITORE stesso (i vari
-  // dialog/pannelli dell'editor) — lasciare il loro undo nativo del browser
-  // invariato, non intercettarlo.
+  // Ctrl/Cmd+Z to undo, Ctrl/Cmd+Shift+Z (or Ctrl+Y) to redo — the standard
+  // shortcut in every editor with undo/redo. Never in conflict with TipTap
+  // text editing: that lives INSIDE the sandboxed iframe
+  // (init-preview-bridge.ts), a separate document whose keyboard events
+  // never reach this listener on the parent at all. The only guard worth
+  // having here is for the PARENT's own inputs/textareas (the editor's
+  // various dialogs and panels) — leaving their native browser undo alone
+  // rather than intercepting it.
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent): void {
       const isUndoRedoKey =
@@ -371,15 +370,15 @@ export function CanvasEditorShell({
     }
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- undo/redo sono ricreate ad ogni render da useBlockTreeMutations ma leggono già lo stato corrente al momento della chiamata — non serve riattaccare il listener per il loro cambio di riferimento.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- undo/redo are recreated on every render by useBlockTreeMutations but already read current state at call time, so there is no need to reattach the listener when their identity changes.
   }, []);
 
-  // Calcolo puramente derivato (nessuno stato proprio) — si aggiorna ad ogni
-  // render insieme a `bridge.activeDrag`/`sidebarDrag`, così l'indicatore
-  // segue il puntatore dal vivo senza bisogno di un effect dedicato. Per un
-  // drag dalla sidebar non esiste un "blocco trascinato" già nell'albero da
-  // escludere dai candidati — nessun id reale può eguagliare '', quindi
-  // computeDropTarget considera tutti i blocchi di primo livello.
+  // A purely derived computation (no state of its own) — it updates on
+  // every render alongside `bridge.activeDrag`/`sidebarDrag`, so the
+  // indicator follows the pointer live without a dedicated effect. For a
+  // drag out of the sidebar there is no "dragged block" already in the tree
+  // to exclude from the candidates — no real id can equal '', so
+  // computeDropTarget considers every top-level block.
   const liveDropTarget = bridge.activeDrag
     ? computeDropTarget(
         rootRects,
@@ -394,16 +393,16 @@ export function CanvasEditorShell({
         )
       : null;
 
-  // Applica il riordino al termine del drag — stesso pattern "aggiusta lo
-  // stato durante il render" già usato sopra per lastTextChange: l'aggiornamento
-  // ottico di `localBlocks` vive qui (mai in un effect, vedi
-  // react-hooks/set-state-in-effect). `pendingReorderCommit` è un secondo
-  // stato (non un ref: un ref non si può scrivere durante il render) che
-  // porta l'albero appena riordinato a un effect dedicato sotto, l'unico
-  // punto in cui è sicuro chiamare il vero side-effect verso il chiamante
-  // (`onChange`, che a sua volta salva la bozza) — quell'effect non chiama
-  // mai `setState`, si limita a leggere questo valore, quindi non ricade
-  // nella regola che vieta `setState` sincrono dentro un effect.
+  // Applies the reorder once the drag ends — the same "adjust state during
+  // render" pattern already used above for lastTextChange: the optimistic
+  // update of `localBlocks` lives here (never in an effect, see
+  // react-hooks/set-state-in-effect). `pendingReorderCommit` is a second
+  // piece of state (not a ref: a ref cannot be written during render) that
+  // carries the freshly reordered tree to a dedicated effect below, the one
+  // place where it is safe to call the real side effect towards the caller
+  // (`onChange`, which in turn saves the draft) — that effect never calls
+  // `setState`, it only reads this value, so it does not fall foul of the
+  // rule against synchronous `setState` inside an effect.
   const [lastAppliedDragEnd, setLastAppliedDragEnd] = useState(
     bridge.dragEnded,
   );
@@ -420,10 +419,10 @@ export function CanvasEditorShell({
           parentId: null,
           index: dropTarget.index,
         });
-        // Rilasciato dove già si trovava (nessuno spostamento reale) — stessa
-        // cortesia di computeNestedReorder in layers-panel.tsx: non salvare
-        // una bozza identica solo perché moveBlock restituisce sempre un
-        // nuovo array per costruzione.
+        // Dropped where it already was (no real movement) — the same
+        // courtesy computeNestedReorder extends in layers-panel.tsx: do not
+        // save an identical draft just because moveBlock always returns a
+        // new array by construction.
         const orderUnchanged = next.every(
           (block, index) => block.id === localBlocks[index]?.id,
         );
@@ -442,7 +441,7 @@ export function CanvasEditorShell({
         pendingReorderCommit.map((block) => block.id as string),
       );
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- reagisce solo a un NUOVO pendingReorderCommit — onChange/bridge.reorderBlocks sono letti dal valore corrente, non serve rieseguire per un loro cambio di riferimento.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- reacts only to a NEW pendingReorderCommit; onChange/bridge.reorderBlocks are read from their current value, so there is no need to re-run when their identity changes.
   }, [pendingReorderCommit]);
 
   function handleChangeProp(key: string, value: unknown): void {
@@ -462,7 +461,7 @@ export function CanvasEditorShell({
     );
   }
 
-  /** Override per-ISTANZA (docs/adr/0022) — popover sul blocco selezionato, tocca solo questo blocco. Stesso pattern "ottico subito, debounce per il salvataggio vero" di handleChangeProp sopra. */
+  /** Per-INSTANCE override (docs/adr/0022) — a popover on the selected block, touching only that block. Same "optimistic immediately, debounce the real save" pattern as handleChangeProp above. */
   function handleChangeStyleOverride(styleOverride: BlockStyleOverride): void {
     if (!selectedBlock?.id) {
       return;
@@ -480,23 +479,23 @@ export function CanvasEditorShell({
   }
 
   /**
-   * Override per-TIPO (docs/adr/0022) — tocca `site.themeTokens.blockStyles[tipo]`:
-   * OGNI istanza di quel tipo sul sito. Nessun aggiornamento ottico locale
-   * dell'albero (a differenza di handleChangeStyleOverride sopra): non è
-   * nell'albero della pagina, è nei theme tokens del sito —
-   * `useSiteThemeTokens` invalida già la query del sito al successo,
-   * `site.themeTokens` sopra si aggiorna da sé. Condivisa da due chiamanti
-   * (docs/adr/0022, parte 2): il pulsante "Stile" della toolbar (tipo del
-   * blocco selezionato) e la nuova modale "Stile globale" (qualunque tipo
-   * scelto dalla lista, senza bisogno di una sua istanza sul canvas).
+   * Per-TYPE override (docs/adr/0022) — touches `site.themeTokens.blockStyles[type]`:
+   * EVERY instance of that type across the site. No local optimistic update
+   * of the tree (unlike handleChangeStyleOverride above): it is not in the
+   * page's tree, it is in the site's theme tokens — `useSiteThemeTokens`
+   * already invalidates the site query on success, so `site.themeTokens`
+   * above updates by itself. Shared by two callers (docs/adr/0022, part 2):
+   * the toolbar's "Style" button (the selected block's type) and the new
+   * "Global style" dialog (any type picked from the list, with no need for
+   * an instance of it on the canvas).
    */
   /**
-   * Cattura l'errore qui, non nei chiamanti (handleChangeTypeStyle sotto,
-   * e global-styles-dialog.tsx che la invoca via `onSaveTypeStyle`): un
-   * solo punto per mostrare il toast invece di duplicarlo in entrambi i
-   * chiamanti. Non rilancia — il canvas resta con l'ultimo CSS buono
-   * finché il prossimo salvataggio non ritenta, invariato rispetto a
-   * prima; l'unica differenza è che ora l'utente lo sa.
+   * The error is caught here, not in the callers (handleChangeTypeStyle
+   * below, and global-styles-dialog.tsx which calls it through
+   * `onSaveTypeStyle`): one place to show the toast instead of duplicating
+   * it in both. It does not rethrow — the canvas keeps the last good CSS
+   * until the next save retries, unchanged from before; the only difference
+   * is that the user now knows.
    */
   async function saveTypeStyle(
     blockType: string,
@@ -504,10 +503,10 @@ export function CanvasEditorShell({
   ): Promise<void> {
     try {
       const updated = await updateThemeTokens({ blockType, style });
-      // Aggiorna subito il <style> dentro l'iframe (docs/adr/0022) — senza
-      // questo, ogni istanza già visibile di quel tipo resterebbe con
-      // l'aspetto vecchio finché l'iframe non ricarica, anche se il
-      // salvataggio è già andato a buon fine.
+      // Updates the <style> inside the iframe straight away (docs/adr/0022)
+      // — without this, every already-visible instance of that type would
+      // keep its old look until the iframe reloads, even though the save
+      // already succeeded.
       bridge.updateBlockStyleCss(
         buildBlockStyleOverridesCss(updated.themeTokens?.blockStyles ?? {}),
       );
@@ -541,7 +540,7 @@ export function CanvasEditorShell({
     onPublish(localBlocksRef.current);
   }
 
-  /** Stessa `token` già in stato per `usePropertyPatch` — apre in una nuova scheda l'URL di anteprima, disponibile anche per una bozza mai pubblicata (a differenza di un link diretto al sito pubblico). */
+  /** The same `token` already in state for `usePropertyPatch` — opens the preview URL in a new tab, available even for a draft that was never published (unlike a direct link to the public site). */
   function handleOpenPreview(): void {
     if (!token) {
       return;

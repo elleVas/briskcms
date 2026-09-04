@@ -274,19 +274,19 @@ export class SitesController {
   }
 
   /**
-   * Ogni handler che restituisce il sito lo fa attraverso questo stesso
-   * punto — `themeTokens` non è più parte di `Site`/`SiteProps` (vive in
-   * `site_theme_block_styles`, docs/adr/0022's follow-up sullo schema) ma
-   * il contratto della risposta HTTP resta invariato per non toccare
-   * nessun consumer (editor-app sovrascrive per intero la propria cache
-   * del sito con QUALUNQUE risposta di queste mutation — un DTO senza
-   * `themeTokens` la farebbe sparire dalla cache fino al prossimo GET).
+   * Every handler returning the site does so through this one point —
+   * `themeTokens` is no longer part of `Site`/`SiteProps` (it lives in
+   * `site_theme_block_styles`, docs/adr/0022's schema follow-up) but the
+   * HTTP response contract stays unchanged so no consumer has to be touched
+   * (editor-app overwrites its whole site cache with ANY of these mutation
+   * responses — a DTO without `themeTokens` would make it disappear from
+   * the cache until the next GET).
    *
-   * Security review 2026-08-24, backend seconda passata: prima faceva
-   * `{ ...site.toProps(), themeTokens }` — un nome che sembrava una
-   * whitelist ma non lo era, esponeva ogni campo di Site senza filtro.
-   * Nessun campo sensibile su Site oggi, ma senza whitelist esplicita un
-   * futuro campo lo esporrebbe automaticamente qui.
+   * Security review 2026-08-24, second backend pass: this used to do
+   * `{ ...site.toProps(), themeTokens }` — a name that looked like a
+   * whitelist without being one, exposing every field of Site unfiltered.
+   * There is no sensitive field on Site today, but without an explicit
+   * whitelist a future one would be exposed here automatically.
    */
   private async toDto(site: Site): Promise<SiteRecord> {
     const blockStyles = await this.siteThemeBlockStylesRepository.listBySite(

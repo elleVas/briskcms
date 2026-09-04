@@ -187,12 +187,13 @@ describe('OverlayLayer', () => {
   });
 
   it("hides a selected box whose rect is scrolled below the iframe's own visible viewport", () => {
-    // L'iframe misura 600px di altezza (vedi setup()) — un blocco a 900px
-    // dal top del SUO documento interno esiste ma non è nella parte
-    // visibile senza scorrere l'iframe stesso: senza la guardia aggiunta,
-    // l'overlay `position: fixed` finirebbe renderizzato ben oltre il
-    // riquadro del canvas, sopra il resto della pagina dell'editor (bug
-    // trovato dal vivo popolando un contenitore in fondo a una pagina lunga).
+    // The iframe is 600px tall (see setup()) — a block 900px from the top
+    // of ITS own inner document exists but is not in the visible area
+    // without scrolling the iframe itself: without the guard that was
+    // added, the `position: fixed` overlay would end up rendered well
+    // beyond the canvas frame, on top of the rest of the editor's page (a
+    // bug found live while filling a container at the bottom of a long
+    // page).
     const ref = setup();
     render(
       <OverlayLayer

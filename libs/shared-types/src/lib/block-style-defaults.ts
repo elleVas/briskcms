@@ -1,26 +1,25 @@
 import type { BlockStyleDefaults } from './site-theme-tokens';
 
 /**
- * L'espressione CSS di default per ciascuna proprietà stilizzabile
- * (docs/adr/0022) di ogni tipo di blocco — copiata 1:1 dal fallback che
- * il `.astro` del blocco già usa (`var(--brisk-override-radius,
- * var(--radius))`), non inventata: questa è la stessa identica sorgente
- * di verità, solo dichiarata qui invece che rimanere visibile solo dentro
- * un file CSS. Vive in shared-types (non in block-registry) perché SIA
- * `libs/block-registry` (BlockDescriptor.defaultStyle, per il picker di
- * editor-app) SIA `apps/public-site`
- * (resolve-theme-block-style-defaults.ts, per l'endpoint
- * `/api/themes/current/block-style-defaults`) ne hanno bisogno — stessa
- * ragione di `block-style-overrides.ts` in questo stesso file, e non solo
- * un capriccio di layering: fare dipendere apps/public-site da
- * `@brisk/block-registry` (un pacchetto orientato ai componenti React
- * dell'editor, non dati puri) ha causato un conflitto reale di risoluzione
- * TypeScript tra la configurazione di Astro e i file di test React del
- * registro — vedi la history di questo file per il dettaglio. shared-types
- * non ha questo problema, essendo già una dipendenza pura di entrambe le
- * app. Un riferimento a un custom property del tema (`var(--x)`) viene
- * risolto contro il `theme.css` del tema attivo solo lato public-site; un
- * letterale (`'transparent'`, `'0.5rem'`) passa invariato.
+ * The default CSS expression for each stylable property (docs/adr/0022) of
+ * every block type — copied 1:1 from the fallback the block's `.astro`
+ * already uses (`var(--brisk-override-radius, var(--radius))`), not
+ * invented: this is the exact same source of truth, only declared here
+ * rather than remaining visible solely inside a CSS file. It lives in
+ * shared-types (not in block-registry) because BOTH `libs/block-registry`
+ * (BlockDescriptor.defaultStyle, for editor-app's picker) AND
+ * `apps/public-site` (resolve-theme-block-style-defaults.ts, for the
+ * `/api/themes/current/block-style-defaults` endpoint) need it — the same
+ * reason as `block-style-overrides.ts` in this same file, and not merely a
+ * layering whim: making apps/public-site depend on `@brisk/block-registry`
+ * (a package oriented around the editor's React components, not pure data)
+ * caused a real TypeScript resolution conflict between Astro's
+ * configuration and the registry's React test files — see this file's
+ * history for the detail. shared-types does not have that problem, being
+ * already a pure dependency of both apps. A reference to a theme custom
+ * property (`var(--x)`) is resolved against the active theme's `theme.css`
+ * on the public-site side only; a literal (`'transparent'`, `'0.5rem'`)
+ * passes through unchanged.
  */
 export const BLOCK_STYLE_DEFAULTS: Record<string, BlockStyleDefaults> = {
   AccordionItem: {

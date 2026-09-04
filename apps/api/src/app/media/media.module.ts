@@ -44,11 +44,11 @@ export function createMediaStorage(): MediaStoragePort {
   imports: [
     DatabaseModule,
     AuthModule,
-    // Security review 2026-08-24, "terzo giro": l'upload media autenticato
-    // non aveva alcun rate limiting — un singolo account compromesso
-    // poteva riempire lo storage senza alcun limite. 30/minuto per IP è
-    // generoso per un editor legittimo che carica più immagini in
-    // sequenza, ma limita un abuso automatizzato.
+    // Security review 2026-08-24, "third pass": authenticated media upload
+    // had no rate limiting at all — a single compromised account could fill
+    // the storage without limit. 30 a minute per IP is generous for a
+    // legitimate editor uploading several images in a row, but it caps
+    // automated abuse.
     ThrottlerModule.forRoot({ throttlers: [{ ttl: 60000, limit: 30 }] }),
   ],
   controllers: [MediaController],

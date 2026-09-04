@@ -1,20 +1,20 @@
 /**
- * Backfill una tantum: assegna un id stabile ad ogni blocco esistente che ne
- * è privo (pagine, versioni di pagina, header/footer, versioni di
- * header/footer) — vedi il piano dell'editor visuale, Giorno 1: un id
- * assegnato una volta, per sempre, prima che il nuovo editor tocchi
- * qualunque contenuto (selezione/drag/patch a frammento sono tutti
- * indirizzati per id). Idempotente: rigenera solo dove manca, un id già
- * presente non viene mai toccato — sicuro da rieseguire.
+ * A one-off backfill: it assigns a stable id to every existing block that
+ * lacks one (pages, page versions, headers/footers, header/footer versions)
+ * — see the visual editor plan, Day 1: an id assigned once, forever, before
+ * the new editor touches any content (selection, dragging and fragment
+ * patching are all addressed by id). Idempotent: it regenerates only where
+ * one is missing, and never touches an id that is already there — safe to
+ * re-run.
  *
- * Da girare una volta, in un momento di manutenzione, PRIMA di deployare
- * qualunque codice che pretenda l'id come obbligatorio nello schema Zod
- * (vedi content-model.ts). L'editor Puck ancora attivo durante il backfill
- * non ne risente: continua a scartare gli id come oggi.
+ * To be run once, during a maintenance window, BEFORE deploying any code
+ * that requires the id in the Zod schema (see content-model.ts). The Puck
+ * editor still live during the backfill is unaffected: it goes on
+ * discarding ids as it does today.
  *
- * `tenants` non ha RLS (è la tabella radice, vedi schema.ts) — leggibile
- * direttamente con la connessione brisk_app. Ogni tabella di contenuto
- * successiva è invece scoped per tenant e richiede `withTenant`.
+ * `tenants` has no RLS (it is the root table, see schema.ts) — readable
+ * directly with the brisk_app connection. Every content table below it is
+ * tenant-scoped instead and requires `withTenant`.
  */
 import { backfillBlockIds, type PageContent } from '@brisk/shared-types';
 import { eq } from 'drizzle-orm';

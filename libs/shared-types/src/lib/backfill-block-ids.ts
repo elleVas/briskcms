@@ -1,25 +1,26 @@
 import type { Block } from './content-model';
 
-// Web Crypto (`globalThis.crypto`), non `node:crypto` — questo file è
-// esportato dal barrel di @brisk/shared-types, che apps/public-site importa
-// anche da script client-side (preview-bridge-client.ts): un import di
-// `node:crypto` verrebbe esternalizzato da Vite per il bundle browser e
-// lancerebbe non appena il barrel viene valutato, anche se questa funzione
-// specifica non viene mai chiamata lì. `crypto.randomUUID()` è lo stesso
-// Web Crypto API standard sia in Node (globale dalla v19) che nel browser.
+// Web Crypto (`globalThis.crypto`), not `node:crypto` — this file is
+// exported from @brisk/shared-types' barrel, which apps/public-site also
+// imports from client-side scripts (preview-bridge-client.ts): a
+// `node:crypto` import would be externalized by Vite for the browser bundle
+// and would throw as soon as the barrel is evaluated, even when this
+// particular function is never called there. `crypto.randomUUID()` is the
+// same standard Web Crypto API in both Node (global since v19) and the
+// browser.
 const randomUUID = (): string => crypto.randomUUID();
 
 /**
- * Assegna un id stabile ad ogni blocco che ne è privo, ricorsivamente su
- * `children` — mai a un blocco che ne ha già uno (idempotente: un secondo
- * giro su contenuto già backfillato non cambia nulla). Non muta l'array/gli
- * oggetti in input: costruisce alberi nuovi solo per i rami effettivamente
- * toccati, così un chiamante può confrontare `changed` per decidere se vale
- * la pena scrivere la riga.
+ * Assigns a stable id to every block that lacks one, recursively through
+ * `children` — never to a block that already has one (idempotent: a second
+ * pass over already-backfilled content changes nothing). It does not mutate
+ * the input array or objects: it builds new trees only for the branches
+ * actually touched, so a caller can check `changed` to decide whether
+ * writing the row is worthwhile.
  *
- * Perché non la rigenerazione pigra ad ogni load: un id che cambia finché
- * nessuno salva è fragile proprio per drag/selezione/patch a frammento, che
- * lo useranno come identità stabile — vedi il piano dell'editor, Giorno 1.
+ * Why not lazy regeneration on every load: an id that changes until someone
+ * saves is fragile for exactly dragging, selection and fragment patching,
+ * which will use it as a stable identity — see the editor plan, Day 1.
  */
 export function backfillBlockIds(blocks: Block[]): {
   content: Block[];

@@ -7,75 +7,73 @@ import {
 } from '@brisk/shared-types';
 
 export interface PreviewBridgeState {
-  /** Vuoto finché `preview:ready` non arriva la prima volta. */
+  /** Empty until `preview:ready` arrives for the first time. */
   blockRects: BlockRect[];
   isReady: boolean;
   hoveredBlockId: string | null;
   /**
-   * Non più sola-lettura: oltre a un vero `preview:click` dall'iframe,
-   * anche `selectBlock` sotto lo scrive direttamente — serve al pannello
-   * Livelli per selezionare un blocco che sul canvas è completamente
-   * coperto da un suo figlio (es. una Colonna che contiene una sola
-   * Galleria a tutta larghezza: nessun pixel del canvas appartiene più
-   * alla Colonna stessa), dove cliccare sul canvas selezionerebbe sempre
-   * il figlio, mai il genitore.
+   * No longer read-only: besides a real `preview:click` from the iframe,
+   * `selectBlock` below also writes it directly — the Layers panel needs
+   * that to select a block the canvas covers completely with one of its own
+   * children (a Column containing a single full-width Gallery, say: no
+   * canvas pixel belongs to the Column itself any more), where clicking on
+   * the canvas would always select the child and never the parent.
    */
   selectedBlockId: string | null;
   /**
-   * L'ultimo doppio click ricevuto (Giorno 4) — un OGGETTO NUOVO ad ogni
-   * messaggio (anche se blockId/field sono identici al precedente), così un
-   * `useEffect` del chiamante keyed su questo valore si attiva ad ogni
-   * singolo doppio click per riferimento, non per uguaglianza di contenuto.
-   * Esposto come stato, non come callback: decidere se il field è
-   * `inlineEditable` richiede il block-registry, che questo hook (bridge
-   * postMessage generico) non conosce — quella policy vive nel chiamante
-   * (canvas-editor-shell.tsx), non qui.
+   * The last double click received (Day 4) — a NEW OBJECT on every message
+   * (even when blockId/field are identical to the previous one), so a
+   * caller's `useEffect` keyed on this value fires on every single double
+   * click by reference, not by content equality. Exposed as state rather
+   * than as a callback: deciding whether the field is `inlineEditable`
+   * requires the block-registry, which this hook (a generic postMessage
+   * bridge) knows nothing about — that policy lives in the caller
+   * (canvas-editor-shell.tsx), not here.
    */
   lastDblClick: { blockId: string; field: string | null } | null;
   /**
-   * L'ultimo testo digitato dal vivo in un'istanza TipTap montata sul posto
-   * (Giorno 4) — stessa ragione di `lastDblClick`: un oggetto nuovo ad ogni
-   * messaggio, così un `useEffect` del chiamante si attiva ad ogni singolo
-   * cambiamento anche quando blockId/field sono ripetuti.
+   * The last text typed live in a TipTap instance mounted in place (Day 4)
+   * — the same reason as `lastDblClick`: a new object on every message, so
+   * a caller's `useEffect` fires on every single change even when
+   * blockId/field repeat.
    */
   lastTextChange: { blockId: string; field: string; text: string } | null;
   /**
-   * Non-null durante un drag simulato in corso (riordino diretto sul canvas,
-   * Giorno 3/4) — `pointer` è iframe-relative (stessa semantica di
-   * `BlockRect`, il chiamante la combina con l'offset dell'iframe per
-   * disegnare l'indicatore di drop, come già fa OverlayLayer per
-   * hover/selezione).
+   * Non-null while a simulated drag is in progress (direct canvas
+   * reordering, Day 3/4) — `pointer` is iframe-relative (the same semantics
+   * as `BlockRect`; the caller combines it with the iframe's offset to draw
+   * the drop indicator, as OverlayLayer already does for hover/selection).
    */
   activeDrag: { blockId: string; pointer: { x: number; y: number } } | null;
   /**
-   * Un oggetto nuovo ad ogni `preview:drag-end` (stessa ragione di
-   * `lastDblClick`) — porta l'ultimo blockId/pointer noto del drag appena
-   * concluso, così il chiamante può calcolare la posizione di drop finale
-   * e applicarla al proprio `Block[]`. `activeDrag` torna `null` nello
-   * stesso aggiornamento di stato (il drag è visivamente finito).
+   * A new object on every `preview:drag-end` (the same reason as
+   * `lastDblClick`) — it carries the last known blockId/pointer of the drag
+   * that just ended, so the caller can compute the final drop position and
+   * apply it to its own `Block[]`. `activeDrag` returns to `null` in the
+   * same state update (the drag is visually over).
    */
   dragEnded: { blockId: string; pointer: { x: number; y: number } } | null;
   /** Sostituisce un blocco già renderizzato con l'HTML del frammento ottenuto da render-block-fragment (Giorno 3) — vedi block-fragment-api-client.ts. */
   patchBlock: (blockId: string, html: string) => void;
-  /** Inserisce un blocco MAI renderizzato prima (inserimento/duplicazione) — vedi EditorInsertBlockMessage. */
+  /** Inserts a block NEVER rendered before (insert/duplicate) — see EditorInsertBlockMessage. */
   insertBlock: (
     html: string,
     parentId: string | null,
     beforeBlockId: string | null,
   ) => void;
-  /** Rimuove un blocco già renderizzato dal DOM dell'iframe — vedi EditorRemoveBlockMessage. */
+  /** Removes an already-rendered block from the iframe's DOM — see EditorRemoveBlockMessage. */
   removeBlock: (blockId: string) => void;
-  /** Riordina i fratelli esistenti (già tutti renderizzati) — vedi EditorReorderBlocksMessage. */
+  /** Reorders the existing siblings (all already rendered) — see EditorReorderBlocksMessage. */
   reorderBlocks: (parentId: string | null, orderedIds: string[]) => void;
   /** Monta TipTap sul posto nell'iframe (Giorno 4) — vedi editor:enter-text-edit. */
   enterTextEdit: (blockId: string, field: string) => void;
   /** Smonta l'istanza TipTap corrente nell'iframe, se c'è. */
   exitTextEdit: () => void;
-  /** Seleziona un blocco direttamente da questo lato (pannello Livelli), senza passare da un vero `preview:click` sul canvas — vedi il commento su `selectedBlockId` sopra. */
+  /** Selects a block directly from this side (the Layers panel), without going through a real `preview:click` on the canvas — see the comment on `selectedBlockId` above. */
   selectBlock: (blockId: string | null) => void;
-  /** Aggiorna il `<style>` degli override "a livello di componente" nell'iframe (docs/adr/0022, pulsante "Stile") — `css` è già pronto (buildBlockStyleOverridesCss), l'iframe si limita a scriverlo. */
+  /** Updates the `<style>` holding the "component-level" overrides in the iframe (docs/adr/0022, the "Style" button) — `css` is already prepared (buildBlockStyleOverridesCss), and the iframe only writes it. */
   updateBlockStyleCss: (css: string) => void;
-  /** Porta in vista il blocco `blockId` nel documento dell'iframe (pannello Livelli) — vedi EditorScrollToBlockMessage. */
+  /** Brings block `blockId` into view in the iframe's document (the Layers panel) — see EditorScrollToBlockMessage. */
   scrollToBlock: (blockId: string) => void;
 }
 
@@ -104,20 +102,20 @@ const initialState: PreviewBridgeMessageState = {
 };
 
 /**
- * Lato genitore del protocollo postMessage (vedi
- * @brisk/shared-types/preview-bridge-protocol.ts e il piano dell'editor
- * visuale, Giorno 2) — ascolta `preview:*` da un iframe specifico, mai da
- * qualunque iframe: sia `event.origin` che `event.source` sono verificati,
- * così un altro iframe/estensione che spedisse lo stesso envelope non verrebbe
- * mai considerato.
+ * The parent side of the postMessage protocol (see
+ * @brisk/shared-types/preview-bridge-protocol.ts and the visual editor
+ * plan, Day 2) — it listens for `preview:*` from one specific iframe, never
+ * from just any iframe: both `event.origin` and `event.source` are checked,
+ * so another iframe or extension sending the same envelope would never be
+ * considered.
  *
- * Ogni evento in arrivo è esposto come STATO (mai un callback prop): un
- * callback passato dal chiamante avrebbe un'identità nuova ad ogni suo
- * render, e farla dipendere da altri valori derivati da hook del chiamante
- * stesso (es. `usePropertyPatch`, che a sua volta ha bisogno di
- * `patchBlock` restituito da QUESTO hook) creerebbe un ciclo tra due
- * chiamate di hook — niente di simile con lo stato: il chiamante reagisce
- * con un proprio `useEffect` keyed sul valore, letto quando gli serve.
+ * Every incoming event is exposed as STATE (never as a callback prop): a
+ * callback passed by the caller would have a fresh identity on each of its
+ * renders, and making it depend on other values derived from the caller's
+ * own hooks (`usePropertyPatch`, say, which in turn needs `patchBlock`
+ * returned by THIS hook) would create a cycle between two hook calls —
+ * nothing of the sort happens with state: the caller reacts with its own
+ * `useEffect` keyed on the value, read when it needs it.
  */
 export function usePreviewBridge(
   iframeRef: RefObject<HTMLIFrameElement | null>,
@@ -127,13 +125,13 @@ export function usePreviewBridge(
 
   useEffect(() => {
     function handleMessage(event: MessageEvent): void {
-      // L'iframe è sandboxato senza `allow-same-origin` (contiene blocchi
-      // inseriti da utenti della piattaforma, non fidati) — la sua origine
-      // è quindi opaca e ogni messaggio in uscita da lì arriva con
-      // `event.origin === 'null'`, mai l'origine reale di public-site.
-      // La sicurezza del check resta comunque garantita dal confronto di
-      // identità sotto (`event.source`), che individua quell'iframe
-      // preciso indipendentemente dalla stringa origin.
+      // The iframe is sandboxed without `allow-same-origin` (it holds
+      // blocks inserted by platform users, which are not trusted) — its
+      // origin is therefore opaque, and every message leaving it arrives
+      // with `event.origin === 'null'`, never public-site's real origin.
+      // The check's security still holds through the identity comparison
+      // below (`event.source`), which pins down that exact iframe
+      // regardless of the origin string.
       if (event.origin !== expectedOrigin && event.origin !== 'null') {
         return;
       }
@@ -247,11 +245,12 @@ export function usePreviewBridge(
           type: 'editor:patch-block',
           payload: { blockId, html },
         },
-        // Non `expectedOrigin`: l'iframe è sandboxato senza `allow-same-origin`
-        // (vedi handleMessage sopra), quindi la sua origine è opaca e non può
-        // mai combaciare con una stringa letterale — bisogna usare `'*'`.
-        // Nessuna perdita di sicurezza: si scrive sul riferimento diretto
-        // `iframeRef.current.contentWindow`, mai su un window "trovato".
+        // Not `expectedOrigin`: the iframe is sandboxed without
+        // `allow-same-origin` (see handleMessage above), so its origin is
+        // opaque and can never match a literal string — `'*'` has to be
+        // used. No security is lost: the write goes to the direct
+        // `iframeRef.current.contentWindow` reference, never to a window
+        // that was "found".
         '*',
       );
     },

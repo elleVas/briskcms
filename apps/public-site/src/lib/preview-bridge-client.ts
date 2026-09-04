@@ -2,20 +2,20 @@ import { type BlockRect } from '@brisk/shared-types';
 import { getBlockRect } from './get-block-rect';
 
 /**
- * Funzioni pure di parsing/predicati e di patch DOM — deliberatamente
- * separate dall'orchestratore vero e proprio (`initPreviewBridge`, in
- * init-preview-bridge.ts) proprio per essere testabili una per una senza
- * dover montare l'intero bridge (vedi preview-bridge-client.spec.ts contro
- * init-preview-bridge.spec.ts). Nessuno stato a livello di modulo qui —
- * ogni funzione prende esplicitamente il proprio `root`/`blockId`/ecc.
+ * Pure parsing/predicate and DOM-patching functions — deliberately kept
+ * apart from the orchestrator proper (`initPreviewBridge`, in
+ * init-preview-bridge.ts) precisely so each can be tested on its own
+ * without mounting the whole bridge (see preview-bridge-client.spec.ts
+ * against init-preview-bridge.spec.ts). No module-level state here — every
+ * function takes its own `root`/`blockId`/etc. explicitly.
  */
 
 export type EditingSection = 'header' | 'footer';
 
 /**
- * `null` = si sta editando il contenuto della pagina — vedi il piano
- * dell'editor visuale, Giorno 1/2: la stessa rotta di preview pagina serve
- * anche per header/footer, distinta solo da questo query param.
+ * `null` = the page's content is being edited — see the visual editor plan,
+ * Day 1/2: the same page-preview route also serves the header/footer,
+ * distinguished only by this query param.
  */
 export function parseEditingSection(search: string): EditingSection | null {
   const value = new URLSearchParams(search).get('editingSection');
@@ -46,10 +46,10 @@ export function collectBlockElements(root: ParentNode): Element[] {
 }
 
 /**
- * Il vero elemento interattivo (link/bottone/form/dettaglio) più vicino, se
- * esiste — senza intercettarlo, il primo click su uno di questi navigherebbe
- * via l'iframe e ucciderebbe la sessione di editing (Puck non aveva questo
- * problema: canvas React portal-renderizzato, mai anchor veri).
+ * The nearest genuinely interactive element (link/button/form/details), if
+ * there is one — without intercepting it, the first click on one of these
+ * would navigate the iframe away and kill the editing session (Puck did not
+ * have this problem: a React portal-rendered canvas, never real anchors).
  */
 export function findRealInteractiveAncestor(target: Element): Element | null {
   return target.closest('a, button, details');
@@ -60,18 +60,18 @@ export function blockIdOf(el: Element): string | null {
 }
 
 /**
- * Vero solo se NESSUN antenato del blocco è a sua volta un wrapper di
- * blocco — riordino diretto sul canvas (Giorno 3/4) è scoped ai blocchi di
- * primo livello, stessa scelta di layers-panel.tsx ("il riordino tra
- * fratelli annidati... resta un TODO separato"). Si parte da `parentElement`,
- * non da `blockEl` stesso, altrimenti `closest` troverebbe sempre almeno
+ * True only when NO ancestor of the block is itself a block wrapper —
+ * direct reordering on the canvas (Day 3/4) is scoped to top-level blocks,
+ * the same choice layers-panel.tsx made ("reordering between nested
+ * siblings... stays a separate TODO"). It starts from `parentElement`
+ * rather than `blockEl` itself, or `closest` would always find at least
  * `blockEl`.
  */
 export function isRootLevelBlock(blockEl: Element): boolean {
   return blockEl.parentElement?.closest('[data-brisk-block-id]') == null;
 }
 
-/** Il valore di `data-brisk-field` più vicino sotto un punto del click, entro i confini del blocco — `null` se il doppio click è caduto sul blocco ma fuori da ogni campo `inlineEditable` (es. un'area di padding). */
+/** The nearest `data-brisk-field` value under a click point, within the block's own bounds — `null` when the double click landed on the block but outside every `inlineEditable` field (a padding area, say). */
 export function findFieldUnderPointer(
   blockEl: Element,
   target: Element,
@@ -92,12 +92,12 @@ export function toBlockRects(elements: Element[]): BlockRect[] {
 }
 
 /**
- * Sostituzione mirata dopo render-block-fragment (Giorno 3) — `html` porta
- * già il proprio wrapper `data-brisk-block-id` (RenderSingleBlock.astro lo
- * costruisce con lo stesso id), quindi `outerHTML` rimpiazza esattamente il
- * nodo giusto. Restituisce il nuovo elemento (per ri-osservarlo col
- * ResizeObserver) o `null` se il blocco non è (più) nel documento — es. è
- * stato rimosso nel frattempo da un'altra azione, non un errore da segnalare.
+ * Targeted replacement after render-block-fragment (Day 3) — `html` already
+ * carries its own `data-brisk-block-id` wrapper (RenderSingleBlock.astro
+ * builds it with the same id), so `outerHTML` replaces exactly the right
+ * node. Returns the new element (to re-observe it with the ResizeObserver)
+ * or `null` when the block is no longer in the document — removed in the
+ * meantime by another action, say, which is not an error worth reporting.
  */
 export function applyBlockPatch(
   root: ParentNode,
@@ -113,20 +113,20 @@ export function applyBlockPatch(
 }
 
 /**
- * Inserisce un blocco MAI visto prima dell'iframe (inserimento/duplicazione)
- * — vedi EditorInsertBlockMessage. Trova il contenitore DOM giusto senza
- * bisogno di conoscere la struttura interna di ogni tipo di blocco-
- * contenitore (Container/Columns/Accordion/...): se esiste già un fratello
- * (`beforeBlockId`), il SUO `parentElement` è per costruzione il contenitore
- * giusto (ogni blocco è un wrapper `display:contents` piazzato direttamente
- * come figlio di quel contenitore, mai avvolto in altro — vedi
- * BlockRenderer.astro). Altrimenti (contenitore vuoto, o radice) serve un
- * riferimento esplicito: il primo figlio del wrapper del blocco-contenitore
- * (ogni blocco-contenitore renderizza `<slot/>` come unico contenuto del
- * proprio elemento radice) per un inserimento annidato, o il marcatore
- * `data-brisk-root-blocks="page"/"header"/"footer"` (PublicPageContent.astro/
- * PageLayout.astro) per la radice, distinto per scope perché le tre liste
- * radice possono coesistere sulla stessa pagina.
+ * Inserts a block the iframe has NEVER seen before (insert/duplicate) — see
+ * EditorInsertBlockMessage. It finds the right DOM container without having
+ * to know the internal structure of every container block type
+ * (Container/Columns/Accordion/...): if a sibling already exists
+ * (`beforeBlockId`), ITS `parentElement` is by construction the right
+ * container (every block is a `display:contents` wrapper placed directly as
+ * a child of that container, never wrapped in anything else — see
+ * BlockRenderer.astro). Otherwise (an empty container, or the root) an
+ * explicit reference is needed: the first child of the container block's
+ * wrapper (every container block renders `<slot/>` as the sole content of
+ * its own root element) for a nested insert, or the
+ * `data-brisk-root-blocks="page"/"header"/"footer"` marker
+ * (PublicPageContent.astro/PageLayout.astro) for the root, distinguished by
+ * scope because the three root lists can coexist on the same page.
  */
 export function applyBlockInsert(
   root: ParentNode,
@@ -154,27 +154,27 @@ export function applyBlockInsert(
   const template = document.createElement('template');
   template.innerHTML = html.trim();
 
-  // Il wrapper vero non è per forza il primo figlio del frammento: alcuni
-  // blocchi (Countdown, Form, MapEmbed...) hanno il proprio <script>
-  // renderizzato come fratello del wrapper — RenderSingleBlock non ha una
-  // pagina condivisa a cui "agganciarlo", diversamente da un render intero.
+  // The real wrapper is not necessarily the fragment's first child: some
+  // blocks (Countdown, Form, MapEmbed...) have their own <script> rendered
+  // as a sibling of the wrapper — RenderSingleBlock has no shared page to
+  // "hang it off", unlike a whole-page render.
   const newNode = template.content.querySelector('[data-brisk-block-id]');
   if (!newNode) {
     return null;
   }
 
-  // Uno <script> spostato qui via innerHTML/<template> è marcato "already
-  // started" dallo spec e non esegue MAI da solo, nemmeno una volta
-  // ricollegato al documento — va ricreato da zero (stesso motivo per cui
-  // Countdown/Stat/ImageSlider/Tabs/Testimonials/BeforeAfter/Form/MapEmbed
-  // restavano vuoti finché non si ricaricava la pagina; per Form/
-  // NewsletterSignup questo fa ripartire anche lo <script src> di Turnstile,
-  // che si auto-renderizza su ogni .cf-turnstile trovato). Sostituito in
-  // loco, prima di spostare qualunque nodo: se annidato dentro newNode si
-  // ricollega da solo quando newNode entra nel documento (l'intero sotto-
-  // albero si connette in un colpo solo, prima che parta qualunque script
-  // al suo interno); se è un fratello di newNode resta comunque dentro
-  // `template.content` e va spostato a parte, subito dopo.
+  // A <script> moved here through innerHTML/<template> is flagged "already
+  // started" by the spec and NEVER runs on its own, not even once
+  // reconnected to the document — it has to be recreated from scratch (the
+  // same reason Countdown/Stat/ImageSlider/Tabs/Testimonials/BeforeAfter/
+  // Form/MapEmbed stayed empty until the page was reloaded; for Form/
+  // NewsletterSignup this also restarts Turnstile's <script src>, which
+  // self-renders on every .cf-turnstile it finds). Replaced in place, before
+  // any node is moved: if it is nested inside newNode it reconnects by
+  // itself when newNode enters the document (the whole subtree connects in
+  // one go, before any script inside it runs); if it is a sibling of
+  // newNode it stays inside `template.content` and has to be moved
+  // separately, immediately afterwards.
   for (const oldScript of Array.from(
     template.content.querySelectorAll('script'),
   )) {
@@ -192,9 +192,9 @@ export function applyBlockInsert(
     container.appendChild(newNode);
   }
 
-  // Ogni nodo fratello rimasto in `template.content` (tipicamente lo
-  // <script> ricreato sopra, se il fratello e non annidato) va riattaccato
-  // subito dopo newNode, nello stesso ordine relativo dell'HTML originale.
+  // Every sibling node left in `template.content` (typically the <script>
+  // recreated above, when it is a sibling rather than nested) is reattached
+  // right after newNode, in the same relative order as the original HTML.
   let anchor: ChildNode = newNode;
   for (const sibling of Array.from(template.content.childNodes)) {
     anchor.after(sibling);
@@ -205,14 +205,14 @@ export function applyBlockInsert(
 }
 
 /**
- * id fisso del `<style>` iniettato per l'override "a livello di
- * componente" (docs/adr/0022) — un solo elemento, riscritto per intero ad
- * ogni salvataggio dal pulsante "Stile" (il genitore manda già l'intera
- * mappa aggiornata di `blockStyles`, non un delta), mai accumulato.
+ * The fixed id of the `<style>` injected for the "component-level" override
+ * (docs/adr/0022) — a single element, rewritten in full on every save from
+ * the "Style" button (the parent already sends the whole updated
+ * `blockStyles` map, not a delta), never accumulated.
  */
 const BLOCK_STYLE_CSS_ELEMENT_ID = 'brisk-block-style-overrides';
 
-/** Scrive/sostituisce il `<style>` degli override per-tipo (docs/adr/0022) — vedi EditorUpdateBlockStyleCssMessage. Crea l'elemento se non esiste ancora (primo salvataggio della sessione), lo riusa altrimenti. */
+/** Writes or replaces the `<style>` holding the per-type overrides (docs/adr/0022) — see EditorUpdateBlockStyleCssMessage. It creates the element if there is none yet (the session's first save), and reuses it otherwise. */
 export function applyBlockStyleCss(root: Document, css: string): void {
   let styleEl = root.getElementById(BLOCK_STYLE_CSS_ELEMENT_ID);
   if (!styleEl) {
@@ -223,7 +223,7 @@ export function applyBlockStyleCss(root: Document, css: string): void {
   styleEl.textContent = css;
 }
 
-/** Rimuove un blocco eliminato dal DOM dell'iframe — `true` se un nodo è stato davvero rimosso, `false` se non era (più) presente (non un errore: un'azione precedente potrebbe già averlo tolto). */
+/** Removes a deleted block from the iframe's DOM — `true` when a node was actually removed, `false` when it was no longer there (not an error: an earlier action may have taken it out already). */
 export function applyBlockRemove(root: ParentNode, blockId: string): boolean {
   const target = root.querySelector(`[data-brisk-block-id="${blockId}"]`);
   if (!target) {
@@ -234,15 +234,14 @@ export function applyBlockRemove(root: ParentNode, blockId: string): boolean {
 }
 
 /**
- * Riordina i fratelli ESISTENTI (già tutti renderizzati) secondo
- * `orderedIds` — vedi EditorReorderBlocksMessage. Il contenitore è trovato
- * tramite il PRIMO fratello ancora presente nel DOM (il suo
- * `parentElement`, stessa euristica di `applyBlockInsert`): non serve
- * conoscere la struttura interna del blocco-contenitore. Un id in
- * `orderedIds` che non esiste (più) nel DOM viene ignorato in silenzio —
- * non tutti i fratelli devono necessariamente esistere ancora (una
- * rimozione appena applicata potrebbe non essere ancora rispecchiata nella
- * lista che il chiamante ha costruito).
+ * Reorders the EXISTING siblings (all already rendered) to match
+ * `orderedIds` — see EditorReorderBlocksMessage. The container is found
+ * through the FIRST sibling still present in the DOM (its `parentElement`,
+ * the same heuristic as `applyBlockInsert`): no knowledge of the container
+ * block's internal structure is needed. An id in `orderedIds` that is no
+ * longer in the DOM is ignored silently — not every sibling necessarily
+ * still exists (a removal just applied may not yet be reflected in the list
+ * the caller built).
  */
 export function applyBlockReorder(
   root: ParentNode,
@@ -269,14 +268,15 @@ export function applyBlockReorder(
     return;
   }
 
-  // `appendChild` su un nodo già nel DOM lo SPOSTA (niente clone) — ri-
-  // appenderli in sequenza desiderata li lascia in quell'ordine finale.
+  // `appendChild` on a node already in the DOM MOVES it (no clone) — so
+  // re-appending them in the desired sequence leaves them in that final
+  // order.
   for (const el of existing) {
     container.appendChild(el);
   }
 }
 
-/** Il nodo esatto di un field `inlineEditable` dentro un blocco — marcato a mano nel componente Astro del blocco (vedi Hero.astro). `null` se il blocco o il field non esistono (mai un errore da segnalare: un blockId/field ormai stale, es. dopo una patch a frammento, è un caso normale). */
+/** The exact node of an `inlineEditable` field inside a block — marked by hand in the block's Astro component (see Hero.astro). `null` when the block or the field does not exist (never an error worth reporting: a blockId/field that has gone stale, after a fragment patch for instance, is a normal case). */
 export function findFieldElement(
   root: ParentNode,
   blockId: string,
@@ -290,20 +290,21 @@ export function findFieldElement(
 }
 
 /**
- * Porta in vista il blocco `blockId` (pannello Livelli, colonna destra) —
- * `true` se il blocco è stato trovato e lo scroll è partito, `false` se non
- * è (più) nel DOM (es. appena rimosso da un'altra azione): stesso caso
- * "non un errore da segnalare" di `applyBlockPatch`/`applyBlockRemove`.
+ * Brings block `blockId` into view (Layers panel, right-hand column) —
+ * `true` when the block was found and the scroll started, `false` when it
+ * is no longer in the DOM (just removed by another action, say): the same
+ * "not an error worth reporting" case as `applyBlockPatch`/
+ * `applyBlockRemove`.
  *
- * NON un semplice `target.scrollIntoView()`: `target` è il wrapper
- * `display:contents` di BlockRenderer.astro (vedi get-block-rect.ts),
- * quindi non ha mai un box proprio — `scrollIntoView()` su un elemento del
- * genere è un no-op nella maggior parte dei browser (bug live-verificato:
- * il click sul pannello Livelli selezionava il blocco ma il canvas non si
- * muoveva mai). `getBlockRect` misura invece il contenuto renderizzato via
- * `Range` (funziona identicamente per un elemento normale), poi lo
- * scroll è calcolato a mano per centrarlo in verticale — stessa semantica
- * di `scrollIntoView({block:'center'})` su un elemento con un box vero.
+ * NOT a plain `target.scrollIntoView()`: `target` is BlockRenderer.astro's
+ * `display:contents` wrapper (see get-block-rect.ts), so it never has a box
+ * of its own — `scrollIntoView()` on such an element is a no-op in most
+ * browsers (a live-verified bug: clicking in the Layers panel selected the
+ * block but the canvas never moved). `getBlockRect` measures the rendered
+ * content through a `Range` instead (which works identically for an
+ * ordinary element), and the scroll is then computed by hand to centre it
+ * vertically — the same semantics as `scrollIntoView({block:'center'})` on
+ * an element with a real box.
  */
 export function scrollBlockIntoView(
   root: ParentNode,
@@ -320,7 +321,7 @@ export function scrollBlockIntoView(
   return true;
 }
 
-/** TipTap analizza `content` come HTML — un titolo che contenga `&`/`<`/`>` va escaped prima, altrimenti verrebbe interpretato come markup invece che testo letterale. */
+/** TipTap parses `content` as HTML — a title containing `&`/`<`/`>` has to be escaped first, or it would be read as markup rather than literal text. */
 export function escapeHtml(text: string): string {
   return text
     .replaceAll('&', '&amp;')

@@ -8,14 +8,14 @@ import {
 } from '@brisk/postgres-db';
 
 /**
- * Sostituisce l'`UPDATE ... jsonb_set` su `sites.theme_tokens`
- * (docs/adr/0022's follow-up sullo schema): una riga per (site, block
- * type) invece di una voce annidata in un blob unico. L'upsert resta
- * atomico allo stesso modo — anzi più semplice, un `INSERT ... ON
- * CONFLICT DO UPDATE` diretto, niente più path JSONB da costruire —
- * riduce solo il "quanto viene toccato" ad ogni scrittura (questa riga
- * stretta invece dell'intera riga larga `sites`) e abilita query dirette
- * per tipo di blocco.
+ * Replaces the `UPDATE ... jsonb_set` on `sites.theme_tokens`
+ * (docs/adr/0022's schema follow-up): one row per (site, block type)
+ * instead of an entry nested in a single blob. The upsert stays atomic in
+ * exactly the same way — simpler, in fact, a direct
+ * `INSERT ... ON CONFLICT DO UPDATE` with no JSONB path to build — and it
+ * only reduces how much is touched on each write (this narrow row rather
+ * than the whole wide `sites` row) while enabling direct queries per block
+ * type.
  */
 export class DrizzleSiteThemeBlockStylesRepository implements SiteThemeBlockStylesPort {
   constructor(private readonly db: BriskDb) {}

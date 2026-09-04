@@ -86,10 +86,10 @@ export function StyleView({ siteId, site }: StyleViewProps) {
   const [error, setError] = useState('');
   const [savedAt, setSavedAt] = useState(0);
 
-  // Stesso avviso non bloccante di GlobalStylesDialog (docs/adr/0022's
-  // follow-up sul contrasto) — duplicato qui perché questa vista duplica
-  // anche i campi colore stessi (state locale invece del form condiviso),
-  // non un secondo meccanismo.
+  // The same non-blocking warning as GlobalStylesDialog (docs/adr/0022's
+  // contrast follow-up) — duplicated here because this view also duplicates
+  // the colour fields themselves (local state rather than the shared form),
+  // not a second mechanism.
   const primaryContrast =
     primaryColorEnabled && foregroundTokens
       ? checkContrastAgainstThemeForeground(

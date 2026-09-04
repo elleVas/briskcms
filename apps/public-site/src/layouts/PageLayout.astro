@@ -52,8 +52,8 @@ interface Props {
 	footer: Block[] | null;
 	headerSticky: boolean;
 	ancestors: PublishedPageAncestor[];
-	// Solo la rotta di preview lo passa (vedi il piano dell'editor visuale,
-	// Giorno 2) — non influenza mai la rotta pubblicata reale.
+	// Only the preview route passes it (see the visual editor plan, Day 2)
+	// — it never affects the real published route.
 	editable?: boolean;
 	// Which core route is rendering. Passed to the theme's regions, and used
 	// to never render a theme region on the 500 page: that page is the last
@@ -209,8 +209,8 @@ const bodyTrackerScripts = partitionTrackerScripts(
 	'body',
 );
 const themeFont = resolveThemeFont(theme.fontFamily);
-// Global Styles Editor (Fase 2a) — stessa gate di sopra: nessun token
-// personalizzato emesso quando gli override sono disabilitati.
+// The Global Styles Editor (phase 2a) — the same gate as above: no
+// customized token is emitted when overrides are disabled.
 const tokens = allowStyleOverrides ? site.themeTokens : DEFAULT_THEME_TOKENS;
 const themeOverrideDeclarations = [
 	theme.primaryColor && `--primary: ${theme.primaryColor} !important;`,
@@ -225,10 +225,10 @@ const themeOverrideDeclarations = [
 const themeBaseTokenDeclarations = [...themeBaseTokens.entries()]
 	.map(([name, value]) => `${name}: ${value} !important;`)
 	.join(' ');
-// Override "a livello di componente" (docs/adr/0022) — una regola CSS per
-// tipo di blocco stilizzato, non un `:root` unico come sopra: ogni tipo
-// ha il proprio scoping via `[data-brisk-block-type]`, così solo i
-// blocchi di quel tipo vedono il nuovo valore.
+// The "component-level" override (docs/adr/0022) — one CSS rule per styled
+// block type, not a single `:root` as above: each type has its own scoping
+// through `[data-brisk-block-type]`, so only blocks of that type see the
+// new value.
 const blockStyleOverridesCss = buildBlockStyleOverridesCss(
 	tokens.blockStyles,
 );

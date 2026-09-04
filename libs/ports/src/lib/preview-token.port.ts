@@ -9,11 +9,11 @@ export interface PreviewToken {
 }
 
 /**
- * Same opaque-token mechanic as AuthPort's sessions (@brisk/opaque-token),
- * but non-consumante: una sessione di preview ricarica l'iframe più volte,
- * quindi validare un token non lo invalida — a differenza di
- * VerificationTokenPort.consumeToken (single-use). Vedi il piano
- * dell'editor visuale, Giorno 1.
+ * The same opaque-token mechanic as AuthPort's sessions
+ * (@brisk/opaque-token), but non-consuming: a preview session reloads the
+ * iframe several times, so validating a token does not invalidate it —
+ * unlike VerificationTokenPort.consumeToken (single-use). See the visual
+ * editor plan, Day 1.
  */
 export interface PreviewTokenPort {
   /** ttlMs è una decisione di policy del chiamante (application layer), l'adapter si limita ad applicarla. */
@@ -24,7 +24,7 @@ export interface PreviewTokenPort {
     ttlMs: number,
   ): Promise<PreviewToken>;
 
-  /** null se il token non esiste, è scaduto, o non corrisponde a (contentType, contentId) richiesti. */
+  /** null when the token does not exist, has expired, or does not match the requested (contentType, contentId). */
   validateToken(
     token: string,
     contentType: PreviewContentType,

@@ -13,20 +13,20 @@ import {
 import { PUBLIC_SITE_URL } from './public-site-url';
 
 /**
- * Chiama apps/public-site direttamente (mai apps/api) — stesso motivo di
- * renderBlockFragment (block-fragment-api-client.ts): è l'unica app che
- * legge davvero i file dei temi (docs/adr/0021), non passa quindi da
- * http-client.ts, la cui base URL punta ad apps/api.
+ * Calls apps/public-site directly (never apps/api) — the same reason as
+ * renderBlockFragment (block-fragment-api-client.ts): it is the only app
+ * that actually reads the themes' files (docs/adr/0021), so it does not go
+ * through http-client.ts, whose base URL points at apps/api.
  *
- * Ogni funzione prende un `themeName` (docs/adr/0042): da quando ogni
- * tema è bundlato nella stessa immagine e la scelta è per-sito
- * (`Site.themeName`), "current" non identifica più niente da solo —
- * `?theme=` dice a public-site di QUALE tema rispondere.
+ * Every function takes a `themeName` (docs/adr/0042): now that every theme
+ * is bundled into the same image and the choice is per-site
+ * (`Site.themeName`), "current" no longer identifies anything on its own —
+ * `?theme=` tells public-site WHICH theme to answer for.
  *
- * Non esportata — un collaboratore privato a questo modulo (security
- * review 2026-08-24: prima fetchThemeIcons/fetchBlockStyleDefaults
- * vivevano in due file separati, ognuno con lo stesso identico
- * fetch→check res.ok→throw→schema.parse ricopiato).
+ * Not exported — a private collaborator of this module (security review
+ * 2026-08-24: fetchThemeIcons and fetchBlockStyleDefaults used to live in
+ * two separate files, each with the same fetch → check res.ok → throw →
+ * schema.parse copied out).
  */
 class ThemeApiFetcher {
   async fetchAndParse<T>(

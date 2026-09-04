@@ -1,9 +1,9 @@
 /**
- * TTL condiviso da entrambe le rotte di creazione token di preview (pagine
- * e site-layout-sections) — una decisione di policy del chiamante
- * (application layer), non dell'adapter (vedi PreviewTokenPort). Un'ora
- * copre comodamente una sessione di editing continuativa; l'editor-app
- * richiede un token nuovo quando riapre l'editor, non tiene aperta la
- * stessa sessione di preview per giorni.
+ * The TTL shared by both preview-token creation routes (pages and
+ * site-layout-sections) — a policy decision belonging to the caller (the
+ * application layer), not to the adapter (see PreviewTokenPort). An hour
+ * comfortably covers one continuous editing session; editor-app requests a
+ * fresh token when the editor is reopened, it does not keep the same
+ * preview session alive for days.
  */
 export const PREVIEW_TOKEN_TTL_MS = 1000 * 60 * 60;

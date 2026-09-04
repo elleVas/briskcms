@@ -9,7 +9,7 @@ export type PageTranslationStatus = 'draft' | 'published';
 export interface PageTranslationProps {
   id: string;
   tenantId: string;
-  /** Denormalizzato dal PageGroup, scritto solo alla creazione — una pagina non cambia mai sito. Serve al vincolo di unicità dello slug e alla risoluzione pubblica senza un join, vedi PageTranslationRepositoryPort.findByParentGroupAndLocaleSlug. */
+  /** Denormalized from the PageGroup, written only at creation — a page never changes site. Needed for the slug uniqueness constraint and for public resolution without a join, see PageTranslationRepositoryPort.findByParentGroupAndLocaleSlug. */
   siteId: string;
   pageGroupId: string;
   locale: string;
@@ -18,13 +18,13 @@ export interface PageTranslationProps {
   seoMeta: SeoMeta;
   /** Override di SOLI campi `translatable`, chiavati per blocco — vedi mergeTranslatedContent. Ignorato quando `isDiverged` è true (una traduzione scollegata ha la propria struttura+testo interamente in `divergedContent`). */
   fieldValues: FieldValueOverlay;
-  /** Pubblicazione resta PER-LOCALE, come nel vecchio modello — si può pubblicare una lingua oggi e un'altra quando è pronta. */
+  /** Publishing stays PER-LOCALE, as in the old model — one language can be published today and another when it is ready. */
   status: PageTranslationStatus;
-  /** Merge congelato (struttura di PageGroup + fieldValues di questa lingua, o `divergedContent` se scollegata) al momento dell'ultima publish() — stessa forma di Page.publishedContent di ieri, stesso consumatore (risoluzione pubblica). */
+  /** The frozen merge (the PageGroup's structure plus this language's fieldValues, or `divergedContent` when unlinked) as of the last publish() — the same shape as yesterday's Page.publishedContent, and the same consumer (public resolution). */
   publishedSnapshot: PageContent | null;
-  /** Lo "scollega": quando true, questa traduzione non riceve più le modifiche strutturali propagate da PageGroup.content — ha una propria struttura+testo indipendente in `divergedContent`, esattamente il comportamento del vecchio modello isolato a questa sola lingua. */
+  /** "Unlinks" it: when true, this translation no longer receives the structural changes propagated from PageGroup.content — it has a structure and text of its own in `divergedContent`, exactly the old model's behaviour isolated to this one language. */
   isDiverged: boolean;
-  /** Popolato solo quando `isDiverged` è true — fork completo al momento della divergenza. `null` finché la traduzione resta collegata. */
+  /** Populated only when `isDiverged` is true — a full fork taken at the moment of divergence. `null` for as long as the translation stays linked. */
   divergedContent: PageContent | null;
   createdBy: string | null;
   createdAt: Date;
@@ -45,10 +45,10 @@ export interface CreatePageTranslationProps {
 }
 
 /**
- * Entità pura, prende il posto della vecchia Page per-locale (con
- * PageGroup). A differenza di ieri, creare una traduzione è leggero —
- * `fieldValues: {}`, nessuna copia integrale della struttura — perché la
- * struttura non le appartiene più, vive su PageGroup.
+ * A pure entity, taking the place of the old per-locale Page (together with
+ * PageGroup). Unlike yesterday, creating a translation is cheap —
+ * `fieldValues: {}`, no wholesale copy of the structure — because the
+ * structure no longer belongs to it: it lives on PageGroup.
  */
 export class PageTranslation {
   private constructor(private props: PageTranslationProps) {}
@@ -142,7 +142,7 @@ export class PageTranslation {
     return this.props.updatedAt;
   }
 
-  /** Aggiorna slug/seoMeta — resta per-locale come ieri, indipendente da draft/pubblicazione della struttura (stessa ragione di Page.updateSeoMeta, ADR-0014). */
+  /** Updates slug/seoMeta — still per-locale as before, independent of the structure's draft/publish state (the same reasoning as Page.updateSeoMeta, ADR-0014). */
   updateSeoMeta(seoMeta: SeoMeta, now: Date = new Date()): void {
     this.props.seoMeta = seoMeta;
     this.props.updatedAt = now;
@@ -153,7 +153,7 @@ export class PageTranslation {
     this.props.updatedAt = now;
   }
 
-  /** Salva l'overlay di testo per questa lingua — NON valido su una traduzione scollegata (il use-case deve verificare `isDiverged` prima di chiamare, l'entità pura non ha accesso al descrittore campi per saperlo da sola). */
+  /** Saves this language's text overlay — NOT valid on an unlinked translation (the use case must check `isDiverged` before calling; the pure entity has no access to the field descriptors and cannot tell on its own). */
   saveFieldValues(
     fieldValues: FieldValueOverlay,
     now: Date = new Date(),
@@ -162,7 +162,7 @@ export class PageTranslation {
     this.props.updatedAt = now;
   }
 
-  /** Promuove il merge corrente (calcolato dal chiamante — mergeTranslatedContent(group.content, this.fieldValues), o `divergedContent` se scollegata) a versione pubblicata di questa lingua. */
+  /** Promotes the current merge (computed by the caller — mergeTranslatedContent(group.content, this.fieldValues), or `divergedContent` when unlinked) to this language's published version. */
   publish(mergedContent: PageContent, now: Date = new Date()): void {
     this.props.publishedSnapshot = mergedContent;
     this.props.status = 'published';
@@ -170,14 +170,13 @@ export class PageTranslation {
   }
 
   /**
-   * Scollega questa traduzione dalla struttura condivisa — fork completo:
-   * `currentMergedContent` (calcolato dal chiamante, stesso merge di
-   * publish()) diventa la nuova, indipendente `divergedContent`. Dopo
-   * questa chiamata, le modifiche strutturali su PageGroup.content non
-   * raggiungono più questa traduzione — usa `saveDivergedContent` per le
-   * modifiche successive, non più `saveFieldValues`. Irreversibile in v1
-   * (nessun "ricollega" — vedi il piano, ambiguo quali modifiche
-   * vincerebbero).
+   * Unlinks this translation from the shared structure — a full fork:
+   * `currentMergedContent` (computed by the caller, the same merge as
+   * publish()) becomes the new, independent `divergedContent`. After this
+   * call, structural changes to PageGroup.content no longer reach this
+   * translation — use `saveDivergedContent` for subsequent edits, no longer
+   * `saveFieldValues`. Irreversible in v1 (there is no "relink" — see the
+   * plan, it is ambiguous which changes would win).
    */
   diverge(currentMergedContent: PageContent, now: Date = new Date()): void {
     this.props.isDiverged = true;
@@ -185,7 +184,7 @@ export class PageTranslation {
     this.props.updatedAt = now;
   }
 
-  /** Aggiorna il contenuto indipendente di una traduzione GIÀ scollegata — il use-case deve verificare `isDiverged` prima di chiamare, stessa disciplina di saveFieldValues. */
+  /** Updates the independent content of an ALREADY unlinked translation — the use case must check `isDiverged` before calling, the same discipline as saveFieldValues. */
   saveDivergedContent(content: PageContent, now: Date = new Date()): void {
     this.props.divergedContent = content;
     this.props.updatedAt = now;

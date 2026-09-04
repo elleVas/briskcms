@@ -1,9 +1,9 @@
 import type { PageContent } from '@brisk/shared-types';
 
 /**
- * Snapshot immutabile del contenuto di una SiteLayoutSection in un dato
- * istante. Ogni salvataggio (create, saveDraft, rollback) ne crea una
- * nuova riga — mai un overwrite distruttivo, stesso invariante di
+ * An immutable snapshot of a SiteLayoutSection's content at a point in
+ * time. Every save (create, saveDraft, rollback) creates a new row — never
+ * a destructive overwrite, the same invariant as
  * PageVersion/SiteLayoutSection.restoreContent().
  */
 export interface SiteLayoutSectionVersion {

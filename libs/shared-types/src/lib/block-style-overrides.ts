@@ -1,24 +1,24 @@
 import type { BlockStyleOverride } from './site-theme-tokens';
 
 /**
- * Un solo nome di custom property per campo, condiviso da ogni tipo di
- * blocco (docs/adr/0022) — non un `--button-radius` per Button e un
- * `--card-radius` per un altro tipo: lo stesso `.astro` di un blocco
- * legge sempre `var(--brisk-override-*, <default del tema>)`, quale che
- * sia il tipo, quindi il nome della property non ha bisogno di
- * conoscere il tipo — è la regola CSS che lo scopa già per tipo (vedi
- * `buildBlockStyleOverridesCss` sotto). Vive in shared-types (non solo in
- * apps/public-site) perché editor-app la usa anche lei, per aggiornare
- * dal vivo il `<style>` dentro l'iframe del canvas quando il pulsante
- * "Stile" salva — stessa logica, non duplicata tra le due app.
+ * One custom-property name per field, shared by every block type
+ * (docs/adr/0022) — not a `--button-radius` for Button and a
+ * `--card-radius` for some other type: a block's `.astro` always reads
+ * `var(--brisk-override-*, <the theme's default>)` whatever the type, so
+ * the property name does not need to know the type — it is the CSS rule
+ * that already scopes it per type (see `buildBlockStyleOverridesCss`
+ * below). It lives in shared-types (not only in apps/public-site) because
+ * editor-app uses it too, to update the `<style>` inside the canvas iframe
+ * live when the "Style" button saves — the same logic, not duplicated
+ * across the two apps.
  *
- * `marginTop`/`marginBottom` sono ESCLUSI di proposito da questa mappa —
- * non diventano mai una custom property CSS scoped per-tipo: vedi il
- * commento su di loro in `site-theme-tokens.ts` per il perché (una regola
- * `.brisk-<type> { margin-bottom: ... }` toccherebbe anche le istanze
- * annidate, dove lo spazio tra fratelli è già gestito dal contenitore).
- * Restano solo un campo dati su `Block.styleOverride`, letti direttamente
- * da `PublicPageContent.astro` per un blocco di primo livello.
+ * `marginTop`/`marginBottom` are deliberately EXCLUDED from this map — they
+ * never become a per-type scoped CSS custom property: see the comment on
+ * them in `site-theme-tokens.ts` for why (a
+ * `.brisk-<type> { margin-bottom: ... }` rule would also touch nested
+ * instances, where the space between siblings is already handled by the
+ * container). They stay a plain data field on `Block.styleOverride`, read
+ * directly by `PublicPageContent.astro` for a top-level block.
  */
 type CssOverridableProperty = Exclude<
   keyof BlockStyleOverride,
@@ -37,30 +37,29 @@ export const BLOCK_STYLE_CUSTOM_PROPERTIES: Record<
 };
 
 /**
- * "Button" -> "brisk-button", "PromoBar" -> "brisk-promo-bar" — la
- * convenzione di classe già seguita a mano da ogni blocco stilizzato
- * (Container.astro's `.brisk-container`, Column.astro's `.brisk-column`,
- * …). Deriva la classe dal TIPO invece di richiedere che ogni blocco la
- * dichiari esplicitamente da qualche parte: un solo posto da tenere
- * coerente con la convenzione, invece di due.
+ * "Button" -> "brisk-button", "PromoBar" -> "brisk-promo-bar" — the class
+ * convention every styled block already follows by hand (Container.astro's
+ * `.brisk-container`, Column.astro's `.brisk-column`, …). It derives the
+ * class from the TYPE rather than requiring every block to declare it
+ * explicitly somewhere: one place to keep consistent with the convention
+ * instead of two.
  */
 export function blockTypeToClassName(blockType: string): string {
   return `brisk-${blockType.replace(/([a-z0-9])([A-Z])/g, '$1-$2').toLowerCase()}`;
 }
 
 /**
- * Override "a livello di componente" (docs/adr/0022) — una regola CSS per
- * tipo di blocco stilizzato, scoped dalla classe `.brisk-*` del blocco
- * stesso, NON da `[data-brisk-block-type]`: quel wrapper esiste solo
- * quando `editable` è vero (BlockRenderer.astro) — sul sito pubblicato
- * per un visitatore reale non c'è, quindi una regola scoped lì non
- * avrebbe mai effetto fuori dall'editor, l'esatto contrario dello scopo
- * di questa feature. La classe del blocco, invece, è sulla markup reale
- * in ENTRAMBI i contesti. Nessun `!important`: a differenza dei colori/
- * font di Tier 1 (docs/adr/0021), qui non c'è una regola di specificità
- * più alta da battere — il blocco stesso legge
- * `var(--brisk-override-x, <default>)`, quindi qualunque valore la
- * custom property risolva è già quello vincente per costruzione.
+ * The "component-level" override (docs/adr/0022) — one CSS rule per styled
+ * block type, scoped by the block's own `.brisk-*` class and NOT by
+ * `[data-brisk-block-type]`: that wrapper only exists when `editable` is
+ * true (BlockRenderer.astro) — on the published site, for a real visitor,
+ * it is absent, so a rule scoped there would never take effect outside the
+ * editor, the exact opposite of this feature's purpose. The block's class,
+ * by contrast, is on the real markup in BOTH contexts. No `!important`:
+ * unlike Tier 1's colours and fonts (docs/adr/0021), there is no
+ * higher-specificity rule to beat here — the block itself reads
+ * `var(--brisk-override-x, <default>)`, so whatever the custom property
+ * resolves to is already the winning value by construction.
  */
 export function buildBlockStyleOverridesCss(
   blockStyles: Record<string, BlockStyleOverride>,
@@ -87,14 +86,14 @@ export function buildBlockStyleOverridesCss(
 }
 
 /**
- * Override per-istanza (docs/adr/0022) — stesse custom property di sopra,
- * ma come attributo `style` inline sull'elemento REALE del blocco (il
- * componente stesso, es. Button.astro, riceve `styleOverride` come prop
- * in più oltre alle sue — non il wrapper `data-brisk-block-*`, che per lo
- * stesso motivo di `buildBlockStyleOverridesCss` sopra non esiste sul
- * sito pubblicato). Un inline vince sempre sulla regola per-tipo per
- * quello stesso elemento — nessun `!important` qui nemmeno, per lo stesso
- * motivo.
+ * The per-instance override (docs/adr/0022) — the same custom properties as
+ * above, but as an inline `style` attribute on the block's REAL element
+ * (the component itself, Button.astro for instance, receives
+ * `styleOverride` as an extra prop alongside its own — not the
+ * `data-brisk-block-*` wrapper, which for the same reason as
+ * `buildBlockStyleOverridesCss` above does not exist on the published
+ * site). An inline style always beats the per-type rule for that same
+ * element — no `!important` here either, for the same reason.
  */
 export function buildBlockInstanceStyle(
   override: BlockStyleOverride | undefined,

@@ -140,7 +140,7 @@ export const pageGroupRecordSchema = z.object({
 });
 export type PageGroupRecord = z.infer<typeof pageGroupRecordSchema>;
 
-/** Wire shape del `PageTranslation` domain entity — vedi `pageGroupRecordSchema` sopra per il contesto della coesistenza col vecchio modello. */
+/** The wire shape of the `PageTranslation` domain entity — see `pageGroupRecordSchema` above for the context of its coexistence with the old model. */
 export const pageTranslationRecordSchema = z.object({
   id: z.string(),
   tenantId: z.string(),

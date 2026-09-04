@@ -13,22 +13,22 @@ export interface PaginatedResult<T> {
 }
 
 /**
- * Base condivisa per il CRUD identico ripetuto in ogni repository Drizzle
- * scoped-per-tenant (media/form/user/page/site-layout-section): stesso
- * save() (insert + onConflictDoUpdate sulla PK), stesso findById(), stesso
- * delete(), stessa lista paginata "select + count" più recente prima.
- * Cambia solo la tabella/colonne e come si mappa da/verso il dominio —
- * quelli restano hook astratti nella sottoclasse, il resto vive qui una
- * volta sola invece che 5 volte.
+ * The shared base for the identical CRUD repeated in every tenant-scoped
+ * Drizzle repository (media/form/user/page/site-layout-section): the same
+ * save() (insert plus onConflictDoUpdate on the PK), the same findById(),
+ * the same delete(), the same paginated "select + count" list, newest
+ * first. Only the table/columns and how to map to and from the domain
+ * differ — those stay abstract hooks in the subclass, and the rest lives
+ * here once instead of five times.
  *
- * `table`/`idColumn`/`tenantIdColumn` sono tipati in modo volutamente
- * "largo" (`PgTable`/`AnyPgColumn`, non i tipi concreti di ogni tabella):
- * TypeScript non ha modo di correlare staticamente "questa colonna
- * appartiene a questa tabella" attraverso tre generici indipendenti
- * (`TRow`/`TEntity` più il tipo concreto della tabella) senza un quarto
- * generico dedicato per ogni sottoclasse — l'invariante (colonne e riga
- * appartengono davvero alla stessa tabella) è comunque garantita dalla
- * sottoclasse stessa, che li dichiara tutti e tre insieme.
+ * `table`/`idColumn`/`tenantIdColumn` are deliberately typed "widely"
+ * (`PgTable`/`AnyPgColumn`, not each table's concrete types): TypeScript
+ * has no way of statically correlating "this column belongs to this table"
+ * across three independent generics (`TRow`/`TEntity` plus the table's
+ * concrete type) without a fourth generic dedicated to each subclass — the
+ * invariant (that the columns and the row really do belong to the same
+ * table) is guaranteed by the subclass itself anyway, which declares all
+ * three together.
  */
 export abstract class DrizzlePaginatedRepository<
   TSelectRow extends { tenantId: string },
@@ -42,11 +42,11 @@ export abstract class DrizzlePaginatedRepository<
   protected abstract readonly tenantIdColumn: AnyPgColumn;
 
   /**
-   * Due generici di riga, non uno solo: per la maggior parte delle tabelle
-   * "cosa si legge" e "cosa si scrive" coincidono (`TWriteRow` di default è
-   * proprio `TSelectRow`), ma `pages` no — `toRow()` omette di proposito
-   * `searchText` (colonna di `@brisk/postgres-search-repository`, mai
-   * scritta da qui), che invece `$inferSelect` include sempre. Vedi
+   * Two row generics rather than one: for most tables "what you read" and
+   * "what you write" coincide (`TWriteRow` defaults to `TSelectRow`), but
+   * `pages` is different — `toRow()` deliberately omits `searchText` (a
+   * column belonging to `@brisk/postgres-search-repository`, never written
+   * from here), which `$inferSelect` always includes. See
    * `DrizzlePageRepository`.
    */
   protected abstract toRow(entity: TEntity): TWriteRow;
@@ -58,10 +58,10 @@ export abstract class DrizzlePaginatedRepository<
   }
 
   /**
-   * Esposto protected, non solo interno a `save()`: `DrizzleUserRepository`
-   * e `DrizzlePageRepository` lo richiamano dentro il proprio try/catch per
-   * tradurre la unique-violation su un vincolo diverso dalla PK, senza
-   * duplicare insert+onConflictDoUpdate.
+   * Exposed protected rather than staying internal to `save()`:
+   * `DrizzleUserRepository` and `DrizzlePageRepository` call it inside their
+   * own try/catch to translate a unique violation on a constraint other
+   * than the PK, without duplicating insert+onConflictDoUpdate.
    */
   protected upsertTx(tx: BriskTx, row: TWriteRow) {
     return tx
@@ -92,7 +92,7 @@ export abstract class DrizzlePaginatedRepository<
     );
   }
 
-  /** La sottoclasse costruisce il proprio scope (tenant-only, o tenant+site) e passa la colonna di ordinamento — condivide solo il meccanismo count+select+paginazione. */
+  /** The subclass builds its own scope (tenant-only, or tenant+site) and passes the ordering column — it shares only the count+select+pagination mechanism. */
   protected async listPaginatedTx(
     tenantId: string,
     scope: SQL | undefined,

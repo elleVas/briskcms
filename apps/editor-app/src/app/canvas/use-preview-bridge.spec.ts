@@ -261,9 +261,9 @@ describe('usePreviewBridge', () => {
     const first = result.current.lastDblClick;
     expect(first).toEqual({ blockId: 'hero-1', field: 'title' });
 
-    // Stesso blockId/field di prima — un `useEffect` del chiamante keyed su
-    // `lastDblClick` deve comunque attivarsi di nuovo (per riferimento, non
-    // per uguaglianza di contenuto): ogni doppio click è un evento distinto.
+    // The same blockId/field as before — a caller's `useEffect` keyed on
+    // `lastDblClick` still has to fire again (by reference, not by content
+    // equality): every double click is a distinct event.
     act(() => {
       dispatchBridgeMessage(contentWindow, EXPECTED_ORIGIN, {
         source: PREVIEW_BRIDGE_SOURCE,
@@ -317,9 +317,9 @@ describe('usePreviewBridge', () => {
       text: 'Nuovo titolo',
     });
 
-    // Stesso testo di prima (es. l'utente digita e poi cancella un
-    // carattere) — un `useEffect` del chiamante keyed su `lastTextChange`
-    // deve comunque attivarsi di nuovo, per riferimento non per contenuto.
+    // The same text as before (the user types and then deletes a character,
+    // say) — a caller's `useEffect` keyed on `lastTextChange` still has to
+    // fire again, by reference rather than by content.
     act(() => {
       dispatchBridgeMessage(contentWindow, EXPECTED_ORIGIN, {
         source: PREVIEW_BRIDGE_SOURCE,

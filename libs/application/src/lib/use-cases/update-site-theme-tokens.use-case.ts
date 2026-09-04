@@ -18,13 +18,13 @@ export interface UpdateSiteThemeTokensInput {
 }
 
 /**
- * Sostituisce per intero l'override del tipo di blocco dato (gli altri
- * tipi restano invariati) via un upsert atomico su
- * `site_theme_block_styles` (docs/adr/0022's follow-up sullo schema — non
- * più `sites.theme_tokens`). L'esistenza del sito va verificata a parte:
- * la tabella figlia ha solo un FK su `site_id`, non un vincolo che dia un
- * errore di dominio leggibile — meglio un `findById` esplicito che un
- * generico errore di violazione FK propagato al chiamante.
+ * Replaces the given block type's override wholesale (leaving the other
+ * types untouched) through an atomic upsert on `site_theme_block_styles`
+ * (docs/adr/0022's schema follow-up — no longer `sites.theme_tokens`). The
+ * site's existence has to be checked separately: the child table has only
+ * an FK on `site_id`, not a constraint yielding a readable domain error —
+ * an explicit `findById` beats a generic FK-violation error propagated to
+ * the caller.
  */
 export async function updateSiteThemeTokens(
   deps: UpdateSiteThemeTokensDeps,

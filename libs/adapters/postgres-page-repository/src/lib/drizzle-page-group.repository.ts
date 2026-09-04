@@ -64,10 +64,10 @@ function fromRow(row: typeof pageGroups.$inferSelect): PageGroup {
 }
 
 /**
- * Possiede la struttura CONDIVISA — vedi PageGroupRepositoryPort's own doc
- * comment. Nessun vincolo UNIQUE oltre la PK su `page_groups` stessa (a
- * differenza di `pages`/`page_translations`, che portano lo slug): niente
- * mapping di unique-violation da fare qui.
+ * Owns the SHARED structure — see PageGroupRepositoryPort's own doc
+ * comment. No UNIQUE constraint beyond the PK on `page_groups` itself
+ * (unlike `pages`/`page_translations`, which carry the slug): so there is
+ * no unique-violation mapping to do here.
  */
 export class DrizzlePageGroupRepository
   extends DrizzlePaginatedRepository<
@@ -93,7 +93,7 @@ export class DrizzlePageGroupRepository
     return fromRow(row);
   }
 
-  /** Salva il gruppo e la sua nuova versione di struttura nella STESSA transazione — stessa ragione di PageRepositoryPort.saveWithVersion. */
+  /** Saves the group and its new structure version in the SAME transaction — the same reason as PageRepositoryPort.saveWithVersion. */
   async saveWithVersion(
     group: PageGroup,
     version: PageGroupVersion,
@@ -273,7 +273,7 @@ export class DrizzlePageGroupRepository
     };
   }
 
-  /** Fratelli nella gerarchia CONDIVISA — sostituisce PageRepositoryPort.listSiblings, senza `locale` (la posizione nell'albero non è più per-locale). */
+  /** Siblings in the SHARED hierarchy — it replaces PageRepositoryPort.listSiblings, without `locale` (a position in the tree is no longer per-locale). */
   async listSiblings(
     tenantId: string,
     siteId: string,

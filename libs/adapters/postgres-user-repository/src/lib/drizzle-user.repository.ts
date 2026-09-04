@@ -60,12 +60,12 @@ export class DrizzleUserRepository
   }
 
   /**
-   * `onConflictDoUpdate` copre solo un conflitto sulla PK (`id`, un UUID
-   * appena generato) — un conflitto sull'UNIQUE(tenant_id, email) risale
-   * comunque come `PostgresError` grezzo sotto concorrenza reale (due
-   * inviti/registrazioni quasi simultanee sulla stessa email superano
-   * entrambe il check-then-act dell'use-case). Tradotto nello stesso errore
-   * di dominio che l'use-case già lancia nel caso comune.
+   * `onConflictDoUpdate` only covers a conflict on the PK (`id`, a
+   * freshly generated UUID) — a conflict on UNIQUE(tenant_id, email) still
+   * surfaces as a raw `PostgresError` under real concurrency (two
+   * near-simultaneous invites or registrations for the same email both
+   * passing the use case's check-then-act). Translated into the same domain
+   * error the use case already throws in the common case.
    */
   override async save(user: User): Promise<void> {
     const row = this.toRow(user);

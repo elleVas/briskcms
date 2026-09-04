@@ -5,29 +5,29 @@ import {
 } from './site-theme-tokens';
 
 /**
- * Formato generico di un blocco di contenuto (output editor Puck, Fase 2).
- * Ogni tipo di blocco concreto (Hero, Testo, ...) definirà il proprio schema
- * per `props` — questo resta lo shape strutturale condiviso fino a quel momento.
+ * The generic format of a content block (the Puck editor's output, phase
+ * 2). Each concrete block type (Hero, Text, ...) will define its own schema
+ * for `props` — this stays the shared structural shape until then.
  *
- * `children` è il nostro schema di nesting, indipendente dal formato nativo
- * di Puck (root/content/zones) — vedi docs/adr/0007. Il mapping layer in
- * editor-app converte le drop-zone di Puck in/da `children`, così restiamo
- * capaci di supportare blocchi "contenitore" senza accoppiare dominio e DB
- * al formato interno di una libreria terza.
+ * `children` is our own nesting scheme, independent of Puck's native format
+ * (root/content/zones) — see docs/adr/0007. The mapping layer in editor-app
+ * converts Puck's drop zones to and from `children`, so we stay able to
+ * support "container" blocks without coupling the domain and the DB to a
+ * third-party library's internal format.
  *
- * `id` è opzionale qui di proposito, in una finestra transitoria: il
- * backfill una tantum (vedi @brisk/shared-types' backfill-block-ids.ts)
- * assegna un id stabile ad ogni blocco esistente prima che qualunque nuovo
- * editor lo richieda. Reso obbligatorio solo nel deploy *successivo* al
- * backfill — mai prima, altrimenti un salvataggio dell'editor Puck ancora
- * attivo (che non scrive id) fallirebbe la validazione a metà rollout.
+ * `id` is deliberately optional here, in a transitional window: the one-off
+ * backfill (see @brisk/shared-types' backfill-block-ids.ts) assigns a
+ * stable id to every existing block before any new editor requires one. It
+ * becomes mandatory only in the deploy *after* the backfill — never before,
+ * or a save from the still-live Puck editor (which does not write ids)
+ * would fail validation halfway through the rollout.
  */
 export interface Block {
   id?: string;
   type: string;
   props: Record<string, unknown>;
   children?: Block[];
-  /** Override per-istanza (docs/adr/0022) — solo QUESTO blocco, sopra l'eventuale override di tipo salvato nei themeTokens del sito. `undefined`/campi assenti = eredita normalmente. */
+  /** The per-instance override (docs/adr/0022) — THIS block only, on top of any type-level override saved in the site's themeTokens. `undefined`/absent fields = inherit normally. */
   styleOverride?: BlockStyleOverride;
 }
 
@@ -256,7 +256,7 @@ export const navLinkPropsSchema = navItemPositionSchema.extend({
   linkType: z.enum(['page', 'url']),
   page: pickedPageSchema.nullable(),
   url: z.string(),
-  /** Nome icona risolto contro il set del tema attivo (docs/adr/0023) — `null` = nessuna icona. `.default(null)`: i NavLink già salvati prima di questo campo non hanno la chiave. */
+  /** An icon name resolved against the active theme's set (docs/adr/0023) — `null` = no icon. `.default(null)`: NavLinks already saved before this field existed do not have the key. */
   icon: z.string().nullable().default(null),
   visibility: visibilitySchema.default('always'),
 });

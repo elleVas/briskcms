@@ -2,13 +2,12 @@ import type { PageGroup, PageGroupVersion } from '@brisk/domain-core';
 import type { Pagination, PaginatedResult } from './pagination';
 
 /**
- * Proiezione lista — stessa ragione di PageSummary (security review
- * 2026-08-24): mai spedire `content` (l'intero albero blocchi) per una
- * riga di lista. Niente `createdByName`/badge-disponibilità-lingua qui:
- * quella proiezione più ricca è compito della Fase 4 (ricostruzione della
- * lista pagine), che estenderà questo port quando arriva — tenerlo
- * minimale ora evita di progettare in anticipo una forma che potrebbe
- * cambiare.
+ * A list projection — the same reason as PageSummary (security review
+ * 2026-08-24): never ship `content` (the whole block tree) for a list row.
+ * No `createdByName` or language-availability badge here: that richer
+ * projection is phase 4's job (rebuilding the pages list), which will
+ * extend this port when it arrives — keeping it minimal now avoids
+ * designing a shape in advance that might change.
  */
 export interface PageGroupSummary {
   id: string;
@@ -64,14 +63,14 @@ export interface PageGroupListFilters {
 }
 
 /**
- * Possiede la struttura CONDIVISA e la posizione nella gerarchia — prende
- * il posto della parte "struttura" della vecchia Page (vedi
- * PageTranslationRepositoryPort per la parte "testo per-locale"). Stessa
- * disciplina di scoping esplicito per tenantId di PageRepositoryPort.
+ * Owns the SHARED structure and the position in the hierarchy — it takes
+ * the place of the old Page's "structure" half (see
+ * PageTranslationRepositoryPort for the "per-locale text" half). The same
+ * explicit tenantId scoping discipline as PageRepositoryPort.
  */
 export interface PageGroupRepositoryPort {
   save(group: PageGroup): Promise<void>;
-  /** Stessa transazione atomica di PageRepositoryPort.saveWithVersion, stessa ragione: mai una struttura salvata senza la sua riga di versione corrispondente. */
+  /** The same atomic transaction as PageRepositoryPort.saveWithVersion, for the same reason: never a structure saved without its matching version row. */
   saveWithVersion(group: PageGroup, version: PageGroupVersion): Promise<void>;
   findById(tenantId: string, pageGroupId: string): Promise<PageGroup | null>;
   listBySite(
@@ -86,12 +85,12 @@ export interface PageGroupRepositoryPort {
     pagination: Pagination,
     filters: PageGroupListFilters,
   ): Promise<PaginatedResult<PageGroupListItem>>;
-  /** Fratelli nella gerarchia CONDIVISA — sostituisce PageRepositoryPort.listSiblings, ora senza bisogno di un parametro `locale` (la posizione nell'albero non è più per-locale). */
+  /** Siblings in the SHARED hierarchy — it replaces PageRepositoryPort.listSiblings, now with no need for a `locale` parameter (a position in the tree is no longer per-locale). */
   listSiblings(
     tenantId: string,
     siteId: string,
     parentId: string | null,
   ): Promise<PageGroupSummary[]>;
-  /** Cancella il gruppo E ogni sua PageTranslation (ON DELETE CASCADE, vedi schema.ts) — un gruppo senza traduzioni non ha motivo di esistere. */
+  /** Deletes the group AND every one of its PageTranslations (ON DELETE CASCADE, see schema.ts) — a group with no translations has no reason to exist. */
   delete(tenantId: string, pageGroupId: string): Promise<void>;
 }

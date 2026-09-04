@@ -109,11 +109,12 @@ export class UsersController {
   }
 
   /**
-   * Security review 2026-08-24, "terzo giro": un invito scaduto (7 giorni,
-   * vedi inviteUser) lasciava l'email dell'invitato bloccata per sempre
-   * (UserEmailAlreadyExistsError su un nuovo invite), senza alcun modo di
-   * dargli un link nuovo. Rifiuta con UserAlreadyActiveError (mappato a
-   * 409 sotto) se l'invito è già stato accettato — non ha senso re-inviarlo.
+   * Security review 2026-08-24, "third pass": an expired invite (7 days,
+   * see inviteUser) left the invitee's email blocked forever
+   * (UserEmailAlreadyExistsError on a new invite), with no way of giving
+   * them a fresh link. It rejects with UserAlreadyActiveError (mapped to a
+   * 409 below) when the invite has already been accepted — resending it
+   * would make no sense.
    */
   @Post(':id/resend-invite')
   @HttpCode(200)

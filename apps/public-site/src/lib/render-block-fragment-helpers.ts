@@ -8,26 +8,25 @@ export interface RenderBlockFragmentBody {
   blockType: string;
   props: Record<string, unknown>;
   /**
-   * Se presente, usati direttamente invece di ricostruirli leggendo la
-   * bozza salvata lato server (vedi render-block-fragment.ts) — il
-   * chiamante (canvas-editor-shell.tsx) conosce già l'albero corrente,
-   * niente bisogno di rileggerlo, e soprattutto niente race: il salvataggio
-   * bozza e questa chiamata partono in parallelo, una lettura server non ha
-   * garanzia di vedere il salvataggio appena fatto.
+   * When present, used directly rather than rebuilt by reading the saved
+   * draft server-side (see render-block-fragment.ts) — the caller
+   * (canvas-editor-shell.tsx) already knows the current tree, so there is no
+   * need to read it back, and above all no race: the draft save and this
+   * call start in parallel, and a server read has no guarantee of seeing
+   * the save that just happened.
    */
   children?: Block[];
-  /** Override per-istanza (docs/adr/0022) — senza questo, cambiare lo stile di UN blocco dal canvas non si vedrebbe finché l'iframe non ricarica. */
+  /** The per-instance override (docs/adr/0022) — without this, changing ONE block's style from the canvas would not show until the iframe reloaded. */
   styleOverride?: BlockStyleOverride;
 }
 
 /**
- * Isolata dalla rotta stessa (render-block-fragment.ts) perché quel file
- * importa un componente .astro — vitest, con la config plain di questo
- * progetto (nessun plugin Vite di Astro registrato), non riesce a fare il
- * transform di un import .astro nel grafo dei moduli di un file di test.
- * La verifica end-to-end di quella rotta (token/CSS scoping/CORS) è stata
- * fatta dal vivo contro il dev server reale, non qui — vedi il piano
- * dell'editor visuale, Giorno 3.
+ * Isolated from the route itself (render-block-fragment.ts) because that
+ * file imports an .astro component — vitest, with this project's plain
+ * config (no Astro Vite plugin registered), cannot transform an .astro
+ * import in a test file's module graph. That route's end-to-end
+ * verification (token, CSS scoping, CORS) was done live against the real
+ * dev server rather than here — see the visual editor plan, Day 3.
  */
 export function isValidRenderBlockFragmentBody(
   body: unknown,

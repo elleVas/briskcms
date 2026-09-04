@@ -187,32 +187,32 @@ export const sites = pgTable(
       .defaultNow(),
   },
   (table) => [
-    // findByDomain() è l'hot path di ogni richiesta pubblica (rendering
-    // pagina, sitemap, ricerca, chrome del sito) — senza questo indice fa
-    // scan sequenziale. Il vincolo UNIQUE che lo porta con sé è la parte
-    // più importante: senza, due siti dello stesso tenant potrebbero avere
-    // lo stesso domain (nulla lo impedisce a livello applicativo), e
-    // findByDomain (che usa .limit(1) senza ORDER BY) servirebbe uno dei
-    // due in modo indeterminato. `domain` resta nullable — Postgres tratta
-    // più NULL come sempre distinti tra loro sotto UNIQUE, quindi più siti
-    // dello stesso tenant senza ancora un dominio configurato coesistono
-    // senza conflitto.
+    // findByDomain() is the hot path of every public request (page
+    // rendering, sitemap, search, site chrome) — without this index it does
+    // a sequential scan. The UNIQUE constraint it brings along is the more
+    // important part: without it, two sites of the same tenant could share
+    // a domain (nothing prevents it at the application level), and
+    // findByDomain (which uses .limit(1) with no ORDER BY) would serve one
+    // of the two indeterminately. `domain` stays nullable — Postgres treats
+    // multiple NULLs as always distinct under UNIQUE, so several sites of
+    // the same tenant with no domain configured yet coexist without
+    // conflict.
     unique().on(table.tenantId, table.domain),
   ],
 );
 
 /**
- * Sostituisce `sites.theme_tokens` (era un'unica mappa JSONB sparsa sulla
- * riga del sito) — una riga per (site, tipo di blocco) invece di una voce
- * annidata in un blob. Non per correttezza (l'`UPDATE ... jsonb_set`
- * precedente era già atomico per-tipo) ma per due motivi reali: una
- * scrittura qui non riscrive più l'intera riga larga `sites` sotto MVCC
- * (nome, dominio, impostazioni SEO, ecc. — tutte estranee allo stile), e
- * `WHERE block_type = 'Button'` diventa una lookup su indice normale
- * invece di una traversata di path JSONB. `style` resta jsonb (non
- * colonne tipizzate per proprietà): aggiungere/rimuovere una proprietà
- * stilabile resta un cambio di dato, non una migrazione — lo stesso
- * motivo per cui `blockStyles` era già una mappa generica.
+ * Replaces `sites.theme_tokens` (which was a single JSONB map spread across
+ * the site's row) — one row per (site, block type) instead of an entry
+ * nested in a blob. Not for correctness (the previous
+ * `UPDATE ... jsonb_set` was already atomic per type) but for two real
+ * reasons: a write here no longer rewrites the whole wide `sites` row under
+ * MVCC (name, domain, SEO settings, and so on — all unrelated to styling),
+ * and `WHERE block_type = 'Button'` becomes an ordinary index lookup rather
+ * than a JSONB path traversal. `style` stays jsonb (not typed columns per
+ * property): adding or removing a stylable property remains a data change
+ * rather than a migration — the same reason `blockStyles` was already a
+ * generic map.
  */
 export const siteThemeBlockStyles = pgTable(
   'site_theme_block_styles',
@@ -235,11 +235,10 @@ export const siteThemeBlockStyles = pgTable(
   ],
 );
 
-// i18n a livello di campo (struttura condivisa + override per-locale) —
-// pageGroups/pageTranslations hanno sostituito la vecchia `pages`
-// (rimossa in Fase 5 del piano). Un PageGroup possiede la struttura
-// CONDIVISA tra tutte le lingue; una PageTranslation possiede il testo
-// per-locale.
+// Field-level i18n (a shared structure plus per-locale overrides) —
+// pageGroups/pageTranslations replaced the old `pages` table (removed in
+// the plan's phase 5). A PageGroup owns the structure SHARED across every
+// language; a PageTranslation owns the per-locale text.
 export const pageGroups = pgTable(
   'page_groups',
   {
@@ -250,21 +249,23 @@ export const pageGroups = pgTable(
     siteId: uuid('site_id')
       .notNull()
       .references(() => sites.id, { onDelete: 'cascade' }),
-    // Gerarchia CONDIVISA tra tutte le lingue — a differenza della vecchia
-    // pages.parentId (per-locale), non ha senso che due lingue della
-    // stessa pagina vivano in punti diversi dell'albero del sito.
+    // A hierarchy SHARED across every language — unlike the old
+    // pages.parentId (which was per-locale), it makes no sense for two
+    // languages of the same page to live at different points in the site's
+    // tree.
     parentId: uuid('parent_id').references((): AnyPgColumn => pageGroups.id, {
       onDelete: 'set null',
     }),
-    // L'albero blocchi canonico — per un campo marcato `translatable`
-    // (FieldDescriptor in @brisk/block-registry), il valore qui è quello
-    // della lingua di default del sito, fallback quando una
-    // pageTranslation non ha ancora un proprio override (vedi
-    // mergeTranslatedContent in @brisk/shared-types).
+    // The canonical block tree — for a field marked `translatable`
+    // (FieldDescriptor in @brisk/block-registry), the value here is the
+    // site's default language's, the fallback used until a pageTranslation
+    // has an override of its own (see mergeTranslatedContent in
+    // @brisk/shared-types).
     content: jsonb('content').notNull().default([]).$type<PageContent>(),
-    // Sibling-scoped, condiviso per lo stesso motivo di parentId — stessa
-    // non-unicità a livello DB della vecchia pages.order (un duplicato
-    // temporaneo a metà riordino è innocuo, vedi reorderSiblingPages).
+    // Sibling-scoped, and shared for the same reason as parentId — with the
+    // same DB-level non-uniqueness as the old pages.order (a temporary
+    // duplicate halfway through a reorder is harmless, see
+    // reorderSiblingPages).
     order: integer('order').notNull().default(0),
     createdBy: uuid('created_by').references(() => users.id, {
       onDelete: 'set null',
@@ -288,24 +289,23 @@ export const pageTranslations = pgTable(
     tenantId: uuid('tenant_id')
       .notNull()
       .references(() => tenants.id, { onDelete: 'cascade' }),
-    // Denormalizzato da pageGroups.siteId, scritto solo alla creazione
-    // (una pagina non cambia mai sito) — serve per il vincolo di
-    // unicità dello slug e per la risoluzione pubblica senza un join,
-    // vedi PageTranslationRepositoryPort.findByParentGroupAndLocaleSlug.
+    // Denormalized from pageGroups.siteId, written only at creation (a page
+    // never changes site) — needed for the slug uniqueness constraint and
+    // for public resolution without a join, see
+    // PageTranslationRepositoryPort.findByParentGroupAndLocaleSlug.
     siteId: uuid('site_id')
       .notNull()
       .references(() => sites.id, { onDelete: 'cascade' }),
     pageGroupId: uuid('page_group_id')
       .notNull()
       .references(() => pageGroups.id, { onDelete: 'cascade' }),
-    // Denormalizzato da pageGroups.parentId, RI-SINCRONIZZATO su ogni
-    // riparento del gruppo (stessa transazione — vedi il use-case che
-    // sposta un PageGroup) su OGNI sua traduzione. Un vincolo di unicità
-    // dello slug sibling-scoped non può referenziare una colonna di
-    // un'altra tabella via join in Postgres — questa denormalizzazione è
-    // il prezzo per mantenere la stessa garanzia forte a livello DB che
-    // esisteva su pages.parentId, invece di affidarsi solo a un controllo
-    // applicativo.
+    // Denormalized from pageGroups.parentId, RESYNCED on every reparenting
+    // of the group (in the same transaction — see the use case that moves a
+    // PageGroup) across ALL of its translations. A sibling-scoped slug
+    // uniqueness constraint cannot reference another table's column through
+    // a join in Postgres — this denormalization is the price of keeping the
+    // same strong DB-level guarantee that existed on pages.parentId, rather
+    // than relying on an application check alone.
     parentGroupId: uuid('parent_group_id'),
     locale: text('locale').notNull(),
     slug: text('slug').notNull(),
@@ -318,14 +318,14 @@ export const pageTranslations = pgTable(
       .default({})
       .$type<FieldValueOverlay>(),
     status: pageTranslationStatusEnum('status').notNull(),
-    // Merge congelato (struttura + fieldValues di questa lingua, o
-    // divergedContent se scollegata) all'ultima publish() — stessa forma
-    // e stesso consumatore (risoluzione pubblica) di pages.publishedContent
-    // di ieri.
+    // The frozen merge (structure plus this language's fieldValues, or
+    // divergedContent when unlinked) as of the last publish() — the same
+    // shape and the same consumer (public resolution) as yesterday's
+    // pages.publishedContent.
     publishedSnapshot: jsonb('published_snapshot').$type<PageContent>(),
-    // Lo "scollega": quando true, questa traduzione non riceve più le
-    // modifiche strutturali propagate da pageGroups.content — ha una
-    // propria struttura+testo indipendente in divergedContent.
+    // "Unlinks" it: when true, this translation no longer receives the
+    // structural changes propagated from pageGroups.content — it has a
+    // structure and text of its own in divergedContent.
     isDiverged: boolean('is_diverged').notNull().default(false),
     divergedContent: jsonb('diverged_content').$type<PageContent>(),
     // Plain extracted text (SearchPort's indexPage, see
@@ -348,10 +348,10 @@ export const pageTranslations = pgTable(
   },
   (table) => [
     unique().on(table.tenantId, table.pageGroupId, table.locale),
-    // Sibling-scoped (stesso schema di pages sopra) ma chiavato su
-    // parentGroupId invece di parentId per-locale — vedi il commento sulla
-    // colonna. Stesso gap NULL <> NULL di Postgres, stessa chiusura via
-    // indice parziale sotto.
+    // Sibling-scoped (the same scheme as pages above) but keyed on
+    // parentGroupId rather than a per-locale parentId — see the comment on
+    // the column. The same Postgres NULL <> NULL gap, closed the same way
+    // by the partial index below.
     unique().on(
       table.tenantId,
       table.siteId,

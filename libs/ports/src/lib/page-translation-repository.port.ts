@@ -12,22 +12,22 @@ import type {
  */
 export interface PageTranslationRepositoryPort {
   /**
-   * `parentGroupId` è il `PageGroup.parentId` CORRENTE — il chiamante lo
-   * possiede già (ha appena letto o riparentato il gruppo) e lo passa
-   * esplicitamente ad ogni scrittura, invece che l'adapter lo rilegga da
-   * solo con un secondo giro DB. Denormalizzato sulla riga (vedi
-   * schema.ts) solo per rendere possibile il vincolo di unicità dello
-   * slug sibling-scoped a livello DB — un valore diverso da quello vero
-   * del gruppo la prossima volta che qualcuno riparenta il gruppo senza
-   * ri-salvare ogni sua traduzione romperebbe silenziosamente quel
-   * vincolo, per questo è un parametro esplicito e non un dettaglio
-   * interno dell'adapter.
+   * `parentGroupId` is the CURRENT `PageGroup.parentId` — the caller
+   * already owns it (having just read or reparented the group) and passes
+   * it explicitly on every write, rather than the adapter reading it back
+   * itself with a second DB round-trip. It is denormalized onto the row
+   * (see schema.ts) purely to make the sibling-scoped slug uniqueness
+   * constraint possible at the DB level — a value differing from the
+   * group's real one, the next time someone reparents the group without
+   * re-saving every translation, would silently break that constraint,
+   * which is why it is an explicit parameter rather than an adapter
+   * internal.
    */
   save(
     translation: PageTranslation,
     parentGroupId: string | null,
   ): Promise<void>;
-  /** Stessa transazione atomica di PageRepositoryPort.saveWithVersion. Non valida per una traduzione appena scollegata che salva `divergedContent`: quello passa da PageGroupVersion (stessa forma, vedi PageTranslationVersion's doc comment). */
+  /** The same atomic transaction as PageRepositoryPort.saveWithVersion. Not valid for a just-unlinked translation saving `divergedContent`: that goes through PageGroupVersion (the same shape, see PageTranslationVersion's doc comment). */
   saveWithVersion(
     translation: PageTranslation,
     version: PageTranslationVersion,
@@ -42,17 +42,17 @@ export interface PageTranslationRepositoryPort {
     pageGroupId: string,
     locale: string,
   ): Promise<PageTranslation | null>;
-  /** Ogni lingua dello stesso gruppo — sostituisce PageRepositoryPort.listByGroup. */
+  /** Every language of the same group — it replaces PageRepositoryPort.listByGroup. */
   listByGroup(
     tenantId: string,
     pageGroupId: string,
   ): Promise<PageTranslation[]>;
   /**
-   * Sostituisce PageRepositoryPort.findByParentAndSlug per la risoluzione
-   * pubblica — cammina la gerarchia CONDIVISA (PageGroup.parentId) un
-   * segmento alla volta, risolvendo lo slug tradotto di ogni livello nella
-   * `locale` richiesta (join page_groups + page_translations lato
-   * adapter). `parentGroupId: null` = livello radice, stessa semantica di
+   * Replaces PageRepositoryPort.findByParentAndSlug for public resolution —
+   * it walks the SHARED hierarchy (PageGroup.parentId) one segment at a
+   * time, resolving each level's translated slug in the requested `locale`
+   * (a page_groups + page_translations join on the adapter side).
+   * `parentGroupId: null` = the root level, the same semantics as
    * `findByParentAndSlug`'s `parentId: null`.
    */
   findByParentGroupAndLocaleSlug(

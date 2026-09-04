@@ -16,10 +16,10 @@ import { useSiteLayoutSectionEditor } from './use-site-layout-section-editor';
 import { useSiteLayoutSectionVersions } from './use-site-layout-section-versions';
 import { VersionHistoryDialog } from './version-history-dialog';
 
-// Header/footer condividono un unico registro (docs/adr/0018, vedi il
-// commento su headerFooterBlocks stesso) — nessuna categorizzazione
-// separata esiste ancora per loro, un'unica sezione "Blocchi" basta finché
-// il registro resta piccolo (12 tipi).
+// The header and footer share a single registry (docs/adr/0018, see the
+// comment on headerFooterBlocks itself) — no separate categorization exists
+// for them yet, and a single "Blocks" section is enough while the registry
+// stays small (12 types).
 const headerFooterCategories = [
   {
     title: 'blocks.categories.headerFooter',
@@ -74,10 +74,10 @@ export function SiteLayoutSectionEditorView({
     kind,
     isHistoryOpen,
   );
-  // canvas-editor-shell.tsx renderizza sempre il canvas Astro vero di UNA
-  // PAGINA (vedi canvas-frame.tsx) — header/footer non ne hanno una propria,
-  // quindi ne serve una rappresentativa nella stessa lingua da usare come
-  // sfondo su cui mostrare l'header/footer in editing.
+  // canvas-editor-shell.tsx always renders the real Astro canvas of ONE
+  // PAGE (see canvas-frame.tsx) — the header and footer have none of their
+  // own, so a representative one in the same language is needed as the
+  // backdrop to show the header/footer being edited against.
   const { page: representativePage, isLoading: isLoadingRepresentativePage } =
     useRepresentativePage(siteId, locale);
 

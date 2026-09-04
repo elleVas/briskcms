@@ -28,11 +28,11 @@ const instanceStyle = buildBlockInstanceStyle(styleOverride);
     padding: var(--brisk-override-padding-y, 0) var(--brisk-override-padding-x, 0);
   }
 
-  /* Solo nell'editor, e solo con contenuto — vuoto mostra già il proprio
-     bordo tratteggiato via EmptyContainerHint, un secondo qui sarebbe
-     ridondante. Senza questo, un contenitore con dentro del vero contenuto
-     perde ogni confine visibile mentre si lavora (feedback utente dal
-     vivo, stesso motivo di Column.astro/Container.astro). */
+  /* Editor only, and only once it has content — when empty it already
+     shows its own dashed border through EmptyContainerHint, and a second
+     one here would be redundant. Without this, a container holding real
+     content loses every visible boundary while you work (user feedback
+     from live use, the same reason as Column.astro/Container.astro). */
   .brisk-stats-counter[data-brisk-editable-outline] {
     outline: 1px dashed var(--border);
     outline-offset: -4px;

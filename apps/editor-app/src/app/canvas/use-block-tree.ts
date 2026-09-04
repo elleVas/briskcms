@@ -12,10 +12,10 @@ export interface BlockTreeTarget {
 }
 
 /**
- * Mutazioni pure su `Block[]`, tutte indirizzate per id (mai per indice
- * posizionale nell'array, che cambierebbe significato ad ogni riordino) —
- * vedi il piano dell'editor visuale, Giorno 3. Ogni funzione restituisce un
- * albero nuovo; nessuna muta l'input.
+ * Pure mutations over `Block[]`, all addressed by id (never by positional
+ * index in the array, whose meaning would change on every reorder) — see
+ * the visual editor plan, Day 3. Every function returns a new tree; none
+ * mutates its input.
  */
 
 export function findBlockInTree(blocks: Block[], id: string): Block | null {
@@ -33,7 +33,7 @@ export function findBlockInTree(blocks: Block[], id: string): Block | null {
   return null;
 }
 
-/** Fonde le nuove props su quelle esistenti — un cambio di proprietà dall'Inspector non tocca mai gli altri campi. */
+/** Merges the new props over the existing ones — a property change from the Inspector never touches the other fields. */
 export function updateBlockProps(
   blocks: Block[],
   blockId: string,
@@ -53,7 +53,7 @@ export function updateBlockProps(
   });
 }
 
-/** Sostituisce per intero `styleOverride` (docs/adr/0022) — un solo pannello lo edita tutto insieme, stesso "sostituisce, non fonde campo-per-campo" di Site.updateThemeTokens, non un merge come updateBlockProps sopra. */
+/** Replaces `styleOverride` wholesale (docs/adr/0022) — a single panel edits all of it at once, the same "replaces, does not merge field by field" as Site.updateThemeTokens, not a merge like updateBlockProps above. */
 export function updateBlockStyleOverride(
   blocks: Block[],
   blockId: string,
@@ -87,7 +87,7 @@ export function removeBlock(blocks: Block[], blockId: string): Block[] {
     );
 }
 
-/** `target.parentId` deve già esistere nell'albero (o essere `null` per la radice) — un parentId ignoto lascia l'albero invariato, non lancia. */
+/** `target.parentId` has to exist in the tree already (or be `null` for the root) — an unknown parentId leaves the tree unchanged rather than throwing. */
 export function insertBlock(
   blocks: Block[],
   newBlock: Block,
@@ -133,12 +133,12 @@ export function moveBlock(
 }
 
 /**
- * Trova un blocco e restituisce la sua posizione come `BlockTreeTarget` —
- * `parentId: null` se è di primo livello, altrimenti l'id del suo vero
- * genitore nell'albero (serve a "Duplica blocco" per reinserire la copia
- * come fratello, allo stesso livello dell'originale, anche quando quel
- * livello è dentro un Container/Columns). `null` se `id` non esiste
- * nell'albero.
+ * Finds a block and returns its position as a `BlockTreeTarget` —
+ * `parentId: null` when it is top-level, otherwise the id of its real
+ * parent in the tree (which "Duplicate block" needs in order to reinsert
+ * the copy as a sibling, at the same level as the original, even when that
+ * level is inside a Container/Columns). `null` when `id` is not in the
+ * tree.
  */
 export function locateBlock(
   blocks: Block[],
@@ -163,12 +163,12 @@ export function locateBlock(
 }
 
 /**
- * I fratelli attuali in un punto dell'albero — `null` = la radice,
- * altrimenti i `children` del blocco `parentId` (`[]` se non ha ancora
- * figli, o se `parentId` non esiste). Serve a canvas-editor-shell.tsx per
- * sapere quale blocco finirà SUBITO DOPO un nuovo inserimento (vedi
- * `EditorInsertBlockMessage.beforeBlockId`), prima di applicare l'inserimento
- * stesso all'albero locale.
+ * The current siblings at a point in the tree — `null` = the root,
+ * otherwise block `parentId`'s `children` (`[]` when it has no children
+ * yet, or when `parentId` does not exist). canvas-editor-shell.tsx needs it
+ * to know which block will end up IMMEDIATELY AFTER a new insert (see
+ * `EditorInsertBlockMessage.beforeBlockId`), before applying that insert to
+ * the local tree.
  */
 export function siblingsAt(blocks: Block[], parentId: string | null): Block[] {
   if (parentId === null) {
@@ -178,12 +178,11 @@ export function siblingsAt(blocks: Block[], parentId: string | null): Block[] {
 }
 
 /**
- * Un clone profondo con id NUOVI su ogni nodo (incluso ogni figlio
- * annidato, ricorsivamente) — mai gli stessi id dell'originale, altrimenti
- * due blocchi diversi condividerebbero lo stesso id nell'albero (patch a
- * frammento/drag/riordino sono tutti indirizzati per id, vedi il piano
- * dell'editor visuale). Le props sono copiate per valore (shallow), non
- * condivise con l'originale.
+ * A deep clone with NEW ids on every node (including every nested child,
+ * recursively) — never the original's ids, or two different blocks would
+ * share one id in the tree (fragment patching, dragging and reordering are
+ * all addressed by id, see the visual editor plan). Props are copied by
+ * value (shallow), not shared with the original.
  */
 export function cloneBlockWithNewIds(block: Block): Block & { id: string } {
   return {
@@ -197,19 +196,19 @@ export function cloneBlockWithNewIds(block: Block): Block & { id: string } {
 }
 
 /**
- * Costruisce un blocco nuovo dal suo descrittore — "seminato" con figli
- * quando ha senso mostrare subito un esempio reale invece di un
- * contenitore vuoto (feedback utente: un contenitore-collezione vuoto
- * senza nulla dentro è confuso, non invita a costruirci sopra). Regola:
- * - Colonne nasce già con le colonne del proprio layout di default
- *   (`columnsGridTemplate`, stessa fonte di verità del CSS grid reale).
- * - Un contenitore con esattamente UN tipo in `allowedChildTypes`
- *   (Testimonianze→Testimonianza, Team→Membro, Accordion→Domanda, ...)
- *   nasce con UN figlio di quel tipo — è l'unico tipo sensato, nessuna
- *   ambiguità da chiedere all'utente.
- * - Un contenitore generico (Container/Colonna, nessun `allowedChildTypes`
- *   — pensato per contenere qualunque cosa) resta vuoto: non c'è un
- *   "figlio canonico" da indovinare, mostrerebbe solo un esempio arbitrario.
+ * Builds a new block from its descriptor — "seeded" with children where it
+ * makes sense to show a real example straight away instead of an empty
+ * container (user feedback: an empty collection container with nothing
+ * inside is confusing and does not invite building on it). The rule:
+ * - Columns starts out with the columns of its own default layout
+ *   (`columnsGridTemplate`, the same source of truth as the real CSS grid).
+ * - A container with exactly ONE type in `allowedChildTypes`
+ *   (Testimonials→Testimonial, Team→Member, Accordion→Question, ...) starts
+ *   with ONE child of that type — it is the only sensible type, so there is
+ *   no ambiguity to ask the user about.
+ * - A generic container (Container/Column, no `allowedChildTypes` — meant
+ *   to hold anything) stays empty: there is no "canonical child" to guess,
+ *   and it would only show an arbitrary example.
  */
 export function createBlockFromDescriptor(
   descriptor: BlockDescriptor,

@@ -107,11 +107,11 @@ export class FormsController {
   }
 
   /**
-   * Security review 2026-08-24, backend seconda passata: a differenza di
-   * UsersController/MediaController (whitelist esplicita già presente),
-   * questo controller restituiva form.toProps() grezzo — nessun campo
-   * sensibile su Form oggi, ma senza whitelist un futuro campo lo
-   * esporrebbe automaticamente, senza che nessuno se ne accorga qui.
+   * Security review 2026-08-24, second backend pass: unlike
+   * UsersController/MediaController (which already had an explicit
+   * whitelist), this controller returned a raw form.toProps() — there is no
+   * sensitive field on Form today, but without a whitelist a future field
+   * would be exposed automatically, with nobody here noticing.
    */
   private toDto(form: Form) {
     const props = form.toProps();

@@ -10,43 +10,43 @@ export type EditingSection = 'header' | 'footer';
 
 export interface CanvasFrameProps {
   /**
-   * Sempre l'id di UNA PageTranslation (i18n a livello di campo), anche
-   * quando si sta editando header/footer (vedi il piano dell'editor
-   * visuale, Giorno 1: "la stessa rotta di preview pagina basta") —
-   * `editingSection` distingue i due casi, il chiamante
-   * (canvas-editor-shell.tsx) sceglie quale traduzione usare come contesto
-   * quando il context è 'header'/'footer'.
+   * Always the id of ONE PageTranslation (field-level i18n), even while
+   * editing the header/footer (see the visual editor plan, Day 1: "the same
+   * page-preview route is enough") — `editingSection` distinguishes the two
+   * cases, and the caller (canvas-editor-shell.tsx) picks which translation
+   * to use as context when the context is 'header'/'footer'.
    */
   pageId: string;
   editingSection?: EditingSection;
   /**
-   * Il ref dell'iframe è del CHIAMANTE (canvas-editor-shell.tsx), non di
-   * questo componente: sia l'Inspector/Layers-panel che l'overlay hanno
-   * bisogno dello stesso usePreviewBridge — un'unica istanza dell'hook,
-   * una sola sottoscrizione a `message`, invece di due bridge indipendenti
-   * che ascoltano lo stesso iframe.
+   * The iframe's ref belongs to the CALLER (canvas-editor-shell.tsx), not
+   * to this component: the Inspector/Layers panel and the overlay both need
+   * the same usePreviewBridge — one instance of the hook and one `message`
+   * subscription, rather than two independent bridges listening to the same
+   * iframe.
    */
   iframeRef: RefObject<HTMLIFrameElement | null>;
   bridge: PreviewBridgeState;
-  /** Calcolato dal chiamante (compute-drop-target.ts) durante un riordino diretto sul canvas — questo componente non conosce `Block[]`, si limita a inoltrarlo all'overlay. */
+  /** Computed by the caller (compute-drop-target.ts) during a direct canvas reorder — this component knows nothing about `Block[]`, it merely forwards it to the overlay. */
   dropIndicatorTop?: number | null;
-  /** `undefined`/`'desktop'` = piena larghezza (comportamento di sempre). L'overlay non ha bisogno di sapere nulla di questo: la sua geometria è già tracciata dal box reale dell'iframe (vedi `useIframeGeometry`), non dal contenitore attorno. */
+  /** `undefined`/`'desktop'` = full width (the long-standing behaviour). The overlay needs to know nothing about this: its geometry is already tracked from the iframe's real box (see `useIframeGeometry`), not from the container around it. */
   breakpoint?: Breakpoint;
 }
 
 /**
- * Esportata per essere testata in isolamento — il pezzo che compone URL,
- * token ed editingSection nell'unico posto in cui vanno assemblati.
+ * Exported so it can be tested in isolation — the piece that composes the
+ * URL, the token and editingSection in the one place where they belong
+ * together.
  *
- * `embedded` distingue i due contesti che riusano questa stessa rotta di
- * preview: l'iframe del canvas (`CanvasFrame` sotto, `embedded: true`) ha
- * bisogno del click-to-select — è tutto il punto di quell'iframe — mentre
- * il bottone "Anteprima" standalone (canvas-editor-shell.tsx) apre la
- * stessa URL in una scheda normale del browser, dove non c'è nessun
- * editor attorno a cui inviare i click: senza questo flag la pagina
- * intercetta comunque ogni click (stessa initPreviewBridge()) e la
- * navigazione risulta rotta — bug reale, scoperto costruendo un sito con
- * link header veri e riportato dall'utente.
+ * `embedded` distinguishes the two contexts that reuse this same preview
+ * route: the canvas iframe (`CanvasFrame` below, `embedded: true`) needs
+ * click-to-select — that is the entire point of that iframe — whereas the
+ * standalone "Preview" button (canvas-editor-shell.tsx) opens the same URL
+ * in an ordinary browser tab, where there is no surrounding editor to send
+ * clicks to: without this flag the page still intercepts every click (the
+ * same initPreviewBridge()) and navigation comes out broken — a real bug,
+ * found while building a site with real header links and reported by the
+ * user.
  */
 export function buildPreviewUrl(
   pageId: string,
@@ -65,25 +65,25 @@ export function buildPreviewUrl(
 }
 
 /**
- * L'iframe e il suo ciclo di vita (vedi il piano dell'editor visuale,
- * Giorno 2) — un token di preview nuovo ad ogni mount/cambio pagina (TTL
- * corto, non pensato per sopravvivere a lungo), poi l'overlay di
- * hover/selezione sopra, alimentato dal bridge del chiamante.
- * Niente `allow-same-origin` nel sandbox: il contenuto renderizzato qui
- * dentro include blocchi/script inseriti da utenti della piattaforma
- * (non fidati), quindi `allow-scripts` da solo li lascia girare ma con
- * un'origine opaca — combinato ad `allow-same-origin` neutralizzerebbe la
- * sandbox stessa. La comunicazione col genitore resta comunque intatta:
- * passa solo via postMessage (vedi use-preview-bridge.ts), che non
- * richiede same-origin.
- * Questa stessa origine opaca (`Origin: null`) rompe il rendering quando
- * `src` punta al dev server di Astro (`nx serve public-site`): il suo
- * hardening interno (>= Astro 6.0) blocca con 403 fisso ogni script/CSS
- * che la pagina carica dopo la navigazione iniziale, senza alcuna opzione
- * di config per un'origine opaca — non è un bug di questo componente. In
- * produzione (`server.mjs`) questo blocco non esiste. Vedi "Canvas
- * rendering needs public-site's production build" in docs/development.md
- * per la spiegazione completa e il workaround per testare in locale.
+ * The iframe and its lifecycle (see the visual editor plan, Day 2) — a
+ * fresh preview token on every mount and page change (short TTL, not meant
+ * to survive long), then the hover/selection overlay on top, fed by the
+ * caller's bridge.
+ * No `allow-same-origin` in the sandbox: the content rendered in here
+ * includes blocks and scripts inserted by platform users (untrusted), so
+ * `allow-scripts` on its own lets them run but with an opaque origin —
+ * combined with `allow-same-origin` it would neutralize the sandbox itself.
+ * Communication with the parent stays intact regardless: it goes only
+ * through postMessage (see use-preview-bridge.ts), which does not require
+ * same-origin.
+ * That same opaque origin (`Origin: null`) breaks rendering when `src`
+ * points at Astro's dev server (`nx serve public-site`): its internal
+ * hardening (>= Astro 6.0) blocks every script and stylesheet the page
+ * loads after the initial navigation with a hard 403, with no config option
+ * for an opaque origin — this is not a bug in this component. In production
+ * (`server.mjs`) that block does not exist. See "Canvas rendering needs
+ * public-site's production build" in docs/development.md for the full
+ * explanation and the workaround for testing locally.
  */
 export function CanvasFrame({
   pageId,

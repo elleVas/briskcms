@@ -5,18 +5,18 @@ import {
 } from './page-groups-queries';
 
 /**
- * L'editor Header/Footer non ha una pagina propria — canvas-editor-shell.tsx
- * mostra sempre il canvas Astro vero di UNA PageTranslation (vedi
- * canvas-frame.tsx), anche quando si sta editando header/footer, per riusare
- * la stessa rotta di preview invece di costruirne una seconda dedicata.
- * Questo hook sceglie quella traduzione: la prima nella locale della sezione
- * in editing, tra i primi `PAGE_GROUPS_PAGE_SIZE` gruppi del sito — non
- * esaustivo su siti con più pagine di quante ne stia una singola pagina di
- * risultati, ma è solo lo sfondo su cui visualizzare l'header/footer in
- * editing, non il contenuto editato. Il filtro `locale` lato server
- * garantisce che il primo gruppo restituito abbia già una traduzione in
- * questa lingua, quindi il secondo fetch (traduzioni del gruppo) non ha
- * bisogno di un proprio fallback vuoto.
+ * The Header/Footer editor has no page of its own — canvas-editor-shell.tsx
+ * always shows the real Astro canvas of ONE PageTranslation (see
+ * canvas-frame.tsx), even while editing the header or footer, so as to
+ * reuse the same preview route rather than building a second dedicated one.
+ * This hook picks that translation: the first one in the edited section's
+ * locale, among the site's first `PAGE_GROUPS_PAGE_SIZE` groups — not
+ * exhaustive on sites with more pages than fit in a single page of results,
+ * but it is only the backdrop for viewing the header/footer being edited,
+ * not the edited content itself. The server-side `locale` filter guarantees
+ * the first group returned already has a translation in this language, so
+ * the second fetch (the group's translations) needs no empty fallback of
+ * its own.
  */
 export function useRepresentativePage(siteId: string, locale: string) {
   const { data: groups, isLoading: isLoadingGroups } = useQuery(
