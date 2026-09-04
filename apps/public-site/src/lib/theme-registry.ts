@@ -17,6 +17,14 @@
 
 export interface ThemeManifest {
   allowStyleOverrides?: boolean;
+  /**
+   * Il footer resta in fondo alla finestra anche su pagine corte. Vive qui e
+   * non nel CSS del tema perché tocca `<body>`, che è del core: prima
+   * docs-showcase lo otteneva con un `<style is:global>`, e quelle regole
+   * finivano sulle pagine di *ogni altro* tema. Come flag, il core lo
+   * applica con il proprio stile scoped e nessuno cola.
+   */
+  stickyFooter?: boolean;
 }
 
 const themeManifestModules = import.meta.glob<{ default: ThemeManifest }>(

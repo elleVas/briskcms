@@ -1,3 +1,4 @@
 {
-  "allowStyleOverrides": true
+  "allowStyleOverrides": true,
+  "stickyFooter": true
 }

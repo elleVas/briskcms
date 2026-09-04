@@ -39,6 +39,7 @@ import { listPublishedPageTree } from '../lib/public-api-client';
 import DefaultHeader from '../components/regions/DefaultHeader.astro';
 import DefaultFooter from '../components/regions/DefaultFooter.astro';
 import DefaultContentShell from '../components/regions/DefaultContentShell.astro';
+import '../lib/theme-fonts';
 import '../styles/global.css';
 import '../styles/visibility.css';
 
@@ -350,7 +351,10 @@ const blockStyleOverridesCss = buildBlockStyleOverridesCss(
 			set:html={buildCookieConsentBootstrap(Astro.locals.cspNonce)}
 		/>
 	</head>
-	<body data-brisk-editor-app-url={editable ? editorAppUrl() : undefined}>
+	<body
+		class:list={[{ 'brisk-body--sticky-footer': themeManifest.stickyFooter }]}
+		data-brisk-editor-app-url={editable ? editorAppUrl() : undefined}
+	>
 		<a href="#main-content" class="brisk-skip-link">{i18n.t('skipLink')}</a>
 		{
 			header && (
@@ -453,5 +457,23 @@ const blockStyleOverridesCss = buildBlockStyleOverridesCss(
 	}
 	.brisk-skip-link:focus {
 		top: 0.5rem;
+	}
+
+	/* `stickyFooter` in theme.json. Sta nel core e non nel tema perché
+	   riguarda <body>, che il core possiede: uno stile scoped di qui lo
+	   raggiunge già, mentre un tema dovrebbe ricorrere a `is:global` — che è
+	   come le regole di docs-showcase finivano sulle pagine degli altri temi. */
+	.brisk-body--sticky-footer {
+		display: flex;
+		flex-direction: column;
+		min-height: 100vh;
+	}
+	/* `:global` solo sul discendente: <footer> è reso da DefaultFooter.astro
+	   (o dalla regione del tema) e non porta il cid di questo file, quindi
+	   `> footer` scoped non farebbe mai match — preso guardando il CSS
+	   generato, non a ragionamento. Il lato sinistro resta scoped, quindi
+	   la regola non può comunque sfuggire ad altri temi. */
+	.brisk-body--sticky-footer > :global(footer) {
+		margin-top: auto;
 	}
 </style>
