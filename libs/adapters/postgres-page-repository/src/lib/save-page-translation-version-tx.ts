@@ -5,11 +5,11 @@ import { type BriskTx, pageTranslationVersions } from '@brisk/postgres-db';
 const MAX_VERSIONS_TO_KEEP = 10;
 
 /**
- * Inserisce la versione del testo per-locale (overlay + seoMeta) e pota le
- * più vecchie oltre `MAX_VERSIONS_TO_KEEP` — stesso pattern di
- * savePageGroupVersionTx/savePageVersionTx, riguarda solo una traduzione
- * COLLEGATA (una scollegata versiona il proprio `divergedContent` come
- * PageGroupVersion, vedi PageTranslationVersion's doc comment).
+ * Inserts the per-locale text's version (overlay plus seoMeta) and prunes
+ * those beyond `MAX_VERSIONS_TO_KEEP` — the same pattern as
+ * savePageGroupVersionTx/savePageVersionTx, and it concerns only a LINKED
+ * translation (an unlinked one versions its own `divergedContent` as a
+ * PageGroupVersion, see PageTranslationVersion's doc comment).
  */
 export async function savePageTranslationVersionTx(
   tx: BriskTx,

@@ -22,10 +22,10 @@ declare global {
 const SCRIPT_SRC = 'https://challenges.cloudflare.com/turnstile/v0/api.js';
 
 /**
- * Un solo `<script>` per l'intera app, indipendentemente da quanti
- * `TurnstileWidget` montano/smontano (login + password dimenticata possono
- * alternarsi nella stessa sessione, vedi routes/login.tsx) — un secondo
- * `<script src>` identico ricaricherebbe l'intera libreria inutilmente.
+ * A single `<script>` for the whole app, however many `TurnstileWidget`s
+ * mount and unmount (login and forgotten-password can alternate within one
+ * session, see routes/login.tsx) — a second identical `<script src>` would
+ * reload the entire library for nothing.
  */
 function loadTurnstileScript(onLoad: () => void): void {
   if (window.turnstile) {
@@ -52,21 +52,20 @@ export interface TurnstileWidgetProps {
   /** `null` su scadenza/errore — il chiamante deve ridisabilitare il submit finché non arriva un nuovo token. */
   onToken: (token: string | null) => void;
   /**
-   * Incrementato dal chiamante per forzare un nuovo challenge (security
-   * review 2026-08-24, punto 13) — un token Turnstile è single-use: dopo un
-   * login/reset rifiutato dal server, il widget mostra ancora visivamente
-   * "verificato" ma quel token specifico non è più spendibile. Senza un
-   * reset esplicito l'utente resterebbe bloccato a riprovare con un token
-   * morto.
+   * Incremented by the caller to force a fresh challenge (security review
+   * 2026-08-24, point 13) — a Turnstile token is single-use: after a login
+   * or reset the server rejected, the widget still looks "verified" but
+   * that particular token can no longer be spent. Without an explicit reset
+   * the user would be stuck retrying with a dead token.
    */
   resetSignal?: number;
 }
 
 /**
- * Wrapper minimo attorno allo script `window.turnstile` di Cloudflare — non
- * un pacchetto React dedicato (nessuno già in uso nel repo, e il resto
- * dell'integrazione Turnstile in questo progetto è già "script diretto",
- * vedi apps/public-site/src/components/blocks/Form.astro).
+ * A minimal wrapper around Cloudflare's `window.turnstile` script — not a
+ * dedicated React package (none is in use in this repo, and the rest of the
+ * Turnstile integration in this project is already "direct script", see
+ * apps/public-site/src/components/blocks/Form.astro).
  */
 export function TurnstileWidget({
   siteKey,
@@ -100,15 +99,15 @@ export function TurnstileWidget({
         widgetIdRef.current = null;
       }
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- `onToken` è ricreata ad ogni render del chiamante (una closure su `setState`); includerla rimonterebbe il widget (e ne richiederebbe uno nuovo a Cloudflare) ad ogni digitazione nel form.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- `onToken` is recreated on every render of the caller (a closure over `setState`); including it would remount the widget (and request a new one from Cloudflare) on every keystroke in the form.
   }, [siteKey]);
 
   const isFirstResetRun = useRef(true);
   useEffect(() => {
-    // Salta il mount: un reset qui non farebbe nulla di utile (il widget
-    // deve ancora completare il PRIMO challenge) e romperebbe l'unico
-    // scopo di questo effect — reagire a un cambio DOPO il mount, non al
-    // valore iniziale di resetSignal.
+    // Skips the mount: a reset here would do nothing useful (the widget has
+    // yet to complete its FIRST challenge) and would break this effect's
+    // only purpose — reacting to a change AFTER mount, not to resetSignal's
+    // initial value.
     if (isFirstResetRun.current) {
       isFirstResetRun.current = false;
       return;

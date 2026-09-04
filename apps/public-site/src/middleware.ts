@@ -1,6 +1,7 @@
 import { randomBytes } from 'node:crypto';
 import { defineMiddleware } from 'astro:middleware';
 import { buildContentSecurityPolicy } from './lib/content-security-policy';
+import { resolveIconSvg } from './lib/resolve-theme-icons';
 
 // Default for every route: embeddable only by itself. The one route that
 // needs something else (the editor's live-preview iframe,
@@ -16,6 +17,16 @@ export const onRequest = defineMiddleware(async (context, next) => {
   // below ends up setting it — a nonce only works when the header and the
   // tag agree on the exact same string.
   context.locals.cspNonce = randomBytes(16).toString('base64');
+
+  // Handed to themes rather than imported by them: the icon registry is an
+  // eager glob over themes/<name>/icons/ plus lucide-static resolved via
+  // import.meta.resolve, none of which a theme package could carry. A
+  // theme importing it from this app is precisely what stopped a theme
+  // from living outside this repo. The contract is typed in
+  // @brisk/theme-runtime ('BriskThemeLocals'); this is the only place that
+  // fills it in. Free to set unconditionally — resolveIconSvg builds its
+  // per-theme map lazily, on the first call that actually needs it.
+  context.locals.resolveIcon = resolveIconSvg;
 
   const response = await next();
   if (!response.headers.has('Content-Security-Policy')) {

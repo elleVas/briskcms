@@ -46,17 +46,17 @@ async function resolvePolicySlug(
 }
 
 /**
- * Una sezione (header/footer) esiste per (sito, locale, kind) — se una
- * locale non ne ha mai avuta una propria (creata solo per la locale di
- * default, es. durante il setup iniziale del sito), senza questo fallback
- * `findBySiteLocaleKind` tornava `null` e la pagina usciva senza header né
- * footer, in ogni locale diversa da quella di default — bug segnalato dal
- * vivo (2026-08-22): una pagina pubblicata in inglese su un sito impostato
- * in italiano perdeva sia la nav che il footer. Stessa idea di
- * `untranslatedPageFallback` per le pagine (mostra il contenuto della
- * locale di default piuttosto che niente), applicata qui a header/footer.
- * Una sezione mai creata per NESSUNA locale resta `null` anche dopo il
- * fallback — non c'è nulla da mostrare in quel caso.
+ * A section (header or footer) exists per (site, locale, kind) — when a
+ * locale never had one of its own (created only for the default locale,
+ * during the site's initial setup for instance), without this fallback
+ * `findBySiteLocaleKind` returned `null` and the page came out with neither
+ * header nor footer, in every locale other than the default one — a bug
+ * reported live (2026-08-22): a page published in English on a site set up
+ * in Italian lost both the nav and the footer. The same idea as
+ * `untranslatedPageFallback` for pages (show the default locale's content
+ * rather than nothing), applied here to the header and footer. A section
+ * never created for ANY locale stays `null` even after the fallback — there
+ * is nothing to show in that case.
  */
 async function findSectionWithLocaleFallback(
   repository: SiteLayoutSectionRepositoryPort,

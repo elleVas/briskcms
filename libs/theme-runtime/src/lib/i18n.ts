@@ -1,5 +1,5 @@
-import it from '../locales/it.json';
-import en from '../locales/en.json';
+import it from './locales/it.json';
+import en from './locales/en.json';
 
 const dictionaries = { it, en } as const;
 const DEFAULT_LOCALE = 'it';

@@ -49,12 +49,12 @@ describe('pageBlockCategories', () => {
   });
 });
 
-// i18n a livello di campo (struttura condivisa + override per-locale):
-// `translatable` è opt-in esplicito, mai dedotto da `kind`/`inlineEditable`
-// (Image.alt è traducibile ma non inlineEditable — nessuna euristica
-// automatica è affidabile). Spot-check sulle decisioni meno ovvie
-// dell'audit, non esaustivo: il resto è auto-documentato nei singoli
-// *.block.ts.
+// Field-level i18n (a shared structure plus per-locale overrides):
+// `translatable` is explicitly opt-in, never inferred from
+// `kind`/`inlineEditable` (Image.alt is translatable but not inlineEditable
+// — no automatic heuristic is reliable). A spot check on the audit's less
+// obvious decisions, not exhaustive: the rest is self-documented in the
+// individual *.block.ts files.
 describe('translatable field audit spot-checks', () => {
   function fieldOf(type: string, key: string) {
     const block = pageBlocks.find((b) => b.type === type);

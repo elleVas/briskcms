@@ -4,9 +4,9 @@ import type {
 } from '@brisk/domain-core';
 
 /**
- * Ogni metodo richiede esplicitamente tenantId, stesso principio di
- * PageRepositoryPort. Niente `delete`/`list`: non c'è oggi una UX per
- * "elimina l'header" — si aggiunge se/quando serve davvero (YAGNI).
+ * Every method requires tenantId explicitly, the same principle as
+ * PageRepositoryPort. No `delete`/`list`: there is no UX today for "delete
+ * the header" — that gets added if and when it is genuinely needed (YAGNI).
  */
 export interface SiteLayoutSectionRepositoryPort {
   save(section: SiteLayoutSection): Promise<void>;

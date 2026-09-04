@@ -25,25 +25,24 @@ export interface LayersPanelProps {
   hoveredBlockId: string | null;
   selectedBlockId: string | null;
   /**
-   * Chiamato con `(parentId, orderedIds)` dopo un drag completato, a
-   * qualunque profondità — `parentId: null` per i fratelli di primo
-   * livello, altrimenti l'id del blocco-contenitore i cui figli sono stati
-   * riordinati. Ogni riga visibile (root o annidata) condivide lo stesso
-   * `SortableContext`; `computeNestedReorder` sotto rifiuta un drop tra
-   * fratelli di genitori diversi invece di riparentare — stesso principio
-   * di `computeSiblingReorder` (`compute-sibling-reorder.ts`,
-   * pages-list-view.tsx) per lo stesso identico problema di lista piatta
-   * multi-gruppo.
+   * Called with `(parentId, orderedIds)` after a completed drag, at any
+   * depth — `parentId: null` for top-level siblings, otherwise the id of
+   * the container block whose children were reordered. Every visible row
+   * (root or nested) shares the same `SortableContext`;
+   * `computeNestedReorder` below rejects a drop between siblings of
+   * different parents rather than reparenting — the same principle as
+   * `computeSiblingReorder` (`compute-sibling-reorder.ts`,
+   * pages-list-view.tsx) for the exact same flat multi-group list problem.
    */
   onReorder?: (parentId: string | null, orderedIds: string[]) => void;
   /**
-   * Seleziona un blocco cliccando direttamente la sua riga — l'unico modo
-   * affidabile di selezionare un blocco-contenitore quando un suo figlio
-   * lo copre per intero sul canvas (es. una Colonna con dentro una sola
-   * Galleria a tutta larghezza: nessun pixel del canvas appartiene più
-   * alla Colonna, ogni click lì selezionerebbe sempre la Galleria).
-   * Prima di questa prop il pannello Layers mostrava hover/selezione ma
-   * non offriva alcun modo di AGIRE su una riga (bug segnalato dal vivo).
+   * Selects a block by clicking its row directly — the only reliable way to
+   * select a container block when one of its children covers it entirely on
+   * the canvas (a Column holding a single full-width Gallery, say: no
+   * canvas pixel belongs to the Column any more, and every click there
+   * would always select the Gallery). Before this prop the Layers panel
+   * showed hover and selection but offered no way to ACT on a row (a bug
+   * reported from live use).
    */
   onSelect: (blockId: string) => void;
 }
@@ -67,13 +66,13 @@ function rowClassName(isSelected: boolean, isHovered: boolean): string {
 }
 
 /**
- * Isolata per essere testata senza dover simulare un drag reale di dnd-kit
- * (pointer events + misura del DOM) in jsdom. `null` = drop senza effetto
- * (nessun target, stesso punto, id sconosciuto, O un drop tra fratelli di
- * genitori diversi — riparentare via drag non è supportato, stesso limite
- * di `computeSiblingReorder`). `locateBlock`/`siblingsAt` (già usate da
- * "sposta su/giù"/"duplica" per lo stesso problema) trovano il vero
- * genitore e i veri fratelli a qualunque profondità, root incluso
+ * Isolated so it can be tested without simulating a real dnd-kit drag
+ * (pointer events plus DOM measurement) in jsdom. `null` = a drop with no
+ * effect (no target, the same position, an unknown id, OR a drop between
+ * siblings of different parents — reparenting by drag is not supported, the
+ * same limit as `computeSiblingReorder`). `locateBlock`/`siblingsAt`
+ * (already used by move up/down and duplicate for the same problem) find
+ * the real parent and the real siblings at any depth, root included
  * (`parentId: null`).
  */
 export function computeNestedReorder(
@@ -109,13 +108,12 @@ export function computeNestedReorder(
 }
 
 /**
- * Ogni id visibile (root e annidato, root incluso), rispettando lo stato
- * collassato — un figlio dentro un contenitore collassato non è renderizzato
- * quindi non deve comparire negli `items` del `SortableContext` (dnd-kit si
- * aspetta che ogni id dichiarato corrisponda a un nodo davvero montato). Un
- * blocco senza id è escluso: non c'è nulla su cui `useSortable` possa
- * agganciarsi, la sua riga resta comunque visibile ma non trascinabile (vedi
- * `renderRow`).
+ * Every visible id (root and nested, root included), respecting the
+ * collapsed state — a child inside a collapsed container is not rendered
+ * and so must not appear in the `SortableContext`'s `items` (dnd-kit
+ * expects every declared id to correspond to a genuinely mounted node). A
+ * block with no id is excluded: there is nothing for `useSortable` to hook
+ * onto, and its row stays visible but not draggable (see `renderRow`).
  */
 function collectSortableIds(
   blocks: Block[],
@@ -232,12 +230,12 @@ function SortableLayerRow({ id, ...rowProps }: SortableLayerRowProps) {
 }
 
 /**
- * Sceglie tra riga trascinabile e riga semplice in base alla presenza di un
- * id — condiviso dal livello radice (`LayersPanel`) e da ogni livello
- * annidato (`LayerRow`'s stessa funzione), così ogni profondità dell'albero
- * diventa trascinabile allo stesso modo, non solo la radice. `fallbackKey`
- * è l'indice nella lista dei fratelli, usato solo quando il blocco non ha
- * un id (stesso fallback di prima del riordino annidato).
+ * Picks between a draggable row and a plain one based on whether an id is
+ * present — shared by the root level (`LayersPanel`) and every nested level
+ * (`LayerRow`'s own call), so every depth of the tree becomes draggable the
+ * same way, not just the root. `fallbackKey` is the index in the sibling
+ * list, used only when the block has no id (the same fallback as before
+ * nested reordering existed).
  */
 function renderRow(props: LayerRowProps, fallbackKey: number): ReactNode {
   return props.block.id ? (
@@ -248,14 +246,13 @@ function renderRow(props: LayerRowProps, fallbackKey: number): ReactNode {
 }
 
 /**
- * Albero dei blocchi (vedi il piano dell'editor visuale, Giorno 2/3) — mostra
- * hover/selezione che arrivano dal canvas via usePreviewBridge, e permette
- * di riordinare i blocchi via drag-and-drop nel documento del genitore
- * (dnd-kit), a QUALUNQUE profondità — root e annidato (dentro un
- * Container/Colonne/ecc.) condividono lo stesso meccanismo, non solo la
- * radice. Sempre affidabile multi-browser, indipendente dal drag diretto
- * sul canvas (cross-iframe, con vincoli nativi diversi da browser a
- * browser).
+ * The block tree (see the visual editor plan, Day 2/3) — it shows the hover
+ * and selection arriving from the canvas through usePreviewBridge, and lets
+ * blocks be reordered by drag-and-drop in the parent's document (dnd-kit),
+ * at ANY depth — root and nested (inside a Container/Columns/etc.) share
+ * the same mechanism, not just the root. Always reliable across browsers,
+ * independently of direct dragging on the canvas (cross-iframe, with native
+ * constraints that differ from browser to browser).
  */
 export function LayersPanel({
   blocks,
@@ -264,10 +261,10 @@ export function LayersPanel({
   onReorder,
   onSelect,
 }: LayersPanelProps) {
-  // Espansi di default (nessuna sorpresa per chi già usa il pannello) — un
-  // contenitore compare qui solo dopo che l'utente stesso lo comprime,
-  // richiesto dal vivo: con molti blocchi annidati l'elenco diventava
-  // troppo lungo da scorrere per trovarne uno.
+  // Expanded by default (no surprise for anyone already using the panel) —
+  // a container only shows up here once the user collapses it themselves,
+  // asked for from live use: with many nested blocks the list got too long
+  // to scroll through to find one.
   const [collapsedIds, setCollapsedIds] = useState<Set<string>>(new Set());
 
   function toggleCollapsed(blockId: string): void {
@@ -282,22 +279,20 @@ export function LayersPanel({
     });
   }
 
-  // Senza una soglia di attivazione, dnd-kit cattura il puntatore al primo
-  // pointerdown su una riga — ANCHE un semplice click, senza alcun
-  // movimento, verrebbe trattato come un possibile inizio di drag,
-  // interferendo con l'onClick del bottone-riga (visto dal vivo in un
-  // browser reale: il click per selezionare smetteva di funzionare — un
-  // test con jsdom non lo rilevava, perché jsdom non replica la stessa
-  // cattura del puntatore di un browser vero). Un piccolo scarto di
-  // distanza minima (pattern raccomandato da dnd-kit stesso) distingue un
-  // click normale da un vero drag.
+  // Without an activation threshold, dnd-kit captures the pointer on the
+  // first pointerdown on a row — EVEN a plain click, with no movement at
+  // all, would be treated as a possible drag start, interfering with the row
+  // button's onClick (seen live in a real browser: clicking to select
+  // stopped working — a jsdom test did not catch it, because jsdom does not
+  // reproduce a real browser's pointer capture). A small minimum-distance
+  // threshold (the pattern dnd-kit itself recommends) tells an ordinary
+  // click from a real drag.
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
-    // Spazio/Invio per afferrare la riga con il focus, frecce per
-    // spostarla, di nuovo Spazio/Invio per rilasciare, Esc per annullare —
-    // il pattern da tastiera standard di dnd-kit per una lista ordinabile
-    // (chiude il gap segnalato: prima solo il drag col mouse riordinava un
-    // blocco annidato qui dentro).
+    // Space/Enter to grab the focused row, arrows to move it, Space/Enter
+    // again to drop, Esc to cancel — dnd-kit's standard keyboard pattern
+    // for a sortable list (closing the reported gap: before this, only a
+    // mouse drag could reorder a nested block in here).
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
     }),

@@ -1,10 +1,10 @@
 const AA_NORMAL_TEXT_RATIO = 4.5;
 
 /**
- * Componenti sRGB LINEARI (non gamma-corretti) di un colore — esattamente
- * ciò che serve alla formula di luminanza relativa WCAG 2.1 (§1.4.3), che
- * pesa (0.2126, 0.7152, 0.0722) proprio i canali linear-light, non quelli
- * gamma-compressi che si vedono a schermo.
+ * A colour's LINEAR sRGB components (not gamma-corrected) — exactly what
+ * the WCAG 2.1 relative luminance formula (§1.4.3) needs, since it weights
+ * (0.2126, 0.7152, 0.0722) the linear-light channels, not the
+ * gamma-compressed ones you see on screen.
  */
 interface LinearRgb {
   r: number;
@@ -38,17 +38,16 @@ function parseHexToLinearRgb(hex: string): LinearRgb | null {
 }
 
 /**
- * Il formato in cui il TEMA ATTIVO dichiara `--primary-foreground`/
- * `--secondary-foreground` oggi (vedi themes/classic/theme.css) — non un
- * parser CSS generico, solo questa forma specifica (`oklch(L C H)`,
- * niente alpha/unità percentuale). Conversione OKLCH -> OKLab -> LMS ->
- * sRGB lineare con le matrici pubblicate da Björn Ottosson
- * (https://bottosson.github.io/posts/oklab/) — gli stessi coefficienti
- * usati dal resto dell'ecosistema CSS Color 4 (browser, Culori, ecc.).
- * Si ferma alla sRGB LINEARE (non fa l'ultimo passo di gamma-encoding a
- * sRGB "da schermo"): la formula di luminanza WCAG sopra vuole proprio
- * quella, quindi il passo in più sarebbe calcolato solo per essere
- * decodificato di nuovo.
+ * The format the ACTIVE THEME declares `--primary-foreground`/
+ * `--secondary-foreground` in today (see themes/classic/theme.css) — not a
+ * general CSS parser, only this specific shape (`oklch(L C H)`, no alpha or
+ * percentage units). The OKLCH -> OKLab -> LMS -> linear sRGB conversion
+ * uses the matrices published by Björn Ottosson
+ * (https://bottosson.github.io/posts/oklab/) — the same coefficients the
+ * rest of the CSS Color 4 ecosystem uses (browsers, Culori, and so on).
+ * It stops at LINEAR sRGB (it does not take the final gamma-encoding step
+ * to "on-screen" sRGB): the WCAG luminance formula above wants exactly
+ * that, so the extra step would only be computed to be undone again.
  */
 function parseOklchToLinearRgb(color: string): LinearRgb | null {
   const match = color
@@ -102,20 +101,19 @@ export interface ContrastCheckResult {
 }
 
 /**
- * Confronta il colore scelto dall'utente (sempre hex) contro il token
- * `--primary-foreground`/`--secondary-foreground` RISOLTO del tema attivo
- * (oggi sempre oklch, vedi `resolve-theme-foreground-tokens.ts`) — non
- * contro un'assunzione fissa "bianco o nero": quel token è un valore
- * FISSO per tutto il tema, mai ricalcolato in base al colore scelto (a
- * differenza di, es., un tool che sceglie automaticamente testo chiaro/
- * scuro) — è esattamente per questo che una combinazione illeggibile è
- * possibile qui, e perché il confronto dev'essere contro il vero valore
- * del tema, non contro un'ipotesi.
+ * Compares the colour the user picked (always hex) against the active
+ * theme's RESOLVED `--primary-foreground`/`--secondary-foreground` token
+ * (always oklch today, see `resolve-theme-foreground-tokens.ts`) — not
+ * against a fixed "black or white" assumption: that token is a FIXED value
+ * for the whole theme, never recomputed from the chosen colour (unlike, for
+ * instance, a tool that automatically picks light or dark text) — which is
+ * exactly why an unreadable combination is possible here, and why the
+ * comparison has to be against the theme's real value rather than a guess.
  *
- * Ritorna `null` (nessun controllo, nessun avviso) se uno dei due colori
- * non è in un formato riconosciuto — non dovrebbe succedere in pratica
- * (entrambi vengono da fonti già validate), ma un tema custom incompleto
- * o un futuro formato diverso non deve rompere il salvataggio.
+ * Returns `null` (no check, no warning) when either colour is not in a
+ * recognized format — it should not happen in practice (both come from
+ * already-validated sources), but an incomplete custom theme or a future
+ * different format must not break saving.
  */
 export function checkContrastAgainstThemeForeground(
   backgroundHex: string,

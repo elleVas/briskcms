@@ -36,14 +36,19 @@ not any site currently renders with it.
 
 ```
 themes/<name>/
-  theme.css      # required — design tokens
-  theme.json      # required — manifest
-  icons/*.svg      # optional — icon set (docs/adr/0023)
-  PageLayout.astro   # optional — full layout override (see below)
+  theme.css           # required — design tokens
+  env.d.ts            # required — two /// reference lines, see below
+  theme.json          # required — manifest
+  fonts.css           # optional — self-hosted webfont, see below
+  icons/*.svg         # optional — icon set (docs/adr/0023)
+  regions/
+    Header.astro      # optional — the element wrapping the header's blocks
+    ContentShell.astro # optional — the element wrapping the page content
+    Footer.astro      # optional — the element wrapping the footer's blocks
   blocks/
-    *.astro       # optional — full-file overrides of an existing core block
-    *.block.ts     # optional — a genuinely NEW block type (ADR-0041), needs a matching .astro
-    *.locales.json  # required alongside a .block.ts — that block's own i18n
+    *.astro           # optional — full-file overrides of an existing core block
+    *.block.ts        # optional — a genuinely NEW block type (ADR-0041), needs a matching .astro
+    *.locales.json    # required alongside a .block.ts — that block's own i18n
 ```
 
 ## `theme.css` — the common case
@@ -84,10 +89,10 @@ example):
 ## `theme.json` — the manifest
 
 ```json
-{ "allowStyleOverrides": true }
+{ "allowStyleOverrides": true, "stickyFooter": false }
 ```
 
-The one flag that exists today. `true` (or the file/field missing
+**`allowStyleOverrides`** — `true` (or the file/field missing
 entirely) means Tier 1's Style panel can override this theme's own
 tokens on any site running it — this is the default, and what every core
 theme ships with. Set it `false` to make the panel permanently inert for
@@ -99,7 +104,15 @@ composition" section for the full reasoning, including why this can't be
 a database-level toggle instead (a client-editable switch can't protect
 the _agency's_ design intent from the client themselves).
 
-## Going past tokens: full-file overrides
+**`stickyFooter`** — `true` pins the footer to the bottom of the viewport
+on pages too short to fill it. It is a manifest flag rather than something
+you write in your own CSS because it targets `<body>`, which core owns: a
+theme can only reach `<body>` through `<style is:global>`, and a global
+rule from one theme lands on **every other theme's** pages too (that is a
+real bug this directory shipped, not a hypothetical). Declared here, core
+applies it with its own scoped style and nothing leaks.
+
+## Going past tokens: block overrides
 
 A theme that wants more than a restyle — a genuinely different `Hero`
 layout, a custom block — can ship its own `blocks/Hero.astro`; it wins
@@ -116,21 +129,134 @@ by `(themeName, blockType)` per render, from `BlockRenderer.astro`'s own
 `site.themeName` — a theme that ships nothing there falls back to core
 with zero error (a glob matching nothing is just an empty map, and an
 unknown theme name falls back to a bundled one rather than rendering
-blank). A full page-shell override works the same way one level up: ship
-`PageLayout.astro` at the theme's own root (next to
-`theme.css`/`theme.json`, not inside `blocks/`) and it replaces
-`apps/public-site/src/layouts/PageLayout.astro` wholesale for that theme
-— resolved in `resolve-theme-layout-override.ts`, wired into all three
-of PageLayout's importers (`PublicPageContent.astro`,
-`pages/[locale]/search.astro`, `pages/500.astro`). `docs-showcase` ships
-a real one (a docs sidebar); `classic` ships neither, needing only
-tokens.
+blank). The next level up — the furniture _around_ the blocks — is not
+another override but the narrower `regions/` contract described in the
+following section. `classic` ships neither, needing only tokens.
 
-Note for a full `PageLayout.astro` override: it only ever renders for
-the theme it lives in, so it can import its own `./theme.css` directly
-and skip core's per-request token resolution — but that also means it
-won't automatically pick up changes made to core's own PageLayout later.
-It is a copy, and stays one.
+## `regions/` — changing the page's own furniture
+
+Tokens restyle the blocks; `blocks/*.astro` rewrites one of them. What is
+left is the furniture _around_ them — the `<header>` element itself, the
+column layout the content sits in, the `<footer>`. A theme supplies any of
+three optional files for that:
+
+| File                         | Replaces                                                    | Extra prop        |
+| ---------------------------- | ----------------------------------------------------------- | ----------------- |
+| `regions/Header.astro`       | core's `<header>` wrapper                                   | `sticky: boolean` |
+| `regions/ContentShell.astro` | core's content wrapper (which is nothing at all by default) | —                 |
+| `regions/Footer.astro`       | core's `<footer>` wrapper                                   | —                 |
+
+Supply none and you get core's own, byte for byte as today. Supply one and
+you decide only the wrapping element and its classes — **you receive the
+already-rendered blocks as a slot**:
+
+```astro
+---
+import type { ThemeHeaderProps } from '@brisk/theme-runtime';
+export type Props = ThemeHeaderProps;
+const { sticky, class: className } = Astro.props;
+---
+<header class:list={['my-header', className, { 'my-header--sticky': sticky }]}>
+  <slot />
+</header>
+```
+
+**A region that forgets `<slot />` makes the entire page vanish, silently.**
+Nothing warns you — not `astro check`, not the build. It is the first thing
+to check if a page comes back blank.
+
+### Why it is a slot and not a copy
+
+Until 2026-09-04 a theme could instead ship a `PageLayout.astro` at its own
+root that replaced core's layout wholesale. That is **removed**, not
+deprecated. It looked cheaper and was not: `docs-showcase` had to copy 581
+lines of shell in order to change the one in the middle, and the copy then
+drifted in silence, shipping four real defects nobody caught — the WCAG
+2.4.1 skip link disappeared, the `data-brisk-root-blocks` attributes went
+with it (so inserting a block into the header or footer from the visual
+editor was simply broken on that theme), the theme's `theme.css` leaked its
+whole dark palette onto **every other theme's** pages, and the copy never
+received a token-injection fix core had made in the meantime.
+
+So the list of what stays core's is the point of the design, not a
+limitation to work around: all of `<html>`/`<head>`/`<body>`, the skip
+link, `data-brisk-root-blocks`, block rendering, CSP nonces, cookie
+consent, schema.org and the editor's preview bridge. If a region cannot
+express what your design needs, the contract gets extended — don't reach
+for `is:global` to get around it.
+
+### The props
+
+Every region receives `ThemeRegionProps` (see
+`libs/theme-runtime`'s `theme-regions.ts`, which is the authority):
+
+- **`locale`**, **`currentPath`** (`Astro.url.pathname`, no trailing slash)
+  and **`i18n`** (core's translator, already bound to `locale`).
+- **`route`** — `'page' | 'search' | 'error'`. Regions are never rendered
+  on the 500 page at all: that page is the last error handler, and a throw
+  there has nowhere left to propagate.
+- **`editable`** — true only inside the editor's preview iframe.
+- **`pageTree()`** — an async accessor for the site's published page tree.
+  Call it only if you need it: core owns the fetch, memoizes it **per
+  request** (pages get published between requests), guards on the site's
+  domain and resolves to `[]` on failure rather than throwing. This one
+  prop is most of what the old copies got wrong.
+- **`class`** — Astro injects this because core's layout has `<style>`
+  blocks of its own. Forward it onto your root element to let core's scoped
+  styles reach it, or ignore it deliberately.
+
+`Site.themeName` is _not_ passed, and neither is `PublishedSite`: it would
+carry `headScript`, `trackerScripts` and `cookieBannerSettings` along with
+it — an invitation to reimplement exactly the infrastructure this design
+takes off your hands.
+
+### Styling a region
+
+Write ordinary scoped `<style>` in the region file. One rule to internalise,
+because it has bitten this codebase twice: **Astro's scoping follows the
+file the element is written in.** A rule for `<header>` only matches if it
+lives in the same file that writes the `<header>` tag. A selector aimed at
+something core renders (the `<footer>`, a block's root) needs
+`:global(...)` on that part — keep the left-hand side scoped so the rule
+still cannot escape onto another theme.
+
+For genuinely global CSS the sanctioned hook is the
+`data-brisk-theme="<name>"` attribute core puts on `<html>`: start every
+global selector from there and your rules cannot reach a page rendered with
+a different theme.
+
+## `fonts.css` — a self-hosted webfont
+
+Optional, and the only supported way to ship a font. Take the font as a real
+dependency in your theme's `package.json` and import it:
+
+```css
+/* themes/<name>/fonts.css */
+@import '@fontsource-variable/sora';
+```
+
+Then point `--font-sans-value` at it in `theme.css` — using the family name
+the package's own `@font-face` declares, **exactly**. `@fontsource-variable/sora`
+declares `Sora Variable`, not `Sora`, and a near-miss fails silently: the
+browser falls through to the next entry in the stack and the font you
+bundled simply never loads. Check the built stylesheet's `@font-face` rule
+against your token rather than trusting the package name. Vite rewrites the
+`url()`s and bundles the font files, which a hand-written `@font-face` in
+`theme.css` could never get (core only extracts that file's `:root` custom
+properties, and the `url()` would never pass through the bundler).
+
+**Never `<link>` to Google Fonts or any other CDN.** It sends every
+visitor's IP address to a third party — a German court ruled on exactly
+that in 2022 — which is untenable for a product that sells "your data stays
+on your own machine" and generates the customer's privacy policy for them;
+it also breaks any intranet deployment outright. Check you actually have
+redistribution rights for the font: Google Fonts are OFL/Apache, a
+commercial licence usually is not.
+
+Every bundled theme's `fonts.css` ends up in the same stylesheet, which is
+safe by construction rather than by luck: an `@font-face` that no rule
+references downloads nothing. A theme wanting only system fonts ships no
+`fonts.css` at all — see `themes/classic`.
 
 ## Adding a genuinely new block type (ADR-0041)
 
@@ -174,6 +300,43 @@ instead. That route (like its four siblings) takes an optional
 `?theme=<name>` since docs/adr/0042 — without it, it answers for a
 fallback theme rather than erroring.
 
+## What a theme imports
+
+Everything a theme codes against comes from packages, never from a relative
+path into `apps/public-site` — that coupling is what used to make a theme
+impossible to develop outside this monorepo, and there is now none of it
+left in either core theme:
+
+| Package                | What you get                                                                                                         |
+| ---------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| `@brisk/theme-runtime` | `localePath`/`localePathFromAncestors`/`localeDirection`, the `Translator`, the `regions/` props, `PageTreeNodeDto`. |
+| `@brisk/shared-types`  | Every block's props type and the published-site/page shapes.                                                         |
+| `@brisk/block-sdk`     | `defineBlock`, the field types, and `CORE_BLOCK_TYPES` for your own collision check.                                 |
+
+Your `env.d.ts` needs exactly two lines — the second is what types
+`Astro.locals` for you:
+
+```ts
+/// <reference types="astro/client" />
+/// <reference types="@brisk/theme-runtime/locals" />
+```
+
+### Icons
+
+Two cases, and the split is _who chose the icon_:
+
+- **The editor's user chose it**, on a block that has an icon field
+  (`Feature`, `NavLink`): core resolves it and passes it to your override
+  as `iconSvg`. Just render it — `<span set:html={iconSvg} />`.
+- **Your theme wants one of its own**, on a block that has no icon field
+  at all (docs-showcase puts a globe in its `LanguageSwitcher` override):
+  `Astro.locals.resolveIcon('globe', site.themeName)`.
+
+Never import the icon registry. It cannot be a package — it is an eager
+glob over every theme's `icons/` plus `lucide-static` resolved through
+`import.meta.resolve`, all of it the app's — which is exactly why core
+hands it to you instead.
+
 ## The boundary you can't cross
 
 A theme can restyle or rewrite anything in the rendering layer, and
@@ -185,6 +348,40 @@ renders the canonical `Block[]` content model (ADR-0007); it doesn't get
 to redefine what an existing block's `props` shape contains, only add
 block types with shapes of their own.
 
+## A theme that lives outside this repo
+
+Verified end to end on 2026-09-04 (docs/adr/0043): a theme authored in a
+directory outside the monorepo renders — its region, its scoped CSS, its
+tokens — from a real Docker image, with **no code changes and no new
+machinery**. No npm package, no Vite alias, no `import.meta.glob`
+`exhaustive: true`. The only rule is that the theme's directory is present
+at `themes/<name>/` when the build runs.
+
+**In development, symlink it:**
+
+```sh
+ln -s /path/to/my-theme themes/my-theme
+```
+
+Restart `apps/public-site` once (a brand-new directory is only seen when
+the eager globs re-evaluate at process start) and pick it in the editor's
+Style dialog.
+
+**For a deployment, it has to be a real directory** in the Docker build
+context — `COPY` preserves a symlink _as a symlink_, so the link dangles
+inside the image and the theme is silently unreadable (measured, not
+assumed). Copy, clone, or add it as a git submodule under `themes/<name>/`
+before `docker build`. Both images then pick it up on their own:
+`apps/public-site` bundles the whole theme, and `apps/api` copies its
+`theme.json` into `/app/themes/` so it appears in the editor's theme
+picker.
+
+**A theme that only renders needs no packaging at all** — no
+`package.json`, no `tsconfig*.json`, no Nx wiring. Those exist so a theme
+gets its own `typecheck`/`lint`/`test` targets in CI; a theme living in its
+own repo runs its own. What it does need is the two `env.d.ts` reference
+lines and its dependencies resolvable — see "What a theme imports" above.
+
 ## Checklist for a new theme
 
 1. Copy `themes/classic/` as a starting point — including its
@@ -193,17 +390,25 @@ block types with shapes of their own.
    `blocks/blocks.spec.ts`, even if you're not adding any `.block.ts`
    files yet (see ADR-0041) — it's what makes this theme's own files
    real, `nx run-many`-visible `typecheck`/`lint`/`test` targets.
-2. `pnpm install` — new workspace packages need it to link.
+2. `pnpm install` — new workspace packages need it to link. Check your
+   `env.d.ts` carries both `/// reference` lines above; without the second
+   one `Astro.locals.resolveIcon` is untyped and `astro check` will say so.
 3. Rewrite `theme.css`'s `:root` values — every token listed above,
    `--font-sans-value` included.
 4. Decide `allowStyleOverrides` in `theme.json` — `true` unless you have
    a specific reason (see above) to lock it down.
-5. Restart `apps/public-site`'s dev server once — a brand-new directory
+5. Only if tokens genuinely aren't enough: add a `regions/` file, a
+   `blocks/*.astro` override, or a `fonts.css`. Each one is an escalation;
+   a theme needing none of them is the expected case, and the cheapest one
+   to keep working across upgrades.
+6. Restart `apps/public-site`'s dev server once — a brand-new directory
    under `themes/` is only picked up when the eager globs re-evaluate at
    process start, not on a file save. After that, point a site at it by
    picking it in editor-app's Style dialog ("Tema"), which writes
    `Site.themeName`; switching between already-bundled themes needs
    nothing but a page reload (docs/adr/0042).
-6. Verify live in a browser, not just `astro check` — see docs/adr/0021's
+7. Verify live in a browser, not just `astro check` — see docs/adr/0021's
    Consequences for two real bugs (a CSS cascade surprise and a font-token
-   naming trap) that only static checks missed.
+   naming trap) that only static checks missed. If you wrote a region,
+   look at the page with a second theme active too: a rule that leaks is
+   invisible on the theme you were designing.

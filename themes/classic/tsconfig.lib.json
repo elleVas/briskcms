@@ -11,10 +11,10 @@
   "include": ["blocks/**/*.ts"],
   "references": [
     {
-      "path": "../../libs/shared-types/tsconfig.lib.json"
+      "path": "../../libs/theme-runtime/tsconfig.lib.json"
     },
     {
-      "path": "../../libs/block-registry/tsconfig.lib.json"
+      "path": "../../libs/shared-types/tsconfig.lib.json"
     },
     {
       "path": "../../libs/block-sdk/tsconfig.lib.json"

@@ -30,9 +30,9 @@ describe('computeDropTarget', () => {
   });
 
   it('excludes the dragged block itself from the candidate list and index math', () => {
-    // Trascinando "b" oltre il punto medio di "a" (l'unico altro sopra di
-    // esso) — l'indice risultante è relativo all'elenco SENZA "b", pronto
-    // per moveBlock che lo rimuove prima di reinserirlo.
+    // Dragging "b" past the midpoint of "a" (the only other one above it) —
+    // the resulting index is relative to the list WITHOUT "b", ready for
+    // moveBlock, which removes it before reinserting it.
     expect(computeDropTarget(rects, 'b', 60)).toEqual({
       index: 1,
       indicatorTop: 200,

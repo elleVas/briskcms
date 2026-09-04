@@ -16,13 +16,16 @@
   "exclude": ["dist"],
   "references": [
     {
-      "path": "../../libs/block-sdk"
+      "path": "../../libs/theme-runtime"
     },
     {
       "path": "../../libs/shared-types"
     },
     {
       "path": "../../libs/env-config"
+    },
+    {
+      "path": "../../libs/block-sdk"
     }
   ]
 }

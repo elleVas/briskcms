@@ -1,11 +1,11 @@
 import type { PageContent } from '@brisk/shared-types';
 
 /**
- * Snapshot immutabile della struttura CONDIVISA di un PageGroup in un dato
- * istante — uno dei due stream di versioning paralleli del nuovo modello
- * i18n (l'altro è PageTranslationVersion, per il testo per-locale). Stessa
- * disciplina di PageVersion: mai un overwrite distruttivo, una nuova riga
- * per ogni saveContent().
+ * An immutable snapshot of a PageGroup's SHARED structure at a point in
+ * time — one of the new i18n model's two parallel versioning streams (the
+ * other is PageTranslationVersion, for the per-locale text). The same
+ * discipline as PageVersion: never a destructive overwrite, a new row for
+ * every saveContent().
  */
 export interface PageGroupVersion {
   id: string;

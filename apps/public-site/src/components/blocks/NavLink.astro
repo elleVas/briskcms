@@ -1,14 +1,16 @@
 ---
 import type { NavLinkProps } from '@brisk/shared-types';
-import { localePath } from '../../lib/locale-path';
-import { resolveIconSvg } from '../../lib/resolve-theme-icons';
+import { localePath } from '@brisk/theme-runtime';
 
-type Props = NavLinkProps & { themeName: string };
+type Props = NavLinkProps & {
+  /** Already resolved by BlockRenderer — see its comment on `iconName`. */
+  iconSvg?: string | null;
+  themeName: string;
+};
 
-const { label, linkType, page, url, icon, position, visibility, themeName } =
+const { label, linkType, page, url, position, visibility, iconSvg } =
   Astro.props;
 const href = linkType === 'page' && page?.locale && page?.slug ? localePath(page.locale, page.slug) : url;
-const iconSvg = resolveIconSvg(icon, themeName);
 ---
 
 <a

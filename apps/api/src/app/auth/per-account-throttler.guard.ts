@@ -10,20 +10,20 @@ const TTL_MS = 15 * 60 * 1000;
 const LIMIT = 5;
 
 /**
- * Secondo asse di rate limiting, indipendente da `ThrottlerGuard` (per-IP,
- * già applicato su login/request-password-reset) — security review
- * 2026-08-24, punto 13: con solo il limite per-IP, un attaccante da un solo
- * IP può restare sotto soglia (5/min) e mandare comunque fino a 300 email
- * di reset/ora alla stessa vittima; da più IP, illimitato. Questo chiude
- * quel buco tracciando per EMAIL invece che per IP, indipendentemente da
- * quanti indirizzi li mandano.
+ * A second axis of rate limiting, independent of `ThrottlerGuard` (per-IP,
+ * already applied to login and request-password-reset) — security review
+ * 2026-08-24, point 13: with the per-IP limit alone, an attacker from a
+ * single IP can stay under the threshold (5/min) and still send up to 300
+ * reset emails an hour to the same victim; from several IPs, unlimited.
+ * This closes that hole by tracking per EMAIL rather than per IP, no matter
+ * how many addresses send them.
  *
- * Riusa `ThrottlerStorage` (lo stesso storage in-memory già iniettato da
- * `ThrottlerModule` in AuthModule) invece di registrare un secondo
- * throttler "nominato" — `ThrottlerGuard` applica lo stesso tracker (IP di
- * default) a OGNI throttler nominato che vede, quindi un secondo config
- * nominato non baserebbe comunque la chiave sull'email senza duplicare
- * anche la logica del tracker per-IP già esistente.
+ * It reuses `ThrottlerStorage` (the same in-memory storage
+ * `ThrottlerModule` already injects in AuthModule) rather than registering
+ * a second "named" throttler — `ThrottlerGuard` applies the same tracker
+ * (the IP by default) to EVERY named throttler it sees, so a second named
+ * config would still not key on the email without also duplicating the
+ * existing per-IP tracker logic.
  */
 @Injectable()
 export class PerAccountThrottlerGuard implements CanActivate {
@@ -39,9 +39,9 @@ export class PerAccountThrottlerGuard implements CanActivate {
       typeof req.body?.email === 'string'
         ? req.body.email.trim().toLowerCase()
         : null;
-    // Nessuna email valida da tracciare — non è compito di questo guard
-    // rifiutare la richiesta (ZodValidationPipe lo farà comunque a valle),
-    // si limita a non contare nulla.
+    // No valid email to track — it is not this guard's job to reject the
+    // request (ZodValidationPipe will do that downstream anyway), it simply
+    // counts nothing.
     if (!email) {
       return true;
     }

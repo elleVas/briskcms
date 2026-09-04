@@ -7,17 +7,16 @@ import type {
 } from '@brisk/shared-types';
 import BlockRenderer from './BlockRenderer.astro';
 
-// Punto d'ingresso dedicato per la patch a frammento (vedi il piano
-// dell'editor visuale, Giorno 3: POST /api/render-block-fragment) — riusa
-// per intero la logica di dispatch di BlockRenderer.astro invece di
-// duplicarla: un cambio di proprietà nell'Inspector renderizza UN blocco
-// isolato tramite questo componente (via l'Astro Container API,
-// apps/public-site/src/pages/api/render-block-fragment.ts), non l'intera
-// pagina. `editable` è sempre true qui: il frammento risultante deve
-// portare lo stesso wrapper data-brisk-block-id/data-brisk-block-type
-// dell'originale che sta sostituendo, altrimenti il blocco patchato
-// smetterebbe di essere tracciabile dal bridge dopo il primo cambio
-// proprietà.
+// The dedicated entry point for fragment patching (see the visual editor
+// plan, Day 3: POST /api/render-block-fragment) — it reuses
+// BlockRenderer.astro's dispatch logic in full rather than duplicating it: a
+// property change in the Inspector renders ONE isolated block through this
+// component (via the Astro Container API,
+// apps/public-site/src/pages/api/render-block-fragment.ts), not the whole
+// page. `editable` is always true here: the resulting fragment has to carry
+// the same data-brisk-block-id/data-brisk-block-type wrapper as the
+// original it is replacing, or the patched block would stop being
+// trackable by the bridge after the first property change.
 interface Props {
   block: Block;
   locale: string;

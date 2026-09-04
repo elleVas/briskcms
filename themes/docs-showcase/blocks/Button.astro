@@ -12,14 +12,16 @@ import {
   buildBlockInstanceStyle,
   type BlockStyleOverride,
   type ButtonProps,
-} from '../../../libs/shared-types/src/index';
-import { localePath } from '../../../apps/public-site/src/lib/locale-path';
+} from '@brisk/shared-types';
+import { localePath } from '@brisk/theme-runtime';
 
 type Props = ButtonProps & { styleOverride?: BlockStyleOverride };
 
 const { label, linkType, page, url, variant, styleOverride } = Astro.props;
 const href =
-  linkType === 'page' && page ? localePath(page.locale, page.slug) : url;
+  linkType === 'page' && page?.locale && page?.slug
+    ? localePath(page.locale, page.slug)
+    : url;
 
 const instanceStyle = buildBlockInstanceStyle(styleOverride);
 ---

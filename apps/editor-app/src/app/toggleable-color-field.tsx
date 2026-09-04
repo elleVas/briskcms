@@ -11,12 +11,12 @@ export interface ToggleableColorFieldProps {
 }
 
 /**
- * Un colore opzionale: una checkbox "Personalizza" più un color-picker nativo
- * (visibile solo se abilitato) — usato sia da StyleView (impostazioni tema
- * a livello di sito) sia da GlobalStylesDialog (stesso concetto, aperto
- * dalla barra in alto dell'editor). Estratto qui perché lo stesso identico
- * blocco compariva già due volte in StyleView (primario/secondario) prima
- * di aggiungerne un terzo/quarto uso.
+ * An optional colour: a "Customize" checkbox plus a native colour picker
+ * (shown only when enabled) — used both by StyleView (site-level theme
+ * settings) and by GlobalStylesDialog (the same concept, opened from the
+ * editor's top bar). Extracted here because the exact same block already
+ * appeared twice in StyleView (primary/secondary) before a third and
+ * fourth use were added.
  */
 export function ToggleableColorField({
   id,

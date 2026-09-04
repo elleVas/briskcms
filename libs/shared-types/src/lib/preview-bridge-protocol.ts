@@ -1,16 +1,16 @@
 /**
- * Protocollo postMessage tra il canvas (apps/editor-app, genitore) e la
- * pagina reale renderizzata nell'iframe (apps/public-site) — vedi il piano
- * dell'editor visuale, Giorno 2/3. Ogni messaggio porta lo stesso envelope
- * `{ source, v, type, payload }`; entrambi i lati controllano `event.origin`
- * prima di leggere `event.data` (vedi use-preview-bridge.ts /
+ * The postMessage protocol between the canvas (apps/editor-app, the parent)
+ * and the real page rendered in the iframe (apps/public-site) — see the
+ * visual editor plan, Day 2/3. Every message carries the same
+ * `{ source, v, type, payload }` envelope; both sides check `event.origin`
+ * before reading `event.data` (see use-preview-bridge.ts /
  * preview-bridge-client.ts).
  *
  */
 export const PREVIEW_BRIDGE_SOURCE = 'brisk-preview-bridge' as const;
 export const PREVIEW_BRIDGE_VERSION = 1 as const;
 
-/** Sempre viewport-relative (stessa semantica di `getBoundingClientRect()`), mai document-relative — il genitore le combina con la posizione del proprio `<iframe>` per disegnare l'overlay. */
+/** Always viewport-relative (the same semantics as `getBoundingClientRect()`), never document-relative — the parent combines them with its own `<iframe>`'s position to draw the overlay. */
 export interface BlockRect {
   id: string;
   top: number;
@@ -31,7 +31,7 @@ export type PreviewReadyMessage = PreviewBridgeEnvelope<
   { blockRects: BlockRect[]; scrollHeight: number }
 >;
 
-/** Ri-inviato ad ogni ResizeObserver/scroll/resize — mai solo al mount. */
+/** Re-sent on every ResizeObserver/scroll/resize — never only at mount. */
 export type PreviewBlockRectsMessage = PreviewBridgeEnvelope<
   'preview:block-rects',
   { blockRects: BlockRect[] }
@@ -50,11 +50,11 @@ export type PreviewClickMessage = PreviewBridgeEnvelope<
 >;
 
 /**
- * Doppio click — trigger per entrare in editing testo inline (Giorno 4):
- * `field` è il valore di `data-brisk-field` più vicino sotto il cursore,
- * `null` se il doppio click è caduto sul blocco ma fuori da ogni campo
- * `inlineEditable` (es. un'area di padding). Mai emesso per un blocco fuori
- * dallo scope editabile corrente, stessa regola di preview:click.
+ * Double click — the trigger for entering inline text editing (Day 4):
+ * `field` is the nearest `data-brisk-field` value under the cursor, `null`
+ * when the double click landed on the block but outside every
+ * `inlineEditable` field (a padding area, say). Never emitted for a block
+ * outside the current editable scope, the same rule as preview:click.
  */
 export type PreviewDblClickMessage = PreviewBridgeEnvelope<
   'preview:dblclick',
@@ -62,14 +62,14 @@ export type PreviewDblClickMessage = PreviewBridgeEnvelope<
 >;
 
 /**
- * Sincronizza TipTap col testo digitato dal vivo (Giorno 4), con debounce
- * lato genitore prima del salvataggio bozza. `text`, non `html`: ogni field
- * `inlineEditable` di questa codebase è un `z.string()` semplice a livello
- * di dominio (title/subtitle/body/..., vedi content-model.ts) — mai HTML.
- * TipTap qui è vincolato a un singolo paragrafo senza marks (vedi
- * preview-bridge-client.ts), quindi `editor.getText()` è la lettura
- * corretta, non `editor.getHTML()`: quel secondo varrebbe solo per un
- * field che il dominio modellasse davvero come HTML, che oggi non esiste.
+ * Keeps TipTap in sync with text typed live (Day 4), debounced on the
+ * parent side before the draft is saved. `text`, not `html`: every
+ * `inlineEditable` field in this codebase is a plain `z.string()` at the
+ * domain level (title/subtitle/body/..., see content-model.ts) — never
+ * HTML. TipTap is constrained here to a single paragraph with no marks (see
+ * preview-bridge-client.ts), so `editor.getText()` is the correct read, not
+ * `editor.getHTML()`: that second one would only apply to a field the
+ * domain genuinely modelled as HTML, which none does today.
  */
 export type PreviewTextChangedMessage = PreviewBridgeEnvelope<
   'preview:text-changed',
@@ -77,17 +77,17 @@ export type PreviewTextChangedMessage = PreviewBridgeEnvelope<
 >;
 
 /**
- * Inizio di un drag simulato lato genitore (Giorno 3/4: riordino diretto sul
- * canvas) — su `mousedown` su un blocco nello scope editabile corrente.
- * L'iframe non riceve mai un vero evento di drag nativo (HTML5 drag-and-drop
- * non attraversa il confine dell'iframe in modo affidabile multi-browser,
- * vedi il piano dell'editor visuale): il genitore possiede l'intero stato
- * del drag, l'iframe si limita a riportare `mousedown`/`mousemove`/`mouseup`
- * come fa già per hover/click. Il genitore decide se `blockId` è davvero
- * riordinabile (un blocco di primo livello — il riordino annidato resta un
- * TODO separato, stessa scelta di layers-panel.tsx) e ignora l'evento
- * altrimenti, stesso principio "un blockId ignoto non fa crashare nulla" di
- * use-block-tree.ts.
+ * The start of a drag simulated on the parent side (Day 3/4: direct
+ * reordering on the canvas) — on `mousedown` on a block within the current
+ * editable scope. The iframe never receives a real native drag event (HTML5
+ * drag-and-drop does not cross the iframe boundary reliably across
+ * browsers, see the visual editor plan): the parent owns the entire drag
+ * state, and the iframe merely reports `mousedown`/`mousemove`/`mouseup` as
+ * it already does for hover/click. The parent decides whether `blockId` is
+ * genuinely reorderable (a top-level block — nested reordering stays a
+ * separate TODO, the same choice layers-panel.tsx made) and ignores the
+ * event otherwise, the same "an unknown blockId crashes nothing" principle
+ * as use-block-tree.ts.
  */
 export type PreviewDragStartMessage = PreviewBridgeEnvelope<
   'preview:drag-start',
@@ -95,19 +95,19 @@ export type PreviewDragStartMessage = PreviewBridgeEnvelope<
 >;
 
 /**
- * Ri-inviato ad ogni `mousemove` mentre un drag è in corso (throttled a un
- * frame via requestAnimationFrame, stessa cura prestazionale del
- * ResizeObserver già in preview-bridge-client.ts) — copre SOLO il tratto in
- * cui il puntatore è sopra l'iframe: mentre è sopra il documento del
- * genitore, il genitore lo traccia già nativamente col proprio
- * `mousemove`, nessun bridge necessario per quel tratto.
+ * Re-sent on every `mousemove` while a drag is in progress (throttled to
+ * one frame through requestAnimationFrame, the same performance care as the
+ * ResizeObserver already in preview-bridge-client.ts) — it covers ONLY the
+ * stretch where the pointer is over the iframe: while it is over the
+ * parent's document, the parent already tracks it natively with its own
+ * `mousemove`, so no bridging is needed for that stretch.
  */
 export type PreviewDragMoveMessage = PreviewBridgeEnvelope<
   'preview:drag-move',
   { pointer: { x: number; y: number } }
 >;
 
-/** `mouseup` mentre un drag è in corso, ovunque cada — il genitore calcola la posizione di drop finale e la applica al proprio `Block[]`, l'iframe non sa nulla dell'esito. */
+/** `mouseup` while a drag is in progress, wherever it lands — the parent computes the final drop position and applies it to its own `Block[]`; the iframe knows nothing of the outcome. */
 export type PreviewDragEndMessage = PreviewBridgeEnvelope<
   'preview:drag-end',
   Record<string, never>
@@ -125,11 +125,11 @@ export type PreviewToParentMessage =
   | PreviewDragEndMessage;
 
 /**
- * Sostituzione mirata dopo render-block-fragment (Giorno 3): `html` porta
- * già il proprio wrapper `data-brisk-block-id`/`data-brisk-block-type`
- * (RenderSingleBlock.astro lo costruisce con `editable` sempre true), lo
- * script nell'iframe sostituisce il nodo esistente via `outerHTML` mirato
- * — nessun reload, nessun flash.
+ * Targeted replacement after render-block-fragment (Day 3): `html` already
+ * carries its own `data-brisk-block-id`/`data-brisk-block-type` wrapper
+ * (RenderSingleBlock.astro builds it with `editable` always true), and the
+ * script in the iframe replaces the existing node through a targeted
+ * `outerHTML` — no reload, no flash.
  */
 export type EditorPatchBlockMessage = PreviewBridgeEnvelope<
   'editor:patch-block',
@@ -137,10 +137,11 @@ export type EditorPatchBlockMessage = PreviewBridgeEnvelope<
 >;
 
 /**
- * Monta TipTap "sul posto" (Giorno 4) sul nodo `[data-brisk-field=field]`
- * dentro il blocco `blockId` — TipTap prende possesso del nodo esistente e
- * gestisce la propria riconciliazione, fix strutturale del bug del cursore
- * di Puck (nessun re-render React guida più quel nodo), non un workaround.
+ * Mounts TipTap "in place" (Day 4) on the `[data-brisk-field=field]` node
+ * inside block `blockId` — TipTap takes ownership of the existing node and
+ * handles its own reconciliation, which is a structural fix for Puck's
+ * caret bug (no React re-render drives that node any more), not a
+ * workaround.
  */
 export type EditorEnterTextEditMessage = PreviewBridgeEnvelope<
   'editor:enter-text-edit',
@@ -148,11 +149,11 @@ export type EditorEnterTextEditMessage = PreviewBridgeEnvelope<
 >;
 
 /**
- * Blur/Escape, o un altro blocco selezionato mentre questo è in editing —
- * smonta l'istanza TipTap corrente, se ce n'è una. Nessun payload: quale
- * blocco/field sia in editing è stato interamente dell'iframe (vedi
- * `activeTextEditor` in preview-bridge-client.ts), il genitore chiede solo
- * "esci, qualunque cosa sia attiva".
+ * Blur/Escape, or another block selected while this one is being edited —
+ * unmounts the current TipTap instance, if there is one. No payload: which
+ * block/field is being edited has been entirely the iframe's business (see
+ * `activeTextEditor` in preview-bridge-client.ts), and the parent only asks
+ * "exit, whatever is active".
  */
 export type EditorExitTextEditMessage = PreviewBridgeEnvelope<
   'editor:exit-text-edit',
@@ -160,33 +161,33 @@ export type EditorExitTextEditMessage = PreviewBridgeEnvelope<
 >;
 
 /**
- * Un blocco MAI visto prima dall'iframe (inserimento/duplicazione) — a
- * differenza di `editor:patch-block` (sostituisce un nodo esistente), qui
- * serve creare un nodo nuovo e inserirlo nel punto giusto. `html` porta già
- * il proprio wrapper (stesso RenderSingleBlock.astro di patch-block,
- * includendo l'intero sottoalbero se il blocco ha figli — un solo
- * `container.renderToString` rende anche i nested). `parentId: null` =
- * radice della pagina; `beforeBlockId: null` = in coda alla lista
- * (radice o dentro il genitore) invece che prima di un fratello preciso.
+ * A block the iframe has NEVER seen before (insert/duplicate) — unlike
+ * `editor:patch-block` (which replaces an existing node), this one has to
+ * create a new node and insert it in the right place. `html` already
+ * carries its own wrapper (the same RenderSingleBlock.astro as patch-block,
+ * including the whole subtree when the block has children — a single
+ * `container.renderToString` renders the nested ones too). `parentId: null`
+ * = the page root; `beforeBlockId: null` = at the end of the list (root or
+ * inside the parent) rather than before a specific sibling.
  */
 export type EditorInsertBlockMessage = PreviewBridgeEnvelope<
   'editor:insert-block',
   { html: string; parentId: string | null; beforeBlockId: string | null }
 >;
 
-/** Un blocco eliminato (toolbar "Rimuovi blocco") — l'iframe rimuove il nodo `[data-brisk-block-id=blockId]` dal proprio DOM, nessun reload. */
+/** A deleted block (the toolbar's "Remove block") — the iframe removes the `[data-brisk-block-id=blockId]` node from its own DOM, with no reload. */
 export type EditorRemoveBlockMessage = PreviewBridgeEnvelope<
   'editor:remove-block',
   { blockId: string }
 >;
 
 /**
- * Un riordino applicato (drag sul canvas, frecce sposta su/giù, drag nel
- * pannello Livelli) — `orderedIds` è l'elenco completo e finale dei
- * fratelli in quel punto dell'albero, nello stesso ordine desiderato.
- * L'iframe si limita a ri-appendere i nodi ESISTENTI in quell'ordine
- * (`appendChild` su un nodo già nel DOM lo sposta, non lo clona) — nessun
- * nuovo rendering, i blocchi coinvolti sono già tutti visibili.
+ * A reorder that has been applied (a canvas drag, the move up/down arrows,
+ * a drag in the Layers panel) — `orderedIds` is the complete, final list of
+ * siblings at that point in the tree, in the desired order. The iframe only
+ * re-appends the EXISTING nodes in that order (`appendChild` on a node
+ * already in the DOM moves it rather than cloning it) — no new rendering,
+ * since every block involved is already visible.
  */
 export type EditorReorderBlocksMessage = PreviewBridgeEnvelope<
   'editor:reorder-blocks',
@@ -194,14 +195,14 @@ export type EditorReorderBlocksMessage = PreviewBridgeEnvelope<
 >;
 
 /**
- * Override "a livello di componente" appena salvato dal pulsante "Stile"
- * (docs/adr/0022) — `css` è già il risultato di `buildBlockStyleOverridesCss`
- * lato genitore (che conosce l'intera mappa aggiornata dopo la mutation),
- * l'iframe si limita a scrivere quel testo in un `<style>` dedicato nel
- * proprio `<head>` (creandolo se non esiste ancora). A differenza di
- * `editor:patch-block`, tocca lo stile dell'intero documento, non un nodo:
- * ogni istanza già visibile di quel tipo si aggiorna in un colpo solo,
- * niente reload dell'iframe.
+ * A "component-level" override just saved from the "Style" button
+ * (docs/adr/0022) — `css` is already the result of
+ * `buildBlockStyleOverridesCss` on the parent side (which knows the whole
+ * updated map after the mutation), and the iframe only writes that text
+ * into a dedicated `<style>` in its own `<head>` (creating it if there is
+ * none yet). Unlike `editor:patch-block`, this touches the whole document's
+ * styling rather than one node: every already-visible instance of that type
+ * updates in one go, with no iframe reload.
  */
 export type EditorUpdateBlockStyleCssMessage = PreviewBridgeEnvelope<
   'editor:update-block-style-css',
@@ -209,12 +210,12 @@ export type EditorUpdateBlockStyleCssMessage = PreviewBridgeEnvelope<
 >;
 
 /**
- * Selezione di un blocco dal pannello Livelli (colonna destra) — a
- * differenza degli altri messaggi genitore -> iframe, non modifica il DOM:
- * chiede solo all'iframe di portare in vista il blocco `blockId`, così la
- * selezione nel pannello resta visibile anche su una pagina lunga con molti
- * blocchi. No-op silenzioso se il blocco non è (più) nel DOM, stessa
- * disciplina di `editor:patch-block`/`editor:remove-block`.
+ * A block selected from the Layers panel (right-hand column) — unlike the
+ * other parent -> iframe messages, this one does not change the DOM: it
+ * only asks the iframe to bring block `blockId` into view, so the panel's
+ * selection stays visible even on a long page with many blocks. A silent
+ * no-op when the block is no longer in the DOM, the same discipline as
+ * `editor:patch-block`/`editor:remove-block`.
  */
 export type EditorScrollToBlockMessage = PreviewBridgeEnvelope<
   'editor:scroll-to-block',
@@ -238,7 +239,7 @@ function isPlainObject(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
 }
 
-/** Type guard usato da entrambi i lati prima di fidarsi di `event.data` — un `postMessage` di terze parti (estensioni browser, altri script nella stessa pagina) non porta questo envelope e va scartato in silenzio, non lanciato. */
+/** The type guard both sides use before trusting `event.data` — a third-party `postMessage` (browser extensions, other scripts on the same page) does not carry this envelope and is discarded silently rather than thrown on. */
 export function isPreviewBridgeMessage(
   data: unknown,
 ): data is AnyPreviewBridgeMessage {

@@ -39,11 +39,15 @@ below).
   [ADR-0017](docs/adr/0017-multilingua-locale-prefixed-urls-and-page-translations.md).
 - **Theming, at two levels.** A site-level style panel (colors, font,
   custom CSS/scripts, favicon) editable live with no rebuild, layered under
-  filesystem theme packages (`themes/<name>/`, selected per deployment at
-  build time via `BRISK_THEME`) that an agency can write from scratch to
-  give a client site its own distinct look — see
+  filesystem theme packages (`themes/<name>/`) that an agency can write from
+  scratch to give a client site its own distinct look, picked per site and
+  live from the editor. A theme is just a directory — it can live outside
+  this repository, needs no packaging, and can be as small as two files.
+  See [docs/creating-a-theme.md](docs/creating-a-theme.md) to build one,
   [ADR-0021](docs/adr/0021-site-theming-filesystem-packages-and-style-settings.md)
-  and [ADR-0022](docs/adr/0022-component-and-instance-style-overrides.md)
+  and [ADR-0043](docs/adr/0043-theme-regions-and-the-publishable-theme-surface.md)
+  for the design, and
+  [ADR-0022](docs/adr/0022-component-and-instance-style-overrides.md)
   for component/instance-level style overrides on top of a theme's tokens.
 - **A real form builder**, not a single hardcoded contact block: forms are
   created and edited as their own entity with arbitrary field definitions, a
@@ -111,6 +115,8 @@ built and published end to end.
   connection
 - [docs/self-hosting.md](docs/self-hosting.md) — running Brisk in
   production, on your own server
+- [docs/creating-a-theme.md](docs/creating-a-theme.md) — turning a design
+  into a Brisk theme; [themes/README.md](themes/README.md) is its reference
 - [docs/git-workflow.md](docs/git-workflow.md) — branches, PRs, what requires
   sign-off before implementing
 - [docs/adr/](docs/adr/) — Architecture Decision Records

@@ -1,7 +1,6 @@
 ---
 import type { PublishedPage } from '@brisk/shared-types';
-import PageLayoutCore from '../layouts/PageLayout.astro';
-import { resolveThemeLayoutOverride } from '../lib/resolve-theme-layout-override';
+import PageLayout from '../layouts/PageLayout.astro';
 import BlockRenderer from './BlockRenderer.astro';
 import ErrorPageShell from './ErrorPageShell.astro';
 import NotFound from './NotFound.astro';
@@ -14,28 +13,28 @@ import { getPublishedSiteChrome } from '../lib/public-api-client';
 // set it here rendered the right NotFound markup but still answered 200).
 interface Props {
   page: PublishedPage | null;
-  // Solo la rotta di preview lo passa (vedi il piano dell'editor visuale,
-  // Giorno 2) — la rotta pubblicata reale non lo passa mai, quindi resta
-  // undefined e l'HTML pubblicato è byte-identico a prima.
+  // Only the preview route passes it (see the visual editor plan, Day 2) —
+  // the real published route never does, so it stays undefined and the
+  // published HTML is byte-identical to before.
   editable?: boolean;
-  // Solo le rotte pubbliche reali la passano ([locale]/[...slug].astro,
-  // [locale]/index.astro) — preview/[pageId].astro no (un token scaduto
-  // non garantisce un locale/dominio affidabile da cui ricavare il site
-  // chrome, e non è comunque un percorso che un visitatore reale vede).
-  // Usata SOLO per il ramo `page === null` sotto: recupera l'header/
-  // footer reale del sito così una 404 mostra la navigazione vera invece
-  // di una pagina spoglia — se manca, o se il recupero fallisce, resta il
-  // comportamento di sempre.
+  // Only the real public routes pass it ([locale]/[...slug].astro,
+  // [locale]/index.astro) — preview/[pageId].astro does not (an expired
+  // token does not guarantee a reliable locale or domain to derive the site
+  // chrome from, and it is not a path a real visitor sees anyway). Used
+  // ONLY for the `page === null` branch below: it fetches the site's real
+  // header and footer so a 404 shows the actual navigation rather than a
+  // bare page — when it is missing, or the fetch fails, the long-standing
+  // behaviour remains.
   locale?: string;
 }
 
 const { page, editable, locale } = Astro.props;
 
-// Best-effort, non un secondo punto di fallimento: se il sito/dominio non
-// esiste o l'API non risponde, `chrome` resta `null` e sotto si ricade sul
-// <NotFound /> spoglio di sempre — stessa "nothing to show" collapse già
-// usata da search.astro per lo stesso identico problema (una rotta senza
-// una vera Page dietro).
+// Best-effort, not a second point of failure: when the site or domain does
+// not exist or the API does not answer, `chrome` stays `null` and the code
+// below falls back to the bare <NotFound /> as always — the same "nothing
+// to show" collapse search.astro already uses for the exact same problem (a
+// route with no real Page behind it).
 const chrome =
   !page && locale
     ? await getPublishedSiteChrome(Astro.url.hostname, locale).catch(
@@ -43,14 +42,6 @@ const chrome =
       )
     : null;
 
-// docs/adr/0042 — whichever site is actually being rendered below (a real
-// page, or the 404 chrome fallback) decides which bundled theme's own
-// PageLayout override (if any) applies; neither existing means nothing
-// below renders PageLayout at all, so the fallback value here is moot.
-const PageLayout = resolveThemeLayoutOverride(
-  PageLayoutCore,
-  page?.site.themeName ?? chrome?.site.themeName ?? '',
-);
 
 // LanguageSwitcher resolves its links from `translations`, matched against
 // `site.enabledLocales` — there's no real Page here to have real
@@ -65,11 +56,11 @@ const errorPageTranslations =
     slug: 'home',
   })) ?? [];
 
-// Il gap fisso che questo valore sostituisce (vedi il commento sotto,
-// "Un blocco può personalizzare..."): un blocco di primo livello che non
-// personalizza `marginBottom` riceve esattamente lo stesso spazio di
-// prima, quindi l'HTML pubblicato di una pagina senza override resta
-// identico a prima di questo campo esistere.
+// The fixed gap this value replaces (see the comment below, "A block can
+// customize..."): a top-level block that does not customize `marginBottom`
+// gets exactly the same space as before, so the published HTML of a page
+// with no overrides stays identical to what it was before this field
+// existed.
 const DEFAULT_BLOCK_GAP = '4rem';
 
 function rootBlockSpacing(
@@ -77,11 +68,11 @@ function rootBlockSpacing(
   isLast: boolean,
 ): string {
   const marginTop = styleOverride?.marginTop ?? '0';
-  // L'ultimo blocco non riceve il gap di default sotto — `gap` non lo
-  // aggiungeva mai dopo l'ultimo figlio, e sostituirlo con un margin
-  // incondizionato avrebbe aggiunto uno spazio in fondo pagina che prima
-  // non c'era. Un override esplicito sull'ultimo blocco resta comunque
-  // rispettato: solo il DEFAULT viene azzerato, non la personalizzazione.
+  // The last block gets no default gap below it — `gap` never added one
+  // after the final child, and replacing it with an unconditional margin
+  // would have added space at the bottom of the page that was not there
+  // before. An explicit override on the last block is still honoured: only
+  // the DEFAULT is zeroed, not the customization.
   const marginBottom =
     styleOverride?.marginBottom ?? (isLast ? '0' : DEFAULT_BLOCK_GAP);
   return `margin-top: ${marginTop}; margin-bottom: ${marginBottom};`;
@@ -100,6 +91,7 @@ function rootBlockSpacing(
       headerSticky={page.headerSticky}
       ancestors={page.ancestors}
       editable={editable}
+      route="page"
     >
       {
         // The generic baseline layout every page gets for free: a vertical
@@ -156,6 +148,7 @@ function rootBlockSpacing(
       footer={chrome.footer}
       headerSticky={chrome.headerSticky}
       ancestors={[]}
+      route="error"
     >
       <NotFound locale={locale} />
     </PageLayout>

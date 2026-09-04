@@ -449,6 +449,9 @@ importers:
       '@brisk/shared-types':
         specifier: workspace:*
         version: link:../../libs/shared-types
+      '@brisk/theme-runtime':
+        specifier: workspace:*
+        version: link:../../libs/theme-runtime
       '@tiptap/core':
         specifier: ^3.30.2
         version: 3.30.2(@tiptap/pm@3.30.2)
@@ -900,35 +903,48 @@ importers:
         specifier: ^4.4.3
         version: 4.4.3
 
+  libs/theme-runtime: {}
+
   themes/classic:
     dependencies:
-      '@brisk/block-registry':
-        specifier: workspace:*
-        version: link:../../libs/block-registry
       '@brisk/block-sdk':
         specifier: workspace:*
         version: link:../../libs/block-sdk
       '@brisk/shared-types':
         specifier: workspace:*
         version: link:../../libs/shared-types
+      '@brisk/theme-runtime':
+        specifier: workspace:*
+        version: link:../../libs/theme-runtime
       zod:
         specifier: ^4.4.3
         version: 4.4.3
+    devDependencies:
+      astro:
+        specifier: ^7.2.9
+        version: 7.2.9(@emnapi/core@1.11.3)(@emnapi/runtime@1.11.3)(@types/node@26.4.0)(jiti@2.7.0)(less@4.8.1)(sass-embedded@1.103.1)(sass@1.103.1)(terser@5.51.2)(tsx@4.23.12)(yaml@2.9.0)
 
   themes/docs-showcase:
     dependencies:
-      '@brisk/block-registry':
-        specifier: workspace:*
-        version: link:../../libs/block-registry
       '@brisk/block-sdk':
         specifier: workspace:*
         version: link:../../libs/block-sdk
       '@brisk/shared-types':
         specifier: workspace:*
         version: link:../../libs/shared-types
+      '@brisk/theme-runtime':
+        specifier: workspace:*
+        version: link:../../libs/theme-runtime
+      '@fontsource-variable/sora':
+        specifier: ^5.3.0
+        version: 5.3.0
       zod:
         specifier: ^4.4.3
         version: 4.4.3
+    devDependencies:
+      astro:
+        specifier: ^7.2.9
+        version: 7.2.9(@emnapi/core@1.11.3)(@emnapi/runtime@1.11.3)(@types/node@26.4.0)(jiti@2.7.0)(less@4.8.1)(sass-embedded@1.103.1)(sass@1.103.1)(terser@5.51.2)(tsx@4.23.12)(yaml@2.9.0)
 
 packages:
 
@@ -2539,6 +2555,9 @@ packages:
 
   '@fontsource-variable/geist@5.3.0':
     resolution: {integrity: sha512-j0m+vLQuG5XAYoHtGCVu0spvlGreR3EzpECUVzkFmI1mTVnAO38l/NEPDCFgZ177JxzYJCLSmTQibIiYPilGrA==}
+
+  '@fontsource-variable/sora@5.3.0':
+    resolution: {integrity: sha512-h8kHta4Z8SkfUGeI82TUy1n3rbrKpBRGwuk4t4qCwto5oEHxlbOFD2yGP+Df5fbmTXwKGn+o667vYp0E4K8Whw==}
 
   '@hono/node-server@2.1.1':
     resolution: {integrity: sha512-ELuehkj5VCBdgEw9zs+ivkKwyzzUCSQuE96YmiPvn1ECBoZCczbFXJLeEGMTYjphP6gydh4pHMqEYPVMYUVgQg==}
@@ -14179,6 +14198,8 @@ snapshots:
 
   '@fontsource-variable/geist@5.3.0': {}
 
+  '@fontsource-variable/sora@5.3.0': {}
+
   '@hono/node-server@2.1.1(hono@4.13.2)':
     dependencies:
       hono: 4.13.2
@@ -22082,7 +22103,7 @@ snapshots:
 
   minimist@1.2.8: {}
 
-  minimizer-webpack-plugin@5.6.1(@swc/core@1.16.1(@swc/helpers@0.5.23))(esbuild@0.28.2)(postcss@8.5.26)(webpack@5.109.2):
+  minimizer-webpack-plugin@5.6.1(@swc/core@1.16.1(@swc/helpers@0.5.23))(esbuild@0.28.2)(postcss@8.5.26)(webpack@5.109.2(@swc/core@1.16.1(@swc/helpers@0.5.23))(esbuild@0.28.2)(postcss@8.5.26)(webpack-cli@7.2.2)):
     dependencies:
       '@jridgewell/trace-mapping': 0.3.31
       jest-worker: 27.5.1
@@ -25042,7 +25063,7 @@ snapshots:
       events: 3.3.0
       graceful-fs: 4.2.11
       mime-db: 1.54.0
-      minimizer-webpack-plugin: 5.6.1(@swc/core@1.16.1(@swc/helpers@0.5.23))(esbuild@0.28.2)(postcss@8.5.26)(webpack@5.109.2)
+      minimizer-webpack-plugin: 5.6.1(@swc/core@1.16.1(@swc/helpers@0.5.23))(esbuild@0.28.2)(postcss@8.5.26)(webpack@5.109.2(@swc/core@1.16.1(@swc/helpers@0.5.23))(esbuild@0.28.2)(postcss@8.5.26)(webpack-cli@7.2.2))
       neo-async: 2.6.2
       schema-utils: 4.3.3
       tapable: 2.3.3

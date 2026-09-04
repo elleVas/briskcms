@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import {
   collectThemeBlockCandidates,
+  findCoreBlockTypeCollisions,
   validateThemeBlockSet,
   type BlockDescriptor,
 } from '@brisk/block-sdk';
-import { headerFooterBlocks, pageBlocks } from '@brisk/block-registry';
 import type { ThemeBlockLocales } from '@brisk/shared-types';
 
 /**
@@ -42,22 +42,22 @@ describe('classic theme blocks', () => {
 
     expect(validateThemeBlockSet(candidates)).toEqual([]);
 
-    // Core-type collisions live here, not in `validateThemeBlockSet`
-    // (block-sdk can't depend on block-registry, ADR-0037's dependency
-    // direction) — but a theme package can (both "app"-tagged, and
-    // block-registry is "domain"). This is the one check in the whole
-    // mechanism that's only reliable when run here: apps/public-site's
-    // own runtime check (resolve-theme-page-blocks.ts) can't safely
-    // import block-registry either, so it depends on a real page having
-    // rendered first — fine as a defense-in-depth backstop, but this CI
-    // check is what actually guarantees "collision = build fails",
-    // unconditionally, before anything ships.
-    const coreBlockTypes = new Set(
-      [...pageBlocks, ...headerFooterBlocks].map((block) => block.type),
-    );
-    const collisions = candidates
-      .map((candidate) => candidate.descriptor.type)
-      .filter((type) => coreBlockTypes.has(type));
-    expect(collisions).toEqual([]);
+    // Core-type collisions: a theme's own block must not reuse a name core
+    // already ships. The list comes from block-sdk's CORE_BLOCK_TYPES
+    // rather than from `@brisk/block-registry` — that package is React and
+    // editor UI, and depending on it here is what used to make a theme
+    // undevelopable outside this monorepo. block-registry's own
+    // core-block-types.spec.ts keeps the constant honest.
+    //
+    // This is the one check in the whole mechanism that's only reliable
+    // when run here: apps/public-site's runtime check
+    // (resolve-theme-page-blocks.ts) depends on a real page having
+    // rendered first — fine as defense in depth, but this CI check is what
+    // guarantees "collision = build fails", unconditionally.
+    expect(
+      findCoreBlockTypeCollisions(
+        candidates.map((candidate) => candidate.descriptor.type),
+      ),
+    ).toEqual([]);
   });
 });

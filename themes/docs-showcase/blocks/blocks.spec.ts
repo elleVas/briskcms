@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import {
   collectThemeBlockCandidates,
+  findCoreBlockTypeCollisions,
   validateThemeBlockSet,
   type BlockDescriptor,
 } from '@brisk/block-sdk';
-import { headerFooterBlocks, pageBlocks } from '@brisk/block-registry';
 import type { ThemeBlockLocales } from '@brisk/shared-types';
 
 /**
@@ -42,16 +42,12 @@ describe('docs-showcase theme blocks', () => {
     expect(candidates.map((c) => c.basename)).toEqual(['StatusBadge']);
     expect(validateThemeBlockSet(candidates)).toEqual([]);
 
-    // See themes/classic/blocks/blocks.spec.ts's own comment: this is
-    // the one reliable, always-runs-in-CI place a core-type collision
-    // gets caught — apps/public-site's own runtime check can't safely
-    // import block-registry, so it's a backstop, not the primary gate.
-    const coreBlockTypes = new Set(
-      [...pageBlocks, ...headerFooterBlocks].map((block) => block.type),
-    );
-    const collisions = candidates
-      .map((candidate) => candidate.descriptor.type)
-      .filter((type) => coreBlockTypes.has(type));
-    expect(collisions).toEqual([]);
+    // See themes/classic/blocks/blocks.spec.ts for why this lives here and
+    // why the type list comes from block-sdk rather than block-registry.
+    expect(
+      findCoreBlockTypeCollisions(
+        candidates.map((candidate) => candidate.descriptor.type),
+      ),
+    ).toEqual([]);
   });
 });

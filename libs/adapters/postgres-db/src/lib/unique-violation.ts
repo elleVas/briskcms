@@ -1,17 +1,19 @@
 import postgres from 'postgres';
 
 /**
- * `postgres` (porsager/postgres, il driver dietro drizzle-orm/postgres-js —
- * vedi client.ts) rifiuta l'insert/update con un `PostgresError` reale, mai
- * un errore di dominio: sotto concorrenza vera (due richieste quasi
- * simultanee superano entrambe il check-then-act applicativo) è questo,
- * non l'use-case, il primo punto che vede il conflitto. `constraint_name`
- * combacia esattamente con quello generato da Drizzle in schema.ts (visibile
- * anche nelle migration SQL, es. `pages_tenant_id_site_id_locale_parent_id_slug_unique`).
+ * `postgres` (porsager/postgres, the driver behind drizzle-orm/postgres-js
+ * — see client.ts) rejects the insert/update with a real `PostgresError`,
+ * never a domain error: under genuine concurrency (two near-simultaneous
+ * requests both passing the application's check-then-act) this, not the use
+ * case, is the first place that sees the conflict. `constraint_name`
+ * matches exactly the one Drizzle generates in schema.ts (also visible in
+ * the SQL migrations, e.g.
+ * `pages_tenant_id_site_id_locale_parent_id_slug_unique`).
  *
- * Drizzle non lascia risalire il `PostgresError` grezzo: lo avvolge in un
- * proprio `DrizzleQueryError`, con l'originale in `.cause` (verificato dal
- * vivo contro Postgres reale — vedi drizzle-page.repository.integration.spec.ts).
+ * Drizzle does not let the raw `PostgresError` surface: it wraps it in a
+ * `DrizzleQueryError` of its own, with the original in `.cause` (verified
+ * live against a real Postgres — see
+ * drizzle-page.repository.integration.spec.ts).
  */
 export function isUniqueViolation(
   error: unknown,

@@ -27,11 +27,11 @@ export interface BlockPickerProps {
   categories: BlockPickerCategory[];
   registry: BlockDescriptor[];
   onInsert: (descriptor: BlockDescriptor) => void;
-  /** Se presente, ogni bottone diventa anche trascinabile sul canvas — vedi canvas-editor-shell.tsx per il calcolo del punto di rilascio. Un click semplice (nessun movimento oltre la soglia) resta `onInsert` come oggi. */
+  /** When present, every button also becomes draggable onto the canvas — see canvas-editor-shell.tsx for the release-point computation. A plain click (no movement past the threshold) stays `onInsert` as today. */
   drag?: BlockDragHandlers;
 }
 
-/** Stessa soglia/euristica di preview-bridge-client.ts's drag di riordino — un mousedown+mouseup senza spostarsi abbastanza è un click normale, non un drag. */
+/** The same threshold and heuristic as preview-bridge-client.ts's reorder drag — a mousedown+mouseup without moving far enough is an ordinary click, not a drag. */
 const DRAG_START_THRESHOLD_PX = 4;
 
 function DraggableBlockButton({
@@ -113,24 +113,25 @@ function DraggableBlockButton({
 }
 
 /**
- * Click-per-inserire nel contenitore selezionato o alla radice (il
- * chiamante, non ancora canvas-editor-shell.tsx, decide il target passando
- * il risultato a use-block-tree.ts's insertBlock) — categorie da
- * @brisk/block-registry's config.ts/layout-config.ts. "Non registrato =
- * non droppabile": un tipo che non compare in `registry` per la categoria
- * corrente semplicemente non ha un bottone qui, nessuna deny-list a parte.
+ * Click-to-insert into the selected container or at the root (the caller,
+ * not yet canvas-editor-shell.tsx, decides the target by passing the result
+ * to use-block-tree.ts's insertBlock) — the categories come from
+ * @brisk/block-registry's config.ts/layout-config.ts. "Not registered = not
+ * droppable": a type that does not appear in `registry` for the current
+ * category simply has no button here, with no separate deny-list.
  *
- * Ogni categoria è un accordion apribile/chiudibile (feedback utente: con
- * ~7 categorie e oltre 40 tipi di blocco, una lista piatta senza intestazioni
- * visivamente distinte era illeggibile) — tutte chiuse di default, più
- * categorie possono restare aperte insieme (`type="multiple"`).
+ * Each category is a collapsible accordion (user feedback: with ~7
+ * categories and over 40 block types, a flat list without visually distinct
+ * headings was unreadable) — all closed by default, and several categories
+ * can stay open together (`type="multiple"`).
  *
- * Ogni bottone-blocco è anche trascinabile sul canvas quando `drag` è
- * passato (Pointer Capture invece di un vero drag HTML5 o document-level
- * listeners: il drag nasce FUORI dall'iframe e deve continuare a ricevere
- * eventi anche quando il cursore passa visivamente sopra l'iframe, cosa che
- * un listener su `document` non garantirebbe — hit-testing normale
- * consegnerebbe quegli eventi al documento dentro l'iframe, non al genitore).
+ * Each block button is also draggable onto the canvas when `drag` is passed
+ * (Pointer Capture rather than a real HTML5 drag or document-level
+ * listeners: the drag starts OUTSIDE the iframe and has to keep receiving
+ * events even while the cursor visually passes over the iframe, which a
+ * listener on `document` would not guarantee — ordinary hit-testing would
+ * deliver those events to the document inside the iframe, not to the
+ * parent).
  */
 export function BlockPicker({
   categories,

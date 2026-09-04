@@ -11,12 +11,12 @@ import { HttpExceptionFilter } from './app/http-exception.filter';
 import { requestIdMiddleware } from './app/request-id.middleware';
 import { validateApiEnv } from './env-schema';
 
-// Security review 2026-08-24, "terzo giro": nessun handler globale — un
-// reject non gestito o un throw fuori da qualunque try/catch spariva nel
-// nulla, mai loggato. Node considera lo stato del processo indefinito dopo
-// uno di questi due eventi (stesso motivo per cui Node 15+ termina di
-// default su un unhandledRejection non gestito) — loggare e uscire, non
-// continuare a servire richieste in uno stato potenzialmente corrotto.
+// Security review 2026-08-24, "third pass": no global handler — an
+// unhandled rejection or a throw outside every try/catch vanished, never
+// logged. Node considers the process's state undefined after either of
+// those two events (the same reason Node 15+ terminates by default on an
+// unhandled unhandledRejection) — so log and exit, rather than carry on
+// serving requests in a potentially corrupted state.
 process.on('unhandledRejection', (reason) => {
   Logger.error(
     'Unhandled promise rejection',

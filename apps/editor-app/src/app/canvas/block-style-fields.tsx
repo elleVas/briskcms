@@ -13,11 +13,11 @@ export interface BlockStyleFieldsProps {
   value: BlockStyleOverride;
   onChange: (next: BlockStyleOverride) => void;
   /**
-   * Il valore RISOLTO del tema attivo per ogni proprietà (docs/adr/0022's
-   * follow-up), da `GET /api/themes/current/block-style-defaults` — così
-   * i campi partono già dall'aspetto reale attuale invece che vuoti.
-   * Assente/`undefined` = non ancora caricato (mostra il placeholder
-   * generico com'era prima), non un errore.
+   * The active theme's RESOLVED value for each property (docs/adr/0022's
+   * follow-up), from `GET /api/themes/current/block-style-defaults` — so
+   * the fields start from the real current appearance rather than empty.
+   * Absent/`undefined` = not loaded yet (showing the generic placeholder as
+   * before), not an error.
    */
   defaults?: BlockStyleDefaults;
 }
@@ -53,13 +53,13 @@ const LENGTH_FIELD_LABELS: Partial<
 };
 
 /**
- * Gruppo di campi condiviso da ENTRAMBI i popover di stile (docs/adr/0022)
- * — "Stile" nella toolbar (override per-tipo, scrive su
- * `site.themeTokens.blockStyles`) e il popover per-istanza (scrive su
- * `Block.styleOverride`): stessa UI, stesso shape `BlockStyleOverride`,
- * cambia solo DOVE il chiamante salva il risultato. Mostra solo i campi
- * che `descriptor.stylableProperties` dichiara rilevanti per quel tipo —
- * un Testo non offre "raggio angoli", un Button offre tutti e cinque.
+ * The field group shared by BOTH style popovers (docs/adr/0022) — "Style"
+ * in the toolbar (the per-type override, writing to
+ * `site.themeTokens.blockStyles`) and the per-instance popover (writing to
+ * `Block.styleOverride`): the same UI, the same `BlockStyleOverride` shape,
+ * with only WHERE the caller saves the result differing. It shows only the
+ * fields `descriptor.stylableProperties` declares relevant for that type —
+ * a Text offers no "corner radius", a Button offers all five.
  */
 export function BlockStyleFields({
   properties,

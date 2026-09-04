@@ -21,7 +21,7 @@ export function createSiteLayoutSectionPreviewToken(
   });
 }
 
-/** Vedi POST /page-groups/translations/:id/preview-token — i18n a livello di campo, stesso meccanismo scoped a UNA traduzione invece che alla vecchia Page. */
+/** See POST /page-groups/translations/:id/preview-token — field-level i18n, the same mechanism scoped to ONE translation rather than to the old Page. */
 export function createTranslationPreviewToken(
   translationId: string,
 ): Promise<PreviewTokenDto> {

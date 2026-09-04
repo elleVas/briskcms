@@ -15,7 +15,7 @@ import {
   type BlockTreeTarget,
 } from './use-block-tree';
 
-/** Alla radice se il blocco selezionato non è un contenitore, altrimenti in coda ai suoi figli — regola "contenitore selezionato o radice" del piano dell'editor visuale, Giorno 3. */
+/** At the root when the selected block is not a container, otherwise at the end of its children — the "selected container or root" rule from the visual editor plan, Day 3. */
 function resolveInsertTarget(
   blocks: Block[],
   registry: BlockDescriptor[],
@@ -37,14 +37,14 @@ function resolveInsertTarget(
 }
 
 /**
- * Un'azione annullabile — `before`/`after` per il ripristino dello stato
- * locale (identico per ogni tipo di mutazione), `syncForward`/`syncBackward`
- * per rifare/disfare il suo EFFETTO SUL CANVAS LIVE, specifico per tipo:
- * un inserimento si disfa rimuovendo, una rimozione si disfa reinserendo,
- * uno spostamento si disfa spostando all'indice opposto — le tre primitive
- * del bridge (`insertBlock`/`removeBlock`/`reorderBlocks`+`patchBlock`) non
- * sono simmetriche tra loro, quindi non esiste un solo "contrario
- * generico": ogni handler sotto costruisce la propria coppia.
+ * One undoable action — `before`/`after` for restoring local state
+ * (identical for every kind of mutation), `syncForward`/`syncBackward` for
+ * redoing/undoing its EFFECT ON THE LIVE CANVAS, which is type-specific: an
+ * insert is undone by removing, a removal by reinserting, a move by moving
+ * to the opposite index — the bridge's three primitives
+ * (`insertBlock`/`removeBlock`/`reorderBlocks`+`patchBlock`) are not
+ * symmetric with each other, so there is no single "generic opposite": each
+ * handler below builds its own pair.
  */
 interface HistoryEntry {
   before: Block[];
@@ -53,7 +53,7 @@ interface HistoryEntry {
   syncBackward: () => void;
 }
 
-/** Storico limitato — un editor di contenuti non ha bisogno di un undo illimitato, e uno stack che cresce all'infinito in una sessione lunga è comunque uno spreco. */
+/** A bounded history — a content editor does not need unlimited undo, and a stack growing forever through a long session is waste either way. */
 const MAX_HISTORY_ENTRIES = 50;
 
 export interface UseBlockTreeMutationsParams {
@@ -83,7 +83,7 @@ export interface UseBlockTreeMutationsResult {
   handleDuplicateSelected: () => void;
   handleAddChild: () => void;
   handleInsertAtRoot: (descriptor: BlockDescriptor, offset: 0 | 1) => void;
-  /** Riusata da use-sidebar-drag.ts per un drop su un punto arbitrario del canvas — stesso meccanismo di ogni altro inserimento qui, solo con un target già calcolato dal chiamante invece che da resolveInsertTarget/una posizione selezionata. */
+  /** Reused by use-sidebar-drag.ts for a drop at an arbitrary point on the canvas — the same mechanism as every other insert here, only with a target the caller already computed rather than one from resolveInsertTarget or a selected position. */
   insertNewBlockAt: (
     descriptor: BlockDescriptor,
     target: BlockTreeTarget,
@@ -95,15 +95,16 @@ export interface UseBlockTreeMutationsResult {
 }
 
 /**
- * Sposta/duplica/elimina/inserisci un blocco — il pezzo più intrecciato dei
- * tre estratti da canvas-editor-shell.tsx (Bridge+token+localBlocks tutti e
- * tre insieme), per questo l'ultimo ad essere isolato e non il primo.
- * `performInsert` sotto è il nucleo comune riusato da OGNI handler che
- * inserisce un blocco (prima 4 copie quasi identiche di insertBlock+
- * applyLocalChange+insertIntoCanvas nel file originale). Ospita anche
- * l'undo/redo (pattern command, una entry esplicita per mutazione): è
- * l'unico posto che già vede OGNI mutazione strutturale dell'albero, quindi
- * il punto naturale per intercettarle invece di un quarto hook a parte.
+ * Move/duplicate/delete/insert a block — the most entangled of the three
+ * pieces extracted from canvas-editor-shell.tsx (bridge + token +
+ * localBlocks all three at once), which is why it was the last to be
+ * isolated rather than the first. `performInsert` below is the shared core
+ * reused by EVERY handler that inserts a block (previously four nearly
+ * identical copies of insertBlock + applyLocalChange + insertIntoCanvas in
+ * the original file). It also hosts undo/redo (a command pattern, one
+ * explicit entry per mutation): it is the only place that already sees
+ * EVERY structural mutation of the tree, and therefore the natural point to
+ * intercept them rather than a fourth separate hook.
  */
 export function useBlockTreeMutations({
   localBlocks,
@@ -124,7 +125,7 @@ export function useBlockTreeMutations({
     onChange(next);
   }
 
-  /** Registra una nuova azione — cancella sempre il "future" (ripetere non ha più senso dopo una mutazione nuova, stessa convenzione di ogni editor con undo/redo). */
+  /** Records a new action — always clearing the "future" (redo stops making sense after a fresh mutation, the same convention as every editor with undo/redo). */
   function recordHistory(entry: HistoryEntry): void {
     setPast((prev) => [...prev, entry].slice(-MAX_HISTORY_ENTRIES));
     setFuture([]);
@@ -159,17 +160,17 @@ export function useBlockTreeMutations({
   }
 
   /**
-   * Rigenera e ripatcha per intero un blocco-contenitore (stesso
-   * `editor:patch-block` di un cambio proprietà) dopo che uno dei suoi
-   * figli è stato inserito/rimosso — non basta inserire/rimuovere SOLO quel
-   * figlio nel DOM: l'euristica di risoluzione del contenitore in
-   * preview-bridge-client.ts assume che `<slot/>` sia l'unico contenuto
-   * dell'elemento radice del blocco-contenitore, falsa per Testimonials
-   * (pulsanti di navigazione + segnaposto "contenitore vuoto" attorno allo
-   * slot) e fragile in generale per qualunque "cornice" che dipenda dalla
-   * presenza di figli. `treeWithUpdatedChildren` è l'albero già ricalcolato
-   * dal chiamante DOPO la modifica (a differenza di `localBlocks`, che
-   * resta quello PRIMA finché serve).
+   * Regenerates and re-patches a container block in full (the same
+   * `editor:patch-block` as a property change) after one of its children was
+   * inserted or removed — inserting or removing ONLY that child in the DOM
+   * is not enough: the container-resolution heuristic in
+   * preview-bridge-client.ts assumes `<slot/>` is the sole content of the
+   * container block's root element, which is false for Testimonials
+   * (navigation buttons plus an "empty container" placeholder around the
+   * slot) and fragile in general for any "chrome" that depends on children
+   * being present. `treeWithUpdatedChildren` is the tree the caller already
+   * recomputed AFTER the change (unlike `localBlocks`, which stays the one
+   * from BEFORE for as long as it is needed).
    */
   async function patchParentBlock(
     parentId: string,
@@ -199,7 +200,7 @@ export function useBlockTreeMutations({
     }
   }
 
-  /** Nucleo condiviso di ogni inserimento a livello radice: renderizza il frammento e chiede al bridge di innestarlo in un punto ESPLICITO (nessuna ricomputazione di `beforeBlockId` da uno stato "corrente" che potrebbe non essere più quello giusto per un redo successivo — vedi handleRemoveSelected's syncBackward per il caso in cui questo conta davvero). */
+  /** The shared core of every root-level insert: it renders the fragment and asks the bridge to graft it at an EXPLICIT point (no recomputation of `beforeBlockId` from a "current" state that may no longer be the right one for a later redo — see handleRemoveSelected's syncBackward for the case where this genuinely matters). */
   async function insertBlockIntoCanvasAt(
     block: Block & { id: string },
     parentId: string | null,
@@ -219,29 +220,28 @@ export function useBlockTreeMutations({
       });
       bridge.insertBlock(html, parentId, beforeBlockId);
     } catch {
-      // Il blocco resta comunque nell'albero locale e nella bozza salvata
-      // (applyLocalChange è già avvenuto) — ricomparirà nel canvas al
-      // prossimo reload dell'iframe, stesso comportamento di oggi per
-      // qualunque fallimento di rete.
+      // The block stays in the local tree and in the saved draft either way
+      // (applyLocalChange has already happened) — it will reappear on the
+      // canvas at the iframe's next reload, the same behaviour as today for
+      // any network failure.
     }
   }
 
   /**
-   * Renderizza il frammento del blocco APPENA creato (mai visto prima
-   * dall'iframe, a differenza di usePropertyPatch che ne sostituisce uno
-   * esistente) e lo inserisce nel canvas via `editor:insert-block` — senza
-   * questo, il blocco resterebbe nell'albero locale/nella bozza salvata ma
-   * invisibile finché l'iframe non si ricarica (il bug segnalato). I
-   * `children` del blocco sono già noti qui (appena costruiti o clonati),
-   * niente bisogno che il server li rilegga dalla bozza salvata — evita
-   * anche la race fra salvataggio e lettura per un contenitore.
-   * `beforeBlockId` è calcolato PRIMA di applicare l'inserimento
-   * all'albero: è l'id di chi oggi occupa la posizione target, che dopo
-   * l'inserimento si ritroverà spostato di uno.
+   * Renders the fragment of the block JUST created (never seen before by
+   * the iframe, unlike usePropertyPatch, which replaces an existing one)
+   * and inserts it into the canvas through `editor:insert-block` — without
+   * this, the block would stay in the local tree and the saved draft but
+   * remain invisible until the iframe reloaded (the reported bug). The
+   * block's `children` are already known here (just built or cloned), so
+   * there is no need for the server to read them back from the saved draft
+   * — which also avoids the save/read race for a container. `beforeBlockId`
+   * is computed BEFORE the insert is applied to the tree: it is the id of
+   * whoever occupies the target position today, and who will be shifted by
+   * one after the insert.
    *
-   * Per un inserimento ANNIDATO (`target.parentId` non nullo), vedi
-   * `patchParentBlock` sopra — si ripatcha il genitore, non si inserisce il
-   * figlio da solo.
+   * For a NESTED insert (`target.parentId` non-null) see `patchParentBlock`
+   * above — the parent is re-patched, the child is not inserted on its own.
    */
   async function insertIntoCanvas(
     block: Block & { id: string },
@@ -286,13 +286,13 @@ export function useBlockTreeMutations({
   }
 
   /**
-   * Riordina i fratelli a QUALUNQUE profondità — `parentId: null` per la
-   * radice, altrimenti l'id del blocco-contenitore i cui figli sono stati
-   * trascinati (vedi `computeNestedReorder` in layers-panel.tsx, l'unico
-   * chiamante). `moveBlock` con lo stesso `parentId` per ogni id già
-   * gestisce sia il caso radice sia quello annidato, nessun ramo separato
-   * serve qui — stesso motivo per cui `handleMoveSelected` sotto funziona
-   * già a qualunque profondità tramite `locateBlock`.
+   * Reorders siblings at ANY depth — `parentId: null` for the root,
+   * otherwise the id of the container block whose children were dragged
+   * (see `computeNestedReorder` in layers-panel.tsx, its only caller).
+   * `moveBlock` with the same `parentId` for every id already handles both
+   * the root and the nested case, so no separate branch is needed here —
+   * the same reason `handleMoveSelected` below already works at any depth
+   * through `locateBlock`.
    */
   function handleReorder(parentId: string | null, orderedIds: string[]): void {
     const before = localBlocks;
@@ -319,12 +319,11 @@ export function useBlockTreeMutations({
     const removedBlock = selectedBlock as Block & { id: string };
     const next = removeBlock(before, selectedBlock.id);
     applyLocalChange(next);
-    // Un blocco annidato rimosso può cambiare la "cornice" del suo
-    // genitore (es. Testimonials nasconde di nuovo i pulsanti nav e
-    // rimostra il segnaposto vuoto quando perde il suo ultimo figlio) —
-    // stesso motivo per cui un inserimento annidato ripatcha il genitore
-    // invece di toccare solo il nodo rimosso. Un blocco di primo livello
-    // resta invece un semplice editor:remove-block.
+    // A removed nested block can change its parent's "chrome" (Testimonials
+    // hides the nav buttons again and shows the empty placeholder once more
+    // when it loses its last child, say) — the same reason a nested insert
+    // re-patches the parent rather than touching only the removed node. A
+    // top-level block stays a plain editor:remove-block instead.
     const syncForward = () => {
       if (location?.parentId) {
         void patchParentBlock(location.parentId, next);
@@ -339,11 +338,12 @@ export function useBlockTreeMutations({
       if (location.parentId) {
         void patchParentBlock(location.parentId, before);
       } else {
-        // Reinserisce alla posizione ORIGINALE — non riusa insertIntoCanvas
-        // (ricomputerebbe beforeBlockId da `localBlocks`, che al momento di
-        // un successivo redo non è più `before`): il vero fratello
-        // successivo va preso qui, direttamente da `before`, la foto
-        // dell'albero al momento della rimozione originale.
+        // Reinserts at the ORIGINAL position — it does not reuse
+        // insertIntoCanvas (which would recompute beforeBlockId from
+        // `localBlocks`, no longer `before` by the time of a later redo):
+        // the real next sibling has to be taken here, straight from
+        // `before`, the snapshot of the tree at the moment of the original
+        // removal.
         const siblingsBefore = siblingsAt(before, null);
         const beforeBlockId = siblingsBefore[location.index + 1]?.id ?? null;
         void insertBlockIntoCanvasAt(removedBlock, null, beforeBlockId);
@@ -353,9 +353,8 @@ export function useBlockTreeMutations({
     recordHistory({ before, after: next, syncForward, syncBackward });
   }
 
-  // Sposta su/giù, duplica — funzionano a qualunque livello via
-  // `locateBlock`, che trova il vero genitore anche per un blocco
-  // annidato.
+  // Move up/down and duplicate — they work at any level through
+  // `locateBlock`, which finds the real parent even for a nested block.
   function handleMoveSelected(direction: -1 | 1): void {
     if (!selectedBlock?.id) {
       return;
@@ -416,15 +415,15 @@ export function useBlockTreeMutations({
   }
 
   /**
-   * "+" dentro a un contenitore-collezione selezionato (Testimonianze,
-   * Team, Accordion, ...) — aggiunge un altro figlio del suo UNICO tipo
-   * consentito (`allowedChildTypes[0]`) senza aprire il picker: non c'è
-   * ambiguità da chiedere, è l'unico tipo sensato per quel contenitore
-   * (stessa regola di createBlockFromDescriptor). Il pulsante compare solo
-   * quando `descriptor.allowedChildTypes` ha esattamente un elemento (vedi
-   * block-toolbar-overlay.tsx's canAddChild), quindi qui la ricerca nel
-   * registry non dovrebbe mai fallire — se fallisse comunque (registry
-   * disallineato), semplicemente non succede nulla.
+   * The "+" inside a selected collection container (Testimonials, Team,
+   * Accordion, ...) — it adds another child of its ONE allowed type
+   * (`allowedChildTypes[0]`) without opening the picker: there is no
+   * ambiguity to ask about, that being the only sensible type for that
+   * container (the same rule as createBlockFromDescriptor). The button only
+   * appears when `descriptor.allowedChildTypes` has exactly one entry (see
+   * block-toolbar-overlay.tsx's canAddChild), so the registry lookup here
+   * should never fail — and if it somehow did (a registry out of sync),
+   * simply nothing happens.
    */
   function handleAddChild(): void {
     if (!selectedBlock?.id || !selectedDescriptor) {

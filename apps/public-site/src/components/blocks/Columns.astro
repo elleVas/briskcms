@@ -40,11 +40,11 @@ const instanceStyle = buildBlockInstanceStyle(styleOverride);
       grid-template-columns: 1fr !important;
     }
   }
-  /* Solo nell'editor, e solo con contenuto — stesso motivo/pattern di
-     Column.astro/Container.astro: senza un bordo persistente, un layout a
-     più colonne diventa difficile da "leggere" mentre si lavora, specie
-     quando le colonne hanno già del vero contenuto dentro (feedback utente
-     dal vivo). */
+  /* Editor only, and only once it has content — the same reason and
+     pattern as Column.astro/Container.astro: without a persistent border a
+     multi-column layout becomes hard to "read" while you work, especially
+     once the columns already hold real content (user feedback from live
+     use). */
   .brisk-columns[data-brisk-editable-outline] {
     outline: 1px dashed var(--border);
     outline-offset: -4px;

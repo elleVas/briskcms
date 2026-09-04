@@ -1,13 +1,13 @@
 import type { FieldValueOverlay, SeoMeta } from '@brisk/shared-types';
 
 /**
- * Snapshot immutabile del testo per-locale (overlay + seoMeta) di una
- * PageTranslation in un dato istante — il secondo stream di versioning
- * parallelo (vedi PageGroupVersion per la struttura condivisa). Riguarda
- * solo una traduzione COLLEGATA: una traduzione scollegata (`isDiverged`)
- * ha un proprio `divergedContent` completo, versionato invece come
- * PageGroupVersion (stessa forma, stesso use-case) — non ha più senso
- * "solo overlay" una volta forkata.
+ * An immutable snapshot of a PageTranslation's per-locale text (overlay
+ * plus seoMeta) at a point in time — the second parallel versioning stream
+ * (see PageGroupVersion for the shared structure). It concerns only a
+ * LINKED translation: an unlinked one (`isDiverged`) has a complete
+ * `divergedContent` of its own, versioned as a PageGroupVersion instead
+ * (the same shape, the same use case) — "overlay only" stops making sense
+ * once it has forked.
  */
 export interface PageTranslationVersion {
   id: string;

@@ -4,7 +4,7 @@ import { IconButton } from '../icon-button';
 
 export type Breakpoint = 'desktop' | 'tablet' | 'mobile';
 
-/** `undefined` = piena larghezza (comportamento di sempre) — solo tablet/mobile impongono una larghezza fissa all'iframe, vedi canvas-frame.tsx. */
+/** `undefined` = full width (the long-standing behaviour) — only tablet/mobile impose a fixed width on the iframe, see canvas-frame.tsx. */
 export const BREAKPOINT_WIDTHS: Record<Breakpoint, number | undefined> = {
   desktop: undefined,
   tablet: 768,

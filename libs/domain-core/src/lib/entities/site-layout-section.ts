@@ -12,12 +12,12 @@ export interface SiteLayoutSectionProps {
   status: SiteLayoutSectionStatus;
   content: PageContent;
   publishedContent: PageContent | null;
-  // Ha senso solo per kind='header' (resta ancorato in cima durante lo
-  // scroll) — nessun vincolo a livello di dominio che lo impedisca per
-  // 'footer', semplicemente l'editor-app non espone il controllo lì e
-  // apps/public-site non lo legge mai per il footer. Non è parte del
-  // versioning (site-layout-section-version.ts resta solo content): è
-  // un'impostazione di visualizzazione, non un contenuto pubblicato.
+  // Only meaningful for kind='header' (it stays pinned at the top while
+  // scrolling) — there is no domain-level constraint preventing it for
+  // 'footer', it is simply that editor-app does not expose the control
+  // there and apps/public-site never reads it for the footer. It is not
+  // part of versioning (site-layout-section-version.ts stays content only):
+  // it is a display setting, not published content.
   sticky: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -29,22 +29,22 @@ export interface CreateSiteLayoutSectionProps {
   siteId: string;
   locale: string;
   kind: SiteLayoutSectionKind;
-  // Punto di partenza copiato dal content dell'header/footer già
-  // pubblicato nella locale di default del sito (docs/adr/0018) — stessa
-  // filosofia "copy-on-translate" di createPageTranslation, così abilitare
-  // una nuova lingua non costringe a ricostruire l'header da zero. `sticky`
-  // segue la stessa logica: se l'header IT è sticky, l'header EN appena
-  // creato per copia parte sticky anche lui.
+  // A starting point copied from the content of the header or footer
+  // already published in the site's default locale (docs/adr/0018) — the
+  // same "copy-on-translate" philosophy as createPageTranslation, so
+  // enabling a new language does not force rebuilding the header from
+  // scratch. `sticky` follows the same logic: if the IT header is sticky,
+  // the EN header freshly created by copy starts out sticky too.
   content?: PageContent;
   sticky?: boolean;
   now?: Date;
 }
 
 /**
- * Entità pura, nessuna dipendenza da Postgres/Express/Puck. A differenza
- * di Page non ha `groupId`/`slug`/`seoMeta`: Header/Footer non hanno una
- * URL pubblica propria, vivono a livello di (tenant, sito, locale, kind),
- * non come pagine visitabili (docs/adr/0018).
+ * A pure entity, with no dependency on Postgres, Express or Puck. Unlike
+ * Page it has no `groupId`/`slug`/`seoMeta`: the header and footer have no
+ * public URL of their own, living at the level of (tenant, site, locale,
+ * kind) rather than as visitable pages (docs/adr/0018).
  */
 export class SiteLayoutSection {
   private constructor(private props: SiteLayoutSectionProps) {}
@@ -132,8 +132,8 @@ export class SiteLayoutSection {
   }
 
   /**
-   * Ripristina il draft al contenuto di una versione precedente. Non
-   * ripubblica automaticamente, stesso invariante di Page.restoreContent.
+   * Restores the draft to a previous version's content. It does not
+   * republish automatically, the same invariant as Page.restoreContent.
    */
   restoreContent(content: PageContent, now: Date = new Date()): void {
     this.props.content = content;
@@ -141,10 +141,10 @@ export class SiteLayoutSection {
   }
 
   /**
-   * Non è "content": non passa dal draft/publish, non genera una riga di
-   * versione (è un'impostazione di visualizzazione, non testo/blocchi che
-   * un editor vorrebbe poter ripristinare) — prende effetto subito, anche
-   * se lo status resta 'draft'.
+   * It is not "content": it does not go through draft/publish and generates
+   * no version row (it is a display setting, not text or blocks an editor
+   * would want to be able to restore) — it takes effect immediately, even
+   * while the status stays 'draft'.
    */
   setSticky(sticky: boolean, now: Date = new Date()): void {
     this.props.sticky = sticky;

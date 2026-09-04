@@ -3,8 +3,8 @@ import { describe, expect, it } from 'vitest';
 import { PreviewTokenAdapter } from './preview-token.adapter';
 
 /**
- * Puro unit test, niente Postgres: la validazione è solo firma HMAC +
- * controllo scadenza, mai una query. Vedi il commento sul design in
+ * A pure unit test, no Postgres: validation is only an HMAC signature plus
+ * an expiry check, never a query. See the design comment in
  * preview-token.adapter.ts.
  */
 describe('PreviewTokenAdapter', () => {

@@ -1,16 +1,14 @@
 ---
-// Security review 2026-08-24, "terzo giro": [locale]/[...slug].astro e
-// [locale]/index.astro chiamano l'API pubblica senza try/catch — un 500
-// backend o un timeout (vedi public-api-client.ts) propagava come
-// eccezione non gestita. Astro (output:'server', adapter Node) rende
-// automaticamente questa pagina per qualunque errore non catturato
-// durante il render SSR — copre ogni route, non solo le due note, senza
-// un try/catch ad hoc in ognuna.
+// Security review 2026-08-24, "third pass": [locale]/[...slug].astro and
+// [locale]/index.astro call the public API without a try/catch — a backend
+// 500 or a timeout (see public-api-client.ts) propagated as an unhandled
+// exception. Astro (output:'server', the Node adapter) renders this page
+// automatically for any error not caught during the SSR render — covering
+// every route, not just those two, without an ad-hoc try/catch in each.
 import ErrorPageShell from '../components/ErrorPageShell.astro';
 import ServerError from '../components/ServerError.astro';
 import { getPublishedSiteChrome } from '../lib/public-api-client';
-import PageLayoutCore from '../layouts/PageLayout.astro';
-import { resolveThemeLayoutOverride } from '../lib/resolve-theme-layout-override';
+import PageLayout from '../layouts/PageLayout.astro';
 
 Astro.response.status = 500;
 
@@ -33,11 +31,6 @@ const chrome = guessedLocale
     )
   : null;
 
-// docs/adr/0042 — see PublicPageContent.astro's own comment on the same pattern.
-const PageLayout = resolveThemeLayoutOverride(
-  PageLayoutCore,
-  chrome?.site.themeName ?? '',
-);
 
 // Same fabricated "switch language -> go to that language's Home" links as
 // PublicPageContent.astro's themed 404 branch — without this LanguageSwitcher
@@ -60,6 +53,7 @@ const errorPageTranslations =
       footer={chrome.footer}
       headerSticky={chrome.headerSticky}
       ancestors={[]}
+      route="error"
     >
       <ServerError locale={guessedLocale} />
     </PageLayout>

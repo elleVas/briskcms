@@ -23,10 +23,10 @@ export interface CreateFormProps {
 }
 
 /**
- * Entità pura: nessuna dipendenza da Postgres/Express/Puck (vedi
- * docs/adr/0015). `fields` è l'unica sorgente di verità per come il modulo
- * viene renderizzato pubblicamente e per come una submission viene
- * validata — non c'è un formato separato per editor/rendering/validazione.
+ * A pure entity: no dependency on Postgres, Express or Puck (see
+ * docs/adr/0015). `fields` is the single source of truth both for how the
+ * module renders publicly and for how a submission is validated — there is
+ * no separate format for the editor, the rendering and the validation.
  */
 export class Form {
   private constructor(private props: FormProps) {}

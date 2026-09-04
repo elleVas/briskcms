@@ -5,29 +5,30 @@ export interface DropCandidateRect {
 }
 
 export interface DropTarget {
-  /** Indice in cui inserire il blocco trascinato, già calcolato ESCLUDENDO il blocco stesso dall'elenco — passabile direttamente a `moveBlock`/`insertBlock` (use-block-tree.ts), che rimuove il blocco e poi lo reinserisce in quella posizione. */
+  /** The index at which to insert the dragged block, already computed EXCLUDING that block from the list — passable straight to `moveBlock`/`insertBlock` (use-block-tree.ts), which removes the block and then reinserts it at that position. */
   index: number;
-  /** Y (stessa unità dei rect in ingresso — iframe-relative) del confine su cui disegnare l'indicatore di drop, sopra il blocco che finirebbe spinto in giù, o subito sotto l'ultimo se si sta rilasciando in coda. */
+  /** The Y (in the same unit as the incoming rects — iframe-relative) of the boundary on which to draw the drop indicator, above the block that would be pushed down, or just below the last one when dropping at the end. */
   indicatorTop: number;
 }
 
 /**
- * Riordino diretto sul canvas (Giorno 3/4) — calcola dove cadrebbe il
- * blocco trascinato SE rilasciato ora, dalla sola posizione verticale del
- * puntatore. Confronta il puntatore col PUNTO MEDIO di ogni blocco di
- * primo livello (non col suo bordo superiore): superato il punto medio di
- * un blocco, il drop si sposta oltre quel blocco — stessa euristica
- * "closestCenter" già usata da dnd-kit nel pannello Layers, qui applicata a
- * mano perché il drag stesso non è di dnd-kit (attraversa il confine
- * dell'iframe, vedi PreviewDragStartMessage).
+ * Direct reordering on the canvas (Day 3/4) — it computes where the dragged
+ * block would land IF released now, from the pointer's vertical position
+ * alone. It compares the pointer against each top-level block's MIDPOINT
+ * (not its top edge): once a block's midpoint is passed, the drop moves
+ * beyond that block — the same "closestCenter" heuristic dnd-kit already
+ * uses in the Layers panel, applied by hand here because the drag itself is
+ * not dnd-kit's (it crosses the iframe boundary, see
+ * PreviewDragStartMessage).
  *
- * Assume `rects` già in ordine documento (top crescente) — vero per
- * costruzione: sono raccolti da `collectBlockElements` nell'iframe via
- * `querySelectorAll`, nello stesso ordine in cui `Block[]` li renderizza.
+ * It assumes `rects` are already in document order (increasing top), which
+ * is true by construction: they are collected by `collectBlockElements` in
+ * the iframe through `querySelectorAll`, in the same order `Block[]`
+ * renders them.
  *
- * `null` se non resta nessun ALTRO blocco di primo livello con cui
- * confrontarsi (il blocco trascinato è l'unico sulla pagina) — non c'è una
- * posizione di drop sensata da calcolare.
+ * `null` when no OTHER top-level block is left to compare against (the
+ * dragged block is the only one on the page) — there is no sensible drop
+ * position to compute.
  */
 export function computeDropTarget(
   rects: DropCandidateRect[],
@@ -66,16 +67,16 @@ export interface ContainerHitRect {
 }
 
 /**
- * Drop di un blocco NUOVO dalla sidebar (segnalato dal vivo: annidava sempre
- * nel contenitore ancora SELEZIONATO, ignorando il punto di rilascio — se
- * l'utente trascinava sopra un contenitore diverso da quello selezionato in
- * precedenza, il blocco finiva nel posto sbagliato senza alcun segnale
- * visivo del perché). Restituisce l'id del contenitore più profondo (l'area
- * più piccola, tra quelli le cui coordinate contengono il punto) — il
- * chiamante (canvas-editor-shell.tsx) passa solo i rect già filtrati per
- * essere contenitori: questo modulo non conosce il registry dei blocchi.
- * `null` se il punto non cade in nessun contenitore — il chiamante ricade
- * sulla posizione a livello radice via `computeDropTarget` sopra.
+ * A drop of a NEW block from the sidebar (reported from live use: it always
+ * nested into the container that was still SELECTED, ignoring the release
+ * point — if the user dragged over a container other than the previously
+ * selected one, the block ended up in the wrong place with no visual
+ * indication why). It returns the id of the deepest container (the smallest
+ * area among those whose coordinates contain the point) — the caller
+ * (canvas-editor-shell.tsx) passes only rects already filtered down to
+ * containers: this module knows nothing about the block registry. `null`
+ * when the point falls in no container — the caller then falls back to the
+ * root-level position through `computeDropTarget` above.
  */
 export function findContainerAtPoint(
   containerRects: ContainerHitRect[],

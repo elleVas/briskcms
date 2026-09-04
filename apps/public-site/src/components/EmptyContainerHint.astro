@@ -1,14 +1,13 @@
 ---
 /**
- * Segnaposto per un blocco-contenitore (Columns/Accordion/Tabs/...) senza
- * figli — senza questo, un contenitore vuoto collassa a un'altezza
- * praticamente nulla (grid/flex vuoto) e diventa impossibile da selezionare
- * sul canvas, l'unico modo per aggiungerci dentro il primo elemento
- * (seleziona il contenitore, poi scegli un blocco dalla barra laterale —
- * resolveInsertTarget in canvas-editor-shell.tsx lo inserisce come figlio).
- * `show` è calcolato dal chiamante (`!Astro.slots.has('default') &&
- * editable`) — mai renderizzato sulla pagina pubblicata reale, solo sulle
- * rotte di preview.
+ * A placeholder for a container block (Columns/Accordion/Tabs/...) with no
+ * children — without it, an empty container collapses to virtually no
+ * height (an empty grid or flex) and becomes impossible to select on the
+ * canvas, which is the only way to add the first element inside it (select
+ * the container, then pick a block from the sidebar — resolveInsertTarget
+ * in canvas-editor-shell.tsx inserts it as a child). `show` is computed by
+ * the caller (`!Astro.slots.has('default') && editable`) — never rendered
+ * on the real published page, only on the preview routes.
  */
 export interface Props {
   show: boolean;

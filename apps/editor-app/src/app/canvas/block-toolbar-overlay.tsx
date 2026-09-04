@@ -41,25 +41,25 @@ export interface BlockToolbarOverlayProps {
   block: Block;
   descriptor: BlockDescriptor;
   rect: BlockRect;
-  /** Vero solo per un blocco di primo livello — governa inserisci-fratello (scoped a quel livello, come il riordino via drag, vedi compute-drop-target.ts) e i campi di spacing (marginTop/marginBottom). NON sposta su/giù: quello funziona a qualunque profondità, vedi canMoveUp/canMoveDown. */
+  /** True only for a top-level block — it governs insert-sibling (scoped to that level, like drag reordering, see compute-drop-target.ts) and the spacing fields (marginTop/marginBottom). NOT move up/down: that works at any depth, see canMoveUp/canMoveDown. */
   isRootLevel: boolean;
-  /** Vero a QUALUNQUE profondità — calcolato dalla posizione reale del blocco tra i suoi fratelli (root o annidati), non dal solo livello radice. */
+  /** True at ANY depth — computed from the block's real position among its siblings (root or nested), not from the root level alone. */
   canMoveUp: boolean;
   canMoveDown: boolean;
   registry: BlockDescriptor[];
   categories: BlockPickerCategory[];
   onChangeProp: (key: string, value: unknown) => void;
   /**
-   * Override "a livello di componente" (docs/adr/0022) — valore corrente
-   * per il TIPO del blocco selezionato (`site.themeTokens.blockStyles[tipo]
-   * ?? {}`), tocca OGNI istanza di quel tipo sul sito. Entrambi assenti
-   * quando non c'è ancora un sito da cui leggerlo (query non arrivata, o
-   * nessun `siteId` — vedi canvas-editor-shell.tsx): il pulsante "Stile"
-   * semplicemente non appare finché non lo sono.
+   * The "component-level" override (docs/adr/0022) — the current value for
+   * the selected block's TYPE (`site.themeTokens.blockStyles[type] ?? {}`),
+   * touching EVERY instance of that type across the site. Both are absent
+   * when there is no site to read it from yet (the query has not arrived,
+   * or there is no `siteId` — see canvas-editor-shell.tsx): the "Style"
+   * button simply does not appear until they are.
    */
   typeStyle?: BlockStyleOverride;
   onChangeTypeStyle?: (style: BlockStyleOverride) => void;
-  /** Override per-ISTANZA (docs/adr/0022) — solo `block` stesso, letto da `block.styleOverride` direttamente (non serve una prop separata). */
+  /** The per-INSTANCE override (docs/adr/0022) — `block` itself only, read straight from `block.styleOverride` (no separate prop needed). */
   onChangeInstanceStyle: (style: BlockStyleOverride) => void;
   onMoveUp: () => void;
   onMoveDown: () => void;
@@ -67,7 +67,7 @@ export interface BlockToolbarOverlayProps {
   onDelete: () => void;
   onInsertBefore: (descriptor: BlockDescriptor) => void;
   onInsertAfter: (descriptor: BlockDescriptor) => void;
-  /** Presente solo per un contenitore "a collezione" (un solo tipo in `allowedChildTypes`, es. Testimonianze→Testimonianza) — aggiunge un altro figlio di quel tipo direttamente, nessun picker: l'unico tipo sensato è già noto. */
+  /** Present only for a "collection" container (a single type in `allowedChildTypes`, e.g. Testimonials→Testimonial) — it adds another child of that type directly, with no picker: the only sensible type is already known. */
   onAddChild?: () => void;
 }
 
@@ -75,12 +75,12 @@ const iconButtonClass =
   'flex h-7 w-7 items-center justify-center rounded border bg-background text-muted-foreground shadow-sm hover:bg-muted hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40';
 
 /**
- * Toolbar contestuale ancorata al blocco selezionato (Fase 1 del piano
- * "editor visuale, parte 2") — sostituisce la colonna Inspector fissa:
- * breadcrumb, sposta su/giù, scorciatoia colore, proprietà via popover,
- * duplica, elimina, punti di inserimento sopra/sotto. Stessa traduzione
- * iframe-offset già usata da OverlayLayer per hover/selezione — nessuna
- * nuova matematica di posizionamento.
+ * The contextual toolbar anchored to the selected block (phase 1 of the
+ * "visual editor, part 2" plan) — it replaces the fixed Inspector column:
+ * breadcrumb, move up/down, colour shortcut, properties through a popover,
+ * duplicate, delete, and insertion points above and below. The same
+ * iframe-offset translation OverlayLayer already uses for hover/selection —
+ * no new positioning maths.
  */
 export function BlockToolbarOverlay({
   iframeRef,
@@ -118,26 +118,26 @@ export function BlockToolbarOverlay({
     stylableProperties.length > 0 &&
     typeStyle !== undefined &&
     onChangeTypeStyle !== undefined;
-  // marginTop/marginBottom sono solo per-ISTANZA (mai per-tipo, vedi il
-  // commento su blockStyleOverrideSchema in site-theme-tokens.ts) e solo
-  // per un blocco di primo livello: sono l'unico posto dove
-  // PublicPageContent.astro legge `styleOverride.marginTop/marginBottom`
-  // per lo spazio tra blocchi — su un blocco annidato non avrebbero alcun
-  // effetto visivo, quindi non li offriamo lì. Per questo il set di
-  // proprietà mostrate nel popover d'istanza può differere da quello del
-  // popover di tipo, che resta sempre `stylableProperties`.
+  // marginTop/marginBottom are per-INSTANCE only (never per-type, see the
+  // comment on blockStyleOverrideSchema in site-theme-tokens.ts) and only
+  // for a top-level block: they are the one place where
+  // PublicPageContent.astro reads `styleOverride.marginTop/marginBottom`
+  // for the space between blocks — on a nested block they would have no
+  // visual effect at all, so we do not offer them there. That is why the
+  // set of properties shown in the instance popover can differ from the
+  // type popover's, which always stays `stylableProperties`.
   const instanceStylableProperties: readonly (keyof BlockStyleOverride)[] =
     isRootLevel
       ? [...stylableProperties, 'marginTop', 'marginBottom']
       : stylableProperties;
   const canStyleInstance = instanceStylableProperties.length > 0;
-  // L'override di TIPO (se presente e non null, cioè davvero personalizzato)
-  // vince sul default del tema come anteprima per il popover d'istanza: è
-  // quello che l'istanza sta effettivamente mostrando finché non viene
-  // ristilizzata anche a livello di istanza — non il default del tema
-  // "grezzo", fuorviante se il tipo è già stato ristilizzato. `typeStyle`
-  // può contenere `null` (proprietà esplicitamente non personalizzata),
-  // che qui non ha senso propagare — BlockStyleDefaults non è nullable.
+  // The TYPE override (when present and non-null, i.e. genuinely
+  // customized) beats the theme default as the preview for the instance
+  // popover: it is what the instance is actually showing until it is
+  // restyled at instance level too — not the "raw" theme default, which is
+  // misleading once the type has already been restyled. `typeStyle` may
+  // hold `null` (a property explicitly not customized), which makes no
+  // sense to propagate here — BlockStyleDefaults is not nullable.
   const instanceStyleDefaults: BlockStyleDefaults = {
     ...blockStyleDefaults?.[block.type],
     ...Object.fromEntries(

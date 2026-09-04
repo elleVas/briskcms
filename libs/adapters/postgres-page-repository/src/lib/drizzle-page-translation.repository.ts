@@ -16,14 +16,14 @@ import {
 } from '@brisk/postgres-db';
 import { savePageTranslationVersionTx } from './save-page-translation-version-tx';
 
-// Il secondo nome è quello REALMENTE applicato in Postgres, non quello che
-// Drizzle genera prima del troncamento: gli identificatori Postgres sono
-// limitati a 63 byte, e questo nome auto-generato li supera — verificato
-// dal vivo con `select conname from pg_constraint where conrelid =
-// 'page_translations'::regclass`, non assunto per analogia col nome più
-// corto di `pages`. `isUniqueViolation` fa un confronto esatto, un nome
-// sbagliato qui farebbe risalire un PostgresError grezzo invece
-// dell'errore di dominio.
+// The second name is the one ACTUALLY applied in Postgres, not the one
+// Drizzle generates before truncation: Postgres identifiers are capped at
+// 63 bytes, and this auto-generated name exceeds them — verified live with
+// `select conname from pg_constraint where conrelid =
+// 'page_translations'::regclass`, not assumed by analogy with `pages`'
+// shorter name. `isUniqueViolation` does an exact comparison, and a wrong
+// name here would let a raw PostgresError surface instead of the domain
+// error.
 const SLUG_UNIQUE_CONSTRAINT =
   'page_translations_tenant_id_site_id_locale_parent_group_id_slug';
 const ROOT_SLUG_UNIQUE_CONSTRAINT = 'page_translations_root_slug_unique';
@@ -72,13 +72,13 @@ function fromRow(row: typeof pageTranslations.$inferSelect): PageTranslation {
 }
 
 /**
- * Possiede il testo per-locale — vedi PageTranslationRepositoryPort's own
- * doc comment. NON estende DrizzlePaginatedRepository come
- * DrizzlePageGroupRepository: il Port non ha bisogno di una lista
- * paginata (la lista pagine paginata vive su PageGroupRepositoryPort),
- * quindi qui il CRUD di base è scritto a mano invece di ereditarlo — la
- * classe base è pensata per "stesso CRUD ripetuto identico", non per
- * essere estesa solo per due dei suoi metodi.
+ * Owns the per-locale text — see PageTranslationRepositoryPort's own doc
+ * comment. It does NOT extend DrizzlePaginatedRepository the way
+ * DrizzlePageGroupRepository does: the Port needs no paginated list (the
+ * paginated page list lives on PageGroupRepositoryPort), so the basic CRUD
+ * is written by hand here rather than inherited — the base class is meant
+ * for "the same CRUD repeated identically", not for being extended for two
+ * of its methods alone.
  */
 export class DrizzlePageTranslationRepository implements PageTranslationRepositoryPort {
   constructor(private readonly db: BriskDb) {}
@@ -93,7 +93,7 @@ export class DrizzlePageTranslationRepository implements PageTranslationReposito
     );
   }
 
-  /** Salva la traduzione e la sua nuova versione di testo nella STESSA transazione — stessa ragione di PageRepositoryPort.saveWithVersion. */
+  /** Saves the translation and its new text version in the SAME transaction — the same reason as PageRepositoryPort.saveWithVersion. */
   async saveWithVersion(
     translation: PageTranslation,
     version: PageTranslationVersion,
@@ -115,7 +115,7 @@ export class DrizzlePageTranslationRepository implements PageTranslationReposito
       .onConflictDoUpdate({ target: pageTranslations.id, set: row });
   }
 
-  /** Stessa ragione del suo omonimo in DrizzlePageRepository: un conflitto sotto concorrenza reale va tradotto nello stesso errore di dominio che l'use-case lancia nel caso comune, non lasciato risalire come 500 grezzo. */
+  /** The same reason as its namesake in DrizzlePageRepository: a conflict under real concurrency has to be translated into the same domain error the use case throws in the common case, not left to surface as a raw 500. */
   private async withUniqueViolationMapping<T>(
     row: ReturnType<typeof toRow>,
     fn: () => Promise<T>,

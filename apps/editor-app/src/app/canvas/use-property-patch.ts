@@ -6,20 +6,20 @@ export interface UsePropertyPatchInput {
   pageId: string;
   token: string;
   /**
-   * Chiamato con le props già fuse (il chiamante possiede l'albero, vedi
-   * use-block-tree.ts) — persiste la bozza reale. `changedKey` è la SINGOLA
-   * chiave che questa chiamata sta effettivamente cambiando (`props` resta
-   * l'intero oggetto fuso, serve comunque per il render server-side del
-   * frammento) — permette al chiamante (canvas-editor-shell.tsx, i18n a
-   * livello di campo) di instradare SOLO quella chiave verso l'overlay di
-   * una traduzione quando serve, senza dover ridurre `props` da solo.
+   * Called with the props already merged (the caller owns the tree, see
+   * use-block-tree.ts) — it persists the real draft. `changedKey` is the
+   * SINGLE key this call is actually changing (`props` stays the whole
+   * merged object, still needed for the server-side fragment render) — it
+   * lets the caller (canvas-editor-shell.tsx, field-level i18n) route ONLY
+   * that key to a translation's overlay when it needs to, without having to
+   * narrow `props` itself.
    */
   onSaveDraft: (
     blockId: string,
     changedKey: string,
     props: Record<string, unknown>,
   ) => void;
-  /** Come `onSaveDraft` ma per l'override per-istanza (docs/adr/0022) — un valore separato da `props`, sostituito per intero (vedi use-block-tree.ts's updateBlockStyleOverride), non fuso campo-per-campo. */
+  /** Like `onSaveDraft` but for the per-instance override (docs/adr/0022) — a value separate from `props`, replaced wholesale (see use-block-tree.ts's updateBlockStyleOverride) rather than merged field by field. */
   onSaveStyleOverride: (
     blockId: string,
     styleOverride: BlockStyleOverride,
@@ -30,7 +30,7 @@ export interface UsePropertyPatchInput {
 }
 
 export interface UsePropertyPatchResult {
-  /** Da chiamare ad ogni cambio proprietà dall'Inspector — un blockId alla volta ha il proprio timer indipendente, cambiare un blocco non azzera il debounce di un altro. */
+  /** To be called on every property change from the Inspector — one blockId at a time has its own independent timer, so changing one block never resets another's debounce. */
   scheduleChange: (
     blockId: string,
     blockType: string,
@@ -39,15 +39,15 @@ export interface UsePropertyPatchResult {
     children?: Block[],
   ) => void;
   /**
-   * Da chiamare ad ogni `preview:text-changed` (Giorno 4) — stesso debounce
-   * per-blockId di `scheduleChange`, ma solo salvataggio: mai
-   * render-block-fragment/patchBlock per il testo, il DOM dentro l'iframe
-   * mostra già quello che TipTap ha digitato dal vivo, sostituirlo col
-   * frammento appena renderizzato interromperebbe l'istanza TipTap montata
-   * lì sopra a metà digitazione.
+   * To be called on every `preview:text-changed` (Day 4) — the same
+   * per-blockId debounce as `scheduleChange`, but saving only: never
+   * render-block-fragment/patchBlock for text, since the DOM inside the
+   * iframe already shows what TipTap has typed live, and replacing it with
+   * a freshly rendered fragment would tear down the TipTap instance mounted
+   * on it mid-keystroke.
    */
   scheduleTextChange: (blockId: string, field: string, text: string) => void;
-  /** Da chiamare ad ogni cambio nel popover di stile per-istanza (docs/adr/0022) — timer indipendente da `scheduleChange`: un cambio di stile e un cambio di proprietà "normale" sullo stesso blocco, ravvicinati, non si annullano il debounce a vicenda. */
+  /** To be called on every change in the per-instance style popover (docs/adr/0022) — a timer independent of `scheduleChange`'s: a style change and an ordinary property change on the same block, close together, do not cancel each other's debounce. */
   scheduleStyleOverrideChange: (
     blockId: string,
     blockType: string,
@@ -68,13 +68,13 @@ export interface UsePropertyPatchResult {
 const DEFAULT_DEBOUNCE_MS = 300;
 
 /**
- * Al cambio di una proprietà: salva la bozza (debounce, stesso
- * `PATCH /pages/:id/draft` di use-page-editor.ts) e in parallelo chiama
- * render-block-fragment coi nuovi props, poi invia `editor:patch-block` —
- * il canvas si aggiorna senza reload dell'iframe. Vedi il piano dell'editor
- * visuale, Giorno 3. Un fallimento di renderBlockFragment non blocca il
- * salvataggio (già avvenuto): il canvas resta con l'ultimo HTML buono
- * finché il prossimo cambio non ritenta.
+ * On a property change: it saves the draft (debounced, the same
+ * `PATCH /pages/:id/draft` as use-page-editor.ts) and in parallel calls
+ * render-block-fragment with the new props, then sends `editor:patch-block`
+ * — the canvas updates without an iframe reload. See the visual editor
+ * plan, Day 3. A renderBlockFragment failure does not block the save (which
+ * already happened): the canvas keeps the last good HTML until the next
+ * change retries.
  */
 export function usePropertyPatch({
   pageId,
@@ -101,11 +101,11 @@ export function usePropertyPatch({
     };
   }, []);
 
-  // Chiave di debounce distinta da un plain blockId (vedi scheduleTextChange
-  // sotto) — un cambio di proprietà non testuale e un testo in editing sullo
-  // stesso blocco hanno timer indipendenti, l'uno non azzera il debounce
-  // dell'altro. `fire` è tenuto insieme al timeout (non solo quest'ultimo)
-  // così flushAll sotto può invocarlo subito, invece di aspettare che scada.
+  // A debounce key distinct from a plain blockId (see scheduleTextChange
+  // below) — a non-text property change and text being edited on the same
+  // block have independent timers, and neither resets the other's debounce.
+  // `fire` is kept alongside the timeout (not just the latter) so flushAll
+  // below can invoke it immediately rather than waiting for it to expire.
   function schedule(timerKey: string, fire: () => void): void {
     const existing = timers.current.get(timerKey);
     if (existing) {
@@ -147,11 +147,11 @@ export function usePropertyPatch({
         })
           .then((html) => patchBlock(blockId, html))
           .catch(() => {
-            /* la bozza è già salvata sopra — un fallimento qui lascia solo il canvas visivamente indietro di un cambio, non perde dati. */
+            /* the draft is already saved above — a failure here only leaves the canvas one change behind visually, it loses no data. */
           });
       });
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- `schedule` è ridefinita ad ogni render ma legge solo `timers` (un ref, stabile) e `debounceMs` (già una dipendenza esplicita) — includerla romperebbe l'identità stabile di scheduleChange senza alcun beneficio.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- `schedule` is redefined on every render but reads only `timers` (a ref, stable) and `debounceMs` (already an explicit dependency) — including it would break scheduleChange's stable identity for no benefit.
     [pageId, token, onSaveDraft, patchBlock, debounceMs],
   );
 
@@ -186,7 +186,7 @@ export function usePropertyPatch({
         })
           .then((html) => patchBlock(blockId, html))
           .catch(() => {
-            /* la bozza è già salvata sopra — vedi lo stesso commento di scheduleChange. */
+            /* the draft is already saved above — see the same comment on scheduleChange. */
           });
       });
     },

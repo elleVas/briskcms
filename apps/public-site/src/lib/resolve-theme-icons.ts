@@ -4,11 +4,11 @@ import { dirname, join } from 'node:path';
 import type { IconEntry } from '@brisk/shared-types';
 import { groupByTheme, resolveBundledThemeName } from './theme-registry';
 
-// Stesso pattern di resolve-theme-block-override.ts/resolve-theme-layout-
-// override.ts (docs/adr/0021/0042): `themes/<name>/icons/*.svg` risolto
-// una volta per processo per ogni tema bundlato — un tema che non
-// dichiara `icons` in theme.json semplicemente non ha un'entry nella
-// propria mappa, nessun errore.
+// The same pattern as resolve-theme-block-override.ts and the former
+// resolve-theme-layout-override.ts (docs/adr/0021/0042):
+// `themes/<name>/icons/*.svg` resolved once per process for every bundled
+// theme — a theme that declares no `icons` in theme.json simply has no
+// entry in its own map, with no error.
 const themeIconModules = import.meta.glob<string>(
   '../../../../themes/*/icons/*.svg',
   {
@@ -28,19 +28,18 @@ const themeIconsByTheme = groupByTheme(
   (svg) => svg,
 );
 
-// Il set curato di default (docs/adr/0023): l'intero set Lucide corrente,
-// stessa famiglia già usata da editor-app via lucide-react (vedi
-// apps/editor-app/package.json) — non un sottoinsieme vendorizzato a mano,
-// così resta allineato a ogni bump di versione senza un passo di
-// download/sync separato. `lucide-static` è l'unico pacchetto della
-// famiglia Lucide che pubblica SVG grezzi anziché componenti React/Vue —
-// l'unica forma utilizzabile qui (apps/public-site non ha un runtime React
-// lato server per i blocchi core, docs/adr/0019). Risolto via Node
-// (`import.meta.resolve`), non `import.meta.glob`: un pattern che punta
-// dentro node_modules non è un percorso relativo che il glob di Vite
-// gestisce in questo progetto, mentre la risoluzione dei moduli Node trova
-// il pacchetto ovunque pnpm l'abbia effettivamente symlinkato,
-// indipendentemente dalla struttura di hoisting.
+// The curated default set (docs/adr/0023): the whole current Lucide set,
+// the same family editor-app already uses through lucide-react (see
+// apps/editor-app/package.json) — not a hand-vendored subset, so it stays
+// aligned with every version bump without a separate download/sync step.
+// `lucide-static` is the only package in the Lucide family that publishes
+// raw SVGs rather than React/Vue components — the only usable form here
+// (apps/public-site has no server-side React runtime for core blocks,
+// docs/adr/0019). Resolved through Node (`import.meta.resolve`), not
+// `import.meta.glob`: a pattern pointing inside node_modules is not a
+// relative path Vite's glob handles in this project, whereas Node's module
+// resolution finds the package wherever pnpm actually symlinked it,
+// regardless of the hoisting layout.
 function loadDefaultIcons(): IconEntry[] {
   const packageJsonUrl = import.meta.resolve('lucide-static/package.json');
   const iconsDir = join(dirname(fileURLToPath(packageJsonUrl)), 'icons');
@@ -61,10 +60,10 @@ function getDefaultIcons(): IconEntry[] {
 }
 
 /**
- * Tutto il set di icone del tema attivo — un tema che ne dichiara almeno
- * una VINCE per intero sul default (nessun fallback per-nome su un set
- * parziale, vedi la sezione Consequences di docs/adr/0023): la scelta
- * "questo tema ha o non ha il proprio set" è binaria, non un merge.
+ * The active theme's whole icon set — a theme declaring even one icon WINS
+ * outright over the default (no per-name fallback onto a partial set, see
+ * docs/adr/0023's Consequences section): the "this theme does or does not
+ * have its own set" choice is binary, not a merge.
  */
 export function listThemeIcons(themeName: string): IconEntry[] {
   const themeIcons = themeIconsByTheme.get(resolveBundledThemeName(themeName));
@@ -78,7 +77,7 @@ export function listThemeIcons(themeName: string): IconEntry[] {
 
 const iconsByNamePerTheme = new Map<string, Map<string, string>>();
 
-/** Risoluzione per-nome usata dal rendering dei blocchi (es. NavLink.astro) — costruisce la mappa una sola volta per tema. */
+/** The per-name resolution block rendering uses (NavLink.astro, for instance) — it builds the map once per theme. */
 export function resolveIconSvg(
   name: string | null | undefined,
   themeName: string,

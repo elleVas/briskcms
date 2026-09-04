@@ -1,11 +1,11 @@
 /**
- * Security review 2026-08-24, "terzo giro": nessun `window.onerror`/
- * `unhandledrejection` globale — un throw fuori da un error boundary React
- * (un reject non gestito, un errore in un event handler nativo) spariva
- * nel nulla, invisibile anche in produzione. Nessun servizio di error
- * tracking esterno è configurato (richiede l'account/DSN del cliente,
- * fuori scope qui) — logga in console per ora, unico punto di aggancio
- * per un futuro Sentry.init()/captureException.
+ * Security review 2026-08-24, "third pass": no global `window.onerror` or
+ * `unhandledrejection` — a throw outside a React error boundary (an
+ * unhandled rejection, an error in a native event handler) vanished,
+ * invisible even in production. No external error-tracking service is
+ * configured (it needs the customer's account and DSN, out of scope here) —
+ * so it logs to the console for now, as the single hook point for a future
+ * Sentry.init()/captureException.
  */
 export function setupGlobalErrorHandlers(): void {
   window.addEventListener('error', (event) => {

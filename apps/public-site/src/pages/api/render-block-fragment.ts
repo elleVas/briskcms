@@ -13,13 +13,13 @@ import {
 } from '../../lib/render-block-fragment-helpers';
 import RenderSingleBlock from '../../components/RenderSingleBlock.astro';
 
-// Chiamato da apps/editor-app (canvas-frame.tsx/block-fragment-api-client.ts),
-// mai da un visitatore reale: l'editor-app gira su un'origine diversa
-// (porta 4200 in dev), quindi serve CORS esplicito qui, scoped alla sola
-// EDITOR_APP_URL — l'autenticazione vera resta il token di preview validato
-// sotto (stesso token della rotta di preview, vedi il piano dell'editor
-// visuale, Giorno 1/3), CORS decide solo "quale JS può leggere la
-// risposta", non "chi è autorizzato".
+// Called by apps/editor-app (canvas-frame.tsx/block-fragment-api-client.ts),
+// never by a real visitor: editor-app runs on a different origin (port 4200
+// in dev), so explicit CORS is needed here, scoped to EDITOR_APP_URL alone
+// — the real authentication stays the preview token validated below (the
+// same token as the preview route, see the visual editor plan, Day 1/3),
+// and CORS only decides "which JS may read the response", not "who is
+// authorized".
 export const prerender = false;
 
 export const OPTIONS: APIRoute = () =>
@@ -37,9 +37,9 @@ export const POST: APIRoute = async ({ request }) => {
     });
   }
 
-  // Stesso collasso "indistinguibile dal non-esistente" della rotta di
-  // preview: un token mancante/scaduto/mismatch e una pagina che non
-  // esiste ricevono lo stesso 404.
+  // The same "indistinguishable from non-existent" collapse as the preview
+  // route: a missing, expired or mismatched token and a page that does not
+  // exist all get the same 404.
   const page = await getPreviewPageById(body.pageId, body.token);
   if (!page) {
     return new Response('Not found', {
@@ -48,12 +48,12 @@ export const POST: APIRoute = async ({ request }) => {
     });
   }
 
-  // I `children` vanno preservati se il blocco è un contenitore — un
-  // cambio di proprietà dall'Inspector non li tocca mai. Preferisce quelli
-  // passati dal chiamante (già noti client-side, niente race col
-  // salvataggio bozza in corso in parallelo — vedi RenderBlockFragmentBody);
-  // la lettura server resta solo un fallback per chiamate più vecchie che
-  // non li passano ancora.
+  // The `children` have to be preserved when the block is a container — a
+  // property change from the Inspector never touches them. It prefers the
+  // ones the caller passed (already known client-side, with no race against
+  // the draft save happening in parallel — see RenderBlockFragmentBody);
+  // the server read stays only as a fallback for older calls that do not
+  // pass them yet.
   const children =
     body.children ??
     findBlockById(page.content, body.blockId)?.children ??

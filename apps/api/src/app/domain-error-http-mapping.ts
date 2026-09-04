@@ -32,18 +32,18 @@ import {
 type DomainErrorFactory = (message: string) => HttpException;
 
 /**
- * Tabella unica al posto dei 7 `handleDomainErrors` privati duplicati (uno
+ * One table in place of the 7 duplicated private `handleDomainErrors` (one
  * per controller: pages/forms/public-forms/site-layout-sections/sites/
- * users/media, ognuno con lo stesso try/catch e la propria whitelist) —
- * security review 2026-08-24, punto 17. Consumata da HttpExceptionFilter,
- * mai dai controller stessi: un domain error ora si propaga senza essere
- * intercettato lì, il filtro globale lo mappa una volta sola.
+ * users/media, each with the same try/catch and its own whitelist) —
+ * security review 2026-08-24, point 17. Consumed by HttpExceptionFilter,
+ * never by the controllers themselves: a domain error now propagates
+ * without being intercepted there, and the global filter maps it once.
  *
- * auth.controller.ts NON è qui — i suoi 3 errori (InvalidCredentialsError,
- * UserNotActiveError, InvalidOrExpiredTokenError) hanno logica anti-
- * enumerazione (stesso messaggio generico per credenziali sbagliate E
- * account disattivato, vedi loginUser) che una mappa generica romperebbe.
- * Restano gestiti lì, invariati.
+ * auth.controller.ts is NOT here — its 3 errors (InvalidCredentialsError,
+ * UserNotActiveError, InvalidOrExpiredTokenError) carry anti-enumeration
+ * logic (the same generic message for wrong credentials AND a deactivated
+ * account, see loginUser) that a generic map would break. They stay handled
+ * there, unchanged.
  */
 const DOMAIN_ERROR_MAPPINGS: Array<[Type<Error>, DomainErrorFactory]> = [
   [PageGroupNotFoundError, (m) => new NotFoundException(m)],
@@ -69,7 +69,7 @@ const DOMAIN_ERROR_MAPPINGS: Array<[Type<Error>, DomainErrorFactory]> = [
   [InvalidThemeNameError, (m) => new BadRequestException(m)],
 ];
 
-/** `null` quando `error` non è uno degli errori di dominio noti qui — il chiamante (HttpExceptionFilter) lo tratta allora come un 500 grezzo. */
+/** `null` when `error` is not one of the domain errors known here — the caller (HttpExceptionFilter) then treats it as a raw 500. */
 export function mapDomainErrorToHttpException(
   error: unknown,
 ): HttpException | null {

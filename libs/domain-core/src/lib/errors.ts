@@ -149,11 +149,11 @@ export class UserEmailAlreadyExistsError extends Error {
 }
 
 /**
- * Security review 2026-08-24, "terzo giro": un invito già accettato non
- * può essere "re-inviato" — l'utente ha già una password reale, mandargli
- * di nuovo il link di invito lo lascerebbe reimpostare la password senza
- * passare dal flusso "password dimenticata" (che verifica l'identità
- * diversamente: invalida tutte le sessioni esistenti, questo no).
+ * Security review 2026-08-24, "third pass": an already-accepted invite
+ * cannot be "resent" — the user already has a real password, and sending
+ * them the invite link again would let them reset that password without
+ * going through the "forgotten password" flow (which verifies identity
+ * differently: it invalidates every existing session, and this does not).
  */
 export class UserAlreadyActiveError extends Error {
   constructor(userId: string) {

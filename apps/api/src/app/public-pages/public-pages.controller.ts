@@ -146,9 +146,9 @@ export class PublicPagesController {
         token: query.token,
       },
     );
-    // Stessa postura "indistinguibile dal non-esistente" di findBySlug: un
-    // token mancante/scaduto/mismatch e una pagina che non esiste ricevono
-    // lo stesso 404, nessun oracolo per indovinare id di pagina validi.
+    // The same "indistinguishable from non-existent" posture as findBySlug:
+    // a missing, expired or mismatched token and a page that does not exist
+    // all get the same 404, giving no oracle for guessing valid page ids.
     if (!result) {
       throw new NotFoundException();
     }

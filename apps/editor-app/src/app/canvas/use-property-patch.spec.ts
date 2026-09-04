@@ -101,8 +101,8 @@ describe('usePropertyPatch', () => {
       vi.advanceTimersByTime(200);
     });
 
-    // Il primo timer è stato cancellato dal secondo cambio — solo 400ms
-    // totali sono passati dal SECONDO cambio (200ms), non ancora i 300ms.
+    // The first timer was cancelled by the second change — only 400ms in
+    // total have passed since the SECOND change (200ms), not yet the 300ms.
     expect(onSaveDraft).not.toHaveBeenCalled();
   });
 

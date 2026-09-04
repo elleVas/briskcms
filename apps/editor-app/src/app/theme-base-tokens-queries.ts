@@ -2,10 +2,10 @@ import { queryOptions } from '@tanstack/react-query';
 import { fetchThemeBaseTokens } from '../lib/theme-api-client';
 
 /**
- * Stesso motivo/pattern di `themeForegroundTokensQueryOptions` — i token
- * di un dato tema non cambiano a runtime, e `themeName` nella chiave
- * (docs/adr/0042) fa sì che cambiare tema rifaccia la fetch invece di
- * riusare quelli del tema precedente.
+ * The same reason and pattern as `themeForegroundTokensQueryOptions` — a
+ * given theme's tokens do not change at runtime, and `themeName` in the key
+ * (docs/adr/0042) makes changing theme refetch rather than reuse the
+ * previous theme's.
  */
 export function themeBaseTokensQueryOptions(themeName: string) {
   return queryOptions({

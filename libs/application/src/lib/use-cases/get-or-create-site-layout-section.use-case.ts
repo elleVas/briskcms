@@ -22,20 +22,20 @@ export interface GetOrCreateSiteLayoutSectionInput {
 }
 
 /**
- * Header/Footer non hanno nulla da chiedere all'utente prima di crearli
- * (niente slug/seoMeta, docs/adr/0018) — il primo accesso all'editor
- * "Aspetto" per una data (sito, locale, kind) crea implicitamente la riga,
- * così l'editor non deve mai gestire uno stato "non esiste ancora".
+ * The header and footer have nothing to ask the user before being created
+ * (no slug, no seoMeta, docs/adr/0018) — the first visit to the
+ * "Appearance" editor for a given (site, locale, kind) implicitly creates
+ * the row, so the editor never has to handle a "does not exist yet" state.
  *
- * Se il sito ha già un header/footer pubblicato nella sua locale di
- * default, il nuovo draft parte come copia di quel content invece che
- * vuoto — stessa filosofia "copy-on-translate" di createPageTranslation
- * (Fase 5b): abilitare una lingua non deve costringere a ricostruire
- * l'header da zero.
+ * When the site already has a published header or footer in its default
+ * locale, the new draft starts as a copy of that content rather than empty
+ * — the same "copy-on-translate" philosophy as createPageTranslation (phase
+ * 5b): enabling a language must not force rebuilding the header from
+ * scratch.
  *
- * Race TOCTOU tra due tab aperte in contemporanea non gestita apposta:
- * utenza realistica è un singolo admin non tecnico, non un SaaS ad alta
- * concorrenza. Il vincolo unique del DB resta il backstop.
+ * The TOCTOU race between two tabs open at once is deliberately not
+ * handled: the realistic user is a single non-technical admin, not a
+ * high-concurrency SaaS. The DB's unique constraint remains the backstop.
  */
 export async function getOrCreateSiteLayoutSection(
   deps: GetOrCreateSiteLayoutSectionDeps,

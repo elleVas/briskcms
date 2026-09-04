@@ -1,19 +1,19 @@
 import type { BlockStyleDefaults } from '@brisk/shared-types';
 
 /**
- * Isolato dal file che importa `~theme/theme.css?raw` (resolve-theme-
- * block-style-defaults.ts) per lo stesso motivo di render-block-fragment-
- * helpers.ts: la logica pura va testata a unità, l'import via alias Vite
- * no (richiede il plugin Astro che la config vitest di questo progetto
- * non registra).
+ * Isolated from the file that imports `~theme/theme.css?raw`
+ * (resolve-theme-block-style-defaults.ts) for the same reason as
+ * render-block-fragment-helpers.ts: the pure logic should be unit-tested,
+ * the Vite-aliased import should not (it needs the Astro plugin this
+ * project's vitest config does not register).
  */
 
 /**
- * Estrae le custom property dichiarate dentro `:root { ... }` di un
- * `theme.css` — non un parser CSS completo: ogni tema di questo progetto
- * dichiara un SOLO blocco `:root` piatto (nessun nesting, nessun
- * `@media`), vedi themes/classic/theme.css / themes/docs-showcase/
- * theme.css per la forma reale che questo regex copre.
+ * Extracts the custom properties declared inside a `theme.css`'s
+ * `:root { ... }` — not a full CSS parser: every theme in this project
+ * declares a SINGLE flat `:root` block (no nesting, no `@media`), see
+ * themes/classic/theme.css and themes/docs-showcase/theme.css for the real
+ * shape this regex covers.
  */
 export function parseRootCustomProperties(css: string): Map<string, string> {
   const map = new Map<string, string>();
@@ -26,12 +26,12 @@ export function parseRootCustomProperties(css: string): Map<string, string> {
 }
 
 /**
- * Un'espressione dichiarata in `BlockDescriptor.defaultStyle` è o un
- * riferimento a UNA sola custom property del tema (`'var(--radius)'`,
- * mai annidato/composito — nessun blocco oggi usa `calc()`/più variabili
- * nello stesso default) o un letterale CSS (`'transparent'`, `'0.5rem'`)
- * che passa invariato: solo i riferimenti `var(--x)` dipendono dal tema
- * attivo, un letterale è già lo stesso per definizione in ogni tema.
+ * An expression declared in `BlockDescriptor.defaultStyle` is either a
+ * reference to ONE theme custom property (`'var(--radius)'`, never nested
+ * or composite — no block today uses `calc()` or several variables in the
+ * same default) or a CSS literal (`'transparent'`, `'0.5rem'`) that passes
+ * through unchanged: only `var(--x)` references depend on the active theme,
+ * a literal being the same in every theme by definition.
  */
 export function resolveDefaultStyleExpression(
   expression: string,

@@ -4,11 +4,10 @@ import {
   getPublishedSiteChrome,
   searchPublishedPages,
 } from '../../lib/public-api-client';
-import { localePath } from '../../lib/locale-path';
-import { Translator } from '../../lib/i18n';
+import { localePath } from '@brisk/theme-runtime';
+import { Translator } from '@brisk/theme-runtime';
 import { buildContentSecurityPolicy } from '../../lib/content-security-policy';
-import PageLayoutCore from '../../layouts/PageLayout.astro';
-import { resolveThemeLayoutOverride } from '../../lib/resolve-theme-layout-override';
+import PageLayout from '../../layouts/PageLayout.astro';
 import ErrorPageShell from '../../components/ErrorPageShell.astro';
 import NotFound from '../../components/NotFound.astro';
 
@@ -31,11 +30,6 @@ if (!chrome) {
   Astro.response.status = 404;
 }
 
-// docs/adr/0042 — see PublicPageContent.astro's own comment on the same pattern.
-const PageLayout = resolveThemeLayoutOverride(
-  PageLayoutCore,
-  chrome?.site.themeName ?? '',
-);
 
 // ADR-0031: this site's own admin-managed tracker whitelist, on top of the
 // hardcoded default (see content-security-policy.ts).
@@ -74,6 +68,7 @@ const i18n = new Translator(locale ?? 'it');
       footer={chrome.footer}
       headerSticky={chrome.headerSticky}
       ancestors={[]}
+      route="search"
     >
       <main id="main-content" class="brisk-search-results">
         <h1>{i18n.t('search.title')}</h1>

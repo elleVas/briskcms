@@ -1,40 +1,40 @@
 /**
- * Backfill una tantum: converte il vecchio modello "una Page per locale,
- * collegata da groupId" (ADR-0017) nel nuovo modello i18n a livello di
- * campo (struttura condivisa in PageGroup + overlay di testo per-locale in
- * PageTranslation) — vedi il piano `majestic-petting-lampson.md`.
+ * A one-off backfill: it converts the old "one Page per locale, linked by
+ * groupId" model (ADR-0017) into the new field-level i18n model (a shared
+ * structure in PageGroup plus per-locale text overlays in PageTranslation)
+ * — see the `majestic-petting-lampson.md` plan.
  *
- * Per ogni `groupId` esistente:
- * 1. La pagina nella locale di DEFAULT del sito diventa la PageGroup
- *    canonica (struttura + valori di default dei campi traducibili).
- *    Riusa lo stesso `groupId` come id del nuovo PageGroup — nessuna
- *    tabella di remapping serve altrove.
- * 2. Ogni pagina del gruppo (inclusa quella canonica) diventa una
- *    PageTranslation. Se la sua struttura combacia esattamente con quella
- *    canonica (stesso `computeContentStructureSignature`), i valori dei
- *    campi `translatable` che differiscono da quelli canonici finiscono
- *    in `fieldValues` (overlay leggero) — altrimenti la traduzione parte
- *    già `isDiverged: true` con `divergedContent` = il suo contenuto
- *    attuale intatto (zero perdita per una traduzione già indipendente
- *    nei fatti, il vecchio drift-detector la segnalava già come tale).
- * 3. La gerarchia (parentId) diventa condivisa: il parentId della pagina
- *    canonica, mappato al GROUPID del suo genitore (non il suo pageId).
+ * For every existing `groupId`:
+ * 1. The page in the site's DEFAULT locale becomes the canonical PageGroup
+ *    (the structure plus the default values of translatable fields). It
+ *    reuses the same `groupId` as the new PageGroup's id — so no remapping
+ *    table is needed anywhere else.
+ * 2. Every page in the group (including the canonical one) becomes a
+ *    PageTranslation. When its structure matches the canonical one exactly
+ *    (the same `computeContentStructureSignature`), the values of
+ *    `translatable` fields that differ from the canonical ones go into
+ *    `fieldValues` (a light overlay) — otherwise the translation starts out
+ *    `isDiverged: true` with `divergedContent` = its current content
+ *    untouched (no loss at all for a translation already independent in
+ *    practice, which the old drift detector already flagged as such).
+ * 3. The hierarchy (parentId) becomes shared: the canonical page's
+ *    parentId, mapped to its parent's GROUPID (not its pageId).
  *
- * Deliberatamente NON migra lo storico di `page_versions` — retro-
- * costruire quale fosse la struttura "canonica" ad ogni versione passata
- * è ambiguo (la locale di default può essere cambiata nel frattempo, o
- * una versione può risalire a prima che questo stesso concetto esistesse)
- * e non è mai stato promesso dal piano. Ogni nuovo PageGroup/
- * PageTranslation riparte con UNA versione iniziale (lo stato al momento
- * del backfill), non l'intera cronologia — accettabile: questo progetto
- * non ha ancora un DB di produzione, solo dati di sviluppo (docs-showcase).
+ * It deliberately does NOT migrate `page_versions` history — retroactively
+ * reconstructing what the "canonical" structure was at each past version is
+ * ambiguous (the default locale may have changed in the meantime, or a
+ * version may predate this very concept) and the plan never promised it.
+ * Every new PageGroup/PageTranslation restarts with ONE initial version
+ * (the state at backfill time) rather than the whole history — acceptable:
+ * this project has no production DB yet, only development data
+ * (docs-showcase).
  *
- * Idempotente SOLO se rieseguito su un DB che non ha ancora popolato
- * page_groups/page_translations — NON pensato per essere rieseguito dopo
- * un primo giro riuscito (troverebbe di nuovo le vecchie `pages`, invariate,
- * e ricreerebbe righe duplicate). Da girare una volta, in un momento di
- * manutenzione, con le vecchie tabelle `pages`/`page_versions` lasciate
- * intatte (rimosse solo alla fine del piano, dopo verifica completa).
+ * Idempotent ONLY when re-run against a DB that has not yet populated
+ * page_groups/page_translations — NOT meant to be re-run after a successful
+ * first pass (it would find the old `pages` again, unchanged, and recreate
+ * duplicate rows). To be run once, during a maintenance window, with the
+ * old `pages`/`page_versions` tables left intact (removed only at the end
+ * of the plan, after full verification).
  */
 import { randomUUID } from 'node:crypto';
 import { eq } from 'drizzle-orm';
@@ -60,19 +60,19 @@ import {
   tenants,
 } from '../src/lib/schema';
 
-// Fonte di verità duplicata DELIBERATAMENTE da
-// libs/block-registry/src/lib/blocks/*.block.ts's `translatable: true`
-// (vedi l'audit) — non importata da @brisk/block-registry qui: questo è
-// uno script Node una tantum, non vale la pena legare `@brisk/postgres-db`
-// (uno strato adapter) a un pacchetto React/editor solo per una lettura di
-// metadati che non cambierà più una volta finito questo backfill. Se un
-// nuovo campo `translatable` viene aggiunto DOPO che questo script è già
-// stato eseguito con successo, non serve più aggiornare questa mappa.
-// I 6 tipi che riusano ctaLinkFields() (libs/block-registry/src/lib/fields/
-// link-type-field.ts) portano anche `url` — trovato dal vivo che un sito
-// reale lo usa spesso per un percorso interno relativo ("/it/docs") invece
-// del PagePickerField vero, quindi deve variare per lingua come qualunque
-// altro campo di testo (vedi il commento su quel campo).
+// A source of truth DELIBERATELY duplicated from
+// libs/block-registry/src/lib/blocks/*.block.ts's `translatable: true` (see
+// the audit) — not imported from @brisk/block-registry here: this is a
+// one-off Node script, and it is not worth tying `@brisk/postgres-db` (an
+// adapter layer) to a React/editor package for a metadata read that will
+// not change again once this backfill is done. If a new `translatable`
+// field is added AFTER this script has already run successfully, this map
+// no longer needs updating.
+// The 6 types that reuse ctaLinkFields() (libs/block-registry/src/lib/fields/
+// link-type-field.ts) also carry `url` — found live that a real site often
+// uses it for a relative internal path ("/it/docs") rather than the actual
+// PagePickerField, so it has to vary per language like any other text field
+// (see the comment on that field).
 const CTA_LINK_FIELDS = ['url'];
 
 const TRANSLATABLE_FIELDS: Record<string, string[]> = {
@@ -105,12 +105,12 @@ const TRANSLATABLE_FIELDS: Record<string, string[]> = {
 };
 
 /**
- * Estrae in `fieldValues` solo i valori che DIFFERISCONO dalla struttura
- * canonica — cammina per INDICE, valido solo perché il chiamante ha già
- * verificato che le due strutture combaciano esattamente
- * (computeContentStructureSignature identica). Direzione inversa di
- * mergeTranslatedContent (@brisk/shared-types), deliberatamente non lì:
- * quella resta a senso unico, questa è logica di migrazione una tantum.
+ * Extracts into `fieldValues` only the values that DIFFER from the
+ * canonical structure — it walks by INDEX, which is valid only because the
+ * caller has already verified the two structures match exactly (an
+ * identical computeContentStructureSignature). The inverse direction of
+ * mergeTranslatedContent (@brisk/shared-types), deliberately not living
+ * there: that one stays one-way, this is one-off migration logic.
  */
 function extractFieldValues(
   translationContent: PageContent,
@@ -121,14 +121,14 @@ function extractFieldValues(
   function walk(translationBlocks: Block[], canonicalBlocks: Block[]): void {
     translationBlocks.forEach((tBlock, index) => {
       const cBlock = canonicalBlocks[index];
-      // Chiavato sull'id del blocco CANONICO (quello che sopravvive su
-      // PageGroup.content), non su quello della traduzione — ogni locale
-      // aveva i propri id indipendenti sotto il vecchio modello
-      // (createPageTranslation copiava solo la FORMA dell'albero, non gli
-      // id reali). mergeTranslatedContent cerca `fieldValues[block.id]`
-      // camminando `groupContent` (canonico): un overlay chiavato
-      // sull'id sbagliato non verrebbe MAI trovato — bug reale, trovato
-      // dal vivo con la verifica di round-trip, non solo teorizzato.
+      // Keyed on the CANONICAL block's id (the one that survives on
+      // PageGroup.content), not on the translation's — every locale had
+      // independent ids of its own under the old model
+      // (createPageTranslation copied only the tree's SHAPE, not the real
+      // ids). mergeTranslatedContent looks up `fieldValues[block.id]` while
+      // walking `groupContent` (the canonical one): an overlay keyed on the
+      // wrong id would NEVER be found — a real bug, found live through the
+      // round-trip verification rather than merely theorized.
       if (!cBlock?.id) return;
 
       const keys = TRANSLATABLE_FIELDS[tBlock.type] ?? [];
@@ -202,13 +202,13 @@ async function backfillTenant(tx: BriskTx, tenantId: string): Promise<void> {
     pagesByGroup.set(page.groupId, group);
   }
 
-  // Prima passata: risolve canonica + parentGroupId per OGNI gruppo prima
-  // di inserire qualunque riga — l'ordine di iterazione della Map non
-  // garantisce che un genitore venga prima dei suoi figli, e page_groups
-  // ha un vincolo FK self-referenziale su parentId (vedi schema.ts). Ogni
-  // riga viene quindi inserita con `parentId: null`, poi una seconda
-  // passata la aggiorna al valore reale — evita del tutto il problema
-  // dell'ordine invece di provare a topologicamente ordinare i gruppi.
+  // First pass: it resolves the canonical page and parentGroupId for EVERY
+  // group before inserting any row — the Map's iteration order does not
+  // guarantee a parent comes before its children, and page_groups has a
+  // self-referencing FK constraint on parentId (see schema.ts). Every row
+  // is therefore inserted with `parentId: null`, and a second pass updates
+  // it to the real value — sidestepping the ordering problem entirely
+  // rather than trying to topologically sort the groups.
   interface ResolvedGroup {
     groupId: string;
     siteId: string;
@@ -299,9 +299,9 @@ async function backfillTenant(tx: BriskTx, tenantId: string): Promise<void> {
         seoMeta: page.seoMeta,
         fieldValues,
         status: page.status,
-        // Copiato verbatim, mai ricalcolato: preserva esattamente ciò che
-        // è già live sul sito pubblico. Il merge struttura+fieldValues
-        // entra in gioco solo dalla PROSSIMA publish() reale in avanti.
+        // Copied verbatim, never recomputed: it preserves exactly what is
+        // already live on the public site. The structure+fieldValues merge
+        // only comes into play from the NEXT real publish() onwards.
         publishedSnapshot: page.publishedContent,
         isDiverged,
         divergedContent: isDiverged ? page.content : null,
@@ -337,9 +337,10 @@ async function main(): Promise<void> {
       `Backfill page_groups/page_translations completato: ${groupsCreated} gruppi, ${translationsCreated} traduzioni (${divergedCount} già scollegate per drift strutturale pre-esistente), ${allTenants.length} tenant.`,
     );
   } finally {
-    // Sempre chiusa, anche in errore — senza questo il pool di connessioni
-    // tiene vivo il processo Node indefinitamente dopo un errore a metà
-    // transazione, che sembra un hang invece di un fallimento chiaro.
+    // Always closed, errors included — without this the connection pool
+    // keeps the Node process alive indefinitely after an error halfway
+    // through a transaction, which looks like a hang rather than a clear
+    // failure.
     await db.$client.end();
   }
 }

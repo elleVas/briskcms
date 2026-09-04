@@ -45,29 +45,29 @@ const paddingClass: Record<ContainerProps['padding'], string> = {
 </div>
 
 <style>
-	/* Solo nell'editor (mai sulla pagina pubblicata, vedi editable), e solo
-	   una volta che ha contenuto — da vuoto mostra già il proprio bordo
-	   tratteggiato via EmptyContainerHint, un secondo qui sarebbe ridondante.
-	   Senza questo, un Container con dentro del vero contenuto perde ogni
-	   confine visibile — feedback utente dal vivo, stesso motivo di
-	   Column.astro. Un attributo `data-*` condizionale, non una classe
-	   dentro un'espressione ternaria — quest'ultima viene scartata dal
-	   compilatore Astro come "non usata" (analizza solo stringhe statiche
-	   nel markup), osservato dal vivo proprio su Column.astro.
-	   Niente `padding` fisso qui a differenza degli altri contenitori: a
-	   differenza loro, Container ha già un padding scelto dall'utente
-	   (`none`/`sm`/`md`/`lg`, sopra) — un valore fisso lo sovrascriverebbe
-	   con una specificità CSS più alta, facendolo sembrare diverso
-	   nell'editor rispetto alla pagina pubblicata. Il default "md" (2rem)
-	   basta già da solo come area cliccabile. */
+	/* Editor only (never on the published page, see editable), and only
+	   once it has content — when empty it already shows its own dashed
+	   border through EmptyContainerHint, and a second one here would be
+	   redundant. Without this, a Container holding real content loses
+	   every visible boundary — user feedback from live use, the same
+	   reason as Column.astro. A conditional `data-*` attribute, not a
+	   class inside a ternary expression — the latter is discarded by the
+	   Astro compiler as "unused" (it analyses only static strings in the
+	   markup), observed live on Column.astro itself.
+	   No fixed `padding` here, unlike the other containers: unlike them,
+	   Container already has a user-chosen padding (`none`/`sm`/`md`/`lg`,
+	   above) — a fixed value would override it with higher CSS
+	   specificity, making it look different in the editor from the
+	   published page. The "md" default (2rem) is already enough of a
+	   click target on its own. */
 	.brisk-container[data-brisk-editable-outline] {
 		outline: 1px dashed var(--border);
 		outline-offset: -4px;
 	}
 
-	/* Solo raggio e colore testo: background/padding hanno già i propri
-	   campi utente dedicati sopra (background/padding), aggiungerli qui
-	   creerebbe due meccanismi in conflitto per la stessa proprietà. */
+	/* Radius and text colour only: background and padding already have
+	   their own dedicated user fields above, and adding them here would
+	   create two conflicting mechanisms for the same property. */
 	.brisk-container {
 		border-radius: var(--brisk-override-radius, 0.5rem);
 		color: var(--brisk-override-text, inherit);

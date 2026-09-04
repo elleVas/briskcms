@@ -12,21 +12,21 @@ import { mapDomainErrorToHttpException } from './domain-error-http-mapping';
 import type { RequestWithId } from './request-id.middleware';
 
 /**
- * Filtro globale (security review 2026-08-24, punti 14+17) — due problemi
- * risolti insieme perché sono la stessa area di codice:
- * - punto 17: rimpiazza i 7 `handleDomainErrors` privati duplicati (uno per
- *   controller) con un'unica mappa (domain-error-http-mapping.ts) applicata
- *   qui, non più nei controller stessi.
- * - punto 14: logging praticamente assente — ogni errore non gestito
- *   arrivava (o non arrivava affatto) al log senza contesto. Ora ogni
- *   richiesta fallita viene loggata con il suo request-id (vedi
- *   request-id.middleware.ts), method+url e status — un crash in
- *   produzione si scopre da qui, non più solo dal cliente.
+ * The global filter (security review 2026-08-24, points 14 and 17) — two
+ * problems solved together because they are the same area of code:
+ * - point 17: it replaces the 7 duplicated private `handleDomainErrors`
+ *   (one per controller) with a single map (domain-error-http-mapping.ts)
+ *   applied here rather than in the controllers themselves.
+ * - point 14: logging was all but absent — every unhandled error reached
+ *   the log (or failed to reach it at all) with no context. Now every
+ *   failed request is logged with its request id (see
+ *   request-id.middleware.ts), method+url and status — a production crash
+ *   is discovered from here, no longer only from the customer.
  *
- * `@Catch()` senza argomenti: cattura TUTTO, non solo HttpException — un
- * domain error che sfugge a mapDomainErrorToHttpException (o un vero bug)
- * diventa comunque un 500 loggato con lo stack, mai un crash silenzioso
- * del processo.
+ * `@Catch()` with no arguments: it catches EVERYTHING, not just
+ * HttpException — a domain error that escapes mapDomainErrorToHttpException
+ * (or a real bug) still becomes a 500 logged with its stack, never a silent
+ * process crash.
  */
 @Catch()
 export class HttpExceptionFilter implements ExceptionFilter {

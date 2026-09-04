@@ -2,16 +2,16 @@ import { and, desc, eq, notInArray } from 'drizzle-orm';
 import type { PageGroupVersion } from '@brisk/domain-core';
 import { type BriskTx, pageGroupVersions } from '@brisk/postgres-db';
 
-// Stessa policy hard-cap di savePageVersionTx — vedi il suo commento per il
-// perché (niente esenzione basata sull'età, pruning inline dopo ogni save).
+// The same hard-cap policy as savePageVersionTx — see its comment for why
+// (no age-based exemption, pruning inline after every save).
 const MAX_VERSIONS_TO_KEEP = 10;
 
 /**
- * Inserisce la versione della struttura CONDIVISA e pota le più vecchie
- * oltre `MAX_VERSIONS_TO_KEEP`, dentro la transazione `tx` del chiamante —
- * stesso pattern di savePageVersionTx, stream di versioning parallelo
- * (questo per PageGroup.content, l'altro — savePageTranslationVersionTx —
- * per il testo per-locale).
+ * Inserts the SHARED structure's version and prunes those beyond
+ * `MAX_VERSIONS_TO_KEEP`, inside the caller's `tx` transaction — the same
+ * pattern as savePageVersionTx, a parallel versioning stream (this one for
+ * PageGroup.content, the other — savePageTranslationVersionTx — for the
+ * per-locale text).
  */
 export async function savePageGroupVersionTx(
   tx: BriskTx,

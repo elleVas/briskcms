@@ -1,4 +1,5 @@
 ---
+import { resolveIconSvg } from '../lib/resolve-theme-icons';
 import {
   accordionItemPropsSchema,
   accordionPropsSchema,
@@ -66,11 +67,10 @@ interface Props {
   site: PublishedSite;
   ancestors: PublishedPageAncestor[];
   currentPageTitle: string;
-  // Solo le rotte di preview (apps/public-site/src/pages/preview/[pageId].astro)
-  // passano true — la rotta pubblicata reale non la passa mai, quindi
-  // `Wrapper` sotto resta sempre `Fragment` e l'HTML pubblicato è
-  // byte-identico a prima di questa prop esistere (vedi il piano
-  // dell'editor visuale, Giorno 2).
+  // Only the preview routes (apps/public-site/src/pages/preview/[pageId].astro)
+  // pass true — the real published route never does, so `Wrapper` below
+  // always stays `Fragment` and the published HTML is byte-identical to
+  // before this prop existed (see the visual editor plan, Day 2).
   editable?: boolean;
 }
 
@@ -217,29 +217,29 @@ interface BlockRenderContext {
 }
 
 /**
- * Un'entry per ciascuno dei 48 tipi di blocco — sostituisce il vecchio
- * dispatch `{block.type === 'X' && (<X .../>)}` ripetuto 48 volte
- * (git history di questo file). La variazione tra i tipi è tutta metadata
- * STATICA nota a scrittura del file (5 fatti indipendenti: ha
- * styleOverride? ha locale? ha figli-contenitore? ha ancestors/
- * currentPageTitle? ha translations/site?), non logica calcolata a
- * runtime — da qui la scelta di una tabella dati invece di preservare il
- * conditional. `extra` resta l'unica via di fuga, usata solo dai 2 tipi
- * (Breadcrumb, LanguageSwitcher) con props davvero uniche a loro soli.
+ * One entry for each of the 48 block types — replacing the old
+ * `{block.type === 'X' && (<X .../>)}` dispatch repeated 48 times (see this
+ * file's git history). The variation between types is entirely STATIC
+ * metadata known when the file is written (5 independent facts: does it
+ * have styleOverride? a locale? container children? ancestors/
+ * currentPageTitle? translations/site?), not logic computed at runtime —
+ * hence a data table rather than preserving the conditional. `extra`
+ * remains the one escape hatch, used only by the 2 types (Breadcrumb,
+ * LanguageSwitcher) with props genuinely unique to them.
  *
- * `<Component />` con `Component` una variabile risolta a runtime da
- * questa tabella è lo stesso pattern già usato da `Wrapper` poco sotto
- * (`editable ? 'div' : Fragment`) — non una novità per Astro in questo
- * progetto, solo applicata a un insieme di 48 invece che di 2.
+ * `<Component />` with `Component` a variable resolved at runtime from this
+ * table is the same pattern `Wrapper` just below already uses
+ * (`editable ? 'div' : Fragment`) — not something new for Astro in this
+ * project, just applied to a set of 48 rather than of 2.
  */
 interface BlockDispatchEntry {
   component: AstroComponentFactory;
   schema?: { parse: (props: unknown) => Record<string, unknown> };
   styleOverride?: boolean;
   locale?: boolean;
-  /** Ricorre in `block.children` — vero anche per Nav/NavDropdown/HamburgerMenu/Tab, che però NON ricevono `editable`/`hasChildren` (non sono contenitori "a slot" nello stesso senso). */
+  /** Recurses into `block.children` — true for Nav/NavDropdown/HamburgerMenu/Tab too, which however do NOT receive `editable`/`hasChildren` (they are not "slot" containers in the same sense). */
   recurseChildren?: boolean;
-  /** Solo i veri contenitori (Columns/Container/Accordion/ecc.) — passa anche `editable`+`hasChildren` oltre a ricorrere nei figli. */
+  /** Real containers only (Columns/Container/Accordion/etc.) — they also receive `editable`+`hasChildren` on top of recursing into their children. */
   containerProps?: boolean;
   extra?: (context: BlockRenderContext) => Record<string, unknown>;
 }
@@ -465,23 +465,23 @@ Object.assign(
   themeBlockRegistry(Object.keys(BLOCK_REGISTRY), themeName),
 );
 
-// `Astro.slots.has('default')` non basta per un contenitore appena creato
-// vuoto: canvas-editor-shell.tsx gli assegna `children: []` (array vuoto,
-// non `undefined`) — passarlo comunque come children (anche se `.map`
-// produce un array vuoto) fa risultare lo slot "riempito" per Astro,
-// anche se non renderizza nulla di visibile. Il conteggio reale va preso
-// dal `Block` stesso, non dallo slot.
+// `Astro.slots.has('default')` is not enough for a freshly created empty
+// container: canvas-editor-shell.tsx gives it `children: []` (an empty
+// array, not `undefined`) — passing that through as children (even though
+// `.map` produces an empty array) makes the slot count as "filled" for
+// Astro, even when it renders nothing visible. The real count has to come
+// from the `Block` itself, not from the slot.
 const hasChildren = Boolean(block.children?.length);
 
-// Un unico punto di wrapping per l'intero componente (non uno scattered
-// nei ~50 arm sotto) — un blocco è sempre esattamente uno di quegli arm,
-// mai più di uno, quindi avvolgere l'intero output equivale ad avvolgere
-// "il" blocco. `display:contents` evita per costruzione il bug "wrapper
-// reale rompe la griglia CSS" già preso una volta in questa codebase
-// (Column.astro, min-width:auto) — un wrapper vero (es. un <div> senza
-// display:contents) qui romperebbe il layout di Columns/FeatureGrid/ecc.
-// Conseguenza nota: getBoundingClientRect() su un nodo display:contents è
-// vuoto — preview-bridge-client.ts (letto da init-preview-bridge.ts) usa Range.selectNodeContents invece.
+// A single wrapping point for the whole component (not one scattered
+// through the ~50 arms below) — a block is always exactly one of those
+// arms, never more than one, so wrapping the entire output is equivalent to
+// wrapping "the" block. `display:contents` avoids by construction the "a
+// real wrapper breaks the CSS grid" bug this codebase already hit once
+// (Column.astro, min-width:auto) — a real wrapper here (a <div> without
+// display:contents, say) would break the layout of Columns/FeatureGrid/etc.
+// A known consequence: getBoundingClientRect() on a display:contents node
+// is empty — preview-bridge-client.ts (read by init-preview-bridge.ts) uses Range.selectNodeContents instead.
 const Wrapper = editable ? 'div' : Fragment;
 const wrapperProps = editable
   ? {
@@ -501,9 +501,21 @@ const context: BlockRenderContext = {
   currentPageTitle,
   editable,
 };
+const parsedProps: Record<string, unknown> = entry?.schema
+  ? entry.schema.parse(block.props)
+  : {};
+// Resolved here, once, and handed down as `iconSvg` — a block (core's or a
+// theme's override of it) never reaches into the icon registry itself.
+// That registry is apps-only (eager glob + lucide-static via
+// import.meta.resolve), so a theme override that had to call it could not
+// live outside this repo. Only blocks whose schema actually has an `icon`
+// field get the prop; for everything else this is a `typeof` check and
+// nothing more.
+const iconName =
+  typeof parsedProps['icon'] === 'string' ? parsedProps['icon'] : null;
 const dispatchProps = entry
   ? {
-      ...(entry.schema ? entry.schema.parse(block.props) : {}),
+      ...parsedProps,
       ...(entry.styleOverride ? { styleOverride: block.styleOverride } : {}),
       ...(entry.locale ? { locale } : {}),
       ...(entry.containerProps ? { editable, hasChildren } : {}),
@@ -514,6 +526,7 @@ const dispatchProps = entry
       // do today, for icon resolution) without this table needing a new
       // capability flag added per consumer.
       themeName,
+      ...(iconName ? { iconSvg: resolveIconSvg(iconName, themeName) } : {}),
       ...(entry.extra ? entry.extra(context) : {}),
     }
   : {};

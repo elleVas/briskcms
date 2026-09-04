@@ -4,11 +4,11 @@ export interface PageGroupProps {
   id: string;
   tenantId: string;
   siteId: string;
-  /** Gerarchia CONDIVISA tra tutte le lingue di questo gruppo — a differenza della vecchia `Page.parentId` (per-locale), non ha senso che due lingue della stessa pagina vivano in punti diversi dell'albero del sito. */
+  /** A hierarchy SHARED across every language of this group — unlike the old `Page.parentId` (which was per-locale), it makes no sense for two languages of the same page to live at different points in the site's tree. */
   parentId: string | null;
-  /** Posizione tra fratelli, condivisa per lo stesso motivo di `parentId` — vedi setPageOrder's own comment sul vecchio modello. */
+  /** The position among siblings, shared for the same reason as `parentId` — see setPageOrder's own comment about the old model. */
   order: number;
-  /** L'albero blocchi canonico. Per un campo marcato `translatable` (vedi FieldDescriptor in @brisk/block-registry), il valore qui è quello della lingua di default del sito — fallback quando una PageTranslation non ha ancora un proprio override (vedi mergeTranslatedContent). */
+  /** The canonical block tree. For a field marked `translatable` (see FieldDescriptor in @brisk/block-registry), the value here is the site's default language's — the fallback used until a PageTranslation has an override of its own (see mergeTranslatedContent). */
   content: PageContent;
   createdBy: string | null;
   createdAt: Date;
@@ -27,13 +27,13 @@ export interface CreatePageGroupProps {
 }
 
 /**
- * Entità pura, stesso stile di Page (di cui questa e PageTranslation
- * prendono il posto — vedi ADR-0017's superamento). Possiede la struttura
- * CONDIVISA tra tutte le lingue: aggiungere/rimuovere/riordinare un blocco
- * qui vale per ogni PageTranslation collegata (non "scollegata", vedi
- * PageTranslation.isDiverged) in un colpo solo — questo è l'intero punto
- * del redesign i18n a livello di campo, elimina il drift strutturale che
- * il vecchio modello poteva solo segnalare, mai prevenire.
+ * A pure entity, in the same style as Page (which this and PageTranslation
+ * take the place of — see ADR-0017's supersession). It owns the structure
+ * SHARED across every language: adding, removing or reordering a block here
+ * applies to every linked PageTranslation (not an "unlinked" one, see
+ * PageTranslation.isDiverged) in one go — which is the whole point of the
+ * field-level i18n redesign, eliminating the structural drift the old model
+ * could only report and never prevent.
  */
 export class PageGroup {
   private constructor(private props: PageGroupProps) {}
@@ -97,19 +97,19 @@ export class PageGroup {
     return this.props.updatedAt;
   }
 
-  /** Riassegna il genitore nella gerarchia — stessa disciplina di Page.setParent: convalida ciclo/stesso sito a carico del use-case (ha accesso al repository), l'entità pura non può risalire la catena da sola. */
+  /** Reassigns the parent in the hierarchy — the same discipline as Page.setParent: cycle and same-site validation belong to the use case (which has repository access), since the pure entity cannot walk the chain itself. */
   setParent(parentId: string | null, now: Date = new Date()): void {
     this.props.parentId = parentId;
     this.props.updatedAt = now;
   }
 
-  /** Riassegna la posizione tra fratelli — stessa disciplina di Page.reorder: la validità della permutazione è del use-case, non dell'entità. */
+  /** Reassigns the position among siblings — the same discipline as Page.reorder: the permutation's validity is the use case's business, not the entity's. */
   reorder(order: number, now: Date = new Date()): void {
     this.props.order = order;
     this.props.updatedAt = now;
   }
 
-  /** Aggiorna la struttura condivisa (draft) — propaga a tutte le PageTranslation collegate, mai a quelle scollegate (vedi PageTranslation.isDiverged). */
+  /** Updates the shared structure (the draft) — it propagates to every linked PageTranslation, never to unlinked ones (see PageTranslation.isDiverged). */
   saveContent(content: PageContent, now: Date = new Date()): void {
     this.props.content = content;
     this.props.updatedAt = now;

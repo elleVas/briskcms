@@ -1,16 +1,16 @@
 import type { BlockStyleOverride } from '@brisk/shared-types';
 
 /**
- * Sostituisce quello che prima era `sites.theme_tokens.blockStyles` (una
- * mappa JSONB sparsa sulla riga del sito) — una riga per (sito, tipo di
- * blocco) invece di una voce annidata in un blob (docs/adr/0022's
- * follow-up). Il suo proprio Port, non un metodo su SiteRepositoryPort:
- * stessa ragione di SearchPort — è una capacità/storage distinta, con
- * forma di query propria, non un attributo del sito come i campi di Tier
- * 1 (colori, font, script).
+ * Replaces what used to be `sites.theme_tokens.blockStyles` (a JSONB map
+ * spread across the site's row) — one row per (site, block type) instead of
+ * an entry nested in a blob (docs/adr/0022's follow-up). A Port of its own
+ * rather than a method on SiteRepositoryPort: the same reason as SearchPort
+ * — it is a distinct capability and storage, with a query shape of its own,
+ * not an attribute of the site the way the Tier 1 fields (colours, font,
+ * scripts) are.
  */
 export interface SiteThemeBlockStylesPort {
-  /** Tutti gli override attivi per il sito, per tipo di blocco — mappa vuota se nessuno è mai stato personalizzato. */
+  /** Every active override for the site, keyed by block type — an empty map when none has ever been customized. */
   listBySite(
     tenantId: string,
     siteId: string,

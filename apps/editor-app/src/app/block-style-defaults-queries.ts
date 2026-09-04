@@ -2,11 +2,10 @@ import { queryOptions } from '@tanstack/react-query';
 import { fetchBlockStyleDefaults } from '../lib/theme-api-client';
 
 /**
- * Il default risolto di ogni tipo di blocco dipende dai token del tema
- * attivo e non cambia mai a runtime per un dato tema — `staleTime:
- * Infinity`, con `themeName` nella chiave così un cambio tema rifà la
- * fetch da solo (docs/adr/0042). Stesso pattern di
- * themeIconsQueryOptions.
+ * Each block type's resolved default depends on the active theme's tokens
+ * and never changes at runtime for a given theme — `staleTime: Infinity`,
+ * with `themeName` in the key so a theme change refetches by itself
+ * (docs/adr/0042). The same pattern as themeIconsQueryOptions.
  */
 export function blockStyleDefaultsQueryOptions(themeName: string) {
   return queryOptions({
