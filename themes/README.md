@@ -348,6 +348,40 @@ renders the canonical `Block[]` content model (ADR-0007); it doesn't get
 to redefine what an existing block's `props` shape contains, only add
 block types with shapes of their own.
 
+## A theme that lives outside this repo
+
+Verified end to end on 2026-09-04 (docs/adr/0043): a theme authored in a
+directory outside the monorepo renders — its region, its scoped CSS, its
+tokens — from a real Docker image, with **no code changes and no new
+machinery**. No npm package, no Vite alias, no `import.meta.glob`
+`exhaustive: true`. The only rule is that the theme's directory is present
+at `themes/<name>/` when the build runs.
+
+**In development, symlink it:**
+
+```sh
+ln -s /path/to/my-theme themes/my-theme
+```
+
+Restart `apps/public-site` once (a brand-new directory is only seen when
+the eager globs re-evaluate at process start) and pick it in the editor's
+Style dialog.
+
+**For a deployment, it has to be a real directory** in the Docker build
+context — `COPY` preserves a symlink _as a symlink_, so the link dangles
+inside the image and the theme is silently unreadable (measured, not
+assumed). Copy, clone, or add it as a git submodule under `themes/<name>/`
+before `docker build`. Both images then pick it up on their own:
+`apps/public-site` bundles the whole theme, and `apps/api` copies its
+`theme.json` into `/app/themes/` so it appears in the editor's theme
+picker.
+
+**A theme that only renders needs no packaging at all** — no
+`package.json`, no `tsconfig*.json`, no Nx wiring. Those exist so a theme
+gets its own `typecheck`/`lint`/`test` targets in CI; a theme living in its
+own repo runs its own. What it does need is the two `env.d.ts` reference
+lines and its dependencies resolvable — see "What a theme imports" above.
+
 ## Checklist for a new theme
 
 1. Copy `themes/classic/` as a starting point — including its

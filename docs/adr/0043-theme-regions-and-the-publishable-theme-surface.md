@@ -147,9 +147,28 @@ The remaining costs, accepted knowingly:
   `libs/block-registry/src/lib/core-block-types.spec.ts` asserts the two
   match and fails naming exactly what to add or remove.
 
-What this does **not** yet do is prove a theme rendering from a directory
-outside the repo. Every import now resolves by package name rather than by
-relative path, which was the blocker; choosing the entry mechanism (a
-build-time copy, an npm package reached with `exhaustive: true`, or a Vite
-alias onto an `external-themes/` directory) is deliberately left to be
-decided against a real attempt rather than on paper.
+Finally, this was verified where it counts. A theme authored entirely
+outside the monorepo renders — its region, its scoped CSS, its tokens —
+from a real Docker image running as a real container. **No entry mechanism
+had to be built.** The three candidates weighed on paper (a build-time
+copy, an npm package reached with `import.meta.glob`'s `exhaustive: true`,
+a Vite alias onto an `external-themes/` directory) all turned out to be
+unnecessary: the existing globs already accept any directory sitting at
+`themes/<name>/`, symlinks included, once the imports resolve by package
+name instead of by relative path — which is what the rest of this ADR did.
+
+So the mechanism is just "the directory is there": symlink it in
+development, and have it be a real directory in the Docker build context,
+because `COPY` preserves a symlink as a symlink and the link then dangles
+inside the image (measured with an isolated build, not assumed). A theme
+that only needs to render requires no `package.json`, no `tsconfig`, no Nx
+wiring at all — that scaffolding exists to give a theme in _this_ repo its
+own CI targets.
+
+Trying it also found a real defect the design work had not: the API's
+theme catalog filtered directory entries with `isDirectory()`, which is
+false for a symlink, since `readdir` reports on the link rather than its
+target. An external theme therefore rendered correctly but never appeared
+in the editor's theme picker, and `PATCH /sites/:id/theme-package`
+rejected its name. Fixed, with a regression test that symlinks a theme in
+from outside the scanned directory.
