@@ -19,7 +19,9 @@ type Props = ButtonProps & { styleOverride?: BlockStyleOverride };
 
 const { label, linkType, page, url, variant, styleOverride } = Astro.props;
 const href =
-  linkType === 'page' && page ? localePath(page.locale, page.slug) : url;
+  linkType === 'page' && page?.locale && page?.slug
+    ? localePath(page.locale, page.slug)
+    : url;
 
 const instanceStyle = buildBlockInstanceStyle(styleOverride);
 ---

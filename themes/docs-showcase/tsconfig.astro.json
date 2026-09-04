@@ -1,0 +1,18 @@
+{
+  // Separato dal tsconfig.json che mantiene `nx sync` (stile "solution",
+  // con i project reference): `astro check --tsconfig` permette ai due di
+  // convivere senza litigare. Serve perché senza i tipi di Astro un file
+  // .astro di un tema non ha alcun namespace JSX, e se il file importa
+  // qualcosa da apps/public-site ci si infila quello di React — che è come
+  // un bug di arità reale è rimasto invisibile fino al 2026-09-04.
+  "extends": "astro/tsconfigs/strict",
+  "include": [
+    "**/*.astro",
+    "env.d.ts",
+    // Temporaneo: PageLayout.astro legge `Astro.locals.cspNonce`, dichiarato
+    // dall'env.d.ts di public-site — è vero che gira dentro il contesto di
+    // quell'app. Va via da sé quando l'override della shell sparisce.
+    "../../apps/public-site/src/env.d.ts"
+  ],
+  "exclude": ["dist", "out-tsc", "coverage", "node_modules"]
+}

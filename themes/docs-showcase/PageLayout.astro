@@ -17,14 +17,14 @@ import {
 	buildBlockStyleOverridesCss,
 	DEFAULT_THEME_TOKENS,
 	type Block,
+	type PublishedPageAncestor,
+	type PublishedPageTranslation,
+	type PublishedSite,
 	type SeoMeta,
 } from '../../libs/shared-types/src/index';
 import {
 	listPublishedPageTree,
 	type PageTreeNodeDto,
-	type PublishedPageAncestorDto,
-	type PublishedPageTranslationDto,
-	type PublishedSiteDto,
 } from '../../apps/public-site/src/lib/public-api-client';
 import BlockRenderer from '../../apps/public-site/src/components/BlockRenderer.astro';
 import CookieConsent from '../../apps/public-site/src/components/CookieConsent.astro';
@@ -52,12 +52,12 @@ import '../../apps/public-site/src/styles/visibility.css';
 interface Props {
 	seoMeta: SeoMeta;
 	locale: string;
-	translations: PublishedPageTranslationDto[];
-	site: PublishedSiteDto;
+	translations: PublishedPageTranslation[];
+	site: PublishedSite;
 	header: Block[] | null;
 	footer: Block[] | null;
 	headerSticky: boolean;
-	ancestors: PublishedPageAncestorDto[];
+	ancestors: PublishedPageAncestor[];
 	// Solo la rotta di preview lo passa (vedi il piano dell'editor visuale,
 	// Giorno 2) — stessa prop di core PageLayout.astro, che questo file
 	// sovrascrive per intero (docs/adr/0021's full-layout escalation), va

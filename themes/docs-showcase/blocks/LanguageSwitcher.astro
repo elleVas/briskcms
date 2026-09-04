@@ -57,7 +57,7 @@ const links = site.enabledLocales
   .filter((link): link is LocaleLink => link !== null);
 
 const i18n = new Translator(locale);
-const globeSvg = resolveIconSvg('globe');
+const globeSvg = resolveIconSvg('globe', site.themeName);
 
 // Exactly 2 enabled locales (this site's real config, and the common
 // case) renders as a single toggle: current locale + globe, clicking

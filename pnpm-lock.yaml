@@ -914,6 +914,10 @@ importers:
       zod:
         specifier: ^4.4.3
         version: 4.4.3
+    devDependencies:
+      astro:
+        specifier: ^7.2.9
+        version: 7.2.9(@emnapi/core@1.11.3)(@emnapi/runtime@1.11.3)(@types/node@26.4.0)(jiti@2.7.0)(less@4.8.1)(sass-embedded@1.103.1)(sass@1.103.1)(terser@5.51.2)(tsx@4.23.12)(yaml@2.9.0)
 
   themes/docs-showcase:
     dependencies:
@@ -929,6 +933,10 @@ importers:
       zod:
         specifier: ^4.4.3
         version: 4.4.3
+    devDependencies:
+      astro:
+        specifier: ^7.2.9
+        version: 7.2.9(@emnapi/core@1.11.3)(@emnapi/runtime@1.11.3)(@types/node@26.4.0)(jiti@2.7.0)(less@4.8.1)(sass-embedded@1.103.1)(sass@1.103.1)(terser@5.51.2)(tsx@4.23.12)(yaml@2.9.0)
 
 packages:
 

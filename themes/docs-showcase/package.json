@@ -6,12 +6,23 @@
   "nx": {
     "tags": [
       "app"
-    ]
+    ],
+    "targets": {
+      "typecheck": {
+        "command": "tsc --build tsconfig.json --emitDeclarationOnly && astro check --tsconfig tsconfig.astro.json",
+        "options": {
+          "cwd": "themes/docs-showcase"
+        }
+      }
+    }
   },
   "dependencies": {
     "@brisk/block-registry": "workspace:*",
     "@brisk/block-sdk": "workspace:*",
     "@brisk/shared-types": "workspace:*",
     "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "astro": "^7.2.9"
   }
 }
