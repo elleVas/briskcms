@@ -30,7 +30,7 @@ describe('SessionAuthAdapter (integration)', () => {
       .values({ name: `Integration Tenant ${randomUUID()}` })
       .returning({ id: tenants.id });
     tenantId = tenant.id;
-    adapter = new SessionAuthAdapter(db, tenantId);
+    adapter = new SessionAuthAdapter(db, async () => tenantId);
   });
 
   afterAll(async () => {

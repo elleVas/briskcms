@@ -4,6 +4,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
 import { DashboardModule } from './dashboard/dashboard.module';
+import { DeploymentTenantModule } from './deployment-tenant.module';
 import { FormsModule } from './forms/forms.module';
 import { HealthModule } from './health/health.module';
 import { LegalDocumentsModule } from './legal-documents/legal-documents.module';
@@ -20,6 +21,7 @@ import { UsersModule } from './users/users.module';
 
 @Module({
   imports: [
+    DeploymentTenantModule,
     ScheduleModule.forRoot(),
     AuthModule,
     DashboardModule,

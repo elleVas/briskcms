@@ -37,9 +37,12 @@ import type {
 } from '@brisk/ports';
 import { ZodValidationPipe } from '../zod-validation.pipe';
 import {
+  DEPLOYMENT_TENANT_RESOLVER,
+  DeploymentTenantResolver,
+} from '../deployment-tenant.resolver';
+import {
   AUTH_PORT,
   CAPTCHA_PORT,
-  DEFAULT_TENANT_ID,
   EDITOR_APP_URL,
   EMAIL_PORT,
   USER_REPOSITORY,
@@ -74,7 +77,8 @@ export class AuthController {
     private readonly verificationTokenPort: VerificationTokenPort,
     @Inject(EMAIL_PORT) private readonly emailPort: EmailPort,
     @Inject(CAPTCHA_PORT) private readonly captchaPort: CaptchaPort,
-    @Inject(DEFAULT_TENANT_ID) private readonly defaultTenantId: string,
+    @Inject(DEPLOYMENT_TENANT_RESOLVER)
+    private readonly tenant: DeploymentTenantResolver,
     @Inject(EDITOR_APP_URL) private readonly editorAppUrl: string,
   ) {}
 
@@ -94,7 +98,7 @@ export class AuthController {
           captchaPort: this.captchaPort,
         },
         {
-          tenantId: this.defaultTenantId,
+          tenantId: await this.tenant.require(),
           email: body.email,
           password: body.password,
           captchaToken: body.captchaToken,
@@ -205,7 +209,7 @@ export class AuthController {
           captchaPort: this.captchaPort,
         },
         {
-          tenantId: this.defaultTenantId,
+          tenantId: await this.tenant.require(),
           email: body.email,
           resetUrlBase: this.editorAppUrl,
           captchaToken: body.captchaToken,

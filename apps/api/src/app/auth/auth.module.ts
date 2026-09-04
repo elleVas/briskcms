@@ -8,11 +8,15 @@ import { VerificationTokenAdapter } from '@brisk/verification-token-adapter';
 import { SmtpEmailAdapter } from '@brisk/smtp-email-adapter';
 import { TurnstileCaptchaAdapter } from '@brisk/turnstile-captcha';
 import { DATABASE, DatabaseModule } from '../database.module';
+import {
+  DEPLOYMENT_TENANT_RESOLVER,
+  DeploymentTenantResolver,
+} from '../deployment-tenant.resolver';
+import { DeploymentTenantModule } from '../deployment-tenant.module';
 import { AuthController } from './auth.controller';
 import {
   AUTH_PORT,
   CAPTCHA_PORT,
-  DEFAULT_TENANT_ID,
   EDITOR_APP_URL,
   EMAIL_PORT,
   TENANT_CONTEXT,
@@ -26,6 +30,7 @@ import { SessionTenantContextAdapter } from './session-tenant-context.adapter';
 
 @Module({
   imports: [
+    DeploymentTenantModule,
     DatabaseModule,
     // Only applied to specific routes (via @UseGuards(ThrottlerGuard))
     // — not registered as a global guard, so the rest of the API is
@@ -34,10 +39,6 @@ import { SessionTenantContextAdapter } from './session-tenant-context.adapter';
   ],
   controllers: [AuthController],
   providers: [
-    {
-      provide: DEFAULT_TENANT_ID,
-      useFactory: (): string => requireEnv('DEFAULT_TENANT_ID'),
-    },
     {
       provide: EDITOR_APP_URL,
       useFactory: (): string => requireEnv('EDITOR_APP_URL'),
@@ -49,15 +50,15 @@ import { SessionTenantContextAdapter } from './session-tenant-context.adapter';
     },
     {
       provide: AUTH_PORT,
-      useFactory: (db: BriskDb, tenantId: string) =>
-        new SessionAuthAdapter(db, tenantId),
-      inject: [DATABASE, DEFAULT_TENANT_ID],
+      useFactory: (db: BriskDb, tenant: DeploymentTenantResolver) =>
+        new SessionAuthAdapter(db, () => tenant.require()),
+      inject: [DATABASE, DEPLOYMENT_TENANT_RESOLVER],
     },
     {
       provide: VERIFICATION_TOKEN_PORT,
-      useFactory: (db: BriskDb, tenantId: string) =>
-        new VerificationTokenAdapter(db, tenantId),
-      inject: [DATABASE, DEFAULT_TENANT_ID],
+      useFactory: (db: BriskDb, tenant: DeploymentTenantResolver) =>
+        new VerificationTokenAdapter(db, () => tenant.require()),
+      inject: [DATABASE, DEPLOYMENT_TENANT_RESOLVER],
     },
     {
       provide: EMAIL_PORT,

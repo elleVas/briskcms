@@ -28,13 +28,19 @@ describe('AuthModule', () => {
     expect(moduleRef.get(AuthController)).toBeInstanceOf(AuthController);
   });
 
-  it('fails fast when DEFAULT_TENANT_ID is missing', async () => {
+  it('builds without DEFAULT_TENANT_ID, for a deployment not set up yet', async () => {
+    // It used to fail fast here, which was right while the tenant id could
+    // only ever come from the environment. Since the first-run wizard it
+    // cannot: a self-hoster who has never completed setup has no tenant to
+    // name, and the API still has to boot far enough to serve the wizard
+    // itself. DeploymentTenantResolver takes over, falling back to the
+    // single row in `tenants` — see its own tests for that behaviour.
     delete process.env.DEFAULT_TENANT_ID;
 
-    await expect(
-      Test.createTestingModule({ imports: [AuthModule] }).compile(),
-    ).rejects.toThrow(
-      /Missing required environment variable: DEFAULT_TENANT_ID/,
-    );
+    const moduleRef = await Test.createTestingModule({
+      imports: [AuthModule],
+    }).compile();
+
+    expect(moduleRef.get(AuthController)).toBeInstanceOf(AuthController);
   });
 });

@@ -8,7 +8,7 @@ describe('SessionAuthAdapter password hashing', () => {
   // touch the db.
   const adapter = new SessionAuthAdapter(
     createDb('postgres://user:pass@localhost:5432/db'),
-    'unused-in-this-suite',
+    async () => 'unused-in-this-suite',
   );
 
   it('hashes a password into an argon2id hash', async () => {

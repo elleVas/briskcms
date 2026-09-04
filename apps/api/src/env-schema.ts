@@ -23,7 +23,11 @@ import { z } from 'zod';
  */
 const apiEnvBaseSchema = z.object({
   POSTGRES_APP_PASSWORD: z.string().min(1),
-  DEFAULT_TENANT_ID: z.string().uuid(),
+  // Optional since the first-run wizard: a self-hosted deployment that has
+  // never been set up has no tenant to name here, and DeploymentTenantResolver
+  // falls back to the single row in `tenants`. Still honoured when present —
+  // development and the integration tests both pin it.
+  DEFAULT_TENANT_ID: z.string().uuid().optional(),
   PREVIEW_TOKEN_SECRET: z.string().min(1),
   EDITOR_APP_URL: z.string().url(),
   SMTP_HOST: z.string().min(1),

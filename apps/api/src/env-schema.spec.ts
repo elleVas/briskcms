@@ -21,8 +21,17 @@ describe('validateApiEnv', () => {
 
   it('reports every missing variable in one error, not just the first', () => {
     expect(() => validateApiEnv({})).toThrow(
-      /DEFAULT_TENANT_ID[\s\S]*PREVIEW_TOKEN_SECRET[\s\S]*EDITOR_APP_URL/,
+      /POSTGRES_APP_PASSWORD[\s\S]*PREVIEW_TOKEN_SECRET[\s\S]*EDITOR_APP_URL/,
     );
+  });
+
+  it('accepts a missing DEFAULT_TENANT_ID', () => {
+    // Optional since the first-run wizard: a deployment that has never been
+    // set up has no tenant to name, and DeploymentTenantResolver falls back
+    // to the single row in `tenants`.
+    const { DEFAULT_TENANT_ID: _omitted, ...withoutTenantId } = VALID_ENV;
+
+    expect(() => validateApiEnv(withoutTenantId)).not.toThrow();
   });
 
   it('rejects a malformed DEFAULT_TENANT_ID (not a uuid)', () => {
