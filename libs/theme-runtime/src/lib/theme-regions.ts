@@ -1,5 +1,24 @@
 import type { Translator } from './i18n';
-import type { PageTreeNodeDto } from './public-api-client';
+
+/**
+ * One published page as a region receives it. It lives here rather than in
+ * apps/public-site's API client because it is part of the contract a theme
+ * codes against: `ThemeRegionProps.pageTree()` resolves to a list of these,
+ * and a theme built outside this repo has no way to import from the app.
+ */
+export interface PageTreeNodeDto {
+  id: string;
+  parentId: string | null;
+  slug: string;
+  title: string;
+  ancestorSlugs: string[];
+  // Sibling-scoped manual position (drag-to-reorder in the pages list) —
+  // the sort key a theme's sidebar should use; createdAt below is only a
+  // legacy tiebreak for pages that predate manual ordering (see
+  // list-published-page-tree.use-case.ts).
+  order: number;
+  createdAt: string;
+}
 
 /**
  * The successor to docs/adr/0042's full-shell override — the three regions

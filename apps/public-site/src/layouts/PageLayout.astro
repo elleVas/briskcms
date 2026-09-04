@@ -18,10 +18,10 @@ import {
 } from '../lib/consent-script-blocking';
 import { injectScriptNonce } from '../lib/content-security-policy';
 import { editorAppUrl } from '../lib/editor-app-url';
-import { localeDirection, localePath } from '../lib/locale-path';
+import { localeDirection, localePath } from '@brisk/theme-runtime';
 import { buildSchemaOrgGraph } from '../lib/schema-org';
 import { resolveThemeFont } from '../lib/theme-font';
-import { Translator } from '../lib/i18n';
+import { Translator } from '@brisk/theme-runtime';
 import { parseRootCustomProperties } from '../lib/resolve-theme-block-style-defaults-helpers';
 import {
 	getThemeCssRaw,
@@ -34,7 +34,7 @@ import type {
 	ThemeFooterProps,
 	ThemeHeaderProps,
 	ThemeRegionRoute,
-} from '../lib/theme-regions';
+} from '@brisk/theme-runtime';
 import { listPublishedPageTree } from '../lib/public-api-client';
 import DefaultHeader from '../components/regions/DefaultHeader.astro';
 import DefaultFooter from '../components/regions/DefaultFooter.astro';

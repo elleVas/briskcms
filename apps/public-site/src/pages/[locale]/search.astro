@@ -4,8 +4,8 @@ import {
   getPublishedSiteChrome,
   searchPublishedPages,
 } from '../../lib/public-api-client';
-import { localePath } from '../../lib/locale-path';
-import { Translator } from '../../lib/i18n';
+import { localePath } from '@brisk/theme-runtime';
+import { Translator } from '@brisk/theme-runtime';
 import { buildContentSecurityPolicy } from '../../lib/content-security-policy';
 import PageLayout from '../../layouts/PageLayout.astro';
 import ErrorPageShell from '../../components/ErrorPageShell.astro';

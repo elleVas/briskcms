@@ -37,6 +37,7 @@ not any site currently renders with it.
 ```
 themes/<name>/
   theme.css           # required — design tokens
+  env.d.ts            # required — two /// reference lines, see below
   theme.json          # required — manifest
   fonts.css           # optional — self-hosted webfont, see below
   icons/*.svg         # optional — icon set (docs/adr/0023)
@@ -151,7 +152,7 @@ already-rendered blocks as a slot**:
 
 ```astro
 ---
-import type { ThemeHeaderProps } from '../../../apps/public-site/src/lib/theme-regions';
+import type { ThemeHeaderProps } from '@brisk/theme-runtime';
 export type Props = ThemeHeaderProps;
 const { sticky, class: className } = Astro.props;
 ---
@@ -187,7 +188,7 @@ for `is:global` to get around it.
 ### The props
 
 Every region receives `ThemeRegionProps` (see
-`apps/public-site/src/lib/theme-regions.ts`, which is the authority):
+`libs/theme-runtime`'s `theme-regions.ts`, which is the authority):
 
 - **`locale`**, **`currentPath`** (`Astro.url.pathname`, no trailing slash)
   and **`i18n`** (core's translator, already bound to `locale`).
@@ -299,6 +300,43 @@ instead. That route (like its four siblings) takes an optional
 `?theme=<name>` since docs/adr/0042 — without it, it answers for a
 fallback theme rather than erroring.
 
+## What a theme imports
+
+Everything a theme codes against comes from packages, never from a relative
+path into `apps/public-site` — that coupling is what used to make a theme
+impossible to develop outside this monorepo, and there is now none of it
+left in either core theme:
+
+| Package                | What you get                                                                                                         |
+| ---------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| `@brisk/theme-runtime` | `localePath`/`localePathFromAncestors`/`localeDirection`, the `Translator`, the `regions/` props, `PageTreeNodeDto`. |
+| `@brisk/shared-types`  | Every block's props type and the published-site/page shapes.                                                         |
+| `@brisk/block-sdk`     | `defineBlock`, the field types, and `CORE_BLOCK_TYPES` for your own collision check.                                 |
+
+Your `env.d.ts` needs exactly two lines — the second is what types
+`Astro.locals` for you:
+
+```ts
+/// <reference types="astro/client" />
+/// <reference types="@brisk/theme-runtime/locals" />
+```
+
+### Icons
+
+Two cases, and the split is _who chose the icon_:
+
+- **The editor's user chose it**, on a block that has an icon field
+  (`Feature`, `NavLink`): core resolves it and passes it to your override
+  as `iconSvg`. Just render it — `<span set:html={iconSvg} />`.
+- **Your theme wants one of its own**, on a block that has no icon field
+  at all (docs-showcase puts a globe in its `LanguageSwitcher` override):
+  `Astro.locals.resolveIcon('globe', site.themeName)`.
+
+Never import the icon registry. It cannot be a package — it is an eager
+glob over every theme's `icons/` plus `lucide-static` resolved through
+`import.meta.resolve`, all of it the app's — which is exactly why core
+hands it to you instead.
+
 ## The boundary you can't cross
 
 A theme can restyle or rewrite anything in the rendering layer, and
@@ -318,7 +356,9 @@ block types with shapes of their own.
    `blocks/blocks.spec.ts`, even if you're not adding any `.block.ts`
    files yet (see ADR-0041) — it's what makes this theme's own files
    real, `nx run-many`-visible `typecheck`/`lint`/`test` targets.
-2. `pnpm install` — new workspace packages need it to link.
+2. `pnpm install` — new workspace packages need it to link. Check your
+   `env.d.ts` carries both `/// reference` lines above; without the second
+   one `Astro.locals.resolveIcon` is untyped and `astro check` will say so.
 3. Rewrite `theme.css`'s `:root` values — every token listed above,
    `--font-sans-value` included.
 4. Decide `allowStyleOverrides` in `theme.json` — `true` unless you have

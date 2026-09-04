@@ -17,9 +17,9 @@
     }
   },
   "dependencies": {
-    "@brisk/block-registry": "workspace:*",
     "@brisk/block-sdk": "workspace:*",
     "@brisk/shared-types": "workspace:*",
+    "@brisk/theme-runtime": "workspace:*",
     "zod": "^4.4.3"
   },
   "devDependencies": {

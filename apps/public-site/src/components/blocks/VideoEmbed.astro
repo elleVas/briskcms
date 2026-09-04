@@ -2,7 +2,7 @@
 import type { VideoEmbedProps } from '@brisk/shared-types';
 import ConsentGatedEmbed from '../ConsentGatedEmbed.astro';
 import { parseVideoEmbedUrl } from '../../lib/video-embed';
-import { Translator } from '../../lib/i18n';
+import { Translator } from '@brisk/theme-runtime';
 
 type Props = VideoEmbedProps & { locale: string };
 

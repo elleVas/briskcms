@@ -1,4 +1,5 @@
 ---
+import { resolveIconSvg } from '../lib/resolve-theme-icons';
 import {
   accordionItemPropsSchema,
   accordionPropsSchema,
@@ -501,9 +502,21 @@ const context: BlockRenderContext = {
   currentPageTitle,
   editable,
 };
+const parsedProps: Record<string, unknown> = entry?.schema
+  ? entry.schema.parse(block.props)
+  : {};
+// Resolved here, once, and handed down as `iconSvg` — a block (core's or a
+// theme's override of it) never reaches into the icon registry itself.
+// That registry is apps-only (eager glob + lucide-static via
+// import.meta.resolve), so a theme override that had to call it could not
+// live outside this repo. Only blocks whose schema actually has an `icon`
+// field get the prop; for everything else this is a `typeof` check and
+// nothing more.
+const iconName =
+  typeof parsedProps['icon'] === 'string' ? parsedProps['icon'] : null;
 const dispatchProps = entry
   ? {
-      ...(entry.schema ? entry.schema.parse(block.props) : {}),
+      ...parsedProps,
       ...(entry.styleOverride ? { styleOverride: block.styleOverride } : {}),
       ...(entry.locale ? { locale } : {}),
       ...(entry.containerProps ? { editable, hasChildren } : {}),
@@ -514,6 +527,7 @@ const dispatchProps = entry
       // do today, for icon resolution) without this table needing a new
       // capability flag added per consumer.
       themeName,
+      ...(iconName ? { iconSvg: resolveIconSvg(iconName, themeName) } : {}),
       ...(entry.extra ? entry.extra(context) : {}),
     }
   : {};

@@ -13,10 +13,9 @@ import type {
   LanguageSwitcherProps,
   PublishedPageTranslation,
   PublishedSite,
-} from '../../../libs/shared-types/src/index';
-import { localePath } from '../../../apps/public-site/src/lib/locale-path';
-import { Translator } from '../../../apps/public-site/src/lib/i18n';
-import { resolveIconSvg } from '../../../apps/public-site/src/lib/resolve-theme-icons';
+} from '@brisk/shared-types';
+import { localePath } from '@brisk/theme-runtime';
+import { Translator } from '@brisk/theme-runtime';
 
 interface Props extends LanguageSwitcherProps {
   locale: string;
@@ -57,7 +56,7 @@ const links = site.enabledLocales
   .filter((link): link is LocaleLink => link !== null);
 
 const i18n = new Translator(locale);
-const globeSvg = resolveIconSvg('globe', site.themeName);
+const globeSvg = Astro.locals.resolveIcon('globe', site.themeName);
 
 // Exactly 2 enabled locales (this site's real config, and the common
 // case) renders as a single toggle: current locale + globe, clicking

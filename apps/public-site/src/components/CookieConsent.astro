@@ -7,8 +7,8 @@
 // to add to header/footer. Only rendered at all when
 // `settings.enabled` is true — see both PageLayout.astro call sites.
 import type { CookieBannerSettings } from '@brisk/shared-types';
-import { localePath } from '../lib/locale-path';
-import { Translator, type TranslationKey } from '../lib/i18n';
+import { localePath } from '@brisk/theme-runtime';
+import { Translator, type TranslationKey } from '@brisk/theme-runtime';
 import { COOKIE_CONSENT_DISMISS_SCRIPT } from './cookie-consent-dismiss-script';
 import { COOKIE_CONSENT_PANEL_SCRIPT } from './cookie-consent-panel-script';
 

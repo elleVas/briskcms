@@ -1,3 +1,4 @@
+import type { PageTreeNodeDto } from '@brisk/theme-runtime';
 import { requireEnv } from '@brisk/env-config';
 import {
   publishedPageSchema,
@@ -154,20 +155,6 @@ export async function getPublishedSiteChrome(
   }
   const chrome: PublishedSiteChromeDto = await res.json();
   return { ...chrome, site: publishedSiteSchema.parse(chrome.site) };
-}
-
-export interface PageTreeNodeDto {
-  id: string;
-  parentId: string | null;
-  slug: string;
-  title: string;
-  ancestorSlugs: string[];
-  // Sibling-scoped manual position (drag-to-reorder in the pages list) —
-  // the sort key a theme's sidebar should use; createdAt below is only a
-  // legacy tiebreak for pages that predate manual ordering (see
-  // list-published-page-tree.use-case.ts).
-  order: number;
-  createdAt: string;
 }
 
 // Built for a theme's own sidebar/tree navigation (docs-showcase,

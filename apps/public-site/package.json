@@ -33,6 +33,7 @@
     "@brisk/block-sdk": "workspace:*",
     "@brisk/env-config": "workspace:*",
     "@brisk/shared-types": "workspace:*",
+    "@brisk/theme-runtime": "workspace:*",
     "@tiptap/core": "^3.30.2",
     "@tiptap/extension-document": "^3.30.5",
     "@tiptap/extension-paragraph": "^3.30.2",

@@ -101,6 +101,9 @@
     },
     {
       "path": "./libs/adapters/filesystem-theme-catalog"
+    },
+    {
+      "path": "./libs/theme-runtime"
     }
   ],
   "compilerOptions": {}

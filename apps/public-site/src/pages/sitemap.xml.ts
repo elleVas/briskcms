@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro';
-import { localePathFromAncestors } from '../lib/locale-path';
+import { localePathFromAncestors } from '@brisk/theme-runtime';
 import {
   listPublishedPagesForSitemap,
   type SitemapEntryDto,

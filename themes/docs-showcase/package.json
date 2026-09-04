@@ -17,11 +17,11 @@
     }
   },
   "dependencies": {
-    "@brisk/block-registry": "workspace:*",
     "@brisk/block-sdk": "workspace:*",
     "@brisk/shared-types": "workspace:*",
-    "zod": "^4.4.3",
-    "@fontsource-variable/sora": "^5.3.0"
+    "@brisk/theme-runtime": "workspace:*",
+    "@fontsource-variable/sora": "^5.3.0",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "astro": "^7.2.9"
