@@ -7,7 +7,7 @@ import {
   type Type,
 } from '@nestjs/common';
 import {
-  FormNotFoundError,
+  DeploymentAlreadySetUpError,
   InvalidCaptchaError,
   InvalidFormSubmissionError,
   InvalidThemeNameError,
@@ -28,6 +28,7 @@ import {
   UserAlreadyActiveError,
   UserEmailAlreadyExistsError,
   UserNotFoundError,
+  FormNotFoundError,
 } from '@brisk/domain-core';
 import { DeploymentNotSetUpError } from './deployment-tenant.resolver';
 
@@ -55,6 +56,10 @@ const DOMAIN_ERROR_MAPPINGS: Array<[Type<Error>, DomainErrorFactory]> = [
   // is a second try/catch in every public controller, which is exactly the
   // duplication this table replaced.
   [DeploymentNotSetUpError, (m) => new ServiceUnavailableException(m)],
+  // 409: the wizard has already been run. Not 403 — nothing about the
+  // caller is wrong, the deployment's state is simply past the point where
+  // this request means anything.
+  [DeploymentAlreadySetUpError, (m) => new ConflictException(m)],
   [PageGroupNotFoundError, (m) => new NotFoundException(m)],
   [PageGroupVersionNotFoundError, (m) => new NotFoundException(m)],
   [PageTranslationNotFoundError, (m) => new NotFoundException(m)],
