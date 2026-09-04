@@ -4,7 +4,9 @@
     "error": "Si è verificato un errore.",
     "retry": "Riprova",
     "cancel": "Annulla",
-    "delete": "Elimina"
+    "delete": "Elimina",
+    "yes": "Sì",
+    "no": "No"
   },
   "auth": {
     "login": {
@@ -558,6 +560,21 @@
         "time": "Ora",
         "file": "Caricamento file"
       }
+    },
+    "submissions": {
+      "title": "Iscrizioni ricevute",
+      "empty": "Ancora nulla. Le risposte a questo modulo compariranno qui.",
+      "count_one": "{{count}} risposta",
+      "count_other": "{{count}} risposte",
+      "exportCsv": "Esporta CSV",
+      "removedField": "non è più nel modulo",
+      "noAnswer": "—",
+      "loadError": "Non è stato possibile caricare le risposte.",
+      "previousPage": "Precedente",
+      "nextPage": "Successiva",
+      "expand": "Mostra tutte le risposte",
+      "collapse": "Nascondi le risposte",
+      "downloadFile": "Scarica"
     }
   },
   "openingHours": {

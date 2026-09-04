@@ -4,7 +4,9 @@
     "error": "Something went wrong.",
     "retry": "Retry",
     "cancel": "Cancel",
-    "delete": "Delete"
+    "delete": "Delete",
+    "yes": "Yes",
+    "no": "No"
   },
   "auth": {
     "login": {
@@ -558,6 +560,21 @@
         "time": "Time",
         "file": "File upload"
       }
+    },
+    "submissions": {
+      "title": "Submissions",
+      "empty": "Nothing yet. Answers to this form will show up here.",
+      "count_one": "{{count}} submission",
+      "count_other": "{{count}} submissions",
+      "exportCsv": "Export CSV",
+      "removedField": "no longer in this form",
+      "noAnswer": "—",
+      "loadError": "Could not load the submissions.",
+      "previousPage": "Previous",
+      "nextPage": "Next",
+      "expand": "Show all answers",
+      "collapse": "Hide answers",
+      "downloadFile": "Download"
     }
   },
   "openingHours": {

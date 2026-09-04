@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { FormSubmissionsList } from './form-submissions-list';
 import { Link } from '@tanstack/react-router';
 import { Plus, Trash2 } from 'lucide-react';
 import type { FormField, FormStep } from '@brisk/shared-types';
@@ -215,6 +216,9 @@ export function FormEditorView({ formId }: FormEditorViewProps) {
             />
           ))
         )}
+      </div>
+      <div className="border-border mt-2 border-t pt-6">
+        <FormSubmissionsList formId={formId} />
       </div>
     </div>
   );
