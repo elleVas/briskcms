@@ -615,6 +615,20 @@ export class InMemoryFormSubmissionRepository implements FormSubmissionRepositor
     };
   }
 
+  async countByForms(
+    _tenantId: string,
+    formIds: string[],
+  ): Promise<Record<string, number>> {
+    const counts: Record<string, number> = {};
+    for (const submission of this.submissions) {
+      const formId = submission.toProps().formId;
+      if (formId && formIds.includes(formId)) {
+        counts[formId] = (counts[formId] ?? 0) + 1;
+      }
+    }
+    return counts;
+  }
+
   async listAllByForm(
     _tenantId: string,
     formId: string,

@@ -1,4 +1,4 @@
-import { and, count, desc, eq } from 'drizzle-orm';
+import { and, count, desc, eq, inArray } from 'drizzle-orm';
 import { FormSubmission, type FormSubmissionProps } from '@brisk/domain-core';
 import type {
   FormSubmissionRepositoryPort,
@@ -69,6 +69,33 @@ export class DrizzleFormSubmissionRepository implements FormSubmissionRepository
         tx.select({ value: count() }).from(formSubmissions).where(where),
       ]);
       return { items: rows.map(toEntity), total: totals?.value ?? 0 };
+    });
+  }
+
+  async countByForms(
+    tenantId: string,
+    formIds: string[],
+  ): Promise<Record<string, number>> {
+    // `inArray` with an empty list generates `in ()`, which Postgres
+    // rejects as a syntax error — and an empty page has nothing to count
+    // anyway.
+    if (formIds.length === 0) return {};
+
+    return withTenant(this.db, tenantId, async (tx) => {
+      const rows = await tx
+        .select({ formId: formSubmissions.formId, total: count() })
+        .from(formSubmissions)
+        .where(
+          and(
+            eq(formSubmissions.tenantId, tenantId),
+            inArray(formSubmissions.formId, formIds),
+          ),
+        )
+        .groupBy(formSubmissions.formId);
+
+      return Object.fromEntries(
+        rows.flatMap((row) => (row.formId ? [[row.formId, row.total]] : [])),
+      );
     });
   }
 

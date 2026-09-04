@@ -18,9 +18,31 @@ export interface DashboardRecentActivityItem {
   updatedAt: Date;
 }
 
+/**
+ * One form that recently received something. Deliberately carries no part
+ * of the payload: the dashboard is the first screen after login and the
+ * one most likely to be left open on a monitor, and a visitor's name and
+ * email do not belong on it. The count and the link are enough to decide
+ * whether to go and read them.
+ */
+export interface DashboardRecentSubmissionItem {
+  formId: string;
+  formName: string;
+  receivedAt: Date;
+}
+
+export interface DashboardFormStats {
+  /** Every submission this site has ever received, across all its forms. */
+  totalCount: number;
+  /** How many arrived in the last 7 days — the number that says "is anything happening". */
+  recentCount: number;
+  recent: DashboardRecentSubmissionItem[];
+}
+
 export interface DashboardStats {
   pages: DashboardPageStats;
   media: DashboardMediaStats;
+  forms: DashboardFormStats;
   recentActivity: DashboardRecentActivityItem[];
 }
 

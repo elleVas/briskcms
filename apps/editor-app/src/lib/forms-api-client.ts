@@ -11,6 +11,13 @@ export interface FormDto {
   notificationEmail: string | null;
   createdAt: string;
   updatedAt: string;
+  /**
+   * How many submissions this form has received. Sent with the list rather
+   * than fetched per row: the list is where someone finds out that answers
+   * arrived at all, and without it they would have to open every form to
+   * know.
+   */
+  submissionCount: number;
 }
 
 export interface PaginatedForms {

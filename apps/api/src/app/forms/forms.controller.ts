@@ -79,8 +79,19 @@ export class FormsController {
         pageSize: query.pageSize,
       },
     );
+    // One extra query for the whole page rather than one per row: the list
+    // is where someone finds out that answers came in at all, and without
+    // a number here they have to open every form to know.
+    const counts = await this.formSubmissionRepository.countByForms(
+      this.tenantContext.getCurrentTenantId(),
+      result.items.map((form) => form.id),
+    );
+
     return {
-      items: result.items.map((form) => this.toDto(form)),
+      items: result.items.map((form) => ({
+        ...this.toDto(form),
+        submissionCount: counts[form.id] ?? 0,
+      })),
       total: result.total,
     };
   }

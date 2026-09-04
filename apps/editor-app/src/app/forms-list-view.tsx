@@ -125,6 +125,17 @@ export function FormsListView({
                     <span className="font-medium">{f.name}</span>
                   </span>
                   <span className="flex items-center gap-3 text-muted-foreground">
+                    <span
+                      className={cn(
+                        f.submissionCount > 0 && 'text-foreground font-medium',
+                      )}
+                    >
+                      {f.submissionCount > 0
+                        ? t('forms.list.submissionCount', {
+                            count: f.submissionCount,
+                          })
+                        : t('forms.list.noSubmissions')}
+                    </span>
                     <span>
                       {t('forms.list.fieldCount', { count: f.fields.length })}
                     </span>

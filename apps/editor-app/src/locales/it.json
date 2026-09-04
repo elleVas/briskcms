@@ -103,6 +103,14 @@
       "published": {
         "title": "Pubblicate",
         "description": "Live sul sito pubblico in questo momento"
+      },
+      "forms": {
+        "title": "Moduli",
+        "description_one": "{{count}} risposta ricevuta",
+        "description_other": "{{count}} risposte ricevute",
+        "recentLabel": "{{count}} negli ultimi 7 giorni",
+        "empty": "Nessuna risposta finora.",
+        "viewAll": "Leggile"
       }
     },
     "recentActivity": {
@@ -501,7 +509,10 @@
       "actions": {
         "edit": "Modifica modulo",
         "delete": "Elimina"
-      }
+      },
+      "submissionCount_one": "{{count}} risposta",
+      "submissionCount_other": "{{count}} risposte",
+      "noSubmissions": "nessuna risposta"
     },
     "newFormDialog": {
       "title": "Nuovo modulo",
@@ -575,6 +586,10 @@
       "expand": "Mostra tutte le risposte",
       "collapse": "Nascondi le risposte",
       "downloadFile": "Scarica"
+    },
+    "tabs": {
+      "structure": "Struttura",
+      "submissions": "Risposte"
     }
   },
   "openingHours": {

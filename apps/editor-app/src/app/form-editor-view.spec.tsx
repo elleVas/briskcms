@@ -43,6 +43,7 @@ const sampleForm: FormDto = {
   notificationEmail: null,
   createdAt: '',
   updatedAt: '',
+  submissionCount: 0,
 };
 
 function renderView(form: FormDto = sampleForm) {

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { cn } from '../lib/utils';
 import { FormSubmissionsList } from './form-submissions-list';
 import { Link } from '@tanstack/react-router';
 import { Plus, Trash2 } from 'lucide-react';
@@ -18,6 +19,11 @@ export interface FormEditorViewProps {
 export function FormEditorView({ formId }: FormEditorViewProps) {
   const { t } = useTranslation();
   const { form, save, isSaving } = useFormEditor(formId);
+  const [tab, setTab] = useState<'structure' | 'submissions'>('structure');
+  // Read off the form the editor already loaded rather than fetched again:
+  // the tab label only needs a number, and the list itself fetches the
+  // real data when it is opened.
+  const submissionCount = form?.submissionCount ?? 0;
 
   // Lazy-initialized from the route-loaded form; safe because the route
   // remounts this component on every formId change (see
@@ -128,98 +134,143 @@ export function FormEditorView({ formId }: FormEditorViewProps) {
           {isSaving ? t('forms.editor.saving') : t('forms.editor.save')}
         </Button>
       </div>
-      {saved && (
-        <p className="text-sm text-muted-foreground">
-          {t('forms.editor.saved')}
-        </p>
-      )}
-      {error && (
-        <p role="alert" className="text-sm text-destructive">
-          {error}
-        </p>
-      )}
-      <div className="flex max-w-md flex-col gap-2">
-        <Label htmlFor="form-name">{t('forms.editor.nameLabel')}</Label>
-        <Input
-          id="form-name"
-          value={name}
-          onChange={(event) => setName(event.target.value)}
-        />
+      {/* Two panels rather than one long page: editing what a form asks
+          and reading what people answered are different jobs, done at
+          different times. The count sits in the label so the answers are
+          discoverable from here without opening the tab. */}
+      <div role="tablist" className="border-border flex gap-1 border-b">
+        {(['structure', 'submissions'] as const).map((id) => (
+          <button
+            key={id}
+            role="tab"
+            type="button"
+            aria-selected={tab === id}
+            onClick={() => setTab(id)}
+            className={cn(
+              '-mb-px border-b-2 px-3 py-2 text-sm',
+              tab === id
+                ? 'border-primary text-foreground font-medium'
+                : 'text-muted-foreground border-transparent hover:text-foreground',
+            )}
+          >
+            {t(`forms.tabs.${id}`)}
+            {id === 'submissions' && submissionCount > 0 && (
+              <span className="text-muted-foreground ml-1.5 tabular-nums">
+                ({submissionCount})
+              </span>
+            )}
+          </button>
+        ))}
       </div>
-      <div className="flex max-w-md flex-col gap-2">
-        <Label htmlFor="form-notification-email">
-          {t('forms.editor.notificationEmailLabel')}
-        </Label>
-        <Input
-          id="form-notification-email"
-          type="email"
-          value={notificationEmail}
-          onChange={(event) => setNotificationEmail(event.target.value)}
-          placeholder={t('forms.editor.notificationEmailPlaceholder')}
-        />
-      </div>
-      <div className="flex flex-col gap-3">
-        <div className="flex items-center justify-between">
-          <Label>{t('forms.editor.stepsLabel')}</Label>
-          <Button type="button" variant="outline" size="sm" onClick={addStep}>
-            <Plus className="size-3.5" />
-            {t('forms.editor.addStep')}
-          </Button>
+      {tab === 'submissions' ? (
+        <div role="tabpanel">
+          <FormSubmissionsList formId={formId} />
         </div>
-        <p className="text-sm text-muted-foreground">
-          {steps.length === 0
-            ? t('forms.editor.noSteps')
-            : t('forms.editor.stepsHint')}
-        </p>
-        {steps.length > 0 &&
-          steps.map((step, index) => (
-            <div key={step.id} className="flex items-center gap-2">
-              <Input
-                aria-label={t('forms.editor.stepTitlePlaceholder')}
-                value={step.title}
-                placeholder={t('forms.editor.stepTitlePlaceholder')}
-                onChange={(event) => updateStepTitle(index, event.target.value)}
-              />
-              <IconButton
-                label={t('forms.editor.removeStep')}
-                onClick={() => removeStep(index)}
-              >
-                <Trash2 />
-              </IconButton>
-            </div>
-          ))}
-      </div>
-      <div className="flex flex-col gap-3">
-        <div className="flex items-center justify-between">
-          <Label>{t('forms.editor.fieldsLabel')}</Label>
-          <Button type="button" variant="outline" size="sm" onClick={addField}>
-            <Plus className="size-3.5" />
-            {t('forms.editor.addField')}
-          </Button>
-        </div>
-        {fields.length === 0 ? (
-          <p className="text-sm text-muted-foreground">
-            {t('forms.editor.noFields')}
-          </p>
-        ) : (
-          fields.map((field, index) => (
-            <FormFieldEditorRow
-              key={field.id}
-              field={field}
-              onChange={(next) => updateField(index, next)}
-              onRemove={() => removeField(index)}
-              onMoveUp={() => moveField(index, -1)}
-              onMoveDown={() => moveField(index, 1)}
-              canMoveUp={index > 0}
-              canMoveDown={index < fields.length - 1}
-              steps={steps}
+      ) : (
+        <div role="tabpanel" className="flex flex-col gap-4">
+          {saved && (
+            <p className="text-sm text-muted-foreground">
+              {t('forms.editor.saved')}
+            </p>
+          )}
+          {error && (
+            <p role="alert" className="text-sm text-destructive">
+              {error}
+            </p>
+          )}
+          <div className="flex max-w-md flex-col gap-2">
+            <Label htmlFor="form-name">{t('forms.editor.nameLabel')}</Label>
+            <Input
+              id="form-name"
+              value={name}
+              onChange={(event) => setName(event.target.value)}
             />
-          ))
-        )}
-      </div>
-      <div className="border-border mt-2 border-t pt-6">
-        <FormSubmissionsList formId={formId} />
-      </div>
+          </div>
+          <div className="flex max-w-md flex-col gap-2">
+            <Label htmlFor="form-notification-email">
+              {t('forms.editor.notificationEmailLabel')}
+            </Label>
+            <Input
+              id="form-notification-email"
+              type="email"
+              value={notificationEmail}
+              onChange={(event) => setNotificationEmail(event.target.value)}
+              placeholder={t('forms.editor.notificationEmailPlaceholder')}
+            />
+          </div>
+          <div className="flex flex-col gap-3">
+            <div className="flex items-center justify-between">
+              <Label>{t('forms.editor.stepsLabel')}</Label>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={addStep}
+              >
+                <Plus className="size-3.5" />
+                {t('forms.editor.addStep')}
+              </Button>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              {steps.length === 0
+                ? t('forms.editor.noSteps')
+                : t('forms.editor.stepsHint')}
+            </p>
+            {steps.length > 0 &&
+              steps.map((step, index) => (
+                <div key={step.id} className="flex items-center gap-2">
+                  <Input
+                    aria-label={t('forms.editor.stepTitlePlaceholder')}
+                    value={step.title}
+                    placeholder={t('forms.editor.stepTitlePlaceholder')}
+                    onChange={(event) =>
+                      updateStepTitle(index, event.target.value)
+                    }
+                  />
+                  <IconButton
+                    label={t('forms.editor.removeStep')}
+                    onClick={() => removeStep(index)}
+                  >
+                    <Trash2 />
+                  </IconButton>
+                </div>
+              ))}
+          </div>
+          <div className="flex flex-col gap-3">
+            <div className="flex items-center justify-between">
+              <Label>{t('forms.editor.fieldsLabel')}</Label>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={addField}
+              >
+                <Plus className="size-3.5" />
+                {t('forms.editor.addField')}
+              </Button>
+            </div>
+            {fields.length === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                {t('forms.editor.noFields')}
+              </p>
+            ) : (
+              fields.map((field, index) => (
+                <FormFieldEditorRow
+                  key={field.id}
+                  field={field}
+                  onChange={(next) => updateField(index, next)}
+                  onRemove={() => removeField(index)}
+                  onMoveUp={() => moveField(index, -1)}
+                  onMoveDown={() => moveField(index, 1)}
+                  canMoveUp={index > 0}
+                  canMoveDown={index < fields.length - 1}
+                  steps={steps}
+                />
+              ))
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

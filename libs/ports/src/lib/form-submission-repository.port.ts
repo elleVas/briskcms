@@ -19,6 +19,20 @@ export interface FormSubmissionRepositoryPort {
   ): Promise<PaginatedResult<FormSubmission>>;
 
   /**
+   * How many submissions each of these forms has, keyed by form id. A form
+   * with none is absent from the map rather than present as zero — the
+   * caller is merging into a list it already has, and an absent key reads
+   * the same as a zero there.
+   *
+   * Takes several ids at once because the forms list needs the count for
+   * a whole page of forms, and asking per form would be one query per row.
+   */
+  countByForms(
+    tenantId: string,
+    formIds: string[],
+  ): Promise<Record<string, number>>;
+
+  /**
    * Every submission for a form, unpaginated — the export.
    *
    * Deliberately separate from `listByForm` rather than "the same call

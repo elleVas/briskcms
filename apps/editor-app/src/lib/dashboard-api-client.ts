@@ -3,6 +3,12 @@ import { request } from './http-client';
 export interface DashboardStatsDto {
   pages: { publishedCount: number; draftCount: number };
   media: { count: number; totalSizeBytes: number };
+  forms: {
+    totalCount: number;
+    recentCount: number;
+    /** No payload: see DashboardRecentSubmissionItem's own comment on why. */
+    recent: { formId: string; formName: string; receivedAt: string }[];
+  };
   recentActivity: {
     pageGroupId: string;
     pageTranslationId: string;

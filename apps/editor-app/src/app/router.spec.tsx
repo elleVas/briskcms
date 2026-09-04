@@ -219,6 +219,7 @@ const sampleForm: FormDto = {
   notificationEmail: null,
   createdAt: '',
   updatedAt: '',
+  submissionCount: 0,
 };
 
 const sampleUser: UserDto = {

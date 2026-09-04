@@ -103,6 +103,14 @@
       "published": {
         "title": "Published",
         "description": "Live on the public site right now"
+      },
+      "forms": {
+        "title": "Forms",
+        "description_one": "{{count}} submission received",
+        "description_other": "{{count}} submissions received",
+        "recentLabel": "{{count}} in the last 7 days",
+        "empty": "No submissions yet.",
+        "viewAll": "Read them"
       }
     },
     "recentActivity": {
@@ -501,7 +509,10 @@
       "actions": {
         "edit": "Edit form",
         "delete": "Delete"
-      }
+      },
+      "submissionCount_one": "{{count}} submission",
+      "submissionCount_other": "{{count}} submissions",
+      "noSubmissions": "no submissions"
     },
     "newFormDialog": {
       "title": "New form",
@@ -575,6 +586,10 @@
       "expand": "Show all answers",
       "collapse": "Hide answers",
       "downloadFile": "Download"
+    },
+    "tabs": {
+      "structure": "Structure",
+      "submissions": "Submissions"
     }
   },
   "openingHours": {
