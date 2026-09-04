@@ -4,8 +4,10 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
 import { DashboardModule } from './dashboard/dashboard.module';
+import { DeploymentTenantModule } from './deployment-tenant.module';
 import { FormsModule } from './forms/forms.module';
 import { HealthModule } from './health/health.module';
+import { SetupModule } from './setup/setup.module';
 import { LegalDocumentsModule } from './legal-documents/legal-documents.module';
 import { MaintenanceModule } from './maintenance/maintenance.module';
 import { MediaModule } from './media/media.module';
@@ -20,6 +22,8 @@ import { UsersModule } from './users/users.module';
 
 @Module({
   imports: [
+    DeploymentTenantModule,
+    SetupModule,
     ScheduleModule.forRoot(),
     AuthModule,
     DashboardModule,

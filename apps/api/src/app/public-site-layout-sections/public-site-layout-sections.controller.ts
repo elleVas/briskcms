@@ -7,6 +7,10 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
+import {
+  DEPLOYMENT_TENANT_RESOLVER,
+  DeploymentTenantResolver,
+} from '../deployment-tenant.resolver';
 import { ThrottlerGuard } from '@nestjs/throttler';
 import { getPreviewSiteLayoutSectionById } from '@brisk/application';
 import type {
@@ -19,7 +23,6 @@ import {
   publicSiteLayoutSectionPreviewQuerySchema,
 } from './public-site-layout-sections.schemas';
 import {
-  DEFAULT_TENANT_ID,
   PREVIEW_TOKEN_PORT,
   SITE_LAYOUT_SECTION_REPOSITORY,
 } from './public-site-layout-sections.tokens';
@@ -33,7 +36,8 @@ export class PublicSiteLayoutSectionsController {
   constructor(
     @Inject(SITE_LAYOUT_SECTION_REPOSITORY)
     private readonly siteLayoutSectionRepository: SiteLayoutSectionRepositoryPort,
-    @Inject(DEFAULT_TENANT_ID) private readonly defaultTenantId: string,
+    @Inject(DEPLOYMENT_TENANT_RESOLVER)
+    private readonly tenant: DeploymentTenantResolver,
     @Inject(PREVIEW_TOKEN_PORT)
     private readonly previewTokenPort: PreviewTokenPort,
   ) {}
@@ -50,7 +54,7 @@ export class PublicSiteLayoutSectionsController {
         previewTokenPort: this.previewTokenPort,
       },
       {
-        tenantId: this.defaultTenantId,
+        tenantId: await this.tenant.require(),
         sectionId: id,
         token: query.token,
       },

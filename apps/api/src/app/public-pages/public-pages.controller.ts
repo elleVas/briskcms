@@ -7,6 +7,10 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
+import {
+  DEPLOYMENT_TENANT_RESOLVER,
+  DeploymentTenantResolver,
+} from '../deployment-tenant.resolver';
 import { ThrottlerGuard } from '@nestjs/throttler';
 import {
   getPreviewPageById,
@@ -42,7 +46,6 @@ import {
   publicPagesTreeQuerySchema,
 } from './public-pages.schemas';
 import {
-  DEFAULT_TENANT_ID,
   PAGE_GROUP_REPOSITORY,
   PAGE_TRANSLATION_REPOSITORY,
   PREVIEW_TOKEN_PORT,
@@ -71,7 +74,8 @@ export class PublicPagesController {
     private readonly siteThemeBlockStylesRepository: SiteThemeBlockStylesPort,
     @Inject(SEARCH_REPOSITORY)
     private readonly searchPort: SearchPort,
-    @Inject(DEFAULT_TENANT_ID) private readonly defaultTenantId: string,
+    @Inject(DEPLOYMENT_TENANT_RESOLVER)
+    private readonly tenant: DeploymentTenantResolver,
     @Inject(PREVIEW_TOKEN_PORT)
     private readonly previewTokenPort: PreviewTokenPort,
   ) {}
@@ -90,7 +94,7 @@ export class PublicPagesController {
         siteThemeBlockStylesRepository: this.siteThemeBlockStylesRepository,
       },
       {
-        tenantId: this.defaultTenantId,
+        tenantId: await this.tenant.require(),
         domain: query.domain,
         locale: query.locale,
         segments: query.path,
@@ -114,7 +118,7 @@ export class PublicPagesController {
           pageTranslationRepository: this.pageTranslationRepository,
         },
         {
-          tenantId: this.defaultTenantId,
+          tenantId: await this.tenant.require(),
           domain: query.domain,
           locale: query.locale,
           segments: query.path,
@@ -141,7 +145,7 @@ export class PublicPagesController {
         previewTokenPort: this.previewTokenPort,
       },
       {
-        tenantId: this.defaultTenantId,
+        tenantId: await this.tenant.require(),
         pageId: id,
         token: query.token,
       },
@@ -168,7 +172,7 @@ export class PublicPagesController {
         pageTranslationRepository: this.pageTranslationRepository,
       },
       {
-        tenantId: this.defaultTenantId,
+        tenantId: await this.tenant.require(),
         domain: query.domain,
         locale: query.locale,
       },
@@ -196,7 +200,7 @@ export class PublicPagesController {
         pageTranslationRepository: this.pageTranslationRepository,
       },
       {
-        tenantId: this.defaultTenantId,
+        tenantId: await this.tenant.require(),
         domain: query.domain,
         locale: query.locale,
       },
@@ -215,7 +219,7 @@ export class PublicPagesController {
     const result = await searchPages(
       { siteRepository: this.siteRepository, searchPort: this.searchPort },
       {
-        tenantId: this.defaultTenantId,
+        tenantId: await this.tenant.require(),
         domain: query.domain,
         locale: query.locale,
         query: query.q,
@@ -238,7 +242,7 @@ export class PublicPagesController {
         pageGroupRepository: this.pageGroupRepository,
         pageTranslationRepository: this.pageTranslationRepository,
       },
-      { tenantId: this.defaultTenantId, domain: query.domain },
+      { tenantId: await this.tenant.require(), domain: query.domain },
     );
     // An unrecognized domain renders as an empty, indexing-allowed
     // sitemap/robots response, not a 404 — see listPublishedPagesForSitemap's

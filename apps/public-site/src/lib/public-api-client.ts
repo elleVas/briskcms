@@ -354,3 +354,26 @@ export async function subscribeNewsletter(
   }
   return { ok: false, status: res.status };
 }
+
+/**
+ * Whether this deployment has been through its first-run wizard. Only the
+ * 500 page asks: it is where every failing route ends up, and "nobody has
+ * set this up yet" is the one failure there with a remedy worth naming
+ * instead of a generic apology.
+ *
+ * Resolves to `true` when the API cannot be reached at all — a backend
+ * that is down is a different problem, and claiming the site is
+ * unconfigured would send the reader off to fix the wrong thing.
+ */
+export async function hasDeploymentBeenSetUp(): Promise<boolean> {
+  try {
+    const res = await fetch(`${apiUrl()}/setup/status`, {
+      signal: AbortSignal.timeout(DEFAULT_TIMEOUT_MS),
+    });
+    if (!res.ok) return true;
+    const body: { hasBeenSetUp: boolean } = await res.json();
+    return body.hasBeenSetUp;
+  } catch {
+    return true;
+  }
+}

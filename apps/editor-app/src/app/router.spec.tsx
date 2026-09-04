@@ -9,6 +9,7 @@ import {
 import { TooltipProvider } from '../components/ui/tooltip';
 import * as authApi from '../lib/auth-api-client';
 import * as dashboardApi from '../lib/dashboard-api-client';
+import * as setupApi from '../lib/setup-api-client';
 import * as formsApi from '../lib/forms-api-client';
 import * as mediaApi from '../lib/media-api-client';
 import * as pageGroupsApi from '../lib/page-groups-api-client';
@@ -29,6 +30,20 @@ import { DEFAULT_COOKIE_BANNER_SETTINGS } from '@brisk/shared-types';
 import { routeTree } from '../routeTree.gen';
 import { createTestQueryClient } from '../test-query-client';
 import { ToastProvider } from './toast-provider';
+
+// The login route asks whether this deployment has been set up before it
+// will render a form (a fresh install has no account to log into, so it
+// sends people to the wizard instead). Every test in this file is about an
+// installation that exists.
+vi.mock('../lib/setup-api-client', async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import('../lib/setup-api-client')>();
+  return {
+    ...actual,
+    fetchSetupStatus: vi.fn(),
+    bootstrapDeployment: vi.fn(),
+  };
+});
 
 vi.mock('../lib/auth-api-client', async (importOriginal) => {
   const actual =
@@ -238,6 +253,12 @@ function renderApp(initialPath: string) {
 describe('router', () => {
   beforeEach(() => {
     vi.mocked(sitesApi.getSite).mockResolvedValue(sampleSite);
+    // Reset per test rather than once in the mock factory: the one test
+    // that flips it to false would otherwise leave every test after it
+    // looking at a wizard instead of a login form.
+    vi.mocked(setupApi.fetchSetupStatus).mockResolvedValue({
+      hasBeenSetUp: true,
+    });
   });
 
   afterEach(() => {
@@ -250,6 +271,32 @@ describe('router', () => {
     );
 
     renderApp('/');
+
+    expect(await screen.findByRole('heading', { name: 'Accedi' })).toBeTruthy();
+  });
+
+  it('sends a visitor to the wizard when nothing has been set up yet', async () => {
+    // The state a self-hoster is in seconds after `docker compose up`:
+    // there is no account, so the login form would be a door with no key.
+    vi.mocked(setupApi.fetchSetupStatus).mockResolvedValue({
+      hasBeenSetUp: false,
+    });
+    vi.mocked(dashboardApi.getDashboardStats).mockRejectedValue(
+      new ApiError(401, { message: 'Unauthorized' }),
+    );
+
+    renderApp('/');
+
+    expect(
+      await screen.findByRole('heading', { name: 'Benvenuto in Brisk' }),
+    ).toBeTruthy();
+  });
+
+  it('sends a visitor away from the wizard once setup has happened', async () => {
+    // The other half of the pair: the route stops existing in practice the
+    // moment it has done its job, so a bookmarked /setup cannot be used to
+    // reopen it.
+    renderApp('/setup');
 
     expect(await screen.findByRole('heading', { name: 'Accedi' })).toBeTruthy();
   });

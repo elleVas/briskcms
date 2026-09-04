@@ -24,18 +24,24 @@ function toSession(row: typeof sessions.$inferSelect, token: string): Session {
  * docs/adr/0010-session-based-auth-foundations.md). Connects as `brisk_app`
  * — see docs/adr/0002-non-superuser-role-for-rls-enforcement.md.
  *
- * `bootstrapTenantId` exists only because `validateSession`/`invalidateSession`
- * look a session up by its (globally unique) token hash *before* the tenant
- * is known — RLS needs `app.current_tenant_id` set for any row to be
+ * `resolveBootstrapTenantId` exists only because
+ * `validateSession`/`invalidateSession` look a session up by its (globally
+ * unique) token hash *before* the tenant is known — RLS needs `app.current_tenant_id` set for any row to be
  * visible at all, even one matched by a globally-unique key. Safe under the
  * current single-tenant-per-deployment MVP model (every session row already
  * belongs to this one tenant); see the ADR for what changes if Brisk ever
  * becomes genuinely multi-tenant.
+ *
+ * It is a function rather than a plain id because a self-hosted deployment
+ * may not know its tenant when this adapter is constructed: the first-run
+ * wizard creates it. Resolving per call, rather than at construction, is
+ * what lets the same process serve the wizard and then serve sessions
+ * without a restart. See apps/api's DeploymentTenantResolver.
  */
 export class SessionAuthAdapter implements AuthPort {
   constructor(
     private readonly db: BriskDb,
-    private readonly bootstrapTenantId: string,
+    private readonly resolveBootstrapTenantId: () => Promise<string>,
   ) {}
 
   async hashPassword(plainText: string): Promise<string> {
@@ -68,12 +74,15 @@ export class SessionAuthAdapter implements AuthPort {
   async validateSession(token: string): Promise<Session | null> {
     const tokenHash = hashOpaqueToken(token);
 
-    const rows = await withTenant(this.db, this.bootstrapTenantId, (tx) =>
-      tx
-        .select()
-        .from(sessions)
-        .where(eq(sessions.tokenHash, tokenHash))
-        .limit(1),
+    const rows = await withTenant(
+      this.db,
+      await this.resolveBootstrapTenantId(),
+      (tx) =>
+        tx
+          .select()
+          .from(sessions)
+          .where(eq(sessions.tokenHash, tokenHash))
+          .limit(1),
     );
     const row = rows[0];
     if (!row) {
@@ -101,7 +110,7 @@ export class SessionAuthAdapter implements AuthPort {
 
   async invalidateSession(token: string): Promise<void> {
     const tokenHash = hashOpaqueToken(token);
-    await withTenant(this.db, this.bootstrapTenantId, (tx) =>
+    await withTenant(this.db, await this.resolveBootstrapTenantId(), (tx) =>
       tx.delete(sessions).where(eq(sessions.tokenHash, tokenHash)),
     );
   }

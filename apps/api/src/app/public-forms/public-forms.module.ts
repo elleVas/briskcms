@@ -9,13 +9,13 @@ import {
 import { SmtpEmailAdapter } from '@brisk/smtp-email-adapter';
 import { TurnstileCaptchaAdapter } from '@brisk/turnstile-captcha';
 import { DATABASE, DatabaseModule } from '../database.module';
+import { DeploymentTenantModule } from '../deployment-tenant.module';
 import { createAttachmentStorage } from '../attachment-storage.factory';
 import { createNewsletterPort } from '../newsletter-port.factory';
 import { PublicFormsController } from './public-forms.controller';
 import {
   ATTACHMENT_STORAGE,
   CAPTCHA_PORT,
-  DEFAULT_TENANT_ID,
   EMAIL_PORT,
   FORM_REPOSITORY,
   FORM_SUBMISSION_REPOSITORY,
@@ -24,6 +24,7 @@ import {
 
 @Module({
   imports: [
+    DeploymentTenantModule,
     DatabaseModule,
     // A write endpoint (unlike PublicPagesController's reads) is exactly
     // what a spam bot wants to hit repeatedly — stricter than page-view
@@ -33,14 +34,6 @@ import {
   ],
   controllers: [PublicFormsController],
   providers: [
-    // Its own DEFAULT_TENANT_ID/EMAIL_PORT providers rather than importing
-    // AuthModule: same reasoning as PublicPagesModule — no business sharing
-    // AuthModule's session/throttler wiring just to get the pieces this
-    // module actually needs.
-    {
-      provide: DEFAULT_TENANT_ID,
-      useFactory: (): string => requireEnv('DEFAULT_TENANT_ID'),
-    },
     {
       provide: FORM_REPOSITORY,
       useFactory: (db: BriskDb) => new DrizzleFormRepository(db),

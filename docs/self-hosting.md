@@ -27,33 +27,52 @@ routing, or you already have your own reverse proxy, you can replace
 ## First-time setup
 
 1. Clone this repository (or download a release) onto the server.
-2. `cp .env.prod.example .env`, fill in every `CHANGE ME` value — see
-   that file's own comments. Generate `DEFAULT_TENANT_ID`/
-   `DEFAULT_SITE_ID` with `uuidgen` (any UUID works, they just need to be
-   unique to this deployment) and `PREVIEW_TOKEN_SECRET` with
+2. `cp .env.prod.example .env`, fill in every `CHANGE ME` value — see that
+   file's own comments. Generate `PREVIEW_TOKEN_SECRET` with
    `openssl rand -hex 32`.
 3. Build and start the database + migration step first:
    ```sh
    docker compose -f docker-compose.prod.yml up -d postgres
    docker compose -f docker-compose.prod.yml up migrate
    ```
-4. Seed the tenant/site and first admin account — one-off, not a
-   persistent service, safe to re-run (idempotent):
-   ```sh
-   docker compose -f docker-compose.prod.yml run --rm migrate \
-     pnpm --filter @brisk/postgres-db exec tsx scripts/seed-default-tenant.ts
-   docker compose -f docker-compose.prod.yml run --rm migrate \
-     pnpm --filter @brisk/postgres-db exec tsx scripts/seed-default-user.ts
-   ```
-5. Start everything else:
+4. Start everything else:
    ```sh
    docker compose -f docker-compose.prod.yml up -d --build
    ```
    The first run builds all three app images locally (a few minutes);
    `--build` isn't needed on later restarts.
-6. Once DNS has propagated, `https://admin.<domain>` should show the
-   login screen. Log in with `DEFAULT_USER_EMAIL`/`DEFAULT_USER_PASSWORD`
-   from your `.env`.
+5. Once DNS has propagated, open `https://admin.<domain>`. A deployment
+   nobody has set up yet opens on the **first-run wizard** rather than a
+   login screen: give it your site's name, its default language, and the
+   email and password for your administrator account. You are logged in as
+   soon as it finishes.
+
+That is the whole setup. There is no seed step and no admin password in
+your `.env` — the wizard runs once per installation and refuses to run
+again afterwards, so there is nothing to clean up either.
+
+Your site has no domain attached yet, which is deliberate: the wizard runs
+before anyone can know the public hostname, and it may not even resolve at
+that point. Set it in **Site settings** in the editor — until you do, the
+public site has no site to match a request against.
+
+### If you would rather not use the wizard
+
+The two seed scripts still exist, for development and for anyone
+automating a deployment:
+
+```sh
+docker compose -f docker-compose.prod.yml run --rm migrate \
+  pnpm --filter @brisk/postgres-db exec tsx scripts/seed-default-tenant.ts
+docker compose -f docker-compose.prod.yml run --rm migrate \
+  pnpm --filter @brisk/postgres-db exec tsx scripts/seed-default-user.ts
+```
+
+They need `DEFAULT_TENANT_ID`, `DEFAULT_SITE_ID`, `DEFAULT_USER_EMAIL` and
+`DEFAULT_USER_PASSWORD` set (generate the two ids with `uuidgen`). Be aware
+of what that costs: the admin password sits in plaintext in a file on the
+server, and stays there. Change it through "Forgot password?" afterwards if
+you go this route.
 
 ## Choosing a theme
 

@@ -26,14 +26,20 @@ function toVerificationToken(
  * but for one-time tokens — connects as `brisk_app`, see
  * docs/adr/0002-non-superuser-role-for-rls-enforcement.md.
  *
- * `bootstrapTenantId`: same RLS chicken-and-egg as SessionAuthAdapter —
+ * `resolveBootstrapTenantId`: same RLS chicken-and-egg as SessionAuthAdapter —
  * `consumeToken` looks a token up by its globally-unique hash before the
  * tenant is known. See docs/adr/0010-session-based-auth-foundations.md.
+ *
+ * It is a function rather than a plain id because a self-hosted deployment
+ * may not know its tenant when this adapter is constructed: the first-run
+ * wizard creates it. Resolving per call, rather than at construction, is
+ * what lets the same process serve the wizard and then serve sessions
+ * without a restart. See apps/api's DeploymentTenantResolver.
  */
 export class VerificationTokenAdapter implements VerificationTokenPort {
   constructor(
     private readonly db: BriskDb,
-    private readonly bootstrapTenantId: string,
+    private readonly resolveBootstrapTenantId: () => Promise<string>,
   ) {}
 
   async createToken(
@@ -67,16 +73,19 @@ export class VerificationTokenAdapter implements VerificationTokenPort {
     // DELETE ... RETURNING is atomic: a concurrent second consume of the
     // same token finds nothing to delete, so double-consumption can't
     // race — no explicit row locking needed.
-    const rows = await withTenant(this.db, this.bootstrapTenantId, (tx) =>
-      tx
-        .delete(verificationTokens)
-        .where(
-          and(
-            eq(verificationTokens.tokenHash, tokenHash),
-            eq(verificationTokens.purpose, purpose),
-          ),
-        )
-        .returning(),
+    const rows = await withTenant(
+      this.db,
+      await this.resolveBootstrapTenantId(),
+      (tx) =>
+        tx
+          .delete(verificationTokens)
+          .where(
+            and(
+              eq(verificationTokens.tokenHash, tokenHash),
+              eq(verificationTokens.purpose, purpose),
+            ),
+          )
+          .returning(),
     );
     const row = rows[0];
     if (!row) {

@@ -2,11 +2,12 @@ import {
   BadRequestException,
   ConflictException,
   NotFoundException,
+  ServiceUnavailableException,
   type HttpException,
   type Type,
 } from '@nestjs/common';
 import {
-  FormNotFoundError,
+  DeploymentAlreadySetUpError,
   InvalidCaptchaError,
   InvalidFormSubmissionError,
   InvalidThemeNameError,
@@ -27,7 +28,9 @@ import {
   UserAlreadyActiveError,
   UserEmailAlreadyExistsError,
   UserNotFoundError,
+  FormNotFoundError,
 } from '@brisk/domain-core';
+import { DeploymentNotSetUpError } from './deployment-tenant.resolver';
 
 type DomainErrorFactory = (message: string) => HttpException;
 
@@ -46,6 +49,17 @@ type DomainErrorFactory = (message: string) => HttpException;
  * there, unchanged.
  */
 const DOMAIN_ERROR_MAPPINGS: Array<[Type<Error>, DomainErrorFactory]> = [
+  // 503, not 500: a visitor reaching a deployment whose first-run wizard
+  // has not been completed is a temporary, expected state with a real
+  // remedy, not a fault. It is also the only entry here that is not a
+  // domain error — it lives in this table anyway because the alternative
+  // is a second try/catch in every public controller, which is exactly the
+  // duplication this table replaced.
+  [DeploymentNotSetUpError, (m) => new ServiceUnavailableException(m)],
+  // 409: the wizard has already been run. Not 403 — nothing about the
+  // caller is wrong, the deployment's state is simply past the point where
+  // this request means anything.
+  [DeploymentAlreadySetUpError, (m) => new ConflictException(m)],
   [PageGroupNotFoundError, (m) => new NotFoundException(m)],
   [PageGroupVersionNotFoundError, (m) => new NotFoundException(m)],
   [PageTranslationNotFoundError, (m) => new NotFoundException(m)],

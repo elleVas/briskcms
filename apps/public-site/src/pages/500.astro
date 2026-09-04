@@ -7,10 +7,39 @@
 // every route, not just those two, without an ad-hoc try/catch in each.
 import ErrorPageShell from '../components/ErrorPageShell.astro';
 import ServerError from '../components/ServerError.astro';
-import { getPublishedSiteChrome } from '../lib/public-api-client';
+import NotSetUp from '../components/NotSetUp.astro';
+import {
+  getPublishedSiteChrome,
+  hasDeploymentBeenSetUp,
+} from '../lib/public-api-client';
+import { editorAppUrl } from '../lib/editor-app-url';
 import PageLayout from '../layouts/PageLayout.astro';
 
 Astro.response.status = 500;
+
+// One failure here has a remedy worth naming: a deployment nobody has run
+// the first-run wizard on yet. Every route that needs a site ends up on
+// this page in that state, so this is the one place the check has to
+// happen — and it is cheap, since it only runs when something has already
+// gone wrong.
+//
+// It would be more honest as a 503 (the installation is fine, it is
+// unfinished), and it cannot be: Astro serves this page with a hardcoded
+// 500 for any uncaught SSR error, whatever `Astro.response.status` says
+// here — measured with a deliberately absurd status code, which came back
+// 500 too. The line above is decorative for the same reason.
+const setUp = await hasDeploymentBeenSetUp();
+
+// requireEnv throws when unset, and this page is the last error handler —
+// a missing EDITOR_APP_URL must not become a second failure with nowhere
+// to go. The message degrades to "open the editor" instead of a link.
+const resolvedEditorAppUrl = (() => {
+  try {
+    return editorAppUrl();
+  } catch {
+    return null;
+  }
+})();
 
 // This IS the final error handler for the whole app — unlike every other
 // route, a failure here has nowhere left to propagate to, so the chrome
@@ -43,7 +72,13 @@ const errorPageTranslations =
 ---
 
 {
-  chrome && guessedLocale ? (
+  !setUp ? (
+    // Before the wizard has run there is no site, no theme and no chrome
+    // to render this inside — NotSetUp brings its own.
+    <ErrorPageShell title="Not set up yet">
+      <NotSetUp editorAppUrl={resolvedEditorAppUrl} />
+    </ErrorPageShell>
+  ) : chrome && guessedLocale ? (
     <PageLayout
       seoMeta={{ title: '500', description: '' }}
       locale={guessedLocale}

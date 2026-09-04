@@ -30,7 +30,7 @@ describe('VerificationTokenAdapter (integration)', () => {
       .values({ name: `Integration Tenant ${randomUUID()}` })
       .returning({ id: tenants.id });
     tenantId = tenant.id;
-    adapter = new VerificationTokenAdapter(db, tenantId);
+    adapter = new VerificationTokenAdapter(db, async () => tenantId);
   });
 
   afterAll(async () => {

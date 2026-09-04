@@ -10,6 +10,7 @@ import type {
   VerificationToken,
   VerificationTokenPort,
 } from '@brisk/ports';
+import type { DeploymentTenantResolver } from '../deployment-tenant.resolver';
 import { AuthController } from './auth.controller';
 import { SESSION_COOKIE_NAME } from './session-cookie.constants';
 import type { AuthenticatedRequest } from './session-auth.guard';
@@ -76,7 +77,11 @@ describe('AuthController', () => {
       verificationTokenPort,
       emailPort,
       captchaPort,
-      tenantId,
+      // The controller takes the resolver, not a raw id — a self-hosted
+      // deployment does not know its tenant until the first-run wizard
+      // creates one. Here it is always resolved, which is what every test
+      // in this file assumes.
+      { require: async () => tenantId } as DeploymentTenantResolver,
       editorAppUrl,
     );
   });

@@ -14,9 +14,9 @@ import {
   DrizzleSiteThemeBlockStylesRepository,
 } from '@brisk/postgres-site-repository';
 import { DATABASE, DatabaseModule } from '../database.module';
+import { DeploymentTenantModule } from '../deployment-tenant.module';
 import { PublicPagesController } from './public-pages.controller';
 import {
-  DEFAULT_TENANT_ID,
   PAGE_GROUP_REPOSITORY,
   PAGE_TRANSLATION_REPOSITORY,
   PREVIEW_TOKEN_PORT,
@@ -28,6 +28,7 @@ import {
 
 @Module({
   imports: [
+    DeploymentTenantModule,
     DatabaseModule,
     // Generous limit tuned for real page-view traffic, not login-attempt
     // strictness (compare AuthModule's throttler) — this endpoint is hit on
@@ -38,13 +39,6 @@ import {
   ],
   controllers: [PublicPagesController],
   providers: [
-    // Its own DEFAULT_TENANT_ID provider rather than importing AuthModule
-    // for the one it already has: AuthModule also wires SMTP/email/session
-    // providers this module has no business depending on to boot.
-    {
-      provide: DEFAULT_TENANT_ID,
-      useFactory: (): string => requireEnv('DEFAULT_TENANT_ID'),
-    },
     {
       provide: PAGE_GROUP_REPOSITORY,
       useFactory: (db: BriskDb) => new DrizzlePageGroupRepository(db),

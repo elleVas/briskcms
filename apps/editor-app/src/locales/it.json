@@ -52,6 +52,19 @@
     },
     "logout": "Esci"
   },
+  "setup": {
+    "title": "Benvenuto in Brisk",
+    "description": "Questa installazione non è ancora configurata. Crea il tuo account amministratore per iniziare.",
+    "siteNameLabel": "Nome del sito",
+    "localeLabel": "Lingua predefinita",
+    "localeHint": "La lingua in cui nascono i contenuti del sito. Puoi aggiungerne altre più avanti, dalle impostazioni del sito.",
+    "emailLabel": "La tua email",
+    "passwordLabel": "Password",
+    "passwordHint": "Almeno {{count}} caratteri. Questo è l'account che nessuno può sbloccare al posto tuo: scegli bene.",
+    "submitIdle": "Crea il mio account",
+    "submitPending": "Configurazione in corso...",
+    "genericError": "Qualcosa è andato storto. Ricarica la pagina e riprova — se questa installazione era già configurata verrai portato alla pagina di accesso."
+  },
   "shell": {
     "nav": {
       "dashboard": "Dashboard",
@@ -701,8 +714,12 @@
     "accordionItem": {
       "label": "Domanda",
       "fields": {
-        "question": { "fieldLabel": "Domanda" },
-        "answer": { "fieldLabel": "Risposta" }
+        "question": {
+          "fieldLabel": "Domanda"
+        },
+        "answer": {
+          "fieldLabel": "Risposta"
+        }
       }
     },
     "accordion": {
@@ -714,30 +731,48 @@
     "banner": {
       "label": "Banner/CTA",
       "fields": {
-        "title": { "fieldLabel": "Titolo" },
-        "text": { "fieldLabel": "Testo" },
-        "buttonLabel": { "fieldLabel": "Testo bottone" }
+        "title": {
+          "fieldLabel": "Titolo"
+        },
+        "text": {
+          "fieldLabel": "Testo"
+        },
+        "buttonLabel": {
+          "fieldLabel": "Testo bottone"
+        }
       }
     },
     "beforeAfter": {
       "label": "Prima/dopo",
       "fields": {
-        "beforeImage": { "fieldLabel": "Immagine \"prima\"" },
-        "afterImage": { "fieldLabel": "Immagine \"dopo\"" },
-        "beforeLabel": { "fieldLabel": "Etichetta \"prima\"" },
-        "afterLabel": { "fieldLabel": "Etichetta \"dopo\"" }
+        "beforeImage": {
+          "fieldLabel": "Immagine \"prima\""
+        },
+        "afterImage": {
+          "fieldLabel": "Immagine \"dopo\""
+        },
+        "beforeLabel": {
+          "fieldLabel": "Etichetta \"prima\""
+        },
+        "afterLabel": {
+          "fieldLabel": "Etichetta \"dopo\""
+        }
       }
     },
     "breadcrumb": {
       "label": "Breadcrumb",
       "fields": {
-        "homeLabel": { "fieldLabel": "Etichetta home" }
+        "homeLabel": {
+          "fieldLabel": "Etichetta home"
+        }
       }
     },
     "button": {
       "label": "Bottone (CTA)",
       "fields": {
-        "label": { "fieldLabel": "Testo" },
+        "label": {
+          "fieldLabel": "Testo"
+        },
         "variant": {
           "fieldLabel": "Stile",
           "options": {
@@ -750,7 +785,9 @@
     "callout": {
       "label": "Riquadro avviso",
       "fields": {
-        "message": { "fieldLabel": "Messaggio" },
+        "message": {
+          "fieldLabel": "Messaggio"
+        },
         "tone": {
           "fieldLabel": "Tono",
           "options": {
@@ -764,7 +801,9 @@
     "code": {
       "label": "Codice",
       "fields": {
-        "code": { "fieldLabel": "Snippet di codice" },
+        "code": {
+          "fieldLabel": "Snippet di codice"
+        },
         "language": {
           "fieldLabel": "Linguaggio",
           "options": {
@@ -822,14 +861,20 @@
     "countdown": {
       "label": "Countdown",
       "fields": {
-        "targetDate": { "fieldLabel": "Data/ora obiettivo" },
-        "label": { "fieldLabel": "Etichetta" }
+        "targetDate": {
+          "fieldLabel": "Data/ora obiettivo"
+        },
+        "label": {
+          "fieldLabel": "Etichetta"
+        }
       }
     },
     "embedHtml": {
       "label": "Embed HTML",
       "fields": {
-        "html": { "fieldLabel": "Codice HTML" }
+        "html": {
+          "fieldLabel": "Codice HTML"
+        }
       }
     },
     "featureGrid": {
@@ -838,27 +883,39 @@
     "feature": {
       "label": "Feature",
       "fields": {
-        "icon": { "fieldLabel": "Icona (emoji)" },
-        "title": { "fieldLabel": "Titolo" },
-        "text": { "fieldLabel": "Testo" }
+        "icon": {
+          "fieldLabel": "Icona (emoji)"
+        },
+        "title": {
+          "fieldLabel": "Titolo"
+        },
+        "text": {
+          "fieldLabel": "Testo"
+        }
       }
     },
     "form": {
       "label": "Modulo",
       "fields": {
-        "form": { "fieldLabel": "Modulo" }
+        "form": {
+          "fieldLabel": "Modulo"
+        }
       }
     },
     "gallery": {
       "label": "Galleria",
       "fields": {
-        "images": { "fieldLabel": "Immagini" }
+        "images": {
+          "fieldLabel": "Immagini"
+        }
       }
     },
     "heading": {
       "label": "Titolo",
       "fields": {
-        "text": { "fieldLabel": "Testo" },
+        "text": {
+          "fieldLabel": "Testo"
+        },
         "level": {
           "fieldLabel": "Livello",
           "options": {
@@ -874,25 +931,37 @@
     "hero": {
       "label": "Hero",
       "fields": {
-        "title": { "fieldLabel": "Titolo" },
-        "subtitle": { "fieldLabel": "Sottotitolo" }
+        "title": {
+          "fieldLabel": "Titolo"
+        },
+        "subtitle": {
+          "fieldLabel": "Sottotitolo"
+        }
       }
     },
     "imageSlider": {
       "label": "Slider immagini",
       "fields": {
-        "images": { "fieldLabel": "Immagini" }
+        "images": {
+          "fieldLabel": "Immagini"
+        }
       }
     },
     "image": {
       "label": "Immagine",
       "fields": {
-        "media": { "fieldLabel": "Immagine" },
-        "alt": { "fieldLabel": "Testo alternativo" },
+        "media": {
+          "fieldLabel": "Immagine"
+        },
+        "alt": {
+          "fieldLabel": "Testo alternativo"
+        },
         "isDecorative": {
           "fieldLabel": "Immagine decorativa (nessun testo alternativo necessario)"
         },
-        "caption": { "fieldLabel": "Didascalia" }
+        "caption": {
+          "fieldLabel": "Didascalia"
+        }
       }
     },
     "languageSwitcher": {
@@ -901,32 +970,44 @@
     "link": {
       "label": "Link",
       "fields": {
-        "label": { "fieldLabel": "Testo" }
+        "label": {
+          "fieldLabel": "Testo"
+        }
       }
     },
     "logoStrip": {
       "label": "Loghi partner/clienti",
       "fields": {
-        "logos": { "fieldLabel": "Loghi" }
+        "logos": {
+          "fieldLabel": "Loghi"
+        }
       }
     },
     "mapEmbed": {
       "label": "Mappa",
       "fields": {
-        "address": { "fieldLabel": "Indirizzo" }
+        "address": {
+          "fieldLabel": "Indirizzo"
+        }
       }
     },
     "navDropdown": {
       "label": "Sottomenu",
       "fields": {
-        "label": { "fieldLabel": "Etichetta" }
+        "label": {
+          "fieldLabel": "Etichetta"
+        }
       }
     },
     "navLink": {
       "label": "Link di navigazione",
       "fields": {
-        "label": { "fieldLabel": "Testo" },
-        "icon": { "fieldLabel": "Icona" }
+        "label": {
+          "fieldLabel": "Testo"
+        },
+        "icon": {
+          "fieldLabel": "Icona"
+        }
       }
     },
     "nav": {
@@ -935,19 +1016,35 @@
     "newsletterSignup": {
       "label": "Iscrizione newsletter",
       "fields": {
-        "title": { "fieldLabel": "Titolo" },
-        "buttonLabel": { "fieldLabel": "Testo bottone" }
+        "title": {
+          "fieldLabel": "Titolo"
+        },
+        "buttonLabel": {
+          "fieldLabel": "Testo bottone"
+        }
       }
     },
     "pricingPlan": {
       "label": "Piano prezzo",
       "fields": {
-        "name": { "fieldLabel": "Nome piano" },
-        "price": { "fieldLabel": "Prezzo" },
-        "period": { "fieldLabel": "Periodo" },
-        "features": { "fieldLabel": "Caratteristiche" },
-        "highlighted": { "fieldLabel": "In evidenza" },
-        "buttonLabel": { "fieldLabel": "Testo bottone" }
+        "name": {
+          "fieldLabel": "Nome piano"
+        },
+        "price": {
+          "fieldLabel": "Prezzo"
+        },
+        "period": {
+          "fieldLabel": "Periodo"
+        },
+        "features": {
+          "fieldLabel": "Caratteristiche"
+        },
+        "highlighted": {
+          "fieldLabel": "In evidenza"
+        },
+        "buttonLabel": {
+          "fieldLabel": "Testo bottone"
+        }
       }
     },
     "pricingTable": {
@@ -956,37 +1053,59 @@
     "promoBar": {
       "label": "Barra annuncio/promo",
       "fields": {
-        "message": { "fieldLabel": "Messaggio" }
+        "message": {
+          "fieldLabel": "Messaggio"
+        }
       }
     },
     "quote": {
       "label": "Citazione",
       "fields": {
-        "quote": { "fieldLabel": "Citazione" },
-        "author": { "fieldLabel": "Autore" },
-        "role": { "fieldLabel": "Ruolo" }
+        "quote": {
+          "fieldLabel": "Citazione"
+        },
+        "author": {
+          "fieldLabel": "Autore"
+        },
+        "role": {
+          "fieldLabel": "Ruolo"
+        }
       }
     },
     "rating": {
       "label": "Valutazione a stelle",
       "fields": {
-        "rating": { "fieldLabel": "Stelle" },
-        "label": { "fieldLabel": "Etichetta" }
+        "rating": {
+          "fieldLabel": "Stelle"
+        },
+        "label": {
+          "fieldLabel": "Etichetta"
+        }
       }
     },
     "searchBox": {
       "label": "Ricerca sul sito",
       "fields": {
-        "placeholder": { "fieldLabel": "Placeholder" }
+        "placeholder": {
+          "fieldLabel": "Placeholder"
+        }
       }
     },
     "stat": {
       "label": "Statistica",
       "fields": {
-        "value": { "fieldLabel": "Valore" },
-        "prefix": { "fieldLabel": "Prefisso" },
-        "suffix": { "fieldLabel": "Suffisso" },
-        "label": { "fieldLabel": "Etichetta" }
+        "value": {
+          "fieldLabel": "Valore"
+        },
+        "prefix": {
+          "fieldLabel": "Prefisso"
+        },
+        "suffix": {
+          "fieldLabel": "Suffisso"
+        },
+        "label": {
+          "fieldLabel": "Etichetta"
+        }
       }
     },
     "statsCounter": {
@@ -995,13 +1114,17 @@
     "tab": {
       "label": "Tab",
       "fields": {
-        "label": { "fieldLabel": "Etichetta tab" }
+        "label": {
+          "fieldLabel": "Etichetta tab"
+        }
       }
     },
     "table": {
       "label": "Tabella dati",
       "fields": {
-        "rows": { "fieldLabel": "Righe" }
+        "rows": {
+          "fieldLabel": "Righe"
+        }
       }
     },
     "tabs": {
@@ -1010,10 +1133,18 @@
     "teamMember": {
       "label": "Membro del team",
       "fields": {
-        "photo": { "fieldLabel": "Foto" },
-        "name": { "fieldLabel": "Nome" },
-        "role": { "fieldLabel": "Ruolo" },
-        "bio": { "fieldLabel": "Bio" }
+        "photo": {
+          "fieldLabel": "Foto"
+        },
+        "name": {
+          "fieldLabel": "Nome"
+        },
+        "role": {
+          "fieldLabel": "Ruolo"
+        },
+        "bio": {
+          "fieldLabel": "Bio"
+        }
       }
     },
     "team": {
@@ -1022,11 +1153,21 @@
     "testimonial": {
       "label": "Testimonianza",
       "fields": {
-        "quote": { "fieldLabel": "Recensione" },
-        "author": { "fieldLabel": "Autore" },
-        "role": { "fieldLabel": "Ruolo" },
-        "avatar": { "fieldLabel": "Avatar" },
-        "rating": { "fieldLabel": "Stelle" }
+        "quote": {
+          "fieldLabel": "Recensione"
+        },
+        "author": {
+          "fieldLabel": "Autore"
+        },
+        "role": {
+          "fieldLabel": "Ruolo"
+        },
+        "avatar": {
+          "fieldLabel": "Avatar"
+        },
+        "rating": {
+          "fieldLabel": "Stelle"
+        }
       }
     },
     "testimonials": {
@@ -1035,15 +1176,23 @@
     "text": {
       "label": "Testo",
       "fields": {
-        "body": { "fieldLabel": "Testo" }
+        "body": {
+          "fieldLabel": "Testo"
+        }
       }
     },
     "timelineStep": {
       "label": "Fase",
       "fields": {
-        "label": { "fieldLabel": "Etichetta" },
-        "title": { "fieldLabel": "Titolo" },
-        "description": { "fieldLabel": "Descrizione" }
+        "label": {
+          "fieldLabel": "Etichetta"
+        },
+        "title": {
+          "fieldLabel": "Titolo"
+        },
+        "description": {
+          "fieldLabel": "Descrizione"
+        }
       }
     },
     "timeline": {
@@ -1052,14 +1201,20 @@
     "videoEmbed": {
       "label": "Video",
       "fields": {
-        "url": { "fieldLabel": "URL video" }
+        "url": {
+          "fieldLabel": "URL video"
+        }
       }
     },
     "whatsAppButton": {
       "label": "Bottone WhatsApp",
       "fields": {
-        "phoneNumber": { "fieldLabel": "Numero di telefono" },
-        "message": { "fieldLabel": "Messaggio precompilato" }
+        "phoneNumber": {
+          "fieldLabel": "Numero di telefono"
+        },
+        "message": {
+          "fieldLabel": "Messaggio precompilato"
+        }
       }
     }
   }

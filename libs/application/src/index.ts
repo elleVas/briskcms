@@ -68,3 +68,4 @@ export * from './lib/use-cases/update-site-layout-section-sticky.use-case';
 export * from './lib/use-cases/get-dashboard-stats.use-case';
 export * from './lib/use-cases/update-site-form-submission-retention.use-case';
 export * from './lib/use-cases/update-site-cookie-banner-settings.use-case';
+export * from './lib/use-cases/bootstrap-deployment.use-case';

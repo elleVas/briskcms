@@ -15,13 +15,26 @@ export class ExpiredTokensCleanupService {
 
   constructor(
     private readonly db: BriskDb,
-    private readonly tenantId: string,
+    /**
+     * A function, not an id: a self-hosted deployment has no tenant until
+     * the first-run wizard creates one, and this service is constructed
+     * long before that. It resolves to `null` until then, which is a tick
+     * with nothing to clean rather than a failure.
+     */
+    private readonly resolveTenantId: () => Promise<string | null>,
   ) {}
 
   @Cron(CronExpression.EVERY_DAY_AT_3AM)
   async cleanupExpiredTokens(): Promise<void> {
+    const tenantId = await this.resolveTenantId();
+    if (!tenantId) {
+      // Nothing set up yet, so nothing to clean — not a failure worth
+      // logging on every scheduled tick.
+      return;
+    }
+
     const { deletedSessions, deletedVerificationTokens } =
-      await deleteExpiredTokens(this.db, this.tenantId);
+      await deleteExpiredTokens(this.db, tenantId);
 
     this.logger.log(
       `Cleaned up ${deletedSessions} expired session(s) and ${deletedVerificationTokens} expired verification token(s)`,

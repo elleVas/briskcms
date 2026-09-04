@@ -52,6 +52,19 @@
     },
     "logout": "Log out"
   },
+  "setup": {
+    "title": "Welcome to Brisk",
+    "description": "This installation has not been set up yet. Create your administrator account to get started.",
+    "siteNameLabel": "Site name",
+    "localeLabel": "Default language",
+    "localeHint": "The language your site's content starts in. You can add more later, in Site settings.",
+    "emailLabel": "Your email",
+    "passwordLabel": "Password",
+    "passwordHint": "At least {{count}} characters. This is the account nobody can unlock for you, so make it a good one.",
+    "submitIdle": "Create my account",
+    "submitPending": "Setting things up...",
+    "genericError": "Something went wrong. Reload the page and try again — if this installation was already set up, you'll be sent to the login page."
+  },
   "shell": {
     "nav": {
       "dashboard": "Dashboard",
@@ -701,8 +714,12 @@
     "accordionItem": {
       "label": "Question",
       "fields": {
-        "question": { "fieldLabel": "Question" },
-        "answer": { "fieldLabel": "Answer" }
+        "question": {
+          "fieldLabel": "Question"
+        },
+        "answer": {
+          "fieldLabel": "Answer"
+        }
       }
     },
     "accordion": {
@@ -714,30 +731,48 @@
     "banner": {
       "label": "Banner/CTA",
       "fields": {
-        "title": { "fieldLabel": "Title" },
-        "text": { "fieldLabel": "Text" },
-        "buttonLabel": { "fieldLabel": "Button text" }
+        "title": {
+          "fieldLabel": "Title"
+        },
+        "text": {
+          "fieldLabel": "Text"
+        },
+        "buttonLabel": {
+          "fieldLabel": "Button text"
+        }
       }
     },
     "beforeAfter": {
       "label": "Before/after",
       "fields": {
-        "beforeImage": { "fieldLabel": "\"Before\" image" },
-        "afterImage": { "fieldLabel": "\"After\" image" },
-        "beforeLabel": { "fieldLabel": "\"Before\" label" },
-        "afterLabel": { "fieldLabel": "\"After\" label" }
+        "beforeImage": {
+          "fieldLabel": "\"Before\" image"
+        },
+        "afterImage": {
+          "fieldLabel": "\"After\" image"
+        },
+        "beforeLabel": {
+          "fieldLabel": "\"Before\" label"
+        },
+        "afterLabel": {
+          "fieldLabel": "\"After\" label"
+        }
       }
     },
     "breadcrumb": {
       "label": "Breadcrumb",
       "fields": {
-        "homeLabel": { "fieldLabel": "Home label" }
+        "homeLabel": {
+          "fieldLabel": "Home label"
+        }
       }
     },
     "button": {
       "label": "Button (CTA)",
       "fields": {
-        "label": { "fieldLabel": "Text" },
+        "label": {
+          "fieldLabel": "Text"
+        },
         "variant": {
           "fieldLabel": "Style",
           "options": {
@@ -750,7 +785,9 @@
     "callout": {
       "label": "Callout",
       "fields": {
-        "message": { "fieldLabel": "Message" },
+        "message": {
+          "fieldLabel": "Message"
+        },
         "tone": {
           "fieldLabel": "Tone",
           "options": {
@@ -764,7 +801,9 @@
     "code": {
       "label": "Code",
       "fields": {
-        "code": { "fieldLabel": "Code snippet" },
+        "code": {
+          "fieldLabel": "Code snippet"
+        },
         "language": {
           "fieldLabel": "Language",
           "options": {
@@ -822,14 +861,20 @@
     "countdown": {
       "label": "Countdown",
       "fields": {
-        "targetDate": { "fieldLabel": "Target date/time" },
-        "label": { "fieldLabel": "Label" }
+        "targetDate": {
+          "fieldLabel": "Target date/time"
+        },
+        "label": {
+          "fieldLabel": "Label"
+        }
       }
     },
     "embedHtml": {
       "label": "Embed HTML",
       "fields": {
-        "html": { "fieldLabel": "HTML code" }
+        "html": {
+          "fieldLabel": "HTML code"
+        }
       }
     },
     "featureGrid": {
@@ -838,27 +883,39 @@
     "feature": {
       "label": "Feature",
       "fields": {
-        "icon": { "fieldLabel": "Icon (emoji)" },
-        "title": { "fieldLabel": "Title" },
-        "text": { "fieldLabel": "Text" }
+        "icon": {
+          "fieldLabel": "Icon (emoji)"
+        },
+        "title": {
+          "fieldLabel": "Title"
+        },
+        "text": {
+          "fieldLabel": "Text"
+        }
       }
     },
     "form": {
       "label": "Form",
       "fields": {
-        "form": { "fieldLabel": "Form" }
+        "form": {
+          "fieldLabel": "Form"
+        }
       }
     },
     "gallery": {
       "label": "Gallery",
       "fields": {
-        "images": { "fieldLabel": "Images" }
+        "images": {
+          "fieldLabel": "Images"
+        }
       }
     },
     "heading": {
       "label": "Heading",
       "fields": {
-        "text": { "fieldLabel": "Text" },
+        "text": {
+          "fieldLabel": "Text"
+        },
         "level": {
           "fieldLabel": "Level",
           "options": {
@@ -874,25 +931,37 @@
     "hero": {
       "label": "Hero",
       "fields": {
-        "title": { "fieldLabel": "Title" },
-        "subtitle": { "fieldLabel": "Subtitle" }
+        "title": {
+          "fieldLabel": "Title"
+        },
+        "subtitle": {
+          "fieldLabel": "Subtitle"
+        }
       }
     },
     "imageSlider": {
       "label": "Image slider",
       "fields": {
-        "images": { "fieldLabel": "Images" }
+        "images": {
+          "fieldLabel": "Images"
+        }
       }
     },
     "image": {
       "label": "Image",
       "fields": {
-        "media": { "fieldLabel": "Image" },
-        "alt": { "fieldLabel": "Alt text" },
+        "media": {
+          "fieldLabel": "Image"
+        },
+        "alt": {
+          "fieldLabel": "Alt text"
+        },
         "isDecorative": {
           "fieldLabel": "Decorative image (no alt text needed)"
         },
-        "caption": { "fieldLabel": "Caption" }
+        "caption": {
+          "fieldLabel": "Caption"
+        }
       }
     },
     "languageSwitcher": {
@@ -901,32 +970,44 @@
     "link": {
       "label": "Link",
       "fields": {
-        "label": { "fieldLabel": "Text" }
+        "label": {
+          "fieldLabel": "Text"
+        }
       }
     },
     "logoStrip": {
       "label": "Partner/client logos",
       "fields": {
-        "logos": { "fieldLabel": "Logos" }
+        "logos": {
+          "fieldLabel": "Logos"
+        }
       }
     },
     "mapEmbed": {
       "label": "Map",
       "fields": {
-        "address": { "fieldLabel": "Address" }
+        "address": {
+          "fieldLabel": "Address"
+        }
       }
     },
     "navDropdown": {
       "label": "Submenu",
       "fields": {
-        "label": { "fieldLabel": "Label" }
+        "label": {
+          "fieldLabel": "Label"
+        }
       }
     },
     "navLink": {
       "label": "Navigation link",
       "fields": {
-        "label": { "fieldLabel": "Text" },
-        "icon": { "fieldLabel": "Icon" }
+        "label": {
+          "fieldLabel": "Text"
+        },
+        "icon": {
+          "fieldLabel": "Icon"
+        }
       }
     },
     "nav": {
@@ -935,19 +1016,35 @@
     "newsletterSignup": {
       "label": "Newsletter signup",
       "fields": {
-        "title": { "fieldLabel": "Title" },
-        "buttonLabel": { "fieldLabel": "Button text" }
+        "title": {
+          "fieldLabel": "Title"
+        },
+        "buttonLabel": {
+          "fieldLabel": "Button text"
+        }
       }
     },
     "pricingPlan": {
       "label": "Pricing plan",
       "fields": {
-        "name": { "fieldLabel": "Plan name" },
-        "price": { "fieldLabel": "Price" },
-        "period": { "fieldLabel": "Period" },
-        "features": { "fieldLabel": "Features" },
-        "highlighted": { "fieldLabel": "Highlighted" },
-        "buttonLabel": { "fieldLabel": "Button text" }
+        "name": {
+          "fieldLabel": "Plan name"
+        },
+        "price": {
+          "fieldLabel": "Price"
+        },
+        "period": {
+          "fieldLabel": "Period"
+        },
+        "features": {
+          "fieldLabel": "Features"
+        },
+        "highlighted": {
+          "fieldLabel": "Highlighted"
+        },
+        "buttonLabel": {
+          "fieldLabel": "Button text"
+        }
       }
     },
     "pricingTable": {
@@ -956,37 +1053,59 @@
     "promoBar": {
       "label": "Announcement/promo bar",
       "fields": {
-        "message": { "fieldLabel": "Message" }
+        "message": {
+          "fieldLabel": "Message"
+        }
       }
     },
     "quote": {
       "label": "Quote",
       "fields": {
-        "quote": { "fieldLabel": "Quote" },
-        "author": { "fieldLabel": "Author" },
-        "role": { "fieldLabel": "Role" }
+        "quote": {
+          "fieldLabel": "Quote"
+        },
+        "author": {
+          "fieldLabel": "Author"
+        },
+        "role": {
+          "fieldLabel": "Role"
+        }
       }
     },
     "rating": {
       "label": "Star rating",
       "fields": {
-        "rating": { "fieldLabel": "Stars" },
-        "label": { "fieldLabel": "Label" }
+        "rating": {
+          "fieldLabel": "Stars"
+        },
+        "label": {
+          "fieldLabel": "Label"
+        }
       }
     },
     "searchBox": {
       "label": "Site search",
       "fields": {
-        "placeholder": { "fieldLabel": "Placeholder" }
+        "placeholder": {
+          "fieldLabel": "Placeholder"
+        }
       }
     },
     "stat": {
       "label": "Statistic",
       "fields": {
-        "value": { "fieldLabel": "Value" },
-        "prefix": { "fieldLabel": "Prefix" },
-        "suffix": { "fieldLabel": "Suffix" },
-        "label": { "fieldLabel": "Label" }
+        "value": {
+          "fieldLabel": "Value"
+        },
+        "prefix": {
+          "fieldLabel": "Prefix"
+        },
+        "suffix": {
+          "fieldLabel": "Suffix"
+        },
+        "label": {
+          "fieldLabel": "Label"
+        }
       }
     },
     "statsCounter": {
@@ -995,13 +1114,17 @@
     "tab": {
       "label": "Tab",
       "fields": {
-        "label": { "fieldLabel": "Tab label" }
+        "label": {
+          "fieldLabel": "Tab label"
+        }
       }
     },
     "table": {
       "label": "Data table",
       "fields": {
-        "rows": { "fieldLabel": "Rows" }
+        "rows": {
+          "fieldLabel": "Rows"
+        }
       }
     },
     "tabs": {
@@ -1010,10 +1133,18 @@
     "teamMember": {
       "label": "Team member",
       "fields": {
-        "photo": { "fieldLabel": "Photo" },
-        "name": { "fieldLabel": "Name" },
-        "role": { "fieldLabel": "Role" },
-        "bio": { "fieldLabel": "Bio" }
+        "photo": {
+          "fieldLabel": "Photo"
+        },
+        "name": {
+          "fieldLabel": "Name"
+        },
+        "role": {
+          "fieldLabel": "Role"
+        },
+        "bio": {
+          "fieldLabel": "Bio"
+        }
       }
     },
     "team": {
@@ -1022,11 +1153,21 @@
     "testimonial": {
       "label": "Testimonial",
       "fields": {
-        "quote": { "fieldLabel": "Review" },
-        "author": { "fieldLabel": "Author" },
-        "role": { "fieldLabel": "Role" },
-        "avatar": { "fieldLabel": "Avatar" },
-        "rating": { "fieldLabel": "Stars" }
+        "quote": {
+          "fieldLabel": "Review"
+        },
+        "author": {
+          "fieldLabel": "Author"
+        },
+        "role": {
+          "fieldLabel": "Role"
+        },
+        "avatar": {
+          "fieldLabel": "Avatar"
+        },
+        "rating": {
+          "fieldLabel": "Stars"
+        }
       }
     },
     "testimonials": {
@@ -1035,15 +1176,23 @@
     "text": {
       "label": "Text",
       "fields": {
-        "body": { "fieldLabel": "Text" }
+        "body": {
+          "fieldLabel": "Text"
+        }
       }
     },
     "timelineStep": {
       "label": "Step",
       "fields": {
-        "label": { "fieldLabel": "Label" },
-        "title": { "fieldLabel": "Title" },
-        "description": { "fieldLabel": "Description" }
+        "label": {
+          "fieldLabel": "Label"
+        },
+        "title": {
+          "fieldLabel": "Title"
+        },
+        "description": {
+          "fieldLabel": "Description"
+        }
       }
     },
     "timeline": {
@@ -1052,14 +1201,20 @@
     "videoEmbed": {
       "label": "Video",
       "fields": {
-        "url": { "fieldLabel": "Video URL" }
+        "url": {
+          "fieldLabel": "Video URL"
+        }
       }
     },
     "whatsAppButton": {
       "label": "WhatsApp button",
       "fields": {
-        "phoneNumber": { "fieldLabel": "Phone number" },
-        "message": { "fieldLabel": "Pre-filled message" }
+        "phoneNumber": {
+          "fieldLabel": "Phone number"
+        },
+        "message": {
+          "fieldLabel": "Pre-filled message"
+        }
       }
     }
   }

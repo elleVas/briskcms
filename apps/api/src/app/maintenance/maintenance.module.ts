@@ -1,27 +1,28 @@
 import { Module } from '@nestjs/common';
-import { requireEnv } from '@brisk/env-config';
 import { type BriskDb } from '@brisk/postgres-db';
 import { DATABASE, DatabaseModule } from '../database.module';
+import { DeploymentTenantModule } from '../deployment-tenant.module';
+import {
+  DEPLOYMENT_TENANT_RESOLVER,
+  type DeploymentTenantResolver,
+} from '../deployment-tenant.resolver';
 import { ExpiredTokensCleanupService } from './expired-tokens-cleanup.service';
 import { FormSubmissionsRetentionCleanupService } from './form-submissions-retention-cleanup.service';
 
 @Module({
-  imports: [DatabaseModule],
+  imports: [DeploymentTenantModule, DatabaseModule],
   providers: [
     {
       provide: ExpiredTokensCleanupService,
-      useFactory: (db: BriskDb) =>
-        new ExpiredTokensCleanupService(db, requireEnv('DEFAULT_TENANT_ID')),
-      inject: [DATABASE],
+      useFactory: (db: BriskDb, tenant: DeploymentTenantResolver) =>
+        new ExpiredTokensCleanupService(db, () => tenant.resolve()),
+      inject: [DATABASE, DEPLOYMENT_TENANT_RESOLVER],
     },
     {
       provide: FormSubmissionsRetentionCleanupService,
-      useFactory: (db: BriskDb) =>
-        new FormSubmissionsRetentionCleanupService(
-          db,
-          requireEnv('DEFAULT_TENANT_ID'),
-        ),
-      inject: [DATABASE],
+      useFactory: (db: BriskDb, tenant: DeploymentTenantResolver) =>
+        new FormSubmissionsRetentionCleanupService(db, () => tenant.resolve()),
+      inject: [DATABASE, DEPLOYMENT_TENANT_RESOLVER],
     },
   ],
 })

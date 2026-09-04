@@ -213,3 +213,17 @@ export class InvalidThemeNameError extends Error {
     this.name = 'InvalidThemeNameError';
   }
 }
+
+/**
+ * Raised by bootstrapDeployment when this deployment already has a tenant.
+ * The first-run wizard is unauthenticated by necessity — there is nobody to
+ * authenticate as before it runs — so emptiness is the only thing gating
+ * it, and running it twice would mean a stranger granting themselves an
+ * admin account on a live install.
+ */
+export class DeploymentAlreadySetUpError extends Error {
+  constructor() {
+    super('This Brisk deployment has already been set up');
+    this.name = 'DeploymentAlreadySetUpError';
+  }
+}

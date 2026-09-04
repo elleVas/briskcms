@@ -11,6 +11,10 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
+import {
+  DEPLOYMENT_TENANT_RESOLVER,
+  DeploymentTenantResolver,
+} from '../deployment-tenant.resolver';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ThrottlerGuard } from '@nestjs/throttler';
 import { memoryStorage } from 'multer';
@@ -32,7 +36,6 @@ import {
 import {
   ATTACHMENT_STORAGE,
   CAPTCHA_PORT,
-  DEFAULT_TENANT_ID,
   EMAIL_PORT,
   FORM_REPOSITORY,
   FORM_SUBMISSION_REPOSITORY,
@@ -59,14 +62,15 @@ export class PublicFormsController {
     @Inject(NEWSLETTER_PORT) private readonly newsletterPort: NewsletterPort,
     @Inject(ATTACHMENT_STORAGE)
     private readonly attachmentStorage: AttachmentStoragePort,
-    @Inject(DEFAULT_TENANT_ID) private readonly defaultTenantId: string,
+    @Inject(DEPLOYMENT_TENANT_RESOLVER)
+    private readonly tenant: DeploymentTenantResolver,
   ) {}
 
   @Get(':id')
   async findById(@Param('id') id: string) {
     return getPublicForm(
       { formRepository: this.formRepository },
-      { tenantId: this.defaultTenantId, formId: id },
+      { tenantId: await this.tenant.require(), formId: id },
     );
   }
 
@@ -92,7 +96,10 @@ export class PublicFormsController {
     if (!file) {
       throw new BadRequestException('No file uploaded');
     }
-    const form = await this.formRepository.findById(this.defaultTenantId, id);
+    const form = await this.formRepository.findById(
+      await this.tenant.require(),
+      id,
+    );
     if (!form) {
       throw new FormNotFoundError(id);
     }
@@ -123,7 +130,7 @@ export class PublicFormsController {
         newsletterPort: this.newsletterPort,
       },
       {
-        tenantId: this.defaultTenantId,
+        tenantId: await this.tenant.require(),
         formId: id,
         pageId: body.pageId,
         values: body.values,
