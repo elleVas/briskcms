@@ -1,0 +1,12 @@
+---
+import type { ThemeContentShellProps } from '../../lib/theme-regions';
+
+/**
+ * Nessun wrapper: il contenuto della pagina va dove andrebbe comunque. È un
+ * componente e non un ramo di ternario perché così le tre regioni hanno la
+ * stessa forma (`quella del tema ?? quella del core`) in PageLayout.astro.
+ */
+export type Props = ThemeContentShellProps;
+---
+
+<slot />

@@ -1,0 +1,10 @@
+---
+import type { ThemeFooterProps } from '../../lib/theme-regions';
+
+/** Sibling di DefaultHeader.astro — stesso ragionamento, per il footer. */
+export type Props = ThemeFooterProps;
+---
+
+<footer class="border-t border-border bg-secondary px-6 py-12">
+	<slot />
+</footer>

@@ -1,0 +1,45 @@
+---
+import type { ThemeHeaderProps } from '../../lib/theme-regions';
+
+/**
+ * Il wrapper dell'header quando il tema attivo non fornisce il proprio
+ * `regions/Header.astro`. Markup identico a quello che PageLayout.astro
+ * aveva inline prima che le regioni esistessero — un tema che non dichiara
+ * nulla ottiene esattamente la pagina di sempre.
+ *
+ * Il `<div data-brisk-root-blocks>` con i blocchi NON è qui: arriva come
+ * slot dal core, così resta suo anche quando un tema sostituisce questo
+ * file (è l'aggancio dell'editor visuale per l'inserimento a livello radice).
+ */
+type Props = ThemeHeaderProps;
+
+const { sticky } = Astro.props;
+---
+
+<header
+	class:list={[
+		'border-b border-border bg-background px-6 py-4',
+		{ 'brisk-header--sticky': sticky },
+	]}
+>
+	<slot />
+</header>
+
+<style>
+	/* Sta qui e non nel layout perché lo stile scoped di Astro segue il file
+	   in cui l'elemento è scritto: quando <header> è passato di qui, la
+	   regola nel layout ha smesso di fare match (preso al primo confronto
+	   dell'HTML renderizzato, non a ragionamento).
+
+	   Configurabile per (sito, locale) — l'interruttore "Fisso durante lo
+	   scroll" dell'editor dell'header (docs/adr/0018). z-index abbastanza
+	   alto da stare sopra il contenuto, ma non tale da litigare con i
+	   pannelli di hamburger/nav-dropdown, che usano 10. Un tema che
+	   fornisce il proprio regions/Header.astro riceve `sticky` come prop e
+	   decide da sé come renderlo. */
+	.brisk-header--sticky {
+		position: sticky;
+		top: 0;
+		z-index: 40;
+	}
+</style>

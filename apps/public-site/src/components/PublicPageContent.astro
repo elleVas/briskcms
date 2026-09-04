@@ -100,6 +100,7 @@ function rootBlockSpacing(
       headerSticky={page.headerSticky}
       ancestors={page.ancestors}
       editable={editable}
+      route="page"
     >
       {
         // The generic baseline layout every page gets for free: a vertical
@@ -156,6 +157,7 @@ function rootBlockSpacing(
       footer={chrome.footer}
       headerSticky={chrome.headerSticky}
       ancestors={[]}
+      route="error"
     >
       <NotFound locale={locale} />
     </PageLayout>
