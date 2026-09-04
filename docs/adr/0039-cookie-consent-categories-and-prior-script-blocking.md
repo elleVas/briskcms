@@ -104,6 +104,12 @@ The banner (`CookieConsent.astro`) is rendered directly by
 confirmed: the docs-showcase file is a full byte-copied override resolved
 via `resolve-theme-layout-override.ts`'s `import.meta.glob`, so this is
 two edits, not one) — deliberately **outside** the editable block tree.
+
+> **Amended 2026-09-04.** The full-shell override described above is gone:
+> a theme now supplies at most a narrow `regions/*.astro` fragment and can
+> no longer render (or forget to render) the banner at all. It is one edit
+> now, in core's `PageLayout.astro` alone. See `themes/README.md`.
+
 Unlike `BackToTop`/`WhatsAppButton`/`PromoBar` (all regular
 `block-registry` blocks an editor must place), the banner must be
 guaranteed present on every page: an editor forgetting to drag it onto a

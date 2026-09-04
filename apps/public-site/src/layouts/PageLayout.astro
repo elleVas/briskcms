@@ -55,11 +55,11 @@ interface Props {
 	// Solo la rotta di preview lo passa (vedi il piano dell'editor visuale,
 	// Giorno 2) — non influenza mai la rotta pubblicata reale.
 	editable?: boolean;
-	// Quale rotta del core sta renderizzando. Passata alle regioni del tema,
-	// e usata per non renderizzare mai una regione di tema sulla 500: quella
-	// pagina è l'ultimo gestore d'errore e un throw lì non ha dove propagare
-	// (in Astro non si può try/catch il render di un componente dal
-	// frontmatter). Default 'page' perché è il caso di gran lunga più comune.
+	// Which core route is rendering. Passed to the theme's regions, and used
+	// to never render a theme region on the 500 page: that page is the last
+	// error handler and a throw there has nowhere to propagate (Astro cannot
+	// try/catch a component's render from the frontmatter). Defaults to
+	// 'page', by far the most common case.
 	route?: ThemeRegionRoute;
 }
 
@@ -81,10 +81,10 @@ const {
 const resolvedThemeName = resolveBundledThemeName(site.themeName);
 const themeManifest = getThemeManifest(site.themeName);
 
-// Le tre regioni che il tema può fornire (resolve-theme-regions.ts). Il
-// core resta padrone di tutto il resto: un frammento riceve i blocchi già
-// renderizzati come slot e sceglie solo l'elemento che li avvolge. Mai
-// sulla 500, vedi il commento sulla prop `route`.
+// The three regions a theme may supply (resolve-theme-regions.ts). Core
+// stays in charge of everything else: a region receives the already-
+// rendered blocks as a slot and only picks the element that wraps them.
+// Never on the 500 page, see the comment on the `route` prop.
 const useThemeRegions = route !== 'error';
 const ThemeHeader = useThemeRegions
 	? resolveThemeRegion<typeof DefaultHeader>('Header', site.themeName)
@@ -99,9 +99,9 @@ const HeaderRegion = ThemeHeader ?? DefaultHeader;
 const FooterRegion = ThemeFooter ?? DefaultFooter;
 const ContentShellRegion = ThemeContentShell ?? DefaultContentShell;
 
-// Memoizzato per RICHIESTA, non per processo: tra una richiesta e l'altra
-// le pagine si pubblicano. Il core tiene fetch, guardia sul dominio ed
-// errori, così un tema non può sbagliarli.
+// Memoized per REQUEST, not per process: pages get published between one
+// request and the next. Core keeps the fetch, the domain guard and the
+// error policy, so a theme cannot get them wrong.
 let pageTreePromise: Promise<Awaited<ReturnType<typeof listPublishedPageTree>>> | null =
 	null;
 const pageTree = () =>
@@ -459,20 +459,21 @@ const blockStyleOverridesCss = buildBlockStyleOverridesCss(
 		top: 0.5rem;
 	}
 
-	/* `stickyFooter` in theme.json. Sta nel core e non nel tema perché
-	   riguarda <body>, che il core possiede: uno stile scoped di qui lo
-	   raggiunge già, mentre un tema dovrebbe ricorrere a `is:global` — che è
-	   come le regole di docs-showcase finivano sulle pagine degli altri temi. */
+	/* `stickyFooter` in theme.json. It lives in core rather than in the theme
+	   because it concerns <body>, which core owns: a scoped style written
+	   here already reaches it, whereas a theme would have to fall back to
+	   `is:global` — which is how docs-showcase's rules ended up on the other
+	   themes' pages. */
 	.brisk-body--sticky-footer {
 		display: flex;
 		flex-direction: column;
 		min-height: 100vh;
 	}
-	/* `:global` solo sul discendente: <footer> è reso da DefaultFooter.astro
-	   (o dalla regione del tema) e non porta il cid di questo file, quindi
-	   `> footer` scoped non farebbe mai match — preso guardando il CSS
-	   generato, non a ragionamento. Il lato sinistro resta scoped, quindi
-	   la regola non può comunque sfuggire ad altri temi. */
+	/* `:global` on the descendant only: <footer> is rendered by
+	   DefaultFooter.astro (or by the theme's own region) and carries no cid
+	   from this file, so a scoped `> footer` would never match — caught by
+	   reading the generated CSS, not by reasoning. The left-hand side stays
+	   scoped, so the rule still cannot escape onto other themes. */
 	.brisk-body--sticky-footer > :global(footer) {
 		margin-top: auto;
 	}

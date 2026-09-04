@@ -1,20 +1,20 @@
 import { groupByTheme, resolveBundledThemeName } from './theme-registry';
 
 /**
- * Le regioni che un tema può fornire — `themes/<nome>/regions/Header.astro`,
- * `ContentShell.astro`, `Footer.astro` — risolte una volta per processo per
- * ogni tema bundlato e cercate per `(tema, regione)` a ogni render.
+ * The regions a theme may supply — `themes/<name>/regions/Header.astro`,
+ * `ContentShell.astro`, `Footer.astro` — resolved once per process for
+ * every bundled theme and looked up by `(theme, region)` on each render.
  *
- * Sostituisce l'override completo di `PageLayout.astro`
- * (resolve-theme-layout-override.ts, rimosso a fine migrazione): quello
- * costringeva un tema a copiare 581 righe di shell per cambiarne una, e la
- * copia derivava in silenzio — link di accessibilità perso, attributi
- * dell'editor persi, CSS che colava sugli altri temi. Qui il tema non può
- * toccare nulla di tutto ciò: riceve i blocchi già renderizzati come slot.
+ * This replaces the full `PageLayout.astro` override
+ * (resolve-theme-layout-override.ts, removed once the migration landed):
+ * that mechanism forced a theme to copy 581 lines of shell in order to
+ * change one of them, and the copy then drifted in silence — a lost
+ * accessibility link, lost editor attributes, CSS bleeding onto the other
+ * themes. Here a theme cannot touch any of that: it receives the
+ * already-rendered blocks as a slot.
  *
- * Un tema che non fornisce una regione ottiene quella del core, identica a
- * come è sempre stata: un glob che non combacia è una mappa vuota, non un
- * errore.
+ * A theme that supplies no region gets core's own, exactly as it has
+ * always been: a glob matching nothing is an empty map, not an error.
  */
 const themeRegionModules = import.meta.glob<{ default: unknown }>(
   '../../../../themes/*/regions/*.astro',
@@ -34,11 +34,11 @@ const regionsByTheme = groupByTheme(
 );
 
 /**
- * Il componente del tema per questa regione, o `null` se il tema non ne
- * fornisce uno — nel qual caso il chiamante usa il proprio wrapper di
- * default. Il nome del tema passa da `resolveBundledThemeName`, così un
- * `Site.themeName` stantio ricade sul tema di riserva invece di cercare
- * regioni che non esistono.
+ * The theme's component for this region, or `null` when the theme supplies
+ * none — in which case the caller falls back to its own default wrapper.
+ * The theme name goes through `resolveBundledThemeName`, so a stale
+ * `Site.themeName` lands on the fallback theme instead of looking for
+ * regions that do not exist.
  */
 export function resolveThemeRegion<T>(
   region: ThemeRegionName,

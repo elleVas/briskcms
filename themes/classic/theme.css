@@ -27,7 +27,13 @@
 }
 
 :root {
-  --font-sans-value: 'Inter Variable', ui-sans-serif, system-ui, sans-serif;
+  /* Stack di sistema, deliberatamente: questo tema non spedisce file di
+     font. Prima dichiarava 'Inter Variable' senza che nulla lo caricasse,
+     quindi renderizzava comunque col fallback — la dichiarazione
+     prometteva un font che non arrivava mai. Un tema che vuole un font
+     proprio se lo porta come dipendenza e lo dichiara in un fonts.css
+     nella propria cartella (vedi themes/docs-showcase). */
+  --font-sans-value: ui-sans-serif, system-ui, sans-serif;
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
   --primary: oklch(0.205 0 0);

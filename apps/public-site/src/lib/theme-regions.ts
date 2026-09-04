@@ -2,50 +2,51 @@ import type { Translator } from './i18n';
 import type { PageTreeNodeDto } from './public-api-client';
 
 /**
- * docs/adr/0042's successor — le tre regioni che un tema può fornire al
- * posto dei wrapper del core, senza reimplementare la shell.
+ * The successor to docs/adr/0042's full-shell override — the three regions
+ * a theme may supply in place of core's own wrappers, without
+ * reimplementing the page shell.
  *
- * I tipi vivono qui e non in `resolve-theme-regions.ts` di proposito: quel
- * file fa un `import.meta.glob` sui file dei temi, e un tema che importasse
- * le proprie props da lì creerebbe un ciclo che oggi non esiste.
+ * These types live here rather than in `resolve-theme-regions.ts` on
+ * purpose: that file runs an `import.meta.glob` over the themes' own files,
+ * so a theme importing its props from there would create a cycle that does
+ * not exist today.
  *
- * Cosa resta SEMPRE del core, e che un tema non può quindi rompere: tutto
- * `<html>`/`<head>`/`<body>`, il link "salta al contenuto", gli attributi
- * `data-brisk-root-blocks` su cui si aggancia l'editor visuale, il
- * rendering dei blocchi, la CSP, il consent, schema.org e il preview
- * bridge. Un frammento riceve i blocchi già renderizzati come slot e
- * decide solo l'elemento che li avvolge.
+ * What always stays core's, and a theme therefore cannot break: all of
+ * `<html>`/`<head>`/`<body>`, the skip-to-content link, the
+ * `data-brisk-root-blocks` attributes the visual editor hooks onto, block
+ * rendering, CSP, consent, schema.org and the preview bridge. A region
+ * receives the already-rendered blocks as a slot and decides only the
+ * element that wraps them.
  */
 export type ThemeRegionRoute = 'page' | 'search' | 'error';
 
 export interface ThemeRegionProps {
   locale: string;
-  /** `Astro.url.pathname` senza slash finali, `'/'` per la radice. */
+  /** `Astro.url.pathname` with trailing slashes stripped, `'/'` for the root. */
   currentPath: string;
-  /** Il dizionario di UI del core, già legato a `locale`. */
+  /** Core's own UI dictionary, already bound to `locale`. */
   i18n: Translator;
   /**
-   * L'albero delle pagine pubblicate del sito. Recuperato al massimo una
-   * volta per richiesta e solo se il frammento lo chiama davvero: fetch,
-   * memoizzazione, guardia sul dominio e politica d'errore (risolve a `[]`,
-   * non lancia mai) sono del core, non del tema — è esattamente il genere
-   * di cosa che una copia sbaglia.
+   * The site's published page tree. Fetched at most once per request, and
+   * only if the region actually calls it: the fetch, the memoization, the
+   * domain guard and the error policy (resolves to `[]`, never throws) are
+   * core's, not the theme's — exactly the kind of thing a copy gets wrong.
    */
   pageTree: () => Promise<PageTreeNodeDto[]>;
-  /** Quale rotta del core sta renderizzando. */
+  /** Which core route is rendering. */
   route: ThemeRegionRoute;
-  /** Vero solo dentro l'iframe di anteprima dell'editor. */
+  /** True only inside the editor's preview iframe. */
   editable: boolean;
   /**
-   * Iniettata da Astro perché il layout del core ha `<style>` propri:
-   * inoltrala sull'elemento radice del frammento per far arrivare gli stili
-   * scoped del core, oppure ignorala.
+   * Injected by Astro because core's layout has `<style>` blocks of its
+   * own: forward it onto the region's root element to let core's scoped
+   * styles reach it, or ignore it.
    */
   class?: string;
 }
 
 export interface ThemeHeaderProps extends ThemeRegionProps {
-  /** Configurato per (sito, locale) dall'editor — il tema decide come renderlo. */
+  /** Configured per (site, locale) in the editor — the theme decides how to honour it. */
   sticky: boolean;
 }
 

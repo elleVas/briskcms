@@ -14,10 +14,13 @@ import tailwindcss from '@tailwindcss/vite';
 // resolve-theme-*.ts file, which glob `../../../../themes/*/...` (every
 // bundled theme) instead of a single aliased directory. `BRISK_THEME`
 // still exists, but only as an optional, comma-separated allow-list read
-// by apps/public-site/Dockerfile *before* this build runs (pruning
-// themes/ on disk, since import.meta.glob's pattern must be a static
-// literal — it can't itself read an env var) — this file no longer needs
-// to know about it at all. The deployment unit is still one container
+// at *runtime* by theme-registry.ts's `applyThemeAllowList` — it narrows
+// which of the bundled themes a deployment will serve at all, never which
+// one a given site renders. Pruning themes/ on disk before this build was
+// tried first and abandoned (see apps/public-site/Dockerfile for why it
+// cannot work); either way the glob's pattern has to be a static literal,
+// so it can't read an env var itself, and this file needs to know nothing
+// about it. The deployment unit is still one container
 // per site, unchanged (docs/adr/0032's own 2026-09-02 amendment); only
 // *which theme* that one site uses is no longer fixed at image build.
 
@@ -60,24 +63,24 @@ export default defineConfig({
     plugins: [
       tailwindcss(),
       {
-        // Il canvas dell'editor (apps/editor-app/canvas-frame.tsx) carica
-        // questa pagina in un iframe sandboxato SENZA allow-same-origin
-        // (fix dello stored XSS via blocchi utente non fidati) — la sua
-        // origine è quindi opaca, e il browser tratta OGNI richiesta che fa,
-        // anche verso questo stesso host, come cross-origin. Questo header
-        // resta necessario ma NON basta da solo in dev: il dev server di
-        // Astro (>= 6.0) blocca comunque queste richieste con un 403 fisso
-        // prima ancora che questo header conti, perché `Origin: null`
-        // (origine opaca) non passa mai la sua validazione interna — vedi
-        // "Canvas rendering needs public-site's production build" in
-        // docs/development.md per la spiegazione completa e il workaround
-        // (build + `server.mjs` invece di `nx serve` quando si lavora sul
-        // canvas). L'equivalente per la build di produzione (asset statici
-        // sotto `_astro/`, serviti da `sirv` non da Vite, dove il blocco di
-        // Astro non esiste) vive in `server.mjs`, non qui.
-        // Esclude esplicitamente /api/*: render-block-fragment.ts ha il
-        // proprio scoping CORS su EDITOR_APP_URL (vedi il commento su
-        // `cors: false` sotto) e non deve mai essere sovrascritto qui.
+        // The editor's canvas (apps/editor-app/canvas-frame.tsx) loads this
+        // page in a sandboxed iframe WITHOUT allow-same-origin (the fix for
+        // stored XSS via untrusted user blocks) — its origin is therefore
+        // opaque, and the browser treats EVERY request it makes, even to
+        // this same host, as cross-origin. This header
+        // stays necessary but is NOT enough on its own in dev: Astro's dev
+        // server (>= 6.0) blocks these requests with a hard 403 before this
+        // header ever counts, because `Origin: null` (an opaque origin)
+        // never passes its internal validation — see "Canvas rendering
+        // needs public-site's production build" in docs/development.md for
+        // the full explanation and the workaround (build + `server.mjs`
+        // instead of `nx serve` when working on the canvas). The equivalent
+        // for the production build (static assets under `_astro/`, served
+        // by `sirv` rather than Vite, where Astro's block does not exist)
+        // lives in `server.mjs`, not here.
+        // /api/* is explicitly excluded: render-block-fragment.ts does its
+        // own CORS scoping against EDITOR_APP_URL (see the `cors: false`
+        // comment below) and must never be overwritten here.
         name: 'brisk-dev-sandboxed-iframe-cors',
         apply: 'serve',
         configureServer(server) {
@@ -92,11 +95,11 @@ export default defineConfig({
     ],
     server: {
       // Il dev server di Vite intercetta ogni preflight OPTIONS con la
-      // propria risposta CORS generica, prima ancora che raggiunga la
+      // own generic CORS response, before it ever reaches the
       // rotta Astro — impedirebbe a render-block-fragment.ts's export
       // OPTIONS/i suoi header CORS scoped a EDITOR_APP_URL di funzionare
-      // in dev (in produzione questo non esiste affatto: l'adapter Node
-      // standalone non passa da Vite). Disabilitato così è sempre la
+      // in dev (in production this does not exist at all: the standalone
+      // Node adapter never goes through Vite). Disabled like this, the
       // rotta stessa a rispondere, identico tra dev e produzione.
       cors: false,
     },

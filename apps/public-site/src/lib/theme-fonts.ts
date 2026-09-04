@@ -1,21 +1,21 @@
 /**
- * I font dei temi, self-hosted (docs/adr/0042 e successore). Un tema che
- * vuole un font proprio dichiara un `fonts.css` nella propria cartella e si
- * porta il pacchetto del font come dipendenza — stesso schema che le icone
- * usano già con `lucide-static`: un pacchetto versionato, non una CDN.
+ * The themes' own fonts, self-hosted (docs/adr/0042 and its successor). A
+ * theme that wants a font of its own declares a `fonts.css` in its
+ * directory and takes the font package as a dependency — the same pattern
+ * icons already use with `lucide-static`: a versioned package, never a CDN.
  *
- * Nessun `<link>` verso Google Fonts, mai: manderebbe l'IP di ogni
- * visitatore a Google (c'è una condanna tedesca del 2022 su esattamente
- * questo), il che è insostenibile per un prodotto che vende "i dati restano
- * a casa tua" e che genera pure la privacy policy del cliente — e un
- * deployment intranet non funzionerebbe affatto.
+ * No `<link>` to Google Fonts, ever: it would send every visitor's IP to
+ * Google (a German court ruled on exactly that in 2022), which is
+ * untenable for a product that sells "your data stays on your own
+ * machine" and that generates the customer's privacy policy for them — and
+ * an intranet deployment would not work at all.
  *
- * Import eager e non filtrato per tema, di proposito: i `fonts.css` di
- * tutti i temi bundlati finiscono nel foglio di stile, ma un `@font-face`
- * che nessuna regola referenzia **non scarica nulla** — è inerte per
- * costruzione, non per fortuna. Vale la pena rispetto all'alternativa
- * (iniettare CSS per richiesta), perché così è Vite a riscrivere gli
- * `url()` e a impacchettare i file del font, che è esattamente ciò che un
- * `@font-face` scritto a mano in `theme.css` non otterrebbe.
+ * The import is eager and not filtered per theme, deliberately: every
+ * bundled theme's `fonts.css` ends up in the stylesheet, but an
+ * `@font-face` no rule references **downloads nothing** — it is inert by
+ * construction, not by luck. That is worth it against the alternative
+ * (injecting the CSS per request), because this way Vite rewrites the
+ * `url()`s and bundles the font files, which a hand-written `@font-face`
+ * in `theme.css` would never get.
  */
 import.meta.glob('../../../../themes/*/fonts.css', { eager: true });

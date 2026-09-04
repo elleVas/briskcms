@@ -4,14 +4,14 @@ import { localePathFromAncestors } from '../../../apps/public-site/src/lib/local
 import type { ThemeContentShellProps } from '../../../apps/public-site/src/lib/theme-regions';
 
 /**
- * La sidebar docs e il pager prev/next di questo tema. Sostituisce la copia
- * integrale di PageLayout.astro che il tema teneva prima: <html>, <head>,
- * header, footer, consent, CSP e preview bridge sono tornati al core, e qui
- * resta solo cio che e davvero di questo tema.
+ * This theme's docs sidebar and prev/next pager. It replaces the wholesale
+ * copy of PageLayout.astro the theme used to carry: <html>, <head>, the
+ * header, the footer, consent, CSP and the preview bridge all went back to
+ * core, and what stays here is only what genuinely belongs to this theme.
  *
- * Il fetch dell'albero, la guardia sul dominio e la gestione dell'errore non
- * sono piu qui: arrivano gia risolti da `pageTree()`, che il core memoizza
- * per richiesta e fa risolvere a [] in caso di guasto.
+ * The tree fetch, the domain guard and the error handling are no longer
+ * here either: they arrive already resolved through `pageTree()`, which
+ * core memoizes per request and resolves to [] on failure.
  */
 type Props = ThemeContentShellProps;
 
@@ -47,18 +47,17 @@ const toSidebarNode = (node: PageTreeNodeDto): SidebarNode => ({
 });
 
 let sidebarGroups: SidebarGroup[] = [];
-// Solo su una pagina vera: su ricerca e sugli errori non c'e un nodo
-// corrente da cui risalire, quindi chiamare pageTree() sarebbe un fetch
-// per niente. Il core lo memoizza comunque per richiesta.
+// Only on a real page: on search and error routes there is no current node
+// to walk up from, so calling pageTree() would be a fetch for nothing. Core
+// memoizes it per request either way.
 const tree: PageTreeNodeDto[] = route === 'page' ? await pageTree() : [];
 
-// Il pathname intero, non solo l'ultimo segmento: l'unicita degli slug e
-// per fratelli (docs/adr/0029), quindi due pagine docs sotto genitori
-// DIVERSI possono legittimamente avere lo stesso slug finale (due
-// "overview"). Confrontare il solo slug prendeva quella che capitava prima
-// nell'albero appiattito, evidenziando la voce sbagliata nella sidebar e
-// puntando il pager ai fratelli del nodo sbagliato. L'href di un nodo,
-// costruito allo stesso modo, e invece unico.
+// The whole pathname, not just the last segment: slug uniqueness is
+// sibling-scoped (docs/adr/0029), so two docs pages under DIFFERENT parents
+// may legitimately end in the same slug (two "overview"s). Matching on the
+// slug alone picked whichever came first in the flattened tree, highlighting
+// the wrong sidebar entry and pointing the pager at the wrong node's
+// siblings. A node's href, built the same way, is unique instead.
 const currentNode =
 	tree.find(
 		(node) =>
@@ -67,9 +66,9 @@ const currentNode =
 	) ?? null;
 
 if (currentNode) {
-	// Si risale alla radice della sezione (parentId === null). La radice
-	// puo essere la pagina corrente stessa (si sta visitando la landing
-	// della sezione), una categoria, o una pagina foglia.
+	// Walk up to the section root (parentId === null). That root may be the
+	// current page itself (visiting the section's landing page), a category,
+	// or a leaf page.
 	let docsRoot = currentNode;
 	const visited = new Set<string>([docsRoot.id]);
 	while (docsRoot.parentId) {
@@ -102,6 +101,7 @@ const nextDoc =
 		: null;
 ---
 
+{
 	hasSidebar ? (
 		<div class="brisk-docs-shell">
 			<nav class="brisk-docs-sidebar" aria-label={i18n.t('docs.sidebarLabel')}>
@@ -146,12 +146,9 @@ const nextDoc =
 	) : (
 		<slot />
 	)
+}
+
 <style>
-	.brisk-header--sticky {
-		position: sticky;
-		top: 0;
-		z-index: 40;
-	}
 	.brisk-docs-shell {
 		display: grid;
 		grid-template-columns: 16rem minmax(0, 1fr);

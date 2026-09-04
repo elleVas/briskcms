@@ -9,8 +9,7 @@
 import ErrorPageShell from '../components/ErrorPageShell.astro';
 import ServerError from '../components/ServerError.astro';
 import { getPublishedSiteChrome } from '../lib/public-api-client';
-import PageLayoutCore from '../layouts/PageLayout.astro';
-import { resolveThemeLayoutOverride } from '../lib/resolve-theme-layout-override';
+import PageLayout from '../layouts/PageLayout.astro';
 
 Astro.response.status = 500;
 
@@ -33,11 +32,6 @@ const chrome = guessedLocale
     )
   : null;
 
-// docs/adr/0042 — see PublicPageContent.astro's own comment on the same pattern.
-const PageLayout = resolveThemeLayoutOverride(
-  PageLayoutCore,
-  chrome?.site.themeName ?? '',
-);
 
 // Same fabricated "switch language -> go to that language's Home" links as
 // PublicPageContent.astro's themed 404 branch — without this LanguageSwitcher
