@@ -1,0 +1,1 @@
+ALTER TABLE "sites" ADD COLUMN "theme_name" text DEFAULT 'classic' NOT NULL;

@@ -143,6 +143,7 @@ describe('PublicPagesController (integration)', () => {
       site: {
         name: 'Public Test Site',
         domain,
+        themeName: 'classic',
         defaultLocale: 'it',
         enabledLocales: ['it'],
         untranslatedPageFallback: 'redirect-to-default',

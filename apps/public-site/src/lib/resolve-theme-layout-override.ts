@@ -1,16 +1,29 @@
+import {
+  resolveBundledThemeName,
+  themeNameFromGlobPath,
+} from './theme-registry';
+
 // Sibling of resolve-theme-block-override.ts, same reasoning — but for the
 // "full PageLayout.astro override" escalation themes/README.md describes
 // (a theme that wants to restructure header/main/footer wholesale, not
-// just restyle blocks). A theme ships `~theme/PageLayout.astro` at its own
-// root (next to theme.css/theme.json), not inside blocks/ — this is the
-// whole page shell, not one block among many.
-const themeLayoutOverride = import.meta.glob<{ default: unknown }>(
-  '~theme/PageLayout.astro',
+// just restyle blocks). A theme ships `themes/<name>/PageLayout.astro` at
+// its own root (next to theme.css/theme.json), not inside blocks/ — this
+// is the whole page shell, not one block among many.
+const themeLayoutOverrideModules = import.meta.glob<{ default: unknown }>(
+  '../../../../themes/*/PageLayout.astro',
   { eager: true },
 );
 
-export function resolveThemeLayoutOverride<T>(coreLayout: T): T {
-  const entry = Object.values(themeLayoutOverride)[0] as
-    { default: T } | undefined;
-  return entry?.default ?? coreLayout;
+const overrideByTheme = new Map<string, unknown>(
+  Object.entries(themeLayoutOverrideModules)
+    .map(([path, mod]) => [themeNameFromGlobPath(path), mod.default] as const)
+    .filter((entry): entry is [string, unknown] => entry[0] !== null),
+);
+
+export function resolveThemeLayoutOverride<T>(
+  coreLayout: T,
+  themeName: string,
+): T {
+  const override = overrideByTheme.get(resolveBundledThemeName(themeName));
+  return (override as T | undefined) ?? coreLayout;
 }

@@ -16,15 +16,15 @@ declare module 'i18next' {
 }
 
 // No browser-language auto-detection: an explicit `lng` keeps the starting
-// language deterministic (tests, first-time users in the target IT market)
-// — LanguageSwitcher (see app/language-switcher.tsx) is how it changes.
+// language deterministic (tests, first-time users) — the toggle in
+// app/settings-menu.tsx is how it actually changes.
 void i18next.use(initReactI18next).init({
-  lng: 'it',
+  lng: 'en',
   resources: {
     it: { translation: it },
     en: { translation: en },
   },
-  fallbackLng: 'it',
+  fallbackLng: 'en',
   interpolation: { escapeValue: false },
 });
 

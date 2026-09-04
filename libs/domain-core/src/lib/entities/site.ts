@@ -12,6 +12,8 @@ export interface SiteProps {
   tenantId: string;
   name: string;
   domain: string | null;
+  /** Tier 2 of docs/adr/0021's theming model (docs/adr/0042) — which bundled filesystem theme this site renders. Distinct from the Tier 1 theme* fields below. */
+  themeName: string;
   defaultLocale: string;
   enabledLocales: string[];
   untranslatedPageFallback: UntranslatedPageFallback;
@@ -48,6 +50,10 @@ export interface UpdateBusinessInfoInput {
 export interface UpdateGeneralSettingsInput {
   name: string;
   domain: string | null;
+}
+
+export interface UpdateThemePackageInput {
+  themeName: string;
 }
 
 export interface UpdateSeoSettingsInput {
@@ -94,6 +100,10 @@ export class Site {
 
   get domain(): string | null {
     return this.props.domain;
+  }
+
+  get themeName(): string {
+    return this.props.themeName;
   }
 
   get defaultLocale(): string {
@@ -196,6 +206,10 @@ export class Site {
   updateGeneralSettings(input: UpdateGeneralSettingsInput): void {
     this.props.name = input.name;
     this.props.domain = input.domain;
+  }
+
+  updateThemePackage(input: UpdateThemePackageInput): void {
+    this.props.themeName = input.themeName;
   }
 
   updateSeoSettings(input: UpdateSeoSettingsInput): void {

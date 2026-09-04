@@ -35,6 +35,10 @@ vi.mock('../lib/sites-api-client', async (importOriginal) => {
     ...actual,
     getSite: vi.fn(),
     updateThemeSettings: vi.fn(),
+    updateThemePackage: vi.fn(),
+    listAvailableThemes: vi
+      .fn()
+      .mockResolvedValue([{ name: 'classic' }, { name: 'docs-showcase' }]),
   };
 });
 
@@ -58,6 +62,7 @@ function buildSite(overrides: Partial<SiteRecord> = {}): SiteRecord {
     tenantId: 'tenant-1',
     name: 'Il mio sito',
     domain: null,
+    themeName: 'classic',
     defaultLocale: 'it',
     enabledLocales: ['it'],
     untranslatedPageFallback: 'redirect-to-default',
@@ -268,6 +273,39 @@ describe('GlobalStylesDialog', () => {
       'Hero',
       expect.objectContaining({ borderRadius: '8px' }),
     );
+  });
+
+  it("marks the site's current theme as selected in the theme dropdown", async () => {
+    vi.mocked(api.getSite).mockResolvedValue(
+      buildSite({ themeName: 'docs-showcase' }),
+    );
+    renderDialog(true);
+    await waitFor(() => screen.getByText('Tema'));
+
+    fireEvent.click(screen.getByRole('combobox'));
+
+    expect(
+      screen.getByRole('option', { name: 'docs-showcase', selected: true }),
+    ).toBeTruthy();
+  });
+
+  it('switches theme immediately on selection, without the Salva button', async () => {
+    vi.mocked(api.getSite).mockResolvedValue(buildSite());
+    vi.mocked(api.updateThemePackage).mockResolvedValue(
+      buildSite({ themeName: 'docs-showcase' }),
+    );
+    renderDialog(true);
+    await waitFor(() => screen.getByText('Tema'));
+
+    fireEvent.click(screen.getByRole('combobox'));
+    fireEvent.click(screen.getByRole('option', { name: 'docs-showcase' }));
+
+    await waitFor(() =>
+      expect(api.updateThemePackage).toHaveBeenCalledWith('site-1', {
+        themeName: 'docs-showcase',
+      }),
+    );
+    expect(api.updateThemeSettings).not.toHaveBeenCalled();
   });
 
   it('goes back to the list from the per-type editor', async () => {

@@ -67,6 +67,13 @@ env:
   # MEDIA_UPLOAD_DIR is never written to.
   MEDIA_UPLOAD_DIR: /tmp/brisk-ci-uploads
   API_PUBLIC_URL: http://localhost:3000/api
+  # Needed for SitesModule to compile in apps/api's unit tests (see
+  # app.module.spec.ts) — docs/adr/0042's ThemeCatalogPort. Points at the
+  # checkout's real themes/ rather than a placeholder: unlike
+  # MEDIA_UPLOAD_DIR above this directory is actually *read* (readdir) the
+  # moment anything lists the available themes, so a fake path would turn
+  # a future test into a confusing ENOENT instead of real data.
+  THEMES_DIR: ${{ github.workspace }}/themes
 
 jobs:
   # Typecheck/lint/build/test used to be steps inside one "main" job —

@@ -27,3 +27,40 @@ No code changes follow from this ADR. It exists to close the open question left 
 - `sites` staying schema-plural is deliberate defense-in-depth (RLS/tenant-scoping hygiene), not a half-built feature — don't read its plurality as a signal that multi-site-per-container is coming.
 - If a real use case for one container serving multiple differently-themed sites under one account ever shows up, that's a new decision, not a reason to reopen this one on spec: it would need a real `POST /sites` + site-switcher UI + per-request theme resolution (a genuinely bigger feature, not a config tweak) and should be scoped against an actual request, not a hypothetical.
 - Local dev is unaffected either way: `DEFAULT_SITE_ID` in `.env` already models exactly one site per running instance, matching this ADR by construction.
+
+## Amendment — 2026-09-02: runtime theme selection does not reopen multi-tenancy
+
+[ADR-0042](0042-self-hosting-distribution-and-runtime-theme-selection.md)
+introduces two new theme-runtime capabilities: an admin picking among the
+themes bundled into a running container's own image with no rebuild
+(`Site.themeName`, resolved per-request), and (documented, deliberately
+deferred until real demand — see ADR-0042's own Consequences) uploading a
+custom theme that would trigger a background build inside that site's
+own stack. Worth being explicit about what this does and doesn't change
+against this ADR's own decision, since on a skim it could look like the
+exact thing this ADR argued against.
+
+This ADR's decision was against **multi-tenancy** — one container serving
+several _different_ sites, each wanting its own theme, which this ADR's
+Consequences section explicitly left as a future decision to scope
+against a real request, not something to build speculatively. Nothing
+about that has changed: a container in this deployment model still
+serves exactly one site, forever, for the lifetime of that deployment.
+There is still no `POST /sites`, no site-switcher, and no per-request
+"which site" resolution beyond what already existed for domain-based
+page serving.
+
+What ADR-0042 adds is narrower: that _one_ site's _own_ theme becoming
+changeable at runtime, among a bundled set. The per-request resolution
+ADR-0042 requires is "which theme does the one site this container
+serves currently have," not "which site is this container serving" —
+the latter is what this ADR's argument against multi-tenancy was
+actually about, and it remains unanswered by design, not by oversight.
+
+This also updates a stale assumption baked into `astro.config.mjs`'s own
+comment at the time of this ADR (now corrected in the same change as
+ADR-0042's implementation): it read "a container never needs to pick a
+theme per request," citing this ADR. That specific claim no longer holds
+— the _site_ per container is still fixed, but the _theme_ that site's
+own container serves is no longer decided once at build time. The two
+are independent axes; this ADR only ever committed to the first.

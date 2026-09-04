@@ -3,11 +3,12 @@ import type { NavLinkProps } from '@brisk/shared-types';
 import { localePath } from '../../lib/locale-path';
 import { resolveIconSvg } from '../../lib/resolve-theme-icons';
 
-type Props = NavLinkProps;
+type Props = NavLinkProps & { themeName: string };
 
-const { label, linkType, page, url, icon, position, visibility } = Astro.props;
+const { label, linkType, page, url, icon, position, visibility, themeName } =
+  Astro.props;
 const href = linkType === 'page' && page?.locale && page?.slug ? localePath(page.locale, page.slug) : url;
-const iconSvg = resolveIconSvg(icon);
+const iconSvg = resolveIconSvg(icon, themeName);
 ---
 
 <a

@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { pageBlockCategories, pageBlocks } from '@brisk/block-registry';
 import { mergeThemeBlocks, type PageBlockRegistry } from './merge-theme-blocks';
 import { themePageBlocksQueryOptions } from './theme-page-blocks-queries';
+import { useActiveThemeName } from './use-active-theme-name';
 
 /**
  * Docs/adr/0041 — the one integration point `page-group-editor-view.tsx`
@@ -14,7 +15,7 @@ import { themePageBlocksQueryOptions } from './theme-page-blocks-queries';
  * theme block just appears in the picker a moment after everything else.
  */
 export function usePageBlockRegistry(): PageBlockRegistry {
-  const { data } = useQuery(themePageBlocksQueryOptions());
+  const { data } = useQuery(themePageBlocksQueryOptions(useActiveThemeName()));
   return useMemo(
     () => mergeThemeBlocks(pageBlocks, pageBlockCategories, data ?? []),
     [data],

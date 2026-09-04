@@ -1,25 +1,35 @@
+import { groupByTheme, resolveBundledThemeName } from './theme-registry';
+
 // docs/adr/0021 + themes/README.md's "escalation on top of the token-only
 // default": a theme package can ship its own `blocks/<Name>.astro` to
-// replace a core block's markup entirely, resolved at build time via the
-// same `~theme` alias as theme.css. `import.meta.glob` against a directory
-// that doesn't exist (most themes never need this) simply matches nothing
-// — no error, `coreComponent` wins every time. One call per block import
-// in BlockRenderer.astro, not a rewrite of its conditional-render logic.
-const themeBlockOverrides = import.meta.glob<{ default: unknown }>(
-  '~theme/blocks/*.astro',
+// replace a core block's markup entirely, resolved once per process for
+// every bundled theme (docs/adr/0042 — every theme ships in the same
+// image, `themeName` picks which one a given request sees). A theme with
+// no blocks/ directory simply has no entries in its own map — no error,
+// `coreComponent` wins every time.
+const themeBlockOverrideModules = import.meta.glob<{ default: unknown }>(
+  '../../../../themes/*/blocks/*.astro',
   { eager: true },
+);
+
+function basename(path: string): string {
+  const fileName = path.slice(path.lastIndexOf('/') + 1);
+  return fileName.replace(/\.astro$/, '');
+}
+
+const overridesByTheme = groupByTheme(
+  themeBlockOverrideModules,
+  basename,
+  (mod) => mod.default,
 );
 
 export function resolveThemeBlockOverride<T>(
   blockType: string,
   coreComponent: T,
+  themeName: string,
 ): T {
-  // Matched by suffix, not a fixed key shape: import.meta.glob's key format
-  // for an aliased pattern isn't part of Vite's stable public contract —
-  // safer than assuming one exact string.
-  const entry = Object.entries(themeBlockOverrides).find(([path]) =>
-    path.endsWith(`/${blockType}.astro`),
-  );
-  const override = entry?.[1] as { default: T } | undefined;
-  return override?.default ?? coreComponent;
+  const override = overridesByTheme
+    .get(resolveBundledThemeName(themeName))
+    ?.get(blockType);
+  return (override as T | undefined) ?? coreComponent;
 }

@@ -62,6 +62,17 @@ export type UpdateThemeSettingsBody = z.infer<
   typeof updateThemeSettingsBodySchema
 >;
 
+// Tier 2 selection (docs/adr/0021/0042) — which bundled theme renders this
+// site. Whether `themeName` is actually one of this deployment's bundled
+// themes is checked in the use-case against ThemeCatalogPort, not here —
+// this schema only enforces the shape.
+export const updateThemePackageBodySchema = z.object({
+  themeName: z.string().min(1),
+});
+export type UpdateThemePackageBody = z.infer<
+  typeof updateThemePackageBodySchema
+>;
+
 // Reuses @brisk/shared-types' schema wholesale — same reasoning as theme
 // settings above (Global Styles Editor, Fase 2a del piano editor visuale
 // parte 2).

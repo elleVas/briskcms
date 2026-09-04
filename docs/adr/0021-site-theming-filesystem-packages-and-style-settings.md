@@ -207,3 +207,69 @@ theme redefines for itself.
   surface in `editor-app`; and a strategy for keeping four (and growing)
   themes from silently drifting out of sync when a core block's Zod
   schema changes underneath them.
+
+## Amendment — 2026-09-02: themes become real Nx/pnpm packages
+
+[ADR-0041](0041-theme-defined-block-extensions.md) resolved the first
+open item above — a theme can now register a genuinely new block type —
+and along the way partially reversed this ADR's own original stance
+that "a theme is a directory outside the existing Nx `apps`/`libs`, not
+a new Nx project." `themes/classic` and `themes/docs-showcase` are now
+real Nx/pnpm packages (`@brisk/theme-classic`/`@brisk/theme-docs-showcase`,
+`nx.tags: ["app"]`), each with a real `typecheck`/`lint`/`test` target
+that runs in CI. Worth being explicit about why, and what it does and
+doesn't change:
+
+- Before this, a theme's own files were **completely invisible** to any
+  correctness tooling — `astro check`'s `include` doesn't reach them,
+  and a file only ever matched by `import.meta.glob` is never opened by
+  `tsc` at all. A real bug in a theme's code (wrong prop type, a typo'd
+  i18n key, a business-rule violation) could only ever be discovered by
+  a human clicking around, or by a real user hitting a 500. Making
+  themes real Nx packages closes that for real: `tsc` type-checks them,
+  and each theme's own `blocks/blocks.spec.ts` — only possible because
+  it's now a real `test` target — is what actually, reliably keeps a
+  broken block or a core-type collision from ever shipping.
+- **This benefit currently reaches every theme that can possibly
+  exist** — as of this amendment there is still no self-hosting
+  distribution mechanism (Dockerfile, build pipeline, or any way to
+  layer an externally-hosted theme into a build at all — see the
+  backlog). Until that's built, the _only_ way for any theme, first-party
+  or hypothetically third-party, to exist at all is to physically live
+  under this repo's own `themes/` directory. So today, "does this
+  exclude a third party from the benefit" is a moot question — nothing
+  exists outside this repo's `themes/` to exclude.
+- That's also exactly where the earlier isolation intent (this ADR's
+  "Tier 2" reasoning, Bedrock/Sage-style: an agency's own folder a core
+  update never touches) becomes a real, unresolved question again, not
+  before: a theme inside this Nx workspace depends on `@brisk/block-sdk`/
+  `@brisk/shared-types` via `workspace:*`, so a shape change to either
+  in a future release would fail a first-party theme's typecheck
+  immediately on the next install — which is the _right_ outcome for
+  Brisk's own team (loud, at build time, not a silent runtime surprise),
+  but is precisely the coupling this ADR's Tier 2 design set out to
+  avoid for a genuinely external theme author. Whether a future
+  self-hosting distribution model keeps themes inside this same Nx
+  workspace, or instead layers in an externally-repo'd theme at Docker
+  build time (git submodule, build-context `COPY`, or similar — in
+  which case that theme would need its own independent scaffolding
+  against a published `@brisk/block-sdk` npm version, not
+  `workspace:*`) is **explicitly not decided by this amendment**,
+  deferred until Phase 6 (self-hosting distribution) exists to test it
+  against a real, deliberately disconnected theme built the way an
+  actual external developer would build one.
+
+## Amendment — 2026-09-02: Tier 2 becomes runtime-selectable for bundled themes
+
+This ADR's original Decision section states Tier 2 (filesystem theme
+packages) is "[s]elected per-deployment via a build-time env var
+(`BRISK_THEME`), never swapped at runtime." [ADR-0042](0042-self-hosting-distribution-and-runtime-theme-selection.md)
+changes that specific claim: a self-hosted deployment's image now bundles
+every theme under `themes/*` at build time, and which one a given site
+actually renders becomes a runtime, DB-backed choice (`Site.themeName`),
+picked from an editor-app menu with zero rebuild. See ADR-0042 itself for
+the full design and [docs/adr/0032](0032-one-container-per-site-deployment-unit.md)'s
+own 2026-09-02 amendment for why this doesn't reopen the multi-tenancy
+question this ADR's Tier 2 reasoning was never about. Uploading a
+genuinely new, uninstalled theme still requires a rebuild — only
+switching among an already-bundled set is instant.

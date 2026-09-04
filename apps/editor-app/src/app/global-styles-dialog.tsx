@@ -21,16 +21,24 @@ import {
   DialogHeader,
   DialogTitle,
 } from '../components/ui/dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../components/ui/select';
 import { blockStyleDefaultsQueryOptions } from './block-style-defaults-queries';
 import type { BlockPickerCategory } from './canvas/block-picker';
 import { BlockStyleFields } from './canvas/block-style-fields';
 import { checkContrastAgainstThemeForeground } from '../lib/color-contrast';
 import { useTranslation } from '../lib/use-translation';
-import { siteQueryOptions } from './site-queries';
+import { availableThemesQueryOptions, siteQueryOptions } from './site-queries';
 import { themeBaseTokensQueryOptions } from './theme-base-tokens-queries';
 import { themeForegroundTokensQueryOptions } from './theme-foreground-tokens-queries';
 import { ToggleableColorField } from './toggleable-color-field';
 import { useResetFormOnOpen } from './use-reset-form-on-open';
+import { useSiteThemePackage } from './use-site-theme-package';
 import { useSiteThemeSettings } from './use-site-theme-settings';
 
 export interface GlobalStylesDialogProps {
@@ -109,16 +117,26 @@ export function GlobalStylesDialog({
 }: GlobalStylesDialogProps) {
   const { t, tLabel } = useTranslation();
   const { data: site } = useQuery(siteQueryOptions(siteId));
+  // Il tema del sito che questo dialog sta editando, non quello di
+  // default dell'app: i token/default mostrati devono essere quelli che
+  // il visitatore vedrà davvero (docs/adr/0042).
+  const activeThemeName = site?.themeName ?? '';
   const { data: blockStyleDefaults } = useQuery(
-    blockStyleDefaultsQueryOptions(),
+    blockStyleDefaultsQueryOptions(activeThemeName),
   );
   const { data: foregroundTokens } = useQuery(
-    themeForegroundTokensQueryOptions(),
+    themeForegroundTokensQueryOptions(activeThemeName),
   );
-  const { data: baseTokens } = useQuery(themeBaseTokensQueryOptions());
+  const { data: baseTokens } = useQuery(
+    themeBaseTokensQueryOptions(activeThemeName),
+  );
+  const { data: availableThemes } = useQuery(availableThemesQueryOptions());
   const { updateThemeSettings, isSaving } = useSiteThemeSettings(siteId);
+  const { updateThemePackage, isSaving: isSavingThemePackage } =
+    useSiteThemePackage(siteId);
 
   const [error, setError] = useState('');
+  const [themeError, setThemeError] = useState('');
   // Navigazione tra l'elenco e lo stile di un tipo — non dati di un form,
   // riparte sempre dall'elenco (non dall'ultimo tipo aperto) perché
   // riaprire il dialog è un'azione deliberata dell'utente, non una
@@ -157,9 +175,19 @@ export function GlobalStylesDialog({
       : null;
   useResetFormOnOpen(open, site, reset, (currentSite) => {
     setError('');
+    setThemeError('');
     setSelectedType(null);
     return toFormValues(currentSite, baseTokens);
   });
+
+  async function onThemeChange(themeName: string) {
+    setThemeError('');
+    try {
+      await updateThemePackage({ themeName });
+    } catch (err) {
+      setThemeError(String(err));
+    }
+  }
 
   async function onSubmit(values: ColorsFormValues) {
     if (!site) {
@@ -340,6 +368,42 @@ export function GlobalStylesDialog({
                   </Button>
                 </div>
               </div>
+              {site && (
+                <div className="flex flex-col gap-2">
+                  <h3 className="text-sm font-medium">
+                    {t('globalStyles.themeTitle')}
+                  </h3>
+                  <p className="text-xs text-muted-foreground">
+                    {t('globalStyles.themeHint')}
+                  </p>
+                  <Select
+                    value={site.themeName}
+                    onValueChange={(value) => void onThemeChange(value)}
+                    disabled={isSavingThemePackage}
+                  >
+                    <SelectTrigger id="global-styles-theme" className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {(availableThemes ?? []).map((theme) => (
+                        <SelectItem key={theme.name} value={theme.name}>
+                          {theme.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {isSavingThemePackage && (
+                    <p className="text-xs text-muted-foreground">
+                      {t('globalStyles.themeSaving')}
+                    </p>
+                  )}
+                  {themeError && (
+                    <p role="alert" className="text-sm text-destructive">
+                      {themeError}
+                    </p>
+                  )}
+                </div>
+              )}
               {styleableCategories.length > 0 && (
                 <div className="flex flex-col gap-2">
                   <h3 className="text-sm font-medium">

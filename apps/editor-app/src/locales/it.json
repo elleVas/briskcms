@@ -437,6 +437,9 @@
     "close": "Chiudi",
     "back": "Indietro",
     "colorsTitle": "Colori",
+    "themeTitle": "Tema",
+    "themeHint": "Quale dei temi bundlati in questo deployment usa il sito. Applicato subito, nessun ricaricamento pagina necessario.",
+    "themeSaving": "Cambio tema in corso...",
     "blockStylesTitle": "Stile per blocco",
     "blockStylesHint": "Scegli un tipo di blocco per modificarne lo stile su tutto il sito — sfondo, colore testo, angoli, padding."
   },

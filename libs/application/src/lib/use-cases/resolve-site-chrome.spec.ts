@@ -19,6 +19,7 @@ describe('resolveSiteChrome', () => {
       tenantId,
       name: 'Sito di prova',
       domain: 'example.com',
+      themeName: 'classic',
       defaultLocale: 'it',
       enabledLocales: ['it', 'en'],
       untranslatedPageFallback: 'redirect-to-default',

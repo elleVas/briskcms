@@ -23,6 +23,7 @@ import {
   PopoverTrigger,
 } from '../../components/ui/popover';
 import { blockStyleDefaultsQueryOptions } from '../block-style-defaults-queries';
+import { useActiveThemeName } from '../use-active-theme-name';
 import { useTranslation } from '../../lib/use-translation';
 import { BlockPicker, type BlockPickerCategory } from './block-picker';
 import { BlockStyleFields } from './block-style-fields';
@@ -107,7 +108,7 @@ export function BlockToolbarOverlay({
   const geometry = useIframeGeometry(iframeRef);
   const [insertOpen, setInsertOpen] = useState<'before' | 'after' | null>(null);
   const { data: blockStyleDefaults } = useQuery(
-    blockStyleDefaultsQueryOptions(),
+    blockStyleDefaultsQueryOptions(useActiveThemeName()),
   );
 
   const canAddChild =

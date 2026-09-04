@@ -2,20 +2,22 @@ import type { APIRoute } from 'astro';
 import { resolveThemeForegroundTokens } from '../../../../lib/resolve-theme-foreground-tokens';
 import { themesApiCorsHeaders } from '../../../../lib/themes-api-cors';
 
-// Stesso pattern/motivo di block-style-defaults.ts: solo apps/public-site
-// conosce il tema attivo (~theme) — l'editor lo consuma per il controllo
-// di contrasto WCAG sul color picker primario/secondario del tema
-// (GlobalStylesDialog).
+// docs/adr/0042 — see base-tokens.ts's own comment on the ?theme= param.
 export const prerender = false;
 
 export const OPTIONS: APIRoute = () =>
   new Response(null, { status: 204, headers: themesApiCorsHeaders() });
 
-export const GET: APIRoute = () =>
-  new Response(JSON.stringify(resolveThemeForegroundTokens()), {
-    status: 200,
-    headers: {
-      'Content-Type': 'application/json',
-      ...themesApiCorsHeaders(),
+export const GET: APIRoute = ({ url }) =>
+  new Response(
+    JSON.stringify(
+      resolveThemeForegroundTokens(url.searchParams.get('theme') ?? ''),
+    ),
+    {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/json',
+        ...themesApiCorsHeaders(),
+      },
     },
-  });
+  );

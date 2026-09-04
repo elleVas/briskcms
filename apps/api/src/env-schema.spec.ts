@@ -11,6 +11,7 @@ const VALID_ENV: NodeJS.ProcessEnv = {
   MEDIA_UPLOAD_DIR: './uploads',
   API_PUBLIC_URL: 'http://localhost:3000/api',
   TURNSTILE_SECRET_KEY: 'turnstile-secret',
+  THEMES_DIR: './themes',
 };
 
 describe('validateApiEnv', () => {

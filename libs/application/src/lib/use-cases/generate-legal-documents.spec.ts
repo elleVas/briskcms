@@ -43,6 +43,7 @@ describe('generateLegalDocuments', () => {
       tenantId,
       name: 'Il mio sito',
       domain: 'example.com',
+      themeName: 'classic',
       defaultLocale: overrides.defaultLocale ?? 'it',
       enabledLocales: overrides.enabledLocales ?? ['it', 'en'],
       untranslatedPageFallback: 'redirect-to-default',

@@ -437,6 +437,9 @@
     "close": "Close",
     "back": "Back",
     "colorsTitle": "Colors",
+    "themeTitle": "Theme",
+    "themeHint": "Which of this deployment's bundled themes this site uses. Applies immediately, no page reload needed.",
+    "themeSaving": "Switching theme...",
     "blockStylesTitle": "Style by block",
     "blockStylesHint": "Pick a block type to edit its style across the whole site — background, text color, corners, padding."
   },

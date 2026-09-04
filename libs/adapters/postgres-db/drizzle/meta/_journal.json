@@ -57,6 +57,13 @@
       "when": 1788285157923,
       "tag": "0007_cookie_consent",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1788412323229,
+      "tag": "0008_site_theme_name",
+      "breakpoints": true
     }
   ]
 }

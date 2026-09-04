@@ -1,5 +1,7 @@
 import {
+  availableThemesResponseSchema,
   siteRecordSchema,
+  type AvailableTheme,
   type BlockStyleOverride,
   type CookieBannerSettings,
   type LocaleSettings,
@@ -108,6 +110,26 @@ export function updateCookieBannerSettings(
     method: 'PATCH',
     body: JSON.stringify(input),
   });
+}
+
+export interface UpdateThemePackageInput {
+  themeName: string;
+}
+
+export function updateThemePackage(
+  id: string,
+  input: UpdateThemePackageInput,
+): Promise<SiteRecord> {
+  return requestSite(`/sites/${id}/theme-package`, {
+    method: 'PATCH',
+    body: JSON.stringify(input),
+  });
+}
+
+export async function listAvailableThemes(): Promise<AvailableTheme[]> {
+  return availableThemesResponseSchema.parse(
+    await request('/sites/themes/available'),
+  );
 }
 
 export function updateThemeTokens(

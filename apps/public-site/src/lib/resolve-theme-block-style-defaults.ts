@@ -1,4 +1,3 @@
-import themeCssRaw from '~theme/theme.css?raw';
 import {
   BLOCK_STYLE_DEFAULTS,
   type BlockStyleDefaultsResponse,
@@ -8,8 +7,9 @@ import {
   resolveBlockStyleDefaults,
 } from './resolve-theme-block-style-defaults-helpers';
 import { listThemePageBlocks } from './resolve-theme-page-blocks';
+import { getThemeCssRaw, resolveBundledThemeName } from './theme-registry';
 
-let cached: BlockStyleDefaultsResponse | null = null;
+const cacheByTheme = new Map<string, BlockStyleDefaultsResponse>();
 
 /**
  * Un'entry per ogni tipo di blocco dichiarato in
@@ -21,12 +21,17 @@ let cached: BlockStyleDefaultsResponse | null = null;
  * React del registro — vedi la history di questo file. `BLOCK_STYLE_
  * DEFAULTS` in shared-types è la stessa identica sorgente di verità
  * (BlockDescriptor.defaultStyle la legge da lì anche lui), senza quel
- * problema. Calcolata una sola volta per processo: il tema attivo
- * (`~theme`) non cambia mai a runtime (docs/adr/0021).
+ * problema. Calcolata una sola volta per tema (docs/adr/0042 — ogni tema
+ * bundlato ha i propri token, memoizzata per tema una volta risolta).
  */
-export function listBlockStyleDefaults(): BlockStyleDefaultsResponse {
+export function listBlockStyleDefaults(
+  themeName: string,
+): BlockStyleDefaultsResponse {
+  const resolvedTheme = resolveBundledThemeName(themeName);
+  const cached = cacheByTheme.get(resolvedTheme);
   if (cached) return cached;
-  const themeVars = parseRootCustomProperties(themeCssRaw);
+
+  const themeVars = parseRootCustomProperties(getThemeCssRaw(resolvedTheme));
   const result: BlockStyleDefaultsResponse = {};
   for (const [type, declared] of Object.entries(BLOCK_STYLE_DEFAULTS)) {
     result[type] = resolveBlockStyleDefaults(declared, themeVars);
@@ -37,7 +42,7 @@ export function listBlockStyleDefaults(): BlockStyleDefaultsResponse {
   // looks up every block's resolved defaults generically by type string
   // against this one endpoint, core or theme-defined alike, so it needs
   // no changes of its own for a theme block's style popover to work.
-  for (const entry of listThemePageBlocks([])) {
+  for (const entry of listThemePageBlocks([], resolvedTheme)) {
     if (entry.descriptor.defaultStyle) {
       result[entry.descriptor.type] = resolveBlockStyleDefaults(
         entry.descriptor.defaultStyle,
@@ -45,6 +50,6 @@ export function listBlockStyleDefaults(): BlockStyleDefaultsResponse {
       );
     }
   }
-  cached = result;
+  cacheByTheme.set(resolvedTheme, result);
   return result;
 }

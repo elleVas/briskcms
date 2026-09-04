@@ -25,6 +25,10 @@ export const siteRecordSchema = businessInfoSchema.extend({
   tenantId: z.string(),
   name: z.string(),
   domain: z.string().nullable(),
+  // Tier 2 selection (docs/adr/0021/0042) — which bundled filesystem theme
+  // renders this site, distinct from the Tier 1 `theme*` style overrides
+  // below.
+  themeName: z.string(),
   defaultLocale: z.string(),
   enabledLocales: z.array(z.string()),
   untranslatedPageFallback: untranslatedPageFallbackSchema,

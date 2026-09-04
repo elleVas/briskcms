@@ -1,8 +1,8 @@
-import themeCssRaw from '~theme/theme.css?raw';
 import type { ThemeForegroundTokens } from '@brisk/shared-types';
 import { parseRootCustomProperties } from './resolve-theme-block-style-defaults-helpers';
+import { getThemeCssRaw, resolveBundledThemeName } from './theme-registry';
 
-let cached: ThemeForegroundTokens | null = null;
+const cacheByTheme = new Map<string, ThemeForegroundTokens>();
 
 /**
  * `--primary-foreground`/`--secondary-foreground` risolti (non `var(--x)`
@@ -14,13 +14,20 @@ let cached: ThemeForegroundTokens | null = null;
  * `:root { ... }` già usata lì — se un token manca dal tema attivo
  * (teoricamente possibile per un tema custom incompleto), il chiamante
  * riceve la stringa vuota e salta il controllo invece di lanciare.
+ * Memoizzata per tema (docs/adr/0042).
  */
-export function resolveThemeForegroundTokens(): ThemeForegroundTokens {
+export function resolveThemeForegroundTokens(
+  themeName: string,
+): ThemeForegroundTokens {
+  const resolvedTheme = resolveBundledThemeName(themeName);
+  const cached = cacheByTheme.get(resolvedTheme);
   if (cached) return cached;
-  const themeVars = parseRootCustomProperties(themeCssRaw);
-  cached = {
+
+  const themeVars = parseRootCustomProperties(getThemeCssRaw(resolvedTheme));
+  const tokens: ThemeForegroundTokens = {
     primaryForeground: themeVars.get('--primary-foreground') ?? '',
     secondaryForeground: themeVars.get('--secondary-foreground') ?? '',
   };
-  return cached;
+  cacheByTheme.set(resolvedTheme, tokens);
+  return tokens;
 }
