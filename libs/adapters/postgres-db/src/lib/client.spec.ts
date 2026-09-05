@@ -89,7 +89,7 @@ describe('adminConnectionString / createAppDb', () => {
   it('falls back to default host/port/db/user when unset', () => {
     process.env.POSTGRES_PASSWORD = 'secret';
     expect(adminConnectionString()).toBe(
-      'postgres://brisk:secret@localhost:5432/brisk',
+      'postgres://brisk:secret@localhost:5432/brisk?options=-c%20client_min_messages%3Dwarning',
     );
   });
 
@@ -100,7 +100,7 @@ describe('adminConnectionString / createAppDb', () => {
     process.env.POSTGRES_USER = 'custom_user';
     process.env.POSTGRES_PASSWORD = 'secret';
     expect(adminConnectionString()).toBe(
-      'postgres://custom_user:secret@db.internal:5433/custom_db',
+      'postgres://custom_user:secret@db.internal:5433/custom_db?options=-c%20client_min_messages%3Dwarning',
     );
   });
 
