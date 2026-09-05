@@ -10,7 +10,7 @@ export function useSiteLocaleSettings(siteId: string) {
     mutationFn: (input: LocaleSettings) =>
       apiUpdateLocaleSettings(siteId, input),
     onSuccess: (updated) => {
-      queryClient.setQueryData(siteQueryOptions(siteId).queryKey, updated);
+      queryClient.setQueryData(siteQueryOptions().queryKey, updated);
     },
   });
 

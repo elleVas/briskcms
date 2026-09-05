@@ -17,8 +17,6 @@ import { siteQueryOptions } from '../app/site-queries';
 import { useDebouncedValue } from '../app/use-debounced-value';
 import { requireAuth } from './-require-auth';
 
-const DEFAULT_SITE_ID = import.meta.env['VITE_DEFAULT_SITE_ID'] as string;
-
 // .default(1) keeps `page` optional for every <Link to="/pages"> that
 // doesn't care what page it lands on (TanStack Router requires a search
 // param at the type level unless the schema marks it optional/defaulted);
@@ -32,19 +30,21 @@ const pagesListSearchSchema = z.object({
 export const Route = createFileRoute('/_shell/pages/')({
   validateSearch: pagesListSearchSchema,
   loaderDeps: ({ search }) => ({ page: search.page }),
+  // Sequential rather than the Promise.all this used to be: the site's id
+  // is what scopes the list, so it has to be resolved before the list can
+  // be asked for at all.
   loader: ({ context, deps }) =>
-    requireAuth(() =>
-      Promise.all([
-        // Warms only the unfiltered page-1(+N)-equivalent fetch (no
-        // filters applied yet at first paint) — once the user actually
-        // touches the filter bar, the component below refetches via a
-        // plain (non-suspense) useQuery instead, see its own comment.
-        context.queryClient.ensureQueryData(
-          pageGroupsQueryOptions(DEFAULT_SITE_ID, deps.page),
-        ),
-        context.queryClient.ensureQueryData(siteQueryOptions(DEFAULT_SITE_ID)),
-      ]),
-    ),
+    requireAuth(async () => {
+      const site =
+        await context.queryClient.ensureQueryData(siteQueryOptions());
+      // Warms only the unfiltered page-1(+N)-equivalent fetch (no
+      // filters applied yet at first paint) — once the user actually
+      // touches the filter bar, the component below refetches via a
+      // plain (non-suspense) useQuery instead, see its own comment.
+      await context.queryClient.ensureQueryData(
+        pageGroupsQueryOptions(site.id, deps.page),
+      );
+    }),
   component: PagesListRoute,
 });
 
@@ -67,7 +67,7 @@ function toApiFilters(
 
 function PagesListRoute() {
   const { page } = Route.useSearch();
-  const { data: site } = useSuspenseQuery(siteQueryOptions(DEFAULT_SITE_ID));
+  const { data: site } = useSuspenseQuery(siteQueryOptions());
   // Local, not URL-synced (unlike `page`): the filter bar's own text input
   // needs to update on every keystroke, and syncing that straight into the
   // route search params would mean a full loader re-run (and, worse, a
@@ -87,7 +87,7 @@ function PagesListRoute() {
   // of flashing empty.
   const { data } = useQuery({
     ...pageGroupsQueryOptions(
-      DEFAULT_SITE_ID,
+      site.id,
       page,
       toApiFilters(filters, debouncedSearch),
     ),
@@ -96,7 +96,7 @@ function PagesListRoute() {
 
   return (
     <PageGroupsListView
-      siteId={DEFAULT_SITE_ID}
+      siteId={site.id}
       defaultLocale={site.defaultLocale}
       enabledLocales={site.enabledLocales}
       groups={data?.items ?? []}

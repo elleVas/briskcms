@@ -34,7 +34,15 @@ export function adminConnectionString(): string {
   const database = process.env.POSTGRES_DB ?? 'brisk';
   const user = process.env.POSTGRES_USER ?? 'brisk';
   const password = requireEnv('POSTGRES_PASSWORD');
-  return `postgres://${user}:${password}@${host}:${port}/${database}`;
+  // client_min_messages=warning silences the ~40 NOTICEs the baseline
+  // migration raises (identifier truncation, drop cascades). They are
+  // normal, but postgres-js prints each as a red-looking JSON object, so
+  // the one run a self-hoster is told to watch — `up migrate`, step 3 of
+  // docs/self-hosting.md — read as a stack trace with "migrations applied
+  // successfully" buried at the end. Set on the connection rather than
+  // filtered after the fact: this way Postgres never sends them.
+  const quiet = '?options=-c%20client_min_messages%3Dwarning';
+  return `postgres://${user}:${password}@${host}:${port}/${database}${quiet}`;
 }
 
 /** brisk_app connection — what every runtime query must use, respects RLS. */

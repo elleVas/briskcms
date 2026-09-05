@@ -41,7 +41,7 @@ export function GeneralSettingsDialog({
   // Gated on `open`: same reasoning as BusinessInfoDialog — this dialog can
   // be mounted for the app's whole lifetime (rendered from SettingsMenu).
   const { data: site } = useQuery({
-    ...siteQueryOptions(siteId),
+    ...siteQueryOptions(),
     enabled: open,
   });
   const { updateGeneralSettings, isSaving } = useSiteGeneralSettings(siteId);

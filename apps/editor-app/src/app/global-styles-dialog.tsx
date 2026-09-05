@@ -116,7 +116,7 @@ export function GlobalStylesDialog({
   onSaveTypeStyle,
 }: GlobalStylesDialogProps) {
   const { t, tLabel } = useTranslation();
-  const { data: site } = useQuery(siteQueryOptions(siteId));
+  const { data: site } = useQuery(siteQueryOptions());
   // The theme of the site this dialog is editing, not the app's default
   // one: the tokens and defaults shown have to be the ones the visitor will
   // actually see (docs/adr/0042).

@@ -12,7 +12,7 @@ export function useSiteGeneralSettings(siteId: string) {
     mutationFn: (input: UpdateGeneralSettingsInput) =>
       apiUpdateGeneralSettings(siteId, input),
     onSuccess: (updated) => {
-      queryClient.setQueryData(siteQueryOptions(siteId).queryKey, updated);
+      queryClient.setQueryData(siteQueryOptions().queryKey, updated);
     },
   });
 

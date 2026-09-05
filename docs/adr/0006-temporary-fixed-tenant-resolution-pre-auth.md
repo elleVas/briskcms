@@ -4,6 +4,12 @@
 planned once auth landed — see
 [ADR-0010](0010-session-based-auth-foundations.md), which also documents
 why `DEFAULT_TENANT_ID` itself survives with a narrower job than "consequences" below assumed.
+Both env vars this ADR introduced are now **optional**, and both are
+resolved at runtime when absent:
+[ADR-0042](0042-self-hosting-distribution-and-runtime-theme-selection.md)
+did that for the tenant, and
+[ADR-0044](0044-runtime-site-resolution-in-the-editor.md) for the site —
+without which the first-run wizard could not produce a working editor.
 
 ## Context
 

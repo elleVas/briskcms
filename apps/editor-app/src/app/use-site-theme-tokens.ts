@@ -10,7 +10,7 @@ export function useSiteThemeTokens(siteId: string) {
     mutationFn: (input: { blockType: string; style: BlockStyleOverride }) =>
       apiUpdateThemeTokens(siteId, input.blockType, input.style),
     onSuccess: (updated) => {
-      queryClient.setQueryData(siteQueryOptions(siteId).queryKey, updated);
+      queryClient.setQueryData(siteQueryOptions().queryKey, updated);
     },
   });
 

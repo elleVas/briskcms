@@ -1,6 +1,11 @@
 # 0032 — One container per site is the deployment unit; `BRISK_THEME` stays build-time
 
-**Status**: Accepted — 2026-08-30
+**Status**: Accepted — 2026-08-30. Still holds, with one amendment: the
+site id is no longer something `apps/editor-app` carries from build time.
+`DEFAULT_SITE_ID` remains the way to pin which site a deployment edits when
+its tenant owns several — the topology this ADR describes — but it is now
+optional and read server-side only, see
+[ADR-0044](0044-runtime-site-resolution-in-the-editor.md).
 
 ## Context
 

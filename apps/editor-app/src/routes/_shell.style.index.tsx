@@ -4,18 +4,14 @@ import { StyleView } from '../app/style-view';
 import { siteQueryOptions } from '../app/site-queries';
 import { requireAuth } from './-require-auth';
 
-const DEFAULT_SITE_ID = import.meta.env['VITE_DEFAULT_SITE_ID'] as string;
-
 export const Route = createFileRoute('/_shell/style/')({
   loader: ({ context }) =>
-    requireAuth(() =>
-      context.queryClient.ensureQueryData(siteQueryOptions(DEFAULT_SITE_ID)),
-    ),
+    requireAuth(() => context.queryClient.ensureQueryData(siteQueryOptions())),
   component: StyleRoute,
 });
 
 function StyleRoute() {
-  const { data: site } = useSuspenseQuery(siteQueryOptions(DEFAULT_SITE_ID));
+  const { data: site } = useSuspenseQuery(siteQueryOptions());
 
-  return <StyleView siteId={DEFAULT_SITE_ID} site={site} />;
+  return <StyleView siteId={site.id} site={site} />;
 }

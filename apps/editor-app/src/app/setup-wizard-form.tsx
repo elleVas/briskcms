@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
+import { ApiError } from '../lib/http-client';
 import {
   CURATED_LOCALE_CODES,
   getLocaleDisplayName,
@@ -20,6 +21,7 @@ const MIN_PASSWORD_LENGTH = 12;
 
 export interface SetupWizardFormProps {
   onSubmit: (input: {
+    setupToken: string;
     siteName: string;
     defaultLocale: string;
     adminEmail: string;
@@ -28,19 +30,24 @@ export interface SetupWizardFormProps {
 }
 
 /**
- * The first screen a self-hosted Brisk ever shows. Deliberately four
- * fields: everything else — the domain, SMTP, the theme, more users — is
- * reachable and changeable from the editor afterwards, and asking for it
- * here would mean asking someone to make decisions before they have seen
- * the product.
+ * The first screen a self-hosted Brisk ever shows. Deliberately short:
+ * everything else — the domain, SMTP, the theme, more users — is reachable
+ * and changeable from the editor afterwards, and asking for it here would
+ * mean asking someone to make decisions before they have seen the product.
  *
- * No captcha, unlike login. There is exactly one request this form will
- * ever succeed at in the life of an installation, and Turnstile's own
- * keys are configured through the same env file the wizard exists to
+ * The exception is the setup token, which is not a preference but a gate:
+ * without it, whoever loads this page first becomes the administrator of
+ * somebody else's installation. It goes first because a wrong one makes
+ * the rest of the form pointless.
+ *
+ * No captcha, unlike login. A captcha proves "not a robot"; the token
+ * proves something far stronger — that you can read this server's logs.
+ * Turnstile's keys also live in the same env file the wizard exists to
  * avoid needing.
  */
 export function SetupWizardForm({ onSubmit }: SetupWizardFormProps) {
   const { t } = useTranslation();
+  const [setupToken, setSetupToken] = useState('');
   const [siteName, setSiteName] = useState('');
   const [defaultLocale, setDefaultLocale] = useState('en');
   const [adminEmail, setAdminEmail] = useState('');
@@ -53,13 +60,23 @@ export function SetupWizardForm({ onSubmit }: SetupWizardFormProps) {
     setError('');
     setSubmitting(true);
     try {
-      await onSubmit({ siteName, defaultLocale, adminEmail, adminPassword });
-    } catch {
-      // Nothing here is a per-field error worth mapping: the schema is
-      // mirrored in the inputs themselves, so what is left is the API
-      // being unreachable or already set up — both of which mean "try
-      // again / reload", not "fix this field".
-      setError(t('setup.genericError'));
+      await onSubmit({
+        setupToken,
+        siteName,
+        defaultLocale,
+        adminEmail,
+        adminPassword,
+      });
+    } catch (err) {
+      // A rejected token IS worth mapping, unlike everything else here: it
+      // is the one failure the person can act on, and the action (re-read
+      // the log) is not guessable. Everything else — API unreachable,
+      // already set up — means "try again / reload", not "fix this field".
+      setError(
+        err instanceof ApiError && err.status === 401
+          ? t('setup.tokenError')
+          : t('setup.genericError'),
+      );
       setSubmitting(false);
     }
   }
@@ -77,6 +94,26 @@ export function SetupWizardForm({ onSubmit }: SetupWizardFormProps) {
         <CardContent>
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
             <div className="flex flex-col gap-2">
+              <Label htmlFor="setup-token">{t('setup.tokenLabel')}</Label>
+              <Input
+                id="setup-token"
+                value={setupToken}
+                onChange={(e) => setSetupToken(e.target.value)}
+                required
+                autoFocus
+                autoComplete="off"
+                spellCheck={false}
+                aria-describedby="setup-token-hint"
+              />
+              <p
+                id="setup-token-hint"
+                className="text-muted-foreground text-xs"
+              >
+                {t('setup.tokenHint')}
+              </p>
+            </div>
+
+            <div className="flex flex-col gap-2">
               <Label htmlFor="setup-site-name">
                 {t('setup.siteNameLabel')}
               </Label>
@@ -86,7 +123,6 @@ export function SetupWizardForm({ onSubmit }: SetupWizardFormProps) {
                 onChange={(e) => setSiteName(e.target.value)}
                 required
                 maxLength={120}
-                autoFocus
               />
             </div>
 

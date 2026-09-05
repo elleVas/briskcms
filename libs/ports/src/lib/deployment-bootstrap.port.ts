@@ -1,5 +1,9 @@
+import type { PageContent } from '@brisk/shared-types';
+
 export interface BootstrapDeploymentInput {
   siteName: string;
+  /** The starter home page created alongside the site — see BootstrapHomePage. */
+  homePage: BootstrapHomePage;
   /** BCP-47, and the site's only enabled locale to start with. */
   defaultLocale: string;
   adminEmail: string;
@@ -11,6 +15,21 @@ export interface BootstrapDeploymentResult {
   tenantId: string;
   siteId: string;
   userId: string;
+}
+
+/**
+ * The site's first page, created published so that a deployment which has
+ * just finished the wizard serves something instead of 404ing on its own
+ * homepage. Its content is decided by the use case, not here and not by
+ * the adapter: what a starter page should say is a product question, while
+ * this port's job is only that the rows land in one transaction.
+ */
+export interface BootstrapHomePage {
+  /** Locale of the single translation created — the site's default. */
+  locale: string;
+  slug: string;
+  title: string;
+  content: PageContent;
 }
 
 /**

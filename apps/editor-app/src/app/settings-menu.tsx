@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import {
   Building2,
@@ -23,12 +24,18 @@ import { FormSubmissionRetentionDialog } from './form-submission-retention-dialo
 import { GeneralSettingsDialog } from './general-settings-dialog';
 import { LocaleSettingsDialog } from './locale-settings-dialog';
 import { SeoSettingsDialog } from './seo-settings-dialog';
+import { siteQueryOptions } from './site-queries';
 import { useTheme } from './use-theme';
-
-const DEFAULT_SITE_ID = import.meta.env['VITE_DEFAULT_SITE_ID'] as string;
 
 export function SettingsMenu() {
   const { t, i18n } = useTranslation();
+  // Which site these dialogs edit is resolved at runtime now, so it can be
+  // momentarily absent — in practice never, since every route under the
+  // shell has already loaded this same entry. The dialogs below are simply
+  // not mounted until it is there, which keeps `siteId` a required prop
+  // that is always a real id, rather than an empty-string stand-in that
+  // would reach the API as `PATCH /sites//...` if it ever did render.
+  const { data: site } = useQuery(siteQueryOptions());
   const { theme, setTheme } = useTheme();
   const [isBusinessInfoOpen, setIsBusinessInfoOpen] = useState(false);
   const [isGeneralSettingsOpen, setIsGeneralSettingsOpen] = useState(false);
@@ -127,31 +134,35 @@ export function SettingsMenu() {
           </Button>
         </PopoverContent>
       </Popover>
-      <GeneralSettingsDialog
-        siteId={DEFAULT_SITE_ID}
-        open={isGeneralSettingsOpen}
-        onOpenChange={setIsGeneralSettingsOpen}
-      />
-      <SeoSettingsDialog
-        siteId={DEFAULT_SITE_ID}
-        open={isSeoSettingsOpen}
-        onOpenChange={setIsSeoSettingsOpen}
-      />
-      <LocaleSettingsDialog
-        siteId={DEFAULT_SITE_ID}
-        open={isLocaleSettingsOpen}
-        onOpenChange={setIsLocaleSettingsOpen}
-      />
-      <BusinessInfoDialog
-        siteId={DEFAULT_SITE_ID}
-        open={isBusinessInfoOpen}
-        onOpenChange={setIsBusinessInfoOpen}
-      />
-      <FormSubmissionRetentionDialog
-        siteId={DEFAULT_SITE_ID}
-        open={isFormSubmissionRetentionOpen}
-        onOpenChange={setIsFormSubmissionRetentionOpen}
-      />
+      {site && (
+        <>
+          <GeneralSettingsDialog
+            siteId={site.id}
+            open={isGeneralSettingsOpen}
+            onOpenChange={setIsGeneralSettingsOpen}
+          />
+          <SeoSettingsDialog
+            siteId={site.id}
+            open={isSeoSettingsOpen}
+            onOpenChange={setIsSeoSettingsOpen}
+          />
+          <LocaleSettingsDialog
+            siteId={site.id}
+            open={isLocaleSettingsOpen}
+            onOpenChange={setIsLocaleSettingsOpen}
+          />
+          <BusinessInfoDialog
+            siteId={site.id}
+            open={isBusinessInfoOpen}
+            onOpenChange={setIsBusinessInfoOpen}
+          />
+          <FormSubmissionRetentionDialog
+            siteId={site.id}
+            open={isFormSubmissionRetentionOpen}
+            onOpenChange={setIsFormSubmissionRetentionOpen}
+          />
+        </>
+      )}
     </>
   );
 }

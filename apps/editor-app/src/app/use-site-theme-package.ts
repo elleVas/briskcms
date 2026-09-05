@@ -12,7 +12,7 @@ export function useSiteThemePackage(siteId: string) {
     mutationFn: (input: UpdateThemePackageInput) =>
       apiUpdateThemePackage(siteId, input),
     onSuccess: (updated) => {
-      queryClient.setQueryData(siteQueryOptions(siteId).queryKey, updated);
+      queryClient.setQueryData(siteQueryOptions().queryKey, updated);
     },
   });
 

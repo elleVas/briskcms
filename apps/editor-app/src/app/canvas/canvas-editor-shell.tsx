@@ -130,11 +130,12 @@ export function CanvasEditorShell({
   // toolbar's "Style" button) — this query's only other consumer,
   // global-styles-dialog.tsx, already has an independent one of its own,
   // with the same queryKey, so React Query's cache keeps them in sync
-  // anyway. `enabled: Boolean(siteId)` because siteId is optional here
-  // (the Header/Footer editor always passes it, but the prop stays
-  // optional in the type) — no fetch with an empty id.
+  // anyway. `enabled: Boolean(siteId)` no longer guards against fetching
+  // with an empty id (the query carries none now — see siteQueryOptions):
+  // it guards against fetching at all on the page editor, which has no
+  // `siteId` prop precisely because it has no component-level override.
   const { data: site } = useQuery({
-    ...siteQueryOptions(siteId ?? ''),
+    ...siteQueryOptions(),
     enabled: Boolean(siteId),
   });
   const { updateThemeTokens } = useSiteThemeTokens(siteId ?? '');

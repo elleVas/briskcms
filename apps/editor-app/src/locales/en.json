@@ -57,6 +57,9 @@
   "setup": {
     "title": "Welcome to Brisk",
     "description": "This installation has not been set up yet. Create your administrator account to get started.",
+    "tokenLabel": "Setup token",
+    "tokenHint": "Printed in the API's log when it starts. On a Docker deployment: `docker compose logs api`. It proves you are the person running this server, so nobody else can claim the installation before you.",
+    "tokenError": "That setup token is not valid. It is printed in the API's log and changes every time the API restarts — check the log again and use the most recent one.",
     "siteNameLabel": "Site name",
     "localeLabel": "Default language",
     "localeHint": "The language your site's content starts in. You can add more later, in Site settings.",

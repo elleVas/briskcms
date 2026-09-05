@@ -63,6 +63,7 @@ describe('LegalDocumentsController (unit)', () => {
   beforeEach(() => {
     siteRepository = {
       findByDomain: jest.fn(),
+      listByTenant: jest.fn(),
       findById: jest.fn(),
       save: jest.fn(),
     };

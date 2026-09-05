@@ -12,7 +12,7 @@ export function useSiteSeoSettings(siteId: string) {
     mutationFn: (input: UpdateSeoSettingsInput) =>
       apiUpdateSeoSettings(siteId, input),
     onSuccess: (updated) => {
-      queryClient.setQueryData(siteQueryOptions(siteId).queryKey, updated);
+      queryClient.setQueryData(siteQueryOptions().queryKey, updated);
     },
   });
 

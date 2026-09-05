@@ -11,7 +11,7 @@ import { SettingsMenu } from './settings-menu';
 vi.mock('../lib/sites-api-client', async (importOriginal) => {
   const actual =
     await importOriginal<typeof import('../lib/sites-api-client')>();
-  return { ...actual, getSite: vi.fn() };
+  return { ...actual, getCurrentSite: vi.fn() };
 });
 
 function renderMenu() {
@@ -63,7 +63,7 @@ describe('SettingsMenu', () => {
   }
 
   it('opens the business info dialog from the settings popover', async () => {
-    vi.mocked(api.getSite).mockResolvedValue(mockSite());
+    vi.mocked(api.getCurrentSite).mockResolvedValue(mockSite());
 
     renderMenu();
     fireEvent.click(screen.getByRole('button', { name: /^impostazioni$/i }));
@@ -75,7 +75,7 @@ describe('SettingsMenu', () => {
   });
 
   it('opens the general settings dialog from the settings popover', async () => {
-    vi.mocked(api.getSite).mockResolvedValue(mockSite());
+    vi.mocked(api.getCurrentSite).mockResolvedValue(mockSite());
 
     renderMenu();
     fireEvent.click(screen.getByRole('button', { name: /^impostazioni$/i }));
@@ -89,7 +89,7 @@ describe('SettingsMenu', () => {
   });
 
   it('opens the SEO settings dialog from the settings popover', async () => {
-    vi.mocked(api.getSite).mockResolvedValue(mockSite());
+    vi.mocked(api.getCurrentSite).mockResolvedValue(mockSite());
 
     renderMenu();
     fireEvent.click(screen.getByRole('button', { name: /^impostazioni$/i }));
@@ -101,7 +101,7 @@ describe('SettingsMenu', () => {
   });
 
   it('opens the locale settings dialog from the settings popover', async () => {
-    vi.mocked(api.getSite).mockResolvedValue(mockSite());
+    vi.mocked(api.getCurrentSite).mockResolvedValue(mockSite());
 
     renderMenu();
     fireEvent.click(screen.getByRole('button', { name: /^impostazioni$/i }));

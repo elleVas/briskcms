@@ -1,11 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { siteQueryOptions } from './site-queries';
 
-// The same app-wide "which site is this editor for" constant every route
-// file already reads (docs/adr/0032 — one deployment serves exactly one
-// site, so this is a build-time value, not a route param).
-const DEFAULT_SITE_ID = import.meta.env['VITE_DEFAULT_SITE_ID'] as string;
-
 /**
  * Which filesystem theme this site currently renders with
  * (`Site.themeName`, docs/adr/0042) — every theme-* query needs it, since
@@ -20,6 +15,6 @@ const DEFAULT_SITE_ID = import.meta.env['VITE_DEFAULT_SITE_ID'] as string;
  * down to them would mean prop-drilling through the whole canvas tree.
  */
 export function useActiveThemeName(): string {
-  const { data: site } = useQuery(siteQueryOptions(DEFAULT_SITE_ID));
+  const { data: site } = useQuery(siteQueryOptions());
   return site?.themeName ?? '';
 }

@@ -18,8 +18,14 @@ async function requestSite(
   return siteRecordSchema.parse(await request(path, init));
 }
 
-export function getSite(id: string): Promise<SiteRecord> {
-  return requestSite(`/sites/${id}`);
+/**
+ * No id: which site this deployment edits is the API's to resolve, not the
+ * browser's to know. It used to come from `VITE_DEFAULT_SITE_ID`, baked
+ * into this bundle at image build time — which could never match a site the
+ * first-run wizard creates afterwards.
+ */
+export function getCurrentSite(): Promise<SiteRecord> {
+  return requestSite('/sites/current');
 }
 
 export interface UpdateBusinessInfoInput {

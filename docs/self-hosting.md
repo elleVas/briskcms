@@ -24,6 +24,15 @@ automatically. If you'd rather use a single domain with path-based
 routing, or you already have your own reverse proxy, you can replace
 `Caddyfile`/drop the `caddy` service — see its own comment.
 
+If you do, set `EDITOR_APP_URL`, `API_PUBLIC_URL` and `PUBLIC_SITE_URL` in
+your `.env` (they are commented out in `.env.prod.example`, and default to
+`https://` on the three subdomains). All three, together: a browser origin
+is scheme+host+port, and three separate things pin the editor's — the API's
+CORS allow-list, `public-site`'s `frame-ancestors` for the canvas iframe,
+and the URLs baked into the editor bundle. If one disagrees, the editor
+loads normally and every API call fails CORS, with nothing on screen
+explaining it.
+
 ## First-time setup
 
 1. Clone this repository (or download a release) onto the server.
@@ -41,20 +50,33 @@ routing, or you already have your own reverse proxy, you can replace
    ```
    The first run builds all three app images locally (a few minutes);
    `--build` isn't needed on later restarts.
-5. Once DNS has propagated, open `https://admin.<domain>`. A deployment
+5. Read the **setup token** the API printed when it started:
+   ```sh
+   docker compose -f docker-compose.prod.yml logs api | grep -A4 'not been set up'
+   ```
+   It gates the wizard, so that nobody who happens to reach your server
+   before you can create themselves the administrator account. Treat it as
+   a password. It is regenerated every time the API restarts, and only the
+   most recent one works.
+6. Once DNS has propagated, open `https://admin.<domain>`. A deployment
    nobody has set up yet opens on the **first-run wizard** rather than a
-   login screen: give it your site's name, its default language, and the
-   email and password for your administrator account. You are logged in as
-   soon as it finishes.
+   login screen: paste the token, then give it your site's name, its
+   default language, and the email and password for your administrator
+   account. You are logged in as soon as it finishes.
 
-That is the whole setup. There is no seed step and no admin password in
-your `.env` — the wizard runs once per installation and refuses to run
-again afterwards, so there is nothing to clean up either.
+That is the whole setup. There is no seed step, no admin password and no
+site id in your `.env` — the wizard runs once per installation and refuses
+to run again afterwards, so there is nothing to clean up either.
 
-Your site has no domain attached yet, which is deliberate: the wizard runs
-before anyone can know the public hostname, and it may not even resolve at
-that point. Set it in **Site settings** in the editor — until you do, the
-public site has no site to match a request against.
+Your new site comes with one published home page carrying the name you
+typed, so it renders as soon as it is reachable rather than answering 404
+on itself. Edit it, or replace it, from **Pages**.
+
+One thing is still yours to do: the site has no domain attached yet, which
+is deliberate — the wizard runs before anyone can know the public hostname,
+and it may not even resolve at that point. Set it in **Site settings** in
+the editor. Until you do, the public site has no site to match a request
+against and every URL 404s.
 
 ### If you would rather not use the wizard
 
@@ -73,6 +95,13 @@ They need `DEFAULT_TENANT_ID`, `DEFAULT_SITE_ID`, `DEFAULT_USER_EMAIL` and
 of what that costs: the admin password sits in plaintext in a file on the
 server, and stays there. Change it through "Forgot password?" afterwards if
 you go this route.
+
+`DEFAULT_SITE_ID` has one other use, unrelated to seeding: it pins which
+site a deployment edits when its tenant owns more than one
+([ADR-0032](adr/0032-one-container-per-site-deployment-unit.md)). Leave it
+unset otherwise — the API then resolves the tenant's only site on its own,
+which is what lets a wizard-created install need no site id anywhere
+([ADR-0044](adr/0044-runtime-site-resolution-in-the-editor.md)).
 
 ## Choosing a theme
 

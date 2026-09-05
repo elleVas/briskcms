@@ -47,7 +47,7 @@ export function FormSubmissionRetentionDialog({
 }: FormSubmissionRetentionDialogProps) {
   const { t } = useTranslation();
   const { data: site } = useQuery({
-    ...siteQueryOptions(siteId),
+    ...siteQueryOptions(),
     enabled: open,
   });
   const { updateFormSubmissionRetention, isSaving } =

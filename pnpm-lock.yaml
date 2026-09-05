@@ -231,6 +231,9 @@ importers:
       '@brisk/mailchimp-newsletter':
         specifier: workspace:*
         version: link:../../libs/adapters/mailchimp-newsletter
+      '@brisk/opaque-token':
+        specifier: workspace:*
+        version: link:../../libs/opaque-token
       '@brisk/ports':
         specifier: workspace:*
         version: link:../../libs/ports

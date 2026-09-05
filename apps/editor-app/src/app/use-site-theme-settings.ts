@@ -9,7 +9,7 @@ export function useSiteThemeSettings(siteId: string) {
   const updateThemeSettingsMutation = useMutation({
     mutationFn: (input: ThemeSettings) => apiUpdateThemeSettings(siteId, input),
     onSuccess: (updated) => {
-      queryClient.setQueryData(siteQueryOptions(siteId).queryKey, updated);
+      queryClient.setQueryData(siteQueryOptions().queryKey, updated);
     },
   });
 

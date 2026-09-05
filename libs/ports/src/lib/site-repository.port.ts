@@ -8,5 +8,12 @@ import type { Site } from '@brisk/domain-core';
 export interface SiteRepositoryPort {
   findByDomain(tenantId: string, domain: string): Promise<Site | null>;
   findById(tenantId: string, id: string): Promise<Site | null>;
+  /**
+   * Every site this tenant owns. In practice that is exactly one — a
+   * deployment serves a single site (docs/adr/0032) — and the caller that
+   * needs this (`DeploymentSiteResolver`) asks precisely so it can tell
+   * "the one" from "more than one" rather than assume either.
+   */
+  listByTenant(tenantId: string): Promise<Site[]>;
   save(site: Site): Promise<void>;
 }

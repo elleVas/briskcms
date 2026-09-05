@@ -84,9 +84,14 @@ pnpm exec nx run @brisk/editor-app:dev     # http://localhost:4200
 
 Requires the API's Postgres migrated/seeded first (see
 `docs/development.md`) — login uses the `db:seed` dev user. `VITE_`-prefixed
-env vars (`VITE_API_URL`, `VITE_DEFAULT_SITE_ID`, `VITE_PUBLIC_SITE_URL`,
-`VITE_TURNSTILE_SITE_KEY`) are read at build time by Vite — see
-`.env.example` at the repo root.
+env vars (`VITE_API_URL`, `VITE_PUBLIC_SITE_URL`, `VITE_TURNSTILE_SITE_KEY`)
+are read at build time by Vite — see `.env.example` at the repo root.
+
+There is deliberately no `VITE_DEFAULT_SITE_ID` among them: which site this
+editor edits is resolved at runtime from the API, because a value baked into
+the bundle at build time can never name a site the first-run wizard creates
+afterwards. See
+[ADR-0044](../../docs/adr/0044-runtime-site-resolution-in-the-editor.md).
 
 ## Nx targets
 
