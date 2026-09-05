@@ -23,7 +23,7 @@
   ],
   "references": [
     {
-      "path": "../../libs/adapters/filesystem-theme-catalog/tsconfig.lib.json"
+      "path": "../../libs/opaque-token/tsconfig.lib.json"
     },
     {
       "path": "../../libs/adapters/verification-token-adapter/tsconfig.lib.json"
@@ -87,6 +87,9 @@
     },
     {
       "path": "../../libs/adapters/local-disk-attachment-storage/tsconfig.lib.json"
+    },
+    {
+      "path": "../../libs/adapters/filesystem-theme-catalog/tsconfig.lib.json"
     },
     {
       "path": "../../libs/env-config/tsconfig.lib.json"

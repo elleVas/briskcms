@@ -10,6 +10,9 @@ import { z } from 'zod';
  * reachable from the public internet by design.
  */
 export const bootstrapDeploymentBodySchema = z.object({
+  // Printed to the API's log at boot, see SetupTokenRegistry — what stops a
+  // stranger claiming an installation before its owner gets to it.
+  setupToken: z.string().min(1),
   siteName: z.string().trim().min(1).max(120),
   // Matches the picker in the editor's own locale settings (docs/adr/0017)
   // — a BCP-47 tag, not a free-form string.

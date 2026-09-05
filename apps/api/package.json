@@ -97,6 +97,7 @@
     "@brisk/local-disk-attachment-storage": "workspace:*",
     "@brisk/local-disk-media-storage": "workspace:*",
     "@brisk/mailchimp-newsletter": "workspace:*",
+    "@brisk/opaque-token": "workspace:*",
     "@brisk/ports": "workspace:*",
     "@brisk/postgres-dashboard-stats-repository": "workspace:*",
     "@brisk/postgres-db": "workspace:*",

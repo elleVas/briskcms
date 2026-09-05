@@ -5,6 +5,8 @@ export interface SetupStatus {
 }
 
 export interface BootstrapDeploymentRequest {
+  /** Printed in the API's log at boot — see the server's SetupTokenRegistry. */
+  setupToken: string;
   siteName: string;
   defaultLocale: string;
   adminEmail: string;

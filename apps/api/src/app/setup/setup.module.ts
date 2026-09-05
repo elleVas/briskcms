@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { ThrottlerModule } from '@nestjs/throttler';
 import {
   DrizzleDeploymentBootstrapAdapter,
   type BriskDb,
@@ -12,6 +13,7 @@ import {
   type DeploymentTenantResolver,
 } from '../deployment-tenant.resolver';
 import { SetupController } from './setup.controller';
+import { SetupTokenRegistry } from './setup-token.registry';
 import { DEPLOYMENT_BOOTSTRAP_PORT } from './setup.tokens';
 
 /**
@@ -21,9 +23,17 @@ import { DEPLOYMENT_BOOTSTRAP_PORT } from './setup.tokens';
  * email transport for a single call.
  */
 @Module({
-  imports: [DatabaseModule, DeploymentTenantModule],
+  imports: [
+    DatabaseModule,
+    DeploymentTenantModule,
+    // Same window and limit AuthModule uses for login. Declared here rather
+    // than shared: ThrottlerModule.forRoot is per-module in this codebase,
+    // and SetupModule deliberately does not import AuthModule (see below).
+    ThrottlerModule.forRoot({ throttlers: [{ ttl: 60000, limit: 5 }] }),
+  ],
   controllers: [SetupController],
   providers: [
+    SetupTokenRegistry,
     {
       provide: DEPLOYMENT_BOOTSTRAP_PORT,
       useFactory: (db: BriskDb) => new DrizzleDeploymentBootstrapAdapter(db),

@@ -50,11 +50,19 @@ explaining it.
    ```
    The first run builds all three app images locally (a few minutes);
    `--build` isn't needed on later restarts.
-5. Once DNS has propagated, open `https://admin.<domain>`. A deployment
+5. Read the **setup token** the API printed when it started:
+   ```sh
+   docker compose -f docker-compose.prod.yml logs api | grep -A4 'not been set up'
+   ```
+   It gates the wizard, so that nobody who happens to reach your server
+   before you can create themselves the administrator account. Treat it as
+   a password. It is regenerated every time the API restarts, and only the
+   most recent one works.
+6. Once DNS has propagated, open `https://admin.<domain>`. A deployment
    nobody has set up yet opens on the **first-run wizard** rather than a
-   login screen: give it your site's name, its default language, and the
-   email and password for your administrator account. You are logged in as
-   soon as it finishes.
+   login screen: paste the token, then give it your site's name, its
+   default language, and the email and password for your administrator
+   account. You are logged in as soon as it finishes.
 
 That is the whole setup. There is no seed step, no admin password and no
 site id in your `.env` — the wizard runs once per installation and refuses
