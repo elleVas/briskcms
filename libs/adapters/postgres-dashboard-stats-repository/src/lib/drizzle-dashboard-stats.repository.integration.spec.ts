@@ -4,6 +4,8 @@ import {
   type BriskDb,
   createAppDb,
   deleteIntegrationTenants,
+  formSubmissions,
+  forms,
   media,
   pageGroups,
   pageTranslations,
@@ -201,5 +203,84 @@ describe('DrizzleDashboardStatsRepository (integration)', () => {
     expect(stats.pages).toEqual({ publishedCount: 0, draftCount: 0 });
     expect(stats.media).toEqual({ count: 0, totalSizeBytes: 0 });
     expect(stats.recentActivity).toEqual([]);
+  });
+
+  it('counts form submissions, splits out the last 7 days, and lists the most recent', async () => {
+    const [form] = await withTenant(db, tenantAId, (tx) =>
+      tx
+        .insert(forms)
+        .values({ tenantId: tenantAId, siteId: siteAId, name: 'Contatti' })
+        .returning({ id: forms.id }),
+    );
+    const daysAgo = (days: number) =>
+      new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+    await withTenant(db, tenantAId, (tx) =>
+      tx.insert(formSubmissions).values([
+        {
+          tenantId: tenantAId,
+          siteId: siteAId,
+          formId: form.id,
+          payload: {},
+          createdAt: daysAgo(1),
+        },
+        {
+          tenantId: tenantAId,
+          siteId: siteAId,
+          formId: form.id,
+          payload: {},
+          createdAt: daysAgo(2),
+        },
+        // Older than the window: counted in the total, not in the recent
+        // count. This is the assertion the 7-day filter exists for.
+        {
+          tenantId: tenantAId,
+          siteId: siteAId,
+          formId: form.id,
+          payload: {},
+          createdAt: daysAgo(30),
+        },
+      ]),
+    );
+
+    const stats = await repository.getStats(tenantAId, siteAId, 2);
+
+    expect(stats.forms.totalCount).toBe(3);
+    expect(stats.forms.recentCount).toBe(2);
+    // Capped at the limit, newest first.
+    expect(stats.forms.recent).toHaveLength(2);
+    expect(stats.forms.recent[0].formName).toBe('Contatti');
+    expect(stats.forms.recent[0].formId).toBe(form.id);
+    expect(stats.forms.recent[0].receivedAt.getTime()).toBeGreaterThan(
+      stats.forms.recent[1].receivedAt.getTime(),
+    );
+  });
+
+  it('does not count another tenant submissions', async () => {
+    const before = await repository.getStats(tenantAId, siteAId, 5);
+
+    const [otherSite] = await withTenant(db, tenantBId, (tx) =>
+      tx
+        .insert(sites)
+        .values({ tenantId: tenantBId, name: 'Site B', defaultLocale: 'it' })
+        .returning({ id: sites.id }),
+    );
+    const [otherForm] = await withTenant(db, tenantBId, (tx) =>
+      tx
+        .insert(forms)
+        .values({ tenantId: tenantBId, siteId: otherSite.id, name: 'Altro' })
+        .returning({ id: forms.id }),
+    );
+    await withTenant(db, tenantBId, (tx) =>
+      tx.insert(formSubmissions).values({
+        tenantId: tenantBId,
+        siteId: otherSite.id,
+        formId: otherForm.id,
+        payload: {},
+      }),
+    );
+
+    const after = await repository.getStats(tenantAId, siteAId, 5);
+
+    expect(after.forms.totalCount).toBe(before.forms.totalCount);
   });
 });

@@ -1,5 +1,4 @@
 import {
-  Body,
   Controller,
   Delete,
   Get,
@@ -9,26 +8,38 @@ import {
   Patch,
   Post,
   Query,
+  Res,
   UseGuards,
+  Body,
 } from '@nestjs/common';
 import {
-  createForm,
   deleteForm,
+  exportFormSubmissions,
   getFormById,
+  listFormSubmissions,
   listForms,
   updateForm,
+  createForm,
 } from '@brisk/application';
+import type { Response } from 'express';
 import type { Form } from '@brisk/domain-core';
-import type { FormRepositoryPort, TenantContextPort } from '@brisk/ports';
+import type {
+  FormRepositoryPort,
+  FormSubmissionRepositoryPort,
+  TenantContextPort,
+} from '@brisk/ports';
 import { SessionAuthGuard } from '../auth/session-auth.guard';
 import { ZodValidationPipe } from '../zod-validation.pipe';
 import { TENANT_CONTEXT } from '../auth/auth.tokens';
-import { FORM_REPOSITORY } from './forms.tokens';
+import { buildFormSubmissionsCsv } from './form-submissions-csv';
+import { FORM_REPOSITORY, FORM_SUBMISSION_REPOSITORY } from './forms.tokens';
 import {
   type CreateFormBody,
   createFormBodySchema,
   type ListFormsQuery,
   listFormsQuerySchema,
+  type ListFormSubmissionsQuery,
+  listFormSubmissionsQuerySchema,
   type UpdateFormBody,
   updateFormBodySchema,
 } from './forms.schemas';
@@ -39,6 +50,8 @@ export class FormsController {
   constructor(
     @Inject(FORM_REPOSITORY)
     private readonly formRepository: FormRepositoryPort,
+    @Inject(FORM_SUBMISSION_REPOSITORY)
+    private readonly formSubmissionRepository: FormSubmissionRepositoryPort,
     @Inject(TENANT_CONTEXT) private readonly tenantContext: TenantContextPort,
   ) {}
 
@@ -66,10 +79,92 @@ export class FormsController {
         pageSize: query.pageSize,
       },
     );
+    // One extra query for the whole page rather than one per row: the list
+    // is where someone finds out that answers came in at all, and without
+    // a number here they have to open every form to know.
+    const counts = await this.formSubmissionRepository.countByForms(
+      this.tenantContext.getCurrentTenantId(),
+      result.items.map((form) => form.id),
+    );
+
     return {
-      items: result.items.map((form) => this.toDto(form)),
+      items: result.items.map((form) => ({
+        ...this.toDto(form),
+        submissionCount: counts[form.id] ?? 0,
+      })),
       total: result.total,
     };
+  }
+
+  /**
+   * One form's submissions. Behind the same session guard as the rest of
+   * this controller — the payloads are whatever visitors typed into a
+   * public form, which is exactly the kind of data that must not be
+   * readable without being logged in.
+   *
+   * Returns the form alongside them: a payload is keyed by field id and is
+   * unreadable without the field definitions to render it against.
+   */
+  @Get(':id/submissions')
+  async listSubmissions(
+    @Param('id') id: string,
+    @Query(new ZodValidationPipe(listFormSubmissionsQuerySchema))
+    query: ListFormSubmissionsQuery,
+  ) {
+    const result = await listFormSubmissions(
+      {
+        formRepository: this.formRepository,
+        formSubmissionRepository: this.formSubmissionRepository,
+      },
+      {
+        tenantId: this.tenantContext.getCurrentTenantId(),
+        formId: id,
+        page: query.page,
+        pageSize: query.pageSize,
+      },
+    );
+    return {
+      items: result.items.map((submission) => {
+        const props = submission.toProps();
+        return {
+          id: props.id,
+          payload: props.payload,
+          createdAt: props.createdAt.toISOString(),
+        };
+      }),
+      total: result.total,
+      fields: result.form.toProps().fields,
+    };
+  }
+
+  /**
+   * The same data as a file. A separate route rather than a query param on
+   * the one above: it answers with a different content type and a
+   * different pagination story (all of it), and conflating the two makes
+   * both harder to reason about.
+   */
+  @Get(':id/submissions.csv')
+  async exportSubmissions(
+    @Param('id') id: string,
+    @Res({ passthrough: true }) response: Response,
+  ): Promise<string> {
+    const { form, submissions } = await exportFormSubmissions(
+      {
+        formRepository: this.formRepository,
+        formSubmissionRepository: this.formSubmissionRepository,
+      },
+      { tenantId: this.tenantContext.getCurrentTenantId(), formId: id },
+    );
+
+    response.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    response.setHeader(
+      'Content-Disposition',
+      // The form's own name would be friendlier and is not worth the
+      // escaping: it is user-supplied text going into a header, and a
+      // quote or a newline there is a header-injection bug.
+      `attachment; filename="submissions-${id}.csv"`,
+    );
+    return buildFormSubmissionsCsv(form, submissions);
   }
 
   @Get(':id')

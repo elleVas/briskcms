@@ -592,6 +592,53 @@ export class InMemoryFormSubmissionRepository implements FormSubmissionRepositor
   async save(submission: FormSubmission): Promise<void> {
     this.submissions.push(submission);
   }
+
+  private byForm(formId: string): FormSubmission[] {
+    return this.submissions.filter((s) => s.toProps().formId === formId);
+  }
+
+  async listByForm(
+    _tenantId: string,
+    formId: string,
+    pagination: Pagination,
+  ): Promise<PaginatedResult<FormSubmission>> {
+    // Newest first, matching the real adapter — a test that asserts on
+    // ordering has to be asserting on the same thing production does.
+    const all = this.byForm(formId).sort(
+      (a, b) =>
+        b.toProps().createdAt.getTime() - a.toProps().createdAt.getTime(),
+    );
+    const start = (pagination.page - 1) * pagination.pageSize;
+    return {
+      items: all.slice(start, start + pagination.pageSize),
+      total: all.length,
+    };
+  }
+
+  async countByForms(
+    _tenantId: string,
+    formIds: string[],
+  ): Promise<Record<string, number>> {
+    const counts: Record<string, number> = {};
+    for (const submission of this.submissions) {
+      const formId = submission.toProps().formId;
+      if (formId && formIds.includes(formId)) {
+        counts[formId] = (counts[formId] ?? 0) + 1;
+      }
+    }
+    return counts;
+  }
+
+  async listAllByForm(
+    _tenantId: string,
+    formId: string,
+  ): Promise<FormSubmission[]> {
+    // Oldest first for the export, again matching the adapter.
+    return this.byForm(formId).sort(
+      (a, b) =>
+        a.toProps().createdAt.getTime() - b.toProps().createdAt.getTime(),
+    );
+  }
 }
 
 /** Fake, not a real storage backend — records what was uploaded/deleted so

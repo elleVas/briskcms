@@ -212,4 +212,101 @@ describe('DrizzleFormRepository (integration)', () => {
       formSubmissionRepository.save(submission),
     ).resolves.not.toThrow();
   });
+
+  /** Three submissions one second apart, so ordering assertions are stable. */
+  async function seedSubmissions(formId: string, payloads: string[]) {
+    const base = Date.now() - payloads.length * 1000;
+    for (const [index, email] of payloads.entries()) {
+      await formSubmissionRepository.save(
+        FormSubmission.create({
+          id: randomUUID(),
+          tenantId: tenantAId,
+          siteId: siteAId,
+          pageId: null,
+          formId,
+          payload: { email },
+          now: new Date(base + index * 1000),
+        }),
+      );
+    }
+  }
+
+  it('listByForm returns newest first, paginated and scoped to its tenant', async () => {
+    const form = buildForm();
+    await formRepository.save(form);
+    await seedSubmissions(form.id, ['first@x.it', 'second@x.it', 'third@x.it']);
+
+    const firstPage = await formSubmissionRepository.listByForm(
+      tenantAId,
+      form.id,
+      { page: 1, pageSize: 2 },
+    );
+    expect(firstPage.total).toBe(3);
+    expect(firstPage.items.map((s) => s.toProps().payload['email'])).toEqual([
+      'third@x.it',
+      'second@x.it',
+    ]);
+
+    const secondPage = await formSubmissionRepository.listByForm(
+      tenantAId,
+      form.id,
+      { page: 2, pageSize: 2 },
+    );
+    expect(secondPage.items.map((s) => s.toProps().payload['email'])).toEqual([
+      'first@x.it',
+    ]);
+
+    // RLS from the other tenant's point of view: the rows exist, and it must
+    // not be able to see any of them.
+    const fromOtherTenant = await formSubmissionRepository.listByForm(
+      tenantBId,
+      form.id,
+      { page: 1, pageSize: 10 },
+    );
+    expect(fromOtherTenant.items).toEqual([]);
+    expect(fromOtherTenant.total).toBe(0);
+  });
+
+  it('listAllByForm returns every submission, oldest first', async () => {
+    // The opposite order from the screen, on purpose: a spreadsheet reads
+    // top-to-bottom as a timeline.
+    const form = buildForm();
+    await formRepository.save(form);
+    await seedSubmissions(form.id, ['a@x.it', 'b@x.it', 'c@x.it']);
+
+    const all = await formSubmissionRepository.listAllByForm(
+      tenantAId,
+      form.id,
+    );
+
+    expect(all.map((s) => s.toProps().payload['email'])).toEqual([
+      'a@x.it',
+      'b@x.it',
+      'c@x.it',
+    ]);
+  });
+
+  it('countByForms counts per form and omits the ones with none', async () => {
+    const withTwo = buildForm();
+    const withNone = buildForm();
+    await formRepository.save(withTwo);
+    await formRepository.save(withNone);
+    await seedSubmissions(withTwo.id, ['one@x.it', 'two@x.it']);
+
+    const counts = await formSubmissionRepository.countByForms(tenantAId, [
+      withTwo.id,
+      withNone.id,
+    ]);
+
+    expect(counts[withTwo.id]).toBe(2);
+    expect(counts[withNone.id]).toBeUndefined();
+  });
+
+  it('countByForms answers an empty list without hitting the database', async () => {
+    // `inArray` with no values generates `in ()`, which Postgres rejects as a
+    // syntax error — an empty page of forms has to short-circuit.
+    await expect(
+      formSubmissionRepository.countByForms(tenantAId, []),
+    ).resolves.toEqual({});
+  });
 });

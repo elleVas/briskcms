@@ -4,7 +4,9 @@
     "error": "Something went wrong.",
     "retry": "Retry",
     "cancel": "Cancel",
-    "delete": "Delete"
+    "delete": "Delete",
+    "yes": "Yes",
+    "no": "No"
   },
   "auth": {
     "login": {
@@ -101,6 +103,14 @@
       "published": {
         "title": "Published",
         "description": "Live on the public site right now"
+      },
+      "forms": {
+        "title": "Forms",
+        "description_one": "{{count}} submission received",
+        "description_other": "{{count}} submissions received",
+        "recentLabel": "{{count}} in the last 7 days",
+        "empty": "No submissions yet.",
+        "viewAll": "Read them"
       }
     },
     "recentActivity": {
@@ -499,7 +509,10 @@
       "actions": {
         "edit": "Edit form",
         "delete": "Delete"
-      }
+      },
+      "submissionCount_one": "{{count}} submission",
+      "submissionCount_other": "{{count}} submissions",
+      "noSubmissions": "no submissions"
     },
     "newFormDialog": {
       "title": "New form",
@@ -558,6 +571,25 @@
         "time": "Time",
         "file": "File upload"
       }
+    },
+    "submissions": {
+      "title": "Submissions",
+      "empty": "Nothing yet. Answers to this form will show up here.",
+      "count_one": "{{count}} submission",
+      "count_other": "{{count}} submissions",
+      "exportCsv": "Export CSV",
+      "removedField": "no longer in this form",
+      "noAnswer": "—",
+      "loadError": "Could not load the submissions.",
+      "previousPage": "Previous",
+      "nextPage": "Next",
+      "expand": "Show all answers",
+      "collapse": "Hide answers",
+      "downloadFile": "Download"
+    },
+    "tabs": {
+      "structure": "Structure",
+      "submissions": "Submissions"
     }
   },
   "openingHours": {

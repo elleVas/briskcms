@@ -79,6 +79,63 @@ export function DashboardView({ stats }: DashboardViewProps) {
 
         <Card>
           <CardHeader>
+            <CardTitle>{t('dashboard.stats.forms.title')}</CardTitle>
+            <CardDescription>
+              {t('dashboard.stats.forms.description', {
+                count: stats.forms.totalCount,
+              })}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-baseline gap-3">
+              <span className="text-2xl font-semibold">
+                {stats.forms.totalCount}
+              </span>
+              <span className="text-muted-foreground text-sm">
+                {t('dashboard.stats.forms.recentLabel', {
+                  count: stats.forms.recentCount,
+                })}
+              </span>
+            </div>
+            {/* Which form and when, and nothing else. This screen is the
+                first thing after login and the one most likely to be left
+                open on a monitor — a visitor's name and email do not belong
+                on it. The link is how you go and read them. */}
+            {stats.forms.recent.length === 0 ? (
+              <p className="text-muted-foreground mt-3 text-sm">
+                {t('dashboard.stats.forms.empty')}
+              </p>
+            ) : (
+              <ul className="mt-3 flex flex-col gap-1.5 text-sm">
+                {stats.forms.recent.map((item) => (
+                  <li
+                    key={`${item.formId}-${item.receivedAt}`}
+                    className="flex items-center justify-between gap-3"
+                  >
+                    <Link
+                      to="/forms/$formId"
+                      params={{ formId: item.formId }}
+                      className="truncate hover:underline"
+                    >
+                      {item.formName}
+                    </Link>
+                    <time
+                      dateTime={item.receivedAt}
+                      className="text-muted-foreground shrink-0 text-xs tabular-nums"
+                    >
+                      {new Date(item.receivedAt).toLocaleDateString(
+                        i18n.language,
+                      )}
+                    </time>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
             <CardTitle>{t('dashboard.stats.published.title')}</CardTitle>
             <CardDescription>
               {t('dashboard.stats.published.description')}

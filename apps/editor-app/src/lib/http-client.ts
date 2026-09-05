@@ -1,6 +1,9 @@
 import { requireViteEnv } from './require-vite-env';
 
-const API_BASE_URL = requireViteEnv('VITE_API_URL');
+// Exported for the one case that cannot go through `request()`: a file
+// download, where the browser has to do the fetching itself for the save
+// dialog to appear (forms-api-client.ts's CSV export).
+export const API_BASE_URL = requireViteEnv('VITE_API_URL');
 
 // Security review 2026-08-24, point 18: without this, a backend that hangs
 // (pool exhausted, a slow query) left the editor tab stuck indefinitely —

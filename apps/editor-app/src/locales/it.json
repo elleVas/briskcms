@@ -4,7 +4,9 @@
     "error": "Si è verificato un errore.",
     "retry": "Riprova",
     "cancel": "Annulla",
-    "delete": "Elimina"
+    "delete": "Elimina",
+    "yes": "Sì",
+    "no": "No"
   },
   "auth": {
     "login": {
@@ -101,6 +103,14 @@
       "published": {
         "title": "Pubblicate",
         "description": "Live sul sito pubblico in questo momento"
+      },
+      "forms": {
+        "title": "Moduli",
+        "description_one": "{{count}} risposta ricevuta",
+        "description_other": "{{count}} risposte ricevute",
+        "recentLabel": "{{count}} negli ultimi 7 giorni",
+        "empty": "Nessuna risposta finora.",
+        "viewAll": "Leggile"
       }
     },
     "recentActivity": {
@@ -499,7 +509,10 @@
       "actions": {
         "edit": "Modifica modulo",
         "delete": "Elimina"
-      }
+      },
+      "submissionCount_one": "{{count}} risposta",
+      "submissionCount_other": "{{count}} risposte",
+      "noSubmissions": "nessuna risposta"
     },
     "newFormDialog": {
       "title": "Nuovo modulo",
@@ -558,6 +571,25 @@
         "time": "Ora",
         "file": "Caricamento file"
       }
+    },
+    "submissions": {
+      "title": "Iscrizioni ricevute",
+      "empty": "Ancora nulla. Le risposte a questo modulo compariranno qui.",
+      "count_one": "{{count}} risposta",
+      "count_other": "{{count}} risposte",
+      "exportCsv": "Esporta CSV",
+      "removedField": "non è più nel modulo",
+      "noAnswer": "—",
+      "loadError": "Non è stato possibile caricare le risposte.",
+      "previousPage": "Precedente",
+      "nextPage": "Successiva",
+      "expand": "Mostra tutte le risposte",
+      "collapse": "Nascondi le risposte",
+      "downloadFile": "Scarica"
+    },
+    "tabs": {
+      "structure": "Struttura",
+      "submissions": "Risposte"
     }
   },
   "openingHours": {

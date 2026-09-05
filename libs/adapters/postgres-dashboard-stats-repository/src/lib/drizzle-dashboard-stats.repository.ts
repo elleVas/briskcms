@@ -1,7 +1,9 @@
-import { and, count, desc, eq, sql } from 'drizzle-orm';
+import { and, count, desc, eq, gte, sql } from 'drizzle-orm';
 import type { DashboardStats, DashboardStatsPort } from '@brisk/ports';
 import {
   type BriskDb,
+  formSubmissions,
+  forms,
   media,
   pageGroups,
   pageTranslations,
@@ -16,10 +18,12 @@ export class DrizzleDashboardStatsRepository implements DashboardStatsPort {
     siteId: string,
     recentActivityLimit: number,
   ): Promise<DashboardStats> {
-    const [statusCounts, mediaTotals, recentRows] = await withTenant(
-      this.db,
-      tenantId,
-      (tx) =>
+    // Seven days: long enough that a quiet week still shows something,
+    // short enough that the number means "recently" rather than "ever".
+    const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+
+    const [statusCounts, mediaTotals, recentRows, formTotals, recentForms] =
+      await withTenant(this.db, tenantId, (tx) =>
         Promise.all([
           tx
             .select({ status: pageTranslations.status, total: count() })
@@ -66,8 +70,49 @@ export class DrizzleDashboardStatsRepository implements DashboardStatsPort {
             )
             .orderBy(desc(pageTranslations.updatedAt))
             .limit(recentActivityLimit),
+          tx
+            .select({
+              total: count(),
+              // The comparison is built by drizzle rather than written
+              // into the template: interpolating the Date directly sends
+              // it as an untyped parameter, and inside a FILTER clause
+              // Postgres cannot infer what it is — it fails with
+              // "operator does not exist: timestamp with time zone >= text".
+              recent: sql<string>`count(*) filter (where ${gte(formSubmissions.createdAt, since)})`,
+            })
+            .from(formSubmissions)
+            .where(
+              and(
+                eq(formSubmissions.tenantId, tenantId),
+                eq(formSubmissions.siteId, siteId),
+              ),
+            ),
+          tx
+            .select({
+              // The id comes from the joined `forms` row rather than from
+              // `formSubmissions.formId`: that column is nullable (a deleted
+              // form sets it null, docs/adr/0015), and reading it here would
+              // mean narrowing a value the join has already guaranteed.
+              formId: forms.id,
+              formName: forms.name,
+              receivedAt: formSubmissions.createdAt,
+            })
+            .from(formSubmissions)
+            // Inner, not left: a submission whose form was deleted has no
+            // name to show and nowhere to link to, so it cannot be a row
+            // on this list — it still counts in the totals above, which is
+            // where it belongs.
+            .innerJoin(forms, eq(formSubmissions.formId, forms.id))
+            .where(
+              and(
+                eq(formSubmissions.tenantId, tenantId),
+                eq(formSubmissions.siteId, siteId),
+              ),
+            )
+            .orderBy(desc(formSubmissions.createdAt))
+            .limit(recentActivityLimit),
         ]),
-    );
+      );
 
     const publishedCount =
       statusCounts.find((row) => row.status === 'published')?.total ?? 0;
@@ -79,6 +124,11 @@ export class DrizzleDashboardStatsRepository implements DashboardStatsPort {
       media: {
         count: mediaTotals[0]?.count ?? 0,
         totalSizeBytes: Number(mediaTotals[0]?.totalSizeBytes ?? '0'),
+      },
+      forms: {
+        totalCount: formTotals[0]?.total ?? 0,
+        recentCount: Number(formTotals[0]?.recent ?? '0'),
+        recent: recentForms,
       },
       recentActivity: recentRows.map((row) => ({
         ...row,
