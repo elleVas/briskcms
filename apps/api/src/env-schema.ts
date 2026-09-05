@@ -17,9 +17,9 @@ import { z } from 'zod';
  * Deliberately scoped to apps/api's own runtime needs only — not
  * `apps/editor-app` (Vite build-time `VITE_*` vars) or `apps/public-site`
  * (its own separate runtime), and not `POSTGRES_PASSWORD`/
- * `DEFAULT_SITE_ID`/`DEFAULT_USER_EMAIL`/`DEFAULT_USER_PASSWORD` (only
- * used by the one-off `db:seed`/migration scripts, a different process
- * entirely, never read by this app at runtime).
+ * `DEFAULT_USER_EMAIL`/`DEFAULT_USER_PASSWORD` (only used by the one-off
+ * `db:seed`/migration scripts, a different process entirely, never read by
+ * this app at runtime).
  */
 const apiEnvBaseSchema = z.object({
   POSTGRES_APP_PASSWORD: z.string().min(1),
@@ -28,6 +28,12 @@ const apiEnvBaseSchema = z.object({
   // falls back to the single row in `tenants`. Still honoured when present —
   // development and the integration tests both pin it.
   DEFAULT_TENANT_ID: z.string().uuid().optional(),
+  // Optional for the same reason, and read by DeploymentSiteResolver:
+  // which site this deployment edits. Only needed for the one topology
+  // where the tenant owns more than one (docs/adr/0032) — otherwise the
+  // resolver takes the tenant's only site, which is what lets a
+  // wizard-created deployment need no site id anywhere.
+  DEFAULT_SITE_ID: z.string().uuid().optional(),
   PREVIEW_TOKEN_SECRET: z.string().min(1),
   EDITOR_APP_URL: z.string().url(),
   SMTP_HOST: z.string().min(1),
@@ -117,7 +123,10 @@ export function validateApiEnv(env: NodeJS.ProcessEnv = process.env): void {
       .join('\n');
     throw new Error(
       `Invalid or missing environment variables:\n${issues}\n\n` +
-        `Copy .env.example to .env and set them (see docs/development.md), or export them directly.`,
+        'Set them in the .env this deployment reads, then restart. For local ' +
+        'development that file comes from .env.example (docs/development.md); ' +
+        'for a self-hosted deployment from .env.prod.example ' +
+        '(docs/self-hosting.md). They can also be exported directly.',
     );
   }
 }

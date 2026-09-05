@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { SiteRecord } from '@brisk/shared-types';
 import { DEFAULT_COOKIE_BANNER_SETTINGS } from '@brisk/shared-types';
 import {
-  getSite,
+  getCurrentSite,
   updateBusinessInfo,
   updateGeneralSettings,
   updateLocaleSettings,
@@ -56,13 +56,13 @@ describe('sites-api-client', () => {
     vi.unstubAllGlobals();
   });
 
-  it('getSite fetches the site by id', async () => {
+  it('getCurrentSite asks the API which site this deployment edits', async () => {
     vi.mocked(fetch).mockResolvedValue(jsonResponse(sampleSite));
 
-    const result = await getSite('site-1');
+    const result = await getCurrentSite();
 
     expect(fetch).toHaveBeenCalledWith(
-      expect.stringContaining('/sites/site-1'),
+      expect.stringContaining('/sites/current'),
       expect.objectContaining({ credentials: 'include' }),
     );
     expect(result).toEqual(sampleSite);

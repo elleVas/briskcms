@@ -31,6 +31,10 @@ import {
   siteRecordSchema,
   type SiteRecord,
 } from '@brisk/shared-types';
+import {
+  DEPLOYMENT_SITE_RESOLVER,
+  DeploymentSiteResolver,
+} from './deployment-site.resolver';
 import { Roles } from '../auth/roles.decorator';
 import { RolesGuard } from '../auth/roles.guard';
 import { SessionAuthGuard } from '../auth/session-auth.guard';
@@ -73,12 +77,32 @@ export class SitesController {
     @Inject(THEME_CATALOG)
     private readonly themeCatalog: ThemeCatalogPort,
     @Inject(TENANT_CONTEXT) private readonly tenantContext: TenantContextPort,
+    @Inject(DEPLOYMENT_SITE_RESOLVER)
+    private readonly deploymentSiteResolver: DeploymentSiteResolver,
   ) {}
 
   @Get('themes/available')
   async listAvailableThemes() {
     return availableThemesResponseSchema.parse(
       await this.themeCatalog.listAvailableThemes(),
+    );
+  }
+
+  /**
+   * The site this deployment edits — how apps/editor-app learns its id at
+   * all, now that it no longer carries one baked into its bundle.
+   *
+   * Declared above `@Get(':id')` on purpose: Nest matches routes in
+   * declaration order, so the parameterised one would otherwise swallow
+   * "current" and look for a site with that literal id. Same reason
+   * `themes/available` sits where it does.
+   */
+  @Get('current')
+  async findCurrent() {
+    return this.toDto(
+      await this.deploymentSiteResolver.require(
+        this.tenantContext.getCurrentTenantId(),
+      ),
     );
   }
 

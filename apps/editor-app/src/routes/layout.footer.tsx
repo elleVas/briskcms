@@ -6,8 +6,6 @@ import { siteQueryOptions } from '../app/site-queries';
 import { SiteLayoutSectionEditorView } from '../app/site-layout-section-editor-view';
 import { requireAuth } from './-require-auth';
 
-const DEFAULT_SITE_ID = import.meta.env['VITE_DEFAULT_SITE_ID'] as string;
-
 // Same reasoning as layout.header.tsx's own schema.
 const layoutFooterSearchSchema = z.object({
   locale: z.string().min(2).optional(),
@@ -18,12 +16,11 @@ export const Route = createFileRoute('/layout/footer')({
   loaderDeps: ({ search }) => ({ locale: search.locale }),
   loader: ({ context, deps }) =>
     requireAuth(async () => {
-      const site = await context.queryClient.ensureQueryData(
-        siteQueryOptions(DEFAULT_SITE_ID),
-      );
+      const site =
+        await context.queryClient.ensureQueryData(siteQueryOptions());
       const locale = deps.locale ?? site.defaultLocale;
       await context.queryClient.ensureQueryData(
-        siteLayoutSectionQueryOptions(DEFAULT_SITE_ID, locale, 'footer'),
+        siteLayoutSectionQueryOptions(site.id, locale, 'footer'),
       );
     }),
   component: LayoutFooterRoute,
@@ -31,13 +28,13 @@ export const Route = createFileRoute('/layout/footer')({
 
 function LayoutFooterRoute() {
   const { locale: searchLocale } = Route.useSearch();
-  const { data: site } = useSuspenseQuery(siteQueryOptions(DEFAULT_SITE_ID));
+  const { data: site } = useSuspenseQuery(siteQueryOptions());
   const locale = searchLocale ?? site.defaultLocale;
 
   return (
     <SiteLayoutSectionEditorView
       key={locale}
-      siteId={DEFAULT_SITE_ID}
+      siteId={site.id}
       locale={locale}
       kind="footer"
     />

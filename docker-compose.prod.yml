@@ -82,8 +82,16 @@ services:
       POSTGRES_PORT: '5432'
       # Public origins — browsers hit these, so they must be the real
       # public URLs (through Caddy), never an internal service name.
-      EDITOR_APP_URL: https://admin.${DOMAIN:?Set DOMAIN in .env}
-      API_PUBLIC_URL: https://api.${DOMAIN:?Set DOMAIN in .env}/api
+      # Public origins — browsers hit these, so they must be the real
+      # public URLs, never an internal service name. Derived from DOMAIN for
+      # the layout this file ships (Caddy, three subdomains, HTTPS), but
+      # overridable in .env in one place: an origin is scheme+host+port, and
+      # anyone fronting this stack differently (TLS terminated upstream, one
+      # domain with path routing, a non-443 port) needs to change all of
+      # them together or the editor loads and every API call dies in CORS
+      # with nothing saying why. See .env.prod.example.
+      EDITOR_APP_URL: ${EDITOR_APP_URL:-https://admin.${DOMAIN:?Set DOMAIN in .env}}
+      API_PUBLIC_URL: ${API_PUBLIC_URL:-https://api.${DOMAIN:?Set DOMAIN in .env}/api}
       MEDIA_UPLOAD_DIR: /app/uploads
       THEMES_DIR: /app/themes
     volumes:
@@ -117,7 +125,9 @@ services:
       # internet for it.
       API_URL: http://api:3000/api
       PORT: '4321'
-      EDITOR_APP_URL: https://admin.${DOMAIN:?Set DOMAIN in .env}
+      # Same value as api's: this is the origin allowed to embed the canvas
+      # iframe (frame-ancestors), so it must match the editor's real origin.
+      EDITOR_APP_URL: ${EDITOR_APP_URL:-https://admin.${DOMAIN:?Set DOMAIN in .env}}
     healthcheck:
       test: ['CMD', 'wget', '-qO-', 'http://127.0.0.1:4321/api/health']
       interval: 10s
@@ -135,9 +145,8 @@ services:
       args:
         # Browser-facing, baked into the static bundle at build time —
         # changing DOMAIN later means rebuilding this one image (docs/adr/0042).
-        VITE_API_URL: https://api.${DOMAIN:?Set DOMAIN in .env}/api
-        VITE_PUBLIC_SITE_URL: https://${DOMAIN:?Set DOMAIN in .env}
-        VITE_DEFAULT_SITE_ID: ${DEFAULT_SITE_ID:?Set DEFAULT_SITE_ID in .env, see .env.prod.example}
+        VITE_API_URL: ${API_PUBLIC_URL:-https://api.${DOMAIN:?Set DOMAIN in .env}/api}
+        VITE_PUBLIC_SITE_URL: ${PUBLIC_SITE_URL:-https://${DOMAIN:?Set DOMAIN in .env}}
         VITE_TURNSTILE_SITE_KEY: ${TURNSTILE_SITE_KEY:-1x00000000000000000000AA}
     restart: unless-stopped
 

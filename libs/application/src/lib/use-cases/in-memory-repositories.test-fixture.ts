@@ -413,6 +413,12 @@ export class InMemorySiteRepository implements SiteRepositoryPort {
     const site = this.sites.get(id);
     return site && site.tenantId === tenantId ? site : null;
   }
+
+  async listByTenant(tenantId: string): Promise<Site[]> {
+    return [...this.sites.values()].filter(
+      (site) => site.tenantId === tenantId,
+    );
+  }
 }
 
 export class InMemoryThemeCatalog implements ThemeCatalogPort {

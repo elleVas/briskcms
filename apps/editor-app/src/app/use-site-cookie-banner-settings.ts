@@ -10,7 +10,7 @@ export function useSiteCookieBannerSettings(siteId: string) {
     mutationFn: (input: CookieBannerSettings) =>
       apiUpdateCookieBannerSettings(siteId, input),
     onSuccess: (updated) => {
-      queryClient.setQueryData(siteQueryOptions(siteId).queryKey, updated);
+      queryClient.setQueryData(siteQueryOptions().queryKey, updated);
     },
   });
 

@@ -46,7 +46,7 @@ export function LocaleSettingsDialog({
   // Gated on `open`: same reasoning as GeneralSettingsDialog — this dialog
   // can be mounted for the app's whole lifetime (rendered from SettingsMenu).
   const { data: site } = useQuery({
-    ...siteQueryOptions(siteId),
+    ...siteQueryOptions(),
     enabled: open,
   });
   const { updateLocaleSettings, isSaving } = useSiteLocaleSettings(siteId);

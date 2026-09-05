@@ -37,7 +37,7 @@ export function SeoSettingsDialog({
 }: SeoSettingsDialogProps) {
   const { t } = useTranslation();
   const { data: site } = useQuery({
-    ...siteQueryOptions(siteId),
+    ...siteQueryOptions(),
     enabled: open,
   });
   const { updateSeoSettings, isSaving } = useSiteSeoSettings(siteId);

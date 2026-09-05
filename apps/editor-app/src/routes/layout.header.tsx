@@ -6,8 +6,6 @@ import { siteQueryOptions } from '../app/site-queries';
 import { SiteLayoutSectionEditorView } from '../app/site-layout-section-editor-view';
 import { requireAuth } from './-require-auth';
 
-const DEFAULT_SITE_ID = import.meta.env['VITE_DEFAULT_SITE_ID'] as string;
-
 // Optional, not required: a direct visit with no `locale` in the URL still
 // works, falling back to the site's own defaultLocale (loaded below) —
 // same reasoning as layoutSearchSchema on the index route.
@@ -20,12 +18,11 @@ export const Route = createFileRoute('/layout/header')({
   loaderDeps: ({ search }) => ({ locale: search.locale }),
   loader: ({ context, deps }) =>
     requireAuth(async () => {
-      const site = await context.queryClient.ensureQueryData(
-        siteQueryOptions(DEFAULT_SITE_ID),
-      );
+      const site =
+        await context.queryClient.ensureQueryData(siteQueryOptions());
       const locale = deps.locale ?? site.defaultLocale;
       await context.queryClient.ensureQueryData(
-        siteLayoutSectionQueryOptions(DEFAULT_SITE_ID, locale, 'header'),
+        siteLayoutSectionQueryOptions(site.id, locale, 'header'),
       );
     }),
   component: LayoutHeaderRoute,
@@ -33,13 +30,13 @@ export const Route = createFileRoute('/layout/header')({
 
 function LayoutHeaderRoute() {
   const { locale: searchLocale } = Route.useSearch();
-  const { data: site } = useSuspenseQuery(siteQueryOptions(DEFAULT_SITE_ID));
+  const { data: site } = useSuspenseQuery(siteQueryOptions());
   const locale = searchLocale ?? site.defaultLocale;
 
   return (
     <SiteLayoutSectionEditorView
       key={locale}
-      siteId={DEFAULT_SITE_ID}
+      siteId={site.id}
       locale={locale}
       kind="header"
     />

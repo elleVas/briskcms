@@ -11,6 +11,7 @@ import type {
   ThemeCatalogPort,
 } from '@brisk/ports';
 import { DEFAULT_COOKIE_BANNER_SETTINGS } from '@brisk/shared-types';
+import { DeploymentSiteResolver } from './deployment-site.resolver';
 import { SitesController } from './sites.controller';
 
 function buildSite(
@@ -57,6 +58,7 @@ describe('SitesController (unit)', () => {
   beforeEach(() => {
     siteRepository = {
       findByDomain: jest.fn(),
+      listByTenant: jest.fn(),
       findById: jest.fn(),
       save: jest.fn(),
     };
@@ -73,12 +75,26 @@ describe('SitesController (unit)', () => {
       getCurrentTenantId: () => 'tenant-1',
       getCurrentUserId: () => 'user-1',
     };
+    // A real resolver over the same mocked repository, not a mock of its
+    // own: its whole behaviour is which repository call it makes and what
+    // it does with the result, so mocking it would test nothing.
     controller = new SitesController(
       siteRepository,
       siteThemeBlockStylesRepository,
       themeCatalog,
       tenantContext,
+      new DeploymentSiteResolver(siteRepository, undefined),
     );
+  });
+
+  it('findCurrent returns the site this deployment edits, without being given an id', async () => {
+    const site = buildSite();
+    siteRepository.listByTenant.mockResolvedValue([site]);
+
+    const dto = await controller.findCurrent();
+
+    expect(siteRepository.listByTenant).toHaveBeenCalledWith('tenant-1');
+    expect(dto.id).toBe('site-1');
   });
 
   it('findById throws a NotFoundException when no site matches', async () => {

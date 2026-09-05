@@ -11,7 +11,7 @@ import { BusinessInfoDialog } from './business-info-dialog';
 vi.mock('../lib/sites-api-client', async (importOriginal) => {
   const actual =
     await importOriginal<typeof import('../lib/sites-api-client')>();
-  return { ...actual, getSite: vi.fn(), updateBusinessInfo: vi.fn() };
+  return { ...actual, getCurrentSite: vi.fn(), updateBusinessInfo: vi.fn() };
 });
 
 const sampleSite: SiteRecord = {
@@ -64,15 +64,15 @@ describe('BusinessInfoDialog', () => {
   });
 
   it('does not fetch the site when closed', () => {
-    vi.mocked(api.getSite).mockResolvedValue(sampleSite);
+    vi.mocked(api.getCurrentSite).mockResolvedValue(sampleSite);
 
     renderDialog(false);
 
-    expect(api.getSite).not.toHaveBeenCalled();
+    expect(api.getCurrentSite).not.toHaveBeenCalled();
   });
 
   it('loads and pre-fills the form with the site business info', async () => {
-    vi.mocked(api.getSite).mockResolvedValue(sampleSite);
+    vi.mocked(api.getCurrentSite).mockResolvedValue(sampleSite);
 
     renderDialog();
 
@@ -82,7 +82,7 @@ describe('BusinessInfoDialog', () => {
   });
 
   it('saves the edited business info', async () => {
-    vi.mocked(api.getSite).mockResolvedValue(sampleSite);
+    vi.mocked(api.getCurrentSite).mockResolvedValue(sampleSite);
     vi.mocked(api.updateBusinessInfo).mockResolvedValue(sampleSite);
 
     renderDialog();
@@ -99,7 +99,7 @@ describe('BusinessInfoDialog', () => {
   });
 
   it('sends null for blank optional fields, not empty strings', async () => {
-    vi.mocked(api.getSite).mockResolvedValue({
+    vi.mocked(api.getCurrentSite).mockResolvedValue({
       ...sampleSite,
       businessAddress: null,
       businessPhone: null,

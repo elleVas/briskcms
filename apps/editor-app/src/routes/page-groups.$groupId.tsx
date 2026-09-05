@@ -22,9 +22,8 @@ export const Route = createFileRoute('/page-groups/$groupId')({
       // the initial active locale below can be the site's default one —
       // "opens where the shared content lives" is the more intuitive
       // default than an arbitrary first-in-list translation.
-      const site = await context.queryClient.ensureQueryData(
-        siteQueryOptions(group.siteId),
-      );
+      const site =
+        await context.queryClient.ensureQueryData(siteQueryOptions());
       return { group, translations, site };
     }),
   component: PageGroupEditorRoute,

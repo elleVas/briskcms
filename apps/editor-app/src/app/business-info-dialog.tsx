@@ -65,7 +65,7 @@ export function BusinessInfoDialog({
   // route), so an unconditional query would fetch the site on every page
   // load whether or not the user ever opens the dialog.
   const { data: site } = useQuery({
-    ...siteQueryOptions(siteId),
+    ...siteQueryOptions(),
     enabled: open,
   });
   const { updateBusinessInfo, isSaving } = useSiteBusinessInfo(siteId);

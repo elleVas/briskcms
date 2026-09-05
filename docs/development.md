@@ -103,8 +103,10 @@ pnpm exec nx run @brisk/editor-app:dev  # http://localhost:4200
 Opening `http://localhost:4200` prompts for login first (the dev user from
 `db:seed` above) — every Pages route requires a session, see
 [ADR-0010](adr/0010-session-based-auth-foundations.md). Once logged in, it
-lands on `/pages`, the admin shell's list of pages for
-`VITE_DEFAULT_SITE_ID`; "Nuova pagina" creates one and opens it in the
+lands on `/pages`, the admin shell's list of pages for whichever site the
+API resolves as this deployment's (`GET /sites/current`, see
+[ADR-0044](adr/0044-runtime-site-resolution-in-the-editor.md)); "Nuova
+pagina" creates one and opens it in the
 fullscreen canvas editor at `/pages/:id`
 (`apps/editor-app/src/app/canvas/canvas-editor-shell.tsx`), also requiring
 `apps/public-site` to be running (see below) — the canvas embeds the real

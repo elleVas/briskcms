@@ -4,18 +4,14 @@ import { LegalDocumentsWizard } from '../app/legal-documents-wizard';
 import { siteQueryOptions } from '../app/site-queries';
 import { requireAuth } from './-require-auth';
 
-const DEFAULT_SITE_ID = import.meta.env['VITE_DEFAULT_SITE_ID'] as string;
-
 export const Route = createFileRoute('/_shell/cookies/legal-documents')({
   loader: ({ context }) =>
-    requireAuth(() =>
-      context.queryClient.ensureQueryData(siteQueryOptions(DEFAULT_SITE_ID)),
-    ),
+    requireAuth(() => context.queryClient.ensureQueryData(siteQueryOptions())),
   component: LegalDocumentsRoute,
 });
 
 function LegalDocumentsRoute() {
-  const { data: site } = useSuspenseQuery(siteQueryOptions(DEFAULT_SITE_ID));
+  const { data: site } = useSuspenseQuery(siteQueryOptions());
 
-  return <LegalDocumentsWizard siteId={DEFAULT_SITE_ID} site={site} />;
+  return <LegalDocumentsWizard siteId={site.id} site={site} />;
 }

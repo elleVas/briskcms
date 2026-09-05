@@ -12,7 +12,7 @@ export function useSiteBusinessInfo(siteId: string) {
     mutationFn: (input: UpdateBusinessInfoInput) =>
       apiUpdateBusinessInfo(siteId, input),
     onSuccess: (updated) => {
-      queryClient.setQueryData(siteQueryOptions(siteId).queryKey, updated);
+      queryClient.setQueryData(siteQueryOptions().queryKey, updated);
     },
   });
 

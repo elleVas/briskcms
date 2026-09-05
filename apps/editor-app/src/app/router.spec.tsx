@@ -98,7 +98,7 @@ vi.mock('../lib/users-api-client', async (importOriginal) => {
 vi.mock('../lib/sites-api-client', async (importOriginal) => {
   const actual =
     await importOriginal<typeof import('../lib/sites-api-client')>();
-  return { ...actual, getSite: vi.fn() };
+  return { ...actual, getCurrentSite: vi.fn() };
 });
 
 vi.mock('../lib/site-layout-sections-api-client', async (importOriginal) => {
@@ -253,7 +253,7 @@ function renderApp(initialPath: string) {
 
 describe('router', () => {
   beforeEach(() => {
-    vi.mocked(sitesApi.getSite).mockResolvedValue(sampleSite);
+    vi.mocked(sitesApi.getCurrentSite).mockResolvedValue(sampleSite);
     // Reset per test rather than once in the mock factory: the one test
     // that flips it to false would otherwise leave every test after it
     // looking at a wizard instead of a login form.

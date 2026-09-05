@@ -4,18 +4,14 @@ import { IntegrationsView } from '../app/integrations-view';
 import { siteQueryOptions } from '../app/site-queries';
 import { requireAuth } from './-require-auth';
 
-const DEFAULT_SITE_ID = import.meta.env['VITE_DEFAULT_SITE_ID'] as string;
-
 export const Route = createFileRoute('/_shell/integrations/')({
   loader: ({ context }) =>
-    requireAuth(() =>
-      context.queryClient.ensureQueryData(siteQueryOptions(DEFAULT_SITE_ID)),
-    ),
+    requireAuth(() => context.queryClient.ensureQueryData(siteQueryOptions())),
   component: IntegrationsRoute,
 });
 
 function IntegrationsRoute() {
-  const { data: site } = useSuspenseQuery(siteQueryOptions(DEFAULT_SITE_ID));
+  const { data: site } = useSuspenseQuery(siteQueryOptions());
 
-  return <IntegrationsView siteId={DEFAULT_SITE_ID} site={site} />;
+  return <IntegrationsView siteId={site.id} site={site} />;
 }
