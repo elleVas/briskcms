@@ -89,7 +89,11 @@ export class DrizzleDashboardStatsRepository implements DashboardStatsPort {
             ),
           tx
             .select({
-              formId: formSubmissions.formId,
+              // The id comes from the joined `forms` row rather than from
+              // `formSubmissions.formId`: that column is nullable (a deleted
+              // form sets it null, docs/adr/0015), and reading it here would
+              // mean narrowing a value the join has already guaranteed.
+              formId: forms.id,
               formName: forms.name,
               receivedAt: formSubmissions.createdAt,
             })
@@ -124,20 +128,7 @@ export class DrizzleDashboardStatsRepository implements DashboardStatsPort {
       forms: {
         totalCount: formTotals[0]?.total ?? 0,
         recentCount: Number(formTotals[0]?.recent ?? '0'),
-        recent: recentForms.flatMap((row) =>
-          // formId is nullable in the schema (a deleted form sets it null,
-          // docs/adr/0015) even though the inner join makes it non-null
-          // here; narrowing rather than asserting keeps that honest.
-          row.formId
-            ? [
-                {
-                  formId: row.formId,
-                  formName: row.formName,
-                  receivedAt: row.receivedAt,
-                },
-              ]
-            : [],
-        ),
+        recent: recentForms,
       },
       recentActivity: recentRows.map((row) => ({
         ...row,
