@@ -19,6 +19,13 @@ import { Label } from '../components/ui/label';
 /** Mirrors the server's own minimum (setup.schemas.ts) so the field can say so before submitting. */
 const MIN_PASSWORD_LENGTH = 12;
 
+/**
+ * The locale the language field starts on. Exported so a test can assert it
+ * is actually one of `CURATED_LOCALE_CODES` — the pairing that broke once
+ * already, see the comment where it is used.
+ */
+export const DEFAULT_SETUP_LOCALE = 'en-US';
+
 export interface SetupWizardFormProps {
   onSubmit: (input: {
     setupToken: string;
@@ -49,7 +56,13 @@ export function SetupWizardForm({ onSubmit }: SetupWizardFormProps) {
   const { t } = useTranslation();
   const [setupToken, setSetupToken] = useState('');
   const [siteName, setSiteName] = useState('');
-  const [defaultLocale, setDefaultLocale] = useState('en');
+  // Must be a member of CURATED_LOCALE_CODES, which holds full BCP-47 tags
+  // and no bare 'en'. A `value` matching no `<option>` makes the browser
+  // display the FIRST one — Arabic — while React's state stays what it was:
+  // someone who actually wanted Arabic saw it already selected, submitted
+  // without touching it, and got a site in English.
+  const [defaultLocale, setDefaultLocale] =
+    useState<string>(DEFAULT_SETUP_LOCALE);
   const [adminEmail, setAdminEmail] = useState('');
   const [adminPassword, setAdminPassword] = useState('');
   const [error, setError] = useState('');

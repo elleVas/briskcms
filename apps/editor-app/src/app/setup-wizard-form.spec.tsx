@@ -1,7 +1,8 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
+import { CURATED_LOCALE_CODES } from '@brisk/shared-types';
 import { ApiError } from '../lib/http-client';
-import { SetupWizardForm } from './setup-wizard-form';
+import { DEFAULT_SETUP_LOCALE, SetupWizardForm } from './setup-wizard-form';
 
 // The suite runs pinned to Italian (test-setup.ts), so the queries below
 // match the Italian copy — same convention as every other dialog spec here.
@@ -61,6 +62,35 @@ describe('SetupWizardForm', () => {
 
     const alert = await screen.findByRole('alert');
     expect(alert.textContent).toMatch(/ricarica la pagina/i);
+  });
+
+  // A <select> whose `value` matches no <option> silently renders the FIRST
+  // one. That happened: the default was a bare 'en', the curated list holds
+  // only full tags, so the field showed "Arabic (Saudi Arabia)" while the
+  // submitted value stayed 'en' — worst for whoever actually wanted Arabic,
+  // saw it preselected, and got an English site.
+  it('starts on a locale that really exists in the curated list', () => {
+    expect(CURATED_LOCALE_CODES).toContain(DEFAULT_SETUP_LOCALE);
+  });
+
+  it('shows that same locale as the selected option', () => {
+    render(<SetupWizardForm onSubmit={vi.fn()} />);
+
+    expect(screen.getByLabelText(/lingua predefinita/i)).toHaveProperty(
+      'value',
+      DEFAULT_SETUP_LOCALE,
+    );
+  });
+
+  it('submits the preselected locale when the user never touches the field', async () => {
+    const onSubmit = vi.fn().mockResolvedValue(undefined);
+
+    fillAndSubmit(onSubmit);
+
+    await waitFor(() => expect(onSubmit).toHaveBeenCalledTimes(1));
+    expect(onSubmit).toHaveBeenCalledWith(
+      expect.objectContaining({ defaultLocale: DEFAULT_SETUP_LOCALE }),
+    );
   });
 
   it('marks the token field required, so the browser blocks an empty submit', () => {
