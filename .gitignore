@@ -73,8 +73,7 @@ uploads/
 # TanStack Router — generated from apps/*/src/routes/, never edited by hand
 apps/*/src/routeTree.gen.ts
 
-# privato, non versionare
-piano-progetto-astro-cms.md
-review-sicurezza-architettura-2026-08-24.md
-backlog-review-sicurezza-2026-08-26.md
+# Private planning documents, never versioned: the project plan, the
+# security reviews and the feature plans live here rather than in docs/.
+planning/
 themes/*/.astro
