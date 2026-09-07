@@ -82,16 +82,36 @@ describe('resolveRichTextPageLinks', () => {
 });
 
 describe('pageLinkResolverFor', () => {
+  const join = (locale: string, ancestors: string[], slug: string) =>
+    `/${[locale, ...ancestors, slug].join('/')}`;
+
   it('builds the path for the locale actually being rendered', () => {
     const map: PageGroupSlugMap = new Map([
-      [GUIDE, { locale: 'it', slug: 'guida' }],
+      [GUIDE, { locale: 'it', slug: 'guida', ancestorSlugs: [] }],
     ]);
-    const resolve = pageLinkResolverFor(map, (l, s) => `/${l}/${s}`);
-    expect(resolve(GUIDE)).toBe('/it/guida');
+    expect(pageLinkResolverFor(map, join)(GUIDE)).toBe('/it/guida');
+  });
+
+  // A slug alone is not an address: slugs are scoped to their siblings
+  // (ADR-0029), so a link written inside a sentence needs the chain too.
+  it('passes the ancestor chain through, not just the slug', () => {
+    const map: PageGroupSlugMap = new Map([
+      [
+        GUIDE,
+        {
+          locale: 'en',
+          slug: 'installation',
+          ancestorSlugs: ['docs', 'getting-started'],
+        },
+      ],
+    ]);
+    expect(pageLinkResolverFor(map, join)(GUIDE)).toBe(
+      '/en/docs/getting-started/installation',
+    );
   });
 
   it('returns null for a page missing from the map', () => {
-    const resolve = pageLinkResolverFor(new Map(), (l, s) => `/${l}/${s}`);
+    const resolve = pageLinkResolverFor(new Map(), join);
     expect(resolve(ABOUT)).toBeNull();
   });
 });
