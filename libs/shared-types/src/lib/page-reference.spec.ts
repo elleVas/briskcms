@@ -155,6 +155,87 @@ describe('resolvePageReferences', () => {
   });
 });
 
+describe('links written inside a sentence', () => {
+  const GUIDE = '9f3a1c72-0000-4000-8000-000000000001';
+  const richText = (id: string) =>
+    `<p>come ho <a href="brisk://page/${id}">spiegato qui</a></p>`;
+
+  it('is collected like any other page reference', () => {
+    expect(
+      collectPageGroupReferences([
+        { id: 'a', type: 'Text', props: { body: richText(GUIDE) } },
+      ]),
+    ).toEqual(new Set([GUIDE]));
+  });
+
+  it('is collected from a nested block too', () => {
+    expect(
+      collectPageGroupReferences([
+        {
+          id: 'c',
+          type: 'Container',
+          props: {},
+          children: [
+            { id: 'a', type: 'Text', props: { body: richText(GUIDE) } },
+          ],
+        },
+      ]),
+    ).toEqual(new Set([GUIDE]));
+  });
+
+  // The whole reason the reference is stored instead of the address: the
+  // page is renamed or read in another language, and the link inside the
+  // paragraph follows it.
+  it('resolves to the address of the locale being rendered', () => {
+    const blocks = [
+      { id: 'a', type: 'Text', props: { body: richText(GUIDE) } },
+    ];
+
+    const italian = resolvePageReferences(
+      blocks,
+      new Map([[GUIDE, { locale: 'it', slug: 'come-funziona' }]]),
+    );
+    expect(italian[0].props['body']).toBe(
+      '<p>come ho <a href="/it/come-funziona">spiegato qui</a></p>',
+    );
+
+    const english = resolvePageReferences(
+      blocks,
+      new Map([[GUIDE, { locale: 'en', slug: 'how-it-works' }]]),
+    );
+    expect(english[0].props['body']).toBe(
+      '<p>come ho <a href="/en/how-it-works">spiegato qui</a></p>',
+    );
+  });
+
+  it('uses the same "home" convention as every other address', () => {
+    const resolved = resolvePageReferences(
+      [{ id: 'a', type: 'Text', props: { body: richText(GUIDE) } }],
+      new Map([[GUIDE, { locale: 'it', slug: 'home' }]]),
+    );
+    expect(resolved[0].props['body']).toContain('href="/it/"');
+  });
+
+  // Same outcome the `page` prop already produces: nothing to link to,
+  // so no address — never a dangling brisk:// link in public HTML.
+  it('drops the address, keeping the words, when the page is gone', () => {
+    const resolved = resolvePageReferences(
+      [{ id: 'a', type: 'Text', props: { body: richText(GUIDE) } }],
+      new Map(),
+    );
+    expect(resolved[0].props['body']).toBe(
+      '<p>come ho <a>spiegato qui</a></p>',
+    );
+  });
+
+  // Not just equal: the same object. A block with nothing to resolve
+  // should not be copied, or every render would rebuild the whole tree.
+  it('leaves a block with no internal link untouched', () => {
+    const blocks = [{ id: 'a', type: 'Text', props: { body: '<p>ciao</p>' } }];
+    expect(resolvePageReferences(blocks, new Map())[0]).toBe(blocks[0]);
+  });
+});
+
 describe('collectResolvedPageRefs', () => {
   it('harvests pageGroupId -> locale/slug pairs from an already-resolved tree', () => {
     const content: PageContent = [

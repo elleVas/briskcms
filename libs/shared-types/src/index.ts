@@ -2,6 +2,7 @@ export * from './lib/backfill-block-ids';
 export * from './lib/business-info';
 export * from './lib/content-model';
 export * from './lib/custom-field-control';
+export * from './lib/rich-text-to-plain-text';
 export * from './lib/rich-text-page-links';
 export * from './lib/content-structure-signature';
 export * from './lib/field-value-overlay';

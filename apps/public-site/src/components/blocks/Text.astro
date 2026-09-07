@@ -11,7 +11,12 @@ const { body, styleOverride } = Astro.props;
 const instanceStyle = buildBlockInstanceStyle(styleOverride);
 ---
 
-<p class="brisk-text" data-brisk-field="body" style={instanceStyle}>{body}</p>
+<div
+  class="brisk-text brisk-rich-text"
+  data-brisk-field="body"
+  style={instanceStyle}
+  set:html={body}
+/>
 
 <style>
   .brisk-text {

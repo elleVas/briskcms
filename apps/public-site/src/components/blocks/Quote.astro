@@ -14,7 +14,7 @@ const instanceStyle = buildBlockInstanceStyle(styleOverride);
 ---
 
 <div class="brisk-quote" style={instanceStyle}>
-  <blockquote data-brisk-field="quote">{quote}</blockquote>
+  <blockquote class="brisk-rich-text" data-brisk-field="quote" set:html={quote} />
   {
     (hasAuthor || hasRole) && (
       <cite>

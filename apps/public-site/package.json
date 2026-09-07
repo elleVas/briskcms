@@ -30,8 +30,10 @@
   "dependencies": {
     "@astrojs/node": "^11.1.2",
     "@astrojs/react": "^6.0.4",
+    "@brisk/block-registry": "workspace:*",
     "@brisk/block-sdk": "workspace:*",
     "@brisk/env-config": "workspace:*",
+    "@brisk/rich-text": "workspace:*",
     "@brisk/shared-types": "workspace:*",
     "@brisk/theme-runtime": "workspace:*",
     "@tiptap/core": "^3.30.2",

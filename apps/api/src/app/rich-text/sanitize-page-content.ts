@@ -2,7 +2,7 @@ import { headerFooterBlocks, pageBlocks } from '@brisk/block-registry';
 import type { Block, FieldValueOverlay } from '@brisk/shared-types';
 import {
   blockTypesById,
-  sanitizeRichText,
+  normalizeRichText,
   transformRichTextInContent,
   transformRichTextInOverlay,
   type IsRichTextField,
@@ -31,12 +31,22 @@ const CORE_RICH_TEXT_FIELDS = new Set(
 export const isCoreRichTextField: IsRichTextField = (blockType, fieldKey) =>
   CORE_RICH_TEXT_FIELDS.has(`${blockType}.${fieldKey}`);
 
-/** Every rich text value in a content tree, made safe to render with `set:html`. */
+/**
+ * Every rich text value in a content tree, made safe to render with
+ * `set:html`.
+ *
+ * `normalizeRichText` rather than the sanitiser alone: a caller that
+ * sends plain text — the editor sends HTML, but this repo publishes real
+ * content through the API directly, and so will the WordPress importer —
+ * gets it turned into a paragraph with its `&` and `<` escaped, instead
+ * of a value that looks fine in the database and loses half a sentence on
+ * the page.
+ */
 export function sanitizePageContent(content: Block[]): Block[] {
   return transformRichTextInContent(
     content,
     isCoreRichTextField,
-    sanitizeRichText,
+    normalizeRichText,
   );
 }
 
@@ -54,6 +64,6 @@ export function sanitizeFieldValueOverlay(
     fieldValues,
     blockTypesById(groupContent),
     isCoreRichTextField,
-    sanitizeRichText,
+    normalizeRichText,
   );
 }

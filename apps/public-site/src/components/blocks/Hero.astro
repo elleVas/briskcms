@@ -22,12 +22,11 @@ const instanceStyle = buildBlockInstanceStyle(styleOverride);
 	>
 		{title}
 	</h1>
-	<p
+	<div
 		data-brisk-field="subtitle"
-		class="mt-4 text-lg text-pretty text-muted-foreground sm:text-xl"
-	>
-		{subtitle}
-	</p>
+		class="brisk-rich-text mt-4 text-lg text-pretty text-muted-foreground sm:text-xl"
+		set:html={subtitle}
+	/>
 </section>
 
 <style>

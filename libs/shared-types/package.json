@@ -19,6 +19,7 @@
     "./package.json": "./package.json"
   },
   "dependencies": {
-    "zod": "^4.4.3"
+    "zod": "^4.4.3",
+    "@brisk/theme-runtime": "workspace:*"
   }
 }

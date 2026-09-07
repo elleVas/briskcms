@@ -59,6 +59,7 @@ import {
 import type { AstroComponentFactory } from 'astro/runtime/server/index.js';
 import { resolveThemeBlockOverride } from '../lib/resolve-theme-block-override';
 import { themeBlockRegistry } from '../lib/resolve-theme-page-blocks';
+import { normalizeRenderedProps } from '../lib/normalize-rendered-content';
 
 interface Props {
   block: Block;
@@ -515,7 +516,7 @@ const iconName =
   typeof parsedProps['icon'] === 'string' ? parsedProps['icon'] : null;
 const dispatchProps = entry
   ? {
-      ...parsedProps,
+      ...normalizeRenderedProps(block.type, parsedProps, themeName),
       ...(entry.styleOverride ? { styleOverride: block.styleOverride } : {}),
       ...(entry.locale ? { locale } : {}),
       ...(entry.containerProps ? { editable, hasChildren } : {}),

@@ -1,5 +1,11 @@
 import type { Block, PageContent } from './content-model';
 import { pickedPageSchema } from './content-model';
+import { localePath } from '@brisk/theme-runtime';
+import {
+  collectRichTextPageReferences,
+  pageLinkResolverFor,
+  resolveRichTextPageLinks,
+} from './rich-text-page-links';
 
 /** groupId -> where that group resolves for one specific rendering locale. */
 export type PageGroupSlugMap = Map<
@@ -31,6 +37,18 @@ export function collectPageGroupReferences(content: PageContent): Set<string> {
       const page = block.props['page'];
       if (isPageRefLike(page)) {
         ids.add(page.pageGroupId);
+      }
+      // A link written INSIDE a sentence (ADR-0046) has no prop of its
+      // own — it lives in the rich text as `brisk://page/<id>`. Every
+      // string prop is scanned rather than only the ones a registry would
+      // call rich text: the reference is an opaque token that cannot
+      // occur by accident, and this file has no registry to ask.
+      for (const value of Object.values(block.props)) {
+        if (typeof value === 'string') {
+          for (const id of collectRichTextPageReferences(value)) {
+            ids.add(id);
+          }
+        }
       }
       if (block.children) {
         walk(block.children);
@@ -76,23 +94,48 @@ export function collectResolvedPageRefs(
 }
 
 function resolveBlock(block: Block, slugByGroupId: PageGroupSlugMap): Block {
-  const page = block.props['page'];
   const children = block.children?.map((child) =>
     resolveBlock(child, slugByGroupId),
   );
+  const props = resolveProps(block.props, slugByGroupId);
+  if (props === block.props && children === block.children) {
+    return block;
+  }
+  return { ...block, props, ...(children ? { children } : {}) };
+}
+
+function resolveProps(
+  props: Record<string, unknown>,
+  slugByGroupId: PageGroupSlugMap,
+): Record<string, unknown> {
+  const resolveHref = pageLinkResolverFor(slugByGroupId, localePath);
+  let next = props;
+  for (const [key, value] of Object.entries(props)) {
+    if (typeof value !== 'string') {
+      continue;
+    }
+    // Links written inside a sentence. `localePath` is the same function
+    // the rest of the site builds addresses with, so a link in a
+    // paragraph lands exactly where the Link block's would.
+    const resolved = resolveRichTextPageLinks(value, resolveHref);
+    if (resolved !== value) {
+      next = next === props ? { ...props } : next;
+      next[key] = resolved;
+    }
+  }
+
+  const page = props['page'];
   if (!isPageRefLike(page)) {
-    return children ? { ...block, children } : block;
+    return next;
   }
   const resolved = slugByGroupId.get(page.pageGroupId);
-  return {
-    ...block,
-    // `null`, not a dangling ref, when the group has no translation in
-    // this locale (deleted, or never translated) — same "nothing to link
-    // to" state a field that was never picked at all already renders as
-    // (Link.astro's own `linkType === 'page' && page` guard).
-    props: { ...block.props, page: resolved ? { ...page, ...resolved } : null },
-    ...(children ? { children } : {}),
-  };
+  next = next === props ? { ...props } : next;
+  // `null`, not a dangling ref, when the group has no translation in
+  // this locale (deleted, or never translated) — same "nothing to link
+  // to" state a field that was never picked at all already renders as
+  // (Link.astro's own `linkType === 'page' && page` guard).
+  next['page'] = resolved ? { ...page, ...resolved } : null;
+  return next;
 }
 
 /**

@@ -18,7 +18,16 @@ describe('richTextToPlainText', () => {
 
   it('separates list items and line breaks the same way', () => {
     expect(richTextToPlainText('<ul><li>a</li><li>b</li></ul>')).toBe('a b');
-    expect(richTextToPlainText('a<br>b')).toBe('a b');
+    expect(richTextToPlainText('<p>a<br>b</p>')).toBe('a b');
+  });
+
+  // The values every one of these fields held before ADR-0046. Stripping
+  // `<[^>]*>` from them would delete the middle of the sentence.
+  it('leaves a plain string alone, angle brackets included', () => {
+    expect(richTextToPlainText('Costa < 10 euro > 5')).toBe(
+      'Costa < 10 euro > 5',
+    );
+    expect(richTextToPlainText('Rossi & Figli')).toBe('Rossi & Figli');
   });
 
   it('keeps the text of a link, dropping its address', () => {
