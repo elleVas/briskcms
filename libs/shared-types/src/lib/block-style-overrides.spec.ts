@@ -441,3 +441,63 @@ describe('per-variant type styles', () => {
     ).toBe('');
   });
 });
+
+/**
+ * A theme may add style properties of its own to a block (ADR-0047's
+ * consequence on `stylableProperties`): without it core is the only
+ * possible source of properties, which contradicts ADR-0037 and
+ * ADR-0041 — a theme could restyle a block but never give the agency a
+ * knob for something core did not think of.
+ */
+describe("a theme's own style properties", () => {
+  it('derives the custom property name from the key', () => {
+    expect(
+      buildBlockStyleOverridesCss({
+        Card: { default: { base: { letterSpacing: '0.02em' } } },
+      }),
+    ).toContain('--brisk-override-letter-spacing: 0.02em;');
+  });
+
+  it('emits them beside the core ones, not instead', () => {
+    const css = buildBlockStyleOverridesCss({
+      Card: {
+        default: { base: { backgroundColor: '#fff', cardElevation: '4px' } },
+      },
+    });
+
+    expect(css).toContain('--brisk-override-bg: #fff;');
+    expect(css).toContain('--brisk-override-card-elevation: 4px;');
+  });
+
+  // The exit barrier, and it is not redundant with the schema's: an
+  // override reaches the emitter from the database too, where a row may
+  // predate the rule or have been edited by hand (PR #144).
+  it.each([
+    'letter spacing',
+    'LetterSpacing',
+    '--evil',
+    'letter}spacing',
+    'a'.repeat(65),
+  ])('refuses %s as a property name rather than emitting it', (key) => {
+    const css = buildBlockStyleOverridesCss({
+      Card: { default: { base: { [key]: '1px' } } },
+    });
+
+    expect(css).toBe('');
+  });
+
+  /**
+   * The one case the derivation must NOT catch. `marginTop` and
+   * `marginBottom` are core keys deliberately absent from the custom
+   * property map — they are applied per instance on a wrapper, never as a
+   * per-type rule. Deriving a name for them would quietly resurrect them
+   * as one.
+   */
+  it('still emits no rule for marginTop/marginBottom', () => {
+    expect(
+      buildBlockStyleOverridesCss({
+        Button: { default: { base: { marginTop: '1rem' } } },
+      }),
+    ).toBe('');
+  });
+});

@@ -2,14 +2,19 @@ import { ColorPickerField } from './custom-fields/color-picker-field';
 import type {
   BlockStyleDefaults,
   BlockStyleOverride,
+  ThemeStyleProperty,
 } from '@brisk/shared-types';
 import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
 import { useTranslation } from '../../lib/use-translation';
 
 export interface BlockStyleFieldsProps {
-  /** `BlockDescriptor.stylableProperties` del tipo selezionato — decide quali campi mostrare, nello stesso ordine (docs/adr/0022). */
-  properties: readonly (keyof BlockStyleOverride)[];
+  /** The selected type's `BlockDescriptor.stylableProperties` — decides which fields to show, in that order (docs/adr/0022). Since ADR-0047 it may name a property a THEME added, which core has never heard of. */
+  properties: readonly string[];
+  /** The block type these properties belong to, only so a theme property can find its label at `blocks.<type>.styleProperties.<key>`. */
+  blockType: string;
+  /** What the active theme declared for the properties core does not ship (ADR-0047) — which control to draw, and the options a select offers. Absent = this theme added none. */
+  themeProperties?: readonly ThemeStyleProperty[];
   value: BlockStyleOverride;
   onChange: (next: BlockStyleOverride) => void;
   /**
@@ -109,35 +114,57 @@ const SELECT_FIELD_OPTIONS: Partial<
  */
 export function BlockStyleFields({
   properties,
+  blockType,
+  themeProperties,
   value,
   onChange,
   defaults,
 }: BlockStyleFieldsProps) {
   const { tLabel } = useTranslation();
-  function setField<K extends keyof BlockStyleOverride>(
-    key: K,
-    fieldValue: BlockStyleOverride[K],
-  ) {
+  function setField(key: string, fieldValue: string | null) {
     onChange({ ...value, [key]: fieldValue });
   }
+
+  /**
+   * Core's own maps are keyed by its property names; a theme's property is
+   * in none of them, so `Partial<Record<...>>` cannot be indexed by an
+   * arbitrary string without this. A lookup that returns `undefined` for
+   * an unknown key is exactly the behaviour the code below already
+   * expects — the maps were only ever probed, never exhausted.
+   */
+  const coreLabel = <T,>(
+    map: Partial<Record<keyof BlockStyleOverride, T>>,
+    key: string,
+  ): T | undefined => (map as Partial<Record<string, T>>)[key];
+
+  const read = (key: string): string | null | undefined => {
+    const current = (value as Record<string, unknown>)[key];
+    return typeof current === 'string' ? current : null;
+  };
+
+  const themePropertyByKey = new Map(
+    (themeProperties ?? []).map((property) => [property.key, property]),
+  );
+  const themeLabelKey = (key: string) =>
+    `blocks.${blockType.charAt(0).toLowerCase()}${blockType.slice(1)}.styleProperties.${key}`;
 
   return (
     <div className="flex flex-col gap-3">
       {properties.map((property) => {
-        const colorLabel = COLOR_FIELD_LABELS[property];
+        const colorLabel = coreLabel(COLOR_FIELD_LABELS, property);
         if (colorLabel) {
           return (
             <div key={property} className="flex flex-col gap-1.5">
               <Label>{tLabel(colorLabel)}</Label>
               <ColorPickerField
-                value={(value[property] as string | null | undefined) ?? null}
+                value={read(property) ?? null}
                 onChange={(next) => setField(property, next)}
-                defaultValue={defaults?.[property]}
+                defaultValue={coreLabel(defaults ?? {}, property)}
               />
             </div>
           );
         }
-        const lengthField = LENGTH_FIELD_LABELS[property];
+        const lengthField = coreLabel(LENGTH_FIELD_LABELS, property);
         if (lengthField) {
           return (
             <div key={property} className="flex flex-col gap-1.5">
@@ -146,9 +173,10 @@ export function BlockStyleFields({
               </Label>
               <Input
                 id={`block-style-${property}`}
-                value={(value[property] as string | null | undefined) ?? ''}
+                value={read(property) ?? ''}
                 placeholder={
-                  defaults?.[property] ?? tLabel(lengthField.placeholder)
+                  coreLabel(defaults ?? {}, property) ??
+                  tLabel(lengthField.placeholder)
                 }
                 onChange={(event) => {
                   const next = event.target.value;
@@ -158,7 +186,7 @@ export function BlockStyleFields({
             </div>
           );
         }
-        const options = SELECT_FIELD_OPTIONS[property];
+        const options = coreLabel(SELECT_FIELD_OPTIONS, property);
         if (options) {
           return (
             <div key={property} className="flex flex-col gap-1.5">
@@ -168,7 +196,7 @@ export function BlockStyleFields({
               <select
                 id={`block-style-${property}`}
                 className="border-input bg-background h-9 rounded-md border px-2 text-sm"
-                value={(value[property] as string | null | undefined) ?? ''}
+                value={read(property) ?? ''}
                 onChange={(event) =>
                   setField(
                     property,
@@ -191,6 +219,64 @@ export function BlockStyleFields({
                   </option>
                 ))}
               </select>
+            </div>
+          );
+        }
+        // A property core has never heard of: the THEME said which control
+        // to draw (ADR-0047), and its label was registered into i18next on
+        // arrival. Last, so a core property can never be shadowed by a
+        // theme's — each theme's own spec refuses that clash, and the
+        // order here says so too.
+        const themeProperty = themePropertyByKey.get(property);
+        if (themeProperty) {
+          const label = tLabel(themeLabelKey(property));
+          if (themeProperty.control === 'color') {
+            return (
+              <div key={property} className="flex flex-col gap-1.5">
+                <Label>{label}</Label>
+                <ColorPickerField
+                  value={read(property) ?? null}
+                  onChange={(next) => setField(property, next)}
+                />
+              </div>
+            );
+          }
+          if (themeProperty.control === 'select') {
+            return (
+              <div key={property} className="flex flex-col gap-1.5">
+                <Label htmlFor={`block-style-${property}`}>{label}</Label>
+                <select
+                  id={`block-style-${property}`}
+                  className="border-input bg-background h-9 rounded-md border px-2 text-sm"
+                  value={read(property) ?? ''}
+                  onChange={(event) =>
+                    setField(property, event.target.value || null)
+                  }
+                >
+                  <option value="">
+                    {tLabel('canvas.blockStyle.selects.inherit')}
+                  </option>
+                  {(themeProperty.options ?? []).map((option) => (
+                    <option key={option} value={option}>
+                      {option}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            );
+          }
+          return (
+            <div key={property} className="flex flex-col gap-1.5">
+              <Label htmlFor={`block-style-${property}`}>{label}</Label>
+              <Input
+                id={`block-style-${property}`}
+                value={read(property) ?? ''}
+                placeholder={themeProperty.placeholder}
+                onChange={(event) => {
+                  const next = event.target.value;
+                  setField(property, next.trim() === '' ? null : next);
+                }}
+              />
             </div>
           );
         }

@@ -44,6 +44,7 @@ import {
   themeAllowsStyleOverrides,
   themeCapabilitiesQueryOptions,
 } from './theme-capabilities-queries';
+import { themeStylePropertiesQueryOptions } from './theme-style-properties-queries';
 import { themeBaseTokensQueryOptions } from './theme-base-tokens-queries';
 import { themeForegroundTokensQueryOptions } from './theme-foreground-tokens-queries';
 import { ToggleableColorField } from './toggleable-color-field';
@@ -252,6 +253,9 @@ export function GlobalStylesDialog({
     themeCapabilitiesQueryOptions(activeThemeName),
   );
   const themeAllowsStyling = themeAllowsStyleOverrides(themeCapabilities);
+  const { data: themeStyleProperties } = useQuery(
+    themeStylePropertiesQueryOptions(activeThemeName),
+  );
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -330,6 +334,8 @@ export function GlobalStylesDialog({
               </label>
             )}
             <BlockStyleFields
+              blockType={selectedDescriptor.type}
+              themeProperties={themeStyleProperties?.[selectedDescriptor.type]}
               properties={selectedDescriptor.stylableProperties ?? []}
               value={
                 site.themeTokens?.blockStyles[selectedDescriptor.type]?.[

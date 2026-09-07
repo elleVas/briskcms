@@ -262,9 +262,30 @@ are the same question from two sides.
   live-patches a `<style>` for per-type rules on save; it must now do the
   same for per-instance rules. Where those rules live in the document, and
   how they are patched into the iframe, is the first thing to design.
-- **`stylableProperties` must open.** It is typed
-  `keyof BlockStyleOverride` (`theme-blocks.ts`), so today a theme cannot
+- **`stylableProperties` must open.** It was typed
+  `keyof BlockStyleOverride` (`theme-blocks.ts`), so a theme could not
   widen the vocabulary — which contradicts ADR-0037 and ADR-0041.
+
+  > **Done.** A theme declares extra properties in
+  > `themes/<name>/blocks/<Type>.style.ts`: a key, a control, a label per
+  > locale. `blockStyleOverrideSchema` gained a `catchall` so the value
+  > can be stored, plus a refinement on the KEY — `catchall` constrains
+  > values and says nothing about names, and the name becomes a CSS
+  > custom property.
+  >
+  > The theme does not name that property. `windowTint` becomes
+  > `--brisk-override-window-tint`, derived by the emitter: a theme
+  > naming its own could point two properties at one variable or collide
+  > with a core one, and neither mistake announces itself. Core's names
+  > stay a map, because they are not mechanical — `backgroundColor` is
+  > `--brisk-override-bg`.
+  >
+  > The one case the derivation must NOT catch is `marginTop` and
+  > `marginBottom`: core keys deliberately absent from that map, applied
+  > per instance on a wrapper rather than as a per-type rule. Deriving a
+  > name for them would have quietly resurrected them as one, so they are
+  > excluded explicitly and a test says so.
+
 - **"Mobile" changes meaning**, and the interface must say so rather than a
   documentation page nobody opens. The selector keeps the familiar words
   with the measurement beside them — `Desktop (>1024px)`,

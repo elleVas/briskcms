@@ -6,6 +6,7 @@ import {
   themeBlockVariantsResponseSchema,
   themeCapabilitiesSchema,
   themeForegroundTokensSchema,
+  themeStylePropertiesResponseSchema,
   type BlockStyleDefaultsResponse,
   type IconEntry,
   type ThemeBaseTokens,
@@ -13,6 +14,7 @@ import {
   type ThemeBlockVariantsResponse,
   type ThemeCapabilities,
   type ThemeForegroundTokens,
+  type ThemeStylePropertiesResponse,
 } from '@brisk/shared-types';
 import { PUBLIC_SITE_URL } from './public-site-url';
 
@@ -114,5 +116,15 @@ export async function fetchThemeBlockVariants(
     '/api/themes/current/block-variants',
     themeName,
     themeBlockVariantsResponseSchema,
+  );
+}
+
+export async function fetchThemeStyleProperties(
+  themeName: string,
+): Promise<ThemeStylePropertiesResponse> {
+  return themeApiFetcher.fetchAndParse(
+    '/api/themes/current/block-style-properties',
+    themeName,
+    themeStylePropertiesResponseSchema,
   );
 }

@@ -73,76 +73,154 @@ export const contentAlignSchema = z.enum(['start', 'center', 'end']).nullable();
  * `BlockDescriptor.stylableProperties` that declares which of these are
  * actually relevant to a given type.
  */
-export const blockStyleOverrideSchema = z.object({
-  backgroundColor: cssColorTokenSchema.optional(),
-  textColor: cssColorTokenSchema.optional(),
-  borderRadius: cssLengthTokenSchema.optional(),
-  paddingX: cssLengthTokenSchema.optional(),
-  paddingY: cssLengthTokenSchema.optional(),
-  // Unlike the other properties above, these two are deliberately EXCLUDED
-  // from BLOCK_STYLE_CUSTOM_PROPERTIES (block-style-overrides.ts) — they
-  // make no sense as a per-TYPE CSS rule scoped by `.brisk-<type>` (it
-  // would touch every instance of that type anywhere, including ones nested
-  // inside a Container/Columns, where the space between siblings is already
-  // handled by the container's gap). They are applied per-instance instead,
-  // and only for a top-level block of the page (PublicPageContent.astro) —
-  // see editor-app's block-toolbar-overlay.tsx `isRootLevel` for the gate
-  // on the editor side.
-  marginTop: cssLengthTokenSchema.optional(),
-  marginBottom: cssLengthTokenSchema.optional(),
+/**
+ * The key of a style property a THEME adds to a block (ADR-0047's
+ * consequence on `stylableProperties`), as opposed to one of the ones
+ * core ships.
+ *
+ * It becomes a CSS custom property name — `letterSpacing` emits
+ * `--brisk-override-letter-spacing` — so it is checked like every other
+ * value that reaches a stylesheet (PR #144). Derived rather than declared
+ * by the theme, deliberately: a theme naming its own variable could point
+ * two properties at one name, or collide with a core one, and neither
+ * mistake announces itself.
+ */
+export const themeStylePropertyKeySchema = z
+  .string()
+  .min(1)
+  .max(64)
+  .regex(/^[a-z][A-Za-z0-9]*$/, 'must be a style property name');
 
-  // --- The vocabulary an ordinary marketing page needs (ADR-0047) ---
-  //
-  // Seven properties could not express a website: no border, no shadow,
-  // no background IMAGE, no overlay, no minimum height, no alignment, no
-  // maximum width, no gap. Everything below closes that, and a block
-  // still only offers what its own `stylableProperties` declares — so
-  // adding a property here does not put a control on every block.
+/** The property names core itself ships — everything else in an override came from a theme (ADR-0047). A map rather than a Set so the check above is a plain `in`. */
+const BLOCK_STYLE_PROPERTY_KEYS: Readonly<Record<string, true>> = {
+  backgroundColor: true,
+  textColor: true,
+  borderRadius: true,
+  paddingX: true,
+  paddingY: true,
+  marginTop: true,
+  marginBottom: true,
+  borderWidth: true,
+  borderStyle: true,
+  borderColor: true,
+  boxShadow: true,
+  backgroundImage: true,
+  backgroundPosition: true,
+  backgroundSize: true,
+  backgroundRepeat: true,
+  overlayColor: true,
+  minHeight: true,
+  maxWidth: true,
+  gap: true,
+  contentAlign: true,
+  contentJustify: true,
+};
 
-  borderWidth: cssLengthTokenSchema.optional(),
-  borderStyle: borderStyleSchema.optional(),
-  borderColor: cssColorTokenSchema.optional(),
+export const blockStyleOverrideSchema = z
+  .object({
+    backgroundColor: cssColorTokenSchema.optional(),
+    textColor: cssColorTokenSchema.optional(),
+    borderRadius: cssLengthTokenSchema.optional(),
+    paddingX: cssLengthTokenSchema.optional(),
+    paddingY: cssLengthTokenSchema.optional(),
+    // Unlike the other properties above, these two are deliberately EXCLUDED
+    // from BLOCK_STYLE_CUSTOM_PROPERTIES (block-style-overrides.ts) — they
+    // make no sense as a per-TYPE CSS rule scoped by `.brisk-<type>` (it
+    // would touch every instance of that type anywhere, including ones nested
+    // inside a Container/Columns, where the space between siblings is already
+    // handled by the container's gap). They are applied per-instance instead,
+    // and only for a top-level block of the page (PublicPageContent.astro) —
+    // see editor-app's block-toolbar-overlay.tsx `isRootLevel` for the gate
+    // on the editor side.
+    marginTop: cssLengthTokenSchema.optional(),
+    marginBottom: cssLengthTokenSchema.optional(),
 
+    // --- The vocabulary an ordinary marketing page needs (ADR-0047) ---
+    //
+    // Seven properties could not express a website: no border, no shadow,
+    // no background IMAGE, no overlay, no minimum height, no alignment, no
+    // maximum width, no gap. Everything below closes that, and a block
+    // still only offers what its own `stylableProperties` declares — so
+    // adding a property here does not put a control on every block.
+
+    borderWidth: cssLengthTokenSchema.optional(),
+    borderStyle: borderStyleSchema.optional(),
+    borderColor: cssColorTokenSchema.optional(),
+
+    /**
+     * Usually `var(--shadow-md)` from the theme's own scale, which is what
+     * keeps a site coherent — change the scale and every shadow follows.
+     * A literal value is allowed too, because a design handed over as a
+     * Figma file sometimes has to be matched exactly, and closing that door
+     * only pushes the work into the site's custom CSS, where the system
+     * cannot see it at all.
+     */
+    boxShadow: cssValueSchema.nullable().optional(),
+
+    /**
+     * A `url(...)`, or a gradient — anything that is a valid
+     * `background-image`. Stored as the CSS value rather than a media
+     * reference so it stays a scalar like every other property here; the
+     * editor's control fills it in from the media picker.
+     */
+    backgroundImage: cssValueSchema.nullable().optional(),
+    backgroundPosition: backgroundPositionSchema.optional(),
+    backgroundSize: backgroundSizeSchema.optional(),
+    backgroundRepeat: backgroundRepeatSchema.optional(),
+
+    /**
+     * The wash between a background image and the text on top of it,
+     * without which light photographs make body copy unreadable.
+     *
+     * One property, not colour plus opacity: CSS already expresses "black
+     * at 50%" as `rgb(0 0 0 / 50%)`, and a second knob would be a second
+     * thing to keep in step for no expressive gain.
+     */
+    overlayColor: cssColorTokenSchema.optional(),
+
+    minHeight: cssLengthTokenSchema.optional(),
+    maxWidth: cssLengthTokenSchema.optional(),
+    gap: cssLengthTokenSchema.optional(),
+
+    /** Horizontal placement of the block's own content. */
+    contentAlign: contentAlignSchema.optional(),
+    /** Vertical placement — what a hero with a minimum height needs, and nothing else can express. */
+    contentJustify: contentAlignSchema.optional(),
+  })
   /**
-   * Usually `var(--shadow-md)` from the theme's own scale, which is what
-   * keeps a site coherent — change the scale and every shadow follows.
-   * A literal value is allowed too, because a design handed over as a
-   * Figma file sometimes has to be matched exactly, and closing that door
-   * only pushes the work into the site's custom CSS, where the system
-   * cannot see it at all.
-   */
-  boxShadow: cssValueSchema.nullable().optional(),
-
-  /**
-   * A `url(...)`, or a gradient — anything that is a valid
-   * `background-image`. Stored as the CSS value rather than a media
-   * reference so it stays a scalar like every other property here; the
-   * editor's control fills it in from the media picker.
-   */
-  backgroundImage: cssValueSchema.nullable().optional(),
-  backgroundPosition: backgroundPositionSchema.optional(),
-  backgroundSize: backgroundSizeSchema.optional(),
-  backgroundRepeat: backgroundRepeatSchema.optional(),
-
-  /**
-   * The wash between a background image and the text on top of it,
-   * without which light photographs make body copy unreadable.
+   * Plus whatever a THEME added (ADR-0047). A closed object here would
+   * mean core is the only possible source of style properties, which
+   * contradicts ADR-0037 and ADR-0041 — a theme could restyle a block but
+   * never give the agency a knob for something core did not think of.
    *
-   * One property, not colour plus opacity: CSS already expresses "black
-   * at 50%" as `rgb(0 0 0 / 50%)`, and a second knob would be a second
-   * thing to keep in step for no expressive gain.
+   * `catchall`, not `passthrough`: an unknown key still has to be a
+   * usable property name and its value still has to survive
+   * `cssValueSchema`, so the two barriers PR #144 established hold for a
+   * theme's properties exactly as they do for core's. What is NOT checked
+   * here is that some theme actually declared the key — that is the
+   * editor's business, and the emitter treats an undeclared one as
+   * harmless: it becomes a custom property nobody reads.
    */
-  overlayColor: cssColorTokenSchema.optional(),
-
-  minHeight: cssLengthTokenSchema.optional(),
-  maxWidth: cssLengthTokenSchema.optional(),
-  gap: cssLengthTokenSchema.optional(),
-
-  /** Horizontal placement of the block's own content. */
-  contentAlign: contentAlignSchema.optional(),
-  /** Vertical placement — what a hero with a minimum height needs, and nothing else can express. */
-  contentJustify: contentAlignSchema.optional(),
-});
+  .catchall(cssValueSchema.nullable().optional())
+  // `catchall` constrains the VALUE of an unknown key and says nothing
+  // about the key itself, so `{ 'letter spacing': '1px' }` parses without
+  // this. The key becomes a CSS custom property name, so it is refused
+  // where it is written as well as where it is emitted — the two-barrier
+  // shape PR #144 established, not one or the other.
+  .superRefine((override, ctx) => {
+    for (const key of Object.keys(override)) {
+      if (key in BLOCK_STYLE_PROPERTY_KEYS) {
+        continue;
+      }
+      if (!themeStylePropertyKeySchema.safeParse(key).success) {
+        ctx.addIssue({
+          code: 'custom',
+          path: [key],
+          message: `"${key}" is not a usable style property name — it becomes a CSS custom property`,
+        });
+      }
+    }
+  });
 export type BlockStyleOverride = z.infer<typeof blockStyleOverrideSchema>;
 
 /**

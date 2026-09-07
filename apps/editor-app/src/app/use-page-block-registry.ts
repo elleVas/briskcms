@@ -4,6 +4,7 @@ import { pageBlockCategories, pageBlocks } from '@brisk/block-registry';
 import { mergeThemeBlocks, type PageBlockRegistry } from './merge-theme-blocks';
 import { themeBlockVariantsQueryOptions } from './theme-block-variants-queries';
 import { themePageBlocksQueryOptions } from './theme-page-blocks-queries';
+import { themeStylePropertiesQueryOptions } from './theme-style-properties-queries';
 import { useActiveThemeName } from './use-active-theme-name';
 
 /**
@@ -24,6 +25,12 @@ export function usePageBlockRegistry(): PageBlockRegistry {
   const { data: themeVariants } = useQuery(
     themeBlockVariantsQueryOptions(themeName),
   );
+  // ...and what it added to core's style vocabulary (ADR-0047): a third
+  // question, and a theme commonly answers one of the three and not the
+  // others.
+  const { data: themeStyleProperties } = useQuery(
+    themeStylePropertiesQueryOptions(themeName),
+  );
   return useMemo(
     () =>
       mergeThemeBlocks(
@@ -31,7 +38,8 @@ export function usePageBlockRegistry(): PageBlockRegistry {
         pageBlockCategories,
         data ?? [],
         themeVariants ?? {},
+        themeStyleProperties ?? {},
       ),
-    [data, themeVariants],
+    [data, themeVariants, themeStyleProperties],
   );
 }

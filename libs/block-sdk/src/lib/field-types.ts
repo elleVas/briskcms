@@ -131,6 +131,20 @@ export class FieldBuilder {
   }
 }
 
+/**
+ * A style property a block offers: one core ships, or one a THEME added
+ * (ADR-0047's consequence on `stylableProperties`).
+ *
+ * `string & {}` rather than a plain `string`, which would collapse the
+ * union and lose autocomplete on the twenty-one core names. `Extract`
+ * because the override schema has a catchall, which widens its `keyof` to
+ * include `number` — a property name never is one — the point is
+ * to keep those suggested while not making core the only possible source
+ * of properties, which is what contradicted ADR-0037 and ADR-0041.
+ */
+export type BlockStylePropertyName =
+  Extract<keyof BlockStyleOverride, string> | (string & {});
+
 export interface BlockDescriptor<Props = Record<string, unknown>> {
   type: string;
   label: string;
@@ -148,7 +162,7 @@ export interface BlockDescriptor<Props = Record<string, unknown>> {
    * override popover for this type: rollout is incremental, not a
    * mechanical addition to every block type at once (see the ADR for why).
    */
-  stylableProperties?: readonly (keyof BlockStyleOverride)[];
+  stylableProperties?: readonly BlockStylePropertyName[];
   /**
    * The default CSS expression for each of this type's `stylableProperties`
    * — e.g. `{ borderRadius: 'var(--radius)', paddingX: '1.25rem' }` —

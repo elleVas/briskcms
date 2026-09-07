@@ -248,6 +248,43 @@ package is React and editor UI, and depending on it is what used to make
 a theme undevelopable outside the monorepo. `block-registry`'s own
 `core-block-types.spec.ts` fails, naming what to fix, when either drifts.
 
+## Adding a style property core does not have
+
+Beside variants, a theme can give a block a new **style knob** — a value
+the agency tunes from the editor's style panel, for something core has no
+property for. `themes/<name>/blocks/<Type>.style.ts`:
+
+```ts
+import type { ThemeStyleProperty } from '@brisk/block-sdk';
+
+const properties: ThemeStyleProperty[] = [
+  {
+    key: 'windowTint',
+    control: 'color',
+    label: { en: 'Chrome', it: 'Cornice' },
+  },
+];
+
+export default properties;
+```
+
+The theme's CSS reads the variable derived from the key —
+`--brisk-override-window-tint` — and never names it itself.
+
+|                                   | what it checks                                   | where it can run         |
+| --------------------------------- | ------------------------------------------------ | ------------------------ |
+| `collectThemeStyleProperties`     | shapes an `import.meta.glob` map into extensions | anywhere                 |
+| `validateThemeStyleProperties`    | keys, controls, labels, a theme repeating itself | anywhere                 |
+| `checkStylePropertiesAgainstCore` | the type exists; no key core already ships       | needs `CORE_BLOCK_TYPES` |
+
+`CORE_STYLE_PROPERTY_KEYS` is read from `blockStyleOverrideSchema` itself
+rather than repeated, so unlike `CORE_BLOCK_TYPES` it has no anti-drift
+spec to keep: it **is** the source.
+
+**Reach for this only when the agency should tune the value.** If it is
+the theme's own design decision, write it in CSS — simpler, and nobody
+can break it.
+
 ## Running unit tests
 
 Run `nx test block-sdk` to execute the unit tests via [Vitest](https://vitest.dev/).

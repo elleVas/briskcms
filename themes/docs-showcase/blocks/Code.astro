@@ -43,7 +43,12 @@ const shikiLang = language as CodeLanguage;
   .brisk-code {
     border-radius: var(--brisk-override-radius, var(--radius));
     overflow: hidden;
-    border: 1px solid rgb(255 255 255 / 10%);
+    /* `--brisk-override-window-tint` is this theme's OWN style property,
+       declared in Code.style.ts (ADR-0047) — core has no such property.
+       The variable name is derived from the key, so nothing here had to
+       be registered anywhere: the emitter writes it from whatever the
+       agency sets, and this fallback is what shows until they do. */
+    border: 1px solid var(--brisk-override-window-tint, rgb(255 255 255 / 10%));
     background: #24292e;
   }
   .brisk-code__titlebar {

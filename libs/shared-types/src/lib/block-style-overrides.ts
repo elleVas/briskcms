@@ -255,19 +255,60 @@ function buildResponsiveRules(selector: string, style: unknown): string[] {
 function buildOverrideDeclarations(
   override: Readonly<Record<string, unknown>>,
 ): string | null {
-  const declarations = (
+  const core = (
     Object.keys(BLOCK_STYLE_CUSTOM_PROPERTIES) as CssOverridableProperty[]
-  )
-    .map((field) => {
-      const value = safeDeclarationValue(override[field]);
-      return value
-        ? `${BLOCK_STYLE_CUSTOM_PROPERTIES[field]}: ${value};`
-        : null;
-    })
+  ).map((field) => {
+    const value = safeDeclarationValue(override[field]);
+    return value ? `${BLOCK_STYLE_CUSTOM_PROPERTIES[field]}: ${value};` : null;
+  });
+
+  // Anything else in the override came from a THEME's own style property
+  // (ADR-0047). Core's names are not mechanical — `backgroundColor` is
+  // `--brisk-override-bg` — so they stay a map; a theme's is derived from
+  // its key, which is why the theme never gets to name the variable and
+  // cannot collide with core's or point two properties at one name.
+  const themeProperties = Object.keys(override)
+    .filter((key) => !(key in BLOCK_STYLE_CUSTOM_PROPERTIES))
+    .map((key) => {
+      const name = themeStylePropertyName(key);
+      const value = safeDeclarationValue(override[key]);
+      return name && value ? `${name}: ${value};` : null;
+    });
+
+  const declarations = [...core, ...themeProperties]
     .filter((declaration): declaration is string => declaration !== null)
     .join(' ');
   return declarations.length > 0 ? declarations : null;
 }
+
+/**
+ * `letterSpacing` becomes `--brisk-override-letter-spacing`, or `null`
+ * for anything that could not safely be a custom property name.
+ *
+ * The exit barrier for a theme's own style properties, and it is not
+ * redundant with the schema's: an override reaches here from the database
+ * too, where a row may predate the rule or have been edited by hand. The
+ * lesson of PR #144 is that whatever reaches a stylesheet is checked
+ * where it gets there, not only where it was written.
+ *
+ * `marginTop`/`marginBottom` are the one case this must NOT catch: they
+ * are core keys deliberately absent from the map above (instance-only,
+ * see site-theme-tokens.ts), so they are excluded here explicitly rather
+ * than silently becoming `--brisk-override-margin-top` — which would
+ * quietly resurrect them as a per-type rule.
+ */
+function themeStylePropertyName(key: string): string | null {
+  if (
+    !/^[a-z][A-Za-z0-9]{0,63}$/.test(key) ||
+    INSTANCE_ONLY_PROPERTIES.has(key)
+  ) {
+    return null;
+  }
+  return `--brisk-override-${key.replace(/([a-z0-9])([A-Z])/g, '$1-$2').toLowerCase()}`;
+}
+
+/** Core properties that are deliberately not CSS custom properties at all — see BLOCK_STYLE_CUSTOM_PROPERTIES's own comment. */
+const INSTANCE_ONLY_PROPERTIES = new Set(['marginTop', 'marginBottom']);
 
 /**
  * The class that carries ONE block instance's overrides.

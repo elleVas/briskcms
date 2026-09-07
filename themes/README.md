@@ -238,6 +238,51 @@ A variant is additive by construction: adding or removing one never
 touches a stored page. A block wearing a look this theme does not define
 simply renders in its default look.
 
+## Adding a style property core does not have
+
+A theme can also give a block a **new style knob**, not just a new look,
+in `blocks/<Type>.style.ts`:
+
+```ts
+import type { ThemeStyleProperty } from '@brisk/block-sdk';
+
+const properties: ThemeStyleProperty[] = [
+  {
+    key: 'windowTint',
+    control: 'color',
+    label: { en: 'Window chrome', it: 'Cornice della finestra' },
+  },
+];
+
+export default properties;
+```
+
+…and the CSS reads the variable **derived from the key**:
+
+```css
+border: 1px solid var(--brisk-override-window-tint, rgb(255 255 255 / 10%));
+```
+
+You do not name that variable. `windowTint` becomes
+`--brisk-override-window-tint`, always: a theme naming its own could point
+two properties at one variable, or collide with a core one, and neither
+mistake announces itself.
+
+**When to reach for this rather than plain CSS.** Only when the AGENCY
+should tune the value per block or per block type from the editor. If the
+value is the theme's own design decision, write it in your CSS — that is
+simpler and nobody can break it.
+
+Rules, checked by your theme's `blocks.spec.ts` in CI and again by the
+loader:
+
+- `key` is lower camel case; it becomes a CSS custom property
+- `control` is `color`, `length` or `select`; a `select` needs `options`
+- a label for **every** locale the editor speaks
+- the type has to exist, and the key must not be one core already ships —
+  add that one to the block's `stylableProperties` instead of redeclaring
+  it
+
 ## `regions/` — changing the page's own furniture
 
 Tokens restyle the blocks; `blocks/*.astro` rewrites one of them. What is
