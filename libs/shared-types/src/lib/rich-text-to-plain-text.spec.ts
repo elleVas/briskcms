@@ -55,4 +55,20 @@ describe('richTextToPlainText', () => {
   it('is empty for empty input', () => {
     expect(richTextToPlainText('')).toBe('');
   });
+
+  // A single-pass `replace(/<[^>]*>/g, '')` removes the inner match and
+  // lets the outside reassemble into `<script`. Nothing here writes that
+  // — the value has been sanitised already — but this function hands
+  // plain text to callers and must not rely on that.
+  it('leaves no tag fragment behind, however the input is nested', () => {
+    for (const attack of [
+      '<p><scr<script>ipt>alert(1)</p>',
+      '<p><<div>div>x</p>',
+      '<p><img src=x onerror=alert(1)>y</p>',
+    ]) {
+      const out = richTextToPlainText(attack);
+      expect(out, attack).not.toContain('<');
+      expect(out, attack).not.toContain('>');
+    }
+  });
 });
