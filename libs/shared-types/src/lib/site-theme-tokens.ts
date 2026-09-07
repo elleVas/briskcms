@@ -7,10 +7,43 @@ import { z } from 'zod';
  * PageLayout.astro). `null` = not customized, inheriting the active theme's
  * default.
  */
-export const cssLengthTokenSchema = z.string().min(1).nullable();
+/**
+ * What may not appear in a value that is written straight into a
+ * stylesheet.
+ *
+ * These values reach the page through `buildBlockStyleOverridesCss`, which
+ * interpolates them into a `<style>` — so `red; } body { … } .x {` used to
+ * close our rule and open one of the attacker's own, covering the whole
+ * site. Demonstrated, not theorised: the string above produced a valid
+ * full-page overlay. Anyone with edit rights could do it, against a site
+ * they do not own.
+ *
+ * Characters, not syntax, because a CSS grammar strict enough to be safe
+ * would also refuse values people legitimately write. Everything that can
+ * end a declaration or start a rule is out — `;` `{` `}` `@` `<` `>` — and
+ * with them gone, what remains cannot escape the declaration it is in.
+ * `\` goes too, or `\3B` smuggles a semicolon back in; comment markers go
+ * because they could swallow the closing brace and merge two rules.
+ *
+ * What stays allowed is everything real: `#fff`, `oklch(0.7 0.1 250)`,
+ * `rgb(0 0 0 / 50%)`, `var(--primary)`, `calc(100% - 2rem)`, `1.5rem`.
+ */
+const CSS_VALUE_BREAKOUT = /[;{}@<>\\]|\/\*|\*\//;
+const MAX_CSS_VALUE_LENGTH = 200;
+
+const cssValueSchema = z
+  .string()
+  .min(1)
+  .max(MAX_CSS_VALUE_LENGTH)
+  .refine((value) => !CSS_VALUE_BREAKOUT.test(value), {
+    message:
+      'must be a plain CSS value: ; { } @ < > \\ and comment markers are not allowed',
+  });
+
+export const cssLengthTokenSchema = cssValueSchema.nullable();
 
 /** Un colore CSS grezzo (qualunque sintassi valida — hex, oklch, var(...)). `null` = non personalizzato. */
-export const cssColorTokenSchema = z.string().min(1).nullable();
+export const cssColorTokenSchema = cssValueSchema.nullable();
 
 /**
  * The style properties a block can make overridable — ONE shape shared by
@@ -47,8 +80,23 @@ export type BlockStyleOverride = z.infer<typeof blockStyleOverrideSchema>;
  * field each time. Applied to ALL instances of that type across the site —
  * see `Block.styleOverride` for the single-instance override.
  */
+/**
+ * A block type name, which becomes a CSS SELECTOR
+ * (`blockTypeToClassName`), so it is constrained the same way a value is
+ * — and for the same demonstrated reason: `X { } body { display: none } .y`
+ * as a type produced exactly that rule in the page's stylesheet.
+ *
+ * Every real block type is a PascalCase identifier (`Hero`, `PromoBar`,
+ * `EmbedHtml`), core and theme alike, so this refuses nothing legitimate.
+ */
+export const blockTypeNameSchema = z
+  .string()
+  .min(1)
+  .max(64)
+  .regex(/^[A-Za-z][A-Za-z0-9]*$/, 'must be a block type name');
+
 export const themeTokensSchema = z.object({
-  blockStyles: z.record(z.string(), blockStyleOverrideSchema),
+  blockStyles: z.record(blockTypeNameSchema, blockStyleOverrideSchema),
 });
 export type ThemeTokens = z.infer<typeof themeTokensSchema>;
 
@@ -65,7 +113,7 @@ export const DEFAULT_THEME_TOKENS: ThemeTokens = {
  * untouched.
  */
 export const updateThemeTokensBodySchema = z.object({
-  blockType: z.string().min(1),
+  blockType: blockTypeNameSchema,
   style: blockStyleOverrideSchema,
 });
 export type UpdateThemeTokensBody = z.infer<typeof updateThemeTokensBodySchema>;

@@ -82,3 +82,68 @@ describe('buildBlockInstanceStyle', () => {
     ).toBeUndefined();
   });
 });
+
+/**
+ * These values are written straight into a `<style>` on the public site,
+ * and the block type becomes the selector in front of them. Both were
+ * interpolated raw, so anyone with edit rights could close our rule and
+ * open one of their own — against a site they do not own.
+ *
+ * Not theory: `red; } body { … } .x {` produced a valid full-viewport
+ * overlay, and `X { } body { display: none } .y` as a block type produced
+ * exactly that rule.
+ *
+ * The schema refuses both at the entrance (site-theme-tokens.spec.ts).
+ * This is the second barrier, at the exit, for what the schema cannot
+ * see: rows written before it was tightened, a write path that forgets
+ * it, a theme supplying its own defaults.
+ */
+describe('nothing reaches the stylesheet that could escape a declaration', () => {
+  const BREAKOUTS = [
+    'red; } body { display: none } .x {',
+    'red@import url(//evil.example)',
+    'red/* } body { display:none } .x { */',
+    'red\\3B } body { display:none } .x {',
+    '<style>x</style>',
+  ];
+
+  it.each(BREAKOUTS)('drops the declaration for %s', (hostile) => {
+    expect(
+      buildBlockStyleOverridesCss({ Hero: { backgroundColor: hostile } }),
+    ).toBe('');
+    expect(
+      buildBlockInstanceStyle({ backgroundColor: hostile }),
+    ).toBeUndefined();
+  });
+
+  it('drops a block type that is not an identifier, selector and all', () => {
+    expect(
+      buildBlockStyleOverridesCss({
+        'X { } body { display: none } .y': { backgroundColor: 'red' },
+      }),
+    ).toBe('');
+  });
+
+  it('drops a value long enough to be a payload rather than a colour', () => {
+    expect(
+      buildBlockStyleOverridesCss({
+        Hero: { backgroundColor: 'a'.repeat(201) },
+      }),
+    ).toBe('');
+  });
+
+  // The point of a character rule rather than a CSS grammar: everything
+  // people actually write still goes through.
+  it.each([
+    '#fff',
+    'oklch(0.7 0.1 250)',
+    'rgb(0 0 0 / 50%)',
+    'var(--primary)',
+    'calc(100% - 2rem)',
+    'transparent',
+  ])('keeps %s', (value) => {
+    expect(
+      buildBlockStyleOverridesCss({ Hero: { backgroundColor: value } }),
+    ).toContain(value);
+  });
+});
