@@ -33,13 +33,40 @@ const ENTITIES: Record<string, string> = {
  * decoded last, so `&amp;lt;` — a literal "&lt;" someone typed — comes
  * back as "&lt;" and not as "<".
  */
+/**
+ * Everything outside a `<…>`, scanned once left to right.
+ *
+ * Not `replace(/<[^>]*>/g, '')`, which is a single-pass removal and
+ * therefore incomplete: `<scr<script>ipt>` has its inner match taken out
+ * and reassembles into `<script`. Nothing in this codebase writes that —
+ * the value reaching here has already been through `sanitizeRichText` —
+ * but a function whose whole job is to hand plain text to a caller should
+ * not depend on its input already being safe, and CodeQL is right to say
+ * so. A scanner cannot leave a fragment behind: it never re-reads what it
+ * has already passed.
+ */
+function stripTags(value: string): string {
+  let out = '';
+  let insideTag = false;
+  for (const character of value) {
+    if (character === '<') {
+      insideTag = true;
+    } else if (character === '>') {
+      insideTag = false;
+    } else if (!insideTag) {
+      out += character;
+    }
+  }
+  return out;
+}
+
 export function richTextToPlainText(value: string): string {
   if (value.trimStart() === '' || !value.trimStart().startsWith('<')) {
     return value.replace(/\s+/g, ' ').trim();
   }
-  const stripped = value
-    .replace(/<\/(p|li|ul|ol|div|blockquote)>|<br\s*\/?>/gi, ' ')
-    .replace(/<[^>]*>/g, '');
+  const stripped = stripTags(
+    value.replace(/<\/(p|li|ul|ol|div|blockquote)>|<br\s*\/?>/gi, ' '),
+  );
   const decoded = Object.entries(ENTITIES)
     .reduce(
       (text, [entity, char]) => text.split(entity).join(char),
