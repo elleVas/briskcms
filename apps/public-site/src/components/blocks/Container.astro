@@ -65,11 +65,44 @@ const paddingClass: Record<ContainerProps['padding'], string> = {
 		outline-offset: -4px;
 	}
 
-	/* Radius and text colour only: background and padding already have
+	/* Background and padding are deliberately absent: they already have
 	   their own dedicated user fields above, and adding them here would
-	   create two conflicting mechanisms for the same property. */
+	   create two conflicting mechanisms for the same property.
+	   Everything else a container needs to hold a real section of a page
+	   comes through (ADR-0047). Every fallback is the value this block
+	   ALREADY had — `gap` matches the `gap-4` class, alignment matches the
+	   flex defaults — so a container with nothing overridden renders byte
+	   for byte as it did before. */
 	.brisk-container {
 		border-radius: var(--brisk-override-radius, 0.5rem);
 		color: var(--brisk-override-text, inherit);
+		border-width: var(--brisk-override-border-width, 0);
+		border-style: var(--brisk-override-border-style, solid);
+		border-color: var(--brisk-override-border-color, var(--border));
+		box-shadow: var(--brisk-override-shadow, none);
+		min-height: var(--brisk-override-min-height, auto);
+		max-width: var(--brisk-override-max-width, none);
+		gap: var(--brisk-override-gap, 1rem);
+		/* The element is `flex flex-col`, so align-items is the HORIZONTAL
+		   axis and justify-content the vertical — which is why the two
+		   properties map this way round and not the other. */
+		align-items: var(--brisk-override-align, stretch);
+		justify-content: var(--brisk-override-justify, flex-start);
+		/* The overlay is a flat gradient layer ON TOP of the image, rather
+		   than a `::before` with a negative z-index. A pseudo-element would
+		   need `position: relative` and `isolation: isolate` to sit in the
+		   right place, and both change the stacking context for everything
+		   nested inside — a real risk for a block whose whole job is to
+		   contain other blocks. Transparent by default, so it is invisible
+		   until someone sets it. */
+		background-image:
+			linear-gradient(
+				var(--brisk-override-overlay, transparent),
+				var(--brisk-override-overlay, transparent)
+			),
+			var(--brisk-override-bg-image, none);
+		background-position: var(--brisk-override-bg-position, center);
+		background-size: var(--brisk-override-bg-size, cover);
+		background-repeat: var(--brisk-override-bg-repeat, no-repeat);
 	}
 </style>

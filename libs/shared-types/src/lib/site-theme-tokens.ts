@@ -46,6 +46,26 @@ export const cssLengthTokenSchema = cssValueSchema.nullable();
 export const cssColorTokenSchema = cssValueSchema.nullable();
 
 /**
+ * Closed sets, so the editor can render a menu rather than a text box and
+ * the value is safe in CSS by construction — there is nothing to escape
+ * in `dashed`.
+ */
+export const borderStyleSchema = z
+  .enum(['solid', 'dashed', 'dotted', 'none'])
+  .nullable();
+export const backgroundPositionSchema = z
+  .enum(['center', 'top', 'bottom', 'left', 'right'])
+  .nullable();
+export const backgroundSizeSchema = z
+  .enum(['cover', 'contain', 'auto'])
+  .nullable();
+export const backgroundRepeatSchema = z
+  .enum(['no-repeat', 'repeat', 'repeat-x', 'repeat-y'])
+  .nullable();
+/** Start/center/end rather than left/right: it reads the same on a right-to-left site (ADR-0099's `dir` work). */
+export const contentAlignSchema = z.enum(['start', 'center', 'end']).nullable();
+
+/**
  * The style properties a block can make overridable — ONE shape shared by
  * every block type (docs/adr/0022), not a Zod field added by hand to each
  * of the 48+ types: not every block uses every property (a Text has no
@@ -70,6 +90,58 @@ export const blockStyleOverrideSchema = z.object({
   // on the editor side.
   marginTop: cssLengthTokenSchema.optional(),
   marginBottom: cssLengthTokenSchema.optional(),
+
+  // --- The vocabulary an ordinary marketing page needs (ADR-0047) ---
+  //
+  // Seven properties could not express a website: no border, no shadow,
+  // no background IMAGE, no overlay, no minimum height, no alignment, no
+  // maximum width, no gap. Everything below closes that, and a block
+  // still only offers what its own `stylableProperties` declares — so
+  // adding a property here does not put a control on every block.
+
+  borderWidth: cssLengthTokenSchema.optional(),
+  borderStyle: borderStyleSchema.optional(),
+  borderColor: cssColorTokenSchema.optional(),
+
+  /**
+   * Usually `var(--shadow-md)` from the theme's own scale, which is what
+   * keeps a site coherent — change the scale and every shadow follows.
+   * A literal value is allowed too, because a design handed over as a
+   * Figma file sometimes has to be matched exactly, and closing that door
+   * only pushes the work into the site's custom CSS, where the system
+   * cannot see it at all.
+   */
+  boxShadow: cssValueSchema.nullable().optional(),
+
+  /**
+   * A `url(...)`, or a gradient — anything that is a valid
+   * `background-image`. Stored as the CSS value rather than a media
+   * reference so it stays a scalar like every other property here; the
+   * editor's control fills it in from the media picker.
+   */
+  backgroundImage: cssValueSchema.nullable().optional(),
+  backgroundPosition: backgroundPositionSchema.optional(),
+  backgroundSize: backgroundSizeSchema.optional(),
+  backgroundRepeat: backgroundRepeatSchema.optional(),
+
+  /**
+   * The wash between a background image and the text on top of it,
+   * without which light photographs make body copy unreadable.
+   *
+   * One property, not colour plus opacity: CSS already expresses "black
+   * at 50%" as `rgb(0 0 0 / 50%)`, and a second knob would be a second
+   * thing to keep in step for no expressive gain.
+   */
+  overlayColor: cssColorTokenSchema.optional(),
+
+  minHeight: cssLengthTokenSchema.optional(),
+  maxWidth: cssLengthTokenSchema.optional(),
+  gap: cssLengthTokenSchema.optional(),
+
+  /** Horizontal placement of the block's own content. */
+  contentAlign: contentAlignSchema.optional(),
+  /** Vertical placement — what a hero with a minimum height needs, and nothing else can express. */
+  contentJustify: contentAlignSchema.optional(),
 });
 export type BlockStyleOverride = z.infer<typeof blockStyleOverrideSchema>;
 
@@ -135,6 +207,24 @@ export const blockStyleDefaultsSchema = z.object({
   borderRadius: z.string().min(1).optional(),
   paddingX: z.string().min(1).optional(),
   paddingY: z.string().min(1).optional(),
+  // The widened vocabulary (ADR-0047) resolves the same way: a block
+  // declares the theme expression it starts from, and the editor shows it
+  // as the placeholder so a field reads "what this is now" rather than
+  // being blank. Only the properties a block actually declares appear.
+  borderWidth: z.string().min(1).optional(),
+  borderStyle: z.string().min(1).optional(),
+  borderColor: z.string().min(1).optional(),
+  boxShadow: z.string().min(1).optional(),
+  backgroundImage: z.string().min(1).optional(),
+  backgroundPosition: z.string().min(1).optional(),
+  backgroundSize: z.string().min(1).optional(),
+  backgroundRepeat: z.string().min(1).optional(),
+  overlayColor: z.string().min(1).optional(),
+  minHeight: z.string().min(1).optional(),
+  maxWidth: z.string().min(1).optional(),
+  gap: z.string().min(1).optional(),
+  contentAlign: z.string().min(1).optional(),
+  contentJustify: z.string().min(1).optional(),
   // marginTop/marginBottom have no "theme default" to resolve (they depend
   // on no theme — see the comment on them in `blockStyleOverrideSchema`
   // above): these two fields always stay `undefined` here, never populated

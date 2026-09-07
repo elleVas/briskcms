@@ -681,7 +681,9 @@
     "blockStyle": {
       "colors": {
         "backgroundColor": "Background color",
-        "textColor": "Text color"
+        "textColor": "Text color",
+        "borderColor": "Border color",
+        "overlayColor": "Overlay"
       },
       "lengths": {
         "borderRadius": {
@@ -703,6 +705,85 @@
         "marginBottom": {
           "fieldLabel": "Space below",
           "placeholder": "e.g. 4rem — empty for default"
+        },
+        "borderWidth": {
+          "fieldLabel": "Border width",
+          "placeholder": "e.g. 1px — empty for none"
+        },
+        "minHeight": {
+          "fieldLabel": "Minimum height",
+          "placeholder": "e.g. 60vh — empty for default"
+        },
+        "maxWidth": {
+          "fieldLabel": "Maximum width",
+          "placeholder": "e.g. 48rem — empty for default"
+        },
+        "gap": {
+          "fieldLabel": "Space between items",
+          "placeholder": "e.g. 1.5rem — empty for default"
+        },
+        "boxShadow": {
+          "fieldLabel": "Shadow",
+          "placeholder": "e.g. var(--shadow-md)"
+        },
+        "backgroundImage": {
+          "fieldLabel": "Background image",
+          "placeholder": "e.g. url(/media/photo.jpg)"
+        }
+      },
+      "selects": {
+        "inherit": "Theme default",
+        "borderStyle": {
+          "fieldLabel": "Border style",
+          "options": {
+            "none": "None",
+            "solid": "Solid",
+            "dashed": "Dashed",
+            "dotted": "Dotted"
+          }
+        },
+        "backgroundPosition": {
+          "fieldLabel": "Image position",
+          "options": {
+            "center": "Center",
+            "top": "Top",
+            "bottom": "Bottom",
+            "left": "Left",
+            "right": "Right"
+          }
+        },
+        "backgroundSize": {
+          "fieldLabel": "Image size",
+          "options": {
+            "cover": "Fill the block",
+            "contain": "Fit inside",
+            "auto": "Original size"
+          }
+        },
+        "backgroundRepeat": {
+          "fieldLabel": "Image repeat",
+          "options": {
+            "no-repeat": "Do not repeat",
+            "repeat": "Tile",
+            "repeat-x": "Tile across",
+            "repeat-y": "Tile down"
+          }
+        },
+        "contentAlign": {
+          "fieldLabel": "Horizontal alignment",
+          "options": {
+            "start": "Left",
+            "center": "Center",
+            "end": "Right"
+          }
+        },
+        "contentJustify": {
+          "fieldLabel": "Vertical alignment",
+          "options": {
+            "start": "Top",
+            "center": "Middle",
+            "end": "Bottom"
+          }
         }
       }
     },
