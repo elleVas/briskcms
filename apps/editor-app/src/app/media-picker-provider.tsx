@@ -2,7 +2,7 @@ import { useCallback, useMemo, useRef, useState, type ReactNode } from 'react';
 import {
   MediaPickerContext,
   type MediaPickerPort,
-} from '@brisk/block-registry';
+} from './media-picker-context';
 import type { PickedMedia } from '@brisk/shared-types';
 import { MediaPickerDialog } from './media-picker-dialog';
 

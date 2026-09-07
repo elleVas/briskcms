@@ -1,4 +1,6 @@
 import type { Block } from '@brisk/shared-types';
+import { CUSTOM_FIELD_CONTROLS } from './custom-fields/custom-field-controls';
+import { RichTextField } from './custom-fields/rich-text-field';
 import type { BlockDescriptor, FieldDescriptor } from '@brisk/block-registry';
 import { Input } from '../../components/ui/input';
 import { Textarea } from '../../components/ui/textarea';
@@ -41,6 +43,14 @@ function FieldRow({ field, value, onChange }: FieldRowProps) {
           onChange={(event) => onChange(event.target.value)}
         />
       );
+    case 'richtext':
+      return (
+        <RichTextField
+          value={typeof value === 'string' ? value : ''}
+          onChange={onChange}
+          placeholder={field.placeholder}
+        />
+      );
     case 'number':
       return (
         <input
@@ -78,7 +88,9 @@ function FieldRow({ field, value, onChange }: FieldRowProps) {
         </select>
       );
     case 'custom': {
-      const Custom = field.component;
+      // The descriptor names a control; the map is what knows how to draw
+      // it. See custom-field-controls.tsx for why that indirection exists.
+      const Custom = CUSTOM_FIELD_CONTROLS[field.control];
       return <Custom value={value} onChange={onChange} />;
     }
   }
@@ -94,7 +106,13 @@ function isRequiredFieldEmpty(
   field: FieldDescriptor,
   props: Record<string, unknown>,
 ): boolean {
-  if (field.kind !== 'text' && field.kind !== 'textarea') return false;
+  if (
+    field.kind !== 'text' &&
+    field.kind !== 'textarea' &&
+    field.kind !== 'richtext'
+  ) {
+    return false;
+  }
   if (!field.required) return false;
   if (field.requiredUnless && props[field.requiredUnless]) return false;
   const value = props[field.key];
@@ -127,7 +145,9 @@ export function InspectorPanel({
           <label key={field.key} className="flex flex-col gap-1.5">
             <span className="text-xs font-medium text-muted-foreground">
               {tLabel(field.label)}
-              {(field.kind === 'text' || field.kind === 'textarea') &&
+              {(field.kind === 'text' ||
+                field.kind === 'textarea' ||
+                field.kind === 'richtext') &&
                 field.required && <span className="text-destructive"> *</span>}
             </span>
             <FieldRow

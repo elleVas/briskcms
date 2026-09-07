@@ -25,7 +25,7 @@ export const bannerBlock: BlockDescriptor<BannerProps> = {
       inlineEditable: true,
     },
     {
-      kind: 'textarea',
+      kind: 'richtext',
       key: 'text',
       translatable: true,
       label: 'blocks.banner.fields.text.fieldLabel',

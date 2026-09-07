@@ -1,4 +1,5 @@
 import type { BlockDescriptor, FieldDescriptor } from './field-types';
+import { CUSTOM_FIELD_CONTROLS } from '@brisk/shared-types';
 
 const KNOWN_CATEGORIES = [
   'layout',
@@ -172,14 +173,22 @@ export function validateThemeBlockSet(
       });
     }
 
-    const customField = descriptor.fields.find(
-      (field) => field.kind === 'custom',
-    );
-    if (customField) {
-      errors.push({
-        basename,
-        message: `field "${customField.key}" has kind:'custom', which cannot cross the wire to editor-app — not supported for theme blocks`,
-      });
+    // `kind: 'custom'` is allowed for theme blocks (opened 2026-09-07): a
+    // descriptor names its control rather than holding a React component,
+    // so it survives the wire to editor-app like any other field. What is
+    // NOT allowed is naming a control the editor has never heard of —
+    // that renders as a blank space under a label, with nothing anywhere
+    // to say why, so it is caught at build time and named here.
+    for (const field of descriptor.fields) {
+      if (
+        field.kind === 'custom' &&
+        !(CUSTOM_FIELD_CONTROLS as readonly string[]).includes(field.control)
+      ) {
+        errors.push({
+          basename,
+          message: `field "${field.key}" asks for control "${field.control}", which the editor cannot render — one of: ${CUSTOM_FIELD_CONTROLS.join(', ')}`,
+        });
+      }
     }
 
     errors.push(...labelKeyIssues(basename, descriptor));

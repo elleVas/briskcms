@@ -4,6 +4,16 @@ import type { Block } from '@brisk/shared-types';
 import type { BlockDescriptor } from '@brisk/block-registry';
 import { InspectorPanel } from './inspector-panel';
 
+vi.mock('./custom-fields/custom-field-controls', () => ({
+  CUSTOM_FIELD_CONTROLS: {
+    media: ({ onChange }: { onChange: (value: unknown) => void }) => (
+      <button onClick={() => onChange({ mediaId: 'm1', url: '/m1.jpg' })}>
+        Scegli immagine
+      </button>
+    ),
+  },
+}));
+
 describe('InspectorPanel', () => {
   it('renders nothing for a block with no fields (e.g. a pure layout container)', () => {
     const block: Block = { id: 'container-1', type: 'Container', props: {} };
@@ -119,32 +129,20 @@ describe('InspectorPanel', () => {
     expect(onChangeProp).toHaveBeenCalledWith('layout', 'three-equal');
   });
 
-  it('renders a custom field via its own component', () => {
+  // A custom field names its control; the map in custom-field-controls.tsx
+  // turns that name into a component. Mocked here so this stays a test of
+  // the INDIRECTION — that the right control is picked and its onChange
+  // reaches the right prop — rather than of the media picker's own UI,
+  // which has its own spec.
+  it('renders the control a custom field names, and wires its onChange', () => {
     const block: Block = { id: 'img-1', type: 'Image', props: { media: null } };
-    function FakeMediaPicker({
-      onChange,
-    }: {
-      value: unknown;
-      onChange: (value: unknown) => void;
-    }) {
-      return (
-        <button onClick={() => onChange({ mediaId: 'm1', url: '/m1.jpg' })}>
-          Scegli immagine
-        </button>
-      );
-    }
     const descriptor: BlockDescriptor = {
       type: 'Image',
       label: 'Immagine',
       category: 'content',
       defaultProps: { media: null },
       fields: [
-        {
-          kind: 'custom',
-          key: 'media',
-          label: 'Immagine',
-          component: FakeMediaPicker as never,
-        },
+        { kind: 'custom', key: 'media', label: 'Immagine', control: 'media' },
       ],
     };
     const onChangeProp = vi.fn();

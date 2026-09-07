@@ -11,7 +11,7 @@ export const textBlock: BlockDescriptor<TextProps> = {
   },
   fields: [
     {
-      kind: 'textarea',
+      kind: 'richtext',
       key: 'body',
       translatable: true,
       label: 'blocks.text.fields.body.fieldLabel',

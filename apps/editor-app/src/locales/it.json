@@ -705,6 +705,18 @@
           "placeholder": "es. 4rem — vuoto per il default"
         }
       }
+    },
+    "richText": {
+      "bold": "Grassetto",
+      "bulletList": "Elenco puntato",
+      "italic": "Corsivo",
+      "linkToPage": "Collega a una pagina",
+      "linkToUrl": "Collega a un indirizzo web",
+      "orderedList": "Elenco numerato",
+      "strike": "Barrato",
+      "underline": "Sottolineato",
+      "unlink": "Rimuovi il collegamento",
+      "urlPrompt": "Indirizzo web"
     }
   },
   "toast": {

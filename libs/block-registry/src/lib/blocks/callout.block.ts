@@ -20,7 +20,7 @@ export const calloutBlock = defineBlock({
   },
   fields: [
     {
-      kind: 'textarea',
+      kind: 'richtext',
       key: 'message',
       translatable: true,
       label: 'blocks.callout.fields.message.fieldLabel',

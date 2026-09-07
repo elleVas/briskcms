@@ -1,4 +1,4 @@
-import { ColorPickerField } from '@brisk/block-registry';
+import { ColorPickerField } from './custom-fields/color-picker-field';
 import type {
   BlockStyleDefaults,
   BlockStyleOverride,

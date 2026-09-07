@@ -100,7 +100,10 @@ describe('validateThemeBlockSet', () => {
     );
   });
 
-  it('rejects a field with kind:"custom"', () => {
+  // Opened 2026-09-07: a descriptor now names its control instead of
+  // holding a React component, so it crosses the wire like any other
+  // field. What replaces the ban is a check on the NAME.
+  it('accepts a field with kind:"custom" naming a control the editor has', () => {
     const errors = validateThemeBlockSet([
       validCandidate({
         descriptor: validDescriptor({
@@ -109,7 +112,31 @@ describe('validateThemeBlockSet', () => {
               kind: 'custom',
               key: 'picker',
               label: 'blocks.faq.fields.picker.fieldLabel',
-              component: () => null,
+              control: 'media',
+            },
+          ],
+        }),
+      }),
+    ]);
+    // Only the field KIND is under test here — the fixture has no
+    // translation for this key, and that error is a different rule's job.
+    expect(
+      errors.filter((error) => /custom|control/.test(error.message)),
+    ).toEqual([]);
+  });
+
+  it('rejects a control the editor cannot render, naming it', () => {
+    // Without this the field would render as a blank space under its
+    // label — no error in the console, nothing in the build output.
+    const errors = validateThemeBlockSet([
+      validCandidate({
+        descriptor: validDescriptor({
+          fields: [
+            {
+              kind: 'custom',
+              key: 'picker',
+              label: 'blocks.faq.fields.picker.fieldLabel',
+              control: 'spreadsheet' as never,
             },
           ],
         }),
@@ -117,7 +144,7 @@ describe('validateThemeBlockSet', () => {
     ]);
     expect(errors).toContainEqual(
       expect.objectContaining({
-        message: expect.stringContaining("kind:'custom'"),
+        message: expect.stringContaining('spreadsheet'),
       }),
     );
   });

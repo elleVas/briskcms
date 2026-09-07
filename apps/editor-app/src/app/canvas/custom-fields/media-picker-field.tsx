@@ -1,5 +1,5 @@
 import type { PickedMedia } from '@brisk/shared-types';
-import { useMediaPicker } from '../media-picker-context';
+import { useMediaPicker } from '../../media-picker-context';
 
 export interface MediaPickerFieldProps {
   value: PickedMedia | null;

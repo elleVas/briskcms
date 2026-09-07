@@ -1,7 +1,6 @@
 import type { TestimonialProps } from '@brisk/shared-types';
 import { BLOCK_STYLE_DEFAULTS } from '@brisk/shared-types';
 import { FieldBuilder, type BlockDescriptor } from '../field-types';
-import { MediaPickerField } from '../fields/media-picker-field';
 import { BlockStyleRegistry } from '../block-style-registry';
 
 export const testimonialBlock: BlockDescriptor<TestimonialProps> = {
@@ -17,7 +16,7 @@ export const testimonialBlock: BlockDescriptor<TestimonialProps> = {
   },
   fields: [
     {
-      kind: 'textarea',
+      kind: 'richtext',
       key: 'quote',
       translatable: true,
       label: 'blocks.testimonial.fields.quote.fieldLabel',
@@ -39,7 +38,7 @@ export const testimonialBlock: BlockDescriptor<TestimonialProps> = {
     FieldBuilder.custom(
       'avatar',
       'blocks.testimonial.fields.avatar.fieldLabel',
-      MediaPickerField,
+      'media',
     ),
     {
       kind: 'number',

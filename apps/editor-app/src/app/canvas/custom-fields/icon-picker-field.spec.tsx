@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import type { ReactNode } from 'react';
-import { IconListContext, type IconListPort } from '../icon-list-context';
+import { IconListContext, type IconListPort } from '../../icon-list-context';
 import { IconPickerField } from './icon-picker-field';
 
 function wrapperWith(port: IconListPort) {

@@ -19,7 +19,7 @@ export const heroBlock: BlockDescriptor<HeroProps> = {
       inlineEditable: true,
     },
     {
-      kind: 'textarea',
+      kind: 'richtext',
       key: 'subtitle',
       translatable: true,
       label: 'blocks.hero.fields.subtitle.fieldLabel',

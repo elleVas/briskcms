@@ -5,7 +5,7 @@ import type { PickedMedia } from '@brisk/shared-types';
 import {
   MediaPickerContext,
   type MediaPickerPort,
-} from '../media-picker-context';
+} from '../../media-picker-context';
 import {
   GalleryPickerField,
   type GalleryImageItem,

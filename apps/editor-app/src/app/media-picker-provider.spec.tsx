@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { QueryClientProvider } from '@tanstack/react-query';
-import { useMediaPicker } from '@brisk/block-registry';
+import { useMediaPicker } from './media-picker-context';
 import type { PickedMedia } from '@brisk/shared-types';
 import { TooltipProvider } from '../components/ui/tooltip';
 import * as api from '../lib/media-api-client';

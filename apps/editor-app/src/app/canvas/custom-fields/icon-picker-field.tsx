@@ -1,4 +1,4 @@
-import { useIconList } from '../icon-list-context';
+import { useIconList } from '../../icon-list-context';
 
 export interface IconPickerFieldProps {
   value: string | null;

@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { customFieldControlSchema } from './custom-field-control';
 import {
   blockStyleDefaultsSchema,
   blockStyleOverrideSchema,
@@ -17,10 +18,12 @@ import {
  * versionable wire shape instead of a new dependency edge onto
  * `@brisk/block-sdk`.
  *
- * `kind: 'custom'` is deliberately absent — it carries a live React
- * `ComponentType`, which cannot cross an HTTP/JSON boundary. A theme
- * block declaring a `custom` field fails `validateThemeBlockSet()`
- * (`@brisk/block-sdk`) at build time, before this schema is ever reached.
+ * `kind: 'custom'` used to be absent here, because it carried a live
+ * React `ComponentType` and so could not cross an HTTP/JSON boundary. A
+ * descriptor now names its control instead of holding it, so it can, and
+ * a theme may declare one — see `customFieldControlSchema` for the set of
+ * names, and `validateThemeBlockSet()` for the check that a theme has not
+ * invented one the editor cannot draw.
  */
 export const themeFieldDescriptorSchema = z.discriminatedUnion('kind', [
   z.object({
@@ -42,6 +45,33 @@ export const themeFieldDescriptorSchema = z.discriminatedUnion('kind', [
     required: z.boolean().optional(),
     requiredUnless: z.string().optional(),
     translatable: z.boolean().optional(),
+  }),
+  // A theme must be able to declare one too, or rich text would be a
+  // privilege of core blocks (ADR-0046, and the additive rule of
+  // ADR-0048). Same shape as `textarea`; what differs is that the value
+  // is sanitised HTML rather than a literal string.
+  z.object({
+    kind: z.literal('richtext'),
+    key: z.string(),
+    label: z.string(),
+    inlineEditable: z.boolean().optional(),
+    placeholder: z.string().optional(),
+    required: z.boolean().optional(),
+    requiredUnless: z.string().optional(),
+    translatable: z.boolean().optional(),
+  }),
+  // Opened 2026-09-07. It used to be excluded with the note that a
+  // `custom` field "carries a live React ComponentType, which cannot
+  // cross an HTTP/JSON boundary" — true then, and no longer true: a
+  // descriptor now NAMES its control instead of holding it (ADR-0046's
+  // split), so it survives JSON like every other field. What still has to
+  // be checked is that the name is one the editor knows, or the field
+  // renders as a blank space under its label with no error anywhere.
+  z.object({
+    kind: z.literal('custom'),
+    key: z.string(),
+    label: z.string(),
+    control: customFieldControlSchema,
   }),
   z.object({
     kind: z.enum(['radio', 'select']),

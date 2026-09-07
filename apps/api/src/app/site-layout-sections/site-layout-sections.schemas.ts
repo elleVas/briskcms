@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { pageContentSchema } from '@brisk/shared-types';
+import { sanitizedPageContentSchema } from '../rich-text/sanitized-page-content.schema';
 
 export const siteLayoutSectionKindSchema = z.enum(['header', 'footer']);
 
@@ -11,7 +11,7 @@ export const getOrCreateQuerySchema = z.object({
 export type GetOrCreateQuery = z.infer<typeof getOrCreateQuerySchema>;
 
 export const saveDraftBodySchema = z.object({
-  content: pageContentSchema,
+  content: sanitizedPageContentSchema,
 });
 export type SaveDraftBody = z.infer<typeof saveDraftBodySchema>;
 

@@ -2,7 +2,6 @@ import type { FeatureProps } from '@brisk/shared-types';
 import { BLOCK_STYLE_DEFAULTS } from '@brisk/shared-types';
 import { FieldBuilder, type BlockDescriptor } from '../field-types';
 import { BlockStyleRegistry } from '../block-style-registry';
-import { IconPickerField } from '../fields/icon-picker-field';
 
 export const featureBlock: BlockDescriptor<FeatureProps> = {
   type: 'Feature',
@@ -17,7 +16,7 @@ export const featureBlock: BlockDescriptor<FeatureProps> = {
     FieldBuilder.custom(
       'icon',
       'blocks.feature.fields.icon.fieldLabel',
-      IconPickerField,
+      'icon',
     ),
     {
       kind: 'text',
@@ -27,7 +26,7 @@ export const featureBlock: BlockDescriptor<FeatureProps> = {
       inlineEditable: true,
     },
     {
-      kind: 'textarea',
+      kind: 'richtext',
       key: 'text',
       translatable: true,
       label: 'blocks.feature.fields.text.fieldLabel',

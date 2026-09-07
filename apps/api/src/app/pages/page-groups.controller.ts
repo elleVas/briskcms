@@ -88,6 +88,7 @@ import {
   type UpdatePageTranslationSeoMetaBody,
   updatePageTranslationSeoMetaBodySchema,
 } from './page-groups.schemas';
+import { sanitizeFieldValueOverlay } from '../rich-text/sanitize-page-content';
 
 /**
  * i18n a livello di campo (vedi il piano) — struttura condivisa
@@ -300,12 +301,36 @@ export class PageGroupsController {
     @Body(new ZodValidationPipe(savePageTranslationFieldValuesBodySchema))
     body: SavePageTranslationFieldValuesBody,
   ) {
+    const tenantId = this.tenantContext.getCurrentTenantId();
+    // The only content entrance a schema cannot guard on its own (see
+    // sanitized-page-content.schema.ts): the overlay records a block ID,
+    // and only the group's own tree says what TYPE that block is — which
+    // is what decides whether a field is rich text at all. Sanitising
+    // every value instead would be destructive, because `Code.code` is
+    // deliberately `translatable` and a snippet would lose everything
+    // after its first `<`.
+    // Via the translation, not `body.parentGroupId` — that one is the
+    // group's parent in the page HIERARCHY, a different thing entirely,
+    // and sanitising against it would mean sanitising against another
+    // page's tree.
+    const translationBeingSaved = await this.pageTranslationRepository.findById(
+      tenantId,
+      translationId,
+    );
+    const group = translationBeingSaved
+      ? await this.pageGroupRepository.findById(
+          tenantId,
+          translationBeingSaved.pageGroupId,
+        )
+      : null;
     const translation = await savePageTranslationFieldValues(
       { pageTranslationRepository: this.pageTranslationRepository },
       {
-        tenantId: this.tenantContext.getCurrentTenantId(),
+        tenantId,
         pageTranslationId: translationId,
-        fieldValues: body.fieldValues,
+        fieldValues: group
+          ? sanitizeFieldValueOverlay(body.fieldValues, group.content)
+          : body.fieldValues,
         parentGroupId: body.parentGroupId,
         actorUserId: this.tenantContext.getCurrentUserId(),
       },

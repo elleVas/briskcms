@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { IconListContext, type IconListPort } from '@brisk/block-registry';
+import { IconListContext, type IconListPort } from './icon-list-context';
 import { themeIconsQueryOptions } from './theme-icons-queries';
 import { useActiveThemeName } from './use-active-theme-name';
 import { IconPickerDialog } from './icon-picker-dialog';

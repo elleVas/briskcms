@@ -20,7 +20,7 @@ export const accordionItemBlock: BlockDescriptor<AccordionItemProps> = {
       inlineEditable: true,
     },
     {
-      kind: 'textarea',
+      kind: 'richtext',
       key: 'answer',
       translatable: true,
       label: 'blocks.accordionItem.fields.answer.fieldLabel',
