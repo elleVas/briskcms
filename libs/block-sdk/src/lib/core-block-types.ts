@@ -82,3 +82,25 @@ export function findCoreBlockTypeCollisions(
   const core = new Set(CORE_BLOCK_TYPES);
   return themeBlockTypes.filter((type) => core.has(type));
 }
+
+/**
+ * The variants each core block type ships, for the same reason and with
+ * the same discipline as `CORE_BLOCK_TYPES` above: a theme may ADD looks
+ * to a core block (ADR-0047), and it must not redeclare one the block
+ * already has — that would put the same entry in the picker twice, one of
+ * them unreachable.
+ *
+ * A literal map rather than something derived, because deriving it means
+ * importing `@brisk/block-registry`, which is React and editor UI: the
+ * dependency ADR-0037 removed so a theme can be built outside this
+ * monorepo at all. `libs/block-registry`'s own `core-block-types.spec.ts`
+ * asserts it matches the real descriptors and fails naming what to fix,
+ * exactly as it already does for the type list.
+ *
+ * Only types that actually declare variants appear. Everything else has
+ * one look and nothing to collide with.
+ */
+export const CORE_BLOCK_VARIANTS: Readonly<Record<string, readonly string[]>> =
+  {
+    Button: ['secondary'],
+  };

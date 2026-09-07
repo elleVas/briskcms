@@ -195,6 +195,49 @@ What each declaration then DOES remains the theme's business. The
 `--brisk-override-bg`, because its background is a designed gradient — a
 deliberate choice, not an oversight.
 
+## Adding a look to a core block (variants)
+
+A block type offers named **variants** — looks the client picks from a
+menu (ADR-0047). `Button` ships `secondary`; a theme adds its own without
+touching the core block, in `blocks/<Type>.variants.ts`:
+
+```ts
+import type { ThemeBlockVariant } from '@brisk/block-sdk';
+
+const variants: ThemeBlockVariant[] = [
+  { value: 'ghost', label: { en: 'Ghost', it: 'Fantasma' } },
+];
+
+export default variants;
+```
+
+…and the CSS for `.brisk-button--ghost` goes wherever this theme's CSS
+lives — its own `Button.astro` override, or `theme.css`. Nothing else is
+needed: `BlockRenderer` builds the class from `Block.variant`, so the look
+renders as soon as somebody picks it.
+
+**This is the file to use for the Figma workflow.** A design file with
+twenty button variants becomes twenty entries here, one rule each — not
+twenty block types. Declaring a `Button.block.ts` would be _redefining_
+the core Button, which is refused (ADR-0048): it would duplicate every
+field and lose the core block with them.
+
+Rules, all checked by your theme's own `blocks.spec.ts` in CI, and again
+by the loader at runtime:
+
+- `value` becomes part of a CSS class, so it is lower case letters,
+  digits and dashes, starting with a letter
+- `default` is reserved — it names the block's own look
+- a label for **every** locale the editor speaks; one missing means the
+  client sees a raw key
+- the type has to exist, and you may not redeclare a variant the block
+  already has — add a different look, or restyle the existing one from
+  the editor's Global Styles, which is keyed by `(type, variant)`
+
+A variant is additive by construction: adding or removing one never
+touches a stored page. A block wearing a look this theme does not define
+simply renders in its default look.
+
 ## `regions/` — changing the page's own furniture
 
 Tokens restyle the blocks; `blocks/*.astro` rewrites one of them. What is

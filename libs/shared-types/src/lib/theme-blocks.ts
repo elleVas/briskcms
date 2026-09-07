@@ -3,6 +3,8 @@ import { customFieldControlSchema } from './custom-field-control';
 import {
   blockStyleDefaultsSchema,
   blockStyleOverrideSchema,
+  blockTypeNameSchema,
+  blockVariantNameSchema,
 } from './site-theme-tokens';
 
 /**
@@ -157,3 +159,31 @@ export type ThemeBlockEntry = z.infer<typeof themeBlockEntrySchema>;
 
 export const themeBlocksResponseSchema = z.array(themeBlockEntrySchema);
 export type ThemeBlocksResponse = z.infer<typeof themeBlocksResponseSchema>;
+
+/**
+ * The looks a theme ADDS to a block type core already ships (ADR-0047,
+ * under ADR-0048's additive rule) — the wire shape of
+ * `GET /api/themes/current/block-variants`.
+ *
+ * Keyed by core block type, so a theme extending Button and Hero is two
+ * entries rather than a list the editor has to group itself.
+ *
+ * The label is one string per locale rather than an i18n key: a theme
+ * cannot add keys to the editor's own bundles at build time, so its
+ * strings travel with the data and are registered into i18next on
+ * arrival — the same route `ThemeBlockEntry.locales` already takes for a
+ * theme's own block types.
+ */
+export const themeBlockVariantSchema = z.object({
+  value: blockVariantNameSchema,
+  label: z.object({ en: z.string().min(1), it: z.string().min(1) }),
+});
+export type ThemeBlockVariant = z.infer<typeof themeBlockVariantSchema>;
+
+export const themeBlockVariantsResponseSchema = z.record(
+  blockTypeNameSchema,
+  z.array(themeBlockVariantSchema),
+);
+export type ThemeBlockVariantsResponse = z.infer<
+  typeof themeBlockVariantsResponseSchema
+>;
