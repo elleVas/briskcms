@@ -189,6 +189,11 @@ const schemaOrgJson = JSON.stringify(schemaOrgGraph).replace(/</g, '\\u003c');
 //      back on if the theme's own ceiling already said no.
 // When either is false, no Tier 1 CSS is emitted at all, full stop.
 //
+// The two are kept apart below, because they mean different things and
+// they had been fused into one `&&` used for everything. The switch is
+// the SITE saying "show me the theme's own colours again"; the ceiling is
+// the THEME saying "nobody dresses me". Only the first is Tier 1's.
+//
 // Every declaration below is !important, found necessary by testing this
 // live rather than assumed: Astro's dev server injects `import '*.css'`
 // side-effect styles (global.css) as their own <style data-vite-dev-id>
@@ -210,10 +215,32 @@ const schemaOrgJson = JSON.stringify(schemaOrgGraph).replace(/</g, '\\u003c');
 // overrides, rather than checking both gates at each usage site further
 // down — one check here is much harder to accidentally miss than four
 // scattered conditionals in the markup.
-const allowStyleOverrides =
-	(themeManifest.allowStyleOverrides ?? true) &&
-	site.themeSettings.overridesEnabled;
-const theme = allowStyleOverrides
+/**
+ * The theme author's ceiling. Everything a site puts on top of the theme
+ * answers to it — Tier 1 tokens, per-type block styles, per-instance
+ * ones — because "no site can ever override it" is what it says it
+ * means, and a rule honoured by two tiers out of three is not a ceiling.
+ */
+const themeAllowsOverrides = themeManifest.allowStyleOverrides ?? true;
+/**
+ * The site's own switch, and it covers TIER 1 ONLY.
+ *
+ * It used to gate the per-type block styles too, from the commit that
+ * added the global styles editor: both come out of a "styles" dialog, so
+ * one gate looked right. The control says otherwise, and always has. It
+ * lives in the Style settings page, it greys out exactly the five fields
+ * beside it — primary colour, secondary colour, font, custom CSS,
+ * favicon — and its own description reads "every field BELOW is ignored".
+ * Block styles are not below it; they are not even in that page.
+ *
+ * The result was upside down: on a site with the switch off, an agency
+ * could restyle ONE block on ONE page (that tier was never gated) but not
+ * every block of a type. The smaller power allowed, the larger one
+ * refused, with nothing saying so.
+ */
+const allowThemeTokenOverrides =
+	themeAllowsOverrides && site.themeSettings.overridesEnabled;
+const theme = allowThemeTokenOverrides
 	? site.themeSettings
 	: {
 			primaryColor: null,
@@ -224,7 +251,7 @@ const theme = allowStyleOverrides
 			overridesEnabled: false,
 		};
 // headScript/bodyScript (ADR-0031) are deliberately NOT part of the
-// allowStyleOverrides collapse above — a tracker (GTM/GA4/Meta Pixel, ...)
+// `allowThemeTokenOverrides` collapse above — a tracker (GTM/GA4/Meta Pixel, ...)
 // shouldn't stop running just because someone toggled off color/font
 // overrides in the Style dialog; those are two independent switches.
 const { headScript, bodyScript } = site.themeSettings;
@@ -241,9 +268,10 @@ const bodyTrackerScripts = partitionTrackerScripts(
 	'body',
 );
 const themeFont = resolveThemeFont(theme.fontFamily);
-// The Global Styles Editor (phase 2a) — the same gate as above: no
-// customized token is emitted when overrides are disabled.
-const tokens = allowStyleOverrides ? site.themeTokens : DEFAULT_THEME_TOKENS;
+// The per-type block styles (docs/adr/0022, per variant since ADR-0047).
+// The theme's ceiling, not the site's Tier 1 switch — see the two
+// constants above for why they are no longer the same thing.
+const tokens = themeAllowsOverrides ? site.themeTokens : DEFAULT_THEME_TOKENS;
 const themeOverrideDeclarations = [
 	theme.primaryColor && `--primary: ${theme.primaryColor} !important;`,
 	theme.secondaryColor && `--secondary: ${theme.secondaryColor} !important;`,
@@ -252,15 +280,20 @@ const themeOverrideDeclarations = [
 	.filter(Boolean)
 	.join(' ');
 // The active theme's own :root tokens (Tier 2) — see the comment above
-// `allowStyleOverrides` for why this needs !important now instead of
+// `allowThemeTokenOverrides` for why this needs !important now instead of
 // relying on source order like a static CSS import could.
 const themeBaseTokenDeclarations = [...themeBaseTokens.entries()]
 	.map(([name, value]) => `${name}: ${value} !important;`)
 	.join(' ');
-// The "component-level" override (docs/adr/0022) — one CSS rule per styled
-// block type, not a single `:root` as above: each type has its own scoping
-// through `[data-brisk-block-type]`, so only blocks of that type see the
-// new value.
+// The "component-level" override (docs/adr/0022) — one rule per styled
+// (block type, variant), not a single `:root` as above: each is scoped by
+// the block's own `.brisk-*` class, so only blocks of that type — and,
+// since ADR-0047, only those wearing that variant — see the new value.
+//
+// NOT `[data-brisk-block-type]`, which an earlier version of this comment
+// claimed: that attribute is on the editor-only wrapper, present when
+// `editable` is true, so a rule scoped there would never reach a real
+// visitor.
 const blockStyleOverridesCss = buildBlockStyleOverridesCss(
 	tokens.blockStyles,
 );
@@ -268,17 +301,19 @@ const blockStyleOverridesCss = buildBlockStyleOverridesCss(
 // line someone can read rather than a property of where the rules happen
 // to appear in the document (ADR-0047).
 //
-// Neither is gated on `allowStyleOverrides`. That switch is Tier 1
-// (docs/adr/0021): whether a SITE may repaint the THEME — its `:root`
-// tokens, fonts, custom CSS. These two are docs/adr/0022: an editor
-// styling one block, or one block type. Gating only the per-instance tier
-// on it — as this did briefly — meant that on a site with the switch off,
-// styling a block in the canvas silently did nothing once published,
-// while styling every block of that type site-wide still worked. Before
-// the per-instance tier became a rule it was an inline style and passed
-// no such gate; keeping the gate would have been a behaviour change
-// nobody asked for, and an invisible one.
-const styleTiers = [blockStyleOverridesCss, instanceStyleCss].filter(Boolean);
+// Neither is gated on the site's Tier 1 switch (docs/adr/0021), which is
+// about whether a SITE may repaint the THEME: its `:root` tokens, fonts,
+// custom CSS. These two are docs/adr/0022 — an editor styling one block,
+// or one block type — and the control that switch belongs to says as much.
+//
+// Both DO answer to the theme's own ceiling, which is a different claim:
+// a theme that declares `allowStyleOverrides: false` is refusing to be
+// dressed at all, and honouring that on two tiers out of three would make
+// it not a ceiling. No bundled theme sets it today, so this changes
+// nothing now; it makes the rule true for the first theme that does.
+const styleTiers = themeAllowsOverrides
+	? [blockStyleOverridesCss, instanceStyleCss].filter(Boolean)
+	: [];
 // The declaration comes first so the order is a line someone can read
 // rather than a property of where the rules happen to land in the
 // document (ADR-0047) — and only when there is something to order, so a

@@ -273,3 +273,62 @@ own 2026-09-02 amendment for why this doesn't reopen the multi-tenancy
 question this ADR's Tier 2 reasoning was never about. Uploading a
 genuinely new, uninstalled theme still requires a rebuild — only
 switching among an already-bundled set is instant.
+
+## Amendment — 2026-09-07: the two gates stop being one
+
+Tier 1 is guarded by two switches, and they had been fused into a single
+`&&` used for everything the site puts on top of the theme:
+
+```ts
+const allowStyleOverrides =
+  (themeManifest.allowStyleOverrides ?? true) &&
+  site.themeSettings.overridesEnabled;
+```
+
+They mean different things and are now separate.
+
+**`themeManifest.allowStyleOverrides`** is the THEME author's ceiling:
+"no site may dress me". It covers everything a site adds on top — Tier 1
+tokens, per-type block styles, per-instance block styles. A rule honoured
+by two tiers out of three is not a ceiling.
+
+**`site.themeSettings.overridesEnabled`** is the SITE's own day-to-day
+switch, and it covers **Tier 1 only**.
+
+### Why the narrower scope is the correction, not a change of mind
+
+The control has said so from the beginning. It lives in the Style
+settings page; it greys out (`inert`) exactly the five fields beside it —
+primary colour, secondary colour, font, custom CSS, favicon — and its own
+description reads _"every field below is ignored"_. Block styles are not
+below it. They are not in that page at all: per-type styles are edited in
+the Global Styles dialog and on the block's own toolbar, per-instance
+ones in a popover on the selected block.
+
+The renderer went further than the control promised. The line dates from
+the commit that introduced the global styles editor (21 August 2026), and
+the reasoning is visible in the comment it carried: _"The Global Styles
+Editor — the same gate as above"_. Both did come out of a dialog called
+"styles", so one gate looked right at the time.
+
+What it produced was upside down. On a site with the switch off, an
+agency could restyle **one** block on **one** page — that tier was never
+gated, because it was an inline `style` attribute then and this gate
+decides what CSS the layout emits — but could not restyle **every** block
+of a type. The smaller power allowed, the larger one refused, and nothing
+anywhere said why.
+
+### Consequences
+
+- A site with `overridesEnabled` off now shows its per-type and
+  per-variant block styles again. Nothing else about it changes: its
+  Tier 1 tokens stay suppressed, which is what the switch is for.
+- A theme with `allowStyleOverrides: false` now suppresses per-instance
+  styles too, which it did not before. No bundled theme sets it, so this
+  changes nothing today; it makes the ceiling true for the first theme
+  that uses it.
+- **Known gap, deliberately not closed here**: the editor does not hide
+  its style controls when a theme sets that ceiling. On such a site the
+  block toolbar would offer styling that never reaches the page — the
+  silent no-op this codebase keeps guarding against. Inert until a theme
+  actually sets it; worth closing before one ships.

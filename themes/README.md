@@ -104,6 +104,23 @@ composition" section for the full reasoning, including why this can't be
 a database-level toggle instead (a client-editable switch can't protect
 the _agency's_ design intent from the client themselves).
 
+It is a ceiling over **everything** a site puts on top of the theme, not
+only the Style panel: Tier 1 tokens, the per-type block styles from the
+Global Styles dialog, and the per-instance ones from a block's own
+toolbar. Setting it `false` means none of the three reaches the page.
+
+Do not confuse it with the site's own `overridesEnabled` switch in that
+Style panel, which is a different and much narrower thing: it covers
+Tier 1 only, so a client who turns it off goes back to your colours and
+fonts while the styling they set on individual blocks stays. The two were
+one condition until 2026-09-07 — see the amendment on ADR-0021 for why
+that was wrong.
+
+**A gap to know about if you set this `false`**: the editor does not yet
+hide its block styling controls for such a theme, so they would offer
+styling that never reaches the published page. Nothing in core sets it
+today; tell us if you do.
+
 **`stickyFooter`** — `true` pins the footer to the bottom of the viewport
 on pages too short to fill it. It is a manifest flag rather than something
 you write in your own CSS because it targets `<body>`, which core owns: a

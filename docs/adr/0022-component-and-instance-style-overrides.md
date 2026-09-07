@@ -308,3 +308,15 @@ blockStyles: {...} }` nested exactly as before — assembled by the
   (`jsonb_each` expanding the old blob into rows) sequenced between the
   `CREATE TABLE` and the `DROP COLUMN` migrations — verified against the
   live dev DB, not just assumed safe.
+
+## Follow-up (2026-09-07): which switch these two tiers answer to
+
+Neither tier answers to `site.themeSettings.overridesEnabled`. That is
+Tier 1's switch — whether the SITE may repaint the THEME's `:root` tokens,
+font and custom CSS — and the control it belongs to says as much (see the
+amendment on ADR-0021 for the full account, and for why the per-type tier
+used to be caught by it).
+
+Both DO answer to the theme's own ceiling, `allowStyleOverrides` in
+`theme.json`: a theme declaring it refuses to be dressed at all, and that
+has to hold for every tier or it is not a ceiling.
