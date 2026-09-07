@@ -18,7 +18,10 @@ import {
 } from '../lib/consent-script-blocking';
 import { injectScriptNonce } from '../lib/content-security-policy';
 import { editorAppUrl } from '../lib/editor-app-url';
-import { localeDirection, localePath } from '@brisk/theme-runtime';
+import {
+	localeDirection,
+	localePathFromAncestors,
+} from '@brisk/theme-runtime';
 import { buildSchemaOrgGraph } from '../lib/schema-org';
 import { resolveThemeFont } from '../lib/theme-font';
 import { Translator } from '@brisk/theme-runtime';
@@ -130,10 +133,31 @@ const defaultTranslation = translations.find(
 );
 
 // seoMeta.canonical is the source of truth when set (docs/adr/0014's SEO
-// panel lets an editor override it) — Astro.url.href is the fallback, not
-// the default, so a site behind a different public hostname than the
-// request's own Host header doesn't get a wrong canonical baked in.
-const pageUrl = seoMeta.canonical || Astro.url.href;
+// panel lets an editor override it).
+//
+// Otherwise the page's own address, BUILT rather than taken from
+// `Astro.url.href`: that carries whatever the visitor arrived with —
+// `?utm_source=…`, a stray `?page=2` — and a canonical that varies with
+// the query string is not a canonical at all, it just tells a search
+// engine every tagged link is its own page. Building it from the
+// translation also means it is the reachable, nested address and not the
+// bare slug.
+//
+// `Astro.url.href` stays as the last resort for the case that should not
+// happen (a rendered page with no translation in its own locale), because
+// a wrong canonical is still better than none at all.
+const currentTranslation = translations.find(
+	(translation) => translation.locale === locale,
+);
+const canonicalUrl =
+	seoMeta.canonical ||
+	(currentTranslation
+		? `${Astro.url.origin}${localePathFromAncestors(currentTranslation.locale, currentTranslation.ancestorSlugs, currentTranslation.slug)}`
+		: Astro.url.href);
+// og:url and the canonical must agree — two different "this page's
+// address" in the same document is a contradiction crawlers resolve
+// unpredictably.
+const pageUrl = canonicalUrl;
 const ogImage = seoMeta.ogTags?.['image'];
 const schemaOrgGraph = buildSchemaOrgGraph({ site, seoMeta, pageUrl });
 // JSON.stringify doesn't escape "<" — a "</script>" inside any string value
@@ -280,7 +304,7 @@ const blockStyleOverridesCss = buildBlockStyleOverridesCss(
 		<meta name="generator" content={Astro.generator} />
 		<title>{seoMeta.title}</title>
 		<meta name="description" content={seoMeta.description} />
-		{seoMeta.canonical && <link rel="canonical" href={seoMeta.canonical} />}
+		<link rel="canonical" href={canonicalUrl} />
 		{
 			!site.searchEngineIndexingEnabled && (
 				<meta name="robots" content="noindex, nofollow" />
@@ -291,7 +315,7 @@ const blockStyleOverridesCss = buildBlockStyleOverridesCss(
 				<link
 					rel="alternate"
 					hreflang={translation.locale}
-					href={`${Astro.url.origin}${localePath(translation.locale, translation.slug)}`}
+					href={`${Astro.url.origin}${localePathFromAncestors(translation.locale, translation.ancestorSlugs, translation.slug)}`}
 				/>
 			))
 		}
@@ -300,7 +324,7 @@ const blockStyleOverridesCss = buildBlockStyleOverridesCss(
 				<link
 					rel="alternate"
 					hreflang="x-default"
-					href={`${Astro.url.origin}${localePath(defaultTranslation.locale, defaultTranslation.slug)}`}
+					href={`${Astro.url.origin}${localePathFromAncestors(defaultTranslation.locale, defaultTranslation.ancestorSlugs, defaultTranslation.slug)}`}
 				/>
 			)
 		}

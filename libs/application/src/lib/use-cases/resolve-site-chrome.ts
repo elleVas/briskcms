@@ -1,6 +1,7 @@
 import type { Block, PublishedSite } from '@brisk/shared-types';
 import type { Site, SiteLayoutSection } from '@brisk/domain-core';
 import type {
+  PageGroupRepositoryPort,
   PageTranslationRepositoryPort,
   SiteLayoutSectionRepositoryPort,
   SiteThemeBlockStylesPort,
@@ -20,6 +21,9 @@ export interface ResolveSiteChromeDeps {
   siteLayoutSectionRepository: SiteLayoutSectionRepositoryPort;
   siteThemeBlockStylesRepository: SiteThemeBlockStylesPort;
   pageTranslationRepository: PageTranslationRepositoryPort;
+  // Needed to turn a header/footer link into a reachable address: a page
+  // reference resolves to the whole ancestor chain, not just its slug.
+  pageGroupRepository: PageGroupRepositoryPort;
 }
 
 /**

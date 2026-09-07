@@ -141,7 +141,7 @@ describe('getPublishedPageBySlug', () => {
       ],
       seoMeta: { title: 'Chi siamo', description: '' },
       locale: 'it',
-      translations: [{ locale: 'it', slug: 'chi-siamo' }],
+      translations: [{ locale: 'it', slug: 'chi-siamo', ancestorSlugs: [] }],
       ancestors: [],
       header: null,
       footer: null,
@@ -311,8 +311,8 @@ describe('getPublishedPageBySlug', () => {
     expect(
       result?.translations.sort((a, b) => a.locale.localeCompare(b.locale)),
     ).toEqual([
-      { locale: 'en', slug: 'about-us' },
-      { locale: 'it', slug: 'chi-siamo' },
+      { locale: 'en', slug: 'about-us', ancestorSlugs: [] },
+      { locale: 'it', slug: 'chi-siamo', ancestorSlugs: [] },
     ]);
   });
 
@@ -341,7 +341,9 @@ describe('getPublishedPageBySlug', () => {
       segments: ['chi-siamo'],
     });
 
-    expect(result?.translations).toEqual([{ locale: 'it', slug: 'chi-siamo' }]);
+    expect(result?.translations).toEqual([
+      { locale: 'it', slug: 'chi-siamo', ancestorSlugs: [] },
+    ]);
   });
 
   it("includes the site's business info when set, for schema.org LocalBusiness", async () => {
@@ -698,5 +700,104 @@ describe('getPublishedPageBySlug', () => {
 
     expect(result?.header).toBeNull();
     expect(result?.footer).toBeNull();
+  });
+
+  // A slug is not an address once slugs are sibling-scoped (ADR-0029).
+  // Every consumer given only `{ locale, slug }` built `/it/first-run`
+  // for a page that lives at `/it/docs/getting-started/first-run`, and
+  // linked to a 404 — the language switcher and the hreflang alternates
+  // both did, on every nested page.
+  describe('the address of each language, not just its slug', () => {
+    async function seedNestedPage(deps: ReturnType<typeof setup>) {
+      const { group: docs } = await createGroupAndPublish(deps, {
+        locale: 'it',
+        slug: 'documentazione',
+        title: 'Documentazione',
+      });
+      await publishTranslationInGroup(deps, docs, {
+        locale: 'en',
+        slug: 'docs',
+        title: 'Docs',
+      });
+      const { group: leaf } = await createGroupAndPublish(deps, {
+        locale: 'it',
+        slug: 'primo-avvio',
+        title: 'Primo avvio',
+        parentGroupId: docs.id,
+      });
+      return { docs, leaf };
+    }
+
+    // The ancestor's slug differs per language, which is why the chain
+    // cannot be borrowed from the language being rendered: reusing it
+    // would produce `/en/documentazione/first-run`, which 404s.
+    it('resolves each language ancestor chain in that language', async () => {
+      const deps = setup();
+      await seedSite(deps.siteRepository);
+      const { leaf } = await seedNestedPage(deps);
+      await publishTranslationInGroup(deps, leaf, {
+        locale: 'en',
+        slug: 'first-run',
+        title: 'First run',
+      });
+
+      const result = await getPublishedPageBySlug(deps, {
+        tenantId,
+        domain: 'example.com',
+        locale: 'it',
+        segments: ['documentazione', 'primo-avvio'],
+      });
+
+      expect(
+        result?.translations.sort((a, b) => a.locale.localeCompare(b.locale)),
+      ).toEqual([
+        { locale: 'en', slug: 'first-run', ancestorSlugs: ['docs'] },
+        {
+          locale: 'it',
+          slug: 'primo-avvio',
+          ancestorSlugs: ['documentazione'],
+        },
+      ]);
+    });
+
+    // The page is published in English but its parent is not translated
+    // there, so no English URL resolves to it: the top-down walk stops at
+    // the missing segment. Listing it would hand the switcher — and
+    // search engines — a link to a 404.
+    it('omits a language whose ancestor chain is incomplete', async () => {
+      const deps = setup();
+      await seedSite(deps.siteRepository);
+      const { group: docs } = await createGroupAndPublish(deps, {
+        locale: 'it',
+        slug: 'documentazione',
+        title: 'Documentazione',
+      });
+      const { group: leaf } = await createGroupAndPublish(deps, {
+        locale: 'it',
+        slug: 'primo-avvio',
+        title: 'Primo avvio',
+        parentGroupId: docs.id,
+      });
+      await publishTranslationInGroup(deps, leaf, {
+        locale: 'en',
+        slug: 'first-run',
+        title: 'First run',
+      });
+
+      const result = await getPublishedPageBySlug(deps, {
+        tenantId,
+        domain: 'example.com',
+        locale: 'it',
+        segments: ['documentazione', 'primo-avvio'],
+      });
+
+      expect(result?.translations).toEqual([
+        {
+          locale: 'it',
+          slug: 'primo-avvio',
+          ancestorSlugs: ['documentazione'],
+        },
+      ]);
+    });
   });
 });

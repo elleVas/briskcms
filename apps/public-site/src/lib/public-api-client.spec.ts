@@ -19,7 +19,7 @@ const samplePage: PublishedPage = {
   content: [{ type: 'Hero', props: { title: 'Ciao', subtitle: 'Sub' } }],
   seoMeta: { title: 'Chi siamo', description: 'La nostra storia' },
   locale: 'it',
-  translations: [{ locale: 'it', slug: 'chi-siamo' }],
+  translations: [{ locale: 'it', slug: 'chi-siamo', ancestorSlugs: [] }],
   ancestors: [],
   site: {
     name: 'Sito di prova',

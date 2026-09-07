@@ -1,12 +1,12 @@
 ---
 import type { LinkProps } from '@brisk/shared-types';
-import { localePath } from '@brisk/theme-runtime';
+import { localePathFromAncestors } from '@brisk/theme-runtime';
 
 type Props = LinkProps;
 
 const { label, linkType, page, url } = Astro.props;
 const href =
-	linkType === 'page' && page?.locale && page?.slug ? localePath(page.locale, page.slug) : url;
+	linkType === 'page' && page?.locale && page?.slug ? localePathFromAncestors(page.locale, page.ancestorSlugs ?? [], page.slug) : url;
 ---
 
 <a href={href} data-brisk-field="label">{label}</a>

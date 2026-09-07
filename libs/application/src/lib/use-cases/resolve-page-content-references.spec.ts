@@ -30,10 +30,12 @@ describe('resolvePageContentReferences', () => {
     deps: ReturnType<typeof setup>,
     locale: string,
     slug: string,
+    parentId: string | null = null,
   ) {
     const group = await createPageGroup(deps, {
       tenantId,
       siteId: 'site-1',
+      parentId,
       createdBy: 'user-1',
     });
     const translation = await createPageGroupTranslation(deps, {
@@ -80,6 +82,7 @@ describe('resolvePageContentReferences', () => {
       title: 'Documentazione',
       locale: 'it',
       slug: 'documentazione',
+      ancestorSlugs: [],
     });
   });
 
@@ -166,5 +169,91 @@ describe('resolvePageContentReferences', () => {
     );
 
     expect(resolved).toEqual(content);
+  });
+
+  // A slug alone is not an address: slugs are scoped to their siblings
+  // (ADR-0029), so a Link/NavLink/Button pointing at a nested page
+  // rendered `/it/primo-avvio` and sent the visitor to a 404.
+  describe('links to a nested page', () => {
+    function navLinkTo(pageGroupId: string): PageContent {
+      return [
+        {
+          id: 'nav-1',
+          type: 'NavLink',
+          props: {
+            label: 'Vai',
+            linkType: 'page',
+            page: { pageGroupId, title: 'Vai' },
+            url: '',
+          },
+        },
+      ];
+    }
+
+    it('resolves the whole ancestor chain, in the locale being rendered', async () => {
+      const deps = setup();
+      const { group: parent } = await createGroupWithTranslation(
+        deps,
+        'it',
+        'documentazione',
+      );
+      const { group: child } = await createGroupWithTranslation(
+        deps,
+        'it',
+        'primo-avvio',
+        parent.id,
+      );
+
+      const [resolved] = await resolvePageContentReferences(
+        deps,
+        tenantId,
+        'it',
+        [navLinkTo(child.id)],
+      );
+
+      expect(resolved[0].props['page']).toEqual({
+        pageGroupId: child.id,
+        title: 'Vai',
+        locale: 'it',
+        slug: 'primo-avvio',
+        ancestorSlugs: ['documentazione'],
+      });
+    });
+
+    // The target exists in this locale but its parent does not, so no URL
+    // reaches it here — the top-down walk would stop at the missing
+    // segment. `null` is what every block already renders as "no link",
+    // which is right: better no link than one that 404s.
+    it('resolves to null when an ancestor is missing in this locale', async () => {
+      const deps = setup();
+      const { group: parent } = await createGroupWithTranslation(
+        deps,
+        'it',
+        'documentazione',
+      );
+      const { group: child } = await createGroupWithTranslation(
+        deps,
+        'it',
+        'primo-avvio',
+        parent.id,
+      );
+      await createPageGroupTranslation(deps, {
+        tenantId,
+        pageGroupId: child.id,
+        locale: 'en',
+        slug: 'first-run',
+        seoMeta: { title: 'First run', description: '' },
+        createdBy: 'user-1',
+      });
+
+      const [resolved] = await resolvePageContentReferences(
+        deps,
+        tenantId,
+        'en',
+        [navLinkTo(child.id)],
+      );
+
+      expect(resolved[0].props['page']).toBeNull();
+    });
   });
 });

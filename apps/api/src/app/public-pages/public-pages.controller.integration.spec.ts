@@ -135,7 +135,7 @@ describe('PublicPagesController (integration)', () => {
       content: [{ type: 'Hero', props: { title: 'Ciao' } }],
       seoMeta: { title: 'Chi siamo', description: '' },
       locale: 'it',
-      translations: [{ locale: 'it', slug: 'chi-siamo' }],
+      translations: [{ locale: 'it', slug: 'chi-siamo', ancestorSlugs: [] }],
       ancestors: [],
       header: null,
       footer: null,

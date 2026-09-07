@@ -28,6 +28,35 @@ export interface PageAncestor {
  * resolved, a missing breadcrumb label for one ancestor isn't worth
  * hiding the rest of the trail.
  */
+/**
+ * The ancestor groups of a page, root first, not including the page
+ * itself. Extracted so the two things that need this walk share it: the
+ * breadcrumb below, which wants a readable label per ancestor, and
+ * `resolveTranslationPaths`, which wants each ancestor's slug in every
+ * language. The hierarchy is shared across locales (`PageGroup.parentId`),
+ * so the walk itself is the same for both; only what is read off each
+ * ancestor differs.
+ */
+export async function resolveAncestorGroupIds(
+  pageGroupRepository: PageGroupRepositoryPort,
+  tenantId: string,
+  parentGroupId: string | null,
+): Promise<string[]> {
+  const ids: string[] = [];
+  let currentGroupId = parentGroupId;
+  for (
+    let hops = 0;
+    currentGroupId !== null && hops < MAX_ANCESTOR_WALK;
+    hops += 1
+  ) {
+    const group = await pageGroupRepository.findById(tenantId, currentGroupId);
+    if (!group) break;
+    ids.unshift(group.id);
+    currentGroupId = group.parentId;
+  }
+  return ids;
+}
+
 export async function resolvePageGroupAncestors(
   deps: {
     pageGroupRepository: PageGroupRepositoryPort;

@@ -3,6 +3,7 @@ import { DEFAULT_COOKIE_BANNER_SETTINGS } from '@brisk/shared-types';
 import { Site, SiteLayoutSection } from '@brisk/domain-core';
 import { resolveSiteChrome } from './resolve-site-chrome';
 import {
+  InMemoryPageGroupRepository,
   InMemoryPageTranslationRepository,
   InMemorySiteLayoutSectionRepository,
   InMemorySiteThemeBlockStylesRepository,
@@ -87,6 +88,7 @@ describe('resolveSiteChrome', () => {
         siteThemeBlockStylesRepository:
           new InMemorySiteThemeBlockStylesRepository(),
         pageTranslationRepository: new InMemoryPageTranslationRepository(),
+        pageGroupRepository: new InMemoryPageGroupRepository(),
       },
       tenantId,
       site,
@@ -122,6 +124,7 @@ describe('resolveSiteChrome', () => {
         siteThemeBlockStylesRepository:
           new InMemorySiteThemeBlockStylesRepository(),
         pageTranslationRepository: new InMemoryPageTranslationRepository(),
+        pageGroupRepository: new InMemoryPageGroupRepository(),
       },
       tenantId,
       site,
@@ -149,6 +152,7 @@ describe('resolveSiteChrome', () => {
         siteThemeBlockStylesRepository:
           new InMemorySiteThemeBlockStylesRepository(),
         pageTranslationRepository: new InMemoryPageTranslationRepository(),
+        pageGroupRepository: new InMemoryPageGroupRepository(),
       },
       tenantId,
       site,
@@ -189,6 +193,7 @@ describe('resolveSiteChrome', () => {
         siteThemeBlockStylesRepository:
           new InMemorySiteThemeBlockStylesRepository(),
         pageTranslationRepository: new InMemoryPageTranslationRepository(),
+        pageGroupRepository: new InMemoryPageGroupRepository(),
       },
       tenantId,
       site,
@@ -220,6 +225,7 @@ describe('resolveSiteChrome', () => {
         siteThemeBlockStylesRepository:
           new InMemorySiteThemeBlockStylesRepository(),
         pageTranslationRepository: new InMemoryPageTranslationRepository(),
+        pageGroupRepository: new InMemoryPageGroupRepository(),
       },
       tenantId,
       site,

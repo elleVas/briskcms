@@ -68,6 +68,8 @@ const errorPageTranslations =
   chrome?.site.enabledLocales.map((enabledLocale) => ({
     locale: enabledLocale,
     slug: 'home',
+    // "home" is a root-level page, so there is no chain to walk.
+    ancestorSlugs: [],
   })) ?? [];
 ---
 

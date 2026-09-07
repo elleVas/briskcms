@@ -1,6 +1,6 @@
 ---
 import type { NavLinkProps } from '@brisk/shared-types';
-import { localePath } from '@brisk/theme-runtime';
+import { localePathFromAncestors } from '@brisk/theme-runtime';
 
 type Props = NavLinkProps & {
   /** Already resolved by BlockRenderer — see its comment on `iconName`. */
@@ -10,7 +10,7 @@ type Props = NavLinkProps & {
 
 const { label, linkType, page, url, position, visibility, iconSvg } =
   Astro.props;
-const href = linkType === 'page' && page?.locale && page?.slug ? localePath(page.locale, page.slug) : url;
+const href = linkType === 'page' && page?.locale && page?.slug ? localePathFromAncestors(page.locale, page.ancestorSlugs ?? [], page.slug) : url;
 ---
 
 <a

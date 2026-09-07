@@ -170,6 +170,7 @@ export class PublicPagesController {
         siteLayoutSectionRepository: this.siteLayoutSectionRepository,
         siteThemeBlockStylesRepository: this.siteThemeBlockStylesRepository,
         pageTranslationRepository: this.pageTranslationRepository,
+        pageGroupRepository: this.pageGroupRepository,
       },
       {
         tenantId: await this.tenant.require(),
