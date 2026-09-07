@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import type { FieldValueOverlay, PageContent } from '@brisk/shared-types';
+import { normalizeRichText } from '@brisk/rich-text';
 import type { LegalDocumentOutline } from './legal-document-section';
 
 interface SectionBlockIds {
@@ -42,7 +43,11 @@ export function buildLegalPageContent(
     {
       id: calloutId,
       type: 'Callout',
-      props: { message: draftNoticeText, tone: 'warning' },
+      // `Callout.message` and `Text.body` are rich text (ADR-0046), so
+      // what goes in has to be HTML. Generated prose is plain, and a
+      // clause containing "Rossi & Figli" or "a < b" would lose the rest
+      // of its sentence when read back through `set:html`.
+      props: { message: normalizeRichText(draftNoticeText), tone: 'warning' },
     },
   ];
   const sectionIds: SectionBlockIds[] = [];
@@ -62,7 +67,7 @@ export function buildLegalPageContent(
       content.push({
         id: paragraphId,
         type: 'Text',
-        props: { body: paragraph },
+        props: { body: normalizeRichText(paragraph) },
       });
     }
     sectionIds.push({ headingId, paragraphIds });
@@ -76,7 +81,7 @@ export function buildLegalPageContent(
       return null;
     }
     const overlay: FieldValueOverlay = {
-      [calloutId]: { message: otherDraftNoticeText },
+      [calloutId]: { message: normalizeRichText(otherDraftNoticeText) },
     };
     for (let i = 0; i < otherOutline.sections.length; i++) {
       const otherSection = otherOutline.sections[i];
@@ -86,7 +91,7 @@ export function buildLegalPageContent(
       }
       overlay[ids.headingId] = { text: otherSection.heading };
       otherSection.paragraphs.forEach((paragraph, j) => {
-        overlay[ids.paragraphIds[j]] = { body: paragraph };
+        overlay[ids.paragraphIds[j]] = { body: normalizeRichText(paragraph) };
       });
     }
     return overlay;

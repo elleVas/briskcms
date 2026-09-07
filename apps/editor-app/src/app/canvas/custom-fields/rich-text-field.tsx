@@ -3,7 +3,7 @@ import { EditorContent, useEditor, type Editor } from '@tiptap/react';
 import { buildPageLinkHref } from '@brisk/shared-types';
 import { useTranslation } from 'react-i18next';
 import { usePageList } from '../../page-list-context';
-import { RICH_TEXT_EXTENSIONS } from './rich-text-extensions';
+import { RICH_TEXT_EXTENSIONS } from '@brisk/rich-text-editor';
 
 export interface RichTextFieldProps {
   value: string;

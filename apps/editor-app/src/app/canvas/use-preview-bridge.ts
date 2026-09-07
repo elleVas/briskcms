@@ -66,7 +66,7 @@ export interface PreviewBridgeState {
   /** Reorders the existing siblings (all already rendered) — see EditorReorderBlocksMessage. */
   reorderBlocks: (parentId: string | null, orderedIds: string[]) => void;
   /** Monta TipTap sul posto nell'iframe (Giorno 4) — vedi editor:enter-text-edit. */
-  enterTextEdit: (blockId: string, field: string) => void;
+  enterTextEdit: (blockId: string, field: string, richText: boolean) => void;
   /** Smonta l'istanza TipTap corrente nell'iframe, se c'è. */
   exitTextEdit: () => void;
   /** Selects a block directly from this side (the Layers panel), without going through a real `preview:click` on the canvas — see the comment on `selectedBlockId` above. */
@@ -303,13 +303,13 @@ export function usePreviewBridge(
   );
 
   const enterTextEdit = useCallback(
-    (blockId: string, field: string) => {
+    (blockId: string, field: string, richText: boolean) => {
       iframeRef.current?.contentWindow?.postMessage(
         {
           source: PREVIEW_BRIDGE_SOURCE,
           v: PREVIEW_BRIDGE_VERSION,
           type: 'editor:enter-text-edit',
-          payload: { blockId, field },
+          payload: { blockId, field, richText },
         },
         '*',
       );

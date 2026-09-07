@@ -34,6 +34,7 @@
     "@brisk/block-sdk": "workspace:*",
     "@brisk/env-config": "workspace:*",
     "@brisk/rich-text": "workspace:*",
+    "@brisk/rich-text-editor": "workspace:*",
     "@brisk/shared-types": "workspace:*",
     "@brisk/theme-runtime": "workspace:*",
     "@tiptap/core": "^3.30.2",
