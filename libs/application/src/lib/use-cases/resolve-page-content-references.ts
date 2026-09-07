@@ -4,9 +4,14 @@ import {
   type PageContent,
   type PageGroupSlugMap,
 } from '@brisk/shared-types';
-import type { PageTranslationRepositoryPort } from '@brisk/ports';
+import type {
+  PageGroupRepositoryPort,
+  PageTranslationRepositoryPort,
+} from '@brisk/ports';
+import { resolveAncestorGroupIds } from './resolve-page-group-ancestors';
 
 export interface ResolvePageContentReferencesDeps {
+  pageGroupRepository: PageGroupRepositoryPort;
   pageTranslationRepository: PageTranslationRepositoryPort;
 }
 
@@ -37,21 +42,55 @@ export async function resolvePageContentReferences(
     return contents;
   }
 
+  // Memoised across the whole pass: a navigation menu of eight links into
+  // the same section asks for that section's translation eight times
+  // otherwise, once per link, on every request.
+  const translationCache = new Map<string, Promise<{ slug: string } | null>>();
+  function translationOf(groupId: string): Promise<{ slug: string } | null> {
+    let pending = translationCache.get(groupId);
+    if (!pending) {
+      pending = deps.pageTranslationRepository
+        .findByGroupAndLocale(tenantId, groupId, locale)
+        .then((found) => (found ? { slug: found.slug } : null));
+      translationCache.set(groupId, pending);
+    }
+    return pending;
+  }
+
   const slugByGroupId: PageGroupSlugMap = new Map();
   await Promise.all(
     [...referencedGroupIds].map(async (pageGroupId) => {
-      const translation =
-        await deps.pageTranslationRepository.findByGroupAndLocale(
-          tenantId,
-          pageGroupId,
-          locale,
-        );
-      if (translation) {
-        slugByGroupId.set(pageGroupId, {
-          locale: translation.locale,
-          slug: translation.slug,
-        });
+      const translation = await translationOf(pageGroupId);
+      if (!translation) {
+        return;
       }
+      const group = await deps.pageGroupRepository.findById(
+        tenantId,
+        pageGroupId,
+      );
+      const ancestorGroupIds = await resolveAncestorGroupIds(
+        deps.pageGroupRepository,
+        tenantId,
+        group?.parentId ?? null,
+      );
+      const ancestorSlugs: string[] = [];
+      for (const ancestorId of ancestorGroupIds) {
+        const ancestor = await translationOf(ancestorId);
+        // No translation for an ancestor means no URL reaches this page
+        // in this locale at all — the top-down walk would stop at the
+        // missing segment. Leaving it out of the map makes the reference
+        // resolve to `null`, which every block already renders as "no
+        // link", rather than as a link to a 404.
+        if (!ancestor) {
+          return;
+        }
+        ancestorSlugs.push(ancestor.slug);
+      }
+      slugByGroupId.set(pageGroupId, {
+        locale,
+        slug: translation.slug,
+        ancestorSlugs,
+      });
     }),
   );
 

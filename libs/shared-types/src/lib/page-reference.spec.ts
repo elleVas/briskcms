@@ -74,7 +74,12 @@ describe('resolvePageReferences', () => {
 
     const resolved = resolvePageReferences(
       content,
-      new Map([['group-docs', { locale: 'it', slug: 'documentazione' }]]),
+      new Map([
+        [
+          'group-docs',
+          { locale: 'it', slug: 'documentazione', ancestorSlugs: [] },
+        ],
+      ]),
     );
 
     expect(resolved[0].props['page']).toEqual({
@@ -82,6 +87,7 @@ describe('resolvePageReferences', () => {
       title: 'Docs',
       locale: 'it',
       slug: 'documentazione',
+      ancestorSlugs: [],
     });
   });
 
@@ -128,7 +134,9 @@ describe('resolvePageReferences', () => {
 
     const resolved = resolvePageReferences(
       content,
-      new Map([['group-contact', { locale: 'en', slug: 'contact' }]]),
+      new Map([
+        ['group-contact', { locale: 'en', slug: 'contact', ancestorSlugs: [] }],
+      ]),
     );
 
     expect(resolved[0].children?.[0].props['page']).toEqual({
@@ -136,6 +144,7 @@ describe('resolvePageReferences', () => {
       title: 'Contact',
       locale: 'en',
       slug: 'contact',
+      ancestorSlugs: [],
     });
     expect(resolved[0].children?.[1]).toEqual({
       id: 'text-1',
@@ -160,6 +169,7 @@ describe('collectResolvedPageRefs', () => {
             title: 'Docs',
             locale: 'it',
             slug: 'documentazione',
+            ancestorSlugs: [],
           },
           url: '',
         },
@@ -167,7 +177,12 @@ describe('collectResolvedPageRefs', () => {
     ];
 
     expect(collectResolvedPageRefs(content)).toEqual(
-      new Map([['group-docs', { locale: 'it', slug: 'documentazione' }]]),
+      new Map([
+        [
+          'group-docs',
+          { locale: 'it', slug: 'documentazione', ancestorSlugs: [] },
+        ],
+      ]),
     );
   });
 

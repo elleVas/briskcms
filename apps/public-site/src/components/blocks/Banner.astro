@@ -4,14 +4,14 @@ import {
   type BannerProps,
   type BlockStyleOverride,
 } from '@brisk/shared-types';
-import { localePath } from '@brisk/theme-runtime';
+import { localePathFromAncestors } from '@brisk/theme-runtime';
 
 type Props = BannerProps & { styleOverride?: BlockStyleOverride };
 
 const { title, text, buttonLabel, linkType, page, url, styleOverride } =
   Astro.props;
 const href =
-  linkType === 'page' && page?.locale && page?.slug ? localePath(page.locale, page.slug) : url;
+  linkType === 'page' && page?.locale && page?.slug ? localePathFromAncestors(page.locale, page.ancestorSlugs ?? [], page.slug) : url;
 const hasLink = linkType === 'page' ? Boolean(page) : Boolean(url);
 const instanceStyle = buildBlockInstanceStyle(styleOverride);
 ---

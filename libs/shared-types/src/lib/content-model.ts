@@ -248,6 +248,14 @@ export const pickedPageSchema = z.object({
   title: z.string(),
   locale: z.string().optional(),
   slug: z.string().optional(),
+  /**
+   * Filled in at render alongside `locale`/`slug`, never stored by the
+   * picker: the page's ancestors in the locale being rendered, root
+   * first. Without it a link to a nested page renders as `/it/first-run`
+   * — the bare slug — which stopped resolving when slugs became scoped to
+   * their siblings (ADR-0029).
+   */
+  ancestorSlugs: z.array(z.string()).optional(),
 });
 export type PickedPage = z.infer<typeof pickedPageSchema>;
 

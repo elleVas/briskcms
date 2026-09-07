@@ -9,6 +9,7 @@ import type {
 import { resolveSiteChrome } from './resolve-site-chrome';
 import { resolvePageGroupByPath } from './resolve-page-group-by-path';
 import { resolvePageContentReferences } from './resolve-page-content-references';
+import { resolveTranslationPaths } from './resolve-translation-paths';
 
 export type { PublishedPage };
 
@@ -81,9 +82,19 @@ export async function getPublishedPageBySlug(
       translation.publishedSnapshot,
     ]),
   ]);
-  const translations = siblings
-    .filter((sibling) => sibling.status === 'published')
-    .map((sibling) => ({ locale: sibling.locale, slug: sibling.slug }));
+  // Not `{ locale, slug }`: a slug alone is not an address once slugs are
+  // sibling-scoped (ADR-0029). See resolveTranslationPaths — it also drops
+  // a language whose ancestor chain is incomplete, because the page has no
+  // URL there at all.
+  const translations = await resolveTranslationPaths(
+    {
+      pageGroupRepository: deps.pageGroupRepository,
+      pageTranslationRepository: deps.pageTranslationRepository,
+    },
+    input.tenantId,
+    resolved.group.parentId,
+    siblings.filter((sibling) => sibling.status === 'published'),
+  );
 
   return {
     content: resolvedContent,

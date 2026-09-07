@@ -9,6 +9,7 @@ import type {
 import { mergeTranslatedContent, type PageContent } from '@brisk/shared-types';
 import { resolveSiteChrome } from './resolve-site-chrome';
 import { resolvePageGroupAncestors } from './resolve-page-group-ancestors';
+import { resolveTranslationPaths } from './resolve-translation-paths';
 import { resolvePageContentReferences } from './resolve-page-content-references';
 import type { PublishedPage } from './get-published-page-by-slug.use-case';
 
@@ -103,9 +104,17 @@ export async function getPreviewPageById(
       content,
     ]),
   ]);
-  const translations = siblings
-    .filter((sibling) => sibling.status === 'published')
-    .map((sibling) => ({ locale: sibling.locale, slug: sibling.slug }));
+  // Same as the published route: a slug is not an address on its own, see
+  // resolveTranslationPaths.
+  const translations = await resolveTranslationPaths(
+    {
+      pageGroupRepository: deps.pageGroupRepository,
+      pageTranslationRepository: deps.pageTranslationRepository,
+    },
+    input.tenantId,
+    group.parentId,
+    siblings.filter((sibling) => sibling.status === 'published'),
+  );
 
   return {
     content: resolvedContent,

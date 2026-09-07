@@ -4,7 +4,7 @@ import type {
   PublishedPageTranslation,
   PublishedSite,
 } from '@brisk/shared-types';
-import { localePath } from '@brisk/theme-runtime';
+import { localePathFromAncestors } from '@brisk/theme-runtime';
 import { Translator } from '@brisk/theme-runtime';
 
 interface Props extends LanguageSwitcherProps {
@@ -39,13 +39,24 @@ const links = site.enabledLocales
     if (translation) {
       return {
         locale: enabledLocale,
-        href: localePath(translation.locale, translation.slug),
+        // The ancestor chain, not the bare slug: slugs are scoped to
+        // their siblings (ADR-0029), so `/it/first-run` is not where a
+        // nested page lives and linking there 404s.
+        href: localePathFromAncestors(
+          translation.locale,
+          translation.ancestorSlugs,
+          translation.slug,
+        ),
       };
     }
     if (site.untranslatedPageFallback === 'redirect-to-default' && defaultTranslation) {
       return {
         locale: enabledLocale,
-        href: localePath(defaultTranslation.locale, defaultTranslation.slug),
+        href: localePathFromAncestors(
+          defaultTranslation.locale,
+          defaultTranslation.ancestorSlugs,
+          defaultTranslation.slug,
+        ),
       };
     }
     return null;

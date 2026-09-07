@@ -6,6 +6,23 @@ import { publishedSiteSchema } from './published-site';
 export const publishedPageTranslationSchema = z.object({
   locale: z.string(),
   slug: z.string(),
+  /**
+   * The page's ancestors IN THIS LANGUAGE, root first — what turns a slug
+   * into the address the page actually answers on.
+   *
+   * Slugs are scoped to their siblings (ADR-0029), so `/it/first-run` is
+   * not where `first-run` lives; `/it/docs/getting-started/first-run` is.
+   * Every consumer that had only `slug` built the first shape and linked
+   * to a 404 — the language switcher on every nested page, and the
+   * `hreflang` alternates, which were telling search engines those URLs
+   * existed.
+   *
+   * Per-locale rather than shared, because a site may call a section
+   * `docs` in one language and `documentazione` in another. A language in
+   * which the chain is incomplete is not listed at all: the page is
+   * unreachable there, so there is nothing to link to.
+   */
+  ancestorSlugs: z.array(z.string()).default([]),
 });
 export type PublishedPageTranslation = z.infer<
   typeof publishedPageTranslationSchema

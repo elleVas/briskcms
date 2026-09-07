@@ -22,6 +22,7 @@ export * from './lib/use-cases/get-published-page-by-slug.use-case';
 export * from './lib/use-cases/resolve-untranslated-page-fallback.use-case';
 export * from './lib/use-cases/resolve-site-chrome';
 export * from './lib/use-cases/resolve-page-group-ancestors';
+export * from './lib/use-cases/resolve-translation-paths';
 export * from './lib/use-cases/resolve-page-group-by-path';
 export * from './lib/use-cases/get-published-site-chrome.use-case';
 export * from './lib/use-cases/get-preview-page-by-id.use-case';

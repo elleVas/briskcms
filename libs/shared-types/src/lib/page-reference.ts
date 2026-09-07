@@ -2,7 +2,10 @@ import type { Block, PageContent } from './content-model';
 import { pickedPageSchema } from './content-model';
 
 /** groupId -> where that group resolves for one specific rendering locale. */
-export type PageGroupSlugMap = Map<string, { locale: string; slug: string }>;
+export type PageGroupSlugMap = Map<
+  string,
+  { locale: string; slug: string; ancestorSlugs: string[] }
+>;
 
 function isPageRefLike(value: unknown): value is { pageGroupId: string } {
   return (
@@ -60,6 +63,7 @@ export function collectResolvedPageRefs(
         map.set(parsed.data.pageGroupId, {
           locale: parsed.data.locale,
           slug: parsed.data.slug,
+          ancestorSlugs: parsed.data.ancestorSlugs ?? [],
         });
       }
       if (block.children) {
