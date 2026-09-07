@@ -1,6 +1,6 @@
 # 0046 — Rich text as sanitised HTML strings
 
-**Status**: Accepted — 2026-09-07
+**Status**: Accepted — 2026-09-07 · Amended after implementation — 2026-09-07
 
 ## Context
 
@@ -81,14 +81,32 @@ must not be confused.
 
 Every content write path in `apps/api` runs the sanitiser: `POST
 /page-groups` (which accepts `content`), `PATCH /page-groups/:id/content`,
-`PATCH .../field-values`, `PATCH .../diverged-content`, and both
-`site-layout-sections` saves. **A test enumerates the write paths and fails
-if one of them does not sanitise** — the contract is "everything that
-enters the database is already safe", and a contract with an unguarded
-entrance is not one.
+`PATCH .../field-values`, `PATCH .../diverged-content`, and the
+`site-layout-sections` draft save. **A test enumerates the write paths and
+fails if one of them does not sanitise** — the contract is "everything
+that enters the database is already safe", and a contract with an
+unguarded entrance is not one.
 
-Rendering then trusts the database and uses `set:html`. The CSP nonce
-(ADR-0028) remains the second barrier, not the first.
+In implementation four of the five became structural rather than
+enumerated: the sanitising lives in the Zod schema those paths already use
+to accept content at all, so a new write path gets it by writing the code
+that makes it work. The overlay path cannot be guarded that way — it
+records a block ID, and only the group's tree says what type that block is
+— so it stays explicit, and the enumerating test walks every exported body
+schema rather than a list kept by hand.
+
+**Amended: rendering does NOT simply trust the database.** Sanitising on
+write cannot be the only barrier, because the API cannot see a THEME's
+blocks: those are TypeScript modules under `themes/<name>/blocks/`,
+compiled into the public site by `import.meta.glob` at build time, and a
+running Node process cannot load them. A theme's own rich text field would
+pass the API unexamined. So the renderer sanitises again, where the
+registry is complete — on the per-block path in `BlockRenderer`, so
+coverage is by construction. The write-side barrier is still worth having:
+it keeps the database clean, which is what the search index, exports and
+the API's own responses depend on.
+
+The CSP nonce (ADR-0028) remains a further barrier behind both.
 
 ### Scope
 
@@ -100,6 +118,13 @@ Applying it to all thirteen rather than only `Text` is a coherence
 decision: a user should not have to remember which fields accept a link
 and which silently strip one.
 
+**Amended in implementation: eleven, not thirteen.** `PromoBar.message`
+stays a plain textarea. It renders inside an `<a>` which is itself inside
+a `<p>`, so rich text there would put a paragraph inside a link and a link
+inside a link — both invalid — for a one-line promo label with no room for
+formatting. The coherence argument holds for body copy; it does not
+survive contact with an inline slot.
+
 ### Migration
 
 Existing values are plain text that may contain literal `<` or `&`. Read
@@ -108,6 +133,15 @@ back through `set:html` they would break or vanish. A one-off script
 escapes each value and wraps it in `<p>…</p>`, treating blank lines as
 paragraph breaks. It must be idempotent: a value that is already valid
 sanitised HTML is left alone.
+
+**Amended: the same normalisation runs on the read path too, so the script
+is tidying rather than a precondition.** Scripts in this repo are executed
+by hand (`pnpm db:backfill-block-ids` and friends). A self-hoster who
+upgrades without reading the release notes would otherwise find their site
+quietly missing text — the worst possible failure for the audience this
+product is for. `normalizeRichText` is idempotent by construction, which
+is what lets it sit on the write path, the read path and in the script at
+once.
 
 ## Consequences
 
@@ -121,6 +155,14 @@ sanitised HTML is left alone.
 - The canvas gains a real inline editor: TipTap with `Bold`, `Italic`,
   `Link`, lists, and a small bubble menu, switching from `getText()` to
   `getHTML()`.
+- **Resolved in implementation** — internal links use a `brisk://page/<id>`
+  href, rewritten at render by the same `resolvePageReferences` that
+  already resolves the `page` prop. One stored value serves every locale,
+  and a page with no translation in the locale being read loses its
+  address and keeps its words, which is exactly what the block-prop path
+  already does. Verified live: the same stored reference served
+  `/en/installation` and `/it/installation`. The original framing of the
+  question follows.
 - **Open question deliberately left to implementation**: internal links.
   Today a link to a page is stored as `{pageGroupId, title}` and resolved
   at render (`resolve-page-content-references.ts`), so renaming a page
