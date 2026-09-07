@@ -7,18 +7,18 @@ export interface Props {
   editable?: boolean;
   hasChildren?: boolean;
   styleOverride?: BlockStyleOverride;
+  /** The per-instance style class, from BlockRenderer — see blockInstanceClassName. */
+  instanceClass?: string | null;
   locale: string;
 }
 
-const { editable, hasChildren, styleOverride, locale } = Astro.props;
-const instanceStyle = buildBlockInstanceStyle(styleOverride);
+const { editable, hasChildren, styleOverride, locale, instanceClass} = Astro.props;
 const i18n = new Translator(locale);
 ---
 
 <div
-  class="brisk-testimonials"
+  class:list={['brisk-testimonials', instanceClass]}
   data-brisk-editable-outline={editable && hasChildren ? '' : undefined}
-  style={instanceStyle}
 >
   {
     hasChildren ? (

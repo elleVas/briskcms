@@ -1,18 +1,18 @@
 ---
 import {
-  buildBlockInstanceStyle,
   type BlockStyleOverride,
   type HeadingProps,
 } from '@brisk/shared-types';
 
-type Props = HeadingProps & { styleOverride?: BlockStyleOverride };
+type Props = HeadingProps & { styleOverride?: BlockStyleOverride;
+  instanceClass?: string | null;
+};
 
-const { text, level, styleOverride } = Astro.props;
-const instanceStyle = buildBlockInstanceStyle(styleOverride);
+const { text, level, styleOverride, instanceClass} = Astro.props;
 const Tag = level;
 ---
 
-<Tag class="brisk-heading" data-brisk-field="text" style={instanceStyle}>
+<Tag class:list={['brisk-heading', instanceClass]} data-brisk-field="text">
   {text}
 </Tag>
 

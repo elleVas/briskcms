@@ -1,6 +1,7 @@
 ---
 import type { PublishedPage } from '@brisk/shared-types';
 import PageLayout from '../layouts/PageLayout.astro';
+import { buildBlockInstanceRulesCss } from '@brisk/shared-types';
 import BlockRenderer from './BlockRenderer.astro';
 import ErrorPageShell from './ErrorPageShell.astro';
 import NotFound from './NotFound.astro';
@@ -29,6 +30,18 @@ interface Props {
 }
 
 const { page, editable, locale } = Astro.props;
+// Built here, not in PageLayout: the page's own content only exists on
+// this side of the slot, and an instance rule for a block nobody rendered
+// would be dead CSS on every page.
+// `page` is null on the 404 path, which renders the themed NotFound
+// instead — nothing of the site's own content, so nothing to style.
+const instanceStyleCss = page
+  ? buildBlockInstanceRulesCss([
+      page.content,
+      page.header ?? [],
+      page.footer ?? [],
+    ])
+  : '';
 
 // Best-effort, not a second point of failure: when the site or domain does
 // not exist or the API does not answer, `chrome` stays `null` and the code
@@ -92,6 +105,7 @@ function rootBlockSpacing(
       footer={page.footer}
       headerSticky={page.headerSticky}
       ancestors={page.ancestors}
+      instanceStyleCss={instanceStyleCss}
       editable={editable}
       route="page"
     >

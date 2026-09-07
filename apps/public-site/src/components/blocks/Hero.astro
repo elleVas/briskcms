@@ -1,11 +1,11 @@
 ---
 import type { BlockStyleOverride, HeroProps } from '@brisk/shared-types';
-import { buildBlockInstanceStyle } from '@brisk/shared-types';
 
-type Props = HeroProps & { styleOverride?: BlockStyleOverride };
+type Props = HeroProps & { styleOverride?: BlockStyleOverride;
+  instanceClass?: string | null;
+};
 
-const { title, subtitle, styleOverride } = Astro.props;
-const instanceStyle = buildBlockInstanceStyle(styleOverride);
+const { title, subtitle, styleOverride, instanceClass} = Astro.props;
 ---
 
 {/* <section>, not <header>: this block can be dropped anywhere in a
@@ -13,8 +13,7 @@ const instanceStyle = buildBlockInstanceStyle(styleOverride);
     there creates a second, ambiguous role="banner" landmark alongside the
     real one from PageLayout.astro. Security review 2026-08-24, accessibility. */}
 <section
-	class="brisk-hero mx-auto max-w-3xl py-20 text-center sm:py-28"
-	style={instanceStyle}
+	class:list={['brisk-hero mx-auto max-w-3xl py-20 text-center sm:py-28', instanceClass]}
 >
 	<h1
 		data-brisk-field="title"

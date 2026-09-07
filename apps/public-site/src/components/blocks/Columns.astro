@@ -1,6 +1,5 @@
 ---
 import {
-  buildBlockInstanceStyle,
   columnsGridTemplate,
   type BlockStyleOverride,
   type ColumnsProps,
@@ -11,15 +10,16 @@ type Props = ColumnsProps & {
   editable?: boolean;
   hasChildren?: boolean;
   styleOverride?: BlockStyleOverride;
+  /** The per-instance style class, from BlockRenderer — see blockInstanceClassName. */
+  instanceClass?: string | null;
 };
 
-const { layout, editable, hasChildren, styleOverride } = Astro.props;
-const instanceStyle = buildBlockInstanceStyle(styleOverride);
+const { layout, editable, hasChildren, styleOverride, instanceClass} = Astro.props;
 ---
 
 <div
-  class="brisk-columns"
-  style={`grid-template-columns: ${columnsGridTemplate(layout)}; ${instanceStyle ?? ''}`}
+  class:list={['brisk-columns', instanceClass]}
+  style={`grid-template-columns: ${columnsGridTemplate(layout)};`}
   data-brisk-editable-outline={editable && hasChildren ? '' : undefined}
 >
   <slot />

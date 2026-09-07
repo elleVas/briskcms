@@ -1,17 +1,17 @@
 ---
 import {
-  buildBlockInstanceStyle,
   type BlockStyleOverride,
   type StatProps,
 } from '@brisk/shared-types';
 
-type Props = StatProps & { styleOverride?: BlockStyleOverride };
+type Props = StatProps & { styleOverride?: BlockStyleOverride;
+  instanceClass?: string | null;
+};
 
-const { value, prefix, suffix, label, styleOverride } = Astro.props;
-const instanceStyle = buildBlockInstanceStyle(styleOverride);
+const { value, prefix, suffix, label, styleOverride, instanceClass} = Astro.props;
 ---
 
-<div class="brisk-stat" data-value={value} style={instanceStyle}>
+<div class:list={['brisk-stat', instanceClass]} data-value={value}>
   <div class="brisk-stat__value">
     <span class="brisk-stat__prefix" data-brisk-field="prefix">{prefix}</span><span
       class="brisk-stat__number"

@@ -6,16 +6,16 @@ export interface Props {
   editable?: boolean;
   hasChildren?: boolean;
   styleOverride?: BlockStyleOverride;
+  /** The per-instance style class, from BlockRenderer — see blockInstanceClassName. */
+  instanceClass?: string | null;
 }
 
-const { editable, hasChildren, styleOverride } = Astro.props;
-const instanceStyle = buildBlockInstanceStyle(styleOverride);
+const { editable, hasChildren, styleOverride, instanceClass} = Astro.props;
 ---
 
 <div
-  class="brisk-tabs"
+  class:list={['brisk-tabs', instanceClass]}
   data-brisk-editable-outline={editable && hasChildren ? '' : undefined}
-  style={instanceStyle}
 >
   <slot />
   <EmptyContainerHint show={!hasChildren && Boolean(editable)} />

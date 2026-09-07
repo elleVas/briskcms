@@ -1,6 +1,5 @@
 ---
 import {
-  buildBlockInstanceStyle,
   type BlockStyleOverride,
   type CountdownProps,
 } from '@brisk/shared-types';
@@ -8,15 +7,16 @@ import { Translator } from '@brisk/theme-runtime';
 
 type Props = CountdownProps & {
   styleOverride?: BlockStyleOverride;
+  /** The per-instance style class, from BlockRenderer — see blockInstanceClassName. */
+  instanceClass?: string | null;
   locale: string;
 };
 
-const { targetDate, label, styleOverride, locale } = Astro.props;
-const instanceStyle = buildBlockInstanceStyle(styleOverride);
+const { targetDate, label, styleOverride, locale, instanceClass} = Astro.props;
 const i18n = new Translator(locale);
 ---
 
-<div class="brisk-countdown" data-target-date={targetDate} style={instanceStyle}>
+<div class:list={['brisk-countdown', instanceClass]} data-target-date={targetDate}>
   {label && <p class="brisk-countdown__label" data-brisk-field="label">{label}</p>}
   <div class="brisk-countdown__timer">
     <div class="brisk-countdown__unit">

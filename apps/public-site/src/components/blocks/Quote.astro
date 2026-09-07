@@ -1,19 +1,19 @@
 ---
 import {
-  buildBlockInstanceStyle,
   type BlockStyleOverride,
   type QuoteProps,
 } from '@brisk/shared-types';
 
-type Props = QuoteProps & { styleOverride?: BlockStyleOverride };
+type Props = QuoteProps & { styleOverride?: BlockStyleOverride;
+  instanceClass?: string | null;
+};
 
-const { quote, author, role, styleOverride } = Astro.props;
+const { quote, author, role, styleOverride, instanceClass} = Astro.props;
 const hasAuthor = Boolean(author);
 const hasRole = Boolean(role);
-const instanceStyle = buildBlockInstanceStyle(styleOverride);
 ---
 
-<div class="brisk-quote" style={instanceStyle}>
+<div class:list={['brisk-quote', instanceClass]}>
   <blockquote class="brisk-rich-text" data-brisk-field="quote" set:html={quote} />
   {
     (hasAuthor || hasRole) && (

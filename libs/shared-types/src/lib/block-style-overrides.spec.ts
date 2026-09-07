@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
+  blockInstanceClassName,
   blockTypeToClassName,
+  buildBlockInstanceRulesCss,
   buildBlockInstanceStyle,
   buildBlockStyleOverridesCss,
 } from './block-style-overrides';
@@ -25,8 +27,13 @@ describe('buildBlockStyleOverridesCss', () => {
       Button: { borderRadius: '9999px', paddingX: '1.5rem' },
     });
 
+    // Wrapped in its named tier: a per-type rule and a per-instance rule
+    // have identical specificity, so without `@layer` the winner would be
+    // whichever happened to be emitted last (ADR-0047).
     expect(css).toBe(
-      '.brisk-button { --brisk-override-radius: 9999px; --brisk-override-padding-x: 1.5rem; }',
+      '@layer brisk.class {\n' +
+        '.brisk-button { --brisk-override-radius: 9999px; --brisk-override-padding-x: 1.5rem; }\n' +
+        '}',
     );
   });
 
@@ -43,8 +50,10 @@ describe('buildBlockStyleOverridesCss', () => {
     });
 
     expect(css).toBe(
-      '.brisk-button { --brisk-override-bg: #ff0000; }\n' +
-        '.brisk-promo-bar { --brisk-override-padding-y: 2rem; }',
+      '@layer brisk.class {\n' +
+        '.brisk-button { --brisk-override-bg: #ff0000; }\n' +
+        '.brisk-promo-bar { --brisk-override-padding-y: 2rem; }\n' +
+        '}',
     );
   });
 
@@ -145,5 +154,106 @@ describe('nothing reaches the stylesheet that could escape a declaration', () =>
     expect(
       buildBlockStyleOverridesCss({ Hero: { backgroundColor: value } }),
     ).toContain(value);
+  });
+});
+
+/**
+ * The per-instance override stopped being an inline `style` attribute
+ * (ADR-0047), for one reason that is not negotiable: **an HTML `style`
+ * attribute cannot contain a media query**. Per-breakpoint styling per
+ * instance is impossible while the value stays inline, so it became a
+ * rule — and a rule needs a class and a named tier to win against the
+ * per-type rule it now ties with on specificity.
+ */
+describe('buildBlockInstanceRulesCss', () => {
+  it('emits one rule per styled block, in the instance tier', () => {
+    expect(
+      buildBlockInstanceRulesCss([
+        [
+          {
+            id: 'a1',
+            type: 'Hero',
+            props: {},
+            styleOverride: { minHeight: '60vh' },
+          },
+        ],
+      ]),
+    ).toBe(
+      '@layer brisk.instance {\n.b-a1 { --brisk-override-min-height: 60vh; }\n}',
+    );
+  });
+
+  it('reaches a styled block nested inside a container', () => {
+    const css = buildBlockInstanceRulesCss([
+      [
+        {
+          id: 'c1',
+          type: 'Container',
+          props: {},
+          children: [
+            {
+              id: 'n1',
+              type: 'Text',
+              props: {},
+              styleOverride: { gap: '2rem' },
+            },
+          ],
+        },
+      ],
+    ]);
+
+    expect(css).toContain('.b-n1 { --brisk-override-gap: 2rem; }');
+  });
+
+  it('takes header and footer trees alongside the page content', () => {
+    const css = buildBlockInstanceRulesCss([
+      [{ id: 'p1', type: 'Text', props: {}, styleOverride: { gap: '1rem' } }],
+      [
+        {
+          id: 'h1',
+          type: 'NavLink',
+          props: {},
+          styleOverride: { gap: '2rem' },
+        },
+      ],
+    ]);
+
+    expect(css).toContain('.b-p1');
+    expect(css).toContain('.b-h1');
+  });
+
+  it('emits nothing when no block is styled, so an ordinary page carries no extra bytes', () => {
+    expect(
+      buildBlockInstanceRulesCss([[{ id: 'a1', type: 'Hero', props: {} }]]),
+    ).toBe('');
+  });
+
+  // The block id becomes a selector, so it is checked where it gets there
+  // — the same rule the block TYPE key already follows.
+  it('drops a block whose id is not one, selector and all', () => {
+    expect(
+      buildBlockInstanceRulesCss([
+        [
+          {
+            id: 'a" { } body { display: none } .y',
+            type: 'Hero',
+            props: {},
+            styleOverride: { minHeight: '1px' },
+          },
+        ],
+      ]),
+    ).toBe('');
+  });
+});
+
+describe('blockInstanceClassName', () => {
+  it('builds a class from a real block id', () => {
+    expect(blockInstanceClassName('9f3a1c72-0000-4000-8000-000000000001')).toBe(
+      'b-9f3a1c72-0000-4000-8000-000000000001',
+    );
+  });
+
+  it.each(['a b', 'a{b', 'a"b', '', 'a'.repeat(65)])('refuses %s', (id) => {
+    expect(blockInstanceClassName(id)).toBeNull();
   });
 });
