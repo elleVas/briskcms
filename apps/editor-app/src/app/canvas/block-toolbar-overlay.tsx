@@ -31,6 +31,10 @@ import { BlockPicker, type BlockPickerCategory } from './block-picker';
 import { BlockStyleFields } from './block-style-fields';
 import { InspectorPanel } from './inspector-panel';
 import {
+  themeAllowsStyleOverrides,
+  themeCapabilitiesQueryOptions,
+} from '../theme-capabilities-queries';
+import {
   toAddChildStyle,
   toInsertPointStyle,
   toPillStyle,
@@ -150,7 +154,18 @@ export function BlockToolbarOverlay({
 
   const canAddChild =
     descriptor.isContainer && descriptor.allowedChildTypes?.length === 1;
-  const stylableProperties = descriptor.stylableProperties ?? [];
+  // What the active theme lets this site put on top of it
+  // (docs/adr/0021's ceiling). A theme that refuses is refusing every
+  // tier, so neither styling button appears — before this, both did, saved
+  // what you chose, and the published page ignored it.
+  const { data: themeCapabilities } = useQuery(
+    themeCapabilitiesQueryOptions(useActiveThemeName()),
+  );
+  const themeAllowsStyling = themeAllowsStyleOverrides(themeCapabilities);
+
+  const stylableProperties = themeAllowsStyling
+    ? (descriptor.stylableProperties ?? [])
+    : [];
   const canStyleType =
     stylableProperties.length > 0 &&
     typeStyle !== undefined &&
@@ -170,10 +185,17 @@ export function BlockToolbarOverlay({
   // Offering the field anyway would let somebody set a mobile margin and
   // watch nothing happen — the silent failure ADR-0047 exists to prevent.
   // Fase 3 reworks that wrapper and can bring them back.
+  //
+  // ...and all of it only while the theme allows styling at all: the two
+  // margins are added AFTER `stylableProperties`, so gating that list
+  // alone left them through and the instance button stayed on a theme
+  // that refuses everything. Found by the test below, not by reading.
   const instanceStylableProperties: readonly (keyof BlockStyleOverride)[] =
-    isRootLevel && breakpoint === 'base'
-      ? [...stylableProperties, 'marginTop', 'marginBottom']
-      : stylableProperties;
+    !themeAllowsStyling
+      ? []
+      : isRootLevel && breakpoint === 'base'
+        ? [...stylableProperties, 'marginTop', 'marginBottom']
+        : stylableProperties;
   const canStyleInstance = instanceStylableProperties.length > 0;
   // The TYPE override (when present and non-null, i.e. genuinely
   // customized) beats the theme default as the preview for the instance
@@ -310,6 +332,15 @@ export function BlockToolbarOverlay({
             </PopoverContent>
           </Popover>
         )}
+        {/*
+          Deliberately NOT gated on the theme's ceiling, unlike the two
+          styling buttons above. A variant is a look the THEME itself
+          declares, so choosing between them is picking from the theme's
+          own vocabulary — not a site putting its own presentation on top,
+          which is what the ceiling refuses. A theme that wants fewer
+          looks ships fewer variants; it does not need the editor to hide
+          the ones it declared.
+        */}
         {(descriptor.fields.length > 0 ||
           (descriptor.variants?.length ?? 0) > 0) && (
           <Popover>

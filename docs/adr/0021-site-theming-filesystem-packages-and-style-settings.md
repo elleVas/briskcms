@@ -327,8 +327,49 @@ anywhere said why.
   styles too, which it did not before. No bundled theme sets it, so this
   changes nothing today; it makes the ceiling true for the first theme
   that uses it.
-- **Known gap, deliberately not closed here**: the editor does not hide
-  its style controls when a theme sets that ceiling. On such a site the
-  block toolbar would offer styling that never reaches the page — the
-  silent no-op this codebase keeps guarding against. Inert until a theme
-  actually sets it; worth closing before one ships.
+- The editor now reads the ceiling and stops offering what the theme
+  refuses — see the follow-up below.
+
+## Follow-up — 2026-09-07: the editor can finally read the ceiling
+
+The amendment above left one thing open, and it was the older half of the
+problem rather than anything it introduced: **the editor could not see
+`allowStyleOverrides` at all.**
+
+None of the five theme endpoints
+(`icons`, `block-style-defaults`, `foreground-tokens`, `base-tokens`,
+`blocks`) served the manifest, so a site running a theme that refused to
+be dressed still showed every styling control, saved what the client
+chose, and published a page that ignored it. The Style page's own switch
+admitted as much in its description: _"the active theme can also lock this
+off entirely — see its own documentation"_. Telling someone to go and read
+a theme's documentation is what a control says when it cannot answer.
+
+`GET /api/themes/current/capabilities` now answers it, returning the one
+resolved flag rather than the manifest wholesale — `stickyFooter` is
+core's rendering business and means nothing to the editor, and a manifest
+served whole is where a private field eventually leaks into a public
+response by accident.
+
+Three surfaces read it: the block toolbar (both styling buttons
+disappear), the Global Styles dialog (a sentence instead of an empty
+list), and the Style settings page (a note, and the Tier 1 fields turn
+`inert` regardless of the site's own switch).
+
+The variant picker stays, and that is not an oversight: a variant is a
+look the THEME declares (ADR-0047), so choosing between them is picking
+from the theme's own vocabulary rather than a site putting its own
+presentation on top. What the ceiling refuses is the site's per-variant
+STYLE — the theme's own variant CSS still applies.
+
+Two things worth keeping:
+
+- **Unknown means allowed.** While the answer is in flight the editor
+  behaves as if styling is permitted. The alternative flickers every
+  control off and back on for every user of every theme, to spare the one
+  case where a theme forbids it: a control shown a moment too long costs a
+  click, a control hidden for a moment costs trust in the tool.
+- Gating the block toolbar's `stylableProperties` was not enough on its
+  own. `marginTop`/`marginBottom` are appended to that list _afterwards_
+  for a root-level block, so the per-instance button survived on a theme
+  that refuses everything. The test caught it; reading the code had not.

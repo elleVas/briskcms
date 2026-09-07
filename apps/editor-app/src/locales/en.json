@@ -407,10 +407,11 @@
     "openDraft": "Open draft"
   },
   "themeSettings": {
+    "themeLocked": "The active theme does not allow a site to style on top of it, so nothing on this page — or on any block — will reach the published site. This is the theme's own choice, in its theme.json.",
     "title": "Site style",
     "intro": "These settings apply on top of the site's active theme — leave a field off to keep the theme's own default.",
     "overridesEnabledLabel": "Apply these settings",
-    "overridesEnabledDescription": "When off, every field below is ignored and the theme's own defaults are used, even if you've saved values here before. It does not touch the styles you have set on blocks \u2014 those live on the blocks themselves. The active theme can also lock this off entirely, and a theme that does refuses block styles too \u2014 see its own documentation.",
+    "overridesEnabledDescription": "When off, every field below is ignored and the theme's own defaults are used, even if you've saved values here before. It does not touch the styles you have set on blocks — those live on the blocks themselves. The active theme can also lock this off entirely, and a theme that does refuses block styles too — see its own documentation.",
     "primaryColorLabel": "Primary color",
     "secondaryColorLabel": "Secondary color",
     "currentThemeValue": "The active theme's own base value — customize it here, or by editing the theme itself",
@@ -456,6 +457,7 @@
   },
   "globalStyles": {
     "variantGroup": "Look being styled",
+    "themeLocked": "The active theme does not allow styling on top of it, so nothing set here would reach the published page. This is the theme's own choice, in its theme.json — see its documentation.",
     "breakpointGroup": "Size being styled",
     "open": "Global styles",
     "title": "Global styles",

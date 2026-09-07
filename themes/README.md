@@ -116,10 +116,11 @@ fonts while the styling they set on individual blocks stays. The two were
 one condition until 2026-09-07 — see the amendment on ADR-0021 for why
 that was wrong.
 
-**A gap to know about if you set this `false`**: the editor does not yet
-hide its block styling controls for such a theme, so they would offer
-styling that never reaches the published page. Nothing in core sets it
-today; tell us if you do.
+Setting it `false` is visible in the editor, not only at render: the
+block toolbar drops both styling buttons, the Global Styles dialog says
+the theme does not allow it, and the Style settings page turns its fields
+off with a note. The editor reads
+`GET /api/themes/current/capabilities` for this.
 
 **`stickyFooter`** — `true` pins the footer to the bottom of the viewport
 on pages too short to fill it. It is a manifest flag rather than something

@@ -56,6 +56,9 @@ vi.mock('../lib/theme-api-client', () => ({
     secondaryForeground: '#000000',
   }),
   fetchThemeBaseTokens: vi.fn().mockResolvedValue({}),
+  fetchThemeCapabilities: vi.fn().mockResolvedValue({
+    allowStyleOverrides: true,
+  }),
 }));
 
 function buildSite(overrides: Partial<SiteRecord> = {}): SiteRecord {
@@ -328,5 +331,23 @@ describe('GlobalStylesDialog', () => {
     fireEvent.click(screen.getByRole('button', { name: /indietro/i }));
 
     expect(screen.getByText('Colore primario')).toBeTruthy();
+  });
+});
+
+describe('GlobalStylesDialog under a theme that refuses styling', () => {
+  it('says so instead of listing block types', async () => {
+    vi.mocked(api.getCurrentSite).mockResolvedValue(buildSite());
+    vi.mocked(themeApi.fetchThemeCapabilities).mockResolvedValue({
+      allowStyleOverrides: false,
+    });
+
+    renderDialog(true);
+
+    // The sentence, not an empty dialog: a panel that simply shows
+    // nothing reads as broken, while "this theme does not allow it" is an
+    // answer somebody can act on.
+    expect(
+      await screen.findByText(/tema attivo non permette di stilarlo/i),
+    ).toBeTruthy();
   });
 });
