@@ -1,7 +1,7 @@
 import {
   columnsGridTemplate,
   type Block,
-  type BlockStyleOverride,
+  type ResponsiveBlockStyle,
 } from '@brisk/shared-types';
 import type { BlockDescriptor } from '@brisk/block-registry';
 
@@ -53,11 +53,11 @@ export function updateBlockProps(
   });
 }
 
-/** Replaces `styleOverride` wholesale (docs/adr/0022) — a single panel edits all of it at once, the same "replaces, does not merge field by field" as Site.updateThemeTokens, not a merge like updateBlockProps above. */
+/** Replaces `styleOverride` wholesale (docs/adr/0022) — a single panel edits all of it at once, the same "replaces, does not merge field by field" as Site.updateThemeTokens, not a merge like updateBlockProps above. The value covers EVERY breakpoint (ADR-0047): merging one size into the others is `withBreakpointStyle`'s job, done before this is called. */
 export function updateBlockStyleOverride(
   blocks: Block[],
   blockId: string,
-  styleOverride: BlockStyleOverride,
+  styleOverride: ResponsiveBlockStyle,
 ): Block[] {
   return blocks.map((block) => {
     if (block.id === blockId) {

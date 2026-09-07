@@ -1,15 +1,11 @@
 ---
-import {
-	type BlockStyleOverride,
-	type ContainerProps,
-} from '@brisk/shared-types';
+import type { ContainerProps } from '@brisk/shared-types';
 import EmptyContainerHint from '../EmptyContainerHint.astro';
 
 type Props = ContainerProps & {
 	editable?: boolean;
 	hasChildren?: boolean;
-	styleOverride?: BlockStyleOverride;
-  instanceClass?: string | null;
+	instanceClass?: string | null;
 };
 
 const {
@@ -17,7 +13,6 @@ const {
 	padding,
 	editable,
 	hasChildren,
-	styleOverride,
 	instanceClass,
 } = Astro.props;
 

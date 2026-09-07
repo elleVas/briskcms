@@ -8,16 +8,15 @@
 // other theme block override here.
 import { Code as ShikiCode } from 'astro:components';
 import type { CodeLanguage } from 'astro';
-import {
-  buildBlockInstanceStyle,
-  type BlockStyleOverride,
-  type CodeProps,
-} from '@brisk/shared-types';
+import type { CodeProps } from '@brisk/shared-types';
 
-type Props = CodeProps & { styleOverride?: BlockStyleOverride };
+// `instanceClass` and not `styleOverride` since ADR-0047: the per-instance
+// override is a generated CSS rule now, not an inline attribute, because
+// an inline `style` cannot hold the container query a per-breakpoint value
+// needs. The block receives the class that rule targets.
+type Props = CodeProps & { instanceClass?: string | null };
 
-const { code, language, styleOverride } = Astro.props;
-const instanceStyle = buildBlockInstanceStyle(styleOverride);
+const { code, language, instanceClass } = Astro.props;
 
 // Same reasoning as core Code.astro's own cast: `language` is a plain
 // `string` in the domain schema, the curated options in code.block.ts are
@@ -25,7 +24,7 @@ const instanceStyle = buildBlockInstanceStyle(styleOverride);
 const shikiLang = language as CodeLanguage;
 ---
 
-<div class="brisk-code" style={instanceStyle}>
+<div class:list={['brisk-code', instanceClass]}>
   <div class="brisk-code__titlebar" aria-hidden="true">
     <span class="brisk-code__dot brisk-code__dot--red"></span>
     <span class="brisk-code__dot brisk-code__dot--yellow"></span>

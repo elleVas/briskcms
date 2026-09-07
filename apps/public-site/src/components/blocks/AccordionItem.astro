@@ -1,14 +1,9 @@
 ---
-import {
-  type AccordionItemProps,
-  type BlockStyleOverride,
-} from '@brisk/shared-types';
+import type { AccordionItemProps } from '@brisk/shared-types';
 
-type Props = AccordionItemProps & { styleOverride?: BlockStyleOverride;
-  instanceClass?: string | null;
-};
+type Props = AccordionItemProps & { instanceClass?: string | null };
 
-const { question, answer, styleOverride, instanceClass} = Astro.props;
+const { question, answer, instanceClass } = Astro.props;
 ---
 
 <details class:list={['brisk-accordion-item', instanceClass]}>

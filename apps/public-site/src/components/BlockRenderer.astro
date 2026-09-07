@@ -222,8 +222,8 @@ interface BlockRenderContext {
  * One entry for each of the 48 block types — replacing the old
  * `{block.type === 'X' && (<X .../>)}` dispatch repeated 48 times (see this
  * file's git history). The variation between types is entirely STATIC
- * metadata known when the file is written (5 independent facts: does it
- * have styleOverride? a locale? container children? ancestors/
+ * metadata known when the file is written (5 independent facts: is it
+ * stylable? does it have a locale? container children? ancestors/
  * currentPageTitle? translations/site?), not logic computed at runtime —
  * hence a data table rather than preserving the conditional. `extra`
  * remains the one escape hatch, used only by the 2 types (Breadcrumb,
@@ -237,7 +237,8 @@ interface BlockRenderContext {
 interface BlockDispatchEntry {
   component: AstroComponentFactory;
   schema?: { parse: (props: unknown) => Record<string, unknown> };
-  styleOverride?: boolean;
+  /** The block accepts per-instance styling, so it is handed the class its generated CSS rule targets. The override itself never reaches the component: since ADR-0047 it is a stylesheet rule, not an inline attribute. */
+  stylable?: boolean;
   locale?: boolean;
   /** Recurses into `block.children` — true for Nav/NavDropdown/HamburgerMenu/Tab too, which however do NOT receive `editable`/`hasChildren` (they are not "slot" containers in the same sense). */
   recurseChildren?: boolean;
@@ -247,39 +248,39 @@ interface BlockDispatchEntry {
 }
 
 const BLOCK_REGISTRY: Record<string, BlockDispatchEntry> = {
-  Hero: { component: Hero, schema: heroPropsSchema, styleOverride: true },
+  Hero: { component: Hero, schema: heroPropsSchema, stylable: true },
   Heading: {
     component: Heading,
     schema: headingPropsSchema,
-    styleOverride: true,
+    stylable: true,
   },
-  Text: { component: Text, schema: textPropsSchema, styleOverride: true },
+  Text: { component: Text, schema: textPropsSchema, stylable: true },
   Image: { component: Image, schema: imagePropsSchema, locale: true },
   Gallery: { component: Gallery, schema: galleryPropsSchema, locale: true },
   Form: {
     component: Form,
     schema: formBlockPropsSchema,
-    styleOverride: true,
+    stylable: true,
     locale: true,
   },
-  Quote: { component: Quote, schema: quotePropsSchema, styleOverride: true },
+  Quote: { component: Quote, schema: quotePropsSchema, stylable: true },
   Callout: { component: Callout, schema: calloutPropsSchema },
-  Rating: { component: Rating, schema: ratingPropsSchema, styleOverride: true },
+  Rating: { component: Rating, schema: ratingPropsSchema, stylable: true },
   Countdown: {
     component: Countdown,
     schema: countdownPropsSchema,
-    styleOverride: true,
+    stylable: true,
     locale: true,
   },
   EmbedHtml: {
     component: EmbedHtml,
     schema: embedHtmlPropsSchema,
-    styleOverride: true,
+    stylable: true,
   },
   Code: {
     component: Code,
     schema: codePropsSchema,
-    styleOverride: true,
+    stylable: true,
   },
   Table: { component: Table, schema: tablePropsSchema },
   NavLink: { component: NavLink, schema: navLinkPropsSchema },
@@ -314,27 +315,27 @@ const BLOCK_REGISTRY: Record<string, BlockDispatchEntry> = {
   Columns: {
     component: Columns,
     schema: columnsPropsSchema,
-    styleOverride: true,
+    stylable: true,
     recurseChildren: true,
     containerProps: true,
   },
   Column: {
     component: Column,
-    styleOverride: true,
+    stylable: true,
     recurseChildren: true,
     containerProps: true,
   },
   Container: {
     component: Container,
     schema: containerPropsSchema,
-    styleOverride: true,
+    stylable: true,
     recurseChildren: true,
     containerProps: true,
   },
   PromoBar: {
     component: PromoBar,
     schema: promoBarPropsSchema,
-    styleOverride: true,
+    stylable: true,
     locale: true,
   },
   BackToTop: { component: BackToTop, schema: backToTopPropsSchema, locale: true },
@@ -346,39 +347,39 @@ const BLOCK_REGISTRY: Record<string, BlockDispatchEntry> = {
   Accordion: {
     component: Accordion,
     schema: accordionPropsSchema,
-    styleOverride: true,
+    stylable: true,
     recurseChildren: true,
     containerProps: true,
   },
   AccordionItem: {
     component: AccordionItem,
     schema: accordionItemPropsSchema,
-    styleOverride: true,
+    stylable: true,
   },
   Tabs: {
     component: Tabs,
     schema: tabsPropsSchema,
-    styleOverride: true,
+    stylable: true,
     recurseChildren: true,
     containerProps: true,
   },
   Tab: {
     component: Tab,
     schema: tabPropsSchema,
-    styleOverride: true,
+    stylable: true,
     recurseChildren: true,
   },
-  Banner: { component: Banner, schema: bannerPropsSchema, styleOverride: true },
-  Button: { component: Button, schema: buttonPropsSchema, styleOverride: true },
+  Banner: { component: Banner, schema: bannerPropsSchema, stylable: true },
+  Button: { component: Button, schema: buttonPropsSchema, stylable: true },
   Link: { component: Link, schema: linkPropsSchema },
   FeatureGrid: {
     component: FeatureGrid,
     schema: featureGridPropsSchema,
-    styleOverride: true,
+    stylable: true,
     recurseChildren: true,
     containerProps: true,
   },
-  Feature: { component: Feature, schema: featurePropsSchema, styleOverride: true },
+  Feature: { component: Feature, schema: featurePropsSchema, stylable: true },
   VideoEmbed: { component: VideoEmbed, schema: videoEmbedPropsSchema, locale: true },
   MapEmbed: { component: MapEmbed, schema: mapEmbedPropsSchema, locale: true },
   ImageSlider: {
@@ -394,13 +395,13 @@ const BLOCK_REGISTRY: Record<string, BlockDispatchEntry> = {
   LogoStrip: {
     component: LogoStrip,
     schema: logoStripPropsSchema,
-    styleOverride: true,
+    stylable: true,
     locale: true,
   },
   Testimonials: {
     component: Testimonials,
     schema: testimonialsPropsSchema,
-    styleOverride: true,
+    stylable: true,
     locale: true,
     recurseChildren: true,
     containerProps: true,
@@ -408,44 +409,44 @@ const BLOCK_REGISTRY: Record<string, BlockDispatchEntry> = {
   Testimonial: {
     component: Testimonial,
     schema: testimonialPropsSchema,
-    styleOverride: true,
+    stylable: true,
   },
   Team: {
     component: Team,
     schema: teamPropsSchema,
-    styleOverride: true,
+    stylable: true,
     recurseChildren: true,
     containerProps: true,
   },
   TeamMember: {
     component: TeamMember,
     schema: teamMemberPropsSchema,
-    styleOverride: true,
+    stylable: true,
   },
   PricingTable: {
     component: PricingTable,
     schema: pricingTablePropsSchema,
-    styleOverride: true,
+    stylable: true,
     recurseChildren: true,
     containerProps: true,
   },
   PricingPlan: {
     component: PricingPlan,
     schema: pricingPlanPropsSchema,
-    styleOverride: true,
+    stylable: true,
   },
   StatsCounter: {
     component: StatsCounter,
     schema: statsCounterPropsSchema,
-    styleOverride: true,
+    stylable: true,
     recurseChildren: true,
     containerProps: true,
   },
-  Stat: { component: Stat, schema: statPropsSchema, styleOverride: true },
+  Stat: { component: Stat, schema: statPropsSchema, stylable: true },
   Timeline: {
     component: Timeline,
     schema: timelinePropsSchema,
-    styleOverride: true,
+    stylable: true,
     recurseChildren: true,
     containerProps: true,
   },
@@ -537,13 +538,11 @@ const iconName =
 const dispatchProps = entry
   ? {
       ...normalizeRenderedProps(block.type, parsedProps, themeName),
-      ...(entry.styleOverride
-        ? { styleOverride: block.styleOverride, instanceClass }
-        : {}),
+      ...(entry.stylable ? { instanceClass } : {}),
       ...(entry.locale ? { locale } : {}),
       ...(entry.containerProps ? { editable, hasChildren } : {}),
       // docs/adr/0042 — always included, not gated by a dispatch-entry
-      // flag like styleOverride/locale above: cheap to pass to every
+      // flag like stylable/locale above: cheap to pass to every
       // block (a plain string already resolved once per render), and
       // more than one block type may want it over time (NavLink/Feature
       // do today, for icon resolution) without this table needing a new

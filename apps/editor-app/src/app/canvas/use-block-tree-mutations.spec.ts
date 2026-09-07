@@ -357,7 +357,7 @@ describe('useBlockTreeMutations undo/redo', () => {
         id: 'a',
         type: 'Hero',
         props: {},
-        styleOverride: { textColor: '#f00' },
+        styleOverride: { base: { textColor: '#f00' } },
       },
     ];
     vi.mocked(blockFragmentApi.renderBlockFragment).mockResolvedValue(

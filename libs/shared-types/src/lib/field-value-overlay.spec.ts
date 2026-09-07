@@ -83,7 +83,7 @@ describe('mergeTranslatedContent', () => {
         id: 'hero-1',
         type: 'Hero',
         props: { title: 'Titolo' },
-        styleOverride: { borderRadius: '4px' },
+        styleOverride: { base: { borderRadius: '4px' } },
       },
     ];
 
@@ -91,6 +91,6 @@ describe('mergeTranslatedContent', () => {
       'hero-1': { title: 'Title' },
     });
 
-    expect(merged[0].styleOverride).toEqual({ borderRadius: '4px' });
+    expect(merged[0].styleOverride).toEqual({ base: { borderRadius: '4px' } });
   });
 });

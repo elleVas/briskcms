@@ -1,11 +1,9 @@
 ---
-import type { BlockStyleOverride, HeroProps } from '@brisk/shared-types';
+import type { HeroProps } from '@brisk/shared-types';
 
-type Props = HeroProps & { styleOverride?: BlockStyleOverride;
-  instanceClass?: string | null;
-};
+type Props = HeroProps & { instanceClass?: string | null };
 
-const { title, subtitle, styleOverride, instanceClass} = Astro.props;
+const { title, subtitle, instanceClass } = Astro.props;
 ---
 
 {/* <section>, not <header>: this block can be dropped anywhere in a

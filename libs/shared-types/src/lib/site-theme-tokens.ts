@@ -153,6 +153,143 @@ export type BlockStyleOverride = z.infer<typeof blockStyleOverrideSchema>;
  * see `Block.styleOverride` for the single-instance override.
  */
 /**
+ * The sizes a style can differ at.
+ *
+ * Familiar words with the measurement beside them in the interface
+ * (`Desktop (>1024px)`, `Tablet (<=1024px)`, `Mobile (<=768px)`), because
+ * the words cost nothing to somebody arriving from another builder while
+ * the numbers make it obvious that what is meant is a SIZE — which
+ * matters here, since the size measured is the space the block has, not
+ * the browser window (ADR-0047).
+ */
+export const BREAKPOINTS = ['base', 'tablet', 'mobile'] as const;
+export type StyleBreakpoint = (typeof BREAKPOINTS)[number];
+
+/** The widths the two narrow tiers answer to. `base` has none: it is what applies when neither matches. */
+export const BREAKPOINT_MAX_WIDTHS: Record<
+  Exclude<StyleBreakpoint, 'base'>,
+  number
+> = {
+  tablet: 1024,
+  mobile: 768,
+};
+
+/**
+ * A style that can differ by size — breakpoint-major, because that is the
+ * shape of the CSS it becomes: one block of declarations per query,
+ * rather than every property carrying three values of its own.
+ *
+ * `base` always exists; the other two hold only what CHANGES there, so a
+ * value set once keeps applying at every size, exactly as CSS already
+ * behaves. Nothing has to be repeated to stay the same.
+ */
+export const responsiveBlockStyleSchema = z.preprocess(
+  // The old shape is the new one with only `base` — a flat override
+  // written before breakpoints existed still parses, and still means what
+  // it meant. Detected by the presence of `base` rather than by trying
+  // both shapes: `blockStyleOverrideSchema` would accept `{ base: … }` by
+  // quietly ignoring the unknown key, and the value would vanish.
+  (value) =>
+    value !== null && typeof value === 'object' && 'base' in value
+      ? value
+      : { base: value ?? {} },
+  z.object({
+    base: blockStyleOverrideSchema,
+    tablet: blockStyleOverrideSchema.optional(),
+    mobile: blockStyleOverrideSchema.optional(),
+  }),
+);
+export type ResponsiveBlockStyle = z.infer<typeof responsiveBlockStyleSchema>;
+
+/**
+ * A stored style, in whatever shape it is on disk, as the current one.
+ *
+ * The read boundary for `site_theme_block_styles.style` and for any block
+ * override coming back from the database. Two things can be wrong with a
+ * stored value and they deserve different answers:
+ *
+ * - the SHAPE is the old flat one, written before breakpoints existed.
+ *   `responsiveBlockStyleSchema` already reads that as `{ base: … }`.
+ * - a VALUE is one today's rules reject — a row written before the CSS
+ *   injection fix (PR #144) bounded what a declaration may contain.
+ *
+ * A plain `.parse` answers both with an exception, which on this path
+ * means a site that does not render because one block once had a bad
+ * colour. So an invalid value costs that one property and nothing else:
+ * every other property, and every other block, still comes back.
+ */
+export function normalizeResponsiveBlockStyle(
+  value: unknown,
+): ResponsiveBlockStyle {
+  const parsed = responsiveBlockStyleSchema.safeParse(value);
+  if (parsed.success) {
+    return parsed.data;
+  }
+  const buckets = responsiveBlockStyleSchema.safeParse(
+    dropUnusableValues(value),
+  );
+  return buckets.success ? buckets.data : { base: {} };
+}
+
+/** Every field a `cssValueSchema` would refuse, removed — one bucket deep, which is as deep as this shape goes. */
+function dropUnusableValues(value: unknown): unknown {
+  const isRecord = (candidate: unknown): candidate is Record<string, unknown> =>
+    typeof candidate === 'object' &&
+    candidate !== null &&
+    !Array.isArray(candidate);
+  if (!isRecord(value)) {
+    return {};
+  }
+  const keep = (bucket: unknown): Record<string, unknown> =>
+    isRecord(bucket)
+      ? Object.fromEntries(
+          Object.entries(bucket).filter(
+            ([, field]) =>
+              field === null ||
+              field === undefined ||
+              cssValueSchema.safeParse(field).success,
+          ),
+        )
+      : {};
+  if (!('base' in value)) {
+    return keep(value);
+  }
+  return Object.fromEntries(
+    BREAKPOINTS.filter((breakpoint) => breakpoint in value).map(
+      (breakpoint) => [breakpoint, keep(value[breakpoint])],
+    ),
+  );
+}
+
+/**
+ * The same style with ONE breakpoint replaced.
+ *
+ * A breakpoint whose override is empty is dropped rather than stored as
+ * `{}`: `base` is the only size that always exists, and the other two are
+ * meant to hold what CHANGES. Keeping empty buckets would make "has this
+ * block anything at mobile?" — the question an editor asks to mark the
+ * control — answer yes for a block that merely had the mobile tab opened
+ * once.
+ */
+export function withBreakpointStyle(
+  style: ResponsiveBlockStyle | undefined,
+  breakpoint: StyleBreakpoint,
+  override: BlockStyleOverride,
+): ResponsiveBlockStyle {
+  const current: ResponsiveBlockStyle = style ?? { base: {} };
+  if (breakpoint === 'base') {
+    return { ...current, base: override };
+  }
+  const next = { ...current };
+  if (Object.values(override).some((value) => value)) {
+    next[breakpoint] = override;
+  } else {
+    delete next[breakpoint];
+  }
+  return next;
+}
+
+/**
  * A block type name, which becomes a CSS SELECTOR
  * (`blockTypeToClassName`), so it is constrained the same way a value is
  * — and for the same demonstrated reason: `X { } body { display: none } .y`
@@ -168,7 +305,7 @@ export const blockTypeNameSchema = z
   .regex(/^[A-Za-z][A-Za-z0-9]*$/, 'must be a block type name');
 
 export const themeTokensSchema = z.object({
-  blockStyles: z.record(blockTypeNameSchema, blockStyleOverrideSchema),
+  blockStyles: z.record(blockTypeNameSchema, responsiveBlockStyleSchema),
 });
 export type ThemeTokens = z.infer<typeof themeTokensSchema>;
 
@@ -186,7 +323,7 @@ export const DEFAULT_THEME_TOKENS: ThemeTokens = {
  */
 export const updateThemeTokensBodySchema = z.object({
   blockType: blockTypeNameSchema,
-  style: blockStyleOverrideSchema,
+  style: responsiveBlockStyleSchema,
 });
 export type UpdateThemeTokensBody = z.infer<typeof updateThemeTokensBodySchema>;
 

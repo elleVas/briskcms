@@ -1,4 +1,4 @@
-import type { BlockStyleOverride } from '@brisk/shared-types';
+import type { ResponsiveBlockStyle } from '@brisk/shared-types';
 
 /**
  * Replaces what used to be `sites.theme_tokens.blockStyles` (a JSONB map
@@ -14,13 +14,13 @@ export interface SiteThemeBlockStylesPort {
   listBySite(
     tenantId: string,
     siteId: string,
-  ): Promise<Record<string, BlockStyleOverride>>;
+  ): Promise<Record<string, ResponsiveBlockStyle>>;
 
   /** Sostituisce per intero l'override di UN tipo di blocco — upsert atomico su quella sola riga (site_id, block_type). */
   upsert(
     tenantId: string,
     siteId: string,
     blockType: string,
-    style: BlockStyleOverride,
+    style: ResponsiveBlockStyle,
   ): Promise<void>;
 }

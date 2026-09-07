@@ -277,7 +277,7 @@ describe('usePropertyPatch', () => {
         'button-1',
         'Button',
         { label: 'Clicca qui' },
-        { backgroundColor: '#ff0000' },
+        { base: { backgroundColor: '#ff0000' } },
       );
     });
     await act(async () => {
@@ -288,7 +288,7 @@ describe('usePropertyPatch', () => {
     });
 
     expect(onSaveStyleOverride).toHaveBeenCalledWith('button-1', {
-      backgroundColor: '#ff0000',
+      base: { backgroundColor: '#ff0000' },
     });
     expect(blockFragmentApi.renderBlockFragment).toHaveBeenCalledWith({
       pageId: 'page-1',
@@ -297,7 +297,7 @@ describe('usePropertyPatch', () => {
       blockType: 'Button',
       props: { label: 'Clicca qui' },
       children: undefined,
-      styleOverride: { backgroundColor: '#ff0000' },
+      styleOverride: { base: { backgroundColor: '#ff0000' } },
     });
     expect(patchBlock).toHaveBeenCalledWith('button-1', '<div>patched</div>');
   });
@@ -318,7 +318,7 @@ describe('usePropertyPatch', () => {
         'button-1',
         'Button',
         { label: 'Prop change' },
-        { backgroundColor: '#ff0000' },
+        { base: { backgroundColor: '#ff0000' } },
       );
     });
     act(() => {
@@ -368,7 +368,14 @@ describe('usePropertyPatch', () => {
       act(() => {
         result.current.scheduleChange('a', 'Hero', 'title', {});
         result.current.scheduleTextChange('a', 'title', 'x');
-        result.current.scheduleStyleOverrideChange('a', 'Hero', {}, {});
+        result.current.scheduleStyleOverrideChange(
+          'a',
+          'Hero',
+          {},
+          {
+            base: {},
+          },
+        );
       });
       act(() => void vi.advanceTimersByTime(300));
 

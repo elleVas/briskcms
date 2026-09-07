@@ -1,43 +1,27 @@
 ---
 import type { StatusBadgeProps } from './StatusBadge.block';
 
-// `themes/` isn't a pnpm-resolvable-by-others package for apps/public-site
-// (see themes/README.md) but a theme's OWN `.astro` files here import
-// from a sibling `.block.ts` in this same package freely — this file
-// only needs the type, not a cross-package import.
-type BlockStyleOverride = {
-  backgroundColor?: string | null;
-  textColor?: string | null;
-};
-
+// Same instance-style convention every core block uses, and since
+// ADR-0047 it costs a theme block nothing at all: the per-instance
+// override is a generated CSS RULE, not an inline attribute — an inline
+// `style` cannot hold the container query a per-breakpoint value needs.
+// A stylable block receives the class that rule targets and puts it on
+// its root element; the custom properties below
+// (`--brisk-override-bg`/`--brisk-override-text`, the fixed shared names
+// from libs/shared-types/src/lib/block-style-overrides.ts) arrive through
+// it. Nothing to build by hand, and no copy of those names in TypeScript
+// to drift from the real ones.
 interface Props extends StatusBadgeProps {
-  styleOverride?: BlockStyleOverride;
+  instanceClass?: string | null;
 }
 
-const { label, tone, styleOverride } = Astro.props;
-
-// Same instance-style-override convention every core block already uses
-// (see Heading.astro) — `--brisk-override-bg`/`--brisk-override-text` are
-// the fixed, shared custom-property names every stylable block reads
-// (libs/shared-types/src/lib/block-style-overrides.ts), reproduced here
-// directly since this file can't import that helper (different package).
-const instanceStyle = [
-  styleOverride?.backgroundColor
-    ? `--brisk-override-bg: ${styleOverride.backgroundColor};`
-    : null,
-  styleOverride?.textColor
-    ? `--brisk-override-text: ${styleOverride.textColor};`
-    : null,
-]
-  .filter(Boolean)
-  .join(' ');
+const { label, tone, instanceClass } = Astro.props;
 ---
 
 <span
-  class="brisk-status-badge"
+  class:list={['brisk-status-badge', instanceClass]}
   data-tone={tone}
   data-brisk-field="label"
-  style={instanceStyle || undefined}
 >
   <span class="brisk-status-badge__dot" aria-hidden="true"></span>
   {label}

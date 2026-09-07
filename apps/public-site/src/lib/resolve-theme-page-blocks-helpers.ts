@@ -40,7 +40,8 @@ export function checkCoreTypeCollisions(
 export interface ThemeBlockDispatchEntry {
   component: AstroComponentFactory;
   schema: { parse: (props: unknown) => Record<string, unknown> };
-  styleOverride?: boolean;
+  /** The block accepts per-instance styling, so it is handed the class its generated CSS rule targets. Named for what it does, not for a prop: since ADR-0047 the override itself never reaches the component, only the class. */
+  stylable?: boolean;
   locale?: boolean;
   recurseChildren?: boolean;
   containerProps?: boolean;
@@ -65,7 +66,7 @@ export function buildDispatchEntry(
   return {
     component,
     schema,
-    styleOverride: (descriptor.stylableProperties?.length ?? 0) > 0,
+    stylable: (descriptor.stylableProperties?.length ?? 0) > 0,
     locale: true,
     ...(descriptor.isContainer
       ? { recurseChildren: true, containerProps: true }

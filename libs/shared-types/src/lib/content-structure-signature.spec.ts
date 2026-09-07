@@ -62,7 +62,7 @@ describe('computeContentStructureSignature', () => {
         id: 'block-1',
         type: 'Hero',
         props: {},
-        styleOverride: { borderRadius: '4px' },
+        styleOverride: { base: { borderRadius: '4px' } },
       },
     ];
     const b: PageContent = [{ id: 'block-2', type: 'Hero', props: {} }];

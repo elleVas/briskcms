@@ -15,6 +15,8 @@ import type {
   BlockRect,
   BlockStyleDefaults,
   BlockStyleOverride,
+  ResponsiveBlockStyle,
+  StyleBreakpoint,
 } from '@brisk/shared-types';
 import type { BlockDescriptor } from '@brisk/block-registry';
 import {
@@ -57,8 +59,14 @@ export interface BlockToolbarOverlayProps {
    * or there is no `siteId` — see canvas-editor-shell.tsx): the "Style"
    * button simply does not appear until they are.
    */
-  typeStyle?: BlockStyleOverride;
+  typeStyle?: ResponsiveBlockStyle;
   onChangeTypeStyle?: (style: BlockStyleOverride) => void;
+  /**
+   * Which size the style fields edit — the breakpoint selector's current
+   * value (ADR-0047). The fields themselves stay flat: this picks the
+   * bucket they are handed and the one the change is merged back into.
+   */
+  breakpoint: StyleBreakpoint;
   /** The per-INSTANCE override (docs/adr/0022) — `block` itself only, read straight from `block.styleOverride` (no separate prop needed). */
   onChangeInstanceStyle: (style: BlockStyleOverride) => void;
   onMoveUp: () => void;
@@ -69,6 +77,31 @@ export interface BlockToolbarOverlayProps {
   onInsertAfter: (descriptor: BlockDescriptor) => void;
   /** Present only for a "collection" container (a single type in `allowedChildTypes`, e.g. Testimonials→Testimonial) — it adds another child of that type directly, with no picker: the only sensible type is already known. */
   onAddChild?: () => void;
+}
+
+/**
+ * What the fields show as the value a property FALLS BACK TO when left
+ * empty.
+ *
+ * At the base size that is the theme's resolved default. At tablet or
+ * mobile it is the base override where one is set, because that is what
+ * the block will actually look like there — showing the theme default
+ * would tell the reader the block is untouched at that size when it is
+ * in fact inheriting a value they themselves set, and the difference is
+ * invisible until the page is published.
+ */
+function styleFieldDefaults(
+  themeDefaults: BlockStyleDefaults | undefined,
+  style: ResponsiveBlockStyle | undefined,
+): BlockStyleDefaults | undefined {
+  const base = style?.base;
+  if (!base || !themeDefaults) {
+    return themeDefaults;
+  }
+  const inherited = Object.fromEntries(
+    Object.entries(base).filter(([, value]) => typeof value === 'string'),
+  );
+  return { ...themeDefaults, ...inherited };
 }
 
 const iconButtonClass =
@@ -93,6 +126,7 @@ export function BlockToolbarOverlay({
   registry,
   categories,
   onChangeProp,
+  breakpoint,
   typeStyle,
   onChangeTypeStyle,
   onChangeInstanceStyle,
@@ -126,8 +160,15 @@ export function BlockToolbarOverlay({
   // visual effect at all, so we do not offer them there. That is why the
   // set of properties shown in the instance popover can differ from the
   // type popover's, which always stays `stylableProperties`.
+  // ...and at a narrow size they are dropped again, for a second reason:
+  // the space between root blocks is an inline style on a wrapper whose
+  // DEFAULT depends on the block's position in the page, so it is not part
+  // of the generated per-breakpoint rules (see PublicPageContent.astro).
+  // Offering the field anyway would let somebody set a mobile margin and
+  // watch nothing happen — the silent failure ADR-0047 exists to prevent.
+  // Fase 3 reworks that wrapper and can bring them back.
   const instanceStylableProperties: readonly (keyof BlockStyleOverride)[] =
-    isRootLevel
+    isRootLevel && breakpoint === 'base'
       ? [...stylableProperties, 'marginTop', 'marginBottom']
       : stylableProperties;
   const canStyleInstance = instanceStylableProperties.length > 0;
@@ -141,7 +182,13 @@ export function BlockToolbarOverlay({
   const instanceStyleDefaults: BlockStyleDefaults = {
     ...blockStyleDefaults?.[block.type],
     ...Object.fromEntries(
-      Object.entries(typeStyle ?? {}).filter(([, v]) => v != null),
+      Object.entries({
+        // The type's own base first, then what it changes at this size:
+        // together they are what an uncustomized instance really shows
+        // here (ADR-0047).
+        ...typeStyle?.base,
+        ...typeStyle?.[breakpoint],
+      }).filter(([, v]) => v != null),
     ),
   };
 
@@ -226,9 +273,12 @@ export function BlockToolbarOverlay({
               </p>
               <BlockStyleFields
                 properties={stylableProperties}
-                value={typeStyle ?? {}}
+                value={typeStyle?.[breakpoint] ?? {}}
                 onChange={(next) => onChangeTypeStyle?.(next)}
-                defaults={blockStyleDefaults?.[block.type]}
+                defaults={styleFieldDefaults(
+                  blockStyleDefaults?.[block.type],
+                  typeStyle,
+                )}
               />
             </PopoverContent>
           </Popover>
@@ -247,9 +297,12 @@ export function BlockToolbarOverlay({
             <PopoverContent side="right">
               <BlockStyleFields
                 properties={instanceStylableProperties}
-                value={block.styleOverride ?? {}}
+                value={block.styleOverride?.[breakpoint] ?? {}}
                 onChange={onChangeInstanceStyle}
-                defaults={instanceStyleDefaults}
+                defaults={styleFieldDefaults(
+                  instanceStyleDefaults,
+                  block.styleOverride,
+                )}
               />
             </PopoverContent>
           </Popover>

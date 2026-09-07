@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef } from 'react';
-import type { Block, BlockStyleOverride } from '@brisk/shared-types';
+import type { Block, ResponsiveBlockStyle } from '@brisk/shared-types';
 import { renderBlockFragment } from '../../lib/block-fragment-api-client';
 
 export interface UsePropertyPatchInput {
@@ -19,10 +19,10 @@ export interface UsePropertyPatchInput {
     changedKey: string,
     props: Record<string, unknown>,
   ) => void;
-  /** Like `onSaveDraft` but for the per-instance override (docs/adr/0022) — a value separate from `props`, replaced wholesale (see use-block-tree.ts's updateBlockStyleOverride) rather than merged field by field. */
+  /** Like `onSaveDraft` but for the per-instance override (docs/adr/0022), every breakpoint of it (ADR-0047) — a value separate from `props`, replaced wholesale (see use-block-tree.ts's updateBlockStyleOverride) rather than merged field by field. */
   onSaveStyleOverride: (
     blockId: string,
-    styleOverride: BlockStyleOverride,
+    styleOverride: ResponsiveBlockStyle,
   ) => void;
   /** Da usePreviewBridge — invia editor:patch-block all'iframe. */
   patchBlock: (blockId: string, html: string) => void;
@@ -69,7 +69,7 @@ export interface UsePropertyPatchResult {
     blockId: string,
     blockType: string,
     props: Record<string, unknown>,
-    styleOverride: BlockStyleOverride,
+    styleOverride: ResponsiveBlockStyle,
     children?: Block[],
   ) => void;
   /**
@@ -225,7 +225,7 @@ export function usePropertyPatch({
       blockId: string,
       blockType: string,
       props: Record<string, unknown>,
-      styleOverride: BlockStyleOverride,
+      styleOverride: ResponsiveBlockStyle,
       children?: Block[],
     ) => {
       schedule(`${STYLE_TIMER_PREFIX}${blockId}`, () => {

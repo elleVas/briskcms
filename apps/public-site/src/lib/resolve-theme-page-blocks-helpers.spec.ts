@@ -61,16 +61,16 @@ describe('buildDispatchEntry', () => {
     parse: (props: unknown) => props as Record<string, unknown>,
   };
 
-  it('sets styleOverride only when stylableProperties is non-empty', () => {
-    expect(
-      buildDispatchEntry(descriptor, component, schema).styleOverride,
-    ).toBe(false);
+  it('marks the block stylable only when stylableProperties is non-empty', () => {
+    expect(buildDispatchEntry(descriptor, component, schema).stylable).toBe(
+      false,
+    );
     expect(
       buildDispatchEntry(
         { ...descriptor, stylableProperties: ['textColor'] },
         component,
         schema,
-      ).styleOverride,
+      ).stylable,
     ).toBe(true);
   });
 

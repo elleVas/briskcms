@@ -1,18 +1,16 @@
 ---
-import { buildBlockInstanceStyle, type BlockStyleOverride } from '@brisk/shared-types';
 import EmptyContainerHint from '../EmptyContainerHint.astro';
 import { Translator } from '@brisk/theme-runtime';
 
 export interface Props {
   editable?: boolean;
   hasChildren?: boolean;
-  styleOverride?: BlockStyleOverride;
   /** The per-instance style class, from BlockRenderer — see blockInstanceClassName. */
   instanceClass?: string | null;
   locale: string;
 }
 
-const { editable, hasChildren, styleOverride, locale, instanceClass} = Astro.props;
+const { editable, hasChildren, locale, instanceClass } = Astro.props;
 const i18n = new Translator(locale);
 ---
 

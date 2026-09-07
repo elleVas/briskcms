@@ -51,26 +51,25 @@ describe('DrizzleSiteThemeBlockStylesRepository (integration)', () => {
 
   it('upsert then listBySite round-trips the style for a block type', async () => {
     await repository.upsert(tenantAId, siteId, 'Button', {
-      borderRadius: '9999px',
+      base: { borderRadius: '9999px' },
     });
 
     expect(await repository.listBySite(tenantAId, siteId)).toEqual({
-      Button: { borderRadius: '9999px' },
+      Button: { base: { borderRadius: '9999px' } },
     });
   });
 
   it('upsert on an already-styled type replaces that row, not a field-by-field merge', async () => {
     await repository.upsert(tenantAId, siteId, 'Banner', {
-      borderRadius: '6px',
-      paddingX: '1rem',
+      base: { borderRadius: '6px', paddingX: '1rem' },
     });
 
     await repository.upsert(tenantAId, siteId, 'Banner', {
-      borderRadius: '9999px',
+      base: { borderRadius: '9999px' },
     });
 
     const result = await repository.listBySite(tenantAId, siteId);
-    expect(result['Banner']).toEqual({ borderRadius: '9999px' });
+    expect(result['Banner']).toEqual({ base: { borderRadius: '9999px' } });
   });
 
   it(
@@ -79,16 +78,18 @@ describe('DrizzleSiteThemeBlockStylesRepository (integration)', () => {
     async () => {
       await Promise.all([
         repository.upsert(tenantAId, siteId, 'Hero', {
-          textColor: '#ffffff',
+          base: { textColor: '#ffffff' },
         }),
         repository.upsert(tenantAId, siteId, 'Feature', {
-          backgroundColor: '#000000',
+          base: { backgroundColor: '#000000' },
         }),
       ]);
 
       const result = await repository.listBySite(tenantAId, siteId);
-      expect(result['Hero']).toEqual({ textColor: '#ffffff' });
-      expect(result['Feature']).toEqual({ backgroundColor: '#000000' });
+      expect(result['Hero']).toEqual({ base: { textColor: '#ffffff' } });
+      expect(result['Feature']).toEqual({
+        base: { backgroundColor: '#000000' },
+      });
     },
   );
 });

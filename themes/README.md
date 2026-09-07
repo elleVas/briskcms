@@ -133,6 +133,35 @@ blank). The next level up — the furniture _around_ the blocks — is not
 another override but the narrower `regions/` contract described in the
 following section. `classic` ships neither, needing only tokens.
 
+### An override has to forward `instanceClass`
+
+A block whose descriptor declares `stylableProperties` is handed an
+`instanceClass` prop, and it must end up on the element the block renders:
+
+```astro
+---
+type Props = HeroProps & { instanceClass?: string | null };
+const { title, instanceClass } = Astro.props;
+---
+<header class:list={['brisk-docs-hero', instanceClass]}>…</header>
+```
+
+That class is what the per-instance style rule targets (ADR-0047). Since
+those styles became CSS rules rather than an inline `style` attribute —
+an inline style cannot hold the container query a per-breakpoint value
+needs — an override that drops the prop silently disables per-instance
+styling for that block type on every page of every site using the theme.
+Silently: the rule is still emitted into the page, matching nothing.
+
+`apps/public-site/src/lib/theme-block-override-styling.spec.ts` fails,
+naming the theme and the block, when an override of a stylable core block
+does not forward it.
+
+What each declaration then DOES remains the theme's business. The
+`docs-showcase` Hero forwards the class and still ignores
+`--brisk-override-bg`, because its background is a designed gradient — a
+deliberate choice, not an oversight.
+
 ## `regions/` — changing the page's own furniture
 
 Tokens restyle the blocks; `blocks/*.astro` rewrites one of them. What is

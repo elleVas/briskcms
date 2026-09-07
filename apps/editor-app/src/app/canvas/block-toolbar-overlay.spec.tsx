@@ -72,6 +72,7 @@ function baseProps() {
     registry: [buttonDescriptor],
     categories: [],
     onChangeProp: vi.fn(),
+    breakpoint: 'base' as const,
     onChangeInstanceStyle: vi.fn(),
     onMoveUp: vi.fn(),
     onMoveDown: vi.fn(),
@@ -141,7 +142,7 @@ describe('BlockToolbarOverlay style buttons', () => {
     renderOverlay(
       <BlockToolbarOverlay
         {...baseProps()}
-        typeStyle={{}}
+        typeStyle={{ base: {} }}
         onChangeTypeStyle={vi.fn()}
       />,
     );
@@ -163,7 +164,7 @@ describe('BlockToolbarOverlay style buttons', () => {
             id: 'block-1',
             type: 'Button',
             props: {},
-            styleOverride: { borderRadius: '6px' },
+            styleOverride: { base: { borderRadius: '6px' } },
           } as Block
         }
         onChangeInstanceStyle={onChangeInstanceStyle}
@@ -193,7 +194,7 @@ describe('BlockToolbarOverlay style buttons', () => {
     renderOverlay(
       <BlockToolbarOverlay
         {...baseProps()}
-        typeStyle={{ borderRadius: '4px' }}
+        typeStyle={{ base: { borderRadius: '4px' } }}
         onChangeTypeStyle={onChangeTypeStyle}
         onChangeInstanceStyle={onChangeInstanceStyle}
       />,
@@ -255,7 +256,7 @@ describe('BlockToolbarOverlay style buttons', () => {
       <BlockToolbarOverlay
         {...baseProps()}
         isRootLevel={true}
-        typeStyle={{}}
+        typeStyle={{ base: {} }}
         onChangeTypeStyle={vi.fn()}
       />,
     );

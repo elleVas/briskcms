@@ -90,3 +90,52 @@
   color: var(--brisk-link, inherit);
   text-decoration: underline;
 }
+
+/*
+ * Container queries need somewhere to measure (ADR-0047), and this is
+ * every place a block can live: the page itself, and every block that can
+ * contain other blocks.
+ *
+ * `body` and NOT the `<main>` column, which is the trap this cost an
+ * afternoon to find. That column is `max-w-5xl px-6` — at most 1024px
+ * wide minus 48px of padding, so its inline size NEVER exceeds 976px.
+ * Measured there, `(max-width: 1024px)` would match on a 4K monitor and
+ * every "Tablet" value anyone set would apply on desktop, always. Against
+ * `body` a top-level block measures the viewport and behaves exactly like
+ * the media query people expect, while a block nested in a narrow column
+ * still measures that column, which is the whole point of ADR-0047.
+ *
+ * The list below is not a matter of diligence. When an ancestor is
+ * missing the declaration, an `@container` rule simply NEVER MATCHES --
+ * no error, no warning, nothing in devtools marking it inert. Somebody
+ * would have watched the same control work on a page block minutes
+ * earlier and concluded they had made a mistake. `container-type.spec.ts`
+ * derives the list from the registry and fails, naming the block, when a
+ * new container type is added without appearing here.
+ *
+ * `inline-size` and not `size`: `size` makes the element depend on its own
+ * height, which collapses it. Only the width is ever asked about here.
+ *
+ * Verified in Chrome before choosing this: `container-type` does NOT make
+ * the element a containing block for `position: fixed` or `absolute`
+ * descendants (a CSSWG resolution from 2024), so BackToTop, the WhatsApp
+ * button and the cookie banner stay anchored to the viewport.
+ */
+body,
+.brisk-accordion,
+.brisk-column,
+.brisk-columns,
+.brisk-container,
+.brisk-feature-grid,
+.brisk-hamburger-menu,
+.brisk-nav,
+.brisk-nav-dropdown,
+.brisk-pricing-table,
+.brisk-stats-counter,
+.brisk-tab,
+.brisk-tabs,
+.brisk-team,
+.brisk-testimonials,
+.brisk-timeline {
+  container-type: inline-size;
+}

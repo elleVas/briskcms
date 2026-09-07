@@ -1,16 +1,11 @@
 ---
 import { Code as ShikiCode } from 'astro:components';
 import type { CodeLanguage } from 'astro';
-import {
-  type BlockStyleOverride,
-  type CodeProps,
-} from '@brisk/shared-types';
+import type { CodeProps } from '@brisk/shared-types';
 
-type Props = CodeProps & { styleOverride?: BlockStyleOverride;
-  instanceClass?: string | null;
-};
+type Props = CodeProps & { instanceClass?: string | null };
 
-const { code, language, styleOverride, instanceClass} = Astro.props;
+const { code, language, instanceClass } = Astro.props;
 
 // `language` is a plain `string` in the domain schema (shared-types has no
 // reason to depend on Shiki's bundled-language union) but the curated

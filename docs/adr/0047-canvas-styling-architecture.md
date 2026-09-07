@@ -77,14 +77,23 @@ Brisk uses container queries instead:
 @container (max-width: 768px) { .b-a3f9 { … } }
 ```
 
-with `<main>` — and every block that can contain children — declared
+with `body` — and every block that can contain children — declared
 `container-type: inline-size`.
 
 The elegance is that this needs no new mental model. A root-level block's
-container is `<main>`, whose width tracks the viewport, so it behaves
-exactly as a media query would and the user notices nothing. The same
-block dropped into a 300px column correctly receives the narrow styles.
-Same interface, right behaviour in both cases.
+nearest container is `body`, whose width tracks the viewport, so it
+behaves exactly as a media query would and the user notices nothing. The
+same block dropped into a 300px column correctly receives the narrow
+styles. Same interface, right behaviour in both cases.
+
+> **Amended during implementation.** This paragraph originally said
+> `<main>`, and that was wrong in a way worth recording rather than
+> quietly fixing. `<main>` is `mx-auto max-w-5xl px-6`: its inline size
+> never exceeds **976px**, so `(max-width: 1024px)` would have matched on
+> a 4K monitor and every "Tablet" value anyone set would have applied on
+> desktop, always — silently, and with the control appearing to work.
+> Measuring `body` also survives Fase 3 making the content column
+> configurable, which measuring the column would not.
 
 Checked before choosing it: size container queries reached Baseline Widely
 Available in 2024 and sit around 90% global support in mid-2026; the early
@@ -112,20 +121,32 @@ would conclude they had made a mistake rather than that the feature was
 broken there.
 
 **The invariant, and it is testable**: the places a block can live are few
-and enumerable — `<main>`, the header region, the footer region, and every
-block descriptor with `isContainer: true`. If each declares
-`container-type: inline-size`, coverage is complete by construction. Two
-tests enforce it:
+and enumerable — the page itself, and every block descriptor with
+`isContainer: true`. If each declares `container-type: inline-size`,
+coverage is complete by construction. Two tests enforce it
+(`apps/public-site/src/lib/container-type.spec.ts`):
 
-1. over the registry — every `isContainer` descriptor's rendered element
-   carries the declaration, so adding a new container block and forgetting
-   fails the build **naming the block**;
-2. over real rendered HTML — a page containing a block in every context
-   (root, container, column, tab, header, footer) is rendered, parsed, and
-   each block element's ancestors are walked to assert one is a container.
+1. over the registry — every `isContainer` descriptor's class appears in
+   the rule that declares `container-type`, so adding a new container
+   block and forgetting fails the build **naming the block**;
+2. over the components — each of those classes sits on the **root element**
+   of its component, so it is an ancestor of the children rendered inside,
+   and none of them is `display: contents` (an element with no box
+   measures nothing).
 
-The second is the one that matters: it checks what the browser receives,
-not what we intended.
+The second was specified here as a check over rendered HTML, walking each
+block element's ancestors. It is a check over component source instead:
+Vitest has no Astro plugin in this workspace and there is no served-HTML
+harness to render a page in a test. The substitute is not a weaker claim —
+a class on the component's root element **is** an ancestor of everything
+that component renders, which is exactly what walking the ancestors would
+have established.
+
+Writing the first of these immediately found a real one:
+`HamburgerMenu` is a container, and its root carried `brisk-hamburger`
+while the style system generates rules for `.brisk-hamburger-menu`. Nothing
+had failed because that block has no `stylableProperties` yet — the
+mismatch was waiting for the day it got one.
 
 ### 4. Variants are the product primitive; classes are the mechanism
 
@@ -191,8 +212,23 @@ are the same question from two sides.
 - **A data migration.** The stored shape becomes breakpoint-major —
   `{ base, tablet?, mobile? }` — in JSONB on `Block.styleOverride` for every
   block of every page, and on `site_theme_block_styles.style`. A script
-  (modelled on `backfill-block-ids.ts`) plus a backward-compatible read:
-  the old shape is the new one with only `base`.
+  (`pnpm db:migrate-responsive-block-styles`, modelled on
+  `backfill-block-ids.ts`) plus a backward-compatible read: the old shape
+  is the new one with only `base`. The read is what makes the feature
+  work, so the script does not have to run before the new code — it runs
+  so that only one shape is left in the tables, rather than every future
+  reader having to handle both forever.
+- **Nothing validates a stored style by throwing.** The emitter and the
+  database read both tolerate a value today's rules refuse — a row written
+  before PR #144 bounded what a declaration may contain — by dropping that
+  one property. A `.parse` on either path would answer a bad colour saved
+  months ago with a site that does not render.
+- **Root-block spacing stays base-only.** `marginTop`/`marginBottom` are an
+  inline style on a wrapper whose default depends on the block's position
+  in the page, so they are not part of the generated rules. Rather than
+  offer a control that silently does nothing, the editor hides those two
+  fields at the narrow sizes; Fase 3 reworks that wrapper and can bring
+  them back.
 - **The editor's live patch grows.** `canvas-editor-shell.tsx` already
   live-patches a `<style>` for per-type rules on save; it must now do the
   same for per-instance rules. Where those rules live in the document, and

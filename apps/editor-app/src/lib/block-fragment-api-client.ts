@@ -1,4 +1,4 @@
-import type { Block, BlockStyleOverride } from '@brisk/shared-types';
+import type { Block, ResponsiveBlockStyle } from '@brisk/shared-types';
 import { PUBLIC_SITE_URL } from './public-site-url';
 
 export interface RenderBlockFragmentInput {
@@ -9,8 +9,8 @@ export interface RenderBlockFragmentInput {
   props: Record<string, unknown>;
   /** The block's current children (when it is a container), already known on the client — this saves the server rebuilding them by reading the saved draft, which may not yet have taken in a save happening in parallel. */
   children?: Block[];
-  /** The per-instance override (docs/adr/0022) — without this, a style change from the canvas would not show in the freshly patched fragment. */
-  styleOverride?: BlockStyleOverride;
+  /** The per-instance override (docs/adr/0022), every breakpoint of it (ADR-0047) — without this, a style change from the canvas would not show in the freshly patched fragment. */
+  styleOverride?: ResponsiveBlockStyle;
 }
 
 /**

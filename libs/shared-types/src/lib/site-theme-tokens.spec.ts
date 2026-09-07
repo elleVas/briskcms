@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   blockStyleOverrideSchema,
+  normalizeResponsiveBlockStyle,
   themeTokensSchema,
   updateThemeTokensBodySchema,
 } from './site-theme-tokens';
@@ -91,6 +92,56 @@ describe('a block type cannot become a selector of its own', () => {
         themeTokensSchema.safeParse({ blockStyles: { [blockType]: {} } })
           .success,
       ).toBe(true);
+    },
+  );
+});
+
+describe('normalizeResponsiveBlockStyle', () => {
+  it('reads a flat override written before breakpoints existed', () => {
+    expect(normalizeResponsiveBlockStyle({ minHeight: '60vh' })).toEqual({
+      base: { minHeight: '60vh' },
+    });
+  });
+
+  it('passes a current one through unchanged', () => {
+    const style = {
+      base: { minHeight: '60vh' },
+      mobile: { minHeight: '30vh' },
+    };
+    expect(normalizeResponsiveBlockStyle(style)).toEqual(style);
+  });
+
+  /**
+   * The behaviour this function exists for. A row written before the
+   * declaration rules of PR #144 can hold a value today's schema refuses,
+   * and this runs while resolving a site: a `.parse` would answer with an
+   * exception, and one bad colour saved months ago would take the whole
+   * site off the air.
+   */
+  it('drops only the property a stored value makes unusable', () => {
+    expect(
+      normalizeResponsiveBlockStyle({
+        base: {
+          minHeight: '60vh',
+          backgroundColor: 'red; } body { display: none } .x {',
+        },
+      }),
+    ).toEqual({ base: { minHeight: '60vh' } });
+  });
+
+  it('keeps the other breakpoints when one of them holds a bad value', () => {
+    expect(
+      normalizeResponsiveBlockStyle({
+        base: { minHeight: '60vh' },
+        mobile: { minHeight: '@import url(//evil.example)' },
+      }),
+    ).toEqual({ base: { minHeight: '60vh' }, mobile: {} });
+  });
+
+  it.each([null, undefined, 'a string', 42, []])(
+    'answers %s with an empty style rather than throwing',
+    (garbage) => {
+      expect(normalizeResponsiveBlockStyle(garbage)).toEqual({ base: {} });
     },
   );
 });

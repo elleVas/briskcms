@@ -1,15 +1,12 @@
 ---
 import {
   STAR_ICON_PATH,
-  type BlockStyleOverride,
   type RatingProps,
 } from '@brisk/shared-types';
 
-type Props = RatingProps & { styleOverride?: BlockStyleOverride;
-  instanceClass?: string | null;
-};
+type Props = RatingProps & { instanceClass?: string | null };
 
-const { rating, label, styleOverride, instanceClass} = Astro.props;
+const { rating, label, instanceClass } = Astro.props;
 
 const STAR_POSITIONS = [1, 2, 3, 4, 5];
 ---

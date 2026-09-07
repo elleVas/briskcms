@@ -1,15 +1,10 @@
 ---
-import {
-  type BlockStyleOverride,
-  type ButtonProps,
-} from '@brisk/shared-types';
+import type { ButtonProps } from '@brisk/shared-types';
 import { localePathFromAncestors } from '@brisk/theme-runtime';
 
-type Props = ButtonProps & { styleOverride?: BlockStyleOverride;
-  instanceClass?: string | null;
-};
+type Props = ButtonProps & { instanceClass?: string | null };
 
-const { label, linkType, page, url, variant, styleOverride, instanceClass} = Astro.props;
+const { label, linkType, page, url, variant, instanceClass } = Astro.props;
 const href =
   linkType === 'page' && page?.locale && page?.slug ? localePathFromAncestors(page.locale, page.ancestorSlugs ?? [], page.slug) : url;
 

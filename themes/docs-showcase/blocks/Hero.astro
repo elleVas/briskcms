@@ -10,12 +10,18 @@
 // ../PageLayout.astro for why.
 import type { HeroProps } from '@brisk/shared-types';
 
-type Props = HeroProps;
+// `instanceClass` travels with the props since ADR-0047: the per-instance
+// override is a generated CSS rule, and this element has to carry the
+// class that rule targets — an override that drops it silently disables
+// per-instance styling for every Hero on every site using this theme.
+// What each declaration then DOES is still this theme's business: the
+// gradient below deliberately ignores `--brisk-override-bg`.
+type Props = HeroProps & { instanceClass?: string | null };
 
-const { title, subtitle } = Astro.props;
+const { title, subtitle, instanceClass } = Astro.props;
 ---
 
-<header class="brisk-docs-hero">
+<header class:list={['brisk-docs-hero', instanceClass]}>
 	<div class="brisk-docs-hero__badge">✨ Built with Brisk itself</div>
 	<h1 class="brisk-docs-hero__title">{title}</h1>
 	{/* `set:html`, and a container that may hold paragraphs: `subtitle` is

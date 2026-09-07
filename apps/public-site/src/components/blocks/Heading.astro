@@ -1,14 +1,9 @@
 ---
-import {
-  type BlockStyleOverride,
-  type HeadingProps,
-} from '@brisk/shared-types';
+import type { HeadingProps } from '@brisk/shared-types';
 
-type Props = HeadingProps & { styleOverride?: BlockStyleOverride;
-  instanceClass?: string | null;
-};
+type Props = HeadingProps & { instanceClass?: string | null };
 
-const { text, level, styleOverride, instanceClass} = Astro.props;
+const { text, level, instanceClass } = Astro.props;
 const Tag = level;
 ---
 

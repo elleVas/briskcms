@@ -3,6 +3,7 @@ import { createRef } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import * as previewTokenApi from '../../lib/preview-token-api-client';
 import { PUBLIC_SITE_URL } from '../../lib/public-site-url';
+import { BREAKPOINT_WIDTHS } from './breakpoint-selector';
 import { buildPreviewUrl, CanvasFrame } from './canvas-frame';
 import type { PreviewBridgeState } from './use-preview-bridge';
 
@@ -159,7 +160,12 @@ describe('CanvasFrame', () => {
     renderFrame({ breakpoint: 'tablet' });
 
     const iframe = await waitFor(() => screen.getByTitle('Anteprima pagina'));
-    expect((iframe.parentElement as HTMLElement).style.width).toBe('768px');
+    // Read from the table rather than repeated here: the width moved once
+    // already (ADR-0047 lifted tablet to the top of its band) and a copy
+    // in the assertion only turns that into a failing test to edit.
+    expect((iframe.parentElement as HTMLElement).style.width).toBe(
+      `${BREAKPOINT_WIDTHS.tablet}px`,
+    );
   });
 
   it('constrains the iframe to a fixed width for the mobile breakpoint', async () => {

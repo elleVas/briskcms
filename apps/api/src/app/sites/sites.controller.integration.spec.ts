@@ -349,17 +349,24 @@ describe('SitesController (integration)', () => {
       .patch(`/sites/${siteId}/theme-tokens`)
       .send({
         blockType: 'Button',
+        // Sent flat, on purpose: the shape a client written before
+        // ADR-0047 sends, and `responsiveBlockStyleSchema` reads it as the
+        // base size rather than rejecting it.
         style: { borderRadius: '9999px', paddingX: '1.5rem' },
       })
       .expect(200);
 
     expect(res.body.themeTokens).toEqual({
-      blockStyles: { Button: { borderRadius: '9999px', paddingX: '1.5rem' } },
+      blockStyles: {
+        Button: { base: { borderRadius: '9999px', paddingX: '1.5rem' } },
+      },
     });
 
     const getAfter = await agent.get(`/sites/${siteId}`).expect(200);
     expect(getAfter.body.themeTokens).toEqual({
-      blockStyles: { Button: { borderRadius: '9999px', paddingX: '1.5rem' } },
+      blockStyles: {
+        Button: { base: { borderRadius: '9999px', paddingX: '1.5rem' } },
+      },
     });
   });
 
