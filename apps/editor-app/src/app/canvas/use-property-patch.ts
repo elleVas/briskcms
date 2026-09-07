@@ -26,6 +26,23 @@ export interface UsePropertyPatchInput {
   ) => void;
   /** Da usePreviewBridge — invia editor:patch-block all'iframe. */
   patchBlock: (blockId: string, html: string) => void;
+  /**
+   * The end of a debounce burst — a run of changes on the same timer key
+   * with no gap long enough to fire it. It exists for undo: typing "hello"
+   * is one thing a person did, not five, so it must be one history entry.
+   * The debounce already draws exactly that boundary, so rather than the
+   * caller keeping a second, parallel notion of "still editing" (and the
+   * two drifting), this hook reports the boundary it already knows.
+   *
+   * Fires after the burst's save has run, when the resulting state is
+   * final. There is deliberately no matching `onBurstStart`: the caller
+   * would have to snapshot the state to undo *to*, and no moment during
+   * render is reliably "before" for every path — inline typing applies its
+   * optimistic update during render and schedules the save in an effect,
+   * so a snapshot taken then is already one keystroke late. The history
+   * knows what came before; it does not need to be told.
+   */
+  onBurstEnd?: (timerKey: string) => void;
   debounceMs?: number;
 }
 
@@ -62,10 +79,36 @@ export interface UsePropertyPatchResult {
    * never silently dropped from what gets published. Safe to call with
    * nothing pending (no-op).
    */
-  flushAll: () => void;
+  /**
+   * Fires every pending save NOW. `closeBursts: false` when the page
+   * itself is going away: the save still has to happen (it belongs to the
+   * page being left), but reporting the burst end would record an undo
+   * entry into a history the new page has just reset — an entry pointing
+   * at the OLD page's tree.
+   */
+  flushAll: (options?: { closeBursts?: boolean }) => void;
 }
 
 const DEFAULT_DEBOUNCE_MS = 300;
+
+const TEXT_TIMER_PREFIX = 'text:';
+const STYLE_TIMER_PREFIX = 'style:';
+
+/**
+ * The inverse of the timer keys below. It lives here rather than at the
+ * call site because this file is the one that decides what a timer key
+ * looks like — a caller reconstructing the prefixes by hand would be a
+ * second copy of that decision, free to drift.
+ */
+export function blockIdFromTimerKey(timerKey: string): string {
+  if (timerKey.startsWith(TEXT_TIMER_PREFIX)) {
+    return timerKey.slice(TEXT_TIMER_PREFIX.length);
+  }
+  if (timerKey.startsWith(STYLE_TIMER_PREFIX)) {
+    return timerKey.slice(STYLE_TIMER_PREFIX.length);
+  }
+  return timerKey;
+}
 
 /**
  * On a property change: it saves the draft (debounced, the same
@@ -82,6 +125,7 @@ export function usePropertyPatch({
   onSaveDraft,
   onSaveStyleOverride,
   patchBlock,
+  onBurstEnd,
   debounceMs = DEFAULT_DEBOUNCE_MS,
 }: UsePropertyPatchInput): UsePropertyPatchResult {
   const timers = useRef(
@@ -114,18 +158,29 @@ export function usePropertyPatch({
     const timeout = setTimeout(() => {
       timers.current.delete(timerKey);
       fire();
+      onBurstEnd?.(timerKey);
     }, debounceMs);
     timers.current.set(timerKey, { timeout, fire });
   }
 
-  const flushAll = useCallback(() => {
-    const pending = [...timers.current.values()];
-    timers.current.clear();
-    for (const { timeout, fire } of pending) {
-      clearTimeout(timeout);
-      fire();
-    }
-  }, []);
+  const flushAll = useCallback(
+    ({ closeBursts = true }: { closeBursts?: boolean } = {}) => {
+      const pending = [...timers.current.entries()];
+      timers.current.clear();
+      for (const [timerKey, { timeout, fire }] of pending) {
+        clearTimeout(timeout);
+        fire();
+        // A flushed burst has ended just as surely as an expired one — undo
+        // must see it, or publishing mid-burst would leave that edit out of
+        // the history for good.
+        if (closeBursts) {
+          onBurstEnd?.(timerKey);
+        }
+      }
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- onBurstEnd is redefined on every render but only ever reads refs; depending on it would break flushAll's stable identity, which handlePublish and the page-change flush both rely on.
+    [],
+  );
 
   const scheduleChange = useCallback(
     (
@@ -157,7 +212,7 @@ export function usePropertyPatch({
 
   const scheduleTextChange = useCallback(
     (blockId: string, field: string, text: string) => {
-      schedule(`text:${blockId}`, () => {
+      schedule(`${TEXT_TIMER_PREFIX}${blockId}`, () => {
         onSaveDraft(blockId, field, { [field]: text });
       });
     },
@@ -173,7 +228,7 @@ export function usePropertyPatch({
       styleOverride: BlockStyleOverride,
       children?: Block[],
     ) => {
-      schedule(`style:${blockId}`, () => {
+      schedule(`${STYLE_TIMER_PREFIX}${blockId}`, () => {
         onSaveStyleOverride(blockId, styleOverride);
         renderBlockFragment({
           pageId,

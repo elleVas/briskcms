@@ -130,7 +130,29 @@ function renderShell(
     </QueryClientProvider>,
   );
 
-  return { ...utils, onChange, onPublish, blocks };
+  /** Re-renders the SAME shell with another page — what switching language does (the shell is not remounted, it resyncs from props). */
+  function switchPage(nextPageId: string, nextBlocks: Block[]) {
+    utils.rerender(
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <ToastProvider>
+            <CanvasEditorShell
+              backLink={<a href="/pages">Pagine</a>}
+              statusText="Bozza salvata"
+              registry={registry}
+              categories={categories}
+              blocks={nextBlocks}
+              onChange={onChange}
+              onPublish={onPublish}
+              pageId={nextPageId}
+            />
+          </ToastProvider>
+        </TooltipProvider>
+      </QueryClientProvider>,
+    );
+  }
+
+  return { ...utils, onChange, onPublish, blocks, switchPage };
 }
 
 async function getIframe() {
@@ -1134,5 +1156,50 @@ describe('CanvasEditorShell', () => {
       screen.getByRole('button', { name: 'Annulla' }).hasAttribute('disabled'),
     ).toBe(false);
     input.remove();
+  });
+
+  // A debounced save belongs to the page it was scheduled on. The shell is
+  // NOT remounted when you switch language (it resyncs `blocks` from props),
+  // so a timer still in flight used to fire against whatever tree had
+  // meanwhile taken its place. Two blocks on purpose: the edited one looks
+  // identical either way, the SIBLING is what says which page was saved.
+  it('saves an in-flight edit against the page it was made on, not the one switched to', async () => {
+    const italian: Block[] = [
+      { id: 'hero-1', type: 'Hero', props: { title: 'Ciao', subtitle: 'S' } },
+      { id: 'text-1', type: 'Text', props: { body: 'IT' } },
+    ];
+    const english: Block[] = [
+      { id: 'hero-1', type: 'Hero', props: { title: 'Hello', subtitle: 'S' } },
+      { id: 'text-1', type: 'Text', props: { body: 'EN' } },
+    ];
+    vi.mocked(blockFragmentApi.renderBlockFragment).mockResolvedValue(
+      '<section>hero</section>',
+    );
+    const onChange = vi.fn();
+    const { switchPage } = renderShell({ blocks: italian, onChange });
+    const iframe = await getIframe();
+
+    selectBlockWithRect(iframe, 'hero-1', HERO_RECT);
+    openPropertiesPopover();
+    fireEvent.change(screen.getByDisplayValue('Ciao'), {
+      target: { value: 'Ciao a tutti' },
+    });
+
+    // Switch language well inside the 300ms debounce window.
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(100);
+    });
+    act(() => switchPage('page-2', english));
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(500);
+    });
+
+    const saved = onChange.mock.calls
+      .map(([tree]) => tree as Block[])
+      .filter((tree) => tree[0]?.props?.title === 'Ciao a tutti');
+    expect(saved.length).toBeGreaterThan(0);
+    for (const tree of saved) {
+      expect(tree[1]?.props?.body).toBe('IT');
+    }
   });
 });

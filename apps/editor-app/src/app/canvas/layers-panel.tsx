@@ -18,7 +18,7 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import type { Block } from '@brisk/shared-types';
-import { locateBlock, siblingsAt } from './use-block-tree';
+import { blockIds, locateBlock, siblingsAt } from './use-block-tree';
 
 export interface LayersPanelProps {
   blocks: Block[];
@@ -92,9 +92,7 @@ export function computeNestedReorder(
     return null;
   }
 
-  const siblingIds = siblingsAt(blocks, activeLocation.parentId)
-    .map((block) => block.id)
-    .filter((id): id is string => id !== undefined);
+  const siblingIds = blockIds(siblingsAt(blocks, activeLocation.parentId));
   const oldIndex = siblingIds.indexOf(activeId);
   const newIndex = siblingIds.indexOf(overId);
   if (oldIndex === -1 || newIndex === -1) {

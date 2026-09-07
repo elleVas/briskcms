@@ -1,4 +1,10 @@
-import { useState, type Dispatch, type SetStateAction } from 'react';
+import {
+  useEffect,
+  useRef,
+  useState,
+  type Dispatch,
+  type SetStateAction,
+} from 'react';
 import type { Block } from '@brisk/shared-types';
 import type { BlockDescriptor } from '@brisk/block-registry';
 import { renderBlockFragment } from '../../lib/block-fragment-api-client';
@@ -7,6 +13,7 @@ import {
   cloneBlockWithNewIds,
   createBlockFromDescriptor,
   findBlockInTree,
+  blockIds,
   insertBlock,
   locateBlock,
   moveBlock,
@@ -88,6 +95,23 @@ export interface UseBlockTreeMutationsResult {
     descriptor: BlockDescriptor,
     target: BlockTreeTarget,
   ) => void;
+  /**
+   * Records an edit that changed a block's props or its per-instance style
+   * rather than the shape of the tree — a typed character, a field in the
+   * Inspector, a colour in the style popover.
+   *
+   * Separate from the handlers above because those OWN their mutation: they
+   * compute the new tree and apply it. This one is told about a change that
+   * already happened elsewhere (canvas-editor-shell.tsx, which owns
+   * `localBlocks` for these paths), so it only has to build the entry.
+   *
+   * The caller decides the boundary, and the boundary is the debounce burst
+   * (see usePropertyPatch's onBurstEnd): one entry per run of typing, not
+   * one per keystroke, which would make undo useless. It passes only the
+   * tree it ended up with — what to go BACK to is `lastCommittedRef`, which
+   * the history maintains itself.
+   */
+  recordEdit: (blockId: string, after: Block[]) => void;
   undo: () => void;
   redo: () => void;
   canUndo: boolean;
@@ -119,6 +143,42 @@ export function useBlockTreeMutations({
 }: UseBlockTreeMutationsParams): UseBlockTreeMutationsResult {
   const [past, setPast] = useState<HistoryEntry[]>([]);
   const [future, setFuture] = useState<HistoryEntry[]>([]);
+  /**
+   * The tree as of the last point the history knows about — the state undo
+   * would return to. Every entry below is built from it, which is what
+   * lets an edit be recorded when its debounce burst ENDS without anyone
+   * having had to snapshot a "before" when the burst opened: the history
+   * already knows what came before, and knows it at a moment that does not
+   * depend on when a React effect happened to refresh a ref.
+   *
+   * A ref and not state on purpose: `flushAll` (on publish) can end two
+   * bursts in the same tick, and the second has to see the baseline the
+   * first just moved. A state update would not have landed yet, and the
+   * two entries would overlap.
+   */
+  const lastCommittedRef = useRef(localBlocks);
+
+  /**
+   * The history belongs to ONE page. Nothing reset it before, and the shell
+   * does not remount on navigation (it resyncs `localBlocks` from props
+   * instead, see its `syncKey`) — so switching language and pressing undo
+   * restored the PREVIOUS translation's tree into the current one, and
+   * `undo` calls `onChange`, so it was then saved. Silent cross-language
+   * content loss.
+   */
+  const [historyPageId, setHistoryPageId] = useState(pageId);
+  if (historyPageId !== pageId) {
+    setHistoryPageId(pageId);
+    setPast([]);
+    setFuture([]);
+  }
+  // The baseline follows, in an effect because a ref may not be written
+  // during render. By the time it runs, the shell's own resync has already
+  // put the new page's tree in `localBlocks`.
+  useEffect(() => {
+    lastCommittedRef.current = localBlocks;
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- re-baselines on a PAGE change only; localBlocks changes on every edit, and re-running then would defeat the point.
+  }, [pageId]);
 
   function applyLocalChange(next: Block[]): void {
     setLocalBlocks(next);
@@ -127,6 +187,7 @@ export function useBlockTreeMutations({
 
   /** Records a new action — always clearing the "future" (redo stops making sense after a fresh mutation, the same convention as every editor with undo/redo). */
   function recordHistory(entry: HistoryEntry): void {
+    lastCommittedRef.current = entry.after;
     setPast((prev) => [...prev, entry].slice(-MAX_HISTORY_ENTRIES));
     setFuture([]);
   }
@@ -137,6 +198,7 @@ export function useBlockTreeMutations({
         return prev;
       }
       const entry = prev[prev.length - 1];
+      lastCommittedRef.current = entry.before;
       setLocalBlocks(entry.before);
       onChange(entry.before);
       entry.syncBackward();
@@ -151,6 +213,7 @@ export function useBlockTreeMutations({
         return prev;
       }
       const entry = prev[0];
+      lastCommittedRef.current = entry.after;
       setLocalBlocks(entry.after);
       onChange(entry.after);
       entry.syncForward();
@@ -294,6 +357,49 @@ export function useBlockTreeMutations({
    * the same reason `handleMoveSelected` below already works at any depth
    * through `locateBlock`.
    */
+  /**
+   * Re-renders one block from the tree given and patches it into the live
+   * canvas — the same `editor:patch-block` a property change already sends,
+   * only driven by a tree we are moving *to* rather than one the user just
+   * typed into. A failure leaves the canvas one step behind visually and
+   * loses nothing: `undo` has already restored and saved the real tree.
+   */
+  function patchBlockFromTree(tree: Block[], blockId: string): void {
+    const block = findBlockInTree(tree, blockId);
+    // Without a preview token the fragment cannot be rendered — the same
+    // guard patchParentBlock makes. Undo still restores and saves the tree;
+    // only the live canvas stays behind until the next reload.
+    if (!token || !block) {
+      return;
+    }
+    void renderBlockFragment({
+      pageId,
+      token,
+      blockId,
+      blockType: block.type,
+      props: block.props,
+      children: block.children,
+      styleOverride: block.styleOverride,
+    })
+      .then((html) => bridge.patchBlock(blockId, html))
+      .catch(() => {
+        /* see the comment above — the tree is already correct and saved. */
+      });
+  }
+
+  function recordEdit(blockId: string, after: Block[]): void {
+    const before = lastCommittedRef.current;
+    if (before === after) {
+      return;
+    }
+    recordHistory({
+      before,
+      after,
+      syncForward: () => patchBlockFromTree(after, blockId),
+      syncBackward: () => patchBlockFromTree(before, blockId),
+    });
+  }
+
   function handleReorder(parentId: string | null, orderedIds: string[]): void {
     const before = localBlocks;
     let next = before;
@@ -301,9 +407,7 @@ export function useBlockTreeMutations({
       next = moveBlock(next, id, { parentId, index });
     });
     applyLocalChange(next);
-    const beforeSiblingIds = siblingsAt(before, parentId).map(
-      (block) => block.id as string,
-    );
+    const beforeSiblingIds = blockIds(siblingsAt(before, parentId));
     const syncForward = () => bridge.reorderBlocks(parentId, orderedIds);
     const syncBackward = () => bridge.reorderBlocks(parentId, beforeSiblingIds);
     syncForward();
@@ -380,20 +484,14 @@ export function useBlockTreeMutations({
       if (location.parentId) {
         void patchParentBlock(location.parentId, next);
       } else {
-        bridge.reorderBlocks(
-          null,
-          next.map((block) => block.id as string),
-        );
+        bridge.reorderBlocks(null, blockIds(next));
       }
     };
     const syncBackward = () => {
       if (location.parentId) {
         void patchParentBlock(location.parentId, before);
       } else {
-        bridge.reorderBlocks(
-          null,
-          before.map((block) => block.id as string),
-        );
+        bridge.reorderBlocks(null, blockIds(before));
       }
     };
     syncForward();
@@ -467,6 +565,7 @@ export function useBlockTreeMutations({
   }
 
   return {
+    recordEdit,
     handleInsert,
     handleReorder,
     handleRemoveSelected,

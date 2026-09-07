@@ -178,6 +178,25 @@ export function siblingsAt(blocks: Block[], parentId: string | null): Block[] {
 }
 
 /**
+ * The ids of a flat list of blocks, in order — the form both the preview
+ * bridge (`reorderBlocks`) and `handleReorder` speak in.
+ *
+ * `Block.id` is optional (see content-model.ts: a transitional window for
+ * content written before the backfill), so this has to say what happens to
+ * a block that has none. It is DROPPED rather than cast away, which is
+ * safe here because a block with no id cannot take part in reordering at
+ * all: `rootRects` in canvas-editor-shell.tsx already skips it, so it is
+ * never draggable and never a drop target. Casting instead would put an
+ * `undefined` into a `string[]` and hand it to `moveBlock`, which is the
+ * silent-failure shape this codebase keeps getting caught by.
+ */
+export function blockIds(blocks: Block[]): string[] {
+  return blocks
+    .map((block) => block.id)
+    .filter((id): id is string => id !== undefined);
+}
+
+/**
  * A deep clone with NEW ids on every node (including every nested child,
  * recursively) — never the original's ids, or two different blocks would
  * share one id in the tree (fragment patching, dragging and reordering are

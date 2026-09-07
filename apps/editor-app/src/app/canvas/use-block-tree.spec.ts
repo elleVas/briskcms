@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { Block } from '@brisk/shared-types';
 import type { BlockDescriptor } from '@brisk/block-registry';
 import {
+  blockIds,
   cloneBlockWithNewIds,
   createBlockFromDescriptor,
   findBlockInTree,
@@ -229,6 +230,31 @@ describe('siblingsAt', () => {
 
   it('returns an empty array for an unknown parentId', () => {
     expect(siblingsAt(tree(), 'ghost')).toEqual([]);
+  });
+});
+
+describe('blockIds', () => {
+  it('returns the ids in list order', () => {
+    expect(blockIds(tree())).toEqual(['hero-1', 'container-1']);
+  });
+
+  it('drops a block with no id rather than yielding undefined', () => {
+    // The reason this is a filter and not a cast: the result is handed to
+    // moveBlock and to the preview bridge, both of which take string[].
+    // An `undefined` in there fails silently — nothing throws, the block
+    // just never moves.
+    const blocks: Block[] = [
+      { id: 'a', type: 'Text', props: {} },
+      { type: 'Text', props: {} },
+      { id: 'c', type: 'Text', props: {} },
+    ];
+    expect(blockIds(blocks)).toEqual(['a', 'c']);
+  });
+
+  it('is flat: nested children are not included', () => {
+    // text-1 lives inside container-1. Reordering is always scoped to one
+    // set of siblings, so a nested id here would be a bug, not a bonus.
+    expect(blockIds(tree())).not.toContain('text-1');
   });
 });
 
