@@ -1,8 +1,10 @@
-import type { ComponentType } from 'react';
 import type {
   BlockStyleDefaults,
   BlockStyleOverride,
+  CustomFieldControl,
 } from '@brisk/shared-types';
+
+export type { CustomFieldControl };
 
 /**
  * The public block-authoring data contract — every first-party block in
@@ -47,6 +49,31 @@ export type FieldDescriptor =
       translatable?: boolean;
     }
   | {
+      /**
+       * Long text that may carry formatting and, above all, a link INSIDE
+       * a sentence (ADR-0046). The value is an HTML string, sanitised on
+       * write against a strict allowlist (`@brisk/rich-text`), so a
+       * renderer can trust it and use `set:html`.
+       *
+       * A string and not a document tree on purpose: the per-locale
+       * translation overlay (`fieldValueOverlaySchema`) maps a field to a
+       * STRING, so keeping it one means translating rich text works on
+       * the day this ships, with no change to translation at all.
+       *
+       * `textarea` stays for content that is literal by definition —
+       * `Code.code`, `EmbedHtml.html` — where formatting would corrupt
+       * the value rather than enrich it.
+       */
+      kind: 'richtext';
+      key: string;
+      label: string;
+      inlineEditable?: boolean;
+      placeholder?: string;
+      required?: boolean;
+      requiredUnless?: string;
+      translatable?: boolean;
+    }
+  | {
       kind: 'radio' | 'select';
       key: string;
       label: string;
@@ -65,37 +92,42 @@ export type FieldDescriptor =
       kind: 'custom';
       key: string;
       label: string;
-      component: ComponentType<{
-        value: unknown;
-        onChange: (v: unknown) => void;
-      }>;
+      /**
+       * WHICH editor control renders this field, by name — not the
+       * component itself.
+       *
+       * It used to be a live `ComponentType`, and that one property
+       * decided a surprising amount: a descriptor holding a React
+       * component is not data, so the whole registry could only be read
+       * by something that runs React. The API could not look at a
+       * descriptor to find out which fields hold rich text
+       * (ADR-0046) without pulling React into a Node server, and a theme
+       * could not declare a custom field at all, because the value
+       * cannot survive JSON — a limitation `themeFieldDescriptorSchema`
+       * had to write down rather than solve.
+       *
+       * A name crosses every one of those boundaries. The editor keeps
+       * the map from name to component, which is where the React
+       * belongs; everything else reads the descriptor as what it is.
+       */
+      control: CustomFieldControl;
     };
 
 /**
- * A single point for the cast a `kind: 'custom'` field requires by
- * construction: each concrete picker (PagePickerField, MediaPickerField...)
- * has a `value`/`onChange` typed to its own domain (e.g. `PickedPage |
- * null`), but the `FieldDescriptor[]` array is heterogeneous and must stay
- * homogeneous — TypeScript can't express "this component is only ever used
- * for prop X, which the domain schema guarantees is V" inside an array of
- * this type. Concentrated here, with one comment, instead of repeated at
- * every call site.
+ * Kept as the way to declare a custom field, though it no longer has
+ * anything to hide: it used to exist for a cast, because each concrete
+ * picker typed `value`/`onChange` to its own domain while
+ * `FieldDescriptor[]` had to stay homogeneous. Naming the control instead
+ * of holding the component removed the mismatch rather than concentrating
+ * it, so the generic and the cast are both gone.
  */
 export class FieldBuilder {
-  static custom<V>(
+  static custom(
     key: string,
     label: string,
-    component: ComponentType<{ value: V; onChange: (value: V) => void }>,
+    control: CustomFieldControl,
   ): FieldDescriptor {
-    return {
-      kind: 'custom',
-      key,
-      label,
-      component: component as unknown as ComponentType<{
-        value: unknown;
-        onChange: (value: unknown) => void;
-      }>,
-    };
+    return { kind: 'custom', key, label, control };
   }
 }
 

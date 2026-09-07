@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useMediaPicker } from '@brisk/block-registry';
+import { useMediaPicker } from './media-picker-context';
 import type { SeoMeta } from '@brisk/shared-types';
 import { Button } from '../components/ui/button';
 import {

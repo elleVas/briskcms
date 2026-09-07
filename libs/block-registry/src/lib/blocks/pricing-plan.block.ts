@@ -2,7 +2,6 @@ import type { PricingPlanProps } from '@brisk/shared-types';
 import { BLOCK_STYLE_DEFAULTS } from '@brisk/shared-types';
 import { FieldBuilder, type BlockDescriptor } from '../field-types';
 import { BlockStyleRegistry } from '../block-style-registry';
-import { FeatureListField } from '../fields/feature-list-field';
 import { ctaLinkFields } from '../fields/link-type-field';
 
 export const pricingPlanBlock: BlockDescriptor<PricingPlanProps> = {
@@ -45,7 +44,7 @@ export const pricingPlanBlock: BlockDescriptor<PricingPlanProps> = {
     FieldBuilder.custom(
       'features',
       'blocks.pricingPlan.fields.features.fieldLabel',
-      FeatureListField,
+      'feature-list',
     ),
     // Replaces Puck's boolean-valued radio (options with
     // value: true/false) — a toggle fits a binary flag better.

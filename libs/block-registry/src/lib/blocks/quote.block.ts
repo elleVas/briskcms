@@ -14,7 +14,7 @@ export const quoteBlock: BlockDescriptor<QuoteProps> = {
   },
   fields: [
     {
-      kind: 'textarea',
+      kind: 'richtext',
       key: 'quote',
       translatable: true,
       label: 'blocks.quote.fields.quote.fieldLabel',

@@ -50,6 +50,9 @@
       "path": "../../libs/shared-types/tsconfig.lib.json"
     },
     {
+      "path": "../../libs/rich-text/tsconfig.lib.json"
+    },
+    {
       "path": "../../libs/block-registry/tsconfig.lib.json"
     }
   ]

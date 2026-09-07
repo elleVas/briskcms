@@ -2,7 +2,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import type { ReactNode } from 'react';
 import type { PickedForm } from '@brisk/shared-types';
-import { FormListContext, type FormListPort } from '../form-list-context';
+import { FormListContext, type FormListPort } from '../../form-list-context';
 import { FormPickerField } from './form-picker-field';
 
 const form: PickedForm = { formId: 'f1', formName: 'Contatti' };

@@ -18,7 +18,8 @@ function isInlineEditableField(
   const fieldDescriptor = descriptor?.fields.find((f) => f.key === field);
   return (
     (fieldDescriptor?.kind === 'text' ||
-      fieldDescriptor?.kind === 'textarea') &&
+      fieldDescriptor?.kind === 'textarea' ||
+      fieldDescriptor?.kind === 'richtext') &&
     Boolean(fieldDescriptor.inlineEditable)
   );
 }

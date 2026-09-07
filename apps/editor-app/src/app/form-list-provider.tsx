@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useRef, useState, type ReactNode } from 'react';
-import { FormListContext, type FormListPort } from '@brisk/block-registry';
+import { FormListContext, type FormListPort } from './form-list-context';
 import type { PickedForm } from '@brisk/shared-types';
 import { FormPickerDialog } from './form-picker-dialog';
 

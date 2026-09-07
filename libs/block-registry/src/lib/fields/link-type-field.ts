@@ -1,5 +1,4 @@
 import { FieldBuilder, type FieldDescriptor } from '../field-types';
-import { PagePickerField } from './page-picker-field';
 
 /**
  * Shared by every block with a "page or url" prop (NavLink, Button, Link,
@@ -30,7 +29,7 @@ export function ctaLinkFields(): FieldDescriptor[] {
     FieldBuilder.custom(
       'page',
       'blocks.shared.linkType.pageFieldLabel',
-      PagePickerField,
+      'page',
     ),
     {
       kind: 'text',

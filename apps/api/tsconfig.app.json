@@ -23,9 +23,6 @@
   ],
   "references": [
     {
-      "path": "../../libs/opaque-token/tsconfig.lib.json"
-    },
-    {
       "path": "../../libs/adapters/verification-token-adapter/tsconfig.lib.json"
     },
     {
@@ -45,6 +42,9 @@
     },
     {
       "path": "../../libs/adapters/s3-attachment-storage/tsconfig.lib.json"
+    },
+    {
+      "path": "../../libs/rich-text/tsconfig.lib.json"
     },
     {
       "path": "../../libs/adapters/preview-token-adapter/tsconfig.lib.json"
@@ -80,6 +80,9 @@
       "path": "../../libs/ports/tsconfig.lib.json"
     },
     {
+      "path": "../../libs/opaque-token/tsconfig.lib.json"
+    },
+    {
       "path": "../../libs/adapters/mailchimp-newsletter/tsconfig.lib.json"
     },
     {
@@ -99,6 +102,9 @@
     },
     {
       "path": "../../libs/adapters/brevo-newsletter/tsconfig.lib.json"
+    },
+    {
+      "path": "../../libs/block-registry/tsconfig.lib.json"
     },
     {
       "path": "../../libs/application/tsconfig.lib.json"

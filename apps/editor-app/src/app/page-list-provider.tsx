@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useRef, useState, type ReactNode } from 'react';
-import { PageListContext, type PageListPort } from '@brisk/block-registry';
+import { PageListContext, type PageListPort } from './page-list-context';
 import type { PickedPage } from '@brisk/shared-types';
 import { PagePickerDialog } from './page-picker-dialog';
 

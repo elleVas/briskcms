@@ -17,6 +17,19 @@ module.exports = {
     '^.+\\.[tj]s$': ['@swc/jest', swcJestConfig],
   },
   moduleFileExtensions: ['ts', 'js', 'html'],
+  // node_modules is not transformed by default, and `sanitize-html`
+  // (@brisk/rich-text, ADR-0046) reaches htmlparser2, which ships ESM
+  // only — Jest runs CJS here and chokes on its `import`.
+  //
+  // The pattern matches the whole PATH rather than the package directory
+  // on purpose. Under pnpm the same file is reachable as
+  // `.pnpm/sanitize-html@x/node_modules/htmlparser2/...` through a
+  // symlink, and a pattern anchored on `.pnpm/htmlparser2@` misses that
+  // spelling and silently ignores the file after all — which is exactly
+  // what happened before this comment existed.
+  transformIgnorePatterns: [
+    'node_modules/(?!.*(htmlparser2|entities|domutils|domhandler|domelementtype|dom-serializer))',
+  ],
   coverageDirectory: 'test-output/jest/coverage',
   // Default (babel/istanbul) coverage attributes phantom branches to every
   // decorated class: SWC's legacyDecorator transform inlines a `__decorate`

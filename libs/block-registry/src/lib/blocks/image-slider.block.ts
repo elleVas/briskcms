@@ -1,6 +1,5 @@
 import type { ImageSliderProps } from '@brisk/shared-types';
 import { FieldBuilder, type BlockDescriptor } from '../field-types';
-import { GalleryPickerField } from '../fields/gallery-picker-field';
 
 export const imageSliderBlock: BlockDescriptor<ImageSliderProps> = {
   type: 'ImageSlider',
@@ -13,7 +12,7 @@ export const imageSliderBlock: BlockDescriptor<ImageSliderProps> = {
     FieldBuilder.custom(
       'images',
       'blocks.imageSlider.fields.images.fieldLabel',
-      GalleryPickerField,
+      'gallery',
     ),
   ],
 };

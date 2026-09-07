@@ -104,6 +104,9 @@
     },
     {
       "path": "./libs/theme-runtime"
+    },
+    {
+      "path": "./libs/rich-text"
     }
   ],
   "compilerOptions": {}

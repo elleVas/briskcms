@@ -1,9 +1,6 @@
 import { z } from 'zod';
-import {
-  fieldValueOverlaySchema,
-  pageContentSchema,
-  seoMetaSchema,
-} from '@brisk/shared-types';
+import { fieldValueOverlaySchema, seoMetaSchema } from '@brisk/shared-types';
+import { sanitizedPageContentSchema } from '../rich-text/sanitized-page-content.schema';
 import { pageSlugSchema } from './page-slug.schemas';
 
 // Fase 4's pages-list view — every filter optional, an absent one just
@@ -23,7 +20,7 @@ export type ListPageGroupsQuery = z.infer<typeof listPageGroupsQuerySchema>;
 export const createPageGroupBodySchema = z.object({
   siteId: z.string().uuid(),
   parentId: z.string().uuid().nullable().optional(),
-  content: pageContentSchema.optional(),
+  content: sanitizedPageContentSchema.optional(),
 });
 export type CreatePageGroupBody = z.infer<typeof createPageGroupBodySchema>;
 
@@ -37,7 +34,7 @@ export type CreatePageGroupTranslationBody = z.infer<
 >;
 
 export const savePageGroupContentBodySchema = z.object({
-  content: pageContentSchema,
+  content: sanitizedPageContentSchema,
 });
 export type SavePageGroupContentBody = z.infer<
   typeof savePageGroupContentBodySchema
@@ -52,7 +49,7 @@ export type SavePageTranslationFieldValuesBody = z.infer<
 >;
 
 export const saveDivergedPageTranslationContentBodySchema = z.object({
-  content: pageContentSchema,
+  content: sanitizedPageContentSchema,
   parentGroupId: z.string().uuid().nullable(),
 });
 export type SaveDivergedPageTranslationContentBody = z.infer<

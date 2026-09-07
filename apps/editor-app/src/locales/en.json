@@ -705,6 +705,18 @@
           "placeholder": "e.g. 4rem — empty for default"
         }
       }
+    },
+    "richText": {
+      "bold": "Bold",
+      "bulletList": "Bulleted list",
+      "italic": "Italic",
+      "linkToPage": "Link to a page",
+      "linkToUrl": "Link to a web address",
+      "orderedList": "Numbered list",
+      "strike": "Strikethrough",
+      "underline": "Underline",
+      "unlink": "Remove link",
+      "urlPrompt": "Web address"
     }
   },
   "toast": {

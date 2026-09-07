@@ -1,0 +1,35 @@
+import { z } from 'zod';
+
+/**
+ * The editor controls a `kind: 'custom'` field can ask for, by name.
+ *
+ * It lives here, and not next to `FieldDescriptor` in `@brisk/block-sdk`,
+ * because two different things need the SAME list and neither can own it:
+ * the authoring type in block-sdk, and `themeFieldDescriptorSchema`, which
+ * validates a theme's descriptors at runtime. block-sdk already depends on
+ * this package, so putting it the other way round would be a cycle — and
+ * duplicating it would mean a theme could name a control the type system
+ * accepts and the schema rejects, or the reverse.
+ *
+ * A closed set on purpose: it is the contract between a descriptor, which
+ * is data, and the editor, which is the only place that can draw
+ * anything. A name that is not in it renders nothing at all — no error,
+ * just a label with a blank space under it — which is why it is validated
+ * rather than trusted.
+ */
+export const customFieldControlSchema = z.enum([
+  'color',
+  'feature-list',
+  'form',
+  'gallery',
+  'icon',
+  'media',
+  'page',
+  'table-data',
+]);
+
+export type CustomFieldControl = z.infer<typeof customFieldControlSchema>;
+
+/** The same list as a plain array, for a runtime check that has no Zod in hand. */
+export const CUSTOM_FIELD_CONTROLS: readonly CustomFieldControl[] =
+  customFieldControlSchema.options;

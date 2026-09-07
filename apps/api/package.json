@@ -90,6 +90,7 @@
   },
   "dependencies": {
     "@brisk/application": "workspace:*",
+    "@brisk/block-registry": "workspace:*",
     "@brisk/brevo-newsletter": "workspace:*",
     "@brisk/domain-core": "workspace:*",
     "@brisk/env-config": "workspace:*",
@@ -109,6 +110,7 @@
     "@brisk/postgres-site-repository": "workspace:*",
     "@brisk/postgres-user-repository": "workspace:*",
     "@brisk/preview-token-adapter": "workspace:*",
+    "@brisk/rich-text": "workspace:*",
     "@brisk/s3-attachment-storage": "workspace:*",
     "@brisk/s3-media-storage": "workspace:*",
     "@brisk/session-auth-adapter": "workspace:*",

@@ -26,7 +26,7 @@ export const timelineStepBlock: BlockDescriptor<TimelineStepProps> = {
       inlineEditable: true,
     },
     {
-      kind: 'textarea',
+      kind: 'richtext',
       key: 'description',
       translatable: true,
       label: 'blocks.timelineStep.fields.description.fieldLabel',

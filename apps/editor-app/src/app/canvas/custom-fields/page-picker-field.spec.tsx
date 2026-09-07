@@ -2,7 +2,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import type { ReactNode } from 'react';
 import type { PickedPage } from '@brisk/shared-types';
-import { PageListContext, type PageListPort } from '../page-list-context';
+import { PageListContext, type PageListPort } from '../../page-list-context';
 import { PagePickerField } from './page-picker-field';
 
 const page: PickedPage = {
