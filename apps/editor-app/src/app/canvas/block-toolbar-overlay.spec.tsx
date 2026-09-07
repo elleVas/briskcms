@@ -74,6 +74,7 @@ function baseProps() {
     onChangeProp: vi.fn(),
     breakpoint: 'base' as const,
     onChangeInstanceStyle: vi.fn(),
+    onChangeVariant: vi.fn(),
     onMoveUp: vi.fn(),
     onMoveDown: vi.fn(),
     onDuplicate: vi.fn(),

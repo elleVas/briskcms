@@ -432,7 +432,10 @@ export class InMemoryThemeCatalog implements ThemeCatalogPort {
 }
 
 export class InMemorySiteThemeBlockStylesRepository implements SiteThemeBlockStylesPort {
-  private styles = new Map<string, Record<string, ResponsiveBlockStyle>>();
+  private styles = new Map<
+    string,
+    Record<string, Record<string, ResponsiveBlockStyle>>
+  >();
 
   private key(tenantId: string, siteId: string): string {
     return `${tenantId}:${siteId}`;
@@ -441,7 +444,7 @@ export class InMemorySiteThemeBlockStylesRepository implements SiteThemeBlockSty
   async listBySite(
     tenantId: string,
     siteId: string,
-  ): Promise<Record<string, ResponsiveBlockStyle>> {
+  ): Promise<Record<string, Record<string, ResponsiveBlockStyle>>> {
     return { ...(this.styles.get(this.key(tenantId, siteId)) ?? {}) };
   }
 
@@ -449,11 +452,15 @@ export class InMemorySiteThemeBlockStylesRepository implements SiteThemeBlockSty
     tenantId: string,
     siteId: string,
     blockType: string,
+    variant: string,
     style: ResponsiveBlockStyle,
   ): Promise<void> {
     const key = this.key(tenantId, siteId);
     const existing = this.styles.get(key) ?? {};
-    this.styles.set(key, { ...existing, [blockType]: style });
+    this.styles.set(key, {
+      ...existing,
+      [blockType]: { ...existing[blockType], [variant]: style },
+    });
   }
 }
 

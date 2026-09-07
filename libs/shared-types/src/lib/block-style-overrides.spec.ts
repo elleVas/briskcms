@@ -2,9 +2,11 @@ import { describe, expect, it } from 'vitest';
 import {
   blockInstanceClassName,
   blockTypeToClassName,
+  blockVariantClassName,
   buildBlockInstanceRulesCss,
   buildBlockStyleOverridesCss,
 } from './block-style-overrides';
+import { DEFAULT_VARIANT } from './site-theme-tokens';
 import type { Block } from './content-model';
 
 describe('blockTypeToClassName', () => {
@@ -24,7 +26,9 @@ describe('buildBlockStyleOverridesCss', () => {
     // `editable` is true (BlockRenderer.astro), so a rule scoped there
     // would never affect what a real site visitor sees.
     const css = buildBlockStyleOverridesCss({
-      Button: { base: { borderRadius: '9999px', paddingX: '1.5rem' } },
+      Button: {
+        default: { base: { borderRadius: '9999px', paddingX: '1.5rem' } },
+      },
     });
 
     // Wrapped in its named tier: a per-type rule and a per-instance rule
@@ -38,15 +42,17 @@ describe('buildBlockStyleOverridesCss', () => {
   });
 
   it('emits nothing (no rule at all) for a type whose override has every field unset', () => {
-    const css = buildBlockStyleOverridesCss({ Button: { base: {} } });
+    const css = buildBlockStyleOverridesCss({
+      Button: { default: { base: {} } },
+    });
 
     expect(css).toBe('');
   });
 
   it('emits one rule per type when multiple types are styled', () => {
     const css = buildBlockStyleOverridesCss({
-      Button: { base: { backgroundColor: '#ff0000' } },
-      PromoBar: { base: { paddingY: '2rem' } },
+      Button: { default: { base: { backgroundColor: '#ff0000' } } },
+      PromoBar: { default: { base: { paddingY: '2rem' } } },
     });
 
     expect(css).toBe(
@@ -63,7 +69,9 @@ describe('buildBlockStyleOverridesCss', () => {
 
   it('never emits a rule for marginTop/marginBottom — they are instance-only, not a per-type CSS override', () => {
     const css = buildBlockStyleOverridesCss({
-      Button: { base: { marginTop: '1rem', marginBottom: '2rem' } },
+      Button: {
+        default: { base: { marginTop: '1rem', marginBottom: '2rem' } },
+      },
     });
 
     expect(css).toBe('');
@@ -97,7 +105,7 @@ describe('nothing reaches the stylesheet that could escape a declaration', () =>
   it.each(BREAKOUTS)('drops the declaration for %s', (hostile) => {
     expect(
       buildBlockStyleOverridesCss({
-        Hero: { base: { backgroundColor: hostile } },
+        Hero: { default: { base: { backgroundColor: hostile } } },
       }),
     ).toBe('');
     // The per-instance tier is a generated CSS RULE, not an inline
@@ -121,7 +129,9 @@ describe('nothing reaches the stylesheet that could escape a declaration', () =>
   it('drops a block type that is not an identifier, selector and all', () => {
     expect(
       buildBlockStyleOverridesCss({
-        'X { } body { display: none } .y': { base: { backgroundColor: 'red' } },
+        'X { } body { display: none } .y': {
+          default: { base: { backgroundColor: 'red' } },
+        },
       }),
     ).toBe('');
   });
@@ -129,7 +139,7 @@ describe('nothing reaches the stylesheet that could escape a declaration', () =>
   it('drops a value long enough to be a payload rather than a colour', () => {
     expect(
       buildBlockStyleOverridesCss({
-        Hero: { base: { backgroundColor: 'a'.repeat(201) } },
+        Hero: { default: { base: { backgroundColor: 'a'.repeat(201) } } },
       }),
     ).toBe('');
   });
@@ -146,7 +156,7 @@ describe('nothing reaches the stylesheet that could escape a declaration', () =>
   ])('keeps %s', (value) => {
     expect(
       buildBlockStyleOverridesCss({
-        Hero: { base: { backgroundColor: value } },
+        Hero: { default: { base: { backgroundColor: value } } },
       }),
     ).toContain(value);
   });
@@ -278,7 +288,9 @@ describe('per-breakpoint overrides', () => {
 
   it('emits a container query, not a viewport media query', () => {
     const css = buildBlockStyleOverridesCss({
-      Hero: { base: { minHeight: '60vh' }, mobile: { minHeight: '30vh' } },
+      Hero: {
+        default: { base: { minHeight: '60vh' }, mobile: { minHeight: '30vh' } },
+      },
     });
     expect(css).toContain('.brisk-hero { --brisk-override-min-height: 60vh; }');
     expect(css).toContain(
@@ -291,13 +303,15 @@ describe('per-breakpoint overrides', () => {
 
   it('reads an override written before breakpoints existed', () => {
     expect(
-      buildBlockStyleOverridesCss({ Hero: { base: { minHeight: '60vh' } } }),
+      buildBlockStyleOverridesCss({
+        Hero: { default: { base: { minHeight: '60vh' } } },
+      }),
     ).toContain('.brisk-hero { --brisk-override-min-height: 60vh; }');
   });
 
   it('emits nothing for a breakpoint that changes nothing', () => {
     const css = buildBlockStyleOverridesCss({
-      Hero: { base: { minHeight: '60vh' }, tablet: {} },
+      Hero: { default: { base: { minHeight: '60vh' }, tablet: {} } },
     });
     expect(css).not.toContain('@container');
   });
@@ -326,4 +340,104 @@ describe('per-breakpoint overrides', () => {
       expect(() => buildBlockInstanceRulesCss(instance(garbage))).not.toThrow();
     },
   );
+});
+
+describe('blockVariantClassName', () => {
+  it('builds the modifier class for a declared variant', () => {
+    expect(blockVariantClassName('Button', 'secondary')).toBe(
+      'brisk-button--secondary',
+    );
+    expect(blockVariantClassName('PromoBar', 'ghost-inverted')).toBe(
+      'brisk-promo-bar--ghost-inverted',
+    );
+  });
+
+  it('has no class for a block that uses the type default', () => {
+    expect(blockVariantClassName('Button', undefined)).toBeNull();
+    expect(blockVariantClassName('Button', DEFAULT_VARIANT)).toBeNull();
+  });
+
+  /**
+   * The variant name becomes part of a selector, so it is checked where it
+   * gets there — the lesson of PR #144, where a value AND a key both
+   * reached a public stylesheet. It stops being theoretical the moment a
+   * theme can add a variant and the name stops being a literal.
+   */
+  it.each([
+    'secondary; } body { display: none } .x {',
+    'Secondary',
+    '--evil',
+    'sec ondary',
+    '',
+    'a'.repeat(65),
+  ])('refuses %s rather than putting it in a selector', (hostile) => {
+    expect(blockVariantClassName('Button', hostile)).toBeNull();
+  });
+
+  // A block naming a variant this theme does not define is ADR-0048
+  // working: the theme hid a design it does not have, and the block falls
+  // back to its default look rather than failing.
+  it('is a plain string for a variant no theme happens to define', () => {
+    expect(blockVariantClassName('Button', 'brutalist')).toBe(
+      'brisk-button--brutalist',
+    );
+  });
+
+  it('refuses a block type that is not an identifier', () => {
+    expect(
+      blockVariantClassName('X { } body { display: none } .y', 'secondary'),
+    ).toBeNull();
+  });
+});
+
+describe('per-variant type styles', () => {
+  /**
+   * The point of ADR-0047's fourth decision, in one assertion: an agency
+   * recolours the ghost buttons from the editor without touching the
+   * primary ones, and without writing a line of CSS.
+   */
+  it('paints each variant of a type separately', () => {
+    const css = buildBlockStyleOverridesCss({
+      Button: {
+        default: { base: { backgroundColor: '#0000ff' } },
+        ghost: { base: { backgroundColor: 'transparent' } },
+      },
+    });
+
+    expect(css).toContain('.brisk-button { --brisk-override-bg: #0000ff; }');
+    expect(css).toContain(
+      '.brisk-button--ghost { --brisk-override-bg: transparent; }',
+    );
+  });
+
+  it('carries the breakpoints of a variant too', () => {
+    const css = buildBlockStyleOverridesCss({
+      Button: {
+        ghost: { base: { paddingX: '2rem' }, mobile: { paddingX: '1rem' } },
+      },
+    });
+
+    expect(css).toContain(
+      '@container (max-width: 768px) { .brisk-button--ghost { --brisk-override-padding-x: 1rem; } }',
+    );
+  });
+
+  // Same barrier as everywhere else: the key reaches a selector.
+  it('drops a variant whose name could not be a class', () => {
+    const css = buildBlockStyleOverridesCss({
+      Button: {
+        'ghost; } body { display: none } .x {': {
+          base: { backgroundColor: 'red' },
+        },
+      },
+    });
+
+    expect(css).toBe('');
+  });
+
+  it('emits nothing for a type whose variants are all empty', () => {
+    expect(
+      buildBlockStyleOverridesCss({ Button: { default: { base: {} } } }),
+    ).toBe('');
+  });
 });

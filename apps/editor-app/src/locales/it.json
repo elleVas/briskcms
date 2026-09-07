@@ -455,6 +455,7 @@
     "saved": "Salvato"
   },
   "globalStyles": {
+    "variantGroup": "Aspetto che stai modificando",
     "breakpointGroup": "Dimensione che stai modificando",
     "open": "Stile globale",
     "title": "Stile globale",
@@ -660,6 +661,10 @@
     "redo": "Ripeti",
     "editProperties": "Modifica proprietà",
     "duplicateBlock": "Duplica blocco",
+    "variant": {
+      "fieldLabel": "Aspetto",
+      "default": "Predefinito"
+    },
     "breakpointGroup": "Dimensione in anteprima e in modifica",
     "breakpointDesktop": "Desktop (oltre {{tablet}}px)",
     "breakpointTablet": "Tablet (fino a {{tablet}}px)",
@@ -901,14 +906,10 @@
       "fields": {
         "label": {
           "fieldLabel": "Testo"
-        },
-        "variant": {
-          "fieldLabel": "Stile",
-          "options": {
-            "primary": "Primario",
-            "secondary": "Secondario"
-          }
         }
+      },
+      "variants": {
+        "secondary": "Secondario"
       }
     },
     "callout": {

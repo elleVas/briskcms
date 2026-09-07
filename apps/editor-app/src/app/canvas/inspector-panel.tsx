@@ -10,6 +10,8 @@ export interface InspectorPanelProps {
   block: Block;
   descriptor: BlockDescriptor;
   onChangeProp: (key: string, value: unknown) => void;
+  /** Picking one of the type's declared looks (ADR-0047). `undefined` = the type's own default. */
+  onChangeVariant: (variant: string | undefined) => void;
 }
 
 interface FieldRowProps {
@@ -130,15 +132,44 @@ export function InspectorPanel({
   block,
   descriptor,
   onChangeProp,
+  onChangeVariant,
 }: InspectorPanelProps) {
   const { t, tLabel } = useTranslation();
-  if (descriptor.fields.length === 0) {
+  const variants = descriptor.variants ?? [];
+  // Not `fields.length === 0`: a type may offer a look and no fields at
+  // all, and returning null there would hide the only control it has.
+  if (descriptor.fields.length === 0 && variants.length === 0) {
     return null;
   }
 
   return (
     <div className="flex flex-col gap-3">
       <h3 className="text-sm font-semibold">{tLabel(descriptor.label)}</h3>
+      {variants.length > 0 && (
+        // First, and separated: it is what the block LOOKS like, not what
+        // it says, and the fields below are all the latter.
+        <label className="flex flex-col gap-1.5 border-b pb-3">
+          <span className="text-xs font-medium text-muted-foreground">
+            {t('canvas.variant.fieldLabel')}
+          </span>
+          <select
+            className={nativeFieldClass}
+            value={block.variant ?? ''}
+            onChange={(event) =>
+              onChangeVariant(event.target.value || undefined)
+            }
+          >
+            {/* The type's own look has no variant of its own, so the
+                empty value means "none" rather than naming one. */}
+            <option value="">{t('canvas.variant.default')}</option>
+            {variants.map((variant) => (
+              <option key={variant.value} value={variant.value}>
+                {tLabel(variant.label)}
+              </option>
+            ))}
+          </select>
+        </label>
+      )}
       {descriptor.fields.map((field) => {
         const showRequiredWarning = isRequiredFieldEmpty(field, block.props);
         return (

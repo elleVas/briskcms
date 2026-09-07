@@ -26,7 +26,7 @@ export class DrizzleSiteThemeBlockStylesRepository implements SiteThemeBlockStyl
   async listBySite(
     tenantId: string,
     siteId: string,
-  ): Promise<Record<string, ResponsiveBlockStyle>> {
+  ): Promise<Record<string, Record<string, ResponsiveBlockStyle>>> {
     const rows = await withTenant(this.db, tenantId, (tx) =>
       tx
         .select()
@@ -42,26 +42,31 @@ export class DrizzleSiteThemeBlockStylesRepository implements SiteThemeBlockStyl
     // may still hold the flat pre-breakpoint shape, and one written before
     // PR #144 may hold a value today's rules refuse. Neither should be a
     // site that fails to render.
-    return Object.fromEntries(
-      rows.map((row) => [
-        row.blockType,
-        normalizeResponsiveBlockStyle(row.style),
-      ]),
-    );
+    const byType: Record<string, Record<string, ResponsiveBlockStyle>> = {};
+    for (const row of rows) {
+      const variants = (byType[row.blockType] ??= {});
+      variants[row.variant] = normalizeResponsiveBlockStyle(row.style);
+    }
+    return byType;
   }
 
   async upsert(
     tenantId: string,
     siteId: string,
     blockType: string,
+    variant: string,
     style: ResponsiveBlockStyle,
   ): Promise<void> {
     await withTenant(this.db, tenantId, (tx) =>
       tx
         .insert(siteThemeBlockStyles)
-        .values({ tenantId, siteId, blockType, style })
+        .values({ tenantId, siteId, blockType, variant, style })
         .onConflictDoUpdate({
-          target: [siteThemeBlockStyles.siteId, siteThemeBlockStyles.blockType],
+          target: [
+            siteThemeBlockStyles.siteId,
+            siteThemeBlockStyles.blockType,
+            siteThemeBlockStyles.variant,
+          ],
           set: { style },
         }),
     );

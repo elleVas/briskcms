@@ -15,6 +15,7 @@ import {
   type AnyPgColumn,
 } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
+import { DEFAULT_VARIANT } from '@brisk/shared-types';
 import type {
   ResponsiveBlockStyle,
   CookieBannerSettings,
@@ -224,6 +225,19 @@ export const siteThemeBlockStyles = pgTable(
       .notNull()
       .references(() => sites.id, { onDelete: 'cascade' }),
     blockType: text('block_type').notNull(),
+    /**
+     * Which of the type's looks this style paints (ADR-0047) — part of
+     * the key, so an agency can recolour the ghost buttons without
+     * touching the primary ones.
+     *
+     * `'default'` (never NULL) for the type's own look. A nullable column
+     * would have read more naturally and been wrong: NULLs do not compare
+     * equal, so `(site, type, NULL)` is not a duplicate of itself and the
+     * primary key would let the same type collect unlimited default rows.
+     * `blockVariantNameSchema` reserves the word so a declared variant can
+     * never collide with it.
+     */
+    variant: text('variant').notNull().default(DEFAULT_VARIANT),
     // Per breakpoint since ADR-0047. Rows written before it hold the flat
     // shape and are read as `{ base: … }` — see
     // `normalizeResponsiveBlockStyle`, and the one-off migration that
@@ -231,7 +245,7 @@ export const siteThemeBlockStyles = pgTable(
     style: jsonb('style').notNull().$type<ResponsiveBlockStyle>(),
   },
   (table) => [
-    primaryKey({ columns: [table.siteId, table.blockType] }),
+    primaryKey({ columns: [table.siteId, table.blockType, table.variant] }),
     index('site_theme_block_styles_tenant_site_idx').on(
       table.tenantId,
       table.siteId,

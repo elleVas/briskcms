@@ -304,8 +304,60 @@ export const blockTypeNameSchema = z
   .max(64)
   .regex(/^[A-Za-z][A-Za-z0-9]*$/, 'must be a block type name');
 
+/**
+ * The key for "no variant" — the style of the block type itself.
+ *
+ * A reserved word rather than an empty string, which the database column
+ * and the JSON both had to carry otherwise: `blockStyles.Button.default`
+ * reads, `blockStyles.Button['']` does not, and an empty primary-key
+ * component is the kind of thing that looks like a bug every time someone
+ * meets it. `blockVariantNameSchema` refuses it as a declared variant, so
+ * the two can never collide.
+ */
+export const DEFAULT_VARIANT = 'default';
+
+/**
+ * A variant name, which becomes part of a CSS SELECTOR
+ * (`.brisk-button--secondary`), so it is constrained exactly like a block
+ * type name and for the same demonstrated reason (PR #144: a value AND a
+ * key both reached a public `<style>`).
+ *
+ * Today this refuses nothing, because every variant is declared in code
+ * as a literal. It starts mattering the moment a theme — or the editor —
+ * can add one, which is the point of ADR-0047's fourth decision: at that
+ * moment the name stops being a literal and becomes data, and data that
+ * reaches a selector is checked where it gets there, not only where it
+ * was written.
+ *
+ * Lower case with dashes, because that is what a class name looks like
+ * and a variant is picked from a menu, never typed into markup.
+ */
+export const blockVariantNameSchema = z
+  .string()
+  .min(1)
+  .max(64)
+  .regex(/^[a-z][a-z0-9-]*$/, 'must be a variant name')
+  .refine((value) => value !== DEFAULT_VARIANT, {
+    message: `"${DEFAULT_VARIANT}" is reserved for the block type's own style`,
+  });
+
+/** A key in the per-type style map: a declared variant, or the reserved word for the type's own look. */
+export const blockVariantKeySchema = z.union([
+  z.literal(DEFAULT_VARIANT),
+  blockVariantNameSchema,
+]);
+
 export const themeTokensSchema = z.object({
-  blockStyles: z.record(blockTypeNameSchema, responsiveBlockStyleSchema),
+  /**
+   * The per-TYPE style tier (docs/adr/0022), keyed by type and then by
+   * variant since ADR-0047 — so "every Button" and "every ghost Button"
+   * are two different things an agency can paint, and today's per-type
+   * style becomes the `default` variant's rather than a fourth tier.
+   */
+  blockStyles: z.record(
+    blockTypeNameSchema,
+    z.record(blockVariantKeySchema, responsiveBlockStyleSchema),
+  ),
 });
 export type ThemeTokens = z.infer<typeof themeTokensSchema>;
 
@@ -323,6 +375,8 @@ export const DEFAULT_THEME_TOKENS: ThemeTokens = {
  */
 export const updateThemeTokensBodySchema = z.object({
   blockType: blockTypeNameSchema,
+  /** Which look of that type is being painted. Absent = the type's own, which is what every client sent before ADR-0047. */
+  variant: blockVariantKeySchema.default(DEFAULT_VARIANT),
   style: responsiveBlockStyleSchema,
 });
 export type UpdateThemeTokensBody = z.infer<typeof updateThemeTokensBodySchema>;

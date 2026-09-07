@@ -16,9 +16,13 @@ import { localePath } from '@brisk/theme-runtime';
 // inline `style` cannot hold the container query a per-breakpoint value
 // needs. A theme block receives the class that rule targets and puts it on
 // its root element; the override itself never reaches the component.
-type Props = ButtonProps & { instanceClass?: string | null };
+type Props = ButtonProps & {
+  instanceClass?: string | null;
+  variantClass?: string | null;
+};
 
-const { label, linkType, page, url, variant, instanceClass } = Astro.props;
+const { label, linkType, page, url, instanceClass, variantClass } =
+  Astro.props;
 const href =
   linkType === 'page' && page?.locale && page?.slug
     ? localePath(page.locale, page.slug)
@@ -26,11 +30,7 @@ const href =
 ---
 
 <a
-  class:list={[
-    'brisk-button',
-    { 'brisk-button--secondary': variant === 'secondary' },
-    instanceClass,
-  ]}
+  class:list={['brisk-button', variantClass, instanceClass]}
   href={href}
   data-brisk-field="label"
 >

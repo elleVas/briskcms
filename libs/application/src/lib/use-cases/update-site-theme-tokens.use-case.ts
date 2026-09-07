@@ -14,12 +14,14 @@ export interface UpdateSiteThemeTokensInput {
   tenantId: string;
   siteId: string;
   blockType: string;
+  /** Which of that type's looks is being painted — `DEFAULT_VARIANT` for the type's own (ADR-0047). */
+  variant: string;
   style: ResponsiveBlockStyle;
 }
 
 /**
- * Replaces the given block type's override wholesale (leaving the other
- * types untouched) through an atomic upsert on `site_theme_block_styles`
+ * Replaces the given (block type, variant)'s override wholesale (leaving
+ * every other type and variant untouched) through an atomic upsert on `site_theme_block_styles`
  * (docs/adr/0022's schema follow-up — no longer `sites.theme_tokens`). The
  * site's existence has to be checked separately: the child table has only
  * an FK on `site_id`, not a constraint yielding a readable domain error —
@@ -39,6 +41,7 @@ export async function updateSiteThemeTokens(
     input.tenantId,
     input.siteId,
     input.blockType,
+    input.variant,
     input.style,
   );
 }

@@ -29,6 +29,7 @@ describe('InspectorPanel', () => {
         block={block}
         descriptor={descriptor}
         onChangeProp={vi.fn()}
+        onChangeVariant={vi.fn()}
       />,
     );
     expect(container.innerHTML).toBe('');
@@ -53,6 +54,7 @@ describe('InspectorPanel', () => {
         block={block}
         descriptor={descriptor}
         onChangeProp={onChangeProp}
+        onChangeVariant={vi.fn()}
       />,
     );
 
@@ -81,6 +83,7 @@ describe('InspectorPanel', () => {
         block={block}
         descriptor={descriptor}
         onChangeProp={onChangeProp}
+        onChangeVariant={vi.fn()}
       />,
     );
 
@@ -120,6 +123,7 @@ describe('InspectorPanel', () => {
         block={block}
         descriptor={descriptor}
         onChangeProp={onChangeProp}
+        onChangeVariant={vi.fn()}
       />,
     );
 
@@ -151,6 +155,7 @@ describe('InspectorPanel', () => {
         block={block}
         descriptor={descriptor}
         onChangeProp={onChangeProp}
+        onChangeVariant={vi.fn()}
       />,
     );
 
@@ -188,6 +193,7 @@ describe('InspectorPanel', () => {
         block={block}
         descriptor={descriptor}
         onChangeProp={vi.fn()}
+        onChangeVariant={vi.fn()}
       />,
     );
 
@@ -220,6 +226,7 @@ describe('InspectorPanel', () => {
         block={block}
         descriptor={descriptor}
         onChangeProp={vi.fn()}
+        onChangeVariant={vi.fn()}
       />,
     );
 
@@ -252,9 +259,120 @@ describe('InspectorPanel', () => {
         block={block}
         descriptor={descriptor}
         onChangeProp={vi.fn()}
+        onChangeVariant={vi.fn()}
       />,
     );
 
     expect(screen.queryByText('Campo obbligatorio')).toBeNull();
+  });
+});
+
+describe('InspectorPanel variant picker', () => {
+  const buttonDescriptor: BlockDescriptor = {
+    type: 'Button',
+    label: 'Bottone',
+    category: 'conversion',
+    defaultProps: { label: '' },
+    fields: [{ kind: 'text', key: 'label', label: 'Testo' }],
+    variants: [{ value: 'secondary', label: 'Secondario' }],
+  };
+
+  it('offers the type default plus every declared variant', () => {
+    render(
+      <InspectorPanel
+        block={{ id: 'b1', type: 'Button', props: { label: '' } }}
+        descriptor={buttonDescriptor}
+        onChangeProp={vi.fn()}
+        onChangeVariant={vi.fn()}
+      />,
+    );
+
+    const options = [...screen.getAllByRole('option')].map(
+      (o) => o.textContent,
+    );
+    expect(options).toEqual(['Predefinito', 'Secondario']);
+  });
+
+  it('shows the variant the block is already wearing', () => {
+    render(
+      <InspectorPanel
+        block={{
+          id: 'b1',
+          type: 'Button',
+          props: { label: '' },
+          variant: 'secondary',
+        }}
+        descriptor={buttonDescriptor}
+        onChangeProp={vi.fn()}
+        onChangeVariant={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByRole('combobox')).toHaveProperty('value', 'secondary');
+  });
+
+  it('reports a chosen variant', () => {
+    const onChangeVariant = vi.fn();
+    render(
+      <InspectorPanel
+        block={{ id: 'b1', type: 'Button', props: { label: '' } }}
+        descriptor={buttonDescriptor}
+        onChangeProp={vi.fn()}
+        onChangeVariant={onChangeVariant}
+      />,
+    );
+
+    fireEvent.change(screen.getByRole('combobox'), {
+      target: { value: 'secondary' },
+    });
+
+    expect(onChangeVariant).toHaveBeenCalledWith('secondary');
+  });
+
+  /**
+   * The type's own look has no variant of its own, so going back to it
+   * has to CLEAR the field rather than store the word "default" — which
+   * would then be a variant name, and one no descriptor declares.
+   */
+  it('clears the field when the type default is chosen again', () => {
+    const onChangeVariant = vi.fn();
+    render(
+      <InspectorPanel
+        block={{
+          id: 'b1',
+          type: 'Button',
+          props: { label: '' },
+          variant: 'secondary',
+        }}
+        descriptor={buttonDescriptor}
+        onChangeProp={vi.fn()}
+        onChangeVariant={onChangeVariant}
+      />,
+    );
+
+    fireEvent.change(screen.getByRole('combobox'), { target: { value: '' } });
+
+    expect(onChangeVariant).toHaveBeenCalledWith(undefined);
+  });
+
+  // A type with variants and no fields still has one thing to show.
+  it('renders for a type that has variants and no fields at all', () => {
+    const { container } = render(
+      <InspectorPanel
+        block={{ id: 'b1', type: 'Divider', props: {} }}
+        descriptor={{
+          type: 'Divider',
+          label: 'Separatore',
+          category: 'layout',
+          defaultProps: {},
+          fields: [],
+          variants: [{ value: 'thick', label: 'Spesso' }],
+        }}
+        onChangeProp={vi.fn()}
+        onChangeVariant={vi.fn()}
+      />,
+    );
+
+    expect(container.innerHTML).not.toBe('');
   });
 });

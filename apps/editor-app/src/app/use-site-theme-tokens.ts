@@ -7,8 +7,12 @@ export function useSiteThemeTokens(siteId: string) {
   const queryClient = useQueryClient();
 
   const updateThemeTokensMutation = useMutation({
-    mutationFn: (input: { blockType: string; style: ResponsiveBlockStyle }) =>
-      apiUpdateThemeTokens(siteId, input.blockType, input.style),
+    mutationFn: (input: {
+      blockType: string;
+      variant: string;
+      style: ResponsiveBlockStyle;
+    }) =>
+      apiUpdateThemeTokens(siteId, input.blockType, input.variant, input.style),
     onSuccess: (updated) => {
       queryClient.setQueryData(siteQueryOptions().queryKey, updated);
     },

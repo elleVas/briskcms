@@ -178,6 +178,22 @@ inside `Button.astro`'s `<style>`. Three gaps close:
 1. **Variants become declared**, not conventional: listed in the
    descriptor, with the renderer emitting `.brisk-<type>--<variant>`
    instead of each component doing it by hand.
+
+   > **Where the chosen value lives, decided during implementation.** On
+   > `Block.variant`, a sibling of `styleOverride` — **not** in props.
+   > Props are the client's content and a theme is a view over it
+   > (ADR-0048), so a theme may add a variant or hide one it has no design
+   > for and no stored page changes; the block simply renders in its
+   > default look. Had it stayed a prop, a theme dropping a variant would
+   > leave content pointing at a value that no longer exists, which is the
+   > failure ADR-0048 exists to prevent.
+   >
+   > `Button.variant` moved there. `Callout.tone` and
+   > `PricingPlan.highlighted` did **not**, though they emit a modifier
+   > class too: they are meaning, not presentation. A warning callout is a
+   > warning under any theme, and which plan is recommended is a
+   > commercial fact — neither is a design a theme may hide.
+
 2. **A theme can extend a core block's variants.** Today
    `findCoreBlockTypeCollisions` rejects a theme block named like a core
    one, so twenty button variants force a duplicate `MyButton` that loses
@@ -186,6 +202,19 @@ inside `Button.astro`'s `<style>`. Three gaps close:
    `(type, variant)` rather than `(type)`. Today's per-type styling becomes
    "the type's default variant", which _unifies_ the tiers rather than
    adding one.
+
+   > The variant column is `NOT NULL DEFAULT 'default'`, never nullable.
+   > A nullable column reads more naturally and is wrong here: NULLs do
+   > not compare equal, so `(site, type, NULL)` is not a duplicate of
+   > itself and the primary key would let one type collect unlimited
+   > default rows. `blockVariantNameSchema` reserves the word `default`,
+   > so a declared variant can never collide with it. Existing rows took
+   > the column default, which is exactly what they always meant.
+   >
+   > The toolbar's "style every block of this type" paints the variant the
+   > SELECTED block wears. Painting the default from a ghost button would
+   > have recoloured the primaries and left the button the user was
+   > looking at untouched.
 
 **Two levels of authorship**, mirroring the tiering already in the product
 (a theme may do anything; a site may do the safe subset):

@@ -380,6 +380,7 @@ export function useBlockTreeMutations({
       props: block.props,
       children: block.children,
       styleOverride: block.styleOverride,
+      variant: block.variant,
     })
       .then((html) => bridge.patchBlock(blockId, html))
       .catch(() => {

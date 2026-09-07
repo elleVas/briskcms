@@ -277,6 +277,9 @@ describe('GlobalStylesDialog', () => {
 
     expect(onSaveTypeStyle).toHaveBeenCalledWith(
       'Hero',
+      // The type's own look: this descriptor declares no variants, so
+      // there is nothing else the panel could be painting.
+      'default',
       expect.objectContaining({ base: { borderRadius: '8px' } }),
     );
   });

@@ -2,21 +2,25 @@
 import type { ButtonProps } from '@brisk/shared-types';
 import { localePathFromAncestors } from '@brisk/theme-runtime';
 
-type Props = ButtonProps & { instanceClass?: string | null };
+type Props = ButtonProps & {
+  instanceClass?: string | null;
+  variantClass?: string | null;
+};
 
-const { label, linkType, page, url, variant, instanceClass } = Astro.props;
+const { label, linkType, page, url, instanceClass, variantClass } =
+  Astro.props;
 const href =
   linkType === 'page' && page?.locale && page?.slug ? localePathFromAncestors(page.locale, page.ancestorSlugs ?? [], page.slug) : url;
 
-// Override per-istanza (docs/adr/0022) — inline sull'elemento reale, non
-// su un wrapper: funziona identico in editor e sul sito pubblicato.
+// Neither class is built here: `variantClass` and `instanceClass` are
+// both computed in BlockRenderer.astro, from `Block.variant` and
+// `Block.id`. This component only has to put them on its root element —
+// which is also the contract a theme's own Button override has to keep
+// (see themes/README.md).
 ---
 
 <a
-  class:list={[instanceClass, 
-    'brisk-button',
-    { 'brisk-button--secondary': variant === 'secondary' },
-  ]}
+  class:list={['brisk-button', variantClass, instanceClass]}
   href={href}
   data-brisk-field="label"
 >

@@ -66,3 +66,54 @@ describe('a theme override keeps per-instance styling working', () => {
     },
   );
 });
+
+/**
+ * The same contract for the other class BlockRenderer computes. A theme's
+ * replacement of a block type that has variants must carry
+ * `variantClass`, or the editor shows the picker, saves the choice, and
+ * the published page looks exactly as before — the picker working on core
+ * and doing nothing under this theme, with nothing reporting a fault.
+ */
+describe('a theme override keeps variants working', () => {
+  const typesWithVariants = new Set(
+    [...pageBlocks, ...headerFooterBlocks]
+      .filter((descriptor) => (descriptor.variants?.length ?? 0) > 0)
+      .map((descriptor) => descriptor.type),
+  );
+
+  const overridesWithVariants = readdirSync(THEMES_DIR, {
+    withFileTypes: true,
+  })
+    .filter((entry) => entry.isDirectory())
+    .flatMap((theme) => {
+      const blocksDir = join(THEMES_DIR, theme.name, 'blocks');
+      if (!existsSync(blocksDir)) {
+        return [];
+      }
+      return readdirSync(blocksDir)
+        .filter((file) => file.endsWith('.astro'))
+        .map((file) => ({
+          theme: theme.name,
+          type: file.slice(0, -'.astro'.length),
+          path: join(blocksDir, file),
+        }))
+        .filter(
+          (block) =>
+            typesWithVariants.has(block.type) &&
+            !existsSync(join(blocksDir, `${block.type}.block.ts`)),
+        );
+    });
+
+  it('finds the overrides it is meant to be checking', () => {
+    expect(typesWithVariants.size).toBeGreaterThan(0);
+    expect(overridesWithVariants.length).toBeGreaterThan(0);
+  });
+
+  it.each(
+    overridesWithVariants.map((o) => [`${o.theme}/${o.type}`, o.path] as const),
+  )('%s accepts and renders variantClass', (_name, path) => {
+    const source = readFileSync(path, 'utf8');
+    expect(source).toContain('variantClass');
+    expect(source).toMatch(/class:list=\{\[[\s\S]*?variantClass/);
+  });
+});

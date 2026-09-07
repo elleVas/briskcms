@@ -163,4 +163,25 @@ export interface BlockDescriptor<Props = Record<string, unknown>> {
    * non-empty, with the same keys.
    */
   defaultStyle?: BlockStyleDefaults;
+  /**
+   * The named looks this block type offers, picked from a menu in the
+   * editor (ADR-0047). Absent/empty = the type has one look and no
+   * picker appears.
+   *
+   * Enumerated and not free text, which is the whole reason the primitive
+   * is a "variant" rather than a class: a class is a developer's tool, a
+   * variant is a product concept the client can also use without being
+   * able to invent nonsense. It is also the shape design actually arrives
+   * in — a Figma component with twenty button variants.
+   *
+   * The chosen value lives on `Block.variant`, NOT in props: props are
+   * the client's content and a theme is a view over it (ADR-0048), so a
+   * theme may add variants here or hide one it has no design for without
+   * touching a single stored page.
+   *
+   * `value` becomes part of a CSS class (`.brisk-button--secondary`), so
+   * it must satisfy `blockVariantNameSchema`; `label` is an i18n key like
+   * every other label here.
+   */
+  variants?: readonly { value: string; label: string }[];
 }

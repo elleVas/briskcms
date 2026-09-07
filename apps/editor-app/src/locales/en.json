@@ -455,6 +455,7 @@
     "saved": "Saved"
   },
   "globalStyles": {
+    "variantGroup": "Look being styled",
     "breakpointGroup": "Size being styled",
     "open": "Global styles",
     "title": "Global styles",
@@ -660,6 +661,10 @@
     "redo": "Redo",
     "editProperties": "Edit properties",
     "duplicateBlock": "Duplicate block",
+    "variant": {
+      "fieldLabel": "Look",
+      "default": "Default"
+    },
     "breakpointGroup": "Preview and styling size",
     "breakpointDesktop": "Desktop (wider than {{tablet}}px)",
     "breakpointTablet": "Tablet ({{tablet}}px and under)",
@@ -901,14 +906,10 @@
       "fields": {
         "label": {
           "fieldLabel": "Text"
-        },
-        "variant": {
-          "fieldLabel": "Style",
-          "options": {
-            "primary": "Primary",
-            "secondary": "Secondary"
-          }
         }
+      },
+      "variants": {
+        "secondary": "Secondary"
       }
     },
     "callout": {
