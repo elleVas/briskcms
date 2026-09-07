@@ -1,4 +1,4 @@
-import { renderHook } from '@testing-library/react';
+import { act, renderHook } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import type { Block } from '@brisk/shared-types';
 import type { BlockDescriptor } from '@brisk/block-registry';
@@ -29,11 +29,18 @@ function buildBridge(
     lastDblClick: null,
     enterTextEdit: vi.fn(),
     exitTextEdit: vi.fn(),
+    pageLinkRequest: null,
+    applyPageLink: vi.fn(),
     ...overrides,
   };
 }
 
-function setup(bridge: ReturnType<typeof buildBridge>, blocks: Block[] = []) {
+function setup(
+  bridge: ReturnType<typeof buildBridge>,
+  blocks: Block[] = [],
+  pickPage: () => Promise<{ pageGroupId: string } | null> = () =>
+    Promise.resolve(null),
+) {
   const setLocalBlocks = vi.fn();
   const scheduleTextChange = vi.fn();
   const localBlocksRef = { current: blocks };
@@ -45,6 +52,19 @@ function setup(bridge: ReturnType<typeof buildBridge>, blocks: Block[] = []) {
         localBlocksRef,
         setLocalBlocks,
         scheduleTextChange,
+        pickPage,
+        menuLabels: {
+          bold: 'B',
+          italic: 'I',
+          underline: 'U',
+          strike: 'S',
+          bulletList: '•',
+          orderedList: '1.',
+          linkToPage: 'P',
+          linkToUrl: 'U',
+          unlink: 'X',
+          urlPrompt: '?',
+        },
       }),
     { initialProps: { bridge } },
   );
@@ -94,10 +114,13 @@ describe('useTextEdit', () => {
     });
     rerender({ bridge: nextBridge });
 
+    // The labels travel with it: the iframe renders a site in the
+    // VISITOR's language and cannot translate the editor's own chrome.
     expect(nextBridge.enterTextEdit).toHaveBeenCalledWith(
       'hero-1',
       'title',
       false,
+      expect.objectContaining({ bold: 'B' }),
     );
   });
 
@@ -162,6 +185,43 @@ describe('useTextEdit', () => {
       'hero-1',
       'body',
       true,
+      expect.objectContaining({ bold: 'B' }),
     );
+  });
+
+  // The canvas bubble menu cannot open the page picker itself: the picker
+  // is editor chrome and the menu lives inside the preview iframe. So it
+  // asks, and this answers.
+  describe('link to a page, asked for from the canvas', () => {
+    it('opens the picker and sends back the chosen page', async () => {
+      const picked = { pageGroupId: 'group-1', title: 'Installazione' };
+      const { rerender } = setup(buildBridge(), [], () =>
+        Promise.resolve(picked),
+      );
+
+      const nextBridge = buildBridge({ pageLinkRequest: { at: 1 } });
+      rerender({ bridge: nextBridge });
+      await act(async () => {
+        await Promise.resolve();
+      });
+
+      expect(nextBridge.applyPageLink).toHaveBeenCalledWith('group-1');
+    });
+
+    // The iframe holds its selection open waiting for this. Without a
+    // reply the field stays looking live and answers to nothing.
+    it('answers even when the picker is dismissed', async () => {
+      const { rerender } = setup(buildBridge(), [], () =>
+        Promise.resolve(null),
+      );
+
+      const nextBridge = buildBridge({ pageLinkRequest: { at: 1 } });
+      rerender({ bridge: nextBridge });
+      await act(async () => {
+        await Promise.resolve();
+      });
+
+      expect(nextBridge.applyPageLink).toHaveBeenCalledWith(null);
+    });
   });
 });

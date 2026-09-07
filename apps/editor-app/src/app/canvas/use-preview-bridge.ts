@@ -4,6 +4,7 @@ import {
   PREVIEW_BRIDGE_SOURCE,
   PREVIEW_BRIDGE_VERSION,
   type BlockRect,
+  type RichTextMenuLabels,
 } from '@brisk/shared-types';
 
 export interface PreviewBridgeState {
@@ -31,6 +32,13 @@ export interface PreviewBridgeState {
    * (canvas-editor-shell.tsx), not here.
    */
   lastDblClick: { blockId: string; field: string | null } | null;
+  /**
+   * The canvas bubble menu asking the editor to pick a page to link to —
+   * the picker lives here, not in the iframe. A new object on every
+   * request, for the same reason as `lastDblClick`: asking twice for the
+   * same thing has to look different, or the second ask does nothing.
+   */
+  pageLinkRequest: { at: number } | null;
   /**
    * The last text typed live in a TipTap instance mounted in place (Day 4)
    * — the same reason as `lastDblClick`: a new object on every message, so
@@ -66,7 +74,14 @@ export interface PreviewBridgeState {
   /** Reorders the existing siblings (all already rendered) — see EditorReorderBlocksMessage. */
   reorderBlocks: (parentId: string | null, orderedIds: string[]) => void;
   /** Monta TipTap sul posto nell'iframe (Giorno 4) — vedi editor:enter-text-edit. */
-  enterTextEdit: (blockId: string, field: string, richText: boolean) => void;
+  enterTextEdit: (
+    blockId: string,
+    field: string,
+    richText: boolean,
+    labels?: RichTextMenuLabels,
+  ) => void;
+  /** Answers `preview:request-page-link` — the page the picker returned, or null if it was dismissed. */
+  applyPageLink: (pageGroupId: string | null) => void;
   /** Smonta l'istanza TipTap corrente nell'iframe, se c'è. */
   exitTextEdit: () => void;
   /** Selects a block directly from this side (the Layers panel), without going through a real `preview:click` on the canvas — see the comment on `selectedBlockId` above. */
@@ -84,6 +99,7 @@ type PreviewBridgeMessageState = Omit<
   | 'removeBlock'
   | 'reorderBlocks'
   | 'enterTextEdit'
+  | 'applyPageLink'
   | 'exitTextEdit'
   | 'selectBlock'
   | 'updateBlockStyleCss'
@@ -96,6 +112,7 @@ const initialState: PreviewBridgeMessageState = {
   hoveredBlockId: null,
   selectedBlockId: null,
   lastDblClick: null,
+  pageLinkRequest: null,
   lastTextChange: null,
   activeDrag: null,
   dragEnded: null,
@@ -176,6 +193,12 @@ export function usePreviewBridge(
               blockId: message.payload.blockId,
               field: message.payload.field,
             },
+          }));
+          return;
+        case 'preview:request-page-link':
+          setState((prev) => ({
+            ...prev,
+            pageLinkRequest: { at: Date.now() },
           }));
           return;
         case 'preview:text-changed':
@@ -302,14 +325,34 @@ export function usePreviewBridge(
     [iframeRef],
   );
 
+  const applyPageLink = useCallback(
+    (pageGroupId: string | null) => {
+      iframeRef.current?.contentWindow?.postMessage(
+        {
+          source: PREVIEW_BRIDGE_SOURCE,
+          v: PREVIEW_BRIDGE_VERSION,
+          type: 'editor:apply-page-link',
+          payload: { pageGroupId },
+        },
+        '*',
+      );
+    },
+    [iframeRef],
+  );
+
   const enterTextEdit = useCallback(
-    (blockId: string, field: string, richText: boolean) => {
+    (
+      blockId: string,
+      field: string,
+      richText: boolean,
+      labels?: RichTextMenuLabels,
+    ) => {
       iframeRef.current?.contentWindow?.postMessage(
         {
           source: PREVIEW_BRIDGE_SOURCE,
           v: PREVIEW_BRIDGE_VERSION,
           type: 'editor:enter-text-edit',
-          payload: { blockId, field, richText },
+          payload: { blockId, field, richText, labels },
         },
         '*',
       );
@@ -370,6 +413,7 @@ export function usePreviewBridge(
     removeBlock,
     reorderBlocks,
     enterTextEdit,
+    applyPageLink,
     exitTextEdit,
     selectBlock,
     updateBlockStyleCss,

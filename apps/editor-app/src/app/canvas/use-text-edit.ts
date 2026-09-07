@@ -5,7 +5,7 @@ import {
   type RefObject,
   type SetStateAction,
 } from 'react';
-import type { Block } from '@brisk/shared-types';
+import type { Block, RichTextMenuLabels } from '@brisk/shared-types';
 import type { BlockDescriptor } from '@brisk/block-registry';
 import { findBlockInTree, updateBlockProps } from './use-block-tree';
 import type { PreviewBridgeState } from './use-preview-bridge';
@@ -34,8 +34,17 @@ function inlineEditableKind(
 export interface UseTextEditParams {
   bridge: Pick<
     PreviewBridgeState,
-    'lastTextChange' | 'lastDblClick' | 'enterTextEdit' | 'exitTextEdit'
+    | 'lastTextChange'
+    | 'lastDblClick'
+    | 'enterTextEdit'
+    | 'exitTextEdit'
+    | 'pageLinkRequest'
+    | 'applyPageLink'
   >;
+  /** Opens the editor's page picker — the canvas bubble menu has no access to it. */
+  pickPage: () => Promise<{ pageGroupId: string } | null>;
+  /** The bubble menu's button labels, translated here and sent into the iframe (see RichTextMenuLabels). */
+  menuLabels: RichTextMenuLabels;
   registry: BlockDescriptor[];
   localBlocksRef: RefObject<Block[]>;
   setLocalBlocks: Dispatch<SetStateAction<Block[]>>;
@@ -57,6 +66,8 @@ export function useTextEdit({
   localBlocksRef,
   setLocalBlocks,
   scheduleTextChange,
+  pickPage,
+  menuLabels,
 }: UseTextEditParams): void {
   // The same "adjust state during render" pattern as elsewhere in the
   // shell: `bridge.lastTextChange` has already been turned into React state
@@ -108,7 +119,7 @@ export function useTextEdit({
       : undefined;
     const { editable, richText } = inlineEditableKind(descriptor, field);
     if (editable) {
-      bridge.enterTextEdit(blockId, field, richText);
+      bridge.enterTextEdit(blockId, field, richText, menuLabels);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- reacts only to a NEW lastDblClick; bridge.enterTextEdit/registry are read from their current values, so there is no need to re-run when their identity changes.
   }, [bridge.lastDblClick]);
@@ -123,4 +134,26 @@ export function useTextEdit({
     return () => window.removeEventListener('keydown', handleKeyDown);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- bridge.exitTextEdit has a stable identity (see usePreviewBridge), so it does not belong in the dependencies.
   }, []);
+
+  // The canvas bubble menu's "link to a page": the picker is an editor
+  // dialog and cannot live in the iframe, so the iframe asks and this
+  // answers. The iframe deliberately keeps its selection alive in the
+  // meantime — see `awaitingPageLink` in init-preview-bridge.ts — so a
+  // reply must always be sent, dismissal included, or the field stays
+  // looking live while answering to nothing.
+  useEffect(() => {
+    if (!bridge.pageLinkRequest) {
+      return;
+    }
+    let cancelled = false;
+    void pickPage().then((picked) => {
+      if (!cancelled) {
+        bridge.applyPageLink(picked?.pageGroupId ?? null);
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- reacts only to a NEW request; pickPage/applyPageLink are read from their current values.
+  }, [bridge.pageLinkRequest]);
 }

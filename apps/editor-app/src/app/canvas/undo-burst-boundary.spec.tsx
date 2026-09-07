@@ -80,11 +80,26 @@ function Harness({
       lastDblClick: null,
       enterTextEdit: vi.fn(),
       exitTextEdit: vi.fn(),
+      pageLinkRequest: null,
+      applyPageLink: vi.fn(),
     },
     registry: [heroDescriptor],
     localBlocksRef,
     setLocalBlocks,
     scheduleTextChange,
+    pickPage: () => Promise.resolve(null),
+    menuLabels: {
+      bold: 'B',
+      italic: 'I',
+      underline: 'U',
+      strike: 'S',
+      bulletList: '•',
+      orderedList: '1.',
+      linkToPage: 'P',
+      linkToUrl: 'U',
+      unlink: 'X',
+      urlPrompt: '?',
+    },
   });
 
   return null;

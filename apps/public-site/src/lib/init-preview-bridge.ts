@@ -4,6 +4,14 @@ import TiptapParagraph from '@tiptap/extension-paragraph';
 import TiptapText from '@tiptap/extension-text';
 import { RICH_TEXT_EXTENSIONS } from '@brisk/rich-text-editor';
 import {
+  createRichTextBubbleMenu,
+  type RichTextBubbleMenu,
+} from './rich-text-bubble-menu';
+import {
+  buildPageLinkHref,
+  type RichTextMenuLabels,
+} from '@brisk/shared-types';
+import {
   isPreviewBridgeMessage,
   PREVIEW_BRIDGE_SOURCE,
   PREVIEW_BRIDGE_VERSION,
@@ -74,7 +82,18 @@ export function initPreviewBridge(): void {
     field: string;
     element: HTMLElement;
     richText: boolean;
+    menu: RichTextBubbleMenu | null;
   } | null = null;
+
+  /**
+   * True while the parent is showing its page picker.
+   *
+   * Picking a page takes focus out of the iframe entirely, and the
+   * editor's own `onBlur` would then tear it down — taking the selection
+   * the chosen link is meant to be applied to with it. So the blur is
+   * ignored for as long as the question is open.
+   */
+  let awaitingPageLink = false;
 
   // The state of the drag simulated on the parent side (Day 3/4) — see
   // PreviewDragStartMessage for why it is not a real HTML5 drag.
@@ -97,7 +116,8 @@ export function initPreviewBridge(): void {
     if (!activeTextEditor) {
       return;
     }
-    const { editor, element, richText } = activeTextEditor;
+    const { editor, element, richText, menu } = activeTextEditor;
+    menu?.destroy();
     // The same value the parent has been receiving all along, put back as
     // a static node. For a rich text field that is HTML, and assigning it
     // as text would leave the reader looking at literal `<strong>` tags
@@ -122,6 +142,7 @@ export function initPreviewBridge(): void {
     blockId: string,
     field: string,
     richText: boolean,
+    labels?: RichTextMenuLabels,
   ): void {
     exitTextEdit();
     const element = findFieldElement(document, blockId, field);
@@ -165,11 +186,30 @@ export function initPreviewBridge(): void {
           },
         });
       },
+      onSelectionUpdate: () => {
+        activeTextEditor?.menu?.refresh();
+      },
       onBlur: () => {
-        exitTextEdit();
+        // Not while the parent is asking which page to link to: that
+        // dialog is what took the focus, and tearing the editor down here
+        // would destroy the very selection the link is for.
+        if (!awaitingPageLink) {
+          exitTextEdit();
+        }
       },
     });
-    activeTextEditor = { editor, blockId, field, element, richText };
+    const menu =
+      richText && labels
+        ? createRichTextBubbleMenu(document, editor, labels, () => {
+            awaitingPageLink = true;
+            postToParent(targetOrigin, {
+              type: 'preview:request-page-link',
+              payload: {},
+            });
+          })
+        : null;
+    activeTextEditor = { editor, blockId, field, element, richText, menu };
+    menu?.refresh();
   }
 
   function sendReady(): void {
@@ -411,8 +451,8 @@ export function initPreviewBridge(): void {
         return;
       }
       case 'editor:enter-text-edit': {
-        const { blockId, field, richText } = event.data.payload;
-        enterTextEdit(blockId, field, richText);
+        const { blockId, field, richText, labels } = event.data.payload;
+        enterTextEdit(blockId, field, richText, labels);
         return;
       }
       case 'editor:exit-text-edit':
