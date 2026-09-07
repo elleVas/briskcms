@@ -22,10 +22,16 @@
       "path": "../../libs/shared-types"
     },
     {
+      "path": "../../libs/rich-text"
+    },
+    {
       "path": "../../libs/env-config"
     },
     {
       "path": "../../libs/block-sdk"
+    },
+    {
+      "path": "../../libs/block-registry"
     }
   ]
 }

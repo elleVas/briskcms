@@ -22,7 +22,7 @@ const instanceStyle = buildBlockInstanceStyle(styleOverride);
   }
   <div class="brisk-team-member__name" data-brisk-field="name">{name}</div>
   <div class="brisk-team-member__role" data-brisk-field="role">{role}</div>
-  {bio && <p class="brisk-team-member__bio" data-brisk-field="bio">{bio}</p>}
+  {bio && <div class="brisk-team-member__bio brisk-rich-text" data-brisk-field="bio" set:html={bio} />}
 </div>
 
 <style>

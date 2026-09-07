@@ -7,7 +7,7 @@ const { message, tone } = Astro.props;
 ---
 
 <div class={`brisk-callout brisk-callout--${tone}`} role="note">
-  <p class="brisk-callout__message" data-brisk-field="message">{message}</p>
+  <div class="brisk-callout__message brisk-rich-text" data-brisk-field="message" set:html={message} />
 </div>
 
 <style>

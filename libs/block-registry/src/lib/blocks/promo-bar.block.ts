@@ -18,7 +18,7 @@ export const promoBarBlock: BlockDescriptor<PromoBarProps> = {
   },
   fields: [
     {
-      kind: 'richtext',
+      kind: 'textarea',
       key: 'message',
       translatable: true,
       label: 'blocks.promoBar.fields.message.fieldLabel',

@@ -12,7 +12,8 @@
     "db:seed-user": "dotenv -e ../../../.env -- tsx scripts/seed-default-user.ts",
     "db:seed": "pnpm run db:seed-tenant && pnpm run db:seed-user",
     "db:backfill-block-ids": "dotenv -e ../../../.env -- tsx scripts/backfill-block-ids.ts",
-    "db:backfill-page-groups": "dotenv -e ../../../.env -- tsx scripts/backfill-page-groups.ts"
+    "db:backfill-page-groups": "dotenv -e ../../../.env -- tsx scripts/backfill-page-groups.ts",
+    "db:normalize-rich-text": "dotenv -e ../../../.env -- tsx scripts/normalize-rich-text.ts"
   },
   "nx": {
     "tags": [
@@ -28,9 +29,11 @@
     "./package.json": "./package.json"
   },
   "dependencies": {
+    "@brisk/block-registry": "workspace:*",
     "@brisk/domain-core": "workspace:*",
     "@brisk/env-config": "workspace:*",
     "@brisk/ports": "workspace:*",
+    "@brisk/rich-text": "workspace:*",
     "@brisk/shared-types": "workspace:*",
     "drizzle-orm": "^0.45.2",
     "postgres": "^3.4.9"

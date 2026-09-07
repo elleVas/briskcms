@@ -19,7 +19,7 @@ const instanceStyle = buildBlockInstanceStyle(styleOverride);
 <div class="brisk-feature" style={instanceStyle}>
   {iconSvg && <div class="brisk-feature__icon" aria-hidden="true" data-brisk-field="icon" set:html={iconSvg} />}
   <h3 class="brisk-feature__title" data-brisk-field="title">{title}</h3>
-  <p class="brisk-feature__text" data-brisk-field="text">{text}</p>
+  <div class="brisk-feature__text brisk-rich-text" data-brisk-field="text" set:html={text} />
 </div>
 
 <style>

@@ -503,12 +503,18 @@ importers:
       '@astrojs/react':
         specifier: ^6.0.4
         version: 6.0.4(@types/node@26.4.0)(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(esbuild@0.28.2)(jiti@2.7.0)(less@4.8.1)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(sass-embedded@1.103.1)(sass@1.103.1)(terser@5.51.2)(tsx@4.23.12)(yaml@2.9.0)
+      '@brisk/block-registry':
+        specifier: workspace:*
+        version: link:../../libs/block-registry
       '@brisk/block-sdk':
         specifier: workspace:*
         version: link:../../libs/block-sdk
       '@brisk/env-config':
         specifier: workspace:*
         version: link:../../libs/env-config
+      '@brisk/rich-text':
+        specifier: workspace:*
+        version: link:../../libs/rich-text
       '@brisk/shared-types':
         specifier: workspace:*
         version: link:../../libs/shared-types
@@ -625,6 +631,9 @@ importers:
 
   libs/adapters/postgres-db:
     dependencies:
+      '@brisk/block-registry':
+        specifier: workspace:*
+        version: link:../../block-registry
       '@brisk/domain-core':
         specifier: workspace:*
         version: link:../../domain-core
@@ -634,6 +643,9 @@ importers:
       '@brisk/ports':
         specifier: workspace:*
         version: link:../../ports
+      '@brisk/rich-text':
+        specifier: workspace:*
+        version: link:../../rich-text
       '@brisk/shared-types':
         specifier: workspace:*
         version: link:../../shared-types
@@ -978,6 +990,9 @@ importers:
 
   libs/shared-types:
     dependencies:
+      '@brisk/theme-runtime':
+        specifier: workspace:*
+        version: link:../theme-runtime
       zod:
         specifier: ^4.4.3
         version: 4.4.3
@@ -22389,7 +22404,7 @@ snapshots:
 
   minimist@1.2.8: {}
 
-  minimizer-webpack-plugin@5.6.1(@swc/core@1.16.1(@swc/helpers@0.5.23))(esbuild@0.28.2)(postcss@8.5.26)(webpack@5.109.2(@swc/core@1.16.1(@swc/helpers@0.5.23))(esbuild@0.28.2)(postcss@8.5.26)(webpack-cli@7.2.2)):
+  minimizer-webpack-plugin@5.6.1(@swc/core@1.16.1(@swc/helpers@0.5.23))(esbuild@0.28.2)(postcss@8.5.26)(webpack@5.109.2):
     dependencies:
       '@jridgewell/trace-mapping': 0.3.31
       jest-worker: 27.5.1
@@ -25349,7 +25364,7 @@ snapshots:
       events: 3.3.0
       graceful-fs: 4.2.11
       mime-db: 1.54.0
-      minimizer-webpack-plugin: 5.6.1(@swc/core@1.16.1(@swc/helpers@0.5.23))(esbuild@0.28.2)(postcss@8.5.26)(webpack@5.109.2(@swc/core@1.16.1(@swc/helpers@0.5.23))(esbuild@0.28.2)(postcss@8.5.26)(webpack-cli@7.2.2))
+      minimizer-webpack-plugin: 5.6.1(@swc/core@1.16.1(@swc/helpers@0.5.23))(esbuild@0.28.2)(postcss@8.5.26)(webpack@5.109.2)
       neo-async: 2.6.2
       schema-utils: 4.3.3
       tapable: 2.3.3

@@ -34,7 +34,7 @@ const STAR_POSITIONS = [1, 2, 3, 4, 5];
       ))
     }
   </div>
-  <blockquote class="brisk-testimonial__quote" data-brisk-field="quote">{quote}</blockquote>
+  <blockquote class="brisk-testimonial__quote brisk-rich-text" data-brisk-field="quote" set:html={quote} />
   <div class="brisk-testimonial__footer">
     {avatar && (
       <OptimizedImage media={avatar} alt="" class="brisk-testimonial__avatar" />

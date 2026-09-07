@@ -217,3 +217,44 @@ describe('extractSearchableText', () => {
     expect(() => extractSearchableText(seoMeta, blocks)).not.toThrow();
   });
 });
+
+describe('rich text in the index', () => {
+  // Without stripping, a search for "strong" would match every emphasised
+  // word on the site, and a search for the phrase around a link would
+  // match nothing because the address sits in the middle of it.
+  it('indexes the words, not the markup', () => {
+    const text = extractSearchableText({ title: '', description: '' }, [
+      {
+        id: 'a',
+        type: 'Text',
+        props: {
+          body: '<p>come ho <a href="/it/guida">spiegato qui</a></p>',
+        },
+      },
+    ]);
+
+    expect(text).toBe('come ho spiegato qui');
+    expect(text).not.toContain('href');
+    expect(text).not.toContain('<');
+  });
+
+  it('keeps paragraphs apart, so the last word of one is still findable', () => {
+    expect(
+      extractSearchableText({ title: '', description: '' }, [
+        {
+          id: 'a',
+          type: 'Text',
+          props: { body: '<p>primo</p><p>secondo</p>' },
+        },
+      ]),
+    ).toBe('primo secondo');
+  });
+
+  it('leaves a value written before rich text existed exactly as it was', () => {
+    expect(
+      extractSearchableText({ title: '', description: '' }, [
+        { id: 'a', type: 'Text', props: { body: 'Costa < 10 euro > 5' } },
+      ]),
+    ).toBe('Costa < 10 euro > 5');
+  });
+});

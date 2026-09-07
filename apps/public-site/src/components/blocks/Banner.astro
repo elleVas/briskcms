@@ -18,7 +18,7 @@ const instanceStyle = buildBlockInstanceStyle(styleOverride);
 
 <div class="brisk-banner" style={instanceStyle}>
   <h2 class="brisk-banner__title" data-brisk-field="title">{title}</h2>
-  <p class="brisk-banner__text" data-brisk-field="text">{text}</p>
+  <div class="brisk-banner__text brisk-rich-text" data-brisk-field="text" set:html={text} />
   {
     hasLink && (
       <a class="brisk-banner__button" href={href} data-brisk-field="buttonLabel">

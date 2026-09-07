@@ -1,4 +1,5 @@
 import type { Block, PageContent, SeoMeta } from './content-model';
+import { richTextToPlainText } from './rich-text-to-plain-text';
 
 /**
  * Builds the plain-text blob a SearchPort adapter indexes for a page —
@@ -40,8 +41,16 @@ function collectBlockText(blocks: PageContent, parts: string[]): void {
   }
 }
 
+/**
+ * Every prose value goes through `richTextToPlainText`, not only the ones
+ * a registry would call rich text (ADR-0046). This file has no registry
+ * to ask, and the function leaves a plain string untouched — so a field
+ * that becomes rich text later is handled the day it changes, instead of
+ * quietly indexing `<p>` and `<strong>` until someone notices the search
+ * results have gone strange.
+ */
 function asString(value: unknown): string {
-  return typeof value === 'string' ? value : '';
+  return typeof value === 'string' ? richTextToPlainText(value) : '';
 }
 
 type ProseFieldExtractor = (props: Record<string, unknown>) => string[];

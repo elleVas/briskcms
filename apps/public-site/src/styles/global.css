@@ -57,3 +57,36 @@
     @apply text-primary underline-offset-2 hover:underline;
   }
 }
+
+/*
+ * Rich text (ADR-0046) arrives as paragraphs, so the element holding it
+ * has to be one that may contain them — a `<div>`, not the `<p>` these
+ * fields used when they held a single plain string.
+ *
+ * Swapping the tag alone would change the spacing of every page: the old
+ * `<p>` carried the browser's own margin, and the new `<div>` does not
+ * while its inner paragraphs do. Collapsing the first and last of those
+ * puts the block back exactly where it was, and leaves the spacing
+ * BETWEEN paragraphs — which is new, because until now there could only
+ * ever be one.
+ */
+.brisk-rich-text > :first-child {
+  margin-top: 0;
+}
+
+.brisk-rich-text > :last-child {
+  margin-bottom: 0;
+}
+
+/* Lists inside body copy: without this they lose their markers, because
+   the reset above them zeroes list styling site-wide. */
+.brisk-rich-text ul,
+.brisk-rich-text ol {
+  padding-inline-start: 1.5rem;
+  list-style: revert;
+}
+
+.brisk-rich-text a {
+  color: var(--brisk-link, inherit);
+  text-decoration: underline;
+}

@@ -13,7 +13,7 @@ const instanceStyle = buildBlockInstanceStyle(styleOverride);
 
 <details class="brisk-accordion-item" style={instanceStyle}>
   <summary class="brisk-accordion-item__question" data-brisk-field="question">{question}</summary>
-  <div class="brisk-accordion-item__answer" data-brisk-field="answer">{answer}</div>
+  <div class="brisk-accordion-item__answer brisk-rich-text" data-brisk-field="answer" set:html={answer} />
 </details>
 
 <style>
