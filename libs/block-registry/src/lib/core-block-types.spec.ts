@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { CORE_BLOCK_TYPES } from '@brisk/block-sdk';
+import { CORE_BLOCK_TYPES, CORE_BLOCK_VARIANTS } from '@brisk/block-sdk';
 import { pageBlocks } from './config';
 import { headerFooterBlocks } from './layout-config';
 
@@ -24,6 +24,37 @@ describe('CORE_BLOCK_TYPES', () => {
     expect(
       [...CORE_BLOCK_TYPES].sort(),
       'block-sdk/src/lib/core-block-types.ts is out of date with this registry — add or remove the types the diff shows',
+    ).toEqual(actual);
+  });
+});
+
+/**
+ * The same guard for the variant map. It exists so a theme can check it
+ * is not redeclaring a look core already ships (ADR-0047) without
+ * depending on this package — and the moment someone gives a core block
+ * its first variant is exactly the moment they would forget to add it.
+ */
+describe('CORE_BLOCK_VARIANTS', () => {
+  it('matches the registry exactly', () => {
+    const actual = Object.fromEntries(
+      [...pageBlocks, ...headerFooterBlocks]
+        .filter((block) => block.variants?.length)
+        .map((block) => [
+          block.type,
+          (block.variants ?? []).map((variant) => variant.value).sort(),
+        ]),
+    );
+
+    const declared = Object.fromEntries(
+      Object.entries(CORE_BLOCK_VARIANTS).map(([type, variants]) => [
+        type,
+        [...variants].sort(),
+      ]),
+    );
+
+    expect(
+      declared,
+      'block-sdk/src/lib/core-block-types.ts is out of date with this registry — add or remove the variants the diff shows',
     ).toEqual(actual);
   });
 });

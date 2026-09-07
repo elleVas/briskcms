@@ -213,6 +213,41 @@ validation instead of silently breaking. `themes/README.md` covers the
 theme-package side of this (how `blocks/blocks.spec.ts` is wired up);
 this section is the block-authoring contract itself.
 
+## Adding a look to a core block, without touching core
+
+A theme that wants its own button styles does **not** add a block type.
+It adds **variants** to the one core ships, in
+`themes/<name>/blocks/<Type>.variants.ts`:
+
+```ts
+import type { ThemeBlockVariant } from '@brisk/block-sdk';
+
+const variants: ThemeBlockVariant[] = [
+  { value: 'ghost', label: { en: 'Ghost', it: 'Fantasma' } },
+];
+
+export default variants;
+```
+
+The CSS for `.brisk-button--ghost` goes in the theme's own stylesheet.
+Nothing else is required — the class is built from `Block.variant`, so
+the look renders as soon as it is picked.
+
+The helpers here are the same ones the runtime loader uses, so a passing
+spec is evidence about the loader and not merely about the spec:
+
+|                                  | what it checks                                   | where it can run                                 |
+| -------------------------------- | ------------------------------------------------ | ------------------------------------------------ |
+| `collectThemeVariantExtensions`  | shapes an `import.meta.glob` map into extensions | anywhere                                         |
+| `validateThemeVariantExtensions` | names, labels, a theme repeating itself          | anywhere                                         |
+| `checkVariantsAgainstCore`       | the type exists; no look core already ships      | needs `CORE_BLOCK_VARIANTS` + `CORE_BLOCK_TYPES` |
+
+Both constants live in this package rather than being derived from
+`@brisk/block-registry`, for the reason at the top of this file: that
+package is React and editor UI, and depending on it is what used to make
+a theme undevelopable outside the monorepo. `block-registry`'s own
+`core-block-types.spec.ts` fails, naming what to fix, when either drifts.
+
 ## Running unit tests
 
 Run `nx test block-sdk` to execute the unit tests via [Vitest](https://vitest.dev/).

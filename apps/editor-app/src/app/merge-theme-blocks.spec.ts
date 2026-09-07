@@ -102,3 +102,60 @@ describe('mergeThemeBlocks', () => {
     ).toEqual(['Columns', 'Spacer']);
   });
 });
+
+/**
+ * A theme adding looks to a block core already ships (ADR-0047, under
+ * ADR-0048's additive rule) — the whole point being that the core block
+ * survives: twenty Figma buttons become twenty looks of the one Button,
+ * not twenty block types with duplicated fields.
+ */
+describe('mergeThemeBlocks with a theme that extends a core block', () => {
+  const button: BlockDescriptor = {
+    type: 'Button',
+    label: 'blocks.button.label',
+    category: 'conversion',
+    defaultProps: {},
+    fields: [],
+    variants: [
+      { value: 'secondary', label: 'blocks.button.variants.secondary' },
+    ],
+  };
+
+  it("appends the theme's looks to the block's own", () => {
+    const { registry } = mergeThemeBlocks([button], coreCategories, [], {
+      Button: [{ value: 'ghost', label: { en: 'Ghost', it: 'Fantasma' } }],
+    });
+
+    expect(registry[0].variants).toEqual([
+      { value: 'secondary', label: 'blocks.button.variants.secondary' },
+      // An i18n KEY, exactly like the core one above: the theme's strings
+      // are registered into i18next on arrival, so nothing downstream has
+      // to ask where a look came from.
+      { value: 'ghost', label: 'blocks.button.variants.ghost' },
+    ]);
+  });
+
+  it('leaves a block the theme says nothing about alone', () => {
+    const { registry } = mergeThemeBlocks([button], coreCategories, [], {
+      Hero: [{ value: 'split', label: { en: 'Split', it: 'Diviso' } }],
+    });
+
+    expect(registry[0]).toBe(button);
+  });
+
+  // Refused at the source by each theme's own spec; skipped here too,
+  // because this runs in a browser against an HTTP response and a
+  // duplicate would put the same entry in the picker twice.
+  it('skips a look the block already has', () => {
+    const { registry } = mergeThemeBlocks([button], coreCategories, [], {
+      Button: [{ value: 'secondary', label: { en: 'S', it: 'S' } }],
+    });
+
+    expect(registry[0].variants).toHaveLength(1);
+  });
+
+  it('is unchanged when the theme extends nothing', () => {
+    const { registry } = mergeThemeBlocks([button], coreCategories, [], {});
+    expect(registry[0]).toBe(button);
+  });
+});

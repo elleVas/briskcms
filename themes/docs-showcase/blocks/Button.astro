@@ -54,4 +54,19 @@ const href =
     background: transparent;
     color: var(--brisk-override-bg, var(--primary));
   }
+
+  /* Declared by this theme in Button.variants.ts, not by core (ADR-0047):
+     a look the theme adds to the core Button rather than a block type of
+     its own. The class name is what BlockRenderer emits from
+     `Block.variant`; nothing else was needed to make it render. */
+  .brisk-button--ghost {
+    background: transparent;
+    color: var(--brisk-override-text, var(--foreground));
+    border: 1px solid var(--border);
+  }
+
+  .brisk-button--ghost:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+  }
 </style>

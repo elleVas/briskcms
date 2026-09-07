@@ -1,9 +1,15 @@
 import { describe, expect, it } from 'vitest';
 import {
+  checkVariantsAgainstCore,
   collectThemeBlockCandidates,
+  collectThemeVariantExtensions,
   findCoreBlockTypeCollisions,
   validateThemeBlockSet,
+  validateThemeVariantExtensions,
+  CORE_BLOCK_TYPES,
+  CORE_BLOCK_VARIANTS,
   type BlockDescriptor,
+  type ThemeBlockVariant,
 } from '@brisk/block-sdk';
 import type { ThemeBlockLocales } from '@brisk/shared-types';
 
@@ -47,6 +53,48 @@ describe('docs-showcase theme blocks', () => {
     expect(
       findCoreBlockTypeCollisions(
         candidates.map((candidate) => candidate.descriptor.type),
+      ),
+    ).toEqual([]);
+  });
+});
+
+/**
+ * The half of the variant-extension check that needs the core registry
+ * (ADR-0047): the type being extended exists, and the theme is not
+ * redeclaring a look core already ships.
+ *
+ * It lives here, per theme, for the same reason the block-type collision
+ * check does: `apps/public-site` cannot import `@brisk/block-registry`
+ * (a real TypeScript resolution conflict), while a theme package is
+ * "app"-tagged and may. The runtime loader does the rest — names,
+ * labels, a theme repeating itself — and this runs in CI, so a mistake
+ * fails the build before anything ships.
+ */
+describe('docs-showcase variant extensions', () => {
+  it('extend core types that exist, with looks core does not already have', () => {
+    const variantModules = import.meta.glob<{ default: ThemeBlockVariant[] }>(
+      './*.variants.ts',
+      { eager: true },
+    );
+    const extensions = collectThemeVariantExtensions(variantModules);
+
+    expect(extensions.map((extension) => extension.blockType)).toEqual([
+      'Button',
+    ]);
+    expect(validateThemeVariantExtensions(extensions, ['en', 'it'])).toEqual(
+      [],
+    );
+
+    // Both lists come from block-sdk, never from `@brisk/block-registry`
+    // — the same reason as the collision check above: depending on that
+    // package here is what used to make a theme undevelopable outside
+    // this monorepo. block-registry's own core-block-types.spec.ts keeps
+    // them honest.
+    expect(
+      checkVariantsAgainstCore(
+        extensions,
+        CORE_BLOCK_VARIANTS,
+        CORE_BLOCK_TYPES,
       ),
     ).toEqual([]);
   });

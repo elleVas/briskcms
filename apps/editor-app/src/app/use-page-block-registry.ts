@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { pageBlockCategories, pageBlocks } from '@brisk/block-registry';
 import { mergeThemeBlocks, type PageBlockRegistry } from './merge-theme-blocks';
+import { themeBlockVariantsQueryOptions } from './theme-block-variants-queries';
 import { themePageBlocksQueryOptions } from './theme-page-blocks-queries';
 import { useActiveThemeName } from './use-active-theme-name';
 
@@ -15,9 +16,22 @@ import { useActiveThemeName } from './use-active-theme-name';
  * theme block just appears in the picker a moment after everything else.
  */
 export function usePageBlockRegistry(): PageBlockRegistry {
-  const { data } = useQuery(themePageBlocksQueryOptions(useActiveThemeName()));
+  const themeName = useActiveThemeName();
+  const { data } = useQuery(themePageBlocksQueryOptions(themeName));
+  // The looks a theme adds to CORE types (ADR-0047) — a separate query
+  // from the one above, which brings its own new types: they answer
+  // different questions and a theme commonly has one and not the other.
+  const { data: themeVariants } = useQuery(
+    themeBlockVariantsQueryOptions(themeName),
+  );
   return useMemo(
-    () => mergeThemeBlocks(pageBlocks, pageBlockCategories, data ?? []),
-    [data],
+    () =>
+      mergeThemeBlocks(
+        pageBlocks,
+        pageBlockCategories,
+        data ?? [],
+        themeVariants ?? {},
+      ),
+    [data, themeVariants],
   );
 }

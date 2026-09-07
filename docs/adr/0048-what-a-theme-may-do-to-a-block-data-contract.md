@@ -126,3 +126,35 @@ cost sits with whoever chooses it.
   database.
 - Theme authoring documentation must state the rule and, more importantly,
   the reason — a rule whose justification is lost gets argued away later.
+
+## Follow-up (2026-09-07): the extension surface exists
+
+The Decision above promised "a separate, declarative extension surface (a
+theme file that _adds_ variants to an existing type) rather than a
+redefinition". It is `themes/<name>/blocks/<Type>.variants.ts`, a fourth
+file kind beside `<Type>.block.ts`, `<Type>.astro` and
+`<Type>.locales.json`.
+
+A separate file rather than an additive `Button.block.ts` on purpose:
+`.block.ts` DEFINES a block, so a theme shipping one named after a core
+type would be redefining it — the thing this ADR refuses. Adding is a
+different verb, and gets a different file.
+
+Three details worth keeping:
+
+- **Labels are strings, not i18n keys.** A theme cannot add keys to the
+  editor's bundles at build time, so its strings travel with the data and
+  are registered into i18next on arrival, under
+  `blocks.<type>.variants.<value>` — the key a CORE variant already uses.
+  Downstream nothing has to ask where a look came from.
+- **The render path needed nothing.** `BlockRenderer` builds the variant
+  class from `Block.variant` alone, so a theme's variant already rendered
+  before any of this existed. What the endpoint feeds is the editor's
+  picker: without it the look exists in CSS and nobody can choose it.
+- **The core-aware checks live in each theme's own spec**, not in the
+  runtime loader: `apps/public-site` cannot import
+  `@brisk/block-registry`. `CORE_BLOCK_VARIANTS` in block-sdk carries what
+  those checks need, kept honest by block-registry's own
+  `core-block-types.spec.ts` — the same arrangement `CORE_BLOCK_TYPES`
+  already had, and for the same reason: a theme has to be buildable
+  outside this monorepo.

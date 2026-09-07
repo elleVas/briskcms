@@ -13,11 +13,14 @@ import { themesApiCorsHeaders } from '../../../../lib/themes-api-cors';
 // caused a real TypeScript resolution conflict once (see
 // resolve-theme-block-style-defaults.ts's own comment). The actual,
 // reliable collision gate is each theme's own blocks.spec.ts (see
-// themes/classic/blocks/blocks.spec.ts's comment) — it imports
-// block-registry directly (safe: theme packages are "app"-tagged,
-// block-registry is "domain") and runs unconditionally in CI, so a
-// collision fails the build before this code ever ships, regardless of
-// which route a given server process happens to serve first.
+// themes/classic/blocks/blocks.spec.ts's comment). It does NOT import
+// block-registry — an earlier version of this comment said it did, and
+// that is the very dependency ADR-0037 removed to make a theme buildable
+// outside this monorepo. It uses block-sdk's `CORE_BLOCK_TYPES`, kept
+// honest by block-registry's own core-block-types.spec.ts, and runs
+// unconditionally in CI, so a collision fails the build before this code
+// ever ships, regardless of which route a given server process happens
+// to serve first.
 // `BlockRenderer.astro`'s own call (with the real list) stays as a
 // second, defense-in-depth check — cheap to keep, not the primary gate.
 export const prerender = false;
