@@ -159,3 +159,84 @@ describe('mergeThemeBlocks with a theme that extends a core block', () => {
     expect(registry[0]).toBe(button);
   });
 });
+
+/**
+ * A theme adding a style property core never heard of (ADR-0047) — the
+ * case for it: the theme draws something core has no property for, and
+ * wants the AGENCY to tune it from the editor rather than by editing CSS.
+ */
+describe('mergeThemeBlocks with a theme that adds style properties', () => {
+  const code: BlockDescriptor = {
+    type: 'Code',
+    label: 'blocks.code.label',
+    category: 'content',
+    defaultProps: {},
+    fields: [],
+    stylableProperties: ['borderRadius'],
+  };
+
+  it("appends the theme's keys after the block's own", () => {
+    const { registry } = mergeThemeBlocks(
+      [code],
+      coreCategories,
+      [],
+      {},
+      {
+        Code: [
+          {
+            key: 'windowTint',
+            control: 'color',
+            label: { en: 'Window chrome', it: 'Cornice' },
+          },
+        ],
+      },
+    );
+
+    // Order matters: `stylableProperties` is what the panel renders, in
+    // that sequence, so a theme's additions belong at the end.
+    expect(registry[0].stylableProperties).toEqual([
+      'borderRadius',
+      'windowTint',
+    ]);
+  });
+
+  it('leaves a block the theme says nothing about alone', () => {
+    const { registry } = mergeThemeBlocks(
+      [code],
+      coreCategories,
+      [],
+      {},
+      {
+        Hero: [
+          {
+            key: 'overlayBlur',
+            control: 'length',
+            label: { en: 'B', it: 'B' },
+          },
+        ],
+      },
+    );
+
+    expect(registry[0]).toBe(code);
+  });
+
+  it('skips a key the block already has', () => {
+    const { registry } = mergeThemeBlocks(
+      [code],
+      coreCategories,
+      [],
+      {},
+      {
+        Code: [
+          {
+            key: 'borderRadius',
+            control: 'length',
+            label: { en: 'R', it: 'R' },
+          },
+        ],
+      },
+    );
+
+    expect(registry[0].stylableProperties).toEqual(['borderRadius']);
+  });
+});

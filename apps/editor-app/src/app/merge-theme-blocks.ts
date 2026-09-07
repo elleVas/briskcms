@@ -2,6 +2,7 @@ import type { BlockDescriptor } from '@brisk/block-registry';
 import type {
   ThemeBlockEntry,
   ThemeBlockVariantsResponse,
+  ThemeStylePropertiesResponse,
 } from '@brisk/shared-types';
 import type { BlockPickerCategory } from './canvas/block-picker';
 
@@ -37,13 +38,17 @@ export function mergeThemeBlocks(
   coreCategories: BlockPickerCategory[],
   themeEntries: ThemeBlockEntry[],
   themeVariants: ThemeBlockVariantsResponse = {},
+  themeStyleProperties: ThemeStylePropertiesResponse = {},
 ): PageBlockRegistry {
   const categories = coreCategories.map((category) => ({
     ...category,
     types: [...category.types],
   }));
   const registry = coreBlocks.map((descriptor) =>
-    withThemeVariants(descriptor, themeVariants[descriptor.type]),
+    withThemeStyleProperties(
+      withThemeVariants(descriptor, themeVariants[descriptor.type]),
+      themeStyleProperties[descriptor.type],
+    ),
   );
 
   for (const entry of themeEntries) {
@@ -91,5 +96,42 @@ function withThemeVariants(
     }));
   return extra.length > 0
     ? { ...descriptor, variants: [...(descriptor.variants ?? []), ...extra] }
+    : descriptor;
+}
+
+/**
+ * A core block plus the style properties this theme added to it
+ * (ADR-0047) — appended to `stylableProperties`, so they appear in the
+ * style panel beside core's own.
+ *
+ * Only the KEYS go here; what control to draw for each comes from the
+ * declarations, passed to `BlockStyleFields` separately. The two are
+ * separate because `stylableProperties` is an ordering as much as a set,
+ * and a theme's properties belong at the end of it.
+ *
+ * A theme redeclaring a key core already ships is refused at the source
+ * (each theme's `blocks.spec.ts`). Skipped here too: this runs in a
+ * browser against an HTTP response, and a duplicate would put two
+ * controls in the panel writing to one value.
+ */
+function withThemeStyleProperties(
+  descriptor: BlockDescriptor,
+  added: ThemeStylePropertiesResponse[string] | undefined,
+): BlockDescriptor {
+  if (!added?.length) {
+    return descriptor;
+  }
+  const own = new Set(descriptor.stylableProperties ?? []);
+  const extra = added
+    .map((property) => property.key)
+    .filter((key) => !own.has(key));
+  return extra.length > 0
+    ? {
+        ...descriptor,
+        stylableProperties: [
+          ...(descriptor.stylableProperties ?? []),
+          ...extra,
+        ],
+      }
     : descriptor;
 }

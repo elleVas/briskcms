@@ -6,6 +6,7 @@ describe('BlockStyleFields', () => {
   it('renders only the fields listed in properties, in that order', () => {
     render(
       <BlockStyleFields
+        blockType="Button"
         properties={['borderRadius', 'backgroundColor']}
         value={{}}
         onChange={vi.fn()}
@@ -22,6 +23,7 @@ describe('BlockStyleFields', () => {
     const onChange = vi.fn();
     render(
       <BlockStyleFields
+        blockType="Button"
         properties={['borderRadius', 'paddingX']}
         value={{ paddingX: '1rem' }}
         onChange={onChange}
@@ -42,6 +44,7 @@ describe('BlockStyleFields', () => {
     const onChange = vi.fn();
     render(
       <BlockStyleFields
+        blockType="Button"
         properties={['borderRadius']}
         value={{ borderRadius: '6px' }}
         onChange={onChange}
@@ -59,6 +62,7 @@ describe('BlockStyleFields', () => {
     const onChange = vi.fn();
     render(
       <BlockStyleFields
+        blockType="Button"
         properties={['backgroundColor']}
         value={{}}
         onChange={onChange}
@@ -75,6 +79,7 @@ describe('BlockStyleFields', () => {
   it('shows the resolved theme default as the placeholder for a length field', () => {
     render(
       <BlockStyleFields
+        blockType="Button"
         properties={['borderRadius']}
         value={{}}
         onChange={vi.fn()}
@@ -88,6 +93,7 @@ describe('BlockStyleFields', () => {
   it('passes the resolved theme default through to ColorPickerField as a preview', () => {
     render(
       <BlockStyleFields
+        blockType="Button"
         properties={['backgroundColor']}
         value={{}}
         onChange={vi.fn()}
@@ -102,6 +108,7 @@ describe('BlockStyleFields', () => {
     const onChange = vi.fn();
     render(
       <BlockStyleFields
+        blockType="Button"
         properties={['marginTop', 'marginBottom']}
         value={{ marginBottom: '2rem' }}
         onChange={onChange}
@@ -122,5 +129,91 @@ describe('BlockStyleFields', () => {
       marginBottom: '2rem',
       marginTop: '1rem',
     });
+  });
+});
+
+/**
+ * A property core has never heard of (ADR-0047): the theme said which
+ * control to draw, and its label was registered into i18next on arrival.
+ * Without this the panel would list the property and render nothing —
+ * the silent no-op this arc keeps designing against.
+ */
+describe('BlockStyleFields with a theme’s own style property', () => {
+  const windowTint = {
+    key: 'windowTint',
+    control: 'color' as const,
+    label: { en: 'Window chrome', it: 'Cornice della finestra' },
+  };
+
+  it('draws the control the theme declared', () => {
+    const { container } = render(
+      <BlockStyleFields
+        blockType="Code"
+        themeProperties={[windowTint]}
+        properties={['windowTint']}
+        value={{}}
+        onChange={vi.fn()}
+      />,
+    );
+
+    expect(container.querySelector('input[type="color"]')).not.toBeNull();
+  });
+
+  it('draws a text input for a length property, with the declared placeholder', () => {
+    render(
+      <BlockStyleFields
+        blockType="Card"
+        themeProperties={[
+          {
+            key: 'cardElevation',
+            control: 'length',
+            label: { en: 'Elevation', it: 'Elevazione' },
+            placeholder: '4px',
+          },
+        ]}
+        properties={['cardElevation']}
+        value={{}}
+        onChange={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByPlaceholderText('4px')).toBeTruthy();
+  });
+
+  it('writes the value under the theme’s own key', () => {
+    const onChange = vi.fn();
+    render(
+      <BlockStyleFields
+        blockType="Card"
+        themeProperties={[
+          {
+            key: 'cardElevation',
+            control: 'length',
+            label: { en: 'Elevation', it: 'Elevazione' },
+          },
+        ]}
+        properties={['cardElevation']}
+        value={{}}
+        onChange={onChange}
+      />,
+    );
+
+    fireEvent.change(screen.getByRole('textbox'), { target: { value: '8px' } });
+
+    expect(onChange).toHaveBeenCalledWith({ cardElevation: '8px' });
+  });
+
+  // Listed but undeclared: nothing to draw, and nothing pretending to.
+  it('renders nothing for a property no theme declared', () => {
+    const { container } = render(
+      <BlockStyleFields
+        blockType="Code"
+        properties={['windowTint']}
+        value={{}}
+        onChange={vi.fn()}
+      />,
+    );
+
+    expect(container.querySelector('input')).toBeNull();
   });
 });

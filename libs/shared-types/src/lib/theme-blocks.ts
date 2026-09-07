@@ -5,6 +5,7 @@ import {
   blockStyleOverrideSchema,
   blockTypeNameSchema,
   blockVariantNameSchema,
+  themeStylePropertyKeySchema,
 } from './site-theme-tokens';
 
 /**
@@ -186,4 +187,35 @@ export const themeBlockVariantsResponseSchema = z.record(
 );
 export type ThemeBlockVariantsResponse = z.infer<
   typeof themeBlockVariantsResponseSchema
+>;
+
+/**
+ * The style properties a theme ADDS to a block type core already ships
+ * (ADR-0047's consequence on `stylableProperties`) — the wire shape of
+ * `GET /api/themes/current/block-style-properties`.
+ *
+ * Keyed by core block type, and carrying everything the editor needs to
+ * draw a control for a property it has never heard of: which control,
+ * its label per locale, and the options a select offers.
+ *
+ * The theme does not name the CSS variable — `cardElevation` becomes
+ * `--brisk-override-card-elevation`, derived by the emitter. A theme
+ * naming its own could point two properties at one variable or collide
+ * with a core one, and neither mistake announces itself.
+ */
+export const themeStylePropertySchema = z.object({
+  key: themeStylePropertyKeySchema,
+  control: z.enum(['color', 'length', 'select']),
+  label: z.object({ en: z.string().min(1), it: z.string().min(1) }),
+  placeholder: z.string().optional(),
+  options: z.array(z.string().min(1)).optional(),
+});
+export type ThemeStyleProperty = z.infer<typeof themeStylePropertySchema>;
+
+export const themeStylePropertiesResponseSchema = z.record(
+  blockTypeNameSchema,
+  z.array(themeStylePropertySchema),
+);
+export type ThemeStylePropertiesResponse = z.infer<
+  typeof themeStylePropertiesResponseSchema
 >;

@@ -1,4 +1,4 @@
-import type { BlockStyleOverride } from '@brisk/shared-types';
+import type { BlockStylePropertyName } from '@brisk/block-sdk';
 
 /**
  * Single source for `stylableProperties` presets (docs/adr/0022) shared
@@ -12,7 +12,7 @@ import type { BlockStyleOverride } from '@brisk/shared-types';
  */
 export class BlockStyleRegistry {
   /** Background, text color, borders, horizontal/vertical padding. */
-  static readonly STANDARD: readonly (keyof BlockStyleOverride)[] = [
+  static readonly STANDARD: readonly BlockStylePropertyName[] = [
     'backgroundColor',
     'textColor',
     'borderRadius',

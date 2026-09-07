@@ -1,15 +1,19 @@
 import { describe, expect, it } from 'vitest';
 import {
+  checkStylePropertiesAgainstCore,
   checkVariantsAgainstCore,
   collectThemeBlockCandidates,
+  collectThemeStyleProperties,
   collectThemeVariantExtensions,
   findCoreBlockTypeCollisions,
   validateThemeBlockSet,
+  validateThemeStyleProperties,
   validateThemeVariantExtensions,
   CORE_BLOCK_TYPES,
   CORE_BLOCK_VARIANTS,
   type BlockDescriptor,
   type ThemeBlockVariant,
+  type ThemeStyleProperty,
 } from '@brisk/block-sdk';
 import type { ThemeBlockLocales } from '@brisk/shared-types';
 
@@ -96,6 +100,29 @@ describe('docs-showcase variant extensions', () => {
         CORE_BLOCK_VARIANTS,
         CORE_BLOCK_TYPES,
       ),
+    ).toEqual([]);
+  });
+});
+
+/**
+ * The same split for the style properties this theme adds to core blocks
+ * (ADR-0047): the loader checks keys, controls and labels, and the two
+ * checks needing the core list live here.
+ */
+describe('docs-showcase style property extensions', () => {
+  it('extend core types that exist, with properties core does not ship', () => {
+    const styleModules = import.meta.glob<{ default: ThemeStyleProperty[] }>(
+      './*.style.ts',
+      { eager: true },
+    );
+    const extensions = collectThemeStyleProperties(styleModules);
+
+    expect(extensions.map((extension) => extension.blockType)).toEqual([
+      'Code',
+    ]);
+    expect(validateThemeStyleProperties(extensions, ['en', 'it'])).toEqual([]);
+    expect(
+      checkStylePropertiesAgainstCore(extensions, CORE_BLOCK_TYPES),
     ).toEqual([]);
   });
 });

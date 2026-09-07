@@ -18,7 +18,10 @@ import type {
   ResponsiveBlockStyle,
   StyleBreakpoint,
 } from '@brisk/shared-types';
-import type { BlockDescriptor } from '@brisk/block-registry';
+import type {
+  BlockDescriptor,
+  BlockStylePropertyName,
+} from '@brisk/block-registry';
 import {
   Popover,
   PopoverContent,
@@ -34,6 +37,7 @@ import {
   themeAllowsStyleOverrides,
   themeCapabilitiesQueryOptions,
 } from '../theme-capabilities-queries';
+import { themeStylePropertiesQueryOptions } from '../theme-style-properties-queries';
 import {
   toAddChildStyle,
   toInsertPointStyle,
@@ -148,8 +152,12 @@ export function BlockToolbarOverlay({
   const { t, tLabel } = useTranslation();
   const geometry = useIframeGeometry(iframeRef);
   const [insertOpen, setInsertOpen] = useState<'before' | 'after' | null>(null);
+  // Hoisted rather than called inside each query's options: three
+  // separate `useActiveThemeName()` calls read the same value, and one
+  // name makes it obvious they are meant to.
+  const activeThemeName = useActiveThemeName();
   const { data: blockStyleDefaults } = useQuery(
-    blockStyleDefaultsQueryOptions(useActiveThemeName()),
+    blockStyleDefaultsQueryOptions(activeThemeName),
   );
 
   const canAddChild =
@@ -159,9 +167,14 @@ export function BlockToolbarOverlay({
   // tier, so neither styling button appears — before this, both did, saved
   // what you chose, and the published page ignored it.
   const { data: themeCapabilities } = useQuery(
-    themeCapabilitiesQueryOptions(useActiveThemeName()),
+    themeCapabilitiesQueryOptions(activeThemeName),
   );
   const themeAllowsStyling = themeAllowsStyleOverrides(themeCapabilities);
+  // What this theme added to core's style vocabulary (ADR-0047) — the
+  // panel needs it to draw a control for a property core never heard of.
+  const { data: themeStyleProperties } = useQuery(
+    themeStylePropertiesQueryOptions(activeThemeName),
+  );
 
   const stylableProperties = themeAllowsStyling
     ? (descriptor.stylableProperties ?? [])
@@ -190,7 +203,7 @@ export function BlockToolbarOverlay({
   // margins are added AFTER `stylableProperties`, so gating that list
   // alone left them through and the instance button stayed on a theme
   // that refuses everything. Found by the test below, not by reading.
-  const instanceStylableProperties: readonly (keyof BlockStyleOverride)[] =
+  const instanceStylableProperties: readonly BlockStylePropertyName[] =
     !themeAllowsStyling
       ? []
       : isRootLevel && breakpoint === 'base'
@@ -297,6 +310,8 @@ export function BlockToolbarOverlay({
                 })}
               </p>
               <BlockStyleFields
+                blockType={block.type}
+                themeProperties={themeStyleProperties?.[block.type]}
                 properties={stylableProperties}
                 value={typeStyle?.[breakpoint] ?? {}}
                 onChange={(next) => onChangeTypeStyle?.(next)}
@@ -321,6 +336,8 @@ export function BlockToolbarOverlay({
             </PopoverTrigger>
             <PopoverContent side="right">
               <BlockStyleFields
+                blockType={block.type}
+                themeProperties={themeStyleProperties?.[block.type]}
                 properties={instanceStylableProperties}
                 value={block.styleOverride?.[breakpoint] ?? {}}
                 onChange={onChangeInstanceStyle}
