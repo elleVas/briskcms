@@ -1,172 +1,50 @@
 /**
  * A one-off backfill: it assigns a stable id to every existing block that
- * lacks one (pages, page versions, headers/footers, header/footer versions)
- * — see the visual editor plan, Day 1: an id assigned once, forever, before
- * the new editor touches any content (selection, dragging and fragment
+ * lacks one, across page content and its versions, published snapshots,
+ * diverged translations, and the header/footer sections and theirs — see
+ * the visual editor plan, Day 1: an id assigned once, forever, before the
+ * new editor touches any content (selection, dragging and fragment
  * patching are all addressed by id). Idempotent: it regenerates only where
  * one is missing, and never touches an id that is already there — safe to
  * re-run.
  *
  * To be run once, during a maintenance window, BEFORE deploying any code
- * that requires the id in the Zod schema (see content-model.ts). The Puck
- * editor still live during the backfill is unaffected: it goes on
- * discarding ids as it does today.
+ * that requires the id in the Zod schema (see content-model.ts).
+ *
+ * Repaired on 2026-09-07 (ADR-0047's branch): it still read `pages` and
+ * `pageVersions`, tables the i18n rework replaced with `page_groups` and
+ * `page_translations`, so it could not run at all — while ADR-0046 tells
+ * self-hosters to run it. `scripts/` was outside the typecheck target,
+ * which is why nothing said so; it is inside it now. The table list lives
+ * in `visit-stored-content.ts`, shared with the other one-off script
+ * rather than copied.
  *
  * `tenants` has no RLS (it is the root table, see schema.ts) — readable
  * directly with the brisk_app connection. Every content table below it is
  * tenant-scoped instead and requires `withTenant`.
  */
-import { backfillBlockIds, type PageContent } from '@brisk/shared-types';
-import { eq } from 'drizzle-orm';
-import {
-  createAppDb,
-  withTenant,
-  type BriskDb,
-  type BriskTx,
-} from '../src/lib/client';
-import {
-  pages,
-  pageVersions,
-  siteLayoutSections,
-  siteLayoutSectionVersions,
-  tenants,
-} from '../src/lib/schema';
-
-let backfilled = 0;
-let untouched = 0;
-
-async function backfillPages(tx: BriskTx, tenantId: string): Promise<void> {
-  const rows = await tx
-    .select({
-      id: pages.id,
-      content: pages.content,
-      publishedContent: pages.publishedContent,
-    })
-    .from(pages)
-    .where(eq(pages.tenantId, tenantId));
-
-  for (const row of rows) {
-    const content = backfillBlockIds(row.content as PageContent);
-    const published = row.publishedContent
-      ? backfillBlockIds(row.publishedContent as PageContent)
-      : null;
-
-    if (!content.changed && !published?.changed) {
-      untouched += 1;
-      continue;
-    }
-
-    await tx
-      .update(pages)
-      .set({
-        content: content.content,
-        ...(published ? { publishedContent: published.content } : {}),
-      })
-      .where(eq(pages.id, row.id));
-    backfilled += 1;
-  }
-}
-
-async function backfillPageVersions(
-  tx: BriskTx,
-  tenantId: string,
-): Promise<void> {
-  const rows = await tx
-    .select({ id: pageVersions.id, content: pageVersions.content })
-    .from(pageVersions)
-    .where(eq(pageVersions.tenantId, tenantId));
-
-  for (const row of rows) {
-    const result = backfillBlockIds(row.content as PageContent);
-    if (!result.changed) {
-      untouched += 1;
-      continue;
-    }
-    await tx
-      .update(pageVersions)
-      .set({ content: result.content })
-      .where(eq(pageVersions.id, row.id));
-    backfilled += 1;
-  }
-}
-
-async function backfillSiteLayoutSections(
-  tx: BriskTx,
-  tenantId: string,
-): Promise<void> {
-  const rows = await tx
-    .select({
-      id: siteLayoutSections.id,
-      content: siteLayoutSections.content,
-      publishedContent: siteLayoutSections.publishedContent,
-    })
-    .from(siteLayoutSections)
-    .where(eq(siteLayoutSections.tenantId, tenantId));
-
-  for (const row of rows) {
-    const content = backfillBlockIds(row.content as PageContent);
-    const published = row.publishedContent
-      ? backfillBlockIds(row.publishedContent as PageContent)
-      : null;
-
-    if (!content.changed && !published?.changed) {
-      untouched += 1;
-      continue;
-    }
-
-    await tx
-      .update(siteLayoutSections)
-      .set({
-        content: content.content,
-        ...(published ? { publishedContent: published.content } : {}),
-      })
-      .where(eq(siteLayoutSections.id, row.id));
-    backfilled += 1;
-  }
-}
-
-async function backfillSiteLayoutSectionVersions(
-  tx: BriskTx,
-  tenantId: string,
-): Promise<void> {
-  const rows = await tx
-    .select({
-      id: siteLayoutSectionVersions.id,
-      content: siteLayoutSectionVersions.content,
-    })
-    .from(siteLayoutSectionVersions)
-    .where(eq(siteLayoutSectionVersions.tenantId, tenantId));
-
-  for (const row of rows) {
-    const result = backfillBlockIds(row.content as PageContent);
-    if (!result.changed) {
-      untouched += 1;
-      continue;
-    }
-    await tx
-      .update(siteLayoutSectionVersions)
-      .set({ content: result.content })
-      .where(eq(siteLayoutSectionVersions.id, row.id));
-    backfilled += 1;
-  }
-}
+import { backfillBlockIds } from '@brisk/shared-types';
+import { createAppDb, withTenant, type BriskDb } from '../src/lib/client';
+import { tenants } from '../src/lib/schema';
+import { visitStoredContent } from './visit-stored-content';
 
 async function main(): Promise<void> {
   const db: BriskDb = createAppDb();
-
   const allTenants = await db.select({ id: tenants.id }).from(tenants);
+
+  let backfilled = 0;
+  let untouched = 0;
 
   for (const tenant of allTenants) {
     await withTenant(db, tenant.id, async (tx) => {
-      await backfillPages(tx, tenant.id);
-      await backfillPageVersions(tx, tenant.id);
-      await backfillSiteLayoutSections(tx, tenant.id);
-      await backfillSiteLayoutSectionVersions(tx, tenant.id);
+      const totals = await visitStoredContent(tx, tenant.id, backfillBlockIds);
+      backfilled += totals.rewritten;
+      untouched += totals.untouched;
     });
   }
 
   console.log(
-    `Backfill id blocchi completato: ${backfilled} righe aggiornate, ${untouched} già a posto (${allTenants.length} tenant).`,
+    `Block id backfill complete: ${backfilled} rows updated, ${untouched} already had ids (${allTenants.length} tenants).`,
   );
   await db.$client.end();
 }
