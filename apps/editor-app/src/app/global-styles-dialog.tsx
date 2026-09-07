@@ -40,6 +40,10 @@ import { BlockStyleFields } from './canvas/block-style-fields';
 import { checkContrastAgainstThemeForeground } from '../lib/color-contrast';
 import { useTranslation } from '../lib/use-translation';
 import { availableThemesQueryOptions, siteQueryOptions } from './site-queries';
+import {
+  themeAllowsStyleOverrides,
+  themeCapabilitiesQueryOptions,
+} from './theme-capabilities-queries';
 import { themeBaseTokensQueryOptions } from './theme-base-tokens-queries';
 import { themeForegroundTokensQueryOptions } from './theme-foreground-tokens-queries';
 import { ToggleableColorField } from './toggleable-color-field';
@@ -241,6 +245,14 @@ export function GlobalStylesDialog({
     ? registry.find((d) => d.type === selectedType)
     : undefined;
 
+  // The active theme's ceiling (docs/adr/0021). Said here rather than by
+  // an empty list: a dialog that simply shows nothing reads as broken,
+  // while "this theme does not allow it" is an answer.
+  const { data: themeCapabilities } = useQuery(
+    themeCapabilitiesQueryOptions(activeThemeName),
+  );
+  const themeAllowsStyling = themeAllowsStyleOverrides(themeCapabilities);
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-2xl">
@@ -256,6 +268,10 @@ export function GlobalStylesDialog({
         {!site ? (
           <p className="text-sm text-muted-foreground">
             {t('globalStyles.loading')}
+          </p>
+        ) : !themeAllowsStyling ? (
+          <p className="text-sm text-muted-foreground">
+            {t('globalStyles.themeLocked')}
           </p>
         ) : selectedDescriptor ? (
           <div className="flex flex-col gap-4">

@@ -475,3 +475,23 @@ export const themeBaseTokensSchema = z.object({
   radius: z.string().min(1),
 });
 export type ThemeBaseTokens = z.infer<typeof themeBaseTokensSchema>;
+
+/**
+ * What the active theme lets a site do to it — read by the editor so its
+ * controls can say no BEFORE somebody spends an afternoon styling
+ * something that will never reach the page.
+ *
+ * Only the one flag, deliberately, rather than the theme's whole
+ * `theme.json`: `stickyFooter` is core's rendering business and means
+ * nothing to the editor, and a manifest served wholesale becomes a place
+ * where private fields end up in a public response by accident.
+ *
+ * Resolved, not raw: the manifest field is optional and absent means
+ * allowed, so the endpoint answers `true` rather than making every caller
+ * remember the default.
+ */
+export const themeCapabilitiesSchema = z.object({
+  /** `false` = a bespoke theme refusing to be dressed at all (docs/adr/0021): no Tier 1 token, no per-type block style, no per-instance one. */
+  allowStyleOverrides: z.boolean(),
+});
+export type ThemeCapabilities = z.infer<typeof themeCapabilitiesSchema>;

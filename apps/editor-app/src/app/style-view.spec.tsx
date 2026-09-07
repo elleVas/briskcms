@@ -4,6 +4,7 @@ import { QueryClientProvider } from '@tanstack/react-query';
 import type { SiteRecord } from '@brisk/shared-types';
 import { DEFAULT_COOKIE_BANNER_SETTINGS } from '@brisk/shared-types';
 import * as api from '../lib/sites-api-client';
+import * as themeApi from '../lib/theme-api-client';
 import { createTestQueryClient } from '../test-query-client';
 import { StyleView } from './style-view';
 
@@ -20,6 +21,9 @@ vi.mock('../lib/theme-api-client', () => ({
   fetchThemeForegroundTokens: vi.fn().mockResolvedValue({
     primaryForeground: '#ffffff',
     secondaryForeground: '#000000',
+  }),
+  fetchThemeCapabilities: vi.fn().mockResolvedValue({
+    allowStyleOverrides: true,
   }),
 }));
 
@@ -125,5 +129,45 @@ describe('StyleView', () => {
     fireEvent.click(screen.getByRole('button', { name: /^salva$/i }));
 
     expect(await screen.findByRole('alert')).toBeTruthy();
+  });
+});
+
+/**
+ * A theme may refuse to be dressed at all (docs/adr/0021). This page used
+ * to be unable to tell: its own switch said "the active theme can also
+ * lock this off entirely — see its own documentation", which is an
+ * admission that the editor did not know. Now it does.
+ */
+describe('StyleView under a theme that refuses styling', () => {
+  it('says so, and turns the fields off whatever the site switch says', async () => {
+    vi.mocked(themeApi.fetchThemeCapabilities).mockResolvedValue({
+      allowStyleOverrides: false,
+    });
+
+    const { container } = renderView({ themeOverridesEnabled: true });
+
+    expect(
+      await screen.findByText(
+        /tema attivo non permette a un sito di stilarlo/i,
+      ),
+    ).toBeTruthy();
+    // `inert` is what actually stops the fields being usable — asserting
+    // on the greyed-out class would pass on a page that still accepts
+    // input.
+    await waitFor(() => {
+      expect(container.querySelector('[inert]')).not.toBeNull();
+    });
+  });
+
+  it('leaves the fields alone when the theme allows it', async () => {
+    vi.mocked(themeApi.fetchThemeCapabilities).mockResolvedValue({
+      allowStyleOverrides: true,
+    });
+
+    const { container } = renderView({ themeOverridesEnabled: true });
+
+    await waitFor(() => {
+      expect(container.querySelector('[inert]')).toBeNull();
+    });
   });
 });

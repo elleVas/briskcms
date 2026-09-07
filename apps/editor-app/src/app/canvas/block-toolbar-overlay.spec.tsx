@@ -1,20 +1,73 @@
 import { createRef, type ReactElement } from 'react';
-import { fireEvent, render, screen } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { QueryClientProvider } from '@tanstack/react-query';
-import type { Block, BlockRect } from '@brisk/shared-types';
+import {
+  DEFAULT_COOKIE_BANNER_SETTINGS,
+  type Block,
+  type BlockRect,
+  type SiteRecord,
+} from '@brisk/shared-types';
 import type { BlockDescriptor } from '@brisk/block-registry';
 import { createTestQueryClient } from '../../test-query-client';
+import * as siteApi from '../../lib/sites-api-client';
+import * as themeApi from '../../lib/theme-api-client';
 import { BlockToolbarOverlay } from './block-toolbar-overlay';
 
 // No resolved defaults in these tests — they are not what these tests are
 // about, and without a mock the query would make a real network fetch
 // (non-deterministic behaviour). Empty = the fields show the
 // value/placeholder as it was before docs/adr/0022's pre-fill follow-up.
+// `useActiveThemeName` reads the site, and every theme-* query stays
+// disabled while it is empty — so without this the capabilities query
+// never runs and the toolbar falls back to "allowed", which is the very
+// behaviour the last two tests here are checking.
+vi.mock('../../lib/sites-api-client', async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import('../../lib/sites-api-client')>();
+  return { ...actual, getCurrentSite: vi.fn() };
+});
+
 vi.mock('../../lib/theme-api-client', () => ({
   fetchBlockStyleDefaults: vi.fn().mockResolvedValue({}),
   fetchThemeIcons: vi.fn().mockResolvedValue([]),
+  fetchThemeCapabilities: vi.fn().mockResolvedValue({
+    allowStyleOverrides: true,
+  }),
 }));
+
+/** Only what `useActiveThemeName` reads — the rest of the record is beside the point here. */
+function buildSiteStub(themeName: string): SiteRecord {
+  return {
+    id: 'site-1',
+    tenantId: 'tenant-1',
+    name: 'Sito',
+    domain: null,
+    themeName,
+    defaultLocale: 'it',
+    enabledLocales: ['it'],
+    untranslatedPageFallback: 'redirect-to-default',
+    businessAddress: null,
+    businessPhone: null,
+    businessType: null,
+    openingHours: null,
+    searchEngineIndexingEnabled: false,
+    themePrimaryColor: null,
+    themeSecondaryColor: null,
+    themeFontFamily: null,
+    themeCustomCss: null,
+    themeHeadScript: null,
+    themeBodyScript: null,
+    themeFaviconUrl: null,
+    themeOverridesEnabled: true,
+    themeAllowedTrackerDomains: [],
+    formSubmissionRetentionDays: null,
+    themeTrackerScripts: [],
+    cookieBannerSettings: DEFAULT_COOKIE_BANNER_SETTINGS,
+    themeTokens: { blockStyles: {} },
+    createdAt: '',
+  };
+}
 
 function renderOverlay(ui: ReactElement) {
   return render(
@@ -337,5 +390,68 @@ describe('BlockToolbarOverlay move buttons', () => {
 
     expect(onMoveUp).toHaveBeenCalledTimes(1);
     expect(onMoveDown).toHaveBeenCalledTimes(1);
+  });
+});
+
+/**
+ * A theme may refuse to be dressed at all (`allowStyleOverrides: false` in
+ * its theme.json, docs/adr/0021). Until the editor could read that, both
+ * styling buttons appeared on such a site, saved what you chose, and the
+ * published page ignored it — with nothing anywhere saying why.
+ */
+describe('BlockToolbarOverlay under a theme that refuses styling', () => {
+  const withFields: BlockDescriptor = {
+    ...buttonDescriptor,
+    fields: [{ kind: 'text', key: 'label', label: 'Testo' }],
+  };
+
+  beforeEach(() => {
+    vi.mocked(siteApi.getCurrentSite).mockResolvedValue(
+      buildSiteStub('locked-theme'),
+    );
+    vi.mocked(themeApi.fetchThemeCapabilities).mockResolvedValue({
+      allowStyleOverrides: false,
+    });
+  });
+
+  it('offers neither styling button', async () => {
+    renderOverlay(
+      <BlockToolbarOverlay
+        {...baseProps()}
+        descriptor={withFields}
+        typeStyle={{ base: {} }}
+        onChangeTypeStyle={vi.fn()}
+      />,
+    );
+
+    // Waited for rather than asserted once: both buttons render before
+    // the capabilities answer arrives, so a single `queryBy` would pass
+    // whatever the answer turned out to be — it would be checking that
+    // React has not finished, not that the theme was obeyed.
+    await waitFor(() => {
+      expect(
+        screen.queryByRole('button', { name: /Stile di tutti i blocchi/ }),
+      ).toBeNull();
+      expect(
+        screen.queryByRole('button', { name: /Stile di questo blocco/ }),
+      ).toBeNull();
+    });
+    // Still there, so the two above went away because the theme said so
+    // and not because nothing rendered at all.
+    expect(
+      screen.getByRole('button', { name: /Modifica proprietà/ }),
+    ).toBeTruthy();
+  });
+
+  // The properties popover is content, not styling: a theme's ceiling is
+  // about how the site looks, never about what it says.
+  it('still offers the properties popover', async () => {
+    renderOverlay(
+      <BlockToolbarOverlay {...baseProps()} descriptor={withFields} />,
+    );
+
+    expect(
+      await screen.findByRole('button', { name: /Modifica proprietà/ }),
+    ).toBeTruthy();
   });
 });

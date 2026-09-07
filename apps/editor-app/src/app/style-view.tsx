@@ -16,6 +16,10 @@ import { Switch } from '../components/ui/switch';
 import { Textarea } from '../components/ui/textarea';
 import type { SiteRecord } from '@brisk/shared-types';
 import { checkContrastAgainstThemeForeground } from '../lib/color-contrast';
+import {
+  themeAllowsStyleOverrides,
+  themeCapabilitiesQueryOptions,
+} from './theme-capabilities-queries';
 import { themeForegroundTokensQueryOptions } from './theme-foreground-tokens-queries';
 import { ToggleableColorField } from './toggleable-color-field';
 import { useSiteThemeSettings } from './use-site-theme-settings';
@@ -60,6 +64,14 @@ export function StyleView({ siteId, site }: StyleViewProps) {
   const { data: foregroundTokens } = useQuery(
     themeForegroundTokensQueryOptions(site.themeName),
   );
+  // The active theme's ceiling (docs/adr/0021). Until the editor could
+  // read it, this page told you to go and read the theme's own
+  // documentation instead — the switch below still says so, and now the
+  // page can answer for itself.
+  const { data: themeCapabilities } = useQuery(
+    themeCapabilitiesQueryOptions(site.themeName),
+  );
+  const themeAllowsStyling = themeAllowsStyleOverrides(themeCapabilities);
 
   const initialFont = initialFontState(site.themeFontFamily);
   const [overridesEnabled, setOverridesEnabled] = useState(
@@ -143,6 +155,12 @@ export function StyleView({ siteId, site }: StyleViewProps) {
         {t('themeSettings.intro')}
       </p>
 
+      {!themeAllowsStyling && (
+        <p className="rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-xs text-amber-700 dark:text-amber-400">
+          {t('themeSettings.themeLocked')}
+        </p>
+      )}
+
       <div className="flex items-center justify-between gap-4 rounded-md border p-3">
         <div className="flex flex-col gap-1">
           <span className="text-sm font-medium">
@@ -160,9 +178,11 @@ export function StyleView({ siteId, site }: StyleViewProps) {
       </div>
 
       <div
-        className={`flex flex-col gap-4 ${overridesEnabled ? '' : 'opacity-50'}`}
-        inert={!overridesEnabled || undefined}
-        aria-disabled={!overridesEnabled}
+        className={`flex flex-col gap-4 ${
+          overridesEnabled && themeAllowsStyling ? '' : 'opacity-50'
+        }`}
+        inert={!overridesEnabled || !themeAllowsStyling || undefined}
+        aria-disabled={!overridesEnabled || !themeAllowsStyling}
       >
         <div className="flex flex-col gap-1.5">
           <ToggleableColorField

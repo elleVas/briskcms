@@ -407,10 +407,11 @@
     "openDraft": "Apri bozza"
   },
   "themeSettings": {
+    "themeLocked": "Il tema attivo non permette a un sito di stilarlo, quindi niente di quello che c'è in questa pagina — né sui blocchi — arriverà al sito pubblicato. È una scelta del tema stesso, nel suo theme.json.",
     "title": "Stile del sito",
     "intro": "Queste impostazioni si applicano sopra il tema attivo del sito — lascia un campo disattivato per mantenere il valore predefinito del tema.",
     "overridesEnabledLabel": "Applica queste impostazioni",
-    "overridesEnabledDescription": "Se disattivato, ogni campo qui sotto viene ignorato e si usano i valori predefiniti del tema, anche se hai salvato dei valori in passato. Non tocca gli stili che hai impostato sui blocchi: quelli vivono sui blocchi stessi. Il tema attivo pu\u00f2 anche bloccare questa opzione del tutto, e un tema che lo fa rifiuta anche gli stili dei blocchi \u2014 consulta la sua documentazione.",
+    "overridesEnabledDescription": "Se disattivato, ogni campo qui sotto viene ignorato e si usano i valori predefiniti del tema, anche se hai salvato dei valori in passato. Non tocca gli stili che hai impostato sui blocchi: quelli vivono sui blocchi stessi. Il tema attivo può anche bloccare questa opzione del tutto, e un tema che lo fa rifiuta anche gli stili dei blocchi — consulta la sua documentazione.",
     "primaryColorLabel": "Colore primario",
     "secondaryColorLabel": "Colore secondario",
     "currentThemeValue": "Valore di base del tema attivo — personalizzalo qui o modificando il tema stesso",
@@ -456,6 +457,7 @@
   },
   "globalStyles": {
     "variantGroup": "Aspetto che stai modificando",
+    "themeLocked": "Il tema attivo non permette di stilarlo, quindi nulla di ciò che imposti qui arriverebbe alla pagina pubblicata. È una scelta del tema stesso, nel suo theme.json — consulta la sua documentazione.",
     "breakpointGroup": "Dimensione che stai modificando",
     "open": "Stile globale",
     "title": "Stile globale",
