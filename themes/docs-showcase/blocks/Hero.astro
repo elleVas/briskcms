@@ -18,7 +18,11 @@ const { title, subtitle } = Astro.props;
 <header class="brisk-docs-hero">
 	<div class="brisk-docs-hero__badge">✨ Built with Brisk itself</div>
 	<h1 class="brisk-docs-hero__title">{title}</h1>
-	<p class="brisk-docs-hero__subtitle">{subtitle}</p>
+	{/* `set:html`, and a container that may hold paragraphs: `subtitle` is
+	a rich text field (ADR-0046), so its value is HTML the API has already
+	sanitised. Interpolating it would show the reader `<p>` as text. Any
+	theme overriding a block with a rich text field has to do the same. */}
+	<div class="brisk-docs-hero__subtitle brisk-rich-text" set:html={subtitle} />
 </header>
 
 <style>
