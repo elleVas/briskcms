@@ -16,7 +16,7 @@ import {
 } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
 import type {
-  BlockStyleOverride,
+  ResponsiveBlockStyle,
   CookieBannerSettings,
   FieldValueOverlay,
   FormField,
@@ -224,7 +224,11 @@ export const siteThemeBlockStyles = pgTable(
       .notNull()
       .references(() => sites.id, { onDelete: 'cascade' }),
     blockType: text('block_type').notNull(),
-    style: jsonb('style').notNull().$type<BlockStyleOverride>(),
+    // Per breakpoint since ADR-0047. Rows written before it hold the flat
+    // shape and are read as `{ base: … }` — see
+    // `normalizeResponsiveBlockStyle`, and the one-off migration that
+    // rewrites them.
+    style: jsonb('style').notNull().$type<ResponsiveBlockStyle>(),
   },
   (table) => [
     primaryKey({ columns: [table.siteId, table.blockType] }),

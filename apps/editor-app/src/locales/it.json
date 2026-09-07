@@ -455,6 +455,7 @@
     "saved": "Salvato"
   },
   "globalStyles": {
+    "breakpointGroup": "Dimensione che stai modificando",
     "open": "Stile globale",
     "title": "Stile globale",
     "loading": "Caricamento...",
@@ -659,10 +660,10 @@
     "redo": "Ripeti",
     "editProperties": "Modifica proprietà",
     "duplicateBlock": "Duplica blocco",
-    "breakpointGroup": "Larghezza anteprima",
-    "breakpointDesktop": "Desktop",
-    "breakpointTablet": "Tablet",
-    "breakpointMobile": "Mobile",
+    "breakpointGroup": "Dimensione in anteprima e in modifica",
+    "breakpointDesktop": "Desktop (oltre {{tablet}}px)",
+    "breakpointTablet": "Tablet (fino a {{tablet}}px)",
+    "breakpointMobile": "Mobile (fino a {{mobile}}px)",
     "switchPage": "Cambia pagina",
     "language": {
       "switch": "Cambia lingua",

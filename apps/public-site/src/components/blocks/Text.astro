@@ -1,14 +1,9 @@
 ---
-import {
-  type BlockStyleOverride,
-  type TextProps,
-} from '@brisk/shared-types';
+import type { TextProps } from '@brisk/shared-types';
 
-type Props = TextProps & { styleOverride?: BlockStyleOverride;
-  instanceClass?: string | null;
-};
+type Props = TextProps & { instanceClass?: string | null };
 
-const { body, styleOverride, instanceClass} = Astro.props;
+const { body, instanceClass } = Astro.props;
 ---
 
 <div

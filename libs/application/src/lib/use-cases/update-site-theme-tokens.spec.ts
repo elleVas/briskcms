@@ -59,9 +59,11 @@ describe('updateSiteThemeTokens', () => {
       siteId: 'site-1',
       blockType: 'Button',
       style: {
-        borderRadius: '9999px',
-        paddingX: '1.5rem',
-        paddingY: '0.75rem',
+        base: {
+          borderRadius: '9999px',
+          paddingX: '1.5rem',
+          paddingY: '0.75rem',
+        },
       },
     });
 
@@ -71,9 +73,11 @@ describe('updateSiteThemeTokens', () => {
     );
     expect(persisted).toEqual({
       Button: {
-        borderRadius: '9999px',
-        paddingX: '1.5rem',
-        paddingY: '0.75rem',
+        base: {
+          borderRadius: '9999px',
+          paddingX: '1.5rem',
+          paddingY: '0.75rem',
+        },
       },
     });
   });
@@ -85,16 +89,14 @@ describe('updateSiteThemeTokens', () => {
       tenantId,
       'site-1',
       'Banner',
-      {
-        backgroundColor: '#000000',
-      },
+      { base: { backgroundColor: '#000000' } },
     );
 
     await updateSiteThemeTokens(deps, {
       tenantId,
       siteId: 'site-1',
       blockType: 'Button',
-      style: { borderRadius: '9999px' },
+      style: { base: { borderRadius: '9999px' } },
     });
 
     const persisted = await deps.siteThemeBlockStylesRepository.listBySite(
@@ -102,8 +104,8 @@ describe('updateSiteThemeTokens', () => {
       'site-1',
     );
     expect(persisted).toEqual({
-      Banner: { backgroundColor: '#000000' },
-      Button: { borderRadius: '9999px' },
+      Banner: { base: { backgroundColor: '#000000' } },
+      Button: { base: { borderRadius: '9999px' } },
     });
   });
 
@@ -115,7 +117,7 @@ describe('updateSiteThemeTokens', () => {
         tenantId,
         siteId: 'does-not-exist',
         blockType: 'Button',
-        style: { borderRadius: '6px' },
+        style: { base: { borderRadius: '6px' } },
       }),
     ).rejects.toThrow(SiteNotFoundError);
   });

@@ -8,31 +8,30 @@
 // the editor/content author never made explicit (user's own framing,
 // 2026-08-30) — content stays theme-agnostic, the theme still gets the
 // final say on presentation.
-import {
-  buildBlockInstanceStyle,
-  type BlockStyleOverride,
-  type ButtonProps,
-} from '@brisk/shared-types';
+import type { ButtonProps } from '@brisk/shared-types';
 import { localePath } from '@brisk/theme-runtime';
 
-type Props = ButtonProps & { styleOverride?: BlockStyleOverride };
+// `instanceClass` and not `styleOverride` since ADR-0047: the per-instance
+// override is a generated CSS rule now, not an inline attribute, because an
+// inline `style` cannot hold the container query a per-breakpoint value
+// needs. A theme block receives the class that rule targets and puts it on
+// its root element; the override itself never reaches the component.
+type Props = ButtonProps & { instanceClass?: string | null };
 
-const { label, linkType, page, url, variant, styleOverride } = Astro.props;
+const { label, linkType, page, url, variant, instanceClass } = Astro.props;
 const href =
   linkType === 'page' && page?.locale && page?.slug
     ? localePath(page.locale, page.slug)
     : url;
-
-const instanceStyle = buildBlockInstanceStyle(styleOverride);
 ---
 
 <a
   class:list={[
     'brisk-button',
     { 'brisk-button--secondary': variant === 'secondary' },
+    instanceClass,
   ]}
   href={href}
-  style={instanceStyle}
   data-brisk-field="label"
 >
   {label}

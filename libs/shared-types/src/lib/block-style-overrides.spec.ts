@@ -3,9 +3,9 @@ import {
   blockInstanceClassName,
   blockTypeToClassName,
   buildBlockInstanceRulesCss,
-  buildBlockInstanceStyle,
   buildBlockStyleOverridesCss,
 } from './block-style-overrides';
+import type { Block } from './content-model';
 
 describe('blockTypeToClassName', () => {
   it('converts a simple PascalCase type', () => {
@@ -24,7 +24,7 @@ describe('buildBlockStyleOverridesCss', () => {
     // `editable` is true (BlockRenderer.astro), so a rule scoped there
     // would never affect what a real site visitor sees.
     const css = buildBlockStyleOverridesCss({
-      Button: { borderRadius: '9999px', paddingX: '1.5rem' },
+      Button: { base: { borderRadius: '9999px', paddingX: '1.5rem' } },
     });
 
     // Wrapped in its named tier: a per-type rule and a per-instance rule
@@ -38,15 +38,15 @@ describe('buildBlockStyleOverridesCss', () => {
   });
 
   it('emits nothing (no rule at all) for a type whose override has every field unset', () => {
-    const css = buildBlockStyleOverridesCss({ Button: {} });
+    const css = buildBlockStyleOverridesCss({ Button: { base: {} } });
 
     expect(css).toBe('');
   });
 
   it('emits one rule per type when multiple types are styled', () => {
     const css = buildBlockStyleOverridesCss({
-      Button: { backgroundColor: '#ff0000' },
-      PromoBar: { paddingY: '2rem' },
+      Button: { base: { backgroundColor: '#ff0000' } },
+      PromoBar: { base: { paddingY: '2rem' } },
     });
 
     expect(css).toBe(
@@ -63,32 +63,10 @@ describe('buildBlockStyleOverridesCss', () => {
 
   it('never emits a rule for marginTop/marginBottom — they are instance-only, not a per-type CSS override', () => {
     const css = buildBlockStyleOverridesCss({
-      Button: { marginTop: '1rem', marginBottom: '2rem' },
+      Button: { base: { marginTop: '1rem', marginBottom: '2rem' } },
     });
 
     expect(css).toBe('');
-  });
-});
-
-describe('buildBlockInstanceStyle', () => {
-  it('returns inline declarations for the fields present', () => {
-    expect(
-      buildBlockInstanceStyle({ textColor: '#000000', borderRadius: '4px' }),
-    ).toBe('--brisk-override-text: #000000; --brisk-override-radius: 4px;');
-  });
-
-  it('returns undefined when the override is undefined', () => {
-    expect(buildBlockInstanceStyle(undefined)).toBeUndefined();
-  });
-
-  it('returns undefined when every field is unset', () => {
-    expect(buildBlockInstanceStyle({})).toBeUndefined();
-  });
-
-  it('never emits marginTop/marginBottom inline — they are applied directly by PublicPageContent.astro instead', () => {
-    expect(
-      buildBlockInstanceStyle({ marginTop: '1rem', marginBottom: '2rem' }),
-    ).toBeUndefined();
   });
 });
 
@@ -118,17 +96,32 @@ describe('nothing reaches the stylesheet that could escape a declaration', () =>
 
   it.each(BREAKOUTS)('drops the declaration for %s', (hostile) => {
     expect(
-      buildBlockStyleOverridesCss({ Hero: { backgroundColor: hostile } }),
+      buildBlockStyleOverridesCss({
+        Hero: { base: { backgroundColor: hostile } },
+      }),
     ).toBe('');
+    // The per-instance tier is a generated CSS RULE, not an inline
+    // style attribute, so a value that escaped its declaration here
+    // would escape a stylesheet — the barrier is checked on the path
+    // that exists, not on the one this tier used to take.
     expect(
-      buildBlockInstanceStyle({ backgroundColor: hostile }),
-    ).toBeUndefined();
+      buildBlockInstanceRulesCss([
+        [
+          {
+            id: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee',
+            type: 'Hero',
+            props: {},
+            styleOverride: { base: { backgroundColor: hostile } },
+          },
+        ],
+      ]),
+    ).toBe('');
   });
 
   it('drops a block type that is not an identifier, selector and all', () => {
     expect(
       buildBlockStyleOverridesCss({
-        'X { } body { display: none } .y': { backgroundColor: 'red' },
+        'X { } body { display: none } .y': { base: { backgroundColor: 'red' } },
       }),
     ).toBe('');
   });
@@ -136,7 +129,7 @@ describe('nothing reaches the stylesheet that could escape a declaration', () =>
   it('drops a value long enough to be a payload rather than a colour', () => {
     expect(
       buildBlockStyleOverridesCss({
-        Hero: { backgroundColor: 'a'.repeat(201) },
+        Hero: { base: { backgroundColor: 'a'.repeat(201) } },
       }),
     ).toBe('');
   });
@@ -152,7 +145,9 @@ describe('nothing reaches the stylesheet that could escape a declaration', () =>
     'transparent',
   ])('keeps %s', (value) => {
     expect(
-      buildBlockStyleOverridesCss({ Hero: { backgroundColor: value } }),
+      buildBlockStyleOverridesCss({
+        Hero: { base: { backgroundColor: value } },
+      }),
     ).toContain(value);
   });
 });
@@ -174,7 +169,7 @@ describe('buildBlockInstanceRulesCss', () => {
             id: 'a1',
             type: 'Hero',
             props: {},
-            styleOverride: { minHeight: '60vh' },
+            styleOverride: { base: { minHeight: '60vh' } },
           },
         ],
       ]),
@@ -195,7 +190,7 @@ describe('buildBlockInstanceRulesCss', () => {
               id: 'n1',
               type: 'Text',
               props: {},
-              styleOverride: { gap: '2rem' },
+              styleOverride: { base: { gap: '2rem' } },
             },
           ],
         },
@@ -207,13 +202,20 @@ describe('buildBlockInstanceRulesCss', () => {
 
   it('takes header and footer trees alongside the page content', () => {
     const css = buildBlockInstanceRulesCss([
-      [{ id: 'p1', type: 'Text', props: {}, styleOverride: { gap: '1rem' } }],
+      [
+        {
+          id: 'p1',
+          type: 'Text',
+          props: {},
+          styleOverride: { base: { gap: '1rem' } },
+        },
+      ],
       [
         {
           id: 'h1',
           type: 'NavLink',
           props: {},
-          styleOverride: { gap: '2rem' },
+          styleOverride: { base: { gap: '2rem' } },
         },
       ],
     ]);
@@ -238,7 +240,7 @@ describe('buildBlockInstanceRulesCss', () => {
             id: 'a" { } body { display: none } .y',
             type: 'Hero',
             props: {},
-            styleOverride: { minHeight: '1px' },
+            styleOverride: { base: { minHeight: '1px' } },
           },
         ],
       ]),
@@ -256,4 +258,72 @@ describe('blockInstanceClassName', () => {
   it.each(['a b', 'a{b', 'a"b', '', 'a'.repeat(65)])('refuses %s', (id) => {
     expect(blockInstanceClassName(id)).toBeNull();
   });
+});
+
+describe('per-breakpoint overrides', () => {
+  // Deliberately invalid data is the subject of the last test here, so it
+  // cannot be typed: the claim being checked is precisely what happens
+  // when a value the type forbids reaches the emitter anyway — from an
+  // older row, a hand-edited record, or an attack.
+  const instance = (styleOverride: unknown): Block[][] => [
+    [
+      {
+        id: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee',
+        type: 'Hero',
+        props: {},
+        styleOverride,
+      } as Block,
+    ],
+  ];
+
+  it('emits a container query, not a viewport media query', () => {
+    const css = buildBlockStyleOverridesCss({
+      Hero: { base: { minHeight: '60vh' }, mobile: { minHeight: '30vh' } },
+    });
+    expect(css).toContain('.brisk-hero { --brisk-override-min-height: 60vh; }');
+    expect(css).toContain(
+      '@container (max-width: 768px) { .brisk-hero { --brisk-override-min-height: 30vh; } }',
+    );
+    // The whole point of ADR-0047: a block in a narrow column on a wide
+    // screen must get the narrow styles, which a viewport query cannot do.
+    expect(css).not.toContain('@media');
+  });
+
+  it('reads an override written before breakpoints existed', () => {
+    expect(
+      buildBlockStyleOverridesCss({ Hero: { base: { minHeight: '60vh' } } }),
+    ).toContain('.brisk-hero { --brisk-override-min-height: 60vh; }');
+  });
+
+  it('emits nothing for a breakpoint that changes nothing', () => {
+    const css = buildBlockStyleOverridesCss({
+      Hero: { base: { minHeight: '60vh' }, tablet: {} },
+    });
+    expect(css).not.toContain('@container');
+  });
+
+  /**
+   * The emitter runs while rendering a page, so a value it dislikes must
+   * cost that one declaration and nothing more. Parsing with Zod here
+   * would throw and take the whole page down — the reason
+   * `responsiveBuckets` exists alongside `responsiveBlockStyleSchema`.
+   */
+  it('drops a hostile value at one breakpoint and keeps the rest', () => {
+    const css = buildBlockInstanceRulesCss(
+      instance({
+        base: { minHeight: '60vh' },
+        mobile: { minHeight: 'red; } body { display: none } .x {' },
+      }),
+    );
+    expect(css).toContain('--brisk-override-min-height: 60vh;');
+    expect(css).not.toContain('display: none');
+    expect(css).not.toContain('@container');
+  });
+
+  it.each([null, 'a string', 42, [], { base: 'not an object' }])(
+    'renders rather than throws on %s',
+    (garbage) => {
+      expect(() => buildBlockInstanceRulesCss(instance(garbage))).not.toThrow();
+    },
+  );
 });

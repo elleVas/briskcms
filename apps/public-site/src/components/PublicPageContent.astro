@@ -82,14 +82,20 @@ function rootBlockSpacing(
   styleOverride: PublishedPage['content'][number]['styleOverride'],
   isLast: boolean,
 ): string {
-  const marginTop = styleOverride?.marginTop ?? '0';
+  // `base` only, and deliberately: this margin is an inline style on the
+  // spacing wrapper, and its DEFAULT depends on the block's position
+  // (`isLast` below) — neither of which the per-breakpoint rule emitter
+  // knows about (ADR-0047). Rather than let a mobile margin be set and do
+  // nothing, the editor hides these two fields at the narrow sizes; the
+  // spacing wrapper itself is Fase 3's to rework.
+  const marginTop = styleOverride?.base.marginTop ?? '0';
   // The last block gets no default gap below it — `gap` never added one
   // after the final child, and replacing it with an unconditional margin
   // would have added space at the bottom of the page that was not there
   // before. An explicit override on the last block is still honoured: only
   // the DEFAULT is zeroed, not the customization.
   const marginBottom =
-    styleOverride?.marginBottom ?? (isLast ? '0' : DEFAULT_BLOCK_GAP);
+    styleOverride?.base.marginBottom ?? (isLast ? '0' : DEFAULT_BLOCK_GAP);
   return `margin-top: ${marginTop}; margin-bottom: ${marginBottom};`;
 }
 ---

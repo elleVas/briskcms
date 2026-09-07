@@ -7,6 +7,7 @@ import * as themeApi from '../lib/theme-api-client';
 import type { SiteRecord } from '@brisk/shared-types';
 import { DEFAULT_COOKIE_BANNER_SETTINGS } from '@brisk/shared-types';
 import { createTestQueryClient } from '../test-query-client';
+import { TooltipProvider } from '../components/ui/tooltip';
 import { GlobalStylesDialog } from './global-styles-dialog';
 
 const heroDescriptor: BlockDescriptor = {
@@ -95,16 +96,20 @@ function renderDialog(
   onOpenChange = vi.fn(),
   onSaveTypeStyle = vi.fn().mockResolvedValue(undefined),
 ) {
+  // Wrapped exactly as main.tsx wraps the whole app: the breakpoint
+  // selector inside uses IconButton, which needs a tooltip context.
   return render(
     <QueryClientProvider client={createTestQueryClient()}>
-      <GlobalStylesDialog
-        siteId="site-1"
-        open={open}
-        onOpenChange={onOpenChange}
-        registry={registry}
-        categories={categories}
-        onSaveTypeStyle={onSaveTypeStyle}
-      />
+      <TooltipProvider>
+        <GlobalStylesDialog
+          siteId="site-1"
+          open={open}
+          onOpenChange={onOpenChange}
+          registry={registry}
+          categories={categories}
+          onSaveTypeStyle={onSaveTypeStyle}
+        />
+      </TooltipProvider>
     </QueryClientProvider>,
   );
 }
@@ -272,7 +277,7 @@ describe('GlobalStylesDialog', () => {
 
     expect(onSaveTypeStyle).toHaveBeenCalledWith(
       'Hero',
-      expect.objectContaining({ borderRadius: '8px' }),
+      expect.objectContaining({ base: { borderRadius: '8px' } }),
     );
   });
 

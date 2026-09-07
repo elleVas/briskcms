@@ -4,17 +4,17 @@ import type { BlockBehavior } from './types';
 // attach a second click listener (and a second document-level
 // keydown/click listener) — a single click would then open then
 // immediately re-close the same menu. See run-block-behaviors.ts.
-const INITIALIZED_ATTR = 'data-brisk-hamburger-initialized';
+const INITIALIZED_ATTR = 'data-brisk-hamburger-menu-initialized';
 
 function wireHamburgerMenu(root: HTMLElement): void {
   const toggle = root.querySelector<HTMLButtonElement>(
-    '.brisk-hamburger__toggle',
+    '.brisk-hamburger-menu__toggle',
   );
   if (!toggle || toggle.hasAttribute(INITIALIZED_ATTR)) return;
   toggle.setAttribute(INITIALIZED_ATTR, '');
 
   function setOpen(isOpen: boolean) {
-    root.classList.toggle('brisk-hamburger--open', isOpen);
+    root.classList.toggle('brisk-hamburger-menu--open', isOpen);
     toggle?.setAttribute('aria-expanded', String(isOpen));
     const label = isOpen
       ? toggle?.dataset.labelClose
@@ -23,7 +23,7 @@ function wireHamburgerMenu(root: HTMLElement): void {
   }
 
   toggle.addEventListener('click', () => {
-    setOpen(!root.classList.contains('brisk-hamburger--open'));
+    setOpen(!root.classList.contains('brisk-hamburger-menu--open'));
   });
 
   // Security review 2026-08-24, accessibility: neither Esc nor a click
@@ -32,7 +32,7 @@ function wireHamburgerMenu(root: HTMLElement): void {
   document.addEventListener('keydown', (event) => {
     if (
       event.key === 'Escape' &&
-      root.classList.contains('brisk-hamburger--open')
+      root.classList.contains('brisk-hamburger-menu--open')
     ) {
       setOpen(false);
       toggle?.focus();
@@ -40,7 +40,7 @@ function wireHamburgerMenu(root: HTMLElement): void {
   });
   document.addEventListener('click', (event) => {
     if (
-      root.classList.contains('brisk-hamburger--open') &&
+      root.classList.contains('brisk-hamburger-menu--open') &&
       !root.contains(event.target as Node)
     ) {
       setOpen(false);
@@ -49,5 +49,5 @@ function wireHamburgerMenu(root: HTMLElement): void {
 }
 
 export const hamburgerMenuBehaviors: BlockBehavior[] = [
-  { selector: '.brisk-hamburger', wire: wireHamburgerMenu },
+  { selector: '.brisk-hamburger-menu', wire: wireHamburgerMenu },
 ];

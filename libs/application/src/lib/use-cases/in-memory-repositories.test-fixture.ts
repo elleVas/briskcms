@@ -13,7 +13,7 @@ import type {
   SiteLayoutSectionVersion,
   User,
 } from '@brisk/domain-core';
-import type { BlockStyleOverride } from '@brisk/shared-types';
+import type { ResponsiveBlockStyle } from '@brisk/shared-types';
 import type {
   FormRepositoryPort,
   FormSubmissionRepositoryPort,
@@ -432,7 +432,7 @@ export class InMemoryThemeCatalog implements ThemeCatalogPort {
 }
 
 export class InMemorySiteThemeBlockStylesRepository implements SiteThemeBlockStylesPort {
-  private styles = new Map<string, Record<string, BlockStyleOverride>>();
+  private styles = new Map<string, Record<string, ResponsiveBlockStyle>>();
 
   private key(tenantId: string, siteId: string): string {
     return `${tenantId}:${siteId}`;
@@ -441,7 +441,7 @@ export class InMemorySiteThemeBlockStylesRepository implements SiteThemeBlockSty
   async listBySite(
     tenantId: string,
     siteId: string,
-  ): Promise<Record<string, BlockStyleOverride>> {
+  ): Promise<Record<string, ResponsiveBlockStyle>> {
     return { ...(this.styles.get(this.key(tenantId, siteId)) ?? {}) };
   }
 
@@ -449,7 +449,7 @@ export class InMemorySiteThemeBlockStylesRepository implements SiteThemeBlockSty
     tenantId: string,
     siteId: string,
     blockType: string,
-    style: BlockStyleOverride,
+    style: ResponsiveBlockStyle,
   ): Promise<void> {
     const key = this.key(tenantId, siteId);
     const existing = this.styles.get(key) ?? {};

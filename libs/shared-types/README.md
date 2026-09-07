@@ -90,13 +90,21 @@ Recurring patterns worth knowing when reading/extending these schemas:
 - `site-theme-tokens.ts` / `block-style-overrides.ts` / `block-style-defaults.ts` —
   the "component and instance style overrides" system
   ([ADR-0022](../../docs/adr/0022-component-and-instance-style-overrides.md)):
-  one generic `BlockStyleOverride` shape (backgroundColor, textColor,
-  borderRadius, paddingX/Y, marginTop/Bottom) shared by every block type
-  instead of a bespoke Zod field per block. `blockTypeToClassName` +
-  `buildBlockStyleOverridesCss` turn a per-type override map into scoped
-  CSS rules (`.brisk-hero { --brisk-override-bg: ... }`);
-  `buildBlockInstanceStyle` does the equivalent for a single block
-  instance's inline override. `marginTop`/`marginBottom` are deliberately
+  one generic `BlockStyleOverride` shape (21 properties as of ADR-0047 —
+  colours, spacing, border, shadow, background image, overlay, min-height,
+  max-width, gap, content alignment) shared by every block type instead of
+  a bespoke Zod field per block. A stored style is `ResponsiveBlockStyle` —
+  `{ base, tablet?, mobile? }` — and `responsiveBlockStyleSchema` reads the
+  older flat shape as the new one with only `base`, so nothing written
+  before breakpoints existed has to be migrated to be read.
+  `blockTypeToClassName` + `buildBlockStyleOverridesCss` turn a per-type
+  override map into scoped CSS rules
+  (`.brisk-hero { --brisk-override-bg: ... }`), and
+  `buildBlockInstanceRulesCss` does the equivalent for the blocks of a
+  page, one rule per instance keyed by `.b-<blockId>`. Both wrap their
+  output in a named cascade layer and emit `@container` rules for the
+  narrow sizes — **not** an inline `style` attribute, which cannot hold a
+  media query at all. `marginTop`/`marginBottom` are deliberately
   excluded from the per-type CSS mechanism and only ever applied
   per-instance, at the root level of a page — see the comment on those two
   fields for why a per-type margin rule would leak into nested instances.
@@ -151,6 +159,11 @@ scripts on the page) that must be silently ignored, not throw.
   `parseSearchExcerpt` turns Postgres `ts_headline`'s control-character
   match markers into `{ text, matched }` segments a UI can render safely
   without ever treating a search excerpt as trusted HTML.
+- `migrate-responsive-block-styles.ts` — rewrites a flat, pre-ADR-0047
+  `styleOverride` as `{ base: … }`, for the one-off script in
+  `@brisk/postgres-db` (`pnpm db:migrate-responsive-block-styles`). Reading
+  already copes with both shapes, so this is about leaving only one shape
+  in the tables rather than about making anything work.
 - `backfill-block-ids.ts` — see the content-model section above; uses
   `globalThis.crypto.randomUUID()` (Web Crypto), not `node:crypto`,
   specifically because this function is reachable from a barrel export

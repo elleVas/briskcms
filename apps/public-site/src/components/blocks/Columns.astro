@@ -1,7 +1,6 @@
 ---
 import {
   columnsGridTemplate,
-  type BlockStyleOverride,
   type ColumnsProps,
 } from '@brisk/shared-types';
 import EmptyContainerHint from '../EmptyContainerHint.astro';
@@ -9,12 +8,11 @@ import EmptyContainerHint from '../EmptyContainerHint.astro';
 type Props = ColumnsProps & {
   editable?: boolean;
   hasChildren?: boolean;
-  styleOverride?: BlockStyleOverride;
   /** The per-instance style class, from BlockRenderer — see blockInstanceClassName. */
   instanceClass?: string | null;
 };
 
-const { layout, editable, hasChildren, styleOverride, instanceClass} = Astro.props;
+const { layout, editable, hasChildren, instanceClass } = Astro.props;
 ---
 
 <div

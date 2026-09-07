@@ -12,8 +12,10 @@ import {
 import {
   buildBlockInstanceRulesCss,
   buildBlockStyleOverridesCss,
+  withBreakpointStyle,
   type Block,
   type BlockStyleOverride,
+  type ResponsiveBlockStyle,
 } from '@brisk/shared-types';
 import type { BlockDescriptor } from '@brisk/block-registry';
 import { Button } from '../../components/ui/button';
@@ -128,7 +130,7 @@ export function CanvasEditorShell({
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const bridge = usePreviewBridge(iframeRef, PUBLIC_SITE_URL);
   const iframeGeometry = useIframeGeometry(iframeRef);
-  const [breakpoint, setBreakpoint] = useState<Breakpoint>('desktop');
+  const [breakpoint, setBreakpoint] = useState<Breakpoint>('base');
   const [isGlobalStylesOpen, setIsGlobalStylesOpen] = useState(false);
   // Only needed for the "component-level" override (docs/adr/0022, the
   // toolbar's "Style" button) — this query's only other consumer,
@@ -572,19 +574,29 @@ export function CanvasEditorShell({
     );
   }
 
+  /**
+   * The fields edit ONE size at a time — whichever the breakpoint selector
+   * is showing — and that flat override is merged back into the block's
+   * per-breakpoint style here. Deliberately not in the fields themselves:
+   * they stay a plain editor of a flat override, which is also what the
+   * per-type popover and (later) a variant's style need.
+   */
   function handleChangeStyleOverride(styleOverride: BlockStyleOverride): void {
     const blockId = selectedBlock?.id;
     if (!blockId) {
       return;
     }
-    setLocalBlocks((prev) =>
-      updateBlockStyleOverride(prev, blockId, styleOverride),
+    const next = withBreakpointStyle(
+      selectedBlock.styleOverride,
+      breakpoint,
+      styleOverride,
     );
+    setLocalBlocks((prev) => updateBlockStyleOverride(prev, blockId, next));
     scheduleStyleOverrideChange(
       blockId,
       selectedBlock.type,
       selectedBlock.props,
-      styleOverride,
+      next,
       selectedBlock.children,
     );
     // The style is a RULE now, not an inline attribute (ADR-0047), so
@@ -615,7 +627,7 @@ export function CanvasEditorShell({
    */
   async function saveTypeStyle(
     blockType: string,
-    style: BlockStyleOverride,
+    style: ResponsiveBlockStyle,
   ): Promise<void> {
     try {
       const updated = await updateThemeTokens({ blockType, style });
@@ -635,7 +647,14 @@ export function CanvasEditorShell({
     if (!selectedDescriptor) {
       return;
     }
-    void saveTypeStyle(selectedDescriptor.type, style);
+    void saveTypeStyle(
+      selectedDescriptor.type,
+      withBreakpointStyle(
+        site?.themeTokens?.blockStyles[selectedDescriptor.type],
+        breakpoint,
+        style,
+      ),
+    );
   }
 
   /**
@@ -783,10 +802,12 @@ export function CanvasEditorShell({
                 registry={registry}
                 categories={categories}
                 onChangeProp={handleChangeProp}
+                breakpoint={breakpoint}
                 typeStyle={
                   site
-                    ? (site.themeTokens?.blockStyles[selectedDescriptor.type] ??
-                      {})
+                    ? (site.themeTokens?.blockStyles[
+                        selectedDescriptor.type
+                      ] ?? { base: {} })
                     : undefined
                 }
                 onChangeTypeStyle={site ? handleChangeTypeStyle : undefined}

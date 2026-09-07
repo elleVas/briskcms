@@ -3,11 +3,16 @@ import { Controller, useForm } from 'react-hook-form';
 import { useQuery } from '@tanstack/react-query';
 import { ChevronLeft } from 'lucide-react';
 import type { BlockDescriptor } from '@brisk/block-registry';
-import type {
-  BlockStyleOverride,
-  SiteRecord,
-  ThemeBaseTokens,
+import {
+  withBreakpointStyle,
+  type ResponsiveBlockStyle,
+  type SiteRecord,
+  type ThemeBaseTokens,
 } from '@brisk/shared-types';
+import {
+  BreakpointSelector,
+  type Breakpoint,
+} from './canvas/breakpoint-selector';
 import {
   Accordion,
   AccordionContent,
@@ -52,7 +57,7 @@ export interface GlobalStylesDialogProps {
   /** Writes to `site.themeTokens.blockStyles[blockType]` and updates the CSS in the iframe live — shared with the toolbar's "Style" button (see canvas-editor-shell.tsx's saveTypeStyle). */
   onSaveTypeStyle: (
     blockType: string,
-    style: BlockStyleOverride,
+    style: ResponsiveBlockStyle,
   ) => Promise<void>;
 }
 
@@ -142,6 +147,7 @@ export function GlobalStylesDialog({
   // because reopening the dialog is a deliberate user action, not a
   // continuation of the last edit.
   const [selectedType, setSelectedType] = useState<string | null>(null);
+  const [breakpoint, setBreakpoint] = useState<Breakpoint>('base');
 
   const { control, handleSubmit, reset, watch } = useForm<ColorsFormValues>({
     defaultValues: {
@@ -265,13 +271,34 @@ export function GlobalStylesDialog({
                 type: tLabel(selectedDescriptor.label),
               })}
             </p>
+            {/*
+              Without this the dialog would quietly edit the base size
+              only: a per-type style is per breakpoint like any other
+              (ADR-0047), and a control that silently writes to one of
+              three buckets is exactly the kind of gap somebody discovers
+              months later, on a published site.
+            */}
+            <BreakpointSelector
+              value={breakpoint}
+              onChange={setBreakpoint}
+              label={t('globalStyles.breakpointGroup')}
+            />
             <BlockStyleFields
               properties={selectedDescriptor.stylableProperties ?? []}
               value={
-                site.themeTokens?.blockStyles[selectedDescriptor.type] ?? {}
+                site.themeTokens?.blockStyles[selectedDescriptor.type]?.[
+                  breakpoint
+                ] ?? {}
               }
               onChange={(next) =>
-                void onSaveTypeStyle(selectedDescriptor.type, next)
+                void onSaveTypeStyle(
+                  selectedDescriptor.type,
+                  withBreakpointStyle(
+                    site.themeTokens?.blockStyles[selectedDescriptor.type],
+                    breakpoint,
+                    next,
+                  ),
+                )
               }
               defaults={blockStyleDefaults?.[selectedDescriptor.type]}
             />

@@ -3,7 +3,7 @@ import type {
   SiteRepositoryPort,
   SiteThemeBlockStylesPort,
 } from '@brisk/ports';
-import type { BlockStyleOverride } from '@brisk/shared-types';
+import type { ResponsiveBlockStyle } from '@brisk/shared-types';
 
 export interface UpdateSiteThemeTokensDeps {
   siteRepository: SiteRepositoryPort;
@@ -14,7 +14,7 @@ export interface UpdateSiteThemeTokensInput {
   tenantId: string;
   siteId: string;
   blockType: string;
-  style: BlockStyleOverride;
+  style: ResponsiveBlockStyle;
 }
 
 /**

@@ -2,7 +2,7 @@ import {
   availableThemesResponseSchema,
   siteRecordSchema,
   type AvailableTheme,
-  type BlockStyleOverride,
+  type ResponsiveBlockStyle,
   type CookieBannerSettings,
   type LocaleSettings,
   type OpeningHoursDay,
@@ -141,7 +141,7 @@ export async function listAvailableThemes(): Promise<AvailableTheme[]> {
 export function updateThemeTokens(
   id: string,
   blockType: string,
-  style: BlockStyleOverride,
+  style: ResponsiveBlockStyle,
 ): Promise<SiteRecord> {
   return requestSite(`/sites/${id}/theme-tokens`, {
     method: 'PATCH',

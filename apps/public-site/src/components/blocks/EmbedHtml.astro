@@ -1,15 +1,10 @@
 ---
 import sanitizeHtml from 'sanitize-html';
-import {
-  type BlockStyleOverride,
-  type EmbedHtmlProps,
-} from '@brisk/shared-types';
+import type { EmbedHtmlProps } from '@brisk/shared-types';
 
-type Props = EmbedHtmlProps & { styleOverride?: BlockStyleOverride;
-  instanceClass?: string | null;
-};
+type Props = EmbedHtmlProps & { instanceClass?: string | null };
 
-const { html, styleOverride, instanceClass} = Astro.props;
+const { html, instanceClass } = Astro.props;
 
 // Permissive policy (confirmed with the user, 2026-08-19): script/iframe
 // stay allowed — that's what a free-embed block is for (YouTube, Calendly,

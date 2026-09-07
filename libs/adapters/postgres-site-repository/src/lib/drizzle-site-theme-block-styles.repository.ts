@@ -1,6 +1,9 @@
 import { and, eq } from 'drizzle-orm';
 import type { SiteThemeBlockStylesPort } from '@brisk/ports';
-import type { BlockStyleOverride } from '@brisk/shared-types';
+import {
+  normalizeResponsiveBlockStyle,
+  type ResponsiveBlockStyle,
+} from '@brisk/shared-types';
 import {
   type BriskDb,
   siteThemeBlockStyles,
@@ -23,7 +26,7 @@ export class DrizzleSiteThemeBlockStylesRepository implements SiteThemeBlockStyl
   async listBySite(
     tenantId: string,
     siteId: string,
-  ): Promise<Record<string, BlockStyleOverride>> {
+  ): Promise<Record<string, ResponsiveBlockStyle>> {
     const rows = await withTenant(this.db, tenantId, (tx) =>
       tx
         .select()
@@ -35,14 +38,23 @@ export class DrizzleSiteThemeBlockStylesRepository implements SiteThemeBlockStyl
           ),
         ),
     );
-    return Object.fromEntries(rows.map((row) => [row.blockType, row.style]));
+    // Normalized on the way out, not trusted as stored (ADR-0047): a row
+    // may still hold the flat pre-breakpoint shape, and one written before
+    // PR #144 may hold a value today's rules refuse. Neither should be a
+    // site that fails to render.
+    return Object.fromEntries(
+      rows.map((row) => [
+        row.blockType,
+        normalizeResponsiveBlockStyle(row.style),
+      ]),
+    );
   }
 
   async upsert(
     tenantId: string,
     siteId: string,
     blockType: string,
-    style: BlockStyleOverride,
+    style: ResponsiveBlockStyle,
   ): Promise<void> {
     await withTenant(this.db, tenantId, (tx) =>
       tx

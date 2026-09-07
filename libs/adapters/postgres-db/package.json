@@ -12,6 +12,7 @@
     "db:seed-user": "dotenv -e ../../../.env -- tsx scripts/seed-default-user.ts",
     "db:seed": "pnpm run db:seed-tenant && pnpm run db:seed-user",
     "db:backfill-block-ids": "dotenv -e ../../../.env -- tsx scripts/backfill-block-ids.ts",
+    "db:migrate-responsive-block-styles": "dotenv -e ../../../.env -- tsx scripts/migrate-responsive-block-styles.ts",
     "db:backfill-page-groups": "dotenv -e ../../../.env -- tsx scripts/backfill-page-groups.ts",
     "db:normalize-rich-text": "dotenv -e ../../../.env -- tsx scripts/normalize-rich-text.ts"
   },

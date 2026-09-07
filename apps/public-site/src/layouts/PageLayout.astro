@@ -267,10 +267,18 @@ const blockStyleOverridesCss = buildBlockStyleOverridesCss(
 // The two tiers are declared before either is used, so their order is a
 // line someone can read rather than a property of where the rules happen
 // to appear in the document (ADR-0047).
-const styleTiers = [
-	blockStyleOverridesCss,
-	allowStyleOverrides ? instanceStyleCss : '',
-].filter(Boolean);
+//
+// Neither is gated on `allowStyleOverrides`. That switch is Tier 1
+// (docs/adr/0021): whether a SITE may repaint the THEME — its `:root`
+// tokens, fonts, custom CSS. These two are docs/adr/0022: an editor
+// styling one block, or one block type. Gating only the per-instance tier
+// on it — as this did briefly — meant that on a site with the switch off,
+// styling a block in the canvas silently did nothing once published,
+// while styling every block of that type site-wide still worked. Before
+// the per-instance tier became a rule it was an inline style and passed
+// no such gate; keeping the gate would have been a behaviour change
+// nobody asked for, and an invisible one.
+const styleTiers = [blockStyleOverridesCss, instanceStyleCss].filter(Boolean);
 // The declaration comes first so the order is a line someone can read
 // rather than a property of where the rules happen to land in the
 // document (ADR-0047) — and only when there is something to order, so a

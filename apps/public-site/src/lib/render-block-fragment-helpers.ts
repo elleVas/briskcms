@@ -1,4 +1,4 @@
-import type { Block, BlockStyleOverride } from '@brisk/shared-types';
+import type { Block, ResponsiveBlockStyle } from '@brisk/shared-types';
 import { editorAppUrl } from './editor-app-url';
 
 export interface RenderBlockFragmentBody {
@@ -16,8 +16,8 @@ export interface RenderBlockFragmentBody {
    * the save that just happened.
    */
   children?: Block[];
-  /** The per-instance override (docs/adr/0022) — without this, changing ONE block's style from the canvas would not show until the iframe reloaded. */
-  styleOverride?: BlockStyleOverride;
+  /** The per-instance override (docs/adr/0022), every breakpoint of it (ADR-0047) — without this, changing ONE block's style from the canvas would not show until the iframe reloaded. */
+  styleOverride?: ResponsiveBlockStyle;
 }
 
 /**

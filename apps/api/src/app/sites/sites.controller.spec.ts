@@ -108,14 +108,14 @@ describe('SitesController (unit)', () => {
   it('findById returns the site props, with themeTokens composed from the block styles repository', async () => {
     siteRepository.findById.mockResolvedValue(buildSite());
     siteThemeBlockStylesRepository.listBySite.mockResolvedValue({
-      Button: { borderRadius: '9999px' },
+      Button: { base: { borderRadius: '9999px' } },
     });
 
     const result = await controller.findById('site-1');
 
     expect(result.name).toBe('Il mio sito');
     expect(result.themeTokens).toEqual({
-      blockStyles: { Button: { borderRadius: '9999px' } },
+      blockStyles: { Button: { base: { borderRadius: '9999px' } } },
     });
   });
 
@@ -319,7 +319,7 @@ describe('SitesController (unit)', () => {
     await expect(
       controller.updateThemeTokens('missing', {
         blockType: 'Button',
-        style: { borderRadius: '6px' },
+        style: { base: { borderRadius: '6px' } },
       }),
     ).rejects.toThrow(SiteNotFoundError);
     expect(siteThemeBlockStylesRepository.upsert).not.toHaveBeenCalled();
@@ -328,23 +328,23 @@ describe('SitesController (unit)', () => {
   it('updateThemeTokens upserts the override for only the block type given', async () => {
     siteRepository.findById.mockResolvedValue(buildSite());
     siteThemeBlockStylesRepository.listBySite.mockResolvedValue({
-      Button: { borderRadius: '9999px', paddingX: '1.5rem' },
+      Button: { base: { borderRadius: '9999px', paddingX: '1.5rem' } },
     });
 
     const result = await controller.updateThemeTokens('site-1', {
       blockType: 'Button',
-      style: { borderRadius: '9999px', paddingX: '1.5rem' },
+      style: { base: { borderRadius: '9999px', paddingX: '1.5rem' } },
     });
 
     expect(siteThemeBlockStylesRepository.upsert).toHaveBeenCalledWith(
       'tenant-1',
       'site-1',
       'Button',
-      { borderRadius: '9999px', paddingX: '1.5rem' },
+      { base: { borderRadius: '9999px', paddingX: '1.5rem' } },
     );
     expect(result.themeTokens).toEqual({
       blockStyles: {
-        Button: { borderRadius: '9999px', paddingX: '1.5rem' },
+        Button: { base: { borderRadius: '9999px', paddingX: '1.5rem' } },
       },
     });
   });

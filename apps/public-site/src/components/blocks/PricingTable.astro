@@ -1,16 +1,14 @@
 ---
-import { buildBlockInstanceStyle, type BlockStyleOverride } from '@brisk/shared-types';
 import EmptyContainerHint from '../EmptyContainerHint.astro';
 
 export interface Props {
   editable?: boolean;
   hasChildren?: boolean;
-  styleOverride?: BlockStyleOverride;
   /** The per-instance style class, from BlockRenderer — see blockInstanceClassName. */
   instanceClass?: string | null;
 }
 
-const { editable, hasChildren, styleOverride, instanceClass} = Astro.props;
+const { editable, hasChildren, instanceClass } = Astro.props;
 ---
 
 <div class:list={['brisk-pricing-table', instanceClass]} data-brisk-editable-outline={editable && hasChildren ? '' : undefined}>

@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import {
-  blockStyleOverrideSchema,
-  type BlockStyleOverride,
+  responsiveBlockStyleSchema,
+  type ResponsiveBlockStyle,
 } from './site-theme-tokens';
 
 /**
@@ -27,8 +27,17 @@ export interface Block {
   type: string;
   props: Record<string, unknown>;
   children?: Block[];
-  /** The per-instance override (docs/adr/0022) — THIS block only, on top of any type-level override saved in the site's themeTokens. `undefined`/absent fields = inherit normally. */
-  styleOverride?: BlockStyleOverride;
+  /**
+   * The per-instance override (docs/adr/0022) — THIS block only, on top of
+   * any type-level override saved in the site's themeTokens.
+   * `undefined`/absent fields = inherit normally.
+   *
+   * Per breakpoint since ADR-0047: `base` applies at every size and the
+   * other two hold only what CHANGES below their width, exactly as the
+   * cascade already behaves. A flat override written before then still
+   * parses, and still means what it meant.
+   */
+  styleOverride?: ResponsiveBlockStyle;
 }
 
 export const blockSchema: z.ZodType<Block> = z.lazy(() =>
@@ -37,7 +46,7 @@ export const blockSchema: z.ZodType<Block> = z.lazy(() =>
     type: z.string(),
     props: z.record(z.string(), z.unknown()),
     children: z.array(blockSchema).optional(),
-    styleOverride: blockStyleOverrideSchema.optional(),
+    styleOverride: responsiveBlockStyleSchema.optional(),
   }),
 );
 

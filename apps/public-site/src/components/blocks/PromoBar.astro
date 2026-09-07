@@ -1,14 +1,10 @@
 ---
-import {
-  type BlockStyleOverride,
-  type PromoBarProps,
-} from '@brisk/shared-types';
+import type { PromoBarProps } from '@brisk/shared-types';
 import { localePathFromAncestors } from '@brisk/theme-runtime';
 import { Translator } from '@brisk/theme-runtime';
 import { PROMO_BAR_DISMISS_SCRIPT } from './promo-bar-dismiss-script';
 
 type Props = PromoBarProps & {
-  styleOverride?: BlockStyleOverride;
   instanceClass?: string | null;
   locale: string;
 };
@@ -19,7 +15,6 @@ const {
   page,
   url,
   visibility,
-  styleOverride,
   locale,
   instanceClass,
 } = Astro.props;

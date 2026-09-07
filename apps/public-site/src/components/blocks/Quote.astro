@@ -1,14 +1,9 @@
 ---
-import {
-  type BlockStyleOverride,
-  type QuoteProps,
-} from '@brisk/shared-types';
+import type { QuoteProps } from '@brisk/shared-types';
 
-type Props = QuoteProps & { styleOverride?: BlockStyleOverride;
-  instanceClass?: string | null;
-};
+type Props = QuoteProps & { instanceClass?: string | null };
 
-const { quote, author, role, styleOverride, instanceClass} = Astro.props;
+const { quote, author, role, instanceClass } = Astro.props;
 const hasAuthor = Boolean(author);
 const hasRole = Boolean(role);
 ---

@@ -1,5 +1,10 @@
 import type { Block } from './content-model';
-import type { BlockStyleOverride } from './site-theme-tokens';
+import {
+  BREAKPOINT_MAX_WIDTHS,
+  BREAKPOINTS,
+  type BlockStyleOverride,
+  type ResponsiveBlockStyle,
+} from './site-theme-tokens';
 
 /**
  * One custom-property name per field, shared by every block type
@@ -77,17 +82,12 @@ export function blockTypeToClassName(blockType: string): string {
  * resolves to is already the winning value by construction.
  */
 export function buildBlockStyleOverridesCss(
-  blockStyles: Record<string, BlockStyleOverride>,
+  blockStyles: Record<string, ResponsiveBlockStyle>,
 ): string {
-  const rules = Object.entries(blockStyles)
-    .map(([blockType, override]) => {
-      const className = safeBlockTypeClassName(blockType);
-      const declarations = buildOverrideDeclarations(override);
-      return className && declarations
-        ? `.${className} { ${declarations} }`
-        : null;
-    })
-    .filter((rule): rule is string => rule !== null);
+  const rules = Object.entries(blockStyles).flatMap(([blockType, style]) => {
+    const className = safeBlockTypeClassName(blockType);
+    return className ? buildResponsiveRules(`.${className}`, style) : [];
+  });
   // A named tier rather than source order — see buildBlockInstanceRulesCss.
   return rules.length > 0 ? `@layer brisk.class {\n${rules.join('\n')}\n}` : '';
 }
@@ -136,9 +136,78 @@ function safeBlockTypeClassName(blockType: string): string | null {
     : null;
 }
 
+/**
+ * Every rule one styled thing needs, at every size — the base declaration
+ * plus one container query per narrower tier that changes something.
+ *
+ * **Container queries, not media queries.** Elementor and Webflow drive
+ * responsive styling from the viewport and inherit its defect: a block
+ * inside a narrow column, seen on a wide screen, gets the DESKTOP styles
+ * because the window is wide, and breaks. A container query asks how much
+ * room the block actually has. For a block at the top level of a page
+ * that is the same question — its container is as wide as the viewport —
+ * so nothing feels different until the case where the viewport was the
+ * wrong thing to ask about.
+ *
+ * Narrower tiers come last, so mobile wins over tablet where both match.
+ *
+ * The dangerous part, and the reason for the invariant in
+ * `container-type.spec.ts`: if no ancestor declares `container-type`,
+ * `@container` simply never matches. No error, no warning, nothing in
+ * devtools marking the rule inert.
+ */
+/**
+ * The breakpoint buckets of a stored override, whatever shape it is in.
+ *
+ * Deliberately NOT `responsiveBlockStyleSchema.parse`, though the schema
+ * describes the same shape: a parse THROWS on a value it dislikes, and
+ * this runs while rendering a page. One bad string in one block's
+ * override — left by an older version, a hand-edited row, an attempt at
+ * injection — would take down the whole page instead of costing that one
+ * declaration. The schema guards the boundary where rejecting the write
+ * is the right answer; here the right answer is to emit everything that
+ * is fine and drop what is not, which `safeDeclarationValue` already does
+ * per declaration.
+ */
+function responsiveBuckets(style: unknown): Record<string, unknown>[] {
+  const isRecord = (value: unknown): value is Record<string, unknown> =>
+    typeof value === 'object' && value !== null && !Array.isArray(value);
+  if (!isRecord(style)) {
+    return [{}, {}, {}];
+  }
+  // The old flat shape is the new one with only `base` — see the same
+  // reasoning in `responsiveBlockStyleSchema`.
+  if (!('base' in style)) {
+    return [style, {}, {}];
+  }
+  return BREAKPOINTS.map((breakpoint) => {
+    const bucket = style[breakpoint];
+    return isRecord(bucket) ? bucket : {};
+  });
+}
+
+function buildResponsiveRules(selector: string, style: unknown): string[] {
+  const [base, tablet, mobile] = responsiveBuckets(style);
+  const perBreakpoint = { tablet, mobile };
+  const rules: string[] = [];
+  const baseDeclarations = buildOverrideDeclarations(base);
+  if (baseDeclarations) {
+    rules.push(`${selector} { ${baseDeclarations} }`);
+  }
+  for (const breakpoint of ['tablet', 'mobile'] as const) {
+    const declarations = buildOverrideDeclarations(perBreakpoint[breakpoint]);
+    if (declarations) {
+      rules.push(
+        `@container (max-width: ${BREAKPOINT_MAX_WIDTHS[breakpoint]}px) { ${selector} { ${declarations} } }`,
+      );
+    }
+  }
+  return rules;
+}
+
 /** The declaration list of one override — the single place the property map is walked, so the emitters below cannot drift apart. */
 function buildOverrideDeclarations(
-  override: BlockStyleOverride,
+  override: Readonly<Record<string, unknown>>,
 ): string | null {
   const declarations = (
     Object.keys(BLOCK_STYLE_CUSTOM_PROPERTIES) as CssOverridableProperty[]
@@ -152,14 +221,6 @@ function buildOverrideDeclarations(
     .filter((declaration): declaration is string => declaration !== null)
     .join(' ');
   return declarations.length > 0 ? declarations : null;
-}
-
-export function buildBlockInstanceStyle(
-  override: BlockStyleOverride | undefined,
-): string | undefined {
-  return override
-    ? (buildOverrideDeclarations(override) ?? undefined)
-    : undefined;
 }
 
 /**
@@ -177,8 +238,8 @@ export function blockInstanceClassName(blockId: string): string | null {
 /** Every block of a tree carrying an override, children included. */
 function collectStyledBlocks(
   blocks: Block[],
-  found: { id: string; override: BlockStyleOverride }[] = [],
-): { id: string; override: BlockStyleOverride }[] {
+  found: { id: string; override: ResponsiveBlockStyle }[] = [],
+): { id: string; override: ResponsiveBlockStyle }[] {
   for (const block of blocks) {
     if (block.id && block.styleOverride) {
       found.push({ id: block.id, override: block.styleOverride });
@@ -215,14 +276,10 @@ function collectStyledBlocks(
 export function buildBlockInstanceRulesCss(contents: Block[][]): string {
   const rules = contents
     .flatMap((content) => collectStyledBlocks(content))
-    .map(({ id, override }) => {
+    .flatMap(({ id, override }) => {
       const className = blockInstanceClassName(id);
-      const declarations = buildOverrideDeclarations(override);
-      return className && declarations
-        ? `.${className} { ${declarations} }`
-        : null;
-    })
-    .filter((rule): rule is string => rule !== null);
+      return className ? buildResponsiveRules(`.${className}`, override) : [];
+    });
   return rules.length > 0
     ? `@layer brisk.instance {\n${rules.join('\n')}\n}`
     : '';

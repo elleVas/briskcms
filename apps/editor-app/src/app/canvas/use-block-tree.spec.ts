@@ -77,9 +77,11 @@ describe('updateBlockProps', () => {
 describe('updateBlockStyleOverride', () => {
   it('sets styleOverride on a top-level block with none yet', () => {
     const result = updateBlockStyleOverride(tree(), 'hero-1', {
-      backgroundColor: '#ff0000',
+      base: { backgroundColor: '#ff0000' },
     });
-    expect(result[0].styleOverride).toEqual({ backgroundColor: '#ff0000' });
+    expect(result[0].styleOverride).toEqual({
+      base: { backgroundColor: '#ff0000' },
+    });
   });
 
   it('replaces the whole styleOverride, not a field-by-field merge', () => {
@@ -88,35 +90,41 @@ describe('updateBlockStyleOverride', () => {
         id: 'hero-1',
         type: 'Hero',
         props: {},
-        styleOverride: { backgroundColor: '#000000', borderRadius: '4px' },
+        styleOverride: {
+          base: { backgroundColor: '#000000', borderRadius: '4px' },
+        },
       },
     ];
     const result = updateBlockStyleOverride(blocks, 'hero-1', {
-      backgroundColor: '#ff0000',
+      base: { backgroundColor: '#ff0000' },
     });
-    expect(result[0].styleOverride).toEqual({ backgroundColor: '#ff0000' });
+    expect(result[0].styleOverride).toEqual({
+      base: { backgroundColor: '#ff0000' },
+    });
   });
 
   it('updates a block nested inside children', () => {
     const result = updateBlockStyleOverride(tree(), 'text-1', {
-      textColor: '#111111',
+      base: { textColor: '#111111' },
     });
     expect(result[1].children?.[0].styleOverride).toEqual({
-      textColor: '#111111',
+      base: { textColor: '#111111' },
     });
   });
 
   it('never mutates the input tree', () => {
     const original = tree();
     const snapshot = JSON.parse(JSON.stringify(original));
-    updateBlockStyleOverride(original, 'hero-1', { backgroundColor: '#fff' });
+    updateBlockStyleOverride(original, 'hero-1', {
+      base: { backgroundColor: '#fff' },
+    });
     expect(original).toEqual(snapshot);
   });
 
   it('leaves the tree unchanged for an unknown id', () => {
     const original = tree();
     const result = updateBlockStyleOverride(original, 'ghost', {
-      backgroundColor: '#fff',
+      base: { backgroundColor: '#fff' },
     });
     expect(result).toEqual(original);
   });

@@ -455,6 +455,7 @@
     "saved": "Saved"
   },
   "globalStyles": {
+    "breakpointGroup": "Size being styled",
     "open": "Global styles",
     "title": "Global styles",
     "loading": "Loading...",
@@ -659,10 +660,10 @@
     "redo": "Redo",
     "editProperties": "Edit properties",
     "duplicateBlock": "Duplicate block",
-    "breakpointGroup": "Preview width",
-    "breakpointDesktop": "Desktop",
-    "breakpointTablet": "Tablet",
-    "breakpointMobile": "Mobile",
+    "breakpointGroup": "Preview and styling size",
+    "breakpointDesktop": "Desktop (wider than {{tablet}}px)",
+    "breakpointTablet": "Tablet ({{tablet}}px and under)",
+    "breakpointMobile": "Mobile ({{mobile}}px and under)",
     "switchPage": "Switch page",
     "language": {
       "switch": "Switch language",

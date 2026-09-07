@@ -1,11 +1,7 @@
 ---
-import {
-  type BlockStyleOverride,
-  type FeatureProps,
-} from '@brisk/shared-types';
+import type { FeatureProps } from '@brisk/shared-types';
 
 type Props = FeatureProps & {
-  styleOverride?: BlockStyleOverride;
   /** The per-instance style class, from BlockRenderer — see blockInstanceClassName. */
   instanceClass?: string | null;
   /** Already resolved by BlockRenderer — see its comment on `iconName`. */
@@ -13,7 +9,7 @@ type Props = FeatureProps & {
   themeName: string;
 };
 
-const { title, text, styleOverride, iconSvg, instanceClass} = Astro.props;
+const { title, text, iconSvg, instanceClass } = Astro.props;
 ---
 
 <div class:list={['brisk-feature', instanceClass]}>
