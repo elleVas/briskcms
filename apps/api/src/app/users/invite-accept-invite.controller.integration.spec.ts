@@ -19,14 +19,13 @@ import { UsersModule } from './users.module';
 
 const MAILPIT_URL = `http://localhost:${process.env['MAILPIT_UI_PORT'] ?? '8025'}`;
 
-// 'resends the invite' below chains three of fetchInviteToken/
-// waitForMessageCount's own polling loops back to back, each internally
-// capped at 5s — its own realistic worst case (~15s, before adding real
-// HTTP/Postgres/SMTP overhead) already exceeds Jest's 5000ms default test
-// timeout even with zero CI contention, which is exactly the intermittent
-// CI failure this caused. Not a masked slowdown: every other test in this
-// file does at most one such poll and comfortably fits the default.
-jest.setTimeout(20000);
+// 'resends the invite' below chains THREE of the polling loops below back
+// to back, so this file's Jest timeout has to clear their combined worst
+// case with room to spare — 3 x EMAIL_DELIVERY_TIMEOUT_MS, plus the real
+// HTTP/Postgres/SMTP work around them. Keep the two numbers in step: a
+// per-poll budget that outgrows this one turns an honest "no email
+// arrived" into a bare Jest timeout, which says nothing about why.
+jest.setTimeout(60_000);
 
 /**
  * Runs the full invite -> accept-invite cycle through the real HTTP stack,
@@ -39,53 +38,99 @@ jest.setTimeout(20000);
  * only exists in the email that was sent — polling Mailpit is the only
  * way to test the real, user-facing path end to end.
  */
-async function fetchInviteToken(toEmail: string): Promise<string> {
-  const deadline = Date.now() + 5000;
+/**
+ * How long to wait for an email that has to travel over SMTP to a real
+ * Mailpit before the test gives up.
+ *
+ * Deliberately generous, because it is NOT a performance assertion: there
+ * is no deterministic signal to wait on here, only polling, and the
+ * deadline exists so a genuine failure ends instead of hanging forever.
+ * Five seconds was not generous, and this suite runs `--parallel=1` with
+ * coverage on a shared runner — so it timed out on load that had nothing
+ * to do with email, and the fix was always "run it again". A test that
+ * cries wolf is worse than no test: it teaches everyone to re-run a red
+ * build, which is how a real failure eventually goes unnoticed.
+ *
+ * Bounded by this file's `jest.setTimeout` above, not independent of it:
+ * one test chains three of these waits, so the two numbers have to be
+ * chosen together.
+ */
+const EMAIL_DELIVERY_TIMEOUT_MS = 15_000;
+const POLL_INTERVAL_MS = 200;
+
+interface MailpitMessage {
+  ID: string;
+}
+
+async function messagesFor(toEmail: string): Promise<MailpitMessage[]> {
+  const res = await fetch(
+    `${MAILPIT_URL}/api/v1/messages?query=${encodeURIComponent(`to:${toEmail}`)}`,
+  );
+  const body = (await res.json()) as { messages: MailpitMessage[] };
+  return body.messages;
+}
+
+/**
+ * One polling loop for both waits below, so the timeout is one number
+ * rather than two that can drift.
+ *
+ * `read` returns `null` for "not yet"; `describeFailure` gets the mailbox
+ * as it finally stood, so the error can say whether nothing arrived at all
+ * or something arrived without what was expected in it — the difference
+ * between "slow" and "broken", which the old message could not tell.
+ */
+async function pollMailbox<T>(
+  toEmail: string,
+  read: (messages: MailpitMessage[]) => Promise<T | null>,
+  describeFailure: (messages: MailpitMessage[]) => string,
+): Promise<T> {
+  const deadline = Date.now() + EMAIL_DELIVERY_TIMEOUT_MS;
   for (;;) {
-    const searchRes = await fetch(
-      `${MAILPIT_URL}/api/v1/messages?query=${encodeURIComponent(`to:${toEmail}`)}`,
-    );
-    const search = (await searchRes.json()) as {
-      messages: { ID: string }[];
-    };
-    if (search.messages.length > 0) {
-      const messageRes = await fetch(
-        `${MAILPIT_URL}/api/v1/message/${search.messages[0].ID}`,
-      );
-      const message = (await messageRes.json()) as { Text: string };
-      const match = message.Text.match(/inviteToken=([^&\s]+)/);
-      if (match) {
-        return match[1];
-      }
+    const messages = await messagesFor(toEmail);
+    const found = await read(messages);
+    if (found !== null) {
+      return found;
     }
     if (Date.now() > deadline) {
-      throw new Error(`No invite email found for ${toEmail} within 5s`);
+      throw new Error(
+        `${describeFailure(messages)} after ${EMAIL_DELIVERY_TIMEOUT_MS / 1000}s`,
+      );
     }
-    await new Promise((resolve) => setTimeout(resolve, 200));
+    await new Promise((resolve) => setTimeout(resolve, POLL_INTERVAL_MS));
   }
 }
 
-/** Polls Mailpit until at least `count` messages exist for `toEmail` — used to confirm a resend actually sent a second email, without assuming Mailpit's ordering. */
+async function fetchInviteToken(toEmail: string): Promise<string> {
+  return pollMailbox(
+    toEmail,
+    async (messages) => {
+      if (messages.length === 0) {
+        return null;
+      }
+      const messageRes = await fetch(
+        `${MAILPIT_URL}/api/v1/message/${messages[0].ID}`,
+      );
+      const message = (await messageRes.json()) as { Text: string };
+      return message.Text.match(/inviteToken=([^&\s]+)/)?.[1] ?? null;
+    },
+    (messages) =>
+      messages.length === 0
+        ? `No email at all for ${toEmail}`
+        : `${messages.length} email(s) for ${toEmail}, none carrying an inviteToken`,
+  );
+}
+
+/** Waits until at least `count` messages exist for `toEmail` — used to confirm a resend actually sent a second email, without assuming Mailpit's ordering. */
 async function waitForMessageCount(
   toEmail: string,
   count: number,
 ): Promise<void> {
-  const deadline = Date.now() + 5000;
-  for (;;) {
-    const searchRes = await fetch(
-      `${MAILPIT_URL}/api/v1/messages?query=${encodeURIComponent(`to:${toEmail}`)}`,
-    );
-    const search = (await searchRes.json()) as { messages: { ID: string }[] };
-    if (search.messages.length >= count) {
-      return;
-    }
-    if (Date.now() > deadline) {
-      throw new Error(
-        `Expected ${count} messages for ${toEmail} within 5s, found ${search.messages.length}`,
-      );
-    }
-    await new Promise((resolve) => setTimeout(resolve, 200));
-  }
+  await pollMailbox(
+    toEmail,
+    (messages) => Promise.resolve(messages.length >= count ? true : null),
+    (messages) =>
+      `Expected ${count} email(s) for ${toEmail}, found ${messages.length}`,
+  );
 }
 
 describe('Invite -> accept-invite (integration)', () => {
