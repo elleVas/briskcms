@@ -113,6 +113,19 @@ export type PreviewDragEndMessage = PreviewBridgeEnvelope<
   Record<string, never>
 >;
 
+/**
+ * The bubble menu's "link to a page" button, which cannot do its own job.
+ *
+ * Picking a page means opening the editor's page picker, and that lives
+ * in the parent: the iframe has no access to it, and could not render a
+ * dialog over the editor's own chrome anyway. So it asks, keeps the
+ * selection it had, and waits for `editor:apply-page-link`.
+ */
+export type PreviewRequestPageLinkMessage = PreviewBridgeEnvelope<
+  'preview:request-page-link',
+  Record<string, never>
+>;
+
 export type PreviewToParentMessage =
   | PreviewReadyMessage
   | PreviewBlockRectsMessage
@@ -122,7 +135,8 @@ export type PreviewToParentMessage =
   | PreviewTextChangedMessage
   | PreviewDragStartMessage
   | PreviewDragMoveMessage
-  | PreviewDragEndMessage;
+  | PreviewDragEndMessage
+  | PreviewRequestPageLinkMessage;
 
 /**
  * Targeted replacement after render-block-fragment (Day 3): `html` already
@@ -160,8 +174,33 @@ export type EditorEnterTextEditMessage = PreviewBridgeEnvelope<
      * page.
      */
     richText: boolean;
+    /**
+     * The bubble menu's button labels, already translated.
+     *
+     * They come from the parent rather than being looked up in the
+     * iframe because that is where i18n lives: the preview document is a
+     * rendered SITE, in the visitor's language, not the editor's. Its
+     * chrome has to speak the editor's — and duplicating the catalogue
+     * across the frame to say "Bold" twice would be a second place to
+     * keep in step. Absent for a plain field, which has no menu.
+     */
+    labels?: RichTextMenuLabels;
   }
 >;
+
+/** Button labels for the canvas bubble menu, translated by the editor. */
+export interface RichTextMenuLabels {
+  bold: string;
+  italic: string;
+  underline: string;
+  strike: string;
+  bulletList: string;
+  orderedList: string;
+  linkToPage: string;
+  linkToUrl: string;
+  unlink: string;
+  urlPrompt: string;
+}
 
 /**
  * Blur/Escape, or another block selected while this one is being edited —
@@ -237,6 +276,21 @@ export type EditorScrollToBlockMessage = PreviewBridgeEnvelope<
   { blockId: string }
 >;
 
+/**
+ * The answer to `preview:request-page-link` — the page the editor's
+ * picker returned, or `null` if it was dismissed. The iframe applies it
+ * to the selection it deliberately kept alive in the meantime.
+ *
+ * A page GROUP id, not a path: what gets stored is a reference the render
+ * step resolves in the locale being read (see BRISK_PAGE_LINK_PREFIX), so
+ * the link keeps working when the page is renamed and points at the right
+ * translation for each reader.
+ */
+export type EditorApplyPageLinkMessage = PreviewBridgeEnvelope<
+  'editor:apply-page-link',
+  { pageGroupId: string | null }
+>;
+
 export type ParentToPreviewMessage =
   | EditorPatchBlockMessage
   | EditorEnterTextEditMessage
@@ -245,7 +299,8 @@ export type ParentToPreviewMessage =
   | EditorReorderBlocksMessage
   | EditorInsertBlockMessage
   | EditorUpdateBlockStyleCssMessage
-  | EditorScrollToBlockMessage;
+  | EditorScrollToBlockMessage
+  | EditorApplyPageLinkMessage;
 
 export type AnyPreviewBridgeMessage =
   PreviewToParentMessage | ParentToPreviewMessage;

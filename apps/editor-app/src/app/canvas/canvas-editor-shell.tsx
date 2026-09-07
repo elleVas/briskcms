@@ -19,6 +19,7 @@ import { Button } from '../../components/ui/button';
 import { createTranslationPreviewToken } from '../../lib/preview-token-api-client';
 import { PUBLIC_SITE_URL } from '../../lib/public-site-url';
 import { useTranslation } from '../../lib/use-translation';
+import { usePageList } from '../page-list-context';
 import { GlobalStylesDialog } from '../global-styles-dialog';
 import { IconButton } from '../icon-button';
 import { siteQueryOptions } from '../site-queries';
@@ -121,6 +122,7 @@ export function CanvasEditorShell({
   children,
 }: CanvasEditorShellProps) {
   const { t, tLabel } = useTranslation();
+  const { pick: pickPage } = usePageList();
   const { toast } = useToast();
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const bridge = usePreviewBridge(iframeRef, PUBLIC_SITE_URL);
@@ -293,6 +295,22 @@ export function CanvasEditorShell({
     localBlocksRef,
     setLocalBlocks,
     scheduleTextChange,
+    pickPage,
+    // Translated HERE and sent into the iframe: the preview document is a
+    // rendered site in the VISITOR's language, and its editing chrome has
+    // to speak the editor's instead. See RichTextMenuLabels.
+    menuLabels: {
+      bold: t('canvas.richText.bold'),
+      italic: t('canvas.richText.italic'),
+      underline: t('canvas.richText.underline'),
+      strike: t('canvas.richText.strike'),
+      bulletList: t('canvas.richText.bulletList'),
+      orderedList: t('canvas.richText.orderedList'),
+      linkToPage: t('canvas.richText.linkToPage'),
+      linkToUrl: t('canvas.richText.linkToUrl'),
+      unlink: t('canvas.richText.unlink'),
+      urlPrompt: t('canvas.richText.urlPrompt'),
+    },
   });
 
   // Direct reordering on the canvas (Day 3/4) — the rects of top-level

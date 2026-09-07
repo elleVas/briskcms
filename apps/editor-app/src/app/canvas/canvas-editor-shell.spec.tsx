@@ -21,6 +21,11 @@ import * as previewTokenApi from '../../lib/preview-token-api-client';
 import { PUBLIC_SITE_URL } from '../../lib/public-site-url';
 import { ToastProvider } from '../toast-provider';
 import { CanvasEditorShell } from './canvas-editor-shell';
+import { PageListContext } from '../page-list-context';
+
+// The shell needs it the same way production does: page links are picked
+// through the editor's own dialog, which this context provides.
+const pageListPort = { pick: () => Promise.resolve(null) };
 
 vi.mock('@tanstack/react-router', async (importOriginal) => {
   const actual =
@@ -115,16 +120,18 @@ function renderShell(
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <ToastProvider>
-          <CanvasEditorShell
-            backLink={<a href="/pages">Pagine</a>}
-            statusText="Bozza salvata"
-            registry={registry}
-            categories={categories}
-            blocks={blocks}
-            onChange={onChange}
-            onPublish={onPublish}
-            pageId="page-1"
-          />
+          <PageListContext.Provider value={pageListPort}>
+            <CanvasEditorShell
+              backLink={<a href="/pages">Pagine</a>}
+              statusText="Bozza salvata"
+              registry={registry}
+              categories={categories}
+              blocks={blocks}
+              onChange={onChange}
+              onPublish={onPublish}
+              pageId="page-1"
+            />
+          </PageListContext.Provider>
         </ToastProvider>
       </TooltipProvider>
     </QueryClientProvider>,
@@ -136,16 +143,18 @@ function renderShell(
       <QueryClientProvider client={queryClient}>
         <TooltipProvider>
           <ToastProvider>
-            <CanvasEditorShell
-              backLink={<a href="/pages">Pagine</a>}
-              statusText="Bozza salvata"
-              registry={registry}
-              categories={categories}
-              blocks={nextBlocks}
-              onChange={onChange}
-              onPublish={onPublish}
-              pageId={nextPageId}
-            />
+            <PageListContext.Provider value={pageListPort}>
+              <CanvasEditorShell
+                backLink={<a href="/pages">Pagine</a>}
+                statusText="Bozza salvata"
+                registry={registry}
+                categories={categories}
+                blocks={nextBlocks}
+                onChange={onChange}
+                onPublish={onPublish}
+                pageId={nextPageId}
+              />
+            </PageListContext.Provider>
           </ToastProvider>
         </TooltipProvider>
       </QueryClientProvider>,
@@ -902,7 +911,14 @@ describe('CanvasEditorShell', () => {
         source: PREVIEW_BRIDGE_SOURCE,
         v: PREVIEW_BRIDGE_VERSION,
         type: 'editor:enter-text-edit',
-        payload: { blockId: 'hero-1', field: 'title', richText: false },
+        payload: {
+          blockId: 'hero-1',
+          field: 'title',
+          richText: false,
+          // Translated on this side: the preview document is a rendered
+          // site in the visitor's language, not the editor's.
+          labels: expect.objectContaining({ bold: expect.any(String) }),
+        },
       },
       '*',
     );

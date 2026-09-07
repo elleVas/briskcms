@@ -18,6 +18,7 @@ const emptyBridge: PreviewBridgeState = {
   hoveredBlockId: null,
   selectedBlockId: null,
   lastDblClick: null,
+  pageLinkRequest: null,
   lastTextChange: null,
   activeDrag: null,
   dragEnded: null,
@@ -30,6 +31,7 @@ const emptyBridge: PreviewBridgeState = {
   selectBlock: vi.fn(),
   updateBlockStyleCss: vi.fn(),
   scrollToBlock: vi.fn(),
+  applyPageLink: vi.fn(),
 };
 
 describe('buildPreviewUrl', () => {
