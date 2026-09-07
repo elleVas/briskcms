@@ -116,15 +116,11 @@ describe('a container block wraps its children in the measured element', () => {
    * tag too early for a naive scan.
    */
   function rootOpeningTag(source: string): string {
-    const template = source
-      .replace(/^---[\s\S]*?\n---/, '')
-      // Several components open with a comment explaining the choice of
-      // element, and those comments name elements: `<section>, not
-      // <header>` would otherwise be read as the root tag.
-      .replace(/\{\/\*[\s\S]*?\*\/\}/g, '')
-      .replace(/<!--[\s\S]*?-->/g, '');
-    const start = /<[A-Za-z]/.exec(template)?.index;
-    if (start === undefined) return '';
+    const template = source.replace(/^---[\s\S]*?\n---/, '');
+    const start = firstElementIndex(template);
+    if (start === undefined) {
+      return '';
+    }
     let depth = 0;
     for (let i = start; i < template.length; i += 1) {
       const character = template[i];
@@ -134,6 +130,42 @@ describe('a container block wraps its children in the measured element', () => {
         return template.slice(start, i);
     }
     return '';
+  }
+
+  /**
+   * Where the first real element starts, stepping OVER comments rather
+   * than deleting them.
+   *
+   * Deleting them would be simpler, and it is what this did first — but
+   * several components open with a comment explaining the choice of
+   * element, and those comments name elements: `<section>, not <header>`
+   * would otherwise be read as the root tag. Skipping in one left-to-right
+   * pass also avoids the shape of a "strip the markup and hope" replace,
+   * which is the pattern that produced a real CodeQL finding in this
+   * repository once already.
+   */
+  function firstElementIndex(template: string): number | undefined {
+    const COMMENTS = [
+      { open: '{/*', close: '*/}' },
+      { open: '<!--', close: '-->' },
+    ];
+    let i = 0;
+    while (i < template.length) {
+      const comment = COMMENTS.find((c) => template.startsWith(c.open, i));
+      if (comment) {
+        const end = template.indexOf(comment.close, i + comment.open.length);
+        if (end === -1) {
+          return undefined;
+        }
+        i = end + comment.close.length;
+        continue;
+      }
+      if (template[i] === '<' && /[A-Za-z]/.test(template[i + 1] ?? '')) {
+        return i;
+      }
+      i += 1;
+    }
+    return undefined;
   }
 
   const containers = [...pageBlocks, ...headerFooterBlocks].filter(
