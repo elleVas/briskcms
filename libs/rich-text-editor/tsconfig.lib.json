@@ -15,12 +15,6 @@
     },
     {
       "path": "../rich-text/tsconfig.lib.json"
-    },
-    {
-      "path": "../ports/tsconfig.lib.json"
-    },
-    {
-      "path": "../domain-core/tsconfig.lib.json"
     }
   ],
   "exclude": [

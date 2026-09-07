@@ -12,6 +12,12 @@ const heroDescriptor: BlockDescriptor = {
   fields: [
     { kind: 'text', key: 'title', label: 'Titolo', inlineEditable: true },
     { kind: 'text', key: 'subtitle', label: 'Sottotitolo' },
+    {
+      kind: 'richtext',
+      key: 'body',
+      label: 'Testo',
+      inlineEditable: true,
+    },
   ],
 };
 
@@ -88,7 +94,11 @@ describe('useTextEdit', () => {
     });
     rerender({ bridge: nextBridge });
 
-    expect(nextBridge.enterTextEdit).toHaveBeenCalledWith('hero-1', 'title');
+    expect(nextBridge.enterTextEdit).toHaveBeenCalledWith(
+      'hero-1',
+      'title',
+      false,
+    );
   });
 
   it('does not enter text edit on a double click on a field that is not inlineEditable', () => {
@@ -133,5 +143,25 @@ describe('useTextEdit', () => {
     window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
 
     expect(bridge.exitTextEdit).not.toHaveBeenCalled();
+  });
+
+  // The iframe sees a DOM node, not a descriptor, so it cannot tell rich
+  // text from a plain string. Getting this wrong is not cosmetic: HTML
+  // sent back for a plain field is stored as literal `<p>` characters and
+  // shown as such on the page.
+  it('tells the iframe when the field is rich text', () => {
+    const blocks: Block[] = [{ id: 'hero-1', type: 'Hero', props: {} }];
+    const { rerender } = setup(buildBridge(), blocks);
+
+    const nextBridge = buildBridge({
+      lastDblClick: { blockId: 'hero-1', field: 'body' },
+    });
+    rerender({ bridge: nextBridge });
+
+    expect(nextBridge.enterTextEdit).toHaveBeenCalledWith(
+      'hero-1',
+      'body',
+      true,
+    );
   });
 });

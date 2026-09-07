@@ -107,6 +107,9 @@
     },
     {
       "path": "./libs/rich-text"
+    },
+    {
+      "path": "./libs/rich-text-editor"
     }
   ],
   "compilerOptions": {}

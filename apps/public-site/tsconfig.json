@@ -22,6 +22,9 @@
       "path": "../../libs/shared-types"
     },
     {
+      "path": "../../libs/rich-text-editor"
+    },
+    {
       "path": "../../libs/rich-text"
     },
     {

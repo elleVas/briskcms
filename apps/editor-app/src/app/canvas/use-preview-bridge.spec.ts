@@ -255,7 +255,7 @@ describe('usePreviewBridge', () => {
         source: PREVIEW_BRIDGE_SOURCE,
         v: PREVIEW_BRIDGE_VERSION,
         type: 'preview:dblclick',
-        payload: { blockId: 'hero-1', field: 'title' },
+        payload: { blockId: 'hero-1', field: 'title', richText: false },
       });
     });
     const first = result.current.lastDblClick;
@@ -344,14 +344,14 @@ describe('usePreviewBridge', () => {
     const postMessageSpy = vi.spyOn(contentWindow, 'postMessage');
     const { result } = renderHook(() => usePreviewBridge(ref, EXPECTED_ORIGIN));
 
-    result.current.enterTextEdit('hero-1', 'title');
+    result.current.enterTextEdit('hero-1', 'title', false);
 
     expect(postMessageSpy).toHaveBeenCalledWith(
       {
         source: PREVIEW_BRIDGE_SOURCE,
         v: PREVIEW_BRIDGE_VERSION,
         type: 'editor:enter-text-edit',
-        payload: { blockId: 'hero-1', field: 'title' },
+        payload: { blockId: 'hero-1', field: 'title', richText: false },
       },
       '*',
     );

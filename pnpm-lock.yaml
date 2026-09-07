@@ -373,6 +373,9 @@ importers:
       '@brisk/rich-text':
         specifier: workspace:*
         version: link:../../libs/rich-text
+      '@brisk/rich-text-editor':
+        specifier: workspace:*
+        version: link:../../libs/rich-text-editor
       '@brisk/shared-types':
         specifier: workspace:*
         version: link:../../libs/shared-types
@@ -400,48 +403,6 @@ importers:
       '@tiptap/core':
         specifier: ^3.30.2
         version: 3.30.2(@tiptap/pm@3.30.2)
-      '@tiptap/extension-bold':
-        specifier: ^3.31.3
-        version: 3.31.3(@tiptap/core@3.30.2(@tiptap/pm@3.30.2))
-      '@tiptap/extension-code':
-        specifier: ^3.31.3
-        version: 3.31.3(@tiptap/core@3.30.2(@tiptap/pm@3.30.2))
-      '@tiptap/extension-document':
-        specifier: ^3.31.3
-        version: 3.31.3(@tiptap/core@3.30.2(@tiptap/pm@3.30.2))
-      '@tiptap/extension-hard-break':
-        specifier: ^3.31.3
-        version: 3.31.3(@tiptap/core@3.30.2(@tiptap/pm@3.30.2))
-      '@tiptap/extension-italic':
-        specifier: ^3.31.3
-        version: 3.31.3(@tiptap/core@3.30.2(@tiptap/pm@3.30.2))
-      '@tiptap/extension-link':
-        specifier: ^3.31.3
-        version: 3.31.3(@tiptap/core@3.30.2(@tiptap/pm@3.30.2))(@tiptap/pm@3.30.2)
-      '@tiptap/extension-list':
-        specifier: ^3.31.3
-        version: 3.31.3(@tiptap/core@3.30.2(@tiptap/pm@3.30.2))(@tiptap/pm@3.30.2)
-      '@tiptap/extension-paragraph':
-        specifier: ^3.31.3
-        version: 3.31.3(@tiptap/core@3.30.2(@tiptap/pm@3.30.2))
-      '@tiptap/extension-strike':
-        specifier: ^3.31.3
-        version: 3.31.3(@tiptap/core@3.30.2(@tiptap/pm@3.30.2))
-      '@tiptap/extension-subscript':
-        specifier: ^3.31.3
-        version: 3.31.3(@tiptap/core@3.30.2(@tiptap/pm@3.30.2))(@tiptap/pm@3.30.2)
-      '@tiptap/extension-superscript':
-        specifier: ^3.31.3
-        version: 3.31.3(@tiptap/core@3.30.2(@tiptap/pm@3.30.2))(@tiptap/pm@3.30.2)
-      '@tiptap/extension-text':
-        specifier: ^3.31.3
-        version: 3.31.3(@tiptap/core@3.30.2(@tiptap/pm@3.30.2))
-      '@tiptap/extension-underline':
-        specifier: ^3.31.3
-        version: 3.31.3(@tiptap/core@3.30.2(@tiptap/pm@3.30.2))
-      '@tiptap/extensions':
-        specifier: ^3.31.3
-        version: 3.31.3(@tiptap/core@3.30.2(@tiptap/pm@3.30.2))(@tiptap/pm@3.30.2)
       '@tiptap/pm':
         specifier: ^3.30.2
         version: 3.30.2
@@ -515,6 +476,9 @@ importers:
       '@brisk/rich-text':
         specifier: workspace:*
         version: link:../../libs/rich-text
+      '@brisk/rich-text-editor':
+        specifier: workspace:*
+        version: link:../../libs/rich-text-editor
       '@brisk/shared-types':
         specifier: workspace:*
         version: link:../../libs/shared-types
@@ -918,6 +882,9 @@ importers:
       '@brisk/ports':
         specifier: workspace:*
         version: link:../ports
+      '@brisk/rich-text':
+        specifier: workspace:*
+        version: link:../rich-text
       '@brisk/shared-types':
         specifier: workspace:*
         version: link:../shared-types
@@ -987,6 +954,64 @@ importers:
       '@types/sanitize-html':
         specifier: ^2.16.1
         version: 2.16.1
+
+  libs/rich-text-editor:
+    dependencies:
+      '@brisk/shared-types':
+        specifier: workspace:*
+        version: link:../shared-types
+      '@tiptap/core':
+        specifier: ^3.30.2
+        version: 3.30.2(@tiptap/pm@3.30.2)
+      '@tiptap/extension-bold':
+        specifier: ^3.31.3
+        version: 3.31.3(@tiptap/core@3.30.2(@tiptap/pm@3.30.2))
+      '@tiptap/extension-code':
+        specifier: ^3.31.3
+        version: 3.31.3(@tiptap/core@3.30.2(@tiptap/pm@3.30.2))
+      '@tiptap/extension-document':
+        specifier: ^3.31.3
+        version: 3.31.3(@tiptap/core@3.30.2(@tiptap/pm@3.30.2))
+      '@tiptap/extension-hard-break':
+        specifier: ^3.31.3
+        version: 3.31.3(@tiptap/core@3.30.2(@tiptap/pm@3.30.2))
+      '@tiptap/extension-italic':
+        specifier: ^3.31.3
+        version: 3.31.3(@tiptap/core@3.30.2(@tiptap/pm@3.30.2))
+      '@tiptap/extension-link':
+        specifier: ^3.31.3
+        version: 3.31.3(@tiptap/core@3.30.2(@tiptap/pm@3.30.2))(@tiptap/pm@3.30.2)
+      '@tiptap/extension-list':
+        specifier: ^3.31.3
+        version: 3.31.3(@tiptap/core@3.30.2(@tiptap/pm@3.30.2))(@tiptap/pm@3.30.2)
+      '@tiptap/extension-paragraph':
+        specifier: ^3.31.3
+        version: 3.31.3(@tiptap/core@3.30.2(@tiptap/pm@3.30.2))
+      '@tiptap/extension-strike':
+        specifier: ^3.31.3
+        version: 3.31.3(@tiptap/core@3.30.2(@tiptap/pm@3.30.2))
+      '@tiptap/extension-subscript':
+        specifier: ^3.31.3
+        version: 3.31.3(@tiptap/core@3.30.2(@tiptap/pm@3.30.2))(@tiptap/pm@3.30.2)
+      '@tiptap/extension-superscript':
+        specifier: ^3.31.3
+        version: 3.31.3(@tiptap/core@3.30.2(@tiptap/pm@3.30.2))(@tiptap/pm@3.30.2)
+      '@tiptap/extension-text':
+        specifier: ^3.31.3
+        version: 3.31.3(@tiptap/core@3.30.2(@tiptap/pm@3.30.2))
+      '@tiptap/extension-underline':
+        specifier: ^3.31.3
+        version: 3.31.3(@tiptap/core@3.30.2(@tiptap/pm@3.30.2))
+      '@tiptap/extensions':
+        specifier: ^3.31.3
+        version: 3.31.3(@tiptap/core@3.30.2(@tiptap/pm@3.30.2))(@tiptap/pm@3.30.2)
+      '@tiptap/pm':
+        specifier: ^3.30.2
+        version: 3.30.2
+    devDependencies:
+      '@brisk/rich-text':
+        specifier: workspace:*
+        version: link:../rich-text
 
   libs/shared-types:
     dependencies:

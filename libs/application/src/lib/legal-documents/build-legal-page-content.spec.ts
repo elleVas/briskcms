@@ -16,7 +16,7 @@ describe('buildLegalPageContent', () => {
 
     expect(content[0]).toMatchObject({
       type: 'Callout',
-      props: { message: 'DRAFT NOTICE', tone: 'warning' },
+      props: { message: '<p>DRAFT NOTICE</p>', tone: 'warning' },
     });
   });
 
@@ -25,10 +25,10 @@ describe('buildLegalPageContent', () => {
 
     expect(content.slice(1)).toMatchObject([
       { type: 'Heading', props: { text: 'Data controller', level: 'h2' } },
-      { type: 'Text', props: { body: 'Para 1.' } },
+      { type: 'Text', props: { body: '<p>Para 1.</p>' } },
       { type: 'Heading', props: { text: 'Data collected', level: 'h2' } },
-      { type: 'Text', props: { body: 'Para 2a.' } },
-      { type: 'Text', props: { body: 'Para 2b.' } },
+      { type: 'Text', props: { body: '<p>Para 2a.</p>' } },
+      { type: 'Text', props: { body: '<p>Para 2b.</p>' } },
     ]);
   });
 
@@ -67,16 +67,24 @@ describe('buildLegalPageContent', () => {
       const headingIds = [content[1].id, content[3].id];
       const textIds = [content[2].id, content[4].id, content[5].id];
 
-      expect(overlay?.[calloutId]).toEqual({ message: 'AVVISO BOZZA (it)' });
+      expect(overlay?.[calloutId]).toEqual({
+        message: '<p>AVVISO BOZZA (it)</p>',
+      });
       expect(overlay?.[headingIds[0] as string]).toEqual({
         text: 'Titolare del trattamento',
       });
       expect(overlay?.[headingIds[1] as string]).toEqual({
         text: 'Dati raccolti',
       });
-      expect(overlay?.[textIds[0] as string]).toEqual({ body: 'Par 1 IT.' });
-      expect(overlay?.[textIds[1] as string]).toEqual({ body: 'Par 2a IT.' });
-      expect(overlay?.[textIds[2] as string]).toEqual({ body: 'Par 2b IT.' });
+      expect(overlay?.[textIds[0] as string]).toEqual({
+        body: '<p>Par 1 IT.</p>',
+      });
+      expect(overlay?.[textIds[1] as string]).toEqual({
+        body: '<p>Par 2a IT.</p>',
+      });
+      expect(overlay?.[textIds[2] as string]).toEqual({
+        body: '<p>Par 2b IT.</p>',
+      });
     });
 
     it('returns null when the other outline has a different number of sections', () => {
@@ -104,5 +112,24 @@ describe('buildLegalPageContent', () => {
 
       expect(fieldValuesFor(mismatched, 'x')).toBeNull();
     });
+  });
+
+  // Generated clauses are prose, and these two fields are rich text
+  // (ADR-0046). Left unescaped, a company name with an ampersand loses
+  // the rest of its sentence the moment the page is rendered.
+  it('escapes what a legal clause really contains', () => {
+    const { content } = buildLegalPageContent(
+      {
+        title: 'Privacy Policy',
+        sections: [
+          { heading: 'Titolare', paragraphs: ['Rossi & Figli, a < b.'] },
+        ],
+      },
+      'AVVISO',
+    );
+
+    expect(content[2].props['body']).toBe(
+      '<p>Rossi &amp; Figli, a &lt; b.</p>',
+    );
   });
 });

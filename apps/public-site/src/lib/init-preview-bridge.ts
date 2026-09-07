@@ -2,6 +2,7 @@ import { Editor } from '@tiptap/core';
 import TiptapDocument from '@tiptap/extension-document';
 import TiptapParagraph from '@tiptap/extension-paragraph';
 import TiptapText from '@tiptap/extension-text';
+import { RICH_TEXT_EXTENSIONS } from '@brisk/rich-text-editor';
 import {
   isPreviewBridgeMessage,
   PREVIEW_BRIDGE_SOURCE,
@@ -72,6 +73,7 @@ export function initPreviewBridge(): void {
     blockId: string;
     field: string;
     element: HTMLElement;
+    richText: boolean;
   } | null = null;
 
   // The state of the drag simulated on the parent side (Day 3/4) — see
@@ -95,10 +97,18 @@ export function initPreviewBridge(): void {
     if (!activeTextEditor) {
       return;
     }
-    const { editor, element } = activeTextEditor;
-    const finalText = editor.getText();
+    const { editor, element, richText } = activeTextEditor;
+    // The same value the parent has been receiving all along, put back as
+    // a static node. For a rich text field that is HTML, and assigning it
+    // as text would leave the reader looking at literal `<strong>` tags
+    // the moment the caret left the field.
+    const final = richText ? editor.getHTML() : editor.getText();
     editor.destroy();
-    element.textContent = finalText;
+    if (richText) {
+      element.innerHTML = final;
+    } else {
+      element.textContent = final;
+    }
     activeTextEditor = null;
   }
 
@@ -108,7 +118,11 @@ export function initPreviewBridge(): void {
   // more. Constrained to Document/Paragraph/Text (a single paragraph, no
   // marks): every inlineEditable field is a plain `z.string()` at the domain
   // level, never HTML — see PreviewTextChangedMessage.
-  function enterTextEdit(blockId: string, field: string): void {
+  function enterTextEdit(
+    blockId: string,
+    field: string,
+    richText: boolean,
+  ): void {
     exitTextEdit();
     const element = findFieldElement(document, blockId, field);
     if (!element) {
@@ -119,24 +133,43 @@ export function initPreviewBridge(): void {
     // static text Astro already rendered, unless that is emptied first.
     // Verified live: without this line the text appeared duplicated (static
     // plus ProseMirror together).
-    const initialText = element.textContent ?? '';
+    // A rich text field is ALREADY the markup it should start from — it
+    // was rendered with `set:html` — so it is read as HTML rather than
+    // flattened to text and escaped, which would turn a paragraph with a
+    // link in it into a paragraph with `<a href=...>` written out.
+    const initial = richText
+      ? element.innerHTML
+      : `<p>${escapeHtml(element.textContent ?? '')}</p>`;
     element.innerHTML = '';
     const editor = new Editor({
       element,
-      extensions: [TiptapDocument, TiptapParagraph, TiptapText],
-      content: `<p>${escapeHtml(initialText)}</p>`,
+      // Rich text gets the same set the Inspector uses, from the same
+      // place: the two edit the SAME stored value, and a set that differs
+      // between them would mean formatting made in one surface quietly
+      // disappearing when the other saves. Plain fields keep the original
+      // three — one paragraph, no marks — because their value is a plain
+      // `z.string()` at the domain level and marks would be stored as
+      // literal characters.
+      extensions: richText
+        ? RICH_TEXT_EXTENSIONS
+        : [TiptapDocument, TiptapParagraph, TiptapText],
+      content: initial,
       autofocus: 'end',
       onUpdate: ({ editor: current }) => {
         postToParent(targetOrigin, {
           type: 'preview:text-changed',
-          payload: { blockId, field, text: current.getText() },
+          payload: {
+            blockId,
+            field,
+            text: richText ? current.getHTML() : current.getText(),
+          },
         });
       },
       onBlur: () => {
         exitTextEdit();
       },
     });
-    activeTextEditor = { editor, blockId, field, element };
+    activeTextEditor = { editor, blockId, field, element, richText };
   }
 
   function sendReady(): void {
@@ -378,8 +411,8 @@ export function initPreviewBridge(): void {
         return;
       }
       case 'editor:enter-text-edit': {
-        const { blockId, field } = event.data.payload;
-        enterTextEdit(blockId, field);
+        const { blockId, field, richText } = event.data.payload;
+        enterTextEdit(blockId, field, richText);
         return;
       }
       case 'editor:exit-text-edit':

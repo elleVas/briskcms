@@ -902,7 +902,7 @@ describe('CanvasEditorShell', () => {
         source: PREVIEW_BRIDGE_SOURCE,
         v: PREVIEW_BRIDGE_VERSION,
         type: 'editor:enter-text-edit',
-        payload: { blockId: 'hero-1', field: 'title' },
+        payload: { blockId: 'hero-1', field: 'title', richText: false },
       },
       '*',
     );

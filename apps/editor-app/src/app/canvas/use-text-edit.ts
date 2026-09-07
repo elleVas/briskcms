@@ -10,18 +10,25 @@ import type { BlockDescriptor } from '@brisk/block-registry';
 import { findBlockInTree, updateBlockProps } from './use-block-tree';
 import type { PreviewBridgeState } from './use-preview-bridge';
 
-/** Il field è testuale e marcato `inlineEditable` sul descrittore — l'unico caso in cui un doppio click deve montare TipTap. */
-function isInlineEditableField(
+/**
+ * The field is textual and marked `inlineEditable` on the descriptor —
+ * the only case in which a double click should mount TipTap. Returns
+ * whether it holds RICH text as well, because the iframe cannot work
+ * that out: it sees a DOM node, not a descriptor, and the answer decides
+ * both which extensions it mounts and whether what comes back is HTML or
+ * a plain string.
+ */
+function inlineEditableKind(
   descriptor: BlockDescriptor | undefined,
   field: string,
-): boolean {
+): { editable: boolean; richText: boolean } {
   const fieldDescriptor = descriptor?.fields.find((f) => f.key === field);
-  return (
+  const editable =
     (fieldDescriptor?.kind === 'text' ||
       fieldDescriptor?.kind === 'textarea' ||
       fieldDescriptor?.kind === 'richtext') &&
-    Boolean(fieldDescriptor.inlineEditable)
-  );
+    Boolean(fieldDescriptor.inlineEditable);
+  return { editable, richText: fieldDescriptor?.kind === 'richtext' };
 }
 
 export interface UseTextEditParams {
@@ -99,8 +106,9 @@ export function useTextEdit({
     const descriptor = block
       ? registry.find((d) => d.type === block.type)
       : undefined;
-    if (isInlineEditableField(descriptor, field)) {
-      bridge.enterTextEdit(blockId, field);
+    const { editable, richText } = inlineEditableKind(descriptor, field);
+    if (editable) {
+      bridge.enterTextEdit(blockId, field, richText);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- reacts only to a NEW lastDblClick; bridge.enterTextEdit/registry are read from their current values, so there is no need to re-run when their identity changes.
   }, [bridge.lastDblClick]);

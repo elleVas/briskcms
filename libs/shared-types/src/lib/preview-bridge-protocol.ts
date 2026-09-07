@@ -145,7 +145,22 @@ export type EditorPatchBlockMessage = PreviewBridgeEnvelope<
  */
 export type EditorEnterTextEditMessage = PreviewBridgeEnvelope<
   'editor:enter-text-edit',
-  { blockId: string; field: string }
+  {
+    blockId: string;
+    field: string;
+    /**
+     * Whether this field holds rich text (`kind: 'richtext'`, ADR-0046)
+     * or a plain string. The iframe cannot tell: it sees a DOM node, not
+     * a descriptor. The editor can, so it says.
+     *
+     * It decides both which extensions are mounted and what comes back in
+     * `preview:text-changed` — HTML for one, plain text for the other.
+     * Getting it wrong is not cosmetic: HTML sent for a plain field would
+     * be stored as literal `<p>` characters and shown as such on the
+     * page.
+     */
+    richText: boolean;
+  }
 >;
 
 /**
