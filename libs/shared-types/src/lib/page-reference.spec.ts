@@ -193,7 +193,9 @@ describe('links written inside a sentence', () => {
 
     const italian = resolvePageReferences(
       blocks,
-      new Map([[GUIDE, { locale: 'it', slug: 'come-funziona' }]]),
+      new Map([
+        [GUIDE, { locale: 'it', slug: 'come-funziona', ancestorSlugs: [] }],
+      ]),
     );
     expect(italian[0].props['body']).toBe(
       '<p>come ho <a href="/it/come-funziona">spiegato qui</a></p>',
@@ -201,17 +203,43 @@ describe('links written inside a sentence', () => {
 
     const english = resolvePageReferences(
       blocks,
-      new Map([[GUIDE, { locale: 'en', slug: 'how-it-works' }]]),
+      new Map([
+        [GUIDE, { locale: 'en', slug: 'how-it-works', ancestorSlugs: [] }],
+      ]),
     );
     expect(english[0].props['body']).toBe(
       '<p>come ho <a href="/en/how-it-works">spiegato qui</a></p>',
     );
   });
 
+  // The case the language-switcher fix (PR #137) was about, in the other
+  // consumer of the same resolver: a link written inside a sentence has
+  // to carry the ancestor chain too, or it points at a bare slug that
+  // stopped resolving when slugs became sibling-scoped (ADR-0029).
+  it('resolves to the nested address, not the bare slug', () => {
+    const resolved = resolvePageReferences(
+      [{ id: 'a', type: 'Text', props: { body: richText(GUIDE) } }],
+      new Map([
+        [
+          GUIDE,
+          {
+            locale: 'en',
+            slug: 'installation',
+            ancestorSlugs: ['docs', 'getting-started'],
+          },
+        ],
+      ]),
+    );
+
+    expect(resolved[0].props['body']).toBe(
+      '<p>come ho <a href="/en/docs/getting-started/installation">spiegato qui</a></p>',
+    );
+  });
+
   it('uses the same "home" convention as every other address', () => {
     const resolved = resolvePageReferences(
       [{ id: 'a', type: 'Text', props: { body: richText(GUIDE) } }],
-      new Map([[GUIDE, { locale: 'it', slug: 'home' }]]),
+      new Map([[GUIDE, { locale: 'it', slug: 'home', ancestorSlugs: [] }]]),
     );
     expect(resolved[0].props['body']).toContain('href="/it/"');
   });

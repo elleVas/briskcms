@@ -1,6 +1,6 @@
 import type { Block, PageContent } from './content-model';
 import { pickedPageSchema } from './content-model';
-import { localePath } from '@brisk/theme-runtime';
+import { localePathFromAncestors } from '@brisk/theme-runtime';
 import {
   collectRichTextPageReferences,
   pageLinkResolverFor,
@@ -108,15 +108,19 @@ function resolveProps(
   props: Record<string, unknown>,
   slugByGroupId: PageGroupSlugMap,
 ): Record<string, unknown> {
-  const resolveHref = pageLinkResolverFor(slugByGroupId, localePath);
+  const resolveHref = pageLinkResolverFor(
+    slugByGroupId,
+    localePathFromAncestors,
+  );
   let next = props;
   for (const [key, value] of Object.entries(props)) {
     if (typeof value !== 'string') {
       continue;
     }
-    // Links written inside a sentence. `localePath` is the same function
-    // the rest of the site builds addresses with, so a link in a
-    // paragraph lands exactly where the Link block's would.
+    // Links written inside a sentence, resolved with the same function
+    // the rest of the site builds addresses with — including the ancestor
+    // chain, so a link in a paragraph lands exactly where the Link
+    // block's would rather than on a bare slug that 404s.
     const resolved = resolveRichTextPageLinks(value, resolveHref);
     if (resolved !== value) {
       next = next === props ? { ...props } : next;

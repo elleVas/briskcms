@@ -77,13 +77,23 @@ export function resolveRichTextPageLinks(
   });
 }
 
-/** The `resolveHref` a render pass wants: the page's path in the locale being rendered, or null if it has none. */
+/**
+ * The `resolveHref` a render pass wants: the page's path in the locale
+ * being rendered, or null if it has none.
+ *
+ * The whole ancestor chain, not just the slug — slugs are scoped to their
+ * siblings (ADR-0029), so a link to a nested page written as `/it/guida`
+ * points at nothing. A link inside a sentence has to land exactly where
+ * the Link block's would.
+ */
 export function pageLinkResolverFor(
   slugByGroupId: PageGroupSlugMap,
-  toPath: (locale: string, slug: string) => string,
+  toPath: (locale: string, ancestorSlugs: string[], slug: string) => string,
 ): (pageGroupId: string) => string | null {
   return (pageGroupId) => {
     const resolved = slugByGroupId.get(pageGroupId);
-    return resolved ? toPath(resolved.locale, resolved.slug) : null;
+    return resolved
+      ? toPath(resolved.locale, resolved.ancestorSlugs, resolved.slug)
+      : null;
   };
 }
