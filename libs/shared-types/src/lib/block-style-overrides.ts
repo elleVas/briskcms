@@ -34,6 +34,20 @@ export const BLOCK_STYLE_CUSTOM_PROPERTIES: Record<
   borderRadius: '--brisk-override-radius',
   paddingX: '--brisk-override-padding-x',
   paddingY: '--brisk-override-padding-y',
+  borderWidth: '--brisk-override-border-width',
+  borderStyle: '--brisk-override-border-style',
+  borderColor: '--brisk-override-border-color',
+  boxShadow: '--brisk-override-shadow',
+  backgroundImage: '--brisk-override-bg-image',
+  backgroundPosition: '--brisk-override-bg-position',
+  backgroundSize: '--brisk-override-bg-size',
+  backgroundRepeat: '--brisk-override-bg-repeat',
+  overlayColor: '--brisk-override-overlay',
+  minHeight: '--brisk-override-min-height',
+  maxWidth: '--brisk-override-max-width',
+  gap: '--brisk-override-gap',
+  contentAlign: '--brisk-override-align',
+  contentJustify: '--brisk-override-justify',
 };
 
 /**

@@ -61,6 +61,23 @@ export const containerBlock: BlockDescriptor<ContainerProps> = {
   isContainer: true,
   // Only radius and text color: background/padding already have their
   // own dedicated fields above, they shouldn't be duplicated here.
-  stylableProperties: ['textColor', 'borderRadius'],
+  stylableProperties: [
+    'textColor',
+    'borderRadius',
+    'borderWidth',
+    'borderStyle',
+    'borderColor',
+    'boxShadow',
+    'backgroundImage',
+    'backgroundPosition',
+    'backgroundSize',
+    'backgroundRepeat',
+    'overlayColor',
+    'minHeight',
+    'maxWidth',
+    'gap',
+    'contentAlign',
+    'contentJustify',
+  ],
   defaultStyle: BLOCK_STYLE_DEFAULTS.Container,
 };

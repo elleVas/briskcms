@@ -24,6 +24,12 @@
   --color-border: var(--border);
   --radius-md: var(--radius);
   --radius-lg: calc(var(--radius) * 1.5);
+  /* Le ombre NON sono esposte qui: il namespace di Tailwind è
+     `--shadow-*`, lo stesso che questo tema usa in `:root`, e
+     `--shadow-md: var(--shadow-md)` sarebbe una definizione circolare. I
+     blocchi le leggono direttamente da `:root`, come fanno già con
+     `--brisk-override-*`. */
+  --color-link: var(--link);
 }
 
 :root {
@@ -44,4 +50,48 @@
   --muted-foreground: oklch(0.556 0 0);
   --border: oklch(0.922 0 0);
   --radius: 0.5rem;
+
+  /* Il colore dei link non c'era: ogni blocco che ne rende uno se lo
+     inventava, quindi un tema non poteva cambiarli tutti in un posto. */
+  --link: var(--primary);
+  --link-hover: var(--primary);
+
+  /* Scala delle ombre (ADR-0047). Esiste perché un'ombra scritta a mano
+     dentro un blocco non risponde più al tema: cambiarla vorrebbe dire
+     ripassare blocco per blocco. Sei gradini più una interna, che è la
+     granularità con cui i design arrivano davvero. */
+  --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.04);
+  --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.08), 0 1px 2px -1px rgb(0 0 0 / 0.08);
+  --shadow-md:
+    0 4px 8px -2px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.06);
+  --shadow-lg:
+    0 12px 20px -4px rgb(0 0 0 / 0.1), 0 4px 8px -4px rgb(0 0 0 / 0.06);
+  --shadow-xl:
+    0 20px 32px -8px rgb(0 0 0 / 0.12), 0 8px 12px -6px rgb(0 0 0 / 0.08);
+  --shadow-2xl: 0 32px 64px -16px rgb(0 0 0 / 0.2);
+  --shadow-inner: inset 0 2px 4px 0 rgb(0 0 0 / 0.06);
+
+  /* Scala delle spaziature: senza, ogni blocco sceglie i propri rem e la
+     pagina non ha ritmo verticale. */
+  --space-2xs: 0.25rem;
+  --space-xs: 0.5rem;
+  --space-sm: 0.75rem;
+  --space-md: 1rem;
+  --space-lg: 1.5rem;
+  --space-xl: 2.5rem;
+  --space-2xl: 4rem;
+  --space-3xl: 6rem;
+
+  /* Scala tipografica, fluida: `clamp()` evita il salto secco ai
+     breakpoint e ormai è l'aspettativa di base. Il minimo non scende mai
+     sotto 1rem per il testo, che è il limite di leggibilità. */
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: clamp(1.0625rem, 1rem + 0.3vw, 1.125rem);
+  --text-xl: clamp(1.25rem, 1.15rem + 0.5vw, 1.5rem);
+  --text-2xl: clamp(1.5rem, 1.3rem + 1vw, 2rem);
+  --text-3xl: clamp(1.875rem, 1.5rem + 1.8vw, 2.75rem);
+  --text-4xl: clamp(2.25rem, 1.7rem + 2.6vw, 3.5rem);
+  --leading-tight: 1.15;
+  --leading-normal: 1.55;
 }

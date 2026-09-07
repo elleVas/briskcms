@@ -26,6 +26,17 @@ export const heroBlock: BlockDescriptor<HeroProps> = {
       inlineEditable: true,
     },
   ],
-  stylableProperties: ['backgroundColor', 'textColor', 'borderRadius'],
+  stylableProperties: [
+    'backgroundColor',
+    'textColor',
+    'borderRadius',
+    'boxShadow',
+    'backgroundImage',
+    'backgroundPosition',
+    'backgroundSize',
+    'backgroundRepeat',
+    'overlayColor',
+    'minHeight',
+  ],
   defaultStyle: BLOCK_STYLE_DEFAULTS.Hero,
 };

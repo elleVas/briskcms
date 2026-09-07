@@ -25,6 +25,8 @@ export interface BlockStyleFieldsProps {
 const COLOR_FIELD_LABELS: Partial<Record<keyof BlockStyleOverride, string>> = {
   backgroundColor: 'canvas.blockStyle.colors.backgroundColor',
   textColor: 'canvas.blockStyle.colors.textColor',
+  borderColor: 'canvas.blockStyle.colors.borderColor',
+  overlayColor: 'canvas.blockStyle.colors.overlayColor',
 };
 
 const LENGTH_FIELD_LABELS: Partial<
@@ -50,6 +52,50 @@ const LENGTH_FIELD_LABELS: Partial<
     label: 'canvas.blockStyle.lengths.marginBottom.fieldLabel',
     placeholder: 'canvas.blockStyle.lengths.marginBottom.placeholder',
   },
+  borderWidth: {
+    label: 'canvas.blockStyle.lengths.borderWidth.fieldLabel',
+    placeholder: 'canvas.blockStyle.lengths.borderWidth.placeholder',
+  },
+  minHeight: {
+    label: 'canvas.blockStyle.lengths.minHeight.fieldLabel',
+    placeholder: 'canvas.blockStyle.lengths.minHeight.placeholder',
+  },
+  maxWidth: {
+    label: 'canvas.blockStyle.lengths.maxWidth.fieldLabel',
+    placeholder: 'canvas.blockStyle.lengths.maxWidth.placeholder',
+  },
+  gap: {
+    label: 'canvas.blockStyle.lengths.gap.fieldLabel',
+    placeholder: 'canvas.blockStyle.lengths.gap.placeholder',
+  },
+  // A CSS value rather than a length, but the control is the same box and
+  // the placeholder is what tells you so — `var(--shadow-md)` for one,
+  // `url(...)` for the other.
+  boxShadow: {
+    label: 'canvas.blockStyle.lengths.boxShadow.fieldLabel',
+    placeholder: 'canvas.blockStyle.lengths.boxShadow.placeholder',
+  },
+  backgroundImage: {
+    label: 'canvas.blockStyle.lengths.backgroundImage.fieldLabel',
+    placeholder: 'canvas.blockStyle.lengths.backgroundImage.placeholder',
+  },
+};
+
+/**
+ * Closed sets get a menu, not a text box: there is one right answer per
+ * option and no way to mistype it. The values are the CSS keywords
+ * themselves, so nothing has to translate between what is stored and what
+ * is rendered.
+ */
+const SELECT_FIELD_OPTIONS: Partial<
+  Record<keyof BlockStyleOverride, readonly string[]>
+> = {
+  borderStyle: ['none', 'solid', 'dashed', 'dotted'],
+  backgroundPosition: ['center', 'top', 'bottom', 'left', 'right'],
+  backgroundSize: ['cover', 'contain', 'auto'],
+  backgroundRepeat: ['no-repeat', 'repeat', 'repeat-x', 'repeat-y'],
+  contentAlign: ['start', 'center', 'end'],
+  contentJustify: ['start', 'center', 'end'],
 };
 
 /**
@@ -109,6 +155,42 @@ export function BlockStyleFields({
                   setField(property, next.trim() === '' ? null : next);
                 }}
               />
+            </div>
+          );
+        }
+        const options = SELECT_FIELD_OPTIONS[property];
+        if (options) {
+          return (
+            <div key={property} className="flex flex-col gap-1.5">
+              <Label htmlFor={`block-style-${property}`}>
+                {tLabel(`canvas.blockStyle.selects.${property}.fieldLabel`)}
+              </Label>
+              <select
+                id={`block-style-${property}`}
+                className="border-input bg-background h-9 rounded-md border px-2 text-sm"
+                value={(value[property] as string | null | undefined) ?? ''}
+                onChange={(event) =>
+                  setField(
+                    property,
+                    event.target.value === ''
+                      ? null
+                      : (event.target.value as never),
+                  )
+                }
+              >
+                {/* The theme's own value, not a value of its own: leaving
+                    it selected is how you say "do not override this". */}
+                <option value="">
+                  {tLabel('canvas.blockStyle.selects.inherit')}
+                </option>
+                {options.map((option) => (
+                  <option key={option} value={option}>
+                    {tLabel(
+                      `canvas.blockStyle.selects.${property}.options.${option}`,
+                    )}
+                  </option>
+                ))}
+              </select>
             </div>
           );
         }

@@ -73,6 +73,23 @@ export const BLOCK_STYLE_DEFAULTS: Record<string, BlockStyleDefaults> = {
   Container: {
     textColor: 'inherit',
     borderRadius: '0.5rem',
+    // Each one is the fallback the block's own CSS already declares, so
+    // the editor opens showing what the container looks like right now
+    // rather than an empty box (ADR-0022's follow-up).
+    borderWidth: '0',
+    borderStyle: 'solid',
+    borderColor: 'var(--border)',
+    boxShadow: 'none',
+    backgroundImage: 'none',
+    backgroundPosition: 'center',
+    backgroundSize: 'cover',
+    backgroundRepeat: 'no-repeat',
+    overlayColor: 'transparent',
+    minHeight: 'auto',
+    maxWidth: 'none',
+    gap: '1rem',
+    contentAlign: 'stretch',
+    contentJustify: 'flex-start',
   },
   Countdown: {
     backgroundColor: 'transparent',
@@ -112,6 +129,13 @@ export const BLOCK_STYLE_DEFAULTS: Record<string, BlockStyleDefaults> = {
     backgroundColor: 'transparent',
     textColor: 'var(--foreground)',
     borderRadius: '0',
+    boxShadow: 'none',
+    backgroundImage: 'none',
+    backgroundPosition: 'center',
+    backgroundSize: 'cover',
+    backgroundRepeat: 'no-repeat',
+    overlayColor: 'transparent',
+    minHeight: 'auto',
   },
   Heading: {
     textColor: 'inherit',

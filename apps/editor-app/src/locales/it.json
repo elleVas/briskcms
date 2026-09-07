@@ -681,7 +681,9 @@
     "blockStyle": {
       "colors": {
         "backgroundColor": "Colore di sfondo",
-        "textColor": "Colore testo"
+        "textColor": "Colore testo",
+        "borderColor": "Colore del bordo",
+        "overlayColor": "Velatura"
       },
       "lengths": {
         "borderRadius": {
@@ -703,6 +705,85 @@
         "marginBottom": {
           "fieldLabel": "Spazio sotto",
           "placeholder": "es. 4rem — vuoto per il default"
+        },
+        "borderWidth": {
+          "fieldLabel": "Spessore del bordo",
+          "placeholder": "es. 1px — vuoto per nessuno"
+        },
+        "minHeight": {
+          "fieldLabel": "Altezza minima",
+          "placeholder": "es. 60vh — vuoto per il valore del tema"
+        },
+        "maxWidth": {
+          "fieldLabel": "Larghezza massima",
+          "placeholder": "es. 48rem — vuoto per il valore del tema"
+        },
+        "gap": {
+          "fieldLabel": "Spazio tra gli elementi",
+          "placeholder": "es. 1.5rem — vuoto per il valore del tema"
+        },
+        "boxShadow": {
+          "fieldLabel": "Ombra",
+          "placeholder": "es. var(--shadow-md)"
+        },
+        "backgroundImage": {
+          "fieldLabel": "Immagine di sfondo",
+          "placeholder": "es. url(/media/foto.jpg)"
+        }
+      },
+      "selects": {
+        "inherit": "Valore del tema",
+        "borderStyle": {
+          "fieldLabel": "Stile del bordo",
+          "options": {
+            "none": "Nessuno",
+            "solid": "Continuo",
+            "dashed": "Tratteggiato",
+            "dotted": "Puntinato"
+          }
+        },
+        "backgroundPosition": {
+          "fieldLabel": "Posizione dell'immagine",
+          "options": {
+            "center": "Centro",
+            "top": "Alto",
+            "bottom": "Basso",
+            "left": "Sinistra",
+            "right": "Destra"
+          }
+        },
+        "backgroundSize": {
+          "fieldLabel": "Dimensione dell'immagine",
+          "options": {
+            "cover": "Riempi il blocco",
+            "contain": "Contieni nell'area",
+            "auto": "Dimensione originale"
+          }
+        },
+        "backgroundRepeat": {
+          "fieldLabel": "Ripetizione dell'immagine",
+          "options": {
+            "no-repeat": "Non ripetere",
+            "repeat": "Affianca",
+            "repeat-x": "Affianca in orizzontale",
+            "repeat-y": "Affianca in verticale"
+          }
+        },
+        "contentAlign": {
+          "fieldLabel": "Allineamento orizzontale",
+          "options": {
+            "start": "Sinistra",
+            "center": "Centro",
+            "end": "Destra"
+          }
+        },
+        "contentJustify": {
+          "fieldLabel": "Allineamento verticale",
+          "options": {
+            "start": "Alto",
+            "center": "Centro",
+            "end": "Basso"
+          }
         }
       }
     },

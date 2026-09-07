@@ -30,10 +30,37 @@ const instanceStyle = buildBlockInstanceStyle(styleOverride);
 </section>
 
 <style>
+	/* The audit's worst block: `{title, subtitle}`, centred, fixed markup,
+	   and no way to put a photograph behind it. The vocabulary of
+	   ADR-0047 is what an ordinary hero needs — a background image, a
+	   wash over it so the words stay readable, a minimum height, and
+	   somewhere to put the content inside that height.
+
+	   Alignment is NOT offered here yet, deliberately. This element is a
+	   block, not a flex container, so `align-items` would do nothing
+	   until it becomes one — and making it flex changes the layout of
+	   every hero that exists. It belongs with the Fase 4 rework that
+	   turns Hero into a real container; offering a control that silently
+	   does nothing would be worse than not offering it.
+
+	   Every fallback below is what this block already looked like, so a
+	   hero with nothing overridden renders exactly as before. */
 	.brisk-hero {
-		background: var(--brisk-override-bg, transparent);
+		background-color: var(--brisk-override-bg, transparent);
 		border-radius: var(--brisk-override-radius, 0);
+		box-shadow: var(--brisk-override-shadow, none);
+		min-height: var(--brisk-override-min-height, auto);
+		background-image:
+			linear-gradient(
+				var(--brisk-override-overlay, transparent),
+				var(--brisk-override-overlay, transparent)
+			),
+			var(--brisk-override-bg-image, none);
+		background-position: var(--brisk-override-bg-position, center);
+		background-size: var(--brisk-override-bg-size, cover);
+		background-repeat: var(--brisk-override-bg-repeat, no-repeat);
 	}
+
 	.brisk-hero h1 {
 		color: var(--brisk-override-text, var(--foreground));
 	}
