@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { DEFAULT_COOKIE_BANNER_SETTINGS } from '@brisk/shared-types';
+import {
+  DEFAULT_COOKIE_BANNER_SETTINGS,
+  DEFAULT_VARIANT,
+} from '@brisk/shared-types';
 import { Site, SiteNotFoundError } from '@brisk/domain-core';
 import {
   InMemorySiteRepository,
@@ -58,6 +61,7 @@ describe('updateSiteThemeTokens', () => {
       tenantId,
       siteId: 'site-1',
       blockType: 'Button',
+      variant: DEFAULT_VARIANT,
       style: {
         base: {
           borderRadius: '9999px',
@@ -73,10 +77,12 @@ describe('updateSiteThemeTokens', () => {
     );
     expect(persisted).toEqual({
       Button: {
-        base: {
-          borderRadius: '9999px',
-          paddingX: '1.5rem',
-          paddingY: '0.75rem',
+        default: {
+          base: {
+            borderRadius: '9999px',
+            paddingX: '1.5rem',
+            paddingY: '0.75rem',
+          },
         },
       },
     });
@@ -89,6 +95,7 @@ describe('updateSiteThemeTokens', () => {
       tenantId,
       'site-1',
       'Banner',
+      DEFAULT_VARIANT,
       { base: { backgroundColor: '#000000' } },
     );
 
@@ -96,6 +103,7 @@ describe('updateSiteThemeTokens', () => {
       tenantId,
       siteId: 'site-1',
       blockType: 'Button',
+      variant: DEFAULT_VARIANT,
       style: { base: { borderRadius: '9999px' } },
     });
 
@@ -104,8 +112,8 @@ describe('updateSiteThemeTokens', () => {
       'site-1',
     );
     expect(persisted).toEqual({
-      Banner: { base: { backgroundColor: '#000000' } },
-      Button: { base: { borderRadius: '9999px' } },
+      Banner: { default: { base: { backgroundColor: '#000000' } } },
+      Button: { default: { base: { borderRadius: '9999px' } } },
     });
   });
 
@@ -117,6 +125,7 @@ describe('updateSiteThemeTokens', () => {
         tenantId,
         siteId: 'does-not-exist',
         blockType: 'Button',
+        variant: DEFAULT_VARIANT,
         style: { base: { borderRadius: '6px' } },
       }),
     ).rejects.toThrow(SiteNotFoundError);

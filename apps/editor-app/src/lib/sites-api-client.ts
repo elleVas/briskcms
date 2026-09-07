@@ -141,10 +141,11 @@ export async function listAvailableThemes(): Promise<AvailableTheme[]> {
 export function updateThemeTokens(
   id: string,
   blockType: string,
+  variant: string,
   style: ResponsiveBlockStyle,
 ): Promise<SiteRecord> {
   return requestSite(`/sites/${id}/theme-tokens`, {
     method: 'PATCH',
-    body: JSON.stringify({ blockType, style }),
+    body: JSON.stringify({ blockType, variant, style }),
   });
 }

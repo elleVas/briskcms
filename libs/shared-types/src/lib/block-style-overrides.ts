@@ -2,6 +2,7 @@ import type { Block } from './content-model';
 import {
   BREAKPOINT_MAX_WIDTHS,
   BREAKPOINTS,
+  DEFAULT_VARIANT,
   type BlockStyleOverride,
   type ResponsiveBlockStyle,
 } from './site-theme-tokens';
@@ -69,6 +70,37 @@ export function blockTypeToClassName(blockType: string): string {
 }
 
 /**
+ * The class that carries ONE variant of a block type
+ * (`.brisk-button--secondary`), or `null` for anything that is not a
+ * variant name.
+ *
+ * `null` and not a thrown error, and not the bare type class either: a
+ * block may name a variant its current theme does not define — that is
+ * ADR-0048's rule working as intended, a theme hiding a design it does
+ * not have — and the answer is that the block renders in its default look.
+ * Refusing the name outright would take the page down; falling back to
+ * the type class silently would be the same thing as no variant, which is
+ * what the caller does with `null` anyway, but stated where it can be
+ * read.
+ *
+ * The character rule is the exit barrier, the same one the block type key
+ * gets: whatever reaches a selector is checked where it gets there, not
+ * only where it was written (PR #144).
+ */
+export function blockVariantClassName(
+  blockType: string,
+  variant: string | undefined,
+): string | null {
+  if (!variant || variant === DEFAULT_VARIANT) {
+    return null;
+  }
+  const className = safeBlockTypeClassName(blockType);
+  return className && /^[a-z][a-z0-9-]{0,63}$/.test(variant)
+    ? `${className}--${variant}`
+    : null;
+}
+
+/**
  * The "component-level" override (docs/adr/0022) — one CSS rule per styled
  * block type, scoped by the block's own `.brisk-*` class and NOT by
  * `[data-brisk-block-type]`: that wrapper only exists when `editable` is
@@ -82,12 +114,26 @@ export function blockTypeToClassName(blockType: string): string {
  * resolves to is already the winning value by construction.
  */
 export function buildBlockStyleOverridesCss(
-  blockStyles: Record<string, ResponsiveBlockStyle>,
+  blockStyles: Record<string, Record<string, ResponsiveBlockStyle>>,
 ): string {
-  const rules = Object.entries(blockStyles).flatMap(([blockType, style]) => {
-    const className = safeBlockTypeClassName(blockType);
-    return className ? buildResponsiveRules(`.${className}`, style) : [];
-  });
+  const rules = Object.entries(blockStyles).flatMap(
+    ([blockType, byVariant]) => {
+      const className = safeBlockTypeClassName(blockType);
+      if (!className) {
+        return [];
+      }
+      return Object.entries(byVariant ?? {}).flatMap(([variant, style]) => {
+        // The type's own look is the bare class; a variant adds its
+        // modifier, and goes through the same character rule as everything
+        // else that reaches a selector.
+        const target =
+          variant === DEFAULT_VARIANT
+            ? className
+            : blockVariantClassName(blockType, variant);
+        return target ? buildResponsiveRules(`.${target}`, style) : [];
+      });
+    },
+  );
   // A named tier rather than source order — see buildBlockInstanceRulesCss.
   return rules.length > 0 ? `@layer brisk.class {\n${rules.join('\n')}\n}` : '';
 }

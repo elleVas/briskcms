@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { ChevronLeft } from 'lucide-react';
 import type { BlockDescriptor } from '@brisk/block-registry';
 import {
+  DEFAULT_VARIANT,
   withBreakpointStyle,
   type ResponsiveBlockStyle,
   type SiteRecord,
@@ -57,6 +58,7 @@ export interface GlobalStylesDialogProps {
   /** Writes to `site.themeTokens.blockStyles[blockType]` and updates the CSS in the iframe live — shared with the toolbar's "Style" button (see canvas-editor-shell.tsx's saveTypeStyle). */
   onSaveTypeStyle: (
     blockType: string,
+    variant: string,
     style: ResponsiveBlockStyle,
   ) => Promise<void>;
 }
@@ -148,6 +150,7 @@ export function GlobalStylesDialog({
   // continuation of the last edit.
   const [selectedType, setSelectedType] = useState<string | null>(null);
   const [breakpoint, setBreakpoint] = useState<Breakpoint>('base');
+  const [variant, setVariant] = useState<string>(DEFAULT_VARIANT);
 
   const { control, handleSubmit, reset, watch } = useForm<ColorsFormValues>({
     defaultValues: {
@@ -261,7 +264,10 @@ export function GlobalStylesDialog({
               variant="ghost"
               size="sm"
               className="w-fit"
-              onClick={() => setSelectedType(null)}
+              onClick={() => {
+                setSelectedType(null);
+                setVariant(DEFAULT_VARIANT);
+              }}
             >
               <ChevronLeft size={16} />
               {t('globalStyles.back')}
@@ -283,18 +289,45 @@ export function GlobalStylesDialog({
               onChange={setBreakpoint}
               label={t('globalStyles.breakpointGroup')}
             />
+            {(selectedDescriptor.variants?.length ?? 0) > 0 && (
+              // Which LOOK of the type is being painted (ADR-0047). A
+              // type with one look shows nothing here — there is only one
+              // thing this panel could mean.
+              <label className="flex flex-col gap-1.5">
+                <span className="text-xs font-medium text-muted-foreground">
+                  {t('globalStyles.variantGroup')}
+                </span>
+                <select
+                  className="h-8 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 py-1 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+                  value={variant}
+                  onChange={(event) => setVariant(event.target.value)}
+                >
+                  <option value={DEFAULT_VARIANT}>
+                    {t('canvas.variant.default')}
+                  </option>
+                  {(selectedDescriptor.variants ?? []).map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {tLabel(option.label)}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
             <BlockStyleFields
               properties={selectedDescriptor.stylableProperties ?? []}
               value={
                 site.themeTokens?.blockStyles[selectedDescriptor.type]?.[
-                  breakpoint
-                ] ?? {}
+                  variant
+                ]?.[breakpoint] ?? {}
               }
               onChange={(next) =>
                 void onSaveTypeStyle(
                   selectedDescriptor.type,
+                  variant,
                   withBreakpointStyle(
-                    site.themeTokens?.blockStyles[selectedDescriptor.type],
+                    site.themeTokens?.blockStyles[selectedDescriptor.type]?.[
+                      variant
+                    ],
                     breakpoint,
                     next,
                   ),

@@ -60,7 +60,7 @@ import type { AstroComponentFactory } from 'astro/runtime/server/index.js';
 import { resolveThemeBlockOverride } from '../lib/resolve-theme-block-override';
 import { themeBlockRegistry } from '../lib/resolve-theme-page-blocks';
 import { normalizeRenderedProps } from '../lib/normalize-rendered-content';
-import { blockInstanceClassName } from '@brisk/shared-types';
+import { blockInstanceClassName, blockVariantClassName } from '@brisk/shared-types';
 
 interface Props {
   block: Block;
@@ -513,6 +513,13 @@ const wrapperProps = editable
 const instanceClass =
   block.styleOverride && block.id ? blockInstanceClassName(block.id) : null;
 
+// The variant's modifier class (ADR-0047). Computed for every block
+// rather than gated by a dispatch-entry flag: the answer is `null` unless
+// the block actually names a variant, and a flag here would be a second
+// copy of what the descriptor already says — the kind of copy that goes
+// out of date silently.
+const variantClass = blockVariantClassName(block.type, block.variant);
+
 const entry = BLOCK_REGISTRY[block.type];
 const Component = entry?.component;
 const context: BlockRenderContext = {
@@ -539,6 +546,7 @@ const dispatchProps = entry
   ? {
       ...normalizeRenderedProps(block.type, parsedProps, themeName),
       ...(entry.stylable ? { instanceClass } : {}),
+      ...(variantClass ? { variantClass } : {}),
       ...(entry.locale ? { locale } : {}),
       ...(entry.containerProps ? { editable, hasChildren } : {}),
       // docs/adr/0042 — always included, not gated by a dispatch-entry

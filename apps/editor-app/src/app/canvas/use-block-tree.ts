@@ -53,6 +53,36 @@ export function updateBlockProps(
   });
 }
 
+/**
+ * Sets (or clears, with `undefined`) which of the type's declared looks
+ * this block wears (ADR-0047). A field of the block, not a prop — see
+ * `Block.variant` for why that distinction is the point.
+ */
+export function updateBlockVariant(
+  blocks: Block[],
+  blockId: string,
+  variant: string | undefined,
+): Block[] {
+  return blocks.map((block) => {
+    if (block.id === blockId) {
+      const next = { ...block };
+      if (variant === undefined) {
+        delete next.variant;
+      } else {
+        next.variant = variant;
+      }
+      return next;
+    }
+    if (block.children) {
+      return {
+        ...block,
+        children: updateBlockVariant(block.children, blockId, variant),
+      };
+    }
+    return block;
+  });
+}
+
 /** Replaces `styleOverride` wholesale (docs/adr/0022) — a single panel edits all of it at once, the same "replaces, does not merge field by field" as Site.updateThemeTokens, not a merge like updateBlockProps above. The value covers EVERY breakpoint (ADR-0047): merging one size into the others is `withBreakpointStyle`'s job, done before this is called. */
 export function updateBlockStyleOverride(
   blocks: Block[],

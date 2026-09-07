@@ -157,6 +157,21 @@ Silently: the rule is still emitted into the page, matching nothing.
 naming the theme and the block, when an override of a stylable core block
 does not forward it.
 
+The same applies to **`variantClass`**, for a block type that declares
+variants: it carries `.brisk-button--secondary` and comes from the same
+place, computed by `BlockRenderer` from `Block.variant`. An override that
+drops it shows a look picker in the editor that saves a choice and changes
+nothing on the published page.
+
+```astro
+<a class:list={['brisk-button', variantClass, instanceClass]} href={href}>
+```
+
+What each class then DOES is still the theme's business. The
+`docs-showcase` Hero forwards `instanceClass` and still ignores
+`--brisk-override-bg`, because its background is a designed gradient — a
+deliberate choice, not an oversight.
+
 What each declaration then DOES remains the theme's business. The
 `docs-showcase` Hero forwards the class and still ignores
 `--brisk-override-bg`, because its background is a designed gradient — a

@@ -24,6 +24,8 @@ export interface UsePropertyPatchInput {
     blockId: string,
     styleOverride: ResponsiveBlockStyle,
   ) => void;
+  /** Like the two above but for `Block.variant` (ADR-0047) — which of the type's declared looks this block wears. */
+  onSaveVariant: (blockId: string, variant: string | undefined) => void;
   /** Da usePreviewBridge — invia editor:patch-block all'iframe. */
   patchBlock: (blockId: string, html: string) => void;
   /**
@@ -54,6 +56,7 @@ export interface UsePropertyPatchResult {
     changedKey: string,
     props: Record<string, unknown>,
     children?: Block[],
+    presentation?: BlockPresentation,
   ) => void;
   /**
    * To be called on every `preview:text-changed` (Day 4) — the same
@@ -71,6 +74,16 @@ export interface UsePropertyPatchResult {
     props: Record<string, unknown>,
     styleOverride: ResponsiveBlockStyle,
     children?: Block[],
+    variant?: string,
+  ) => void;
+  /** Picking a variant (ADR-0047) — its own timer again, so choosing a look and typing a label on the same block do not cancel each other. */
+  scheduleVariantChange: (
+    blockId: string,
+    blockType: string,
+    props: Record<string, unknown>,
+    variant: string | undefined,
+    children?: Block[],
+    styleOverride?: ResponsiveBlockStyle,
   ) => void;
   /**
    * Fires every still-pending debounced save right now, instead of waiting
@@ -89,10 +102,26 @@ export interface UsePropertyPatchResult {
   flushAll: (options?: { closeBursts?: boolean }) => void;
 }
 
+/**
+ * What a block wears, as opposed to what it says.
+ *
+ * Every fragment re-render has to carry it, and forgetting is invisible:
+ * the block comes back from the server without its per-instance class or
+ * its variant class, so it silently loses its styling in the canvas until
+ * the page is reloaded — which is exactly what a prop change did between
+ * ADR-0047's first tier and this. The canvas looked wrong and the saved
+ * data was fine, the hardest combination to notice.
+ */
+export interface BlockPresentation {
+  styleOverride?: ResponsiveBlockStyle;
+  variant?: string;
+}
+
 const DEFAULT_DEBOUNCE_MS = 300;
 
 const TEXT_TIMER_PREFIX = 'text:';
 const STYLE_TIMER_PREFIX = 'style:';
+const VARIANT_TIMER_PREFIX = 'variant:';
 
 /**
  * The inverse of the timer keys below. It lives here rather than at the
@@ -124,6 +153,7 @@ export function usePropertyPatch({
   token,
   onSaveDraft,
   onSaveStyleOverride,
+  onSaveVariant,
   patchBlock,
   onBurstEnd,
   debounceMs = DEFAULT_DEBOUNCE_MS,
@@ -189,6 +219,7 @@ export function usePropertyPatch({
       changedKey: string,
       props: Record<string, unknown>,
       children?: Block[],
+      presentation?: BlockPresentation,
     ) => {
       schedule(blockId, () => {
         onSaveDraft(blockId, changedKey, props);
@@ -199,6 +230,7 @@ export function usePropertyPatch({
           blockType,
           props,
           children,
+          ...presentation,
         })
           .then((html) => patchBlock(blockId, html))
           .catch(() => {
@@ -227,6 +259,7 @@ export function usePropertyPatch({
       props: Record<string, unknown>,
       styleOverride: ResponsiveBlockStyle,
       children?: Block[],
+      variant?: string,
     ) => {
       schedule(`${STYLE_TIMER_PREFIX}${blockId}`, () => {
         onSaveStyleOverride(blockId, styleOverride);
@@ -238,6 +271,7 @@ export function usePropertyPatch({
           props,
           children,
           styleOverride,
+          variant,
         })
           .then((html) => patchBlock(blockId, html))
           .catch(() => {
@@ -249,10 +283,42 @@ export function usePropertyPatch({
     [pageId, token, onSaveStyleOverride, patchBlock, debounceMs],
   );
 
+  const scheduleVariantChange = useCallback(
+    (
+      blockId: string,
+      blockType: string,
+      props: Record<string, unknown>,
+      variant: string | undefined,
+      children?: Block[],
+      styleOverride?: ResponsiveBlockStyle,
+    ) => {
+      schedule(`${VARIANT_TIMER_PREFIX}${blockId}`, () => {
+        onSaveVariant(blockId, variant);
+        renderBlockFragment({
+          pageId,
+          token,
+          blockId,
+          blockType,
+          props,
+          children,
+          styleOverride,
+          variant,
+        })
+          .then((html) => patchBlock(blockId, html))
+          .catch(() => {
+            /* the draft is already saved above — see the same comment on scheduleChange. */
+          });
+      });
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- vedi scheduleChange sopra.
+    [pageId, token, onSaveVariant, patchBlock, debounceMs],
+  );
+
   return {
     scheduleChange,
     scheduleTextChange,
     scheduleStyleOverrideChange,
+    scheduleVariantChange,
     flushAll,
   };
 }

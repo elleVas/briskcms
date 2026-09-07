@@ -1,5 +1,6 @@
 export * from './lib/backfill-block-ids';
 export * from './lib/migrate-responsive-block-styles';
+export * from './lib/migrate-variant-props';
 export * from './lib/business-info';
 export * from './lib/content-model';
 export * from './lib/custom-field-control';

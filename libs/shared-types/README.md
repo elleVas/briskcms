@@ -101,7 +101,12 @@ Recurring patterns worth knowing when reading/extending these schemas:
   override map into scoped CSS rules
   (`.brisk-hero { --brisk-override-bg: ... }`), and
   `buildBlockInstanceRulesCss` does the equivalent for the blocks of a
-  page, one rule per instance keyed by `.b-<blockId>`. Both wrap their
+  page, one rule per instance keyed by `.b-<blockId>`. The per-type map is
+  keyed by type and then by VARIANT since ADR-0047 (`default` being the
+  type's own look), so `.brisk-button` and `.brisk-button--ghost` are two
+  things an agency can paint separately; `blockVariantClassName` is the
+  exit barrier for that second key, the same character rule the type key
+  gets. Both wrap their
   output in a named cascade layer and emit `@container` rules for the
   narrow sizes — **not** an inline `style` attribute, which cannot hold a
   media query at all. `marginTop`/`marginBottom` are deliberately
@@ -159,6 +164,11 @@ scripts on the page) that must be silently ignored, not throw.
   `parseSearchExcerpt` turns Postgres `ts_headline`'s control-character
   match markers into `{ text, matched }` segments a UI can render safely
   without ever treating a search excerpt as trusted HTML.
+- `migrate-variant-props.ts` — moves a block's LOOK out of its props and
+  onto `Block.variant` (`pnpm db:migrate-variant-props`). Unlike the two
+  below it this one has to run: `buttonPropsSchema` no longer declares
+  `variant`, so a Button whose look is still in props renders as the
+  default until it does.
 - `migrate-responsive-block-styles.ts` — rewrites a flat, pre-ADR-0047
   `styleOverride` as `{ base: … }`, for the one-off script in
   `@brisk/postgres-db` (`pnpm db:migrate-responsive-block-styles`). Reading

@@ -10,7 +10,10 @@ import type {
   TenantContextPort,
   ThemeCatalogPort,
 } from '@brisk/ports';
-import { DEFAULT_COOKIE_BANNER_SETTINGS } from '@brisk/shared-types';
+import {
+  DEFAULT_COOKIE_BANNER_SETTINGS,
+  DEFAULT_VARIANT,
+} from '@brisk/shared-types';
 import { DeploymentSiteResolver } from './deployment-site.resolver';
 import { SitesController } from './sites.controller';
 
@@ -108,14 +111,16 @@ describe('SitesController (unit)', () => {
   it('findById returns the site props, with themeTokens composed from the block styles repository', async () => {
     siteRepository.findById.mockResolvedValue(buildSite());
     siteThemeBlockStylesRepository.listBySite.mockResolvedValue({
-      Button: { base: { borderRadius: '9999px' } },
+      Button: { default: { base: { borderRadius: '9999px' } } },
     });
 
     const result = await controller.findById('site-1');
 
     expect(result.name).toBe('Il mio sito');
     expect(result.themeTokens).toEqual({
-      blockStyles: { Button: { base: { borderRadius: '9999px' } } },
+      blockStyles: {
+        Button: { default: { base: { borderRadius: '9999px' } } },
+      },
     });
   });
 
@@ -319,6 +324,7 @@ describe('SitesController (unit)', () => {
     await expect(
       controller.updateThemeTokens('missing', {
         blockType: 'Button',
+        variant: DEFAULT_VARIANT,
         style: { base: { borderRadius: '6px' } },
       }),
     ).rejects.toThrow(SiteNotFoundError);
@@ -328,11 +334,14 @@ describe('SitesController (unit)', () => {
   it('updateThemeTokens upserts the override for only the block type given', async () => {
     siteRepository.findById.mockResolvedValue(buildSite());
     siteThemeBlockStylesRepository.listBySite.mockResolvedValue({
-      Button: { base: { borderRadius: '9999px', paddingX: '1.5rem' } },
+      Button: {
+        default: { base: { borderRadius: '9999px', paddingX: '1.5rem' } },
+      },
     });
 
     const result = await controller.updateThemeTokens('site-1', {
       blockType: 'Button',
+      variant: DEFAULT_VARIANT,
       style: { base: { borderRadius: '9999px', paddingX: '1.5rem' } },
     });
 
@@ -340,11 +349,14 @@ describe('SitesController (unit)', () => {
       'tenant-1',
       'site-1',
       'Button',
+      DEFAULT_VARIANT,
       { base: { borderRadius: '9999px', paddingX: '1.5rem' } },
     );
     expect(result.themeTokens).toEqual({
       blockStyles: {
-        Button: { base: { borderRadius: '9999px', paddingX: '1.5rem' } },
+        Button: {
+          default: { base: { borderRadius: '9999px', paddingX: '1.5rem' } },
+        },
       },
     });
   });

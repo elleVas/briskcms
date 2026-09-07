@@ -1,3 +1,4 @@
+import { DEFAULT_VARIANT } from '@brisk/shared-types';
 import { randomUUID } from 'node:crypto';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import {
@@ -50,26 +51,70 @@ describe('DrizzleSiteThemeBlockStylesRepository (integration)', () => {
   });
 
   it('upsert then listBySite round-trips the style for a block type', async () => {
-    await repository.upsert(tenantAId, siteId, 'Button', {
+    await repository.upsert(tenantAId, siteId, 'Button', DEFAULT_VARIANT, {
       base: { borderRadius: '9999px' },
     });
 
     expect(await repository.listBySite(tenantAId, siteId)).toEqual({
-      Button: { base: { borderRadius: '9999px' } },
+      Button: { default: { base: { borderRadius: '9999px' } } },
     });
   });
 
   it('upsert on an already-styled type replaces that row, not a field-by-field merge', async () => {
-    await repository.upsert(tenantAId, siteId, 'Banner', {
+    await repository.upsert(tenantAId, siteId, 'Banner', DEFAULT_VARIANT, {
       base: { borderRadius: '6px', paddingX: '1rem' },
     });
 
-    await repository.upsert(tenantAId, siteId, 'Banner', {
+    await repository.upsert(tenantAId, siteId, 'Banner', DEFAULT_VARIANT, {
       base: { borderRadius: '9999px' },
     });
 
     const result = await repository.listBySite(tenantAId, siteId);
-    expect(result['Banner']).toEqual({ base: { borderRadius: '9999px' } });
+    expect(result['Banner']).toEqual({
+      default: { base: { borderRadius: '9999px' } },
+    });
+  });
+
+  /**
+   * The reason the primary key gained a third column (ADR-0047): an
+   * agency recolours the ghost buttons without touching the primary ones.
+   * With the old two-column key the second upsert would have replaced the
+   * first, and the two looks could never differ.
+   */
+  it('keeps two variants of the same type as separate rows', async () => {
+    await repository.upsert(tenantAId, siteId, 'Button', DEFAULT_VARIANT, {
+      base: { backgroundColor: '#0000ff' },
+    });
+    await repository.upsert(tenantAId, siteId, 'Button', 'ghost', {
+      base: { backgroundColor: 'transparent' },
+    });
+
+    // On this type only: the spec shares one site across its cases, so
+    // rows written by earlier ones are still there.
+    const result = await repository.listBySite(tenantAId, siteId);
+    expect(result['Button']).toEqual({
+      default: { base: { backgroundColor: '#0000ff' } },
+      ghost: { base: { backgroundColor: 'transparent' } },
+    });
+  });
+
+  it('replaces one variant without disturbing its siblings', async () => {
+    await repository.upsert(tenantAId, siteId, 'Button', DEFAULT_VARIANT, {
+      base: { backgroundColor: '#0000ff' },
+    });
+    await repository.upsert(tenantAId, siteId, 'Button', 'ghost', {
+      base: { backgroundColor: 'transparent' },
+    });
+
+    await repository.upsert(tenantAId, siteId, 'Button', 'ghost', {
+      base: { backgroundColor: '#ff0000' },
+    });
+
+    const result = await repository.listBySite(tenantAId, siteId);
+    expect(result['Button']).toEqual({
+      default: { base: { backgroundColor: '#0000ff' } },
+      ghost: { base: { backgroundColor: '#ff0000' } },
+    });
   });
 
   it(
@@ -77,18 +122,20 @@ describe('DrizzleSiteThemeBlockStylesRepository (integration)', () => {
       'type means no shared-row lost-update window)',
     async () => {
       await Promise.all([
-        repository.upsert(tenantAId, siteId, 'Hero', {
+        repository.upsert(tenantAId, siteId, 'Hero', DEFAULT_VARIANT, {
           base: { textColor: '#ffffff' },
         }),
-        repository.upsert(tenantAId, siteId, 'Feature', {
+        repository.upsert(tenantAId, siteId, 'Feature', DEFAULT_VARIANT, {
           base: { backgroundColor: '#000000' },
         }),
       ]);
 
       const result = await repository.listBySite(tenantAId, siteId);
-      expect(result['Hero']).toEqual({ base: { textColor: '#ffffff' } });
+      expect(result['Hero']).toEqual({
+        default: { base: { textColor: '#ffffff' } },
+      });
       expect(result['Feature']).toEqual({
-        base: { backgroundColor: '#000000' },
+        default: { base: { backgroundColor: '#000000' } },
       });
     },
   );

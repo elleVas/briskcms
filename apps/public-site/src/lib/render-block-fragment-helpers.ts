@@ -18,6 +18,8 @@ export interface RenderBlockFragmentBody {
   children?: Block[];
   /** The per-instance override (docs/adr/0022), every breakpoint of it (ADR-0047) — without this, changing ONE block's style from the canvas would not show until the iframe reloaded. */
   styleOverride?: ResponsiveBlockStyle;
+  /** `Block.variant` (ADR-0047) — same reason as the override above: without it the fragment comes back without its variant class. */
+  variant?: string;
 }
 
 /**
@@ -46,7 +48,9 @@ export function isValidRenderBlockFragmentBody(
       Array.isArray(candidate['children'])) &&
     (candidate['styleOverride'] === undefined ||
       (typeof candidate['styleOverride'] === 'object' &&
-        candidate['styleOverride'] !== null))
+        candidate['styleOverride'] !== null)) &&
+    (candidate['variant'] === undefined ||
+      typeof candidate['variant'] === 'string')
   );
 }
 

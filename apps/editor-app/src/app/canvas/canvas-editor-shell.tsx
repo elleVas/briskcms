@@ -12,6 +12,7 @@ import {
 import {
   buildBlockInstanceRulesCss,
   buildBlockStyleOverridesCss,
+  DEFAULT_VARIANT,
   withBreakpointStyle,
   type Block,
   type BlockStyleOverride,
@@ -49,6 +50,7 @@ import {
   moveBlock,
   updateBlockProps,
   updateBlockStyleOverride,
+  updateBlockVariant,
 } from './use-block-tree';
 import { useBlockTreeMutations } from './use-block-tree-mutations';
 import { usePreviewBridge } from './use-preview-bridge';
@@ -207,6 +209,7 @@ export function CanvasEditorShell({
     scheduleChange,
     scheduleTextChange,
     scheduleStyleOverrideChange,
+    scheduleVariantChange,
     flushAll,
   } = usePropertyPatch({
     pageId,
@@ -261,6 +264,11 @@ export function CanvasEditorShell({
         blockId,
         styleOverride,
       );
+      setLocalBlocks(next);
+      onChange(next);
+    },
+    onSaveVariant: (blockId, variant) => {
+      const next = updateBlockVariant(localBlocksRef.current, blockId, variant);
       setLocalBlocks(next);
       onChange(next);
     },
@@ -542,6 +550,13 @@ export function CanvasEditorShell({
       key,
       nextProps,
       selectedBlock.children,
+      // Without these the re-rendered fragment comes back stripped of its
+      // per-instance class and its variant class, so editing a label made
+      // the block lose its styling in the canvas until a reload.
+      {
+        styleOverride: selectedBlock.styleOverride,
+        variant: selectedBlock.variant,
+      },
     );
   }
 
@@ -575,6 +590,27 @@ export function CanvasEditorShell({
   }
 
   /**
+   * Which of the type's declared looks the selected block wears
+   * (ADR-0047). A field of the block, so it travels the same route as the
+   * per-instance override rather than through `props`.
+   */
+  function handleChangeVariant(variant: string | undefined): void {
+    const blockId = selectedBlock?.id;
+    if (!blockId) {
+      return;
+    }
+    setLocalBlocks((prev) => updateBlockVariant(prev, blockId, variant));
+    scheduleVariantChange(
+      blockId,
+      selectedBlock.type,
+      selectedBlock.props,
+      variant,
+      selectedBlock.children,
+      selectedBlock.styleOverride,
+    );
+  }
+
+  /**
    * The fields edit ONE size at a time — whichever the breakpoint selector
    * is showing — and that flat override is merged back into the block's
    * per-breakpoint style here. Deliberately not in the fields themselves:
@@ -598,6 +634,7 @@ export function CanvasEditorShell({
       selectedBlock.props,
       next,
       selectedBlock.children,
+      selectedBlock.variant,
     );
     // The style is a RULE now, not an inline attribute (ADR-0047), so
     // re-rendering the block's fragment no longer carries it — the sheet
@@ -627,10 +664,11 @@ export function CanvasEditorShell({
    */
   async function saveTypeStyle(
     blockType: string,
+    variant: string,
     style: ResponsiveBlockStyle,
   ): Promise<void> {
     try {
-      const updated = await updateThemeTokens({ blockType, style });
+      const updated = await updateThemeTokens({ blockType, variant, style });
       // Updates the <style> inside the iframe straight away (docs/adr/0022)
       // — without this, every already-visible instance of that type would
       // keep its old look until the iframe reloads, even though the save
@@ -647,10 +685,17 @@ export function CanvasEditorShell({
     if (!selectedDescriptor) {
       return;
     }
+    // The variant the SELECTED block wears, not the type's default:
+    // "style every Button like this one" means every Button that looks
+    // like this one. Painting the default from a ghost button would
+    // recolour the primaries and leave the ghost the user was looking at
+    // untouched (ADR-0047).
+    const variant = selectedBlock?.variant ?? DEFAULT_VARIANT;
     void saveTypeStyle(
       selectedDescriptor.type,
+      variant,
       withBreakpointStyle(
-        site?.themeTokens?.blockStyles[selectedDescriptor.type],
+        site?.themeTokens?.blockStyles[selectedDescriptor.type]?.[variant],
         breakpoint,
         style,
       ),
@@ -802,11 +847,12 @@ export function CanvasEditorShell({
                 registry={registry}
                 categories={categories}
                 onChangeProp={handleChangeProp}
+                onChangeVariant={handleChangeVariant}
                 breakpoint={breakpoint}
                 typeStyle={
                   site
-                    ? (site.themeTokens?.blockStyles[
-                        selectedDescriptor.type
+                    ? (site.themeTokens?.blockStyles[selectedDescriptor.type]?.[
+                        selectedBlock.variant ?? DEFAULT_VARIANT
                       ] ?? { base: {} })
                     : undefined
                 }

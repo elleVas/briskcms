@@ -69,6 +69,8 @@ export interface BlockToolbarOverlayProps {
   breakpoint: StyleBreakpoint;
   /** The per-INSTANCE override (docs/adr/0022) — `block` itself only, read straight from `block.styleOverride` (no separate prop needed). */
   onChangeInstanceStyle: (style: BlockStyleOverride) => void;
+  /** Picking one of the type's declared looks (ADR-0047) — `undefined` restores the type's default. */
+  onChangeVariant: (variant: string | undefined) => void;
   onMoveUp: () => void;
   onMoveDown: () => void;
   onDuplicate: () => void;
@@ -130,6 +132,7 @@ export function BlockToolbarOverlay({
   typeStyle,
   onChangeTypeStyle,
   onChangeInstanceStyle,
+  onChangeVariant,
   onMoveUp,
   onMoveDown,
   onDuplicate,
@@ -307,7 +310,8 @@ export function BlockToolbarOverlay({
             </PopoverContent>
           </Popover>
         )}
-        {descriptor.fields.length > 0 && (
+        {(descriptor.fields.length > 0 ||
+          (descriptor.variants?.length ?? 0) > 0) && (
           <Popover>
             <PopoverTrigger asChild>
               <button
@@ -326,6 +330,7 @@ export function BlockToolbarOverlay({
                 block={block}
                 descriptor={descriptor}
                 onChangeProp={onChangeProp}
+                onChangeVariant={onChangeVariant}
               />
             </PopoverContent>
           </Popover>

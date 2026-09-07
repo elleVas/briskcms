@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import {
+  blockVariantNameSchema,
   responsiveBlockStyleSchema,
   type ResponsiveBlockStyle,
 } from './site-theme-tokens';
@@ -28,6 +29,24 @@ export interface Block {
   props: Record<string, unknown>;
   children?: Block[];
   /**
+   * Which of the block type's declared variants this block uses
+   * (ADR-0047) — `undefined` means the type's own default look.
+   *
+   * A field of the block, NOT a prop, and the distinction is the point:
+   * props are the client's CONTENT and a theme is a view over it
+   * (ADR-0048), so a theme may add a variant or hide one it has no design
+   * for, and the worst that happens is the block renders in its default
+   * look. Had this stayed a prop, a theme dropping a variant would leave
+   * content pointing at a value that no longer exists — the failure that
+   * ADR-0048 exists to prevent.
+   *
+   * `Callout.tone` and `PricingPlan.highlighted` deliberately stay props
+   * even though they emit a modifier class too: a warning callout is a
+   * warning under any theme, and which plan is recommended is a
+   * commercial fact. They are meaning, not presentation.
+   */
+  variant?: string;
+  /**
    * The per-instance override (docs/adr/0022) — THIS block only, on top of
    * any type-level override saved in the site's themeTokens.
    * `undefined`/absent fields = inherit normally.
@@ -46,6 +65,7 @@ export const blockSchema: z.ZodType<Block> = z.lazy(() =>
     type: z.string(),
     props: z.record(z.string(), z.unknown()),
     children: z.array(blockSchema).optional(),
+    variant: blockVariantNameSchema.optional(),
     styleOverride: responsiveBlockStyleSchema.optional(),
   }),
 );
@@ -539,19 +559,18 @@ export const bannerPropsSchema = z.object({
 });
 export type BannerProps = z.infer<typeof bannerPropsSchema>;
 
-/** Standalone CTA button — same link shape as Banner/NavLink/PromoBar. `variant` picks between the two button styles Button.astro defines. Per-instance color/spacing overrides live on `Block.styleOverride` (docs/adr/0022), not here. */
+/** Standalone CTA button — same link shape as Banner/NavLink/PromoBar. Which of the two looks it wears is `Block.variant` (ADR-0047), not a prop: a look is presentation, and a theme may add or hide one without touching stored content. Per-instance color/spacing overrides live on `Block.styleOverride` (docs/adr/0022), not here either. */
 export const buttonPropsSchema = z.object({
   label: z.string(),
   linkType: z.enum(['page', 'url']),
   page: pickedPageSchema.nullable(),
   url: z.string(),
-  variant: z.enum(['primary', 'secondary']).default('primary'),
 });
 export type ButtonProps = z.infer<typeof buttonPropsSchema>;
 
 /**
  * Plain inline text link — same page/URL targeting as Button, deliberately
- * without a `variant`: a Link isn't a CTA, it renders as ordinary text
+ * without variants: a Link isn't a CTA, it renders as ordinary text
  * with the global link treatment (apps/public-site global.css), not a
  * button shape. For "a clickable word inside a sentence", not "a button
  * that happens to look like a link".

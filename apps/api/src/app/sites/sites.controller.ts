@@ -282,14 +282,14 @@ export class SitesController {
         tenantId,
         siteId: id,
         blockType: body.blockType,
+        variant: body.variant,
         style: body.style,
       },
     );
-    // Il site è già stato verificato esistente dallo use-case — un
-    // secondo findById qui è per ricomporre il DTO completo, non per
-    // ricontrollare l'esistenza (che getterebbe comunque un 404 identico
-    // nell'improbabile finestra in cui il sito sparisse tra le due
-    // chiamate).
+    // The use case already established the site exists — this second
+    // findById rebuilds the full DTO rather than re-checking (which would
+    // throw the same 404 anyway, in the unlikely window where the site
+    // disappeared between the two calls).
     const site = await this.siteRepository.findById(tenantId, id);
     if (!site) {
       throw new SiteNotFoundError(id);

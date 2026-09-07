@@ -10,17 +10,18 @@ import type { ResponsiveBlockStyle } from '@brisk/shared-types';
  * scripts) are.
  */
 export interface SiteThemeBlockStylesPort {
-  /** Every active override for the site, keyed by block type — an empty map when none has ever been customized. */
+  /** Every active override for the site, keyed by block type and then by variant (ADR-0047) — an empty map when none has ever been customized. */
   listBySite(
     tenantId: string,
     siteId: string,
-  ): Promise<Record<string, ResponsiveBlockStyle>>;
+  ): Promise<Record<string, Record<string, ResponsiveBlockStyle>>>;
 
-  /** Sostituisce per intero l'override di UN tipo di blocco — upsert atomico su quella sola riga (site_id, block_type). */
+  /** Replaces the whole override of ONE (block type, variant) — an atomic upsert on that single row. `DEFAULT_VARIANT` paints the type's own look. */
   upsert(
     tenantId: string,
     siteId: string,
     blockType: string,
+    variant: string,
     style: ResponsiveBlockStyle,
   ): Promise<void>;
 }

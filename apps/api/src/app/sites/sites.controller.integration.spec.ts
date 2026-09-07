@@ -356,16 +356,22 @@ describe('SitesController (integration)', () => {
       })
       .expect(200);
 
+    // Keyed by variant since ADR-0047, and `default` is what a body with
+    // no `variant` means — the shape every client sent before it.
     expect(res.body.themeTokens).toEqual({
       blockStyles: {
-        Button: { base: { borderRadius: '9999px', paddingX: '1.5rem' } },
+        Button: {
+          default: { base: { borderRadius: '9999px', paddingX: '1.5rem' } },
+        },
       },
     });
 
     const getAfter = await agent.get(`/sites/${siteId}`).expect(200);
     expect(getAfter.body.themeTokens).toEqual({
       blockStyles: {
-        Button: { base: { borderRadius: '9999px', paddingX: '1.5rem' } },
+        Button: {
+          default: { base: { borderRadius: '9999px', paddingX: '1.5rem' } },
+        },
       },
     });
   });

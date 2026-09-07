@@ -13,7 +13,6 @@ export const buttonBlock: BlockDescriptor<ButtonProps> = {
     linkType: 'page',
     page: null,
     url: '',
-    variant: 'primary',
   },
   fields: [
     {
@@ -24,22 +23,11 @@ export const buttonBlock: BlockDescriptor<ButtonProps> = {
       inlineEditable: true,
     },
     ...ctaLinkFields(),
-    {
-      kind: 'radio',
-      key: 'variant',
-      label: 'blocks.button.fields.variant.fieldLabel',
-      options: [
-        {
-          label: 'blocks.button.fields.variant.options.primary',
-          value: 'primary',
-        },
-        {
-          label: 'blocks.button.fields.variant.options.secondary',
-          value: 'secondary',
-        },
-      ],
-    },
   ],
+  // Was a `kind: 'radio'` prop until ADR-0047. It is the same two looks,
+  // declared where a look belongs: `Block.variant` rather than the block's
+  // content, so a theme can add a third without editing anyone's pages.
+  variants: [{ value: 'secondary', label: 'blocks.button.variants.secondary' }],
   // Color/borders/padding — editable for ALL Buttons on the site (the
   // "Style" button in the toolbar) or only for this instance (popover on
   // the selected block), docs/adr/0022. Replaces the old `colorOverride`.

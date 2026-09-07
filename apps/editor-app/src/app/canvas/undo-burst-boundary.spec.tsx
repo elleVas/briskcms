@@ -58,6 +58,7 @@ function Harness({
     token: 'tok',
     patchBlock: vi.fn(),
     onSaveStyleOverride: vi.fn(),
+    onSaveVariant: vi.fn(),
     onSaveDraft: (blockId, _changedKey, props) => {
       const next = updateBlockProps(localBlocksRef.current, blockId, props);
       setLocalBlocks(next);

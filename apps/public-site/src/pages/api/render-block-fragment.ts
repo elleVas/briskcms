@@ -66,6 +66,7 @@ export const POST: APIRoute = async ({ request }) => {
     props: body.props,
     ...(children ? { children } : {}),
     ...(body.styleOverride ? { styleOverride: body.styleOverride } : {}),
+    ...(body.variant ? { variant: body.variant } : {}),
   };
 
   // i18n a livello di campo (see the plan) — `body.props.page` (Link/

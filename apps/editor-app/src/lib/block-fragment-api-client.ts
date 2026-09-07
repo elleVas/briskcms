@@ -11,6 +11,8 @@ export interface RenderBlockFragmentInput {
   children?: Block[];
   /** The per-instance override (docs/adr/0022), every breakpoint of it (ADR-0047) — without this, a style change from the canvas would not show in the freshly patched fragment. */
   styleOverride?: ResponsiveBlockStyle;
+  /** Which of the type's declared looks this block wears (ADR-0047) — without it the patched fragment comes back without its variant class, so the canvas silently loses the look until a reload. */
+  variant?: string;
 }
 
 /**

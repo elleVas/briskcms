@@ -24,6 +24,7 @@ describe('usePropertyPatch', () => {
   function setup(debounceMs = 300) {
     const onSaveDraft = vi.fn();
     const onSaveStyleOverride = vi.fn();
+    const onSaveVariant = vi.fn();
     const patchBlock = vi.fn();
     const { result } = renderHook(() =>
       usePropertyPatch({
@@ -31,11 +32,18 @@ describe('usePropertyPatch', () => {
         token: 'tok',
         onSaveDraft,
         onSaveStyleOverride,
+        onSaveVariant,
         patchBlock,
         debounceMs,
       }),
     );
-    return { result, onSaveDraft, onSaveStyleOverride, patchBlock };
+    return {
+      result,
+      onSaveDraft,
+      onSaveStyleOverride,
+      onSaveVariant,
+      patchBlock,
+    };
   }
 
   function setupWithBursts(debounceMs = 300) {
@@ -46,6 +54,7 @@ describe('usePropertyPatch', () => {
         token: 'tok',
         onSaveDraft: vi.fn(),
         onSaveStyleOverride: vi.fn(),
+        onSaveVariant: vi.fn(),
         patchBlock: vi.fn(),
         onBurstEnd: (key) => ends.push(key),
         debounceMs,
