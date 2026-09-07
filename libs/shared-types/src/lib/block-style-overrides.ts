@@ -70,15 +70,16 @@ export function buildBlockStyleOverridesCss(
         Object.keys(BLOCK_STYLE_CUSTOM_PROPERTIES) as CssOverridableProperty[]
       )
         .map((field) => {
-          const value = override[field];
+          const value = safeDeclarationValue(override[field]);
           return value
             ? `${BLOCK_STYLE_CUSTOM_PROPERTIES[field]}: ${value};`
             : null;
         })
         .filter((declaration): declaration is string => declaration !== null)
         .join(' ');
-      return declarations
-        ? `.${blockTypeToClassName(blockType)} { ${declarations} }`
+      const className = safeBlockTypeClassName(blockType);
+      return declarations && className
+        ? `.${className} { ${declarations} }`
         : null;
     })
     .filter((rule): rule is string => rule !== null)
@@ -95,6 +96,40 @@ export function buildBlockStyleOverridesCss(
  * site). An inline style always beats the per-type rule for that same
  * element — no `!important` here either, for the same reason.
  */
+/**
+ * The same characters `cssValueSchema` refuses, checked again at the point
+ * the string actually becomes CSS.
+ *
+ * Two barriers rather than one because they fail differently. The schema
+ * guards the entrance and keeps the database clean; this guards the exit,
+ * and covers what the schema cannot see — rows written before the schema
+ * was tightened, a future write path that forgets to use it, a theme
+ * supplying its own defaults. A function whose job is to emit a stylesheet
+ * should not depend on its caller having validated the input.
+ *
+ * A declaration that fails is dropped, not escaped: there is no correct
+ * escaping for "this was supposed to be a colour", and a block rendering
+ * with its default appearance is a better outcome than one rendering with
+ * whatever the string was trying to do.
+ */
+const CSS_VALUE_BREAKOUT = /[;{}@<>\\]|\/\*|\*\//;
+
+function safeDeclarationValue(value: unknown): string | null {
+  return typeof value === 'string' &&
+    value.length > 0 &&
+    value.length <= 200 &&
+    !CSS_VALUE_BREAKOUT.test(value)
+    ? value
+    : null;
+}
+
+/** A block type only ever names a class here, so anything that is not an identifier cannot. */
+function safeBlockTypeClassName(blockType: string): string | null {
+  return /^[A-Za-z][A-Za-z0-9]*$/.test(blockType)
+    ? blockTypeToClassName(blockType)
+    : null;
+}
+
 export function buildBlockInstanceStyle(
   override: BlockStyleOverride | undefined,
 ): string | undefined {
@@ -105,7 +140,7 @@ export function buildBlockInstanceStyle(
     Object.keys(BLOCK_STYLE_CUSTOM_PROPERTIES) as CssOverridableProperty[]
   )
     .map((field) => {
-      const value = override[field];
+      const value = safeDeclarationValue(override[field]);
       return value
         ? `${BLOCK_STYLE_CUSTOM_PROPERTIES[field]}: ${value};`
         : null;
