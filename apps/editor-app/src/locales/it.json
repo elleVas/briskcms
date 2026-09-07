@@ -410,7 +410,7 @@
     "title": "Stile del sito",
     "intro": "Queste impostazioni si applicano sopra il tema attivo del sito — lascia un campo disattivato per mantenere il valore predefinito del tema.",
     "overridesEnabledLabel": "Applica queste impostazioni",
-    "overridesEnabledDescription": "Se disattivato, ogni campo qui sotto viene ignorato e si usano i valori predefiniti del tema, anche se hai salvato dei valori in passato. Il tema attivo può anche bloccare questa opzione del tutto — consulta la sua documentazione.",
+    "overridesEnabledDescription": "Se disattivato, ogni campo qui sotto viene ignorato e si usano i valori predefiniti del tema, anche se hai salvato dei valori in passato. Non tocca gli stili che hai impostato sui blocchi: quelli vivono sui blocchi stessi. Il tema attivo pu\u00f2 anche bloccare questa opzione del tutto, e un tema che lo fa rifiuta anche gli stili dei blocchi \u2014 consulta la sua documentazione.",
     "primaryColorLabel": "Colore primario",
     "secondaryColorLabel": "Colore secondario",
     "currentThemeValue": "Valore di base del tema attivo — personalizzalo qui o modificando il tema stesso",

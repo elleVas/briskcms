@@ -410,7 +410,7 @@
     "title": "Site style",
     "intro": "These settings apply on top of the site's active theme — leave a field off to keep the theme's own default.",
     "overridesEnabledLabel": "Apply these settings",
-    "overridesEnabledDescription": "When off, every field below is ignored and the theme's own defaults are used, even if you've saved values here before. The active theme can also lock this off entirely — see its own documentation.",
+    "overridesEnabledDescription": "When off, every field below is ignored and the theme's own defaults are used, even if you've saved values here before. It does not touch the styles you have set on blocks \u2014 those live on the blocks themselves. The active theme can also lock this off entirely, and a theme that does refuses block styles too \u2014 see its own documentation.",
     "primaryColorLabel": "Primary color",
     "secondaryColorLabel": "Secondary color",
     "currentThemeValue": "The active theme's own base value — customize it here, or by editing the theme itself",
