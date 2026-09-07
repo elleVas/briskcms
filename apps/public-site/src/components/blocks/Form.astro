@@ -1,6 +1,5 @@
 ---
 import {
-  buildBlockInstanceStyle,
   type BlockStyleOverride,
   type FormBlockProps,
   type FormField,
@@ -12,11 +11,12 @@ import FormFieldComponent from './FormField.astro';
 
 type Props = FormBlockProps & {
   styleOverride?: BlockStyleOverride;
+  /** The per-instance style class, from BlockRenderer — see blockInstanceClassName. */
+  instanceClass?: string | null;
   locale: string;
 };
 
-const { form: pickedForm, styleOverride, locale } = Astro.props;
-const instanceStyle = buildBlockInstanceStyle(styleOverride);
+const { form: pickedForm, styleOverride, locale, instanceClass} = Astro.props;
 const i18n = new Translator(locale);
 const form = pickedForm ? await getPublicForm(pickedForm.formId) : null;
 
@@ -91,7 +91,7 @@ if (form && form.steps.length > 0) {
 
 {
   form && (
-    <div class="brisk-form" style={instanceStyle}>
+    <div class:list={['brisk-form', instanceClass]}>
       {submitted && (
         <p role="status" class="brisk-form__status brisk-form__status--success">
           {i18n.t('form.submitSuccess')}

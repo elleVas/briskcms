@@ -60,6 +60,7 @@ import type { AstroComponentFactory } from 'astro/runtime/server/index.js';
 import { resolveThemeBlockOverride } from '../lib/resolve-theme-block-override';
 import { themeBlockRegistry } from '../lib/resolve-theme-page-blocks';
 import { normalizeRenderedProps } from '../lib/normalize-rendered-content';
+import { blockInstanceClassName } from '@brisk/shared-types';
 
 interface Props {
   block: Block;
@@ -492,6 +493,25 @@ const wrapperProps = editable
     }
   : {};
 
+// The per-INSTANCE overrides are CSS rules now, not an inline style
+// (ADR-0047 — an inline style cannot hold a media query), so the element
+// they apply to needs a class of its own.
+//
+// On the block's OWN root element, not on a wrapper around it. A
+// `display:contents` wrapper would have saved editing every styled block,
+// and it does not affect layout — but it does affect SELECTORS: it sits
+// between a block and its parent, so `:last-child`, `:nth-child` and `>`
+// stop meaning what they meant. `.brisk-timeline-step:last-child` already
+// breaks that way, and a theme may write any selector it likes against
+// core blocks. Structure is not something to change quietly to save
+// thirty mechanical edits.
+//
+// Only for a block that actually has one: a class on every block of every
+// page would be bytes nobody reads, and the rule it pairs with does not
+// exist.
+const instanceClass =
+  block.styleOverride && block.id ? blockInstanceClassName(block.id) : null;
+
 const entry = BLOCK_REGISTRY[block.type];
 const Component = entry?.component;
 const context: BlockRenderContext = {
@@ -517,7 +537,9 @@ const iconName =
 const dispatchProps = entry
   ? {
       ...normalizeRenderedProps(block.type, parsedProps, themeName),
-      ...(entry.styleOverride ? { styleOverride: block.styleOverride } : {}),
+      ...(entry.styleOverride
+        ? { styleOverride: block.styleOverride, instanceClass }
+        : {}),
       ...(entry.locale ? { locale } : {}),
       ...(entry.containerProps ? { editable, hasChildren } : {}),
       // docs/adr/0042 — always included, not gated by a dispatch-entry

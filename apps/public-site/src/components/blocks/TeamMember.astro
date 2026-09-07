@@ -1,18 +1,18 @@
 ---
 import {
-  buildBlockInstanceStyle,
   type BlockStyleOverride,
   type TeamMemberProps,
 } from '@brisk/shared-types';
 import OptimizedImage from '../OptimizedImage.astro';
 
-type Props = TeamMemberProps & { styleOverride?: BlockStyleOverride };
+type Props = TeamMemberProps & { styleOverride?: BlockStyleOverride;
+  instanceClass?: string | null;
+};
 
-const { name, role, bio, photo, styleOverride } = Astro.props;
-const instanceStyle = buildBlockInstanceStyle(styleOverride);
+const { name, role, bio, photo, styleOverride, instanceClass} = Astro.props;
 ---
 
-<div class="brisk-team-member" style={instanceStyle}>
+<div class:list={['brisk-team-member', instanceClass]}>
   {
     photo ? (
       <OptimizedImage media={photo} alt="" class="brisk-team-member__photo" />

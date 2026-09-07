@@ -1,22 +1,30 @@
 ---
 import {
-  buildBlockInstanceStyle,
   type BannerProps,
   type BlockStyleOverride,
 } from '@brisk/shared-types';
 import { localePathFromAncestors } from '@brisk/theme-runtime';
 
-type Props = BannerProps & { styleOverride?: BlockStyleOverride };
+type Props = BannerProps & { styleOverride?: BlockStyleOverride;
+  instanceClass?: string | null;
+};
 
-const { title, text, buttonLabel, linkType, page, url, styleOverride } =
-  Astro.props;
+const {
+  title,
+  text,
+  buttonLabel,
+  linkType,
+  page,
+  url,
+  styleOverride,
+  instanceClass,
+} = Astro.props;
 const href =
   linkType === 'page' && page?.locale && page?.slug ? localePathFromAncestors(page.locale, page.ancestorSlugs ?? [], page.slug) : url;
 const hasLink = linkType === 'page' ? Boolean(page) : Boolean(url);
-const instanceStyle = buildBlockInstanceStyle(styleOverride);
 ---
 
-<div class="brisk-banner" style={instanceStyle}>
+<div class:list={['brisk-banner', instanceClass]}>
   <h2 class="brisk-banner__title" data-brisk-field="title">{title}</h2>
   <div class="brisk-banner__text brisk-rich-text" data-brisk-field="text" set:html={text} />
   {

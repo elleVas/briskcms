@@ -1,17 +1,17 @@
 ---
 import {
-  buildBlockInstanceStyle,
   type AccordionItemProps,
   type BlockStyleOverride,
 } from '@brisk/shared-types';
 
-type Props = AccordionItemProps & { styleOverride?: BlockStyleOverride };
+type Props = AccordionItemProps & { styleOverride?: BlockStyleOverride;
+  instanceClass?: string | null;
+};
 
-const { question, answer, styleOverride } = Astro.props;
-const instanceStyle = buildBlockInstanceStyle(styleOverride);
+const { question, answer, styleOverride, instanceClass} = Astro.props;
 ---
 
-<details class="brisk-accordion-item" style={instanceStyle}>
+<details class:list={['brisk-accordion-item', instanceClass]}>
   <summary class="brisk-accordion-item__question" data-brisk-field="question">{question}</summary>
   <div class="brisk-accordion-item__answer brisk-rich-text" data-brisk-field="answer" set:html={answer} />
 </details>

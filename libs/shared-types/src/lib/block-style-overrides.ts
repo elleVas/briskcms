@@ -1,3 +1,4 @@
+import type { Block } from './content-model';
 import type { BlockStyleOverride } from './site-theme-tokens';
 
 /**
@@ -78,26 +79,17 @@ export function blockTypeToClassName(blockType: string): string {
 export function buildBlockStyleOverridesCss(
   blockStyles: Record<string, BlockStyleOverride>,
 ): string {
-  return Object.entries(blockStyles)
+  const rules = Object.entries(blockStyles)
     .map(([blockType, override]) => {
-      const declarations = (
-        Object.keys(BLOCK_STYLE_CUSTOM_PROPERTIES) as CssOverridableProperty[]
-      )
-        .map((field) => {
-          const value = safeDeclarationValue(override[field]);
-          return value
-            ? `${BLOCK_STYLE_CUSTOM_PROPERTIES[field]}: ${value};`
-            : null;
-        })
-        .filter((declaration): declaration is string => declaration !== null)
-        .join(' ');
       const className = safeBlockTypeClassName(blockType);
-      return declarations && className
+      const declarations = buildOverrideDeclarations(override);
+      return className && declarations
         ? `.${className} { ${declarations} }`
         : null;
     })
-    .filter((rule): rule is string => rule !== null)
-    .join('\n');
+    .filter((rule): rule is string => rule !== null);
+  // A named tier rather than source order — see buildBlockInstanceRulesCss.
+  return rules.length > 0 ? `@layer brisk.class {\n${rules.join('\n')}\n}` : '';
 }
 
 /**
@@ -144,12 +136,10 @@ function safeBlockTypeClassName(blockType: string): string | null {
     : null;
 }
 
-export function buildBlockInstanceStyle(
-  override: BlockStyleOverride | undefined,
-): string | undefined {
-  if (!override) {
-    return undefined;
-  }
+/** The declaration list of one override — the single place the property map is walked, so the emitters below cannot drift apart. */
+function buildOverrideDeclarations(
+  override: BlockStyleOverride,
+): string | null {
   const declarations = (
     Object.keys(BLOCK_STYLE_CUSTOM_PROPERTIES) as CssOverridableProperty[]
   )
@@ -161,5 +151,79 @@ export function buildBlockInstanceStyle(
     })
     .filter((declaration): declaration is string => declaration !== null)
     .join(' ');
-  return declarations.length > 0 ? declarations : undefined;
+  return declarations.length > 0 ? declarations : null;
+}
+
+export function buildBlockInstanceStyle(
+  override: BlockStyleOverride | undefined,
+): string | undefined {
+  return override
+    ? (buildOverrideDeclarations(override) ?? undefined)
+    : undefined;
+}
+
+/**
+ * The class that carries ONE block instance's overrides.
+ *
+ * Block ids are generated (`crypto.randomUUID`), so anything that is not
+ * one is refused: this value becomes a CSS selector, and the lesson of
+ * the block-type key is that whatever reaches a selector is checked where
+ * it gets there, not only where it was written.
+ */
+export function blockInstanceClassName(blockId: string): string | null {
+  return /^[A-Za-z0-9-]{1,64}$/.test(blockId) ? `b-${blockId}` : null;
+}
+
+/** Every block of a tree carrying an override, children included. */
+function collectStyledBlocks(
+  blocks: Block[],
+  found: { id: string; override: BlockStyleOverride }[] = [],
+): { id: string; override: BlockStyleOverride }[] {
+  for (const block of blocks) {
+    if (block.id && block.styleOverride) {
+      found.push({ id: block.id, override: block.styleOverride });
+    }
+    if (block.children) {
+      collectStyledBlocks(block.children, found);
+    }
+  }
+  return found;
+}
+
+/**
+ * The per-INSTANCE overrides of a page, as real CSS rules.
+ *
+ * They were an inline `style` attribute, and the cascade worked by
+ * construction: inline beats the per-type rule, no `!important` needed.
+ * Elegant, and a dead end — **an HTML `style` attribute cannot contain a
+ * media query** (ADR-0047). That is not a limitation of this code, it is
+ * the language, and per-breakpoint styling per instance is impossible
+ * while the value stays inline.
+ *
+ * Two rules of equal specificity then decide by source order, which is
+ * exactly the fragile detail someone eventually breaks. `@layer` makes a
+ * later layer win regardless of specificity OR order, so the tier model
+ * becomes one readable line instead of a convention resting on an
+ * accident.
+ *
+ * Deliberately only these two layers. The theme's own `:root` tokens stay
+ * unlayered: moving them would change how they interact with
+ * `!important`, where layer order REVERSES — and they are not in conflict
+ * with anything here anyway, because a declaration on an element always
+ * beats an inherited one, whatever layer it came from.
+ */
+export function buildBlockInstanceRulesCss(contents: Block[][]): string {
+  const rules = contents
+    .flatMap((content) => collectStyledBlocks(content))
+    .map(({ id, override }) => {
+      const className = blockInstanceClassName(id);
+      const declarations = buildOverrideDeclarations(override);
+      return className && declarations
+        ? `.${className} { ${declarations} }`
+        : null;
+    })
+    .filter((rule): rule is string => rule !== null);
+  return rules.length > 0
+    ? `@layer brisk.instance {\n${rules.join('\n')}\n}`
+    : '';
 }

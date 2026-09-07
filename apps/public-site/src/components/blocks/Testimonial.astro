@@ -1,21 +1,21 @@
 ---
 import {
-  buildBlockInstanceStyle,
   STAR_ICON_PATH,
   type BlockStyleOverride,
   type TestimonialProps,
 } from '@brisk/shared-types';
 import OptimizedImage from '../OptimizedImage.astro';
 
-type Props = TestimonialProps & { styleOverride?: BlockStyleOverride };
+type Props = TestimonialProps & { styleOverride?: BlockStyleOverride;
+  instanceClass?: string | null;
+};
 
-const { quote, author, role, avatar, rating, styleOverride } = Astro.props;
-const instanceStyle = buildBlockInstanceStyle(styleOverride);
+const { quote, author, role, avatar, rating, styleOverride, instanceClass} = Astro.props;
 
 const STAR_POSITIONS = [1, 2, 3, 4, 5];
 ---
 
-<div class="brisk-testimonial" style={instanceStyle}>
+<div class:list={['brisk-testimonial', instanceClass]}>
   <div
     class="brisk-testimonial__stars"
     role="img"

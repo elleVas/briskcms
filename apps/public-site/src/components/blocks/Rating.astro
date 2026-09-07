@@ -1,20 +1,20 @@
 ---
 import {
-  buildBlockInstanceStyle,
   STAR_ICON_PATH,
   type BlockStyleOverride,
   type RatingProps,
 } from '@brisk/shared-types';
 
-type Props = RatingProps & { styleOverride?: BlockStyleOverride };
+type Props = RatingProps & { styleOverride?: BlockStyleOverride;
+  instanceClass?: string | null;
+};
 
-const { rating, label, styleOverride } = Astro.props;
-const instanceStyle = buildBlockInstanceStyle(styleOverride);
+const { rating, label, styleOverride, instanceClass} = Astro.props;
 
 const STAR_POSITIONS = [1, 2, 3, 4, 5];
 ---
 
-<div class="brisk-rating" style={instanceStyle}>
+<div class:list={['brisk-rating', instanceClass]}>
   {label && <p class="brisk-rating__label">{label}</p>}
   <div
     class="brisk-rating__stars"

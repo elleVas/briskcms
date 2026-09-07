@@ -1,29 +1,28 @@
 ---
 import {
-  buildBlockInstanceStyle,
   type BlockStyleOverride,
   type ButtonProps,
 } from '@brisk/shared-types';
 import { localePathFromAncestors } from '@brisk/theme-runtime';
 
-type Props = ButtonProps & { styleOverride?: BlockStyleOverride };
+type Props = ButtonProps & { styleOverride?: BlockStyleOverride;
+  instanceClass?: string | null;
+};
 
-const { label, linkType, page, url, variant, styleOverride } = Astro.props;
+const { label, linkType, page, url, variant, styleOverride, instanceClass} = Astro.props;
 const href =
   linkType === 'page' && page?.locale && page?.slug ? localePathFromAncestors(page.locale, page.ancestorSlugs ?? [], page.slug) : url;
 
 // Override per-istanza (docs/adr/0022) — inline sull'elemento reale, non
 // su un wrapper: funziona identico in editor e sul sito pubblicato.
-const instanceStyle = buildBlockInstanceStyle(styleOverride);
 ---
 
 <a
-  class:list={[
+  class:list={[instanceClass, 
     'brisk-button',
     { 'brisk-button--secondary': variant === 'secondary' },
   ]}
   href={href}
-  style={instanceStyle}
   data-brisk-field="label"
 >
   {label}

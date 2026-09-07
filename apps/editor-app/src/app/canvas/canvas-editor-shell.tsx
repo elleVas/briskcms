@@ -10,6 +10,7 @@ import {
   Undo2,
 } from 'lucide-react';
 import {
+  buildBlockInstanceRulesCss,
   buildBlockStyleOverridesCss,
   type Block,
   type BlockStyleOverride,
@@ -543,6 +544,34 @@ export function CanvasEditorShell({
   }
 
   /** Per-INSTANCE override (docs/adr/0022) — a popover on the selected block, touching only that block. Same "optimistic immediately, debounce the real save" pattern as handleChangeProp above. */
+  /**
+   * The block style sheet the iframe shows, both tiers at once.
+   *
+   * They travel together because they live in ONE `<style>` in there, and
+   * because the order between them is what makes an instance beat its
+   * type — pushing one without the other would leave the layer
+   * declaration referring to rules that are not there.
+   *
+   * The per-type CSS is remembered rather than recomputed: it comes back
+   * from the save that produced it, and the instance side changes far more
+   * often than it does.
+   */
+  const typeStyleCssRef = useRef('');
+  function pushBlockStyleCss(nextTypeCss?: string): void {
+    if (nextTypeCss !== undefined) {
+      typeStyleCssRef.current = nextTypeCss;
+    }
+    const tiers = [
+      typeStyleCssRef.current,
+      buildBlockInstanceRulesCss([localBlocksRef.current]),
+    ].filter(Boolean);
+    bridge.updateBlockStyleCss(
+      tiers.length > 0
+        ? ['@layer brisk.class, brisk.instance;', ...tiers].join('\n')
+        : '',
+    );
+  }
+
   function handleChangeStyleOverride(styleOverride: BlockStyleOverride): void {
     const blockId = selectedBlock?.id;
     if (!blockId) {
@@ -558,6 +587,11 @@ export function CanvasEditorShell({
       styleOverride,
       selectedBlock.children,
     );
+    // The style is a RULE now, not an inline attribute (ADR-0047), so
+    // re-rendering the block's fragment no longer carries it — the sheet
+    // has to be pushed alongside, or the canvas would show the change only
+    // after a reload.
+    pushBlockStyleCss();
   }
 
   /**
@@ -589,7 +623,7 @@ export function CanvasEditorShell({
       // — without this, every already-visible instance of that type would
       // keep its old look until the iframe reloads, even though the save
       // already succeeded.
-      bridge.updateBlockStyleCss(
+      pushBlockStyleCss(
         buildBlockStyleOverridesCss(updated.themeTokens?.blockStyles ?? {}),
       );
     } catch {

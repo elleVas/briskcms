@@ -1,20 +1,19 @@
 ---
 import {
-  buildBlockInstanceStyle,
   type BlockStyleOverride,
   type TextProps,
 } from '@brisk/shared-types';
 
-type Props = TextProps & { styleOverride?: BlockStyleOverride };
+type Props = TextProps & { styleOverride?: BlockStyleOverride;
+  instanceClass?: string | null;
+};
 
-const { body, styleOverride } = Astro.props;
-const instanceStyle = buildBlockInstanceStyle(styleOverride);
+const { body, styleOverride, instanceClass} = Astro.props;
 ---
 
 <div
-  class="brisk-text brisk-rich-text"
+  class:list={['brisk-text brisk-rich-text', instanceClass]}
   data-brisk-field="body"
-  style={instanceStyle}
   set:html={body}
 />
 

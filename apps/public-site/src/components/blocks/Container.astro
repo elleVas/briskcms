@@ -1,6 +1,5 @@
 ---
 import {
-	buildBlockInstanceStyle,
 	type BlockStyleOverride,
 	type ContainerProps,
 } from '@brisk/shared-types';
@@ -10,11 +9,17 @@ type Props = ContainerProps & {
 	editable?: boolean;
 	hasChildren?: boolean;
 	styleOverride?: BlockStyleOverride;
+  instanceClass?: string | null;
 };
 
-const { background, padding, editable, hasChildren, styleOverride } =
-	Astro.props;
-const instanceStyle = buildBlockInstanceStyle(styleOverride);
+const {
+	background,
+	padding,
+	editable,
+	hasChildren,
+	styleOverride,
+	instanceClass,
+} = Astro.props;
 
 // Token-driven (docs/adr/0021) — a theme swap changes what these mean,
 // this component never hardcodes a color. `primary`/`secondary` follow
@@ -36,9 +41,11 @@ const paddingClass: Record<ContainerProps['padding'], string> = {
 ---
 
 <div
-	class={`brisk-container flex flex-col gap-4 rounded-lg ${backgroundClass[background]} ${paddingClass[padding]}`}
+	class:list={[
+		`brisk-container flex flex-col gap-4 rounded-lg ${backgroundClass[background]} ${paddingClass[padding]}`,
+		instanceClass,
+	]}
 	data-brisk-editable-outline={editable && hasChildren ? '' : undefined}
-	style={instanceStyle}
 >
 	<slot />
 	<EmptyContainerHint show={!hasChildren && Boolean(editable)} />
