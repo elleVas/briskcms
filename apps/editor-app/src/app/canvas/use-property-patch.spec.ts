@@ -1,7 +1,7 @@
 import { act, renderHook } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import * as blockFragmentApi from '../../lib/block-fragment-api-client';
-import { usePropertyPatch } from './use-property-patch';
+import { blockIdFromTimerKey, usePropertyPatch } from './use-property-patch';
 
 vi.mock('../../lib/block-fragment-api-client', async (importOriginal) => {
   const actual =
@@ -36,6 +36,22 @@ describe('usePropertyPatch', () => {
       }),
     );
     return { result, onSaveDraft, onSaveStyleOverride, patchBlock };
+  }
+
+  function setupWithBursts(debounceMs = 300) {
+    const ends: string[] = [];
+    const { result } = renderHook(() =>
+      usePropertyPatch({
+        pageId: 'page-1',
+        token: 'tok',
+        onSaveDraft: vi.fn(),
+        onSaveStyleOverride: vi.fn(),
+        patchBlock: vi.fn(),
+        onBurstEnd: (key) => ends.push(key),
+        debounceMs,
+      }),
+    );
+    return { result, ends };
   }
 
   it('does nothing before the debounce window elapses', () => {
@@ -313,5 +329,72 @@ describe('usePropertyPatch', () => {
       label: 'Prop change',
     });
     expect(onSaveStyleOverride).not.toHaveBeenCalled();
+  });
+
+  // The burst boundary is what makes undo usable: typing "hello" is one
+  // thing a person did, not five. These callbacks are how the debounce —
+  // which already draws that boundary — reports it.
+  describe('burst boundaries', () => {
+    it('closes a run of changes once, not once per change', () => {
+      const { result, ends } = setupWithBursts();
+
+      act(() => {
+        result.current.scheduleChange('a', 'Hero', 'title', { title: 'h' });
+        result.current.scheduleChange('a', 'Hero', 'title', { title: 'he' });
+        result.current.scheduleChange('a', 'Hero', 'title', { title: 'hel' });
+      });
+      expect(ends).toEqual([]);
+
+      act(() => void vi.advanceTimersByTime(300));
+      expect(ends).toEqual(['a']);
+    });
+
+    it('closes a second burst once the first has expired', () => {
+      const { result, ends } = setupWithBursts();
+
+      act(() => result.current.scheduleChange('a', 'Hero', 'title', {}));
+      act(() => void vi.advanceTimersByTime(300));
+      act(() => result.current.scheduleChange('a', 'Hero', 'title', {}));
+      act(() => void vi.advanceTimersByTime(300));
+
+      expect(ends).toEqual(['a', 'a']);
+    });
+
+    // Text, props and style have independent timers by design, so one
+    // must never close another's burst.
+    it('keeps a burst per timer key, not per block', () => {
+      const { result, ends } = setupWithBursts();
+
+      act(() => {
+        result.current.scheduleChange('a', 'Hero', 'title', {});
+        result.current.scheduleTextChange('a', 'title', 'x');
+        result.current.scheduleStyleOverrideChange('a', 'Hero', {}, {});
+      });
+      act(() => void vi.advanceTimersByTime(300));
+
+      expect([...ends].sort()).toEqual(['a', 'style:a', 'text:a']);
+    });
+
+    // Publishing mid-burst flushes the pending save; if that did not also
+    // close the burst, the edit would never reach the history at all.
+    it('closes every open burst on flushAll', () => {
+      const { result, ends } = setupWithBursts();
+
+      act(() => {
+        result.current.scheduleChange('a', 'Hero', 'title', {});
+        result.current.scheduleTextChange('b', 'body', 'x');
+      });
+      act(() => result.current.flushAll());
+
+      expect([...ends].sort()).toEqual(['a', 'text:b']);
+    });
+  });
+
+  describe('blockIdFromTimerKey', () => {
+    it('recovers the block id from every key shape', () => {
+      expect(blockIdFromTimerKey('abc')).toBe('abc');
+      expect(blockIdFromTimerKey('text:abc')).toBe('abc');
+      expect(blockIdFromTimerKey('style:abc')).toBe('abc');
+    });
   });
 });

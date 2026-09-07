@@ -32,7 +32,11 @@ function setup(localBlocks: Block[]) {
     reorderBlocks: vi.fn(),
   };
   const { result, rerender } = renderHook(
-    (props: { localBlocks: Block[]; selectedBlock: Block | null }) =>
+    (props: {
+      localBlocks: Block[];
+      selectedBlock: Block | null;
+      pageId?: string;
+    }) =>
       useBlockTreeMutations({
         localBlocks: props.localBlocks,
         setLocalBlocks,
@@ -40,7 +44,7 @@ function setup(localBlocks: Block[]) {
         registry: [heroDescriptor],
         bridge,
         token: 'tok',
-        pageId: 'page-1',
+        pageId: props.pageId ?? 'page-1',
         selectedBlock: props.selectedBlock,
         selectedDescriptor: props.selectedBlock ? heroDescriptor : undefined,
       }),
@@ -48,6 +52,7 @@ function setup(localBlocks: Block[]) {
       initialProps: {
         localBlocks,
         selectedBlock: null as Block | null,
+        pageId: 'page-1',
       },
     },
   );
@@ -134,7 +139,11 @@ describe('useBlockTreeMutations undo/redo', () => {
       heroBlock,
       textBlock,
     ]);
-    rerender({ localBlocks: [heroBlock, textBlock], selectedBlock: heroBlock });
+    rerender({
+      localBlocks: [heroBlock, textBlock],
+      selectedBlock: heroBlock,
+      pageId: 'page-1',
+    });
 
     act(() => {
       result.current.handleRemoveSelected();
@@ -163,7 +172,11 @@ describe('useBlockTreeMutations undo/redo', () => {
       heroBlock,
       textBlock,
     ]);
-    rerender({ localBlocks: [heroBlock, textBlock], selectedBlock: heroBlock });
+    rerender({
+      localBlocks: [heroBlock, textBlock],
+      selectedBlock: heroBlock,
+      pageId: 'page-1',
+    });
 
     act(() => {
       result.current.handleMoveSelected(1);
@@ -277,6 +290,175 @@ describe('useBlockTreeMutations undo/redo', () => {
       'child-a',
       'child-b',
     ]);
+  });
+
+  // recordEdit exists for the changes this hook does NOT own: a typed
+  // character, an Inspector field, a colour in the style popover. The tree
+  // is mutated by canvas-editor-shell, which then hands both sides here.
+  it('undo after a property edit restores the tree and re-patches the canvas with the old props', async () => {
+    const before: Block[] = [
+      { id: 'a', type: 'Hero', props: { title: 'old' } },
+    ];
+    const after: Block[] = [{ id: 'a', type: 'Hero', props: { title: 'new' } }];
+    vi.mocked(blockFragmentApi.renderBlockFragment).mockResolvedValue(
+      '<section>old</section>',
+    );
+    // Mounted on `before`: that IS the baseline the history starts from,
+    // which is the whole point — the caller no longer supplies it.
+    const { result, setLocalBlocks, onChange, bridge } = setup(before);
+
+    act(() => result.current.recordEdit('a', after));
+    expect(result.current.canUndo).toBe(true);
+
+    act(() => result.current.undo());
+    await flush();
+
+    expect(setLocalBlocks).toHaveBeenCalledWith(before);
+    expect(onChange).toHaveBeenCalledWith(before);
+    expect(blockFragmentApi.renderBlockFragment).toHaveBeenCalledWith(
+      expect.objectContaining({ blockId: 'a', props: { title: 'old' } }),
+    );
+    expect(bridge.patchBlock).toHaveBeenCalledWith(
+      'a',
+      '<section>old</section>',
+    );
+  });
+
+  it('redo after undoing a property edit patches the canvas back to the new props', async () => {
+    const before: Block[] = [
+      { id: 'a', type: 'Hero', props: { title: 'old' } },
+    ];
+    const after: Block[] = [{ id: 'a', type: 'Hero', props: { title: 'new' } }];
+    vi.mocked(blockFragmentApi.renderBlockFragment).mockResolvedValue(
+      '<i></i>',
+    );
+    const { result, onChange } = setup(before);
+
+    act(() => result.current.recordEdit('a', after));
+    act(() => result.current.undo());
+    await flush();
+    vi.mocked(blockFragmentApi.renderBlockFragment).mockClear();
+
+    act(() => result.current.redo());
+    await flush();
+
+    expect(onChange).toHaveBeenLastCalledWith(after);
+    expect(blockFragmentApi.renderBlockFragment).toHaveBeenCalledWith(
+      expect.objectContaining({ blockId: 'a', props: { title: 'new' } }),
+    );
+  });
+
+  // The per-instance style override travels on the block, so it rides the
+  // same entry as a property change rather than needing one of its own.
+  it('carries a per-instance style override through undo', async () => {
+    const before: Block[] = [{ id: 'a', type: 'Hero', props: {} }];
+    const after: Block[] = [
+      {
+        id: 'a',
+        type: 'Hero',
+        props: {},
+        styleOverride: { textColor: '#f00' },
+      },
+    ];
+    vi.mocked(blockFragmentApi.renderBlockFragment).mockResolvedValue(
+      '<i></i>',
+    );
+    const { result } = setup(before);
+
+    act(() => result.current.recordEdit('a', after));
+    act(() => result.current.undo());
+    await flush();
+
+    expect(blockFragmentApi.renderBlockFragment).toHaveBeenCalledWith(
+      expect.objectContaining({ blockId: 'a', styleOverride: undefined }),
+    );
+  });
+
+  // The shell does NOT remount when you switch language: it resyncs
+  // localBlocks from props and keeps every other piece of state. So the
+  // history has to notice the page changed under it, or undo reaches back
+  // into the previous translation — and since undo also calls onChange,
+  // that tree gets SAVED over the current one.
+  it('drops the history when the page changes, instead of undoing into the other page', async () => {
+    const italian: Block[] = [
+      { id: 'a', type: 'Hero', props: { title: 'Ciao' } },
+    ];
+    const edited: Block[] = [
+      { id: 'a', type: 'Hero', props: { title: 'Ciao a tutti' } },
+    ];
+    const english: Block[] = [
+      { id: 'a', type: 'Hero', props: { title: 'Hello' } },
+    ];
+    vi.mocked(blockFragmentApi.renderBlockFragment).mockResolvedValue(
+      '<i></i>',
+    );
+    const { result, rerender, onChange } = setup(italian);
+
+    act(() => result.current.recordEdit('a', edited));
+    expect(result.current.canUndo).toBe(true);
+
+    // Switching language: a different pageId, and the shell has already
+    // swapped localBlocks for the other translation's tree.
+    rerender({ localBlocks: english, selectedBlock: null, pageId: 'page-2' });
+
+    expect(result.current.canUndo).toBe(false);
+    expect(result.current.canRedo).toBe(false);
+
+    act(() => result.current.undo());
+    await flush();
+    expect(onChange).not.toHaveBeenCalledWith(italian);
+  });
+
+  // Same reset, seen from the other side: after the switch the history
+  // starts again from the NEW page's tree, so the first edit there is
+  // undoable back to it and not to something belonging to the old page.
+  it('re-baselines on the new page, so the first edit there undoes correctly', async () => {
+    const italian: Block[] = [
+      { id: 'a', type: 'Hero', props: { title: 'Ciao' } },
+    ];
+    const english: Block[] = [
+      { id: 'a', type: 'Hero', props: { title: 'Hello' } },
+    ];
+    const englishEdited: Block[] = [
+      { id: 'a', type: 'Hero', props: { title: 'Hello world' } },
+    ];
+    vi.mocked(blockFragmentApi.renderBlockFragment).mockResolvedValue(
+      '<i></i>',
+    );
+    const { result, rerender, onChange } = setup(italian);
+
+    rerender({ localBlocks: english, selectedBlock: null, pageId: 'page-2' });
+    act(() => result.current.recordEdit('a', englishEdited));
+    act(() => result.current.undo());
+    await flush();
+
+    expect(onChange).toHaveBeenLastCalledWith(english);
+  });
+
+  // An edit is one entry however many keystrokes produced it, so undoing a
+  // structural change after typing must not be swallowed by the text.
+  it('interleaves edits and structural mutations in one history', async () => {
+    const before: Block[] = [
+      { id: 'a', type: 'Hero', props: { title: 'old' } },
+    ];
+    const after: Block[] = [{ id: 'a', type: 'Hero', props: { title: 'new' } }];
+    vi.mocked(blockFragmentApi.renderBlockFragment).mockResolvedValue(
+      '<i></i>',
+    );
+    const { result, rerender, onChange } = setup(before);
+
+    act(() => result.current.recordEdit('a', after));
+    rerender({ localBlocks: after, selectedBlock: after[0], pageId: 'page-1' });
+    act(() => result.current.handleRemoveSelected());
+    await flush();
+
+    act(() => result.current.undo());
+    await flush();
+    expect(onChange).toHaveBeenLastCalledWith(after);
+
+    act(() => result.current.undo());
+    await flush();
+    expect(onChange).toHaveBeenLastCalledWith(before);
   });
 
   it('undo does nothing when there is no history', () => {

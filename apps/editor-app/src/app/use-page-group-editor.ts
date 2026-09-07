@@ -128,9 +128,16 @@ export function usePageGroupEditor(groupId: string, initialLocale: string) {
 
   // Single funnel for every structural change, keyed to whichever target
   // is correct for the CURRENTLY active translation at the moment a save
-  // actually flushes — see this file's own top comment for the narrow
-  // (accepted) race if the user switches locale between scheduling and
-  // flushing a save, same risk profile as switching pages already had.
+  // actually flushes.
+  //
+  // This used to carry an accepted race: switch locale inside the editor's
+  // 300ms debounce window and the pending save fired against whatever tree
+  // had replaced it, writing one translation's edit onto another's content.
+  // It is no longer accepted — CanvasEditorShell now flushes pending saves
+  // when its page changes, while its tree ref still points at the page
+  // being left, so the save reaches the target captured when it was
+  // scheduled. See its `flushedSyncKeyRef` effect, and the regression test
+  // "saves an in-flight edit against the page it was made on".
   const onChange = useSingleFlightSave<Block[]>(
     useCallback(
       (content) =>

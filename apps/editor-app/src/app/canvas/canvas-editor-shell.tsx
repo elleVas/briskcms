@@ -39,6 +39,7 @@ import {
 import { LayersPanel } from './layers-panel';
 import { isRectVisibleInIframe, useIframeGeometry } from './overlay-layer';
 import {
+  blockIds,
   findBlockInTree,
   locateBlock,
   moveBlock,
@@ -47,7 +48,7 @@ import {
 } from './use-block-tree';
 import { useBlockTreeMutations } from './use-block-tree-mutations';
 import { usePreviewBridge } from './use-preview-bridge';
-import { usePropertyPatch } from './use-property-patch';
+import { blockIdFromTimerKey, usePropertyPatch } from './use-property-patch';
 import { useSidebarDrag } from './use-sidebar-drag';
 import { useTextEdit } from './use-text-edit';
 
@@ -169,10 +170,17 @@ export function CanvasEditorShell({
   }
 
   const localBlocksRef = useRef(localBlocks);
-  useEffect(() => {
-    localBlocksRef.current = localBlocks;
-  });
-
+  /**
+   * `recordEdit` comes from useBlockTreeMutations, which is called further
+   * down (it needs the bridge, which needs state declared after this
+   * point). The burst callbacks below are passed to usePropertyPatch
+   * *before* that, but only ever run later — from a debounce timer — so a
+   * ref is enough to bridge the gap without reordering two hooks whose
+   * order is dictated by their real dependencies.
+   */
+  const recordEditRef = useRef<
+    ((blockId: string, after: Block[]) => void) | null
+  >(null);
   // A separate token from the one canvas-frame.tsx mints for its own `src`
   // — non-consuming (see PreviewTokenPort), so a second minting is cheap
   // and does not require refactoring CanvasFrame's already-tested interface
@@ -198,6 +206,18 @@ export function CanvasEditorShell({
   } = usePropertyPatch({
     pageId,
     token: token ?? '',
+    // One history entry per debounce burst. Only the resulting tree is
+    // passed: what to go back to is the history's own last committed
+    // state, so this never has to snapshot a "before" at burst start —
+    // which was wrong for inline typing, where the optimistic update lands
+    // during render, one keystroke ahead of the effect that schedules the
+    // save. See undo-burst-boundary.spec.tsx.
+    onBurstEnd: (timerKey) => {
+      recordEditRef.current?.(
+        blockIdFromTimerKey(timerKey),
+        localBlocksRef.current,
+      );
+    },
     onSaveDraft: (blockId, changedKey, props) => {
       const next = updateBlockProps(localBlocksRef.current, blockId, props);
       setLocalBlocks(next);
@@ -240,6 +260,31 @@ export function CanvasEditorShell({
       onChange(next);
     },
     patchBlock: bridge.patchBlock,
+  });
+
+  /**
+   * `localBlocksRef` is what every debounced save reads to build the tree
+   * it persists, so WHEN it is repointed decides which page a save in
+   * flight lands on. Both halves live in one effect, in this order, on
+   * purpose: splitting them into two would make the fix depend on their
+   * declaration order, which is invisible and one refactor away from
+   * silently coming undone.
+   */
+  const flushedSyncKeyRef = useRef(syncKey);
+  useEffect(() => {
+    if (flushedSyncKeyRef.current !== syncKey) {
+      // The page changed under us — switching language re-renders this
+      // shell rather than remounting it. Anything still pending belongs to
+      // the page being LEFT, and its `fire` closure still holds that
+      // page's save target; only this ref is shared. So fire it here,
+      // while the ref still points at the tree it was scheduled against.
+      // Do not close the bursts: the history has already been reset for
+      // the new page (see useBlockTreeMutations), and an entry recorded
+      // now would undo into the page you just left.
+      flushAll({ closeBursts: false });
+      flushedSyncKeyRef.current = syncKey;
+    }
+    localBlocksRef.current = localBlocks;
   });
 
   useTextEdit({
@@ -310,6 +355,7 @@ export function CanvasEditorShell({
     redo,
     canUndo,
     canRedo,
+    recordEdit,
   } = useBlockTreeMutations({
     localBlocks,
     setLocalBlocks,
@@ -320,6 +366,13 @@ export function CanvasEditorShell({
     pageId,
     selectedBlock,
     selectedDescriptor,
+  });
+  // Closes the loop opened by recordEditRef above. In an effect rather than
+  // during render (React forbids touching a ref there, and the linter says
+  // so): the burst callbacks only ever run from a debounce timer, which
+  // needs a user action first, so they can never fire before this has run.
+  useEffect(() => {
+    recordEditRef.current = recordEdit;
   });
 
   const {
@@ -407,9 +460,9 @@ export function CanvasEditorShell({
   const [lastAppliedDragEnd, setLastAppliedDragEnd] = useState(
     bridge.dragEnded,
   );
-  const [pendingReorderCommit, setPendingReorderCommit] = useState<
-    Block[] | null
-  >(null);
+  const [pendingReorderIds, setPendingReorderIds] = useState<string[] | null>(
+    null,
+  );
   if (bridge.dragEnded !== lastAppliedDragEnd) {
     setLastAppliedDragEnd(bridge.dragEnded);
     if (bridge.dragEnded) {
@@ -428,33 +481,42 @@ export function CanvasEditorShell({
           (block, index) => block.id === localBlocks[index]?.id,
         );
         if (!orderUnchanged) {
-          setLocalBlocks(next);
-          setPendingReorderCommit(next);
+          setPendingReorderIds(blockIds(next));
         }
       }
     }
   }
   useEffect(() => {
-    if (pendingReorderCommit) {
-      onChange(pendingReorderCommit);
-      bridge.reorderBlocks(
-        null,
-        pendingReorderCommit.map((block) => block.id as string),
-      );
+    if (pendingReorderIds) {
+      // Through handleReorder, not around it. This used to apply the move
+      // and save it by hand, which worked but left the drag as the only
+      // structural mutation with no history entry: the SAME reorder was
+      // undoable from the Layers panel and not from the canvas. Routing it
+      // here also means one implementation of "reorder" rather than two
+      // that can drift.
+      //
+      // Not cleared afterwards, deliberately: every drop stores a brand new
+      // array, so identity alone re-runs this. Setting it back to null
+      // would be a setState inside an effect for no gain — the very thing
+      // the comment above this state was written to avoid.
+      handleReorder(null, pendingReorderIds);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- reacts only to a NEW pendingReorderCommit; onChange/bridge.reorderBlocks are read from their current value, so there is no need to re-run when their identity changes.
-  }, [pendingReorderCommit]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- reacts only to a NEW pendingReorderIds; handleReorder is recreated every render but reads current state at call time.
+  }, [pendingReorderIds]);
 
   function handleChangeProp(key: string, value: unknown): void {
-    if (!selectedBlock?.id) {
+    // Hoisted to a local: TypeScript drops the narrowing of a PROPERTY
+    // (`selectedBlock.id`) as soon as it is read inside a callback, since
+    // in principle the object could have changed by then. A `const` keeps
+    // it, so the cast this used to need disappears.
+    const blockId = selectedBlock?.id;
+    if (!blockId) {
       return;
     }
     const nextProps = { ...selectedBlock.props, [key]: value };
-    setLocalBlocks((prev) =>
-      updateBlockProps(prev, selectedBlock.id as string, nextProps),
-    );
+    setLocalBlocks((prev) => updateBlockProps(prev, blockId, nextProps));
     scheduleChange(
-      selectedBlock.id,
+      blockId,
       selectedBlock.type,
       key,
       nextProps,
@@ -464,14 +526,15 @@ export function CanvasEditorShell({
 
   /** Per-INSTANCE override (docs/adr/0022) — a popover on the selected block, touching only that block. Same "optimistic immediately, debounce the real save" pattern as handleChangeProp above. */
   function handleChangeStyleOverride(styleOverride: BlockStyleOverride): void {
-    if (!selectedBlock?.id) {
+    const blockId = selectedBlock?.id;
+    if (!blockId) {
       return;
     }
     setLocalBlocks((prev) =>
-      updateBlockStyleOverride(prev, selectedBlock.id as string, styleOverride),
+      updateBlockStyleOverride(prev, blockId, styleOverride),
     );
     scheduleStyleOverrideChange(
-      selectedBlock.id,
+      blockId,
       selectedBlock.type,
       selectedBlock.props,
       styleOverride,
