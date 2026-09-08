@@ -139,6 +139,12 @@ export const BLOCK_STYLE_DEFAULTS: Record<string, BlockStyleDefaults> = {
     paddingX: '0',
     paddingY: '0',
   },
+  Divider: {
+    borderWidth: '1px',
+    borderStyle: 'solid',
+    borderColor: 'var(--border)',
+    maxWidth: 'none',
+  },
   EmbedHtml: {
     backgroundColor: 'transparent',
     borderRadius: '0',
@@ -199,6 +205,9 @@ export const BLOCK_STYLE_DEFAULTS: Record<string, BlockStyleDefaults> = {
   },
   Heading: {
     textColor: 'inherit',
+  },
+  Icon: {
+    textColor: 'currentColor',
   },
   Image: {
     borderRadius: '0',
@@ -328,6 +337,28 @@ export const BLOCK_STYLE_DEFAULTS: Record<string, BlockStyleDefaults> = {
     paddingX: '0',
     paddingY: '0',
     gap: '1.5rem',
+  },
+  SocialLink: {
+    backgroundColor: 'transparent',
+    textColor: 'inherit',
+    borderRadius: '50%',
+    paddingX: '0',
+    paddingY: '0',
+    borderWidth: '1px',
+    borderStyle: 'solid',
+    borderColor: 'var(--border)',
+  },
+  SocialLinks: {
+    backgroundColor: 'transparent',
+    textColor: 'inherit',
+    borderRadius: '0',
+    paddingX: '0',
+    paddingY: '0',
+    gap: '0.75rem',
+  },
+  Spacer: {
+    minHeight: '2rem',
+    backgroundColor: 'transparent',
   },
   Stat: {
     backgroundColor: 'transparent',

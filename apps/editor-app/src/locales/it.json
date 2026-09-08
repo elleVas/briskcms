@@ -275,7 +275,11 @@
     "picker": {
       "title": "Scegli un'icona",
       "search": "Cerca icona…",
-      "empty": "Nessuna icona trovata."
+      "empty": "Nessuna icona trovata.",
+      "sets": {
+        "interface": "Icone",
+        "brand": "Marchi"
+      }
     },
     "field": {
       "remove": "Rimuovi icona"
@@ -1405,6 +1409,49 @@
     },
     "slider": {
       "label": "Slider"
+    },
+    "divider": {
+      "label": "Separatore"
+    },
+    "spacer": {
+      "label": "Spaziatore"
+    },
+    "icon": {
+      "label": "Icona",
+      "fields": {
+        "icon": {
+          "fieldLabel": "Icona"
+        },
+        "size": {
+          "fieldLabel": "Dimensione",
+          "options": {
+            "sm": "Piccola",
+            "md": "Media",
+            "lg": "Grande",
+            "xl": "Molto grande"
+          }
+        },
+        "label": {
+          "fieldLabel": "Descrizione (lascia vuoto se decorativa)"
+        }
+      }
+    },
+    "socialLinks": {
+      "label": "Link social"
+    },
+    "socialLink": {
+      "label": "Link social",
+      "fields": {
+        "icon": {
+          "fieldLabel": "Icona"
+        },
+        "label": {
+          "fieldLabel": "Nome (letto dagli screen reader)"
+        },
+        "url": {
+          "fieldLabel": "Indirizzo"
+        }
+      }
     }
   }
 }

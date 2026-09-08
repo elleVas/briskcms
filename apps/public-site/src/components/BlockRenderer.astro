@@ -13,6 +13,11 @@ import {
   columnsPropsSchema,
   resolveColumnSpans,
   sliderPropsSchema,
+  dividerPropsSchema,
+  spacerPropsSchema,
+  iconPropsSchema,
+  socialLinksPropsSchema,
+  socialLinkPropsSchema,
   containerPropsSchema,
   countdownPropsSchema,
   embedHtmlPropsSchema,
@@ -116,6 +121,16 @@ import ColumnCore from './blocks/Column.astro';
 const Column = resolveThemeBlockOverride('Column', ColumnCore, themeName);
 import ColumnsCore from './blocks/Columns.astro';
 import SliderCore from './blocks/Slider.astro';
+import DividerCore from './blocks/Divider.astro';
+const Divider = resolveThemeBlockOverride('Divider', DividerCore, themeName);
+import SpacerCore from './blocks/Spacer.astro';
+const Spacer = resolveThemeBlockOverride('Spacer', SpacerCore, themeName);
+import IconCore from './blocks/Icon.astro';
+const Icon = resolveThemeBlockOverride('Icon', IconCore, themeName);
+import SocialLinksCore from './blocks/SocialLinks.astro';
+const SocialLinks = resolveThemeBlockOverride('SocialLinks', SocialLinksCore, themeName);
+import SocialLinkCore from './blocks/SocialLink.astro';
+const SocialLink = resolveThemeBlockOverride('SocialLink', SocialLinkCore, themeName);
 const Slider = resolveThemeBlockOverride('Slider', SliderCore, themeName);
 const Columns = resolveThemeBlockOverride('Columns', ColumnsCore, themeName);
 import ContainerCore from './blocks/Container.astro';
@@ -345,6 +360,22 @@ const BLOCK_REGISTRY: Record<string, BlockDispatchEntry> = {
     schema: navDropdownPropsSchema,
     stylable: true,
     recurseChildren: true,
+  },
+  Divider: { component: Divider, schema: dividerPropsSchema, stylable: true },
+  Spacer: { component: Spacer, schema: spacerPropsSchema, stylable: true },
+  Icon: { component: Icon, schema: iconPropsSchema, stylable: true },
+  SocialLinks: {
+    component: SocialLinks,
+    schema: socialLinksPropsSchema,
+    stylable: true,
+    recurseChildren: true,
+    containerProps: true,
+    locale: true,
+  },
+  SocialLink: {
+    component: SocialLink,
+    schema: socialLinkPropsSchema,
+    stylable: true,
   },
   Slider: {
     component: Slider,

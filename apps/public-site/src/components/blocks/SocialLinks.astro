@@ -1,0 +1,63 @@
+---
+import type { SocialLinksProps } from '@brisk/shared-types';
+import CollectionLayout from '../CollectionLayout.astro';
+
+type Props = SocialLinksProps & {
+  editable?: boolean;
+  hasChildren?: boolean;
+  instanceClass?: string | null;
+  locale: string;
+};
+
+const { display, editable, hasChildren, instanceClass, locale } = Astro.props;
+---
+
+{/*
+  A collection, so it arranges itself like every other one (ADR-0052) and
+  each link is an ordinary block to edit, reorder and style — rather than
+  a bespoke list widget that would need its own editing UI.
+*/}
+<CollectionLayout
+  blockClass="brisk-social-links"
+  display={display}
+  editable={editable}
+  hasChildren={hasChildren}
+  instanceClass={instanceClass}
+  locale={locale}
+>
+  <slot />
+</CollectionLayout>
+
+<script>
+  import { collectionBehaviors } from '../../lib/block-behaviors/collection';
+  import { runBlockBehaviors } from '../../lib/block-behaviors/run-block-behaviors';
+  runBlockBehaviors(document, collectionBehaviors);
+</script>
+
+<style>
+  /*
+     `:global()` for the same reason as every other collection: the element
+     is rendered by CollectionLayout.astro, so Astro's scoped styles never
+     reach it.
+  */
+  :global(.brisk-social-links.brisk-collection--grid) {
+    display: flex;
+    flex-wrap: wrap;
+    /* Not `auto-fit` columns like the other collections: social icons are
+       small and of one size, so a row that wraps reads far better than a
+       grid that stretches six icons across a full-width section. */
+    gap: var(--brisk-override-gap, 0.75rem);
+  }
+  :global(.brisk-social-links) {
+    background: var(--brisk-override-bg, transparent);
+    color: var(--brisk-override-text, inherit);
+    border-radius: var(--brisk-override-radius, 0);
+    padding: var(--brisk-override-padding-y, 0)
+      var(--brisk-override-padding-x, 0);
+  }
+  :global(.brisk-social-links[data-brisk-editable-outline]) {
+    outline: 1px dashed var(--border);
+    outline-offset: -4px;
+    padding: 0.5rem;
+  }
+</style>

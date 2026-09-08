@@ -52,11 +52,65 @@ function loadDefaultIcons(): IconEntry[] {
     }));
 }
 
+/**
+ * The brand marks (ADR-0053), under a `brand:` prefix.
+ *
+ * A second set, and a second package, because Lucide removed brand logos
+ * from its own — 2034 icons and not one of Facebook, Instagram, YouTube
+ * or WhatsApp. Without these a "social links" block can only render the
+ * name of the network as text, which is not what anyone means by one.
+ *
+ * The prefix is not decoration: the two sets collide on 34 names (apple,
+ * box, circle, bitcoin…), and an icon's name is stored in page content,
+ * so `apple` has to keep meaning the same picture forever. `:` is safe as
+ * the separator because no name in either set contains one.
+ *
+ * **Licensing.** simple-icons is CC0, but the marks themselves belong to
+ * their owners and some carry their own licence — the package ships a
+ * DISCLAIMER.md saying exactly that. Putting a company's logo on a link
+ * to that company's page is the ordinary, intended use; anything else is
+ * the site owner's call, not ours. Notably absent: LinkedIn, removed at
+ * the trademark owner's request.
+ */
+const BRAND_PREFIX = 'brand:';
+
+function loadBrandIcons(): IconEntry[] {
+  // Resolved through the package's own entry point rather than its
+  // `package.json` — unlike lucide-static, simple-icons declares an
+  // `exports` map that does not list `./package.json`, so asking for it
+  // throws ERR_PACKAGE_PATH_NOT_EXPORTED at runtime while typechecking
+  // perfectly happily. The entry point sits at the package root, so its
+  // directory is the same one either way.
+  const entryUrl = import.meta.resolve('simple-icons');
+  const iconsDir = join(dirname(fileURLToPath(entryUrl)), 'icons');
+  return readdirSync(iconsDir)
+    .filter((file) => file.endsWith('.svg'))
+    .sort()
+    .map((file) => ({
+      name: `${BRAND_PREFIX}${file.replace(/\.svg$/, '')}`,
+      // These are solid shapes drawn with `fill`, where Lucide's are
+      // outlines drawn with `stroke` — and a simple-icons SVG names no
+      // fill at all, so it renders black whatever colour the block asks
+      // for. Declaring `currentColor` here is what makes the same
+      // `textColor` override work on both sets.
+      svg: readFileSync(join(iconsDir, file), 'utf-8').replace(
+        '<svg',
+        '<svg fill="currentColor"',
+      ),
+    }));
+}
+
 let defaultIcons: IconEntry[] | null = null;
+let brandIcons: IconEntry[] | null = null;
 
 function getDefaultIcons(): IconEntry[] {
   if (!defaultIcons) defaultIcons = loadDefaultIcons();
   return defaultIcons;
+}
+
+function getBrandIcons(): IconEntry[] {
+  if (!brandIcons) brandIcons = loadBrandIcons();
+  return brandIcons;
 }
 
 /**
@@ -65,7 +119,16 @@ function getDefaultIcons(): IconEntry[] {
  * docs/adr/0023's Consequences section): the "this theme does or does not
  * have its own set" choice is binary, not a merge.
  */
-export function listThemeIcons(themeName: string): IconEntry[] {
+export function listThemeIcons(
+  themeName: string,
+  set: IconSet = 'interface',
+): IconEntry[] {
+  // The brands are never a theme's to replace, unlike the interface set
+  // (ADR-0053): a theme redrawing arrows and chevrons has not redrawn the
+  // Instagram logo, and would not want to.
+  if (set === 'brand') {
+    return getBrandIcons();
+  }
   const themeIcons = themeIconsByTheme.get(resolveBundledThemeName(themeName));
   if (!themeIcons || themeIcons.size === 0) {
     return getDefaultIcons();
@@ -74,6 +137,15 @@ export function listThemeIcons(themeName: string): IconEntry[] {
     .map(([name, svg]) => ({ name, svg }))
     .sort((a, b) => a.name.localeCompare(b.name));
 }
+
+/**
+ * Which set to list. They are fetched separately, and that is a size
+ * decision made with the numbers in hand: the interface set serialises to
+ * 1.1MB and the brands to another 5.2MB, uncompressed, and a picker that
+ * loaded both would make everyone pay for the logos whether or not they
+ * ever open the brand tab.
+ */
+export type IconSet = 'interface' | 'brand';
 
 const iconsByNamePerTheme = new Map<string, Map<string, string>>();
 
@@ -86,8 +158,15 @@ export function resolveIconSvg(
   const resolvedTheme = resolveBundledThemeName(themeName);
   let iconsByName = iconsByNamePerTheme.get(resolvedTheme);
   if (!iconsByName) {
+    // BOTH sets: rendering has to resolve whatever a page stored, and a
+    // page can hold an interface icon and a brand mark side by side. Only
+    // the PICKER fetches them separately, because only the picker pays
+    // for the ones nobody asked for.
     iconsByName = new Map(
-      listThemeIcons(resolvedTheme).map((icon) => [icon.name, icon.svg]),
+      [
+        ...listThemeIcons(resolvedTheme, 'interface'),
+        ...listThemeIcons(resolvedTheme, 'brand'),
+      ].map((icon) => [icon.name, icon.svg]),
     );
     iconsByNamePerTheme.set(resolvedTheme, iconsByName);
   }

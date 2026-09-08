@@ -10,6 +10,11 @@ import { codeBlock } from './blocks/code.block';
 import { columnBlock } from './blocks/column.block';
 import { columnsBlock } from './blocks/columns.block';
 import { sliderBlock } from './blocks/slider.block';
+import { dividerBlock } from './blocks/divider.block';
+import { iconBlock } from './blocks/icon.block';
+import { socialLinkBlock } from './blocks/social-link.block';
+import { socialLinksBlock } from './blocks/social-links.block';
+import { spacerBlock } from './blocks/spacer.block';
 import { containerBlock } from './blocks/container.block';
 import { countdownBlock } from './blocks/countdown.block';
 import { embedHtmlBlock } from './blocks/embed-html.block';
@@ -56,6 +61,11 @@ export {
   columnBlock,
   columnsBlock,
   sliderBlock,
+  dividerBlock,
+  spacerBlock,
+  iconBlock,
+  socialLinksBlock,
+  socialLinkBlock,
   containerBlock,
   countdownBlock,
   embedHtmlBlock,

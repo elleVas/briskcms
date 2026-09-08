@@ -275,7 +275,11 @@
     "picker": {
       "title": "Choose an icon",
       "search": "Search icon…",
-      "empty": "No icon found."
+      "empty": "No icon found.",
+      "sets": {
+        "interface": "Icons",
+        "brand": "Brands"
+      }
     },
     "field": {
       "remove": "Remove icon"
@@ -1405,6 +1409,49 @@
     },
     "slider": {
       "label": "Slider"
+    },
+    "divider": {
+      "label": "Divider"
+    },
+    "spacer": {
+      "label": "Spacer"
+    },
+    "icon": {
+      "label": "Icon",
+      "fields": {
+        "icon": {
+          "fieldLabel": "Icon"
+        },
+        "size": {
+          "fieldLabel": "Size",
+          "options": {
+            "sm": "Small",
+            "md": "Medium",
+            "lg": "Large",
+            "xl": "Extra large"
+          }
+        },
+        "label": {
+          "fieldLabel": "Description (leave empty if decorative)"
+        }
+      }
+    },
+    "socialLinks": {
+      "label": "Social links"
+    },
+    "socialLink": {
+      "label": "Social link",
+      "fields": {
+        "icon": {
+          "fieldLabel": "Icon"
+        },
+        "label": {
+          "fieldLabel": "Name (read aloud by screen readers)"
+        },
+        "url": {
+          "fieldLabel": "Address"
+        }
+      }
     }
   }
 }

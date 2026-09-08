@@ -39,8 +39,10 @@ class ThemeApiFetcher {
     path: string,
     themeName: string,
     schema: { parse: (data: unknown) => T },
+    params: Record<string, string> = {},
   ): Promise<T> {
-    const url = `${PUBLIC_SITE_URL}${path}?theme=${encodeURIComponent(themeName)}`;
+    const query = new URLSearchParams({ theme: themeName, ...params });
+    const url = `${PUBLIC_SITE_URL}${path}?${query.toString()}`;
     const res = await fetch(url);
     if (!res.ok) {
       throw new Error(`${path} API error: ${res.status}`);
@@ -51,11 +53,21 @@ class ThemeApiFetcher {
 
 const themeApiFetcher = new ThemeApiFetcher();
 
-export async function fetchThemeIcons(themeName: string): Promise<IconEntry[]> {
+/**
+ * `set` decides which of the two icon sets comes back (ADR-0053). They
+ * are separate requests on purpose: the interface icons serialise to
+ * 1.1MB and the brand marks to another 5.2MB, so fetching both up front
+ * would make everyone pay for logos they may never open.
+ */
+export async function fetchThemeIcons(
+  themeName: string,
+  set: 'interface' | 'brand' = 'interface',
+): Promise<IconEntry[]> {
   return themeApiFetcher.fetchAndParse(
     '/api/themes/current/icons',
     themeName,
     iconManifestSchema,
+    { set },
   );
 }
 
