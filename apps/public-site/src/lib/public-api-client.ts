@@ -125,6 +125,30 @@ export async function getPreviewPageById(
   return publishedPageSchema.parse(await res.json());
 }
 
+/**
+ * The reusable section behind a preview token, shaped as a page so the
+ * section editor's canvas can render it with the same components
+ * (docs/adr/0059). Same 404 -> null collapse as everything else here.
+ */
+export async function getPreviewSectionById(
+  sectionId: string,
+  token: string,
+  locale: string,
+): Promise<PublishedPage | null> {
+  const params = new URLSearchParams({ token, locale });
+  const res = await timedFetcher.fetch(
+    `${apiUrl()}/public/pages/sections/${sectionId}/preview?${params.toString()}`,
+  );
+
+  if (res.status === 404) {
+    return null;
+  }
+  if (!res.ok) {
+    throw new Error(`Public pages API error: ${res.status}`);
+  }
+  return publishedPageSchema.parse(await res.json());
+}
+
 export interface PublishedSiteChromeDto {
   site: PublishedSite;
   header: Block[] | null;

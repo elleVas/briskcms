@@ -2,6 +2,7 @@ import type { PublishedPage } from '@brisk/shared-types';
 import type {
   PageGroupRepositoryPort,
   PageTranslationRepositoryPort,
+  ReusableSectionRepositoryPort,
   SiteLayoutSectionRepositoryPort,
   SiteRepositoryPort,
   SiteThemeBlockStylesPort,
@@ -14,6 +15,7 @@ import { resolveTranslationPaths } from './resolve-translation-paths';
 export type { PublishedPage };
 
 export interface GetPublishedPageBySlugDeps {
+  reusableSectionRepository: ReusableSectionRepositoryPort;
   siteRepository: SiteRepositoryPort;
   pageGroupRepository: PageGroupRepositoryPort;
   pageTranslationRepository: PageTranslationRepositoryPort;

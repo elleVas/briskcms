@@ -152,6 +152,13 @@ body,
    live and has to be measurable like every other container here. */
 .brisk-hero,
 .brisk-card,
+/* A section instance is not a container in the EDITOR's sense — nothing
+   can be dropped into one (docs/adr/0059) — but it does have blocks
+   inside it at render time, so a container query in one of them needs
+   this exactly as much as any other. `container-type.spec.ts` derives its
+   list from `isContainer` and so cannot see this one; it checks it by
+   name instead. */
+.brisk-section,
 .brisk-column,
 .brisk-columns,
 .brisk-container,

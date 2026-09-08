@@ -41,9 +41,26 @@ export function isBlockInteractive(
   return !insideHeader && !insideFooter;
 }
 
-/** Ogni wrapper marcato da BlockRenderer.astro quando editable=true. */
+/**
+ * Every wrapper BlockRenderer.astro marks when editable=true — minus
+ * everything standing inside a section instance.
+ *
+ * Those blocks are real blocks with real ids (they need them: their
+ * per-instance style rules are keyed by id), but they belong to the
+ * SECTION and not to this page. They are not in the editor's block tree,
+ * so selecting one would highlight something the Inspector cannot show and
+ * the Layers panel does not list; dragging one would ask the page to
+ * reorder blocks it does not own.
+ *
+ * Filtered here, at the single place every canvas behaviour gets its
+ * elements from, rather than in each of them — that is what makes "you
+ * cannot edit a section from a page" (docs/adr/0059) true by construction
+ * instead of true in the three code paths somebody remembered.
+ */
 export function collectBlockElements(root: ParentNode): Element[] {
-  return Array.from(root.querySelectorAll('[data-brisk-block-id]'));
+  return Array.from(root.querySelectorAll('[data-brisk-block-id]')).filter(
+    (element) => element.closest('[data-brisk-section-content]') === null,
+  );
 }
 
 /**

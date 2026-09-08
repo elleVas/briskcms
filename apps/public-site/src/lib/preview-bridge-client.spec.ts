@@ -6,6 +6,7 @@ import {
   applyBlockRemove,
   applyBlockReorder,
   applyBlockStyleCss,
+  blockIdOf,
   collectBlockElements,
   escapeHtml,
   findFieldElement,
@@ -783,5 +784,30 @@ describe('root blocks travel with their wrapper', () => {
 
     expect(wrappers()).toHaveLength(3);
     expect(orderOf()).toEqual(['c', 'a', 'b']);
+  });
+});
+
+describe('a section instance is one object on the canvas', () => {
+  /*
+   * The blocks inside a section instance carry ids — they have to, or
+   * their per-instance style rules would not match — but they are not in
+   * the page's block tree. Selecting or dragging one is a request the
+   * editor cannot honour, so they never reach it (docs/adr/0059).
+   */
+  it('leaves out the blocks rendered inside a section', () => {
+    const root = document.createElement('div');
+    root.innerHTML = `
+      <div data-brisk-block-id="page-block"></div>
+      <div data-brisk-block-id="instance">
+        <section data-brisk-section-content>
+          <div data-brisk-block-id="instance--inner-1"></div>
+          <div data-brisk-block-id="instance--inner-2"></div>
+        </section>
+      </div>`;
+
+    expect(collectBlockElements(root).map(blockIdOf)).toEqual([
+      'page-block',
+      'instance',
+    ]);
   });
 });

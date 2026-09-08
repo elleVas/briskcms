@@ -367,6 +367,11 @@ export const BLOCK_STYLE_DEFAULTS: Record<string, BlockStyleDefaults> = {
     paddingX: '0',
     paddingY: '0',
   },
+  Section: {
+    // The only thing the wrapper owns — see section.block.ts on why it
+    // owns nothing else.
+    maxWidth: 'none',
+  },
   SearchBox: {
     backgroundColor: 'transparent',
     textColor: 'inherit',

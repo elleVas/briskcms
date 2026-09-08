@@ -1,6 +1,7 @@
 import type {
   PageGroupRepositoryPort,
   PageTranslationRepositoryPort,
+  ReusableSectionRepositoryPort,
   PreviewTokenPort,
   SiteLayoutSectionRepositoryPort,
   SiteRepositoryPort,
@@ -14,6 +15,7 @@ import { resolvePageContentReferences } from './resolve-page-content-references'
 import type { PublishedPage } from './get-published-page-by-slug.use-case';
 
 export interface GetPreviewPageByIdDeps {
+  reusableSectionRepository: ReusableSectionRepositoryPort;
   pageGroupRepository: PageGroupRepositoryPort;
   pageTranslationRepository: PageTranslationRepositoryPort;
   siteRepository: SiteRepositoryPort;

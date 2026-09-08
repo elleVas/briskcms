@@ -77,6 +77,7 @@
       "media": "Media",
       "forms": "Moduli",
       "layout": "Layout",
+      "sections": "Sezioni",
       "style": "Stile",
       "integrations": "Integrazioni",
       "cookies": "Cookie banner",
@@ -234,6 +235,36 @@
       "label": "Pagina genitore",
       "none": "— Nessuno (livello radice) —"
     }
+  },
+  "sections": {
+    "title": "Sezioni",
+    "subtitle": "Costruisci una fascia di blocchi una volta e usala su tante pagine.",
+    "empty": "Nessuna sezione.",
+    "create": "Nuova sezione",
+    "createTitle": "Nuova sezione",
+    "nameLabel": "Nome",
+    "kindLabel": "Tipo",
+    "kind": {
+      "shared": "Sezione condivisa — la modifichi una volta e cambiano tutte le pagine",
+      "template": "Template — copiato all'inserimento, poi libero di cambiare"
+    },
+    "kindShort": {
+      "shared": "Condivisa",
+      "template": "Template"
+    },
+    "status": {
+      "draft": "Bozza",
+      "published": "Pubblicata"
+    },
+    "open": "Apri",
+    "delete": "Elimina",
+    "deleteConfirm": "Eliminare questa sezione? Le pagine che la usano non mostreranno più niente al suo posto.",
+    "exposeField": "Una pagina può cambiarlo",
+    "backToList": "← Torna alle sezioni",
+    "draftSaved": "Bozza salvata",
+    "published": "Pubblicata — tutte le pagine che la usano sono aggiornate",
+    "nameTaken": "Esiste già una sezione con questo nome.",
+    "templates": "Template"
   },
   "layout": {
     "title": "Layout",
@@ -875,6 +906,23 @@
       "socialProof": "Prova sociale",
       "interactive": "Interattivo",
       "headerFooter": "Blocchi"
+    },
+    "section": {
+      "label": "Sezione riusabile",
+      "fields": {
+        "section": {
+          "fieldLabel": "Sezione"
+        }
+      },
+      "picker": {
+        "none": "Nessuna sezione",
+        "unpublished": "non pubblicata"
+      },
+      "instance": {
+        "title": "Cosa può cambiare questa pagina",
+        "edit": "Modifica sezione",
+        "noExposedFields": "Questa sezione non espone nessun campo modificabile. Aprila per scegliere cosa una pagina può cambiare."
+      }
     },
     "shared": {
       "linkType": {

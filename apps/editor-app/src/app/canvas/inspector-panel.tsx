@@ -1,5 +1,6 @@
-import type { Block, BlockAlign } from '@brisk/shared-types';
+import type { Block, BlockAlign, PickedSection } from '@brisk/shared-types';
 import { CUSTOM_FIELD_CONTROLS } from './custom-fields/custom-field-controls';
+import { SectionInstanceFields } from './section-instance-fields';
 import { RichTextField } from './custom-fields/rich-text-field';
 import type { BlockDescriptor, FieldDescriptor } from '@brisk/block-registry';
 import { Input } from '../../components/ui/input';
@@ -18,6 +19,15 @@ export interface InspectorPanelProps {
    * holds it, so the control would promise something the page cannot do.
    */
   onChangeAlign?: (align: BlockAlign | undefined) => void;
+  /**
+   * Present only inside the reusable-section editor (docs/adr/0059): it
+   * turns each field into something a page instance may or may not change.
+   * `exposed` is the field keys already unlocked for THIS block.
+   */
+  sectionEditing?: {
+    exposed: string[];
+    onToggle: (field: string) => void;
+  };
 }
 
 const ALIGN_OPTIONS: readonly BlockAlign[] = ['content', 'wide', 'full'];
@@ -28,7 +38,7 @@ interface FieldRowProps {
   onChange: (value: unknown) => void;
 }
 
-const nativeFieldClass =
+export const nativeFieldClass =
   'h-8 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 py-1 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50';
 
 /** One input per kind — a panel driven by the field descriptor, replacing Puck's Fields<T> sidebar (docs/adr/0007, see the visual editor plan, Day 3). */
@@ -154,9 +164,14 @@ export function InspectorPanel({
   onChangeProp,
   onChangeVariant,
   onChangeAlign,
+  sectionEditing,
 }: InspectorPanelProps) {
   const { t, tLabel } = useTranslation();
   const variants = descriptor.variants ?? [];
+  // A section instance's inputs cannot come from the descriptor — see
+  // SectionInstanceFields for why — so this one type is special-cased
+  // here rather than through a general mechanism nothing else uses.
+  const isSectionInstance = descriptor.type === 'Section';
   // Not `fields.length === 0`: a type may offer a look and no fields at
   // all, and returning null there would hide the only control it has —
   // width included, which every root block has whether or not its type
@@ -164,7 +179,8 @@ export function InspectorPanel({
   if (
     descriptor.fields.length === 0 &&
     variants.length === 0 &&
-    !onChangeAlign
+    !onChangeAlign &&
+    !isSectionInstance
   ) {
     return null;
   }
@@ -246,9 +262,44 @@ export function InspectorPanel({
                 {t('canvas.requiredField')}
               </span>
             )}
+            {/* Only inside the section editor: it is the section's author
+                deciding what a page may change about this field, and it
+                is deliberately per FIELD rather than per block — "the
+                title, and nothing else" is the whole point
+                (docs/adr/0059). */}
+            {sectionEditing && (
+              <label className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <input
+                  type="checkbox"
+                  checked={sectionEditing.exposed.includes(field.key)}
+                  onChange={() => sectionEditing.onToggle(field.key)}
+                />
+                {t('sections.exposeField')}
+              </label>
+            )}
           </label>
         );
       })}
+      {isSectionInstance && (
+        <SectionInstanceFields
+          section={
+            isPickedSection(block.props['section'])
+              ? block.props['section']
+              : null
+          }
+          props={block.props}
+          onChangeProp={onChangeProp}
+        />
+      )}
     </div>
+  );
+}
+
+/** The saved value is jsonb, so what it is has to be checked, not asserted. */
+function isPickedSection(value: unknown): value is PickedSection {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    typeof (value as Record<string, unknown>)['sectionId'] === 'string'
   );
 }

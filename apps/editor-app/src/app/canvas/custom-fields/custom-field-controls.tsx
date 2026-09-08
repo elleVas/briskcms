@@ -7,6 +7,7 @@ import { GalleryPickerField } from './gallery-picker-field';
 import { IconPickerField } from './icon-picker-field';
 import { MediaPickerField } from './media-picker-field';
 import { PagePickerField } from './page-picker-field';
+import { SectionPickerField } from './section-picker-field';
 import { TableDataField } from './table-data-field';
 
 type ControlComponent = ComponentType<{
@@ -43,5 +44,6 @@ export const CUSTOM_FIELD_CONTROLS: Record<
   icon: IconPickerField as ControlComponent,
   media: MediaPickerField as ControlComponent,
   page: PagePickerField as ControlComponent,
+  section: SectionPickerField as ControlComponent,
   'table-data': TableDataField as ControlComponent,
 };

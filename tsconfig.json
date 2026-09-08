@@ -110,6 +110,9 @@
     },
     {
       "path": "./libs/rich-text-editor"
+    },
+    {
+      "path": "./libs/adapters/postgres-reusable-section-repository"
     }
   ],
   "compilerOptions": {}

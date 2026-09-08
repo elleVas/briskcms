@@ -83,6 +83,8 @@ export interface BlockToolbarOverlayProps {
   onChangeVariant: (variant: string | undefined) => void;
   /** How much page width this block claims (ADR-0049) — present only for a ROOT-level block, see InspectorPanel. */
   onChangeAlign?: (align: BlockAlign | undefined) => void;
+  /** Section editor only — see InspectorPanel's own prop (docs/adr/0059). */
+  sectionEditing?: { exposed: string[]; onToggle: (field: string) => void };
   onMoveUp: () => void;
   onMoveDown: () => void;
   onDuplicate: () => void;
@@ -146,6 +148,7 @@ export function BlockToolbarOverlay({
   onChangeInstanceStyle,
   onChangeVariant,
   onChangeAlign,
+  sectionEditing,
   onMoveUp,
   onMoveDown,
   onDuplicate,
@@ -395,6 +398,7 @@ export function BlockToolbarOverlay({
                 onChangeProp={onChangeProp}
                 onChangeVariant={onChangeVariant}
                 onChangeAlign={onChangeAlign}
+                sectionEditing={sectionEditing}
               />
             </PopoverContent>
           </Popover>

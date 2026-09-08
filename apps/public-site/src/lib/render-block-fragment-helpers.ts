@@ -3,6 +3,15 @@ import { editorAppUrl } from './editor-app-url';
 
 export interface RenderBlockFragmentBody {
   pageId: string;
+  /**
+   * Set only by the reusable-section editor (docs/adr/0059). When present
+   * the token is validated against that SECTION and `pageId` is ignored —
+   * a section is not on a page, and the two token kinds are deliberately
+   * not interchangeable.
+   */
+  sectionId?: string;
+  /** Which language the fragment's links resolve in — carried only alongside `sectionId`, since a section has no locale of its own. */
+  locale?: string;
   token: string;
   blockId: string;
   blockType: string;
@@ -39,6 +48,10 @@ export function isValidRenderBlockFragmentBody(
   const candidate = body as Record<string, unknown>;
   return (
     typeof candidate['pageId'] === 'string' &&
+    (candidate['sectionId'] === undefined ||
+      typeof candidate['sectionId'] === 'string') &&
+    (candidate['locale'] === undefined ||
+      typeof candidate['locale'] === 'string') &&
     typeof candidate['token'] === 'string' &&
     typeof candidate['blockId'] === 'string' &&
     typeof candidate['blockType'] === 'string' &&

@@ -16,6 +16,8 @@ export * from './lib/page-translation-version-repository.port';
 export * from './lib/pagination';
 export * from './lib/preview-token.port';
 export * from './lib/search.port';
+export * from './lib/reusable-section-repository.port';
+export * from './lib/reusable-section-version-repository.port';
 export * from './lib/site-layout-section-repository.port';
 export * from './lib/site-layout-section-version-repository.port';
 export * from './lib/site-repository.port';

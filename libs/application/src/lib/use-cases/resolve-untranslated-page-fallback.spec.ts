@@ -10,6 +10,7 @@ import {
   InMemoryPageGroupVersionRepository,
   InMemoryPageTranslationRepository,
   InMemoryPageTranslationVersionRepository,
+  InMemoryReusableSectionRepository,
   InMemorySearchPort,
   InMemorySiteRepository,
 } from './in-memory-repositories.test-fixture';
@@ -35,6 +36,7 @@ describe('resolveUntranslatedPageFallback', () => {
       pageTranslationVersionRepository,
       siteRepository,
       searchPort: new InMemorySearchPort(),
+      reusableSectionRepository: new InMemoryReusableSectionRepository(),
     };
   }
 

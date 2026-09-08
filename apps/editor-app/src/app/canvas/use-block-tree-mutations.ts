@@ -78,12 +78,16 @@ export interface UseBlockTreeMutationsParams {
   >;
   token: string | null;
   pageId: string;
+  /** Set only by the reusable-section editor (docs/adr/0059) — the fragment endpoint then validates the token against the section rather than a page. */
+  fragmentSection?: { sectionId: string; locale: string };
   selectedBlock: Block | null;
   selectedDescriptor: BlockDescriptor | undefined;
 }
 
 export interface UseBlockTreeMutationsResult {
   handleInsert: (descriptor: BlockDescriptor) => void;
+  /** A whole strip at once — how a template lands on the page (docs/adr/0059). */
+  handleInsertBlocks: (blocks: (Block & { id: string })[]) => void;
   handleReorder: (parentId: string | null, orderedIds: string[]) => void;
   handleRemoveSelected: () => void;
   handleMoveSelected: (direction: -1 | 1) => void;
@@ -138,6 +142,7 @@ export function useBlockTreeMutations({
   bridge,
   token,
   pageId,
+  fragmentSection,
   selectedBlock,
   selectedDescriptor,
 }: UseBlockTreeMutationsParams): UseBlockTreeMutationsResult {
@@ -249,6 +254,7 @@ export function useBlockTreeMutations({
     try {
       const html = await renderBlockFragment({
         pageId,
+        ...(fragmentSection ?? {}),
         token,
         blockId: parent.id,
         blockType: parent.type,
@@ -275,6 +281,7 @@ export function useBlockTreeMutations({
     try {
       const html = await renderBlockFragment({
         pageId,
+        ...(fragmentSection ?? {}),
         token,
         blockId: block.id,
         blockType: block.type,
@@ -349,6 +356,28 @@ export function useBlockTreeMutations({
   }
 
   /**
+   * Inserts a whole strip of blocks — how a TEMPLATE arrives (docs/adr/0059).
+   *
+   * One at a time through `performInsert`, and forwards rather than
+   * backwards: each goes to the position after the one before it, so the
+   * strip lands in the order it was written. Reusing the single-block path
+   * is what keeps undo, the canvas patch and history working for a
+   * template exactly as they do for a block, instead of a second insert
+   * path that would have to reimplement all three.
+   */
+  function handleInsertBlocks(blocks: (Block & { id: string })[]): void {
+    let target = resolveInsertTarget(
+      localBlocks,
+      registry,
+      bridge.selectedBlockId,
+    );
+    for (const block of blocks) {
+      performInsert(block, target);
+      target = { parentId: target.parentId, index: target.index + 1 };
+    }
+  }
+
+  /**
    * Reorders siblings at ANY depth — `parentId: null` for the root,
    * otherwise the id of the container block whose children were dragged
    * (see `computeNestedReorder` in layers-panel.tsx, its only caller).
@@ -374,6 +403,7 @@ export function useBlockTreeMutations({
     }
     void renderBlockFragment({
       pageId,
+      ...(fragmentSection ?? {}),
       token,
       blockId,
       blockType: block.type,
@@ -568,6 +598,7 @@ export function useBlockTreeMutations({
   return {
     recordEdit,
     handleInsert,
+    handleInsertBlocks,
     handleReorder,
     handleRemoveSelected,
     handleMoveSelected,

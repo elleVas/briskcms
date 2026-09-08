@@ -4,6 +4,8 @@ import { renderBlockFragment } from '../../lib/block-fragment-api-client';
 
 export interface UsePropertyPatchInput {
   pageId: string;
+  /** Set only by the reusable-section editor (docs/adr/0059) — the fragment endpoint then validates the token against the section rather than a page. */
+  fragmentSection?: { sectionId: string; locale: string };
   token: string;
   /**
    * Called with the props already merged (the caller owns the tree, see
@@ -150,6 +152,7 @@ export function blockIdFromTimerKey(timerKey: string): string {
  */
 export function usePropertyPatch({
   pageId,
+  fragmentSection,
   token,
   onSaveDraft,
   onSaveStyleOverride,
@@ -225,6 +228,7 @@ export function usePropertyPatch({
         onSaveDraft(blockId, changedKey, props);
         renderBlockFragment({
           pageId,
+          ...(fragmentSection ?? {}),
           token,
           blockId,
           blockType,
@@ -239,7 +243,7 @@ export function usePropertyPatch({
       });
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps -- `schedule` is redefined on every render but reads only `timers` (a ref, stable) and `debounceMs` (already an explicit dependency) — including it would break scheduleChange's stable identity for no benefit.
-    [pageId, token, onSaveDraft, patchBlock, debounceMs],
+    [pageId, fragmentSection, token, onSaveDraft, patchBlock, debounceMs],
   );
 
   const scheduleTextChange = useCallback(
@@ -265,6 +269,7 @@ export function usePropertyPatch({
         onSaveStyleOverride(blockId, styleOverride);
         renderBlockFragment({
           pageId,
+          ...(fragmentSection ?? {}),
           token,
           blockId,
           blockType,
@@ -280,7 +285,14 @@ export function usePropertyPatch({
       });
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps -- vedi scheduleChange sopra.
-    [pageId, token, onSaveStyleOverride, patchBlock, debounceMs],
+    [
+      pageId,
+      fragmentSection,
+      token,
+      onSaveStyleOverride,
+      patchBlock,
+      debounceMs,
+    ],
   );
 
   const scheduleVariantChange = useCallback(
@@ -296,6 +308,7 @@ export function usePropertyPatch({
         onSaveVariant(blockId, variant);
         renderBlockFragment({
           pageId,
+          ...(fragmentSection ?? {}),
           token,
           blockId,
           blockType,
@@ -311,7 +324,7 @@ export function usePropertyPatch({
       });
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps -- vedi scheduleChange sopra.
-    [pageId, token, onSaveVariant, patchBlock, debounceMs],
+    [pageId, fragmentSection, token, onSaveVariant, patchBlock, debounceMs],
   );
 
   return {

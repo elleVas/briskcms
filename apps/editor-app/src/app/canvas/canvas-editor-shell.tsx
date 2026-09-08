@@ -17,11 +17,15 @@ import {
   type Block,
   type BlockAlign,
   type BlockStyleOverride,
+  type ExposedFields,
   type ResponsiveBlockStyle,
 } from '@brisk/shared-types';
 import type { BlockDescriptor } from '@brisk/block-registry';
 import { Button } from '../../components/ui/button';
-import { createTranslationPreviewToken } from '../../lib/preview-token-api-client';
+import {
+  createReusableSectionPreviewToken,
+  createTranslationPreviewToken,
+} from '../../lib/preview-token-api-client';
 import { PUBLIC_SITE_URL } from '../../lib/public-site-url';
 import { useTranslation } from '../../lib/use-translation';
 import { usePageList } from '../page-list-context';
@@ -31,6 +35,7 @@ import { siteQueryOptions } from '../site-queries';
 import { useToast } from '../toast-provider';
 import { useSiteThemeTokens } from '../use-site-theme-tokens';
 import { BlockPicker, type BlockPickerCategory } from './block-picker';
+import { TemplatePicker } from './template-picker';
 import { BlockToolbarOverlay } from './block-toolbar-overlay';
 import { BreakpointSelector, type Breakpoint } from './breakpoint-selector';
 import {
@@ -59,6 +64,30 @@ import { usePreviewBridge } from './use-preview-bridge';
 import { blockIdFromTimerKey, usePropertyPatch } from './use-property-patch';
 import { useSidebarDrag } from './use-sidebar-drag';
 import { useTextEdit } from './use-text-edit';
+
+/**
+ * The per-BLOCK slice of the section editor's expose controls. A function
+ * rather than an inline object so the "no block id" case is answered once:
+ * a block without an id cannot be keyed in `exposedFields` at all, and
+ * offering the checkbox anyway would silently drop the choice.
+ */
+function buildSectionEditing(
+  sectionEditing:
+    | {
+        exposedFields: ExposedFields;
+        onToggleField: (blockId: string, field: string) => void;
+      }
+    | undefined,
+  blockId: string | undefined,
+): { exposed: string[]; onToggle: (field: string) => void } | undefined {
+  if (!sectionEditing || !blockId) {
+    return undefined;
+  }
+  return {
+    exposed: sectionEditing.exposedFields[blockId] ?? [],
+    onToggle: (field: string) => sectionEditing.onToggleField(blockId, field),
+  };
+}
 
 export interface CanvasEditorShellProps {
   backLink: ReactNode;
@@ -99,6 +128,17 @@ export interface CanvasEditorShellProps {
    */
   pageId: string;
   editingSection?: EditingSection;
+  /** Present only in the reusable-section editor — see CanvasFrame's own prop. */
+  sectionPreview?: { sectionId: string; locale: string };
+  /**
+   * Also section-editor only (docs/adr/0059): it puts an "a page may
+   * change this" checkbox beside every field, which is how the agency
+   * decides what a client may touch on an instance.
+   */
+  sectionEditing?: {
+    exposedFields: ExposedFields;
+    onToggleField: (blockId: string, field: string) => void;
+  };
   /** Bumped only on an explicit rollback — the same mechanism block-editor-shell.tsx (Puck) used to reset local state. */
   restoredAt?: number;
   children?: ReactNode;
@@ -125,6 +165,8 @@ export function CanvasEditorShell({
   onPublish,
   pageId,
   editingSection,
+  sectionPreview,
+  sectionEditing,
   restoredAt = 0,
   children,
 }: CanvasEditorShellProps) {
@@ -197,7 +239,12 @@ export function CanvasEditorShell({
   const [token, setToken] = useState<string | null>(null);
   useEffect(() => {
     let cancelled = false;
-    createTranslationPreviewToken(pageId).then((preview) => {
+    // A section's fragments are authorised by a SECTION token: the
+    // endpoint validates one or the other and never both (docs/adr/0059).
+    const minted = sectionPreview
+      ? createReusableSectionPreviewToken(sectionPreview.sectionId)
+      : createTranslationPreviewToken(pageId);
+    minted.then((preview) => {
       if (!cancelled) {
         setToken(preview.token);
       }
@@ -205,7 +252,7 @@ export function CanvasEditorShell({
     return () => {
       cancelled = true;
     };
-  }, [pageId]);
+  }, [pageId, sectionPreview]);
 
   const {
     scheduleChange,
@@ -215,6 +262,7 @@ export function CanvasEditorShell({
     flushAll,
   } = usePropertyPatch({
     pageId,
+    fragmentSection: sectionPreview,
     token: token ?? '',
     // One history entry per debounce burst. Only the resulting tree is
     // passed: what to go back to is the history's own last committed
@@ -375,6 +423,7 @@ export function CanvasEditorShell({
 
   const {
     handleInsert,
+    handleInsertBlocks,
     handleReorder,
     handleRemoveSelected,
     handleMoveSelected,
@@ -395,6 +444,7 @@ export function CanvasEditorShell({
     bridge,
     token,
     pageId,
+    fragmentSection: sectionPreview,
     selectedBlock,
     selectedDescriptor,
   });
@@ -843,6 +893,13 @@ export function CanvasEditorShell({
                   onDragEnd: handleSidebarDragEnd,
                 }}
               />
+              {/* Not inside the section editor: a template dropped into a
+                  section would be a copy inside a thing that already IS
+                  the shared original, which is a muddle rather than a
+                  feature. */}
+              {siteId && !sectionPreview && (
+                <TemplatePicker siteId={siteId} onInsert={handleInsertBlocks} />
+              )}
             </>
           )}
         </aside>
@@ -850,6 +907,7 @@ export function CanvasEditorShell({
           <CanvasFrame
             pageId={pageId}
             editingSection={editingSection}
+            sectionPreview={sectionPreview}
             iframeRef={iframeRef}
             bridge={bridge}
             dropIndicatorTop={liveDropTarget?.indicatorTop}
@@ -871,6 +929,10 @@ export function CanvasEditorShell({
                 categories={categories}
                 onChangeProp={handleChangeProp}
                 onChangeVariant={handleChangeVariant}
+                sectionEditing={buildSectionEditing(
+                  sectionEditing,
+                  selectedBlock.id,
+                )}
                 onChangeAlign={
                   // Root level, and the page's own content: the header and
                   // footer lists have no per-block wrapper to carry the

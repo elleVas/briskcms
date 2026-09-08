@@ -3,6 +3,10 @@ import { PUBLIC_SITE_URL } from './public-site-url';
 
 export interface RenderBlockFragmentInput {
   pageId: string;
+  /** Set only by the reusable-section editor — see RenderBlockFragmentBody. */
+  sectionId?: string;
+  /** The language the fragment's links resolve in; carried with `sectionId` alone. */
+  locale?: string;
   token: string;
   blockId: string;
   blockType: string;

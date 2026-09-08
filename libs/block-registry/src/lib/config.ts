@@ -38,6 +38,7 @@ import { pricingTableBlock } from './blocks/pricing-table.block';
 import { quoteBlock } from './blocks/quote.block';
 import { ratingBlock } from './blocks/rating.block';
 import { searchBoxBlock } from './blocks/search-box.block';
+import { sectionBlock } from './blocks/section.block';
 import { statBlock } from './blocks/stat.block';
 import { statsCounterBlock } from './blocks/stats-counter.block';
 import { tabBlock } from './blocks/tab.block';
@@ -65,6 +66,7 @@ export {
   columnsBlock,
   carouselBlock,
   cardBlock,
+  sectionBlock,
   dividerBlock,
   spacerBlock,
   iconBlock,
@@ -128,6 +130,7 @@ export const pageBlocks: BlockDescriptor[] = [
   containerBlock,
   cardBlock,
   carouselBlock,
+  sectionBlock,
   dividerBlock,
   spacerBlock,
   iconBlock,
@@ -179,6 +182,7 @@ export const pageBlockCategories: { title: string; types: string[] }[] = [
       'Column',
       'Container',
       'Card',
+      'Section',
       'Carousel',
       'Divider',
       'Spacer',

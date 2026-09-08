@@ -127,7 +127,12 @@ describe('DrizzleSearchRepository (integration)', () => {
       tenantId: tenantAId,
       siteId: siteAId,
     });
-    await searchRepository.indexPage(tenantAId, siteAId, translation);
+    await searchRepository.indexPage(
+      tenantAId,
+      siteAId,
+      translation,
+      translation.publishedSnapshot ?? [],
+    );
 
     const results = await searchRepository.search(
       tenantAId,
@@ -154,7 +159,12 @@ describe('DrizzleSearchRepository (integration)', () => {
       siteId: siteAId,
       status: 'draft',
     });
-    await searchRepository.indexPage(tenantAId, siteAId, translation);
+    await searchRepository.indexPage(
+      tenantAId,
+      siteAId,
+      translation,
+      translation.publishedSnapshot ?? [],
+    );
 
     const results = await searchRepository.search(
       tenantAId,
@@ -181,7 +191,12 @@ describe('DrizzleSearchRepository (integration)', () => {
       tenantId: tenantAId,
       siteId: otherSite.id,
     });
-    await searchRepository.indexPage(tenantAId, otherSite.id, translation);
+    await searchRepository.indexPage(
+      tenantAId,
+      otherSite.id,
+      translation,
+      translation.publishedSnapshot ?? [],
+    );
 
     const results = await searchRepository.search(
       tenantAId,
@@ -199,7 +214,12 @@ describe('DrizzleSearchRepository (integration)', () => {
       siteId: siteAId,
       locale: 'en',
     });
-    await searchRepository.indexPage(tenantAId, siteAId, translation);
+    await searchRepository.indexPage(
+      tenantAId,
+      siteAId,
+      translation,
+      translation.publishedSnapshot ?? [],
+    );
 
     const results = await searchRepository.search(
       tenantAId,
@@ -222,7 +242,12 @@ describe('DrizzleSearchRepository (integration)', () => {
       tenantId: tenantBId,
       siteId: siteB.id,
     });
-    await searchRepository.indexPage(tenantBId, siteB.id, translation);
+    await searchRepository.indexPage(
+      tenantBId,
+      siteB.id,
+      translation,
+      translation.publishedSnapshot ?? [],
+    );
 
     const results = await searchRepository.search(
       tenantAId,

@@ -1,5 +1,6 @@
 import type { Block, PageContent, SeoMeta } from './content-model';
 import { richTextToPlainText } from './rich-text-to-plain-text';
+import { parseSectionOverrideKey } from './reusable-section';
 
 /**
  * Builds the plain-text blob a SearchPort adapter indexes for a page —
@@ -70,6 +71,22 @@ const PROSE_FIELD_EXTRACTORS: Partial<Record<string, ProseFieldExtractor>> = {
   // Its children index themselves; the header's alt is the card's own
   // only prose, and it is prose for Image's reason.
   Card: (props) => [asString(props['alt'])],
+  /*
+   * A section instance's own prose is the values it overrides — the
+   * section's other words arrive as resolved CHILDREN, which
+   * `collectBlockText` already walks (docs/adr/0059).
+   *
+   * Every `ovr:` prop and no allow-list of keys, unlike every other entry
+   * here: which fields exist depends on the section, so there is no fixed
+   * list to write. That is safe precisely because these keys can hold
+   * nothing else — `sectionPropsSchema` refuses any key that is not an
+   * override, so "every other string prop" is exactly "every value an
+   * author typed".
+   */
+  Section: (props) =>
+    Object.entries(props)
+      .filter(([key]) => parseSectionOverrideKey(key) !== null)
+      .map(([, value]) => asString(value)),
   Gallery: (props) => {
     const images = Array.isArray(props['images']) ? props['images'] : [];
     return images.map((image) =>

@@ -43,6 +43,7 @@ import type {
   PageTranslationRepositoryPort,
   PageTranslationVersionRepositoryPort,
   PreviewTokenPort,
+  ReusableSectionRepositoryPort,
   SearchPort,
   TenantContextPort,
 } from '@brisk/ports';
@@ -67,7 +68,11 @@ import {
   PAGE_TRANSLATION_REPOSITORY,
   PAGE_TRANSLATION_VERSION_REPOSITORY,
 } from './page-groups.tokens';
-import { PREVIEW_TOKEN_PORT, SEARCH_REPOSITORY } from './pages.tokens';
+import {
+  PREVIEW_TOKEN_PORT,
+  REUSABLE_SECTION_REPOSITORY,
+  SEARCH_REPOSITORY,
+} from './pages.tokens';
 import {
   type CreatePageGroupBody,
   createPageGroupBodySchema,
@@ -112,6 +117,8 @@ export class PageGroupsController {
     @Inject(PREVIEW_TOKEN_PORT)
     private readonly previewTokenPort: PreviewTokenPort,
     @Inject(SEARCH_REPOSITORY) private readonly searchPort: SearchPort,
+    @Inject(REUSABLE_SECTION_REPOSITORY)
+    private readonly reusableSectionRepository: ReusableSectionRepositoryPort,
   ) {}
 
   @Post()
@@ -384,6 +391,7 @@ export class PageGroupsController {
       {
         pageGroupRepository: this.pageGroupRepository,
         pageTranslationRepository: this.pageTranslationRepository,
+        reusableSectionRepository: this.reusableSectionRepository,
         searchPort: this.searchPort,
       },
       {

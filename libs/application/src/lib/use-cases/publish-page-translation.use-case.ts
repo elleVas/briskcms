@@ -7,12 +7,15 @@ import { mergeTranslatedContent, type PageContent } from '@brisk/shared-types';
 import type {
   PageGroupRepositoryPort,
   PageTranslationRepositoryPort,
+  ReusableSectionRepositoryPort,
   SearchPort,
 } from '@brisk/ports';
+import { resolveSectionInstances } from './resolve-section-instances';
 
 export interface PublishPageTranslationDeps {
   pageGroupRepository: PageGroupRepositoryPort;
   pageTranslationRepository: PageTranslationRepositoryPort;
+  reusableSectionRepository: ReusableSectionRepositoryPort;
   searchPort: SearchPort;
 }
 
@@ -66,10 +69,19 @@ export async function publishPageTranslation(
 
   translation.publish(merged);
   await deps.pageTranslationRepository.save(translation, group.parentId);
+  // Sections expanded first: the snapshot holds a reference where their
+  // words are, so indexing it as-is would leave a page's section text
+  // unsearchable (docs/adr/0059). The snapshot itself keeps the
+  // reference — that is what lets publishing the section alone update
+  // every page using it.
+  const [indexable] = await resolveSectionInstances(deps, input.tenantId, [
+    merged,
+  ]);
   await deps.searchPort.indexPage(
     input.tenantId,
     translation.siteId,
     translation,
+    indexable,
   );
 
   return translation;

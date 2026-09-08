@@ -59,6 +59,7 @@ export const CORE_BLOCK_TYPES: readonly string[] = [
   'Quote',
   'Rating',
   'SearchBox',
+  'Section',
   'SocialLink',
   'SocialLinks',
   'Spacer',

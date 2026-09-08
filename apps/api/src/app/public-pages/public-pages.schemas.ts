@@ -62,3 +62,12 @@ export const publicPagePreviewQuerySchema = z.object({
 export type PublicPagePreviewQuery = z.infer<
   typeof publicPagePreviewQuerySchema
 >;
+
+/** A section has no locale of its own — the caller says which one its links resolve in. */
+export const publicSectionPreviewQuerySchema = z.object({
+  token: z.string().min(1),
+  locale: z.string().min(2),
+});
+export type PublicSectionPreviewQuery = z.infer<
+  typeof publicSectionPreviewQuerySchema
+>;

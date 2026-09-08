@@ -77,6 +77,7 @@
       "media": "Media",
       "forms": "Forms",
       "layout": "Layout",
+      "sections": "Sections",
       "style": "Style",
       "integrations": "Integrations",
       "cookies": "Cookie banner",
@@ -234,6 +235,36 @@
       "label": "Parent page",
       "none": "— None (root level) —"
     }
+  },
+  "sections": {
+    "title": "Sections",
+    "subtitle": "Build a strip of blocks once, use it on many pages.",
+    "empty": "No section yet.",
+    "create": "New section",
+    "createTitle": "New section",
+    "nameLabel": "Name",
+    "kindLabel": "Kind",
+    "kind": {
+      "shared": "Shared section — edit once, every page follows",
+      "template": "Template — copied on insert, then free to change"
+    },
+    "kindShort": {
+      "shared": "Shared",
+      "template": "Template"
+    },
+    "status": {
+      "draft": "Draft",
+      "published": "Published"
+    },
+    "open": "Open",
+    "delete": "Delete",
+    "deleteConfirm": "Delete this section? Pages using it will show nothing where it was.",
+    "exposeField": "A page may change this",
+    "backToList": "← Back to sections",
+    "draftSaved": "Draft saved",
+    "published": "Published — every page using it is updated",
+    "nameTaken": "A section with that name already exists.",
+    "templates": "Templates"
   },
   "layout": {
     "title": "Layout",
@@ -875,6 +906,23 @@
       "socialProof": "Social proof",
       "interactive": "Interactive",
       "headerFooter": "Blocks"
+    },
+    "section": {
+      "label": "Reusable section",
+      "fields": {
+        "section": {
+          "fieldLabel": "Section"
+        }
+      },
+      "picker": {
+        "none": "No section",
+        "unpublished": "not published"
+      },
+      "instance": {
+        "title": "What this page may change",
+        "edit": "Edit section",
+        "noExposedFields": "This section exposes no editable field. Open it to choose which fields a page may change."
+      }
     },
     "shared": {
       "linkType": {

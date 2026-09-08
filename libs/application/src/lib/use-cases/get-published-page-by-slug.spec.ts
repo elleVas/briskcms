@@ -11,6 +11,7 @@ import {
   InMemoryPageGroupVersionRepository,
   InMemoryPageTranslationRepository,
   InMemoryPageTranslationVersionRepository,
+  InMemoryReusableSectionRepository,
   InMemorySearchPort,
   InMemorySiteLayoutSectionRepository,
   InMemorySiteRepository,
@@ -35,6 +36,7 @@ describe('getPublishedPageBySlug', () => {
       pageTranslationVersionRepository,
       siteRepository: new InMemorySiteRepository(),
       siteLayoutSectionRepository: new InMemorySiteLayoutSectionRepository(),
+      reusableSectionRepository: new InMemoryReusableSectionRepository(),
       siteThemeBlockStylesRepository:
         new InMemorySiteThemeBlockStylesRepository(),
       searchPort: new InMemorySearchPort(),

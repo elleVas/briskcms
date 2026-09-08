@@ -12,6 +12,7 @@ import {
   InMemoryPageTranslationRepository,
   InMemoryPageTranslationVersionRepository,
   InMemoryPreviewTokenPort,
+  InMemoryReusableSectionRepository,
   InMemorySearchPort,
   InMemorySiteLayoutSectionRepository,
   InMemorySiteRepository,
@@ -36,6 +37,7 @@ describe('getPreviewPageById', () => {
       pageTranslationVersionRepository,
       siteRepository: new InMemorySiteRepository(),
       siteLayoutSectionRepository: new InMemorySiteLayoutSectionRepository(),
+      reusableSectionRepository: new InMemoryReusableSectionRepository(),
       siteThemeBlockStylesRepository:
         new InMemorySiteThemeBlockStylesRepository(),
       previewTokenPort: new InMemoryPreviewTokenPort(),

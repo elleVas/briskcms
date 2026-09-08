@@ -7,12 +7,15 @@ import {
 import type {
   PageGroupRepositoryPort,
   PageTranslationRepositoryPort,
+  ReusableSectionRepositoryPort,
 } from '@brisk/ports';
 import { resolveAncestorGroupIds } from './resolve-page-group-ancestors';
+import { resolveSectionInstances } from './resolve-section-instances';
 
 export interface ResolvePageContentReferencesDeps {
   pageGroupRepository: PageGroupRepositoryPort;
   pageTranslationRepository: PageTranslationRepositoryPort;
+  reusableSectionRepository: ReusableSectionRepositoryPort;
 }
 
 /**
@@ -25,13 +28,24 @@ export interface ResolvePageContentReferencesDeps {
  * specific locale+slug at PICK time, reused verbatim for every locale of
  * the containing block since `page` isn't a `translatable` field — an IT
  * reader could get an EN link.
+ *
+ * It also expands section instances, and it does that FIRST (docs/adr/0059).
+ * The order is not a detail: a reusable section can hold a Link, and that
+ * link has to be resolved in the locale being rendered like any other.
+ * Resolving links first and expanding sections afterwards would produce a
+ * page whose section links all pointed nowhere — with nothing failing, on
+ * exactly the pages that used a section. Doing both here, rather than
+ * leaving the caller to sequence them, is what makes that impossible to
+ * get wrong at the four call sites.
  */
 export async function resolvePageContentReferences(
   deps: ResolvePageContentReferencesDeps,
   tenantId: string,
   locale: string,
-  contents: PageContent[],
+  rawContents: PageContent[],
 ): Promise<PageContent[]> {
+  const contents = await resolveSectionInstances(deps, tenantId, rawContents);
+
   const referencedGroupIds = new Set<string>();
   for (const content of contents) {
     for (const groupId of collectPageGroupReferences(content)) {
