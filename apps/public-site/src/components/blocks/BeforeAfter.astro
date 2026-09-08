@@ -3,9 +3,20 @@ import type { BeforeAfterProps } from '@brisk/shared-types';
 import { Translator } from '@brisk/theme-runtime';
 import OptimizedImage from '../OptimizedImage.astro';
 
-type Props = BeforeAfterProps & { locale: string };
+type Props = BeforeAfterProps & {
+  locale: string;
+  /** The per-instance style class, from BlockRenderer — see blockInstanceClassName. */
+  instanceClass?: string | null;
+};
 
-const { beforeImage, afterImage, beforeLabel, afterLabel, locale } =
+const {
+  beforeImage,
+  afterImage,
+  beforeLabel,
+  afterLabel,
+  locale,
+  instanceClass,
+} =
   Astro.props;
 const canRender = beforeImage !== null && afterImage !== null;
 const i18n = new Translator(locale);
@@ -13,7 +24,10 @@ const i18n = new Translator(locale);
 
 {
   canRender ? (
-    <div class="brisk-before-after" style="--reveal: 50%">
+    <div
+      class:list={['brisk-before-after', instanceClass]}
+      style="--reveal: 50%"
+    >
       {
         /* loading="eager" (same reasoning as Image.astro): full-width,
         can be the first block on a page, so it can be the page's own LCP
@@ -72,7 +86,13 @@ const i18n = new Translator(locale);
     aspect-ratio: 4 / 3;
     width: 100%;
     overflow: hidden;
-    border-radius: 8px;
+    /* Fallbacks are what this block already rendered. */
+    border-radius: var(--brisk-override-radius, 8px);
+    border: var(--brisk-override-border-width, 0)
+      var(--brisk-override-border-style, solid)
+      var(--brisk-override-border-color, var(--border));
+    box-shadow: var(--brisk-override-shadow, none);
+    max-width: var(--brisk-override-max-width, none);
   }
   /* :global() because OptimizedImage (a child component) renders the
   actual <img> — see Image.astro's own style block for the full reasoning. */

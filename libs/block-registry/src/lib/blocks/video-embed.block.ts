@@ -1,4 +1,5 @@
 import type { VideoEmbedProps } from '@brisk/shared-types';
+import { BLOCK_STYLE_DEFAULTS } from '@brisk/shared-types';
 import type { BlockDescriptor } from '../field-types';
 
 export const videoEmbedBlock: BlockDescriptor<VideoEmbedProps> = {
@@ -16,4 +17,13 @@ export const videoEmbedBlock: BlockDescriptor<VideoEmbedProps> = {
       placeholder: 'https://www.youtube.com/watch?v=...',
     },
   ],
+  stylableProperties: [
+    'borderRadius',
+    'borderWidth',
+    'borderStyle',
+    'borderColor',
+    'boxShadow',
+    'maxWidth',
+  ],
+  defaultStyle: BLOCK_STYLE_DEFAULTS.VideoEmbed,
 };

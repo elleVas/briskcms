@@ -3,13 +3,17 @@ import type { GalleryProps } from '@brisk/shared-types';
 import { Translator } from '@brisk/theme-runtime';
 import OptimizedImage from '../OptimizedImage.astro';
 
-type Props = GalleryProps & { locale: string };
+type Props = GalleryProps & {
+  locale: string;
+  /** The per-instance style class, from BlockRenderer — see blockInstanceClassName. */
+  instanceClass?: string | null;
+};
 
-const { images, locale } = Astro.props;
+const { images, locale, instanceClass } = Astro.props;
 const i18n = new Translator(locale);
 ---
 
-<div class="gallery">
+<div class:list={['gallery', instanceClass]}>
   {
     images.some((image) => image.media) ? (
       images.map(
@@ -29,10 +33,17 @@ const i18n = new Translator(locale);
 </div>
 
 <style>
+  /* `gap` is the one that was missing most: the space between thumbnails
+     was a fixed 0.5rem, so a tight contact sheet and an airy portfolio
+     were the same gallery. Fallbacks are the values already in use. */
   .gallery {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: 0.5rem;
+    gap: var(--brisk-override-gap, 0.5rem);
+    background: var(--brisk-override-bg, transparent);
+    border-radius: var(--brisk-override-radius, 0);
+    padding: var(--brisk-override-padding-y, 0)
+      var(--brisk-override-padding-x, 0);
   }
   /* :global() because OptimizedImage (a child component) renders the
   actual <img> — see Image.astro's own style block for the full reasoning. */

@@ -1,9 +1,12 @@
 ---
 import type { NavDropdownProps } from '@brisk/shared-types';
 
-type Props = NavDropdownProps;
+type Props = NavDropdownProps & {
+  /** The per-instance style class, from BlockRenderer — see blockInstanceClassName. */
+  instanceClass?: string | null;
+};
 
-const { label, position, visibility } = Astro.props;
+const { label, position, visibility, instanceClass } = Astro.props;
 ---
 
 <details
@@ -12,6 +15,7 @@ const { label, position, visibility } = Astro.props;
     { 'brisk-nav-dropdown--right': position === 'right' },
     { 'brisk-visibility-desktop-only': visibility === 'desktop-only' },
     { 'brisk-visibility-mobile-only': visibility === 'mobile-only' },
+    instanceClass,
   ]}
 >
   <summary class="brisk-nav-dropdown__trigger" data-brisk-field="label">{label}</summary>
@@ -44,6 +48,11 @@ const { label, position, visibility } = Astro.props;
     content: ' ▾';
   }
 
+  /* The overrides land on the PANEL, not on the wrapper they are
+     declared on: the wrapper is a positioning context with no appearance
+     of its own, and styling it would leave the visible menu untouched —
+     the silent no-op ADR-0047 exists to prevent. Every fallback is the
+     value already in use. */
   .brisk-nav-dropdown__panel {
     position: absolute;
     top: calc(100% + 0.5rem);
@@ -52,12 +61,16 @@ const { label, position, visibility } = Astro.props;
     min-width: 12rem;
     display: flex;
     flex-direction: column;
-    gap: 0.25rem;
-    padding: 0.75rem;
-    background: var(--background);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    box-shadow: 0 8px 24px rgb(0 0 0 / 12%);
+    gap: var(--brisk-override-gap, 0.25rem);
+    padding: var(--brisk-override-padding-y, 0.75rem)
+      var(--brisk-override-padding-x, 0.75rem);
+    background: var(--brisk-override-bg, var(--background));
+    color: var(--brisk-override-text, inherit);
+    border: var(--brisk-override-border-width, 1px)
+      var(--brisk-override-border-style, solid)
+      var(--brisk-override-border-color, var(--border));
+    border-radius: var(--brisk-override-radius, 8px);
+    box-shadow: var(--brisk-override-shadow, 0 8px 24px rgb(0 0 0 / 12%));
   }
   .brisk-nav-dropdown__panel :global(.brisk-nav-link) {
     display: block;

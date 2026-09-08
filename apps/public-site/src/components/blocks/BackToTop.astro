@@ -2,9 +2,13 @@
 import type { BackToTopProps } from '@brisk/shared-types';
 import { Translator } from '@brisk/theme-runtime';
 
-type Props = BackToTopProps & { locale: string };
+type Props = BackToTopProps & {
+  locale: string;
+  /** The per-instance style class, from BlockRenderer — see blockInstanceClassName. */
+  instanceClass?: string | null;
+};
 
-const { visibility, locale } = Astro.props;
+const { visibility, locale, instanceClass } = Astro.props;
 const i18n = new Translator(locale);
 ---
 
@@ -14,6 +18,7 @@ const i18n = new Translator(locale);
     'brisk-back-to-top',
     { 'brisk-visibility-desktop-only': visibility === 'desktop-only' },
     { 'brisk-visibility-mobile-only': visibility === 'mobile-only' },
+    instanceClass,
   ]}
   aria-label={i18n.t('backToTop.label')}
 >
@@ -52,14 +57,14 @@ const i18n = new Translator(locale);
     height: 2.75rem;
     padding: 0;
     border: none;
-    border-radius: 50%;
-    background: var(--primary);
-    color: var(--primary-foreground);
+    border-radius: var(--brisk-override-radius, 50%);
+    background: var(--brisk-override-bg, var(--primary));
+    color: var(--brisk-override-text, var(--primary-foreground));
     display: none;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    box-shadow: 0 4px 12px rgb(0 0 0 / 20%);
+    box-shadow: var(--brisk-override-shadow, 0 4px 12px rgb(0 0 0 / 20%));
   }
   .brisk-back-to-top--visible {
     display: flex;

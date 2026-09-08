@@ -2,9 +2,13 @@
 import type { NewsletterSignupProps } from '@brisk/shared-types';
 import { Translator } from '@brisk/theme-runtime';
 
-type Props = NewsletterSignupProps & { locale: string };
+type Props = NewsletterSignupProps & {
+  locale: string;
+  /** The per-instance style class, from BlockRenderer — see blockInstanceClassName. */
+  instanceClass?: string | null;
+};
 
-const { title, buttonLabel, locale } = Astro.props;
+const { title, buttonLabel, locale, instanceClass } = Astro.props;
 const i18n = new Translator(locale);
 
 // Simple presence flags, not keyed by a block id the way Form.astro keys
@@ -24,7 +28,7 @@ const redirectTo =
 const turnstileSiteKey = process.env['TURNSTILE_SITE_KEY'] ?? '';
 ---
 
-<div class="brisk-newsletter-signup">
+<div class:list={['brisk-newsletter-signup', instanceClass]}>
   {
     subscribed && (
       <p class="brisk-newsletter-signup__status brisk-newsletter-signup__status--success">
@@ -84,8 +88,16 @@ const turnstileSiteKey = process.env['TURNSTILE_SITE_KEY'] ?? '';
 </script>
 
 <style>
+  /* `max-width` was a hardcoded 24rem, so this block could never fill a
+     wide section — the most common complaint a fixed width causes.
+     Fallbacks are what it already rendered. */
   .brisk-newsletter-signup {
-    max-width: 24rem;
+    max-width: var(--brisk-override-max-width, 24rem);
+    background: var(--brisk-override-bg, transparent);
+    color: var(--brisk-override-text, inherit);
+    border-radius: var(--brisk-override-radius, 0);
+    padding: var(--brisk-override-padding-y, 0)
+      var(--brisk-override-padding-x, 0);
   }
   .brisk-newsletter-signup__title {
     margin: 0 0 0.5rem;

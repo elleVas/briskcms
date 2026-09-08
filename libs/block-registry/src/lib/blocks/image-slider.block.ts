@@ -1,4 +1,5 @@
 import type { ImageSliderProps } from '@brisk/shared-types';
+import { BLOCK_STYLE_DEFAULTS } from '@brisk/shared-types';
 import { FieldBuilder, type BlockDescriptor } from '../field-types';
 
 export const imageSliderBlock: BlockDescriptor<ImageSliderProps> = {
@@ -15,4 +16,6 @@ export const imageSliderBlock: BlockDescriptor<ImageSliderProps> = {
       'gallery',
     ),
   ],
+  stylableProperties: ['borderRadius', 'boxShadow', 'maxWidth'],
+  defaultStyle: BLOCK_STYLE_DEFAULTS.ImageSlider,
 };

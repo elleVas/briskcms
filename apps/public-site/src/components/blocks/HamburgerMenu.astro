@@ -2,9 +2,13 @@
 import type { HamburgerMenuProps } from '@brisk/shared-types';
 import { Translator } from '@brisk/theme-runtime';
 
-type Props = HamburgerMenuProps & { locale: string };
+type Props = HamburgerMenuProps & {
+  locale: string;
+  /** The per-instance style class, from BlockRenderer — see blockInstanceClassName. */
+  instanceClass?: string | null;
+};
 
-const { position, visibility, locale } = Astro.props;
+const { position, visibility, locale, instanceClass } = Astro.props;
 const i18n = new Translator(locale);
 const openLabel = i18n.t('hamburgerMenu.open');
 const closeLabel = i18n.t('hamburgerMenu.close');
@@ -16,6 +20,7 @@ const closeLabel = i18n.t('hamburgerMenu.close');
     { 'brisk-hamburger-menu--right': position === 'right' },
     { 'brisk-visibility-desktop-only': visibility === 'desktop-only' },
     { 'brisk-visibility-mobile-only': visibility === 'mobile-only' },
+    instanceClass,
   ]}
 >
   <button
@@ -111,6 +116,9 @@ const closeLabel = i18n.t('hamburgerMenu.close');
      `.brisk-hamburger-menu`'s own full block width), matching a standard
      hamburger dropdown. Overlays whatever is below it (position:
      absolute) instead of pushing page content down. */
+  /* On the PANEL, for the same reason as NavDropdown: the wrapper has no
+     appearance, so styling it would do nothing visible. Fallbacks are the
+     values already in use. */
   .brisk-hamburger-menu__panel {
     display: none;
     position: absolute;
@@ -118,11 +126,15 @@ const closeLabel = i18n.t('hamburgerMenu.close');
     left: 0;
     right: 0;
     z-index: 10;
-    padding: 1rem;
-    background: var(--background);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    box-shadow: 0 8px 24px rgb(0 0 0 / 12%);
+    padding: var(--brisk-override-padding-y, 1rem)
+      var(--brisk-override-padding-x, 1rem);
+    background: var(--brisk-override-bg, var(--background));
+    color: var(--brisk-override-text, inherit);
+    border: var(--brisk-override-border-width, 1px)
+      var(--brisk-override-border-style, solid)
+      var(--brisk-override-border-color, var(--border));
+    border-radius: var(--brisk-override-radius, 8px);
+    box-shadow: var(--brisk-override-shadow, 0 8px 24px rgb(0 0 0 / 12%));
   }
   .brisk-hamburger-menu.brisk-hamburger-menu--open .brisk-hamburger-menu__panel {
     display: block;

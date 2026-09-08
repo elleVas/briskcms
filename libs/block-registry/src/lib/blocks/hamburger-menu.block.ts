@@ -1,4 +1,6 @@
 import type { BlockDescriptor } from '../field-types';
+import { BlockStyleRegistry } from '../block-style-registry';
+import { BLOCK_STYLE_DEFAULTS } from '@brisk/shared-types';
 import { positionField } from '../fields/position-field';
 import { visibilityField } from '../fields/visibility-field';
 
@@ -18,4 +20,12 @@ export const hamburgerMenuBlock: BlockDescriptor<{
   fields: [positionField, visibilityField],
   isContainer: true,
   allowedChildTypes: ['NavLink', 'LanguageSwitcher'],
+  stylableProperties: [
+    ...BlockStyleRegistry.STANDARD,
+    'borderWidth',
+    'borderStyle',
+    'borderColor',
+    'boxShadow',
+  ],
+  defaultStyle: BLOCK_STYLE_DEFAULTS.HamburgerMenu,
 };

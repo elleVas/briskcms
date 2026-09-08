@@ -4,10 +4,13 @@ import { localePath } from '@brisk/theme-runtime';
 import { Translator } from '@brisk/theme-runtime';
 
 interface Props extends SearchBoxProps {
+  /** The per-instance style class, from BlockRenderer — see blockInstanceClassName. */
+  instanceClass?: string | null;
+
   locale: string;
 }
 
-const { placeholder, visibility, locale } = Astro.props;
+const { placeholder, visibility, locale, instanceClass } = Astro.props;
 const i18n = new Translator(locale);
 ---
 
@@ -18,6 +21,7 @@ const i18n = new Translator(locale);
     'brisk-search-box',
     { 'brisk-visibility-desktop-only': visibility === 'desktop-only' },
     { 'brisk-visibility-mobile-only': visibility === 'mobile-only' },
+    instanceClass,
   ]}
   role="search"
 >
@@ -26,9 +30,15 @@ const i18n = new Translator(locale);
 </form>
 
 <style>
+  /* Fallbacks are what this block already rendered. */
   .brisk-search-box {
     display: flex;
-    gap: 0.5rem;
+    gap: var(--brisk-override-gap, 0.5rem);
+    background: var(--brisk-override-bg, transparent);
+    color: var(--brisk-override-text, inherit);
+    border-radius: var(--brisk-override-radius, 0);
+    padding: var(--brisk-override-padding-y, 0)
+      var(--brisk-override-padding-x, 0);
   }
   .brisk-search-box input {
     padding: 0.4rem 0.6rem;

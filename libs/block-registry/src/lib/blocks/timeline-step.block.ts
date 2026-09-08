@@ -1,5 +1,7 @@
 import type { TimelineStepProps } from '@brisk/shared-types';
+import { BLOCK_STYLE_DEFAULTS } from '@brisk/shared-types';
 import type { BlockDescriptor } from '../field-types';
+import { BlockStyleRegistry } from '../block-style-registry';
 
 export const timelineStepBlock: BlockDescriptor<TimelineStepProps> = {
   type: 'TimelineStep',
@@ -33,4 +35,6 @@ export const timelineStepBlock: BlockDescriptor<TimelineStepProps> = {
       inlineEditable: true,
     },
   ],
+  stylableProperties: BlockStyleRegistry.STANDARD,
+  defaultStyle: BLOCK_STYLE_DEFAULTS.TimelineStep,
 };

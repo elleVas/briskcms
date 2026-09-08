@@ -21,9 +21,18 @@ interface Props extends LanguageSwitcherProps {
   locale: string;
   translations: PublishedPageTranslation[];
   site: PublishedSite;
+  /**
+   * The per-instance style class, from BlockRenderer. A theme override
+   * has to accept and render it exactly as core does: the block became
+   * stylable (ADR-0051), and a theme that swallowed the class would make
+   * styling this block silently do nothing on sites using that theme —
+   * which `theme-block-override-styling.spec.ts` fails on, by name.
+   */
+  instanceClass?: string | null;
 }
 
-const { position, visibility, locale, translations, site } = Astro.props;
+const { position, visibility, locale, translations, site, instanceClass } =
+  Astro.props;
 
 const defaultTranslation = translations.find(
   (translation) => translation.locale === site.defaultLocale,
@@ -88,6 +97,7 @@ const otherLink = isToggle
         { 'brisk-language-switcher--right': position === 'right' },
         { 'brisk-visibility-desktop-only': visibility === 'desktop-only' },
         { 'brisk-visibility-mobile-only': visibility === 'mobile-only' },
+        instanceClass,
       ]}
       aria-label={i18n.t('languageSwitcher.label')}
     >
@@ -115,9 +125,16 @@ const otherLink = isToggle
 }
 
 <style>
+  /* Same fallbacks as core's own, so this override behaves identically
+     under a per-instance style. */
   .brisk-language-switcher {
     display: flex;
-    gap: 0.5rem;
+    gap: var(--brisk-override-gap, 0.5rem);
+    background: var(--brisk-override-bg, transparent);
+    color: var(--brisk-override-text, inherit);
+    border-radius: var(--brisk-override-radius, 0);
+    padding: var(--brisk-override-padding-y, 0)
+      var(--brisk-override-padding-x, 0);
   }
   .brisk-language-switcher--right {
     margin-left: auto;

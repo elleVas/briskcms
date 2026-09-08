@@ -9,11 +9,15 @@ import { Translator } from '@brisk/theme-runtime';
 
 interface Props extends LanguageSwitcherProps {
   locale: string;
+  /** The per-instance style class, from BlockRenderer — see blockInstanceClassName. */
+  instanceClass?: string | null;
   translations: PublishedPageTranslation[];
   site: PublishedSite;
 }
 
-const { position, visibility, locale, translations, site } = Astro.props;
+const { position, visibility, locale, translations, site,
+  instanceClass,
+} = Astro.props;
 
 // The default locale's translation doubles as the redirect target for
 // 'redirect-to-default' (docs/adr/0017's fallback setting) — same
@@ -73,6 +77,7 @@ const i18n = new Translator(locale);
         { 'brisk-language-switcher--right': position === 'right' },
         { 'brisk-visibility-desktop-only': visibility === 'desktop-only' },
         { 'brisk-visibility-mobile-only': visibility === 'mobile-only' },
+        instanceClass,
       ]}
       aria-label={i18n.t('languageSwitcher.label')}
     >
@@ -89,9 +94,15 @@ const i18n = new Translator(locale);
 }
 
 <style>
+  /* Fallbacks are what this block already rendered. */
   .brisk-language-switcher {
     display: flex;
-    gap: 0.5rem;
+    gap: var(--brisk-override-gap, 0.5rem);
+    background: var(--brisk-override-bg, transparent);
+    color: var(--brisk-override-text, inherit);
+    border-radius: var(--brisk-override-radius, 0);
+    padding: var(--brisk-override-padding-y, 0)
+      var(--brisk-override-padding-x, 0);
   }
   .brisk-language-switcher--right {
     margin-left: auto;

@@ -1,5 +1,9 @@
-import type { BreadcrumbProps } from '@brisk/shared-types';
+import {
+  BLOCK_STYLE_DEFAULTS,
+  type BreadcrumbProps,
+} from '@brisk/shared-types';
 import type { BlockDescriptor } from '../field-types';
+import { BlockStyleRegistry } from '../block-style-registry';
 import { visibilityField } from '../fields/visibility-field';
 
 export const breadcrumbBlock: BlockDescriptor<BreadcrumbProps> = {
@@ -20,4 +24,6 @@ export const breadcrumbBlock: BlockDescriptor<BreadcrumbProps> = {
     },
     visibilityField,
   ],
+  stylableProperties: [...BlockStyleRegistry.STANDARD, 'gap'],
+  defaultStyle: BLOCK_STYLE_DEFAULTS.Breadcrumb,
 };

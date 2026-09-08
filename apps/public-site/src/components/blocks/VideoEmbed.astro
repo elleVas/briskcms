@@ -4,9 +4,13 @@ import ConsentGatedEmbed from '../ConsentGatedEmbed.astro';
 import { parseVideoEmbedUrl } from '../../lib/video-embed';
 import { Translator } from '@brisk/theme-runtime';
 
-type Props = VideoEmbedProps & { locale: string };
+type Props = VideoEmbedProps & {
+  locale: string;
+  /** The per-instance style class, from BlockRenderer — see blockInstanceClassName. */
+  instanceClass?: string | null;
+};
 
-const { url, locale } = Astro.props;
+const { url, locale, instanceClass } = Astro.props;
 const parsed = url ? parseVideoEmbedUrl(url) : null;
 const i18n = new Translator(locale);
 ---
@@ -14,6 +18,7 @@ const i18n = new Translator(locale);
 {
   parsed && (
     <ConsentGatedEmbed
+      instanceClass={instanceClass}
       src={parsed.embedUrl}
       title={i18n.t('videoEmbed.title')}
       buttonLabel={i18n.t('videoEmbed.buttonLabel', {
