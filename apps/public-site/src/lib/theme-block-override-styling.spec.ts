@@ -65,6 +65,32 @@ describe('a theme override keeps per-instance styling working', () => {
       expect(source).toMatch(/class:list=\{\[[\s\S]*?instanceClass/);
     },
   );
+
+  /*
+   * A container's override has to render `<slot />`, or every child block
+   * disappears on every site using that theme — silently, since the page
+   * still renders and the blocks are still stored.
+   *
+   * `Hero` became a container in ADR-0056 while `themes/docs-showcase`
+   * was already overriding it, which is exactly the shape of the problem:
+   * the override was written when the block had no children to lose.
+   */
+  const containerTypes = new Set(
+    [...pageBlocks, ...headerFooterBlocks]
+      .filter((descriptor) => descriptor.isContainer)
+      .map((descriptor) => descriptor.type),
+  );
+
+  const containerOverrides = overrides.filter((override) =>
+    containerTypes.has(override.type),
+  );
+
+  it.each(containerOverrides.map((o) => [`${o.theme}/${o.type}`, o.path]))(
+    '%s renders a slot, because the block it replaces holds children',
+    (_name, path) => {
+      expect(readFileSync(path, 'utf8')).toContain('<slot');
+    },
+  );
 });
 
 /**

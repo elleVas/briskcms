@@ -148,6 +148,9 @@
  */
 body,
 .brisk-accordion,
+/* A Hero holds blocks since ADR-0056, so it is somewhere a block can
+   live and has to be measurable like every other container here. */
+.brisk-hero,
 .brisk-column,
 .brisk-columns,
 .brisk-container,

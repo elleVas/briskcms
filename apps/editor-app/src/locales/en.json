@@ -952,10 +952,30 @@
       "fields": {
         "label": {
           "fieldLabel": "Text"
+        },
+        "icon": {
+          "fieldLabel": "Icon"
+        },
+        "size": {
+          "fieldLabel": "Size",
+          "options": {
+            "sm": "Small",
+            "md": "Medium",
+            "lg": "Large"
+          }
+        },
+        "fullWidth": {
+          "fieldLabel": "Full width"
+        },
+        "openInNewTab": {
+          "fieldLabel": "Open in a new tab"
         }
       },
       "variants": {
-        "secondary": "Secondary"
+        "secondary": "Secondary",
+        "outline": "Outline",
+        "ghost": "Ghost",
+        "link": "Link"
       }
     },
     "callout": {
@@ -1126,6 +1146,9 @@
         },
         "subtitle": {
           "fieldLabel": "Subtitle"
+        },
+        "eyebrow": {
+          "fieldLabel": "Eyebrow (small line above the title)"
         }
       }
     },

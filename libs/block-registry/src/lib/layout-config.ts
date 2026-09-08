@@ -10,6 +10,15 @@ import { whatsAppButtonBlock } from './blocks/whatsapp-button.block';
 import { imageBlock } from './blocks/image.block';
 import { searchBoxBlock } from './blocks/search-box.block';
 import { textBlock } from './blocks/text.block';
+import { buttonBlock } from './blocks/button.block';
+import { containerBlock } from './blocks/container.block';
+import { columnsBlock } from './blocks/columns.block';
+import { columnBlock } from './blocks/column.block';
+import { socialLinksBlock } from './blocks/social-links.block';
+import { socialLinkBlock } from './blocks/social-link.block';
+import { dividerBlock } from './blocks/divider.block';
+import { spacerBlock } from './blocks/spacer.block';
+import { iconBlock } from './blocks/icon.block';
 
 export {
   backToTopBlock,
@@ -57,4 +66,23 @@ export const headerFooterBlocks: BlockDescriptor[] = [
   backToTopBlock,
   whatsAppButtonBlock,
   searchBoxBlock,
+  // ADR-0056. A call to action in the header is something every site has,
+  // and until now the palette had no button at all — the only way to get
+  // one was a NavLink, which is a menu item and reads as one.
+  buttonBlock,
+  // The header and footer stacked their blocks in a plain `flex-col` and
+  // nothing else: two columns in a footer, or a row of links beside a
+  // logo, were not expressible. These are the same layout blocks a page
+  // has, and a footer is a layout problem like any other.
+  containerBlock,
+  columnsBlock,
+  columnBlock,
+  // A row of social icons is a footer's most common single element.
+  socialLinksBlock,
+  socialLinkBlock,
+  // A rule between the footer's sections, deliberate space, and a
+  // standalone icon — all three belong wherever content does.
+  dividerBlock,
+  spacerBlock,
+  iconBlock,
 ];
