@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import type {
   Block,
+  BlockAlign,
   BlockRect,
   BlockStyleDefaults,
   BlockStyleOverride,
@@ -79,6 +80,8 @@ export interface BlockToolbarOverlayProps {
   onChangeInstanceStyle: (style: BlockStyleOverride) => void;
   /** Picking one of the type's declared looks (ADR-0047) — `undefined` restores the type's default. */
   onChangeVariant: (variant: string | undefined) => void;
+  /** How much page width this block claims (ADR-0049) — present only for a ROOT-level block, see InspectorPanel. */
+  onChangeAlign?: (align: BlockAlign | undefined) => void;
   onMoveUp: () => void;
   onMoveDown: () => void;
   onDuplicate: () => void;
@@ -141,6 +144,7 @@ export function BlockToolbarOverlay({
   onChangeTypeStyle,
   onChangeInstanceStyle,
   onChangeVariant,
+  onChangeAlign,
   onMoveUp,
   onMoveDown,
   onDuplicate,
@@ -379,6 +383,7 @@ export function BlockToolbarOverlay({
                 descriptor={descriptor}
                 onChangeProp={onChangeProp}
                 onChangeVariant={onChangeVariant}
+                onChangeAlign={onChangeAlign}
               />
             </PopoverContent>
           </Popover>

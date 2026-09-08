@@ -1,6 +1,7 @@
 import {
   columnsGridTemplate,
   type Block,
+  type BlockAlign,
   type ResponsiveBlockStyle,
 } from '@brisk/shared-types';
 import type { BlockDescriptor } from '@brisk/block-registry';
@@ -80,6 +81,36 @@ export function updateBlockVariant(
       };
     }
     return block;
+  });
+}
+
+/**
+ * Sets (or clears, with `undefined`) how much page width a ROOT block
+ * claims (ADR-0049). A field of the block like `variant`, and cleared the
+ * same way: `content` is the default and is stored as the field's absence,
+ * so a page does not carry a value on every block saying "behave
+ * normally".
+ */
+export function updateBlockAlign(
+  blocks: Block[],
+  blockId: string,
+  align: BlockAlign | undefined,
+): Block[] {
+  // Root level only, deliberately: this is the one block field that is
+  // meaningless deeper down (a nested block is laid out by its container),
+  // so there is no recursion into `children` here — unlike every other
+  // helper in this file. A stray id simply matches nothing.
+  return blocks.map((block) => {
+    if (block.id !== blockId) {
+      return block;
+    }
+    const next = { ...block };
+    if (align === undefined) {
+      delete next.align;
+    } else {
+      next.align = align;
+    }
+    return next;
   });
 }
 

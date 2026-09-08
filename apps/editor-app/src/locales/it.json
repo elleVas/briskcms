@@ -423,6 +423,8 @@
     "fontCustomPlaceholder": "es. Space Grotesk",
     "faviconLabel": "URL favicon",
     "customCssLabel": "CSS personalizzato",
+    "contentWidthLabel": "Larghezza del contenuto",
+    "contentWidthHelp": "Quanto è larga la colonna leggibile su ogni pagina — una misura CSS come 64rem o 1100px. Lascia vuoto per usare la larghezza del tema. Un singolo blocco può comunque essere impostato su Larga o Tutta la larghezza.",
     "save": "Salva",
     "saving": "Salvataggio in corso...",
     "saved": "Salvato"
@@ -666,6 +668,13 @@
     "variant": {
       "fieldLabel": "Aspetto",
       "default": "Predefinito"
+    },
+    "align": {
+      "fieldLabel": "Larghezza",
+      "content": "Contenuto",
+      "wide": "Larga",
+      "full": "Tutta la larghezza",
+      "hint": "Quanta parte della pagina occupa questo blocco."
     },
     "breakpointGroup": "Dimensione in anteprima e in modifica",
     "breakpointDesktop": "Desktop (oltre {{tablet}}px)",

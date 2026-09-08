@@ -19,6 +19,7 @@ import {
 } from '@brisk/shared-types';
 import { runBlockBehaviorsInSubtree } from './block-behaviors/run-block-behaviors-in-subtree';
 import {
+  applyBlockAlign,
   applyBlockInsert,
   applyBlockPatch,
   applyBlockRemove,
@@ -464,6 +465,15 @@ export function initPreviewBridge(): void {
       case 'editor:scroll-to-block':
         scrollBlockIntoView(document, event.data.payload.blockId);
         return;
+      case 'editor:set-block-align': {
+        const { blockId, align } = event.data.payload;
+        applyBlockAlign(document, blockId, align);
+        // The block's box changes, so the overlay drawn over it has to be
+        // re-measured — the same reason every structural message above
+        // ends this way.
+        sendBlockRects();
+        return;
+      }
       default:
         return;
     }

@@ -166,7 +166,15 @@ export function buildBlockStyleOverridesCss(
  */
 const CSS_VALUE_BREAKOUT = /[;{}@<>\\]|\/\*|\*\//;
 
-function safeDeclarationValue(value: unknown): string | null {
+/**
+ * Exported since ADR-0049: the site's own content width is interpolated
+ * into a `:root` declaration by PageLayout.astro, which is the same
+ * position — a string becoming a stylesheet — this already guards for
+ * block overrides. Exported rather than re-implemented there, so there is
+ * one definition of "safe at the exit" to keep correct, not two that can
+ * drift apart while both look right.
+ */
+export function safeCssDeclarationValue(value: unknown): string | null {
   return typeof value === 'string' &&
     value.length > 0 &&
     value.length <= 200 &&
@@ -212,7 +220,7 @@ function safeBlockTypeClassName(blockType: string): string | null {
  * injection — would take down the whole page instead of costing that one
  * declaration. The schema guards the boundary where rejecting the write
  * is the right answer; here the right answer is to emit everything that
- * is fine and drop what is not, which `safeDeclarationValue` already does
+ * is fine and drop what is not, which `safeCssDeclarationValue` already does
  * per declaration.
  */
 function responsiveBuckets(style: unknown): Record<string, unknown>[] {
@@ -258,7 +266,7 @@ function buildOverrideDeclarations(
   const core = (
     Object.keys(BLOCK_STYLE_CUSTOM_PROPERTIES) as CssOverridableProperty[]
   ).map((field) => {
-    const value = safeDeclarationValue(override[field]);
+    const value = safeCssDeclarationValue(override[field]);
     return value ? `${BLOCK_STYLE_CUSTOM_PROPERTIES[field]}: ${value};` : null;
   });
 
@@ -271,7 +279,7 @@ function buildOverrideDeclarations(
     .filter((key) => !(key in BLOCK_STYLE_CUSTOM_PROPERTIES))
     .map((key) => {
       const name = themeStylePropertyName(key);
-      const value = safeDeclarationValue(override[key]);
+      const value = safeCssDeclarationValue(override[key]);
       return name && value ? `${name}: ${value};` : null;
     });
 

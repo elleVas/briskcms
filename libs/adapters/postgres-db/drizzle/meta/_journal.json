@@ -71,6 +71,13 @@
       "when": 1788803376337,
       "tag": "0009_site_theme_block_styles_variant",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1788844507018,
+      "tag": "0010_site_theme_content_width",
+      "breakpoints": true
     }
   ]
 }

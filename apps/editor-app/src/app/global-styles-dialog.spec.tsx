@@ -80,6 +80,7 @@ function buildSite(overrides: Partial<SiteRecord> = {}): SiteRecord {
     themeSecondaryColor: null,
     themeFontFamily: null,
     themeCustomCss: null,
+    themeContentWidth: null,
     themeHeadScript: null,
     themeBodyScript: null,
     themeFaviconUrl: null,

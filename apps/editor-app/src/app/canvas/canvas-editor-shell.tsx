@@ -15,6 +15,7 @@ import {
   DEFAULT_VARIANT,
   withBreakpointStyle,
   type Block,
+  type BlockAlign,
   type BlockStyleOverride,
   type ResponsiveBlockStyle,
 } from '@brisk/shared-types';
@@ -50,6 +51,7 @@ import {
   moveBlock,
   updateBlockProps,
   updateBlockStyleOverride,
+  updateBlockAlign,
   updateBlockVariant,
 } from './use-block-tree';
 import { useBlockTreeMutations } from './use-block-tree-mutations';
@@ -611,6 +613,27 @@ export function CanvasEditorShell({
   }
 
   /**
+   * How much of the page's width the selected ROOT block claims
+   * (ADR-0049).
+   *
+   * No render round trip, unlike the variant above: the value ends up as
+   * an attribute on the wrapper AROUND the block, so re-rendering the
+   * block's own HTML would not carry it. The bridge sets that attribute
+   * directly and the CSS does the rest — the canvas reflows as the select
+   * changes, with nothing to wait for.
+   */
+  function handleChangeAlign(align: BlockAlign | undefined): void {
+    const blockId = selectedBlock?.id;
+    if (!blockId) {
+      return;
+    }
+    const next = updateBlockAlign(localBlocksRef.current, blockId, align);
+    setLocalBlocks(next);
+    onChange(next);
+    bridge.setBlockAlign(blockId, align ?? null);
+  }
+
+  /**
    * The fields edit ONE size at a time — whichever the breakpoint selector
    * is showing — and that flat override is merged back into the block's
    * per-breakpoint style here. Deliberately not in the fields themselves:
@@ -848,6 +871,15 @@ export function CanvasEditorShell({
                 categories={categories}
                 onChangeProp={handleChangeProp}
                 onChangeVariant={handleChangeVariant}
+                onChangeAlign={
+                  // Root level, and the page's own content: the header and
+                  // footer lists have no per-block wrapper to carry the
+                  // attribute (they space their blocks with a flex `gap`),
+                  // and a nested block's width is its container's business.
+                  isSelectedRootLevel && !editingSection
+                    ? handleChangeAlign
+                    : undefined
+                }
                 breakpoint={breakpoint}
                 typeStyle={
                   site

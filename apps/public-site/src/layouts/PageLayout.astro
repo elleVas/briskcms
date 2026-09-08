@@ -2,6 +2,7 @@
 import {
 	buildBlockStyleOverridesCss,
 	DEFAULT_THEME_TOKENS,
+	safeCssDeclarationValue,
 	type Block,
 	type PublishedPageAncestor,
 	type PublishedPageTranslation,
@@ -247,6 +248,7 @@ const theme = allowThemeTokenOverrides
 			secondaryColor: null,
 			fontFamily: null,
 			customCss: null,
+			contentWidth: null,
 			faviconUrl: null,
 			overridesEnabled: false,
 		};
@@ -276,6 +278,20 @@ const themeOverrideDeclarations = [
 	theme.primaryColor && `--primary: ${theme.primaryColor} !important;`,
 	theme.secondaryColor && `--secondary: ${theme.secondaryColor} !important;`,
 	themeFont && `--font-sans-value: ${themeFont.cssFontFamily} !important;`,
+	// ADR-0049. It lands in the same `:root` as the colours above and after
+	// the theme's own token block, so the site's number wins the identical
+	// `!important` the theme's declaration carries — the ordering the two
+	// <style> tags below already relied on for `--primary`.
+	//
+	// The value is a guarded CSS length at the schema (`cssLengthTokenSchema`),
+	// and this is the second barrier PR #144 established for exactly this
+	// position: a declaration written into a page-wide stylesheet is where a
+	// string stops being data. `safeCssLength` drops anything that could
+	// close the declaration rather than escaping it — a site rendering at
+	// its theme's own width is a better outcome than one rendering an
+	// attacker's rule.
+	safeCssDeclarationValue(theme.contentWidth) &&
+		`--brisk-content-width: ${theme.contentWidth} !important;`,
 ]
 	.filter(Boolean)
 	.join(' ');

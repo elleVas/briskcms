@@ -1,5 +1,10 @@
-import { type BlockRect } from '@brisk/shared-types';
+import { type BlockAlign, type BlockRect } from '@brisk/shared-types';
 import { getBlockRect } from './get-block-rect';
+import {
+  DEFAULT_GAP_ATTR,
+  ROOT_BLOCK_CLASS,
+  rootBlockSpacingStyle,
+} from './root-block-layout';
 
 /**
  * Pure parsing/predicate and DOM-patching functions — deliberately kept
@@ -113,6 +118,88 @@ export function applyBlockPatch(
 }
 
 /**
+ * The wrapper a root block lives in, built to match the one
+ * PublicPageContent.astro renders server-side.
+ *
+ * The new block goes in as the LAST one (that is where an append puts it,
+ * and an insert-before hands its own position to the sibling), so it takes
+ * the last block's spacing: no default gap below it.
+ */
+function wrapRootBlock(blockEl: Element): Element {
+  const wrapper = document.createElement('div');
+  wrapper.className = ROOT_BLOCK_CLASS;
+  wrapper.setAttribute('style', rootBlockSpacingStyle(undefined, true));
+  // Nobody has chosen a gap for a block that did not exist a moment ago,
+  // so this wrapper is re-spaceable — the same marker the server writes
+  // for every root block whose spacing is still the default.
+  wrapper.setAttribute(DEFAULT_GAP_ATTR, 'default');
+  wrapper.appendChild(blockEl);
+  return wrapper;
+}
+
+/**
+ * Re-applies the positional default gap to a wrapper whose position in the
+ * list just changed — and ONLY when that gap is still the default one
+ * (`data-brisk-gap="default"`, written by PublicPageContent.astro in the
+ * canvas). A wrapper whose bottom margin somebody chose keeps it: the
+ * canvas re-spacing blocks must never silently discard a value the editor
+ * shows as set.
+ */
+function respaceRootWrapper(wrapper: Element | null, isLast: boolean): void {
+  if (wrapper?.getAttribute(DEFAULT_GAP_ATTR) !== 'default') {
+    return;
+  }
+  wrapper.setAttribute('style', rootBlockSpacingStyle(undefined, isLast));
+}
+
+/**
+ * The `.brisk-root-block` wrapper `el` sits directly inside, if any.
+ *
+ * A root block is the only block with one as its immediate parent — a
+ * nested block has a root wrapper somewhere up the tree too, which is why
+ * this checks the parent rather than using `closest`.
+ */
+function rootWrapperOf(el: Element): Element | null {
+  const parent = el.parentElement;
+  return parent?.classList.contains(ROOT_BLOCK_CLASS) ? parent : null;
+}
+
+/**
+ * Sets how much width a root block claims (ADR-0049) — see
+ * EditorSetBlockAlignMessage.
+ *
+ * The attribute goes on the wrapper, not the block: that is where the CSS
+ * reads it, and it is also why this is its own message rather than a
+ * re-render — patching the block's HTML would replace the element inside
+ * the wrapper and leave the wrapper's own attributes exactly as they were.
+ *
+ * A silent no-op for a block that is not root-level, the same discipline
+ * as the rest of the bridge: the editor only offers the control at the top
+ * level, and a message arriving for anything else asks for something the
+ * page has no way to express.
+ */
+export function applyBlockAlign(
+  root: ParentNode,
+  blockId: string,
+  align: BlockAlign | null,
+): boolean {
+  const target = root.querySelector(`[data-brisk-block-id="${blockId}"]`);
+  const wrapper = target ? rootWrapperOf(target) : null;
+  if (!wrapper) {
+    return false;
+  }
+  // `content` is written as the ABSENCE of the attribute, matching how the
+  // server renders it — anything else leaves two ways to express the same
+  // page, and the canvas showing one while a reload shows the other.
+  if (align && align !== 'content') {
+    wrapper.setAttribute('data-brisk-align', align);
+  } else {
+    wrapper.removeAttribute('data-brisk-align');
+  }
+  return true;
+}
+
+/**
  * Inserts a block the iframe has NEVER seen before (insert/duplicate) — see
  * EditorInsertBlockMessage. It finds the right DOM container without having
  * to know the internal structure of every container block type
@@ -135,8 +222,24 @@ export function applyBlockInsert(
   beforeBlockId: string | null,
   editingSection: EditingSection | null,
 ): Element | null {
-  const beforeEl = beforeBlockId
+  const beforeBlockEl = beforeBlockId
     ? root.querySelector(`[data-brisk-block-id="${beforeBlockId}"]`)
+    : null;
+
+  // A ROOT block is not a direct child of its list: PublicPageContent.astro
+  // puts every one of them inside a `.brisk-root-block` wrapper carrying
+  // the spacing and, since ADR-0049, the width and alignment that used to
+  // sit on `<main>`. So the sibling to insert before is that WRAPPER, and
+  // the container is the wrapper's parent — using the block element's own
+  // parent, as this did, made the new block a CHILD of its neighbour's
+  // wrapper: nested inside the block it was supposed to sit above, sharing
+  // its spacing and its width.
+  //
+  // `closest` and not "is the parent a root wrapper": a nested block is
+  // inside a root wrapper too, several levels down, and only the one whose
+  // wrapper is its immediate parent is a root block.
+  const beforeEl = beforeBlockEl
+    ? (rootWrapperOf(beforeBlockEl) ?? beforeBlockEl)
     : null;
 
   const container = beforeEl?.parentElement
@@ -150,6 +253,17 @@ export function applyBlockInsert(
   if (!container) {
     return null;
   }
+  // Whether this insert lands in the PAGE's root list, whichever branch
+  // above found it — an append with no sibling finds the marker directly,
+  // an insert-before finds it as the wrapper's parent.
+  //
+  // `'page'` specifically, not "any root list": the header and footer lists
+  // space their blocks with a flex `gap` on the list itself
+  // (PageLayout.astro) and have no per-block wrapper at all. Wrapping a
+  // block inserted there would put a div nothing styles between the flex
+  // container and its item.
+  const isRootInsert =
+    container.getAttribute('data-brisk-root-blocks') === 'page';
 
   const template = document.createElement('template');
   template.innerHTML = html.trim();
@@ -186,15 +300,32 @@ export function applyBlockInsert(
     oldScript.replaceWith(freshScript);
   }
 
+  // A root block travels in its wrapper. Building it here rather than
+  // asking the server for it keeps the insert a single round trip, and
+  // root-block-layout.ts is shared with the page renderer precisely so the
+  // two agree: a wrapper missing here is a block rendered outside the
+  // content column until the next reload.
+  const insertedNode: Element = isRootInsert ? wrapRootBlock(newNode) : newNode;
+
   if (beforeEl) {
-    container.insertBefore(newNode, beforeEl);
+    container.insertBefore(insertedNode, beforeEl);
   } else {
-    container.appendChild(newNode);
+    // Appending makes the previous last block no longer last, and the
+    // default bottom gap is exactly the one thing about a root block that
+    // depends on its position — without this the two blocks sit flush
+    // against each other, and only until a reload, which is the kind of
+    // difference between canvas and page this bridge exists to avoid.
+    respaceRootWrapper(container.lastElementChild, false);
+    container.appendChild(insertedNode);
   }
 
   // Every sibling node left in `template.content` (typically the <script>
   // recreated above, when it is a sibling rather than nested) is reattached
   // right after newNode, in the same relative order as the original HTML.
+  // `newNode`, not the wrapper around it: a server-rendered page puts the
+  // block's sibling <script> inside the same root wrapper as the block
+  // itself (the wrapper encloses BlockRenderer's whole output), and the
+  // canvas has to match that or the two DOMs differ.
   let anchor: ChildNode = newNode;
   for (const sibling of Array.from(template.content.childNodes)) {
     anchor.after(sibling);
@@ -229,7 +360,22 @@ export function applyBlockRemove(root: ParentNode, blockId: string): boolean {
   if (!target) {
     return false;
   }
-  target.remove();
+  // A root block leaves with its wrapper. Removing the block alone left an
+  // empty `.brisk-root-block` behind, still carrying the gap below it — a
+  // blank band where the block used to be, until the next reload. It also
+  // takes any sibling <script> the block rendered alongside itself, which
+  // lives in that same wrapper.
+  const wrapper = rootWrapperOf(target);
+  if (wrapper) {
+    const container = wrapper.parentElement;
+    wrapper.remove();
+    // Deleting the last block promotes its neighbour, and the last block
+    // is the one with no default gap under it — otherwise the page keeps
+    // a trailing 4rem that the server-rendered version does not have.
+    respaceRootWrapper(container?.lastElementChild ?? null, true);
+  } else {
+    target.remove();
+  }
   return true;
 }
 
@@ -251,7 +397,12 @@ export function applyBlockReorder(
 ): void {
   const existing = orderedIds
     .map((id) => root.querySelector(`[data-brisk-block-id="${id}"]`))
-    .filter((el): el is Element => el !== null);
+    .filter((el): el is Element => el !== null)
+    // What moves is the WRAPPER, for a root block: reordering the block
+    // elements themselves took the first block's wrapper as the container
+    // and then appended every other block INTO it, collapsing the whole
+    // page into one wrapper and emptying the rest.
+    .map((el) => rootWrapperOf(el) ?? el);
   if (existing.length === 0) {
     return;
   }

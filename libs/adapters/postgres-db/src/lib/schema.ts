@@ -143,6 +143,10 @@ export const sites = pgTable(
     themeSecondaryColor: text('theme_secondary_color'),
     themeFontFamily: text('theme_font_family'),
     themeCustomCss: text('theme_custom_css'),
+    // ADR-0049 — the readable content column's width. Nullable like every
+    // other Tier 1 column: `null` is "whatever the active theme says",
+    // never a number coerced here.
+    themeContentWidth: text('theme_content_width'),
     themeHeadScript: text('theme_head_script'),
     themeBodyScript: text('theme_body_script'),
     themeFaviconUrl: text('theme_favicon_url'),

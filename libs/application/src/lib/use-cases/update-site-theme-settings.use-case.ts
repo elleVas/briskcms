@@ -58,6 +58,7 @@ export async function updateSiteThemeSettings(
     secondaryColor: input.secondaryColor,
     fontFamily: input.fontFamily,
     customCss: input.customCss,
+    contentWidth: input.contentWidth,
     headScript: head.remainingScript,
     bodyScript: body.remainingScript,
     faviconUrl: input.faviconUrl,

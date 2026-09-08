@@ -22,6 +22,7 @@ function buildSite(id: string, tenantId = 'tenant-1') {
     themeSecondaryColor: null,
     themeFontFamily: null,
     themeCustomCss: null,
+    themeContentWidth: null,
     themeHeadScript: null,
     themeBodyScript: null,
     themeFaviconUrl: null,

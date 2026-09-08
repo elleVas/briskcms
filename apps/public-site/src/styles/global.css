@@ -35,6 +35,9 @@
   --muted-foreground: #71717a;
   --border: #e4e4e7;
   --radius: 0.5rem;
+  --brisk-content-width: 64rem;
+  --brisk-content-width-wide: 80rem;
+  --brisk-content-gutter: 1.5rem;
 }
 
 @layer base {
@@ -138,4 +141,60 @@ body,
 .brisk-testimonials,
 .brisk-timeline {
   container-type: inline-size;
+}
+
+/*
+ * The width a root-level block gets (ADR-0049).
+ *
+ * This used to be `<main class="mx-auto flex max-w-5xl flex-col px-6">` in
+ * PublicPageContent.astro — one literal number, on every page of every
+ * site, and unreachable: the constraint sat INSIDE the slot a theme's
+ * ContentShell wraps, so even a theme that owned the whole page could not
+ * widen it. The audit called it the single biggest limitation of the
+ * canvas, and it is the reason a hero could never run edge-to-edge.
+ *
+ * `max-width` + `padding-inline` on ONE element, with the border-box
+ * sizing Tailwind's preflight already sets, reproduces the old pair
+ * exactly: 64rem outer, 61rem of content inside 1.5rem gutters, the same
+ * numbers `max-w-5xl px-6` produced. A page that sets nothing renders
+ * byte-for-byte as before.
+ *
+ * `<main>` keeps `flex flex-col` deliberately. Margins do not collapse
+ * between flex items and they do between block-flow siblings, so a page
+ * where one block sets `marginTop` under a neighbour's `marginBottom`
+ * would silently lose the smaller of the two if this became block flow —
+ * a spacing change nobody asked for, on saved content.
+ */
+.brisk-root-block {
+  max-width: var(--brisk-content-width);
+  padding-inline: var(--brisk-content-gutter);
+  margin-inline: auto;
+  /* Belt and braces: the tokens above are theme-supplied and a theme is
+     allowed to be wrong. Without this, a theme shipping a width in a unit
+     that does not resolve leaves the block at its flex default — full
+     width, no gutters — and the page looks broken rather than plain. */
+  box-sizing: border-box;
+  width: 100%;
+}
+
+/*
+ * `max()` and not a bare `var()`: the wide tier belongs to the theme, the
+ * content width can be raised by the site (Tier 1, Style settings). A site
+ * that widens its column past its theme's wide tier would otherwise make
+ * "wide" render NARROWER than the default it is supposed to exceed —
+ * silently, and only on the sites that customized the number.
+ */
+.brisk-root-block[data-brisk-align='wide'] {
+  max-width: max(var(--brisk-content-width-wide), var(--brisk-content-width));
+}
+
+/*
+ * Full-bleed: the whole viewport, gutters included. A block that paints a
+ * background is the reason this exists, so the padding goes too — a
+ * full-width band with 1.5rem of blank page either side is the exact thing
+ * it was asked not to be.
+ */
+.brisk-root-block[data-brisk-align='full'] {
+  max-width: none;
+  padding-inline: 0;
 }

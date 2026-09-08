@@ -423,6 +423,8 @@
     "fontCustomPlaceholder": "e.g. Space Grotesk",
     "faviconLabel": "Favicon URL",
     "customCssLabel": "Custom CSS",
+    "contentWidthLabel": "Content width",
+    "contentWidthHelp": "How wide the readable column is on every page — a CSS length such as 64rem or 1100px. Leave empty to use the theme's own width. A block can still be set to Wide or Full width on its own.",
     "save": "Save",
     "saved": "Saved",
     "saving": "Saving..."
@@ -666,6 +668,13 @@
     "variant": {
       "fieldLabel": "Look",
       "default": "Default"
+    },
+    "align": {
+      "fieldLabel": "Width",
+      "content": "Content",
+      "wide": "Wide",
+      "full": "Full width",
+      "hint": "How much of the page this block takes up."
     },
     "breakpointGroup": "Preview and styling size",
     "breakpointDesktop": "Desktop (wider than {{tablet}}px)",

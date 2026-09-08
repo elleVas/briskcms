@@ -341,6 +341,7 @@ export class SitesController {
       themeSecondaryColor: props.themeSecondaryColor,
       themeFontFamily: props.themeFontFamily,
       themeCustomCss: props.themeCustomCss,
+      themeContentWidth: props.themeContentWidth,
       themeHeadScript: props.themeHeadScript,
       themeBodyScript: props.themeBodyScript,
       themeFaviconUrl: props.themeFaviconUrl,
