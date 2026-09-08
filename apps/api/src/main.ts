@@ -1,14 +1,15 @@
+import { join } from 'node:path';
 import { Logger } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import compression from 'compression';
 import cookieParser from 'cookie-parser';
+import express from 'express';
 import helmet from 'helmet';
 import { requireEnv } from '@brisk/env-config';
 import { AppModule } from './app/app.module';
 import { HttpExceptionFilter } from './app/http-exception.filter';
 import { requestIdMiddleware } from './app/request-id.middleware';
 import { validateApiEnv } from './env-schema';
-import { mountMediaStatic } from './app/media-static';
 
 // Security review 2026-08-24, "third pass": no global handler — an
 // unhandled rejection or a throw outside every try/catch vanished, never
@@ -65,10 +66,41 @@ async function bootstrap() {
   // editor-app origin, see docs/adr/0010-session-based-auth-foundations.md.
   app.enableCors({ origin: requireEnv('EDITOR_APP_URL'), credentials: true });
   const mediaUploadDir = requireEnv('MEDIA_UPLOAD_DIR');
-  // Serving rules for both upload trees live in one place, shared with
-  // the integration tests so they exercise the real configuration —
-  // see media-static.ts.
-  mountMediaStatic(app, mediaUploadDir, `/${globalPrefix}`);
+  // Public form attachments (public-forms.controller.ts, unauthenticated
+  // upload) are content-sniffed on the way in (sniffAttachmentType) but
+  // served here with a second, independent layer of defense: forced
+  // download instead of inline rendering, so even a type that slipped
+  // through can never execute as HTML/SVG in a browser (security review
+  // 2026-08-25). Mounted before the general /uploads static below so it
+  // wins for this subpath.
+  app.use(
+    `/${globalPrefix}/uploads/attachments`,
+    express.static(join(mediaUploadDir, 'attachments'), {
+      setHeaders: (res) => {
+        res.setHeader('Content-Disposition', 'attachment');
+        res.setHeader('X-Content-Type-Options', 'nosniff');
+      },
+    }),
+  );
+  // apps/api serves uploaded media itself — no separate reverse-proxy route
+  // to configure for self-hosting, see ADR-0013. Under the global prefix
+  // since LocalDiskMediaStorageAdapter.getUrl() builds URLs against
+  // API_PUBLIC_URL, which already includes it.
+  // `nosniff` on the media tree as well (ADR-0054): every file here has
+  // had its bytes checked against a short allow-list and images are
+  // re-encoded to WebP, so nothing stored is executable — but the header
+  // costs nothing and removes the whole class of "the browser decides the
+  // type differs from what we said" from consideration. Media stays
+  // INLINE, unlike the attachments above: a <video> element cannot play a
+  // file the server told the browser to download.
+  app.use(
+    `/${globalPrefix}/uploads`,
+    express.static(mediaUploadDir, {
+      setHeaders: (res) => {
+        res.setHeader('X-Content-Type-Options', 'nosniff');
+      },
+    }),
+  );
   const port = process.env.PORT || 3000;
   await app.listen(port);
   Logger.log(
