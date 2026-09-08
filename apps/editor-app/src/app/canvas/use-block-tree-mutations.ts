@@ -90,6 +90,8 @@ export interface UseBlockTreeMutationsResult {
   handleInsert: (descriptor: BlockDescriptor) => void;
   /** A whole strip at once — how a template lands on the page (docs/adr/0059). */
   handleInsertBlocks: (blocks: (Block & { id: string })[]) => void;
+  /** Inserts a copy beside the selection — see the implementation on why the ids change. */
+  handlePaste: (block: Block) => void;
   handleReorder: (parentId: string | null, orderedIds: string[]) => void;
   handleRemoveSelected: () => void;
   /** Swaps the selected block for another at the same place — see the implementation. */
@@ -592,6 +594,27 @@ export function useBlockTreeMutations({
   }
 
   /**
+   * Pastes a block beside the selected one, or at the end of the page when
+   * nothing is selected.
+   *
+   * Fresh ids on every paste (`cloneBlockWithNewIds`, the same function
+   * Duplicate uses): two pastes of one copied block must not share ids,
+   * which key the per-instance style rule and the translation overlay —
+   * a style set on the second copy would land on both.
+   */
+  function handlePaste(block: Block): void {
+    const location = selectedBlock?.id
+      ? locateBlock(localBlocks, selectedBlock.id)
+      : null;
+    performInsert(
+      cloneBlockWithNewIds(block),
+      location
+        ? { parentId: location.parentId, index: location.index + 1 }
+        : { parentId: null, index: localBlocks.length },
+    );
+  }
+
+  /**
    * The "+" inside a selected collection container (Testimonials, Team,
    * Accordion, ...) — it adds another child of its ONE allowed type
    * (`allowedChildTypes[0]`) without opening the picker: there is no
@@ -647,6 +670,7 @@ export function useBlockTreeMutations({
     recordEdit,
     handleInsert,
     handleInsertBlocks,
+    handlePaste,
     handleReplaceSelected,
     handleReorder,
     handleRemoveSelected,

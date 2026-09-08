@@ -1219,3 +1219,119 @@ describe('CanvasEditorShell', () => {
     }
   });
 });
+
+/*
+ * Two shortcuts existed before Fase 7 — undo and redo — and every other
+ * gesture needed the mouse. These are the ones the plan asks for, plus
+ * the guard that keeps them out of the way of ordinary typing.
+ */
+describe('CanvasEditorShell keyboard shortcuts', () => {
+  beforeEach(() => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+  });
+  afterEach(() => {
+    vi.clearAllMocks();
+    vi.useRealTimers();
+  });
+
+  it('deletes the selected block with Delete', async () => {
+    const onChange = vi.fn();
+    renderShell({ onChange });
+    const iframe = await getIframe();
+    selectBlockWithRect(iframe, 'hero-1', HERO_RECT);
+
+    fireEvent.keyDown(window, { key: 'Delete' });
+
+    expect(onChange).toHaveBeenCalledWith([]);
+  });
+
+  it('duplicates the selected block with Cmd+D', async () => {
+    const onChange = vi.fn();
+    renderShell({ onChange });
+    const iframe = await getIframe();
+    selectBlockWithRect(iframe, 'hero-1', HERO_RECT);
+
+    fireEvent.keyDown(window, { key: 'd', metaKey: true });
+
+    const next = onChange.mock.calls.at(-1)?.[0] as Block[];
+    expect(next).toHaveLength(2);
+    // A copy, not the same block twice: the ids key the per-instance style
+    // rule and the translation overlay.
+    expect(next[1].id).not.toBe('hero-1');
+    expect(next[1].props).toEqual(next[0].props);
+  });
+
+  /*
+   * Copy/paste is the editor's own clipboard, not the system one: reading
+   * that needs a permission prompt, and writing a block to it as text
+   * would put a wall of JSON into whatever the person pastes into next.
+   */
+  it('copies and pastes a block with Cmd+C then Cmd+V', async () => {
+    const onChange = vi.fn();
+    renderShell({ onChange });
+    const iframe = await getIframe();
+    selectBlockWithRect(iframe, 'hero-1', HERO_RECT);
+
+    fireEvent.keyDown(window, { key: 'c', metaKey: true });
+    expect(onChange).not.toHaveBeenCalled();
+
+    fireEvent.keyDown(window, { key: 'v', metaKey: true });
+
+    const next = onChange.mock.calls.at(-1)?.[0] as Block[];
+    expect(next).toHaveLength(2);
+    expect(next[1].id).not.toBe('hero-1');
+  });
+
+  it('pastes nothing when nothing was copied', async () => {
+    const onChange = vi.fn();
+    renderShell({ onChange });
+    const iframe = await getIframe();
+    selectBlockWithRect(iframe, 'hero-1', HERO_RECT);
+
+    fireEvent.keyDown(window, { key: 'v', metaKey: true });
+
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  /*
+   * Alt, not a bare arrow: the arrows scroll, and taking that away from
+   * somebody reading a long page would be the wrong trade.
+   */
+  it('moves the selected block with Alt+Arrow', async () => {
+    const onChange = vi.fn();
+    renderShell({
+      onChange,
+      blocks: [
+        { id: 'hero-1', type: 'Hero', props: { title: 'A', subtitle: '' } },
+        { id: 'hero-2', type: 'Hero', props: { title: 'B', subtitle: '' } },
+      ],
+    });
+    const iframe = await getIframe();
+    selectBlockWithRect(iframe, 'hero-2', HERO_RECT);
+
+    fireEvent.keyDown(window, { key: 'ArrowUp', altKey: true });
+
+    const next = onChange.mock.calls.at(-1)?.[0] as Block[];
+    expect(next.map((block) => block.id)).toEqual(['hero-2', 'hero-1']);
+  });
+
+  /*
+   * The guard that matters: Delete has to delete a character in the
+   * editor's own inputs, not the block behind the dialog.
+   */
+  it('leaves the editor’s own inputs alone', async () => {
+    const onChange = vi.fn();
+    renderShell({ onChange });
+    const iframe = await getIframe();
+    selectBlockWithRect(iframe, 'hero-1', HERO_RECT);
+
+    const input = document.createElement('input');
+    document.body.append(input);
+    input.focus();
+
+    fireEvent.keyDown(window, { key: 'Delete' });
+    expect(onChange).not.toHaveBeenCalled();
+
+    input.remove();
+  });
+});

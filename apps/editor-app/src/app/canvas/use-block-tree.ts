@@ -230,6 +230,30 @@ export function locateBlock(
 }
 
 /**
+ * The chain from the outermost block down to `id`, `id` included — what
+ * the toolbar's breadcrumb shows and what makes "select the parent"
+ * possible at all.
+ *
+ * `[]` when the id is not in the tree, which the caller renders as
+ * nothing rather than as an error: a selection can outlive the block it
+ * pointed at for one render, after an undo or a delete.
+ */
+export function blockAncestry(blocks: Block[], id: string): Block[] {
+  for (const block of blocks) {
+    if (block.id === id) {
+      return [block];
+    }
+    if (block.children) {
+      const below = blockAncestry(block.children, id);
+      if (below.length > 0) {
+        return [block, ...below];
+      }
+    }
+  }
+  return [];
+}
+
+/**
  * The current siblings at a point in the tree — `null` = the root,
  * otherwise block `parentId`'s `children` (`[]` when it has no children
  * yet, or when `parentId` does not exist). canvas-editor-shell.tsx needs it

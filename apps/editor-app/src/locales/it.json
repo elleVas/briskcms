@@ -918,6 +918,30 @@
         "border": "Bordo",
         "link": "Link"
       }
+    },
+    "blockSearch": {
+      "label": "Cerca blocchi",
+      "placeholder": "Cerca blocchi…",
+      "noResults": "Nessun blocco corrisponde a “{{query}}”."
+    },
+    "pickers": {
+      "media": {
+        "change": "Cambia immagine",
+        "choose": "Scegli immagine"
+      },
+      "form": {
+        "change": "Cambia modulo",
+        "choose": "Scegli modulo"
+      },
+      "page": {
+        "change": "Cambia pagina",
+        "choose": "Scegli pagina"
+      },
+      "icon": {
+        "change": "Cambia icona",
+        "choose": "Scegli icona",
+        "remove": "Rimuovi icona"
+      }
     }
   },
   "toast": {

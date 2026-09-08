@@ -68,7 +68,9 @@ describe('IconPickerField', () => {
       wrapper: wrapperWith({ pick: vi.fn(), resolve: vi.fn() }),
     });
 
-    fireEvent.click(screen.getByTitle('Rimuovi icona'));
+    // By accessible name, not by `title`: the button is labelled through
+    // i18n now, and a screen reader finds it the same way this does.
+    fireEvent.click(screen.getByRole('button', { name: 'Rimuovi icona' }));
 
     expect(onChange).toHaveBeenCalledWith(null);
   });

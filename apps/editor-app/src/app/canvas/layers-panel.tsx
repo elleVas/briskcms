@@ -36,6 +36,27 @@ export interface LayersPanelProps {
    */
   onReorder?: (parentId: string | null, orderedIds: string[]) => void;
   /**
+   * Called when a row is dropped onto a DIFFERENT parent — moving a block
+   * into or out of a container without deleting and rebuilding it (Fase 7).
+   *
+   * Before this, `computeNestedReorder` refused a cross-parent drop
+   * outright: reparenting was impossible by construction, and the only way
+   * to move a block into a Column was to delete it and build it again in
+   * place, losing its styling and its text.
+   */
+  onReparent?: (
+    blockId: string,
+    parentId: string | null,
+    index: number,
+  ) => void;
+  /**
+   * Whether `parentType` may hold `childType` — the descriptor's own rule
+   * (`isContainer` plus `allowedChildTypes`), passed as a predicate rather
+   * than as the registry itself so this panel keeps knowing nothing about
+   * block descriptors.
+   */
+  canContain?: (parentType: string, childType: string) => boolean;
+  /**
    * Selects a block by clicking its row directly — the only reliable way to
    * select a container block when one of its children covers it entirely on
    * the canvas (a Column holding a single full-width Gallery, say: no
@@ -102,6 +123,101 @@ export function computeNestedReorder(
   return {
     parentId: activeLocation.parentId,
     orderedIds: arrayMove(siblingIds, oldIndex, newIndex),
+  };
+}
+
+/** Every id inside `blockId`, itself included — a block cannot be dropped into its own subtree. */
+function subtreeIds(blocks: Block[], blockId: string): Set<string> {
+  const found = new Set<string>();
+  const walk = (candidates: Block[], inside: boolean): void => {
+    for (const block of candidates) {
+      const isTarget = inside || block.id === blockId;
+      if (isTarget && block.id) {
+        found.add(block.id);
+      }
+      if (block.children) {
+        walk(block.children, isTarget);
+      }
+    }
+  };
+  walk(blocks, false);
+  return found;
+}
+
+/**
+ * Where a cross-parent drop actually lands, or `null` when it must not
+ * happen (Fase 7).
+ *
+ * Dropping ONTO a container's own row means "put it inside", at the end —
+ * that is the only way to reach an empty container, which has no child row
+ * to aim between. Dropping onto an ordinary row means "become its
+ * sibling", at that row's position.
+ *
+ * Three refusals, and each is a real way to break a page rather than a
+ * nicety:
+ *  - into its own subtree, which would detach the block from the tree
+ *    and lose everything under it;
+ *  - into a container that does not accept that type (`canContain`), the
+ *    same rule the drag-from-sidebar path already honours;
+ *  - a drop whose parent is unchanged, which is a REORDER and belongs to
+ *    `computeNestedReorder` — answering it here too would give one gesture
+ *    two implementations.
+ */
+export function computeReparent(
+  blocks: Block[],
+  activeId: string,
+  overId: string | null,
+  options: {
+    isContainer: (block: Block) => boolean;
+    canContain: (parentType: string, childType: string) => boolean;
+  },
+): { blockId: string; parentId: string | null; index: number } | null {
+  if (!overId || activeId === overId) {
+    return null;
+  }
+  const active = findBlockById(blocks, activeId);
+  const over = findBlockById(blocks, overId);
+  const activeLocation = locateBlock(blocks, activeId);
+  const overLocation = locateBlock(blocks, overId);
+  if (!active || !over || !activeLocation || !overLocation) {
+    return null;
+  }
+  if (subtreeIds(blocks, activeId).has(overId)) {
+    return null;
+  }
+
+  // Onto a container's own row: inside it, at the end.
+  if (options.isContainer(over)) {
+    if (
+      overLocation.parentId === activeId ||
+      !options.canContain(over.type, active.type)
+    ) {
+      return null;
+    }
+    if (activeLocation.parentId === overId) {
+      return null;
+    }
+    return {
+      blockId: activeId,
+      parentId: overId,
+      index: over.children?.length ?? 0,
+    };
+  }
+
+  // Onto an ordinary row: beside it.
+  if (activeLocation.parentId === overLocation.parentId) {
+    return null;
+  }
+  const newParent = overLocation.parentId
+    ? findBlockById(blocks, overLocation.parentId)
+    : null;
+  if (newParent && !options.canContain(newParent.type, active.type)) {
+    return null;
+  }
+  return {
+    blockId: activeId,
+    parentId: overLocation.parentId,
+    index: overLocation.index,
   };
 }
 
@@ -301,16 +417,30 @@ export function LayersPanel({
   }
 
   function handleDragEnd(event: DragEndEvent): void {
-    if (!onReorder) {
+    const activeId = String(event.active.id);
+    const overId = event.over ? String(event.over.id) : null;
+
+    // Reorder first: a drop between siblings of the same parent is the
+    // common gesture, and `computeReparent` deliberately refuses it so
+    // the two never both answer the same drop.
+    const reordered = onReorder
+      ? computeNestedReorder(blocks, activeId, overId)
+      : null;
+    if (reordered) {
+      onReorder?.(reordered.parentId, reordered.orderedIds);
       return;
     }
-    const result = computeNestedReorder(
-      blocks,
-      String(event.active.id),
-      event.over ? String(event.over.id) : null,
-    );
-    if (result) {
-      onReorder(result.parentId, result.orderedIds);
+    if (!onReparent || !canContain) {
+      return;
+    }
+    const reparented = computeReparent(blocks, activeId, overId, {
+      isContainer: (block) =>
+        canContain(block.type, block.type) ||
+        isKnownContainer(block, canContain),
+      canContain,
+    });
+    if (reparented) {
+      onReparent(reparented.blockId, reparented.parentId, reparented.index);
     }
   }
 

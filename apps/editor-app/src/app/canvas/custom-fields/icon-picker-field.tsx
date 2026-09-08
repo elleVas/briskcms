@@ -1,3 +1,6 @@
+import { X } from 'lucide-react';
+import { useTranslation } from '../../../lib/use-translation';
+import { Button } from '../../../components/ui/button';
 import { useIconList } from '../../icon-list-context';
 
 export interface IconPickerFieldProps {
@@ -6,6 +9,7 @@ export interface IconPickerFieldProps {
 }
 
 export function IconPickerField({ value, onChange }: IconPickerFieldProps) {
+  const { t } = useTranslation();
   const { pick, resolve } = useIconList();
   const svg = value ? resolve(value) : null;
 
@@ -15,48 +19,36 @@ export function IconPickerField({ value, onChange }: IconPickerFieldProps) {
   }
 
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+    <div className="flex items-center gap-2">
       {svg && (
         <span
           aria-hidden="true"
-          style={{ width: 20, height: 20, flexShrink: 0 }}
+          className="size-5 shrink-0"
+          // The SVG comes from the icon registry, which is our own bundled
+          // asset list — not from anything an author typed.
           dangerouslySetInnerHTML={{ __html: svg }}
         />
       )}
-      <button
+      <Button
         type="button"
+        variant="outline"
+        size="sm"
         onClick={() => void handlePick()}
-        style={{
-          padding: '6px 12px',
-          borderRadius: 4,
-          border: '1px solid #d4d4d8',
-          background: '#fff',
-          color: '#18181b',
-          font: 'inherit',
-          fontSize: 14,
-          cursor: 'pointer',
-        }}
       >
-        {value ? 'Cambia icona' : 'Scegli icona'}
-      </button>
+        {value
+          ? t('canvas.pickers.icon.change')
+          : t('canvas.pickers.icon.choose')}
+      </Button>
       {value && (
-        <button
+        <Button
           type="button"
+          variant="ghost"
+          size="icon-sm"
+          aria-label={t('canvas.pickers.icon.remove')}
           onClick={() => onChange(null)}
-          title="Rimuovi icona"
-          style={{
-            padding: '6px 10px',
-            borderRadius: 4,
-            border: '1px solid #d4d4d8',
-            background: '#fff',
-            color: '#18181b',
-            font: 'inherit',
-            fontSize: 13,
-            cursor: 'pointer',
-          }}
         >
-          ✕
-        </button>
+          <X />
+        </Button>
       )}
     </div>
   );

@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import type { BlockDescriptor } from '@brisk/block-registry';
 import {
   Accordion,
@@ -6,6 +6,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '../../components/ui/accordion';
+import { Input } from '../../components/ui/input';
 import { useTranslation } from '../../lib/use-translation';
 
 export interface BlockPickerCategory {
@@ -139,36 +140,77 @@ export function BlockPicker({
   onInsert,
   drag,
 }: BlockPickerProps) {
-  const { tLabel } = useTranslation();
+  const { t, tLabel } = useTranslation();
+  const [query, setQuery] = useState('');
+  const search = query.trim().toLowerCase();
+
   const nonEmptyCategories = categories
     .map((category) => ({
       ...category,
       descriptors: category.types
         .map((type) => registry.find((block) => block.type === type))
-        .filter((descriptor): descriptor is BlockDescriptor => !!descriptor),
+        .filter((descriptor): descriptor is BlockDescriptor => !!descriptor)
+        // Against the TRANSLATED label and the type name both: somebody
+        // reads "Immagine" in the list and types that, while somebody
+        // reading the docs types "Image". Refusing either would be a
+        // search that only works if you already knew where to look.
+        .filter(
+          (descriptor) =>
+            search === '' ||
+            tLabel(descriptor.label).toLowerCase().includes(search) ||
+            descriptor.type.toLowerCase().includes(search),
+        ),
     }))
     .filter((category) => category.descriptors.length > 0);
 
   return (
-    <Accordion type="multiple">
-      {nonEmptyCategories.map((category) => (
-        <AccordionItem key={category.title} value={category.title}>
-          <AccordionTrigger>{tLabel(category.title)}</AccordionTrigger>
-          <AccordionContent>
-            <ul className="flex flex-col gap-0.5">
-              {category.descriptors.map((descriptor) => (
-                <li key={descriptor.type}>
-                  <DraggableBlockButton
-                    descriptor={descriptor}
-                    onInsert={onInsert}
-                    drag={drag}
-                  />
-                </li>
-              ))}
-            </ul>
-          </AccordionContent>
-        </AccordionItem>
-      ))}
-    </Accordion>
+    <>
+      <label className="mb-2 flex flex-col gap-1">
+        <span className="sr-only">{t('canvas.blockSearch.label')}</span>
+        <Input
+          type="search"
+          value={query}
+          placeholder={t('canvas.blockSearch.placeholder')}
+          onChange={(event) => setQuery(event.target.value)}
+        />
+      </label>
+      {search !== '' && nonEmptyCategories.length === 0 && (
+        <p className="px-1 py-2 text-xs text-muted-foreground">
+          {t('canvas.blockSearch.noResults', { query: query.trim() })}
+        </p>
+      )}
+      {/*
+        `value` is controlled while searching so every matching category
+        opens: a search that found three blocks and left them behind
+        collapsed sections would look like a search that found nothing.
+        Uncontrolled otherwise, so the sections a person opened by hand
+        stay as they left them.
+      */}
+      <Accordion
+        type="multiple"
+        {...(search !== ''
+          ? { value: nonEmptyCategories.map((category) => category.title) }
+          : {})}
+      >
+        {nonEmptyCategories.map((category) => (
+          <AccordionItem key={category.title} value={category.title}>
+            <AccordionTrigger>{tLabel(category.title)}</AccordionTrigger>
+            <AccordionContent>
+              <ul className="flex flex-col gap-0.5">
+                {category.descriptors.map((descriptor) => (
+                  <li key={descriptor.type}>
+                    <DraggableBlockButton
+                      descriptor={descriptor}
+                      onInsert={onInsert}
+                      drag={drag}
+                    />
+                  </li>
+                ))}
+              </ul>
+            </AccordionContent>
+          </AccordionItem>
+        ))}
+      </Accordion>
+    </>
   );
 }
