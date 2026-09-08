@@ -160,7 +160,8 @@ it go red.
   reordering is scoped to top-level blocks by construction
   (`isRootLevelBlock`). And the Inspector's conditional and grouped fields
   are a question about what the Inspector should be, starting by merging
-  two popovers into one. Each is a PR, not a paragraph.
+  two popovers into one. Each is a PR, not a paragraph. **All three
+  shipped in ADR-0062**, which closes Fase 7.
 - Verification here is the component tests against the real components,
   not a browser session: the editor sits behind a login whose credentials
   this work did not have. Every new test was checked by breaking the

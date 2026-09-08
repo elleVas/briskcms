@@ -1,6 +1,7 @@
 import type { GalleryProps } from '@brisk/shared-types';
 import { BLOCK_STYLE_DEFAULTS } from '@brisk/shared-types';
 import { FieldBuilder, type BlockDescriptor } from '../field-types';
+import { aspectRatioField } from '../fields/aspect-ratio-field';
 import { BlockStyleRegistry } from '../block-style-registry';
 
 export const galleryBlock: BlockDescriptor<GalleryProps> = {
@@ -23,6 +24,7 @@ export const galleryBlock: BlockDescriptor<GalleryProps> = {
       kind: 'select',
       key: 'columns',
       label: 'blocks.gallery.fields.columns.fieldLabel',
+      group: 'style',
       options: [
         { label: 'blocks.gallery.fields.columns.options.auto', value: 'auto' },
         { label: 'blocks.gallery.fields.columns.options.2', value: '2' },
@@ -32,27 +34,7 @@ export const galleryBlock: BlockDescriptor<GalleryProps> = {
         { label: 'blocks.gallery.fields.columns.options.6', value: '6' },
       ],
     },
-    {
-      kind: 'select',
-      key: 'aspectRatio',
-      label: 'blocks.shared.aspectRatio.fieldLabel',
-      options: [
-        {
-          label: 'blocks.shared.aspectRatio.options.original',
-          value: 'original',
-        },
-        { label: 'blocks.shared.aspectRatio.options.square', value: 'square' },
-        {
-          label: 'blocks.shared.aspectRatio.options.landscape',
-          value: 'landscape',
-        },
-        {
-          label: 'blocks.shared.aspectRatio.options.portrait',
-          value: 'portrait',
-        },
-        { label: 'blocks.shared.aspectRatio.options.wide', value: 'wide' },
-      ],
-    },
+    aspectRatioField,
     {
       kind: 'boolean',
       key: 'lightbox',

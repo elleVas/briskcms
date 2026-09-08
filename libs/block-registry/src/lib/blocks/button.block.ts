@@ -32,6 +32,7 @@ export const buttonBlock: BlockDescriptor<ButtonProps> = {
       kind: 'radio',
       key: 'size',
       label: 'blocks.button.fields.size.fieldLabel',
+      group: 'style',
       options: [
         { label: 'blocks.button.fields.size.options.sm', value: 'sm' },
         { label: 'blocks.button.fields.size.options.md', value: 'md' },
@@ -42,11 +43,13 @@ export const buttonBlock: BlockDescriptor<ButtonProps> = {
       kind: 'boolean',
       key: 'fullWidth',
       label: 'blocks.button.fields.fullWidth.fieldLabel',
+      group: 'style',
     },
     {
       kind: 'boolean',
       key: 'openInNewTab',
       label: 'blocks.button.fields.openInNewTab.fieldLabel',
+      group: 'advanced',
     },
   ],
   // Was a `kind: 'radio'` prop until ADR-0047. It is the same two looks,

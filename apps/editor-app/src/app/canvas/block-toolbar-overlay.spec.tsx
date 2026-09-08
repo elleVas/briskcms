@@ -149,7 +149,7 @@ describe('BlockToolbarOverlay style buttons', () => {
     ).toBeNull();
   });
 
-  it('still shows the instance style button for a root-level block with no stylableProperties (marginTop/marginBottom are always offered there)', () => {
+  it('still offers the instance style fields for a root-level block with no stylableProperties (marginTop/marginBottom are always offered there)', () => {
     renderOverlay(
       <BlockToolbarOverlay
         {...baseProps()}
@@ -158,12 +158,12 @@ describe('BlockToolbarOverlay style buttons', () => {
       />,
     );
 
-    expect(
-      screen.getByRole('button', { name: 'Stile di questo blocco' }),
-    ).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Modifica proprietà' }));
+
+    expect(screen.getByLabelText('Spazio sotto')).toBeTruthy();
   });
 
-  it('hides the instance style button for a NESTED block with no stylableProperties (marginTop/marginBottom only apply to a page-root block)', () => {
+  it('offers no instance style fields for a NESTED block with no stylableProperties (marginTop/marginBottom only apply to a page-root block)', () => {
     renderOverlay(
       <BlockToolbarOverlay
         {...baseProps()}
@@ -172,17 +172,20 @@ describe('BlockToolbarOverlay style buttons', () => {
       />,
     );
 
+    // Nothing left to open: this descriptor has no fields and no looks
+    // either, so with the margins gone the panel would have been an
+    // empty box behind a button.
     expect(
-      screen.queryByRole('button', { name: /Stile di questo blocco/ }),
+      screen.queryByRole('button', { name: 'Modifica proprietà' }),
     ).toBeNull();
   });
 
-  it('shows the instance style button whenever the type has stylableProperties, regardless of typeStyle', () => {
+  it('offers the instance style fields whenever the type has stylableProperties, regardless of typeStyle', () => {
     renderOverlay(<BlockToolbarOverlay {...baseProps()} />);
 
-    expect(
-      screen.getByRole('button', { name: 'Stile di questo blocco' }),
-    ).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Modifica proprietà' }));
+
+    expect(screen.getByLabelText('Raggio angoli')).toBeTruthy();
   });
 
   it('hides the type-level "Stile" button when typeStyle/onChangeTypeStyle are not provided (no site to save to yet)', () => {
@@ -226,9 +229,7 @@ describe('BlockToolbarOverlay style buttons', () => {
       />,
     );
 
-    fireEvent.click(
-      screen.getByRole('button', { name: 'Stile di questo blocco' }),
-    );
+    fireEvent.click(screen.getByRole('button', { name: 'Modifica proprietà' }));
     expect(screen.getByLabelText('Raggio angoli')).toHaveProperty(
       'value',
       '6px',
@@ -283,9 +284,7 @@ describe('BlockToolbarOverlay style buttons', () => {
       />,
     );
 
-    fireEvent.click(
-      screen.getByRole('button', { name: 'Stile di questo blocco' }),
-    );
+    fireEvent.click(screen.getByRole('button', { name: 'Modifica proprietà' }));
     fireEvent.change(screen.getByLabelText('Spazio sotto'), {
       target: { value: '2rem' },
     });
@@ -298,9 +297,7 @@ describe('BlockToolbarOverlay style buttons', () => {
   it('does not offer marginTop/marginBottom in the instance popover for a NESTED block, even when the type has other stylableProperties', () => {
     renderOverlay(<BlockToolbarOverlay {...baseProps()} isRootLevel={false} />);
 
-    fireEvent.click(
-      screen.getByRole('button', { name: 'Stile di questo blocco' }),
-    );
+    fireEvent.click(screen.getByRole('button', { name: 'Modifica proprietà' }));
 
     expect(screen.queryByLabelText('Spazio sopra')).toBeNull();
     expect(screen.queryByLabelText('Spazio sotto')).toBeNull();
@@ -415,17 +412,18 @@ describe('BlockToolbarOverlay under a theme that refuses styling', () => {
     });
   });
 
-  it('offers neither styling button', async () => {
+  it('offers no styling at all — not for the type, not for this block', async () => {
     renderOverlay(
       <BlockToolbarOverlay
         {...baseProps()}
         descriptor={withFields}
+        isRootLevel={true}
         typeStyle={{ base: {} }}
         onChangeTypeStyle={vi.fn()}
       />,
     );
 
-    // Waited for rather than asserted once: both buttons render before
+    // Waited for rather than asserted once: the toolbar renders before
     // the capabilities answer arrives, so a single `queryBy` would pass
     // whatever the answer turned out to be — it would be checking that
     // React has not finished, not that the theme was obeyed.
@@ -433,15 +431,18 @@ describe('BlockToolbarOverlay under a theme that refuses styling', () => {
       expect(
         screen.queryByRole('button', { name: /Stile di tutti i blocchi/ }),
       ).toBeNull();
-      expect(
-        screen.queryByRole('button', { name: /Stile di questo blocco/ }),
-      ).toBeNull();
     });
-    // Still there, so the two above went away because the theme said so
-    // and not because nothing rendered at all.
-    expect(
-      screen.getByRole('button', { name: /Modifica proprietà/ }),
-    ).toBeTruthy();
+    // Still there, so the button above went away because the theme said
+    // so and not because nothing rendered at all.
+    fireEvent.click(screen.getByRole('button', { name: /Modifica proprietà/ }));
+    // The panel opens on its content fields and on nothing else: the
+    // instance style used to be a second button, and gating that button
+    // was enough. Now the fields live inside this panel, so what the
+    // ceiling has to keep out is them — including the two margins, which
+    // are offered at root level whatever the type declares.
+    expect(screen.getByLabelText('Testo')).toBeTruthy();
+    expect(screen.queryByLabelText('Raggio angoli')).toBeNull();
+    expect(screen.queryByLabelText('Spazio sotto')).toBeNull();
   });
 
   // The properties popover is content, not styling: a theme's ceiling is

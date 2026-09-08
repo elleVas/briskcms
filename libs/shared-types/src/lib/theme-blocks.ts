@@ -28,41 +28,54 @@ import {
  * names, and `validateThemeBlockSet()` for the check that a theme has not
  * invented one the editor cannot draw.
  */
+/**
+ * The two things every field carries, whatever draws it. Written once
+ * and spread into each member below: `key`/`label` were repeated seven
+ * times, and adding `showWhen`/`group` (ADR-0062) would have made that
+ * eleven copies of the same four lines.
+ */
+const themeFieldCommonShape = {
+  key: z.string(),
+  label: z.string(),
+  /**
+   * When the field is worth showing — one comparison against a sibling
+   * prop, see `FieldCondition` in @brisk/block-sdk. A theme gets it too:
+   * conditional fields are part of the authoring vocabulary, and a
+   * vocabulary core alone can speak is the thing ADR-0048 refuses.
+   */
+  showWhen: z
+    .object({
+      field: z.string(),
+      equals: z.union([
+        z.string(),
+        z.number(),
+        z.boolean(),
+        z.array(z.union([z.string(), z.number(), z.boolean()])),
+      ]),
+    })
+    .optional(),
+  /** Which part of the inspector it belongs to — absent means `content`. */
+  group: z.enum(['content', 'style', 'advanced']).optional(),
+};
+
+/** What the three free-text kinds add on top — also written once, for the same reason. */
+const themeTextualFieldShape = {
+  ...themeFieldCommonShape,
+  inlineEditable: z.boolean().optional(),
+  placeholder: z.string().optional(),
+  required: z.boolean().optional(),
+  requiredUnless: z.string().optional(),
+  translatable: z.boolean().optional(),
+};
+
 export const themeFieldDescriptorSchema = z.discriminatedUnion('kind', [
-  z.object({
-    kind: z.literal('text'),
-    key: z.string(),
-    label: z.string(),
-    inlineEditable: z.boolean().optional(),
-    placeholder: z.string().optional(),
-    required: z.boolean().optional(),
-    requiredUnless: z.string().optional(),
-    translatable: z.boolean().optional(),
-  }),
-  z.object({
-    kind: z.literal('textarea'),
-    key: z.string(),
-    label: z.string(),
-    inlineEditable: z.boolean().optional(),
-    placeholder: z.string().optional(),
-    required: z.boolean().optional(),
-    requiredUnless: z.string().optional(),
-    translatable: z.boolean().optional(),
-  }),
+  z.object({ kind: z.literal('text'), ...themeTextualFieldShape }),
+  z.object({ kind: z.literal('textarea'), ...themeTextualFieldShape }),
   // A theme must be able to declare one too, or rich text would be a
   // privilege of core blocks (ADR-0046, and the additive rule of
   // ADR-0048). Same shape as `textarea`; what differs is that the value
   // is sanitised HTML rather than a literal string.
-  z.object({
-    kind: z.literal('richtext'),
-    key: z.string(),
-    label: z.string(),
-    inlineEditable: z.boolean().optional(),
-    placeholder: z.string().optional(),
-    required: z.boolean().optional(),
-    requiredUnless: z.string().optional(),
-    translatable: z.boolean().optional(),
-  }),
+  z.object({ kind: z.literal('richtext'), ...themeTextualFieldShape }),
   // Opened 2026-09-07. It used to be excluded with the note that a
   // `custom` field "carries a live React ComponentType, which cannot
   // cross an HTTP/JSON boundary" — true then, and no longer true: a
@@ -72,29 +85,22 @@ export const themeFieldDescriptorSchema = z.discriminatedUnion('kind', [
   // renders as a blank space under its label with no error anywhere.
   z.object({
     kind: z.literal('custom'),
-    key: z.string(),
-    label: z.string(),
+    ...themeFieldCommonShape,
     control: customFieldControlSchema,
   }),
   z.object({
     kind: z.enum(['radio', 'select']),
-    key: z.string(),
-    label: z.string(),
+    ...themeFieldCommonShape,
     options: z.array(z.object({ label: z.string(), value: z.string() })),
   }),
   z.object({
     kind: z.literal('number'),
-    key: z.string(),
-    label: z.string(),
+    ...themeFieldCommonShape,
     min: z.number().optional(),
     max: z.number().optional(),
     step: z.number().optional(),
   }),
-  z.object({
-    kind: z.literal('boolean'),
-    key: z.string(),
-    label: z.string(),
-  }),
+  z.object({ kind: z.literal('boolean'), ...themeFieldCommonShape }),
 ]);
 export type ThemeFieldDescriptor = z.infer<typeof themeFieldDescriptorSchema>;
 

@@ -18,6 +18,7 @@ const emptyBridge: PreviewBridgeState = {
   isReady: false,
   hoveredBlockId: null,
   selectedBlockId: null,
+  selectedBlockIds: [],
   lastDblClick: null,
   pageLinkRequest: null,
   lastTextChange: null,

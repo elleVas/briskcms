@@ -696,6 +696,8 @@
     "expandSidebar": "Espandi barra laterale",
     "collapseLayersPanel": "Comprimi pannello Livelli",
     "expandLayersPanel": "Espandi pannello Livelli",
+    "collapseChildren": "Comprimi",
+    "expandChildren": "Espandi",
     "removeBlock": "Rimuovi blocco",
     "addChild": "Aggiungi elemento",
     "publish": "Pubblica",
@@ -706,6 +708,11 @@
     "redo": "Ripeti",
     "editProperties": "Modifica proprietà",
     "duplicateBlock": "Duplica blocco",
+    "fieldGroup": {
+      "content": "Contenuto",
+      "style": "Stile",
+      "advanced": "Avanzate"
+    },
     "variant": {
       "fieldLabel": "Aspetto",
       "default": "Predefinito"
@@ -733,7 +740,6 @@
     "style": {
       "editType": "Stile di tutti i blocchi {{type}}",
       "editTypeHint": "Questi valori si applicano a OGNI blocco {{type}} del sito.",
-      "editInstance": "Stile di questo blocco",
       "saveError": "Salvataggio dello stile non riuscito. Riprova."
     },
     "blockStyle": {

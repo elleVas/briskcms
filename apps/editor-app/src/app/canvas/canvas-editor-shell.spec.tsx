@@ -1335,3 +1335,217 @@ describe('CanvasEditorShell keyboard shortcuts', () => {
     input.remove();
   });
 });
+
+/*
+ * Dragging on the canvas used to be top-level only, which meant the three
+ * columns of a Columns could be reordered from the Layers panel and not
+ * from the page they were on — the editor disagreeing with itself about
+ * one gesture (Fase 7).
+ */
+describe('CanvasEditorShell nested canvas drag', () => {
+  beforeEach(() => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+  });
+  afterEach(() => {
+    vi.clearAllMocks();
+    vi.useRealTimers();
+  });
+
+  const nested: Block[] = [
+    {
+      id: 'cols-1',
+      type: 'Columns',
+      props: {},
+      children: [
+        { id: 'col-a', type: 'Column', props: {}, children: [] },
+        { id: 'col-b', type: 'Column', props: {}, children: [] },
+      ],
+    },
+  ];
+
+  it('reorders a nested block among its own siblings, not at the root', async () => {
+    const onChange = vi.fn();
+    renderShell({ onChange, blocks: nested });
+    const iframe = await getIframe();
+
+    // Rects for both columns, then a drag of the first past the second's
+    // midpoint. The block ids are the tree's, so the shell resolves the
+    // parent from `locateBlock` rather than assuming the root.
+    act(() => {
+      dispatchFromIframe(iframe, 'preview:ready', {
+        blockRects: [
+          { id: 'cols-1', top: 0, left: 0, width: 800, height: 400 },
+          { id: 'col-a', top: 0, left: 0, width: 400, height: 200 },
+          { id: 'col-b', top: 200, left: 0, width: 400, height: 200 },
+        ],
+        scrollHeight: 400,
+      });
+    });
+    // `preview:drag-end` carries no payload: the block and the pointer come
+    // from the drag already in flight, so a start has to precede it.
+    act(() => {
+      dispatchFromIframe(iframe, 'preview:drag-start', {
+        blockId: 'col-a',
+        pointer: { x: 10, y: 10 },
+      });
+    });
+    act(() => {
+      dispatchFromIframe(iframe, 'preview:drag-move', {
+        blockId: 'col-a',
+        pointer: { x: 10, y: 380 },
+      });
+    });
+    act(() => {
+      dispatchFromIframe(iframe, 'preview:drag-end', {});
+    });
+
+    const next = onChange.mock.calls.at(-1)?.[0] as Block[];
+    expect(next).toHaveLength(1);
+    expect(next[0].children?.map((child) => child.id)).toEqual([
+      'col-b',
+      'col-a',
+    ]);
+  });
+});
+
+/*
+ * The bridge carried one `selectedBlockId` and every overlay, toolbar and
+ * mutation read it — the change of model the plan warned about (Fase 7).
+ * The primary stays that field; the set is what bulk operations act on.
+ */
+describe('CanvasEditorShell multi-select', () => {
+  beforeEach(() => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+  });
+  afterEach(() => {
+    vi.clearAllMocks();
+    vi.useRealTimers();
+  });
+
+  const three: Block[] = [
+    { id: 'a', type: 'Hero', props: { title: 'A', subtitle: '' } },
+    { id: 'b', type: 'Hero', props: { title: 'B', subtitle: '' } },
+    { id: 'c', type: 'Hero', props: { title: 'C', subtitle: '' } },
+  ];
+
+  function selectMany(iframe: HTMLIFrameElement, ids: string[]) {
+    act(() => {
+      dispatchFromIframe(iframe, 'preview:ready', {
+        blockRects: ids.map((id, index) => ({
+          id,
+          top: index * 100,
+          left: 0,
+          width: 800,
+          height: 100,
+        })),
+        scrollHeight: ids.length * 100,
+      });
+    });
+    ids.forEach((id, index) => {
+      act(() => {
+        dispatchFromIframe(iframe, 'preview:click', {
+          blockId: id,
+          additive: index > 0,
+        });
+      });
+    });
+  }
+
+  it('deletes every selected block in one go', async () => {
+    const onChange = vi.fn();
+    renderShell({ onChange, blocks: three });
+    const iframe = await getIframe();
+    selectMany(iframe, ['a', 'b']);
+
+    fireEvent.keyDown(window, { key: 'Delete' });
+
+    const next = onChange.mock.calls.at(-1)?.[0] as Block[];
+    expect(next.map((block) => block.id)).toEqual(['c']);
+  });
+
+  it('undoes a multi-delete in one step, not one per block', async () => {
+    const onChange = vi.fn();
+    renderShell({ onChange, blocks: three });
+    const iframe = await getIframe();
+    selectMany(iframe, ['a', 'b']);
+
+    fireEvent.keyDown(window, { key: 'Delete' });
+    fireEvent.keyDown(window, { key: 'z', metaKey: true });
+
+    const next = onChange.mock.calls.at(-1)?.[0] as Block[];
+    // Somebody who selected two things and pressed Delete asked for one
+    // action; two undos to get back would be two surprises.
+    expect(next.map((block) => block.id)).toEqual(['a', 'b', 'c']);
+  });
+
+  it('duplicates every selected block, each after itself', async () => {
+    const onChange = vi.fn();
+    renderShell({ onChange, blocks: three });
+    const iframe = await getIframe();
+    selectMany(iframe, ['a', 'c']);
+
+    fireEvent.keyDown(window, { key: 'd', metaKey: true });
+
+    const next = onChange.mock.calls.at(-1)?.[0] as Block[];
+    expect(next).toHaveLength(5);
+    expect(next[0].id).toBe('a');
+    expect(next[1].id).not.toBe('a');
+    expect(next[1].props).toEqual(next[0].props);
+    expect(next[3].id).toBe('c');
+  });
+
+  it('copies and pastes a whole selection, in the order it was copied', async () => {
+    const onChange = vi.fn();
+    renderShell({ onChange, blocks: three });
+    const iframe = await getIframe();
+    selectMany(iframe, ['a', 'b']);
+
+    fireEvent.keyDown(window, { key: 'c', metaKey: true });
+    fireEvent.keyDown(window, { key: 'v', metaKey: true });
+
+    const next = onChange.mock.calls.at(-1)?.[0] as Block[];
+    expect(next).toHaveLength(5);
+    expect(
+      (next[2].props as { title: string }).title +
+        (next[3].props as { title: string }).title,
+    ).toBe('AB');
+  });
+
+  /*
+   * Cmd+click on an already-selected block removes it — what every file
+   * manager does, and what makes a mis-click recoverable without starting
+   * the selection over.
+   */
+  it('toggles a block out of the selection when it is picked again', async () => {
+    const onChange = vi.fn();
+    renderShell({ onChange, blocks: three });
+    const iframe = await getIframe();
+    selectMany(iframe, ['a', 'b']);
+    act(() => {
+      dispatchFromIframe(iframe, 'preview:click', {
+        blockId: 'b',
+        additive: true,
+      });
+    });
+
+    fireEvent.keyDown(window, { key: 'Delete' });
+
+    const next = onChange.mock.calls.at(-1)?.[0] as Block[];
+    expect(next.map((block) => block.id)).toEqual(['b', 'c']);
+  });
+
+  it('a plain click replaces the selection instead of adding to it', async () => {
+    const onChange = vi.fn();
+    renderShell({ onChange, blocks: three });
+    const iframe = await getIframe();
+    selectMany(iframe, ['a', 'b']);
+    act(() => {
+      dispatchFromIframe(iframe, 'preview:click', { blockId: 'c' });
+    });
+
+    fireEvent.keyDown(window, { key: 'Delete' });
+
+    const next = onChange.mock.calls.at(-1)?.[0] as Block[];
+    expect(next.map((block) => block.id)).toEqual(['a', 'b']);
+  });
+});

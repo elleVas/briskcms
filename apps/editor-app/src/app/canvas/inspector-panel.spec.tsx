@@ -426,3 +426,222 @@ describe('InspectorPanel variant picker', () => {
     expect(container.innerHTML).not.toBe('');
   });
 });
+
+describe('InspectorPanel conditional fields', () => {
+  const imageDescriptor: BlockDescriptor = {
+    type: 'Image',
+    label: 'Immagine',
+    category: 'content',
+    defaultProps: { alt: '', isDecorative: false, linkType: 'none', url: '' },
+    fields: [
+      {
+        kind: 'text',
+        key: 'alt',
+        label: 'Testo alternativo',
+        required: true,
+        requiredUnless: 'isDecorative',
+        showWhen: { field: 'isDecorative', equals: false },
+      },
+      { kind: 'boolean', key: 'isDecorative', label: 'Decorativa' },
+      {
+        kind: 'text',
+        key: 'url',
+        label: 'URL',
+        showWhen: { field: 'linkType', equals: 'url' },
+      },
+    ],
+  };
+
+  function renderImage(props: Record<string, unknown>) {
+    render(
+      <InspectorPanel
+        block={{ id: 'img-1', type: 'Image', props }}
+        descriptor={imageDescriptor}
+        onChangeProp={vi.fn()}
+        onChangeVariant={vi.fn()}
+      />,
+    );
+  }
+
+  it('draws a field whose condition is met', () => {
+    renderImage({ isDecorative: false, linkType: 'url' });
+
+    // The label carries the required marker, so it is matched loosely.
+    expect(screen.getByLabelText(/Testo alternativo/)).toBeTruthy();
+    expect(screen.getByLabelText('URL')).toBeTruthy();
+  });
+
+  it('leaves out a field whose condition is not met', () => {
+    renderImage({ isDecorative: true, linkType: 'page' });
+
+    expect(screen.queryByLabelText(/Testo alternativo/)).toBeNull();
+    expect(screen.queryByLabelText('URL')).toBeNull();
+    // The field that DECIDES is of course still there — hiding it would
+    // lock the block in whichever state it happens to be in.
+    expect(screen.getByLabelText('Decorativa')).toBeTruthy();
+  });
+
+  /*
+   * A hidden field must not nag either. The warning is drawn per field,
+   * so leaving it behind would put "Campo obbligatorio" under a label
+   * that is not on screen — a complaint about an input the person cannot
+   * even see, let alone fill in.
+   *
+   * Deliberately NOT the alt/isDecorative pair: `requiredUnless` already
+   * silences that one, so the test would pass with conditional
+   * visibility removed entirely. This is a required field that is empty,
+   * un-waived, and simply not being asked for right now.
+   */
+  it('does not warn about a required field it is not showing', () => {
+    render(
+      <InspectorPanel
+        block={{ id: 'link-1', type: 'Link', props: { linkType: 'page' } }}
+        descriptor={{
+          type: 'Link',
+          label: 'Link',
+          category: 'content',
+          defaultProps: { linkType: 'page', url: '' },
+          fields: [
+            {
+              kind: 'text',
+              key: 'url',
+              label: 'URL',
+              required: true,
+              showWhen: { field: 'linkType', equals: 'url' },
+            },
+          ],
+        }}
+        onChangeProp={vi.fn()}
+        onChangeVariant={vi.fn()}
+      />,
+    );
+
+    expect(screen.queryByText('Campo obbligatorio')).toBeNull();
+  });
+});
+
+describe('InspectorPanel field groups', () => {
+  const descriptor: BlockDescriptor = {
+    type: 'Button',
+    label: 'Bottone',
+    category: 'conversion',
+    defaultProps: {},
+    fields: [
+      { kind: 'text', key: 'label', label: 'Testo' },
+      {
+        kind: 'boolean',
+        key: 'fullWidth',
+        label: 'Larghezza piena',
+        group: 'style',
+      },
+      {
+        kind: 'boolean',
+        key: 'openInNewTab',
+        label: 'Nuova scheda',
+        group: 'advanced',
+      },
+    ],
+  };
+
+  it('files each field under the group it declares, content by default', () => {
+    render(
+      <InspectorPanel
+        block={{ id: 'b1', type: 'Button', props: {} }}
+        descriptor={descriptor}
+        onChangeProp={vi.fn()}
+        onChangeVariant={vi.fn()}
+      />,
+    );
+
+    const groupOf = (label: string) =>
+      screen.getByLabelText(label).closest('details')?.querySelector('summary')
+        ?.textContent;
+
+    expect(groupOf('Testo')).toBe('Contenuto');
+    expect(groupOf('Larghezza piena')).toBe('Stile');
+    expect(groupOf('Nuova scheda')).toBe('Avanzate');
+  });
+
+  /*
+   * Open/closed is the whole point of the split: content and style are
+   * what people came for, "advanced" is what they should be able to
+   * ignore. `<details open>` is what decides it, and a group that opens
+   * closed is still fully rendered — so this asserts the attribute, not
+   * the presence of the field.
+   */
+  it('opens content and style, and leaves advanced folded away', () => {
+    render(
+      <InspectorPanel
+        block={{ id: 'b1', type: 'Button', props: {} }}
+        descriptor={descriptor}
+        onChangeProp={vi.fn()}
+        onChangeVariant={vi.fn()}
+      />,
+    );
+
+    const openOf = (label: string) =>
+      screen.getByLabelText(label).closest('details')?.hasAttribute('open');
+
+    expect(openOf('Testo')).toBe(true);
+    expect(openOf('Larghezza piena')).toBe(true);
+    expect(openOf('Nuova scheda')).toBe(false);
+  });
+
+  it('draws no heading for a group with nothing in it', () => {
+    render(
+      <InspectorPanel
+        block={{ id: 'b1', type: 'Button', props: {} }}
+        descriptor={{ ...descriptor, fields: [descriptor.fields[0]] }}
+        onChangeProp={vi.fn()}
+        onChangeVariant={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText('Contenuto')).toBeTruthy();
+    expect(screen.queryByText('Stile')).toBeNull();
+    expect(screen.queryByText('Avanzate')).toBeNull();
+  });
+
+  // The merge this whole change is for (ADR-0062): the per-instance
+  // style controls were a second popover behind a second button, and are
+  // now one group of this panel.
+  it('places the instance style controls in the Style group', () => {
+    render(
+      <InspectorPanel
+        block={{ id: 'b1', type: 'Button', props: {} }}
+        descriptor={{ ...descriptor, fields: [descriptor.fields[0]] }}
+        onChangeProp={vi.fn()}
+        onChangeVariant={vi.fn()}
+        instanceStyleFields={<button>Raggio angoli</button>}
+      />,
+    );
+
+    expect(
+      screen
+        .getByText('Raggio angoli')
+        .closest('details')
+        ?.querySelector('summary')?.textContent,
+    ).toBe('Stile');
+  });
+
+  it('shows the panel for a block whose only control is its style', () => {
+    const { container } = render(
+      <InspectorPanel
+        block={{ id: 'b1', type: 'Spacer', props: {} }}
+        descriptor={{
+          type: 'Spacer',
+          label: 'Spaziatore',
+          category: 'layout',
+          defaultProps: {},
+          fields: [],
+        }}
+        onChangeProp={vi.fn()}
+        onChangeVariant={vi.fn()}
+        instanceStyleFields={<button>Raggio angoli</button>}
+      />,
+    );
+
+    expect(container.innerHTML).not.toBe('');
+    expect(screen.getByText('Raggio angoli')).toBeTruthy();
+  });
+});

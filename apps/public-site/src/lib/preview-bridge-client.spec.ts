@@ -13,7 +13,6 @@ import {
   findFieldUnderPointer,
   findRealInteractiveAncestor,
   isBlockInteractive,
-  isRootLevelBlock,
   parseEditingSection,
   scrollBlockIntoView,
   toBlockRects,
@@ -593,24 +592,6 @@ describe('findFieldUnderPointer', () => {
     const target = requireElement('other');
 
     expect(findFieldUnderPointer(blockEl, target)).toBeNull();
-  });
-});
-
-describe('isRootLevelBlock', () => {
-  it('is true for a block with no ancestor block wrapper', () => {
-    document.body.innerHTML =
-      '<div class="mx-auto flex max-w-5xl">' +
-      '<div data-brisk-block-id="hero-1" id="hero-1"></div>' +
-      '</div>';
-    expect(isRootLevelBlock(requireElement('hero-1'))).toBe(true);
-  });
-
-  it('is false for a block nested inside another block wrapper (e.g. a Container child)', () => {
-    document.body.innerHTML =
-      '<div data-brisk-block-id="container-1">' +
-      '<div data-brisk-block-id="text-1" id="text-1"></div>' +
-      '</div>';
-    expect(isRootLevelBlock(requireElement('text-1'))).toBe(false);
   });
 });
 

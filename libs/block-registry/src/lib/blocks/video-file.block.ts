@@ -37,16 +37,19 @@ export const videoFileBlock: BlockDescriptor<VideoFileProps> = {
       kind: 'boolean',
       key: 'autoplay',
       label: 'blocks.videoFile.fields.autoplay.fieldLabel',
+      group: 'advanced',
     },
     {
       kind: 'boolean',
       key: 'loop',
       label: 'blocks.videoFile.fields.loop.fieldLabel',
+      group: 'advanced',
     },
     {
       kind: 'boolean',
       key: 'muted',
       label: 'blocks.videoFile.fields.muted.fieldLabel',
+      group: 'advanced',
     },
   ],
   stylableProperties: [

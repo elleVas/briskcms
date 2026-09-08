@@ -6,6 +6,78 @@ import type {
 
 export type { CustomFieldControl };
 
+/** What a `showWhen` may compare against — a prop value the editor can hold, not an expression. */
+export type FieldConditionValue = string | number | boolean;
+
+/**
+ * When a field is worth showing at all (ADR-0062).
+ *
+ * Deliberately one comparison against ONE sibling prop, not a predicate
+ * and not a boolean algebra: the descriptor has to survive JSON so a
+ * theme can declare a conditional field too (ADR-0048's additive rule),
+ * and a function does not. Every case the registry actually has is of
+ * this shape — `url` only when the link points at a url, `alt` only when
+ * the image is not decorative — so a richer language would be inventing
+ * needs rather than answering them.
+ *
+ * An absent prop counts as `false`, which is what makes
+ * `{ field: 'isDecorative', equals: false }` correct on a block whose
+ * props were saved before the flag existed.
+ */
+export interface FieldCondition {
+  /** The key of a sibling prop on the SAME block — never another block's. */
+  field: string;
+  /** Shown when that prop equals this value, or any one of these. */
+  equals: FieldConditionValue | readonly FieldConditionValue[];
+}
+
+/**
+ * Which part of the inspector a field belongs to (ADR-0062).
+ *
+ * `content` is what the block SAYS, `style` what it LOOKS like, and
+ * `advanced` what most people never need to touch — the split a person
+ * already makes when they look at a panel of fourteen inputs and try to
+ * find the one they came for. Absent = `content`, so every field written
+ * before this existed lands where it always was.
+ */
+export type FieldGroup = 'content' | 'style' | 'advanced';
+
+/** Every field carries these, whatever control draws it. */
+interface FieldCommon {
+  key: string;
+  label: string;
+  /** See `FieldCondition` — absent means always shown. */
+  showWhen?: FieldCondition;
+  /** See `FieldGroup` — absent means `content`. */
+  group?: FieldGroup;
+}
+
+/**
+ * The three free-text kinds. They differ only in what draws them and what
+ * the value means (a literal string, a multi-line one, sanitised HTML) —
+ * everything else about them is the same, and was written out three times
+ * before it was named.
+ */
+interface TextualField extends FieldCommon {
+  inlineEditable?: boolean;
+  placeholder?: string;
+  /** Shows a required marker + inline warning when empty — a soft nudge, never blocks saving/publishing. */
+  required?: boolean;
+  /** Name of a sibling boolean prop that, when true, waives `required` — e.g. an "isDecorative" flag legitimately making an empty value correct, not an oversight. */
+  requiredUnless?: string;
+  /**
+   * Opt-in, explicit — never derived from `inlineEditable` or `kind`.
+   * A field can be free text without being locale-specific content
+   * (e.g. an external URL typed via `kind: 'text'`), and conversely can
+   * be translatable without being inline-editable (e.g. an image `alt`
+   * attribute rather than a visible canvas node) — neither existing
+   * flag is a reliable proxy, so this is its own field. `false`/absent
+   * = the value lives on the shared page-group structure, same for
+   * every locale; `true` = per-locale override.
+   */
+  translatable?: boolean;
+}
+
 /**
  * The public block-authoring data contract — every first-party block in
  * `libs/block-registry/src/lib/blocks/*.block.ts` is defined against this
@@ -16,39 +88,9 @@ export type { CustomFieldControl };
  * every core block's implementation.
  */
 export type FieldDescriptor =
-  | {
-      kind: 'text';
-      key: string;
-      label: string;
-      inlineEditable?: boolean;
-      placeholder?: string;
-      /** Shows a required marker + inline warning when empty — a soft nudge, never blocks saving/publishing. */
-      required?: boolean;
-      /** Name of a sibling boolean prop that, when true, waives `required` — e.g. an "isDecorative" flag legitimately making an empty value correct, not an oversight. */
-      requiredUnless?: string;
-      /**
-       * Opt-in, explicit — never derived from `inlineEditable` or `kind`.
-       * A field can be free text without being locale-specific content
-       * (e.g. an external URL typed via `kind: 'text'`), and conversely can
-       * be translatable without being inline-editable (e.g. an image `alt`
-       * attribute rather than a visible canvas node) — neither existing
-       * flag is a reliable proxy, so this is its own field. `false`/absent
-       * = the value lives on the shared page-group structure, same for
-       * every locale; `true` = per-locale override.
-       */
-      translatable?: boolean;
-    }
-  | {
-      kind: 'textarea';
-      key: string;
-      label: string;
-      inlineEditable?: boolean;
-      placeholder?: string;
-      required?: boolean;
-      requiredUnless?: string;
-      translatable?: boolean;
-    }
-  | {
+  | (TextualField & { kind: 'text' })
+  | (TextualField & { kind: 'textarea' })
+  | (TextualField & {
       /**
        * Long text that may carry formatting and, above all, a link INSIDE
        * a sentence (ADR-0046). The value is an HTML string, sanitised on
@@ -65,24 +107,13 @@ export type FieldDescriptor =
        * the value rather than enrich it.
        */
       kind: 'richtext';
-      key: string;
-      label: string;
-      inlineEditable?: boolean;
-      placeholder?: string;
-      required?: boolean;
-      requiredUnless?: string;
-      translatable?: boolean;
-    }
-  | {
+    })
+  | (FieldCommon & {
       kind: 'radio' | 'select';
-      key: string;
-      label: string;
       options: { label: string; value: string }[];
-    }
-  | {
+    })
+  | (FieldCommon & {
       kind: 'number';
-      key: string;
-      label: string;
       min?: number;
       max?: number;
       step?: number;
@@ -101,12 +132,10 @@ export type FieldDescriptor =
        * exactly as it did.
        */
       optional?: boolean;
-    }
-  | { kind: 'boolean'; key: string; label: string }
-  | {
+    })
+  | (FieldCommon & { kind: 'boolean' })
+  | (FieldCommon & {
       kind: 'custom';
-      key: string;
-      label: string;
       /**
        * WHICH editor control renders this field, by name — not the
        * component itself.
@@ -126,7 +155,28 @@ export type FieldDescriptor =
        * belongs; everything else reads the descriptor as what it is.
        */
       control: CustomFieldControl;
-    };
+    });
+
+/**
+ * Whether a field is worth drawing, given the props the block currently
+ * holds. Lives here, next to the type it reads, so the editor and
+ * anything else that walks a descriptor answer the question the same way.
+ */
+export function isFieldVisible(
+  field: FieldDescriptor,
+  props: Record<string, unknown>,
+): boolean {
+  const condition = field.showWhen;
+  if (!condition) return true;
+  // An absent prop is `false`, not "no answer": a block saved before the
+  // flag existed must behave like one whose flag is off, or the field it
+  // guards would vanish from every page that predates it.
+  const actual = props[condition.field] ?? false;
+  const expected = condition.equals;
+  return Array.isArray(expected)
+    ? expected.some((value) => value === actual)
+    : expected === actual;
+}
 
 /**
  * Kept as the way to declare a custom field, though it no longer has
@@ -141,8 +191,10 @@ export class FieldBuilder {
     key: string,
     label: string,
     control: CustomFieldControl,
+    /** Everything a custom field shares with the others — its group, and when it shows. */
+    options?: Pick<FieldCommon, 'showWhen' | 'group'>,
   ): FieldDescriptor {
-    return { kind: 'custom', key, label, control };
+    return { kind: 'custom', key, label, control, ...options };
   }
 }
 

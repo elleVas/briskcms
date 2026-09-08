@@ -33,7 +33,6 @@ import {
   findFieldUnderPointer,
   findRealInteractiveAncestor,
   isBlockInteractive,
-  isRootLevelBlock,
   parseEditingSection,
   scrollBlockIntoView,
   toBlockRects,
@@ -277,7 +276,7 @@ export function initPreviewBridge(): void {
       if (id && blockEl && isBlockInteractive(blockEl, editingSection)) {
         postToParent(targetOrigin, {
           type: 'preview:click',
-          payload: { blockId: id },
+          payload: { blockId: id, additive: event.metaKey || event.ctrlKey },
         });
       }
     },
@@ -326,12 +325,14 @@ export function initPreviewBridge(): void {
       const target = event.target as Element | null;
       const blockEl = target?.closest?.('[data-brisk-block-id]') ?? null;
       const id = blockEl ? blockIdOf(blockEl) : null;
-      if (
-        id &&
-        blockEl &&
-        isBlockInteractive(blockEl, editingSection) &&
-        isRootLevelBlock(blockEl)
-      ) {
+      // No root-level gate any more (Fase 7). Reordering by dragging on
+      // the canvas used to be top-level only, which meant the three
+      // columns of a Columns could be reordered from the Layers panel and
+      // not from the page they were on — the editor disagreeing with
+      // itself about the same gesture. The parent's identity is decided on
+      // the EDITOR's side, from the tree, so nothing here has to know how
+      // deep the block sits.
+      if (id && blockEl && isBlockInteractive(blockEl, editingSection)) {
         pendingDrag = {
           blockId: id,
           startX: event.clientX,
