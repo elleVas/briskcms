@@ -1,12 +1,15 @@
 ---
 import type { TimelineStepProps } from '@brisk/shared-types';
 
-type Props = TimelineStepProps;
+type Props = TimelineStepProps & {
+  /** The per-instance style class, from BlockRenderer — see blockInstanceClassName. */
+  instanceClass?: string | null;
+};
 
-const { label, title, description } = Astro.props;
+const { label, title, description, instanceClass } = Astro.props;
 ---
 
-<div class="brisk-timeline-step">
+<div class:list={['brisk-timeline-step', instanceClass]}>
   <div class="brisk-timeline-step__marker" aria-hidden="true"></div>
   <div class="brisk-timeline-step__body">
     {label && <div class="brisk-timeline-step__label" data-brisk-field="label">{label}</div>}
@@ -16,10 +19,15 @@ const { label, title, description } = Astro.props;
 </div>
 
 <style>
+  /* Fallbacks are what a step already rendered. The block padding is
+     the rhythm between steps, which was fixed. */
   .brisk-timeline-step {
     position: relative;
-    padding-block-end: 1.5rem;
-    padding-inline-start: 1rem;
+    padding-block-end: var(--brisk-override-padding-y, 1.5rem);
+    padding-inline-start: var(--brisk-override-padding-x, 1rem);
+    background: var(--brisk-override-bg, transparent);
+    color: var(--brisk-override-text, inherit);
+    border-radius: var(--brisk-override-radius, 0);
   }
   .brisk-timeline-step:last-child {
     padding-block-end: 0;

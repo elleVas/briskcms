@@ -10,10 +10,18 @@ interface Props extends BreadcrumbProps {
   locale: string;
   ancestors: PublishedPageAncestor[];
   currentPageTitle: string;
+  /** The per-instance style class, from BlockRenderer — see blockInstanceClassName. */
+  instanceClass?: string | null;
 }
 
-const { homeLabel, visibility, locale, ancestors, currentPageTitle } =
-  Astro.props;
+const {
+  homeLabel,
+  visibility,
+  locale,
+  ancestors,
+  currentPageTitle,
+  instanceClass,
+} = Astro.props;
 
 interface Crumb {
   title: string;
@@ -44,6 +52,7 @@ const i18n = new Translator(locale);
     'brisk-breadcrumb',
     { 'brisk-visibility-desktop-only': visibility === 'desktop-only' },
     { 'brisk-visibility-mobile-only': visibility === 'mobile-only' },
+    instanceClass,
   ]}
   aria-label={i18n.t('breadcrumb.label')}
 >
@@ -65,11 +74,20 @@ const i18n = new Translator(locale);
 </nav>
 
 <style>
+  /* Every fallback is what this block already rendered, so a breadcrumb
+     nobody has styled is unchanged. */
+  .brisk-breadcrumb {
+    background: var(--brisk-override-bg, transparent);
+    color: var(--brisk-override-text, inherit);
+    border-radius: var(--brisk-override-radius, 0);
+    padding: var(--brisk-override-padding-y, 0)
+      var(--brisk-override-padding-x, 0);
+  }
   .brisk-breadcrumb ol {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: 0.4rem;
+    gap: var(--brisk-override-gap, 0.4rem);
     margin: 0;
     padding: 0;
     list-style: none;

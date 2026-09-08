@@ -1,5 +1,7 @@
 import type { LinkProps } from '@brisk/shared-types';
+import { BLOCK_STYLE_DEFAULTS } from '@brisk/shared-types';
 import type { BlockDescriptor } from '../field-types';
+import { BlockStyleRegistry } from '../block-style-registry';
 import { ctaLinkFields } from '../fields/link-type-field';
 
 export const linkBlock: BlockDescriptor<LinkProps> = {
@@ -22,4 +24,6 @@ export const linkBlock: BlockDescriptor<LinkProps> = {
     },
     ...ctaLinkFields(),
   ],
+  stylableProperties: BlockStyleRegistry.STANDARD,
+  defaultStyle: BLOCK_STYLE_DEFAULTS.Link,
 };

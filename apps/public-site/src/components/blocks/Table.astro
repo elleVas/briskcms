@@ -1,15 +1,18 @@
 ---
 import type { TableProps } from '@brisk/shared-types';
 
-type Props = TableProps;
+type Props = TableProps & {
+  /** The per-instance style class, from BlockRenderer — see blockInstanceClassName. */
+  instanceClass?: string | null;
+};
 
-const { rows } = Astro.props;
+const { rows, instanceClass } = Astro.props;
 const [header, ...body] = rows;
 ---
 
 {
   header && (
-    <div class="brisk-table-scroll">
+    <div class:list={['brisk-table-scroll', instanceClass]}>
       <table class="brisk-table">
         <thead>
           <tr>
@@ -41,14 +44,22 @@ const [header, ...body] = rows;
     width: 100%;
     border-collapse: collapse;
   }
+  /* The overrides land on the CELLS, not on the scroll wrapper they are
+     declared on: a table's padding and borders are what anyone means by
+     styling a table, and a padding on the wrapper would only inset the
+     scrollbar. Every fallback is the value already in use. */
   .brisk-table th,
   .brisk-table td {
-    border: 1px solid var(--border);
-    padding: 0.5rem 0.75rem;
+    border: var(--brisk-override-border-width, 1px)
+      var(--brisk-override-border-style, solid)
+      var(--brisk-override-border-color, var(--border));
+    padding: var(--brisk-override-padding-y, 0.5rem)
+      var(--brisk-override-padding-x, 0.75rem);
     text-align: left;
+    color: var(--brisk-override-text, inherit);
   }
   .brisk-table th {
-    background: var(--muted);
+    background: var(--brisk-override-bg, var(--muted));
     font-weight: 600;
   }
 </style>

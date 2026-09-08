@@ -1,5 +1,7 @@
 import type { LanguageSwitcherProps } from '@brisk/shared-types';
+import { BLOCK_STYLE_DEFAULTS } from '@brisk/shared-types';
 import type { BlockDescriptor } from '../field-types';
+import { BlockStyleRegistry } from '../block-style-registry';
 import { positionField } from '../fields/position-field';
 import { visibilityField } from '../fields/visibility-field';
 
@@ -9,4 +11,6 @@ export const languageSwitcherBlock: BlockDescriptor<LanguageSwitcherProps> = {
   category: 'navigation',
   defaultProps: { position: 'left', visibility: 'always' },
   fields: [positionField, visibilityField],
+  stylableProperties: [...BlockStyleRegistry.STANDARD, 'gap'],
+  defaultStyle: BLOCK_STYLE_DEFAULTS.LanguageSwitcher,
 };

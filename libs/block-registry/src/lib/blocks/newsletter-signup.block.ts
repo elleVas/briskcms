@@ -1,5 +1,7 @@
 import type { NewsletterSignupProps } from '@brisk/shared-types';
+import { BLOCK_STYLE_DEFAULTS } from '@brisk/shared-types';
 import type { BlockDescriptor } from '../field-types';
+import { BlockStyleRegistry } from '../block-style-registry';
 
 export const newsletterSignupBlock: BlockDescriptor<NewsletterSignupProps> = {
   type: 'NewsletterSignup',
@@ -25,4 +27,6 @@ export const newsletterSignupBlock: BlockDescriptor<NewsletterSignupProps> = {
       inlineEditable: true,
     },
   ],
+  stylableProperties: [...BlockStyleRegistry.STANDARD, 'maxWidth'],
+  defaultStyle: BLOCK_STYLE_DEFAULTS.NewsletterSignup,
 };

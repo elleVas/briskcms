@@ -1,5 +1,7 @@
 import type { NavDropdownProps } from '@brisk/shared-types';
+import { BLOCK_STYLE_DEFAULTS } from '@brisk/shared-types';
 import type { BlockDescriptor } from '../field-types';
+import { BlockStyleRegistry } from '../block-style-registry';
 import { positionField } from '../fields/position-field';
 import { visibilityField } from '../fields/visibility-field';
 
@@ -27,4 +29,13 @@ export const navDropdownBlock: BlockDescriptor<NavDropdownProps> = {
   // another NavDropdown.
   isContainer: true,
   allowedChildTypes: ['NavLink'],
+  stylableProperties: [
+    ...BlockStyleRegistry.STANDARD,
+    'gap',
+    'borderWidth',
+    'borderStyle',
+    'borderColor',
+    'boxShadow',
+  ],
+  defaultStyle: BLOCK_STYLE_DEFAULTS.NavDropdown,
 };

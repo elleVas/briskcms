@@ -1,9 +1,12 @@
 ---
 import type { NavProps } from '@brisk/shared-types';
 
-type Props = NavProps;
+type Props = NavProps & {
+  /** The per-instance style class, from BlockRenderer — see blockInstanceClassName. */
+  instanceClass?: string | null;
+};
 
-const { visibility } = Astro.props;
+const { visibility, instanceClass } = Astro.props;
 ---
 
 <nav
@@ -11,16 +14,25 @@ const { visibility } = Astro.props;
     'brisk-nav',
     { 'brisk-visibility-desktop-only': visibility === 'desktop-only' },
     { 'brisk-visibility-mobile-only': visibility === 'mobile-only' },
+    instanceClass,
   ]}
 >
   <slot />
 </nav>
 
 <style>
+  /* Every fallback is what this block already rendered. `gap` matters
+     most here: the space between nav links was a fixed 1rem, so a dense
+     header and an airy one were not expressible. */
   .brisk-nav {
     display: flex;
     align-items: center;
     flex-wrap: wrap;
-    gap: 1rem;
+    gap: var(--brisk-override-gap, 1rem);
+    background: var(--brisk-override-bg, transparent);
+    color: var(--brisk-override-text, inherit);
+    border-radius: var(--brisk-override-radius, 0);
+    padding: var(--brisk-override-padding-y, 0)
+      var(--brisk-override-padding-x, 0);
   }
 </style>

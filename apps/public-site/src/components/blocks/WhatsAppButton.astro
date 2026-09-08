@@ -2,9 +2,14 @@
 import type { WhatsAppButtonProps } from '@brisk/shared-types';
 import { Translator } from '@brisk/theme-runtime';
 
-type Props = WhatsAppButtonProps & { locale: string };
+type Props = WhatsAppButtonProps & {
+  locale: string;
+  /** The per-instance style class, from BlockRenderer — see blockInstanceClassName. */
+  instanceClass?: string | null;
+};
 
-const { phoneNumber, message, visibility, locale } = Astro.props;
+const { phoneNumber, message, visibility, locale, instanceClass } =
+  Astro.props;
 const i18n = new Translator(locale);
 
 // `message` is optional pre-filled text — omit `?text=` entirely rather
@@ -22,6 +27,7 @@ const href = message
     'brisk-whatsapp-button',
     { 'brisk-visibility-desktop-only': visibility === 'desktop-only' },
     { 'brisk-visibility-mobile-only': visibility === 'mobile-only' },
+    instanceClass,
   ]}
   aria-label={i18n.t('whatsAppButton.label')}
 >
@@ -45,11 +51,14 @@ const href = message
     z-index: 30;
     width: 3.25rem;
     height: 3.25rem;
-    border-radius: 50%;
-    background: #25d366;
+    border-radius: var(--brisk-override-radius, 50%);
+    /* WhatsApp's own green stays the default — a brand-recognition
+       colour, as the comment above says — but it is a default now rather
+       than a constant: a site whose palette clashes with it can say so. */
+    background: var(--brisk-override-bg, #25d366);
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 4px 12px rgb(0 0 0 / 20%);
+    box-shadow: var(--brisk-override-shadow, 0 4px 12px rgb(0 0 0 / 20%));
   }
 </style>

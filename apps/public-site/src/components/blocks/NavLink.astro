@@ -3,12 +3,24 @@ import type { NavLinkProps } from '@brisk/shared-types';
 import { localePathFromAncestors } from '@brisk/theme-runtime';
 
 type Props = NavLinkProps & {
+  /** The per-instance style class, from BlockRenderer — see blockInstanceClassName. */
+  instanceClass?: string | null;
+
   /** Already resolved by BlockRenderer — see its comment on `iconName`. */
   iconSvg?: string | null;
   themeName: string;
 };
 
-const { label, linkType, page, url, position, visibility, iconSvg } =
+const {
+  label,
+  linkType,
+  page,
+  url,
+  position,
+  visibility,
+  iconSvg,
+  instanceClass,
+} =
   Astro.props;
 const href = linkType === 'page' && page?.locale && page?.slug ? localePathFromAncestors(page.locale, page.ancestorSlugs ?? [], page.slug) : url;
 ---
@@ -20,6 +32,7 @@ const href = linkType === 'page' && page?.locale && page?.slug ? localePathFromA
     { 'brisk-nav-link--right': position === 'right' },
     { 'brisk-visibility-desktop-only': visibility === 'desktop-only' },
     { 'brisk-visibility-mobile-only': visibility === 'mobile-only' },
+    instanceClass,
   ]}
 >
   {iconSvg && <span class="brisk-nav-link__icon" set:html={iconSvg} />}
@@ -27,10 +40,23 @@ const href = linkType === 'page' && page?.locale && page?.slug ? localePathFromA
 </a>
 
 <style>
+  /* Fallbacks are what a nav link already rendered. Padding and a
+     background are what turn one into a pill or a highlighted CTA in the
+     header, which until now needed a Button in the middle of a menu. */
   .brisk-nav-link {
     display: inline-flex;
     align-items: center;
-    gap: 0.4em;
+    gap: var(--brisk-override-gap, 0.4em);
+    /* `var(--primary)`, NOT `inherit`: global.css gives a bare `<a>`
+       `text-primary`, and a nav link IS one. A scoped rule here outranks
+       that layer, so `inherit` turned every menu link the colour of its
+       surrounding text — measured against the built site before and
+       after, which is the only way this shows up. */
+    color: var(--brisk-override-text, var(--primary));
+    background: var(--brisk-override-bg, transparent);
+    border-radius: var(--brisk-override-radius, 0);
+    padding: var(--brisk-override-padding-y, 0)
+      var(--brisk-override-padding-x, 0);
   }
   .brisk-nav-link--right {
     margin-left: auto;

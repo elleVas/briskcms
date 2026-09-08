@@ -9,12 +9,19 @@ interface Props {
   src: string;
   title: string;
   buttonLabel: string;
+  /**
+   * Passed through from the block that owns this gate (VideoEmbed,
+   * MapEmbed) so its per-instance style lands on the element the visitor
+   * actually sees. Neither block has a root element of its own — this IS
+   * their root — so without it neither could be styled at all.
+   */
+  instanceClass?: string | null;
 }
 
-const { src, title, buttonLabel } = Astro.props;
+const { src, title, buttonLabel, instanceClass } = Astro.props;
 ---
 
-<div class="brisk-consent-embed">
+<div class:list={['brisk-consent-embed', instanceClass]}>
   <button
     type="button"
     class="brisk-consent-embed__trigger"
@@ -47,7 +54,15 @@ const { src, title, buttonLabel } = Astro.props;
     align-items: center;
     justify-content: center;
     background: var(--muted);
-    border-radius: 8px;
+    /* Fallbacks are what the gate already rendered, so an embed nobody
+       has styled is unchanged. The border and shadow exist because a
+       framed video is the common ask and there was no way to get one. */
+    border-radius: var(--brisk-override-radius, 8px);
+    border: var(--brisk-override-border-width, 0)
+      var(--brisk-override-border-style, solid)
+      var(--brisk-override-border-color, var(--border));
+    box-shadow: var(--brisk-override-shadow, none);
+    max-width: var(--brisk-override-max-width, none);
   }
   .brisk-consent-embed__trigger {
     padding: 0.75rem 1.25rem;

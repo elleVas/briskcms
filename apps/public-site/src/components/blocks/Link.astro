@@ -2,11 +2,38 @@
 import type { LinkProps } from '@brisk/shared-types';
 import { localePathFromAncestors } from '@brisk/theme-runtime';
 
-type Props = LinkProps;
+type Props = LinkProps & {
+	/** The per-instance style class, from BlockRenderer — see blockInstanceClassName. */
+	instanceClass?: string | null;
+};
 
-const { label, linkType, page, url } = Astro.props;
+const { label, linkType, page, url, instanceClass } = Astro.props;
 const href =
 	linkType === 'page' && page?.locale && page?.slug ? localePathFromAncestors(page.locale, page.ancestorSlugs ?? [], page.slug) : url;
 ---
 
-<a href={href} data-brisk-field="label">{label}</a>
+<a
+	class:list={['brisk-link', instanceClass]}
+	href={href}
+	data-brisk-field="label"
+>{label}</a>
+
+<style>
+	/* Every fallback is what a bare `<a>` already looked like, so an
+	   untouched Link is unchanged. Padding and a background are offered
+	   because a link styled into a pill is a real and common thing to
+	   want, and until now the only way to get one was to use a Button —
+	   which carries a different meaning. */
+	.brisk-link {
+		/* `var(--primary)`, NOT `inherit`: global.css gives a bare `<a>`
+		   `text-primary` and names this very block in its comment for why.
+		   A scoped rule here outranks that layer, so `inherit` would have
+		   quietly turned every existing Link the colour of its surrounding
+		   text. The fallback has to be what the block already rendered. */
+		color: var(--brisk-override-text, var(--primary));
+		background: var(--brisk-override-bg, transparent);
+		border-radius: var(--brisk-override-radius, 0);
+		padding: var(--brisk-override-padding-y, 0)
+			var(--brisk-override-padding-x, 0);
+	}
+</style>

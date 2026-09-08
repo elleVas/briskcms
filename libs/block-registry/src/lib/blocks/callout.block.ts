@@ -1,5 +1,5 @@
 import { defineBlock } from '@brisk/block-sdk';
-import { calloutPropsSchema } from '@brisk/shared-types';
+import { BLOCK_STYLE_DEFAULTS, calloutPropsSchema } from '@brisk/shared-types';
 
 /**
  * The worked example for `@brisk/block-sdk` — see libs/block-sdk/README.md.
@@ -43,4 +43,6 @@ export const calloutBlock = defineBlock({
       ],
     },
   ],
+  stylableProperties: ['borderRadius', 'paddingX', 'paddingY'],
+  defaultStyle: BLOCK_STYLE_DEFAULTS.Callout,
 });

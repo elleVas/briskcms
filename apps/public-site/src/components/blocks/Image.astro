@@ -3,9 +3,14 @@ import type { ImageProps } from '@brisk/shared-types';
 import { Translator } from '@brisk/theme-runtime';
 import OptimizedImage from '../OptimizedImage.astro';
 
-type Props = ImageProps & { locale: string };
+type Props = ImageProps & {
+  locale: string;
+  /** The per-instance style class, from BlockRenderer — see blockInstanceClassName. */
+  instanceClass?: string | null;
+};
 
-const { media, alt, isDecorative, caption, locale } = Astro.props;
+const { media, alt, isDecorative, caption, locale, instanceClass } =
+  Astro.props;
 const i18n = new Translator(locale);
 // Authoritative regardless of what's saved in `alt` — a decorative image
 // gets alt="" per WCAG even if a value was typed there before this flag
@@ -15,7 +20,7 @@ const resolvedAlt = isDecorative ? '' : alt;
 
 {
   media ? (
-    <figure>
+    <figure class:list={['brisk-image-figure', instanceClass]}>
       {
         /* loading="eager" here (unlike the other image blocks): this is
         the one block type a page can use as a full-width hero at the very
@@ -44,5 +49,18 @@ const resolvedAlt = isDecorative ? '' : alt;
   :global(.brisk-image) {
     max-width: 100%;
     height: auto;
+  }
+  /* The overrides land on the <figure>, and the radius is passed down to
+     the image because rounding the frame while the picture keeps square
+     corners is not what anyone means by it. Fallbacks are what the block
+     already rendered. */
+  .brisk-image-figure {
+    border-radius: var(--brisk-override-radius, 0);
+    border: var(--brisk-override-border-width, 0)
+      var(--brisk-override-border-style, solid)
+      var(--brisk-override-border-color, var(--border));
+    box-shadow: var(--brisk-override-shadow, none);
+    max-width: var(--brisk-override-max-width, none);
+    overflow: hidden;
   }
 </style>

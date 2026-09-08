@@ -3,7 +3,11 @@ import type { ImageSliderProps, PickedMedia } from '@brisk/shared-types';
 import { Translator } from '@brisk/theme-runtime';
 import OptimizedImage from '../OptimizedImage.astro';
 
-type Props = ImageSliderProps & { locale: string };
+type Props = ImageSliderProps & {
+  locale: string;
+  /** The per-instance style class, from BlockRenderer — see blockInstanceClassName. */
+  instanceClass?: string | null;
+};
 type SliderImage = ImageSliderProps['images'][number];
 
 function isPictured(
@@ -12,14 +16,14 @@ function isPictured(
   return image.media !== null;
 }
 
-const { images, locale } = Astro.props;
+const { images, locale, instanceClass } = Astro.props;
 const pictured = images.filter(isPictured);
 const i18n = new Translator(locale);
 ---
 
 {
   pictured.length > 0 ? (
-    <div class="brisk-slider">
+    <div class:list={['brisk-slider', instanceClass]}>
       <div class="brisk-slider__track">
         {pictured.map((image, index) => (
           <OptimizedImage
@@ -67,8 +71,15 @@ const i18n = new Translator(locale);
 </script>
 
 <style>
+  /* Fallbacks are what the slider already rendered. The radius reaches
+     the slides too: rounding the frame while the pictures keep square
+     corners is not what rounding a slider means. */
   .brisk-slider {
     position: relative;
+    border-radius: var(--brisk-override-radius, 0);
+    overflow: hidden;
+    max-width: var(--brisk-override-max-width, none);
+    box-shadow: var(--brisk-override-shadow, none);
   }
   .brisk-slider__track {
     display: flex;

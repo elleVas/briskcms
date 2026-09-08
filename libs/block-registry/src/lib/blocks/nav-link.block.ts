@@ -1,5 +1,7 @@
 import type { NavLinkProps } from '@brisk/shared-types';
+import { BLOCK_STYLE_DEFAULTS } from '@brisk/shared-types';
 import { FieldBuilder, type BlockDescriptor } from '../field-types';
+import { BlockStyleRegistry } from '../block-style-registry';
 import { ctaLinkFields } from '../fields/link-type-field';
 import { positionField } from '../fields/position-field';
 import { visibilityField } from '../fields/visibility-field';
@@ -34,4 +36,6 @@ export const navLinkBlock: BlockDescriptor<NavLinkProps> = {
     positionField,
     visibilityField,
   ],
+  stylableProperties: [...BlockStyleRegistry.STANDARD, 'gap'],
+  defaultStyle: BLOCK_STYLE_DEFAULTS.NavLink,
 };

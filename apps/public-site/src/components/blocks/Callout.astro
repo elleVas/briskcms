@@ -1,19 +1,32 @@
 ---
 import type { CalloutProps } from '@brisk/shared-types';
 
-type Props = CalloutProps;
+type Props = CalloutProps & {
+  /** The per-instance style class, from BlockRenderer — see blockInstanceClassName. */
+  instanceClass?: string | null;
+};
 
-const { message, tone } = Astro.props;
+const { message, tone, instanceClass } = Astro.props;
 ---
 
-<div class={`brisk-callout brisk-callout--${tone}`} role="note">
+<div
+  class:list={[`brisk-callout brisk-callout--${tone}`, instanceClass]}
+  role="note"
+>
   <div class="brisk-callout__message brisk-rich-text" data-brisk-field="message" set:html={message} />
 </div>
 
 <style>
+  /* Every fallback is the value this block already had, so a callout
+     nobody has styled renders exactly as before (ADR-0022's rule for
+     every stylable block). The tone colours below stay where they are:
+     they are set by a modifier class, and an override reaches this
+     element with higher precedence, so setting one wins and setting
+     nothing leaves the tone alone. */
   .brisk-callout {
-    padding: 1rem 1.25rem;
-    border-radius: var(--radius);
+    padding: var(--brisk-override-padding-y, 1rem)
+      var(--brisk-override-padding-x, 1.25rem);
+    border-radius: var(--brisk-override-radius, var(--radius));
     border-left: 4px solid;
   }
   .brisk-callout__message {

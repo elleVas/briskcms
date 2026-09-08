@@ -1,4 +1,5 @@
 import type { WhatsAppButtonProps } from '@brisk/shared-types';
+import { BLOCK_STYLE_DEFAULTS } from '@brisk/shared-types';
 import type { BlockDescriptor } from '../field-types';
 import { visibilityField } from '../fields/visibility-field';
 
@@ -25,4 +26,6 @@ export const whatsAppButtonBlock: BlockDescriptor<WhatsAppButtonProps> = {
     },
     visibilityField,
   ],
+  stylableProperties: ['backgroundColor', 'borderRadius', 'boxShadow'],
+  defaultStyle: BLOCK_STYLE_DEFAULTS.WhatsAppButton,
 };

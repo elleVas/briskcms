@@ -1,4 +1,5 @@
 import type { ImageProps } from '@brisk/shared-types';
+import { BLOCK_STYLE_DEFAULTS } from '@brisk/shared-types';
 import { FieldBuilder, type BlockDescriptor } from '../field-types';
 
 export const imageBlock: BlockDescriptor<ImageProps> = {
@@ -40,4 +41,13 @@ export const imageBlock: BlockDescriptor<ImageProps> = {
       inlineEditable: true,
     },
   ],
+  stylableProperties: [
+    'borderRadius',
+    'borderWidth',
+    'borderStyle',
+    'borderColor',
+    'boxShadow',
+    'maxWidth',
+  ],
+  defaultStyle: BLOCK_STYLE_DEFAULTS.Image,
 };
