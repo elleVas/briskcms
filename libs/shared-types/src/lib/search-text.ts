@@ -57,6 +57,13 @@ type ProseFieldExtractor = (props: Record<string, unknown>) => string[];
 
 const PROSE_FIELD_EXTRACTORS: Partial<Record<string, ProseFieldExtractor>> = {
   Hero: (props) => [asString(props['title']), asString(props['subtitle'])],
+  // The accessible name of an icon-only link is real prose and the only
+  // words the block has — someone searching for "Instagram" should find
+  // the page whose footer links to it.
+  SocialLink: (props) => [asString(props['label'])],
+  // An icon's label is what it means when it is not decoration.
+  Icon: (props) => [asString(props['label'])],
+  Audio: (props) => [asString(props['title'])],
   Text: (props) => [asString(props['body'])],
   Heading: (props) => [asString(props['text'])],
   Image: (props) => [asString(props['alt']), asString(props['caption'])],
@@ -124,6 +131,16 @@ export const BLOCKS_WITHOUT_SEARCHABLE_TEXT = [
   'Nav',
   'BackToTop',
   'Tabs',
+  // ADR-0052/0053/0054's blocks, all genuinely without prose: an
+  // arrangement wrapper, a rule, empty space, a picked icon, and two
+  // players whose only words are handled below.
+  'Carousel',
+  'Divider',
+  'Spacer',
+  'SocialLinks',
+  // A hosted video has no words of its own — its poster and its file are
+  // not prose. `VideoEmbed` is on this list for the same reason.
+  'VideoFile',
 
   // Real prose, not wired up yet — a genuine backlog item (found during
   // the 2026-09-02 Extension Manifest planning session, deliberately left

@@ -9,7 +9,7 @@ import { calloutBlock } from './blocks/callout.block';
 import { codeBlock } from './blocks/code.block';
 import { columnBlock } from './blocks/column.block';
 import { columnsBlock } from './blocks/columns.block';
-import { sliderBlock } from './blocks/slider.block';
+import { carouselBlock } from './blocks/carousel.block';
 import { dividerBlock } from './blocks/divider.block';
 import { iconBlock } from './blocks/icon.block';
 import { socialLinkBlock } from './blocks/social-link.block';
@@ -62,7 +62,7 @@ export {
   codeBlock,
   columnBlock,
   columnsBlock,
-  sliderBlock,
+  carouselBlock,
   dividerBlock,
   spacerBlock,
   iconBlock,
@@ -124,6 +124,14 @@ export const pageBlocks: BlockDescriptor[] = [
   columnsBlock,
   columnBlock,
   containerBlock,
+  carouselBlock,
+  dividerBlock,
+  spacerBlock,
+  iconBlock,
+  socialLinksBlock,
+  socialLinkBlock,
+  videoFileBlock,
+  audioBlock,
   calloutBlock,
   linkBlock,
   quoteBlock,
@@ -163,7 +171,7 @@ export const pageBlocks: BlockDescriptor[] = [
 export const pageBlockCategories: { title: string; types: string[] }[] = [
   {
     title: 'blocks.categories.layout',
-    types: ['Columns', 'Column', 'Container'],
+    types: ['Columns', 'Column', 'Container', 'Carousel', 'Divider', 'Spacer'],
   },
   {
     title: 'blocks.categories.content',
@@ -180,6 +188,7 @@ export const pageBlockCategories: { title: string; types: string[] }[] = [
       'EmbedHtml',
       'Code',
       'Breadcrumb',
+      'Icon',
     ],
   },
   {
@@ -191,6 +200,8 @@ export const pageBlockCategories: { title: string; types: string[] }[] = [
       'SearchBox',
       'Countdown',
       'Banner',
+      'SocialLinks',
+      'SocialLink',
     ],
   },
   {
@@ -202,6 +213,8 @@ export const pageBlockCategories: { title: string; types: string[] }[] = [
       'BeforeAfter',
       'LogoStrip',
       'Rating',
+      'VideoFile',
+      'Audio',
     ],
   },
   {

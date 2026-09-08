@@ -523,10 +523,10 @@ export const socialLinkPropsSchema = z.object({
 });
 export type SocialLinkProps = z.infer<typeof socialLinkPropsSchema>;
 
-export const sliderPropsSchema = z.object({
+export const carouselPropsSchema = z.object({
   display: collectionDisplaySchema.default('carousel'),
 });
-export type SliderProps = z.infer<typeof sliderPropsSchema>;
+export type CarouselProps = z.infer<typeof carouselPropsSchema>;
 
 export const columnSpanSchema = z.number().int().min(1).max(12);
 
