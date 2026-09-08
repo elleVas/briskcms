@@ -1,4 +1,5 @@
 import type { BlockBehavior } from './types';
+import { preferredScrollBehavior } from '../scroll-behavior';
 
 const SCROLL_THRESHOLD = 300;
 
@@ -27,7 +28,7 @@ function wireBackToTop(button: HTMLElement): void {
   window.addEventListener('scroll', updateVisibility, { passive: true });
 
   button.addEventListener('click', () => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo({ top: 0, behavior: preferredScrollBehavior() });
   });
 }
 

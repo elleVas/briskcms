@@ -317,7 +317,19 @@ function themeStylePropertyName(key: string): string | null {
 }
 
 /** Core properties that are deliberately not CSS custom properties at all — see BLOCK_STYLE_CUSTOM_PROPERTIES's own comment. */
-const INSTANCE_ONLY_PROPERTIES = new Set(['marginTop', 'marginBottom']);
+const INSTANCE_ONLY_PROPERTIES = new Set([
+  'marginTop',
+  'marginBottom',
+  // The animation set (docs/adr/0060) joins them for the same reason and
+  // one more: the animated element is the WRAPPER around a root block, so
+  // a per-type rule scoped by `.brisk-<type>` would land on the wrong
+  // element entirely.
+  'animation',
+  'animationDuration',
+  'animationDelay',
+  'animationEasing',
+  'hoverEffect',
+]);
 
 /**
  * The class that carries ONE block instance's overrides.
@@ -402,7 +414,12 @@ export function rootBlockInstanceClassName(blockId: string): string | null {
 export function buildRootBlockSpacingCss(content: Block[]): string {
   const rules = content.flatMap((block) => {
     const className = block.id ? rootBlockInstanceClassName(block.id) : null;
-    return className ? spacingRules(`.${className}`, block.styleOverride) : [];
+    return className
+      ? [
+          ...spacingRules(`.${className}`, block.styleOverride),
+          ...animationRules(`.${className}`, block.styleOverride),
+        ]
+      : [];
   });
   return rules.length > 0
     ? `@layer brisk.instance {\n${rules.join('\n')}\n}`
@@ -421,6 +438,79 @@ export function buildRootBlockSpacingCss(content: Block[]): string {
  * variables. Teaching it a second output mode would put a special case in
  * front of every other property; this is the smaller, more honest shape.
  */
+/**
+ * The animation and hover rules for one root block (docs/adr/0060).
+ *
+ * Base only, with no per-breakpoint tiers, and that is a decision rather
+ * than an omission: an entrance animation is not a layout, and the sizes
+ * are about layout. A different animation on a phone would be a second
+ * thing to keep in step for no expressive gain — and the size at which
+ * animation genuinely has to change is not the viewport, it is whether
+ * the reader asked for less motion, which `prefers-reduced-motion`
+ * answers on its own (global.css).
+ *
+ * Emitted as CUSTOM PROPERTIES, not as `animation:` declarations. The
+ * shorthand lives once in global.css, where it can be paused until the
+ * block scrolls into view and dropped entirely under
+ * `prefers-reduced-motion`; scattering it per block would mean writing
+ * both of those rules once per block instead.
+ */
+const ANIMATION_KEYFRAMES = new Set([
+  'fade',
+  'slide-up',
+  'slide-down',
+  'slide-left',
+  'slide-right',
+  'zoom',
+]);
+
+/**
+ * The hover effect one root block wears, or `null`.
+ *
+ * An ATTRIBUTE on the wrapper and not a custom property, unlike the
+ * animation beside it: a hover effect is two declarations and a
+ * transition, not one value, so there is nothing a custom property could
+ * hold — and CSS cannot select on a custom property's value without
+ * `@container style()`, which is not yet everywhere.
+ */
+export function rootBlockHoverAttr(style: unknown): string | undefined {
+  const [base] = responsiveBuckets(style);
+  const value = safeCssDeclarationValue(base['hoverEffect']);
+  return value && value !== 'none' && HOVER_EFFECTS.has(value)
+    ? value
+    : undefined;
+}
+
+const HOVER_EFFECTS = new Set(['lift', 'grow', 'dim']);
+
+function animationRules(selector: string, style: unknown): string[] {
+  const [base] = responsiveBuckets(style);
+  const name = safeCssDeclarationValue(base['animation']);
+  const declarations = [
+    // The stored value is the vocabulary's word (`slide-up`); the
+    // stylesheet's keyframes are prefixed. Mapped here, once, so the
+    // saved data stays readable and a keyframe set can be renamed without
+    // rewriting every page that used it.
+    name && name !== 'none' && ANIMATION_KEYFRAMES.has(name)
+      ? `--brisk-anim-name: brisk-${name};`
+      : null,
+    ...(
+      [
+        ['animationDuration', '--brisk-anim-duration'],
+        ['animationDelay', '--brisk-anim-delay'],
+        ['animationEasing', '--brisk-anim-easing'],
+      ] as const
+    ).map(([key, property]) => {
+      const value = safeCssDeclarationValue(base[key]);
+      return value && value !== 'none' ? `${property}: ${value};` : null;
+    }),
+  ].filter((declaration): declaration is string => declaration !== null);
+
+  return declarations.length > 0
+    ? [`${selector} { ${declarations.join(' ')} }`]
+    : [];
+}
+
 function spacingRules(selector: string, style: unknown): string[] {
   const [base, tablet, mobile] = responsiveBuckets(style);
   const declarationsFor = (bucket: Record<string, unknown>): string | null => {

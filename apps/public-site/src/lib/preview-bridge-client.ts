@@ -1,6 +1,7 @@
 import { type BlockAlign, type BlockRect } from '@brisk/shared-types';
 import { getBlockRect } from './get-block-rect';
 import { ROOT_BLOCK_CLASS } from './root-block-layout';
+import { preferredScrollBehavior } from './scroll-behavior';
 
 /**
  * Pure parsing/predicate and DOM-patching functions — deliberately kept
@@ -453,7 +454,10 @@ export function scrollBlockIntoView(
   const rect = getBlockRect(target);
   const targetTop =
     window.scrollY + rect.top - (window.innerHeight - rect.height) / 2;
-  window.scrollTo({ top: Math.max(targetTop, 0), behavior: 'smooth' });
+  window.scrollTo({
+    top: Math.max(targetTop, 0),
+    behavior: preferredScrollBehavior(),
+  });
   return true;
 }
 

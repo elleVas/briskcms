@@ -95,6 +95,18 @@ const LENGTH_FIELD_LABELS: Partial<
     label: 'canvas.blockStyle.lengths.backgroundImage.fieldLabel',
     placeholder: 'canvas.blockStyle.lengths.backgroundImage.placeholder',
   },
+  // Durations (docs/adr/0060) — a text box, because "600ms" and "0.6s"
+  // are both right and a menu of fixed steps would be the thing an
+  // agency matching a design cannot use. The schema refuses a bare
+  // number, which is the mistake that actually happens.
+  animationDuration: {
+    label: 'canvas.blockStyle.lengths.animationDuration.fieldLabel',
+    placeholder: 'canvas.blockStyle.lengths.animationDuration.placeholder',
+  },
+  animationDelay: {
+    label: 'canvas.blockStyle.lengths.animationDelay.fieldLabel',
+    placeholder: 'canvas.blockStyle.lengths.animationDelay.placeholder',
+  },
 };
 
 /**
@@ -113,6 +125,20 @@ const SELECT_FIELD_OPTIONS: Partial<
   contentAlign: ['start', 'center', 'end'],
   contentJustify: ['start', 'center', 'end'],
   flexDirection: ['column', 'row'],
+  // docs/adr/0060. `none` is first and is what every block already does,
+  // so the menu opens on "no animation" rather than on one somebody has
+  // to undo.
+  animation: [
+    'none',
+    'fade',
+    'slide-up',
+    'slide-down',
+    'slide-left',
+    'slide-right',
+    'zoom',
+  ],
+  animationEasing: ['ease-out', 'ease', 'ease-in', 'ease-in-out', 'linear'],
+  hoverEffect: ['none', 'lift', 'grow', 'dim'],
 };
 
 /**

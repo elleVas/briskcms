@@ -46,6 +46,29 @@ export const cssLengthTokenSchema = cssValueSchema.nullable();
 export const cssColorTokenSchema = cssValueSchema.nullable();
 
 /**
+ * A time, and nothing else (docs/adr/0060). Narrower than
+ * `cssLengthTokenSchema` on purpose: a duration is the one place where a
+ * wrong unit is not a wrong look but a broken animation — `600` without
+ * `ms` makes the whole `animation` shorthand invalid, and the block simply
+ * never appears. Four seconds is the ceiling because an entrance animation
+ * longer than that is a page that looks broken.
+ */
+export const cssDurationTokenSchema = z
+  .string()
+  .regex(
+    /^(?:[0-9]|[1-9][0-9]{0,3})(?:\.[0-9]{1,3})?m?s$/,
+    'must be a CSS duration like "600ms" or "0.6s"',
+  )
+  .refine(
+    (value) =>
+      (value.endsWith('ms')
+        ? Number(value.slice(0, -2))
+        : Number(value.slice(0, -1)) * 1000) <= 4000,
+    { message: 'must be at most 4s' },
+  )
+  .nullable();
+
+/**
  * Closed sets, so the editor can render a menu rather than a text box and
  * the value is safe in CSS by construction — there is nothing to escape
  * in `dashed`.
@@ -58,6 +81,44 @@ export const backgroundPositionSchema = z
   .nullable();
 export const backgroundSizeSchema = z
   .enum(['cover', 'contain', 'auto'])
+  .nullable();
+
+/**
+ * How a block arrives when it first scrolls into view (docs/adr/0060).
+ *
+ * A closed list and not a free CSS `animation` value, unlike `boxShadow`
+ * just below: an entrance animation is a keyframe set the stylesheet has
+ * to define, so an arbitrary string could only name something that does
+ * not exist. Every one of these moves opacity and transform ONLY —
+ * nothing that changes layout — because an entrance animation that moved
+ * a margin or a height would push the rest of the page around while it
+ * played, which is a Cumulative Layout Shift on a site's most visible
+ * content.
+ */
+export const blockAnimationSchema = z
+  .enum([
+    'none',
+    'fade',
+    'slide-up',
+    'slide-down',
+    'slide-left',
+    'slide-right',
+    'zoom',
+  ])
+  .nullable();
+
+/** What a block does under the pointer. Same closed-list reasoning as `blockAnimationSchema`. */
+export const blockHoverEffectSchema = z
+  .enum(['none', 'lift', 'grow', 'dim'])
+  .nullable();
+
+/**
+ * `ease-out` is the default rather than `ease` or `linear`: an element
+ * entering the viewport should decelerate into place, which is what makes
+ * an entrance read as arriving rather than as being dragged.
+ */
+export const animationEasingSchema = z
+  .enum(['ease', 'ease-in', 'ease-out', 'ease-in-out', 'linear'])
   .nullable();
 export const backgroundRepeatSchema = z
   .enum(['no-repeat', 'repeat', 'repeat-x', 'repeat-y'])
@@ -110,6 +171,11 @@ const BLOCK_STYLE_PROPERTY_KEYS: Readonly<Record<string, true>> = {
   paddingY: true,
   marginTop: true,
   marginBottom: true,
+  animation: true,
+  animationDuration: true,
+  animationDelay: true,
+  animationEasing: true,
+  hoverEffect: true,
   borderWidth: true,
   borderStyle: true,
   borderColor: true,
@@ -145,6 +211,22 @@ export const blockStyleOverrideSchema = z
     // on the editor side.
     marginTop: cssLengthTokenSchema.optional(),
     marginBottom: cssLengthTokenSchema.optional(),
+
+    /*
+     * The animation set (docs/adr/0060). Instance-only and root-block-only
+     * for the margins' reason above, plus one of its own: the animated
+     * element is the WRAPPER around a root block, which is the only
+     * element that exists once per placement. A per-TYPE entrance
+     * animation would fire on every block of that type anywhere, including
+     * the six inside a Columns that are already arriving with their
+     * parent.
+     */
+    animation: blockAnimationSchema.optional(),
+    animationDuration: cssDurationTokenSchema.optional(),
+    animationDelay: cssDurationTokenSchema.optional(),
+    animationEasing: animationEasingSchema.optional(),
+    /** Under the pointer. Instance-only for the same reason as the four above. */
+    hoverEffect: blockHoverEffectSchema.optional(),
 
     // --- The vocabulary an ordinary marketing page needs (ADR-0047) ---
     //

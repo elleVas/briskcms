@@ -18,6 +18,7 @@ import {
   type PreviewToParentMessage,
 } from '@brisk/shared-types';
 import { runBlockBehaviorsInSubtree } from './block-behaviors/run-block-behaviors-in-subtree';
+import { initEntranceAnimations } from './block-behaviors/entrance-animation';
 import {
   applyBlockAlign,
   applyBlockInsert,
@@ -436,6 +437,11 @@ export function initPreviewBridge(): void {
         if (inserted) {
           resizeObserver.observe(inserted);
           runBlockBehaviorsInSubtree(inserted);
+          // A block dropped onto the canvas gets its entrance animation
+          // wired like any other (docs/adr/0060) — the wrapper it landed
+          // in is new, so nothing was observing it. Idempotent, so the
+          // blocks that were already there are skipped.
+          initEntranceAnimations(document);
         }
         sendBlockRects();
         return;

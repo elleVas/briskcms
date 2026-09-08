@@ -357,6 +357,145 @@ body,
   padding-inline: 0;
 }
 
+/* ------------------------------------------------------------------ *
+ * Motion (docs/adr/0060)
+ * ------------------------------------------------------------------ */
+
+/*
+ * Every entrance animation moves `opacity` and `transform` and NOTHING
+ * else. That is not a stylistic preference: those two are the properties
+ * a browser can animate on the compositor without laying the page out
+ * again, so an entrance cannot push the content below it around while it
+ * plays. An animation that moved a height or a margin would be a
+ * Cumulative Layout Shift on the most visible content a site has.
+ *
+ * The distances are small (24px, and 8% for the zoom) for the same
+ * reason a fade is the default: a block that flies in from the edge of
+ * the screen reads as a demo, not as a website.
+ */
+@keyframes brisk-fade {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes brisk-slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+}
+@keyframes brisk-slide-down {
+  from {
+    opacity: 0;
+    transform: translateY(-24px);
+  }
+}
+@keyframes brisk-slide-left {
+  from {
+    opacity: 0;
+    transform: translateX(24px);
+  }
+}
+@keyframes brisk-slide-right {
+  from {
+    opacity: 0;
+    transform: translateX(-24px);
+  }
+}
+@keyframes brisk-zoom {
+  from {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+}
+
+/*
+ * The whole entrance mechanism, and the reason it is shaped this way.
+ *
+ * `.brisk-motion-ready` is put on <html> by `entrance-animation.ts` — so
+ * with JavaScript off, or before the behaviour has run, NONE of this
+ * applies and every block is simply visible. That order matters more than
+ * it looks: the animation's first frame is `opacity: 0`, so a mechanism
+ * that started from the animated state and waited for JS to release it
+ * would hide the entire page for any reader without JavaScript. This one
+ * fails to "no animation", never to "no content".
+ *
+ * `paused` plus `both`: the block sits on the animation's first frame
+ * until the observer says it has entered the viewport, then runs. The
+ * alternative — adding the animation only on entry — restarts layout and
+ * makes the first frame flash at full opacity on slow machines.
+ *
+ * `--brisk-anim-name` is unset for a block nobody animated, so the
+ * shorthand resolves to `none` and the rule costs that block nothing.
+ */
+.brisk-motion-ready .brisk-root-block {
+  animation: var(--brisk-anim-name, none) var(--brisk-anim-duration, 600ms)
+    var(--brisk-anim-easing, ease-out) var(--brisk-anim-delay, 0s) both paused;
+}
+.brisk-motion-ready .brisk-root-block[data-brisk-in-view] {
+  animation-play-state: running;
+}
+
+/*
+ * What a block does under the pointer. `--brisk-hover-effect` is set per
+ * instance (block-style-overrides.ts) and read here as a NAME, because a
+ * hover effect is two declarations and a transition rather than one
+ * value — there is nothing a single custom property could hold.
+ */
+.brisk-root-block {
+  transition:
+    transform 200ms ease-out,
+    box-shadow 200ms ease-out,
+    opacity 200ms ease-out;
+}
+.brisk-root-block[data-brisk-hover='lift']:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg, 0 12px 32px rgb(0 0 0 / 12%));
+}
+.brisk-root-block[data-brisk-hover='grow']:hover {
+  transform: scale(1.02);
+}
+.brisk-root-block[data-brisk-hover='dim']:hover {
+  opacity: 0.75;
+}
+
+/*
+ * Accessibility, not polish (docs/adr/0060).
+ *
+ * Before this rule the product had not one `prefers-reduced-motion` block
+ * anywhere, while shipping transitions and four smooth scrolls. For a
+ * reader with vestibular disorders those are not decoration, they are a
+ * reason to close the tab.
+ *
+ * `!important` and a blanket selector, deliberately: this has to beat a
+ * per-instance rule in `@layer brisk.instance`, a theme's own stylesheet
+ * and a block's scoped style alike. A reader who asked the operating
+ * system for less motion is not overridden by a site's design.
+ *
+ * `0.01ms` rather than `none`: an animation that never runs never fires
+ * `animationend`, and code waiting on that event would hang. This lets
+ * every animation complete instantly instead.
+ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  /* The entrance is dropped outright rather than merely shortened: `both`
+     would otherwise leave the block on its first frame — invisible —
+     until the observer got to it. */
+  .brisk-motion-ready .brisk-root-block {
+    animation: none !important;
+  }
+  .brisk-root-block[data-brisk-hover]:hover {
+    transform: none;
+  }
+}
+
 /*
  * The full-size view a lightbox opens (ADR-0057).
  *

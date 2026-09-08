@@ -5,6 +5,7 @@ import {
   buildBlockInstanceRulesCss,
   buildRootBlockSpacingCss,
   rootBlockInstanceClassName,
+  rootBlockHoverAttr,
 } from '@brisk/shared-types';
 import BlockRenderer from './BlockRenderer.astro';
 import ErrorPageShell from './ErrorPageShell.astro';
@@ -146,6 +147,7 @@ const errorPageTranslations =
               block.id ? rootBlockInstanceClassName(block.id) : null,
             ]}
             data-brisk-align={rootBlockAlignAttr(block.align)}
+            data-brisk-hover={rootBlockHoverAttr(block.styleOverride)}
           >
             <BlockRenderer
               block={block}
@@ -180,3 +182,19 @@ const errorPageTranslations =
     </ErrorPageShell>
   )
 }
+
+{/*
+  The entrance animations (docs/adr/0060). Here and not in PageLayout
+  because the wrappers it observes are rendered by THIS component — the
+  header and footer have no root-block wrappers and nothing to animate.
+
+  A module import rather than inline code, like every block's own script:
+  it keeps the logic testable and lets the canvas re-run it after a live
+  insert. A second consumer exists for the same reason the CSP gotcha of
+  2026-09-02 taught — but even with one, this stays a real module rather
+  than inline text.
+*/}
+<script>
+  import { initEntranceAnimations } from '../lib/block-behaviors/entrance-animation';
+  initEntranceAnimations();
+</script>
