@@ -31,6 +31,7 @@ import {
   InMemoryPageGroupVersionRepository,
   InMemoryPageTranslationRepository,
   InMemoryPageTranslationVersionRepository,
+  InMemoryReusableSectionRepository,
   InMemorySearchPort,
 } from './in-memory-repositories.test-fixture';
 
@@ -54,6 +55,7 @@ describe('page group i18n lifecycle', () => {
       pageTranslationRepository,
       pageTranslationVersionRepository,
       searchPort: new InMemorySearchPort(),
+      reusableSectionRepository: new InMemoryReusableSectionRepository(),
     };
   }
 

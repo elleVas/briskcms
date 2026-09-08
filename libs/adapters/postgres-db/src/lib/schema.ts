@@ -19,6 +19,7 @@ import { DEFAULT_VARIANT } from '@brisk/shared-types';
 import type {
   ResponsiveBlockStyle,
   CookieBannerSettings,
+  ExposedFields,
   FieldValueOverlay,
   FormField,
   FormStep,
@@ -58,6 +59,17 @@ export const siteLayoutSectionStatusEnum = pgEnum(
   'site_layout_section_status',
   ['draft', 'published'],
 );
+// A reusable section is either a live reference or a copy taken once
+// (docs/adr/0059) — the kind decides what INSERTING one does, so it is a
+// property of the section itself and not of the insert action.
+export const reusableSectionKindEnum = pgEnum('reusable_section_kind', [
+  'shared',
+  'template',
+]);
+export const reusableSectionStatusEnum = pgEnum('reusable_section_status', [
+  'draft',
+  'published',
+]);
 export const storageProviderEnum = pgEnum('storage_provider', ['local', 's3']);
 export const verificationTokenPurposeEnum = pgEnum(
   'verification_token_purpose',
@@ -507,6 +519,81 @@ export const siteLayoutSectionVersions = pgTable(
     // `WHERE site_layout_section_id = ? ORDER BY created_at ASC`.
     index('site_layout_section_versions_section_created_idx').on(
       table.siteLayoutSectionId,
+      table.createdAt,
+    ),
+  ],
+);
+
+// A strip of blocks an agency builds once and places on many pages
+// (docs/adr/0059). It has its OWN draft/publish cycle, and that is the
+// whole mechanism: a page's published snapshot stores only the reference,
+// so publishing the section changes every page using it without any of
+// them being republished.
+export const reusableSections = pgTable(
+  'reusable_sections',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    tenantId: uuid('tenant_id')
+      .notNull()
+      .references(() => tenants.id, { onDelete: 'cascade' }),
+    siteId: uuid('site_id')
+      .notNull()
+      .references(() => sites.id, { onDelete: 'cascade' }),
+    name: text('name').notNull(),
+    kind: reusableSectionKindEnum('kind').notNull(),
+    status: reusableSectionStatusEnum('status').notNull(),
+    content: jsonb('content').notNull().default([]).$type<PageContent>(),
+    publishedContent: jsonb('published_content').$type<PageContent>(),
+    // Which fields of which inner blocks an instance may change. Lives on
+    // the section and not on the instance on purpose: the agency that
+    // built it decides what the client may touch, and the client cannot
+    // grant themselves more.
+    exposedFields: jsonb('exposed_fields')
+      .notNull()
+      .default({})
+      .$type<ExposedFields>(),
+    createdBy: uuid('created_by').references(() => users.id, {
+      onDelete: 'set null',
+    }),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    // Names are how a person picks one out of the insert menu, so two
+    // sections called "I nostri servizi" on one site is a bug the database
+    // can refuse rather than a support call later.
+    unique().on(table.tenantId, table.siteId, table.name),
+    index('reusable_sections_tenant_site_idx').on(table.tenantId, table.siteId),
+  ],
+);
+
+export const reusableSectionVersions = pgTable(
+  'reusable_section_versions',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    tenantId: uuid('tenant_id')
+      .notNull()
+      .references(() => tenants.id, { onDelete: 'cascade' }),
+    reusableSectionId: uuid('reusable_section_id')
+      .notNull()
+      .references(() => reusableSections.id, { onDelete: 'cascade' }),
+    content: jsonb('content').notNull().$type<PageContent>(),
+    createdBy: uuid('created_by').references(() => users.id, {
+      onDelete: 'set null',
+    }),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    // The same composite as the other version tables: listing is always
+    // `WHERE reusable_section_id = ? ORDER BY created_at`.
+    index('reusable_section_versions_section_created_idx').on(
+      table.reusableSectionId,
       table.createdAt,
     ),
   ],

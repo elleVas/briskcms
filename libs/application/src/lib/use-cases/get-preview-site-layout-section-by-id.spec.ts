@@ -3,6 +3,7 @@ import { SiteLayoutSection } from '@brisk/domain-core';
 import { getPreviewSiteLayoutSectionById } from './get-preview-site-layout-section-by-id.use-case';
 import {
   InMemoryPreviewTokenPort,
+  InMemoryReusableSectionRepository,
   InMemorySiteLayoutSectionRepository,
 } from './in-memory-repositories.test-fixture';
 
@@ -12,6 +13,7 @@ describe('getPreviewSiteLayoutSectionById', () => {
   function setup() {
     return {
       siteLayoutSectionRepository: new InMemorySiteLayoutSectionRepository(),
+      reusableSectionRepository: new InMemoryReusableSectionRepository(),
       previewTokenPort: new InMemoryPreviewTokenPort(),
     };
   }

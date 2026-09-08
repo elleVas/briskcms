@@ -25,6 +25,7 @@ export const customFieldControlSchema = z.enum([
   'icon',
   'media',
   'page',
+  'section',
   'table-data',
 ]);
 

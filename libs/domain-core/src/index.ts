@@ -3,6 +3,8 @@ export * from './lib/entities/page-group-version';
 export * from './lib/entities/page-translation';
 export * from './lib/entities/page-translation-version';
 export * from './lib/entities/site';
+export * from './lib/entities/reusable-section';
+export * from './lib/entities/reusable-section-version';
 export * from './lib/entities/site-layout-section';
 export * from './lib/entities/site-layout-section-version';
 export * from './lib/entities/user';

@@ -78,14 +78,22 @@ export interface UseBlockTreeMutationsParams {
   >;
   token: string | null;
   pageId: string;
+  /** Set only by the reusable-section editor (docs/adr/0059) — the fragment endpoint then validates the token against the section rather than a page. */
+  fragmentSection?: { sectionId: string; locale: string };
+  /** Remounts the canvas iframe — used where no fragment can be patched in (docs/adr/0059). */
+  reloadCanvas?: () => void;
   selectedBlock: Block | null;
   selectedDescriptor: BlockDescriptor | undefined;
 }
 
 export interface UseBlockTreeMutationsResult {
   handleInsert: (descriptor: BlockDescriptor) => void;
+  /** A whole strip at once — how a template lands on the page (docs/adr/0059). */
+  handleInsertBlocks: (blocks: (Block & { id: string })[]) => void;
   handleReorder: (parentId: string | null, orderedIds: string[]) => void;
   handleRemoveSelected: () => void;
+  /** Swaps the selected block for another at the same place — see the implementation. */
+  handleReplaceSelected: (replacement: Block & { id: string }) => void;
   handleMoveSelected: (direction: -1 | 1) => void;
   handleDuplicateSelected: () => void;
   handleAddChild: () => void;
@@ -138,6 +146,8 @@ export function useBlockTreeMutations({
   bridge,
   token,
   pageId,
+  fragmentSection,
+  reloadCanvas,
   selectedBlock,
   selectedDescriptor,
 }: UseBlockTreeMutationsParams): UseBlockTreeMutationsResult {
@@ -249,6 +259,7 @@ export function useBlockTreeMutations({
     try {
       const html = await renderBlockFragment({
         pageId,
+        ...(fragmentSection ?? {}),
         token,
         blockId: parent.id,
         blockType: parent.type,
@@ -275,6 +286,7 @@ export function useBlockTreeMutations({
     try {
       const html = await renderBlockFragment({
         pageId,
+        ...(fragmentSection ?? {}),
         token,
         blockId: block.id,
         blockType: block.type,
@@ -349,6 +361,28 @@ export function useBlockTreeMutations({
   }
 
   /**
+   * Inserts a whole strip of blocks — how a TEMPLATE arrives (docs/adr/0059).
+   *
+   * One at a time through `performInsert`, and forwards rather than
+   * backwards: each goes to the position after the one before it, so the
+   * strip lands in the order it was written. Reusing the single-block path
+   * is what keeps undo, the canvas patch and history working for a
+   * template exactly as they do for a block, instead of a second insert
+   * path that would have to reimplement all three.
+   */
+  function handleInsertBlocks(blocks: (Block & { id: string })[]): void {
+    let target = resolveInsertTarget(
+      localBlocks,
+      registry,
+      bridge.selectedBlockId,
+    );
+    for (const block of blocks) {
+      performInsert(block, target);
+      target = { parentId: target.parentId, index: target.index + 1 };
+    }
+  }
+
+  /**
    * Reorders siblings at ANY depth — `parentId: null` for the root,
    * otherwise the id of the container block whose children were dragged
    * (see `computeNestedReorder` in layers-panel.tsx, its only caller).
@@ -374,6 +408,7 @@ export function useBlockTreeMutations({
     }
     void renderBlockFragment({
       pageId,
+      ...(fragmentSection ?? {}),
       token,
       blockId,
       blockType: block.type,
@@ -411,6 +446,49 @@ export function useBlockTreeMutations({
     const beforeSiblingIds = blockIds(siblingsAt(before, parentId));
     const syncForward = () => bridge.reorderBlocks(parentId, orderedIds);
     const syncBackward = () => bridge.reorderBlocks(parentId, beforeSiblingIds);
+    syncForward();
+    recordHistory({ before, after: next, syncForward, syncBackward });
+  }
+
+  /**
+   * Swaps the selected block for another one at the same place — how a
+   * block becomes a reusable section (docs/adr/0059): the section is
+   * created from its content, and the block it was made from is replaced
+   * by an instance pointing at it.
+   *
+   * Remove then insert at the ORIGINAL index, in one history entry: two
+   * separate mutations would mean an undo that leaves the page with
+   * neither the block nor the section, which is the state nobody asked
+   * for.
+   */
+  function handleReplaceSelected(replacement: Block & { id: string }): void {
+    if (!selectedBlock?.id) {
+      return;
+    }
+    const location = locateBlock(localBlocks, selectedBlock.id);
+    if (!location) {
+      return;
+    }
+    const before = localBlocks;
+    const target: BlockTreeTarget = {
+      parentId: location.parentId,
+      index: location.index,
+    };
+    const next = insertBlock(
+      removeBlock(before, selectedBlock.id),
+      replacement,
+      target,
+    );
+    applyLocalChange(next);
+    // A full reload of the canvas rather than a surgical patch: the
+    // replacement renders a section, whose blocks the client does not
+    // have, so there is no fragment to graft in place of the old node.
+    // A full reload rather than a surgical patch, both ways: what replaces
+    // the block renders a SECTION, whose blocks live on the server and are
+    // resolved at read time — there is no fragment the client could graft
+    // in its place.
+    const syncForward = () => reloadCanvas?.();
+    const syncBackward = () => reloadCanvas?.();
     syncForward();
     recordHistory({ before, after: next, syncForward, syncBackward });
   }
@@ -568,6 +646,8 @@ export function useBlockTreeMutations({
   return {
     recordEdit,
     handleInsert,
+    handleInsertBlocks,
+    handleReplaceSelected,
     handleReorder,
     handleRemoveSelected,
     handleMoveSelected,

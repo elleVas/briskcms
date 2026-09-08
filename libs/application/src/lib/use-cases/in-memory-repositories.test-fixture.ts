@@ -7,6 +7,8 @@ import type {
   PageTranslation,
   PageTranslationVersion,
   PreviewContentType,
+  ReusableSection,
+  ReusableSectionVersion,
   Site,
   SiteLayoutSection,
   SiteLayoutSectionKind,
@@ -14,7 +16,7 @@ import type {
   User,
 } from '@brisk/domain-core';
 import { sniffMediaType } from '@brisk/domain-core';
-import type { ResponsiveBlockStyle } from '@brisk/shared-types';
+import type { PageContent, ResponsiveBlockStyle } from '@brisk/shared-types';
 import type {
   FormRepositoryPort,
   FormSubmissionRepositoryPort,
@@ -32,6 +34,8 @@ import type {
   PageTranslationVersionRepositoryPort,
   PreviewToken,
   PreviewTokenPort,
+  ReusableSectionRepositoryPort,
+  ReusableSectionVersionRepositoryPort,
   SearchPort,
   SiteLayoutSectionRepositoryPort,
   SiteLayoutSectionVersionRepositoryPort,
@@ -178,6 +182,15 @@ export class InMemoryPageGroupRepository implements PageGroupRepositoryPort {
     };
   }
 
+  async listContentBySite(
+    tenantId: string,
+    siteId: string,
+  ): Promise<{ id: string; content: PageContent }[]> {
+    return [...this.groups.values()]
+      .filter((group) => group.tenantId === tenantId && group.siteId === siteId)
+      .map((group) => ({ id: group.id, content: group.content }));
+  }
+
   async listSiblings(
     tenantId: string,
     siteId: string,
@@ -296,6 +309,18 @@ export class InMemoryPageTranslationRepository implements PageTranslationReposit
       (translation) =>
         translation.tenantId === tenantId &&
         translation.pageGroupId === pageGroupId,
+    );
+  }
+
+  async listPublishedBySite(
+    tenantId: string,
+    siteId: string,
+  ): Promise<PageTranslation[]> {
+    return [...this.translations.values()].filter(
+      (translation) =>
+        translation.tenantId === tenantId &&
+        translation.siteId === siteId &&
+        translation.status === 'published',
     );
   }
 
@@ -697,11 +722,87 @@ export class InMemoryMediaStorage implements MediaStoragePort {
   }
 }
 
+export class InMemoryReusableSectionRepository implements ReusableSectionRepositoryPort {
+  private sections = new Map<string, ReusableSection>();
+
+  async save(section: ReusableSection): Promise<void> {
+    this.sections.set(section.id, section);
+  }
+
+  async findById(
+    tenantId: string,
+    id: string,
+  ): Promise<ReusableSection | null> {
+    const section = this.sections.get(id);
+    return section && section.tenantId === tenantId ? section : null;
+  }
+
+  async findByIds(tenantId: string, ids: string[]): Promise<ReusableSection[]> {
+    return ids
+      .map((id) => this.sections.get(id))
+      .filter(
+        (section): section is ReusableSection =>
+          section !== undefined && section.tenantId === tenantId,
+      );
+  }
+
+  /** By name, the same order the real adapter returns — the insert menu's order. */
+  async listBySite(
+    tenantId: string,
+    siteId: string,
+  ): Promise<ReusableSection[]> {
+    return [...this.sections.values()]
+      .filter(
+        (section) => section.tenantId === tenantId && section.siteId === siteId,
+      )
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }
+
+  async delete(tenantId: string, id: string): Promise<void> {
+    const section = this.sections.get(id);
+    if (section && section.tenantId === tenantId) {
+      this.sections.delete(id);
+    }
+  }
+}
+
+export class InMemoryReusableSectionVersionRepository implements ReusableSectionVersionRepositoryPort {
+  versions: ReusableSectionVersion[] = [];
+
+  async save(version: ReusableSectionVersion): Promise<void> {
+    this.versions.push(version);
+  }
+
+  async findById(
+    tenantId: string,
+    versionId: string,
+  ): Promise<ReusableSectionVersion | null> {
+    return (
+      this.versions.find(
+        (version) => version.tenantId === tenantId && version.id === versionId,
+      ) ?? null
+    );
+  }
+
+  async listBySection(
+    tenantId: string,
+    reusableSectionId: string,
+  ): Promise<ReusableSectionVersion[]> {
+    return this.versions.filter(
+      (version) =>
+        version.tenantId === tenantId &&
+        version.reusableSectionId === reusableSectionId,
+    );
+  }
+}
+
 export class InMemorySearchPort implements SearchPort {
   indexed: {
     tenantId: string;
     siteId: string;
     translation: PageTranslation;
+    /** What was actually handed to the index — sections already expanded. */
+    content: PageContent;
   }[] = [];
   results: PageSearchResult[] = [];
 
@@ -709,8 +810,9 @@ export class InMemorySearchPort implements SearchPort {
     tenantId: string,
     siteId: string,
     translation: PageTranslation,
+    content: PageContent,
   ): Promise<void> {
-    this.indexed.push({ tenantId, siteId, translation });
+    this.indexed.push({ tenantId, siteId, translation, content });
   }
 
   async search(): Promise<PageSearchResult[]> {

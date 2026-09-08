@@ -194,6 +194,26 @@ export class DrizzlePageTranslationRepository implements PageTranslationReposito
     return rows.map(fromRow);
   }
 
+  /** See the port — used to find the pages a published section appears on. */
+  async listPublishedBySite(
+    tenantId: string,
+    siteId: string,
+  ): Promise<PageTranslation[]> {
+    const rows = await withTenant(this.db, tenantId, (tx) =>
+      tx
+        .select()
+        .from(pageTranslations)
+        .where(
+          and(
+            eq(pageTranslations.tenantId, tenantId),
+            eq(pageTranslations.siteId, siteId),
+            eq(pageTranslations.status, 'published'),
+          ),
+        ),
+    );
+    return rows.map(fromRow);
+  }
+
   /** Vedi PageTranslationRepositoryPort's own doc comment — cammina la gerarchia CONDIVISA un segmento alla volta, tramite `parentGroupId` (denormalizzato da PageGroup.parentId, vedi schema.ts). */
   async findByParentGroupAndLocaleSlug(
     tenantId: string,

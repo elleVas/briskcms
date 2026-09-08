@@ -1,7 +1,7 @@
 import { eq, sql } from 'drizzle-orm';
 import type { PageTranslation } from '@brisk/domain-core';
 import type { PageSearchResult, SearchPort } from '@brisk/ports';
-import { extractSearchableText } from '@brisk/shared-types';
+import { extractSearchableText, type PageContent } from '@brisk/shared-types';
 import { type BriskDb, pageTranslations, withTenant } from '@brisk/postgres-db';
 
 /**
@@ -20,11 +20,9 @@ export class DrizzleSearchRepository implements SearchPort {
     tenantId: string,
     siteId: string,
     translation: PageTranslation,
+    content: PageContent,
   ): Promise<void> {
-    const searchText = extractSearchableText(
-      translation.seoMeta,
-      translation.publishedSnapshot ?? [],
-    );
+    const searchText = extractSearchableText(translation.seoMeta, content);
     await withTenant(this.db, tenantId, (tx) =>
       tx
         .update(pageTranslations)

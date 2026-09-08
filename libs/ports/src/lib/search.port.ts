@@ -1,4 +1,5 @@
 import type { PageTranslation } from '@brisk/domain-core';
+import type { PageContent } from '@brisk/shared-types';
 
 export interface PageSearchResult {
   pageId: string;
@@ -30,6 +31,19 @@ export interface SearchPort {
     tenantId: string,
     siteId: string,
     translation: PageTranslation,
+    /**
+     * The content to extract words from — the translation's published
+     * snapshot with its `Section` blocks already expanded (docs/adr/0059).
+     *
+     * Passed in rather than read off `translation.publishedSnapshot`
+     * inside the adapter, and required rather than optional: a snapshot
+     * stores a REFERENCE where a section's words are, so an adapter
+     * reading the snapshot directly would index a page as though the
+     * section were not on it. Making it a parameter puts the decision at
+     * the call site, where whoever adds the next caller has to answer it;
+     * a default would let that caller silently index nothing.
+     */
+    content: PageContent,
   ): Promise<void>;
 
   /** Only ever matches published translations — an adapter must never surface draft content here. */

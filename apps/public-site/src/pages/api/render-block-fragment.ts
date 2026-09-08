@@ -5,7 +5,10 @@ import {
   resolvePageReferences,
   type Block,
 } from '@brisk/shared-types';
-import { getPreviewPageById } from '../../lib/public-api-client';
+import {
+  getPreviewPageById,
+  getPreviewSectionById,
+} from '../../lib/public-api-client';
 import { findBlockById } from '../../lib/find-block-by-id';
 import {
   isValidRenderBlockFragmentBody,
@@ -40,7 +43,13 @@ export const POST: APIRoute = async ({ request }) => {
   // The same "indistinguishable from non-existent" collapse as the preview
   // route: a missing, expired or mismatched token and a page that does not
   // exist all get the same 404.
-  const page = await getPreviewPageById(body.pageId, body.token);
+  // A section's token is validated against the SECTION, a page's against
+  // the page — the branch is what keeps one from standing in for the
+  // other (docs/adr/0059). Either way what comes back is page-shaped, so
+  // everything below this line is the same code for both.
+  const page = body.sectionId
+    ? await getPreviewSectionById(body.sectionId, body.token, body.locale ?? '')
+    : await getPreviewPageById(body.pageId, body.token);
   if (!page) {
     return new Response('Not found', {
       status: 404,

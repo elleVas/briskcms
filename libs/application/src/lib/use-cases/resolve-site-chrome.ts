@@ -3,6 +3,7 @@ import type { Site, SiteLayoutSection } from '@brisk/domain-core';
 import type {
   PageGroupRepositoryPort,
   PageTranslationRepositoryPort,
+  ReusableSectionRepositoryPort,
   SiteLayoutSectionRepositoryPort,
   SiteThemeBlockStylesPort,
 } from '@brisk/ports';
@@ -18,6 +19,7 @@ export interface PublishedSiteChrome {
 }
 
 export interface ResolveSiteChromeDeps {
+  reusableSectionRepository: ReusableSectionRepositoryPort;
   siteLayoutSectionRepository: SiteLayoutSectionRepositoryPort;
   siteThemeBlockStylesRepository: SiteThemeBlockStylesPort;
   pageTranslationRepository: PageTranslationRepositoryPort;

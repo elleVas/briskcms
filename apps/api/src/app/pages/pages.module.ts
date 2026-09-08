@@ -8,11 +8,16 @@ import {
   DrizzlePageTranslationVersionRepository,
 } from '@brisk/postgres-page-repository';
 import { PreviewTokenAdapter } from '@brisk/preview-token-adapter';
+import { DrizzleReusableSectionRepository } from '@brisk/postgres-reusable-section-repository';
 import { DrizzleSearchRepository } from '@brisk/postgres-search-repository';
 import { AuthModule } from '../auth/auth.module';
 import { DATABASE, DatabaseModule } from '../database.module';
 import { PageGroupsController } from './page-groups.controller';
-import { PREVIEW_TOKEN_PORT, SEARCH_REPOSITORY } from './pages.tokens';
+import {
+  PREVIEW_TOKEN_PORT,
+  REUSABLE_SECTION_REPOSITORY,
+  SEARCH_REPOSITORY,
+} from './pages.tokens';
 import {
   PAGE_GROUP_REPOSITORY,
   PAGE_GROUP_VERSION_REPOSITORY,
@@ -24,6 +29,13 @@ import {
   imports: [DatabaseModule, AuthModule],
   controllers: [PageGroupsController],
   providers: [
+    {
+      // Publishing a page indexes it with its sections expanded — the
+      // snapshot holds only the reference (docs/adr/0059).
+      provide: REUSABLE_SECTION_REPOSITORY,
+      useFactory: (db: BriskDb) => new DrizzleReusableSectionRepository(db),
+      inject: [DATABASE],
+    },
     {
       provide: SEARCH_REPOSITORY,
       useFactory: (db: BriskDb) => new DrizzleSearchRepository(db),

@@ -62,5 +62,26 @@ export interface PageTranslationRepositoryPort {
     parentGroupId: string | null,
     slug: string,
   ): Promise<PageTranslation | null>;
+  /**
+   * Every PUBLISHED translation of one site (docs/adr/0059).
+   *
+   * It exists for one job: when a reusable section is published, the pages
+   * that use it have to be re-indexed for search, and finding them means
+   * asking each published snapshot whether it references that section.
+   * That question is answered by `collectSectionReferences` — the same
+   * function the renderer uses — so "which pages use this section" has one
+   * answer, not one for rendering and a subtly different one for search.
+   *
+   * Deliberately not a `where snapshot references :id` query pushed into
+   * the adapter: as SQL that is a `::text like` scan over jsonb, correct
+   * only because a uuid is unlikely to appear anywhere else in the
+   * document, and it would give a second definition of the same question.
+   * The cost is bounded — a site's published pages, on a manual publish,
+   * not per request.
+   */
+  listPublishedBySite(
+    tenantId: string,
+    siteId: string,
+  ): Promise<PageTranslation[]>;
   delete(tenantId: string, pageTranslationId: string): Promise<void>;
 }

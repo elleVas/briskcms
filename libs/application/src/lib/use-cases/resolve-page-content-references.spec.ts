@@ -8,6 +8,7 @@ import {
   InMemoryPageGroupVersionRepository,
   InMemoryPageTranslationRepository,
   InMemoryPageTranslationVersionRepository,
+  InMemoryReusableSectionRepository,
 } from './in-memory-repositories.test-fixture';
 
 describe('resolvePageContentReferences', () => {
@@ -23,7 +24,11 @@ describe('resolvePageContentReferences', () => {
     const pageTranslationRepository = new InMemoryPageTranslationRepository(
       pageTranslationVersionRepository,
     );
-    return { pageGroupRepository, pageTranslationRepository };
+    return {
+      pageGroupRepository,
+      pageTranslationRepository,
+      reusableSectionRepository: new InMemoryReusableSectionRepository(),
+    };
   }
 
   async function createGroupWithTranslation(

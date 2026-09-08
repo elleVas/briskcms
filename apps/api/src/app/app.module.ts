@@ -16,6 +16,7 @@ import { PublicFormsModule } from './public-forms/public-forms.module';
 import { PublicNewsletterModule } from './public-newsletter/public-newsletter.module';
 import { PublicPagesModule } from './public-pages/public-pages.module';
 import { PublicSiteLayoutSectionsModule } from './public-site-layout-sections/public-site-layout-sections.module';
+import { ReusableSectionsModule } from './reusable-sections/reusable-sections.module';
 import { SiteLayoutSectionsModule } from './site-layout-sections/site-layout-sections.module';
 import { SitesModule } from './sites/sites.module';
 import { UsersModule } from './users/users.module';
@@ -37,6 +38,7 @@ import { UsersModule } from './users/users.module';
     FormsModule,
     PublicFormsModule,
     PublicNewsletterModule,
+    ReusableSectionsModule,
     SiteLayoutSectionsModule,
     PublicSiteLayoutSectionsModule,
     UsersModule,

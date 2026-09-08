@@ -74,6 +74,7 @@ describe('LegalDocumentsController (unit)', () => {
       findById: jest.fn(),
       listBySite: jest.fn(),
       listBySiteFiltered: jest.fn(),
+      listContentBySite: jest.fn().mockResolvedValue([]),
       listSiblings: jest.fn().mockResolvedValue([]),
       delete: jest.fn(),
     };
@@ -83,6 +84,7 @@ describe('LegalDocumentsController (unit)', () => {
       findById: jest.fn(),
       findByGroupAndLocale: jest.fn(),
       listByGroup: jest.fn(),
+      listPublishedBySite: jest.fn().mockResolvedValue([]),
       findByParentGroupAndLocaleSlug: jest.fn().mockResolvedValue(null),
       delete: jest.fn(),
     };

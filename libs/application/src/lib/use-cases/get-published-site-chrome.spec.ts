@@ -5,6 +5,7 @@ import { getPublishedSiteChrome } from './get-published-site-chrome.use-case';
 import {
   InMemoryPageGroupRepository,
   InMemoryPageTranslationRepository,
+  InMemoryReusableSectionRepository,
   InMemorySiteLayoutSectionRepository,
   InMemorySiteRepository,
   InMemorySiteThemeBlockStylesRepository,
@@ -27,6 +28,7 @@ describe('getPublishedSiteChrome', () => {
       siteThemeBlockStylesRepository,
       pageTranslationRepository,
       pageGroupRepository,
+      reusableSectionRepository: new InMemoryReusableSectionRepository(),
     };
   }
 

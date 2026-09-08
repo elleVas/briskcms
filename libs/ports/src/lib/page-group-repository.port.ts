@@ -1,4 +1,5 @@
 import type { PageGroup, PageGroupVersion } from '@brisk/domain-core';
+import type { PageContent } from '@brisk/shared-types';
 import type { Pagination, PaginatedResult } from './pagination';
 
 /**
@@ -85,6 +86,23 @@ export interface PageGroupRepositoryPort {
     pagination: Pagination,
     filters: PageGroupListFilters,
   ): Promise<PaginatedResult<PageGroupListItem>>;
+  /**
+   * Every page group's canonical content on one site (docs/adr/0059).
+   *
+   * It answers one question: how many pages is this reusable section
+   * placed on. `listBySite` returns summaries with no content, and asking
+   * it then reading each group back one by one would be a query per page
+   * for a number shown next to a name.
+   *
+   * The GROUP's content and not the published snapshots: what an author
+   * wants to know before renaming or deleting a section is where it is
+   * placed, which includes a page whose draft has it and has not been
+   * published yet.
+   */
+  listContentBySite(
+    tenantId: string,
+    siteId: string,
+  ): Promise<{ id: string; content: PageContent }[]>;
   /** Siblings in the SHARED hierarchy — it replaces PageRepositoryPort.listSiblings, now with no need for a `locale` parameter (a position in the tree is no longer per-locale). */
   listSiblings(
     tenantId: string,

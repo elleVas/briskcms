@@ -21,6 +21,7 @@ import {
   socialLinksPropsSchema,
   socialLinkPropsSchema,
   cardPropsSchema,
+  sectionPropsSchema,
   containerPropsSchema,
   countdownPropsSchema,
   embedHtmlPropsSchema,
@@ -123,6 +124,8 @@ const Code = resolveThemeBlockOverride('Code', CodeCore, themeName);
 import ColumnCore from './blocks/Column.astro';
 const Column = resolveThemeBlockOverride('Column', ColumnCore, themeName);
 import ColumnsCore from './blocks/Columns.astro';
+import SectionCore from './blocks/Section.astro';
+const Section = resolveThemeBlockOverride('Section', SectionCore, themeName);
 import CardCore from './blocks/Card.astro';
 const Card = resolveThemeBlockOverride('Card', CardCore, themeName);
 import CarouselCore from './blocks/Carousel.astro';
@@ -288,6 +291,16 @@ const BLOCK_REGISTRY: Record<string, BlockDispatchEntry> = {
     stylable: true,
     // A container since ADR-0056 — it needs its children rendered and
     // `hasChildren` to know whether to emit the wrapper for them.
+    recurseChildren: true,
+    containerProps: true,
+  },
+  Section: {
+    component: Section,
+    schema: sectionPropsSchema,
+    stylable: true,
+    locale: true,
+    // Its children arrive from the section, not from the page tree — they
+    // are grafted on at read time by resolveSectionBlocks (docs/adr/0059).
     recurseChildren: true,
     containerProps: true,
   },

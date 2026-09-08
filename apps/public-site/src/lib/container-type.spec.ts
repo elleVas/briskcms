@@ -77,6 +77,19 @@ describe('every place a block can live measures itself', () => {
    * that are SIBLINGS of <main>: a container on the column alone would
    * have left every header block's per-breakpoint styling inert.
    */
+  /*
+   * `Section` is not in the derived list and has to be checked by name:
+   * `isContainer` is false for it on purpose (nothing can be dropped into
+   * a section instance, docs/adr/0059), but the section's own blocks are
+   * rendered inside it at read time — so a container query in one of them
+   * measures `.brisk-section`, and without the declaration it would never
+   * match. The one case where "a block that holds blocks" and "a block the
+   * editor lets you fill" come apart.
+   */
+  it('measures a section instance, which holds blocks without being a container', () => {
+    expect(selectors).toContain('.brisk-section');
+  });
+
   it('measures the page itself, not the content column', () => {
     expect(selectors).toContain('body');
     expect(selectors).not.toContain('main');

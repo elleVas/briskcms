@@ -8,6 +8,7 @@ import {
 } from '@brisk/postgres-page-repository';
 import { PreviewTokenAdapter } from '@brisk/preview-token-adapter';
 import { DrizzleSearchRepository } from '@brisk/postgres-search-repository';
+import { DrizzleReusableSectionRepository } from '@brisk/postgres-reusable-section-repository';
 import { DrizzleSiteLayoutSectionRepository } from '@brisk/postgres-site-layout-section-repository';
 import {
   DrizzleSiteRepository,
@@ -20,6 +21,7 @@ import {
   PAGE_GROUP_REPOSITORY,
   PAGE_TRANSLATION_REPOSITORY,
   PREVIEW_TOKEN_PORT,
+  REUSABLE_SECTION_REPOSITORY,
   SEARCH_REPOSITORY,
   SITE_LAYOUT_SECTION_REPOSITORY,
   SITE_REPOSITORY,
@@ -52,6 +54,14 @@ import {
     {
       provide: SITE_REPOSITORY,
       useFactory: (db: BriskDb) => new DrizzleSiteRepository(db),
+      inject: [DATABASE],
+    },
+    {
+      // Public reads resolve section instances into the section's
+      // published blocks (docs/adr/0059) — the page's own snapshot only
+      // holds the reference.
+      provide: REUSABLE_SECTION_REPOSITORY,
+      useFactory: (db: BriskDb) => new DrizzleReusableSectionRepository(db),
       inject: [DATABASE],
     },
     {

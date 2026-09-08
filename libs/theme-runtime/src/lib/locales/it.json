@@ -26,6 +26,8 @@
   "imageSlider.empty": "Nessuna immagine nello slider.",
   "gallery.empty": "Nessuna immagine nella galleria.",
   "image.empty": "Nessuna immagine selezionata.",
+  "section.notChosen": "Nessuna sezione selezionata.",
+  "section.notPublished": "Questa sezione non è ancora stata pubblicata.",
   "beforeAfter.compareLabel": "Confronta {before} e {after}",
   "beforeAfter.empty": "Seleziona entrambe le immagini per il confronto prima/dopo.",
   "logoStrip.empty": "Nessun logo aggiunto.",

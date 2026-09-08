@@ -14,6 +14,7 @@ import {
 import { ThrottlerGuard } from '@nestjs/throttler';
 import {
   getPreviewPageById,
+  getPreviewReusableSectionById,
   getPublishedPageBySlug,
   getPublishedSiteChrome,
   listPublishedPagesForSitemap,
@@ -27,6 +28,7 @@ import type {
   PreviewTokenPort,
   SearchPort,
   SiteLayoutSectionRepositoryPort,
+  ReusableSectionRepositoryPort,
   SiteRepositoryPort,
   SiteThemeBlockStylesPort,
 } from '@brisk/ports';
@@ -36,6 +38,8 @@ import {
   publicPageBySlugQuerySchema,
   type PublicPagePreviewQuery,
   publicPagePreviewQuerySchema,
+  type PublicSectionPreviewQuery,
+  publicSectionPreviewQuerySchema,
   type PublicPagesChromeQuery,
   publicPagesChromeQuerySchema,
   type PublicPagesSearchQuery,
@@ -49,6 +53,7 @@ import {
   PAGE_GROUP_REPOSITORY,
   PAGE_TRANSLATION_REPOSITORY,
   PREVIEW_TOKEN_PORT,
+  REUSABLE_SECTION_REPOSITORY,
   SEARCH_REPOSITORY,
   SITE_LAYOUT_SECTION_REPOSITORY,
   SITE_REPOSITORY,
@@ -72,6 +77,8 @@ export class PublicPagesController {
     private readonly siteLayoutSectionRepository: SiteLayoutSectionRepositoryPort,
     @Inject(SITE_THEME_BLOCK_STYLES_REPOSITORY)
     private readonly siteThemeBlockStylesRepository: SiteThemeBlockStylesPort,
+    @Inject(REUSABLE_SECTION_REPOSITORY)
+    private readonly reusableSectionRepository: ReusableSectionRepositoryPort,
     @Inject(SEARCH_REPOSITORY)
     private readonly searchPort: SearchPort,
     @Inject(DEPLOYMENT_TENANT_RESOLVER)
@@ -92,6 +99,7 @@ export class PublicPagesController {
         pageTranslationRepository: this.pageTranslationRepository,
         siteLayoutSectionRepository: this.siteLayoutSectionRepository,
         siteThemeBlockStylesRepository: this.siteThemeBlockStylesRepository,
+        reusableSectionRepository: this.reusableSectionRepository,
       },
       {
         tenantId: await this.tenant.require(),
@@ -142,6 +150,7 @@ export class PublicPagesController {
         siteRepository: this.siteRepository,
         siteLayoutSectionRepository: this.siteLayoutSectionRepository,
         siteThemeBlockStylesRepository: this.siteThemeBlockStylesRepository,
+        reusableSectionRepository: this.reusableSectionRepository,
         previewTokenPort: this.previewTokenPort,
       },
       {
@@ -159,6 +168,42 @@ export class PublicPagesController {
     return result;
   }
 
+  /**
+   * The section editor's canvas. A route of its own rather than a flag on
+   * the page preview: it validates a token minted for a SECTION, so a page
+   * token can never reach it and vice versa.
+   */
+  @Get('sections/:id/preview')
+  async previewSection(
+    @Param('id') id: string,
+    @Query(new ZodValidationPipe(publicSectionPreviewQuerySchema))
+    query: PublicSectionPreviewQuery,
+  ) {
+    const result = await getPreviewReusableSectionById(
+      {
+        previewTokenPort: this.previewTokenPort,
+        reusableSectionRepository: this.reusableSectionRepository,
+        pageGroupRepository: this.pageGroupRepository,
+        pageTranslationRepository: this.pageTranslationRepository,
+        siteRepository: this.siteRepository,
+        siteLayoutSectionRepository: this.siteLayoutSectionRepository,
+        siteThemeBlockStylesRepository: this.siteThemeBlockStylesRepository,
+      },
+      {
+        tenantId: await this.tenant.require(),
+        id,
+        token: query.token,
+        locale: query.locale,
+      },
+    );
+    // The same collapse as every other preview: missing, expired,
+    // mismatched or non-existent all answer 404.
+    if (!result) {
+      throw new NotFoundException();
+    }
+    return result;
+  }
+
   @Get('chrome')
   async chrome(
     @Query(new ZodValidationPipe(publicPagesChromeQuerySchema))
@@ -169,6 +214,7 @@ export class PublicPagesController {
         siteRepository: this.siteRepository,
         siteLayoutSectionRepository: this.siteLayoutSectionRepository,
         siteThemeBlockStylesRepository: this.siteThemeBlockStylesRepository,
+        reusableSectionRepository: this.reusableSectionRepository,
         pageTranslationRepository: this.pageTranslationRepository,
         pageGroupRepository: this.pageGroupRepository,
       },

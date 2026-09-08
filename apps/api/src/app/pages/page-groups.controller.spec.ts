@@ -16,6 +16,7 @@ import type {
   PageTranslationRepositoryPort,
   PageTranslationVersionRepositoryPort,
   PreviewTokenPort,
+  ReusableSectionRepositoryPort,
   SearchPort,
   TenantContextPort,
 } from '@brisk/ports';
@@ -55,6 +56,7 @@ describe('PageGroupsController (unit)', () => {
   let tenantContext: TenantContextPort;
   let previewTokenPort: jest.Mocked<PreviewTokenPort>;
   let searchPort: jest.Mocked<SearchPort>;
+  let reusableSectionRepository: jest.Mocked<ReusableSectionRepositoryPort>;
   let controller: PageGroupsController;
 
   beforeEach(() => {
@@ -64,6 +66,7 @@ describe('PageGroupsController (unit)', () => {
       findById: jest.fn(),
       listBySite: jest.fn(),
       listBySiteFiltered: jest.fn(),
+      listContentBySite: jest.fn().mockResolvedValue([]),
       listSiblings: jest.fn(),
       delete: jest.fn(),
     };
@@ -78,6 +81,7 @@ describe('PageGroupsController (unit)', () => {
       findById: jest.fn(),
       findByGroupAndLocale: jest.fn(),
       listByGroup: jest.fn(),
+      listPublishedBySite: jest.fn().mockResolvedValue([]),
       findByParentGroupAndLocaleSlug: jest.fn(),
       delete: jest.fn(),
     };
@@ -98,6 +102,13 @@ describe('PageGroupsController (unit)', () => {
       indexPage: jest.fn(),
       search: jest.fn(),
     };
+    reusableSectionRepository = {
+      save: jest.fn(),
+      findById: jest.fn(),
+      findByIds: jest.fn().mockResolvedValue([]),
+      listBySite: jest.fn().mockResolvedValue([]),
+      delete: jest.fn(),
+    };
     controller = new PageGroupsController(
       pageGroupRepository,
       pageGroupVersionRepository,
@@ -106,6 +117,7 @@ describe('PageGroupsController (unit)', () => {
       tenantContext,
       previewTokenPort,
       searchPort,
+      reusableSectionRepository,
     );
   });
 

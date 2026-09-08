@@ -1,6 +1,9 @@
 import { useEffect, useState, type RefObject } from 'react';
 import { useTranslation } from 'react-i18next';
-import { createTranslationPreviewToken } from '../../lib/preview-token-api-client';
+import {
+  createReusableSectionPreviewToken,
+  createTranslationPreviewToken,
+} from '../../lib/preview-token-api-client';
 import { PUBLIC_SITE_URL } from '../../lib/public-site-url';
 import { BREAKPOINT_WIDTHS, type Breakpoint } from './breakpoint-selector';
 import { OverlayLayer } from './overlay-layer';
@@ -18,6 +21,13 @@ export interface CanvasFrameProps {
    */
   pageId: string;
   editingSection?: EditingSection;
+  /**
+   * Present only in the reusable-section editor (docs/adr/0059). When it
+   * is, the canvas shows that section's own draft on its own route and
+   * `pageId` is ignored — a section is not on a page, so there is no page
+   * to render it against.
+   */
+  sectionPreview?: { sectionId: string; locale: string };
   /**
    * The iframe's ref belongs to the CALLER (canvas-editor-shell.tsx), not
    * to this component: the Inspector/Layers panel and the overlay both need
@@ -65,6 +75,25 @@ export function buildPreviewUrl(
 }
 
 /**
+ * The section editor's canvas URL. A route of its own rather than a flag
+ * on the page preview: the token it carries is minted for a SECTION, and
+ * the two are validated separately so neither can be replayed as the
+ * other.
+ */
+export function buildSectionPreviewUrl(
+  sectionId: string,
+  token: string,
+  locale: string,
+  embedded?: boolean,
+): string {
+  const params = new URLSearchParams({ token, locale });
+  if (embedded) {
+    params.set('embedded', '1');
+  }
+  return `${PUBLIC_SITE_URL}/preview/sections/${sectionId}?${params.toString()}`;
+}
+
+/**
  * The iframe and its lifecycle (see the visual editor plan, Day 2) — a
  * fresh preview token on every mount and page change (short TTL, not meant
  * to survive long), then the hover/selection overlay on top, fed by the
@@ -88,6 +117,7 @@ export function buildPreviewUrl(
 export function CanvasFrame({
   pageId,
   editingSection,
+  sectionPreview,
   iframeRef,
   bridge,
   dropIndicatorTop,
@@ -99,10 +129,23 @@ export function CanvasFrame({
 
   useEffect(() => {
     let cancelled = false;
-    createTranslationPreviewToken(pageId)
-      .then((preview) => {
+    const minted = sectionPreview
+      ? createReusableSectionPreviewToken(sectionPreview.sectionId).then(
+          (preview) =>
+            buildSectionPreviewUrl(
+              sectionPreview.sectionId,
+              preview.token,
+              sectionPreview.locale,
+              true,
+            ),
+        )
+      : createTranslationPreviewToken(pageId).then((preview) =>
+          buildPreviewUrl(pageId, preview.token, editingSection, true),
+        );
+    minted
+      .then((url) => {
         if (!cancelled) {
-          setSrc(buildPreviewUrl(pageId, preview.token, editingSection, true));
+          setSrc(url);
           setError(null);
         }
       })
@@ -115,7 +158,7 @@ export function CanvasFrame({
     return () => {
       cancelled = true;
     };
-  }, [pageId, editingSection, t]);
+  }, [pageId, editingSection, sectionPreview, t]);
 
   if (error) {
     return <div className="p-6 text-sm text-destructive">{error}</div>;

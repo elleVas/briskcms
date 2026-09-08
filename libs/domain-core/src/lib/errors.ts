@@ -91,6 +91,28 @@ export class SiteNotFoundError extends Error {
   }
 }
 
+export class ReusableSectionNotFoundError extends Error {
+  constructor(id: string) {
+    super(`Reusable section not found: ${id}`);
+    this.name = 'ReusableSectionNotFoundError';
+  }
+}
+
+export class ReusableSectionVersionNotFoundError extends Error {
+  constructor(id: string) {
+    super(`Reusable section version not found: ${id}`);
+    this.name = 'ReusableSectionVersionNotFoundError';
+  }
+}
+
+/** The unique constraint on (tenant, site, name) surfacing as a domain error — a name is how a person picks a section out of the insert menu. */
+export class ReusableSectionNameAlreadyExistsError extends Error {
+  constructor(name: string) {
+    super(`A section named "${name}" already exists on this site`);
+    this.name = 'ReusableSectionNameAlreadyExistsError';
+  }
+}
+
 export class SiteLayoutSectionNotFoundError extends Error {
   constructor(id: string) {
     super(`Site layout section not found: ${id}`);

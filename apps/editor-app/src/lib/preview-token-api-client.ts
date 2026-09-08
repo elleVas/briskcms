@@ -21,6 +21,15 @@ export function createSiteLayoutSectionPreviewToken(
   });
 }
 
+/** See POST /reusable-sections/:id/preview-token — the same mechanism, for the section editor's own canvas (docs/adr/0059). */
+export function createReusableSectionPreviewToken(
+  sectionId: string,
+): Promise<PreviewTokenDto> {
+  return request(`/reusable-sections/${sectionId}/preview-token`, {
+    method: 'POST',
+  });
+}
+
 /** See POST /page-groups/translations/:id/preview-token — field-level i18n, the same mechanism scoped to ONE translation rather than to the old Page. */
 export function createTranslationPreviewToken(
   translationId: string,

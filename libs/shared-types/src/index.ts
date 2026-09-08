@@ -9,6 +9,7 @@ export * from './lib/rich-text-to-plain-text';
 export * from './lib/rich-text-page-links';
 export * from './lib/content-structure-signature';
 export * from './lib/field-value-overlay';
+export * from './lib/reusable-section';
 export * from './lib/search-excerpt';
 export * from './lib/search-text';
 export * from './lib/theme-blocks';
