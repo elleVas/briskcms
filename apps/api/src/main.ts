@@ -1,9 +1,7 @@
-import { join } from 'node:path';
 import { Logger } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import compression from 'compression';
 import cookieParser from 'cookie-parser';
-import express from 'express';
 import helmet from 'helmet';
 import { requireEnv } from '@brisk/env-config';
 import { AppModule } from './app/app.module';

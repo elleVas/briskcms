@@ -5,7 +5,6 @@ import { Test } from '@nestjs/testing';
 import { HttpExceptionFilter } from '../http-exception.filter';
 import { requestIdMiddleware } from '../request-id.middleware';
 import cookieParser from 'cookie-parser';
-import express from 'express';
 import request from 'supertest';
 import sharp from 'sharp';
 import type { AuthPort } from '@brisk/ports';
@@ -195,7 +194,8 @@ describe('MediaController (integration)', () => {
     await agent
       .post('/media')
       .field('siteId', siteId)
-      .attach('file', Buffer.from('<svg onload="alert(1)">'), 'clip.mp4', {
+      .attach('file', Buffer.from('<svg onload="alert(1)">'), {
+        filename: 'clip.mp4',
         contentType: 'video/mp4',
       })
       .expect(400);
