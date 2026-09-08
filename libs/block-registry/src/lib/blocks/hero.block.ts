@@ -7,10 +7,18 @@ export const heroBlock: BlockDescriptor<HeroProps> = {
   label: 'blocks.hero.label',
   category: 'content',
   defaultProps: {
+    eyebrow: '',
     title: 'Titolo',
     subtitle: 'Sottotitolo',
   },
   fields: [
+    {
+      kind: 'text',
+      key: 'eyebrow',
+      translatable: true,
+      label: 'blocks.hero.fields.eyebrow.fieldLabel',
+      inlineEditable: true,
+    },
     {
       kind: 'text',
       key: 'title',
@@ -37,6 +45,19 @@ export const heroBlock: BlockDescriptor<HeroProps> = {
     'backgroundRepeat',
     'overlayColor',
     'minHeight',
+    // New with ADR-0056, now that the block is a flex container: an
+    // alignment control on a block that was not one would have done
+    // nothing, which is why the previous comment in Hero.astro refused
+    // to offer it.
+    'contentAlign',
+    'gap',
+    'paddingX',
+    'paddingY',
+    'maxWidth',
   ],
+  // A Hero holds blocks now: a Button under the subtitle is what every
+  // landing page opens with, and it belongs inside the hero's background
+  // and padding rather than in a separate block below it.
+  isContainer: true,
   defaultStyle: BLOCK_STYLE_DEFAULTS.Hero,
 };

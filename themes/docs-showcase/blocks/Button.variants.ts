@@ -15,10 +15,20 @@ import type { ThemeBlockVariant } from '@brisk/block-sdk';
  * editor's bundles at build time, so they travel with the data and are
  * registered on arrival.
  */
+/*
+ * `ghost` used to be declared here and is core's own look since ADR-0056
+ * — a theme may not redeclare a core variant (ADR-0048's additive rule,
+ * enforced by blocks.spec.ts). The theme's `.brisk-button--ghost` rule in
+ * Button.astro still applies: what a look LOOKS like was always the
+ * theme's business, and only the declaring moved.
+ *
+ * What is left is a look that is genuinely this theme's and that core has
+ * no business shipping — the gradient this site uses for its own hero.
+ */
 const variants: ThemeBlockVariant[] = [
   {
-    value: 'ghost',
-    label: { en: 'Ghost', it: 'Fantasma' },
+    value: 'gradient',
+    label: { en: 'Gradient', it: 'Sfumato' },
   },
 ];
 

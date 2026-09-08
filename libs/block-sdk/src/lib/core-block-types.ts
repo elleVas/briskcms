@@ -110,5 +110,5 @@ export function findCoreBlockTypeCollisions(
  */
 export const CORE_BLOCK_VARIANTS: Readonly<Record<string, readonly string[]>> =
   {
-    Button: ['secondary'],
+    Button: ['secondary', 'outline', 'ghost', 'link'],
   };

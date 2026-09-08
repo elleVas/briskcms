@@ -55,10 +55,9 @@ const href =
     color: var(--brisk-override-bg, var(--primary));
   }
 
-  /* Declared by this theme in Button.variants.ts, not by core (ADR-0047):
-     a look the theme adds to the core Button rather than a block type of
-     its own. The class name is what BlockRenderer emits from
-     `Block.variant`; nothing else was needed to make it render. */
+  /* `ghost` is core's own look since ADR-0056; this is the theme
+     restyling it, which is what a theme is for. Declaring it moved to
+     core, the appearance stayed here. */
   .brisk-button--ghost {
     background: transparent;
     color: var(--brisk-override-text, var(--foreground));
@@ -68,5 +67,17 @@ const href =
   .brisk-button--ghost:hover {
     border-color: var(--primary);
     color: var(--primary);
+  }
+
+  /* Declared by this theme in Button.variants.ts, not by core (ADR-0047):
+     a look the theme ADDS to the core Button rather than a block type of
+     its own. The class name is what BlockRenderer emits from
+     `Block.variant`; nothing else was needed to make it render. It is
+     the same gradient this theme's hero uses, which is exactly the kind
+     of thing core should not ship and a theme should. */
+  .brisk-button--gradient {
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    color: var(--primary-foreground);
+    border-color: transparent;
   }
 </style>

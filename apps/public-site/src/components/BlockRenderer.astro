@@ -279,7 +279,15 @@ interface BlockDispatchEntry {
 }
 
 const BLOCK_REGISTRY: Record<string, BlockDispatchEntry> = {
-  Hero: { component: Hero, schema: heroPropsSchema, stylable: true },
+  Hero: {
+    component: Hero,
+    schema: heroPropsSchema,
+    stylable: true,
+    // A container since ADR-0056 — it needs its children rendered and
+    // `hasChildren` to know whether to emit the wrapper for them.
+    recurseChildren: true,
+    containerProps: true,
+  },
   Heading: {
     component: Heading,
     schema: headingPropsSchema,

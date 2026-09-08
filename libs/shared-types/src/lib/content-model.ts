@@ -131,6 +131,16 @@ export type SeoMeta = z.infer<typeof seoMetaSchema>;
 export const heroPropsSchema = z.object({
   title: z.string(),
   subtitle: z.string(),
+  /**
+   * The small line above the title — "New in 2026", "Free trial", the
+   * pill every landing page opens with (ADR-0056).
+   *
+   * Empty by default and not rendered when empty, so every hero that
+   * exists is unchanged. `themes/docs-showcase` already hardcoded one of
+   * these into its own Hero override, which is the clearest evidence it
+   * belongs to the block rather than to a theme.
+   */
+  eyebrow: z.string().default(''),
 });
 export type HeroProps = z.infer<typeof heroPropsSchema>;
 
@@ -807,11 +817,30 @@ export const bannerPropsSchema = z.object({
 export type BannerProps = z.infer<typeof bannerPropsSchema>;
 
 /** Standalone CTA button — same link shape as Banner/NavLink/PromoBar. Which of the two looks it wears is `Block.variant` (ADR-0047), not a prop: a look is presentation, and a theme may add or hide one without touching stored content. Per-instance color/spacing overrides live on `Block.styleOverride` (docs/adr/0022), not here either. */
+/** Button sizes, a closed set: a free length would let a call to action be 4px tall. */
+export const buttonSizeSchema = z.enum(['sm', 'md', 'lg']);
+export type ButtonSize = z.infer<typeof buttonSizeSchema>;
+
 export const buttonPropsSchema = z.object({
   label: z.string(),
   linkType: z.enum(['page', 'url']),
   page: pickedPageSchema.nullable(),
   url: z.string(),
+  /**
+   * An icon beside the label (ADR-0056) — `null` for none. The icon
+   * registry is resolved by BlockRenderer, exactly as for NavLink and
+   * Feature, so this block never reaches into it.
+   */
+  icon: z.string().nullable().default(null),
+  size: buttonSizeSchema.default('md'),
+  /** Full width of whatever holds it — what a button in a narrow column or a mobile CTA needs. */
+  fullWidth: z.boolean().default(false),
+  /**
+   * `target="_blank"` plus the `rel` that has to come with it. A boolean
+   * rather than a free `target`: the only value anyone wants is a new
+   * tab, and letting it be free means letting it be wrong.
+   */
+  openInNewTab: z.boolean().default(false),
 });
 export type ButtonProps = z.infer<typeof buttonPropsSchema>;
 

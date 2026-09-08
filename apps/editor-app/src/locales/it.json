@@ -952,10 +952,30 @@
       "fields": {
         "label": {
           "fieldLabel": "Testo"
+        },
+        "icon": {
+          "fieldLabel": "Icona"
+        },
+        "size": {
+          "fieldLabel": "Dimensione",
+          "options": {
+            "sm": "Piccolo",
+            "md": "Medio",
+            "lg": "Grande"
+          }
+        },
+        "fullWidth": {
+          "fieldLabel": "Larghezza piena"
+        },
+        "openInNewTab": {
+          "fieldLabel": "Apri in una nuova scheda"
         }
       },
       "variants": {
-        "secondary": "Secondario"
+        "secondary": "Secondario",
+        "outline": "Contorno",
+        "ghost": "Trasparente",
+        "link": "Link"
       }
     },
     "callout": {
@@ -1126,6 +1146,9 @@
         },
         "subtitle": {
           "fieldLabel": "Sottotitolo"
+        },
+        "eyebrow": {
+          "fieldLabel": "Occhiello (riga sopra il titolo)"
         }
       }
     },

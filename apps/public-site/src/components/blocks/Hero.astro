@@ -1,9 +1,13 @@
 ---
 import type { HeroProps } from '@brisk/shared-types';
 
-type Props = HeroProps & { instanceClass?: string | null };
+type Props = HeroProps & {
+	instanceClass?: string | null;
+	/** True when the block holds children — a Hero is a container since ADR-0056. */
+	hasChildren?: boolean;
+};
 
-const { title, subtitle, instanceClass } = Astro.props;
+const { title, eyebrow, subtitle, instanceClass, hasChildren } = Astro.props;
 ---
 
 {/* <section>, not <header>: this block can be dropped anywhere in a
@@ -11,8 +15,11 @@ const { title, subtitle, instanceClass } = Astro.props;
     there creates a second, ambiguous role="banner" landmark alongside the
     real one from PageLayout.astro. Security review 2026-08-24, accessibility. */}
 <section
-	class:list={['brisk-hero mx-auto max-w-3xl py-20 text-center sm:py-28', instanceClass]}
+	class:list={['brisk-hero mx-auto text-center', instanceClass]}
 >
+	{/* Not rendered at all when empty, so a hero that never set one is
+	    byte-identical to before. */}
+	{eyebrow && <p class="brisk-hero__eyebrow" data-brisk-field="eyebrow">{eyebrow}</p>}
 	<h1
 		data-brisk-field="title"
 		class="text-4xl font-semibold tracking-tight text-balance text-foreground sm:text-5xl"
@@ -24,6 +31,16 @@ const { title, subtitle, instanceClass } = Astro.props;
 		class="brisk-rich-text mt-4 text-lg text-pretty text-muted-foreground sm:text-xl"
 		set:html={subtitle}
 	/>
+	{/* A Hero holds blocks now (ADR-0056) — a Button under the subtitle
+	    is what every landing page opens with, and until now the only way
+	    to get one was a separate block below the hero, outside its
+	    background and its padding. Rendered only when there are children,
+	    so an empty hero gains no stray box. */}
+	{hasChildren && (
+		<div class="brisk-hero__content">
+			<slot />
+		</div>
+	)}
 </section>
 
 <style>
@@ -43,6 +60,27 @@ const { title, subtitle, instanceClass } = Astro.props;
 	   Every fallback below is what this block already looked like, so a
 	   hero with nothing overridden renders exactly as before. */
 	.brisk-hero {
+		/* Flex, so `contentAlign` has something to align — the comment
+		   this replaces said alignment could not be offered until the
+		   block became a container, and this is that change. `stretch`
+		   is the flex default AND what block flow did, so a hero that
+		   sets nothing lays out exactly as before: children fill the
+		   width and `text-center` still centres the text inside them. */
+		display: flex;
+		flex-direction: column;
+		align-items: var(--brisk-override-align, stretch);
+		gap: var(--brisk-override-gap, 0);
+		max-width: var(--brisk-override-max-width, 48rem);
+		/* `max-w-3xl py-20 sm:py-28` moved off the class list and into
+		   here, because a scoped rule outranks a Tailwind utility: left
+		   in place they would have been declared twice and the utility
+		   would always have lost. The numbers are that utility's own —
+		   48rem, 5rem, and 7rem above 640px — so the hero is unchanged.
+		   Losing the responsive half is the easy mistake here: a flat
+		   5rem would quietly shorten every hero on a desktop. */
+		padding: var(--brisk-override-padding-y, var(--brisk-hero-py))
+			var(--brisk-override-padding-x, 0);
+		--brisk-hero-py: 5rem;
 		background-color: var(--brisk-override-bg, transparent);
 		border-radius: var(--brisk-override-radius, 0);
 		box-shadow: var(--brisk-override-shadow, none);
@@ -58,7 +96,41 @@ const { title, subtitle, instanceClass } = Astro.props;
 		background-repeat: var(--brisk-override-bg-repeat, no-repeat);
 	}
 
+	/* `@container`, not `@media`, per ADR-0047 — and since ADR-0056 the
+	   Hero measures ITSELF (it declares `container-type` in global.css,
+	   being a container now), so this asks how much room the hero has
+	   rather than how wide the window is. At the top level those are the
+	   same question, because the hero fills the content column; nested in
+	   a narrow track it is the better one, which is the whole argument of
+	   ADR-0047. Verified by measuring both at 1600px and at 500px. */
+	@container (min-width: 640px) {
+		.brisk-hero {
+			--brisk-hero-py: 7rem;
+		}
+	}
+
 	.brisk-hero h1 {
 		color: var(--brisk-override-text, var(--foreground));
+	}
+
+	/* The small line above the title. Sized and spaced like the pill it
+	   usually is, and using the theme's own accent so it reads as part of
+	   the design rather than as stray text. */
+	.brisk-hero__eyebrow {
+		margin: 0 0 0.75rem;
+		font-size: 0.875rem;
+		font-weight: 600;
+		letter-spacing: 0.02em;
+		color: var(--primary);
+	}
+
+	.brisk-hero__content {
+		/* Inherits the section's own alignment rather than imposing one:
+		   a Button inside a centred hero should be centred too. */
+		display: flex;
+		flex-direction: column;
+		align-items: inherit;
+		gap: var(--brisk-override-gap, 1rem);
+		margin-top: 1.5rem;
 	}
 </style>

@@ -3,12 +3,24 @@ import type { ButtonProps } from '@brisk/shared-types';
 import { localePathFromAncestors } from '@brisk/theme-runtime';
 
 type Props = ButtonProps & {
+  /** Resolved by BlockRenderer from the `icon` prop (docs/adr/0023). */
+  iconSvg?: string | null;
   instanceClass?: string | null;
   variantClass?: string | null;
 };
 
-const { label, linkType, page, url, instanceClass, variantClass } =
-  Astro.props;
+const {
+  label,
+  linkType,
+  page,
+  url,
+  size,
+  fullWidth,
+  openInNewTab,
+  iconSvg,
+  instanceClass,
+  variantClass,
+} = Astro.props;
 const href =
   linkType === 'page' && page?.locale && page?.slug ? localePathFromAncestors(page.locale, page.ancestorSlugs ?? [], page.slug) : url;
 
@@ -17,29 +29,107 @@ const href =
 // `Block.id`. This component only has to put them on its root element —
 // which is also the contract a theme's own Button override has to keep
 // (see themes/README.md).
+//
+// `rel` travels with `target` and is not optional (ADR-0056): a link that
+// opens a new tab gives the opened page a handle on this one through
+// `window.opener` unless `noopener` says otherwise.
 ---
 
 <a
-  class:list={['brisk-button', variantClass, instanceClass]}
+  class:list={[
+    'brisk-button',
+    `brisk-button--${size}`,
+    { 'brisk-button--full': fullWidth },
+    variantClass,
+    instanceClass,
+  ]}
   href={href}
-  data-brisk-field="label"
+  target={openInNewTab ? '_blank' : undefined}
+  rel={openInNewTab ? 'noopener' : undefined}
 >
-  {label}
+  {/* `aria-hidden`: the label beside it already says what the button
+      does, and announcing the icon as well repeats it. */}
+  {iconSvg && (
+    <span class="brisk-button__icon" aria-hidden="true" set:html={iconSvg} />
+  )}
+  <span data-brisk-field="label">{label}</span>
 </a>
 
 <style>
   .brisk-button {
-    display: inline-block;
-    padding: var(--brisk-override-padding-y, 0.5rem)
-      var(--brisk-override-padding-x, 1.25rem);
+    /* `inline-flex`, not `inline-block`: an icon and a label have to line
+       up on their centres, which block layout cannot do. With no icon the
+       result is identical to what it was. */
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--brisk-override-gap, 0.5em);
+    padding: var(--brisk-override-padding-y, var(--brisk-button-py))
+      var(--brisk-override-padding-x, var(--brisk-button-px));
+    font-size: var(--brisk-button-size, 1rem);
     border-radius: var(--brisk-override-radius, var(--radius));
     background: var(--brisk-override-bg, var(--primary));
     color: var(--brisk-override-text, var(--primary-foreground));
     text-decoration: none;
     border: 1px solid var(--brisk-override-bg, var(--primary));
+    /* The medium size is exactly the padding this block had before sizes
+       existed, so an existing button is unchanged. */
+    --brisk-button-py: 0.5rem;
+    --brisk-button-px: 1.25rem;
   }
+  .brisk-button--sm {
+    --brisk-button-py: 0.3rem;
+    --brisk-button-px: 0.85rem;
+    --brisk-button-size: 0.875rem;
+  }
+  .brisk-button--lg {
+    --brisk-button-py: 0.75rem;
+    --brisk-button-px: 1.75rem;
+    --brisk-button-size: 1.125rem;
+  }
+  /* `flex`, so it actually fills the line rather than shrink-wrapping —
+     `width: 100%` on an inline-flex element would not. */
+  .brisk-button--full {
+    display: flex;
+    width: 100%;
+  }
+  .brisk-button__icon {
+    display: inline-flex;
+    width: 1em;
+    height: 1em;
+    flex-shrink: 0;
+  }
+  .brisk-button__icon :global(svg) {
+    width: 100%;
+    height: 100%;
+  }
+
+  /*
+   * The looks a button can wear (ADR-0056). `secondary` is unchanged;
+   * the three new ones are the ones every design system ships, and each
+   * keeps reading as a button — `link` is the exception that deliberately
+   * does not, which is the point of it.
+   */
   .brisk-button--secondary {
     background: transparent;
     color: var(--brisk-override-bg, var(--primary));
+  }
+  .brisk-button--outline {
+    background: transparent;
+    color: var(--brisk-override-bg, var(--primary));
+    border-color: var(--brisk-override-bg, var(--primary));
+  }
+  .brisk-button--ghost {
+    background: transparent;
+    color: var(--brisk-override-bg, var(--primary));
+    border-color: transparent;
+  }
+  .brisk-button--link {
+    background: transparent;
+    color: var(--brisk-override-bg, var(--primary));
+    border-color: transparent;
+    padding: 0;
+    text-decoration: underline;
+    text-underline-offset: 2px;
   }
 </style>

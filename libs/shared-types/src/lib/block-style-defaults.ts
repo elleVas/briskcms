@@ -78,6 +78,8 @@ export const BLOCK_STYLE_DEFAULTS: Record<string, BlockStyleDefaults> = {
     borderRadius: 'var(--radius)',
     paddingX: '1.25rem',
     paddingY: '0.5rem',
+    // The space between an icon and its label (ADR-0056).
+    gap: '0.5em',
   },
   Callout: {
     // The tone's own colours are deliberately literal and stay put (see
@@ -209,6 +211,14 @@ export const BLOCK_STYLE_DEFAULTS: Record<string, BlockStyleDefaults> = {
     backgroundRepeat: 'no-repeat',
     overlayColor: 'transparent',
     minHeight: 'auto',
+    // The values the block already rendered — `sm:py-28`'s 7rem is the
+    // wide-screen half of a responsive default, so the resolved default
+    // shown in the editor is the base one.
+    contentAlign: 'stretch',
+    gap: '0',
+    paddingX: '0',
+    paddingY: '5rem',
+    maxWidth: '48rem',
   },
   Heading: {
     textColor: 'inherit',
