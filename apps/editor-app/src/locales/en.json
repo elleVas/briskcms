@@ -848,6 +848,25 @@
     "dismiss": "Dismiss notification"
   },
   "blocks": {
+    "card": {
+      "label": "Card",
+      "fields": {
+        "media": {
+          "fieldLabel": "Header image"
+        },
+        "alt": {
+          "fieldLabel": "Alt text"
+        },
+        "isDecorative": {
+          "fieldLabel": "Decorative image"
+        }
+      },
+      "variants": {
+        "elevated": "Elevated",
+        "flat": "Flat",
+        "horizontal": "Horizontal"
+      }
+    },
     "categories": {
       "layout": "Layout",
       "content": "Content",
@@ -920,6 +939,10 @@
         "buttonLabel": {
           "fieldLabel": "Button text"
         }
+      },
+      "variants": {
+        "split": "Call-to-action bar",
+        "outline": "Outlined"
       }
     },
     "beforeAfter": {
@@ -1102,6 +1125,10 @@
         "text": {
           "fieldLabel": "Text"
         }
+      },
+      "variants": {
+        "inline": "Icon beside the text",
+        "start": "Left aligned"
       }
     },
     "form": {

@@ -33,6 +33,18 @@ export const featureBlock: BlockDescriptor<FeatureProps> = {
       inlineEditable: true,
     },
   ],
-  stylableProperties: BlockStyleRegistry.STANDARD,
+  // Presentation, so variants rather than props (ADR-0048): a feature
+  // with its icon beside the words, or with its column of text ranged
+  // left, is the same feature wearing a different look — and a theme may
+  // add its own on top (ADR-0048's .variants.ts).
+  variants: [
+    { value: 'inline', label: 'blocks.feature.variants.inline' },
+    { value: 'start', label: 'blocks.feature.variants.start' },
+  ],
+  // STANDARD plus `gap`: the `inline` variant makes this block a flex
+  // row, so the distance between the icon and the words is now a real
+  // thing to set — offering it before the variant existed would have been
+  // a control that did nothing.
+  stylableProperties: [...BlockStyleRegistry.STANDARD, 'gap'],
   defaultStyle: BLOCK_STYLE_DEFAULTS.Feature,
 };

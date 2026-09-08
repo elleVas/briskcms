@@ -2,7 +2,12 @@
 import type { BannerProps } from '@brisk/shared-types';
 import { localePathFromAncestors } from '@brisk/theme-runtime';
 
-type Props = BannerProps & { instanceClass?: string | null };
+type Props = BannerProps & {
+  /** The per-instance style class, from BlockRenderer — see blockInstanceClassName. */
+  instanceClass?: string | null;
+  /** The variant's modifier class, from BlockRenderer — see blockVariantClassName. */
+  variantClass?: string | null;
+};
 
 const {
   title,
@@ -12,20 +17,29 @@ const {
   page,
   url,
   instanceClass,
+  variantClass,
 } = Astro.props;
 const href =
   linkType === 'page' && page?.locale && page?.slug ? localePathFromAncestors(page.locale, page.ancestorSlugs ?? [], page.slug) : url;
 const hasLink = linkType === 'page' ? Boolean(page) : Boolean(url);
 ---
 
-<div class:list={['brisk-banner', instanceClass]}>
-  <h2 class="brisk-banner__title" data-brisk-field="title">{title}</h2>
-  <div class="brisk-banner__text brisk-rich-text" data-brisk-field="text" set:html={text} />
+{/* The words and the button are wrapped separately so that `split` has
+    two things to put on the two ends of a row. Both wrappers are emitted
+    in every variant: a structure that changes with the look is a
+    structure a theme override cannot rely on. */}
+<div class:list={['brisk-banner', variantClass, instanceClass]}>
+  <div class="brisk-banner__body">
+    <h2 class="brisk-banner__title" data-brisk-field="title">{title}</h2>
+    <div class="brisk-banner__text brisk-rich-text" data-brisk-field="text" set:html={text} />
+  </div>
   {
     hasLink && (
-      <a class="brisk-banner__button" href={href} data-brisk-field="buttonLabel">
-        {buttonLabel}
-      </a>
+      <div class="brisk-banner__actions">
+        <a class="brisk-banner__button" href={href} data-brisk-field="buttonLabel">
+          {buttonLabel}
+        </a>
+      </div>
     )
   }
 </div>
@@ -37,6 +51,11 @@ const hasLink = linkType === 'page' ? Boolean(page) : Boolean(url);
     border-radius: var(--brisk-override-radius, 12px);
     background: var(--brisk-override-bg, var(--secondary));
     color: var(--brisk-override-text, inherit);
+    /* Zero width by default, so the frame is there to be turned on and
+       the banner looks exactly as it did before. */
+    border-width: var(--brisk-override-border-width, 0);
+    border-style: var(--brisk-override-border-style, solid);
+    border-color: var(--brisk-override-border-color, var(--border));
     text-align: center;
   }
   .brisk-banner__title {
@@ -54,5 +73,51 @@ const hasLink = linkType === 'page' ? Boolean(page) : Boolean(url);
     background: var(--primary);
     color: var(--primary-foreground);
     text-decoration: none;
+  }
+
+  /*
+   * The call-to-action bar: the words on one side, the button on the
+   * other (ADR-0058). This is what a banner looks like on most sites, and
+   * it was the one shape a block whose markup was a fixed centred stack
+   * could not make.
+   *
+   * `flex-wrap` rather than a container query. A query here would measure
+   * the banner's ANCESTOR, and what decides whether a paragraph and a
+   * button fit on one line is the width of the banner itself — the two
+   * are not the same number the moment the banner has a max-width, sits
+   * in a column, or the ancestor is padded. Wrapping asks the question at
+   * the right element and needs no breakpoint chosen in advance.
+   */
+  .brisk-banner--split {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--brisk-override-gap, 1.5rem);
+    text-align: start;
+  }
+  /* The minimum below which the words stop being readable beside a
+     button: under it the two put themselves on separate lines. `1 1` and
+     not `0 1`, so the body takes the whole width once it is alone on its
+     line rather than leaving the button's share empty beside it. */
+  .brisk-banner--split .brisk-banner__body {
+    flex: 1 1 18rem;
+  }
+  .brisk-banner--split .brisk-banner__actions {
+    flex: 0 0 auto;
+  }
+  /* The button carries a top margin for the stacked look, where it sits
+     under the text; beside the words, and on its own wrapped line where
+     the flex gap already provides the space, that margin only pushes it
+     out of alignment. */
+  .brisk-banner--split .brisk-banner__button {
+    margin-top: 0;
+  }
+
+  /* The quiet banner: a frame instead of a fill, for a page that already
+     has a filled block above it. */
+  .brisk-banner--outline {
+    background: var(--brisk-override-bg, transparent);
+    border-width: var(--brisk-override-border-width, 1px);
   }
 </style>

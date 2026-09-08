@@ -26,6 +26,7 @@ export const CORE_BLOCK_TYPES: readonly string[] = [
   'Breadcrumb',
   'Button',
   'Callout',
+  'Card',
   'Carousel',
   'Code',
   'Column',
@@ -110,5 +111,8 @@ export function findCoreBlockTypeCollisions(
  */
 export const CORE_BLOCK_VARIANTS: Readonly<Record<string, readonly string[]>> =
   {
+    Banner: ['split', 'outline'],
     Button: ['secondary', 'outline', 'ghost', 'link'],
+    Card: ['elevated', 'flat', 'horizontal'],
+    Feature: ['inline', 'start'],
   };

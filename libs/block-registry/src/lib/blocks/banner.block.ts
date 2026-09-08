@@ -40,6 +40,24 @@ export const bannerBlock: BlockDescriptor<BannerProps> = {
     },
     ...ctaLinkFields(),
   ],
-  stylableProperties: BlockStyleRegistry.STANDARD,
+  // Presentation, so variants and not props (ADR-0048). `split` is the
+  // call-to-action bar — words on one side, button on the other — which
+  // is what a banner looks like on most sites and was the one shape this
+  // block could not make. `outline` is the quiet version, for a page that
+  // already has a filled block above it.
+  variants: [
+    { value: 'split', label: 'blocks.banner.variants.split' },
+    { value: 'outline', label: 'blocks.banner.variants.outline' },
+  ],
+  // STANDARD plus the frame and the spacing the two variants need: a
+  // border with no width to set is not a control, and `split` turns the
+  // block into a flex row whose gap is worth setting.
+  stylableProperties: [
+    ...BlockStyleRegistry.STANDARD,
+    'borderWidth',
+    'borderStyle',
+    'borderColor',
+    'gap',
+  ],
   defaultStyle: BLOCK_STYLE_DEFAULTS.Banner,
 };

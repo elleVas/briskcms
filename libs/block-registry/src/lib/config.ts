@@ -10,6 +10,7 @@ import { codeBlock } from './blocks/code.block';
 import { columnBlock } from './blocks/column.block';
 import { columnsBlock } from './blocks/columns.block';
 import { carouselBlock } from './blocks/carousel.block';
+import { cardBlock } from './blocks/card.block';
 import { dividerBlock } from './blocks/divider.block';
 import { iconBlock } from './blocks/icon.block';
 import { socialLinkBlock } from './blocks/social-link.block';
@@ -63,6 +64,7 @@ export {
   columnBlock,
   columnsBlock,
   carouselBlock,
+  cardBlock,
   dividerBlock,
   spacerBlock,
   iconBlock,
@@ -106,7 +108,7 @@ export {
 };
 
 /**
- * The 40 page blocks (docs/adr/0007) — "not registered = not droppable",
+ * The page blocks (docs/adr/0007) — "not registered = not droppable",
  * no deny-list. Data only (fields/defaultProps), no `render`: the real
  * Astro component in apps/public-site is the only renderer, shown live
  * in the canvas inside an iframe (see the visual editor plan). Breadcrumb
@@ -124,6 +126,7 @@ export const pageBlocks: BlockDescriptor[] = [
   columnsBlock,
   columnBlock,
   containerBlock,
+  cardBlock,
   carouselBlock,
   dividerBlock,
   spacerBlock,
@@ -171,7 +174,15 @@ export const pageBlocks: BlockDescriptor[] = [
 export const pageBlockCategories: { title: string; types: string[] }[] = [
   {
     title: 'blocks.categories.layout',
-    types: ['Columns', 'Column', 'Container', 'Carousel', 'Divider', 'Spacer'],
+    types: [
+      'Columns',
+      'Column',
+      'Container',
+      'Card',
+      'Carousel',
+      'Divider',
+      'Spacer',
+    ],
   },
   {
     title: 'blocks.categories.content',

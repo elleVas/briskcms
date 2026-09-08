@@ -20,6 +20,7 @@ import {
   iconPropsSchema,
   socialLinksPropsSchema,
   socialLinkPropsSchema,
+  cardPropsSchema,
   containerPropsSchema,
   countdownPropsSchema,
   embedHtmlPropsSchema,
@@ -122,6 +123,8 @@ const Code = resolveThemeBlockOverride('Code', CodeCore, themeName);
 import ColumnCore from './blocks/Column.astro';
 const Column = resolveThemeBlockOverride('Column', ColumnCore, themeName);
 import ColumnsCore from './blocks/Columns.astro';
+import CardCore from './blocks/Card.astro';
+const Card = resolveThemeBlockOverride('Card', CardCore, themeName);
 import CarouselCore from './blocks/Carousel.astro';
 import DividerCore from './blocks/Divider.astro';
 const Divider = resolveThemeBlockOverride('Divider', DividerCore, themeName);
@@ -285,6 +288,15 @@ const BLOCK_REGISTRY: Record<string, BlockDispatchEntry> = {
     stylable: true,
     // A container since ADR-0056 — it needs its children rendered and
     // `hasChildren` to know whether to emit the wrapper for them.
+    recurseChildren: true,
+    containerProps: true,
+  },
+  Card: {
+    component: Card,
+    schema: cardPropsSchema,
+    stylable: true,
+    // A container: its children are rendered inside it, and `hasChildren`
+    // decides whether the padded body element is emitted at all.
     recurseChildren: true,
     containerProps: true,
   },
