@@ -16,7 +16,7 @@ import {
   deleteReusableSection,
   getReusableSection,
   listReusableSectionVersions,
-  listReusableSections,
+  listReusableSectionsWithUsage,
   publishReusableSection,
   renameReusableSection,
   rollbackReusableSectionToVersion,
@@ -24,6 +24,7 @@ import {
   setReusableSectionExposedFields,
 } from '@brisk/application';
 import type {
+  PageGroupRepositoryPort,
   PageTranslationRepositoryPort,
   PreviewTokenPort,
   ReusableSectionRepositoryPort,
@@ -50,6 +51,7 @@ import {
   saveDraftBodySchema,
 } from './reusable-sections.schemas';
 import {
+  PAGE_GROUP_REPOSITORY,
   PAGE_TRANSLATION_REPOSITORY,
   PREVIEW_TOKEN_PORT,
   REUSABLE_SECTION_REPOSITORY,
@@ -67,6 +69,8 @@ export class ReusableSectionsController {
     private readonly reusableSectionVersionRepository: ReusableSectionVersionRepositoryPort,
     @Inject(PAGE_TRANSLATION_REPOSITORY)
     private readonly pageTranslationRepository: PageTranslationRepositoryPort,
+    @Inject(PAGE_GROUP_REPOSITORY)
+    private readonly pageGroupRepository: PageGroupRepositoryPort,
     @Inject(SEARCH_PORT) private readonly searchPort: SearchPort,
     @Inject(TENANT_CONTEXT) private readonly tenantContext: TenantContextPort,
     @Inject(PREVIEW_TOKEN_PORT)
@@ -86,12 +90,18 @@ export class ReusableSectionsController {
 
   @Get()
   async list(@Query(new ZodValidationPipe(listQuerySchema)) query: ListQuery) {
-    const sections = await listReusableSections(
-      this.deps,
+    const sections = await listReusableSectionsWithUsage(
+      { ...this.deps, pageGroupRepository: this.pageGroupRepository },
       this.tenantId,
       query.siteId,
     );
-    return sections.map((section) => section.toProps());
+    // The count travels with the row rather than as a second endpoint: it
+    // is one number the list always shows, and a separate call would mean
+    // the name and the count could disagree on screen.
+    return sections.map(({ section, usedOnPages }) => ({
+      ...section.toProps(),
+      usedOnPages,
+    }));
   }
 
   @Post()

@@ -121,12 +121,33 @@ export function SectionsListView({ siteId }: SectionsListViewProps) {
                 <span className="text-xs text-muted-foreground">
                   {t(`sections.kindShort.${section.kind}`)} ·{' '}
                   {t(`sections.status.${section.status}`)}
+                  {/* Only for a shared section: inserting a template
+                      copies its blocks and leaves nothing pointing back,
+                      so there is nothing to count and a "0" there would
+                      suggest a link that does not exist. */}
+                  {section.kind === 'shared' &&
+                    ' · ' +
+                      (section.usedOnPages === 0
+                        ? t('sections.usedNowhere')
+                        : t('sections.usedOnPages', {
+                            count: section.usedOnPages,
+                          }))}
                 </span>
               </div>
               <IconButton
                 label={t('sections.delete')}
                 onClick={() => {
-                  if (window.confirm(t('sections.deleteConfirm'))) {
+                  // The count is in the question when there is one:
+                  // "delete this?" and "delete this, which eight pages
+                  // are showing?" are different decisions.
+                  const question =
+                    section.usedOnPages > 0
+                      ? t('sections.deleteConfirmUsed', {
+                          name: section.name,
+                          count: section.usedOnPages,
+                        })
+                      : t('sections.deleteConfirm');
+                  if (window.confirm(question)) {
                     deleteMutation.mutate(section.id);
                   }
                 }}

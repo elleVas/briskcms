@@ -4,6 +4,7 @@ import {
   ChevronDown,
   ChevronUp,
   Copy,
+  Rows3,
   Paintbrush,
   Palette,
   Pencil,
@@ -85,6 +86,12 @@ export interface BlockToolbarOverlayProps {
   onChangeAlign?: (align: BlockAlign | undefined) => void;
   /** Section editor only — see InspectorPanel's own prop (docs/adr/0059). */
   sectionEditing?: { exposed: string[]; onToggle: (field: string) => void };
+  /**
+   * Turns this block into a reusable section and replaces it with an
+   * instance (docs/adr/0059). Absent where that has no meaning: inside the
+   * section editor, and in the header/footer.
+   */
+  onMakeReusable?: () => void;
   onMoveUp: () => void;
   onMoveDown: () => void;
   onDuplicate: () => void;
@@ -149,6 +156,7 @@ export function BlockToolbarOverlay({
   onChangeVariant,
   onChangeAlign,
   sectionEditing,
+  onMakeReusable,
   onMoveUp,
   onMoveDown,
   onDuplicate,
@@ -402,6 +410,19 @@ export function BlockToolbarOverlay({
               />
             </PopoverContent>
           </Popover>
+        )}
+        {/* Only where it can actually be honoured: a section is placed on
+            a page, so turning a block into one has no meaning inside the
+            section editor itself, nor in the header/footer (docs/adr/0059). */}
+        {onMakeReusable && (
+          <button
+            type="button"
+            className={iconButtonClass}
+            onClick={onMakeReusable}
+            aria-label={t('sections.makeReusable')}
+          >
+            <Rows3 size={16} />
+          </button>
         )}
         <button
           type="button"

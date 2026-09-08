@@ -18,9 +18,14 @@ export interface ReusableSectionDto {
   updatedAt: string;
 }
 
+/** The list row: a section plus how many pages place it (docs/adr/0059). */
+export interface ReusableSectionListItemDto extends ReusableSectionDto {
+  usedOnPages: number;
+}
+
 export function listReusableSections(
   siteId: string,
-): Promise<ReusableSectionDto[]> {
+): Promise<ReusableSectionListItemDto[]> {
   const params = new URLSearchParams({ siteId });
   return request(`/reusable-sections?${params.toString()}`);
 }

@@ -182,6 +182,15 @@ export class InMemoryPageGroupRepository implements PageGroupRepositoryPort {
     };
   }
 
+  async listContentBySite(
+    tenantId: string,
+    siteId: string,
+  ): Promise<{ id: string; content: PageContent }[]> {
+    return [...this.groups.values()]
+      .filter((group) => group.tenantId === tenantId && group.siteId === siteId)
+      .map((group) => ({ id: group.id, content: group.content }));
+  }
+
   async listSiblings(
     tenantId: string,
     siteId: string,

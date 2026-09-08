@@ -24,6 +24,7 @@ import type {
   PaginatedResult,
   Pagination,
 } from '@brisk/ports';
+import type { PageContent } from '@brisk/shared-types';
 import {
   DrizzlePaginatedRepository,
   type BriskDb,
@@ -274,6 +275,21 @@ export class DrizzlePageGroupRepository
   }
 
   /** Siblings in the SHARED hierarchy — it replaces PageRepositoryPort.listSiblings, without `locale` (a position in the tree is no longer per-locale). */
+  /** See the port — one query, `content` only, to count where a section is placed. */
+  async listContentBySite(
+    tenantId: string,
+    siteId: string,
+  ): Promise<{ id: string; content: PageContent }[]> {
+    return withTenant(this.db, tenantId, (tx) =>
+      tx
+        .select({ id: pageGroups.id, content: pageGroups.content })
+        .from(pageGroups)
+        .where(
+          and(eq(pageGroups.tenantId, tenantId), eq(pageGroups.siteId, siteId)),
+        ),
+    );
+  }
+
   async listSiblings(
     tenantId: string,
     siteId: string,

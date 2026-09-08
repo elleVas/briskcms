@@ -16,6 +16,7 @@ import {
   InMemorySearchPort,
 } from './in-memory-repositories.test-fixture';
 import { publishReusableSection } from './publish-reusable-section.use-case';
+import { listReusableSectionsWithUsage } from './reusable-section.use-cases';
 import { publishPageTranslation } from './publish-page-translation.use-case';
 
 const tenantId = 'tenant-1';
@@ -176,5 +177,61 @@ describe('a section’s words reach the search index', () => {
 
     const indexed = deps.searchPort.indexed.at(-1);
     expect(JSON.stringify(indexed?.content)).toContain('What we do');
+  });
+});
+
+describe('how many pages place a section', () => {
+  it('counts each page once, and never counts a template', async () => {
+    const deps = setup();
+    const shared = await seedSection(deps, [
+      { id: 'b1', type: 'Heading', props: { text: 'Shared' } },
+    ]);
+    const template = ReusableSection.create({
+      id: randomUUID(),
+      tenantId,
+      siteId,
+      name: 'A template',
+      kind: 'template',
+      content: [{ id: 'b2', type: 'Heading', props: { text: 'Template' } }],
+    });
+    template.publish();
+    await deps.reusableSectionRepository.save(template);
+    await seedPageUsing(deps, shared.id);
+    await seedPageUsing(deps, shared.id);
+
+    const listed = await listReusableSectionsWithUsage(deps, tenantId, siteId);
+    const bySection = new Map(
+      listed.map((row) => [row.section.id, row.usedOnPages]),
+    );
+    expect(bySection.get(shared.id)).toBe(2);
+    // Nothing points back at a template — a number here would suggest a
+    // link that does not exist.
+    expect(bySection.get(template.id)).toBe(0);
+  });
+
+  it('counts a page whose draft holds it but which was never published', async () => {
+    const deps = setup();
+    const section = await seedSection(deps, [
+      { id: 'b1', type: 'Heading', props: { text: 'Draft only' } },
+    ]);
+    const group = PageGroup.create({
+      id: randomUUID(),
+      tenantId,
+      siteId,
+      createdBy: null,
+    });
+    group.saveContent([
+      {
+        id: 'inst-x',
+        type: 'Section',
+        props: { section: { sectionId: section.id, sectionName: 'x' } },
+      },
+    ]);
+    await deps.pageGroupRepository.save(group);
+
+    const listed = await listReusableSectionsWithUsage(deps, tenantId, siteId);
+    // What an author wants before renaming or deleting is where it is
+    // PLACED, which includes a page nobody has published yet.
+    expect(listed[0]?.usedOnPages).toBe(1);
   });
 });

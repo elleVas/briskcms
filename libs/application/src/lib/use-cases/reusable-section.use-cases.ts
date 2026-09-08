@@ -12,9 +12,11 @@ import type {
   ReusableSectionKind,
 } from '@brisk/shared-types';
 import type {
+  PageGroupRepositoryPort,
   ReusableSectionRepositoryPort,
   ReusableSectionVersionRepositoryPort,
 } from '@brisk/ports';
+import { collectSectionReferences } from '@brisk/shared-types';
 
 export interface ReusableSectionDeps {
   reusableSectionRepository: ReusableSectionRepositoryPort;
@@ -109,6 +111,56 @@ export async function listReusableSections(
   siteId: string,
 ): Promise<ReusableSection[]> {
   return deps.reusableSectionRepository.listBySite(tenantId, siteId);
+}
+
+export interface ReusableSectionWithUsage {
+  section: ReusableSection;
+  /** How many pages place this section. Always 0 for a template — see below. */
+  usedOnPages: number;
+}
+
+/**
+ * The list, with the one number an author needs before renaming or
+ * deleting a section: how many pages it is on.
+ *
+ * Counted with `collectSectionReferences`, the same function the renderer
+ * uses, over every page group's canonical content in one query. One
+ * question, one answer — not one for rendering and a subtly different one
+ * for the list.
+ *
+ * A `template` always counts 0, and that is not a gap: inserting one
+ * copies its blocks and leaves nothing pointing back, so there is nothing
+ * to count. Reporting a number there would suggest a link that does not
+ * exist.
+ */
+export async function listReusableSectionsWithUsage(
+  deps: ReusableSectionDeps & {
+    pageGroupRepository: PageGroupRepositoryPort;
+  },
+  tenantId: string,
+  siteId: string,
+): Promise<ReusableSectionWithUsage[]> {
+  const sections = await deps.reusableSectionRepository.listBySite(
+    tenantId,
+    siteId,
+  );
+  if (sections.length === 0) {
+    return [];
+  }
+  const groups = await deps.pageGroupRepository.listContentBySite(
+    tenantId,
+    siteId,
+  );
+  const usage = new Map<string, number>();
+  for (const group of groups) {
+    for (const sectionId of collectSectionReferences([group.content])) {
+      usage.set(sectionId, (usage.get(sectionId) ?? 0) + 1);
+    }
+  }
+  return sections.map((section) => ({
+    section,
+    usedOnPages: usage.get(section.id) ?? 0,
+  }));
 }
 
 export async function getReusableSection(

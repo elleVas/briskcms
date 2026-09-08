@@ -153,7 +153,22 @@ a table with a policy next to four without one.
   `container-type.spec.ts` derives its list from `isContainer` and so
   checks this one by name.
 - 53 insertable blocks.
-- Still open, deliberately: a section cannot yet be made **out of** blocks
-  already on a page (the API accepts starting content, the editor has no
-  button for it), and there is no "used on N pages" count in the sections
-  list. Both are additions to a working feature, not gaps in it.
+- A block on a page can be **turned into** a section from its toolbar: the
+  section is created from that block, published immediately, and the block
+  is replaced by an instance — one history entry, so an undo does not leave
+  the page with neither. Published rather than left as a draft, because the
+  page it was taken from would otherwise lose that strip until somebody
+  went and published the section, which reads as the button having broken
+  the page.
+- The canvas is **remounted** rather than patched for that replacement.
+  There is no fragment the client could graft in place of the old node: what
+  replaces it renders a section, whose blocks live on the server and are
+  resolved at read time.
+- The sections list shows how many pages place each section, counted with
+  `collectSectionReferences` over every page group's content in one query —
+  the same function the renderer uses, so the number and the page agree.
+  A `template` shows none: inserting one copies its blocks and leaves
+  nothing pointing back, so a "0" there would suggest a link that does not
+  exist. The count is also in the delete confirmation, because "delete
+  this?" and "delete this, which eight pages are showing?" are different
+  decisions.

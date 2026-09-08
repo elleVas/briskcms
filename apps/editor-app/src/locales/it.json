@@ -264,7 +264,13 @@
     "draftSaved": "Bozza salvata",
     "published": "Pubblicata — tutte le pagine che la usano sono aggiornate",
     "nameTaken": "Esiste già una sezione con questo nome.",
-    "templates": "Template"
+    "templates": "Template",
+    "makeReusable": "Trasforma in sezione riusabile",
+    "makeReusablePrompt": "Nome di questa sezione:",
+    "usedOnPages_one": "su {{count}} pagina",
+    "usedOnPages_other": "su {{count}} pagine",
+    "usedNowhere": "non ancora inserita da nessuna parte",
+    "deleteConfirmUsed": "Eliminare “{{name}}”? È su {{count}} pagine, e ognuna non mostrerà più niente al suo posto."
   },
   "layout": {
     "title": "Layout",

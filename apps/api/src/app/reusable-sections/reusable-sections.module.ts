@@ -5,13 +5,17 @@ import {
   DrizzleReusableSectionRepository,
   DrizzleReusableSectionVersionRepository,
 } from '@brisk/postgres-reusable-section-repository';
-import { DrizzlePageTranslationRepository } from '@brisk/postgres-page-repository';
+import {
+  DrizzlePageGroupRepository,
+  DrizzlePageTranslationRepository,
+} from '@brisk/postgres-page-repository';
 import { DrizzleSearchRepository } from '@brisk/postgres-search-repository';
 import { PreviewTokenAdapter } from '@brisk/preview-token-adapter';
 import { AuthModule } from '../auth/auth.module';
 import { DATABASE, DatabaseModule } from '../database.module';
 import { ReusableSectionsController } from './reusable-sections.controller';
 import {
+  PAGE_GROUP_REPOSITORY,
   PAGE_TRANSLATION_REPOSITORY,
   PREVIEW_TOKEN_PORT,
   REUSABLE_SECTION_REPOSITORY,
@@ -42,6 +46,12 @@ import {
       // Read-only here (finding the pages a section appears on), so no
       // version repository: this module never writes a translation.
       useFactory: (db: BriskDb) => new DrizzlePageTranslationRepository(db),
+      inject: [DATABASE],
+    },
+    {
+      // Read-only: counting the pages a section is placed on.
+      provide: PAGE_GROUP_REPOSITORY,
+      useFactory: (db: BriskDb) => new DrizzlePageGroupRepository(db),
       inject: [DATABASE],
     },
     {

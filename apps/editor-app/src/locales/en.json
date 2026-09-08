@@ -264,7 +264,13 @@
     "draftSaved": "Draft saved",
     "published": "Published — every page using it is updated",
     "nameTaken": "A section with that name already exists.",
-    "templates": "Templates"
+    "templates": "Templates",
+    "makeReusable": "Turn into a reusable section",
+    "makeReusablePrompt": "Name for this section:",
+    "usedOnPages_one": "on {{count}} page",
+    "usedOnPages_other": "on {{count}} pages",
+    "usedNowhere": "not placed anywhere yet",
+    "deleteConfirmUsed": "Delete “{{name}}”? It is on {{count}} page(s), and each will show nothing where it was."
   },
   "layout": {
     "title": "Layout",

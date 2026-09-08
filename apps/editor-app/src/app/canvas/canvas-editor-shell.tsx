@@ -1,4 +1,10 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import {
+  type ReactNode,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
   Palette,
@@ -34,6 +40,10 @@ import { IconButton } from '../icon-button';
 import { siteQueryOptions } from '../site-queries';
 import { useToast } from '../toast-provider';
 import { useSiteThemeTokens } from '../use-site-theme-tokens';
+import {
+  createReusableSection,
+  publishReusableSection,
+} from '../../lib/reusable-sections-api-client';
 import { BlockPicker, type BlockPickerCategory } from './block-picker';
 import { TemplatePicker } from './template-picker';
 import { BlockToolbarOverlay } from './block-toolbar-overlay';
@@ -212,6 +222,13 @@ export function CanvasEditorShell({
   // changed key prop) rather than a `useEffect` with a `setState` inside —
   // it avoids one wasted render before the local tree reflects the new
   // pageId/restoredAt.
+  // Bumped where the canvas cannot be patched in place — replacing a block
+  // with a reusable section, whose blocks the client does not hold
+  // (docs/adr/0059). It is the `key` of CanvasFrame, so a bump remounts the
+  // iframe with a fresh preview token.
+  const [canvasNonce, setCanvasNonce] = useState(0);
+  const reloadCanvas = useCallback(() => setCanvasNonce((n) => n + 1), []);
+
   const syncKey = `${pageId}:${restoredAt}`;
   const [lastSyncKey, setLastSyncKey] = useState(syncKey);
   const [localBlocks, setLocalBlocks] = useState(blocks);
@@ -428,6 +445,7 @@ export function CanvasEditorShell({
     handleRemoveSelected,
     handleMoveSelected,
     handleDuplicateSelected,
+    handleReplaceSelected,
     handleAddChild,
     handleInsertAtRoot,
     insertNewBlockAt,
@@ -445,9 +463,61 @@ export function CanvasEditorShell({
     token,
     pageId,
     fragmentSection: sectionPreview,
+    reloadCanvas,
     selectedBlock,
     selectedDescriptor,
   });
+  /**
+   * "This strip belongs on other pages too" (docs/adr/0059).
+   *
+   * Creates a SHARED section from the selected block, publishes it, and
+   * replaces the block with an instance pointing at it. Published straight
+   * away rather than left as a draft: the page it was taken from would
+   * otherwise lose that strip until somebody went and published the
+   * section, which reads as the button having broken the page.
+   *
+   * A window.prompt for the name, deliberately: a name is the only thing
+   * this needs, and the alternative — a dialog with one field — is more
+   * code for a worse interruption. It stays until somebody asks for more
+   * than a name at this point.
+   *
+   * A plain function and not a `useCallback`: the React Compiler refuses
+   * to optimise the component when a manual dependency list holds a value
+   * it cannot prove stable (`selectedBlock` here), and it memoises this
+   * perfectly well on its own.
+   */
+  async function handleMakeReusable(): Promise<void> {
+    if (!siteId || !selectedBlock?.id) {
+      return;
+    }
+    const name = window.prompt(t('sections.makeReusablePrompt'));
+    if (!name?.trim()) {
+      return;
+    }
+    try {
+      const created = await createReusableSection({
+        siteId,
+        name: name.trim(),
+        kind: 'shared',
+        content: [selectedBlock],
+      });
+      await publishReusableSection(created.id);
+      handleReplaceSelected({
+        id: crypto.randomUUID(),
+        type: 'Section',
+        props: {
+          section: { sectionId: created.id, sectionName: created.name },
+        },
+      });
+    } catch (caught) {
+      window.alert(
+        String(caught).includes('409')
+          ? t('sections.nameTaken')
+          : String(caught),
+      );
+    }
+  }
+
   // Closes the loop opened by recordEditRef above. In an effect rather than
   // during render (React forbids touching a ref there, and the linter says
   // so): the burst callbacks only ever run from a debounce timer, which
@@ -905,6 +975,7 @@ export function CanvasEditorShell({
         </aside>
         <div style={{ flex: 1, minHeight: 0, position: 'relative' }}>
           <CanvasFrame
+            key={canvasNonce}
             pageId={pageId}
             editingSection={editingSection}
             sectionPreview={sectionPreview}
@@ -933,6 +1004,14 @@ export function CanvasEditorShell({
                   sectionEditing,
                   selectedBlock.id,
                 )}
+                onMakeReusable={
+                  // Not in the section editor (a section inside itself) and
+                  // not in the header/footer, which are already applied to
+                  // every page and have nothing to gain (docs/adr/0059).
+                  siteId && !sectionPreview && !editingSection
+                    ? handleMakeReusable
+                    : undefined
+                }
                 onChangeAlign={
                   // Root level, and the page's own content: the header and
                   // footer lists have no per-block wrapper to carry the

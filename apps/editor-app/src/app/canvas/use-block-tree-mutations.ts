@@ -80,6 +80,8 @@ export interface UseBlockTreeMutationsParams {
   pageId: string;
   /** Set only by the reusable-section editor (docs/adr/0059) — the fragment endpoint then validates the token against the section rather than a page. */
   fragmentSection?: { sectionId: string; locale: string };
+  /** Remounts the canvas iframe — used where no fragment can be patched in (docs/adr/0059). */
+  reloadCanvas?: () => void;
   selectedBlock: Block | null;
   selectedDescriptor: BlockDescriptor | undefined;
 }
@@ -90,6 +92,8 @@ export interface UseBlockTreeMutationsResult {
   handleInsertBlocks: (blocks: (Block & { id: string })[]) => void;
   handleReorder: (parentId: string | null, orderedIds: string[]) => void;
   handleRemoveSelected: () => void;
+  /** Swaps the selected block for another at the same place — see the implementation. */
+  handleReplaceSelected: (replacement: Block & { id: string }) => void;
   handleMoveSelected: (direction: -1 | 1) => void;
   handleDuplicateSelected: () => void;
   handleAddChild: () => void;
@@ -143,6 +147,7 @@ export function useBlockTreeMutations({
   token,
   pageId,
   fragmentSection,
+  reloadCanvas,
   selectedBlock,
   selectedDescriptor,
 }: UseBlockTreeMutationsParams): UseBlockTreeMutationsResult {
@@ -445,6 +450,49 @@ export function useBlockTreeMutations({
     recordHistory({ before, after: next, syncForward, syncBackward });
   }
 
+  /**
+   * Swaps the selected block for another one at the same place — how a
+   * block becomes a reusable section (docs/adr/0059): the section is
+   * created from its content, and the block it was made from is replaced
+   * by an instance pointing at it.
+   *
+   * Remove then insert at the ORIGINAL index, in one history entry: two
+   * separate mutations would mean an undo that leaves the page with
+   * neither the block nor the section, which is the state nobody asked
+   * for.
+   */
+  function handleReplaceSelected(replacement: Block & { id: string }): void {
+    if (!selectedBlock?.id) {
+      return;
+    }
+    const location = locateBlock(localBlocks, selectedBlock.id);
+    if (!location) {
+      return;
+    }
+    const before = localBlocks;
+    const target: BlockTreeTarget = {
+      parentId: location.parentId,
+      index: location.index,
+    };
+    const next = insertBlock(
+      removeBlock(before, selectedBlock.id),
+      replacement,
+      target,
+    );
+    applyLocalChange(next);
+    // A full reload of the canvas rather than a surgical patch: the
+    // replacement renders a section, whose blocks the client does not
+    // have, so there is no fragment to graft in place of the old node.
+    // A full reload rather than a surgical patch, both ways: what replaces
+    // the block renders a SECTION, whose blocks live on the server and are
+    // resolved at read time — there is no fragment the client could graft
+    // in its place.
+    const syncForward = () => reloadCanvas?.();
+    const syncBackward = () => reloadCanvas?.();
+    syncForward();
+    recordHistory({ before, after: next, syncForward, syncBackward });
+  }
+
   function handleRemoveSelected(): void {
     if (!selectedBlock?.id) {
       return;
@@ -599,6 +647,7 @@ export function useBlockTreeMutations({
     recordEdit,
     handleInsert,
     handleInsertBlocks,
+    handleReplaceSelected,
     handleReorder,
     handleRemoveSelected,
     handleMoveSelected,
