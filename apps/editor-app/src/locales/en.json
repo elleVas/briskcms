@@ -908,6 +908,27 @@
           "slider": "Slider (one at a time)",
           "carousel": "Carousel (several)"
         }
+      },
+      "alignment": {
+        "fieldLabel": "Alignment",
+        "options": {
+          "start": "Left",
+          "center": "Centre",
+          "end": "Right"
+        }
+      },
+      "aspectRatio": {
+        "fieldLabel": "Shape",
+        "options": {
+          "original": "As uploaded",
+          "square": "Square",
+          "landscape": "Landscape (4:3)",
+          "portrait": "Portrait (3:4)",
+          "wide": "Wide (16:9)"
+        }
+      },
+      "caption": {
+        "fieldLabel": "Caption"
       }
     },
     "accordionItem": {
@@ -1144,6 +1165,17 @@
       "fields": {
         "images": {
           "fieldLabel": "Images"
+        },
+        "columns": {
+          "fieldLabel": "Columns",
+          "options": {
+            "auto": "Fit automatically",
+            "2": "2",
+            "3": "3",
+            "4": "4",
+            "5": "5",
+            "6": "6"
+          }
         }
       }
     },
@@ -1201,6 +1233,17 @@
         },
         "caption": {
           "fieldLabel": "Caption"
+        },
+        "linkType": {
+          "fieldLabel": "Links to",
+          "options": {
+            "none": "Nothing",
+            "page": "A page of this site",
+            "url": "An address"
+          }
+        },
+        "lightbox": {
+          "fieldLabel": "Open full size when clicked"
         }
       }
     },
@@ -1443,6 +1486,9 @@
       "fields": {
         "url": {
           "fieldLabel": "Video URL"
+        },
+        "poster": {
+          "fieldLabel": "Cover image (shown before loading)"
         }
       }
     },
@@ -1539,6 +1585,20 @@
     },
     "carousel": {
       "label": "Carousel"
+    }
+  },
+  "gallery": {
+    "field": {
+      "pick": "Choose image",
+      "change": "Change image",
+      "alt": "Alternative text",
+      "decorative": "Decorative image (no alternative text needed)",
+      "altRequired": "Alternative text required (or mark as decorative)",
+      "caption": "Caption (optional)",
+      "moveUp": "Move up",
+      "moveDown": "Move down",
+      "remove": "Remove",
+      "add": "Add image"
     }
   }
 }

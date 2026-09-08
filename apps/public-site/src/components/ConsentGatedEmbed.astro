@@ -16,12 +16,30 @@ interface Props {
    * their root — so without it neither could be styled at all.
    */
   instanceClass?: string | null;
+  /**
+   * Shown behind the button until the visitor asks for the embed
+   * (ADR-0057). It is what makes a consent gate look like a video rather
+   * than a grey box — and since nothing has been requested from the third
+   * party yet, this image is the ONLY thing there is to look at.
+   */
+  posterUrl?: string | null;
+  /** The gate must be the same shape as the thing it stands in for, or the page reflows the moment it loads. */
+  aspectRatio?: string | null;
 }
 
-const { src, title, buttonLabel, instanceClass } = Astro.props;
+const { src, title, buttonLabel, instanceClass, posterUrl, aspectRatio } =
+  Astro.props;
 ---
 
-<div class:list={['brisk-consent-embed', instanceClass]}>
+<div
+  class:list={['brisk-consent-embed', instanceClass]}
+  style={[
+    posterUrl ? `--brisk-embed-poster: url(${JSON.stringify(posterUrl)});` : '',
+    aspectRatio ? `--brisk-embed-ratio: ${aspectRatio};` : '',
+  ]
+    .filter(Boolean)
+    .join(' ')}
+>
   <button
     type="button"
     class="brisk-consent-embed__trigger"
@@ -48,12 +66,18 @@ const { src, title, buttonLabel, instanceClass } = Astro.props;
 <style>
   .brisk-consent-embed {
     position: relative;
-    aspect-ratio: 16 / 9;
+    aspect-ratio: var(--brisk-embed-ratio, 16 / 9);
     width: 100%;
     display: flex;
     align-items: center;
     justify-content: center;
     background: var(--muted);
+    /* The poster sits behind the button. A `background-image` rather than
+       an <img>: it is decoration for a control, not content — a screen
+       reader gains nothing from being told the video has a thumbnail. */
+    background-image: var(--brisk-embed-poster, none);
+    background-size: cover;
+    background-position: center;
     /* Fallbacks are what the gate already rendered, so an embed nobody
        has styled is unchanged. The border and shadow exist because a
        framed video is the common ask and there was no way to get one. */

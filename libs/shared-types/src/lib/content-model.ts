@@ -160,6 +160,65 @@ export const headingPropsSchema = z.object({
 export type HeadingProps = z.infer<typeof headingPropsSchema>;
 
 /**
+ * i18n a livello di campo (see the plan) — `pageGroupId` is locale-
+ * independent by construction (a group, not one specific translation), on
+ * purpose: `locale`/`slug` used to be denormalized here at PICK time, which
+ * meant a link picked while editing one language pointed at THAT
+ * language's path even when the containing block is shared across every
+ * locale of the group (`page` isn't a `translatable` field — real bug,
+ * found live: an IT reader could get an EN link). `locale`/`slug` are now
+ * `.optional()` — present ONLY on a RESOLVED reference (added by
+ * `resolvePageReferences` in page-reference.ts, at publish/preview render
+ * time, for the locale actually being rendered), absent on the raw STORED
+ * value the editor picker writes. `title` stays denormalized purely for
+ * the editor canvas/picker label (same reasoning as PickedForm's
+ * `formName`), never used for rendering either way.
+ */
+export const pickedPageSchema = z.object({
+  pageGroupId: z.string(),
+  title: z.string(),
+  locale: z.string().optional(),
+  slug: z.string().optional(),
+  /**
+   * Filled in at render alongside `locale`/`slug`, never stored by the
+   * picker: the page's ancestors in the locale being rendered, root
+   * first. Without it a link to a nested page renders as `/it/first-run`
+   * — the bare slug — which stopped resolving when slugs became scoped to
+   * their siblings (ADR-0029).
+   */
+  ancestorSlugs: z.array(z.string()).optional(),
+});
+export type PickedPage = z.infer<typeof pickedPageSchema>;
+
+/**
+ * How a block sits in the width available to it (ADR-0057).
+ *
+ * Not `contentAlign`, which aligns what is INSIDE a block: this places
+ * the block's own box, which for an image narrower than its column is the
+ * question people actually ask. `start`/`end` rather than left/right so
+ * it reads the same on a right-to-left site.
+ */
+export const blockAlignmentSchema = z.enum(['start', 'center', 'end']);
+export type BlockAlignment = z.infer<typeof blockAlignmentSchema>;
+
+/**
+ * A picture's shape, as a closed set (ADR-0057).
+ *
+ * `original` means "whatever the file is", and is the default because it
+ * is what every existing image already does. The other four are the
+ * shapes a layout is usually built around; a free `aspect-ratio` string
+ * would let a gallery be 3:1000.
+ */
+export const aspectRatioSchema = z.enum([
+  'original',
+  'square',
+  'landscape',
+  'portrait',
+  'wide',
+]);
+export type AspectRatio = z.infer<typeof aspectRatioSchema>;
+
+/**
  * The picked media's `url` is denormalized into the block props (not just
  * `mediaId`) so rendering — both the editor canvas and apps/public-site —
  * never needs a live call back to the media API to resolve an id to a URL.
@@ -196,6 +255,22 @@ export const imagePropsSchema = z.object({
   // entirely when this is true, even if it's non-empty from before).
   isDecorative: z.boolean(),
   caption: z.string(),
+  /**
+   * Where the picture leads (ADR-0057). `linkType: 'none'` — the default
+   * — renders no anchor at all, so an image that links nowhere is exactly
+   * the markup it was.
+   */
+  linkType: z.enum(['none', 'page', 'url']).default('none'),
+  page: pickedPageSchema.nullable().default(null),
+  url: z.string().default(''),
+  /**
+   * Click to see it full size. Mutually exclusive with a link in
+   * practice — the renderer prefers the link, because a link is a
+   * navigation the visitor asked for and a lightbox is a convenience.
+   */
+  lightbox: z.boolean().default(false),
+  alignment: blockAlignmentSchema.default('center'),
+  aspectRatio: aspectRatioSchema.default('original'),
 });
 export type ImageProps = z.infer<typeof imagePropsSchema>;
 
@@ -229,8 +304,18 @@ export const galleryPropsSchema = z.object({
       media: pickedMediaSchema.nullable(),
       alt: z.string(),
       isDecorative: z.boolean(),
+      /** Shown under the picture. Optional, and absent on every image saved before ADR-0057. */
+      caption: z.string().default(''),
     }),
   ),
+  /**
+   * `auto` keeps the responsive `auto-fill` grid the block always had —
+   * as many 200px columns as fit. A number pins it, which is what a
+   * three-up layout that must stay three-up needs.
+   */
+  columns: z.enum(['auto', '2', '3', '4', '5', '6']).default('auto'),
+  aspectRatio: aspectRatioSchema.default('square'),
+  lightbox: z.boolean().default(false),
 });
 export type GalleryProps = z.infer<typeof galleryPropsSchema>;
 
@@ -327,37 +412,6 @@ export const languageSwitcherPropsSchema = navItemPositionSchema.extend({
   visibility: visibilitySchema.default('always'),
 });
 export type LanguageSwitcherProps = z.infer<typeof languageSwitcherPropsSchema>;
-
-/**
- * i18n a livello di campo (see the plan) — `pageGroupId` is locale-
- * independent by construction (a group, not one specific translation), on
- * purpose: `locale`/`slug` used to be denormalized here at PICK time, which
- * meant a link picked while editing one language pointed at THAT
- * language's path even when the containing block is shared across every
- * locale of the group (`page` isn't a `translatable` field — real bug,
- * found live: an IT reader could get an EN link). `locale`/`slug` are now
- * `.optional()` — present ONLY on a RESOLVED reference (added by
- * `resolvePageReferences` in page-reference.ts, at publish/preview render
- * time, for the locale actually being rendered), absent on the raw STORED
- * value the editor picker writes. `title` stays denormalized purely for
- * the editor canvas/picker label (same reasoning as PickedForm's
- * `formName`), never used for rendering either way.
- */
-export const pickedPageSchema = z.object({
-  pageGroupId: z.string(),
-  title: z.string(),
-  locale: z.string().optional(),
-  slug: z.string().optional(),
-  /**
-   * Filled in at render alongside `locale`/`slug`, never stored by the
-   * picker: the page's ancestors in the locale being rendered, root
-   * first. Without it a link to a nested page renders as `/it/first-run`
-   * — the bare slug — which stopped resolving when slugs became scoped to
-   * their siblings (ADR-0029).
-   */
-  ancestorSlugs: z.array(z.string()).optional(),
-});
-export type PickedPage = z.infer<typeof pickedPageSchema>;
 
 export const navLinkPropsSchema = navItemPositionSchema.extend({
   label: z.string(),
@@ -929,6 +983,17 @@ export type SearchBoxProps = z.infer<typeof searchBoxPropsSchema>;
  */
 export const videoEmbedPropsSchema = z.object({
   url: z.string(),
+  /**
+   * The image shown before the visitor asks for the video (ADR-0057).
+   *
+   * It has a second job here that `VideoFile.poster` does not: this block
+   * is consent-gated, so until someone clicks, nothing has been requested
+   * from YouTube — and the poster is what makes that gate look like a
+   * video rather than a grey box.
+   */
+  poster: pickedMediaSchema.nullable().default(null),
+  aspectRatio: aspectRatioSchema.default('wide'),
+  caption: z.string().default(''),
 });
 export type VideoEmbedProps = z.infer<typeof videoEmbedPropsSchema>;
 
