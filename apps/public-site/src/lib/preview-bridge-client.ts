@@ -78,18 +78,6 @@ export function blockIdOf(el: Element): string | null {
   return (el as HTMLElement).dataset['briskBlockId'] ?? null;
 }
 
-/**
- * True only when NO ancestor of the block is itself a block wrapper —
- * direct reordering on the canvas (Day 3/4) is scoped to top-level blocks,
- * the same choice layers-panel.tsx made ("reordering between nested
- * siblings... stays a separate TODO"). It starts from `parentElement`
- * rather than `blockEl` itself, or `closest` would always find at least
- * `blockEl`.
- */
-export function isRootLevelBlock(blockEl: Element): boolean {
-  return blockEl.parentElement?.closest('[data-brisk-block-id]') == null;
-}
-
 /** The nearest `data-brisk-field` value under a click point, within the block's own bounds — `null` when the double click landed on the block but outside every `inlineEditable` field (a padding area, say). */
 export function findFieldUnderPointer(
   blockEl: Element,

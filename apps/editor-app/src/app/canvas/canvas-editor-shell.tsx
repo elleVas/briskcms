@@ -65,6 +65,7 @@ import {
   findBlockInTree,
   locateBlock,
   moveBlock,
+  siblingsAt,
   updateBlockProps,
   updateBlockStyleOverride,
   updateBlockAlign,
@@ -230,10 +231,11 @@ export function CanvasEditorShell({
   const [canvasNonce, setCanvasNonce] = useState(0);
   // The editor's own clipboard. Not the system one: reading that needs a
   // permission prompt, and writing a block to it as text would put a wall
-  // of JSON into whatever the person pastes into next. It holds ONE block
-  // and lives as long as the editor is open, which is what "copy this,
-  // paste it on the next page" needs.
-  const [clipboard, setClipboard] = useState<Block | null>(null);
+  // of JSON into whatever the person pastes into next. It holds the whole
+  // selection since Fase 7's multi-select, and lives as long as the editor
+  // is open — which is what "copy these, paste them on the next page"
+  // needs.
+  const [clipboard, setClipboard] = useState<(Block & { id: string })[]>([]);
   const reloadCanvas = useCallback(() => setCanvasNonce((n) => n + 1), []);
 
   const syncKey = `${pageId}:${restoredAt}`;
@@ -398,19 +400,39 @@ export function CanvasEditorShell({
     },
   });
 
-  // Direct reordering on the canvas (Day 3/4) — the rects of top-level
-  // blocks only, in the same order as `localBlocks` (not the raw document
-  // order of `bridge.blockRects`, which also includes nested blocks): the
-  // only list compute-drop-target.ts makes sense against, given that
-  // reordering stays scoped to top-level siblings (the same choice
-  // layers-panel.tsx made).
-  const rootRects: DropCandidateRect[] = localBlocks.flatMap((block) => {
-    if (!block.id) {
-      return [];
-    }
-    const rect = bridge.blockRects.find((r) => r.id === block.id);
-    return rect ? [{ id: block.id, top: rect.top, height: rect.height }] : [];
-  });
+  /**
+   * The rects a drop is measured against: the dragged block's real
+   * SIBLINGS, at whatever depth it sits (Fase 7).
+   *
+   * It used to be the top-level blocks and nothing else, which is why
+   * dragging on the canvas was root-only — the three columns of a Columns
+   * could be reordered from the Layers panel and not from the page they
+   * were on. `compute-drop-target.ts` never cared: it compares a pointer
+   * against a list of rects, and the list was the whole restriction.
+   *
+   * In `localBlocks` order and not the raw document order of
+   * `bridge.blockRects`, which interleaves every depth.
+   */
+  function siblingRectsFor(blockId: string | null): {
+    parentId: string | null;
+    rects: DropCandidateRect[];
+  } {
+    const parentId = blockId
+      ? (locateBlock(localBlocks, blockId)?.parentId ?? null)
+      : null;
+    const rects = siblingsAt(localBlocks, parentId).flatMap((block) => {
+      if (!block.id) {
+        return [];
+      }
+      const rect = bridge.blockRects.find((r) => r.id === block.id);
+      return rect ? [{ id: block.id, top: rect.top, height: rect.height }] : [];
+    });
+    return { parentId, rects };
+  }
+
+  // A drag out of the SIDEBAR has no block in the tree yet, so it always
+  // measures against the root — the level it drops at.
+  const rootRects = siblingRectsFor(null).rects;
 
   const selectedBlock = bridge.selectedBlockId
     ? findBlockInTree(localBlocks, bridge.selectedBlockId)
@@ -418,6 +440,13 @@ export function CanvasEditorShell({
   const selectedDescriptor = selectedBlock
     ? registry.find((d) => d.type === selectedBlock.type)
     : undefined;
+  // The whole selection as blocks, in pick order. A block whose id is no
+  // longer in the tree — deleted, or undone away — simply drops out rather
+  // than reaching a mutation that would not find it.
+  const selectedBlocks = bridge.selectedBlockIds.flatMap((id) => {
+    const block = findBlockInTree(localBlocks, id);
+    return block?.id ? [block as Block & { id: string }] : [];
+  });
   // The trail the toolbar shows, already labelled: a step whose block has
   // no id cannot be selected and is dropped rather than rendered as a
   // dead word.
@@ -470,8 +499,10 @@ export function CanvasEditorShell({
     handleRemoveSelected,
     handleMoveSelected,
     handleDuplicateSelected,
-    handlePaste,
+    handlePasteMany,
     handleReparent,
+    handleRemoveMany,
+    handleDuplicateMany,
     handleReplaceSelected,
     handleAddChild,
     handleInsertAtRoot,
@@ -585,11 +616,11 @@ export function CanvasEditorShell({
   const shortcutsRef = useRef({
     undo,
     redo,
-    handleRemoveSelected,
-    handleDuplicateSelected,
     handleMoveSelected,
-    handlePaste,
-    selectedBlock,
+    handlePasteMany,
+    handleRemoveMany,
+    handleDuplicateMany,
+    selectedBlocks,
     clipboard,
     setClipboard,
   });
@@ -601,11 +632,11 @@ export function CanvasEditorShell({
     shortcutsRef.current = {
       undo,
       redo,
-      handleRemoveSelected,
-      handleDuplicateSelected,
       handleMoveSelected,
-      handlePaste,
-      selectedBlock,
+      handlePasteMany,
+      handleRemoveMany,
+      handleDuplicateMany,
+      selectedBlocks,
       clipboard,
       setClipboard,
     };
@@ -644,7 +675,7 @@ export function CanvasEditorShell({
       }
       if (modifier && key === 'd') {
         event.preventDefault();
-        current.handleDuplicateSelected();
+        current.handleDuplicateMany(current.selectedBlocks.map((b) => b.id));
         return;
       }
       if (modifier && key === 'c') {
@@ -652,23 +683,23 @@ export function CanvasEditorShell({
         // clipboard needs a permission prompt, and writing a block to it
         // as text would mean pasting a wall of JSON into any other app —
         // this copies a BLOCK, and only inside the editor.
-        if (current.selectedBlock) {
+        if (current.selectedBlocks.length > 0) {
           event.preventDefault();
-          current.setClipboard(current.selectedBlock);
+          current.setClipboard(current.selectedBlocks);
         }
         return;
       }
       if (modifier && key === 'v') {
-        if (current.clipboard) {
+        if (current.clipboard.length > 0) {
           event.preventDefault();
-          current.handlePaste(current.clipboard);
+          current.handlePasteMany(current.clipboard);
         }
         return;
       }
       if (key === 'delete' || key === 'backspace') {
-        if (current.selectedBlock) {
+        if (current.selectedBlocks.length > 0) {
           event.preventDefault();
-          current.handleRemoveSelected();
+          current.handleRemoveMany(current.selectedBlocks.map((b) => b.id));
         }
         return;
       }
@@ -676,8 +707,11 @@ export function CanvasEditorShell({
       // from a person reading a long page to make them move a block would
       // be the wrong trade. Alt+Arrow is what an editor with a tree
       // usually binds this to.
+      // One block only: "move these four up" has no single answer once
+      // they sit under different parents, and guessing one would be worse
+      // than not offering it.
       if (event.altKey && (key === 'arrowup' || key === 'arrowdown')) {
-        if (current.selectedBlock) {
+        if (current.selectedBlocks.length === 1) {
           event.preventDefault();
           current.handleMoveSelected(key === 'arrowup' ? -1 : 1);
         }
@@ -695,7 +729,7 @@ export function CanvasEditorShell({
   // computeDropTarget considers every top-level block.
   const liveDropTarget = bridge.activeDrag
     ? computeDropTarget(
-        rootRects,
+        siblingRectsFor(bridge.activeDrag.blockId).rects,
         bridge.activeDrag.blockId,
         bridge.activeDrag.pointer.y,
       )
@@ -720,34 +754,39 @@ export function CanvasEditorShell({
   const [lastAppliedDragEnd, setLastAppliedDragEnd] = useState(
     bridge.dragEnded,
   );
-  const [pendingReorderIds, setPendingReorderIds] = useState<string[] | null>(
-    null,
-  );
+  // The parent travels with the order now: a drop can reorder the children
+  // of any container, not just the page's own top level, so "which list did
+  // this reorder" is no longer always `null`.
+  const [pendingReorderCommit, setPendingReorderCommit] = useState<{
+    parentId: string | null;
+    orderedIds: string[];
+  } | null>(null);
   if (bridge.dragEnded !== lastAppliedDragEnd) {
     setLastAppliedDragEnd(bridge.dragEnded);
     if (bridge.dragEnded) {
       const { blockId, pointer } = bridge.dragEnded;
-      const dropTarget = computeDropTarget(rootRects, blockId, pointer.y);
+      const { parentId, rects } = siblingRectsFor(blockId);
+      const dropTarget = computeDropTarget(rects, blockId, pointer.y);
       if (dropTarget) {
         const next = moveBlock(localBlocks, blockId, {
-          parentId: null,
+          parentId,
           index: dropTarget.index,
         });
         // Dropped where it already was (no real movement) — the same
         // courtesy computeNestedReorder extends in layers-panel.tsx: do not
         // save an identical draft just because moveBlock always returns a
-        // new array by construction.
-        const orderUnchanged = next.every(
-          (block, index) => block.id === localBlocks[index]?.id,
-        );
-        if (!orderUnchanged) {
-          setPendingReorderIds(blockIds(next));
+        // new array by construction. Compared among the SIBLINGS, since
+        // those are what the drop reordered.
+        const before = blockIds(siblingsAt(localBlocks, parentId));
+        const after = blockIds(siblingsAt(next, parentId));
+        if (before.join() !== after.join()) {
+          setPendingReorderCommit({ parentId, orderedIds: after });
         }
       }
     }
   }
   useEffect(() => {
-    if (pendingReorderIds) {
+    if (pendingReorderCommit) {
       // Through handleReorder, not around it. This used to apply the move
       // and save it by hand, which worked but left the drag as the only
       // structural mutation with no history entry: the SAME reorder was
@@ -759,10 +798,13 @@ export function CanvasEditorShell({
       // array, so identity alone re-runs this. Setting it back to null
       // would be a setState inside an effect for no gain — the very thing
       // the comment above this state was written to avoid.
-      handleReorder(null, pendingReorderIds);
+      handleReorder(
+        pendingReorderCommit.parentId,
+        pendingReorderCommit.orderedIds,
+      );
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- reacts only to a NEW pendingReorderIds; handleReorder is recreated every render but reads current state at call time.
-  }, [pendingReorderIds]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- reacts only to a NEW pendingReorderCommit; handleReorder is recreated every render but reads current state at call time.
+  }, [pendingReorderCommit]);
 
   function handleChangeProp(key: string, value: unknown): void {
     // Hoisted to a local: TypeScript drops the narrowing of a PROPERTY
@@ -1217,9 +1259,15 @@ export function CanvasEditorShell({
                     parent.allowedChildTypes.includes(childType)
                   );
                 }}
-                onSelect={(blockId) => {
-                  bridge.selectBlock(blockId);
-                  bridge.scrollToBlock(blockId);
+                selectedBlockIds={bridge.selectedBlockIds}
+                onSelect={(blockId, additive) => {
+                  bridge.selectBlock(blockId, additive);
+                  // Only a plain click scrolls: adding a fourth block to a
+                  // selection should not yank the canvas away from the
+                  // three you are looking at.
+                  if (!additive) {
+                    bridge.scrollToBlock(blockId);
+                  }
                 }}
               />
             </>

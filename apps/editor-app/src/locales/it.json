@@ -696,6 +696,8 @@
     "expandSidebar": "Espandi barra laterale",
     "collapseLayersPanel": "Comprimi pannello Livelli",
     "expandLayersPanel": "Espandi pannello Livelli",
+    "collapseChildren": "Comprimi",
+    "expandChildren": "Espandi",
     "removeBlock": "Rimuovi blocco",
     "addChild": "Aggiungi elemento",
     "publish": "Pubblica",

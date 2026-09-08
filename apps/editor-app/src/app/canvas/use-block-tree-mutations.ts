@@ -98,6 +98,12 @@ export interface UseBlockTreeMutationsResult {
     parentId: string | null,
     index: number,
   ) => void;
+  /** Pastes a whole clipboard in one history entry (Fase 7). */
+  handlePasteMany: (blocks: Block[]) => void;
+  /** Removes a whole selection in one history entry (Fase 7). */
+  handleRemoveMany: (blockIds: string[]) => void;
+  /** Duplicates a whole selection in one history entry (Fase 7). */
+  handleDuplicateMany: (blockIds: string[]) => void;
   handleReorder: (parentId: string | null, orderedIds: string[]) => void;
   handleRemoveSelected: () => void;
   /** Swaps the selected block for another at the same place — see the implementation. */
@@ -600,6 +606,121 @@ export function useBlockTreeMutations({
   }
 
   /**
+   * Pastes a whole clipboard beside the selection, in one operation.
+   *
+   * Not a loop over `handlePaste`: each call reads the tree from the
+   * render it was created in, so the second paste would start from a tree
+   * that never had the first — last write wins, and one of the two blocks
+   * silently disappears. Found by the test, not by reading.
+   */
+  function handlePasteMany(blocks: Block[]): void {
+    if (blocks.length === 0) {
+      return;
+    }
+    if (blocks.length === 1) {
+      handlePaste(blocks[0]);
+      return;
+    }
+    const before = localBlocks;
+    const at = selectedBlock?.id ? locateBlock(before, selectedBlock.id) : null;
+    const parentId = at?.parentId ?? null;
+    let index = at ? at.index + 1 : siblingsAt(before, null).length;
+    let next = before;
+    for (const block of blocks) {
+      next = insertBlock(next, cloneBlockWithNewIds(block), {
+        parentId,
+        index,
+      });
+      // Forwards, so the strip lands in the order it was copied.
+      index += 1;
+    }
+    applyLocalChange(next);
+    const sync = () => reloadCanvas?.();
+    sync();
+    recordHistory({
+      before,
+      after: next,
+      syncForward: sync,
+      syncBackward: sync,
+    });
+  }
+
+  /**
+   * Removes every selected block in one step (Fase 7).
+   *
+   * One history entry for the whole set, not one per block: somebody who
+   * selected four things and pressed Delete asked for one action, and four
+   * undos to get back would be four surprises.
+   *
+   * A canvas reload rather than four surgical patches: the blocks can sit
+   * under different parents, so the patches would be a set of parent
+   * re-renders computed from a tree that is changing underneath them.
+   */
+  function handleRemoveMany(blockIds: string[]): void {
+    if (blockIds.length === 0) {
+      return;
+    }
+    // One block keeps the surgical path — it is the common case, and
+    // reloading the canvas for it would be a visible flash where there
+    // never used to be one.
+    if (blockIds.length === 1 && blockIds[0] === selectedBlock?.id) {
+      handleRemoveSelected();
+      return;
+    }
+    const before = localBlocks;
+    const next = blockIds.reduce(
+      (tree, blockId) => removeBlock(tree, blockId),
+      before,
+    );
+    applyLocalChange(next);
+    const sync = () => reloadCanvas?.();
+    sync();
+    recordHistory({
+      before,
+      after: next,
+      syncForward: sync,
+      syncBackward: sync,
+    });
+  }
+
+  /**
+   * Duplicates every selected block, each right after itself. Same
+   * single-entry, single-reload reasoning as `handleRemoveMany`.
+   */
+  function handleDuplicateMany(blockIds: string[]): void {
+    if (blockIds.length <= 1) {
+      handleDuplicateSelected();
+      return;
+    }
+    const before = localBlocks;
+    let next = before;
+    // Right to left, so an insertion never shifts the index of a block
+    // still waiting to be copied.
+    const locations = blockIds
+      .flatMap((blockId) => {
+        const at = locateBlock(before, blockId);
+        const block = findBlockInTree(before, blockId);
+        return at && block ? [{ at, block }] : [];
+      })
+      .sort((a, b) => b.at.index - a.at.index);
+    for (const { at, block } of locations) {
+      next = insertBlock(next, cloneBlockWithNewIds(block), {
+        parentId: at.parentId,
+        index: at.index + 1,
+      });
+    }
+    applyLocalChange(next);
+    const sync = () => reloadCanvas?.();
+    sync();
+    recordHistory({
+      before,
+      after: next,
+      syncForward: sync,
+      syncBackward: sync,
+    });
+  }
+
+  /**
    * Moves a block under a different parent, keeping the block itself
    * intact (Fase 7).
    *
@@ -747,6 +868,9 @@ export function useBlockTreeMutations({
     handleInsertBlocks,
     handlePaste,
     handleReparent,
+    handlePasteMany,
+    handleRemoveMany,
+    handleDuplicateMany,
     handleReplaceSelected,
     handleReorder,
     handleRemoveSelected,

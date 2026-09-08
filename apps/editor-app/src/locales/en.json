@@ -696,6 +696,8 @@
     "expandSidebar": "Expand sidebar",
     "collapseLayersPanel": "Collapse Layers panel",
     "expandLayersPanel": "Expand Layers panel",
+    "collapseChildren": "Collapse children",
+    "expandChildren": "Expand children",
     "removeBlock": "Remove block",
     "addChild": "Add item",
     "publish": "Publish",

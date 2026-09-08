@@ -211,7 +211,7 @@ describe('LayersPanel', () => {
 
     fireEvent.click(screen.getAllByTestId('layer-row')[1]);
 
-    expect(onSelect).toHaveBeenCalledWith('text-1');
+    expect(onSelect).toHaveBeenCalledWith('text-1', false);
   });
 
   it('clicking a nested row selects the CHILD, not its parent container', () => {
@@ -235,10 +235,10 @@ describe('LayersPanel', () => {
 
     const rows = screen.getAllByTestId('layer-row');
     fireEvent.click(rows[0]); // "column-1"
-    expect(onSelect).toHaveBeenLastCalledWith('column-1');
+    expect(onSelect).toHaveBeenLastCalledWith('column-1', false);
 
     fireEvent.click(rows[1]); // "gallery-1"
-    expect(onSelect).toHaveBeenLastCalledWith('gallery-1');
+    expect(onSelect).toHaveBeenLastCalledWith('gallery-1', false);
   });
 
   it('a container with children shows an expand/collapse chevron, a leaf block does not', () => {

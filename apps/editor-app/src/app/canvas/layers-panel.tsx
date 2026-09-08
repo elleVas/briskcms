@@ -18,6 +18,7 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import type { Block } from '@brisk/shared-types';
+import { useTranslation } from '../../lib/use-translation';
 import {
   blockIds,
   findBlockInTree,
@@ -71,15 +72,18 @@ export interface LayersPanelProps {
    * showed hover and selection but offered no way to ACT on a row (a bug
    * reported from live use).
    */
-  onSelect: (blockId: string) => void;
+  onSelect: (blockId: string, additive: boolean) => void;
+  /** Every selected id (Fase 7) — `selectedBlockId` is the last of them. */
+  selectedBlockIds?: string[];
 }
 
 interface LayerRowProps {
   block: Block;
   hoveredBlockId: string | null;
   selectedBlockId: string | null;
+  selectedBlockIds: string[];
   depth: number;
-  onSelect: (blockId: string) => void;
+  onSelect: (blockId: string, additive: boolean) => void;
   collapsedIds: ReadonlySet<string>;
   onToggleCollapsed: (blockId: string) => void;
 }
@@ -258,16 +262,24 @@ function LayerRow({
   block,
   hoveredBlockId,
   selectedBlockId,
+  selectedBlockIds,
   depth,
   onSelect,
   collapsedIds,
   onToggleCollapsed,
 }: LayerRowProps) {
-  const isSelected = block.id === selectedBlockId;
+  // Every selected row looks selected, not only the primary (Fase 7): a
+  // multi-selection you cannot see is a multi-selection you will delete by
+  // accident.
+  const isSelected = Boolean(
+    block.id &&
+    (block.id === selectedBlockId || selectedBlockIds.includes(block.id)),
+  );
   const isHovered = block.id === hoveredBlockId;
   const blockId = block.id;
   const hasChildren = Boolean(block.children && block.children.length > 0);
   const isCollapsed = Boolean(blockId && collapsedIds.has(blockId));
+  const { t } = useTranslation();
 
   return (
     <li>
@@ -275,7 +287,11 @@ function LayerRow({
         {hasChildren ? (
           <button
             type="button"
-            aria-label={isCollapsed ? 'Espandi' : 'Comprimi'}
+            aria-label={
+              isCollapsed
+                ? t('canvas.expandChildren')
+                : t('canvas.collapseChildren')
+            }
             className="flex h-5 w-5 shrink-0 items-center justify-center text-muted-foreground hover:text-foreground"
             onClick={() => blockId && onToggleCollapsed(blockId)}
           >
@@ -295,9 +311,9 @@ function LayerRow({
           data-state={isSelected ? 'selected' : isHovered ? 'hovered' : 'idle'}
           className={rowClassName(isSelected, isHovered)}
           disabled={!blockId}
-          onClick={() => {
+          onClick={(event) => {
             if (blockId) {
-              onSelect(blockId);
+              onSelect(blockId, event.metaKey || event.ctrlKey);
             }
           }}
         >
@@ -312,6 +328,7 @@ function LayerRow({
                 block: child,
                 hoveredBlockId,
                 selectedBlockId,
+                selectedBlockIds,
                 depth: depth + 1,
                 onSelect,
                 collapsedIds,
@@ -379,6 +396,7 @@ export function LayersPanel({
   hoveredBlockId,
   selectedBlockId,
   onReorder,
+  selectedBlockIds = [],
   onReparent,
   canContain,
   isContainerType,
@@ -468,6 +486,7 @@ export function LayersPanel({
                 block,
                 hoveredBlockId,
                 selectedBlockId,
+                selectedBlockIds,
                 depth: 0,
                 onSelect,
                 collapsedIds,

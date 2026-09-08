@@ -48,7 +48,20 @@ export type PreviewHoverMessage = PreviewBridgeEnvelope<
 /** Mai emesso per un blocco fuori dallo scope editabile corrente (vedi editingSection in preview-bridge-client.ts). */
 export type PreviewClickMessage = PreviewBridgeEnvelope<
   'preview:click',
-  { blockId: string }
+  {
+    blockId: string;
+    /**
+     * True when Cmd (or Ctrl) was held (Fase 7) — the block joins the
+     * selection instead of replacing it.
+     *
+     * Reported by the iframe rather than read on the editor's side,
+     * because the modifier belongs to the event that actually happened:
+     * the parent document never sees that click, and a key-state flag kept
+     * in the editor would go stale the moment focus moved between the two
+     * documents.
+     */
+    additive?: boolean;
+  }
 >;
 
 /**

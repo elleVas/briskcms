@@ -26,6 +26,7 @@ function setup(localBlocks: Block[]) {
   const setLocalBlocks = vi.fn();
   const bridge = {
     selectedBlockId: null,
+    selectedBlockIds: [],
     patchBlock: vi.fn(),
     insertBlock: vi.fn(),
     removeBlock: vi.fn(),

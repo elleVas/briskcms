@@ -8,6 +8,37 @@ import {
   type RichTextMenuLabels,
 } from '@brisk/shared-types';
 
+/**
+ * The one place a selection changes, so "what does Cmd+click do" has a
+ * single answer rather than one per call site (Fase 7).
+ *
+ * Additive toggles: clicking an already-selected block with the modifier
+ * held REMOVES it, which is what every file manager and every drawing tool
+ * does, and what makes a mis-click recoverable without starting over.
+ *
+ * The primary follows the last block still in the set — so removing the
+ * primary hands the toolbar and the Inspector to whatever remains, instead
+ * of leaving them pointing at a block nobody has selected.
+ */
+function withSelection<
+  T extends { selectedBlockId: string | null; selectedBlockIds: string[] },
+>(prev: T, blockId: string | null, additive: boolean): T {
+  if (!blockId) {
+    return { ...prev, selectedBlockId: null, selectedBlockIds: [] };
+  }
+  if (!additive) {
+    return { ...prev, selectedBlockId: blockId, selectedBlockIds: [blockId] };
+  }
+  const ids = prev.selectedBlockIds.includes(blockId)
+    ? prev.selectedBlockIds.filter((id) => id !== blockId)
+    : [...prev.selectedBlockIds, blockId];
+  return {
+    ...prev,
+    selectedBlockIds: ids,
+    selectedBlockId: ids[ids.length - 1] ?? null,
+  };
+}
+
 export interface PreviewBridgeState {
   /** Empty until `preview:ready` arrives for the first time. */
   blockRects: BlockRect[];
@@ -22,6 +53,22 @@ export interface PreviewBridgeState {
    * the canvas would always select the child and never the parent.
    */
   selectedBlockId: string | null;
+  /**
+   * Every block currently selected, in the order they were picked (Fase 7).
+   *
+   * `selectedBlockId` above is the LAST of these — the "primary" — and
+   * stays the one the Inspector edits and the toolbar belongs to. That is
+   * the whole shape of the change: multi-select is for the operations that
+   * make sense on many blocks at once (delete, duplicate, copy), while
+   * editing a property is a thing you do to one block. Keeping the primary
+   * as a plain field also means every existing reader of
+   * `selectedBlockId` — the overlay, the toolbar, the mutations — kept
+   * working untouched.
+   *
+   * Always contains `selectedBlockId` when that is not null, and is empty
+   * when it is.
+   */
+  selectedBlockIds: string[];
   /**
    * The last double click received (Day 4) — a NEW OBJECT on every message
    * (even when blockId/field are identical to the previous one), so a
@@ -86,7 +133,7 @@ export interface PreviewBridgeState {
   /** Smonta l'istanza TipTap corrente nell'iframe, se c'è. */
   exitTextEdit: () => void;
   /** Selects a block directly from this side (the Layers panel), without going through a real `preview:click` on the canvas — see the comment on `selectedBlockId` above. */
-  selectBlock: (blockId: string | null) => void;
+  selectBlock: (blockId: string | null, additive?: boolean) => void;
   /** Updates the `<style>` holding the "component-level" overrides in the iframe (docs/adr/0022, the "Style" button) — `css` is already prepared (buildBlockStyleOverridesCss), and the iframe only writes it. */
   updateBlockStyleCss: (css: string) => void;
   /** ADR-0049 — how much page width a ROOT block claims. `null` = the default content column. */
@@ -115,6 +162,7 @@ const initialState: PreviewBridgeMessageState = {
   isReady: false,
   hoveredBlockId: null,
   selectedBlockId: null,
+  selectedBlockIds: [],
   lastDblClick: null,
   pageLinkRequest: null,
   lastTextChange: null,
@@ -185,10 +233,13 @@ export function usePreviewBridge(
           }));
           return;
         case 'preview:click':
-          setState((prev) => ({
-            ...prev,
-            selectedBlockId: message.payload.blockId,
-          }));
+          setState((prev) =>
+            withSelection(
+              prev,
+              message.payload.blockId,
+              message.payload.additive ?? false,
+            ),
+          );
           return;
         case 'preview:dblclick':
           setState((prev) => ({
@@ -376,9 +427,12 @@ export function usePreviewBridge(
     );
   }, [iframeRef]);
 
-  const selectBlock = useCallback((blockId: string | null) => {
-    setState((prev) => ({ ...prev, selectedBlockId: blockId }));
-  }, []);
+  const selectBlock = useCallback(
+    (blockId: string | null, additive = false) => {
+      setState((prev) => withSelection(prev, blockId, additive));
+    },
+    [],
+  );
 
   const updateBlockStyleCss = useCallback(
     (css: string) => {

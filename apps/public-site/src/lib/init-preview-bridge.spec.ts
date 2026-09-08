@@ -273,7 +273,14 @@ describe('initPreviewBridge', () => {
     expect(messagesOfType(postMessageSpy, 'preview:drag-end')).toHaveLength(1);
   });
 
-  it('never starts a drag for a block nested inside another block wrapper', () => {
+  /*
+   * The rule this used to assert was the opposite one, and it was the
+   * reason the editor disagreed with itself: the three columns of a
+   * Columns could be reordered from the Layers panel and not from the page
+   * they were on. Depth is decided on the editor's side now, from the
+   * tree, so the iframe no longer has an opinion about it (Fase 7).
+   */
+  it('starts a drag for a nested block too, reporting the block it started on', () => {
     document.body.innerHTML =
       '<div data-brisk-block-id="container-1" style="display:contents">' +
       '<div data-brisk-block-id="text-1" style="display:contents"><p>Testo</p></div>' +
@@ -293,9 +300,11 @@ describe('initPreviewBridge', () => {
       new MouseEvent('mousemove', { bubbles: true, clientX: 40, clientY: 40 }),
     );
 
-    expect(messagesOfType(postMessageSpy, 'preview:drag-start')).toHaveLength(
-      0,
-    );
+    const started = messagesOfType(postMessageSpy, 'preview:drag-start') as {
+      payload: { blockId: string };
+    }[];
+    expect(started).toHaveLength(1);
+    expect(started[0].payload.blockId).toBe('text-1');
   });
 
   it('applies editor:patch-block and re-sends block-rects, ignoring a message from the wrong origin', () => {
