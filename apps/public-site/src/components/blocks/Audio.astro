@@ -1,0 +1,51 @@
+---
+import type { AudioProps } from '@brisk/shared-types';
+
+type Props = AudioProps & {
+  /** The per-instance style class, from BlockRenderer — see blockInstanceClassName. */
+  instanceClass?: string | null;
+};
+
+const { media, title, loop, instanceClass } = Astro.props;
+
+// The player is named by its own caption when there is one, so a screen
+// reader announces "Episode 3, audio player" rather than just "audio".
+// It falls back to nothing rather than to a made-up label: an unnamed
+// player is still usable, a wrongly named one is misleading.
+---
+
+{
+  media && (
+    <figure class:list={['brisk-audio', instanceClass]}>
+      {title && <figcaption class="brisk-audio__title">{title}</figcaption>}
+      <audio
+        class="brisk-audio__player"
+        src={media.url}
+        controls
+        loop={loop}
+        preload="metadata"
+        aria-label={title || undefined}
+      />
+    </figure>
+  )
+}
+
+<style>
+  .brisk-audio {
+    margin: 0;
+    background: var(--brisk-override-bg, transparent);
+    color: var(--brisk-override-text, inherit);
+    border-radius: var(--brisk-override-radius, 0);
+    padding: var(--brisk-override-padding-y, 0)
+      var(--brisk-override-padding-x, 0);
+  }
+  .brisk-audio__title {
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+  }
+  .brisk-audio__player {
+    /* The native control bar has no intrinsic width and collapses to a
+       browser default otherwise — this is what makes it fill its column. */
+    width: 100%;
+  }
+</style>

@@ -34,7 +34,12 @@ import {
 import { TENANT_CONTEXT } from '../auth/auth.tokens';
 import { MEDIA_REPOSITORY, MEDIA_STORAGE } from './media.tokens';
 
-const MAX_UPLOAD_BYTES = 10 * 1024 * 1024; // 10MB — a generous photo, not a video/archive
+// The ceiling multer enforces before anything has been read — it cannot
+// know what the file is yet, so it is the LARGEST any kind may be
+// (ADR-0054). The real per-kind limits live in uploadMedia, which sniffs
+// first: an oversized photo is refused there with the number it exceeded,
+// rather than here with a generic one.
+const MAX_UPLOAD_BYTES = 64 * 1024 * 1024;
 
 @Controller('media')
 @UseGuards(SessionAuthGuard)

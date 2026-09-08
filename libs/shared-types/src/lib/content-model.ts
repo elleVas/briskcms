@@ -421,6 +421,45 @@ export type CollectionDisplay = z.infer<typeof collectionDisplaySchema>;
  * prop next to a `borderStyle` override would be the two-mechanisms
  * mistake ADR-0050 found in Container, before it was made.
  */
+/**
+ * A video the site hosts itself (ADR-0054), as opposed to `VideoEmbed`,
+ * which points at YouTube or Vimeo.
+ *
+ * The two are not redundant. An embed costs the site no bandwidth and
+ * carries the platform's player, its branding and its cookies — which is
+ * why `VideoEmbed` sits behind a consent gate. A self-hosted clip has
+ * none of that: no third party, no consent to ask for, nothing to gate.
+ * It is the right answer for a short product loop and the wrong one for
+ * a forty-minute talk.
+ *
+ * `poster` is a separate image because a browser shows the first frame
+ * otherwise — and the first frame of a video is very often black.
+ */
+export const videoFilePropsSchema = z.object({
+  media: pickedMediaSchema.nullable(),
+  poster: pickedMediaSchema.nullable(),
+  /**
+   * Autoplay implies muted, and the schema does not enforce that pairing
+   * because the renderer does: every browser blocks an unmuted autoplay,
+   * so a video set to autoplay with sound simply does not start. Silently
+   * muting is the behaviour that matches what people expect from the
+   * checkbox they ticked.
+   */
+  autoplay: z.boolean().default(false),
+  loop: z.boolean().default(false),
+  muted: z.boolean().default(false),
+  controls: z.boolean().default(true),
+});
+export type VideoFileProps = z.infer<typeof videoFilePropsSchema>;
+
+/** A hosted audio file — a podcast episode, a recorded message, a track. */
+export const audioPropsSchema = z.object({
+  media: pickedMediaSchema.nullable(),
+  title: z.string().default(''),
+  loop: z.boolean().default(false),
+});
+export type AudioProps = z.infer<typeof audioPropsSchema>;
+
 export const dividerPropsSchema = z.strictObject({});
 export type DividerProps = z.infer<typeof dividerPropsSchema>;
 

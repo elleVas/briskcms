@@ -13,3 +13,4 @@ export * from './lib/errors';
 export * from './lib/verification-token-purpose';
 export * from './lib/preview-content-type';
 export * from './lib/attachment-type-sniffer';
+export * from './lib/media-type-sniffer';

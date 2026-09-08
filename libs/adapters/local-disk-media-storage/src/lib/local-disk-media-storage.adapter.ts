@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { mkdir, unlink, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import sharp from 'sharp';
-import { UnsupportedMediaTypeError } from '@brisk/domain-core';
+import { sniffMediaType } from '@brisk/domain-core';
 import type {
   MediaStoragePort,
   UploadMediaInput,
@@ -29,8 +29,29 @@ export class LocalDiskMediaStorageAdapter implements MediaStoragePort {
   constructor(private readonly options: LocalDiskMediaStorageOptions) {}
 
   async upload(input: UploadMediaInput): Promise<UploadMediaResult> {
-    if (!input.mimeType.startsWith('image/')) {
-      throw new UnsupportedMediaTypeError(input.mimeType);
+    // The file's own bytes decide, not the declared type (ADR-0054): a
+    // caller can set any header it likes, and for video and audio — which
+    // are stored exactly as uploaded, since sharp cannot re-encode them —
+    // this is the only check there will ever be. It throws
+    // UnsupportedMediaTypeError for anything not on the allow-list.
+    const sniffed = sniffMediaType(input.data);
+
+    if (sniffed.kind !== 'image') {
+      await mkdir(this.options.uploadDir, { recursive: true });
+      const key = `${randomUUID()}.${sniffed.extension}`;
+      await writeFile(join(this.options.uploadDir, key), input.data);
+      return {
+        storageKey: key,
+        mimeType: sniffed.mimeType,
+        size: input.data.byteLength,
+        // A video has pixel dimensions and an audio file does not, but
+        // reading a container's dimensions means decoding it — a
+        // different kind of dependency than sharp. Left unset rather than
+        // guessed: `width`/`height` are nullable for exactly this, and
+        // nothing in the renderer needs them for these two.
+        width: 0,
+        height: 0,
+      };
     }
 
     // rotate() with no args: auto-orients from EXIF before anything else —
