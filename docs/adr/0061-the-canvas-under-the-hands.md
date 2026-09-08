@@ -105,13 +105,64 @@ text, correct in the light theme and unreadable in the dark one, where the
 panel around them is dark. They read the same tokens every other control
 does now, and the strings go through i18n like the rest of the app.
 
+### A block can move house
+
+`computeNestedReorder` refused every cross-parent drop, so getting a block
+into a Column meant deleting it and building it again in place — losing
+its per-instance styling, its variant and its text. That is the item the
+plan calls impossible by construction, and it was. `computeReparent`
+moves the same block, with the same id, so all three survive.
+
+Dropping onto a **container's own row** means "inside it, at the end" —
+the only way to reach an empty container, which has no child row to aim
+between. Dropping onto an ordinary row means "become its sibling".
+
+Three refusals, each a real way to break a page rather than a nicety:
+
+- **into its own subtree**, which detaches the block and everything under
+  it from the tree;
+- **into a container that does not accept that type**, the rule the
+  drag-from-sidebar path already honours;
+- **a same-parent drop between ordinary rows**, which is a reorder and
+  belongs to `computeNestedReorder` — answering it in both places would
+  give one gesture two implementations.
+
+The panel is told those rules as two predicates rather than handed the
+registry: it goes on knowing nothing about block descriptors.
+
+On the canvas the move re-renders **both parents**, not the block. A
+container shows different chrome when it gains or loses a child — an
+empty-state hint appearing, a collection's arrows — and patching only the
+moved node would leave that stale. One history entry for the whole move,
+like the swap that turns a block into a section: an undo that put the
+block back but left the hole open is a state nobody asked for.
+
+## The invariant this needed, and did not have
+
+`t()` is typed against `en.json`, so a key missing **there** is a compile
+error. That is why the English side has never drifted. `it.json` had no
+such backstop: a key added in English and forgotten in Italian falls back
+to the English string silently, and the only way anyone finds out is by
+reading the interface in Italian and seeing a word in the wrong language.
+
+This phase added six groups of keys across two files. The parity check now
+fails naming the exact missing key — verified by deleting one and watching
+it go red.
+
 ## Consequences
 
-- Seven keyboard shortcuts where there were two.
-- The four items still open are the heavier half, and one of them —
-  multi-select — the plan itself calls a change of model rather than an
-  addition: the bridge carries a single `selectedBlockId` today, and
-  every overlay, toolbar and mutation reads it. Reparenting from the
-  Layers panel and dragging a nested block on the canvas are both real
-  work in `compute-drop-target.ts`; merging the two style popovers is a
-  question about what the Inspector should be, not a fix.
+- Seven keyboard shortcuts where there were two, and seven of Fase 7's ten
+  items done.
+- **Three are left, and none is an oversight.** Multi-select is a change
+  of model, as the plan itself says: the bridge carries a single
+  `selectedBlockId`, and every overlay, toolbar and mutation reads it.
+  Dragging a NESTED block on the canvas is a second one — direct canvas
+  reordering is scoped to top-level blocks by construction
+  (`isRootLevelBlock`). And the Inspector's conditional and grouped fields
+  are a question about what the Inspector should be, starting by merging
+  two popovers into one. Each is a PR, not a paragraph.
+- Verification here is the component tests against the real components,
+  not a browser session: the editor sits behind a login whose credentials
+  this work did not have. Every new test was checked by breaking the
+  feature and watching it fail first — the delete shortcut, the
+  copy/paste pair, the subtree guard, and the locale parity.

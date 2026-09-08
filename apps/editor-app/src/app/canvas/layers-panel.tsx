@@ -18,7 +18,12 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import type { Block } from '@brisk/shared-types';
-import { blockIds, locateBlock, siblingsAt } from './use-block-tree';
+import {
+  blockIds,
+  findBlockInTree,
+  locateBlock,
+  siblingsAt,
+} from './use-block-tree';
 
 export interface LayersPanelProps {
   blocks: Block[];
@@ -50,12 +55,13 @@ export interface LayersPanelProps {
     index: number,
   ) => void;
   /**
-   * Whether `parentType` may hold `childType` — the descriptor's own rule
-   * (`isContainer` plus `allowedChildTypes`), passed as a predicate rather
-   * than as the registry itself so this panel keeps knowing nothing about
-   * block descriptors.
+   * Whether `parentType` may hold `childType`, and whether a type can hold
+   * anything at all — the descriptors' own rules (`isContainer` plus
+   * `allowedChildTypes`), passed as predicates rather than as the registry
+   * itself so this panel keeps knowing nothing about block descriptors.
    */
   canContain?: (parentType: string, childType: string) => boolean;
+  isContainerType?: (type: string) => boolean;
   /**
    * Selects a block by clicking its row directly — the only reliable way to
    * select a container block when one of its children covers it entirely on
@@ -168,15 +174,15 @@ export function computeReparent(
   activeId: string,
   overId: string | null,
   options: {
-    isContainer: (block: Block) => boolean;
+    isContainerType: (type: string) => boolean;
     canContain: (parentType: string, childType: string) => boolean;
   },
 ): { blockId: string; parentId: string | null; index: number } | null {
   if (!overId || activeId === overId) {
     return null;
   }
-  const active = findBlockById(blocks, activeId);
-  const over = findBlockById(blocks, overId);
+  const active = findBlockInTree(blocks, activeId);
+  const over = findBlockInTree(blocks, overId);
   const activeLocation = locateBlock(blocks, activeId);
   const overLocation = locateBlock(blocks, overId);
   if (!active || !over || !activeLocation || !overLocation) {
@@ -187,7 +193,7 @@ export function computeReparent(
   }
 
   // Onto a container's own row: inside it, at the end.
-  if (options.isContainer(over)) {
+  if (options.isContainerType(over.type)) {
     if (
       overLocation.parentId === activeId ||
       !options.canContain(over.type, active.type)
@@ -209,7 +215,7 @@ export function computeReparent(
     return null;
   }
   const newParent = overLocation.parentId
-    ? findBlockById(blocks, overLocation.parentId)
+    ? findBlockInTree(blocks, overLocation.parentId)
     : null;
   if (newParent && !options.canContain(newParent.type, active.type)) {
     return null;
@@ -373,6 +379,9 @@ export function LayersPanel({
   hoveredBlockId,
   selectedBlockId,
   onReorder,
+  onReparent,
+  canContain,
+  isContainerType,
   onSelect,
 }: LayersPanelProps) {
   // Expanded by default (no surprise for anyone already using the panel) —
@@ -430,13 +439,11 @@ export function LayersPanel({
       onReorder?.(reordered.parentId, reordered.orderedIds);
       return;
     }
-    if (!onReparent || !canContain) {
+    if (!onReparent || !canContain || !isContainerType) {
       return;
     }
     const reparented = computeReparent(blocks, activeId, overId, {
-      isContainer: (block) =>
-        canContain(block.type, block.type) ||
-        isKnownContainer(block, canContain),
+      isContainerType,
       canContain,
     });
     if (reparented) {

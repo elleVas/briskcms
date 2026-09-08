@@ -471,6 +471,7 @@ export function CanvasEditorShell({
     handleMoveSelected,
     handleDuplicateSelected,
     handlePaste,
+    handleReparent,
     handleReplaceSelected,
     handleAddChild,
     handleInsertAtRoot,
@@ -1197,6 +1198,25 @@ export function CanvasEditorShell({
                 hoveredBlockId={bridge.hoveredBlockId}
                 selectedBlockId={bridge.selectedBlockId}
                 onReorder={handleReorder}
+                onReparent={handleReparent}
+                // The descriptors' own rules, as two predicates: the panel
+                // stays free of the registry, and the answer is the same
+                // one the drag-from-sidebar path already uses.
+                isContainerType={(type) =>
+                  Boolean(registry.find((d) => d.type === type)?.isContainer)
+                }
+                canContain={(parentType, childType) => {
+                  const parent = registry.find((d) => d.type === parentType);
+                  if (!parent?.isContainer) {
+                    return false;
+                  }
+                  // No list means "anything" (Container/Column); a list
+                  // means exactly those (Testimonials→Testimonial).
+                  return (
+                    !parent.allowedChildTypes ||
+                    parent.allowedChildTypes.includes(childType)
+                  );
+                }}
                 onSelect={(blockId) => {
                   bridge.selectBlock(blockId);
                   bridge.scrollToBlock(blockId);

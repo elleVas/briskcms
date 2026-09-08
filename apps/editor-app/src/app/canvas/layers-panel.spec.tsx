@@ -1,7 +1,11 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import type { Block } from '@brisk/shared-types';
-import { computeNestedReorder, LayersPanel } from './layers-panel';
+import {
+  LayersPanel,
+  computeNestedReorder,
+  computeReparent,
+} from './layers-panel';
 
 describe('computeNestedReorder', () => {
   it('moves the active block to the position of the over block, among root siblings', () => {
@@ -303,5 +307,98 @@ describe('LayersPanel', () => {
     expect(row.disabled).toBe(true);
     fireEvent.click(row);
     expect(onSelect).not.toHaveBeenCalled();
+  });
+});
+
+/*
+ * Reparenting was impossible by construction: `computeNestedReorder`
+ * refused every cross-parent drop, so moving a block into a Column meant
+ * deleting it and building it again — losing its styling and its text.
+ * These are the cases that decide whether the new path is safe.
+ */
+describe('computeReparent', () => {
+  const tree: Block[] = [
+    { id: 'hero', type: 'Hero', props: {} },
+    { id: 'sibling', type: 'Text', props: {} },
+    {
+      id: 'cols',
+      type: 'Columns',
+      props: {},
+      children: [
+        { id: 'col-a', type: 'Column', props: {}, children: [] },
+        {
+          id: 'col-b',
+          type: 'Column',
+          props: {},
+          children: [{ id: 'text', type: 'Text', props: {} }],
+        },
+      ],
+    },
+    { id: 'quotes', type: 'Testimonials', props: {}, children: [] },
+  ];
+
+  const CONTAINERS = new Set(['Columns', 'Column', 'Testimonials']);
+  const options = {
+    isContainerType: (type: string) => CONTAINERS.has(type),
+    canContain: (parentType: string, childType: string) =>
+      parentType === 'Testimonials' ? childType === 'Testimonial' : true,
+  };
+
+  /* An empty container has no child row to aim between — its own row is the only target. */
+  it('drops a block inside an empty container, at the end', () => {
+    expect(computeReparent(tree, 'hero', 'col-a', options)).toEqual({
+      blockId: 'hero',
+      parentId: 'col-a',
+      index: 0,
+    });
+  });
+
+  it('drops a block beside an ordinary row, becoming its sibling', () => {
+    expect(computeReparent(tree, 'hero', 'text', options)).toEqual({
+      blockId: 'hero',
+      parentId: 'col-b',
+      index: 0,
+    });
+  });
+
+  /*
+   * The one that would break a page rather than look wrong: a container
+   * dropped inside itself detaches the whole subtree from the tree.
+   */
+  it('refuses a drop into its own subtree', () => {
+    expect(computeReparent(tree, 'cols', 'col-a', options)).toBeNull();
+    expect(computeReparent(tree, 'col-b', 'text', options)).toBeNull();
+  });
+
+  /* The same rule the drag-from-sidebar path already honours. */
+  it('refuses a container that does not accept that type', () => {
+    expect(computeReparent(tree, 'hero', 'quotes', options)).toBeNull();
+  });
+
+  /*
+   * A same-parent drop between ordinary rows is a REORDER and belongs to
+   * computeNestedReorder — answering it here too would give one gesture
+   * two implementations.
+   */
+  it('refuses a same-parent drop between ordinary rows', () => {
+    expect(computeReparent(tree, 'hero', 'sibling', options)).toBeNull();
+  });
+
+  /*
+   * Dropping onto a CONTAINER's row always means "inside it", even when
+   * the two are siblings — that is how a root block gets into a Columns,
+   * and there is no other gesture for it.
+   */
+  it('puts a block inside a sibling container', () => {
+    expect(computeReparent(tree, 'hero', 'cols', options)).toEqual({
+      blockId: 'hero',
+      parentId: 'cols',
+      index: 2,
+    });
+  });
+
+  it('refuses a drop on nothing, or on itself', () => {
+    expect(computeReparent(tree, 'hero', null, options)).toBeNull();
+    expect(computeReparent(tree, 'hero', 'hero', options)).toBeNull();
   });
 });
