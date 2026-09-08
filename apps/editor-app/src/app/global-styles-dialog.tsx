@@ -360,6 +360,7 @@ export function GlobalStylesDialog({
                 )
               }
               defaults={blockStyleDefaults?.[selectedDescriptor.type]}
+              themeTokens={baseTokens}
             />
           </div>
         ) : (

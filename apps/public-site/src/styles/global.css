@@ -1,5 +1,27 @@
 @import 'tailwindcss';
 
+/*
+ * The order of our own cascade layers, declared once and up front (ADR-0050).
+ *
+ * A layer's position is fixed by the FIRST rule that names it, and ours
+ * are emitted from three different places — this file, and two inline
+ * `<style>` tags PageLayout.astro builds per request. Leaving the order to
+ * whichever happened to be parsed first made it depend on markup order in
+ * a file nobody would think to look at while debugging a style that did
+ * not apply. Named here, the layers rank the same way whatever the page
+ * emits and in whatever order:
+ *
+ *   base     — what a block looks like before anyone touched it
+ *   class    — the site's per-TYPE override (every Button on the site)
+ *   instance — this one block, on this one page
+ *
+ * Later layers win regardless of specificity, which is the property being
+ * bought: `.brisk-root-block:last-child` is a more specific selector than
+ * `.brisk-rb-<id>`, and without layers the default would beat the value
+ * somebody typed.
+ */
+@layer brisk.base, brisk.class, brisk.instance;
+
 /**
  * Fallback defaults only — the active theme's theme.css (docs/adr/0021,
  * resolved via the `~theme` alias in astro.config.mjs) is imported after
@@ -165,6 +187,32 @@ body,
  * would silently lose the smaller of the two if this became block flow —
  * a spacing change nobody asked for, on saved content.
  */
+@layer brisk.base {
+  /*
+   * The rhythm between root blocks, and the reason it is a rule rather
+   * than the inline style it used to be (ADR-0050).
+   *
+   * The gap's default depends on POSITION — the last block gets none, or
+   * every page would end with 4rem of empty space that was not there
+   * before flex `gap` was replaced. Position is something a selector
+   * knows and a rule emitter does not, which is why this lived as an
+   * inline style computed while rendering, and why the two margins were
+   * stuck at the base size: they were the one pair of style properties
+   * that could not be a per-breakpoint rule.
+   *
+   * Expressed here, `:last-child` answers the position question by
+   * construction, `@layer brisk.instance` beats it whenever somebody set
+   * a value of their own, and the margins become ordinary responsive
+   * properties like every other.
+   */
+  .brisk-root-block {
+    margin-bottom: 4rem;
+  }
+  .brisk-root-block:last-child {
+    margin-bottom: 0;
+  }
+}
+
 .brisk-root-block {
   max-width: var(--brisk-content-width);
   padding-inline: var(--brisk-content-gutter);

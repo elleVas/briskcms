@@ -389,7 +389,7 @@ describe('createBlockFromDescriptor', () => {
     expect(block.children?.[0].id).toBeTruthy();
   });
 
-  it('seeds Columns with one Column per track of its default layout (two-equal → 2)', () => {
+  it('seeds Columns with two Columns', () => {
     const block = createBlockFromDescriptor(columnsDescriptor, registry);
 
     expect(block.children).toHaveLength(2);
@@ -398,15 +398,15 @@ describe('createBlockFromDescriptor', () => {
     );
   });
 
-  it('seeds Columns with 3 columns for the three-equal layout', () => {
-    const threeColumnsDescriptor: BlockDescriptor = {
-      ...columnsDescriptor,
-      defaultProps: { layout: 'three-equal' },
-    };
+  it('seeds each Column without a width, so the row splits itself', () => {
+    // The count is a starting point, not a layout (ADR-0050): with no
+    // `span` anywhere, `resolveColumnSpans` divides the row equally, and
+    // adding a third column re-divides it with nothing to update by hand.
+    // The three fixed presets this replaced could only ever produce two
+    // or three columns, and a Column could not be resized at all.
+    const block = createBlockFromDescriptor(columnsDescriptor, registry);
 
-    const block = createBlockFromDescriptor(threeColumnsDescriptor, registry);
-
-    expect(block.children).toHaveLength(3);
+    expect(block.children?.map((child) => child.props)).toEqual([{}, {}]);
   });
 
   it('gives each seeded Column a distinct id, and leaves it empty (a Column has no canonical child of its own)', () => {

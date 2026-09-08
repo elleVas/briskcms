@@ -59,9 +59,17 @@ export const containerBlock: BlockDescriptor<ContainerProps> = {
   // track), a Container is meant to hold anything, including another
   // Container or Columns.
   isContainer: true,
-  // Only radius and text color: background/padding already have their
-  // own dedicated fields above, they shouldn't be duplicated here.
+  // background/padding are in this list now (ADR-0050). They used to be
+  // left out to avoid "two mechanisms for the same property" — but the
+  // preset and the override were never two mechanisms, they were one
+  // declaration and a Tailwind class that always beat it. The preset is
+  // the fallback of the override now, so setting either does what it
+  // says, and setting the free value wins.
   stylableProperties: [
+    'backgroundColor',
+    'paddingX',
+    'paddingY',
+    'flexDirection',
     'textColor',
     'borderRadius',
     'borderWidth',

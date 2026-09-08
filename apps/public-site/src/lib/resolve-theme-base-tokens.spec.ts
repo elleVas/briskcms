@@ -13,6 +13,16 @@ describe('resolveThemeBaseTokens', () => {
       // fallback anyway.
       fontSansValue: 'ui-sans-serif, system-ui, sans-serif',
       radius: '0.5rem',
+      // The rest of the colour vocabulary, for the picker's theme
+      // swatches (ADR-0050) — read from the same `:root` as the four
+      // above, so a theme that renames one loses a swatch here rather
+      // than silently offering a colour that resolves to nothing.
+      background: 'oklch(1 0 0)',
+      foreground: 'oklch(0.145 0 0)',
+      muted: 'oklch(0.97 0 0)',
+      mutedForeground: 'oklch(0.556 0 0)',
+      border: 'oklch(0.922 0 0)',
+      link: 'var(--primary)',
     });
   });
 
@@ -24,6 +34,16 @@ describe('resolveThemeBaseTokens', () => {
       // @fontsource-variable/sora declares 'Sora Variable'.
       fontSansValue: "'Sora Variable', ui-sans-serif, system-ui, sans-serif",
       radius: '1rem',
+      background: '#0b0f14',
+      foreground: '#f3f5f7',
+      muted: '#1b222b',
+      mutedForeground: '#94a3b8',
+      border: '#263140',
+      // This theme declares no `--link` of its own, so there is nothing
+      // to resolve — the picker drops that swatch rather than offering a
+      // colour that resolves to nothing. Not a gap to fill: it is the
+      // absent case, and it is real.
+      link: undefined,
     });
   });
 

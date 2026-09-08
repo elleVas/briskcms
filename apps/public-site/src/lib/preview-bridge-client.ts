@@ -1,10 +1,6 @@
 import { type BlockAlign, type BlockRect } from '@brisk/shared-types';
 import { getBlockRect } from './get-block-rect';
-import {
-  DEFAULT_GAP_ATTR,
-  ROOT_BLOCK_CLASS,
-  rootBlockSpacingStyle,
-} from './root-block-layout';
+import { ROOT_BLOCK_CLASS } from './root-block-layout';
 
 /**
  * Pure parsing/predicate and DOM-patching functions — deliberately kept
@@ -128,28 +124,8 @@ export function applyBlockPatch(
 function wrapRootBlock(blockEl: Element): Element {
   const wrapper = document.createElement('div');
   wrapper.className = ROOT_BLOCK_CLASS;
-  wrapper.setAttribute('style', rootBlockSpacingStyle(undefined, true));
-  // Nobody has chosen a gap for a block that did not exist a moment ago,
-  // so this wrapper is re-spaceable — the same marker the server writes
-  // for every root block whose spacing is still the default.
-  wrapper.setAttribute(DEFAULT_GAP_ATTR, 'default');
   wrapper.appendChild(blockEl);
   return wrapper;
-}
-
-/**
- * Re-applies the positional default gap to a wrapper whose position in the
- * list just changed — and ONLY when that gap is still the default one
- * (`data-brisk-gap="default"`, written by PublicPageContent.astro in the
- * canvas). A wrapper whose bottom margin somebody chose keeps it: the
- * canvas re-spacing blocks must never silently discard a value the editor
- * shows as set.
- */
-function respaceRootWrapper(wrapper: Element | null, isLast: boolean): void {
-  if (wrapper?.getAttribute(DEFAULT_GAP_ATTR) !== 'default') {
-    return;
-  }
-  wrapper.setAttribute('style', rootBlockSpacingStyle(undefined, isLast));
 }
 
 /**
@@ -310,12 +286,11 @@ export function applyBlockInsert(
   if (beforeEl) {
     container.insertBefore(insertedNode, beforeEl);
   } else {
-    // Appending makes the previous last block no longer last, and the
-    // default bottom gap is exactly the one thing about a root block that
-    // depends on its position — without this the two blocks sit flush
-    // against each other, and only until a reload, which is the kind of
-    // difference between canvas and page this bridge exists to avoid.
-    respaceRootWrapper(container.lastElementChild, false);
+    // No re-spacing to do on the block that was last (ADR-0050): the gap
+    // is `.brisk-root-block:last-child` in CSS now, so moving the last
+    // position to another element is something the stylesheet notices on
+    // its own. It used to be an inline style computed per block, which
+    // meant every insert and delete had to recompute its neighbours'.
     container.appendChild(insertedNode);
   }
 
@@ -366,16 +341,9 @@ export function applyBlockRemove(root: ParentNode, blockId: string): boolean {
   // takes any sibling <script> the block rendered alongside itself, which
   // lives in that same wrapper.
   const wrapper = rootWrapperOf(target);
-  if (wrapper) {
-    const container = wrapper.parentElement;
-    wrapper.remove();
-    // Deleting the last block promotes its neighbour, and the last block
-    // is the one with no default gap under it — otherwise the page keeps
-    // a trailing 4rem that the server-rendered version does not have.
-    respaceRootWrapper(container?.lastElementChild ?? null, true);
-  } else {
-    target.remove();
-  }
+  // The wrapper goes with the block — see ADR-0049. Nothing to re-space
+  // afterwards: the promoted last block picks up `:last-child` by itself.
+  (wrapper ?? target).remove();
   return true;
 }
 

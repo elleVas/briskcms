@@ -1,14 +1,28 @@
 ---
+import type { ColumnProps } from '@brisk/shared-types';
 import EmptyContainerHint from '../EmptyContainerHint.astro';
 
-export interface Props {
+type Props = ColumnProps & {
   editable?: boolean;
   hasChildren?: boolean;
   /** The per-instance style class, from BlockRenderer — see blockInstanceClassName. */
   instanceClass?: string | null;
-}
+};
 
 const { editable, hasChildren, instanceClass } = Astro.props;
+
+/*
+ * The width is NOT read from `span` here, deliberately, even though this
+ * block owns that prop.
+ *
+ * A track is a property of the grid, not of the item sitting in it: a
+ * column that took `grid-column: span 4` of a parent divided into equal
+ * shares would claim four of somebody else's tracks. The parent resolves
+ * every column's width together (`resolveColumnSpans`) precisely because
+ * one column's default depends on what the others asked for, and emits
+ * the whole `grid-template-columns` — leaving this element to be a plain
+ * grid item that fills the track it was given.
+ */
 ---
 
 <div

@@ -180,7 +180,7 @@ describe('applyBlockInsert', () => {
   it('appends to the root blocks list for the current editing scope when there is no beforeBlockId', () => {
     document.body.innerHTML =
       '<div data-brisk-root-blocks="page">' +
-      '<div class="brisk-root-block" data-brisk-gap="default" style="margin-top: 0; margin-bottom: 0;">' +
+      '<div class="brisk-root-block">' +
       '<div data-brisk-block-id="a">first</div>' +
       '</div>' +
       '</div>';
@@ -200,10 +200,10 @@ describe('applyBlockInsert', () => {
       '<div data-brisk-root-blocks="page">' +
         // The block that was last is no longer last, so it gets the
         // default gap below it back.
-        '<div class="brisk-root-block" data-brisk-gap="default" style="margin-top: 0; margin-bottom: 4rem;">' +
+        '<div class="brisk-root-block">' +
         '<div data-brisk-block-id="a">first</div>' +
         '</div>' +
-        '<div class="brisk-root-block" style="margin-top: 0; margin-bottom: 0;" data-brisk-gap="default">' +
+        '<div class="brisk-root-block">' +
         '<div data-brisk-block-id="b">second</div>' +
         '</div>' +
         '</div>',
@@ -213,7 +213,7 @@ describe('applyBlockInsert', () => {
   it("inserts before an existing root sibling, using its wrapper's parent as the container", () => {
     document.body.innerHTML =
       '<div data-brisk-root-blocks="page">' +
-      '<div class="brisk-root-block" data-brisk-gap="default" style="margin-top: 0; margin-bottom: 0;">' +
+      '<div class="brisk-root-block">' +
       '<div data-brisk-block-id="a">first</div>' +
       '</div>' +
       '</div>';
@@ -228,10 +228,10 @@ describe('applyBlockInsert', () => {
 
     expect(document.body.innerHTML).toBe(
       '<div data-brisk-root-blocks="page">' +
-        '<div class="brisk-root-block" style="margin-top: 0; margin-bottom: 0;" data-brisk-gap="default">' +
+        '<div class="brisk-root-block">' +
         '<div data-brisk-block-id="b">new</div>' +
         '</div>' +
-        '<div class="brisk-root-block" data-brisk-gap="default" style="margin-top: 0; margin-bottom: 0;">' +
+        '<div class="brisk-root-block">' +
         '<div data-brisk-block-id="a">first</div>' +
         '</div>' +
         '</div>',
@@ -255,12 +255,7 @@ describe('applyBlockInsert', () => {
   const rootList = (...blocks: string[]) =>
     '<main data-brisk-root-blocks="page" class="flex flex-col">' +
     blocks
-      .map(
-        (block, index) =>
-          `<div class="brisk-root-block" style="margin-top: 0; margin-bottom: ${
-            index === blocks.length - 1 ? '0' : '4rem'
-          };">${block}</div>`,
-      )
+      .map((block, index) => `<div class="brisk-root-block">${block}</div>`)
       .join('') +
     '</main>';
 
@@ -729,10 +724,8 @@ describe('root blocks travel with their wrapper', () => {
     '<main data-brisk-root-blocks="page" class="flex flex-col">' +
     ids
       .map(
-        (id, index) =>
-          `<div class="brisk-root-block" data-brisk-gap="default" style="margin-top: 0; margin-bottom: ${
-            index === ids.length - 1 ? '0' : '4rem'
-          };">` +
+        (id) =>
+          '<div class="brisk-root-block">' +
           `<div data-brisk-block-id="${id}" style="display:contents">${id}</div>` +
           '</div>',
       )
@@ -760,37 +753,27 @@ describe('root blocks travel with their wrapper', () => {
     expect(orderOf()).toEqual(['b']);
   });
 
-  it("gives the promoted last block the last block's spacing", () => {
+  it('leaves the spacing to the stylesheet, writing no style of its own', () => {
+    // The gap between root blocks is `.brisk-root-block` and its
+    // `:last-child` rule now (ADR-0050), so removing the last block
+    // promotes its neighbour with nothing for the bridge to recompute.
+    // It used to be an inline style per block, which meant every insert
+    // and delete had to re-space the neighbours — and had to tell a
+    // default gap from one somebody typed, or silently discard it.
     document.body.innerHTML = rootList('a', 'b');
 
     applyBlockRemove(document, 'b');
-
-    expect(wrappers()[0]?.getAttribute('style')).toBe(
-      'margin-top: 0; margin-bottom: 0;',
-    );
-  });
-
-  it('keeps a chosen gap when re-spacing, and only re-spaces the default one', () => {
-    document.body.innerHTML =
-      '<main data-brisk-root-blocks="page">' +
-      '<div class="brisk-root-block" style="margin-top: 0; margin-bottom: 10rem;">' +
-      '<div data-brisk-block-id="a">first</div>' +
-      '</div>' +
-      '</main>';
-
     applyBlockInsert(
       document,
-      '<div data-brisk-block-id="b">second</div>',
+      '<div data-brisk-block-id="c">third</div>',
       null,
       null,
       null,
     );
 
-    // Untouched: 10rem is a value somebody typed, and the marker that says
-    // "this gap is still the default" is absent.
-    expect(wrappers()[0]?.getAttribute('style')).toBe(
-      'margin-top: 0; margin-bottom: 10rem;',
-    );
+    for (const wrapper of wrappers()) {
+      expect(wrapper.getAttribute('style')).toBeNull();
+    }
   });
 
   it('reorders the wrappers, instead of collapsing every block into the first one', () => {

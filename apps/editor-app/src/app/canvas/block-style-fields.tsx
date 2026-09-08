@@ -2,6 +2,7 @@ import { ColorPickerField } from './custom-fields/color-picker-field';
 import type {
   BlockStyleDefaults,
   BlockStyleOverride,
+  ThemeBaseTokens,
   ThemeStyleProperty,
 } from '@brisk/shared-types';
 import { Input } from '../../components/ui/input';
@@ -25,6 +26,16 @@ export interface BlockStyleFieldsProps {
    * before), not an error.
    */
   defaults?: BlockStyleDefaults;
+  /**
+   * The active theme's own colour vocabulary (ADR-0050), offered as
+   * swatches by every colour control below. Picking one stores
+   * `var(--primary)` rather than the hex it currently resolves to, so the
+   * block keeps following the theme.
+   *
+   * Absent = no swatch row; the fields still work, they just cannot offer
+   * the theme's colours.
+   */
+  themeTokens?: ThemeBaseTokens | null;
 }
 
 const COLOR_FIELD_LABELS: Partial<Record<keyof BlockStyleOverride, string>> = {
@@ -101,6 +112,7 @@ const SELECT_FIELD_OPTIONS: Partial<
   backgroundRepeat: ['no-repeat', 'repeat', 'repeat-x', 'repeat-y'],
   contentAlign: ['start', 'center', 'end'],
   contentJustify: ['start', 'center', 'end'],
+  flexDirection: ['column', 'row'],
 };
 
 /**
@@ -119,6 +131,7 @@ export function BlockStyleFields({
   value,
   onChange,
   defaults,
+  themeTokens,
 }: BlockStyleFieldsProps) {
   const { tLabel } = useTranslation();
   function setField(key: string, fieldValue: string | null) {
@@ -160,6 +173,7 @@ export function BlockStyleFields({
                 value={read(property) ?? null}
                 onChange={(next) => setField(property, next)}
                 defaultValue={coreLabel(defaults ?? {}, property)}
+                themeTokens={themeTokens}
               />
             </div>
           );
@@ -237,6 +251,7 @@ export function BlockStyleFields({
                 <ColorPickerField
                   value={read(property) ?? null}
                   onChange={(next) => setField(property, next)}
+                  themeTokens={themeTokens}
                 />
               </div>
             );

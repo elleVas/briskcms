@@ -64,6 +64,16 @@ export const backgroundRepeatSchema = z
   .nullable();
 /** Start/center/end rather than left/right: it reads the same on a right-to-left site (ADR-0099's `dir` work). */
 export const contentAlignSchema = z.enum(['start', 'center', 'end']).nullable();
+/**
+ * Whether a container stacks its children or lines them up (ADR-0050).
+ *
+ * A closed set for the same reason as every enum above — there is nothing
+ * to escape in `row` — and a style property rather than a block prop so it
+ * can differ per breakpoint: a row of three cards on a desktop and a stack
+ * on a phone is the single most common responsive layout there is, and
+ * until now a Container could only ever be a column.
+ */
+export const flexDirectionSchema = z.enum(['column', 'row']).nullable();
 
 /**
  * The style properties a block can make overridable — ONE shape shared by
@@ -114,6 +124,7 @@ const BLOCK_STYLE_PROPERTY_KEYS: Readonly<Record<string, true>> = {
   gap: true,
   contentAlign: true,
   contentJustify: true,
+  flexDirection: true,
 };
 
 export const blockStyleOverrideSchema = z
@@ -186,6 +197,8 @@ export const blockStyleOverrideSchema = z
     contentAlign: contentAlignSchema.optional(),
     /** Vertical placement — what a hero with a minimum height needs, and nothing else can express. */
     contentJustify: contentAlignSchema.optional(),
+    /** Stack the children or line them up — see `flexDirectionSchema`. */
+    flexDirection: flexDirectionSchema.optional(),
   })
   /**
    * Plus whatever a THEME added (ADR-0047). A closed object here would
@@ -494,6 +507,7 @@ export const blockStyleDefaultsSchema = z.object({
   gap: z.string().min(1).optional(),
   contentAlign: z.string().min(1).optional(),
   contentJustify: z.string().min(1).optional(),
+  flexDirection: z.string().min(1).optional(),
   // marginTop/marginBottom have no "theme default" to resolve (they depend
   // on no theme — see the comment on them in `blockStyleOverrideSchema`
   // above): these two fields always stay `undefined` here, never populated
@@ -551,6 +565,22 @@ export const themeBaseTokensSchema = z.object({
   secondary: z.string().min(1),
   fontSansValue: z.string().min(1),
   radius: z.string().min(1),
+  /**
+   * The rest of the theme's colour vocabulary, added for the colour
+   * picker's theme swatches (ADR-0050): picking one stores
+   * `var(--muted)`, so the block follows the theme the way the theme's
+   * own CSS does, instead of freezing today's hex into the page.
+   *
+   * `.optional()` and not `.min(1)` like the four above: those four are
+   * declared by every theme that exists, these are not guaranteed, and a
+   * theme that omits one should lose a swatch rather than fail to load.
+   */
+  background: z.string().optional(),
+  foreground: z.string().optional(),
+  muted: z.string().optional(),
+  mutedForeground: z.string().optional(),
+  border: z.string().optional(),
+  link: z.string().optional(),
 });
 export type ThemeBaseTokens = z.infer<typeof themeBaseTokensSchema>;
 

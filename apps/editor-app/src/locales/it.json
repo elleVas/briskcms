@@ -801,6 +801,13 @@
             "center": "Centro",
             "end": "Basso"
           }
+        },
+        "flexDirection": {
+          "fieldLabel": "Direzione",
+          "options": {
+            "column": "Impilati",
+            "row": "Affiancati"
+          }
         }
       }
     },
@@ -815,6 +822,22 @@
       "underline": "Sottolineato",
       "unlink": "Rimuovi il collegamento",
       "urlPrompt": "Indirizzo web"
+    },
+    "colorPicker": {
+      "inherit": "Eredita dal tema",
+      "themeValue": "Tema: {{value}}",
+      "clear": "Torna al colore del tema",
+      "useToken": "Usa il colore {{token}} del tema",
+      "tokens": {
+        "primary": "Primario",
+        "secondary": "Secondario",
+        "background": "Sfondo",
+        "foreground": "Testo",
+        "muted": "Attenuato",
+        "mutedForeground": "Testo attenuato",
+        "border": "Bordo",
+        "link": "Link"
+      }
     }
   },
   "toast": {
@@ -961,17 +984,31 @@
       }
     },
     "column": {
-      "label": "Colonna"
+      "label": "Colonna",
+      "fields": {
+        "span": {
+          "fieldLabel": "Larghezza in dodicesimi (vuoto = parti uguali)"
+        }
+      }
     },
     "columns": {
       "label": "Colonne",
       "fields": {
-        "layout": {
-          "fieldLabel": "Layout",
+        "stackBelow": {
+          "fieldLabel": "Impila in una colonna",
           "options": {
-            "twoEqual": "2 uguali",
-            "twoAsymmetric": "2 (30/70)",
-            "threeEqual": "3 uguali"
+            "mobile": "Sui telefoni",
+            "tablet": "Su tablet e telefoni",
+            "never": "Mai"
+          }
+        },
+        "verticalAlign": {
+          "fieldLabel": "Allinea le colonne",
+          "options": {
+            "stretch": "Stessa altezza",
+            "start": "In alto",
+            "center": "Al centro",
+            "end": "In basso"
           }
         }
       }

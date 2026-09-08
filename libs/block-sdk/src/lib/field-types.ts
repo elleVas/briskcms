@@ -86,6 +86,21 @@ export type FieldDescriptor =
       min?: number;
       max?: number;
       step?: number;
+      /**
+       * Whether clearing the field means "no value" rather than zero
+       * (ADR-0050).
+       *
+       * Without it an empty numeric input saves `0`, which for a property
+       * whose range starts at 1 is not a number the user chose — it is a
+       * value that fails the block's own schema while looking deliberate.
+       * A column's width is the case that needed it: empty means "share
+       * the room with the others", and there has to be a way back to it
+       * after picking a number.
+       *
+       * Off by default, so every existing numeric field keeps behaving
+       * exactly as it did.
+       */
+      optional?: boolean;
     }
   | { kind: 'boolean'; key: string; label: string }
   | {

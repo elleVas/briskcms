@@ -1,8 +1,5 @@
 ---
-import {
-  columnsGridTemplate,
-  type ColumnsProps,
-} from '@brisk/shared-types';
+import { columnsGridTemplate, type ColumnsProps } from '@brisk/shared-types';
 import EmptyContainerHint from '../EmptyContainerHint.astro';
 
 type Props = ColumnsProps & {
@@ -10,14 +7,39 @@ type Props = ColumnsProps & {
   hasChildren?: boolean;
   /** The per-instance style class, from BlockRenderer — see blockInstanceClassName. */
   instanceClass?: string | null;
+  /**
+   * One track per child column, already resolved (ADR-0050). Computed by
+   * BlockRenderer from `block.children`, because a column's width is a
+   * property of the column and this element only has a `<slot/>`: it
+   * cannot see its own children to add their widths up.
+   */
+  columnSpans?: number[];
 };
 
-const { layout, editable, hasChildren, instanceClass } = Astro.props;
+const {
+  stackBelow,
+  verticalAlign,
+  editable,
+  hasChildren,
+  instanceClass,
+  columnSpans = [],
+} = Astro.props;
+
+// A row with no columns yet has no tracks to declare — `grid-template-
+// columns: ` would be invalid CSS, and the empty-state hint below is what
+// the editor shows instead.
+const gridTemplate =
+  columnSpans.length > 0 ? columnsGridTemplate(columnSpans) : null;
 ---
 
 <div
-  class:list={['brisk-columns', instanceClass]}
-  style={`grid-template-columns: ${columnsGridTemplate(layout)};`}
+  class:list={[
+    'brisk-columns',
+    `brisk-columns--stack-${stackBelow}`,
+    `brisk-columns--align-${verticalAlign}`,
+    instanceClass,
+  ]}
+  style={gridTemplate ? `--brisk-columns-template: ${gridTemplate};` : undefined}
   data-brisk-editable-outline={editable && hasChildren ? '' : undefined}
 >
   <slot />
@@ -27,17 +49,59 @@ const { layout, editable, hasChildren, instanceClass } = Astro.props;
 <style>
   .brisk-columns {
     display: grid;
-    gap: 1.5rem;
+    /* The fallback is what a row renders as before its tracks are known —
+       one column, which is also what an empty row should look like. */
+    grid-template-columns: var(--brisk-columns-template, 1fr);
+    gap: var(--brisk-override-gap, 1.5rem);
     background: var(--brisk-override-bg, transparent);
     color: var(--brisk-override-text, inherit);
     border-radius: var(--brisk-override-radius, 0);
     padding: var(--brisk-override-padding-y, 0) var(--brisk-override-padding-x, 0);
   }
-  @media (max-width: 640px) {
-    .brisk-columns {
-      grid-template-columns: 1fr !important;
+
+  /* Vertical alignment of columns against each other — `align-items` on a
+     grid is the block axis, so this is what makes three cards of unequal
+     text length line up at the top, or centre on each other, instead of
+     always stretching to the tallest. `stretch` is the grid default and
+     what every existing row already does. */
+  .brisk-columns--align-start { align-items: start; }
+  .brisk-columns--align-center { align-items: center; }
+  .brisk-columns--align-end { align-items: end; }
+  .brisk-columns--align-stretch { align-items: stretch; }
+
+  /*
+   * Container queries, not the `@media (max-width: 640px)` this replaces
+   * (ADR-0047).
+   *
+   * The old rule asked how wide the WINDOW was. A row of columns nested
+   * inside another column, on a wide desktop, therefore kept its columns
+   * side by side inside a 300px track — the exact defect ADR-0047 exists
+   * to remove, still present here because this rule predates it. Asking
+   * the row how much room IT has is the same question at the top level of
+   * a page and the right one everywhere else.
+   *
+   * `.brisk-columns` already declares `container-type: inline-size` in
+   * global.css, so the row measures itself: the query below is scoped to
+   * the row's own width by the ancestor it names.
+   */
+  /*
+   * The widths are written out rather than read from a token, because a
+   * container query's CONDITION cannot contain `var()` — CSS resolves
+   * custom properties too late for it, and the rule silently never
+   * matches. `columns-breakpoints.spec.ts` reads this file and fails,
+   * naming the number, if either stops matching BREAKPOINT_MAX_WIDTHS.
+   */
+  @container (max-width: 1024px) {
+    .brisk-columns--stack-tablet {
+      grid-template-columns: 1fr;
     }
   }
+  @container (max-width: 768px) {
+    .brisk-columns--stack-mobile {
+      grid-template-columns: 1fr;
+    }
+  }
+
   /* Editor only, and only once it has content — the same reason and
      pattern as Column.astro/Container.astro: without a persistent border a
      multi-column layout becomes hard to "read" while you work, especially
