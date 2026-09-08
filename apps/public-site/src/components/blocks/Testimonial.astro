@@ -45,6 +45,11 @@ const STAR_POSITIONS = [1, 2, 3, 4, 5];
 
 <style>
   .brisk-testimonial {
+    /* Neither of these decides the card's width any more (ADR-0052): the
+       track is a grid, so its `grid-auto-columns` does — at the same
+       `min(320px, 85vw)` this declared, which is why the card is the same
+       size as before. Kept because a card can also sit outside a
+       collection track, where a flex parent would still ask. */
     flex: 0 0 min(320px, 85vw);
     scroll-snap-align: start;
     border: 1px solid var(--border);

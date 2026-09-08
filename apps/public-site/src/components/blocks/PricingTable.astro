@@ -1,26 +1,49 @@
 ---
-import EmptyContainerHint from '../EmptyContainerHint.astro';
+import type { PricingTableProps } from '@brisk/shared-types';
+import CollectionLayout from '../CollectionLayout.astro';
 
-export interface Props {
+export type Props = PricingTableProps & {
   editable?: boolean;
   hasChildren?: boolean;
   /** The per-instance style class, from BlockRenderer — see blockInstanceClassName. */
   instanceClass?: string | null;
-}
+  locale: string;
+};
 
-const { editable, hasChildren, instanceClass } = Astro.props;
+const { display, editable, hasChildren, instanceClass, locale } =
+  Astro.props;
 ---
 
-<div class:list={['brisk-pricing-table', instanceClass]} data-brisk-editable-outline={editable && hasChildren ? '' : undefined}>
+<CollectionLayout
+  blockClass="brisk-pricing-table"
+  display={display}
+  editable={editable}
+  hasChildren={hasChildren}
+  instanceClass={instanceClass}
+  locale={locale}
+>
   <slot />
-  <EmptyContainerHint show={!hasChildren && Boolean(editable)} />
-</div>
+</CollectionLayout>
+
+<script>
+  // Prev/next for the scrolling arrangements — a plain importable module
+  // so it can be re-run after a live canvas insert/patch, see
+  // block-behaviors/run-block-behaviors-in-subtree.ts.
+  import { collectionBehaviors } from '../../lib/block-behaviors/collection';
+  import { runBlockBehaviors } from '../../lib/block-behaviors/run-block-behaviors';
+  runBlockBehaviors(document, collectionBehaviors);
+</script>
 
 <style>
-  .brisk-pricing-table {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 1.5rem;
+  /*
+     `:global()`, and it is not optional: the element these rules target is
+     rendered by CollectionLayout.astro, not by this file, so Astro's
+     scoped styles never reach it — the block silently lost its grid
+     entirely, measured as `display: block` on the built page. Same
+     reasoning as Image.astro's `:global(.brisk-image)`, which styles an
+     element OptimizedImage renders.
+  */
+  :global(.brisk-pricing-table) {
     align-items: start;
     background: var(--brisk-override-bg, transparent);
     color: var(--brisk-override-text, inherit);
@@ -33,7 +56,7 @@ const { editable, hasChildren, instanceClass } = Astro.props;
      one here would be redundant. Without this, a container holding real
      content loses every visible boundary while you work (user feedback
      from live use, the same reason as Column.astro/Container.astro). */
-  .brisk-pricing-table[data-brisk-editable-outline] {
+  :global(.brisk-pricing-table[data-brisk-editable-outline]) {
     outline: 1px dashed var(--border);
     outline-offset: -4px;
     padding: 0.5rem;

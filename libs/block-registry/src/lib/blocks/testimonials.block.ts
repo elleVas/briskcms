@@ -7,8 +7,28 @@ export const testimonialsBlock: BlockDescriptor<TestimonialsProps> = {
   type: 'Testimonials',
   label: 'blocks.testimonials.label',
   category: 'socialProof',
-  defaultProps: {},
-  fields: [],
+  defaultProps: { display: 'slider' },
+  fields: [
+    {
+      kind: 'select',
+      key: 'display',
+      label: 'blocks.shared.display.fieldLabel',
+      options: [
+        {
+          label: 'blocks.shared.display.options.grid',
+          value: 'grid',
+        },
+        {
+          label: 'blocks.shared.display.options.slider',
+          value: 'slider',
+        },
+        {
+          label: 'blocks.shared.display.options.carousel',
+          value: 'carousel',
+        },
+      ],
+    },
+  ],
   isContainer: true,
   allowedChildTypes: ['Testimonial'],
   stylableProperties: BlockStyleRegistry.STANDARD,

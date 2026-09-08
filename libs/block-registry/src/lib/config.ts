@@ -9,6 +9,7 @@ import { calloutBlock } from './blocks/callout.block';
 import { codeBlock } from './blocks/code.block';
 import { columnBlock } from './blocks/column.block';
 import { columnsBlock } from './blocks/columns.block';
+import { sliderBlock } from './blocks/slider.block';
 import { containerBlock } from './blocks/container.block';
 import { countdownBlock } from './blocks/countdown.block';
 import { embedHtmlBlock } from './blocks/embed-html.block';
@@ -54,6 +55,7 @@ export {
   codeBlock,
   columnBlock,
   columnsBlock,
+  sliderBlock,
   containerBlock,
   countdownBlock,
   embedHtmlBlock,
