@@ -11,13 +11,11 @@ export const dividerBlock: BlockDescriptor<DividerProps> = {
   category: 'layout',
   defaultProps: {},
   fields: [],
-  stylableProperties: [
-    'borderWidth',
-    'borderStyle',
-    'borderColor',
-    'maxWidth',
-    'marginTop',
-    'marginBottom',
-  ],
+  // No marginTop/marginBottom here: those two are instance-only and have
+  // no theme default to resolve (see blockStyleOverrideSchema), so the
+  // toolbar adds them for root-level blocks rather than the descriptor
+  // declaring them — declaring them fails the BLOCK_STYLE_DEFAULTS
+  // alignment invariant, which is how this was caught.
+  stylableProperties: ['borderWidth', 'borderStyle', 'borderColor', 'maxWidth'],
   defaultStyle: BLOCK_STYLE_DEFAULTS.Divider,
 };

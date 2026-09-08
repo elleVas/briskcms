@@ -12,7 +12,7 @@ import {
   codePropsSchema,
   columnsPropsSchema,
   resolveColumnSpans,
-  sliderPropsSchema,
+  carouselPropsSchema,
   dividerPropsSchema,
   spacerPropsSchema,
   videoFilePropsSchema,
@@ -122,7 +122,7 @@ const Code = resolveThemeBlockOverride('Code', CodeCore, themeName);
 import ColumnCore from './blocks/Column.astro';
 const Column = resolveThemeBlockOverride('Column', ColumnCore, themeName);
 import ColumnsCore from './blocks/Columns.astro';
-import SliderCore from './blocks/Slider.astro';
+import CarouselCore from './blocks/Carousel.astro';
 import DividerCore from './blocks/Divider.astro';
 const Divider = resolveThemeBlockOverride('Divider', DividerCore, themeName);
 import SpacerCore from './blocks/Spacer.astro';
@@ -137,7 +137,7 @@ import SocialLinksCore from './blocks/SocialLinks.astro';
 const SocialLinks = resolveThemeBlockOverride('SocialLinks', SocialLinksCore, themeName);
 import SocialLinkCore from './blocks/SocialLink.astro';
 const SocialLink = resolveThemeBlockOverride('SocialLink', SocialLinkCore, themeName);
-const Slider = resolveThemeBlockOverride('Slider', SliderCore, themeName);
+const Carousel = resolveThemeBlockOverride('Carousel', CarouselCore, themeName);
 const Columns = resolveThemeBlockOverride('Columns', ColumnsCore, themeName);
 import ContainerCore from './blocks/Container.astro';
 const Container = resolveThemeBlockOverride('Container', ContainerCore, themeName);
@@ -389,9 +389,9 @@ const BLOCK_REGISTRY: Record<string, BlockDispatchEntry> = {
     schema: socialLinkPropsSchema,
     stylable: true,
   },
-  Slider: {
-    component: Slider,
-    schema: sliderPropsSchema,
+  Carousel: {
+    component: Carousel,
+    schema: carouselPropsSchema,
     stylable: true,
     recurseChildren: true,
     containerProps: true,

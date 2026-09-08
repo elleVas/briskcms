@@ -1,8 +1,8 @@
 ---
-import type { SliderProps } from '@brisk/shared-types';
+import type { CarouselProps } from '@brisk/shared-types';
 import CollectionLayout from '../CollectionLayout.astro';
 
-type Props = SliderProps & {
+type Props = CarouselProps & {
   editable?: boolean;
   hasChildren?: boolean;
   instanceClass?: string | null;
@@ -13,7 +13,7 @@ const { display, editable, hasChildren, instanceClass, locale } = Astro.props;
 ---
 
 <CollectionLayout
-  blockClass="brisk-free-slider"
+  blockClass="brisk-carousel"
   display={display}
   editable={editable}
   hasChildren={hasChildren}
@@ -35,12 +35,12 @@ const { display, editable, hasChildren, instanceClass, locale } = Astro.props;
      element is rendered by CollectionLayout.astro, so Astro's scoped
      styles never reach it.
   */
-  :global(.brisk-free-slider.brisk-collection--grid) {
+  :global(.brisk-carousel.brisk-collection--grid) {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
     gap: var(--brisk-override-gap, 1.5rem);
   }
-  :global(.brisk-free-slider) {
+  :global(.brisk-carousel) {
     background: var(--brisk-override-bg, transparent);
     color: var(--brisk-override-text, inherit);
     border-radius: var(--brisk-override-radius, 0);
@@ -49,7 +49,7 @@ const { display, editable, hasChildren, instanceClass, locale } = Astro.props;
   }
   /* Editor only, and only once it has content — the same pattern as
      Column.astro/Container.astro. */
-  :global(.brisk-free-slider[data-brisk-editable-outline]) {
+  :global(.brisk-carousel[data-brisk-editable-outline]) {
     outline: 1px dashed var(--border);
     outline-offset: -4px;
     padding: 0.5rem;

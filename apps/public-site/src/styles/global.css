@@ -161,7 +161,9 @@ body,
 .brisk-tabs,
 .brisk-team,
 .brisk-testimonials,
-.brisk-timeline {
+.brisk-timeline,
+.brisk-carousel,
+.brisk-social-links {
   container-type: inline-size;
 }
 

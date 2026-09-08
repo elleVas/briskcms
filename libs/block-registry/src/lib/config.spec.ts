@@ -1,3 +1,5 @@
+import { readdirSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
   BLOCK_STYLE_DEFAULTS,
@@ -184,4 +186,45 @@ describe('search-text.ts prose-field coverage', () => {
     );
     expect(overlap).toEqual([]);
   });
+});
+
+describe('every block a file defines is a block somebody can insert', () => {
+  /*
+   * The gap this closes, found only because the user asked whether the
+   * new blocks were actually there: eight blocks were written, registered
+   * as exports, rendered by BlockRenderer, covered by tests — and absent
+   * from `pageBlocks`, which is the list the editor's picker is built
+   * from. They compiled, they passed, and nobody could insert one.
+   *
+   * Every other invariant in this file starts FROM `pageBlocks`, so none
+   * of them could see a block that never got in. This one starts from the
+   * files on disk instead.
+   */
+  const blocksDir = join(import.meta.dirname, 'blocks');
+  const definedTypes = readdirSync(blocksDir)
+    .filter((file) => file.endsWith('.block.ts'))
+    .map((file) => {
+      const source = readFileSync(join(blocksDir, file), 'utf8');
+      const match = source.match(/type: '([A-Za-z]+)'/);
+      return { file, type: match?.[1] ?? null };
+    });
+
+  it('finds a type in every block file, so the check below cannot go vacuous', () => {
+    const unreadable = definedTypes.filter((block) => block.type === null);
+    expect(unreadable).toEqual([]);
+    expect(definedTypes.length).toBeGreaterThan(50);
+  });
+
+  it.each(definedTypes.map((block) => [block.file, block.type]))(
+    '%s is listed in pageBlocks or headerFooterBlocks',
+    (file, type) => {
+      const listed = [...pageBlocks, ...headerFooterBlocks].some(
+        (block) => block.type === type,
+      );
+      expect(
+        listed,
+        `${file} defines "${type}" but no list offers it — the editor cannot insert it`,
+      ).toBe(true);
+    },
+  );
 });

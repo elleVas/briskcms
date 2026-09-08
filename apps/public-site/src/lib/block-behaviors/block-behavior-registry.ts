@@ -36,7 +36,7 @@ export const BLOCK_BEHAVIOR_REGISTRY: Record<string, BlockBehavior[]> = {
   FeatureGrid: collectionBehaviors,
   PricingTable: collectionBehaviors,
   StatsCounter: collectionBehaviors,
-  Slider: collectionBehaviors,
+  Carousel: collectionBehaviors,
   SocialLinks: collectionBehaviors,
   BackToTop: backToTopBehaviors,
   PromoBar: promoBarBehaviors,
