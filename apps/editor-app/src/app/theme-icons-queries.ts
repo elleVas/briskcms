@@ -10,10 +10,16 @@ import { fetchThemeIcons } from '../lib/theme-api-client';
  * rather than a stale cache. `enabled` until the theme is known: no data is
  * better than the wrong theme's.
  */
-export function themeIconsQueryOptions(themeName: string) {
+export function themeIconsQueryOptions(
+  themeName: string,
+  set: 'interface' | 'brand' = 'interface',
+) {
   return queryOptions({
-    queryKey: ['theme-icons', themeName] as const,
-    queryFn: () => fetchThemeIcons(themeName),
+    // `set` is part of the key, so switching tabs fetches the other set
+    // once and then reuses it — the brands are never requested at all
+    // until somebody opens that tab.
+    queryKey: ['theme-icons', themeName, set] as const,
+    queryFn: () => fetchThemeIcons(themeName, set),
     enabled: themeName !== '',
     staleTime: Infinity,
   });

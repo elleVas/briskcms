@@ -30,12 +30,16 @@ export function IconPickerDialog({
 }: IconPickerDialogProps) {
   const { t } = useTranslation();
   const [search, setSearch] = useState('');
+  // Which of the two sets is showing (ADR-0053). The brands are fetched
+  // only once this is switched, and separating them is also what stops
+  // somebody looking for "star" from wading through three thousand logos.
+  const [set, setSet] = useState<'interface' | 'brand'>('interface');
   // Not gated on `open` (unlike Page/MediaPickerDialog): the active theme
   // never changes at runtime, so it is worth preloading as soon as the
   // provider mounts, both for the dialog's first opening and for the
   // synchronous preview IconPickerField shows for an already-chosen icon —
   // see IconListProvider.
-  const { data } = useQuery(themeIconsQueryOptions(useActiveThemeName()));
+  const { data } = useQuery(themeIconsQueryOptions(useActiveThemeName(), set));
 
   const filtered = useMemo(() => {
     if (!data) return [];
@@ -49,12 +53,35 @@ export function IconPickerDialog({
     onOpenChange(next);
   }
 
+  const tabs: { value: 'interface' | 'brand'; label: string }[] = [
+    { value: 'interface', label: t('icons.picker.sets.interface') },
+    { value: 'brand', label: t('icons.picker.sets.brand') },
+  ];
+
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>{t('icons.picker.title')}</DialogTitle>
         </DialogHeader>
+        <div className="flex gap-1" role="tablist">
+          {tabs.map((tab) => (
+            <button
+              key={tab.value}
+              type="button"
+              role="tab"
+              aria-selected={set === tab.value}
+              onClick={() => setSet(tab.value)}
+              className={
+                set === tab.value
+                  ? 'rounded-md border border-input bg-accent px-3 py-1.5 text-sm font-medium'
+                  : 'rounded-md border border-transparent px-3 py-1.5 text-sm text-muted-foreground'
+              }
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
         <input
           type="text"
           value={search}

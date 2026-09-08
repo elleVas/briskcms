@@ -412,6 +412,78 @@ export type CollectionDisplay = z.infer<typeof collectionDisplaySchema>;
  * this has several things to show and wants them side by side, which is
  * also the arrangement that degrades best when there are only two.
  */
+/**
+ * A horizontal rule between sections (ADR-0053).
+ *
+ * No props at all, deliberately. Everything a divider can be — thickness,
+ * colour, style, how wide it runs, the space around it — is already in
+ * the style vocabulary (ADR-0047), and per breakpoint at that. A `style`
+ * prop next to a `borderStyle` override would be the two-mechanisms
+ * mistake ADR-0050 found in Container, before it was made.
+ */
+export const dividerPropsSchema = z.strictObject({});
+export type DividerProps = z.infer<typeof dividerPropsSchema>;
+
+/**
+ * Deliberate empty space (ADR-0053).
+ *
+ * Also propless, and for a better reason than Divider's: its height is
+ * `minHeight`, an ordinary style property, so it can differ per
+ * breakpoint — 4rem of air on a desktop and 1rem on a phone, which is the
+ * single most common thing anyone actually wants from a spacer and which
+ * a plain `height` prop could not express.
+ */
+export const spacerPropsSchema = z.strictObject({});
+export type SpacerProps = z.infer<typeof spacerPropsSchema>;
+
+/** How large a standalone icon renders. A closed set: a free length would let an icon be pasted in at 3px or 900px, and every value here is a size something is actually designed at. */
+export const iconSizeSchema = z.enum(['sm', 'md', 'lg', 'xl']);
+export type IconSize = z.infer<typeof iconSizeSchema>;
+
+/**
+ * A single icon as a block of its own (ADR-0053).
+ *
+ * `label` is what decides whether it is decoration or content: empty
+ * means the icon is hidden from assistive technology (`aria-hidden`),
+ * which is correct for a flourish beside text that already says the same
+ * thing, and wrong for an icon that IS the message. The same choice
+ * `Image.isDecorative` makes, phrased as the label it needs rather than
+ * as a checkbox.
+ */
+export const iconPropsSchema = z.object({
+  icon: z.string().nullable(),
+  size: iconSizeSchema.default('md'),
+  label: z.string().default(''),
+});
+export type IconProps = z.infer<typeof iconPropsSchema>;
+
+/**
+ * A row of social links (ADR-0053) — a collection, so it arranges itself
+ * like every other one (ADR-0052) and each link is edited as its own
+ * block rather than through a bespoke list widget.
+ */
+export const socialLinksPropsSchema = z.object({
+  display: collectionDisplaySchema.default('grid'),
+});
+export type SocialLinksProps = z.infer<typeof socialLinksPropsSchema>;
+
+/**
+ * One social link.
+ *
+ * An icon plus a URL rather than a closed list of platforms: a closed
+ * list is a promise to keep up with every network that matters, in a
+ * release cycle, forever — and it is wrong the day someone wants Mastodon
+ * or a Discord invite. `label` is required because an icon-only link with
+ * no accessible name is unusable with a screen reader, and it is what a
+ * social row is made of.
+ */
+export const socialLinkPropsSchema = z.object({
+  icon: z.string().nullable(),
+  label: z.string(),
+  url: z.string(),
+});
+export type SocialLinkProps = z.infer<typeof socialLinkPropsSchema>;
+
 export const sliderPropsSchema = z.object({
   display: collectionDisplaySchema.default('carousel'),
 });
