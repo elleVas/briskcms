@@ -1,4 +1,6 @@
 import type { PickedForm } from '@brisk/shared-types';
+import { useTranslation } from '../../../lib/use-translation';
+import { Button } from '../../../components/ui/button';
 import { useFormList } from '../../form-list-context';
 
 export interface FormPickerFieldProps {
@@ -7,6 +9,7 @@ export interface FormPickerFieldProps {
 }
 
 export function FormPickerField({ value, onChange }: FormPickerFieldProps) {
+  const { t } = useTranslation();
   const { pick } = useFormList();
 
   async function handlePick() {
@@ -15,25 +18,19 @@ export function FormPickerField({ value, onChange }: FormPickerFieldProps) {
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-      {value && <p style={{ margin: 0, fontSize: 14 }}>{value.formName}</p>}
-      <button
+    <div className="flex flex-col gap-2">
+      {value && <p className="m-0 text-sm">{value.formName}</p>}
+      <Button
         type="button"
+        variant="outline"
+        size="sm"
+        className="self-start"
         onClick={() => void handlePick()}
-        style={{
-          padding: '6px 12px',
-          borderRadius: 4,
-          border: '1px solid #d4d4d8',
-          background: '#fff',
-          color: '#18181b',
-          font: 'inherit',
-          fontSize: 14,
-          cursor: 'pointer',
-          alignSelf: 'flex-start',
-        }}
       >
-        {value ? 'Cambia modulo' : 'Scegli modulo'}
-      </button>
+        {value
+          ? t('canvas.pickers.form.change')
+          : t('canvas.pickers.form.choose')}
+      </Button>
     </div>
   );
 }

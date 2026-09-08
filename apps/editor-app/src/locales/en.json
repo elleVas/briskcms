@@ -918,6 +918,30 @@
         "border": "Border",
         "link": "Link"
       }
+    },
+    "blockSearch": {
+      "label": "Search blocks",
+      "placeholder": "Search blocks…",
+      "noResults": "No block matches “{{query}}”."
+    },
+    "pickers": {
+      "media": {
+        "change": "Change image",
+        "choose": "Choose image"
+      },
+      "form": {
+        "change": "Change form",
+        "choose": "Choose form"
+      },
+      "page": {
+        "change": "Change page",
+        "choose": "Choose page"
+      },
+      "icon": {
+        "change": "Change icon",
+        "choose": "Choose icon",
+        "remove": "Remove icon"
+      }
     }
   },
   "toast": {

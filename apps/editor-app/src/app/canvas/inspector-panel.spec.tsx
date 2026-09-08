@@ -94,7 +94,14 @@ describe('InspectorPanel', () => {
     expect(onChangeProp).toHaveBeenCalledWith('highlighted', true);
   });
 
-  it('renders a radio/select field with its own options', () => {
+  /*
+   * `radio` and `select` used to fall through to the same `<select>`, so
+   * a descriptor could say one and get the other. This checks the two are
+   * now actually different controls — the point of the fix, and the thing
+   * a test asserting "some element with these options" would keep passing
+   * through.
+   */
+  it('renders a radio field as a radio group, one option at a time visible', () => {
     const block: Block = {
       id: 'columns-1',
       type: 'Columns',
@@ -127,7 +134,50 @@ describe('InspectorPanel', () => {
       />,
     );
 
+    expect(screen.getByRole('radiogroup')).toBeTruthy();
+    const options = screen.getAllByRole('radio') as HTMLInputElement[];
+    expect(options).toHaveLength(2);
+    expect(options[0].checked).toBe(true);
+
+    fireEvent.click(options[1]);
+    expect(onChangeProp).toHaveBeenCalledWith('layout', 'three-equal');
+  });
+
+  it('renders a select field as a dropdown', () => {
+    const block: Block = {
+      id: 'columns-1',
+      type: 'Columns',
+      props: { layout: 'two-equal' },
+    };
+    const descriptor: BlockDescriptor = {
+      type: 'Columns',
+      label: 'Colonne',
+      category: 'layout',
+      defaultProps: { layout: 'two-equal' },
+      fields: [
+        {
+          kind: 'select',
+          key: 'layout',
+          label: 'Layout',
+          options: [
+            { label: '2 uguali', value: 'two-equal' },
+            { label: '3 uguali', value: 'three-equal' },
+          ],
+        },
+      ],
+    };
+    const onChangeProp = vi.fn();
+    render(
+      <InspectorPanel
+        block={block}
+        descriptor={descriptor}
+        onChangeProp={onChangeProp}
+        onChangeVariant={vi.fn()}
+      />,
+    );
+
     const select = screen.getByDisplayValue('2 uguali');
+    expect(screen.queryByRole('radiogroup')).toBeNull();
     fireEvent.change(select, { target: { value: 'three-equal' } });
 
     expect(onChangeProp).toHaveBeenCalledWith('layout', 'three-equal');

@@ -90,6 +90,14 @@ export interface UseBlockTreeMutationsResult {
   handleInsert: (descriptor: BlockDescriptor) => void;
   /** A whole strip at once — how a template lands on the page (docs/adr/0059). */
   handleInsertBlocks: (blocks: (Block & { id: string })[]) => void;
+  /** Inserts a copy beside the selection — see the implementation on why the ids change. */
+  handlePaste: (block: Block) => void;
+  /** Moves a block under a different parent, keeping its id, style and text. */
+  handleReparent: (
+    blockId: string,
+    parentId: string | null,
+    index: number,
+  ) => void;
   handleReorder: (parentId: string | null, orderedIds: string[]) => void;
   handleRemoveSelected: () => void;
   /** Swaps the selected block for another at the same place — see the implementation. */
@@ -592,6 +600,96 @@ export function useBlockTreeMutations({
   }
 
   /**
+   * Moves a block under a different parent, keeping the block itself
+   * intact (Fase 7).
+   *
+   * Until now this was impossible: the Layers panel refused a cross-parent
+   * drop, so getting a block into a Column meant deleting it and building
+   * it again in place — losing its per-instance styling, its variant and
+   * its text. This moves the same block, with the same id, so all three
+   * survive.
+   *
+   * One history entry, like the swap in `handleReplaceSelected`: an undo
+   * that put the block back but left the hole open would be a state
+   * nobody asked for.
+   */
+  function handleReparent(
+    blockId: string,
+    parentId: string | null,
+    index: number,
+  ): void {
+    const before = localBlocks;
+    const block = findBlockInTree(before, blockId);
+    const from = locateBlock(before, blockId);
+    if (!block?.id || !from) {
+      return;
+    }
+    const next = insertBlock(
+      removeBlock(before, blockId),
+      block as Block & { id: string },
+      {
+        parentId,
+        index,
+      },
+    );
+    applyLocalChange(next);
+    // Both ends of the move have to be re-rendered, and the fragments
+    // involved are the two PARENTS rather than the block: a container
+    // shows different chrome when it gains or loses a child (an empty-state
+    // hint appearing, a collection's arrows), which patching only the moved
+    // node would leave stale.
+    const sync = (tree: Block[]) => () => {
+      if (from.parentId) {
+        void patchParentBlock(from.parentId, tree);
+      } else {
+        bridge.removeBlock(blockId);
+      }
+      if (parentId) {
+        void patchParentBlock(parentId, tree);
+      }
+      // Out of a container and back to the root: there is no parent
+      // fragment to re-render, so the block is grafted in directly.
+      if (!parentId) {
+        const siblings = siblingsAt(tree, null);
+        const beforeBlockId = siblings[index + 1]?.id ?? null;
+        void insertBlockIntoCanvasAt(
+          block as Block & { id: string },
+          null,
+          beforeBlockId,
+        );
+      }
+    };
+    sync(next)();
+    recordHistory({
+      before,
+      after: next,
+      syncForward: sync(next),
+      syncBackward: sync(before),
+    });
+  }
+
+  /**
+   * Pastes a block beside the selected one, or at the end of the page when
+   * nothing is selected.
+   *
+   * Fresh ids on every paste (`cloneBlockWithNewIds`, the same function
+   * Duplicate uses): two pastes of one copied block must not share ids,
+   * which key the per-instance style rule and the translation overlay —
+   * a style set on the second copy would land on both.
+   */
+  function handlePaste(block: Block): void {
+    const location = selectedBlock?.id
+      ? locateBlock(localBlocks, selectedBlock.id)
+      : null;
+    performInsert(
+      cloneBlockWithNewIds(block),
+      location
+        ? { parentId: location.parentId, index: location.index + 1 }
+        : { parentId: null, index: localBlocks.length },
+    );
+  }
+
+  /**
    * The "+" inside a selected collection container (Testimonials, Team,
    * Accordion, ...) — it adds another child of its ONE allowed type
    * (`allowedChildTypes[0]`) without opening the picker: there is no
@@ -647,6 +745,8 @@ export function useBlockTreeMutations({
     recordEdit,
     handleInsert,
     handleInsertBlocks,
+    handlePaste,
+    handleReparent,
     handleReplaceSelected,
     handleReorder,
     handleRemoveSelected,

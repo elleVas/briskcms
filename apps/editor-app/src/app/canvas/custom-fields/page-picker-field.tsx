@@ -1,4 +1,6 @@
 import type { PickedPage } from '@brisk/shared-types';
+import { useTranslation } from '../../../lib/use-translation';
+import { Button } from '../../../components/ui/button';
 import { usePageList } from '../../page-list-context';
 
 export interface PagePickerFieldProps {
@@ -7,6 +9,7 @@ export interface PagePickerFieldProps {
 }
 
 export function PagePickerField({ value, onChange }: PagePickerFieldProps) {
+  const { t } = useTranslation();
   const { pick } = usePageList();
 
   async function handlePick() {
@@ -15,25 +18,19 @@ export function PagePickerField({ value, onChange }: PagePickerFieldProps) {
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-      {value && <p style={{ margin: 0, fontSize: 14 }}>{value.title}</p>}
-      <button
+    <div className="flex flex-col gap-2">
+      {value && <p className="m-0 text-sm">{value.title}</p>}
+      <Button
         type="button"
+        variant="outline"
+        size="sm"
+        className="self-start"
         onClick={() => void handlePick()}
-        style={{
-          padding: '6px 12px',
-          borderRadius: 4,
-          border: '1px solid #d4d4d8',
-          background: '#fff',
-          color: '#18181b',
-          font: 'inherit',
-          fontSize: 14,
-          cursor: 'pointer',
-          alignSelf: 'flex-start',
-        }}
       >
-        {value ? 'Cambia pagina' : 'Scegli pagina'}
-      </button>
+        {value
+          ? t('canvas.pickers.page.change')
+          : t('canvas.pickers.page.choose')}
+      </Button>
     </div>
   );
 }

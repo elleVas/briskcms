@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { Block } from '@brisk/shared-types';
 import type { BlockDescriptor } from '@brisk/block-registry';
 import {
+  blockAncestry,
   blockIds,
   cloneBlockWithNewIds,
   createBlockFromDescriptor,
@@ -433,5 +434,44 @@ describe('createBlockFromDescriptor', () => {
     ]);
 
     expect(block.children).toEqual([]);
+  });
+});
+
+describe('blockAncestry', () => {
+  const tree: Block[] = [
+    { id: 'a', type: 'Hero', props: {} },
+    {
+      id: 'b',
+      type: 'Columns',
+      props: {},
+      children: [
+        {
+          id: 'c',
+          type: 'Column',
+          props: {},
+          children: [{ id: 'd', type: 'Text', props: {} }],
+        },
+      ],
+    },
+  ];
+
+  it('returns the chain down to the block, the block included', () => {
+    expect(blockAncestry(tree, 'd').map((block) => block.id)).toEqual([
+      'b',
+      'c',
+      'd',
+    ]);
+  });
+
+  it('returns just the block itself at the root', () => {
+    expect(blockAncestry(tree, 'a').map((block) => block.id)).toEqual(['a']);
+  });
+
+  /*
+   * A selection can outlive the block it pointed at for one render, after
+   * an undo or a delete — the caller renders nothing rather than crashing.
+   */
+  it('returns nothing for a block that is no longer there', () => {
+    expect(blockAncestry(tree, 'gone')).toEqual([]);
   });
 });

@@ -18,6 +18,14 @@ const textDescriptor: BlockDescriptor = {
   fields: [],
 };
 
+const columnsDescriptor: BlockDescriptor = {
+  type: 'Columns',
+  label: 'Colonne',
+  category: 'layout',
+  defaultProps: {},
+  fields: [],
+};
+
 describe('BlockPicker', () => {
   it('renders one collapsed section per category, expandable to show its registered block types', () => {
     render(
@@ -82,5 +90,61 @@ describe('BlockPicker', () => {
 
     expect(screen.getByRole('button', { name: 'Hero' })).toBeDefined();
     expect(screen.getByRole('button', { name: 'Testo' })).toBeDefined();
+  });
+});
+
+/*
+ * 53 insertable types in collapsed accordion sections: without a search
+ * field, finding one meant knowing which category somebody had filed it
+ * under. That is the item Fase 7 lists, and these are the three things it
+ * has to get right.
+ */
+describe('searching the picker', () => {
+  function renderPicker() {
+    render(
+      <BlockPicker
+        categories={[
+          { title: 'Contenuto', types: ['Hero', 'Text'] },
+          { title: 'Layout', types: ['Columns'] },
+        ]}
+        registry={[heroDescriptor, textDescriptor, columnsDescriptor]}
+        onInsert={vi.fn()}
+      />,
+    );
+    return screen.getByRole('searchbox');
+  }
+
+  /*
+   * A search that found three blocks and left them behind collapsed
+   * sections would look like a search that found nothing.
+   */
+  it('opens the matching sections instead of leaving the results hidden', () => {
+    fireEvent.change(renderPicker(), { target: { value: 'hero' } });
+
+    expect(screen.getByText('Hero')).toBeDefined();
+    expect(screen.queryByText('Testo')).toBeNull();
+    expect(screen.queryByText('Layout')).toBeNull();
+  });
+
+  /*
+   * Somebody reading the UI types "Testo"; somebody reading the docs types
+   * "Text". Matching only one of the two is a search that works if you
+   * already knew where to look.
+   */
+  it('matches the translated label and the type name alike', () => {
+    const box = renderPicker();
+
+    fireEvent.change(box, { target: { value: 'testo' } });
+    expect(screen.getByText('Testo')).toBeDefined();
+
+    fireEvent.change(box, { target: { value: 'text' } });
+    expect(screen.getByText('Testo')).toBeDefined();
+  });
+
+  it('says so when nothing matches, rather than showing an empty list', () => {
+    fireEvent.change(renderPicker(), { target: { value: 'zzz' } });
+
+    expect(screen.queryByText('Contenuto')).toBeNull();
+    expect(screen.getByText(/zzz/)).toBeDefined();
   });
 });

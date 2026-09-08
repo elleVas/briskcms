@@ -68,3 +68,44 @@ describe('block i18n key coverage', () => {
     }
   });
 });
+
+/**
+ * The other half of the same problem, and the half nothing was checking.
+ *
+ * `t()` is typed against en.json, so a key missing THERE is a compile
+ * error — a real guarantee, and the reason the English side has never
+ * drifted. it.json has no such backstop: a key added in English and
+ * forgotten in Italian falls back to the English string silently, and the
+ * only way anyone finds out is by reading the interface in Italian and
+ * seeing a word in the wrong language.
+ *
+ * Fase 7 added five groups of keys across two files; this is what makes
+ * the next batch fail loudly instead.
+ */
+describe('the two locales carry the same keys', () => {
+  function leafKeys(node: unknown, prefix = ''): string[] {
+    if (typeof node !== 'object' || node === null) {
+      return [prefix];
+    }
+    return Object.entries(node as Record<string, unknown>).flatMap(
+      ([key, value]) => leafKeys(value, prefix ? `${prefix}.${key}` : key),
+    );
+  }
+
+  it('has no key in English that Italian is missing', () => {
+    const english = new Set(leafKeys(en));
+    const italian = new Set(leafKeys(itLocale));
+    expect([...english].filter((key) => !italian.has(key))).toEqual([]);
+  });
+
+  /*
+   * And the reverse: a key only Italian has is either a typo or something
+   * deleted from English and left behind — dead weight either way, and
+   * one nobody would ever see.
+   */
+  it('has no key in Italian that English is missing', () => {
+    const english = new Set(leafKeys(en));
+    const italian = new Set(leafKeys(itLocale));
+    expect([...italian].filter((key) => !english.has(key))).toEqual([]);
+  });
+});

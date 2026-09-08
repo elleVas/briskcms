@@ -36,13 +36,15 @@ interface FieldRowProps {
   field: FieldDescriptor;
   value: unknown;
   onChange: (value: unknown) => void;
+  /** Scopes a radio group's `name` — see the `radio` case. */
+  blockId?: string;
 }
 
 export const nativeFieldClass =
   'h-8 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 py-1 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50';
 
 /** One input per kind — a panel driven by the field descriptor, replacing Puck's Fields<T> sidebar (docs/adr/0007, see the visual editor plan, Day 3). */
-function FieldRow({ field, value, onChange }: FieldRowProps) {
+function FieldRow({ field, value, onChange, blockId }: FieldRowProps) {
   const { tLabel } = useTranslation();
   switch (field.kind) {
     case 'text':
@@ -105,6 +107,43 @@ function FieldRow({ field, value, onChange }: FieldRowProps) {
         />
       );
     case 'radio':
+      /*
+       * A real radio group. `radio` and `select` used to fall through to
+       * the same `<select>`, which made the two kinds indistinguishable —
+       * a descriptor could say `radio`, the editor drew a dropdown, and
+       * the difference existed only in the type.
+       *
+       * They are not interchangeable: a radio group shows every option at
+       * once, which is what a three-way choice like a Container's padding
+       * wants, while a dropdown hides all but one, which is what a
+       * sixty-item list needs. Now the descriptor decides.
+       */
+      return (
+        <div
+          role="radiogroup"
+          aria-label={tLabel(field.label)}
+          className="flex flex-wrap gap-2"
+        >
+          {field.options.map((option) => (
+            <label
+              key={option.value}
+              className="flex items-center gap-1.5 text-sm"
+            >
+              <input
+                type="radio"
+                className="size-4 border-input"
+                // Scoped to this field AND this block: two blocks of the
+                // same type on one page would otherwise share a radio
+                // group, and picking on one would clear the other.
+                name={`${blockId ?? 'block'}-${field.key}`}
+                checked={value === option.value}
+                onChange={() => onChange(option.value)}
+              />
+              {tLabel(option.label)}
+            </label>
+          ))}
+        </div>
+      );
     case 'select':
       return (
         <select
@@ -255,6 +294,7 @@ export function InspectorPanel({
             <FieldRow
               field={field}
               value={block.props[field.key]}
+              blockId={block.id}
               onChange={(value) => onChangeProp(field.key, value)}
             />
             {showRequiredWarning && (

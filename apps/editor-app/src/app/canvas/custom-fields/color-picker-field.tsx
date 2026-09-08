@@ -90,7 +90,7 @@ export function ColorPickerField({
             width: 36,
             height: 28,
             padding: 0,
-            border: '1px solid #d4d4d8',
+            border: '1px solid var(--border)',
             borderRadius: 4,
             cursor: 'pointer',
           }}
@@ -104,7 +104,7 @@ export function ColorPickerField({
               height: 16,
               flexShrink: 0,
               borderRadius: 3,
-              border: '1px solid #d4d4d8',
+              border: '1px solid var(--border)',
               background: defaultValue,
             }}
           />
@@ -134,7 +134,7 @@ export function ColorPickerField({
             minWidth: 0,
             padding: '6px 8px',
             borderRadius: 4,
-            border: '1px solid #d4d4d8',
+            border: '1px solid var(--border)',
             background: '#fff',
             color: '#18181b',
             font: 'inherit',
@@ -149,7 +149,7 @@ export function ColorPickerField({
             style={{
               padding: '6px 10px',
               borderRadius: 4,
-              border: '1px solid #d4d4d8',
+              border: '1px solid var(--border)',
               background: '#fff',
               color: '#18181b',
               font: 'inherit',
@@ -187,7 +187,7 @@ export function ColorPickerField({
                 border:
                   value === swatch.cssValue
                     ? '2px solid #18181b'
-                    : '1px solid #d4d4d8',
+                    : '1px solid var(--border)',
               }}
             />
           ))}

@@ -2,6 +2,18 @@ import { useTranslation } from 'react-i18next';
 import type { PickedMedia } from '@brisk/shared-types';
 import { useMediaPicker } from '../../media-picker-context';
 
+/*
+ * The design system's own classes, not literal hex values (Fase 7).
+ * These fields used to carry `background: '#fff'` and `color: '#18181b'`
+ * inline, which is a white box with near-black text — correct in the light
+ * theme and unreadable in the dark one, where the panel around them is
+ * dark. A class reads the same tokens every other control does.
+ */
+const buttonClass =
+  'inline-flex h-7 shrink-0 items-center justify-center rounded-lg border border-border bg-background px-2.5 text-[0.8rem] font-medium hover:bg-muted';
+const inputClass =
+  'h-8 min-w-0 rounded-lg border border-input bg-transparent px-2.5 py-1 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50';
+
 export interface GalleryImageItem {
   media: PickedMedia | null;
   alt: string;
@@ -14,27 +26,6 @@ export interface GalleryPickerFieldProps {
   value: GalleryImageItem[];
   onChange: (value: GalleryImageItem[]) => void;
 }
-
-const buttonStyle = {
-  padding: '6px 12px',
-  borderRadius: 4,
-  border: '1px solid #d4d4d8',
-  background: '#fff',
-  color: '#18181b',
-  font: 'inherit',
-  fontSize: 14,
-  cursor: 'pointer',
-};
-
-const inputStyle = {
-  padding: '6px 8px',
-  borderRadius: 4,
-  border: '1px solid #d4d4d8',
-  background: '#fff',
-  color: '#18181b',
-  font: 'inherit',
-  fontSize: 14,
-};
 
 /** Every slot (picker, alt text, remove) is always visible, no expansion step. */
 export function GalleryPickerField({
@@ -110,7 +101,7 @@ export function GalleryPickerField({
             flexDirection: 'column',
             gap: 6,
             padding: 8,
-            border: '1px solid #d4d4d8',
+            border: '1px solid var(--border)',
             borderRadius: 4,
           }}
         >
@@ -121,14 +112,14 @@ export function GalleryPickerField({
               style={{
                 maxWidth: '100%',
                 borderRadius: 4,
-                border: '1px solid #d4d4d8',
+                border: '1px solid var(--border)',
               }}
             />
           )}
           <button
             type="button"
             onClick={() => void handlePickAt(index)}
-            style={{ ...buttonStyle, alignSelf: 'flex-start' }}
+            className={`${buttonClass} self-start`}
           >
             {item.media ? t('gallery.field.change') : t('gallery.field.pick')}
           </button>
@@ -138,7 +129,7 @@ export function GalleryPickerField({
             value={item.alt}
             disabled={item.isDecorative}
             onChange={(event) => handleAltChange(index, event.target.value)}
-            style={inputStyle}
+            className={inputClass}
           />
           <label
             style={{
@@ -167,7 +158,7 @@ export function GalleryPickerField({
             placeholder={t('gallery.field.caption')}
             value={item.caption ?? ''}
             onChange={(event) => handleCaptionChange(index, event.target.value)}
-            style={inputStyle}
+            className={inputClass}
           />
           <div style={{ display: 'flex', gap: 6 }}>
             <button
@@ -175,7 +166,7 @@ export function GalleryPickerField({
               onClick={() => handleMove(index, -1)}
               disabled={index === 0}
               aria-label={t('gallery.field.moveUp')}
-              style={buttonStyle}
+              className={buttonClass}
             >
               ↑
             </button>
@@ -184,21 +175,21 @@ export function GalleryPickerField({
               onClick={() => handleMove(index, 1)}
               disabled={index === value.length - 1}
               aria-label={t('gallery.field.moveDown')}
-              style={buttonStyle}
+              className={buttonClass}
             >
               ↓
             </button>
             <button
               type="button"
               onClick={() => handleRemove(index)}
-              style={buttonStyle}
+              className={buttonClass}
             >
               {t('gallery.field.remove')}
             </button>
           </div>
         </div>
       ))}
-      <button type="button" onClick={handleAdd} style={buttonStyle}>
+      <button type="button" onClick={handleAdd} className={buttonClass}>
         {t('gallery.field.add')}
       </button>
     </div>

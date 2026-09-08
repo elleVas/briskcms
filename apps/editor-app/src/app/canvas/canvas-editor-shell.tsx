@@ -60,6 +60,7 @@ import {
 import { LayersPanel } from './layers-panel';
 import { isRectVisibleInIframe, useIframeGeometry } from './overlay-layer';
 import {
+  blockAncestry,
   blockIds,
   findBlockInTree,
   locateBlock,
@@ -227,6 +228,12 @@ export function CanvasEditorShell({
   // (docs/adr/0059). It is the `key` of CanvasFrame, so a bump remounts the
   // iframe with a fresh preview token.
   const [canvasNonce, setCanvasNonce] = useState(0);
+  // The editor's own clipboard. Not the system one: reading that needs a
+  // permission prompt, and writing a block to it as text would put a wall
+  // of JSON into whatever the person pastes into next. It holds ONE block
+  // and lives as long as the editor is open, which is what "copy this,
+  // paste it on the next page" needs.
+  const [clipboard, setClipboard] = useState<Block | null>(null);
   const reloadCanvas = useCallback(() => setCanvasNonce((n) => n + 1), []);
 
   const syncKey = `${pageId}:${restoredAt}`;
@@ -411,6 +418,24 @@ export function CanvasEditorShell({
   const selectedDescriptor = selectedBlock
     ? registry.find((d) => d.type === selectedBlock.type)
     : undefined;
+  // The trail the toolbar shows, already labelled: a step whose block has
+  // no id cannot be selected and is dropped rather than rendered as a
+  // dead word.
+  const selectedAncestry = bridge.selectedBlockId
+    ? blockAncestry(localBlocks, bridge.selectedBlockId).flatMap((block) =>
+        block.id
+          ? [
+              {
+                id: block.id,
+                label: tLabel(
+                  registry.find((d) => d.type === block.type)?.label ??
+                    block.type,
+                ),
+              },
+            ]
+          : [],
+      )
+    : [];
   const selectedRect = bridge.selectedBlockId
     ? bridge.blockRects.find((r) => r.id === bridge.selectedBlockId)
     : undefined;
@@ -445,6 +470,8 @@ export function CanvasEditorShell({
     handleRemoveSelected,
     handleMoveSelected,
     handleDuplicateSelected,
+    handlePaste,
+    handleReparent,
     handleReplaceSelected,
     handleAddChild,
     handleInsertAtRoot,
@@ -548,34 +575,116 @@ export function CanvasEditorShell({
   // having here is for the PARENT's own inputs/textareas (the editor's
   // various dialogs and panels) — leaving their native browser undo alone
   // rather than intercepting it.
+  // Every shortcut reads through this ref rather than being captured in
+  // the listener's closure. The listener is attached once (an empty
+  // dependency list, so it is not torn down and rebuilt on every render),
+  // and undo/redo could get away with that because they read current
+  // state at call time — the ones added here do not: they close over
+  // `selectedBlock` and the block tree, and a stale closure would delete
+  // the block that WAS selected three renders ago.
+  const shortcutsRef = useRef({
+    undo,
+    redo,
+    handleRemoveSelected,
+    handleDuplicateSelected,
+    handleMoveSelected,
+    handlePaste,
+    selectedBlock,
+    clipboard,
+    setClipboard,
+  });
+  // In an effect and not during render, for recordEditRef's reason just
+  // below: React forbids touching a ref while rendering, and the linter
+  // says so. Safe here because the listener only fires on a real key
+  // press, which cannot happen before the first effect has run.
+  useEffect(() => {
+    shortcutsRef.current = {
+      undo,
+      redo,
+      handleRemoveSelected,
+      handleDuplicateSelected,
+      handleMoveSelected,
+      handlePaste,
+      selectedBlock,
+      clipboard,
+      setClipboard,
+    };
+  });
+
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent): void {
-      const isUndoRedoKey =
-        (event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'z';
-      const isRedoKey =
-        (isUndoRedoKey && event.shiftKey) ||
-        ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'y');
-      if (!isUndoRedoKey && !isRedoKey) {
-        return;
-      }
+      // The parent document's own inputs, dialogs and panels keep their
+      // native behaviour — Delete has to delete a character, not a block.
+      // Text editing ON THE CANVAS is not this listener's problem at all:
+      // it happens inside the sandboxed iframe, a separate document whose
+      // key events never reach here.
       const active = document.activeElement;
-      const isEditingText =
+      if (
         active instanceof HTMLInputElement ||
         active instanceof HTMLTextAreaElement ||
-        (active instanceof HTMLElement && active.isContentEditable);
-      if (isEditingText) {
+        (active instanceof HTMLElement && active.isContentEditable)
+      ) {
         return;
       }
-      event.preventDefault();
-      if (isRedoKey) {
-        redo();
-      } else {
-        undo();
+
+      const current = shortcutsRef.current;
+      const modifier = event.ctrlKey || event.metaKey;
+      const key = event.key.toLowerCase();
+
+      if (modifier && key === 'z') {
+        event.preventDefault();
+        if (event.shiftKey) current.redo();
+        else current.undo();
+        return;
+      }
+      if (modifier && key === 'y') {
+        event.preventDefault();
+        current.redo();
+        return;
+      }
+      if (modifier && key === 'd') {
+        event.preventDefault();
+        current.handleDuplicateSelected();
+        return;
+      }
+      if (modifier && key === 'c') {
+        // A clipboard of our own, not the system one. Reading the system
+        // clipboard needs a permission prompt, and writing a block to it
+        // as text would mean pasting a wall of JSON into any other app —
+        // this copies a BLOCK, and only inside the editor.
+        if (current.selectedBlock) {
+          event.preventDefault();
+          current.setClipboard(current.selectedBlock);
+        }
+        return;
+      }
+      if (modifier && key === 'v') {
+        if (current.clipboard) {
+          event.preventDefault();
+          current.handlePaste(current.clipboard);
+        }
+        return;
+      }
+      if (key === 'delete' || key === 'backspace') {
+        if (current.selectedBlock) {
+          event.preventDefault();
+          current.handleRemoveSelected();
+        }
+        return;
+      }
+      // Alt, not a bare arrow: the arrows scroll, and taking that away
+      // from a person reading a long page to make them move a block would
+      // be the wrong trade. Alt+Arrow is what an editor with a tree
+      // usually binds this to.
+      if (event.altKey && (key === 'arrowup' || key === 'arrowdown')) {
+        if (current.selectedBlock) {
+          event.preventDefault();
+          current.handleMoveSelected(key === 'arrowup' ? -1 : 1);
+        }
       }
     }
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- undo/redo are recreated on every render by useBlockTreeMutations but already read current state at call time, so there is no need to reattach the listener when their identity changes.
   }, []);
 
   // A purely derived computation (no state of its own) — it updates on
@@ -1004,6 +1113,8 @@ export function CanvasEditorShell({
                   sectionEditing,
                   selectedBlock.id,
                 )}
+                ancestry={selectedAncestry}
+                onSelectBlock={bridge.selectBlock}
                 onMakeReusable={
                   // Not in the section editor (a section inside itself) and
                   // not in the header/footer, which are already applied to
@@ -1087,6 +1198,25 @@ export function CanvasEditorShell({
                 hoveredBlockId={bridge.hoveredBlockId}
                 selectedBlockId={bridge.selectedBlockId}
                 onReorder={handleReorder}
+                onReparent={handleReparent}
+                // The descriptors' own rules, as two predicates: the panel
+                // stays free of the registry, and the answer is the same
+                // one the drag-from-sidebar path already uses.
+                isContainerType={(type) =>
+                  Boolean(registry.find((d) => d.type === type)?.isContainer)
+                }
+                canContain={(parentType, childType) => {
+                  const parent = registry.find((d) => d.type === parentType);
+                  if (!parent?.isContainer) {
+                    return false;
+                  }
+                  // No list means "anything" (Container/Column); a list
+                  // means exactly those (Testimonials→Testimonial).
+                  return (
+                    !parent.allowedChildTypes ||
+                    parent.allowedChildTypes.includes(childType)
+                  );
+                }}
                 onSelect={(blockId) => {
                   bridge.selectBlock(blockId);
                   bridge.scrollToBlock(blockId);

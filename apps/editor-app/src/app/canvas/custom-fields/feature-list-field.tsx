@@ -15,7 +15,7 @@ export function FeatureListField({ value, onChange }: FeatureListFieldProps) {
         width: '100%',
         padding: '6px 8px',
         borderRadius: 4,
-        border: '1px solid #d4d4d8',
+        border: '1px solid var(--border)',
         background: '#fff',
         color: '#18181b',
         font: 'inherit',

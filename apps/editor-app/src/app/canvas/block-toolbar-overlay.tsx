@@ -84,6 +84,14 @@ export interface BlockToolbarOverlayProps {
   onChangeVariant: (variant: string | undefined) => void;
   /** How much page width this block claims (ADR-0049) — present only for a ROOT-level block, see InspectorPanel. */
   onChangeAlign?: (align: BlockAlign | undefined) => void;
+  /**
+   * The chain from the outermost ancestor down to this block, each step
+   * already labelled — the toolbar shows it and lets a person climb it.
+   * Empty falls back to the block's own label.
+   */
+  ancestry?: { id: string; label: string }[];
+  /** Selects an ancestor from the breadcrumb. */
+  onSelectBlock?: (blockId: string) => void;
   /** Section editor only — see InspectorPanel's own prop (docs/adr/0059). */
   sectionEditing?: { exposed: string[]; onToggle: (field: string) => void };
   /**
@@ -156,6 +164,8 @@ export function BlockToolbarOverlay({
   onChangeVariant,
   onChangeAlign,
   sectionEditing,
+  ancestry = [],
+  onSelectBlock,
   onMakeReusable,
   onMoveUp,
   onMoveDown,
@@ -270,12 +280,39 @@ export function BlockToolbarOverlay({
 
   return (
     <div className="pointer-events-none absolute inset-0 overflow-visible">
+      {/*
+        The breadcrumb was the selected block's own label and nothing
+        else — a label pretending to be a trail. It is the ancestor chain
+        now, and every step of it selects that ancestor: a block inside a
+        Column inside a Columns was otherwise unreachable except by
+        hunting for a pixel its children did not already cover, which is
+        the whole reason the Layers panel had to grow click-to-select.
+      */}
       <div
         data-testid="block-breadcrumb"
         className="pointer-events-auto flex items-center gap-1 rounded bg-primary px-2 py-1 text-xs font-medium text-primary-foreground shadow-sm"
         style={toPillStyle(geometry, rect)}
       >
-        {tLabel(descriptor.label)}
+        {ancestry.length > 0
+          ? ancestry.map((step, index) => (
+              <span key={step.id} className="flex items-center gap-1">
+                {index > 0 && <span aria-hidden="true">›</span>}
+                {index === ancestry.length - 1 ? (
+                  // The selected block itself: a label, not a button —
+                  // clicking it would select what is already selected.
+                  <span>{step.label}</span>
+                ) : (
+                  <button
+                    type="button"
+                    className="underline-offset-2 hover:underline"
+                    onClick={() => onSelectBlock?.(step.id)}
+                  >
+                    {step.label}
+                  </button>
+                )}
+              </span>
+            ))
+          : tLabel(descriptor.label)}
       </div>
 
       {isRootLevel && (
