@@ -9,22 +9,57 @@ type Props = GalleryProps & {
   instanceClass?: string | null;
 };
 
-const { images, locale, instanceClass } = Astro.props;
+const { images, columns, aspectRatio, lightbox, locale, instanceClass } =
+  Astro.props;
 const i18n = new Translator(locale);
 ---
 
-<div class:list={['gallery', instanceClass]}>
+<div
+  class:list={[
+    'gallery',
+    `gallery--cols-${columns}`,
+    `gallery--ratio-${aspectRatio}`,
+    instanceClass,
+  ]}
+  data-brisk-lightbox={lightbox ? '' : undefined}
+  data-brisk-lightbox-close={lightbox ? i18n.t('image.lightboxClose') : undefined}
+>
   {
     images.some((image) => image.media) ? (
-      images.map(
-        (image) =>
-          image.media && (
-            <OptimizedImage
-              media={image.media}
-              alt={image.isDecorative ? '' : image.alt}
-              class="gallery-image"
-            />
-          ),
+      images.map((image) =>
+        image.media ? (
+          <figure class="gallery-item">
+            {/* Same reasoning as Image.astro: a real <button> when the
+                picture opens, so it is reachable by keyboard and
+                announced as something that does something. */}
+            {lightbox ? (
+              <button
+                type="button"
+                class="gallery-item__zoom"
+                data-brisk-lightbox-src={image.media.url}
+                data-brisk-lightbox-alt={image.isDecorative ? '' : image.alt}
+                aria-label={i18n.t('image.lightboxOpen')}
+              >
+                <OptimizedImage
+                  media={image.media}
+                  alt={image.isDecorative ? '' : image.alt}
+                  class="gallery-image"
+                />
+              </button>
+            ) : (
+              <OptimizedImage
+                media={image.media}
+                alt={image.isDecorative ? '' : image.alt}
+                class="gallery-image"
+              />
+            )}
+            {image.caption && (
+              <figcaption class="gallery-item__caption">
+                {image.caption}
+              </figcaption>
+            )}
+          </figure>
+        ) : null,
       )
     ) : (
       <p>{i18n.t('gallery.empty')}</p>
@@ -38,7 +73,14 @@ const i18n = new Translator(locale);
      were the same gallery. Fallbacks are the values already in use. */
   .gallery {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    /* `auto` is the responsive grid this block always had — as many
+       200px columns as fit. A fixed count is what a three-up layout that
+       must STAY three-up needs, and `minmax(0, 1fr)` rather than `1fr`
+       so a wide picture cannot push the track past its share. */
+    grid-template-columns: var(
+      --brisk-gallery-columns,
+      repeat(auto-fill, minmax(200px, 1fr))
+    );
     gap: var(--brisk-override-gap, 0.5rem);
     background: var(--brisk-override-bg, transparent);
     border-radius: var(--brisk-override-radius, 0);
@@ -47,9 +89,83 @@ const i18n = new Translator(locale);
   }
   /* :global() because OptimizedImage (a child component) renders the
   actual <img> — see Image.astro's own style block for the full reasoning. */
+  .gallery--cols-2 {
+    --brisk-gallery-columns: repeat(2, minmax(0, 1fr));
+  }
+  .gallery--cols-3 {
+    --brisk-gallery-columns: repeat(3, minmax(0, 1fr));
+  }
+  .gallery--cols-4 {
+    --brisk-gallery-columns: repeat(4, minmax(0, 1fr));
+  }
+  .gallery--cols-5 {
+    --brisk-gallery-columns: repeat(5, minmax(0, 1fr));
+  }
+  .gallery--cols-6 {
+    --brisk-gallery-columns: repeat(6, minmax(0, 1fr));
+  }
+
+  /* A fixed column count has to stop being fixed on a narrow screen, or
+     six columns on a phone are six unreadable slivers. Container query,
+     not media: a gallery in a sidebar should collapse for the same
+     reason (ADR-0047). */
+  @container (max-width: 768px) {
+    .gallery--cols-4,
+    .gallery--cols-5,
+    .gallery--cols-6 {
+      --brisk-gallery-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+  @container (max-width: 480px) {
+    .gallery--cols-2,
+    .gallery--cols-3,
+    .gallery--cols-4,
+    .gallery--cols-5,
+    .gallery--cols-6 {
+      --brisk-gallery-columns: minmax(0, 1fr);
+    }
+  }
+
+  .gallery-item {
+    margin: 0;
+    min-width: 0;
+  }
+  .gallery-item__zoom {
+    display: block;
+    padding: 0;
+    border: 0;
+    background: none;
+    cursor: zoom-in;
+    width: 100%;
+  }
+  .gallery-item__caption {
+    margin-top: 0.375rem;
+    font-size: 0.8125rem;
+    color: var(--muted-foreground);
+  }
+
   :global(.gallery-image) {
     width: 100%;
-    aspect-ratio: 1 / 1;
     object-fit: cover;
   }
+  /* `square` is what this block always rendered, so it stays the
+     default; `original` is the one that declares nothing. */
+  .gallery--ratio-square :global(.gallery-image) {
+    aspect-ratio: 1 / 1;
+  }
+  .gallery--ratio-landscape :global(.gallery-image) {
+    aspect-ratio: 4 / 3;
+  }
+  .gallery--ratio-portrait :global(.gallery-image) {
+    aspect-ratio: 3 / 4;
+  }
+  .gallery--ratio-wide :global(.gallery-image) {
+    aspect-ratio: 16 / 9;
+  }
 </style>
+
+<script>
+  import { lightboxBehaviors } from '../../lib/block-behaviors/lightbox';
+  import { runBlockBehaviors } from '../../lib/block-behaviors/run-block-behaviors';
+  runBlockBehaviors(document, lightboxBehaviors);
+</script>

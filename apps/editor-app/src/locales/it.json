@@ -889,6 +889,27 @@
           "slider": "Slider (uno alla volta)",
           "carousel": "Carosello (più elementi)"
         }
+      },
+      "alignment": {
+        "fieldLabel": "Allineamento",
+        "options": {
+          "start": "A sinistra",
+          "center": "Al centro",
+          "end": "A destra"
+        }
+      },
+      "aspectRatio": {
+        "fieldLabel": "Forma",
+        "options": {
+          "original": "Come caricata",
+          "square": "Quadrata",
+          "landscape": "Orizzontale (4:3)",
+          "portrait": "Verticale (3:4)",
+          "wide": "Panoramica (16:9)"
+        }
+      },
+      "caption": {
+        "fieldLabel": "Didascalia"
       }
     },
     "accordionItem": {
@@ -1117,6 +1138,17 @@
       "fields": {
         "images": {
           "fieldLabel": "Immagini"
+        },
+        "columns": {
+          "fieldLabel": "Colonne",
+          "options": {
+            "auto": "Adatta automaticamente",
+            "2": "2",
+            "3": "3",
+            "4": "4",
+            "5": "5",
+            "6": "6"
+          }
         }
       }
     },
@@ -1174,6 +1206,17 @@
         },
         "caption": {
           "fieldLabel": "Didascalia"
+        },
+        "linkType": {
+          "fieldLabel": "Collega a",
+          "options": {
+            "none": "Niente",
+            "page": "Una pagina del sito",
+            "url": "Un indirizzo"
+          }
+        },
+        "lightbox": {
+          "fieldLabel": "Apri a schermo intero al clic"
         }
       }
     },
@@ -1416,6 +1459,9 @@
       "fields": {
         "url": {
           "fieldLabel": "URL video"
+        },
+        "poster": {
+          "fieldLabel": "Immagine di copertina (prima del caricamento)"
         }
       }
     },
@@ -1512,6 +1558,20 @@
     },
     "carousel": {
       "label": "Carosello"
+    }
+  },
+  "gallery": {
+    "field": {
+      "pick": "Scegli immagine",
+      "change": "Cambia immagine",
+      "alt": "Testo alternativo",
+      "decorative": "Immagine decorativa (nessun testo alternativo necessario)",
+      "altRequired": "Testo alternativo richiesto (o segna come decorativa)",
+      "caption": "Didascalia (facoltativa)",
+      "moveUp": "Sposta su",
+      "moveDown": "Sposta giù",
+      "remove": "Rimuovi",
+      "add": "Aggiungi immagine"
     }
   }
 }

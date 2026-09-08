@@ -72,5 +72,7 @@
   "cookieConsent.categoryExperience": "Experience",
   "cookieConsent.categoryExperienceDescription": "Personalizes content shown by this site and its partners.",
   "cookieConsent.privacyPolicyLink": "Privacy Policy",
-  "cookieConsent.cookiePolicyLink": "Cookie Policy"
+  "cookieConsent.cookiePolicyLink": "Cookie Policy",
+  "image.lightboxOpen": "See the picture full size",
+  "image.lightboxClose": "Close the picture"
 }

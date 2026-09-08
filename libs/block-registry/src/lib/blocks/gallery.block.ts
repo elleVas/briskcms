@@ -9,6 +9,9 @@ export const galleryBlock: BlockDescriptor<GalleryProps> = {
   category: 'content',
   defaultProps: {
     images: [],
+    columns: 'auto',
+    aspectRatio: 'square',
+    lightbox: false,
   },
   fields: [
     FieldBuilder.custom(
@@ -16,6 +19,45 @@ export const galleryBlock: BlockDescriptor<GalleryProps> = {
       'blocks.gallery.fields.images.fieldLabel',
       'gallery',
     ),
+    {
+      kind: 'select',
+      key: 'columns',
+      label: 'blocks.gallery.fields.columns.fieldLabel',
+      options: [
+        { label: 'blocks.gallery.fields.columns.options.auto', value: 'auto' },
+        { label: 'blocks.gallery.fields.columns.options.2', value: '2' },
+        { label: 'blocks.gallery.fields.columns.options.3', value: '3' },
+        { label: 'blocks.gallery.fields.columns.options.4', value: '4' },
+        { label: 'blocks.gallery.fields.columns.options.5', value: '5' },
+        { label: 'blocks.gallery.fields.columns.options.6', value: '6' },
+      ],
+    },
+    {
+      kind: 'select',
+      key: 'aspectRatio',
+      label: 'blocks.shared.aspectRatio.fieldLabel',
+      options: [
+        {
+          label: 'blocks.shared.aspectRatio.options.original',
+          value: 'original',
+        },
+        { label: 'blocks.shared.aspectRatio.options.square', value: 'square' },
+        {
+          label: 'blocks.shared.aspectRatio.options.landscape',
+          value: 'landscape',
+        },
+        {
+          label: 'blocks.shared.aspectRatio.options.portrait',
+          value: 'portrait',
+        },
+        { label: 'blocks.shared.aspectRatio.options.wide', value: 'wide' },
+      ],
+    },
+    {
+      kind: 'boolean',
+      key: 'lightbox',
+      label: 'blocks.image.fields.lightbox.fieldLabel',
+    },
   ],
   stylableProperties: [...BlockStyleRegistry.STANDARD, 'gap'],
   defaultStyle: BLOCK_STYLE_DEFAULTS.Gallery,

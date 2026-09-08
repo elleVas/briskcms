@@ -348,3 +348,45 @@ body,
   max-width: none;
   padding-inline: 0;
 }
+
+/*
+ * The full-size view a lightbox opens (ADR-0057).
+ *
+ * In global.css rather than in a block's scoped style because the overlay
+ * is created by `block-behaviors/lightbox.ts` and appended to `<body>` —
+ * it is nobody's child, so no scoped rule can reach it.
+ */
+.brisk-lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  background: rgb(0 0 0 / 85%);
+}
+
+.brisk-lightbox__image {
+  max-width: 100%;
+  /* Both dimensions, or a tall picture on a short window overflows the
+     viewport and cannot be seen whole — which is the one thing this view
+     exists to do. */
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.brisk-lightbox__close {
+  position: absolute;
+  top: 1rem;
+  inset-inline-end: 1rem;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 50%;
+  border: 1px solid rgb(255 255 255 / 40%);
+  background: rgb(0 0 0 / 40%);
+  color: #fff;
+  font-size: 1.25rem;
+  line-height: 1;
+  cursor: pointer;
+}
