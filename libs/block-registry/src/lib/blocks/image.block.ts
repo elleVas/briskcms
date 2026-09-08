@@ -1,6 +1,7 @@
 import type { ImageProps } from '@brisk/shared-types';
 import { BLOCK_STYLE_DEFAULTS } from '@brisk/shared-types';
 import { FieldBuilder, type BlockDescriptor } from '../field-types';
+import { aspectRatioField } from '../fields/aspect-ratio-field';
 
 export const imageBlock: BlockDescriptor<ImageProps> = {
   type: 'Image',
@@ -32,7 +33,14 @@ export const imageBlock: BlockDescriptor<ImageProps> = {
       translatable: true,
       label: 'blocks.image.fields.alt.fieldLabel',
       required: true,
+      // Both, and they are not the same statement: `requiredUnless`
+      // says an empty value is legitimate here, `showWhen` says the
+      // question is not worth asking at all. A decorative image is
+      // `alt=""` by definition, so the field it would be typed into is
+      // noise — while any OTHER reader of the descriptor still learns
+      // from `requiredUnless` that the emptiness is deliberate.
       requiredUnless: 'isDecorative',
+      showWhen: { field: 'isDecorative', equals: false },
     },
     {
       kind: 'boolean',
@@ -50,33 +58,14 @@ export const imageBlock: BlockDescriptor<ImageProps> = {
       kind: 'select',
       key: 'alignment',
       label: 'blocks.shared.alignment.fieldLabel',
+      group: 'style',
       options: [
         { label: 'blocks.shared.alignment.options.start', value: 'start' },
         { label: 'blocks.shared.alignment.options.center', value: 'center' },
         { label: 'blocks.shared.alignment.options.end', value: 'end' },
       ],
     },
-    {
-      kind: 'select',
-      key: 'aspectRatio',
-      label: 'blocks.shared.aspectRatio.fieldLabel',
-      options: [
-        {
-          label: 'blocks.shared.aspectRatio.options.original',
-          value: 'original',
-        },
-        { label: 'blocks.shared.aspectRatio.options.square', value: 'square' },
-        {
-          label: 'blocks.shared.aspectRatio.options.landscape',
-          value: 'landscape',
-        },
-        {
-          label: 'blocks.shared.aspectRatio.options.portrait',
-          value: 'portrait',
-        },
-        { label: 'blocks.shared.aspectRatio.options.wide', value: 'wide' },
-      ],
-    },
+    aspectRatioField,
     {
       kind: 'select',
       key: 'linkType',
@@ -87,14 +76,19 @@ export const imageBlock: BlockDescriptor<ImageProps> = {
         { label: 'blocks.image.fields.linkType.options.url', value: 'url' },
       ],
     },
+    // Not `ctaLinkFields()`: this block's linkType has a third option
+    // ("none"), and its labels are its own — but the visibility rule is
+    // the same one, so the two fields follow the choice here too.
     FieldBuilder.custom(
       'page',
       'blocks.shared.linkType.pageFieldLabel',
       'page',
+      { showWhen: { field: 'linkType', equals: 'page' } },
     ),
     {
       kind: 'text',
       key: 'url',
+      showWhen: { field: 'linkType', equals: 'url' },
       label: 'blocks.shared.linkType.urlFieldLabel',
       placeholder: 'https://',
     },

@@ -708,6 +708,11 @@
     "redo": "Redo",
     "editProperties": "Edit properties",
     "duplicateBlock": "Duplicate block",
+    "fieldGroup": {
+      "content": "Content",
+      "style": "Style",
+      "advanced": "Advanced"
+    },
     "variant": {
       "fieldLabel": "Look",
       "default": "Default"
@@ -735,7 +740,6 @@
     "style": {
       "editType": "Style all {{type}} blocks",
       "editTypeHint": "These values apply to EVERY {{type}} block on the site.",
-      "editInstance": "Style this block",
       "saveError": "Couldn't save the style. Try again."
     },
     "blockStyle": {

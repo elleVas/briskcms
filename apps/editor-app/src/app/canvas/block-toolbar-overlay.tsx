@@ -6,7 +6,6 @@ import {
   Copy,
   Rows3,
   Paintbrush,
-  Palette,
   Pencil,
   Plus,
   Trash2,
@@ -399,36 +398,10 @@ export function BlockToolbarOverlay({
             </PopoverContent>
           </Popover>
         )}
-        {canStyleInstance && (
-          <Popover>
-            <PopoverTrigger asChild>
-              <button
-                type="button"
-                className={iconButtonClass}
-                aria-label={t('canvas.style.editInstance')}
-              >
-                <Palette size={16} />
-              </button>
-            </PopoverTrigger>
-            <PopoverContent side="right">
-              <BlockStyleFields
-                blockType={block.type}
-                themeProperties={themeStyleProperties?.[block.type]}
-                properties={instanceStylableProperties}
-                value={block.styleOverride?.[breakpoint] ?? {}}
-                onChange={onChangeInstanceStyle}
-                defaults={styleFieldDefaults(
-                  instanceStyleDefaults,
-                  block.styleOverride,
-                )}
-                themeTokens={themeTokens}
-              />
-            </PopoverContent>
-          </Popover>
-        )}
         {/*
-          Deliberately NOT gated on the theme's ceiling, unlike the two
-          styling buttons above. A variant is a look the THEME itself
+          Deliberately NOT gated on the theme's ceiling, unlike the
+          type-level styling button above and the instance style fields
+          this panel now carries. A variant is a look the THEME itself
           declares, so choosing between them is picking from the theme's
           own vocabulary — not a site putting its own presentation on top,
           which is what the ceiling refuses. A theme that wants fewer
@@ -436,7 +409,8 @@ export function BlockToolbarOverlay({
           the ones it declared.
         */}
         {(descriptor.fields.length > 0 ||
-          (descriptor.variants?.length ?? 0) > 0) && (
+          (descriptor.variants?.length ?? 0) > 0 ||
+          canStyleInstance) && (
           <Popover>
             <PopoverTrigger asChild>
               <button
@@ -458,6 +432,32 @@ export function BlockToolbarOverlay({
                 onChangeVariant={onChangeVariant}
                 onChangeAlign={onChangeAlign}
                 sectionEditing={sectionEditing}
+                /*
+                  This block's OWN styling, inside the same panel as its
+                  content since ADR-0062 — it used to be a second popover
+                  behind its own button, which meant changing a heading's
+                  text and its colour were two different places with two
+                  different shapes for the same block. The TYPE-level
+                  button beside it stays separate on purpose: that one
+                  edits every block of this type on the site, which is a
+                  different thing to be doing, not a different tab.
+                */
+                instanceStyleFields={
+                  canStyleInstance ? (
+                    <BlockStyleFields
+                      blockType={block.type}
+                      themeProperties={themeStyleProperties?.[block.type]}
+                      properties={instanceStylableProperties}
+                      value={block.styleOverride?.[breakpoint] ?? {}}
+                      onChange={onChangeInstanceStyle}
+                      defaults={styleFieldDefaults(
+                        instanceStyleDefaults,
+                        block.styleOverride,
+                      )}
+                      themeTokens={themeTokens}
+                    />
+                  ) : null
+                }
               />
             </PopoverContent>
           </Popover>

@@ -1,8 +1,14 @@
+import type { ReactNode } from 'react';
 import type { Block, BlockAlign, PickedSection } from '@brisk/shared-types';
 import { CUSTOM_FIELD_CONTROLS } from './custom-fields/custom-field-controls';
 import { SectionInstanceFields } from './section-instance-fields';
 import { RichTextField } from './custom-fields/rich-text-field';
-import type { BlockDescriptor, FieldDescriptor } from '@brisk/block-registry';
+import type {
+  BlockDescriptor,
+  FieldDescriptor,
+  FieldGroup,
+} from '@brisk/block-registry';
+import { isFieldVisible } from '@brisk/block-registry';
 import { Input } from '../../components/ui/input';
 import { Textarea } from '../../components/ui/textarea';
 import { useTranslation } from '../../lib/use-translation';
@@ -28,6 +34,19 @@ export interface InspectorPanelProps {
     exposed: string[];
     onToggle: (field: string) => void;
   };
+  /**
+   * The per-instance style controls, drawn by the caller and placed in
+   * the "Style" group here (ADR-0062).
+   *
+   * A slot rather than a dozen more props: the toolbar already holds
+   * everything `BlockStyleFields` needs — the theme's ceiling, the
+   * properties it added, the current breakpoint, the resolved defaults,
+   * the tokens — and threading all of that through this component would
+   * make the inspector know about styling it does not otherwise touch.
+   * What it decides is WHERE those controls go, which is exactly what a
+   * slot expresses.
+   */
+  instanceStyleFields?: ReactNode;
 }
 
 const ALIGN_OPTIONS: readonly BlockAlign[] = ['content', 'wide', 'full'];
@@ -197,6 +216,38 @@ function isRequiredFieldEmpty(
  * field, textual or not, is editable only from here, which the plan already
  * guarantees as the real fallback.
  */
+/** Content first, then the look, then what most people never touch (ADR-0062). */
+const GROUP_ORDER: readonly FieldGroup[] = ['content', 'style', 'advanced'];
+
+/**
+ * Open unless it is `advanced`: the whole point of that group is to be
+ * out of the way until someone goes looking for it, while hiding content
+ * or style behind a click would cost every edit an extra one.
+ */
+function isGroupOpenByDefault(group: FieldGroup): boolean {
+  return group !== 'advanced';
+}
+
+interface FieldSectionProps {
+  group: FieldGroup;
+  children: ReactNode;
+}
+
+function FieldSection({ group, children }: FieldSectionProps) {
+  const { t } = useTranslation();
+  return (
+    <details
+      open={isGroupOpenByDefault(group)}
+      className="border-b pb-3 last:border-b-0 last:pb-0"
+    >
+      <summary className="cursor-pointer list-none text-xs font-semibold uppercase tracking-wide text-muted-foreground marker:content-['']">
+        {t(`canvas.fieldGroup.${group}`)}
+      </summary>
+      <div className="mt-2.5 flex flex-col gap-3">{children}</div>
+    </details>
+  );
+}
+
 export function InspectorPanel({
   block,
   descriptor,
@@ -204,6 +255,7 @@ export function InspectorPanel({
   onChangeVariant,
   onChangeAlign,
   sectionEditing,
+  instanceStyleFields,
 }: InspectorPanelProps) {
   const { t, tLabel } = useTranslation();
   const variants = descriptor.variants ?? [];
@@ -211,126 +263,167 @@ export function InspectorPanel({
   // SectionInstanceFields for why — so this one type is special-cased
   // here rather than through a general mechanism nothing else uses.
   const isSectionInstance = descriptor.type === 'Section';
+  // Hidden fields are dropped before anything else looks at them: a
+  // field that is not shown must not draw its required warning either,
+  // or an image marked decorative would keep nagging about the alt text
+  // it no longer asks for.
+  const visibleFields = descriptor.fields.filter((field) =>
+    isFieldVisible(field, block.props),
+  );
+  const fieldsByGroup = (group: FieldGroup) =>
+    visibleFields.filter((field) => (field.group ?? 'content') === group);
   // Not `fields.length === 0`: a type may offer a look and no fields at
   // all, and returning null there would hide the only control it has —
-  // width included, which every root block has whether or not its type
-  // declares a single field.
+  // width and the per-instance style included, which a block can have
+  // whether or not its type declares a single field.
   if (
     descriptor.fields.length === 0 &&
     variants.length === 0 &&
     !onChangeAlign &&
+    !instanceStyleFields &&
     !isSectionInstance
   ) {
     return null;
   }
 
+  const renderFields = (fields: FieldDescriptor[]) =>
+    fields.map((field) => {
+      const showRequiredWarning = isRequiredFieldEmpty(field, block.props);
+      return (
+        <label key={field.key} className="flex flex-col gap-1.5">
+          <span className="text-xs font-medium text-muted-foreground">
+            {tLabel(field.label)}
+            {(field.kind === 'text' ||
+              field.kind === 'textarea' ||
+              field.kind === 'richtext') &&
+              field.required && <span className="text-destructive"> *</span>}
+          </span>
+          <FieldRow
+            field={field}
+            value={block.props[field.key]}
+            blockId={block.id}
+            onChange={(value) => onChangeProp(field.key, value)}
+          />
+          {showRequiredWarning && (
+            <span className="text-xs text-amber-600 dark:text-amber-500">
+              {t('canvas.requiredField')}
+            </span>
+          )}
+          {/* Only inside the section editor: it is the section's author
+              deciding what a page may change about this field, and it
+              is deliberately per FIELD rather than per block — "the
+              title, and nothing else" is the whole point
+              (docs/adr/0059). */}
+          {sectionEditing && (
+            <label className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <input
+                type="checkbox"
+                checked={sectionEditing.exposed.includes(field.key)}
+                onChange={() => sectionEditing.onToggle(field.key)}
+              />
+              {t('sections.exposeField')}
+            </label>
+          )}
+        </label>
+      );
+    });
+
+  // What each group holds beyond its own fields: the look and the width
+  // are style by definition, and a section instance's inputs are content.
+  const hasStyleExtras =
+    variants.length > 0 ||
+    Boolean(onChangeAlign) ||
+    Boolean(instanceStyleFields);
+  const extras: Record<FieldGroup, ReactNode> = {
+    content: isSectionInstance ? (
+      <SectionInstanceFields
+        section={
+          isPickedSection(block.props['section'])
+            ? block.props['section']
+            : null
+        }
+        props={block.props}
+        onChangeProp={onChangeProp}
+      />
+    ) : null,
+    // A fragment is truthy even when every one of its children is
+    // absent, so the emptiness of the group is decided here rather than
+    // by looking at the node — otherwise a block with no look, no width
+    // and no styling still got a "Style" heading over nothing.
+    style: !hasStyleExtras ? null : (
+      <>
+        {variants.length > 0 && (
+          <label className="flex flex-col gap-1.5">
+            <span className="text-xs font-medium text-muted-foreground">
+              {t('canvas.variant.fieldLabel')}
+            </span>
+            <select
+              className={nativeFieldClass}
+              value={block.variant ?? ''}
+              onChange={(event) =>
+                onChangeVariant(event.target.value || undefined)
+              }
+            >
+              {/* The type's own look has no variant of its own, so the
+                  empty value means "none" rather than naming one. */}
+              <option value="">{t('canvas.variant.default')}</option>
+              {variants.map((variant) => (
+                <option key={variant.value} value={variant.value}>
+                  {tLabel(variant.label)}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
+        {onChangeAlign && (
+          <label className="flex flex-col gap-1.5">
+            <span className="text-xs font-medium text-muted-foreground">
+              {t('canvas.align.fieldLabel')}
+            </span>
+            <select
+              className={nativeFieldClass}
+              value={block.align ?? 'content'}
+              onChange={(event) => {
+                const value = event.target.value as BlockAlign;
+                // `content` is the default and is stored as its absence, so
+                // the block does not carry a field saying "behave normally".
+                onChangeAlign(value === 'content' ? undefined : value);
+              }}
+            >
+              {ALIGN_OPTIONS.map((option) => (
+                <option key={option} value={option}>
+                  {t(`canvas.align.${option}`)}
+                </option>
+              ))}
+            </select>
+            <span className="text-xs text-muted-foreground">
+              {t('canvas.align.hint')}
+            </span>
+          </label>
+        )}
+        {instanceStyleFields}
+      </>
+    ),
+    advanced: null,
+  };
+
   return (
     <div className="flex flex-col gap-3">
       <h3 className="text-sm font-semibold">{tLabel(descriptor.label)}</h3>
-      {variants.length > 0 && (
-        // First, and separated: it is what the block LOOKS like, not what
-        // it says, and the fields below are all the latter.
-        <label className="flex flex-col gap-1.5 border-b pb-3">
-          <span className="text-xs font-medium text-muted-foreground">
-            {t('canvas.variant.fieldLabel')}
-          </span>
-          <select
-            className={nativeFieldClass}
-            value={block.variant ?? ''}
-            onChange={(event) =>
-              onChangeVariant(event.target.value || undefined)
-            }
-          >
-            {/* The type's own look has no variant of its own, so the
-                empty value means "none" rather than naming one. */}
-            <option value="">{t('canvas.variant.default')}</option>
-            {variants.map((variant) => (
-              <option key={variant.value} value={variant.value}>
-                {tLabel(variant.label)}
-              </option>
-            ))}
-          </select>
-        </label>
-      )}
-      {onChangeAlign && (
-        // Beside the look, and above the content fields, for the same
-        // reason: this is what the block IS on the page, not what it says.
-        <label className="flex flex-col gap-1.5 border-b pb-3">
-          <span className="text-xs font-medium text-muted-foreground">
-            {t('canvas.align.fieldLabel')}
-          </span>
-          <select
-            className={nativeFieldClass}
-            value={block.align ?? 'content'}
-            onChange={(event) => {
-              const value = event.target.value as BlockAlign;
-              // `content` is the default and is stored as its absence, so
-              // the block does not carry a field saying "behave normally".
-              onChangeAlign(value === 'content' ? undefined : value);
-            }}
-          >
-            {ALIGN_OPTIONS.map((option) => (
-              <option key={option} value={option}>
-                {t(`canvas.align.${option}`)}
-              </option>
-            ))}
-          </select>
-          <span className="text-xs text-muted-foreground">
-            {t('canvas.align.hint')}
-          </span>
-        </label>
-      )}
-      {descriptor.fields.map((field) => {
-        const showRequiredWarning = isRequiredFieldEmpty(field, block.props);
+      {GROUP_ORDER.map((group) => {
+        const fields = fieldsByGroup(group);
+        const extra = extras[group];
+        // An empty group is not drawn at all — a "Style" heading over
+        // nothing tells the reader this block has styling it does not
+        // have.
+        if (fields.length === 0 && !extra) return null;
         return (
-          <label key={field.key} className="flex flex-col gap-1.5">
-            <span className="text-xs font-medium text-muted-foreground">
-              {tLabel(field.label)}
-              {(field.kind === 'text' ||
-                field.kind === 'textarea' ||
-                field.kind === 'richtext') &&
-                field.required && <span className="text-destructive"> *</span>}
-            </span>
-            <FieldRow
-              field={field}
-              value={block.props[field.key]}
-              blockId={block.id}
-              onChange={(value) => onChangeProp(field.key, value)}
-            />
-            {showRequiredWarning && (
-              <span className="text-xs text-amber-600 dark:text-amber-500">
-                {t('canvas.requiredField')}
-              </span>
-            )}
-            {/* Only inside the section editor: it is the section's author
-                deciding what a page may change about this field, and it
-                is deliberately per FIELD rather than per block — "the
-                title, and nothing else" is the whole point
-                (docs/adr/0059). */}
-            {sectionEditing && (
-              <label className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                <input
-                  type="checkbox"
-                  checked={sectionEditing.exposed.includes(field.key)}
-                  onChange={() => sectionEditing.onToggle(field.key)}
-                />
-                {t('sections.exposeField')}
-              </label>
-            )}
-          </label>
+          <FieldSection key={group} group={group}>
+            {renderFields(fields)}
+            {extra}
+          </FieldSection>
         );
       })}
-      {isSectionInstance && (
-        <SectionInstanceFields
-          section={
-            isPickedSection(block.props['section'])
-              ? block.props['section']
-              : null
-          }
-          props={block.props}
-          onChangeProp={onChangeProp}
-        />
-      )}
     </div>
   );
 }

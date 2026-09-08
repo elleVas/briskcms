@@ -3,9 +3,9 @@ import { FieldBuilder, type FieldDescriptor } from '../field-types';
 /**
  * Shared by every block with a "page or url" prop (NavLink, Button, Link,
  * Banner, PromoBar, PricingPlan) — drives which of `page`/`url` the
- * editor is actually filling in. Both fields always stay visible in the
- * Inspector (no conditional visibility for now), not just the chosen
- * one.
+ * editor is actually filling in, and since ADR-0062 which of the two the
+ * editor even shows: the other one was visible and inert, an input that
+ * accepted what you typed and then ignored it.
  */
 export const linkTypeField: FieldDescriptor = {
   kind: 'radio',
@@ -30,10 +30,12 @@ export function ctaLinkFields(): FieldDescriptor[] {
       'page',
       'blocks.shared.linkType.pageFieldLabel',
       'page',
+      { showWhen: { field: 'linkType', equals: 'page' } },
     ),
     {
       kind: 'text',
       key: 'url',
+      showWhen: { field: 'linkType', equals: 'url' },
       label: 'blocks.shared.linkType.urlFieldLabel',
       // Found live during the i18n backfill (not just theorized): a real
       // site often uses this field for a hand-written relative internal
