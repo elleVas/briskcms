@@ -14,6 +14,7 @@
     "db:backfill-block-ids": "dotenv -e ../../../.env -- tsx scripts/backfill-block-ids.ts",
     "db:migrate-responsive-block-styles": "dotenv -e ../../../.env -- tsx scripts/migrate-responsive-block-styles.ts",
     "db:migrate-variant-props": "dotenv -e ../../../.env -- tsx scripts/migrate-variant-props.ts",
+    "db:migrate-columns-layout": "dotenv -e ../../../.env -- tsx scripts/migrate-columns-layout.ts",
     "db:normalize-rich-text": "dotenv -e ../../../.env -- tsx scripts/normalize-rich-text.ts"
   },
   "nx": {

@@ -11,6 +11,7 @@ import {
   calloutPropsSchema,
   codePropsSchema,
   columnsPropsSchema,
+  resolveColumnSpans,
   containerPropsSchema,
   countdownPropsSchema,
   embedHtmlPropsSchema,
@@ -210,6 +211,12 @@ const WhatsAppButton = resolveThemeBlockOverride('WhatsAppButton', WhatsAppButto
 // `ancestors`/`currentPageTitle` follow the same reasoning for Breadcrumb.
 
 interface BlockRenderContext {
+  /**
+   * The block being rendered. Needed by a container whose own layout
+   * depends on its children — Columns resolves one grid track per child
+   * column (ADR-0050), and it cannot see them from inside its `<slot/>`.
+   */
+  block: Block;
   locale: string;
   translations: PublishedPageTranslation[];
   site: PublishedSite;
@@ -318,6 +325,10 @@ const BLOCK_REGISTRY: Record<string, BlockDispatchEntry> = {
     stylable: true,
     recurseChildren: true,
     containerProps: true,
+    // One track per child column, resolved together: a column with no
+    // width of its own takes an equal share of what the others left, so
+    // the answer depends on all of them at once (ADR-0050).
+    extra: (ctx) => ({ columnSpans: resolveColumnSpans(ctx.block.children) }),
   },
   Column: {
     component: Column,
@@ -523,6 +534,7 @@ const variantClass = blockVariantClassName(block.type, block.variant);
 const entry = BLOCK_REGISTRY[block.type];
 const Component = entry?.component;
 const context: BlockRenderContext = {
+  block,
   locale,
   translations,
   site,

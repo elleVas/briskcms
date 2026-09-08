@@ -29,6 +29,7 @@ import {
   PopoverTrigger,
 } from '../../components/ui/popover';
 import { blockStyleDefaultsQueryOptions } from '../block-style-defaults-queries';
+import { themeBaseTokensQueryOptions } from '../theme-base-tokens-queries';
 import { useActiveThemeName } from '../use-active-theme-name';
 import { useTranslation } from '../../lib/use-translation';
 import { BlockPicker, type BlockPickerCategory } from './block-picker';
@@ -163,6 +164,13 @@ export function BlockToolbarOverlay({
   const { data: blockStyleDefaults } = useQuery(
     blockStyleDefaultsQueryOptions(activeThemeName),
   );
+  // The theme's own colours, offered as swatches by every colour control
+  // below (ADR-0050) — loaded here rather than passed down, like the two
+  // theme queries either side of it. Cached per theme name and never
+  // refetched, so the extra query costs nothing per block selection.
+  const { data: themeTokens } = useQuery(
+    themeBaseTokensQueryOptions(activeThemeName),
+  );
 
   const canAddChild =
     descriptor.isContainer && descriptor.allowedChildTypes?.length === 1;
@@ -195,13 +203,14 @@ export function BlockToolbarOverlay({
   // visual effect at all, so we do not offer them there. That is why the
   // set of properties shown in the instance popover can differ from the
   // type popover's, which always stays `stylableProperties`.
-  // ...and at a narrow size they are dropped again, for a second reason:
-  // the space between root blocks is an inline style on a wrapper whose
-  // DEFAULT depends on the block's position in the page, so it is not part
-  // of the generated per-breakpoint rules (see PublicPageContent.astro).
-  // Offering the field anyway would let somebody set a mobile margin and
-  // watch nothing happen — the silent failure ADR-0047 exists to prevent.
-  // Fase 3 reworks that wrapper and can bring them back.
+  // At every size since ADR-0050, where the wrapper was reworked. They
+  // used to be dropped at the narrow sizes for a second reason: the space
+  // between root blocks was an inline style whose DEFAULT depended on the
+  // block's position, so it could not be part of the generated
+  // per-breakpoint rules, and offering the field would have let somebody
+  // set a mobile margin and watch nothing happen. The default is
+  // `.brisk-root-block:last-child` in CSS now — position is something a
+  // selector knows — so the margins are ordinary responsive properties.
   //
   // ...and all of it only while the theme allows styling at all: the two
   // margins are added AFTER `stylableProperties`, so gating that list
@@ -210,7 +219,7 @@ export function BlockToolbarOverlay({
   const instanceStylableProperties: readonly BlockStylePropertyName[] =
     !themeAllowsStyling
       ? []
-      : isRootLevel && breakpoint === 'base'
+      : isRootLevel
         ? [...stylableProperties, 'marginTop', 'marginBottom']
         : stylableProperties;
   const canStyleInstance = instanceStylableProperties.length > 0;
@@ -323,6 +332,7 @@ export function BlockToolbarOverlay({
                   blockStyleDefaults?.[block.type],
                   typeStyle,
                 )}
+                themeTokens={themeTokens}
               />
             </PopoverContent>
           </Popover>
@@ -349,6 +359,7 @@ export function BlockToolbarOverlay({
                   instanceStyleDefaults,
                   block.styleOverride,
                 )}
+                themeTokens={themeTokens}
               />
             </PopoverContent>
           </Popover>

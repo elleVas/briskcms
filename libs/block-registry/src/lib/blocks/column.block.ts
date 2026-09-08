@@ -10,7 +10,20 @@ export const columnBlock: BlockDescriptor<ColumnProps> = {
   label: 'blocks.column.label',
   category: 'layout',
   defaultProps: {},
-  fields: [],
+  fields: [
+    {
+      kind: 'number',
+      key: 'span',
+      label: 'blocks.column.fields.span.fieldLabel',
+      min: 1,
+      max: 12,
+      step: 1,
+      // Empty means "take an equal share of what the others left" — the
+      // behaviour a column has until somebody gives it a width, and the
+      // one it has to be able to go back to. See ADR-0050.
+      optional: true,
+    },
+  ],
   isContainer: true,
   stylableProperties: BlockStyleRegistry.STANDARD,
   defaultStyle: BLOCK_STYLE_DEFAULTS.Column,

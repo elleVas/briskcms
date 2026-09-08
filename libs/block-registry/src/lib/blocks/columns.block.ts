@@ -7,30 +7,56 @@ export const columnsBlock: BlockDescriptor<ColumnsProps> = {
   type: 'Columns',
   label: 'blocks.columns.label',
   category: 'layout',
-  defaultProps: { layout: 'two-equal' },
+  defaultProps: { stackBelow: 'mobile', verticalAlign: 'stretch' },
   fields: [
     {
       kind: 'radio',
-      key: 'layout',
-      label: 'blocks.columns.fields.layout.fieldLabel',
+      key: 'stackBelow',
+      label: 'blocks.columns.fields.stackBelow.fieldLabel',
       options: [
         {
-          label: 'blocks.columns.fields.layout.options.twoEqual',
-          value: 'two-equal',
+          label: 'blocks.columns.fields.stackBelow.options.mobile',
+          value: 'mobile',
         },
         {
-          label: 'blocks.columns.fields.layout.options.twoAsymmetric',
-          value: 'two-asymmetric',
+          label: 'blocks.columns.fields.stackBelow.options.tablet',
+          value: 'tablet',
         },
         {
-          label: 'blocks.columns.fields.layout.options.threeEqual',
-          value: 'three-equal',
+          label: 'blocks.columns.fields.stackBelow.options.never',
+          value: 'never',
+        },
+      ],
+    },
+    {
+      kind: 'select',
+      key: 'verticalAlign',
+      label: 'blocks.columns.fields.verticalAlign.fieldLabel',
+      options: [
+        {
+          label: 'blocks.columns.fields.verticalAlign.options.stretch',
+          value: 'stretch',
+        },
+        {
+          label: 'blocks.columns.fields.verticalAlign.options.start',
+          value: 'start',
+        },
+        {
+          label: 'blocks.columns.fields.verticalAlign.options.center',
+          value: 'center',
+        },
+        {
+          label: 'blocks.columns.fields.verticalAlign.options.end',
+          value: 'end',
         },
       ],
     },
   ],
   isContainer: true,
   allowedChildTypes: ['Column'],
-  stylableProperties: BlockStyleRegistry.STANDARD,
+  // `gap` on top of the standard set (ADR-0050): the space between columns
+  // was a hardcoded 1.5rem, which made a row of tight cards and a row of
+  // full sections the same distance apart.
+  stylableProperties: [...BlockStyleRegistry.STANDARD, 'gap'],
   defaultStyle: BLOCK_STYLE_DEFAULTS.Columns,
 };

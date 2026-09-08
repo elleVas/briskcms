@@ -20,26 +20,37 @@ const {
 // this component never hardcodes a color. `primary`/`secondary` follow
 // the same convention as Button/the global link color: primary is the
 // accent surface, secondary is supporting/subtle chrome.
-const backgroundClass: Record<ContainerProps['background'], string> = {
+//
+// These stay PRESETS and are not replaced by a free colour (ADR-0050):
+// they follow the theme, and a hex does not. What changes is that they
+// are custom properties rather than Tailwind classes, so a free override
+// can sit in FRONT of the preset in the same declaration
+// (`var(--brisk-override-bg, var(--brisk-container-bg))`) instead of
+// fighting it on specificity and silently losing.
+const backgroundVars: Record<ContainerProps['background'], string> = {
 	none: '',
-	muted: 'bg-muted text-foreground',
-	primary: 'bg-primary text-primary-foreground',
-	secondary: 'bg-secondary text-secondary-foreground',
+	muted: '--brisk-container-bg: var(--muted); --brisk-container-fg: var(--foreground);',
+	primary:
+		'--brisk-container-bg: var(--primary); --brisk-container-fg: var(--primary-foreground);',
+	secondary:
+		'--brisk-container-bg: var(--secondary); --brisk-container-fg: var(--secondary-foreground);',
 };
 
-const paddingClass: Record<ContainerProps['padding'], string> = {
-	none: '',
-	sm: 'p-4',
-	md: 'p-8',
-	lg: 'p-12',
+// A length rather than a Tailwind class, so `--brisk-override-padding-*`
+// can sit in front of it in the same declaration. As a class it won a
+// specificity contest the override could not enter: setting a padding on
+// a Container simply did nothing, with no hint as to why.
+const paddingValue: Record<ContainerProps['padding'], string> = {
+	none: '0',
+	sm: '1rem',
+	md: '2rem',
+	lg: '3rem',
 };
 ---
 
 <div
-	class:list={[
-		`brisk-container flex flex-col gap-4 rounded-lg ${backgroundClass[background]} ${paddingClass[padding]}`,
-		instanceClass,
-	]}
+	class:list={['brisk-container flex rounded-lg', instanceClass]}
+	style={`--brisk-container-padding: ${paddingValue[padding]}; ${backgroundVars[background]}`}
 	data-brisk-editable-outline={editable && hasChildren ? '' : undefined}
 >
 	<slot />
@@ -67,17 +78,32 @@ const paddingClass: Record<ContainerProps['padding'], string> = {
 		outline-offset: -4px;
 	}
 
-	/* Background and padding are deliberately absent: they already have
-	   their own dedicated user fields above, and adding them here would
-	   create two conflicting mechanisms for the same property.
-	   Everything else a container needs to hold a real section of a page
-	   comes through (ADR-0047). Every fallback is the value this block
-	   ALREADY had — `gap` matches the `gap-4` class, alignment matches the
-	   flex defaults — so a container with nothing overridden renders byte
-	   for byte as it did before. */
+	/* Padding is no longer absent from this list (ADR-0050). It used to be,
+	   on the grounds that a dedicated field and a style override would be
+	   "two conflicting mechanisms" — but they were never in conflict, they
+	   were in a specificity contest the override always lost, silently. A
+	   preset is now the FALLBACK of the same declaration the override
+	   fills: one mechanism, with the preset as its starting value, and the
+	   free value winning when there is one.
+
+	   Background colour follows the same shape. The preset classes remain
+	   because they track the theme where a hex cannot, so a Container set
+	   to `primary` still re-tints itself when the theme changes.
+
+	   Every fallback is the value this block ALREADY had — `gap` matches
+	   the old `gap-4` class, padding matches the preset, direction matches
+	   the old `flex-col` — so a container with nothing overridden renders
+	   byte for byte as it did before. */
 	.brisk-container {
+		flex-direction: var(--brisk-override-direction, column);
+		padding: var(--brisk-override-padding-y, var(--brisk-container-padding))
+			var(--brisk-override-padding-x, var(--brisk-container-padding));
+		background-color: var(
+			--brisk-override-bg,
+			var(--brisk-container-bg, transparent)
+		);
 		border-radius: var(--brisk-override-radius, 0.5rem);
-		color: var(--brisk-override-text, inherit);
+		color: var(--brisk-override-text, var(--brisk-container-fg, inherit));
 		border-width: var(--brisk-override-border-width, 0);
 		border-style: var(--brisk-override-border-style, solid);
 		border-color: var(--brisk-override-border-color, var(--border));
@@ -107,4 +133,5 @@ const paddingClass: Record<ContainerProps['padding'], string> = {
 		background-size: var(--brisk-override-bg-size, cover);
 		background-repeat: var(--brisk-override-bg-repeat, no-repeat);
 	}
+
 </style>

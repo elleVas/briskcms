@@ -801,6 +801,13 @@
             "center": "Middle",
             "end": "Bottom"
           }
+        },
+        "flexDirection": {
+          "fieldLabel": "Direction",
+          "options": {
+            "column": "Stacked",
+            "row": "Side by side"
+          }
         }
       }
     },
@@ -815,6 +822,22 @@
       "underline": "Underline",
       "unlink": "Remove link",
       "urlPrompt": "Web address"
+    },
+    "colorPicker": {
+      "inherit": "Inherits from theme",
+      "themeValue": "Theme: {{value}}",
+      "clear": "Back to the theme colour",
+      "useToken": "Use the theme's {{token}} colour",
+      "tokens": {
+        "primary": "Primary",
+        "secondary": "Secondary",
+        "background": "Background",
+        "foreground": "Text",
+        "muted": "Muted",
+        "mutedForeground": "Muted text",
+        "border": "Border",
+        "link": "Link"
+      }
     }
   },
   "toast": {
@@ -961,17 +984,31 @@
       }
     },
     "column": {
-      "label": "Column"
+      "label": "Column",
+      "fields": {
+        "span": {
+          "fieldLabel": "Width in twelfths (empty = equal share)"
+        }
+      }
     },
     "columns": {
       "label": "Columns",
       "fields": {
-        "layout": {
-          "fieldLabel": "Layout",
+        "stackBelow": {
+          "fieldLabel": "Stack into one column",
           "options": {
-            "twoEqual": "2 equal",
-            "twoAsymmetric": "2 (30/70)",
-            "threeEqual": "3 equal"
+            "mobile": "On phones",
+            "tablet": "On tablets and phones",
+            "never": "Never"
+          }
+        },
+        "verticalAlign": {
+          "fieldLabel": "Align columns",
+          "options": {
+            "stretch": "Same height",
+            "start": "Top",
+            "center": "Middle",
+            "end": "Bottom"
           }
         }
       }

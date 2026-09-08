@@ -69,8 +69,20 @@ export const BLOCK_STYLE_DEFAULTS: Record<string, BlockStyleDefaults> = {
     borderRadius: '0',
     paddingX: '0',
     paddingY: '0',
+    // The space between columns, which used to be a hardcoded 1.5rem
+    // (ADR-0050) — this is that same value, so a row nobody has touched
+    // looks exactly as it did.
+    gap: '1.5rem',
   },
   Container: {
+    // The preset's own value at the block's default (`padding: 'md'`) and
+    // `background: 'none'` — the editor opens showing what a Container
+    // actually looks like now, and the preset stays the fallback these
+    // free values sit in front of (ADR-0050).
+    backgroundColor: 'transparent',
+    paddingX: '2rem',
+    paddingY: '2rem',
+    flexDirection: 'column',
     textColor: 'inherit',
     borderRadius: '0.5rem',
     // Each one is the fallback the block's own CSS already declares, so

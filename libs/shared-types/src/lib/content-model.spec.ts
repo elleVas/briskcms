@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest';
 import {
   backToTopPropsSchema,
   blockSchema,
-  columnsGridTemplate,
   hamburgerMenuPropsSchema,
   languageSwitcherPropsSchema,
   navDropdownPropsSchema,
@@ -66,16 +65,6 @@ describe('content-model schemas', () => {
       seoMetaSchema.safeParse({ title: 'x', description: 'y' }).success,
     ).toBe(true);
     expect(seoMetaSchema.safeParse({ title: 'x' }).success).toBe(false);
-  });
-});
-
-describe('columnsGridTemplate', () => {
-  it.each([
-    ['two-equal', '1fr 1fr'],
-    ['two-asymmetric', '3fr 7fr'],
-    ['three-equal', '1fr 1fr 1fr'],
-  ] as const)('maps %s to %s', (layout, expected) => {
-    expect(columnsGridTemplate(layout)).toBe(expected);
   });
 });
 

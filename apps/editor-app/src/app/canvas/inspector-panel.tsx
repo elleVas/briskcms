@@ -70,7 +70,19 @@ function FieldRow({ field, value, onChange }: FieldRowProps) {
           min={field.min}
           max={field.max}
           step={field.step}
-          onChange={(event) => onChange(Number(event.target.value))}
+          onChange={(event) => {
+            // An empty input is not zero. For a field that declares
+            // itself optional it means "no value" — clearing a column's
+            // width is how you give it back its equal share — and saving
+            // `0` there would store a number outside the property's own
+            // range while looking like something the user picked.
+            const raw = event.target.value;
+            if (field.optional && raw === '') {
+              onChange(undefined);
+              return;
+            }
+            onChange(Number(raw));
+          }}
         />
       );
     case 'boolean':

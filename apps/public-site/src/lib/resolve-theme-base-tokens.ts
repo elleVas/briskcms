@@ -24,6 +24,15 @@ export function resolveThemeBaseTokens(themeName: string): ThemeBaseTokens {
     secondary: themeVars.get('--secondary') ?? '',
     fontSansValue: themeVars.get('--font-sans-value') ?? '',
     radius: themeVars.get('--radius') ?? '',
+    // Absent rather than empty when a theme does not declare one: the
+    // editor drops the swatch instead of offering a colour that resolves
+    // to nothing (ADR-0050).
+    background: themeVars.get('--background'),
+    foreground: themeVars.get('--foreground'),
+    muted: themeVars.get('--muted'),
+    mutedForeground: themeVars.get('--muted-foreground'),
+    border: themeVars.get('--border'),
+    link: themeVars.get('--link'),
   };
   cacheByTheme.set(resolvedTheme, tokens);
   return tokens;

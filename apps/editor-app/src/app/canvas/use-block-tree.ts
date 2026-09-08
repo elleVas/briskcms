@@ -1,10 +1,16 @@
 import {
-  columnsGridTemplate,
   type Block,
   type BlockAlign,
   type ResponsiveBlockStyle,
 } from '@brisk/shared-types';
 import type { BlockDescriptor } from '@brisk/block-registry';
+
+/**
+ * How many columns a new Columns block starts with. Two, because it is the
+ * layout somebody reaches for a row of columns to build, and because
+ * neither of them declares a width: they simply split the row.
+ */
+const DEFAULT_COLUMN_COUNT = 2;
 
 export interface BlockTreeTarget {
   /** `null` = alla radice dell'albero (pagina o header/footer). */
@@ -280,8 +286,10 @@ export function cloneBlockWithNewIds(block: Block): Block & { id: string } {
  * makes sense to show a real example straight away instead of an empty
  * container (user feedback: an empty collection container with nothing
  * inside is confusing and does not invite building on it). The rule:
- * - Columns starts out with the columns of its own default layout
- *   (`columnsGridTemplate`, the same source of truth as the real CSS grid).
+ * - Columns starts out with two columns, neither of which declares a
+ *   width: `resolveColumnSpans` splits the row equally between whatever
+ *   columns are there, so two is a starting point rather than a layout
+ *   the user then has to undo (ADR-0050).
  * - A container with exactly ONE type in `allowedChildTypes`
  *   (Testimonials→Testimonial, Team→Member, Accordion→Question, ...) starts
  *   with ONE child of that type — it is the only sensible type, so there is
@@ -303,18 +311,11 @@ export function createBlockFromDescriptor(
     return block;
   }
   if (descriptor.type === 'Columns') {
-    const layout =
-      (
-        descriptor.defaultProps as {
-          layout?: Parameters<typeof columnsGridTemplate>[0];
-        }
-      ).layout ?? 'two-equal';
-    const columnCount = columnsGridTemplate(layout).split(' ').length;
     const columnDescriptor = registry.find((d) => d.type === 'Column');
     return {
       ...block,
       children: columnDescriptor
-        ? Array.from({ length: columnCount }, () =>
+        ? Array.from({ length: DEFAULT_COLUMN_COUNT }, () =>
             createBlockFromDescriptor(columnDescriptor, registry),
           )
         : [],

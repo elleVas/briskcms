@@ -354,47 +354,98 @@ export const navDropdownPropsSchema = navItemPositionSchema.extend({
 export type NavDropdownProps = z.infer<typeof navDropdownPropsSchema>;
 
 /**
- * A finite set of presets (not a free "number of columns" field) — every
- * layout maps to one explicit `grid-template-columns` value in
- * `columnsGridTemplate` below, in both the editor canvas and
- * apps/public-site. The editor doesn't enforce that a "2 uguali" Columns
- * block actually contains exactly 2 `Column` children (Puck slots don't
- * support that kind of cardinality check) — CSS Grid degrades gracefully
- * with fewer or more, same trade-off as every other radio-guided field in
- * this file (e.g. NavLink's `linkType`).
+ * How many of the twelve tracks a column takes (ADR-0050).
+ *
+ * Twelve because that is the number Bootstrap, the WordPress block editor
+ * and every grid system a designer has met use: 6+6 halves, 4+4+4 thirds,
+ * 3+9 a sidebar. What it replaces was three fixed presets — `two-equal`,
+ * `two-asymmetric`, `three-equal` — which could express a two-column and a
+ * three-column page and nothing else at all. A `Column` had `fields: []`:
+ * it was structurally impossible to resize one.
+ *
+ * Optional, and that is the useful part: a column that says nothing takes
+ * an equal share of whatever the explicit ones left over
+ * (`resolveColumnSpans`), so adding a column to a row that never asked for
+ * particular widths keeps them all equal, with nothing to keep in sync by
+ * hand.
  */
-export const columnsLayoutSchema = z.enum([
-  'two-equal',
-  'two-asymmetric',
-  'three-equal',
+export const columnSpanSchema = z.number().int().min(1).max(12);
+
+export const columnPropsSchema = z.object({
+  span: columnSpanSchema.optional(),
+});
+export type ColumnProps = z.infer<typeof columnPropsSchema>;
+
+/** The number of tracks the grid is divided into — see `columnSpanSchema`. */
+export const COLUMN_GRID_TRACKS = 12;
+
+/**
+ * When a row of columns stops being a row and becomes a stack.
+ *
+ * `mobile` is the default because it is what the old fixed
+ * `@media (max-width: 640px)` did: columns became one column on a phone,
+ * always, with no way to ask for anything else. Now a two-column layout
+ * that still reads fine on a tablet can say so, and a row of small cards
+ * can refuse to stack at all.
+ */
+export const columnsStackBelowSchema = z.enum(['never', 'tablet', 'mobile']);
+export type ColumnsStackBelow = z.infer<typeof columnsStackBelowSchema>;
+
+/** How columns of unequal height line up against each other. */
+export const columnsVerticalAlignSchema = z.enum([
+  'stretch',
+  'start',
+  'center',
+  'end',
 ]);
-export type ColumnsLayout = z.infer<typeof columnsLayoutSchema>;
+export type ColumnsVerticalAlign = z.infer<typeof columnsVerticalAlignSchema>;
 
 export const columnsPropsSchema = z.object({
-  layout: columnsLayoutSchema.default('two-equal'),
+  stackBelow: columnsStackBelowSchema.default('mobile'),
+  verticalAlign: columnsVerticalAlignSchema.default('stretch'),
 });
 export type ColumnsProps = z.infer<typeof columnsPropsSchema>;
 
-/** One CSS value per `ColumnsLayout` — read by apps/public-site's Columns.astro, the only renderer (docs/adr/0007). */
-export function columnsGridTemplate(layout: ColumnsLayout): string {
-  switch (layout) {
-    case 'two-equal':
-      return '1fr 1fr';
-    case 'two-asymmetric':
-      return '3fr 7fr';
-    case 'three-equal':
-      return '1fr 1fr 1fr';
+/**
+ * One grid track per column, in order — the value
+ * `grid-template-columns` is built from.
+ *
+ * A column with an explicit `span` gets it. The rest divide what is left
+ * of the twelve equally, so "one column at 4, the other untouched" reads
+ * as 4 and 8 rather than 4 and some arbitrary default. Nothing here has to
+ * add up to twelve: the tracks are emitted as `fr`, which normalises
+ * whatever it is given, so an over-committed row compresses instead of
+ * overflowing its container — the failure this shape exists to make
+ * impossible.
+ */
+export function resolveColumnSpans(children: Block[] | undefined): number[] {
+  const columns = children ?? [];
+  if (columns.length === 0) {
+    return [];
   }
+  const explicit = columns.map((child) => {
+    // `safeParse().data` rather than a cast: the schema already narrows
+    // the value to a number in the 1..12 range, and re-asserting what it
+    // just proved would be trusting the annotation over the check.
+    const parsed = columnSpanSchema.safeParse(child.props.span);
+    return parsed.success ? parsed.data : null;
+  });
+  const claimed = explicit.reduce<number>((sum, span) => sum + (span ?? 0), 0);
+  const implicitCount = explicit.filter((span) => span === null).length;
+  // At least 1: a row whose explicit columns already claim everything
+  // still has to give the others a track, or they would collapse to
+  // nothing and their content would vanish.
+  const share =
+    implicitCount > 0
+      ? Math.max(1, Math.floor((COLUMN_GRID_TRACKS - claimed) / implicitCount))
+      : 0;
+  return explicit.map((span) => span ?? share);
 }
 
-/**
- * Pure layout wrapper, no props of its own — mirrors Nav's own reasoning
- * (see above) for why `strictObject`, not `object`. Its content lives
- * entirely in `Block.children`; which `ColumnsLayout` it renders under is
- * the parent `Columns` block's concern, not this block's own.
- */
-export const columnPropsSchema = z.strictObject({});
-export type ColumnProps = z.infer<typeof columnPropsSchema>;
+/** `grid-template-columns` for a row of columns — see `resolveColumnSpans`. */
+export function columnsGridTemplate(spans: number[]): string {
+  return spans.map((span) => `${span}fr`).join(' ');
+}
 
 /**
  * Generic grouping wrapper — the "Container/Sezione" from the original MVP

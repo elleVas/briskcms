@@ -55,6 +55,7 @@ export const BLOCK_STYLE_CUSTOM_PROPERTIES: Record<
   gap: '--brisk-override-gap',
   contentAlign: '--brisk-override-align',
   contentJustify: '--brisk-override-justify',
+  flexDirection: '--brisk-override-direction',
 };
 
 /**
@@ -368,6 +369,93 @@ function collectStyledBlocks(
  * with anything here anyway, because a declaration on an element always
  * beats an inherited one, whatever layer it came from.
  */
+/**
+ * The class carrying a ROOT block's own spacing (ADR-0050) — on the
+ * wrapper, not on the block.
+ *
+ * A separate name from `blockInstanceClassName` because they land on two
+ * different elements: the instance class styles the block itself, this one
+ * styles the box the page puts around it. Sharing one class would apply
+ * every rule to both.
+ */
+export function rootBlockInstanceClassName(blockId: string): string | null {
+  return /^[A-Za-z0-9_-]{1,64}$/.test(blockId) ? `brisk-rb-${blockId}` : null;
+}
+
+/**
+ * The space around each root block that somebody actually customized
+ * (ADR-0050).
+ *
+ * These two properties used to be an inline `style` on the wrapper, and
+ * `base`-only, because their DEFAULT depends on the block's position —
+ * the last block gets no gap below it — which no rule emitter knew about.
+ * The default now lives in CSS as `.brisk-root-block:last-child`, which
+ * knows about position by construction, leaving these free to be ordinary
+ * per-breakpoint rules: a margin can differ on a phone like every other
+ * style property, and the editor no longer has to hide the field at
+ * narrow sizes to avoid promising something that would not happen.
+ *
+ * They stay out of `BLOCK_STYLE_CUSTOM_PROPERTIES` (they are not custom
+ * properties any block reads) and out of the per-TYPE tier: spacing
+ * between sections is a property of one page's rhythm, not of a type.
+ */
+export function buildRootBlockSpacingCss(content: Block[]): string {
+  const rules = content.flatMap((block) => {
+    const className = block.id ? rootBlockInstanceClassName(block.id) : null;
+    return className ? spacingRules(`.${className}`, block.styleOverride) : [];
+  });
+  return rules.length > 0
+    ? `@layer brisk.instance {\n${rules.join('\n')}\n}`
+    : '';
+}
+
+/**
+ * The margin rules for one root block, base plus one container query per
+ * narrower tier that changes something — the same shape as
+ * `buildResponsiveRules`, but emitting real `margin-top`/`margin-bottom`
+ * declarations rather than custom properties.
+ *
+ * Not routed through that function: it walks
+ * `BLOCK_STYLE_CUSTOM_PROPERTIES`, which deliberately excludes these two
+ * keys (INSTANCE_ONLY_PROPERTIES) because no block reads them as
+ * variables. Teaching it a second output mode would put a special case in
+ * front of every other property; this is the smaller, more honest shape.
+ */
+function spacingRules(selector: string, style: unknown): string[] {
+  const [base, tablet, mobile] = responsiveBuckets(style);
+  const declarationsFor = (bucket: Record<string, unknown>): string | null => {
+    const top = safeCssDeclarationValue(bucket['marginTop']);
+    const bottom = safeCssDeclarationValue(bucket['marginBottom']);
+    const declarations = [
+      top ? `margin-top: ${top};` : null,
+      bottom ? `margin-bottom: ${bottom};` : null,
+    ]
+      .filter((declaration): declaration is string => declaration !== null)
+      .join(' ');
+    return declarations.length > 0 ? declarations : null;
+  };
+
+  const rules: string[] = [];
+  const baseDeclarations = declarationsFor(base);
+  if (baseDeclarations) {
+    rules.push(`${selector} { ${baseDeclarations} }`);
+  }
+  // Narrower tiers last, so mobile wins over tablet where both match —
+  // the same ordering rule as every other responsive rule we emit.
+  for (const [breakpoint, bucket] of [
+    ['tablet', tablet],
+    ['mobile', mobile],
+  ] as const) {
+    const declarations = declarationsFor(bucket);
+    if (declarations) {
+      rules.push(
+        `@container (max-width: ${BREAKPOINT_MAX_WIDTHS[breakpoint]}px) { ${selector} { ${declarations} } }`,
+      );
+    }
+  }
+  return rules;
+}
+
 export function buildBlockInstanceRulesCss(contents: Block[][]): string {
   const rules = contents
     .flatMap((content) => collectStyledBlocks(content))
