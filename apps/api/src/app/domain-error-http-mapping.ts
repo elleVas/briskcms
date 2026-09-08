@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  PayloadTooLargeException,
   ConflictException,
   NotFoundException,
   ServiceUnavailableException,
@@ -24,6 +25,7 @@ import {
   SiteLayoutSectionVersionNotFoundError,
   SiteNotFoundError,
   UnsupportedAttachmentTypeError,
+  MediaTooLargeError,
   UnsupportedMediaTypeError,
   UserAlreadyActiveError,
   UserEmailAlreadyExistsError,
@@ -80,6 +82,9 @@ const DOMAIN_ERROR_MAPPINGS: Array<[Type<Error>, DomainErrorFactory]> = [
   [InvalidCaptchaError, (m) => new BadRequestException(m)],
   [UnsupportedAttachmentTypeError, (m) => new BadRequestException(m)],
   [UnsupportedMediaTypeError, (m) => new BadRequestException(m)],
+  // 413, not 400: the request was well formed, it was too big — and the
+  // status is what a client can act on without parsing the message.
+  [MediaTooLargeError, (m) => new PayloadTooLargeException(m)],
   [InvalidThemeNameError, (m) => new BadRequestException(m)],
 ];
 

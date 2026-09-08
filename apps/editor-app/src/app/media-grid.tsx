@@ -24,6 +24,21 @@ export interface MediaGridProps {
   showDelete?: boolean;
 }
 
+/**
+ * The exact formats the server accepts (ADR-0054), rather than
+ * `image/*`: a hint that matches the allow-list spares people picking a
+ * file only to have it refused. Extensions AND MIME types, because
+ * browsers differ on which they match. It is a hint and nothing more —
+ * an upload's own bytes are what actually decides, server-side.
+ */
+const UPLOAD_ACCEPT = [
+  '.png,.jpg,.jpeg,.gif,.webp,.avif',
+  '.mp4,.webm,.mp3,.ogg,.wav',
+  'image/png,image/jpeg,image/gif,image/webp,image/avif',
+  'video/mp4,video/webm',
+  'audio/mpeg,audio/ogg,audio/wav',
+].join(',');
+
 export function MediaGrid({
   siteId,
   items,
@@ -71,7 +86,7 @@ export function MediaGrid({
         <input
           ref={fileInputRef}
           type="file"
-          accept="image/*"
+          accept={UPLOAD_ACCEPT}
           className="hidden"
           onChange={(event) => void handleFileChange(event)}
         />

@@ -86,7 +86,21 @@ async function bootstrap() {
   // to configure for self-hosting, see ADR-0013. Under the global prefix
   // since LocalDiskMediaStorageAdapter.getUrl() builds URLs against
   // API_PUBLIC_URL, which already includes it.
-  app.use(`/${globalPrefix}/uploads`, express.static(mediaUploadDir));
+  // `nosniff` on the media tree as well (ADR-0054): every file here has
+  // had its bytes checked against a short allow-list and images are
+  // re-encoded to WebP, so nothing stored is executable — but the header
+  // costs nothing and removes the whole class of "the browser decides the
+  // type differs from what we said" from consideration. Media stays
+  // INLINE, unlike the attachments above: a <video> element cannot play a
+  // file the server told the browser to download.
+  app.use(
+    `/${globalPrefix}/uploads`,
+    express.static(mediaUploadDir, {
+      setHeaders: (res) => {
+        res.setHeader('X-Content-Type-Options', 'nosniff');
+      },
+    }),
+  );
   const port = process.env.PORT || 3000;
   await app.listen(port);
   Logger.log(

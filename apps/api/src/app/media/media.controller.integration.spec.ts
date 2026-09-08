@@ -5,7 +5,6 @@ import { Test } from '@nestjs/testing';
 import { HttpExceptionFilter } from '../http-exception.filter';
 import { requestIdMiddleware } from '../request-id.middleware';
 import cookieParser from 'cookie-parser';
-import express from 'express';
 import request from 'supertest';
 import sharp from 'sharp';
 import type { AuthPort } from '@brisk/ports';
@@ -19,6 +18,7 @@ import {
 import { AUTH_PORT } from '../auth/auth.tokens';
 import { DATABASE } from '../database.module';
 import { MediaModule } from './media.module';
+import { mountMediaStatic } from '../media-static';
 
 /**
  * Runs against a real Postgres and writes real files under MEDIA_UPLOAD_DIR
@@ -49,7 +49,9 @@ describe('MediaController (integration)', () => {
     // which this isolated test harness — like the sibling integration
     // specs — never sets either) so this suite exercises the real
     // upload-then-served-back path, not just the controller in isolation.
-    app.use('/uploads', express.static(process.env.MEDIA_UPLOAD_DIR as string));
+    // The real serving configuration, not a bare static mount: a test
+    // that sets up its own headers is testing itself.
+    mountMediaStatic(app, process.env.MEDIA_UPLOAD_DIR as string);
     await app.init();
     db = app.get<BriskDb>(DATABASE);
 
@@ -138,6 +140,64 @@ describe('MediaController (integration)', () => {
       .post('/media')
       .field('siteId', siteId)
       .attach('file', Buffer.from('not an image'), 'documento.pdf')
+      .expect(400);
+  });
+
+  /**
+   * A minimal but structurally real MP4: an `ftyp` box declaring the
+   * `isom` brand, then an `mdat`. Built here rather than committed as a
+   * fixture because what is being tested is the signature check, and the
+   * signature is these first bytes.
+   */
+  function mp4Buffer(): Buffer {
+    const box = (type: string, payload: Buffer): Buffer => {
+      const header = Buffer.alloc(8);
+      header.writeUInt32BE(8 + payload.length, 0);
+      header.write(type, 4, 'ascii');
+      return Buffer.concat([header, payload]);
+    };
+    const brands = Buffer.concat([
+      Buffer.from('isom', 'ascii'),
+      Buffer.from([0, 0, 2, 0]),
+      Buffer.from('isomiso2mp41', 'ascii'),
+    ]);
+    return Buffer.concat([box('ftyp', brands), box('mdat', Buffer.alloc(64))]);
+  }
+
+  it('uploads a video as-is, without putting it through the image pipeline', async () => {
+    const uploadRes = await agent
+      .post('/media')
+      .field('siteId', siteId)
+      .attach('file', mp4Buffer(), 'clip.mp4')
+      .expect(201);
+
+    // Not converted to WebP, unlike every image: sharp cannot read a
+    // video, so it is stored exactly as uploaded (ADR-0054).
+    expect(uploadRes.body.storageKey).toMatch(/\.mp4$/);
+    expect(uploadRes.body.mimeType).toBe('video/mp4');
+    uploadedStorageKeys.push(uploadRes.body.storageKey);
+
+    const servedRes = await request(app.getHttpServer())
+      .get(`/uploads/${uploadRes.body.storageKey}`)
+      .expect(200);
+    expect(servedRes.headers['content-type']).toContain('video/mp4');
+    // Served inline, deliberately — a <video> cannot play a file the
+    // server told the browser to download — with nosniff as the guard
+    // that its type is taken as declared.
+    expect(servedRes.headers['x-content-type-options']).toBe('nosniff');
+    expect(servedRes.headers['content-disposition']).toBeUndefined();
+  });
+
+  it('refuses a file whose bytes are not what its name and type claim', async () => {
+    // The declared MIME type says video, the extension says video, and
+    // the content is a script. Only the bytes are checked (ADR-0054).
+    await agent
+      .post('/media')
+      .field('siteId', siteId)
+      .attach('file', Buffer.from('<svg onload="alert(1)">'), {
+        filename: 'clip.mp4',
+        contentType: 'video/mp4',
+      })
       .expect(400);
   });
 

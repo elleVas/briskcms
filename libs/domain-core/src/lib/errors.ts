@@ -169,12 +169,48 @@ export class MediaNotFoundError extends Error {
   }
 }
 
-/** MediaStoragePort adapters process every upload through sharp (resize +
- * WebP conversion, see ADR-0013) — not a generic file store, images only. */
+/**
+ * An upload the media library will not store.
+ *
+ * Two callers, guarding two different things. The storage adapters raise
+ * it for anything that is not an image, because they put every image
+ * through sharp (resize + WebP conversion, ADR-0013) and cannot process
+ * what sharp cannot read. `sniffMediaType` raises it for a file whose own
+ * BYTES are not an allowed format (ADR-0054) — which matters for video
+ * and audio specifically, since those are stored as uploaded rather than
+ * re-encoded, so the bytes are the only thing that was ever checked.
+ *
+ * The argument is optional because the sniffer has nothing useful to put
+ * there: what it rejected is the content, not a declared type, and
+ * echoing a caller-supplied string into an upload endpoint's error gains
+ * nothing.
+ */
 export class UnsupportedMediaTypeError extends Error {
-  constructor(mimeType: string) {
-    super(`Unsupported media type: ${mimeType}`);
+  constructor(mimeType?: string) {
+    super(
+      mimeType
+        ? `Unsupported media type: ${mimeType}`
+        : 'Unsupported media type',
+    );
     this.name = 'UnsupportedMediaTypeError';
+  }
+}
+
+/**
+ * Raised by uploadMedia when a file is larger than its kind allows
+ * (ADR-0054) — the limits differ because one number cannot serve both a
+ * photo and a video.
+ *
+ * The limit is in the message on purpose: unlike a rejected type, this is
+ * something the person uploading can act on, and "too large" without a
+ * number is a dead end.
+ */
+export class MediaTooLargeError extends Error {
+  constructor(kind: string, limitBytes: number) {
+    super(
+      `This ${kind} is larger than the ${Math.round(limitBytes / (1024 * 1024))}MB limit`,
+    );
+    this.name = 'MediaTooLargeError';
   }
 }
 

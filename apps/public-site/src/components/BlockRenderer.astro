@@ -15,6 +15,8 @@ import {
   sliderPropsSchema,
   dividerPropsSchema,
   spacerPropsSchema,
+  videoFilePropsSchema,
+  audioPropsSchema,
   iconPropsSchema,
   socialLinksPropsSchema,
   socialLinkPropsSchema,
@@ -124,6 +126,10 @@ import SliderCore from './blocks/Slider.astro';
 import DividerCore from './blocks/Divider.astro';
 const Divider = resolveThemeBlockOverride('Divider', DividerCore, themeName);
 import SpacerCore from './blocks/Spacer.astro';
+import VideoFileCore from './blocks/VideoFile.astro';
+const VideoFile = resolveThemeBlockOverride('VideoFile', VideoFileCore, themeName);
+import AudioCore from './blocks/Audio.astro';
+const Audio = resolveThemeBlockOverride('Audio', AudioCore, themeName);
 const Spacer = resolveThemeBlockOverride('Spacer', SpacerCore, themeName);
 import IconCore from './blocks/Icon.astro';
 const Icon = resolveThemeBlockOverride('Icon', IconCore, themeName);
@@ -362,6 +368,12 @@ const BLOCK_REGISTRY: Record<string, BlockDispatchEntry> = {
     recurseChildren: true,
   },
   Divider: { component: Divider, schema: dividerPropsSchema, stylable: true },
+  VideoFile: {
+    component: VideoFile,
+    schema: videoFilePropsSchema,
+    stylable: true,
+  },
+  Audio: { component: Audio, schema: audioPropsSchema, stylable: true },
   Spacer: { component: Spacer, schema: spacerPropsSchema, stylable: true },
   Icon: { component: Icon, schema: iconPropsSchema, stylable: true },
   SocialLinks: {

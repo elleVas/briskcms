@@ -1452,6 +1452,43 @@
           "fieldLabel": "Address"
         }
       }
+    },
+    "videoFile": {
+      "label": "Video (hosted)",
+      "fields": {
+        "media": {
+          "fieldLabel": "Video file"
+        },
+        "poster": {
+          "fieldLabel": "Cover image (shown before it plays)"
+        },
+        "controls": {
+          "fieldLabel": "Show player controls"
+        },
+        "autoplay": {
+          "fieldLabel": "Play automatically (starts muted)"
+        },
+        "loop": {
+          "fieldLabel": "Loop"
+        },
+        "muted": {
+          "fieldLabel": "Muted"
+        }
+      }
+    },
+    "audio": {
+      "label": "Audio",
+      "fields": {
+        "media": {
+          "fieldLabel": "Audio file"
+        },
+        "title": {
+          "fieldLabel": "Title"
+        },
+        "loop": {
+          "fieldLabel": "Loop"
+        }
+      }
     }
   }
 }

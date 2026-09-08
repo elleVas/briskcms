@@ -15,6 +15,8 @@ import { iconBlock } from './blocks/icon.block';
 import { socialLinkBlock } from './blocks/social-link.block';
 import { socialLinksBlock } from './blocks/social-links.block';
 import { spacerBlock } from './blocks/spacer.block';
+import { videoFileBlock } from './blocks/video-file.block';
+import { audioBlock } from './blocks/audio.block';
 import { containerBlock } from './blocks/container.block';
 import { countdownBlock } from './blocks/countdown.block';
 import { embedHtmlBlock } from './blocks/embed-html.block';
@@ -66,6 +68,8 @@ export {
   iconBlock,
   socialLinksBlock,
   socialLinkBlock,
+  videoFileBlock,
+  audioBlock,
   containerBlock,
   countdownBlock,
   embedHtmlBlock,

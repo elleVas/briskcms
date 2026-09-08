@@ -36,6 +36,13 @@ export const BLOCK_STYLE_DEFAULTS: Record<string, BlockStyleDefaults> = {
     paddingX: '0',
     paddingY: '0',
   },
+  Audio: {
+    backgroundColor: 'transparent',
+    textColor: 'inherit',
+    borderRadius: '0',
+    paddingX: '0',
+    paddingY: '0',
+  },
   BackToTop: {
     backgroundColor: 'var(--primary)',
     textColor: 'var(--primary-foreground)',
@@ -450,6 +457,12 @@ export const BLOCK_STYLE_DEFAULTS: Record<string, BlockStyleDefaults> = {
     borderColor: 'var(--border)',
     boxShadow: 'none',
     maxWidth: 'none',
+  },
+  VideoFile: {
+    borderRadius: '0',
+    boxShadow: 'none',
+    maxWidth: '100%',
+    backgroundColor: '#000',
   },
   WhatsAppButton: {
     backgroundColor: '#25d366',

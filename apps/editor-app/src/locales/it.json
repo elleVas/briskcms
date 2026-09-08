@@ -1452,6 +1452,43 @@
           "fieldLabel": "Indirizzo"
         }
       }
+    },
+    "videoFile": {
+      "label": "Video (caricato)",
+      "fields": {
+        "media": {
+          "fieldLabel": "File video"
+        },
+        "poster": {
+          "fieldLabel": "Immagine di copertina (prima della riproduzione)"
+        },
+        "controls": {
+          "fieldLabel": "Mostra i comandi"
+        },
+        "autoplay": {
+          "fieldLabel": "Riproduci automaticamente (parte senza audio)"
+        },
+        "loop": {
+          "fieldLabel": "Ripeti"
+        },
+        "muted": {
+          "fieldLabel": "Senza audio"
+        }
+      }
+    },
+    "audio": {
+      "label": "Audio",
+      "fields": {
+        "media": {
+          "fieldLabel": "File audio"
+        },
+        "title": {
+          "fieldLabel": "Titolo"
+        },
+        "loop": {
+          "fieldLabel": "Ripeti"
+        }
+      }
     }
   }
 }

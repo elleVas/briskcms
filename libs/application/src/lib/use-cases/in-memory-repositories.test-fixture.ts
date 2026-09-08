@@ -13,6 +13,7 @@ import type {
   SiteLayoutSectionVersion,
   User,
 } from '@brisk/domain-core';
+import { sniffMediaType } from '@brisk/domain-core';
 import type { ResponsiveBlockStyle } from '@brisk/shared-types';
 import type {
   FormRepositoryPort,
@@ -663,12 +664,27 @@ export class InMemoryMediaStorage implements MediaStoragePort {
 
   async upload(input: UploadMediaInput): Promise<UploadMediaResult> {
     this.uploads.push(input);
+    // Mirrors what the real adapters do (ADR-0054): an image is
+    // re-encoded to WebP, while video and audio are stored as uploaded
+    // and keep their own sniffed type. A fake that answered `image/webp`
+    // to everything would let a test assert a video had been stored
+    // correctly when nothing of the kind had happened.
+    const sniffed = sniffMediaType(input.data);
+    if (sniffed.kind === 'image') {
+      return {
+        storageKey: `fake-${this.uploads.length}.webp`,
+        mimeType: 'image/webp',
+        size: input.data.byteLength,
+        width: 800,
+        height: 600,
+      };
+    }
     return {
-      storageKey: `fake-${this.uploads.length}.webp`,
-      mimeType: 'image/webp',
+      storageKey: `fake-${this.uploads.length}.${sniffed.extension}`,
+      mimeType: sniffed.mimeType,
       size: input.data.byteLength,
-      width: 800,
-      height: 600,
+      width: 0,
+      height: 0,
     };
   }
 

@@ -5,7 +5,7 @@ import {
   S3Client,
 } from '@aws-sdk/client-s3';
 import sharp from 'sharp';
-import { UnsupportedMediaTypeError } from '@brisk/domain-core';
+import { sniffMediaType } from '@brisk/domain-core';
 import type {
   MediaStoragePort,
   UploadMediaInput,
@@ -51,8 +51,32 @@ export class S3MediaStorageAdapter implements MediaStoragePort {
   }
 
   async upload(input: UploadMediaInput): Promise<UploadMediaResult> {
-    if (!input.mimeType.startsWith('image/')) {
-      throw new UnsupportedMediaTypeError(input.mimeType);
+    // The bytes decide, not the declared type — see the same call in
+    // LocalDiskMediaStorageAdapter and ADR-0054 for why video and audio
+    // make this necessary rather than merely tidy.
+    const sniffed = sniffMediaType(input.data);
+
+    if (sniffed.kind !== 'image') {
+      const key = `${randomUUID()}.${sniffed.extension}`;
+      await this.client.send(
+        new PutObjectCommand({
+          Bucket: this.options.bucket,
+          Key: key,
+          Body: input.data,
+          // The SNIFFED type, never the declared one: this header is what
+          // a browser trusts when it plays the file back.
+          ContentType: sniffed.mimeType,
+        }),
+      );
+      return {
+        storageKey: key,
+        mimeType: sniffed.mimeType,
+        size: input.data.byteLength,
+        // See the local adapter: reading a container's dimensions means
+        // decoding it, and nothing needs them for these two.
+        width: 0,
+        height: 0,
+      };
     }
 
     // rotate() with no args: auto-orients from EXIF before anything else —
