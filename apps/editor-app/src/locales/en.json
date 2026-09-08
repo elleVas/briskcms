@@ -787,6 +787,14 @@
         "backgroundImage": {
           "fieldLabel": "Background image",
           "placeholder": "e.g. url(/media/photo.jpg)"
+        },
+        "animationDuration": {
+          "fieldLabel": "Animation duration",
+          "placeholder": "e.g. 600ms — empty for default"
+        },
+        "animationDelay": {
+          "fieldLabel": "Animation delay",
+          "placeholder": "e.g. 200ms — empty for none"
         }
       },
       "selects": {
@@ -848,6 +856,37 @@
           "options": {
             "column": "Stacked",
             "row": "Side by side"
+          }
+        },
+        "animation": {
+          "fieldLabel": "Entrance animation",
+          "options": {
+            "none": "None",
+            "fade": "Fade in",
+            "slide-up": "Slide up",
+            "slide-down": "Slide down",
+            "slide-left": "Slide from the right",
+            "slide-right": "Slide from the left",
+            "zoom": "Zoom in"
+          }
+        },
+        "animationEasing": {
+          "fieldLabel": "Easing",
+          "options": {
+            "ease-out": "Ease out",
+            "ease": "Ease",
+            "ease-in": "Ease in",
+            "ease-in-out": "Ease in and out",
+            "linear": "Linear"
+          }
+        },
+        "hoverEffect": {
+          "fieldLabel": "On hover",
+          "options": {
+            "none": "Nothing",
+            "lift": "Lift",
+            "grow": "Grow",
+            "dim": "Dim"
           }
         }
       }

@@ -1,5 +1,6 @@
 import type { BlockBehavior } from './types';
 import { carouselScrollSign } from './carousel-scroll-direction';
+import { preferredScrollBehavior } from '../scroll-behavior';
 
 /**
  * Prev/next for every scrolling collection (ADR-0052).
@@ -46,7 +47,7 @@ function wireCollection(collection: HTMLElement): void {
         : (firstItem?.offsetWidth ?? track.clientWidth) + trackGap(track);
     track.scrollBy({
       left: carouselScrollSign(track, direction) * distance,
-      behavior: 'smooth',
+      behavior: preferredScrollBehavior(),
     });
   };
 

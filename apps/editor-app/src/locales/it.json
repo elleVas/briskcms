@@ -787,6 +787,14 @@
         "backgroundImage": {
           "fieldLabel": "Immagine di sfondo",
           "placeholder": "es. url(/media/foto.jpg)"
+        },
+        "animationDuration": {
+          "fieldLabel": "Durata animazione",
+          "placeholder": "es. 600ms — vuoto per il valore predefinito"
+        },
+        "animationDelay": {
+          "fieldLabel": "Ritardo animazione",
+          "placeholder": "es. 200ms — vuoto per nessuno"
         }
       },
       "selects": {
@@ -848,6 +856,37 @@
           "options": {
             "column": "Impilati",
             "row": "Affiancati"
+          }
+        },
+        "animation": {
+          "fieldLabel": "Animazione d'ingresso",
+          "options": {
+            "none": "Nessuna",
+            "fade": "Dissolvenza",
+            "slide-up": "Scorre dal basso",
+            "slide-down": "Scorre dall'alto",
+            "slide-left": "Scorre da destra",
+            "slide-right": "Scorre da sinistra",
+            "zoom": "Ingrandimento"
+          }
+        },
+        "animationEasing": {
+          "fieldLabel": "Andamento",
+          "options": {
+            "ease-out": "In uscita",
+            "ease": "Morbido",
+            "ease-in": "In entrata",
+            "ease-in-out": "In entrata e uscita",
+            "linear": "Lineare"
+          }
+        },
+        "hoverEffect": {
+          "fieldLabel": "Al passaggio del mouse",
+          "options": {
+            "none": "Niente",
+            "lift": "Si solleva",
+            "grow": "Si ingrandisce",
+            "dim": "Si attenua"
           }
         }
       }

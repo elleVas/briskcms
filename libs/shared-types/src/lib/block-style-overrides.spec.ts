@@ -5,6 +5,8 @@ import {
   blockVariantClassName,
   buildBlockInstanceRulesCss,
   buildBlockStyleOverridesCss,
+  buildRootBlockSpacingCss,
+  rootBlockHoverAttr,
 } from './block-style-overrides';
 import { DEFAULT_VARIANT } from './site-theme-tokens';
 import type { Block } from './content-model';
@@ -499,5 +501,73 @@ describe("a theme's own style properties", () => {
         Button: { default: { base: { marginTop: '1rem' } } },
       }),
     ).toBe('');
+  });
+});
+
+describe('the motion set on a root block (docs/adr/0060)', () => {
+  const wrapperFor = (styleOverride: unknown) =>
+    buildRootBlockSpacingCss([
+      { id: 'abc', type: 'Hero', props: {}, styleOverride },
+    ] as never);
+
+  it('emits the keyframe name the stylesheet defines, not the stored word', () => {
+    const css = wrapperFor({ base: { animation: 'slide-up' } });
+    expect(css).toContain('--brisk-anim-name: brisk-slide-up;');
+  });
+
+  it('emits duration, delay and easing beside it', () => {
+    const css = wrapperFor({
+      base: {
+        animation: 'fade',
+        animationDuration: '800ms',
+        animationDelay: '200ms',
+        animationEasing: 'linear',
+      },
+    });
+    expect(css).toContain('--brisk-anim-duration: 800ms;');
+    expect(css).toContain('--brisk-anim-delay: 200ms;');
+    expect(css).toContain('--brisk-anim-easing: linear;');
+  });
+
+  /*
+   * `none` is what a block without the property already does, so storing
+   * it as a declaration would be a rule that says nothing — and one that
+   * could shadow a value set elsewhere.
+   */
+  it('writes nothing for "none"', () => {
+    expect(wrapperFor({ base: { animation: 'none' } })).toBe('');
+  });
+
+  /*
+   * The exit barrier again (PR #144): a name that has no `@keyframes`
+   * would set `animation-name` to something undefined, and the block
+   * would silently never animate. Refused where it is emitted, not only
+   * where it was typed.
+   */
+  it('refuses an animation the stylesheet does not define', () => {
+    expect(wrapperFor({ base: { animation: 'flip' } })).toBe('');
+  });
+
+  /*
+   * Base only, deliberately: an entrance is not a layout, and the sizes
+   * are about layout. See `animationRules`.
+   */
+  it('ignores a per-breakpoint animation rather than emitting a query', () => {
+    const css = wrapperFor({
+      base: {},
+      mobile: { animation: 'zoom' },
+    });
+    expect(css).toBe('');
+  });
+
+  it('reads the hover effect as an attribute, refusing anything else', () => {
+    expect(rootBlockHoverAttr({ base: { hoverEffect: 'lift' } })).toBe('lift');
+    expect(
+      rootBlockHoverAttr({ base: { hoverEffect: 'none' } }),
+    ).toBeUndefined();
+    expect(
+      rootBlockHoverAttr({ base: { hoverEffect: 'explode' } }),
+    ).toBeUndefined();
+    expect(rootBlockHoverAttr(undefined)).toBeUndefined();
   });
 });

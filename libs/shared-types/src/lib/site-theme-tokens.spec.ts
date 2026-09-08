@@ -145,3 +145,34 @@ describe('normalizeResponsiveBlockStyle', () => {
     },
   );
 });
+
+describe('an animation duration is a time, not a number', () => {
+  const parse = (animationDuration: string) =>
+    blockStyleOverrideSchema.safeParse({ animationDuration }).success;
+
+  it('accepts both units', () => {
+    expect(parse('600ms')).toBe(true);
+    expect(parse('0.6s')).toBe(true);
+    expect(parse('1s')).toBe(true);
+  });
+
+  /*
+   * The mistake that actually happens, and the reason this schema is
+   * narrower than every other length here: `600` without a unit makes the
+   * whole `animation` shorthand invalid, so the block does not animate
+   * slowly — it never appears at all until the observer releases it, and
+   * then it appears without the animation. Refusing it is the difference
+   * between a wrong look and a broken page.
+   */
+  it('refuses a bare number', () => {
+    expect(parse('600')).toBe(false);
+    expect(parse('fast')).toBe(false);
+  });
+
+  /* Longer than this is a page that looks broken, not a page with style. */
+  it('refuses a duration nobody would wait through', () => {
+    expect(parse('4s')).toBe(true);
+    expect(parse('10s')).toBe(false);
+    expect(parse('9000ms')).toBe(false);
+  });
+});

@@ -231,7 +231,21 @@ export function BlockToolbarOverlay({
     !themeAllowsStyling
       ? []
       : isRootLevel
-        ? [...stylableProperties, 'marginTop', 'marginBottom']
+        ? [
+            ...stylableProperties,
+            'marginTop',
+            'marginBottom',
+            // The motion set (docs/adr/0060) joins the margins here for
+            // the same two reasons: per-instance only, and root-level
+            // only — what animates is the wrapper, which exists once per
+            // placement. A nested block would get a control that moves
+            // nothing.
+            'animation',
+            'animationDuration',
+            'animationDelay',
+            'animationEasing',
+            'hoverEffect',
+          ]
         : stylableProperties;
   const canStyleInstance = instanceStylableProperties.length > 0;
   // The TYPE override (when present and non-null, i.e. genuinely
