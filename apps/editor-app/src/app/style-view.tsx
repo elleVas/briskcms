@@ -94,6 +94,11 @@ export function StyleView({ siteId, site }: StyleViewProps) {
     initialFont.customFontName,
   );
   const [customCss, setCustomCss] = useState(site.themeCustomCss ?? '');
+  // Empty string = "not customized" (stored as null), so the theme's own
+  // width applies — the same convention as every other field here.
+  const [contentWidth, setContentWidth] = useState(
+    site.themeContentWidth ?? '',
+  );
   const [faviconUrl, setFaviconUrl] = useState(site.themeFaviconUrl ?? '');
   const [error, setError] = useState('');
   const [savedAt, setSavedAt] = useState(0);
@@ -132,6 +137,7 @@ export function StyleView({ siteId, site }: StyleViewProps) {
               ? customFontName.trim() || null
               : fontChoice,
         customCss: customCss.trim() || null,
+        contentWidth: contentWidth.trim() || null,
         // Owned by IntegrationsView now, not this page — round-tripped
         // unchanged since updateThemeSettings always replaces the whole
         // object (see Site.updateThemeSettings, no partial-patch support).
@@ -263,6 +269,21 @@ export function StyleView({ siteId, site }: StyleViewProps) {
             onChange={(event) => setFaviconUrl(event.target.value)}
             placeholder="https://.../favicon.png"
           />
+        </div>
+
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="theme-settings-content-width">
+            {t('themeSettings.contentWidthLabel')}
+          </Label>
+          <Input
+            id="theme-settings-content-width"
+            value={contentWidth}
+            onChange={(event) => setContentWidth(event.target.value)}
+            placeholder="64rem"
+          />
+          <p className="text-sm text-muted-foreground">
+            {t('themeSettings.contentWidthHelp')}
+          </p>
         </div>
 
         <div className="flex flex-col gap-2">

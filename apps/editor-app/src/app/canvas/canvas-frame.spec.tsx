@@ -31,6 +31,7 @@ const emptyBridge: PreviewBridgeState = {
   exitTextEdit: vi.fn(),
   selectBlock: vi.fn(),
   updateBlockStyleCss: vi.fn(),
+  setBlockAlign: vi.fn(),
   scrollToBlock: vi.fn(),
   applyPageLink: vi.fn(),
 };

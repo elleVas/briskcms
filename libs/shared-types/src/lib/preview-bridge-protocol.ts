@@ -1,3 +1,5 @@
+import type { BlockAlign } from './content-model';
+
 /**
  * The postMessage protocol between the canvas (apps/editor-app, the parent)
  * and the real page rendered in the iframe (apps/public-site) — see the
@@ -291,6 +293,25 @@ export type EditorApplyPageLinkMessage = PreviewBridgeEnvelope<
   { pageGroupId: string | null }
 >;
 
+/**
+ * How much of the page's width a ROOT-level block claims (ADR-0049).
+ *
+ * Its own message rather than a re-render through `editor:patch-block`,
+ * because the value does not live on the block's own element: it is an
+ * attribute on the `.brisk-root-block` wrapper around it
+ * (PublicPageContent.astro), which a patch replacing the block's HTML
+ * leaves untouched. Sending it separately also means changing an
+ * alignment costs no render round trip at all — the iframe sets one
+ * attribute and the CSS does the rest.
+ *
+ * `align: null` is the default content column, matching how the renderer
+ * writes it: the attribute is removed rather than set to a value.
+ */
+export type EditorSetBlockAlignMessage = PreviewBridgeEnvelope<
+  'editor:set-block-align',
+  { blockId: string; align: BlockAlign | null }
+>;
+
 export type ParentToPreviewMessage =
   | EditorPatchBlockMessage
   | EditorEnterTextEditMessage
@@ -300,7 +321,8 @@ export type ParentToPreviewMessage =
   | EditorInsertBlockMessage
   | EditorUpdateBlockStyleCssMessage
   | EditorScrollToBlockMessage
-  | EditorApplyPageLinkMessage;
+  | EditorApplyPageLinkMessage
+  | EditorSetBlockAlignMessage;
 
 export type AnyPreviewBridgeMessage =
   PreviewToParentMessage | ParentToPreviewMessage;

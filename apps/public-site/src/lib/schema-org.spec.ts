@@ -22,6 +22,7 @@ const baseSite: PublishedSite = {
     secondaryColor: null,
     fontFamily: null,
     customCss: null,
+    contentWidth: null,
     headScript: null,
     bodyScript: null,
     faviconUrl: null,

@@ -29,6 +29,23 @@
 }
 
 :root {
+  /* The readable content column (ADR-0049). Every root-level block on
+     every page is centred inside this width unless it says otherwise,
+     which is what `<main class="max-w-5xl px-6">` used to do literally,
+     in core, where no theme could reach it. 64rem is that same number, so
+     a site keeps the exact layout it had.
+
+     `--brisk-content-gutter` is the breathing room at the edges, counted
+     INSIDE the width (border-box), again matching the `px-6` that used to
+     live on the same element as the max-width.
+
+     A block asking for `wide` gets the second value; one asking for
+     `full` gets the viewport. A theme that wants a roomier site changes
+     these two numbers and every page follows. */
+  --brisk-content-width: 64rem;
+  --brisk-content-width-wide: 80rem;
+  --brisk-content-gutter: 1.5rem;
+
   /* Loaded via a Google Fonts <link> in this theme's own PageLayout.astro
      <head> — themes ship no font-loading mechanism of their own, so this
      token alone would silently fall back to the system stack without it

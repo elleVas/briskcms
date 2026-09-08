@@ -3,6 +3,7 @@ import {
   isPreviewBridgeMessage,
   PREVIEW_BRIDGE_SOURCE,
   PREVIEW_BRIDGE_VERSION,
+  type BlockAlign,
   type BlockRect,
   type RichTextMenuLabels,
 } from '@brisk/shared-types';
@@ -88,6 +89,8 @@ export interface PreviewBridgeState {
   selectBlock: (blockId: string | null) => void;
   /** Updates the `<style>` holding the "component-level" overrides in the iframe (docs/adr/0022, the "Style" button) — `css` is already prepared (buildBlockStyleOverridesCss), and the iframe only writes it. */
   updateBlockStyleCss: (css: string) => void;
+  /** ADR-0049 — how much page width a ROOT block claims. `null` = the default content column. */
+  setBlockAlign: (blockId: string, align: BlockAlign | null) => void;
   /** Brings block `blockId` into view in the iframe's document (the Layers panel) — see EditorScrollToBlockMessage. */
   scrollToBlock: (blockId: string) => void;
 }
@@ -103,6 +106,7 @@ type PreviewBridgeMessageState = Omit<
   | 'exitTextEdit'
   | 'selectBlock'
   | 'updateBlockStyleCss'
+  | 'setBlockAlign'
   | 'scrollToBlock'
 >;
 
@@ -391,6 +395,27 @@ export function usePreviewBridge(
     [iframeRef],
   );
 
+  /**
+   * ADR-0049 — the attribute lives on the `.brisk-root-block` wrapper, not
+   * on the block, so a `patchBlock` re-render would not carry it. Sending
+   * it on its own also means an alignment change costs no render round
+   * trip at all.
+   */
+  const setBlockAlign = useCallback(
+    (blockId: string, align: BlockAlign | null) => {
+      iframeRef.current?.contentWindow?.postMessage(
+        {
+          source: PREVIEW_BRIDGE_SOURCE,
+          v: PREVIEW_BRIDGE_VERSION,
+          type: 'editor:set-block-align',
+          payload: { blockId, align },
+        },
+        '*',
+      );
+    },
+    [iframeRef],
+  );
+
   const scrollToBlock = useCallback(
     (blockId: string) => {
       iframeRef.current?.contentWindow?.postMessage(
@@ -417,6 +442,7 @@ export function usePreviewBridge(
     exitTextEdit,
     selectBlock,
     updateBlockStyleCss,
+    setBlockAlign,
     scrollToBlock,
   };
 }

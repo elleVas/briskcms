@@ -180,7 +180,9 @@ describe('applyBlockInsert', () => {
   it('appends to the root blocks list for the current editing scope when there is no beforeBlockId', () => {
     document.body.innerHTML =
       '<div data-brisk-root-blocks="page">' +
+      '<div class="brisk-root-block" data-brisk-gap="default" style="margin-top: 0; margin-bottom: 0;">' +
       '<div data-brisk-block-id="a">first</div>' +
+      '</div>' +
       '</div>';
 
     const inserted = applyBlockInsert(
@@ -191,19 +193,29 @@ describe('applyBlockInsert', () => {
       null,
     );
 
-    expect(inserted?.textContent).toBe('second');
+    // The returned node is the BLOCK, not the wrapper around it: every
+    // caller uses it to select and measure the block it just inserted.
+    expect(inserted?.getAttribute('data-brisk-block-id')).toBe('b');
     expect(document.body.innerHTML).toBe(
       '<div data-brisk-root-blocks="page">' +
+        // The block that was last is no longer last, so it gets the
+        // default gap below it back.
+        '<div class="brisk-root-block" data-brisk-gap="default" style="margin-top: 0; margin-bottom: 4rem;">' +
         '<div data-brisk-block-id="a">first</div>' +
+        '</div>' +
+        '<div class="brisk-root-block" style="margin-top: 0; margin-bottom: 0;" data-brisk-gap="default">' +
         '<div data-brisk-block-id="b">second</div>' +
+        '</div>' +
         '</div>',
     );
   });
 
-  it('inserts before an existing root sibling, using its own parent as the container', () => {
+  it("inserts before an existing root sibling, using its wrapper's parent as the container", () => {
     document.body.innerHTML =
       '<div data-brisk-root-blocks="page">' +
+      '<div class="brisk-root-block" data-brisk-gap="default" style="margin-top: 0; margin-bottom: 0;">' +
       '<div data-brisk-block-id="a">first</div>' +
+      '</div>' +
       '</div>';
 
     applyBlockInsert(
@@ -216,9 +228,90 @@ describe('applyBlockInsert', () => {
 
     expect(document.body.innerHTML).toBe(
       '<div data-brisk-root-blocks="page">' +
+        '<div class="brisk-root-block" style="margin-top: 0; margin-bottom: 0;" data-brisk-gap="default">' +
         '<div data-brisk-block-id="b">new</div>' +
+        '</div>' +
+        '<div class="brisk-root-block" data-brisk-gap="default" style="margin-top: 0; margin-bottom: 0;">' +
         '<div data-brisk-block-id="a">first</div>' +
+        '</div>' +
         '</div>',
+    );
+  });
+
+  /*
+   * The three tests above model a root block as a direct child of the
+   * marker. The real page does not: PublicPageContent.astro wraps every
+   * root block in a `.brisk-root-block` div, which is what carries the
+   * block's spacing and — since ADR-0049 — the width and alignment that
+   * used to sit on `<main>` itself.
+   *
+   * That wrapper makes both branches of the container search wrong in a
+   * way the simplified fixture could never show: `beforeEl.parentElement`
+   * finds the SIBLING'S wrapper rather than the list, and appending to the
+   * list produces a block with no wrapper at all. The first nests a block
+   * inside its neighbour; the second drops it outside the content column
+   * entirely, full-bleed, until the next reload.
+   */
+  const rootList = (...blocks: string[]) =>
+    '<main data-brisk-root-blocks="page" class="flex flex-col">' +
+    blocks
+      .map(
+        (block, index) =>
+          `<div class="brisk-root-block" style="margin-top: 0; margin-bottom: ${
+            index === blocks.length - 1 ? '0' : '4rem'
+          };">${block}</div>`,
+      )
+      .join('') +
+    '</main>';
+
+  it('wraps a block appended to the real root list, so it keeps the content column', () => {
+    document.body.innerHTML = rootList(
+      '<div data-brisk-block-id="a" style="display:contents">first</div>',
+    );
+
+    const inserted = applyBlockInsert(
+      document,
+      '<div data-brisk-block-id="b" style="display:contents">second</div>',
+      null,
+      null,
+      null,
+    );
+
+    expect(inserted?.textContent).toBe('second');
+    const wrappers = document.querySelectorAll(
+      '[data-brisk-root-blocks="page"] > .brisk-root-block',
+    );
+    expect(wrappers).toHaveLength(2);
+    expect(
+      wrappers[1].querySelector('[data-brisk-block-id]')?.textContent,
+    ).toBe('second');
+  });
+
+  it('inserts a new wrapper BESIDE an existing root block, never inside its neighbour', () => {
+    document.body.innerHTML = rootList(
+      '<div data-brisk-block-id="a" style="display:contents">first</div>',
+    );
+
+    applyBlockInsert(
+      document,
+      '<div data-brisk-block-id="b" style="display:contents">new</div>',
+      null,
+      'a',
+      null,
+    );
+
+    const wrappers = document.querySelectorAll(
+      '[data-brisk-root-blocks="page"] > .brisk-root-block',
+    );
+    expect(wrappers).toHaveLength(2);
+    expect(
+      wrappers[0].querySelector('[data-brisk-block-id]')?.textContent,
+    ).toBe('new');
+    // The neighbour holds its own block and nothing else — the failure this
+    // guards against nests the new block inside it and reads as "the
+    // block went to the wrong place" rather than as a DOM bug.
+    expect(wrappers[1].querySelectorAll('[data-brisk-block-id]')).toHaveLength(
+      1,
     );
   });
 
@@ -305,12 +398,17 @@ describe('applyBlockInsert', () => {
       null,
     );
 
-    const rootList = requireQuery('[data-brisk-root-blocks="page"]');
-    expect(rootList.children).toHaveLength(2);
-    expect(rootList.children[0]?.getAttribute('data-brisk-block-id')).toBe(
+    // Inside the root wrapper, beside the block: that is where a
+    // server-rendered page puts it, since the wrapper encloses the whole
+    // of BlockRenderer's output rather than the block element alone.
+    const wrapper = requireQuery(
+      '[data-brisk-root-blocks="page"] > .brisk-root-block',
+    );
+    expect(wrapper.children).toHaveLength(2);
+    expect(wrapper.children[0]?.getAttribute('data-brisk-block-id')).toBe(
       'countdown-1',
     );
-    const script = rootList.children[1] as HTMLScriptElement;
+    const script = wrapper.children[1] as HTMLScriptElement;
     expect(script.tagName).toBe('SCRIPT');
     expect(script.textContent).toBe('window.__briskTestFlag = 1;');
   });
@@ -615,5 +713,92 @@ describe('applyBlockStyleCss', () => {
     expect(
       document.getElementById('brisk-block-style-overrides')?.textContent,
     ).toBe('');
+  });
+});
+
+describe('root blocks travel with their wrapper', () => {
+  /*
+   * `.brisk-root-block` carries a root block's spacing and, since
+   * ADR-0049, the width and alignment that used to be written on `<main>`.
+   * Every DOM operation the bridge performs on a root block has to move,
+   * remove or reorder that wrapper rather than the block inside it — the
+   * three tests here each pin one operation that did not, and each failed
+   * before the wrapper became load-bearing enough to notice.
+   */
+  const rootList = (...ids: string[]) =>
+    '<main data-brisk-root-blocks="page" class="flex flex-col">' +
+    ids
+      .map(
+        (id, index) =>
+          `<div class="brisk-root-block" data-brisk-gap="default" style="margin-top: 0; margin-bottom: ${
+            index === ids.length - 1 ? '0' : '4rem'
+          };">` +
+          `<div data-brisk-block-id="${id}" style="display:contents">${id}</div>` +
+          '</div>',
+      )
+      .join('') +
+    '</main>';
+
+  const wrappers = () => [
+    ...document.querySelectorAll(
+      '[data-brisk-root-blocks="page"] > .brisk-root-block',
+    ),
+  ];
+  const orderOf = () =>
+    wrappers().map((wrapper) =>
+      wrapper
+        .querySelector('[data-brisk-block-id]')
+        ?.getAttribute('data-brisk-block-id'),
+    );
+
+  it('removes the wrapper with the block, leaving no empty band behind', () => {
+    document.body.innerHTML = rootList('a', 'b');
+
+    applyBlockRemove(document, 'a');
+
+    expect(wrappers()).toHaveLength(1);
+    expect(orderOf()).toEqual(['b']);
+  });
+
+  it("gives the promoted last block the last block's spacing", () => {
+    document.body.innerHTML = rootList('a', 'b');
+
+    applyBlockRemove(document, 'b');
+
+    expect(wrappers()[0]?.getAttribute('style')).toBe(
+      'margin-top: 0; margin-bottom: 0;',
+    );
+  });
+
+  it('keeps a chosen gap when re-spacing, and only re-spaces the default one', () => {
+    document.body.innerHTML =
+      '<main data-brisk-root-blocks="page">' +
+      '<div class="brisk-root-block" style="margin-top: 0; margin-bottom: 10rem;">' +
+      '<div data-brisk-block-id="a">first</div>' +
+      '</div>' +
+      '</main>';
+
+    applyBlockInsert(
+      document,
+      '<div data-brisk-block-id="b">second</div>',
+      null,
+      null,
+      null,
+    );
+
+    // Untouched: 10rem is a value somebody typed, and the marker that says
+    // "this gap is still the default" is absent.
+    expect(wrappers()[0]?.getAttribute('style')).toBe(
+      'margin-top: 0; margin-bottom: 10rem;',
+    );
+  });
+
+  it('reorders the wrappers, instead of collapsing every block into the first one', () => {
+    document.body.innerHTML = rootList('a', 'b', 'c');
+
+    applyBlockReorder(document, null, ['c', 'a', 'b'], null);
+
+    expect(wrappers()).toHaveLength(3);
+    expect(orderOf()).toEqual(['c', 'a', 'b']);
   });
 });

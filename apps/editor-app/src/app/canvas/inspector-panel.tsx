@@ -1,4 +1,4 @@
-import type { Block } from '@brisk/shared-types';
+import type { Block, BlockAlign } from '@brisk/shared-types';
 import { CUSTOM_FIELD_CONTROLS } from './custom-fields/custom-field-controls';
 import { RichTextField } from './custom-fields/rich-text-field';
 import type { BlockDescriptor, FieldDescriptor } from '@brisk/block-registry';
@@ -12,7 +12,15 @@ export interface InspectorPanelProps {
   onChangeProp: (key: string, value: unknown) => void;
   /** Picking one of the type's declared looks (ADR-0047). `undefined` = the type's own default. */
   onChangeVariant: (variant: string | undefined) => void;
+  /**
+   * How much page width this block claims (ADR-0049). Absent for a nested
+   * block: a block inside a Container or a Column is laid out by whatever
+   * holds it, so the control would promise something the page cannot do.
+   */
+  onChangeAlign?: (align: BlockAlign | undefined) => void;
 }
+
+const ALIGN_OPTIONS: readonly BlockAlign[] = ['content', 'wide', 'full'];
 
 interface FieldRowProps {
   field: FieldDescriptor;
@@ -133,12 +141,19 @@ export function InspectorPanel({
   descriptor,
   onChangeProp,
   onChangeVariant,
+  onChangeAlign,
 }: InspectorPanelProps) {
   const { t, tLabel } = useTranslation();
   const variants = descriptor.variants ?? [];
   // Not `fields.length === 0`: a type may offer a look and no fields at
-  // all, and returning null there would hide the only control it has.
-  if (descriptor.fields.length === 0 && variants.length === 0) {
+  // all, and returning null there would hide the only control it has —
+  // width included, which every root block has whether or not its type
+  // declares a single field.
+  if (
+    descriptor.fields.length === 0 &&
+    variants.length === 0 &&
+    !onChangeAlign
+  ) {
     return null;
   }
 
@@ -168,6 +183,34 @@ export function InspectorPanel({
               </option>
             ))}
           </select>
+        </label>
+      )}
+      {onChangeAlign && (
+        // Beside the look, and above the content fields, for the same
+        // reason: this is what the block IS on the page, not what it says.
+        <label className="flex flex-col gap-1.5 border-b pb-3">
+          <span className="text-xs font-medium text-muted-foreground">
+            {t('canvas.align.fieldLabel')}
+          </span>
+          <select
+            className={nativeFieldClass}
+            value={block.align ?? 'content'}
+            onChange={(event) => {
+              const value = event.target.value as BlockAlign;
+              // `content` is the default and is stored as its absence, so
+              // the block does not carry a field saying "behave normally".
+              onChangeAlign(value === 'content' ? undefined : value);
+            }}
+          >
+            {ALIGN_OPTIONS.map((option) => (
+              <option key={option} value={option}>
+                {t(`canvas.align.${option}`)}
+              </option>
+            ))}
+          </select>
+          <span className="text-xs text-muted-foreground">
+            {t('canvas.align.hint')}
+          </span>
         </label>
       )}
       {descriptor.fields.map((field) => {

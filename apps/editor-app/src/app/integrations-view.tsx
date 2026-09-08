@@ -53,6 +53,10 @@ export function IntegrationsView({ siteId, site }: IntegrationsViewProps) {
         secondaryColor: site.themeSecondaryColor,
         fontFamily: site.themeFontFamily,
         customCss: site.themeCustomCss,
+        // Owned by StyleView, round-tripped unchanged: this PATCH always
+        // replaces the whole settings object (Site.updateThemeSettings has
+        // no partial-patch support), so anything not sent back is cleared.
+        contentWidth: site.themeContentWidth,
         faviconUrl: site.themeFaviconUrl,
         overridesEnabled: site.themeOverridesEnabled,
         headScript: headScript.trim() || null,

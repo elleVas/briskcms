@@ -9,7 +9,7 @@ import {
   hexColorSchema,
   trackerDomainEntrySchema,
 } from './site-theme-settings';
-import { themeTokensSchema } from './site-theme-tokens';
+import { cssLengthTokenSchema, themeTokensSchema } from './site-theme-tokens';
 
 /**
  * The full site record as the editor CRUD surface sees it (`GET /sites/:id`
@@ -39,6 +39,9 @@ export const siteRecordSchema = businessInfoSchema.extend({
   themeSecondaryColor: hexColorSchema.nullable(),
   themeFontFamily: z.string().nullable(),
   themeCustomCss: z.string().nullable(),
+  // ADR-0049 — same guarded CSS length the Tier 1 settings schema uses, not
+  // a bare string: it is interpolated into a stylesheet on every page.
+  themeContentWidth: cssLengthTokenSchema,
   themeHeadScript: z.string().nullable(),
   themeBodyScript: z.string().nullable(),
   themeFaviconUrl: z.string().nullable(),

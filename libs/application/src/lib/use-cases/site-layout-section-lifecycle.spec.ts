@@ -56,6 +56,7 @@ describe('site layout section lifecycle: get-or-create -> draft -> publish -> ro
       themeSecondaryColor: null,
       themeFontFamily: null,
       themeCustomCss: null,
+      themeContentWidth: null,
       themeHeadScript: null,
       themeBodyScript: null,
       themeFaviconUrl: null,

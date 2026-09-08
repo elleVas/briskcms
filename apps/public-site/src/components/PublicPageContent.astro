@@ -6,6 +6,15 @@ import BlockRenderer from './BlockRenderer.astro';
 import ErrorPageShell from './ErrorPageShell.astro';
 import NotFound from './NotFound.astro';
 import { getPublishedSiteChrome } from '../lib/public-api-client';
+// The one definition of a root block's wrapper — shared with the canvas
+// bridge, which has to build the identical thing for a block inserted
+// live. See root-block-layout.ts for why that matters.
+import {
+  ROOT_BLOCK_CLASS,
+  rootBlockAlignAttr,
+  rootBlockDefaultGapAttr,
+  rootBlockSpacingStyle,
+} from '../lib/root-block-layout';
 
 // Purely presentational — the 404 status itself must be set by the calling
 // page route (src/pages/index.astro, src/pages/[slug].astro), not here:
@@ -71,33 +80,6 @@ const errorPageTranslations =
     ancestorSlugs: [],
   })) ?? [];
 
-// The fixed gap this value replaces (see the comment below, "A block can
-// customize..."): a top-level block that does not customize `marginBottom`
-// gets exactly the same space as before, so the published HTML of a page
-// with no overrides stays identical to what it was before this field
-// existed.
-const DEFAULT_BLOCK_GAP = '4rem';
-
-function rootBlockSpacing(
-  styleOverride: PublishedPage['content'][number]['styleOverride'],
-  isLast: boolean,
-): string {
-  // `base` only, and deliberately: this margin is an inline style on the
-  // spacing wrapper, and its DEFAULT depends on the block's position
-  // (`isLast` below) — neither of which the per-breakpoint rule emitter
-  // knows about (ADR-0047). Rather than let a mobile margin be set and do
-  // nothing, the editor hides these two fields at the narrow sizes; the
-  // spacing wrapper itself is Fase 3's to rework.
-  const marginTop = styleOverride?.base.marginTop ?? '0';
-  // The last block gets no default gap below it — `gap` never added one
-  // after the final child, and replacing it with an unconditional margin
-  // would have added space at the bottom of the page that was not there
-  // before. An explicit override on the last block is still honoured: only
-  // the DEFAULT is zeroed, not the customization.
-  const marginBottom =
-    styleOverride?.base.marginBottom ?? (isLast ? '0' : DEFAULT_BLOCK_GAP);
-  return `margin-top: ${marginTop}; margin-bottom: ${marginBottom};`;
-}
 ---
 
 {
@@ -122,11 +104,16 @@ function rootBlockSpacing(
         // applied neither, so every page ran blocks together edge-to-edge
         // AND stretched full-viewport-width on a wide desktop, regardless
         // of theme. One wrapper here fixes both site-wide instead of
-        // touching all ~46 block files individually. A block that
-        // deliberately wants full-bleed width (e.g. a future full-width
-        // Container/Section) isn't supported by this default yet — that's
-        // a real, separate case to design when a block actually needs it,
-        // not something to guess at now.
+        // touching all ~46 block files individually.
+        //
+        // The width itself is no longer written here (ADR-0049). It used
+        // to be `max-w-5xl px-6` on the <main> below — one literal number
+        // that no theme could reach, because it sat inside the slot a
+        // theme's ContentShell wraps. It now lives on the per-block
+        // wrapper as `.brisk-root-block`, reading a theme token the site
+        // can override, which is what makes `wide` and `full` possible at
+        // all: a constraint on the common ancestor is one no descendant
+        // can escape.
         //
         // The vertical gap itself is `margin`, not flex `gap`, on a
         // one-per-block wrapper below (rootBlockSpacing) — this is what
@@ -137,12 +124,18 @@ function rootBlockSpacing(
       }
       <main
         id="main-content"
-        class="mx-auto flex max-w-5xl flex-col px-6"
+        class="flex flex-col"
         data-brisk-root-blocks={editable ? 'page' : undefined}
       >
         {page.content.map((block, index) => (
           <div
-            style={rootBlockSpacing(
+            class={ROOT_BLOCK_CLASS}
+            data-brisk-align={rootBlockAlignAttr(block.align)}
+            data-brisk-gap={rootBlockDefaultGapAttr(
+              block.styleOverride,
+              editable === true,
+            )}
+            style={rootBlockSpacingStyle(
               block.styleOverride,
               index === page.content.length - 1,
             )}

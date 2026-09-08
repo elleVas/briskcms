@@ -26,6 +26,7 @@ export interface SiteProps {
   themeSecondaryColor: string | null;
   themeFontFamily: string | null;
   themeCustomCss: string | null;
+  themeContentWidth: string | null;
   themeHeadScript: string | null;
   themeBodyScript: string | null;
   themeFaviconUrl: string | null;
@@ -168,6 +169,7 @@ export class Site {
       secondaryColor: this.props.themeSecondaryColor,
       fontFamily: this.props.themeFontFamily,
       customCss: this.props.themeCustomCss,
+      contentWidth: this.props.themeContentWidth,
       headScript: this.props.themeHeadScript,
       bodyScript: this.props.themeBodyScript,
       faviconUrl: this.props.themeFaviconUrl,
@@ -233,6 +235,7 @@ export class Site {
     this.props.themeSecondaryColor = input.secondaryColor;
     this.props.themeFontFamily = input.fontFamily;
     this.props.themeCustomCss = input.customCss;
+    this.props.themeContentWidth = input.contentWidth;
     this.props.themeHeadScript = input.headScript;
     this.props.themeBodyScript = input.bodyScript;
     this.props.themeFaviconUrl = input.faviconUrl;

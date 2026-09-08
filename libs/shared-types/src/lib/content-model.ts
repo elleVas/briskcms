@@ -23,6 +23,18 @@ import {
  * or a save from the still-live Puck editor (which does not write ids)
  * would fail validation halfway through the rollout.
  */
+/**
+ * The three widths a root-level block can claim (ADR-0049).
+ *
+ * A closed set, not a free CSS length: `maxWidth` already exists as a
+ * per-instance style property for "this one block, this exact number",
+ * and it answers a different question. These three are the ones a theme
+ * can be designed around — a theme knows what its wide tier looks like,
+ * it cannot know what 71.5rem was supposed to mean.
+ */
+export const blockAlignSchema = z.enum(['content', 'wide', 'full']);
+export type BlockAlign = z.infer<typeof blockAlignSchema>;
+
 export interface Block {
   id?: string;
   type: string;
@@ -47,6 +59,30 @@ export interface Block {
    */
   variant?: string;
   /**
+   * How much of the page's width this block claims (ADR-0049) — the
+   * WordPress `alignwide`/`alignfull` model. `undefined` means the
+   * readable content column, which is what every block got before this
+   * field existed.
+   *
+   * A field of the block for the same reason `variant` is one, plus a
+   * second: this is the only one of the three style tiers that a site
+   * turning `overridesEnabled` off, or a theme setting
+   * `allowStyleOverrides: false`, must NOT be able to collapse. Those two
+   * gates mean "show me the theme's own look again" — repainting a block
+   * is a look, moving a hero out of the text column and back is the
+   * page's structure, and a switch about colour has no business
+   * re-flowing the layout. Had this been a `styleOverride` property it
+   * would have been gated with the rest of them (PageLayout.astro's
+   * `themeAllowsOverrides`), and a bespoke theme would silently pull
+   * every full-bleed section back into a 64rem column.
+   *
+   * Only meaningful on a ROOT-level block: nested blocks are laid out by
+   * whatever contains them, so the editor offers the control only at the
+   * top level and a value set on a child is ignored by the renderer
+   * rather than rejected — old content stays valid either way.
+   */
+  align?: BlockAlign;
+  /**
    * The per-instance override (docs/adr/0022) — THIS block only, on top of
    * any type-level override saved in the site's themeTokens.
    * `undefined`/absent fields = inherit normally.
@@ -66,6 +102,7 @@ export const blockSchema: z.ZodType<Block> = z.lazy(() =>
     props: z.record(z.string(), z.unknown()),
     children: z.array(blockSchema).optional(),
     variant: blockVariantNameSchema.optional(),
+    align: blockAlignSchema.optional(),
     styleOverride: responsiveBlockStyleSchema.optional(),
   }),
 );

@@ -3,6 +3,7 @@ import {
   MAX_TRACKER_SCRIPTS,
   trackerScriptEntrySchema,
 } from './cookie-consent';
+import { cssLengthTokenSchema } from './site-theme-tokens';
 
 export const hexColorSchema = z
   .string()
@@ -75,6 +76,24 @@ export const themeSettingsSchema = z.object({
   secondaryColor: hexColorSchema.nullable(),
   fontFamily: z.string().min(1).nullable(),
   customCss: z.string().nullable(),
+  /**
+   * How wide the readable content column is on this site (ADR-0049), or
+   * `null` to keep the active theme's own number.
+   *
+   * `cssLengthTokenSchema` rather than a bare string, and deliberately
+   * reused rather than reinvented: this value is interpolated into a
+   * `--brisk-content-width` declaration in a `<style>` on every page, the
+   * exact position PR #144 found a full-page overlay could be injected
+   * from. Whatever guards a block override's length has to guard this one.
+   *
+   * Gated by `overridesEnabled` below like every other field here, and
+   * that is the intended reading: turning the switch off means "show me
+   * the theme's own look", and the theme's own column width is part of
+   * it. What the switch must NOT collapse is a block's own `align` — see
+   * the note on `Block.align` for why that is a field of the block rather
+   * than a style property.
+   */
+  contentWidth: cssLengthTokenSchema,
   headScript: z.string().nullable(),
   bodyScript: z.string().nullable(),
   faviconUrl: z.string().nullable(),

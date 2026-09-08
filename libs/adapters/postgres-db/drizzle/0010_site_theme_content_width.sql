@@ -1,0 +1,1 @@
+ALTER TABLE "sites" ADD COLUMN "theme_content_width" text;
