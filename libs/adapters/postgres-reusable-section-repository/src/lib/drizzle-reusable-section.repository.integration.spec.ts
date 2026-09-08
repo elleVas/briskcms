@@ -138,6 +138,46 @@ describe('DrizzleReusableSectionRepository (integration)', () => {
     expect(found?.exposedFields).toEqual({ 'block-1': ['title', 'text'] });
   });
 
+  it('answers an empty id list without asking the database', async () => {
+    // The guard exists because `inArray(column, [])` is not a query that
+    // returns nothing — it is a query Postgres refuses.
+    expect(await sectionRepository.findByIds(tenantAId, [])).toEqual([]);
+  });
+
+  it('lists a site by name, and lists nothing for another tenant', async () => {
+    const first = buildSection({ name: 'AAA first' });
+    const second = buildSection({ name: 'BBB second' });
+    await sectionRepository.save(second);
+    await sectionRepository.save(first);
+
+    const listed = await sectionRepository.listBySite(tenantAId, siteAId);
+    const names = listed.map((section) => section.name);
+    // By name: it is the order the insert menu shows them in.
+    expect(names.indexOf('AAA first')).toBeLessThan(
+      names.indexOf('BBB second'),
+    );
+    expect(await sectionRepository.listBySite(tenantBId, siteAId)).toEqual([]);
+  });
+
+  it('deletes a section, and refuses to delete another tenant’s', async () => {
+    const section = buildSection();
+    await sectionRepository.save(section);
+
+    await sectionRepository.delete(tenantBId, section.id);
+    expect(
+      await sectionRepository.findById(tenantAId, section.id),
+    ).not.toBeNull();
+
+    await sectionRepository.delete(tenantAId, section.id);
+    expect(await sectionRepository.findById(tenantAId, section.id)).toBeNull();
+  });
+
+  it('returns null for a version that does not exist', async () => {
+    expect(
+      await versionRepository.findById(tenantAId, randomUUID()),
+    ).toBeNull();
+  });
+
   it('keeps only the last ten versions', async () => {
     const section = buildSection();
     await sectionRepository.save(section);
