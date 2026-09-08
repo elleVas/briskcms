@@ -7,8 +7,28 @@ export const teamBlock: BlockDescriptor<TeamProps> = {
   type: 'Team',
   label: 'blocks.team.label',
   category: 'socialProof',
-  defaultProps: {},
-  fields: [],
+  defaultProps: { display: 'grid' },
+  fields: [
+    {
+      kind: 'select',
+      key: 'display',
+      label: 'blocks.shared.display.fieldLabel',
+      options: [
+        {
+          label: 'blocks.shared.display.options.grid',
+          value: 'grid',
+        },
+        {
+          label: 'blocks.shared.display.options.slider',
+          value: 'slider',
+        },
+        {
+          label: 'blocks.shared.display.options.carousel',
+          value: 'carousel',
+        },
+      ],
+    },
+  ],
   isContainer: true,
   allowedChildTypes: ['TeamMember'],
   stylableProperties: BlockStyleRegistry.STANDARD,

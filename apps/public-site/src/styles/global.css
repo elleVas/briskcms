@@ -166,6 +166,103 @@ body,
 }
 
 /*
+ * How a collection arranges what it holds (ADR-0052).
+ *
+ * One engine for every collection block, replacing the arrangement each
+ * one had hard-wired: `Testimonials` was a slider and `Team` a grid, and
+ * neither could be the other. The block keeps its own class and its own
+ * look; these rules only decide the arrangement.
+ *
+ * `grid` declares nothing here on purpose — each block already has its
+ * own `grid-template-columns` with a minimum column width chosen for what
+ * it holds (140px for a stat, 220px for a pricing plan), and flattening
+ * those into one number would make every collection look the same.
+ */
+.brisk-collection {
+  position: relative;
+}
+
+/*
+ * `grid-auto-columns`, not a width on the children, and that is the whole
+ * trick: in the editor every block is wrapped in a `display: contents`
+ * element (BlockRenderer.astro), so a rule matching the track's direct
+ * children hits that wrapper — which generates no box, so flex/width
+ * declarations on it are ignored and never reach the real card. Sizing
+ * the TRACK's implicit columns instead works either way, because the
+ * children the wrapper passes through become the grid items themselves.
+ */
+.brisk-collection--slider .brisk-collection__track,
+.brisk-collection--carousel .brisk-collection__track {
+  display: grid;
+  grid-auto-flow: column;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  gap: var(--brisk-override-gap, 1.5rem);
+}
+
+.brisk-collection--slider .brisk-collection__track::-webkit-scrollbar,
+.brisk-collection--carousel .brisk-collection__track::-webkit-scrollbar {
+  display: none;
+}
+
+/* One at a time — the full visible width per item. */
+.brisk-collection--slider .brisk-collection__track {
+  grid-auto-columns: 100%;
+}
+
+/* Several at a time, at the width a card wants to be. */
+.brisk-collection--carousel .brisk-collection__track {
+  grid-auto-columns: min(320px, 85vw);
+}
+
+/*
+ * The one place the `display: contents` wrapper has to be named. Snapping
+ * is a property of the ITEM, so unlike the sizing above it cannot be
+ * hoisted onto the track — and the item is one level deeper in the
+ * editor than it is on the published page.
+ */
+.brisk-collection--slider .brisk-collection__track > *,
+.brisk-collection--carousel .brisk-collection__track > *,
+.brisk-collection--slider .brisk-collection__track > * > *,
+.brisk-collection--carousel .brisk-collection__track > * > * {
+  scroll-snap-align: start;
+}
+
+/*
+ * Positive insets, not negative: a track can end near the block's own
+ * edge with little margin around it, and a negative offset pushed the
+ * button past the page's right edge and caused horizontal overflow —
+ * found on a real preview page, kept from Testimonials.astro where this
+ * engine came from.
+ */
+.brisk-collection__nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: rgb(255 255 255 / 90%);
+  color: var(--foreground);
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+}
+.brisk-collection__nav--prev {
+  inset-inline-start: 0.5rem;
+}
+.brisk-collection__nav--next {
+  inset-inline-end: 0.5rem;
+}
+/* The glyph is directional, so it mirrors with the writing direction —
+   the arrow has to point the way the track actually moves. */
+.brisk-collection__nav:dir(rtl) {
+  transform: translateY(-50%) scaleX(-1);
+}
+
+/*
  * The width a root-level block gets (ADR-0049).
  *
  * This used to be `<main class="mx-auto flex max-w-5xl flex-col px-6">` in

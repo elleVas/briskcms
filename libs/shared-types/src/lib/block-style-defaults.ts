@@ -321,6 +321,14 @@ export const BLOCK_STYLE_DEFAULTS: Record<string, BlockStyleDefaults> = {
     paddingY: '0',
     gap: '0.5rem',
   },
+  Slider: {
+    backgroundColor: 'transparent',
+    textColor: 'inherit',
+    borderRadius: '0',
+    paddingX: '0',
+    paddingY: '0',
+    gap: '1.5rem',
+  },
   Stat: {
     backgroundColor: 'transparent',
     textColor: 'inherit',

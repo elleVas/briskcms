@@ -4,12 +4,11 @@ import { consentGatedEmbedBehaviors } from './consent-gated-embed';
 import { countdownBehaviors } from './countdown';
 import { embedHtmlBehaviors } from './embed-html';
 import { formBehaviors } from './form';
+import { collectionBehaviors } from './collection';
 import { hamburgerMenuBehaviors } from './hamburger-menu';
-import { imageSliderBehaviors } from './image-slider';
 import { promoBarBehaviors } from './promo-bar';
 import { statBehaviors } from './stat';
 import { tabsBehaviors } from './tabs';
-import { testimonialsBehaviors } from './testimonials';
 import { turnstileBehaviors } from './turnstile';
 import type { BlockBehavior } from './types';
 
@@ -27,8 +26,17 @@ export const BLOCK_BEHAVIOR_REGISTRY: Record<string, BlockBehavior[]> = {
   Tabs: tabsBehaviors,
   HamburgerMenu: hamburgerMenuBehaviors,
   Countdown: countdownBehaviors,
-  ImageSlider: imageSliderBehaviors,
-  Testimonials: testimonialsBehaviors,
+  // Every collection wires the same engine (ADR-0052) — the behaviour
+  // itself only matches the scrolling arrangements, so listing a block
+  // that is currently a grid costs nothing and keeps working the moment
+  // somebody switches it.
+  ImageSlider: collectionBehaviors,
+  Testimonials: collectionBehaviors,
+  Team: collectionBehaviors,
+  FeatureGrid: collectionBehaviors,
+  PricingTable: collectionBehaviors,
+  StatsCounter: collectionBehaviors,
+  Slider: collectionBehaviors,
   BackToTop: backToTopBehaviors,
   PromoBar: promoBarBehaviors,
   BeforeAfter: beforeAfterBehaviors,

@@ -877,6 +877,14 @@
           "desktopOnly": "Desktop only",
           "mobileOnly": "Mobile only"
         }
+      },
+      "display": {
+        "fieldLabel": "Arrangement",
+        "options": {
+          "grid": "Grid",
+          "slider": "Slider (one at a time)",
+          "carousel": "Carousel (several)"
+        }
       }
     },
     "accordionItem": {
@@ -1394,6 +1402,9 @@
           "fieldLabel": "Pre-filled message"
         }
       }
+    },
+    "slider": {
+      "label": "Slider"
     }
   }
 }

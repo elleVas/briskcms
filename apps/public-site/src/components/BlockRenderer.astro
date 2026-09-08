@@ -12,6 +12,7 @@ import {
   codePropsSchema,
   columnsPropsSchema,
   resolveColumnSpans,
+  sliderPropsSchema,
   containerPropsSchema,
   countdownPropsSchema,
   embedHtmlPropsSchema,
@@ -114,6 +115,8 @@ const Code = resolveThemeBlockOverride('Code', CodeCore, themeName);
 import ColumnCore from './blocks/Column.astro';
 const Column = resolveThemeBlockOverride('Column', ColumnCore, themeName);
 import ColumnsCore from './blocks/Columns.astro';
+import SliderCore from './blocks/Slider.astro';
+const Slider = resolveThemeBlockOverride('Slider', SliderCore, themeName);
 const Columns = resolveThemeBlockOverride('Columns', ColumnsCore, themeName);
 import ContainerCore from './blocks/Container.astro';
 const Container = resolveThemeBlockOverride('Container', ContainerCore, themeName);
@@ -343,6 +346,14 @@ const BLOCK_REGISTRY: Record<string, BlockDispatchEntry> = {
     stylable: true,
     recurseChildren: true,
   },
+  Slider: {
+    component: Slider,
+    schema: sliderPropsSchema,
+    stylable: true,
+    recurseChildren: true,
+    containerProps: true,
+    locale: true,
+  },
   Columns: {
     component: Columns,
     schema: columnsPropsSchema,
@@ -419,6 +430,7 @@ const BLOCK_REGISTRY: Record<string, BlockDispatchEntry> = {
     stylable: true,
     recurseChildren: true,
     containerProps: true,
+    locale: true,
   },
   Feature: { component: Feature, schema: featurePropsSchema, stylable: true },
   VideoEmbed: {
@@ -470,6 +482,7 @@ const BLOCK_REGISTRY: Record<string, BlockDispatchEntry> = {
     stylable: true,
     recurseChildren: true,
     containerProps: true,
+    locale: true,
   },
   TeamMember: {
     component: TeamMember,
@@ -482,6 +495,7 @@ const BLOCK_REGISTRY: Record<string, BlockDispatchEntry> = {
     stylable: true,
     recurseChildren: true,
     containerProps: true,
+    locale: true,
   },
   PricingPlan: {
     component: PricingPlan,
@@ -494,6 +508,7 @@ const BLOCK_REGISTRY: Record<string, BlockDispatchEntry> = {
     stylable: true,
     recurseChildren: true,
     containerProps: true,
+    locale: true,
   },
   Stat: { component: Stat, schema: statPropsSchema, stylable: true },
   Timeline: {

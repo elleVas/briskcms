@@ -354,6 +354,35 @@ export const navDropdownPropsSchema = navItemPositionSchema.extend({
 export type NavDropdownProps = z.infer<typeof navDropdownPropsSchema>;
 
 /**
+ * How a collection arranges the items it holds (ADR-0052).
+ *
+ * The problem it solves is a multiplication. There are ten collection
+ * blocks, each with ONE hard-wired arrangement: `Testimonials` is a
+ * slider, `Team` is a grid, and wanting the team as a slider meant a new
+ * block type. Ten collections times four arrangements is forty nearly
+ * identical files, each with its own CSS, RTL handling, accessibility and
+ * translations to keep correct.
+ *
+ * As a value instead, the same combinations cost one engine and three
+ * arrangements.
+ *
+ * `grid`   — every item visible, wrapping onto rows
+ * `slider` — one item at a time, scroll-snapped, with prev/next
+ * `carousel` — several at a time, scrolling sideways
+ *
+ * A PROP and not a field of the block, unlike `variant` (ADR-0048) and
+ * `align` (ADR-0049). The rule those two follow is "can a theme change
+ * the set of legal values?" — a theme may add or drop a variant, so
+ * content pointing at one cannot live in props. These three are core's
+ * own, implemented in core CSS, and a theme cannot remove one; there is
+ * no dangling value to protect against. Being a prop also means the
+ * editor re-renders the block on change, which is exactly what switching
+ * arrangement needs, with no new plumbing at all.
+ */
+export const collectionDisplaySchema = z.enum(['grid', 'slider', 'carousel']);
+export type CollectionDisplay = z.infer<typeof collectionDisplaySchema>;
+
+/**
  * How many of the twelve tracks a column takes (ADR-0050).
  *
  * Twelve because that is the number Bootstrap, the WordPress block editor
@@ -369,6 +398,25 @@ export type NavDropdownProps = z.infer<typeof navDropdownPropsSchema>;
  * particular widths keeps them all equal, with nothing to keep in sync by
  * hand.
  */
+/**
+ * A container whose whole purpose is the arrangement (ADR-0052).
+ *
+ * The collections above answer "show MY items as a carousel"; this
+ * answers "make these three things — whatever they are — scroll". Both
+ * are real and neither covers the other: turning a `Testimonials` into a
+ * slider keeps it testimonials, with its type-level styling, its variants
+ * and (one day) its WordPress import; putting arbitrary blocks in a
+ * slider is something no typed collection can express.
+ *
+ * `carousel` is the default rather than `slider`: somebody reaching for
+ * this has several things to show and wants them side by side, which is
+ * also the arrangement that degrades best when there are only two.
+ */
+export const sliderPropsSchema = z.object({
+  display: collectionDisplaySchema.default('carousel'),
+});
+export type SliderProps = z.infer<typeof sliderPropsSchema>;
+
 export const columnSpanSchema = z.number().int().min(1).max(12);
 
 export const columnPropsSchema = z.object({
@@ -686,7 +734,10 @@ export const featurePropsSchema = z.object({
 export type FeatureProps = z.infer<typeof featurePropsSchema>;
 
 /** Pure layout wrapper, no props of its own — same reasoning as `columnPropsSchema`. Its content lives entirely in `Block.children` (Feature only). */
-export const featureGridPropsSchema = z.strictObject({});
+export const featureGridPropsSchema = z.strictObject({
+  /** ADR-0052 — `grid` is what this block already rendered, so existing pages are unchanged. */
+  display: collectionDisplaySchema.default('grid'),
+});
 export type FeatureGridProps = z.infer<typeof featureGridPropsSchema>;
 
 /**
@@ -797,7 +848,10 @@ export const testimonialPropsSchema = z.object({
 export type TestimonialProps = z.infer<typeof testimonialPropsSchema>;
 
 /** Pure layout wrapper, no props of its own — same reasoning as `columnPropsSchema`. Its content lives entirely in `Block.children` (Testimonial only). */
-export const testimonialsPropsSchema = z.strictObject({});
+export const testimonialsPropsSchema = z.strictObject({
+  /** ADR-0052 — `slider` is what this block already rendered, so existing pages are unchanged. */
+  display: collectionDisplaySchema.default('slider'),
+});
 export type TestimonialsProps = z.infer<typeof testimonialsPropsSchema>;
 
 /** A single team member card — always a child of Team. */
@@ -810,7 +864,10 @@ export const teamMemberPropsSchema = z.object({
 export type TeamMemberProps = z.infer<typeof teamMemberPropsSchema>;
 
 /** Pure layout wrapper, no props of its own — same reasoning as `columnPropsSchema`. Its content lives entirely in `Block.children` (TeamMember only). */
-export const teamPropsSchema = z.strictObject({});
+export const teamPropsSchema = z.strictObject({
+  /** ADR-0052 — `grid` is what this block already rendered, so existing pages are unchanged. */
+  display: collectionDisplaySchema.default('grid'),
+});
 export type TeamProps = z.infer<typeof teamPropsSchema>;
 
 /**
@@ -838,7 +895,10 @@ export const pricingPlanPropsSchema = z.object({
 export type PricingPlanProps = z.infer<typeof pricingPlanPropsSchema>;
 
 /** Pure layout wrapper, no props of its own — same reasoning as `columnPropsSchema`. Its content lives entirely in `Block.children` (PricingPlan only). */
-export const pricingTablePropsSchema = z.strictObject({});
+export const pricingTablePropsSchema = z.strictObject({
+  /** ADR-0052 — `grid` is what this block already rendered, so existing pages are unchanged. */
+  display: collectionDisplaySchema.default('grid'),
+});
 export type PricingTableProps = z.infer<typeof pricingTablePropsSchema>;
 
 /**
@@ -859,7 +919,10 @@ export const statPropsSchema = z.object({
 export type StatProps = z.infer<typeof statPropsSchema>;
 
 /** Pure layout wrapper, no props of its own — same reasoning as `columnPropsSchema`. Its content lives entirely in `Block.children` (Stat only). */
-export const statsCounterPropsSchema = z.strictObject({});
+export const statsCounterPropsSchema = z.strictObject({
+  /** ADR-0052 — `grid` is what this block already rendered, so existing pages are unchanged. */
+  display: collectionDisplaySchema.default('grid'),
+});
 export type StatsCounterProps = z.infer<typeof statsCounterPropsSchema>;
 
 /**

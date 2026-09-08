@@ -877,6 +877,14 @@
           "desktopOnly": "Solo desktop",
           "mobileOnly": "Solo mobile"
         }
+      },
+      "display": {
+        "fieldLabel": "Disposizione",
+        "options": {
+          "grid": "Griglia",
+          "slider": "Slider (uno alla volta)",
+          "carousel": "Carosello (più elementi)"
+        }
       }
     },
     "accordionItem": {
@@ -1394,6 +1402,9 @@
           "fieldLabel": "Messaggio precompilato"
         }
       }
+    },
+    "slider": {
+      "label": "Slider"
     }
   }
 }

@@ -1,117 +1,82 @@
 ---
-import EmptyContainerHint from '../EmptyContainerHint.astro';
-import { Translator } from '@brisk/theme-runtime';
+import type { TestimonialsProps } from '@brisk/shared-types';
+import CollectionLayout from '../CollectionLayout.astro';
 
-export interface Props {
+export type Props = TestimonialsProps & {
   editable?: boolean;
   hasChildren?: boolean;
-  /** The per-instance style class, from BlockRenderer — see blockInstanceClassName. */
   instanceClass?: string | null;
   locale: string;
-}
+};
 
-const { editable, hasChildren, locale, instanceClass } = Astro.props;
-const i18n = new Translator(locale);
+const { display, editable, hasChildren, instanceClass, locale } = Astro.props;
 ---
 
-<div
-  class:list={['brisk-testimonials', instanceClass]}
-  data-brisk-editable-outline={editable && hasChildren ? '' : undefined}
+{/*
+  The track, the nav buttons and the scrolling all come from
+  CollectionLayout now (ADR-0052). This block used to carry its own copy
+  of each, and `ImageSlider` carried a second one — the two differed by a
+  class name and by how far a press scrolled. What stays here is what is
+  actually about testimonials: the card's own width, and nothing else.
+
+  `display` defaults to `slider`, which is what this block always was, so
+  a page that never touched it is unchanged — and it can now be a grid or
+  a carousel without a new block type existing.
+*/}
+<CollectionLayout
+  blockClass="brisk-testimonials"
+  display={display}
+  editable={editable}
+  hasChildren={hasChildren}
+  instanceClass={instanceClass}
+  locale={locale}
+  step="item"
 >
-  {
-    hasChildren ? (
-      <div class="brisk-testimonials__track">
-        <slot />
-      </div>
-    ) : (
-      <EmptyContainerHint show={Boolean(editable)} />
-    )
-  }
-  {
-    hasChildren && (
-      <>
-        <button
-          type="button"
-          class="brisk-testimonials__nav brisk-testimonials__nav--prev"
-          aria-label={i18n.t('testimonials.prev')}
-        >
-          ‹
-        </button>
-        <button
-          type="button"
-          class="brisk-testimonials__nav brisk-testimonials__nav--next"
-          aria-label={i18n.t('testimonials.next')}
-        >
-          ›
-        </button>
-      </>
-    )
-  }
-</div>
+  <slot />
+</CollectionLayout>
 
 <script>
-  // Same "native scroll-snap first, buttons as progressive enhancement"
-  // pattern as ImageSlider.astro's own carousel. Logic lives in a plain
-  // importable module (not inline here) so it can also be re-run after a
-  // live canvas insert/patch — see
+  // Logic lives in a plain importable module (not inline here) so it can
+  // also be re-run after a live canvas insert/patch — see
   // block-behaviors/run-block-behaviors-in-subtree.ts.
-  import { testimonialsBehaviors } from '../../lib/block-behaviors/testimonials';
+  import { collectionBehaviors } from '../../lib/block-behaviors/collection';
   import { runBlockBehaviors } from '../../lib/block-behaviors/run-block-behaviors';
-  runBlockBehaviors(document, testimonialsBehaviors);
+  runBlockBehaviors(document, collectionBehaviors);
 </script>
 
 <style>
-  .brisk-testimonials {
-    position: relative;
+  /*
+     `:global()`, and it is not optional: the element these rules target is
+     rendered by CollectionLayout.astro, not by this file, so Astro's
+     scoped styles never reach it — the block silently lost its grid
+     entirely, measured as `display: block` on the built page. Same
+     reasoning as Image.astro's `:global(.brisk-image)`, which styles an
+     element OptimizedImage renders.
+  */
+  :global(.brisk-testimonials) {
     background: var(--brisk-override-bg, transparent);
     color: var(--brisk-override-text, inherit);
     border-radius: var(--brisk-override-radius, 0);
-    padding: var(--brisk-override-padding-y, 0) var(--brisk-override-padding-x, 0);
+    padding: var(--brisk-override-padding-y, 0)
+      var(--brisk-override-padding-x, 0);
   }
-  .brisk-testimonials__track {
-    display: flex;
-    gap: 1.5rem;
-    overflow-x: auto;
-    scroll-snap-type: x mandatory;
-    scrollbar-width: none;
-    padding: 0.5rem 0;
+  /* The grid arrangement this block never had before: the same shape as
+     every other collection's, at a width a testimonial card reads well
+     at. */
+  :global(.brisk-testimonials.brisk-collection--grid) {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: var(--brisk-override-gap, 1.5rem);
   }
-  .brisk-testimonials__track::-webkit-scrollbar {
-    display: none;
-  }
-  .brisk-testimonials__nav {
-    position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 2.5rem;
-    height: 2.5rem;
-    border-radius: 50%;
-    border: 1px solid var(--border);
-    background: rgb(255 255 255 / 90%);
-    color: var(--foreground);
-    font-size: 1.5rem;
-    line-height: 1;
-    cursor: pointer;
-  }
-  /* Positive insets, not negative — unlike ImageSlider.astro's slider
-     (which fills the block's full width, so its buttons float safely
-     inside the image), a Testimonials track can end near the block's own
-     edge with little margin around it; a negative offset here pushed the
-     button past the page's own right edge and caused horizontal overflow
-     (found via Playwright's scrollWidth check on a real preview page). */
-  .brisk-testimonials__nav--prev {
-    inset-inline-start: 0.5rem;
-  }
-  .brisk-testimonials__nav--next {
-    inset-inline-end: 0.5rem;
-  }
-  /* Same glyph-mirroring reasoning as ImageSlider.astro's own nav. */
-  .brisk-testimonials__nav:dir(rtl) {
-    transform: translateY(-50%) scaleX(-1);
+  /* Kept from the version this replaces: the track sat in 0.5rem of
+     vertical padding so a card's shadow was not clipped by the scroll
+     box. */
+  :global(.brisk-testimonials .brisk-collection__track) {
+    padding-block: 0.5rem;
   }
   /* Editor only, and only once it has content — the same pattern as
      Column.astro/Container.astro. */
-  .brisk-testimonials[data-brisk-editable-outline] {
+  :global(.brisk-testimonials[data-brisk-editable-outline]) {
     outline: 1px dashed var(--border);
     outline-offset: -4px;
     padding: 0.5rem;

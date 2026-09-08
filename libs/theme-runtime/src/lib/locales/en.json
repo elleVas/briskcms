@@ -44,6 +44,8 @@
   "newsletterSignup.submitError": "Something went wrong. Check your email address and try again.",
   "testimonials.prev": "Previous testimonial",
   "testimonials.next": "Next testimonial",
+  "collection.prev": "Previous",
+  "collection.next": "Next",
   "whatsAppButton.label": "Message us on WhatsApp",
   "search.title": "Search",
   "search.pageTitle": "Search: {query}",

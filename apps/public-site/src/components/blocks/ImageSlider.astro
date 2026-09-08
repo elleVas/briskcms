@@ -23,8 +23,16 @@ const i18n = new Translator(locale);
 
 {
   pictured.length > 0 ? (
-    <div class:list={['brisk-slider', instanceClass]}>
-      <div class="brisk-slider__track">
+    <div
+      class:list={[
+        'brisk-slider',
+        'brisk-collection',
+        'brisk-collection--slider',
+        instanceClass,
+      ]}
+      data-brisk-collection-step="track"
+    >
+      <div class="brisk-collection__track brisk-slider__track">
         {pictured.map((image, index) => (
           <OptimizedImage
             media={image.media}
@@ -38,14 +46,14 @@ const i18n = new Translator(locale);
         <>
           <button
             type="button"
-            class="brisk-slider__nav brisk-slider__nav--prev"
+            class="brisk-collection__nav brisk-collection__nav--prev brisk-slider__nav"
             aria-label={i18n.t('imageSlider.prev')}
           >
             ‹
           </button>
           <button
             type="button"
-            class="brisk-slider__nav brisk-slider__nav--next"
+            class="brisk-collection__nav brisk-collection__nav--next brisk-slider__nav"
             aria-label={i18n.t('imageSlider.next')}
           >
             ›
@@ -65,9 +73,9 @@ const i18n = new Translator(locale);
   // lives in a plain importable module (not inline here) so it can also
   // be re-run after a live canvas insert/patch — see
   // block-behaviors/run-block-behaviors-in-subtree.ts.
-  import { imageSliderBehaviors } from '../../lib/block-behaviors/image-slider';
+  import { collectionBehaviors } from '../../lib/block-behaviors/collection';
   import { runBlockBehaviors } from '../../lib/block-behaviors/run-block-behaviors';
-  runBlockBehaviors(document, imageSliderBehaviors);
+  runBlockBehaviors(document, collectionBehaviors);
 </script>
 
 <style>

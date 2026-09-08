@@ -44,6 +44,8 @@
   "newsletterSignup.submitError": "Si è verificato un errore. Controlla l'indirizzo email e riprova.",
   "testimonials.prev": "Testimonianza precedente",
   "testimonials.next": "Testimonianza successiva",
+  "collection.prev": "Precedente",
+  "collection.next": "Successivo",
   "whatsAppButton.label": "Scrivici su WhatsApp",
   "search.title": "Ricerca",
   "search.pageTitle": "Ricerca: {query}",
