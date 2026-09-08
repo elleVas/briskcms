@@ -5,6 +5,7 @@ import { countdownBehaviors } from './countdown';
 import { embedHtmlBehaviors } from './embed-html';
 import { formBehaviors } from './form';
 import { collectionBehaviors } from './collection';
+import { lightboxBehaviors } from './lightbox';
 import { hamburgerMenuBehaviors } from './hamburger-menu';
 import { promoBarBehaviors } from './promo-bar';
 import { statBehaviors } from './stat';
@@ -38,6 +39,10 @@ export const BLOCK_BEHAVIOR_REGISTRY: Record<string, BlockBehavior[]> = {
   StatsCounter: collectionBehaviors,
   Carousel: collectionBehaviors,
   SocialLinks: collectionBehaviors,
+  // Both offer a lightbox (ADR-0057) and share one behaviour — the
+  // overlay, its focus trap and its Escape key exist once.
+  Image: lightboxBehaviors,
+  Gallery: lightboxBehaviors,
   BackToTop: backToTopBehaviors,
   PromoBar: promoBarBehaviors,
   BeforeAfter: beforeAfterBehaviors,

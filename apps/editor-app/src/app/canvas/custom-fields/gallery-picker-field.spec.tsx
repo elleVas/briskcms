@@ -45,8 +45,10 @@ describe('GalleryPickerField', () => {
 
     fireEvent.click(screen.getByText('Aggiungi immagine'));
 
+    // `caption` since ADR-0057 — a new slot carries the empty string
+    // rather than nothing, so the field is controlled from the start.
     expect(onChange).toHaveBeenCalledWith([
-      { media: null, alt: '', isDecorative: false },
+      { media: null, alt: '', isDecorative: false, caption: '' },
     ]);
   });
 
@@ -154,5 +156,42 @@ describe('GalleryPickerField', () => {
         'Testo alternativo richiesto (o segna come decorativa)',
       ),
     ).toBeNull();
+  });
+
+  it('moves a picture without losing the others, which was impossible before', () => {
+    // The only way to reorder a gallery used to be deleting every image
+    // after the one you wanted to move and adding them all back.
+    const onChange = vi.fn();
+    const items = [
+      { media: null, alt: 'first', isDecorative: false, caption: '' },
+      { media: null, alt: 'second', isDecorative: false, caption: '' },
+    ];
+    render(<GalleryPickerField value={items} onChange={onChange} />, {
+      wrapper: wrapperWith({ pick: vi.fn() }),
+    });
+
+    fireEvent.click(screen.getAllByLabelText('Sposta su')[1]);
+
+    expect(onChange).toHaveBeenCalledWith([items[1], items[0]]);
+  });
+
+  it('cannot move the first picture up or the last one down', () => {
+    const onChange = vi.fn();
+    const items = [
+      { media: null, alt: 'first', isDecorative: false, caption: '' },
+      { media: null, alt: 'second', isDecorative: false, caption: '' },
+    ];
+    render(<GalleryPickerField value={items} onChange={onChange} />, {
+      wrapper: wrapperWith({ pick: vi.fn() }),
+    });
+
+    // Disabled rather than a no-op handler: a control that looks
+    // available and does nothing is worse than one that says it cannot.
+    expect(
+      screen.getAllByLabelText('Sposta su')[0].hasAttribute('disabled'),
+    ).toBe(true);
+    expect(
+      screen.getAllByLabelText('Sposta giù')[1].hasAttribute('disabled'),
+    ).toBe(true);
   });
 });
