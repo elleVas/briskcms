@@ -4,15 +4,17 @@ import type { FeatureProps } from '@brisk/shared-types';
 type Props = FeatureProps & {
   /** The per-instance style class, from BlockRenderer — see blockInstanceClassName. */
   instanceClass?: string | null;
+  /** The variant's modifier class, from BlockRenderer — see blockVariantClassName. */
+  variantClass?: string | null;
   /** Already resolved by BlockRenderer — see its comment on `iconName`. */
   iconSvg?: string | null;
   themeName: string;
 };
 
-const { title, text, iconSvg, instanceClass } = Astro.props;
+const { title, text, iconSvg, instanceClass, variantClass } = Astro.props;
 ---
 
-<div class:list={['brisk-feature', instanceClass]}>
+<div class:list={['brisk-feature', variantClass, instanceClass]}>
   {iconSvg && <div class="brisk-feature__icon" aria-hidden="true" data-brisk-field="icon" set:html={iconSvg} />}
   <h3 class="brisk-feature__title" data-brisk-field="title">{title}</h3>
   <div class="brisk-feature__text brisk-rich-text" data-brisk-field="text" set:html={text} />
@@ -46,5 +48,34 @@ const { title, text, iconSvg, instanceClass } = Astro.props;
     margin: 0.25rem 0 0;
     color: var(--muted-foreground);
     font-size: 0.875rem;
+  }
+
+  /*
+   * The look where the icon sits beside the words instead of above them
+   * (ADR-0058) — a variant rather than a prop, because it is presentation
+   * and a theme may want to add its own or restyle this one (ADR-0048).
+   *
+   * `align-items: start` and not `center`: a feature with three lines of
+   * text and a one-line title looks broken with the icon floating in the
+   * vertical middle of it.
+   */
+  .brisk-feature--inline {
+    display: flex;
+    align-items: start;
+    gap: var(--brisk-override-gap, 1rem);
+    text-align: start;
+  }
+  /* The icon must not shrink when the text is long — the classic defect
+     of a flex row whose first child is an icon. */
+  .brisk-feature--inline .brisk-feature__icon {
+    flex-shrink: 0;
+    margin: 0;
+  }
+
+  /* The same stacked feature, ranged left. Centred text is right for a
+     row of three short features and wrong for one paragraph of prose, and
+     until now the block only had the first opinion. */
+  .brisk-feature--start {
+    text-align: start;
   }
 </style>

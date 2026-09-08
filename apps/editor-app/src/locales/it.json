@@ -848,6 +848,25 @@
     "dismiss": "Chiudi notifica"
   },
   "blocks": {
+    "card": {
+      "label": "Scheda",
+      "fields": {
+        "media": {
+          "fieldLabel": "Immagine di testata"
+        },
+        "alt": {
+          "fieldLabel": "Testo alternativo"
+        },
+        "isDecorative": {
+          "fieldLabel": "Immagine decorativa"
+        }
+      },
+      "variants": {
+        "elevated": "Rialzata",
+        "flat": "Piatta",
+        "horizontal": "Orizzontale"
+      }
+    },
     "categories": {
       "layout": "Layout",
       "content": "Contenuto",
@@ -941,6 +960,10 @@
         "buttonLabel": {
           "fieldLabel": "Testo bottone"
         }
+      },
+      "variants": {
+        "split": "Barra di invito all’azione",
+        "outline": "Con bordo"
       }
     },
     "beforeAfter": {
@@ -1123,6 +1146,10 @@
         "text": {
           "fieldLabel": "Testo"
         }
+      },
+      "variants": {
+        "inline": "Icona accanto al testo",
+        "start": "Allineata a sinistra"
       }
     },
     "form": {

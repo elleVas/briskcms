@@ -274,6 +274,30 @@ export const imagePropsSchema = z.object({
 });
 export type ImageProps = z.infer<typeof imagePropsSchema>;
 
+/**
+ * The card's own fields are its media header and nothing else — the rest
+ * of a card is blocks (ADR-0058). A heading, a paragraph and a Button are
+ * already three blocks that do those three jobs well, and a Card that
+ * carried its own copies of them would be a fourth, worse one that could
+ * never grow a rating, a price or a badge without another field.
+ *
+ * The header is a field rather than an Image child for one reason a
+ * container cannot express: it is edge to edge. The card's padding holds
+ * the words away from the border, and the picture has to escape that
+ * padding and be clipped by the card's own corner radius. A child sits
+ * inside the padding by definition.
+ *
+ * `alt`/`isDecorative` are Image's pair, deliberately — the same WCAG
+ * choice, made the same way, so that what an author learns on one block
+ * holds on the other.
+ */
+export const cardPropsSchema = z.object({
+  media: pickedMediaSchema.nullable(),
+  alt: z.string(),
+  isDecorative: z.boolean(),
+});
+export type CardProps = z.infer<typeof cardPropsSchema>;
+
 export const galleryPropsSchema = z.object({
   images: z.array(
     z.object({

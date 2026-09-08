@@ -67,6 +67,9 @@ const PROSE_FIELD_EXTRACTORS: Partial<Record<string, ProseFieldExtractor>> = {
   Text: (props) => [asString(props['body'])],
   Heading: (props) => [asString(props['text'])],
   Image: (props) => [asString(props['alt']), asString(props['caption'])],
+  // Its children index themselves; the header's alt is the card's own
+  // only prose, and it is prose for Image's reason.
+  Card: (props) => [asString(props['alt'])],
   Gallery: (props) => {
     const images = Array.isArray(props['images']) ? props['images'] : [];
     return images.map((image) =>

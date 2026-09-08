@@ -55,6 +55,12 @@ export const BLOCK_STYLE_DEFAULTS: Record<string, BlockStyleDefaults> = {
     borderRadius: '12px',
     paddingX: '1.5rem',
     paddingY: '2.5rem',
+    // What the block's own CSS falls back to: no frame by default, and
+    // the gap the `split` variant opens between the words and the button.
+    borderWidth: '0',
+    borderStyle: 'solid',
+    borderColor: 'var(--border)',
+    gap: '1.5rem',
   },
   BeforeAfter: {
     borderRadius: '8px',
@@ -111,6 +117,26 @@ export const BLOCK_STYLE_DEFAULTS: Record<string, BlockStyleDefaults> = {
     // (ADR-0050) — this is that same value, so a row nobody has touched
     // looks exactly as it did.
     gap: '1.5rem',
+  },
+  Card: {
+    // `--background` and not a `--card` token: this theme vocabulary has
+    // no such token, and inventing one here would name a custom property
+    // no theme.css defines — the reference would resolve to nothing and
+    // the card would come out transparent (ADR-0022 resolves these
+    // against the active theme, it does not create them).
+    backgroundColor: 'var(--background)',
+    textColor: 'inherit',
+    borderRadius: 'var(--radius)',
+    borderWidth: '1px',
+    borderStyle: 'solid',
+    borderColor: 'var(--border)',
+    boxShadow: 'none',
+    paddingX: '1.25rem',
+    paddingY: '1.25rem',
+    gap: '0.75rem',
+    contentAlign: 'stretch',
+    maxWidth: 'none',
+    minHeight: 'auto',
   },
   Container: {
     // The preset's own value at the block's default (`padding: 'md'`) and
@@ -173,6 +199,8 @@ export const BLOCK_STYLE_DEFAULTS: Record<string, BlockStyleDefaults> = {
     borderRadius: '0',
     paddingX: '0',
     paddingY: '0',
+    // What `.brisk-feature--inline` falls back to.
+    gap: '1rem',
   },
   Form: {
     backgroundColor: 'transparent',
