@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { normalizeRichText } from './normalize-rich-text';
+import { ALLOWED_TAGS } from './sanitize-rich-text';
 
 describe('normalizeRichText', () => {
   describe('a plain string written before rich text existed', () => {
@@ -31,6 +32,45 @@ describe('normalizeRichText', () => {
     });
   });
 
+  describe('rich text that does not begin with a tag', () => {
+    // The bug this replaced: the test used to be `startsWith('<')`, so a
+    // paragraph opening with a word had its markup escaped and the reader
+    // saw the tags. 246 of the 548 rich text values on this project's own
+    // documentation site were in that state.
+    it('is markup, not text to be escaped', () => {
+      expect(
+        normalizeRichText(
+          'Reach for this when <code>classic</code> is not enough',
+        ),
+      ).toBe('Reach for this when <code>classic</code> is not enough');
+    });
+
+    it('keeps a link written mid-sentence', () => {
+      const value = 'Open <a href="/en/docs">the docs</a> and read on';
+      expect(normalizeRichText(value)).toBe(value);
+    });
+
+    it('repairs markup an importer left unclosed', () => {
+      expect(normalizeRichText('<p>unclosed')).toBe('<p>unclosed</p>');
+    });
+
+    it('still escapes a lone angle bracket, which is not a tag', () => {
+      expect(normalizeRichText('Costa < 10 euro')).toBe(
+        '<p>Costa &lt; 10 euro</p>',
+      );
+      expect(normalizeRichText('if x<y then z')).toBe(
+        '<p>if x&lt;y then z</p>',
+      );
+    });
+
+    it('never disagrees with the sanitiser about what a tag is', () => {
+      for (const tag of ALLOWED_TAGS) {
+        const value = `before <${tag}>x</${tag}> after`;
+        expect(normalizeRichText(value), tag).not.toContain('&lt;');
+      }
+    });
+  });
+
   describe('a value that is already rich text', () => {
     it('is left as it is', () => {
       const html = '<p>ciao <strong>mondo</strong></p>';
@@ -59,6 +99,8 @@ describe('normalizeRichText', () => {
       'Primo\n\nSecondo',
       '<p>ciao <em>mondo</em></p>',
       'Via Roma 1\nMilano',
+      'Reach for this when <code>classic</code> is not enough',
+      '<p>unclosed',
       '',
     ]) {
       const once = normalizeRichText(input);
