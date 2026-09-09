@@ -9,6 +9,7 @@ import {
   LayoutDashboard,
   LayoutTemplate,
   Rows3,
+  Tags,
   Palette,
   Plug,
   Users,
@@ -73,6 +74,13 @@ export function AdminShell({ children }: AdminShellProps) {
             >
               <Rows3 className="size-4" />
               {t('shell.nav.sections')}
+            </Link>
+            <Link
+              to="/taxonomies"
+              className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm font-medium hover:bg-muted"
+            >
+              <Tags className="size-4" />
+              {t('shell.nav.taxonomies')}
             </Link>
             <Link
               to="/style"
