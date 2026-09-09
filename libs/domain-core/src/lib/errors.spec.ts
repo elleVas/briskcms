@@ -13,7 +13,15 @@ import {
   PageTranslationNotFoundError,
   SiteLayoutSectionNotFoundError,
   SiteLayoutSectionVersionNotFoundError,
+  PageSlugCollidesWithTermError,
   SiteNotFoundError,
+  TaxonomyNotFoundError,
+  TaxonomyNotHierarchicalError,
+  TaxonomyPrefixAlreadyExistsError,
+  TermAddressCollidesWithPageError,
+  TermAddressTakenError,
+  TermCycleError,
+  TermNotFoundError,
 } from './errors';
 
 describe('PageGroupVersionNotFoundError', () => {
@@ -166,4 +174,65 @@ describe('SiteLayoutSectionVersionNotFoundError', () => {
       'Site layout section version not found: version-1',
     );
   });
+});
+
+/*
+ * The classification errors (docs/adr/0064, ADR-0065) as one table: what
+ * matters about each is the same three things, and the API maps them by
+ * class while logs and clients read `name` and `message`. Written as one
+ * table rather than eight near-identical describes, which is what the
+ * previous ones would also be if they were written today.
+ */
+describe('taxonomy errors', () => {
+  const cases: [Error, string, string][] = [
+    [
+      new TaxonomyNotFoundError('taxonomy-1'),
+      'TaxonomyNotFoundError',
+      'Taxonomy not found: taxonomy-1',
+    ],
+    [
+      new TermNotFoundError('term-1'),
+      'TermNotFoundError',
+      'Term not found: term-1',
+    ],
+    [
+      new TaxonomyPrefixAlreadyExistsError('categoria'),
+      'TaxonomyPrefixAlreadyExistsError',
+      'Another taxonomy already uses the prefix "categoria"',
+    ],
+    [
+      new TermAddressTakenError('categoria/espresso'),
+      'TermAddressTakenError',
+      'Another term already answers at "categoria/espresso"',
+    ],
+    [
+      new TermAddressCollidesWithPageError('espresso'),
+      'TermAddressCollidesWithPageError',
+      'A page already answers at "espresso"',
+    ],
+    [
+      new PageSlugCollidesWithTermError('espresso'),
+      'PageSlugCollidesWithTermError',
+      'A taxonomy or term already answers at "espresso"',
+    ],
+    [
+      new TermCycleError(),
+      'TermCycleError',
+      'A term cannot become its own descendant',
+    ],
+    [
+      new TaxonomyNotHierarchicalError('taxonomy-1'),
+      'TaxonomyNotHierarchicalError',
+      'Taxonomy taxonomy-1 does not allow nested terms',
+    ],
+  ];
+
+  it.each(cases)(
+    '%s is a real Error naming what went wrong',
+    (error, name, message) => {
+      expect(error).toBeInstanceOf(Error);
+      expect(error.name).toBe(name);
+      expect(error.message).toBe(message);
+    },
+  );
 });
