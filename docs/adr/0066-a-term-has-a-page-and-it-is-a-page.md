@@ -79,13 +79,10 @@ to it.
 
 ## Consequences
 
-- **The landing page is still reachable at its own slug**, so its content
-  answers at two URLs. The plan calls for it to answer only at the term's
-  address, and for the sitemap to list it once. Neither is done here:
-  removing an address is a decision about inbound links (404 versus a
-  301 to the term), and it belongs with the rest of the SEO work —
-  sitemap entries for terms, and the canonical link. Named here so it is
-  not discovered in production.
+- **The landing page was still reachable at its own slug** when this
+  shipped, so its content answered at two URLs. **Closed by ADR-0067**,
+  which moves it with a 301 and takes the old address out of the sitemap
+  in the languages where the term answers.
 - The editor cannot yet create a taxonomy, a term, or file a page under
   one; the API can. The classification panel is what Fase 8 still owes,
   and the `PageGrid` block's term picker (shipped here) is the first

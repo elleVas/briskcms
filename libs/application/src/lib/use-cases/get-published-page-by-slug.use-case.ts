@@ -6,8 +6,10 @@ import type {
   SiteLayoutSectionRepositoryPort,
   SiteRepositoryPort,
   SiteThemeBlockStylesPort,
+  TaxonomyRepositoryPort,
 } from '@brisk/ports';
 import { resolveSiteChrome } from './resolve-site-chrome';
+import { termPathFor } from './get-published-term-by-path.use-case';
 import { resolvePageGroupByPath } from './resolve-page-group-by-path';
 import { resolvePageContentReferences } from './resolve-page-content-references';
 import { resolveTranslationPaths } from './resolve-translation-paths';
@@ -16,11 +18,35 @@ export type { PublishedPage };
 
 export interface GetPublishedPageBySlugDeps {
   reusableSectionRepository: ReusableSectionRepositoryPort;
+  /**
+   * Only to ask whether a term has claimed this page as its landing page
+   * (docs/adr/0067) — the page then answers at the term's address and
+   * this one redirects there.
+   */
+  taxonomyRepository: TaxonomyRepositoryPort;
   siteRepository: SiteRepositoryPort;
   pageGroupRepository: PageGroupRepositoryPort;
   pageTranslationRepository: PageTranslationRepositoryPort;
   siteLayoutSectionRepository: SiteLayoutSectionRepositoryPort;
   siteThemeBlockStylesRepository: SiteThemeBlockStylesPort;
+}
+
+/**
+ * What an address serves: a page, a permanent move, or nothing.
+ *
+ * Three answers and not two, since ADR-0067 — a page that has become a
+ * term's landing page is rendered on the term's URL, so its own slug
+ * stops being where that content lives. Modelling the move as a third
+ * answer is what keeps the caller from having to guess: `page: null`
+ * with a `redirectTo` is not "missing", it is "moved".
+ */
+/** The answer for every "no page here" branch — one object, so the branches cannot drift apart. */
+const NOTHING: PublishedPageLookup = { page: null, redirectTo: null };
+
+export interface PublishedPageLookup {
+  page: PublishedPage | null;
+  /** The address this content lives at now — a locale path, ready to redirect to. */
+  redirectTo: string | null;
 }
 
 export interface GetPublishedPageBySlugInput {
@@ -47,13 +73,13 @@ export interface GetPublishedPageBySlugInput {
 export async function getPublishedPageBySlug(
   deps: GetPublishedPageBySlugDeps,
   input: GetPublishedPageBySlugInput,
-): Promise<PublishedPage | null> {
+): Promise<PublishedPageLookup> {
   const site = await deps.siteRepository.findByDomain(
     input.tenantId,
     input.domain,
   );
   if (!site) {
-    return null;
+    return NOTHING;
   }
 
   const resolved = await resolvePageGroupByPath(
@@ -67,11 +93,32 @@ export async function getPublishedPageBySlug(
     input.segments,
   );
   if (!resolved) {
-    return null;
+    return NOTHING;
   }
   const { translation, ancestors } = resolved;
   if (translation.status !== 'published' || !translation.publishedSnapshot) {
-    return null;
+    return NOTHING;
+  }
+
+  // Asked before anything is built: a page a term has claimed does not
+  // serve this address any more, and assembling it would be work whose
+  // only use is to be thrown away (docs/adr/0067).
+  const claimedBy = await deps.taxonomyRepository.findTermByLandingPage(
+    input.tenantId,
+    translation.pageGroupId,
+  );
+  if (claimedBy) {
+    const taxonomy = await deps.taxonomyRepository.findTaxonomyById(
+      input.tenantId,
+      claimedBy.taxonomyId,
+    );
+    const to = taxonomy ? termPathFor(claimedBy, taxonomy, input.locale) : null;
+    // No address in THIS language means the term is not published here,
+    // so there is nowhere to send the visitor — the page keeps answering
+    // rather than 404ing on a language the term never reached.
+    if (to) {
+      return { page: null, redirectTo: to };
+    }
   }
 
   const [siblings, chrome, [resolvedContent]] = await Promise.all([
@@ -99,14 +146,17 @@ export async function getPublishedPageBySlug(
   );
 
   return {
-    content: resolvedContent,
-    seoMeta: translation.seoMeta,
-    locale: translation.locale,
-    translations,
-    ancestors,
-    header: chrome.header,
-    footer: chrome.footer,
-    headerSticky: chrome.headerSticky,
-    site: chrome.site,
+    redirectTo: null,
+    page: {
+      content: resolvedContent,
+      seoMeta: translation.seoMeta,
+      locale: translation.locale,
+      translations,
+      ancestors,
+      header: chrome.header,
+      footer: chrome.footer,
+      headerSticky: chrome.headerSticky,
+      site: chrome.site,
+    },
   };
 }

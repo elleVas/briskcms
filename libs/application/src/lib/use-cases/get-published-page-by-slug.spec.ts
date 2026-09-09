@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { DEFAULT_COOKIE_BANNER_SETTINGS } from '@brisk/shared-types';
-import { Site, SiteLayoutSection, type PageGroup } from '@brisk/domain-core';
+import {
+  Site,
+  SiteLayoutSection,
+  Taxonomy,
+  Term,
+  type PageGroup,
+} from '@brisk/domain-core';
 import { createPageGroup } from './create-page-group.use-case';
 import { createPageGroupTranslation } from './create-page-group-translation.use-case';
 import { publishPageTranslation } from './publish-page-translation.use-case';
@@ -124,6 +130,91 @@ describe('getPublishedPageBySlug', () => {
     });
   }
 
+  async function claimAsLandingPage(
+    deps: ReturnType<typeof setup>,
+    group: PageGroup,
+    options: { prefix: string | null; slugs: Record<string, string> },
+  ) {
+    const taxonomy = Taxonomy.create({
+      id: 'taxonomy-1',
+      tenantId,
+      siteId: 'site-1',
+      prefix: options.prefix,
+      name: { it: 'Categoria' },
+    });
+    await deps.taxonomyRepository.saveTaxonomy(taxonomy);
+    const term = Term.create({
+      id: 'term-1',
+      tenantId,
+      siteId: 'site-1',
+      taxonomyId: taxonomy.id,
+      name: { it: 'Espresso' },
+      slugs: options.slugs,
+    });
+    term.setLandingPage(group.id);
+    await deps.taxonomyRepository.saveTerm(term);
+    return term;
+  }
+
+  /*
+   * A page a term renders on its own address does not answer at its own
+   * slug any more — it moved there (docs/adr/0067). A 301 and not a 404
+   * so the links pointing at the old URL keep working and hand their
+   * weight to the new one.
+   */
+  it('reports a permanent move when a term has claimed the page as its landing page', async () => {
+    const deps = setup();
+    await seedSite(deps.siteRepository);
+    const { group } = await createGroupAndPublish(deps, {
+      locale: 'it',
+      slug: 'chi-siamo',
+      title: 'Chi siamo',
+    });
+    await claimAsLandingPage(deps, group, {
+      prefix: 'categoria',
+      slugs: { it: 'espresso' },
+    });
+
+    const result = await getPublishedPageBySlug(deps, {
+      tenantId,
+      domain: 'example.com',
+      locale: 'it',
+      segments: ['chi-siamo'],
+    });
+
+    expect(result.page).toBeNull();
+    expect(result.redirectTo).toBe('/it/categoria/espresso');
+  });
+
+  /*
+   * ...but only where the term is actually reachable. A language the
+   * term has no slug in has no address to send anybody to, so the page
+   * keeps answering rather than redirecting into nothing.
+   */
+  it('keeps serving the page in a language the term does not answer in', async () => {
+    const deps = setup();
+    await seedSite(deps.siteRepository);
+    const { group } = await createGroupAndPublish(deps, {
+      locale: 'it',
+      slug: 'chi-siamo',
+      title: 'Chi siamo',
+    });
+    await claimAsLandingPage(deps, group, {
+      prefix: 'categoria',
+      slugs: { en: 'espresso' },
+    });
+
+    const result = await getPublishedPageBySlug(deps, {
+      tenantId,
+      domain: 'example.com',
+      locale: 'it',
+      segments: ['chi-siamo'],
+    });
+
+    expect(result.redirectTo).toBeNull();
+    expect(result.page?.seoMeta.title).toBe('Chi siamo');
+  });
+
   it('returns the published content for a published page on the matching domain and locale', async () => {
     const deps = setup();
     await seedSite(deps.siteRepository);
@@ -133,12 +224,14 @@ describe('getPublishedPageBySlug', () => {
       title: 'Chi siamo',
     });
 
-    const result = await getPublishedPageBySlug(deps, {
-      tenantId,
-      domain: 'example.com',
-      locale: 'it',
-      segments: ['chi-siamo'],
-    });
+    const result = (
+      await getPublishedPageBySlug(deps, {
+        tenantId,
+        domain: 'example.com',
+        locale: 'it',
+        segments: ['chi-siamo'],
+      })
+    ).page;
 
     expect(result).toEqual({
       content: [
@@ -207,20 +300,24 @@ describe('getPublishedPageBySlug', () => {
       title: 'Idraulica',
     });
 
-    const child = await getPublishedPageBySlug(deps, {
-      tenantId,
-      domain: 'example.com',
-      locale: 'it',
-      segments: ['servizi', 'idraulica'],
-    });
+    const child = (
+      await getPublishedPageBySlug(deps, {
+        tenantId,
+        domain: 'example.com',
+        locale: 'it',
+        segments: ['servizi', 'idraulica'],
+      })
+    ).page;
     expect(child?.ancestors).toEqual([{ slug: 'servizi', title: 'Servizi' }]);
 
-    const root = await getPublishedPageBySlug(deps, {
-      tenantId,
-      domain: 'example.com',
-      locale: 'it',
-      segments: ['servizi'],
-    });
+    const root = (
+      await getPublishedPageBySlug(deps, {
+        tenantId,
+        domain: 'example.com',
+        locale: 'it',
+        segments: ['servizi'],
+      })
+    ).page;
     expect(root?.ancestors).toEqual([]);
   });
 
@@ -262,34 +359,40 @@ describe('getPublishedPageBySlug', () => {
       title: 'Dettagli B',
     });
 
-    const foundUnderA = await getPublishedPageBySlug(deps, {
-      tenantId,
-      domain: 'example.com',
-      locale: 'it',
-      segments: ['ramo-a', 'dettagli'],
-    });
+    const foundUnderA = (
+      await getPublishedPageBySlug(deps, {
+        tenantId,
+        domain: 'example.com',
+        locale: 'it',
+        segments: ['ramo-a', 'dettagli'],
+      })
+    ).page;
     expect(foundUnderA?.content).toEqual([
       { type: 'Text', props: { body: 'A' } },
     ]);
 
-    const foundUnderB = await getPublishedPageBySlug(deps, {
-      tenantId,
-      domain: 'example.com',
-      locale: 'it',
-      segments: ['ramo-b', 'dettagli'],
-    });
+    const foundUnderB = (
+      await getPublishedPageBySlug(deps, {
+        tenantId,
+        domain: 'example.com',
+        locale: 'it',
+        segments: ['ramo-b', 'dettagli'],
+      })
+    ).page;
     expect(foundUnderB?.content).toEqual([
       { type: 'Text', props: { body: 'B' } },
     ]);
 
     // The trailing slug alone is ambiguous now — a mismatched leading
     // segment must not accidentally match the OTHER branch's page.
-    const wrongBranch = await getPublishedPageBySlug(deps, {
-      tenantId,
-      domain: 'example.com',
-      locale: 'it',
-      segments: ['ramo-does-not-exist', 'dettagli'],
-    });
+    const wrongBranch = (
+      await getPublishedPageBySlug(deps, {
+        tenantId,
+        domain: 'example.com',
+        locale: 'it',
+        segments: ['ramo-does-not-exist', 'dettagli'],
+      })
+    ).page;
     expect(wrongBranch).toBeNull();
   });
 
@@ -307,12 +410,14 @@ describe('getPublishedPageBySlug', () => {
       title: 'About us',
     });
 
-    const result = await getPublishedPageBySlug(deps, {
-      tenantId,
-      domain: 'example.com',
-      locale: 'it',
-      segments: ['chi-siamo'],
-    });
+    const result = (
+      await getPublishedPageBySlug(deps, {
+        tenantId,
+        domain: 'example.com',
+        locale: 'it',
+        segments: ['chi-siamo'],
+      })
+    ).page;
 
     expect(
       result?.translations.sort((a, b) => a.locale.localeCompare(b.locale)),
@@ -340,12 +445,14 @@ describe('getPublishedPageBySlug', () => {
       createdBy: 'user-1',
     });
 
-    const result = await getPublishedPageBySlug(deps, {
-      tenantId,
-      domain: 'example.com',
-      locale: 'it',
-      segments: ['chi-siamo'],
-    });
+    const result = (
+      await getPublishedPageBySlug(deps, {
+        tenantId,
+        domain: 'example.com',
+        locale: 'it',
+        segments: ['chi-siamo'],
+      })
+    ).page;
 
     expect(result?.translations).toEqual([
       { locale: 'it', slug: 'chi-siamo', ancestorSlugs: [] },
@@ -368,12 +475,14 @@ describe('getPublishedPageBySlug', () => {
       title: 'Chi siamo',
     });
 
-    const result = await getPublishedPageBySlug(deps, {
-      tenantId,
-      domain: 'example.com',
-      locale: 'it',
-      segments: ['chi-siamo'],
-    });
+    const result = (
+      await getPublishedPageBySlug(deps, {
+        tenantId,
+        domain: 'example.com',
+        locale: 'it',
+        segments: ['chi-siamo'],
+      })
+    ).page;
 
     expect(result?.site).toMatchObject({
       businessAddress: 'Via Roma 1, Milano',
@@ -394,12 +503,14 @@ describe('getPublishedPageBySlug', () => {
       title: 'Chi siamo',
     });
 
-    const result = await getPublishedPageBySlug(deps, {
-      tenantId,
-      domain: 'example.com',
-      locale: 'it',
-      segments: ['chi-siamo'],
-    });
+    const result = (
+      await getPublishedPageBySlug(deps, {
+        tenantId,
+        domain: 'example.com',
+        locale: 'it',
+        segments: ['chi-siamo'],
+      })
+    ).page;
 
     expect(result?.site.searchEngineIndexingEnabled).toBe(true);
   });
@@ -429,12 +540,14 @@ describe('getPublishedPageBySlug', () => {
       actorUserId: 'user-1',
     });
 
-    const result = await getPublishedPageBySlug(deps, {
-      tenantId,
-      domain: 'example.com',
-      locale: 'it',
-      segments: ['chi-siamo'],
-    });
+    const result = (
+      await getPublishedPageBySlug(deps, {
+        tenantId,
+        domain: 'example.com',
+        locale: 'it',
+        segments: ['chi-siamo'],
+      })
+    ).page;
 
     expect(result?.content).toEqual([
       { type: 'Text', props: { body: 'published version' } },
@@ -487,18 +600,22 @@ describe('getPublishedPageBySlug', () => {
       title: 'Home',
     });
 
-    const it = await getPublishedPageBySlug(deps, {
-      tenantId,
-      domain: 'example.com',
-      locale: 'it',
-      segments: ['home'],
-    });
-    const en = await getPublishedPageBySlug(deps, {
-      tenantId,
-      domain: 'example.com',
-      locale: 'en',
-      segments: ['home-en'],
-    });
+    const it = (
+      await getPublishedPageBySlug(deps, {
+        tenantId,
+        domain: 'example.com',
+        locale: 'it',
+        segments: ['home'],
+      })
+    ).page;
+    const en = (
+      await getPublishedPageBySlug(deps, {
+        tenantId,
+        domain: 'example.com',
+        locale: 'en',
+        segments: ['home-en'],
+      })
+    ).page;
 
     expect(it?.content[0].props['page']).toMatchObject({
       locale: 'it',
@@ -527,12 +644,14 @@ describe('getPublishedPageBySlug', () => {
       createdBy: 'user-1',
     });
 
-    const result = await getPublishedPageBySlug(deps, {
-      tenantId,
-      domain: 'example.com',
-      locale: 'it',
-      segments: ['bozza'],
-    });
+    const result = (
+      await getPublishedPageBySlug(deps, {
+        tenantId,
+        domain: 'example.com',
+        locale: 'it',
+        segments: ['bozza'],
+      })
+    ).page;
 
     expect(result).toBeNull();
   });
@@ -541,12 +660,14 @@ describe('getPublishedPageBySlug', () => {
     const deps = setup();
     await seedSite(deps.siteRepository);
 
-    const result = await getPublishedPageBySlug(deps, {
-      tenantId,
-      domain: 'nobody-has-this.test',
-      locale: 'it',
-      segments: ['chi-siamo'],
-    });
+    const result = (
+      await getPublishedPageBySlug(deps, {
+        tenantId,
+        domain: 'nobody-has-this.test',
+        locale: 'it',
+        segments: ['chi-siamo'],
+      })
+    ).page;
 
     expect(result).toBeNull();
   });
@@ -555,12 +676,14 @@ describe('getPublishedPageBySlug', () => {
     const deps = setup();
     await seedSite(deps.siteRepository);
 
-    const result = await getPublishedPageBySlug(deps, {
-      tenantId,
-      domain: 'example.com',
-      locale: 'it',
-      segments: ['non-esiste'],
-    });
+    const result = (
+      await getPublishedPageBySlug(deps, {
+        tenantId,
+        domain: 'example.com',
+        locale: 'it',
+        segments: ['non-esiste'],
+      })
+    ).page;
 
     expect(result).toBeNull();
   });
@@ -578,12 +701,14 @@ describe('getPublishedPageBySlug', () => {
     // it does not fall back to the 'it' page (see the use case's own
     // comment on why: this is deliberate here, resolveUntranslatedPageFallback
     // is the caller's job).
-    const result = await getPublishedPageBySlug(deps, {
-      tenantId,
-      domain: 'example.com',
-      locale: 'en',
-      segments: ['chi-siamo'],
-    });
+    const result = (
+      await getPublishedPageBySlug(deps, {
+        tenantId,
+        domain: 'example.com',
+        locale: 'en',
+        segments: ['chi-siamo'],
+      })
+    ).page;
 
     expect(result).toBeNull();
   });
@@ -617,12 +742,14 @@ describe('getPublishedPageBySlug', () => {
     footer.publish();
     await deps.siteLayoutSectionRepository.save(footer);
 
-    const result = await getPublishedPageBySlug(deps, {
-      tenantId,
-      domain: 'example.com',
-      locale: 'it',
-      segments: ['chi-siamo'],
-    });
+    const result = (
+      await getPublishedPageBySlug(deps, {
+        tenantId,
+        domain: 'example.com',
+        locale: 'it',
+        segments: ['chi-siamo'],
+      })
+    ).page;
 
     expect(result?.header).toEqual([{ type: 'Header', props: {} }]);
     expect(result?.footer).toEqual([{ type: 'Footer', props: {} }]);
@@ -649,12 +776,14 @@ describe('getPublishedPageBySlug', () => {
     stickyHeader.publish();
     await deps.siteLayoutSectionRepository.save(stickyHeader);
 
-    const result = await getPublishedPageBySlug(deps, {
-      tenantId,
-      domain: 'example.com',
-      locale: 'it',
-      segments: ['chi-siamo'],
-    });
+    const result = (
+      await getPublishedPageBySlug(deps, {
+        tenantId,
+        domain: 'example.com',
+        locale: 'it',
+        segments: ['chi-siamo'],
+      })
+    ).page;
 
     expect(result?.headerSticky).toBe(true);
   });
@@ -678,12 +807,14 @@ describe('getPublishedPageBySlug', () => {
     // Never published.
     await deps.siteLayoutSectionRepository.save(header);
 
-    const result = await getPublishedPageBySlug(deps, {
-      tenantId,
-      domain: 'example.com',
-      locale: 'it',
-      segments: ['chi-siamo'],
-    });
+    const result = (
+      await getPublishedPageBySlug(deps, {
+        tenantId,
+        domain: 'example.com',
+        locale: 'it',
+        segments: ['chi-siamo'],
+      })
+    ).page;
 
     expect(result?.header).toBeNull();
   });
@@ -697,12 +828,14 @@ describe('getPublishedPageBySlug', () => {
       title: 'Chi siamo',
     });
 
-    const result = await getPublishedPageBySlug(deps, {
-      tenantId,
-      domain: 'example.com',
-      locale: 'it',
-      segments: ['chi-siamo'],
-    });
+    const result = (
+      await getPublishedPageBySlug(deps, {
+        tenantId,
+        domain: 'example.com',
+        locale: 'it',
+        segments: ['chi-siamo'],
+      })
+    ).page;
 
     expect(result?.header).toBeNull();
     expect(result?.footer).toBeNull();
@@ -747,12 +880,14 @@ describe('getPublishedPageBySlug', () => {
         title: 'First run',
       });
 
-      const result = await getPublishedPageBySlug(deps, {
-        tenantId,
-        domain: 'example.com',
-        locale: 'it',
-        segments: ['documentazione', 'primo-avvio'],
-      });
+      const result = (
+        await getPublishedPageBySlug(deps, {
+          tenantId,
+          domain: 'example.com',
+          locale: 'it',
+          segments: ['documentazione', 'primo-avvio'],
+        })
+      ).page;
 
       expect(
         result?.translations.sort((a, b) => a.locale.localeCompare(b.locale)),
@@ -790,12 +925,14 @@ describe('getPublishedPageBySlug', () => {
         title: 'First run',
       });
 
-      const result = await getPublishedPageBySlug(deps, {
-        tenantId,
-        domain: 'example.com',
-        locale: 'it',
-        segments: ['documentazione', 'primo-avvio'],
-      });
+      const result = (
+        await getPublishedPageBySlug(deps, {
+          tenantId,
+          domain: 'example.com',
+          locale: 'it',
+          segments: ['documentazione', 'primo-avvio'],
+        })
+      ).page;
 
       expect(result?.translations).toEqual([
         {

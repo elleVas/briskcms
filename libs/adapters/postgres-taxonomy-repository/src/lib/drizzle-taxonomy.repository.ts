@@ -297,6 +297,17 @@ export class DrizzleTaxonomyRepository implements TaxonomyRepositoryPort {
     return rows[0] ? this.findTermById(tenantId, rows[0].termId) : null;
   }
 
+  async findTermByLandingPage(
+    tenantId: string,
+    pageGroupId: string,
+  ): Promise<Term | null> {
+    const [term] = await this.loadTerms(
+      tenantId,
+      eq(terms.landingPageGroupId, pageGroupId),
+    );
+    return term ?? null;
+  }
+
   async updateTermAddressPrefix(
     tenantId: string,
     taxonomyId: string,
