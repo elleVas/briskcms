@@ -50,6 +50,21 @@ export interface TaxonomyRepositoryPort {
   ): Promise<Term | null>;
 
   /**
+   * The term that renders this page on its own address, or `null`.
+   *
+   * The reverse of `landingPageGroupId`, and the question the public page
+   * lookup asks about every address it resolves: a page that has become
+   * a term's landing page no longer answers at its own slug, it moves
+   * there (docs/adr/0067). One page can be the landing of at most one
+   * term — a partial unique index says so — which is why this returns
+   * one and not a list.
+   */
+  findTermByLandingPage(
+    tenantId: string,
+    pageGroupId: string,
+  ): Promise<Term | null>;
+
+  /**
    * Rewrites `route_prefix` on every address row of one dimension —
    * called when its prefix changes, in the same transaction as the
    * taxonomy itself.

@@ -33,6 +33,15 @@ const result =
     ? await getPublishedPageBySlug(Astro.url.hostname, locale, segments)
     : null;
 
+// The content moved to a term's address (docs/adr/0067): 301, not 302 —
+// a page that has become a term's landing page lives there now, and a
+// permanent redirect is what hands the inbound links and the ranking
+// over instead of splitting them across two URLs. Before the term
+// lookup, because this address is a PAGE's, not a term's.
+if (result && !result.found && result.movedTo) {
+  return Astro.redirect(result.movedTo + Astro.url.search, 301);
+}
+
 // A page always wins, and asking in this order is what makes that true at
 // render time and not only in the write-path checks (docs/adr/0064): a
 // term is looked up only where no page answered. What comes back is

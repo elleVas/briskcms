@@ -113,7 +113,7 @@ describe('public-api-client', () => {
       'non-esiste',
     ]);
 
-    expect(result).toEqual({ found: false, fallback: null });
+    expect(result).toEqual({ found: false, fallback: null, movedTo: null });
   });
 
   it('surfaces the fallback locale/path from a 404 body when the site redirects untranslated pages', async () => {
@@ -131,6 +131,28 @@ describe('public-api-client', () => {
     expect(result).toEqual({
       found: false,
       fallback: { locale: 'it', segments: ['chi-siamo'] },
+      movedTo: null,
+    });
+  });
+
+  /*
+   * A different answer from `fallback`, and the route treats it
+   * differently: a term claimed this page, so the content lives at the
+   * term's address and the redirect is permanent (docs/adr/0067).
+   */
+  it('surfaces a permanent move from a 404 body', async () => {
+    vi.mocked(fetch).mockResolvedValue(
+      jsonResponse({ fallback: null, movedTo: '/it/categoria/espresso' }, 404),
+    );
+
+    const result = await getPublishedPageBySlug('example.com', 'it', [
+      'chi-siamo',
+    ]);
+
+    expect(result).toEqual({
+      found: false,
+      fallback: null,
+      movedTo: '/it/categoria/espresso',
     });
   });
 

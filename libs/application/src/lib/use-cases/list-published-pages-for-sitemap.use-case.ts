@@ -2,6 +2,7 @@ import type {
   PageGroupRepositoryPort,
   PageTranslationRepositoryPort,
   SiteRepositoryPort,
+  TaxonomyRepositoryPort,
 } from '@brisk/ports';
 import { listPublishedPagePaths } from './list-published-page-paths';
 
@@ -9,6 +10,8 @@ export interface ListPublishedPagesForSitemapDeps {
   siteRepository: SiteRepositoryPort;
   pageGroupRepository: PageGroupRepositoryPort;
   pageTranslationRepository: PageTranslationRepositoryPort;
+  /** Terms are addresses too, and a page a term claimed is no longer one (docs/adr/0067). */
+  taxonomyRepository: TaxonomyRepositoryPort;
 }
 
 export interface ListPublishedPagesForSitemapInput {
@@ -58,16 +61,66 @@ export async function listPublishedPagesForSitemap(
     return null;
   }
 
-  const paths = await listPublishedPagePaths(deps, input.tenantId, site.id);
+  const [paths, taxonomies, terms] = await Promise.all([
+    listPublishedPagePaths(deps, input.tenantId, site.id),
+    deps.taxonomyRepository.listTaxonomiesBySite(input.tenantId, site.id),
+    deps.taxonomyRepository.listTermsBySite(input.tenantId, site.id),
+  ]);
+  const prefixByTaxonomy = new Map(
+    taxonomies.map((taxonomy) => [taxonomy.id, taxonomy.prefix]),
+  );
+  // A page a term renders on its own address answers at that address
+  // only — its old URL is a 301 now (docs/adr/0067). Listing both would
+  // hand a crawler the duplicate the redirect exists to remove.
+  //
+  // Per (group, LOCALE) and not per group: a term with no slug in one
+  // language does not answer there, so the page keeps serving its own
+  // URL in that language — and a URL that answers belongs in the
+  // sitemap. Dropping the group outright would hide a live page.
+  const claimed = new Set<string>();
+  for (const term of terms) {
+    if (!term.landingPageGroupId) continue;
+    for (const locale of site.enabledLocales) {
+      if (term.slugFor(locale) !== null) {
+        claimed.add(`${term.landingPageGroupId}:${locale}`);
+      }
+    }
+  }
+
+  const termEntries: SitemapEntry[] = [];
+  for (const term of terms) {
+    // Only where the term is actually reachable: a language it has no
+    // slug in, or that the site does not publish, has no URL to list.
+    for (const locale of site.enabledLocales) {
+      const slug = term.slugFor(locale);
+      if (slug === null) continue;
+      const prefix = prefixByTaxonomy.get(term.taxonomyId) ?? null;
+      termEntries.push({
+        slug,
+        locale,
+        // The TERM's id groups its own languages together, exactly as a
+        // page group does for a page — that is what the hreflang block
+        // is built from.
+        groupId: term.id,
+        ancestorSlugs: prefix ? [prefix] : [],
+        updatedAt: term.updatedAt,
+      });
+    }
+  }
 
   return {
-    items: paths.map((path) => ({
-      slug: path.slug,
-      locale: path.locale,
-      groupId: path.groupId,
-      ancestorSlugs: path.ancestorSlugs,
-      updatedAt: path.updatedAt,
-    })),
+    items: [
+      ...paths
+        .filter((path) => !claimed.has(`${path.groupId}:${path.locale}`))
+        .map((path) => ({
+          slug: path.slug,
+          locale: path.locale,
+          groupId: path.groupId,
+          ancestorSlugs: path.ancestorSlugs,
+          updatedAt: path.updatedAt,
+        })),
+      ...termEntries,
+    ],
     searchEngineIndexingEnabled: site.searchEngineIndexingEnabled,
     defaultLocale: site.defaultLocale,
   };

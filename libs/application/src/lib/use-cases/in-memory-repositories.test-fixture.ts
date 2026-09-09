@@ -959,6 +959,21 @@ export class InMemoryTaxonomyRepository implements TaxonomyRepositoryPort {
     return null;
   }
 
+  async findTermByLandingPage(
+    tenantId: string,
+    pageGroupId: string,
+  ): Promise<Term | null> {
+    for (const term of this.terms.values()) {
+      if (
+        term.tenantId === tenantId &&
+        term.landingPageGroupId === pageGroupId
+      ) {
+        return term;
+      }
+    }
+    return null;
+  }
+
   async updateTermAddressPrefix(
     tenantId: string,
     taxonomyId: string,

@@ -21,7 +21,18 @@ export interface UntranslatedPageFallbackTargetDto {
 
 export type PublishedPageLookupResult =
   | { found: true; page: PublishedPage }
-  | { found: false; fallback: UntranslatedPageFallbackTargetDto | null };
+  | {
+      found: false;
+      fallback: UntranslatedPageFallbackTargetDto | null;
+      /**
+       * The address this content lives at now — a term claimed it as its
+       * landing page (docs/adr/0067). Distinct from `fallback`, which is
+       * a courtesy for a language that has no such page at all: this one
+       * is a permanent move, and the route answers it with a 301 rather
+       * than a 302.
+       */
+      movedTo: string | null;
+    };
 
 // process.env, not import.meta.env: this must read the real deployment's
 // value at request time (Node adapter, SSR), not whatever was baked in at
@@ -89,12 +100,18 @@ export async function getPublishedPageBySlug(
 
   if (res.status === 404) {
     const body: unknown = await res.json().catch(() => null);
-    const fallback =
-      body && typeof body === 'object' && 'fallback' in body
-        ? ((body as { fallback: UntranslatedPageFallbackTargetDto | null })
-            .fallback ?? null)
-        : null;
-    return { found: false, fallback };
+    const parsed =
+      body && typeof body === 'object'
+        ? (body as {
+            fallback?: UntranslatedPageFallbackTargetDto | null;
+            movedTo?: string | null;
+          })
+        : {};
+    return {
+      found: false,
+      fallback: parsed.fallback ?? null,
+      movedTo: parsed.movedTo ?? null,
+    };
   }
   if (!res.ok) {
     throw new Error(`Public pages API error: ${res.status}`);

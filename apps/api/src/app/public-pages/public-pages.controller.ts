@@ -144,6 +144,7 @@ export class PublicPagesController {
         siteLayoutSectionRepository: this.siteLayoutSectionRepository,
         siteThemeBlockStylesRepository: this.siteThemeBlockStylesRepository,
         reusableSectionRepository: this.reusableSectionRepository,
+        taxonomyRepository: this.taxonomyRepository,
       },
       {
         tenantId: await this.tenant.require(),
@@ -152,11 +153,22 @@ export class PublicPagesController {
         segments: query.path,
       },
     );
+    // The content moved to a term's address (docs/adr/0067). A 404 with
+    // somewhere to go, exactly like the untranslated-page fallback below
+    // — apps/public-site is what turns either into a real redirect,
+    // because which status code a VISITOR gets is a decision about
+    // browsers and crawlers, not about data.
+    if (result.redirectTo) {
+      throw new NotFoundException({
+        fallback: null,
+        movedTo: result.redirectTo,
+      });
+    }
     // A draft page and a page that doesn't exist get the identical 404 —
     // getPublishedPageBySlug already collapses both cases into `null`, so
     // there's no way for this handler to tell them apart even if it wanted
     // to (see the use case's own comment on why that's deliberate).
-    if (!result) {
+    if (!result.page) {
       // Direct navigation/old link/crawler on a (locale, slug) that was
       // never translated — the language switcher can't help here, it only
       // computes a fallback once a page IS found. `fallback` is `null` when
@@ -176,9 +188,9 @@ export class PublicPagesController {
           segments: query.path,
         },
       );
-      throw new NotFoundException({ fallback });
+      throw new NotFoundException({ fallback, movedTo: null });
     }
-    return result;
+    return result.page;
   }
 
   @Get(':id/preview')
@@ -332,6 +344,7 @@ export class PublicPagesController {
         siteRepository: this.siteRepository,
         pageGroupRepository: this.pageGroupRepository,
         pageTranslationRepository: this.pageTranslationRepository,
+        taxonomyRepository: this.taxonomyRepository,
       },
       { tenantId: await this.tenant.require(), domain: query.domain },
     );

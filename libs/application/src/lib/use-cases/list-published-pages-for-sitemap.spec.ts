@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { DEFAULT_COOKIE_BANNER_SETTINGS } from '@brisk/shared-types';
-import { Site } from '@brisk/domain-core';
+import { Site, Taxonomy, Term } from '@brisk/domain-core';
 import { createPageGroup } from './create-page-group.use-case';
 import { createPageGroupTranslation } from './create-page-group-translation.use-case';
 import { publishPageTranslation } from './publish-page-translation.use-case';
@@ -132,6 +132,170 @@ describe('listPublishedPagesForSitemap', () => {
       'chi-siamo',
       'contatti',
     ]);
+  });
+
+  async function seedTerm(
+    deps: ReturnType<typeof setup>,
+    options: {
+      prefix: string | null;
+      slugs: Record<string, string>;
+      landingPageGroupId?: string;
+    },
+  ) {
+    const taxonomy = Taxonomy.create({
+      id: 'taxonomy-1',
+      tenantId,
+      siteId: 'site-1',
+      prefix: options.prefix,
+      name: { it: 'Categoria' },
+    });
+    await deps.taxonomyRepository.saveTaxonomy(taxonomy);
+    const term = Term.create({
+      id: 'term-1',
+      tenantId,
+      siteId: 'site-1',
+      taxonomyId: taxonomy.id,
+      name: { it: 'Espresso' },
+      slugs: options.slugs,
+    });
+    if (options.landingPageGroupId) {
+      term.setLandingPage(options.landingPageGroupId);
+    }
+    await deps.taxonomyRepository.saveTerm(term);
+    return term;
+  }
+
+  /*
+   * A term is an address a crawler should know about — that is the whole
+   * argument for giving terms automatic routes (docs/adr/0064): a term
+   * with no URL does not exist for a search engine.
+   */
+  it('lists a term at its own address, grouped by the term for hreflang', async () => {
+    const deps = setup();
+    await seedSite(deps.siteRepository, { enabledLocales: ['it', 'en'] });
+    await seedTerm(deps, {
+      prefix: 'categoria',
+      slugs: { it: 'espresso', en: 'espresso-machines' },
+    });
+
+    const result = await listPublishedPagesForSitemap(deps, {
+      tenantId,
+      domain: 'example.com',
+    });
+
+    expect(result?.items).toEqual([
+      {
+        slug: 'espresso',
+        locale: 'it',
+        groupId: 'term-1',
+        ancestorSlugs: ['categoria'],
+        updatedAt: expect.any(Date),
+      },
+      {
+        slug: 'espresso-machines',
+        locale: 'en',
+        groupId: 'term-1',
+        ancestorSlugs: ['categoria'],
+        updatedAt: expect.any(Date),
+      },
+    ]);
+  });
+
+  it('leaves out a language the term does not answer in', async () => {
+    const deps = setup();
+    await seedSite(deps.siteRepository, { enabledLocales: ['it', 'en'] });
+    await seedTerm(deps, { prefix: null, slugs: { it: 'espresso' } });
+
+    const result = await listPublishedPagesForSitemap(deps, {
+      tenantId,
+      domain: 'example.com',
+    });
+
+    expect(result?.items).toEqual([
+      {
+        slug: 'espresso',
+        locale: 'it',
+        groupId: 'term-1',
+        // Mounted at the site root, so nothing in front of the slug.
+        ancestorSlugs: [],
+        updatedAt: expect.any(Date),
+      },
+    ]);
+  });
+
+  /*
+   * The other half of the 301 (docs/adr/0067): the old URL redirects, so
+   * listing it would hand a crawler exactly the duplicate the redirect
+   * exists to remove.
+   */
+  it('drops a page a term renders on its own address', async () => {
+    const deps = setup();
+    await seedSite(deps.siteRepository);
+    const kept = await createAndPublish(deps, 'contatti');
+    const claimed = await createAndPublish(deps, 'chi-siamo');
+    await seedTerm(deps, {
+      prefix: 'categoria',
+      slugs: { it: 'espresso' },
+      landingPageGroupId: claimed.id,
+    });
+
+    const result = await listPublishedPagesForSitemap(deps, {
+      tenantId,
+      domain: 'example.com',
+    });
+
+    expect(result?.items.map((entry) => entry.slug).sort()).toEqual([
+      'contatti',
+      'espresso',
+    ]);
+    expect(result?.items.some((entry) => entry.groupId === kept.id)).toBe(true);
+  });
+
+  /*
+   * The page still answers in a language the term does not reach — the
+   * lookup keeps serving it there rather than redirecting into nothing
+   * (docs/adr/0067) — so the sitemap must keep listing it there. Dropping
+   * the whole group would hide a live URL.
+   */
+  it('keeps the claimed page listed in a language the term does not answer in', async () => {
+    const deps = setup();
+    await seedSite(deps.siteRepository, { enabledLocales: ['it', 'en'] });
+    const { group, translation } = await createGroupAndTranslation(
+      deps,
+      'it',
+      'chi-siamo',
+    );
+    await publishPageTranslation(deps, {
+      tenantId,
+      pageTranslationId: translation.id,
+    });
+    const english = await createPageGroupTranslation(deps, {
+      tenantId,
+      pageGroupId: group.id,
+      locale: 'en',
+      slug: 'about-us',
+      seoMeta: { title: 'About us', description: '' },
+      createdBy: 'user-1',
+    });
+    await publishPageTranslation(deps, {
+      tenantId,
+      pageTranslationId: english.id,
+    });
+    // The term answers in Italian only.
+    await seedTerm(deps, {
+      prefix: 'categoria',
+      slugs: { it: 'espresso' },
+      landingPageGroupId: group.id,
+    });
+
+    const result = await listPublishedPagesForSitemap(deps, {
+      tenantId,
+      domain: 'example.com',
+    });
+
+    expect(
+      result?.items.map((entry) => `${entry.locale}:${entry.slug}`).sort(),
+    ).toEqual(['en:about-us', 'it:espresso']);
   });
 
   it('returns null when no site matches the domain', async () => {

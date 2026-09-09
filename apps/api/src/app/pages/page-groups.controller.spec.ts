@@ -124,6 +124,7 @@ describe('PageGroupsController (unit)', () => {
       listTermsBySite: jest.fn().mockResolvedValue([]),
       deleteTerm: jest.fn(),
       findTermByAddress: jest.fn().mockResolvedValue(null),
+      findTermByLandingPage: jest.fn().mockResolvedValue(null),
       updateTermAddressPrefix: jest.fn(),
       listTermIdsForPageGroup: jest.fn().mockResolvedValue([]),
       setTermsForPageGroup: jest.fn(),
