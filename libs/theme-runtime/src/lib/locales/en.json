@@ -76,5 +76,6 @@
   "cookieConsent.privacyPolicyLink": "Privacy Policy",
   "cookieConsent.cookiePolicyLink": "Cookie Policy",
   "image.lightboxOpen": "See the picture full size",
-  "image.lightboxClose": "Close the picture"
+  "image.lightboxClose": "Close the picture",
+  "blockRenderer.unrenderable": "This block cannot be shown: its saved content does not match what “{type}” expects. Visitors see nothing here."
 }
