@@ -155,7 +155,7 @@ export type TextProps = z.infer<typeof textPropsSchema>;
 // but generally useful on any page needing a real <h2>/<h3>.
 export const headingPropsSchema = z.object({
   text: z.string(),
-  level: z.enum(['h2', 'h3']),
+  level: z.enum(['h1', 'h2', 'h3']),
 });
 export type HeadingProps = z.infer<typeof headingPropsSchema>;
 

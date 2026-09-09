@@ -57,6 +57,26 @@
   --muted-foreground: #71717a;
   --border: #e4e4e7;
   --radius: 0.5rem;
+  /* The heading scale. Tailwind's preflight sets every h1-h6 to
+     `font-size: inherit; font-weight: inherit`, so without these a
+     Heading block renders identically to a paragraph — which is what
+     both shipped themes did until this existed.
+
+     Named `--brisk-*` and not `--text-*` deliberately: `--text-sm`,
+     `--text-2xl` and friends are Tailwind's OWN theme variables, the
+     ones every `text-2xl` utility class reads. Redefining those to
+     drive headings would resize every utility on the site as a side
+     effect. A theme retunes the scale by declaring these in its
+     `:root` — PageLayout emits a theme's root custom properties with
+     `!important`, so they win. */
+  --brisk-heading-weight: 650;
+  --brisk-heading-leading: 1.2;
+  --brisk-h1-size: clamp(1.875rem, 1.5rem + 1.8vw, 2.75rem);
+  --brisk-h2-size: clamp(1.5rem, 1.3rem + 1vw, 2rem);
+  --brisk-h3-size: clamp(1.25rem, 1.15rem + 0.5vw, 1.5rem);
+  --brisk-h4-size: 1.125rem;
+  --brisk-h5-size: 1rem;
+  --brisk-h6-size: 0.875rem;
   --brisk-content-width: 64rem;
   --brisk-content-width-wide: 80rem;
   --brisk-content-gutter: 1.5rem;
@@ -80,6 +100,41 @@
      instead of falling back to the browser's default blue. */
   a {
     @apply text-primary underline-offset-2 hover:underline;
+  }
+  /* Same story as the link rule above, and the same fix: preflight
+     flattens h1-h6 to body size and weight, and nothing put them back —
+     not this file, not either shipped theme — so every Heading block
+     read as a paragraph. No margins here on purpose: a heading is a
+     root block, and `.brisk-root-block` already owns the space around
+     it. */
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-weight: var(--brisk-heading-weight);
+    line-height: var(--brisk-heading-leading);
+    text-wrap: balance;
+  }
+  h1 {
+    font-size: var(--brisk-h1-size);
+    font-weight: 700;
+  }
+  h2 {
+    font-size: var(--brisk-h2-size);
+  }
+  h3 {
+    font-size: var(--brisk-h3-size);
+  }
+  h4 {
+    font-size: var(--brisk-h4-size);
+  }
+  h5 {
+    font-size: var(--brisk-h5-size);
+  }
+  h6 {
+    font-size: var(--brisk-h6-size);
   }
 }
 
