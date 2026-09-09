@@ -63,6 +63,8 @@ export * from './lib/use-cases/subscribe-newsletter.use-case';
 export * from './lib/use-cases/get-or-create-site-layout-section.use-case';
 export * from './lib/use-cases/save-site-layout-section-draft.use-case';
 export * from './lib/use-cases/reusable-section.use-cases';
+export * from './lib/use-cases/taxonomy.use-cases';
+export * from './lib/use-cases/term-address';
 export * from './lib/use-cases/get-preview-reusable-section-by-id.use-case';
 export * from './lib/use-cases/publish-reusable-section.use-case';
 export * from './lib/use-cases/resolve-section-instances';

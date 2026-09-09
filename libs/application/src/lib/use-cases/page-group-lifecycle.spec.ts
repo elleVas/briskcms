@@ -4,10 +4,13 @@ import {
   PageGroupReorderMismatchError,
   PageGroupVersionNotFoundError,
   PageSlugAlreadyExistsError,
+  PageSlugCollidesWithTermError,
   PageTranslationDivergedError,
   PageTranslationLocaleAlreadyExistsError,
   PageTranslationNotDivergedError,
   PageTranslationNotFoundError,
+  Taxonomy,
+  Term,
 } from '@brisk/domain-core';
 import { mergeTranslatedContent } from '@brisk/shared-types';
 import { createPageGroup } from './create-page-group.use-case';
@@ -32,6 +35,7 @@ import {
   InMemoryPageTranslationRepository,
   InMemoryPageTranslationVersionRepository,
   InMemoryReusableSectionRepository,
+  InMemoryTaxonomyRepository,
   InMemorySearchPort,
 } from './in-memory-repositories.test-fixture';
 
@@ -56,6 +60,7 @@ describe('page group i18n lifecycle', () => {
       pageTranslationVersionRepository,
       searchPort: new InMemorySearchPort(),
       reusableSectionRepository: new InMemoryReusableSectionRepository(),
+      taxonomyRepository: new InMemoryTaxonomyRepository(),
     };
   }
 
@@ -154,6 +159,51 @@ describe('page group i18n lifecycle', () => {
           createdBy: 'user-1',
         }),
       ).rejects.toThrow(PageTranslationLocaleAlreadyExistsError);
+    });
+
+    /*
+     * The third place the address rule holds (docs/adr/0064). A page and
+     * a root-mounted term are two different tables that meet only in the
+     * URL, so nothing but this check stands between them — and without
+     * it terms would refuse to land on pages while pages landed on terms
+     * freely.
+     */
+    it('throws when a root-mounted term already answers at that address', async () => {
+      const deps = setup();
+      const group = await createPageGroup(deps, {
+        tenantId,
+        siteId,
+        createdBy: 'user-1',
+      });
+      const taxonomy = Taxonomy.create({
+        id: 'taxonomy-1',
+        tenantId,
+        siteId,
+        prefix: null,
+        name: { en: 'Family' },
+      });
+      await deps.taxonomyRepository.saveTaxonomy(taxonomy);
+      await deps.taxonomyRepository.saveTerm(
+        Term.create({
+          id: 'term-1',
+          tenantId,
+          siteId,
+          taxonomyId: taxonomy.id,
+          name: { en: 'Espresso' },
+          slugs: { en: 'espresso' },
+        }),
+      );
+
+      await expect(
+        createPageGroupTranslation(deps, {
+          tenantId,
+          pageGroupId: group.id,
+          locale: 'en',
+          slug: 'espresso',
+          seoMeta: { title: '', description: '' },
+          createdBy: 'user-1',
+        }),
+      ).rejects.toThrow(PageSlugCollidesWithTermError);
     });
 
     it('throws PageSlugAlreadyExistsError for a slug taken under the same parent', async () => {

@@ -23,9 +23,6 @@
   ],
   "references": [
     {
-      "path": "../../libs/adapters/postgres-reusable-section-repository/tsconfig.lib.json"
-    },
-    {
       "path": "../../libs/adapters/verification-token-adapter/tsconfig.lib.json"
     },
     {
@@ -56,6 +53,9 @@
       "path": "../../libs/adapters/postgres-user-repository/tsconfig.lib.json"
     },
     {
+      "path": "../../libs/adapters/postgres-taxonomy-repository/tsconfig.lib.json"
+    },
+    {
       "path": "../../libs/adapters/postgres-site-repository/tsconfig.lib.json"
     },
     {
@@ -63,6 +63,9 @@
     },
     {
       "path": "../../libs/adapters/postgres-search-repository/tsconfig.lib.json"
+    },
+    {
+      "path": "../../libs/adapters/postgres-reusable-section-repository/tsconfig.lib.json"
     },
     {
       "path": "../../libs/adapters/postgres-page-repository/tsconfig.lib.json"

@@ -10,6 +10,8 @@ import {
 import { PreviewTokenAdapter } from '@brisk/preview-token-adapter';
 import { DrizzleReusableSectionRepository } from '@brisk/postgres-reusable-section-repository';
 import { DrizzleSearchRepository } from '@brisk/postgres-search-repository';
+import { DrizzleSiteRepository } from '@brisk/postgres-site-repository';
+import { DrizzleTaxonomyRepository } from '@brisk/postgres-taxonomy-repository';
 import { AuthModule } from '../auth/auth.module';
 import { DATABASE, DatabaseModule } from '../database.module';
 import { PageGroupsController } from './page-groups.controller';
@@ -17,6 +19,8 @@ import {
   PREVIEW_TOKEN_PORT,
   REUSABLE_SECTION_REPOSITORY,
   SEARCH_REPOSITORY,
+  SITE_REPOSITORY,
+  TAXONOMY_REPOSITORY,
 } from './pages.tokens';
 import {
   PAGE_GROUP_REPOSITORY,
@@ -34,6 +38,20 @@ import {
       // snapshot holds only the reference (docs/adr/0059).
       provide: REUSABLE_SECTION_REPOSITORY,
       useFactory: (db: BriskDb) => new DrizzleReusableSectionRepository(db),
+      inject: [DATABASE],
+    },
+    {
+      // Two jobs, both about addresses (docs/adr/0064): filing a page
+      // under terms, and refusing a root page slug a dimension or one of
+      // its root-mounted terms already answers.
+      provide: TAXONOMY_REPOSITORY,
+      useFactory: (db: BriskDb) => new DrizzleTaxonomyRepository(db),
+      inject: [DATABASE],
+    },
+    {
+      // Read-only: which languages the site publishes.
+      provide: SITE_REPOSITORY,
+      useFactory: (db: BriskDb) => new DrizzleSiteRepository(db),
       inject: [DATABASE],
     },
     {

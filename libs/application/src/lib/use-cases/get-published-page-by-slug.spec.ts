@@ -16,6 +16,7 @@ import {
   InMemorySiteLayoutSectionRepository,
   InMemorySiteRepository,
   InMemorySiteThemeBlockStylesRepository,
+  InMemoryTaxonomyRepository,
 } from './in-memory-repositories.test-fixture';
 
 describe('getPublishedPageBySlug', () => {
@@ -33,6 +34,7 @@ describe('getPublishedPageBySlug', () => {
       pageTranslationRepository: new InMemoryPageTranslationRepository(
         pageTranslationVersionRepository,
       ),
+      taxonomyRepository: new InMemoryTaxonomyRepository(),
       pageTranslationVersionRepository,
       siteRepository: new InMemorySiteRepository(),
       siteLayoutSectionRepository: new InMemorySiteLayoutSectionRepository(),

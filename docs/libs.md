@@ -24,7 +24,7 @@ Core hexagonal-architecture layers:
 | Lib                                                   | What it does                                                                                                                                                                                          |
 | ----------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | [domain-core](../libs/domain-core/README.md)          | Pure domain entities (`Page`, `Site`, `User`, `Form`, `Media`, ...) encapsulating their own invariants, plus domain error types and an attachment-type byte-sniffer for unauthenticated form uploads. |
-| [ports](../libs/ports/README.md)                      | The 19 Port interfaces (persistence, storage, auth, email, search, captcha, newsletter, tenant context) that `application` depends on and every `adapters/*` lib implements.                          |
+| [ports](../libs/ports/README.md)                      | Every Port interface (persistence, storage, auth, email, search, captcha, newsletter, tenant context, classification) that `application` depends on and every `adapters/*` lib implements.            |
 | [application](../libs/application/README.md)          | Use cases orchestrating Port calls to complete a user action (`createPage`, `saveDraft`, `publishPage`, `rollbackToVersion`, ...) — zero infrastructure of its own.                                   |
 | [postgres-db](../libs/adapters/postgres-db/README.md) | Shared Drizzle schema, client factory, and tenant-scoping helper (`withTenant`) used by every Postgres adapter below.                                                                                 |
 
@@ -39,6 +39,7 @@ Postgres repositories (each implements one or two Port interfaces from `ports`, 
 | [postgres-media-repository](../libs/adapters/postgres-media-repository/README.md)                             | `MediaRepositoryPort` — uploaded media _metadata_ only; the file bytes live in the storage adapters below.                                 |
 | [postgres-search-repository](../libs/adapters/postgres-search-repository/README.md)                           | `SearchPort` — Postgres full-text search (`tsvector`/`ts_headline`) over published pages.                                                  |
 | [postgres-user-repository](../libs/adapters/postgres-user-repository/README.md)                               | `UserRepositoryPort` — admin/editor accounts, with unique-email-violation mapping under concurrency.                                       |
+| [postgres-taxonomy-repository](../libs/adapters/postgres-taxonomy-repository/README.md)                       | `TaxonomyRepositoryPort` — classification dimensions, their terms, a term's address per language, and which pages carry which terms.       |
 
 Auth & tokens:
 

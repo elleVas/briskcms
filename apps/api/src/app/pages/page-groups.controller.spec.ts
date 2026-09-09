@@ -17,6 +17,8 @@ import type {
   PageTranslationVersionRepositoryPort,
   PreviewTokenPort,
   ReusableSectionRepositoryPort,
+  SiteRepositoryPort,
+  TaxonomyRepositoryPort,
   SearchPort,
   TenantContextPort,
 } from '@brisk/ports';
@@ -57,6 +59,8 @@ describe('PageGroupsController (unit)', () => {
   let previewTokenPort: jest.Mocked<PreviewTokenPort>;
   let searchPort: jest.Mocked<SearchPort>;
   let reusableSectionRepository: jest.Mocked<ReusableSectionRepositoryPort>;
+  let taxonomyRepository: jest.Mocked<TaxonomyRepositoryPort>;
+  let siteRepository: jest.Mocked<SiteRepositoryPort>;
   let controller: PageGroupsController;
 
   beforeEach(() => {
@@ -109,6 +113,28 @@ describe('PageGroupsController (unit)', () => {
       listBySite: jest.fn().mockResolvedValue([]),
       delete: jest.fn(),
     };
+    taxonomyRepository = {
+      saveTaxonomy: jest.fn(),
+      findTaxonomyById: jest.fn(),
+      listTaxonomiesBySite: jest.fn().mockResolvedValue([]),
+      deleteTaxonomy: jest.fn(),
+      saveTerm: jest.fn(),
+      findTermById: jest.fn(),
+      listTermsByTaxonomy: jest.fn().mockResolvedValue([]),
+      listTermsBySite: jest.fn().mockResolvedValue([]),
+      deleteTerm: jest.fn(),
+      findTermByAddress: jest.fn().mockResolvedValue(null),
+      updateTermAddressPrefix: jest.fn(),
+      listTermIdsForPageGroup: jest.fn().mockResolvedValue([]),
+      setTermsForPageGroup: jest.fn(),
+      listPageGroupIdsForTerm: jest.fn().mockResolvedValue([]),
+    };
+    siteRepository = {
+      save: jest.fn(),
+      findById: jest.fn(),
+      findByDomain: jest.fn(),
+      listByTenant: jest.fn().mockResolvedValue([]),
+    };
     controller = new PageGroupsController(
       pageGroupRepository,
       pageGroupVersionRepository,
@@ -118,6 +144,8 @@ describe('PageGroupsController (unit)', () => {
       previewTokenPort,
       searchPort,
       reusableSectionRepository,
+      taxonomyRepository,
+      siteRepository,
     );
   });
 
