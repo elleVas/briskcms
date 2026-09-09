@@ -1,6 +1,11 @@
 import type { PageTreeNodeDto } from '@brisk/theme-runtime';
 import { requireEnv } from '@brisk/env-config';
 import {
+  PUBLIC_API_SERVICE_TOKEN_HEADER,
+  PUBLIC_API_VISITOR_IP_HEADER,
+} from '@brisk/shared-types';
+import { currentVisitorIp } from './request-context';
+import {
   publishedPageSchema,
   publishedSiteSchema,
   publishedTermSchema,
@@ -48,6 +53,31 @@ function apiUrl(): string {
 const DEFAULT_TIMEOUT_MS = 20_000;
 
 /**
+ * Who is asking, on behalf of whom.
+ *
+ * The public API rate-limits per IP, and every call below is made by this
+ * server: without these two headers the entire site shares one bucket and
+ * a busy minute becomes a 500 for every visitor at once. The visitor's
+ * address alone would not be enough — the API is reachable from the
+ * internet through Caddy, so a header anyone can set is a limit anyone can
+ * evade. The token is what makes the address believable.
+ *
+ * Both optional by design: with `PUBLIC_API_SERVICE_TOKEN` unset the API
+ * trusts nothing and counts this server, exactly as it did before. An
+ * upgrade that does not set it keeps working, and there is no default
+ * secret anywhere for one that forgets.
+ */
+function callerHeaders(): Record<string, string> {
+  const token = process.env['PUBLIC_API_SERVICE_TOKEN'];
+  const visitorIp = currentVisitorIp();
+  if (!token || !visitorIp) return {};
+  return {
+    [PUBLIC_API_SERVICE_TOKEN_HEADER]: token,
+    [PUBLIC_API_VISITOR_IP_HEADER]: visitorIp,
+  };
+}
+
+/**
  * Not exported — an injected collaborator private to this module, not a
  * general-purpose "fetch helper". Every one of the 10 functions below owns
  * its own response interpretation (404-collapses-to-null, `{ ok, status }`
@@ -60,6 +90,7 @@ class TimedFetcher {
     try {
       return await fetch(url, {
         ...init,
+        headers: { ...init?.headers, ...callerHeaders() },
         signal: AbortSignal.timeout(DEFAULT_TIMEOUT_MS),
       });
     } catch (error) {
