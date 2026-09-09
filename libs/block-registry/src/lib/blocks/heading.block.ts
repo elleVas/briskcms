@@ -23,6 +23,7 @@ export const headingBlock = defineBlock({
       key: 'level',
       label: 'blocks.heading.fields.level.fieldLabel',
       options: [
+        { label: 'blocks.heading.fields.level.options.h1', value: 'h1' },
         { label: 'blocks.heading.fields.level.options.h2', value: 'h2' },
         { label: 'blocks.heading.fields.level.options.h3', value: 'h3' },
       ],

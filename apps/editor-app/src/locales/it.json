@@ -1344,6 +1344,7 @@
         "level": {
           "fieldLabel": "Livello",
           "options": {
+            "h1": "Titolo 1",
             "h2": "Titolo 2",
             "h3": "Titolo 3"
           }
