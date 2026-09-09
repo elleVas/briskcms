@@ -645,3 +645,60 @@ describe('InspectorPanel field groups', () => {
     expect(screen.getByText('Raggio angoli')).toBeTruthy();
   });
 });
+
+describe('InspectorPanel required fields beyond text', () => {
+  const linkDescriptor: BlockDescriptor = {
+    type: 'Button',
+    label: 'Bottone',
+    category: 'conversion',
+    defaultProps: { linkType: 'page', page: null, url: '' },
+    fields: [
+      {
+        kind: 'custom',
+        key: 'page',
+        label: 'Pagina',
+        control: 'media',
+        required: true,
+        showWhen: { field: 'linkType', equals: 'page' },
+      },
+    ],
+  };
+
+  function renderButton(props: Record<string, unknown>) {
+    render(
+      <InspectorPanel
+        block={{ id: 'b1', type: 'Button', props }}
+        descriptor={linkDescriptor}
+        onChangeProp={vi.fn()}
+        onChangeVariant={vi.fn()}
+      />,
+    );
+  }
+
+  /*
+   * The nudge exists because of what the renderer now does (ADR-0063):
+   * a block that says "Site page" and has none picked is not a link at
+   * all. Before this, the only symptom was a button that quietly did
+   * nothing when clicked.
+   */
+  it('warns when a required picker has nothing picked', () => {
+    renderButton({ linkType: 'page', page: null });
+
+    expect(screen.getByText('Campo obbligatorio')).toBeTruthy();
+  });
+
+  it('stops warning once something is picked', () => {
+    renderButton({
+      linkType: 'page',
+      page: { pageGroupId: 'g1', title: 'Home' },
+    });
+
+    expect(screen.queryByText('Campo obbligatorio')).toBeNull();
+  });
+
+  it('marks the label as required whatever kind the field is', () => {
+    renderButton({ linkType: 'page', page: null });
+
+    expect(screen.getByText('*')).toBeTruthy();
+  });
+});

@@ -56,6 +56,8 @@ const themeFieldCommonShape = {
     .optional(),
   /** Which part of the inspector it belongs to — absent means `content`. */
   group: z.enum(['content', 'style', 'advanced']).optional(),
+  /** A soft nudge while the field is empty, on any kind since ADR-0063 — never a save blocker. */
+  required: z.boolean().optional(),
 };
 
 /** What the three free-text kinds add on top — also written once, for the same reason. */
@@ -63,7 +65,6 @@ const themeTextualFieldShape = {
   ...themeFieldCommonShape,
   inlineEditable: z.boolean().optional(),
   placeholder: z.string().optional(),
-  required: z.boolean().optional(),
   requiredUnless: z.string().optional(),
   translatable: z.boolean().optional(),
 };

@@ -1,6 +1,6 @@
 ---
 import type { ImageProps } from '@brisk/shared-types';
-import { Translator, localePathFromAncestors } from '@brisk/theme-runtime';
+import { Translator, resolveLinkHref } from '@brisk/theme-runtime';
 import OptimizedImage from '../OptimizedImage.astro';
 
 type Props = ImageProps & {
@@ -28,12 +28,7 @@ const i18n = new Translator(locale);
 // existed (see imagePropsSchema's own comment).
 const resolvedAlt = isDecorative ? '' : alt;
 
-const href =
-  linkType === 'page' && page?.locale && page?.slug
-    ? localePathFromAncestors(page.locale, page.ancestorSlugs ?? [], page.slug)
-    : linkType === 'url' && url
-      ? url
-      : null;
+const href = resolveLinkHref({ linkType, page, url });
 
 // A link wins over a lightbox when both are set (ADR-0057): a link is a
 // navigation the visitor asked for, a lightbox is a convenience, and
