@@ -101,6 +101,18 @@ Two things that are easy to get wrong and cost an hour each:
   overlay silently renders in English on the Italian page, which is worse
   than an obvious gap because nobody notices it.
 
+Before touching the **block reference**, regenerate the inventory:
+
+```sh
+npx tsx tools/dump-block-inventory.mts > /tmp/blocks.json
+```
+
+It prints every block the picker offers, with its fields and its labels
+in both languages, straight from the registry. A reference written from
+memory is wrong the day somebody adds a block, and nothing breaks to say
+so — the page just quietly stops listing one. What the page still has to
+add by hand is what no registry knows: what each block is _for_.
+
 A label the editor shows must be quoted in the language the reader is
 reading: `apps/editor-app/src/locales/{en,it}.json` is the only source of
 truth for what a button says. "Insert block" in an Italian sentence sends
