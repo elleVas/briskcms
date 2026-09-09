@@ -80,6 +80,57 @@ describe('FilesystemThemeCatalogAdapter', () => {
     expect(result).toEqual([{ name: 'classic' }]);
   });
 
+  /*
+   * The editor's theme picker is built from this list, and the public
+   * site refuses to render anything the same allow-list excludes
+   * (ADR-0069). Before this, a client could pick a theme here and get
+   * the fallback rendered instead, with no error anywhere.
+   */
+  it('offers only the themes the allow-list names', async () => {
+    await createTheme('classic');
+    await createTheme('docs-showcase');
+    await createTheme('agency');
+
+    const adapter = new FilesystemThemeCatalogAdapter({
+      themesDir,
+      allowList: 'agency',
+    });
+
+    expect(await adapter.listAvailableThemes()).toEqual([{ name: 'agency' }]);
+  });
+
+  it('offers everything when no allow-list is set', async () => {
+    await createTheme('classic');
+    await createTheme('agency');
+
+    for (const allowList of [undefined, '']) {
+      const adapter = new FilesystemThemeCatalogAdapter({
+        themesDir,
+        allowList,
+      });
+      expect(await adapter.listAvailableThemes()).toEqual([
+        { name: 'agency' },
+        { name: 'classic' },
+      ]);
+    }
+  });
+
+  /*
+   * A typo, or a theme dropped from a later release: degrading to
+   * "everything" keeps the deployment working, where an empty picker
+   * would leave a site with no theme it is allowed to choose.
+   */
+  it('offers everything when the allow-list names nothing that exists', async () => {
+    await createTheme('classic');
+
+    const adapter = new FilesystemThemeCatalogAdapter({
+      themesDir,
+      allowList: 'typo-only',
+    });
+
+    expect(await adapter.listAvailableThemes()).toEqual([{ name: 'classic' }]);
+  });
+
   it('returns an empty list for an empty directory', async () => {
     const adapter = new FilesystemThemeCatalogAdapter({ themesDir });
     const result = await adapter.listAvailableThemes();

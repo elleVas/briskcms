@@ -12,5 +12,9 @@ import type { ThemeCatalogPort } from '@brisk/ports';
 export function createThemeCatalog(): ThemeCatalogPort {
   return new FilesystemThemeCatalogAdapter({
     themesDir: requireEnv('THEMES_DIR'),
+    // Optional by design: unset means every bundled theme is offered.
+    // Read here rather than required in the env schema so a deployment
+    // that never narrows its themes needs no variable at all.
+    allowList: process.env['BRISK_THEME'],
   });
 }

@@ -19,6 +19,7 @@
     "./package.json": "./package.json"
   },
   "dependencies": {
-    "@brisk/ports": "workspace:*"
+    "@brisk/ports": "workspace:*",
+    "@brisk/shared-types": "workspace:*"
   }
 }

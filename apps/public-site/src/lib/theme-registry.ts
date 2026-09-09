@@ -13,7 +13,15 @@
  * `BlockRenderer.astro`, `PageLayout.astro`) builds on the primitives
  * here instead of re-deriving "which themes exist" or "what does an
  * unknown theme name fall back to" on its own.
+ *
+ * The allow-list itself lives in `@brisk/shared-types` since ADR-0069:
+ * apps/api has to apply the identical rule to the editor's theme
+ * picker, and when only this side applied it the picker offered themes
+ * that then rendered as the fallback.
  */
+import { applyThemeAllowList } from '@brisk/shared-types';
+
+export { applyThemeAllowList };
 
 export interface ThemeManifest {
   allowStyleOverrides?: boolean;
@@ -53,25 +61,6 @@ if (themeNamesOnDisk.length === 0) {
     'No theme bundled in this apps/public-site build — every deployment ' +
       'needs at least one themes/<name>/theme.json on disk when astro build runs.',
   );
-}
-
-/**
- * `BRISK_THEME=classic,docs-showcase` narrows which bundled themes this
- * deployment serves; empty/unset means all of them. An allow-list naming
- * nothing that's actually bundled (a typo, or a theme dropped from a
- * later release) would otherwise leave the deployment with no theme at
- * all — that degrades back to "every bundled theme" rather than taking
- * the site down.
- */
-export function applyThemeAllowList(
-  namesOnDisk: readonly string[],
-  rawAllowList: string | undefined,
-): readonly string[] {
-  const allowed = (rawAllowList ?? '')
-    .split(',')
-    .map((name) => name.trim())
-    .filter((name) => namesOnDisk.includes(name));
-  return allowed.length > 0 ? allowed : namesOnDisk;
 }
 
 export const BUNDLED_THEME_NAMES: readonly string[] = applyThemeAllowList(
