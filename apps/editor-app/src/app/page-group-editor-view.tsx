@@ -7,6 +7,7 @@ import {
   History,
   Languages,
   Search,
+  Tags,
 } from 'lucide-react';
 import { CanvasEditorShell } from './canvas/canvas-editor-shell';
 import { LanguageSwitcher } from './canvas/language-switcher';
@@ -16,6 +17,7 @@ import { IconButton } from './icon-button';
 import { IconListProvider } from './icon-list-provider';
 import { MediaPickerProvider } from './media-picker-provider';
 import { PageGroupSeoPanelDialog } from './page-group-seo-panel-dialog';
+import { PageGroupTermsDialog } from './page-group-terms-dialog';
 import { PageGroupTranslationsDialog } from './page-group-translations-dialog';
 import { PageListProvider } from './page-list-provider';
 import { publicPagePath } from '../lib/public-page-path';
@@ -96,6 +98,7 @@ export function PageGroupEditorView({
   const statusText = useStatusText(status);
   const [isDivergeConfirmOpen, setIsDivergeConfirmOpen] = useState(false);
   const [isSeoOpen, setIsSeoOpen] = useState(false);
+  const [isTermsOpen, setIsTermsOpen] = useState(false);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [isTranslationsOpen, setIsTranslationsOpen] = useState(false);
   const [restoredAt, setRestoredAt] = useState(0);
@@ -160,6 +163,12 @@ export function PageGroupEditorView({
                     <Search />
                   </IconButton>
                   <IconButton
+                    label={t('taxonomies.pageTitle')}
+                    onClick={() => setIsTermsOpen(true)}
+                  >
+                    <Tags />
+                  </IconButton>
+                  <IconButton
                     label={t('pages.versionHistory.open')}
                     onClick={() => setIsHistoryOpen(true)}
                   >
@@ -216,6 +225,12 @@ export function PageGroupEditorView({
                 seoMeta={activeTranslation.seoMeta}
                 open={isSeoOpen}
                 onOpenChange={setIsSeoOpen}
+              />
+              <PageGroupTermsDialog
+                groupId={groupId}
+                siteId={group.siteId}
+                open={isTermsOpen}
+                onOpenChange={setIsTermsOpen}
               />
               <PageGroupTranslationsDialog
                 groupId={groupId}
