@@ -1489,6 +1489,31 @@
         }
       }
     },
+    "pageGrid": {
+      "label": "Elenco di pagine",
+      "picker": {
+        "none": "Nessun termine scelto",
+        "unnamed": "(senza nome)"
+      },
+      "fields": {
+        "termId": {
+          "fieldLabel": "Termine"
+        },
+        "layout": {
+          "fieldLabel": "Disposizione",
+          "options": {
+            "list": "Elenco",
+            "grid": "Griglia"
+          }
+        },
+        "limit": {
+          "fieldLabel": "Quante al massimo (0 = tutte)"
+        },
+        "emptyText": {
+          "fieldLabel": "Testo quando non c'è niente da elencare"
+        }
+      }
+    },
     "searchBox": {
       "label": "Ricerca sul sito",
       "fields": {

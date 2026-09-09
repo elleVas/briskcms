@@ -3,11 +3,13 @@ import { requireEnv } from '@brisk/env-config';
 import {
   publishedPageSchema,
   publishedSiteSchema,
+  publishedTermSchema,
   type Block,
   type FormField,
   type FormStep,
   type PublishedPage,
   type PublishedSite,
+  type PublishedTerm,
 } from '@brisk/shared-types';
 
 /** Where to send the visitor when (locale, path) has no published page — see resolveUntranslatedPageFallback on the application side. */
@@ -98,6 +100,42 @@ export async function getPublishedPageBySlug(
     throw new Error(`Public pages API error: ${res.status}`);
   }
   return { found: true, page: publishedPageSchema.parse(await res.json()) };
+}
+
+/**
+ * A term's own page (docs/adr/0064), asked for ONLY after the page
+ * lookup came back empty — a page always wins, and doing the two in that
+ * order is what makes that true at render time rather than only at write
+ * time.
+ *
+ * `null` for anything that is not a term: no term at that address, a
+ * path too deep to be one, an unknown domain. The route then 404s
+ * exactly as it did before terms existed.
+ */
+export async function getPublishedTermByPath(
+  domain: string,
+  locale: string,
+  segments: string[],
+): Promise<PublishedTerm | null> {
+  const params = new URLSearchParams({
+    domain,
+    locale,
+    path: segments.join('/'),
+  });
+  const res = await timedFetcher.fetch(
+    `${apiUrl()}/public/pages/term-by-path?${params.toString()}`,
+  );
+
+  if (res.status === 404 || res.status === 400) {
+    // 400 is a path this endpoint refuses to even look up — three
+    // segments, say. For the caller that is the same answer as "no term
+    // here", and it is the page route's 404 that the visitor sees.
+    return null;
+  }
+  if (!res.ok) {
+    throw new Error(`Public terms API error: ${res.status}`);
+  }
+  return publishedTermSchema.parse(await res.json());
 }
 
 /**

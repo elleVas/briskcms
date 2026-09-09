@@ -27,6 +27,7 @@ export const customFieldControlSchema = z.enum([
   'page',
   'section',
   'table-data',
+  'term',
 ]);
 
 export type CustomFieldControl = z.infer<typeof customFieldControlSchema>;

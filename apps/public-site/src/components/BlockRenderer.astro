@@ -41,6 +41,7 @@ import {
   navDropdownPropsSchema,
   navLinkPropsSchema,
   navPropsSchema,
+  pageGridPropsSchema,
   newsletterSignupPropsSchema,
   pricingPlanPropsSchema,
   pricingTablePropsSchema,
@@ -113,6 +114,8 @@ import BannerCore from './blocks/Banner.astro';
 const Banner = resolveThemeBlockOverride('Banner', BannerCore, themeName);
 import BeforeAfterCore from './blocks/BeforeAfter.astro';
 const BeforeAfter = resolveThemeBlockOverride('BeforeAfter', BeforeAfterCore, themeName);
+import PageGridCore from './blocks/PageGrid.astro';
+const PageGrid = resolveThemeBlockOverride('PageGrid', PageGridCore, themeName);
 import BreadcrumbCore from './blocks/Breadcrumb.astro';
 const Breadcrumb = resolveThemeBlockOverride('Breadcrumb', BreadcrumbCore, themeName);
 import ButtonCore from './blocks/Button.astro';
@@ -363,6 +366,11 @@ const BLOCK_REGISTRY: Record<string, BlockDispatchEntry> = {
     schema: languageSwitcherPropsSchema,
     locale: true,
     extra: (ctx) => ({ translations: ctx.translations, site: ctx.site }),
+    stylable: true,
+  },
+  PageGrid: {
+    component: PageGrid,
+    schema: pageGridPropsSchema,
     stylable: true,
   },
   Breadcrumb: {

@@ -944,6 +944,9 @@ importers:
       '@brisk/shared-types':
         specifier: workspace:*
         version: link:../shared-types
+      '@brisk/theme-runtime':
+        specifier: workspace:*
+        version: link:../theme-runtime
 
   libs/block-registry:
     dependencies:

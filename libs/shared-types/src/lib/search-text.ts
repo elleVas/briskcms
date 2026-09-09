@@ -161,6 +161,10 @@ export const BLOCKS_WITHOUT_SEARCHABLE_TEXT = [
   // A hosted video has no words of its own — its poster and its file are
   // not prose. `VideoEmbed` is on this list for the same reason.
   'VideoFile',
+  // What it draws is other pages' titles, and those pages are indexed
+  // themselves — indexing them again here would make one page answer for
+  // words that are not on it (ADR-0064).
+  'PageGrid',
 
   // Real prose, not wired up yet — a genuine backlog item (found during
   // the 2026-09-02 Extension Manifest planning session, deliberately left

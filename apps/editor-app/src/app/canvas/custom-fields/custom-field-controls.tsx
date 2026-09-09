@@ -9,6 +9,7 @@ import { MediaPickerField } from './media-picker-field';
 import { PagePickerField } from './page-picker-field';
 import { SectionPickerField } from './section-picker-field';
 import { TableDataField } from './table-data-field';
+import { TermPickerField } from './term-picker-field';
 
 type ControlComponent = ComponentType<{
   value: unknown;
@@ -46,4 +47,5 @@ export const CUSTOM_FIELD_CONTROLS: Record<
   page: PagePickerField as ControlComponent,
   section: SectionPickerField as ControlComponent,
   'table-data': TableDataField as ControlComponent,
+  term: TermPickerField as ControlComponent,
 };

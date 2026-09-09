@@ -54,3 +54,32 @@ export const publishedPageSchema = z.object({
   headerSticky: z.boolean(),
 });
 export type PublishedPage = z.infer<typeof publishedPageSchema>;
+
+/**
+ * A term's own page (ADR-0064) — the shape apps/public-site renders for
+ * `/{locale}/{prefix}/{slug}`.
+ *
+ * Deliberately a `PublishedPage` plus one field. A term's page is a page:
+ * it has the site's header and footer, its own SEO block, its
+ * translations, and a list of blocks to render — so making it the same
+ * shape means `PublicPageContent.astro` draws it with no new rendering
+ * path, and every block, style rule and instance class works there
+ * without knowing it is on a term.
+ *
+ * `content` is the hand-built landing page's blocks when the term has
+ * one, and the generated default layout otherwise — the caller cannot
+ * tell which, which is exactly the promise ADR-0064 makes about
+ * rendering in place: unlinking that page changes what is drawn, never
+ * whether the address answers.
+ */
+export const publishedTermSchema = publishedPageSchema.extend({
+  term: z.object({
+    id: z.string(),
+    /** Empty when the term has no name in this language — it can still be reached, so it still renders. */
+    name: z.string(),
+    description: z.string(),
+    /** True when the blocks above came from a page somebody built by hand. */
+    hasLandingPage: z.boolean(),
+  }),
+});
+export type PublishedTerm = z.infer<typeof publishedTermSchema>;

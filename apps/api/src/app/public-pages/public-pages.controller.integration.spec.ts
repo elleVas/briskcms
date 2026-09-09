@@ -17,6 +17,7 @@ import {
 import { AUTH_PORT } from '../auth/auth.tokens';
 import { DATABASE } from '../database.module';
 import { PagesModule } from '../pages/pages.module';
+import { TaxonomiesModule } from '../taxonomies/taxonomies.module';
 import { SiteLayoutSectionsModule } from '../site-layout-sections/site-layout-sections.module';
 import { PublicPagesModule } from './public-pages.module';
 
@@ -44,7 +45,12 @@ describe('PublicPagesController (integration)', () => {
 
   beforeAll(async () => {
     const moduleRef = await Test.createTestingModule({
-      imports: [PagesModule, SiteLayoutSectionsModule, PublicPagesModule],
+      imports: [
+        PagesModule,
+        SiteLayoutSectionsModule,
+        PublicPagesModule,
+        TaxonomiesModule,
+      ],
     }).compile();
 
     app = moduleRef.createNestApplication();
@@ -404,6 +410,76 @@ describe('PublicPagesController (integration)', () => {
       .get('/public/pages/by-slug')
       .query({ domain, locale: 'it', path: 'bozza-mai-pubblicata' })
       .expect(404);
+  });
+
+  /*
+   * A term's own page over the real HTTP endpoint (docs/adr/0064) —
+   * created through the authenticated API, then read back through the
+   * public one with no session at all, which is how apps/public-site
+   * asks.
+   */
+  it('serves a term page, its list of filed pages included, without a session', async () => {
+    const suffix = randomUUID().slice(0, 8);
+    const taxonomy = await agent
+      .post('/taxonomies')
+      .send({
+        siteId,
+        name: { it: `Categoria ${suffix}` },
+        prefix: `cat-${suffix}`,
+      })
+      .expect(201);
+    const term = await agent
+      .post(`/taxonomies/${taxonomy.body.id}/terms`)
+      .send({ name: { it: `Espresso ${suffix}` } })
+      .expect(201);
+
+    const group = await agent.post('/page-groups').send({ siteId }).expect(201);
+    const translation = await agent
+      .post(`/page-groups/${group.body.id}/translations`)
+      .send({
+        locale: 'it',
+        slug: `macchina-${suffix}`,
+        seoMeta: { title: 'La macchina', description: '' },
+      })
+      .expect(201);
+    await agent
+      .post(`/page-groups/translations/${translation.body.id}/publish`)
+      .expect(201);
+    await agent
+      .patch(`/page-groups/${group.body.id}/terms`)
+      .send({ termIds: [term.body.id] })
+      .expect(200);
+
+    const res = await request(app.getHttpServer())
+      .get('/public/pages/term-by-path')
+      .query({ domain, locale: 'it', path: `cat-${suffix}/espresso-${suffix}` })
+      .expect(200);
+
+    expect(res.body.term.name).toBe(`Espresso ${suffix}`);
+    expect(res.body.term.hasLandingPage).toBe(false);
+    // Page-shaped, so apps/public-site renders it with no new path.
+    expect(res.body.site).toBeTruthy();
+    const grid = res.body.content.find(
+      (block: { type: string }) => block.type === 'PageGrid',
+    );
+    expect(grid.props.items).toEqual([
+      {
+        pageGroupId: group.body.id,
+        title: 'La macchina',
+        path: `/it/macchina-${suffix}`,
+      },
+    ]);
+  });
+
+  it('404s for an address no term answers, and for a path too deep to be one', async () => {
+    await request(app.getHttpServer())
+      .get('/public/pages/term-by-path')
+      .query({ domain, locale: 'it', path: 'niente/di-niente' })
+      .expect(404);
+    await request(app.getHttpServer())
+      .get('/public/pages/term-by-path')
+      .query({ domain, locale: 'it', path: 'uno/due/tre' })
+      .expect(400);
   });
 
   it('404s for a slug that does not exist', async () => {

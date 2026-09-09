@@ -24,6 +24,21 @@ export const publicPageBySlugQuerySchema = z.object({
 });
 export type PublicPageBySlugQuery = z.infer<typeof publicPageBySlugQuerySchema>;
 
+/**
+ * A term answers at one or two segments — `{prefix}/{slug}`, or just
+ * `{slug}` for a dimension mounted at the site root (docs/adr/0064). The
+ * bound is the shape of the address, not a limit: a term's path never
+ * carries its ancestors.
+ */
+export const publicTermByPathQuerySchema = z.object({
+  domain: domainSchema,
+  locale: z.string().min(2),
+  path: pagePathSchema.refine((segments) => segments.length <= 2, {
+    message: 'a term path is at most two segments',
+  }),
+});
+export type PublicTermByPathQuery = z.infer<typeof publicTermByPathQuerySchema>;
+
 export const publicPagesSitemapQuerySchema = z.object({
   domain: domainSchema,
 });
