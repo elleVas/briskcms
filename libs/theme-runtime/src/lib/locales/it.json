@@ -76,5 +76,6 @@
   "cookieConsent.privacyPolicyLink": "Privacy Policy",
   "cookieConsent.cookiePolicyLink": "Cookie Policy",
   "image.lightboxOpen": "Vedi l'immagine a schermo intero",
-  "image.lightboxClose": "Chiudi l'immagine"
+  "image.lightboxClose": "Chiudi l'immagine",
+  "blockRenderer.unrenderable": "Questo blocco non può essere mostrato: il contenuto salvato non corrisponde a quello che “{type}” si aspetta. Chi visita il sito non vede nulla qui."
 }

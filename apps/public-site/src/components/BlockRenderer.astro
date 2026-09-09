@@ -227,6 +227,7 @@ const Text = resolveThemeBlockOverride('Text', TextCore, themeName);
 import VideoEmbedCore from './blocks/VideoEmbed.astro';
 const VideoEmbed = resolveThemeBlockOverride('VideoEmbed', VideoEmbedCore, themeName);
 import WhatsAppButtonCore from './blocks/WhatsAppButton.astro';
+import UnrenderableBlockHint from './UnrenderableBlockHint.astro';
 const WhatsAppButton = resolveThemeBlockOverride('WhatsAppButton', WhatsAppButtonCore, themeName);
 
 // Walks `Block[]`/`children` directly — no dependency on Puck's own data
@@ -276,7 +277,19 @@ interface BlockRenderContext {
  */
 interface BlockDispatchEntry {
   component: AstroComponentFactory;
-  schema?: { parse: (props: unknown) => Record<string, unknown> };
+  /**
+   * `safeParse`, not `parse`: a block whose saved props no longer match
+   * is skipped on its own, never at the cost of the rest of the page.
+   * Structural rather than `z.ZodType` so a theme's block, whose schema
+   * is its own copy of zod, satisfies it too.
+   */
+  schema?: {
+    safeParse: (
+      props: unknown,
+    ) =>
+      | { success: true; data: Record<string, unknown> }
+      | { success: false; error: { issues: unknown } };
+  };
   /** The block accepts per-instance styling, so it is handed the class its generated CSS rule targets. The override itself never reaches the component: since ADR-0047 it is a stylesheet rule, not an inline attribute. */
   stylable?: boolean;
   locale?: boolean;
@@ -688,8 +701,29 @@ const context: BlockRenderContext = {
   currentPageTitle,
   editable,
 };
-const parsedProps: Record<string, unknown> = entry?.schema
-  ? entry.schema.parse(block.props)
+// `safeParse`, not `parse`. This used to throw, and because every block
+// on a page renders through this same component, one block whose saved
+// props no longer satisfy its schema took the entire page's content down
+// with it — the layout and the navigation still rendered, and all thirty
+// other blocks vanished. It is not hypothetical: publishing a heading
+// with a level the running code did not yet accept blanked every page of
+// the documentation site at once.
+//
+// A block that cannot be rendered is skipped, alone. The person editing
+// the page is told which one and why (UnrenderableBlockHint, canvas
+// only); a visitor sees nothing rather than a diagnostic; and the server
+// log keeps the reason, because a page quietly missing a paragraph is
+// exactly the kind of thing nobody reports.
+const parsed = entry?.schema ? entry.schema.safeParse(block.props) : null;
+const isUnrenderable = parsed !== null && !parsed.success;
+if (isUnrenderable) {
+  console.error(
+    `[block] ${block.type} ${block.id ?? '(no id)'} does not match its schema, skipped:`,
+    parsed.error.issues,
+  );
+}
+const parsedProps: Record<string, unknown> = parsed?.success
+  ? parsed.data
   : {};
 // Resolved here, once, and handed down as `iconSvg` — a block (core's or a
 // theme's override of it) never reaches into the icon registry itself.
@@ -700,8 +734,9 @@ const parsedProps: Record<string, unknown> = entry?.schema
 // nothing more.
 const iconName =
   typeof parsedProps['icon'] === 'string' ? parsedProps['icon'] : null;
-const dispatchProps = entry
-  ? {
+const dispatchProps =
+  entry && !isUnrenderable
+    ? {
       ...normalizeRenderedProps(block.type, parsedProps, themeName),
       ...(entry.stylable ? { instanceClass } : {}),
       ...(variantClass ? { variantClass } : {}),
@@ -722,7 +757,16 @@ const dispatchProps = entry
 
 <Wrapper {...wrapperProps}>
 {
-  Component && entry && (
+  isUnrenderable && (
+    <UnrenderableBlockHint
+      show={editable === true}
+      type={block.type}
+      locale={locale}
+    />
+  )
+}
+{
+  Component && entry && !isUnrenderable && (
     <Component {...dispatchProps}>
       {entry.recurseChildren &&
         block.children?.map((child) => (
