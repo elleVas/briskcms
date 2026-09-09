@@ -37,6 +37,7 @@ import { pricingPlanBlock } from './blocks/pricing-plan.block';
 import { pricingTableBlock } from './blocks/pricing-table.block';
 import { quoteBlock } from './blocks/quote.block';
 import { ratingBlock } from './blocks/rating.block';
+import { pageGridBlock } from './blocks/page-grid.block';
 import { searchBoxBlock } from './blocks/search-box.block';
 import { sectionBlock } from './blocks/section.block';
 import { statBlock } from './blocks/stat.block';
@@ -93,6 +94,7 @@ export {
   pricingTableBlock,
   quoteBlock,
   ratingBlock,
+  pageGridBlock,
   searchBoxBlock,
   statBlock,
   statsCounterBlock,
@@ -154,6 +156,7 @@ export const pageBlocks: BlockDescriptor[] = [
   buttonBlock,
   featureGridBlock,
   featureBlock,
+  pageGridBlock,
   searchBoxBlock,
   videoEmbedBlock,
   mapEmbedBlock,
@@ -204,6 +207,7 @@ export const pageBlockCategories: { title: string; types: string[] }[] = [
       'Code',
       'Breadcrumb',
       'Icon',
+      'PageGrid',
     ],
   },
   {

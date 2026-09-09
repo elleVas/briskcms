@@ -11,6 +11,9 @@
   "include": ["src/**/*.ts"],
   "references": [
     {
+      "path": "../theme-runtime/tsconfig.lib.json"
+    },
+    {
       "path": "../shared-types/tsconfig.lib.json"
     },
     {

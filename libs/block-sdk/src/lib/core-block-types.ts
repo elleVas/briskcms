@@ -58,6 +58,7 @@ export const CORE_BLOCK_TYPES: readonly string[] = [
   'PromoBar',
   'Quote',
   'Rating',
+  'PageGrid',
   'SearchBox',
   'Section',
   'SocialLink',

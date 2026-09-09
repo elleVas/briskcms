@@ -17,6 +17,7 @@ import {
   getPreviewReusableSectionById,
   getPublishedPageBySlug,
   getPublishedSiteChrome,
+  getPublishedTermByPath,
   listPublishedPagesForSitemap,
   listPublishedPageTree,
   resolveUntranslatedPageFallback,
@@ -31,6 +32,7 @@ import type {
   ReusableSectionRepositoryPort,
   SiteRepositoryPort,
   SiteThemeBlockStylesPort,
+  TaxonomyRepositoryPort,
 } from '@brisk/ports';
 import { ZodValidationPipe } from '../zod-validation.pipe';
 import {
@@ -48,6 +50,8 @@ import {
   publicPagesSitemapQuerySchema,
   type PublicPagesTreeQuery,
   publicPagesTreeQuerySchema,
+  type PublicTermByPathQuery,
+  publicTermByPathQuerySchema,
 } from './public-pages.schemas';
 import {
   PAGE_GROUP_REPOSITORY,
@@ -58,6 +62,7 @@ import {
   SITE_LAYOUT_SECTION_REPOSITORY,
   SITE_REPOSITORY,
   SITE_THEME_BLOCK_STYLES_REPOSITORY,
+  TAXONOMY_REPOSITORY,
 } from './public-pages.tokens';
 
 // No SessionAuthGuard on this controller — it's the public, unauthenticated
@@ -77,6 +82,8 @@ export class PublicPagesController {
     private readonly siteLayoutSectionRepository: SiteLayoutSectionRepositoryPort,
     @Inject(SITE_THEME_BLOCK_STYLES_REPOSITORY)
     private readonly siteThemeBlockStylesRepository: SiteThemeBlockStylesPort,
+    @Inject(TAXONOMY_REPOSITORY)
+    private readonly taxonomyRepository: TaxonomyRepositoryPort,
     @Inject(REUSABLE_SECTION_REPOSITORY)
     private readonly reusableSectionRepository: ReusableSectionRepositoryPort,
     @Inject(SEARCH_REPOSITORY)
@@ -86,6 +93,43 @@ export class PublicPagesController {
     @Inject(PREVIEW_TOKEN_PORT)
     private readonly previewTokenPort: PreviewTokenPort,
   ) {}
+
+  /**
+   * A term's own page (docs/adr/0064).
+   *
+   * A separate endpoint rather than a branch inside `by-slug`: the two
+   * lookups answer different questions, and apps/public-site asks this
+   * one only after the page lookup has come back empty — which is what
+   * makes "a page always wins" true at render time, not only at write
+   * time.
+   */
+  @Get('term-by-path')
+  async findTermByPath(
+    @Query(new ZodValidationPipe(publicTermByPathQuerySchema))
+    query: PublicTermByPathQuery,
+  ) {
+    const term = await getPublishedTermByPath(
+      {
+        siteRepository: this.siteRepository,
+        taxonomyRepository: this.taxonomyRepository,
+        pageGroupRepository: this.pageGroupRepository,
+        pageTranslationRepository: this.pageTranslationRepository,
+        siteLayoutSectionRepository: this.siteLayoutSectionRepository,
+        siteThemeBlockStylesRepository: this.siteThemeBlockStylesRepository,
+        reusableSectionRepository: this.reusableSectionRepository,
+      },
+      {
+        tenantId: await this.tenant.require(),
+        domain: query.domain,
+        locale: query.locale,
+        segments: query.path,
+      },
+    );
+    if (!term) {
+      throw new NotFoundException('Term not found');
+    }
+    return term;
+  }
 
   @Get('by-slug')
   async findBySlug(

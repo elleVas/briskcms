@@ -1,5 +1,8 @@
 ---
-import { getPublishedPageBySlug } from '../../lib/public-api-client';
+import {
+  getPublishedPageBySlug,
+  getPublishedTermByPath,
+} from '../../lib/public-api-client';
 import { localePathFromAncestors } from '@brisk/theme-runtime';
 import { buildContentSecurityPolicy } from '../../lib/content-security-policy';
 import PublicPageContent from '../../components/PublicPageContent.astro';
@@ -30,13 +33,29 @@ const result =
     ? await getPublishedPageBySlug(Astro.url.hostname, locale, segments)
     : null;
 
+// A page always wins, and asking in this order is what makes that true at
+// render time and not only in the write-path checks (docs/adr/0064): a
+// term is looked up only where no page answered. What comes back is
+// page-shaped on purpose, so everything below this line — the CSP, the
+// 404, the rendering — treats the two the same.
+const page =
+  (result?.found ? result.page : null) ??
+  (locale && segments.length > 0 && segments.length <= 2
+    ? await getPublishedTermByPath(Astro.url.hostname, locale, segments)
+    : null);
+
 // Direct navigation/old link/crawler on a (locale, path) never translated —
 // `untranslatedPageFallback: 'redirect-to-default'` promises visitors land
 // somewhere instead of a bare 404 (the language switcher already does this
 // once a page IS found; this is the same promise for when it never loads
 // in the first place). `redirect-to-default`/no fallback available both
 // still end in a real 404, same as before this existed.
-if (result && !result.found && result.fallback) {
+//
+// AFTER the term lookup, not before: the fallback answers "this address
+// has no page in this language", and a term living at that address is
+// exactly the case where that is the wrong conclusion — redirecting
+// first would send a visitor away from a page that does exist.
+if (!page && result && !result.found && result.fallback) {
   return Astro.redirect(
     localePathFromAncestors(
       result.fallback.locale,
@@ -46,8 +65,6 @@ if (result && !result.found && result.fallback) {
     302,
   );
 }
-
-const page = result?.found ? result.page : null;
 
 if (!page) {
   Astro.response.status = 404;

@@ -1489,6 +1489,31 @@
         }
       }
     },
+    "pageGrid": {
+      "label": "Page list",
+      "picker": {
+        "none": "No term chosen",
+        "unnamed": "(unnamed)"
+      },
+      "fields": {
+        "termId": {
+          "fieldLabel": "Term"
+        },
+        "layout": {
+          "fieldLabel": "Layout",
+          "options": {
+            "list": "List",
+            "grid": "Grid"
+          }
+        },
+        "limit": {
+          "fieldLabel": "How many at most (0 = all)"
+        },
+        "emptyText": {
+          "fieldLabel": "Text when there is nothing to list"
+        }
+      }
+    },
     "searchBox": {
       "label": "Site search",
       "fields": {

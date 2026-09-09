@@ -8,6 +8,7 @@ import {
 } from '@brisk/postgres-page-repository';
 import { PreviewTokenAdapter } from '@brisk/preview-token-adapter';
 import { DrizzleSearchRepository } from '@brisk/postgres-search-repository';
+import { DrizzleTaxonomyRepository } from '@brisk/postgres-taxonomy-repository';
 import { DrizzleReusableSectionRepository } from '@brisk/postgres-reusable-section-repository';
 import { DrizzleSiteLayoutSectionRepository } from '@brisk/postgres-site-layout-section-repository';
 import {
@@ -26,6 +27,7 @@ import {
   SITE_LAYOUT_SECTION_REPOSITORY,
   SITE_REPOSITORY,
   SITE_THEME_BLOCK_STYLES_REPOSITORY,
+  TAXONOMY_REPOSITORY,
 } from './public-pages.tokens';
 
 @Module({
@@ -73,6 +75,13 @@ import {
       provide: SITE_THEME_BLOCK_STYLES_REPOSITORY,
       useFactory: (db: BriskDb) =>
         new DrizzleSiteThemeBlockStylesRepository(db),
+      inject: [DATABASE],
+    },
+    {
+      // Read-only, like everything in this module: resolving a term's
+      // address and the pages filed under it (docs/adr/0064).
+      provide: TAXONOMY_REPOSITORY,
+      useFactory: (db: BriskDb) => new DrizzleTaxonomyRepository(db),
       inject: [DATABASE],
     },
     {

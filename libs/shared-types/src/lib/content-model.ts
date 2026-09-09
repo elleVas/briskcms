@@ -966,6 +966,41 @@ export type FeatureGridProps = z.infer<typeof featureGridPropsSchema>;
  * only editor-configurable text; the actual results page is not itself a
  * Block-composed page, it's a dedicated Astro route.
  */
+/**
+ * One entry a PageGrid draws — resolved server-side, never authored.
+ *
+ * Same treatment as `PickedPage.locale/slug`: the block stores WHICH
+ * pages it wants (a term), and the render pass fills in what they are.
+ * A client cannot supply these, which is the point — they are the
+ * answer to a query, not content.
+ */
+export const pageGridItemSchema = z.object({
+  pageGroupId: z.string(),
+  title: z.string(),
+  /** Ready to use as an `href`, ancestors included (ADR-0029). */
+  path: z.string(),
+});
+export type PageGridItem = z.infer<typeof pageGridItemSchema>;
+
+/**
+ * The pages filed under a term (ADR-0064) — the block a term's default
+ * layout is built from, and the same block an author can place by hand
+ * on any page.
+ *
+ * `termId` is `null` on a freshly inserted one: the block exists before
+ * anybody has said which dimension it lists, and rendering nothing is
+ * the honest answer until they do.
+ */
+export const pageGridPropsSchema = z.object({
+  termId: z.string().nullable().default(null),
+  layout: z.enum(['list', 'grid']).default('list'),
+  /** 0 = no limit. A term with two hundred pages is a real thing; a page listing all of them is not. */
+  limit: z.number().int().min(0).max(100).default(0),
+  emptyText: z.string().default(''),
+  items: z.array(pageGridItemSchema).default([]),
+});
+export type PageGridProps = z.infer<typeof pageGridPropsSchema>;
+
 export const searchBoxPropsSchema = z.object({
   placeholder: z.string().default('Cerca nel sito...'),
   visibility: visibilitySchema.default('always'),

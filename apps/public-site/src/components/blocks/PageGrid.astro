@@ -1,0 +1,92 @@
+---
+import type { PageGridProps } from '@brisk/shared-types';
+
+type Props = PageGridProps & {
+  /** The per-instance style class, from BlockRenderer — see blockInstanceClassName. */
+  instanceClass?: string | null;
+};
+
+const { layout, limit, emptyText, items, instanceClass } = Astro.props;
+
+// `items` is resolved server-side (resolvePageGridItems) and is empty
+// both when the term has no pages and when the block has no term yet —
+// the reader is shown the same nothing either way, which is correct: an
+// author who has not chosen a term has not asked for anything.
+const shown = limit > 0 ? items.slice(0, limit) : items;
+---
+
+{
+  shown.length > 0 ? (
+    <ul
+      class:list={[
+        'brisk-page-grid',
+        `brisk-page-grid--${layout}`,
+        instanceClass,
+      ]}
+    >
+      {shown.map((item) => (
+        <li class="brisk-page-grid__item">
+          <a class="brisk-page-grid__link" href={item.path}>
+            {item.title}
+          </a>
+        </li>
+      ))}
+    </ul>
+  ) : (
+    emptyText && (
+      <p class:list={['brisk-page-grid__empty', instanceClass]}>{emptyText}</p>
+    )
+  )
+}
+
+<style>
+  /* Every fallback is what an unstyled list of links already looked
+     like, so an untouched PageGrid is unchanged by the style system. */
+  .brisk-page-grid {
+    list-style: none;
+    margin: 0;
+    padding: var(--brisk-override-padding-y, 0)
+      var(--brisk-override-padding-x, 0);
+    display: grid;
+    gap: var(--brisk-override-gap, 0.75rem);
+    background: var(--brisk-override-bg, transparent);
+    color: var(--brisk-override-text, inherit);
+    border-radius: var(--brisk-override-radius, 0);
+    /* Zero width by default, so the frame is there to be turned on. */
+    border-width: var(--brisk-override-border-width, 0);
+    border-style: var(--brisk-override-border-style, solid);
+    border-color: var(--brisk-override-border-color, var(--border));
+    /* Measured by its own children, so the grid can answer to the space
+       it actually has rather than to the viewport (ADR-0050). */
+    container-type: inline-size;
+  }
+
+  .brisk-page-grid--grid {
+    /* `minmax(0, 1fr)` and not `1fr`: a grid item's min-width is `auto`,
+       so a long title would push the track wider than its share and
+       overflow the page (the responsive rule every block here follows). */
+    grid-template-columns: repeat(auto-fill, minmax(min(16rem, 100%), 1fr));
+  }
+
+  .brisk-page-grid__item {
+    min-width: 0;
+  }
+
+  .brisk-page-grid__link {
+    /* `var(--primary)`, NOT `inherit`: global.css colours a bare `<a>`,
+       and a scoped rule here outranks that layer — `inherit` would
+       quietly turn these links the colour of the surrounding text. */
+    color: var(--brisk-override-text, var(--primary));
+    text-decoration: none;
+  }
+
+  .brisk-page-grid__link:hover,
+  .brisk-page-grid__link:focus-visible {
+    text-decoration: underline;
+  }
+
+  .brisk-page-grid__empty {
+    margin: 0;
+    color: var(--brisk-override-text, var(--muted-foreground));
+  }
+</style>
