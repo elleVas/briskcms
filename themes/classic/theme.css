@@ -99,16 +99,17 @@
   --space-2xl: 4rem;
   --space-3xl: 6rem;
 
-  /* Scala tipografica, fluida: `clamp()` evita il salto secco ai
-     breakpoint e ormai è l'aspettativa di base. Il minimo non scende mai
-     sotto 1rem per il testo, che è il limite di leggibilità. */
-  --text-sm: 0.875rem;
-  --text-base: 1rem;
-  --text-lg: clamp(1.0625rem, 1rem + 0.3vw, 1.125rem);
-  --text-xl: clamp(1.25rem, 1.15rem + 0.5vw, 1.5rem);
-  --text-2xl: clamp(1.5rem, 1.3rem + 1vw, 2rem);
-  --text-3xl: clamp(1.875rem, 1.5rem + 1.8vw, 2.75rem);
-  --text-4xl: clamp(2.25rem, 1.7rem + 2.6vw, 3.5rem);
-  --leading-tight: 1.15;
-  --leading-normal: 1.55;
+  /* The type scale used to live here as `--text-sm`..`--text-4xl` and
+     `--leading-*`. Those are Tailwind's OWN theme variables — the ones
+     every `text-lg`/`leading-tight` utility class reads — and
+     PageLayout emits a theme's `:root` with `!important`, so declaring
+     them here silently resized utilities inside Brisk's own components
+     (Hero's title, below the `sm` breakpoint) without this theme ever
+     asking to. Nothing read them as `var(--text-*)` either.
+
+     The fluid heading scale they were written for now lives in
+     `apps/public-site/src/styles/global.css` and applies to every
+     theme. A theme that wants a different one declares
+     `--brisk-h1-size` and friends here instead — same mechanism, own
+     namespace, no collision. */
 }

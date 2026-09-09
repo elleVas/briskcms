@@ -11,7 +11,7 @@ import { BRISK_PAGE_LINK_SCHEME } from '@brisk/shared-types';
  * place in the Layers panel. Letting them in through a text field would
  * produce content the canvas cannot see or edit.
  */
-const ALLOWED_TAGS = [
+export const ALLOWED_TAGS = [
   'p',
   'br',
   'strong',
