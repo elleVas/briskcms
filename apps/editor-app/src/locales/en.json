@@ -267,7 +267,17 @@
     "pageTitle": "Classification",
     "pageHint": "The same for every language of this page.",
     "pageEmpty": "No dimension defined yet.",
-    "pageSaved": "Saved"
+    "pageSaved": "Saved",
+    "termDescription": "Description",
+    "termDescriptionHint": "Shown above the list of pages filed under this term",
+    "termSeo": "SEO",
+    "termSeoTitle": "SEO for “{{term}}” ({{locale}})",
+    "landingPage": "Landing page",
+    "landingPageDefault": "Default layout",
+    "landingPageChosen": "A page is set",
+    "landingPageChoose": "Choose a page",
+    "landingPageChange": "Change",
+    "landingPageClear": "Back to the default layout"
   },
   "sections": {
     "title": "Sections",
