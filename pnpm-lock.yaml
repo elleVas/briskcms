@@ -564,6 +564,9 @@ importers:
       '@brisk/ports':
         specifier: workspace:*
         version: link:../../ports
+      '@brisk/shared-types':
+        specifier: workspace:*
+        version: link:../../shared-types
 
   libs/adapters/local-disk-attachment-storage:
     dependencies:

@@ -1,5 +1,6 @@
 import { readdir, access } from 'node:fs/promises';
 import { join } from 'node:path';
+import { applyThemeAllowList } from '@brisk/shared-types';
 import type { AvailableTheme, ThemeCatalogPort } from '@brisk/ports';
 
 export interface FilesystemThemeCatalogOptions {
@@ -11,6 +12,18 @@ export interface FilesystemThemeCatalogOptions {
    * doesn't otherwise carry `themes/`'s Astro source (docs/adr/0042).
    */
   themesDir: string;
+  /**
+   * The raw `BRISK_THEME` value, when the deployment sets one — the same
+   * comma-separated allow-list apps/public-site applies to what it will
+   * render (docs/adr/0042).
+   *
+   * It has to be applied here too, and that is the whole reason this
+   * option exists: this list populates the editor's theme picker, and a
+   * picker offering a theme the public site refuses to render lets
+   * somebody choose one and get the fallback instead, with no error
+   * anywhere (ADR-0069).
+   */
+  allowList?: string | undefined;
 }
 
 /** Scans the filesystem fresh on every call — a deployment doesn't add or remove bundled themes without a rebuild, so there's nothing to cache. */
@@ -46,6 +59,12 @@ export class FilesystemThemeCatalogAdapter implements ThemeCatalogPort {
       }
     }
 
-    return themes.sort((a, b) => a.name.localeCompare(b.name));
+    const allowed = applyThemeAllowList(
+      themes.map((theme) => theme.name),
+      this.options.allowList,
+    );
+    return themes
+      .filter((theme) => allowed.includes(theme.name))
+      .sort((a, b) => a.name.localeCompare(b.name));
   }
 }

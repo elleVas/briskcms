@@ -113,7 +113,9 @@ See [docs/adr/0042](adr/0042-self-hosting-distribution-and-runtime-theme-selecti
 `BRISK_THEME` in `.env` is a separate, optional knob: a comma-separated
 allow-list (`BRISK_THEME=classic`) restricting which of the bundled
 themes this deployment will serve at all — what an agency sets so its
-client can only ever pick the agency's own theme. Leave it unset to keep
+client can only ever pick the agency's own theme. Both sides apply it
+(ADR-0069): the public site refuses to render anything outside the list,
+and the editor's theme picker does not offer it. Leave it unset to keep
 every bundled theme selectable. It's read at runtime, so changing it
 needs a restart, not a rebuild:
 

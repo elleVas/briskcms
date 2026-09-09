@@ -1714,7 +1714,7 @@
       "label": "Link social"
     },
     "socialLink": {
-      "label": "Link social",
+      "label": "Singolo link social",
       "fields": {
         "icon": {
           "fieldLabel": "Icona"

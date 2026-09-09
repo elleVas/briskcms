@@ -14,11 +14,14 @@ from editor-app's Style dialog, resolved fresh per request in
 `apps/public-site/src/lib/theme-registry.ts` and every `resolve-theme-
 *.ts` file built on it. There is no more single build-time `~theme`
 alias to point at one theme. `BRISK_THEME` still exists, but its role
-shrank to an optional, comma-separated allow-list read at **runtime** by
-`theme-registry.ts` — it restricts which of the bundled themes a given
-deployment will serve at all (an agency shipping an image whose client
-can only ever pick the agency's own theme), not which one renders for a
-given site. Every theme on disk always ends up bundled either way: a
+shrank to an optional, comma-separated allow-list read at **runtime** —
+it restricts which of the bundled themes a given deployment will serve
+at all (an agency shipping an image whose client can only ever pick the
+agency's own theme), not which one renders for a given site. Both sides
+apply it since ADR-0069: `theme-registry.ts` for what gets rendered, and
+`FilesystemThemeCatalogAdapter` for what the editor's picker offers —
+until then only the first did, and the picker offered themes the site
+would not render. Every theme on disk always ends up bundled either way: a
 glob pattern has to be a static literal, so it can't be narrowed by
 config. Only
 `apps/public-site` reads the filesystem directly — apps/api has no
