@@ -85,6 +85,42 @@ pnpm exec nx run @brisk/editor-app:dev                 # React editor (Vite)
 pnpm exec nx run @brisk/public-site:dev                 # Astro public site
 ```
 
+### Before pushing
+
+```sh
+pnpm run verify
+```
+
+Runs the four gates CI runs, in one command: the tsconfig convention
+check, `typecheck`, `lint`, and the test suite **with coverage**. The
+`git push` hook runs the same set minus `typecheck`, which CI keeps as a
+job of its own. The coverage thresholds ([ADR-0009](adr/0009-enforced-coverage-thresholds.md))
+are only enforced with `--coverage`, so a run of plain `nx run-many -t
+test` can be green while the push is refused. Running this first is the
+difference between finding that out now and finding it out at the end of
+a long session.
+
+### Adding a library
+
+```sh
+pnpm exec nx g @nx/js:library <name> --directory=libs/... --importPath=@brisk/<name>
+```
+
+Then **delete `module` and `moduleResolution` from the generated
+`tsconfig.lib.json` and `tsconfig.spec.json`**. The generator writes
+`nodenext` into both and offers no flag to stop it, while this workspace
+resolves as `bundler` (`tsconfig.base.json`) and writes relative imports
+with no file extension (PR #107/#108). Under `nodenext` those imports do
+not resolve, and what tsc prints is `error TS2307: Cannot find module
+'./lib/whatever'` about a file sitting right there — which reads like
+anything except a tsconfig problem.
+
+`pnpm run check:tsconfig` says so in one line instead; it runs in CI and
+on push, and is the first thing `pnpm run verify` does. Also compare the
+generated `vitest.config.mts` against a sibling lib's: the generator
+leaves out the coverage thresholds, and the `dotenv` load that the
+integration specs need to reach Postgres.
+
 After adding/moving a library or changing dependencies between projects, if Nx
 reports "workspace out of sync":
 
