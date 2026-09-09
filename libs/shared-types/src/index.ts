@@ -27,6 +27,7 @@ export * from './lib/block-style-overrides';
 export * from './lib/block-style-defaults';
 export * from './lib/icons';
 export * from './lib/slugify';
+export * from './lib/taxonomy';
 export * from './lib/published-site';
 export * from './lib/site-record';
 export * from './lib/available-theme';
