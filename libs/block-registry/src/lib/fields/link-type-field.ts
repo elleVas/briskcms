@@ -30,12 +30,16 @@ export function ctaLinkFields(): FieldDescriptor[] {
       'page',
       'blocks.shared.linkType.pageFieldLabel',
       'page',
-      { showWhen: { field: 'linkType', equals: 'page' } },
+      { showWhen: { field: 'linkType', equals: 'page' }, required: true },
     ),
     {
       kind: 'text',
       key: 'url',
       showWhen: { field: 'linkType', equals: 'url' },
+      // Both destinations are required, and only ever one of them is on
+      // screen: whichever the block says it points at is the one that
+      // has to be filled in, or it points nowhere (ADR-0063).
+      required: true,
       label: 'blocks.shared.linkType.urlFieldLabel',
       // Found live during the i18n backfill (not just theorized): a real
       // site often uses this field for a hand-written relative internal

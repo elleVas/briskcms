@@ -126,6 +126,7 @@ merged panel and looks inside it.
 - `Link`/`NavLink` still fall back to `url` when `linkType` is `page` and
   no page has been picked — a pre-existing quirk, now slightly more
   surprising because the field being fallen back to is not on screen.
-  Left alone here: changing it changes what published pages render, which
-  is not this decision's subject.
+  Left alone here because changing it changes what published pages
+  render; **fixed straight after, in ADR-0063**, which also found the
+  same expression 404ing inside the theme's own Button override.
 - Fase 7 is closed. What the plan lists after it is Fase 8, taxonomies.

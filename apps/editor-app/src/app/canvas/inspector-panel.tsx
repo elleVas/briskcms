@@ -196,16 +196,26 @@ function isRequiredFieldEmpty(
   field: FieldDescriptor,
   props: Record<string, unknown>,
 ): boolean {
+  if (!field.required) return false;
+  // Only the free-text kinds can waive it through a sibling flag, which
+  // is where that idea came from (an image that is decorative on
+  // purpose). Reading it off the others would be reading a property
+  // they do not have.
   if (
-    field.kind !== 'text' &&
-    field.kind !== 'textarea' &&
-    field.kind !== 'richtext'
+    (field.kind === 'text' ||
+      field.kind === 'textarea' ||
+      field.kind === 'richtext') &&
+    field.requiredUnless &&
+    props[field.requiredUnless]
   ) {
     return false;
   }
-  if (!field.required) return false;
-  if (field.requiredUnless && props[field.requiredUnless]) return false;
   const value = props[field.key];
+  // A picker holds an object or nothing at all — the page picker is the
+  // reason this function stopped being about text (ADR-0063). Everything
+  // else here is judged as text, which is what the remaining kinds that
+  // declare `required` actually hold.
+  if (field.kind === 'custom') return value == null;
   return typeof value !== 'string' || value.trim().length === 0;
 }
 
@@ -293,10 +303,7 @@ export function InspectorPanel({
         <label key={field.key} className="flex flex-col gap-1.5">
           <span className="text-xs font-medium text-muted-foreground">
             {tLabel(field.label)}
-            {(field.kind === 'text' ||
-              field.kind === 'textarea' ||
-              field.kind === 'richtext') &&
-              field.required && <span className="text-destructive"> *</span>}
+            {field.required && <span className="text-destructive"> *</span>}
           </span>
           <FieldRow
             field={field}

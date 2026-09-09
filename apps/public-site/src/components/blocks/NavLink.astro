@@ -1,6 +1,6 @@
 ---
 import type { NavLinkProps } from '@brisk/shared-types';
-import { localePathFromAncestors } from '@brisk/theme-runtime';
+import { resolveLinkHref } from '@brisk/theme-runtime';
 
 type Props = NavLinkProps & {
   /** The per-instance style class, from BlockRenderer — see blockInstanceClassName. */
@@ -22,11 +22,14 @@ const {
   instanceClass,
 } =
   Astro.props;
-const href = linkType === 'page' && page?.locale && page?.slug ? localePathFromAncestors(page.locale, page.ancestorSlugs ?? [], page.slug) : url;
+// See ADR-0063: a menu entry pointing at a page that does not exist in
+// this locale stays visible and stops being a link, rather than linking
+// to whatever is in the url field.
+const href = resolveLinkHref({ linkType, page, url });
 ---
 
 <a
-  href={href}
+  href={href ?? undefined}
   class:list={[
     'brisk-nav-link',
     { 'brisk-nav-link--right': position === 'right' },

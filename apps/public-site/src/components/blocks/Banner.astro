@@ -1,6 +1,6 @@
 ---
 import type { BannerProps } from '@brisk/shared-types';
-import { localePathFromAncestors } from '@brisk/theme-runtime';
+import { resolveLinkHref } from '@brisk/theme-runtime';
 
 type Props = BannerProps & {
   /** The per-instance style class, from BlockRenderer — see blockInstanceClassName. */
@@ -19,9 +19,12 @@ const {
   instanceClass,
   variantClass,
 } = Astro.props;
-const href =
-  linkType === 'page' && page?.locale && page?.slug ? localePathFromAncestors(page.locale, page.ancestorSlugs ?? [], page.slug) : url;
-const hasLink = linkType === 'page' ? Boolean(page) : Boolean(url);
+// One answer for both questions: where this points, and whether there
+// is a button at all. They used to be two expressions that could
+// disagree — `hasLink` was true for a picked page with no address in
+// this locale, and `href` then fell back to the url field (ADR-0063).
+const href = resolveLinkHref({ linkType, page, url });
+const hasLink = href !== null;
 ---
 
 {/* The words and the button are wrapped separately so that `split` has

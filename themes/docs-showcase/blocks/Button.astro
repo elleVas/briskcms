@@ -9,7 +9,7 @@
 // 2026-08-30) — content stays theme-agnostic, the theme still gets the
 // final say on presentation.
 import type { ButtonProps } from '@brisk/shared-types';
-import { localePath } from '@brisk/theme-runtime';
+import { resolveLinkHref } from '@brisk/theme-runtime';
 
 // `instanceClass` and not `styleOverride` since ADR-0047: the per-instance
 // override is a generated CSS rule now, not an inline attribute, because an
@@ -23,15 +23,18 @@ type Props = ButtonProps & {
 
 const { label, linkType, page, url, instanceClass, variantClass } =
   Astro.props;
-const href =
-  linkType === 'page' && page?.locale && page?.slug
-    ? localePath(page.locale, page.slug)
-    : url;
+// The same function core's Button uses (ADR-0063), and the reason a
+// theme gets one at all: this copy resolved a page with `localePath`,
+// which knows nothing about ancestors — so a Button pointing at a
+// nested page linked to `/en/prezzi` instead of `/en/docs/prezzi` and
+// 404'd, the bug PR #137 fixed everywhere except in here. It also fell
+// back to the url field whenever the page did not resolve.
+const href = resolveLinkHref({ linkType, page, url });
 ---
 
 <a
   class:list={['brisk-button', variantClass, instanceClass]}
-  href={href}
+  href={href ?? undefined}
   data-brisk-field="label"
 >
   {label}

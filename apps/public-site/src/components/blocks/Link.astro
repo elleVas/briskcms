@@ -1,6 +1,6 @@
 ---
 import type { LinkProps } from '@brisk/shared-types';
-import { localePathFromAncestors } from '@brisk/theme-runtime';
+import { resolveLinkHref } from '@brisk/theme-runtime';
 
 type Props = LinkProps & {
 	/** The per-instance style class, from BlockRenderer — see blockInstanceClassName. */
@@ -8,13 +8,14 @@ type Props = LinkProps & {
 };
 
 const { label, linkType, page, url, instanceClass } = Astro.props;
-const href =
-	linkType === 'page' && page?.locale && page?.slug ? localePathFromAncestors(page.locale, page.ancestorSlugs ?? [], page.slug) : url;
+// `null` = nothing to link to, and then no href at all rather than an
+// empty one, which would reload the current page (ADR-0063).
+const href = resolveLinkHref({ linkType, page, url });
 ---
 
 <a
 	class:list={['brisk-link', instanceClass]}
-	href={href}
+	href={href ?? undefined}
 	data-brisk-field="label"
 >{label}</a>
 

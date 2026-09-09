@@ -1,6 +1,6 @@
 ---
 import type { ButtonProps } from '@brisk/shared-types';
-import { localePathFromAncestors } from '@brisk/theme-runtime';
+import { resolveLinkHref } from '@brisk/theme-runtime';
 
 type Props = ButtonProps & {
   /** Resolved by BlockRenderer from the `icon` prop (docs/adr/0023). */
@@ -21,8 +21,11 @@ const {
   instanceClass,
   variantClass,
 } = Astro.props;
-const href =
-  linkType === 'page' && page?.locale && page?.slug ? localePathFromAncestors(page.locale, page.ancestorSlugs ?? [], page.slug) : url;
+// `null` when the block points nowhere — an author who chose "Site
+// page" and picked none, or a page with no translation in this locale.
+// The attribute is then left off entirely rather than set to the empty
+// string, which is a link back to the current page (ADR-0063).
+const href = resolveLinkHref({ linkType, page, url });
 
 // Neither class is built here: `variantClass` and `instanceClass` are
 // both computed in BlockRenderer.astro, from `Block.variant` and
@@ -43,7 +46,7 @@ const href =
     variantClass,
     instanceClass,
   ]}
-  href={href}
+  href={href ?? undefined}
   target={openInNewTab ? '_blank' : undefined}
   rel={openInNewTab ? 'noopener' : undefined}
 >

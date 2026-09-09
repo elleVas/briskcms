@@ -50,6 +50,19 @@ interface FieldCommon {
   showWhen?: FieldCondition;
   /** See `FieldGroup` — absent means `content`. */
   group?: FieldGroup;
+  /**
+   * Shows a required marker and an inline warning while the field is
+   * empty — a soft nudge, never a save/publish blocker.
+   *
+   * On every kind, not only the textual ones, since ADR-0063: the field
+   * that needed it was the page picker, a `custom` field. A block whose
+   * `linkType` says "Site page" and has no page picked is not a link at
+   * all, and before the panel said so the only symptom was a button that
+   * quietly did nothing. Meaningless on `boolean` (an unticked box is an
+   * answer) and on `radio`/`select` with a default, so it is simply not
+   * declared there.
+   */
+  required?: boolean;
 }
 
 /**
@@ -61,8 +74,6 @@ interface FieldCommon {
 interface TextualField extends FieldCommon {
   inlineEditable?: boolean;
   placeholder?: string;
-  /** Shows a required marker + inline warning when empty — a soft nudge, never blocks saving/publishing. */
-  required?: boolean;
   /** Name of a sibling boolean prop that, when true, waives `required` — e.g. an "isDecorative" flag legitimately making an empty value correct, not an oversight. */
   requiredUnless?: string;
   /**
@@ -191,8 +202,8 @@ export class FieldBuilder {
     key: string,
     label: string,
     control: CustomFieldControl,
-    /** Everything a custom field shares with the others — its group, and when it shows. */
-    options?: Pick<FieldCommon, 'showWhen' | 'group'>,
+    /** Everything a custom field shares with the others — its group, when it shows, whether it is required. */
+    options?: Pick<FieldCommon, 'showWhen' | 'group' | 'required'>,
   ): FieldDescriptor {
     return { kind: 'custom', key, label, control, ...options };
   }
