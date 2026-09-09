@@ -5,6 +5,7 @@ import { TooltipProvider } from '../components/ui/tooltip';
 import * as api from '../lib/taxonomies-api-client';
 import type { TaxonomyDto, TermDto } from '../lib/taxonomies-api-client';
 import { createTestQueryClient } from '../test-query-client';
+import { MediaPickerProvider } from './media-picker-provider';
 import { TermTreeEditor } from './term-tree-editor';
 
 vi.mock('../lib/taxonomies-api-client', async (importOriginal) => {
@@ -40,6 +41,7 @@ function term(overrides: Partial<TermDto> & { id: string }): TermDto {
     parentId: null,
     name: { it: overrides.id },
     description: {},
+    seoMeta: {},
     landingPageGroupId: null,
     order: 0,
     slugs: { it: overrides.id },
@@ -54,11 +56,16 @@ function renderEditor(terms: TermDto[]) {
   return render(
     <QueryClientProvider client={createTestQueryClient()}>
       <TooltipProvider>
-        <TermTreeEditor
-          taxonomy={taxonomy}
-          locales={['it', 'en']}
-          defaultLocale="it"
-        />
+        {/* The SEO dialog offers an OG image, so this screen mounts the
+            media picker — see TaxonomiesView. */}
+        <MediaPickerProvider siteId="site-1">
+          <TermTreeEditor
+            siteId="site-1"
+            taxonomy={taxonomy}
+            locales={['it', 'en']}
+            defaultLocale="it"
+          />
+        </MediaPickerProvider>
       </TooltipProvider>
     </QueryClientProvider>,
   );
@@ -66,6 +73,87 @@ function renderEditor(terms: TermDto[]) {
 
 describe('TermTreeEditor', () => {
   afterEach(() => vi.clearAllMocks());
+
+  /*
+   * Everything below was reachable only through the API until now
+   * (docs/adr/0067's SEO, docs/adr/0064's landing page): the screen let
+   * you name a term and give it an address, and then asked you to open a
+   * terminal for the rest.
+   */
+  it('saves a term description per language', async () => {
+    vi.mocked(api.updateTerm).mockResolvedValue(term({ id: 'macchine' }));
+    renderEditor([term({ id: 'macchine', name: { it: 'Macchine' } })]);
+
+    fireEvent.click(await screen.findByRole('button', { name: /Macchine/ }));
+    const descriptions = screen.getAllByPlaceholderText(
+      /Compare sopra|Shown above/,
+    );
+    fireEvent.blur(descriptions[0]!, {
+      target: { value: 'Le macchine da caffè' },
+    });
+
+    await waitFor(() =>
+      expect(api.updateTerm).toHaveBeenCalledWith('macchine', {
+        description: { it: 'Le macchine da caffè' },
+      }),
+    );
+  });
+
+  it('saves the SEO of one language without touching the others', async () => {
+    vi.mocked(api.updateTerm).mockResolvedValue(term({ id: 'macchine' }));
+    renderEditor([
+      term({
+        id: 'macchine',
+        name: { it: 'Macchine' },
+        seoMeta: { en: { title: 'Machines', description: 'kept' } },
+      }),
+    ]);
+
+    fireEvent.click(await screen.findByRole('button', { name: /Macchine/ }));
+    fireEvent.click(screen.getAllByRole('button', { name: 'SEO' })[0]!);
+
+    const title = await screen.findByLabelText(/Titolo|Title/);
+    fireEvent.change(title, { target: { value: 'Macchine da caffè' } });
+    fireEvent.click(screen.getByRole('button', { name: /Salva|Save/ }));
+
+    await waitFor(() =>
+      expect(api.updateTerm).toHaveBeenCalledWith('macchine', {
+        seoMeta: {
+          en: { title: 'Machines', description: 'kept' },
+          it: { title: 'Macchine da caffè', description: '' },
+        },
+      }),
+    );
+  });
+
+  /*
+   * The term's URL answers either way — with no page it serves the
+   * default layout — so detaching one has to be as reachable as choosing
+   * it, and must send null rather than omitting the field.
+   */
+  it('lets a term go back to the default layout', async () => {
+    vi.mocked(api.updateTerm).mockResolvedValue(term({ id: 'macchine' }));
+    renderEditor([
+      term({
+        id: 'macchine',
+        name: { it: 'Macchine' },
+        landingPageGroupId: 'page-9',
+      }),
+    ]);
+
+    fireEvent.click(await screen.findByRole('button', { name: /Macchine/ }));
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: /disposizione predefinita|default layout/i,
+      }),
+    );
+
+    await waitFor(() =>
+      expect(api.updateTerm).toHaveBeenCalledWith('macchine', {
+        landingPageGroupId: null,
+      }),
+    );
+  });
 
   /*
    * The slug is next to the name and not behind an "advanced" toggle: it

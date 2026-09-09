@@ -9,14 +9,19 @@ import {
   updateTerm,
   type TaxonomyDto,
   type TermDto,
+  type UpdateTermInput,
 } from '../lib/taxonomies-api-client';
 import { termsQueryOptions } from './taxonomies-queries';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
+import { Textarea } from '../components/ui/textarea';
 import { IconButton } from './icon-button';
+import { SeoMetaDialog } from './seo-meta-dialog';
+import { TermLandingPageField } from './term-landing-page-field';
 import { firstNamed } from './taxonomies-view';
 
 export interface TermTreeEditorProps {
+  siteId: string;
   taxonomy: TaxonomyDto;
   locales: string[];
   defaultLocale: string;
@@ -47,6 +52,7 @@ function inTreeOrder(
  * `categoria-2`.
  */
 export function TermTreeEditor({
+  siteId,
   taxonomy,
   locales,
   defaultLocale,
@@ -58,6 +64,12 @@ export function TermTreeEditor({
   const [name, setName] = useState('');
   const [parentId, setParentId] = useState('');
   const [openTermId, setOpenTermId] = useState<string | null>(null);
+  // Which (term, locale) has its SEO dialog open — one dialog's worth of
+  // state for the whole tree, not one per row.
+  const [seoFor, setSeoFor] = useState<{
+    term: TermDto;
+    locale: string;
+  } | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const invalidate = () =>
@@ -86,11 +98,8 @@ export function TermTreeEditor({
   });
 
   const updateMutation = useMutation({
-    mutationFn: (input: {
-      id: string;
-      name?: Record<string, string>;
-      slugs?: Record<string, string>;
-    }) => updateTerm(input.id, { name: input.name, slugs: input.slugs }),
+    mutationFn: ({ id, ...changes }: { id: string } & UpdateTermInput) =>
+      updateTerm(id, changes),
     onSuccess: () => {
       setError(null);
       invalidate();
@@ -206,8 +215,46 @@ export function TermTreeEditor({
                           }}
                         />
                       </label>
+                      <label className="flex min-w-40 flex-1 flex-col gap-1">
+                        <span className="text-xs text-muted-foreground">
+                          {t('taxonomies.termDescription')}
+                        </span>
+                        <Textarea
+                          rows={2}
+                          defaultValue={term.description[locale] ?? ''}
+                          placeholder={t('taxonomies.termDescriptionHint')}
+                          onBlur={(event) =>
+                            updateMutation.mutate({
+                              id: term.id,
+                              description: {
+                                ...term.description,
+                                [locale]: event.target.value,
+                              },
+                            })
+                          }
+                        />
+                      </label>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setSeoFor({ term, locale })}
+                      >
+                        {t('taxonomies.termSeo')}
+                      </Button>
                     </div>
                   ))}
+                  <TermLandingPageField
+                    siteId={siteId}
+                    locale={defaultLocale}
+                    landingPageGroupId={term.landingPageGroupId}
+                    onChange={(landingPageGroupId) =>
+                      updateMutation.mutate({
+                        id: term.id,
+                        landingPageGroupId,
+                      })
+                    }
+                  />
                   {taxonomy.hierarchical && (
                     <label className="flex max-w-sm flex-col gap-1">
                       <span className="text-xs text-muted-foreground">
@@ -282,6 +329,28 @@ export function TermTreeEditor({
         </Button>
         {error && <p className="w-full text-sm text-destructive">{error}</p>}
       </form>
+      {seoFor && (
+        <SeoMetaDialog
+          heading={t('taxonomies.termSeoTitle', {
+            term: firstNamed(seoFor.term.name) || t('taxonomies.unnamed'),
+            locale: seoFor.locale.toUpperCase(),
+          })}
+          seoMeta={
+            seoFor.term.seoMeta[seoFor.locale] ?? { title: '', description: '' }
+          }
+          open
+          onOpenChange={(open) => {
+            if (!open) setSeoFor(null);
+          }}
+          isSaving={updateMutation.isPending}
+          onSave={async (next) => {
+            await updateMutation.mutateAsync({
+              id: seoFor.term.id,
+              seoMeta: { ...seoFor.term.seoMeta, [seoFor.locale]: next },
+            });
+          }}
+        />
+      )}
     </div>
   );
 }

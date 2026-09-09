@@ -38,6 +38,7 @@ const espresso: TermDto = {
   parentId: null,
   name: { it: 'Espresso' },
   description: {},
+  seoMeta: {},
   landingPageGroupId: null,
   order: 0,
   slugs: { it: 'espresso' },

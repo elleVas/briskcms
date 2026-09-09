@@ -1,4 +1,4 @@
-import type { LocalizedText } from '@brisk/shared-types';
+import type { LocalizedSeoMeta, LocalizedText } from '@brisk/shared-types';
 import { request } from './http-client';
 
 export interface TaxonomyDto {
@@ -22,6 +22,8 @@ export interface TermDto {
   parentId: string | null;
   name: LocalizedText;
   description: LocalizedText;
+  /** Per-locale SEO for the term's own route (docs/adr/0067). */
+  seoMeta: LocalizedSeoMeta;
   landingPageGroupId: string | null;
   order: number;
   /** locale -> the slug this term answers to in that language. */
@@ -99,8 +101,10 @@ export function createTerm(
 export interface UpdateTermInput {
   name?: LocalizedText;
   description?: LocalizedText;
+  seoMeta?: LocalizedSeoMeta;
   /** Replaces the whole map: a language left out loses its address. */
   slugs?: Record<string, string>;
+  /** `null` detaches the landing page; the term's URL keeps working on the default layout. */
   landingPageGroupId?: string | null;
 }
 

@@ -267,7 +267,17 @@
     "pageTitle": "Classificazione",
     "pageHint": "La stessa per tutte le lingue di questa pagina.",
     "pageEmpty": "Nessuna dimensione definita, per ora.",
-    "pageSaved": "Salvato"
+    "pageSaved": "Salvato",
+    "termDescription": "Descrizione",
+    "termDescriptionHint": "Compare sopra l'elenco delle pagine classificate con questo termine",
+    "termSeo": "SEO",
+    "termSeoTitle": "SEO di «{{term}}» ({{locale}})",
+    "landingPage": "Pagina di destinazione",
+    "landingPageDefault": "Disposizione predefinita",
+    "landingPageChosen": "Una pagina è impostata",
+    "landingPageChoose": "Scegli una pagina",
+    "landingPageChange": "Cambia",
+    "landingPageClear": "Torna alla disposizione predefinita"
   },
   "sections": {
     "title": "Sezioni",
