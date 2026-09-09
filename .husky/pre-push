@@ -1,4 +1,7 @@
 set -e
 
+# First because it is the fastest, and because what it catches makes the
+# two below fail in a way that points nowhere near the cause.
+node tools/check-tsconfig-conventions.mjs
 pnpm exec nx run-many -t lint
 pnpm exec nx run-many -t test --coverage --parallel=1

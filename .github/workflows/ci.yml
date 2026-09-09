@@ -129,6 +129,11 @@ jobs:
           cache: 'pnpm'
       - run: pnpm install --frozen-lockfile
       - run: pnpm exec nx format:check --base=origin/main
+      # Cheap, and it turns a confusing failure into a named one: a
+      # generated tsconfig that restates the module resolution makes
+      # every extensionless relative import stop resolving, and the
+      # error tsc prints for that does not mention tsconfig at all.
+      - run: pnpm run check:tsconfig
       - run: pnpm exec nx run-many -t lint --parallel=1
 
   build:
