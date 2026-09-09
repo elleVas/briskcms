@@ -1,4 +1,4 @@
-import { and, eq, isNull } from 'drizzle-orm';
+import { and, eq, isNull, sql } from 'drizzle-orm';
 import {
   PageSlugAlreadyExistsError,
   PageTranslation,
@@ -39,6 +39,7 @@ function toRow(props: PageTranslationProps, parentGroupId: string | null) {
     parentGroupId,
     locale: props.locale,
     slug: props.slug,
+    formerSlugs: props.formerSlugs,
     seoMeta: props.seoMeta,
     fieldValues: props.fieldValues,
     status: props.status,
@@ -59,6 +60,7 @@ function fromRow(row: typeof pageTranslations.$inferSelect): PageTranslation {
     pageGroupId: row.pageGroupId,
     locale: row.locale,
     slug: row.slug,
+    formerSlugs: row.formerSlugs,
     seoMeta: row.seoMeta,
     fieldValues: row.fieldValues,
     status: row.status,
@@ -235,6 +237,45 @@ export class DrizzlePageTranslationRepository implements PageTranslationReposito
               ? isNull(pageTranslations.parentGroupId)
               : eq(pageTranslations.parentGroupId, parentGroupId),
             eq(pageTranslations.slug, slug),
+          ),
+        )
+        .limit(1),
+    );
+    return rows[0] ? fromRow(rows[0]) : null;
+  }
+
+  /**
+   * The translation that USED to answer at this address, if one did.
+   *
+   * Asked only after `findByParentGroupAndLocaleSlug` came back empty, so
+   * the cost lands on a request that was going to be a 404 either way —
+   * and a crawler following a link somebody saved two years ago is
+   * exactly the visitor this is for.
+   *
+   * Scoped by parent like the current-slug lookup: a page renamed from
+   * `contatti` under one section must not answer for a `contatti` that
+   * never existed under another.
+   */
+  async findByFormerSlug(
+    tenantId: string,
+    siteId: string,
+    locale: string,
+    parentGroupId: string | null,
+    slug: string,
+  ): Promise<PageTranslation | null> {
+    const rows = await withTenant(this.db, tenantId, (tx) =>
+      tx
+        .select()
+        .from(pageTranslations)
+        .where(
+          and(
+            eq(pageTranslations.tenantId, tenantId),
+            eq(pageTranslations.siteId, siteId),
+            eq(pageTranslations.locale, locale),
+            parentGroupId === null
+              ? isNull(pageTranslations.parentGroupId)
+              : eq(pageTranslations.parentGroupId, parentGroupId),
+            sql`${pageTranslations.formerSlugs} @> ARRAY[${slug}]::text[]`,
           ),
         )
         .limit(1),

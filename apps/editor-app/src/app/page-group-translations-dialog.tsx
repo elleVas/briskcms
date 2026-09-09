@@ -16,6 +16,8 @@ import { usePageGroupTranslations } from './use-page-group-translations';
 
 export interface PageGroupTranslationsDialogProps {
   groupId: string;
+  /** The uniqueness scope a new address is checked against — siblings, not the whole site. */
+  parentGroupId: string | null;
   translations: PageTranslationRecord[];
   enabledLocales: string[];
   activeLocale: string;
@@ -36,6 +38,7 @@ export interface PageGroupTranslationsDialogProps {
  */
 export function PageGroupTranslationsDialog({
   groupId,
+  parentGroupId,
   translations,
   enabledLocales,
   activeLocale,
@@ -44,7 +47,9 @@ export function PageGroupTranslationsDialog({
   onOpenChange,
 }: PageGroupTranslationsDialogProps) {
   const { t } = useTranslation();
-  const { createTranslation, isCreating } = usePageGroupTranslations(groupId);
+  const { createTranslation, isCreating, rename, isRenaming } =
+    usePageGroupTranslations(groupId);
+  const [renameError, setRenameError] = useState('');
 
   const missingLocales = enabledLocales.filter(
     (locale) =>
@@ -97,6 +102,11 @@ export function PageGroupTranslationsDialog({
         <DialogHeader>
           <DialogTitle>{t('pages.translations.title')}</DialogTitle>
         </DialogHeader>
+        {renameError && (
+          <p role="alert" className="text-sm text-destructive">
+            {renameError}
+          </p>
+        )}
         <ul className="flex flex-col gap-1">
           {translations.map((translation) => (
             <li
@@ -107,9 +117,35 @@ export function PageGroupTranslationsDialog({
                 <span className="font-medium uppercase">
                   {translation.locale}
                 </span>
-                <span className="text-muted-foreground">
-                  {translation.slug}
-                </span>
+                {/* Editable, because an address used to be decided once
+                    at creation and never again: a typo in the title a
+                    page was born from was its URL for good. The old
+                    address keeps answering with a 301 — see
+                    PageTranslation.updateSlug. */}
+                <Input
+                  className="h-7 w-40 text-sm"
+                  aria-label={t('pages.translations.slugForLocale', {
+                    locale: translation.locale.toUpperCase(),
+                  })}
+                  defaultValue={translation.slug}
+                  disabled={isRenaming}
+                  onBlur={(event) => {
+                    const next = slugify(event.target.value);
+                    if (!next || next === translation.slug) {
+                      event.target.value = translation.slug;
+                      return;
+                    }
+                    setRenameError('');
+                    rename({
+                      translationId: translation.id,
+                      slug: next,
+                      parentGroupId,
+                    }).catch((err: unknown) => {
+                      setRenameError(String(err));
+                      event.target.value = translation.slug;
+                    });
+                  }}
+                />
                 <Badge
                   variant={
                     translation.status === 'published' ? 'default' : 'outline'

@@ -226,7 +226,8 @@
       "conflict": "A translation in this language already exists for this page.",
       "drift": "Structure out of sync",
       "driftWarning": "The original (default locale) has different blocks than when this translation was last created or updated.",
-      "markSynced": "Mark as synced"
+      "markSynced": "Mark as synced",
+      "slugForLocale": "URL in {{locale}}"
     },
     "picker": {
       "title": "Choose a page",

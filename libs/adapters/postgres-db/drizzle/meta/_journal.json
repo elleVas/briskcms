@@ -92,6 +92,13 @@
       "when": 1788933388812,
       "tag": "0012_taxonomies",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1788988251277,
+      "tag": "0013_page_translation_former_slugs",
+      "breakpoints": true
     }
   ]
 }

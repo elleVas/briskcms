@@ -327,6 +327,27 @@ export class InMemoryPageTranslationRepository implements PageTranslationReposit
     );
   }
 
+  async findByFormerSlug(
+    tenantId: string,
+    siteId: string,
+    locale: string,
+    parentGroupId: string | null,
+    slug: string,
+  ): Promise<PageTranslation | null> {
+    for (const translation of this.translations.values()) {
+      if (
+        translation.tenantId === tenantId &&
+        translation.siteId === siteId &&
+        translation.locale === locale &&
+        translation.formerSlugs.includes(slug) &&
+        this.parentGroupIds.get(translation.id) === parentGroupId
+      ) {
+        return translation;
+      }
+    }
+    return null;
+  }
+
   async findByParentGroupAndLocaleSlug(
     tenantId: string,
     siteId: string,

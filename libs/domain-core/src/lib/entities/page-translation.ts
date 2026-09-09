@@ -15,6 +15,8 @@ export interface PageTranslationProps {
   locale: string;
   /** Resta per-locale: URL tradotti, a differenza della struttura ora condivisa su PageGroup. */
   slug: string;
+  /** Every address this translation answered to before its current one, oldest first — see `updateSlug`. */
+  formerSlugs: string[];
   seoMeta: SeoMeta;
   /** Override di SOLI campi `translatable`, chiavati per blocco — vedi mergeTranslatedContent. Ignorato quando `isDiverged` è true (una traduzione scollegata ha la propria struttura+testo interamente in `divergedContent`). */
   fieldValues: FieldValueOverlay;
@@ -62,6 +64,7 @@ export class PageTranslation {
       pageGroupId: input.pageGroupId,
       locale: input.locale,
       slug: input.slug,
+      formerSlugs: [],
       seoMeta: input.seoMeta,
       fieldValues: input.fieldValues ?? {},
       status: 'draft',
@@ -106,6 +109,10 @@ export class PageTranslation {
     return this.props.slug;
   }
 
+  get formerSlugs(): readonly string[] {
+    return this.props.formerSlugs;
+  }
+
   get seoMeta(): SeoMeta {
     return this.props.seoMeta;
   }
@@ -148,7 +155,28 @@ export class PageTranslation {
     this.props.updatedAt = now;
   }
 
+  /**
+   * Moves this translation to a new address, and remembers the one it
+   * left.
+   *
+   * The memory is the whole point. A page's URL used to be decided once
+   * and never again, so the only way to fix a wrong one was to delete
+   * the page — and renaming without keeping the old address would trade
+   * that for a quieter failure: every link anyone had saved, and the
+   * page's own ranking, gone with nothing to say so. What the former
+   * address buys is a 301 (`get-published-page-by-slug`), which is how a
+   * move is supposed to be announced.
+   *
+   * Renaming back to an address this page already had drops it from the
+   * history rather than leaving it in both places, so a slug is never
+   * both the current answer and a redirect to itself.
+   */
   updateSlug(slug: string, now: Date = new Date()): void {
+    if (slug === this.props.slug) return;
+    this.props.formerSlugs = [
+      ...this.props.formerSlugs.filter((former) => former !== slug),
+      this.props.slug,
+    ];
     this.props.slug = slug;
     this.props.updatedAt = now;
   }

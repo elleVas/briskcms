@@ -10,6 +10,7 @@ import type {
 } from '@brisk/ports';
 import { resolveSiteChrome } from './resolve-site-chrome';
 import { termPathFor } from './get-published-term-by-path.use-case';
+import { localePathFromAncestors } from '@brisk/theme-runtime';
 import { resolvePageGroupByPath } from './resolve-page-group-by-path';
 import { resolvePageContentReferences } from './resolve-page-content-references';
 import { resolveTranslationPaths } from './resolve-translation-paths';
@@ -98,6 +99,25 @@ export async function getPublishedPageBySlug(
   const { translation, ancestors } = resolved;
   if (translation.status !== 'published' || !translation.publishedSnapshot) {
     return NOTHING;
+  }
+
+  // The path asked for contains an address one of these pages has since
+  // left. Answering here would leave the same content readable at two
+  // addresses — the duplicate a rename is supposed to end, not create —
+  // so the visitor is sent to where the page lives now, permanently. It
+  // is checked before the term claim below only because it is cheaper;
+  // a page that has both moved and been claimed ends up at the term
+  // either way, in two hops.
+  if (resolved.moved) {
+    const [leaf, ...reversed] = [...resolved.currentPath].reverse();
+    return {
+      page: null,
+      redirectTo: localePathFromAncestors(
+        input.locale,
+        reversed.reverse(),
+        leaf ?? '',
+      ),
+    };
   }
 
   // Asked before anything is built: a page a term has claimed does not

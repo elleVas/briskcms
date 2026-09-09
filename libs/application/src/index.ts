@@ -3,6 +3,7 @@ export * from './lib/use-cases/create-page-group-translation.use-case';
 export * from './lib/use-cases/save-page-group-content.use-case';
 export * from './lib/use-cases/save-page-translation-field-values.use-case';
 export * from './lib/use-cases/update-page-translation-seo-meta.use-case';
+export * from './lib/use-cases/rename-page-translation.use-case';
 export * from './lib/use-cases/publish-page-translation.use-case';
 export * from './lib/use-cases/rollback-page-group-to-version.use-case';
 export * from './lib/use-cases/diverge-page-translation.use-case';

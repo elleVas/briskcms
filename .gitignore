@@ -77,3 +77,9 @@ apps/*/src/routeTree.gen.ts
 # security reviews and the feature plans live here rather than in docs/.
 planning/
 themes/*/.astro
+
+# Local database snapshots (tools/dump-database.sh). Never committed: a
+# dump carries password hashes, sessions and form submissions people sent
+# in confidence. Copy them off this machine if they are meant to survive
+# it — gitignored is not backed up.
+_data/

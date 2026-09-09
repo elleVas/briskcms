@@ -102,6 +102,10 @@ export async function duplicatePageGroup(
       siteId: group.siteId,
       pageGroupId: group.id,
       locale: sourceTranslation.locale,
+      // A copy has never had another address, whatever the original's
+      // history: inheriting it would make the copy answer, and 301, at
+      // addresses that belong to the page it was copied from.
+      formerSlugs: [],
       slug,
       seoMeta: sourceTranslation.seoMeta,
       fieldValues: sourceTranslation.fieldValues,

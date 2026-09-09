@@ -87,6 +87,7 @@ describe('PageGroupsController (unit)', () => {
       listByGroup: jest.fn(),
       listPublishedBySite: jest.fn().mockResolvedValue([]),
       findByParentGroupAndLocaleSlug: jest.fn(),
+      findByFormerSlug: jest.fn(),
       delete: jest.fn(),
     };
     pageTranslationVersionRepository = {

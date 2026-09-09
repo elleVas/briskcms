@@ -199,6 +199,22 @@ export function updatePageTranslationSeoMeta(
   });
 }
 
+/**
+ * Moves this language's page to a new address, leaving a 301 behind at
+ * the old one. Rejects with the API's message when a sibling already
+ * answers there.
+ */
+export function renamePageTranslation(
+  translationId: string,
+  slug: string,
+  parentGroupId: string | null,
+): Promise<PageTranslationRecord> {
+  return requestTranslation(`/page-groups/translations/${translationId}/slug`, {
+    method: 'PATCH',
+    body: JSON.stringify({ slug, parentGroupId }),
+  });
+}
+
 export function publishPageTranslation(
   translationId: string,
 ): Promise<PageTranslationRecord> {

@@ -31,6 +31,7 @@ import {
   savePageGroupContent,
   savePageTranslationFieldValues,
   setPageGroupTerms,
+  renamePageTranslation,
   updatePageTranslationSeoMeta,
 } from '@brisk/application';
 import type {
@@ -100,7 +101,9 @@ import {
   savePageGroupContentBodySchema,
   type SavePageTranslationFieldValuesBody,
   savePageTranslationFieldValuesBodySchema,
+  type RenamePageTranslationBody,
   type UpdatePageTranslationSeoMetaBody,
+  renamePageTranslationBodySchema,
   updatePageTranslationSeoMetaBodySchema,
 } from './page-groups.schemas';
 import { sanitizeFieldValueOverlay } from '../rich-text/sanitize-page-content';
@@ -440,6 +443,33 @@ export class PageGroupsController {
         tenantId: this.tenantContext.getCurrentTenantId(),
         pageTranslationId: translationId,
         seoMeta: body.seoMeta,
+        parentGroupId: body.parentGroupId,
+      },
+    );
+    return this.toTranslationDto(translation);
+  }
+
+  /**
+   * Moves this language's page to a new address.
+   *
+   * Not part of the SEO patch above even though both edit one
+   * translation: changing a meta description is a correction, changing an
+   * address is a move — it retires a URL, leaves a 301 behind it, and can
+   * be refused because a sibling already answers there. Folding it into
+   * `seo` would have made all of that invisible at the call site.
+   */
+  @Patch('translations/:translationId/slug')
+  async rename(
+    @Param('translationId') translationId: string,
+    @Body(new ZodValidationPipe(renamePageTranslationBodySchema))
+    body: RenamePageTranslationBody,
+  ) {
+    const translation = await renamePageTranslation(
+      { pageTranslationRepository: this.pageTranslationRepository },
+      {
+        tenantId: this.tenantContext.getCurrentTenantId(),
+        pageTranslationId: translationId,
+        slug: body.slug,
         parentGroupId: body.parentGroupId,
       },
     );
