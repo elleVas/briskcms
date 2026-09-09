@@ -37,8 +37,20 @@ explaining it.
 
 1. Clone this repository (or download a release) onto the server.
 2. `cp .env.prod.example .env`, fill in every `CHANGE ME` value — see that
-   file's own comments. Generate `PREVIEW_TOKEN_SECRET` with
-   `openssl rand -hex 32`.
+   file's own comments. Generate `PREVIEW_TOKEN_SECRET` and
+   `PUBLIC_API_SERVICE_TOKEN` with `openssl rand -hex 32`.
+
+   `PUBLIC_API_SERVICE_TOKEN` is the one worth understanding rather than
+   pasting. The public site renders pages on the server, so every
+   visitor's page view reaches the API from one address — the public
+   site's own. Without this value the API's rate limit therefore counts
+   your whole site as a single client, and roughly two page views per
+   second is enough to make it answer 500 to everybody at once. With it,
+   the public site says whose page view each request is and the API
+   counts that person. It is a shared secret because the API also answers
+   on `api.` — a visitor address anyone could claim is a rate limit
+   anyone could escape.
+
 3. Build and start the database + migration step first:
    ```sh
    docker compose -f docker-compose.prod.yml up -d postgres

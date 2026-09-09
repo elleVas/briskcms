@@ -11,7 +11,7 @@ import {
   DEPLOYMENT_TENANT_RESOLVER,
   DeploymentTenantResolver,
 } from '../deployment-tenant.resolver';
-import { ThrottlerGuard } from '@nestjs/throttler';
+import { PublicPagesThrottlerGuard } from './public-pages-throttler.guard';
 import {
   getPreviewPageById,
   getPreviewReusableSectionById,
@@ -69,7 +69,7 @@ import {
 // read path apps/public-site's SSR calls. Deliberately read-only: there is
 // no create/update/delete route here, not just "none exposed in the UI".
 @Controller('public/pages')
-@UseGuards(ThrottlerGuard)
+@UseGuards(PublicPagesThrottlerGuard)
 export class PublicPagesController {
   constructor(
     @Inject(PAGE_GROUP_REPOSITORY)
