@@ -23,6 +23,8 @@ import type {
   FieldValueOverlay,
   FormField,
   FormStep,
+  LocalizedSeoMeta,
+  LocalizedText,
   OpeningHoursDay,
   PageContent,
   SeoMeta,
@@ -725,5 +727,217 @@ export const formSubmissions = pgTable(
   },
   (table) => [
     index('form_submissions_tenant_site_idx').on(table.tenantId, table.siteId),
+  ],
+);
+
+/**
+ * One dimension a site classifies things along (ADR-0064) — "Category",
+ * "Family", "Tag". Agnostic about what carries the terms: pages do today
+ * through `pageGroupTerms`, products will do it later through a table of
+ * their own, on these same taxonomies and terms.
+ */
+export const taxonomies = pgTable(
+  'taxonomies',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    tenantId: uuid('tenant_id')
+      .notNull()
+      .references(() => tenants.id, { onDelete: 'cascade' }),
+    siteId: uuid('site_id')
+      .notNull()
+      .references(() => sites.id, { onDelete: 'cascade' }),
+    // Nullable, and that is the feature: `null` mounts this dimension's
+    // terms at the site root (`/it/espresso`) instead of behind a prefix
+    // (`/it/categoria/espresso`). Several dimensions may be mounted at
+    // the root at once — the unique below leaves NULLs distinct on
+    // purpose — and what keeps two of them from claiming the same
+    // address is the term-slug constraint, which is keyed on the prefix
+    // rather than on the taxonomy.
+    slug: text('slug'),
+    name: jsonb('name').notNull().default({}).$type<LocalizedText>(),
+    // Whether terms may nest. A flat dimension ("Tag") says false and the
+    // editor then offers no parent at all.
+    hierarchical: boolean('hierarchical').notNull().default(true),
+    order: integer('order').notNull().default(0),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    // Two dimensions cannot share a prefix, or their terms would answer
+    // at the same addresses. NULLs stay distinct here: "no prefix" is not
+    // a prefix two taxonomies are fighting over.
+    unique().on(table.tenantId, table.siteId, table.slug),
+    index('taxonomies_tenant_site_idx').on(table.tenantId, table.siteId),
+  ],
+);
+
+/**
+ * One value inside a dimension — "Espresso machines" inside "Category".
+ *
+ * Name, description and SEO are locale-keyed JSONB rather than a
+ * translation table: a term has no draft, no published snapshot, no
+ * structure and no history, so a second table would carry machinery that
+ * never turns. The slugs are the exception, and they live in
+ * `termSlugs` below for a database reason — see there.
+ */
+export const terms = pgTable(
+  'terms',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    tenantId: uuid('tenant_id')
+      .notNull()
+      .references(() => tenants.id, { onDelete: 'cascade' }),
+    siteId: uuid('site_id')
+      .notNull()
+      .references(() => sites.id, { onDelete: 'cascade' }),
+    taxonomyId: uuid('taxonomy_id')
+      .notNull()
+      .references(() => taxonomies.id, { onDelete: 'cascade' }),
+    // `set null` and not `cascade`: deleting "Machines" must not silently
+    // take "Espresso machines" with it, along with every page filed under
+    // it. The child is promoted to the top of its dimension instead, and
+    // stays reachable.
+    parentId: uuid('parent_id').references((): AnyPgColumn => terms.id, {
+      onDelete: 'set null',
+    }),
+    name: jsonb('name').notNull().default({}).$type<LocalizedText>(),
+    // The introduction the default term layout prints above the list —
+    // a different thing from the meta description inside `seoMeta`.
+    description: jsonb('description')
+      .notNull()
+      .default({})
+      .$type<LocalizedText>(),
+    seoMeta: jsonb('seo_meta').notNull().default({}).$type<LocalizedSeoMeta>(),
+    // A page built by hand, rendered ON this term's own URL rather than
+    // redirected to (ADR-0064). `set null` is what makes that promise
+    // hold: delete the page and the address keeps working, falling back
+    // to the default layout.
+    landingPageGroupId: uuid('landing_page_group_id').references(
+      () => pageGroups.id,
+      { onDelete: 'set null' },
+    ),
+    order: integer('order').notNull().default(0),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    index('terms_tenant_site_idx').on(table.tenantId, table.siteId),
+    // Every listing is "this dimension's children of that parent, in
+    // order" — the editor's tree and the public breadcrumb both.
+    index('terms_taxonomy_parent_order_idx').on(
+      table.taxonomyId,
+      table.parentId,
+      table.order,
+    ),
+    // One page cannot be the landing of two terms: both would render the
+    // same content at two addresses, which is the duplicate ADR-0064
+    // renders in place to avoid.
+    uniqueIndex('terms_landing_page_group_unique')
+      .on(table.landingPageGroupId)
+      .where(sql`${table.landingPageGroupId} is not null`),
+  ],
+);
+
+/**
+ * A term's address, one row per language.
+ *
+ * Split out of `terms` for a database reason and not a modelling one: a
+ * slug is what a URL is built from, and Postgres cannot enforce "unique
+ * per locale" over a JSON map whose keys are whatever languages the site
+ * happens to have. Names can afford to collide; addresses cannot
+ * (ADR-0064).
+ */
+export const termSlugs = pgTable(
+  'term_slugs',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    tenantId: uuid('tenant_id')
+      .notNull()
+      .references(() => tenants.id, { onDelete: 'cascade' }),
+    siteId: uuid('site_id')
+      .notNull()
+      .references(() => sites.id, { onDelete: 'cascade' }),
+    termId: uuid('term_id')
+      .notNull()
+      .references(() => terms.id, { onDelete: 'cascade' }),
+    locale: text('locale').notNull(),
+    slug: text('slug').notNull(),
+    // Denormalized from `taxonomies.slug`, rewritten for every one of a
+    // dimension's terms when that prefix changes — the same price
+    // `pageTranslations.parentGroupId` pays, and for the same reason: a
+    // unique constraint cannot reach through a join in Postgres, and the
+    // guarantee it buys is that no two terms answer at one address.
+    routePrefix: text('route_prefix'),
+  },
+  (table) => [
+    unique().on(table.tenantId, table.termId, table.locale),
+    // The address itself, and the constraint this table exists for.
+    //
+    // Keyed on the PREFIX rather than on the taxonomy, so that two
+    // dimensions both mounted at the root cannot each claim `/it/caffe`.
+    // `nulls not distinct` is what makes the rootly-mounted case work at
+    // all: Postgres treats NULLs as different by default, so a plain
+    // unique would have let every root-mounted duplicate through — the
+    // gap `page_translations` had to close with a second partial index
+    // back when the codebase targeted an older Postgres.
+    //
+    // The whole path and not just the sibling scope: a term's URL is
+    // `/{locale}/{prefix}/{slug}`, flat, so a slug that repeats under a
+    // different parent would still be a second name for one address.
+    // Deliberately the stricter of the two rules the plan allowed —
+    // relaxing a constraint later is always possible, tightening one
+    // over data that already violates it is not.
+    unique('term_slugs_route_unique')
+      .on(
+        table.tenantId,
+        table.siteId,
+        table.locale,
+        table.routePrefix,
+        table.slug,
+      )
+      .nullsNotDistinct(),
+    index('term_slugs_lookup_idx').on(
+      table.tenantId,
+      table.siteId,
+      table.locale,
+      table.slug,
+    ),
+  ],
+);
+
+/**
+ * Which terms a page carries — on the GROUP and not on the translation,
+ * exactly as `parentId` is: the Italian and the English version of an
+ * article belong to the same categories (ADR-0064).
+ */
+export const pageGroupTerms = pgTable(
+  'page_group_terms',
+  {
+    tenantId: uuid('tenant_id')
+      .notNull()
+      .references(() => tenants.id, { onDelete: 'cascade' }),
+    pageGroupId: uuid('page_group_id')
+      .notNull()
+      .references(() => pageGroups.id, { onDelete: 'cascade' }),
+    termId: uuid('term_id')
+      .notNull()
+      .references(() => terms.id, { onDelete: 'cascade' }),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.pageGroupId, table.termId] }),
+    // "Everything filed under this term", which is what the term's own
+    // page is a list of.
+    index('page_group_terms_term_idx').on(table.termId),
   ],
 );
