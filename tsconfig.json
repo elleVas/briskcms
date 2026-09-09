@@ -113,6 +113,9 @@
     },
     {
       "path": "./libs/adapters/postgres-reusable-section-repository"
+    },
+    {
+      "path": "./libs/adapters/postgres-taxonomy-repository"
     }
   ],
   "compilerOptions": {}

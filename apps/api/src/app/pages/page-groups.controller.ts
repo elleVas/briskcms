@@ -20,6 +20,7 @@ import {
   getPageGroupById,
   getPageTranslationById,
   listPageGroups,
+  listPageGroupTerms,
   listPageGroupTranslations,
   listPageGroupVersions,
   listPageTranslationVersions,
@@ -29,6 +30,7 @@ import {
   saveDivergedPageTranslationContent,
   savePageGroupContent,
   savePageTranslationFieldValues,
+  setPageGroupTerms,
   updatePageTranslationSeoMeta,
 } from '@brisk/application';
 import type {
@@ -45,6 +47,8 @@ import type {
   PreviewTokenPort,
   ReusableSectionRepositoryPort,
   SearchPort,
+  SiteRepositoryPort,
+  TaxonomyRepositoryPort,
   TenantContextPort,
 } from '@brisk/ports';
 import {
@@ -60,6 +64,10 @@ import { Roles } from '../auth/roles.decorator';
 import { RolesGuard } from '../auth/roles.guard';
 import { SessionAuthGuard } from '../auth/session-auth.guard';
 import { ZodValidationPipe } from '../zod-validation.pipe';
+import {
+  pageGroupTermsBodySchema,
+  type PageGroupTermsBody,
+} from '../taxonomies/taxonomies.schemas';
 import { TENANT_CONTEXT } from '../auth/auth.tokens';
 import { PREVIEW_TOKEN_TTL_MS } from '../preview-token-ttl.constant';
 import {
@@ -72,6 +80,8 @@ import {
   PREVIEW_TOKEN_PORT,
   REUSABLE_SECTION_REPOSITORY,
   SEARCH_REPOSITORY,
+  SITE_REPOSITORY,
+  TAXONOMY_REPOSITORY,
 } from './pages.tokens';
 import {
   type CreatePageGroupBody,
@@ -119,7 +129,20 @@ export class PageGroupsController {
     @Inject(SEARCH_REPOSITORY) private readonly searchPort: SearchPort,
     @Inject(REUSABLE_SECTION_REPOSITORY)
     private readonly reusableSectionRepository: ReusableSectionRepositoryPort,
+    @Inject(TAXONOMY_REPOSITORY)
+    private readonly taxonomyRepository: TaxonomyRepositoryPort,
+    @Inject(SITE_REPOSITORY)
+    private readonly siteRepository: SiteRepositoryPort,
   ) {}
+
+  /** What the taxonomy use cases need — the same three everywhere they are called. */
+  private get taxonomyDeps() {
+    return {
+      taxonomyRepository: this.taxonomyRepository,
+      pageTranslationRepository: this.pageTranslationRepository,
+      siteRepository: this.siteRepository,
+    };
+  }
 
   @Post()
   async create(
@@ -291,6 +314,7 @@ export class PageGroupsController {
       {
         pageGroupRepository: this.pageGroupRepository,
         pageTranslationRepository: this.pageTranslationRepository,
+        taxonomyRepository: this.taxonomyRepository,
       },
       {
         ...body,
@@ -300,6 +324,47 @@ export class PageGroupsController {
       },
     );
     return this.toTranslationDto(translation);
+  }
+
+  /**
+   * What this page is filed under, across every dimension at once
+   * (docs/adr/0064). On the GROUP and not the translation, exactly as
+   * the hierarchy is: the Italian and the English version of an article
+   * are the same article.
+   */
+  @Get(':id/terms')
+  async listTerms(@Param('id') id: string) {
+    await getPageGroupById(
+      { pageGroupRepository: this.pageGroupRepository },
+      { tenantId: this.tenantContext.getCurrentTenantId(), pageGroupId: id },
+    );
+    return {
+      termIds: await listPageGroupTerms(
+        this.taxonomyDeps,
+        this.tenantContext.getCurrentTenantId(),
+        id,
+      ),
+    };
+  }
+
+  /** The whole set, not a diff — the editor knows which boxes are ticked, not which changed. */
+  @Patch(':id/terms')
+  async setTerms(
+    @Param('id') id: string,
+    @Body(new ZodValidationPipe(pageGroupTermsBodySchema))
+    body: PageGroupTermsBody,
+  ) {
+    await getPageGroupById(
+      { pageGroupRepository: this.pageGroupRepository },
+      { tenantId: this.tenantContext.getCurrentTenantId(), pageGroupId: id },
+    );
+    return {
+      termIds: await setPageGroupTerms(this.taxonomyDeps, {
+        tenantId: this.tenantContext.getCurrentTenantId(),
+        pageGroupId: id,
+        termIds: body.termIds,
+      }),
+    };
   }
 
   @Patch('translations/:translationId/field-values')

@@ -4,6 +4,8 @@ export * from './lib/entities/page-translation';
 export * from './lib/entities/page-translation-version';
 export * from './lib/entities/site';
 export * from './lib/entities/reusable-section';
+export * from './lib/entities/taxonomy';
+export * from './lib/entities/term';
 export * from './lib/entities/reusable-section-version';
 export * from './lib/entities/site-layout-section';
 export * from './lib/entities/site-layout-section-version';

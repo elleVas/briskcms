@@ -17,6 +17,7 @@ import {
   PageGroupReorderMismatchError,
   PageGroupVersionNotFoundError,
   PageSlugAlreadyExistsError,
+  PageSlugCollidesWithTermError,
   PageTranslationDivergedError,
   PageTranslationLocaleAlreadyExistsError,
   PageTranslationNotDivergedError,
@@ -27,6 +28,13 @@ import {
   SiteLayoutSectionNotFoundError,
   SiteLayoutSectionVersionNotFoundError,
   SiteNotFoundError,
+  TaxonomyNotFoundError,
+  TaxonomyNotHierarchicalError,
+  TaxonomyPrefixAlreadyExistsError,
+  TermAddressCollidesWithPageError,
+  TermAddressTakenError,
+  TermCycleError,
+  TermNotFoundError,
   UnsupportedAttachmentTypeError,
   MediaTooLargeError,
   UnsupportedMediaTypeError,
@@ -92,6 +100,22 @@ const DOMAIN_ERROR_MAPPINGS: Array<[Type<Error>, DomainErrorFactory]> = [
   // status is what a client can act on without parsing the message.
   [MediaTooLargeError, (m) => new PayloadTooLargeException(m)],
   [InvalidThemeNameError, (m) => new BadRequestException(m)],
+  [TaxonomyNotFoundError, (m) => new NotFoundException(m)],
+  [TermNotFoundError, (m) => new NotFoundException(m)],
+  // 409 for all four address conflicts: the request is well formed and
+  // the caller can act on it — pick another name — which is exactly what
+  // a conflict means. The message names what is in the way, term or
+  // page, because "that address is taken" without saying by what sends
+  // somebody hunting through the wrong list (docs/adr/0064).
+  [TaxonomyPrefixAlreadyExistsError, (m) => new ConflictException(m)],
+  [TermAddressTakenError, (m) => new ConflictException(m)],
+  [TermAddressCollidesWithPageError, (m) => new ConflictException(m)],
+  [PageSlugCollidesWithTermError, (m) => new ConflictException(m)],
+  // 400, not 409: nothing is occupied, the shape of the request is
+  // simply impossible — a term cannot descend from itself, and a flat
+  // dimension has no parents to offer.
+  [TermCycleError, (m) => new BadRequestException(m)],
+  [TaxonomyNotHierarchicalError, (m) => new BadRequestException(m)],
 ];
 
 /** `null` when `error` is not one of the domain errors known here — the caller (HttpExceptionFilter) then treats it as a raw 500. */

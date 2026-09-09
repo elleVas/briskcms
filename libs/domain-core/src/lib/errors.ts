@@ -285,3 +285,79 @@ export class DeploymentAlreadySetUpError extends Error {
     this.name = 'DeploymentAlreadySetUpError';
   }
 }
+
+export class TaxonomyNotFoundError extends Error {
+  constructor(taxonomyId: string) {
+    super(`Taxonomy not found: ${taxonomyId}`);
+    this.name = 'TaxonomyNotFoundError';
+  }
+}
+
+export class TermNotFoundError extends Error {
+  constructor(termId: string) {
+    super(`Term not found: ${termId}`);
+    this.name = 'TermNotFoundError';
+  }
+}
+
+/** Two dimensions cannot share a URL prefix — their terms would answer at the same addresses (docs/adr/0064). */
+export class TaxonomyPrefixAlreadyExistsError extends Error {
+  constructor(prefix: string) {
+    super(`Another taxonomy already uses the prefix "${prefix}"`);
+    this.name = 'TaxonomyPrefixAlreadyExistsError';
+  }
+}
+
+/**
+ * Something already answers at the address this term is asking for —
+ * another term, or the term's own dimension mounted at the root next to
+ * one that is already there. The database refuses it too; this is the
+ * name the refusal travels under.
+ */
+export class TermAddressTakenError extends Error {
+  constructor(address: string) {
+    super(`Another term already answers at "${address}"`);
+    this.name = 'TermAddressTakenError';
+  }
+}
+
+/**
+ * A term's address would collide with a page's. Not expressible as a
+ * database constraint — terms and pages live in different tables and
+ * only meet in the URL — so it is checked where the write happens
+ * (docs/adr/0064).
+ */
+export class TermAddressCollidesWithPageError extends Error {
+  constructor(address: string) {
+    super(`A page already answers at "${address}"`);
+    this.name = 'TermAddressCollidesWithPageError';
+  }
+}
+
+/** A term cannot be moved under one of its own descendants, which would detach that branch from its dimension entirely. */
+export class TermCycleError extends Error {
+  constructor() {
+    super('A term cannot become its own descendant');
+    this.name = 'TermCycleError';
+  }
+}
+
+/** A flat dimension ("Tag") has no parents to move a term under — `hierarchical: false` is a promise the editor relies on. */
+export class TaxonomyNotHierarchicalError extends Error {
+  constructor(taxonomyId: string) {
+    super(`Taxonomy ${taxonomyId} does not allow nested terms`);
+    this.name = 'TaxonomyNotHierarchicalError';
+  }
+}
+
+/**
+ * The mirror of `TermAddressCollidesWithPageError`: a root page cannot
+ * be created on an address a dimension or one of its root-mounted terms
+ * already answers (docs/adr/0064).
+ */
+export class PageSlugCollidesWithTermError extends Error {
+  constructor(slug: string) {
+    super(`A taxonomy or term already answers at "${slug}"`);
+    this.name = 'PageSlugCollidesWithTermError';
+  }
+}

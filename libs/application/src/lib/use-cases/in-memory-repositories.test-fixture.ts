@@ -13,6 +13,8 @@ import type {
   SiteLayoutSection,
   SiteLayoutSectionKind,
   SiteLayoutSectionVersion,
+  Taxonomy,
+  Term,
   User,
 } from '@brisk/domain-core';
 import { sniffMediaType } from '@brisk/domain-core';
@@ -27,6 +29,7 @@ import type {
   PageGroupListFilters,
   PageGroupListItem,
   PageGroupRepositoryPort,
+  TaxonomyRepositoryPort,
   PageGroupSummary,
   PageGroupVersionRepositoryPort,
   PageSearchResult,
@@ -858,5 +861,137 @@ export class InMemoryPreviewTokenPort implements PreviewTokenPort {
       return null;
     }
     return found;
+  }
+}
+
+/**
+ * Terms, dimensions and their addresses, in memory (docs/adr/0064).
+ *
+ * The address index is kept as its own map rather than derived from the
+ * terms on every lookup, for the same reason the database keeps
+ * `route_prefix` on the slug row: an address is `(locale, prefix, slug)`,
+ * and the prefix belongs to the dimension, not to the term.
+ */
+export class InMemoryTaxonomyRepository implements TaxonomyRepositoryPort {
+  readonly taxonomies = new Map<string, Taxonomy>();
+  readonly terms = new Map<string, Term>();
+  /** termId -> the prefix its addresses were written under. */
+  private readonly prefixByTerm = new Map<string, string | null>();
+  private readonly pageGroupTerms = new Map<string, string[]>();
+
+  async saveTaxonomy(taxonomy: Taxonomy): Promise<void> {
+    this.taxonomies.set(taxonomy.id, taxonomy);
+  }
+
+  async findTaxonomyById(
+    tenantId: string,
+    id: string,
+  ): Promise<Taxonomy | null> {
+    const found = this.taxonomies.get(id);
+    return found && found.tenantId === tenantId ? found : null;
+  }
+
+  async listTaxonomiesBySite(
+    tenantId: string,
+    siteId: string,
+  ): Promise<Taxonomy[]> {
+    return [...this.taxonomies.values()].filter(
+      (taxonomy) =>
+        taxonomy.tenantId === tenantId && taxonomy.siteId === siteId,
+    );
+  }
+
+  async deleteTaxonomy(tenantId: string, id: string): Promise<void> {
+    this.taxonomies.delete(id);
+    for (const term of [...this.terms.values()]) {
+      if (term.taxonomyId === id) {
+        this.terms.delete(term.id);
+        this.prefixByTerm.delete(term.id);
+      }
+    }
+  }
+
+  async saveTerm(term: Term): Promise<void> {
+    this.terms.set(term.id, term);
+    this.prefixByTerm.set(
+      term.id,
+      this.taxonomies.get(term.taxonomyId)?.prefix ?? null,
+    );
+  }
+
+  async findTermById(tenantId: string, id: string): Promise<Term | null> {
+    const found = this.terms.get(id);
+    return found && found.tenantId === tenantId ? found : null;
+  }
+
+  async listTermsByTaxonomy(
+    tenantId: string,
+    taxonomyId: string,
+  ): Promise<Term[]> {
+    return [...this.terms.values()].filter(
+      (term) => term.tenantId === tenantId && term.taxonomyId === taxonomyId,
+    );
+  }
+
+  async listTermsBySite(tenantId: string, siteId: string): Promise<Term[]> {
+    return [...this.terms.values()].filter(
+      (term) => term.tenantId === tenantId && term.siteId === siteId,
+    );
+  }
+
+  async deleteTerm(tenantId: string, id: string): Promise<void> {
+    this.terms.delete(id);
+    this.prefixByTerm.delete(id);
+  }
+
+  async findTermByAddress(
+    tenantId: string,
+    siteId: string,
+    locale: string,
+    prefix: string | null,
+    slug: string,
+  ): Promise<Term | null> {
+    for (const term of this.terms.values()) {
+      if (term.tenantId !== tenantId || term.siteId !== siteId) continue;
+      if ((this.prefixByTerm.get(term.id) ?? null) !== prefix) continue;
+      if (term.slugFor(locale) === slug) return term;
+    }
+    return null;
+  }
+
+  async updateTermAddressPrefix(
+    tenantId: string,
+    taxonomyId: string,
+    prefix: string | null,
+  ): Promise<void> {
+    for (const term of this.terms.values()) {
+      if (term.tenantId === tenantId && term.taxonomyId === taxonomyId) {
+        this.prefixByTerm.set(term.id, prefix);
+      }
+    }
+  }
+
+  async listTermIdsForPageGroup(
+    tenantId: string,
+    pageGroupId: string,
+  ): Promise<string[]> {
+    return this.pageGroupTerms.get(pageGroupId) ?? [];
+  }
+
+  async setTermsForPageGroup(
+    tenantId: string,
+    pageGroupId: string,
+    termIds: string[],
+  ): Promise<void> {
+    this.pageGroupTerms.set(pageGroupId, [...termIds]);
+  }
+
+  async listPageGroupIdsForTerm(
+    tenantId: string,
+    termId: string,
+  ): Promise<string[]> {
+    return [...this.pageGroupTerms.entries()]
+      .filter(([, termIds]) => termIds.includes(termId))
+      .map(([pageGroupId]) => pageGroupId);
   }
 }

@@ -9,6 +9,7 @@ import {
   InMemoryPageTranslationRepository,
   InMemoryPageTranslationVersionRepository,
   InMemoryReusableSectionRepository,
+  InMemoryTaxonomyRepository,
 } from './in-memory-repositories.test-fixture';
 
 describe('resolvePageContentReferences', () => {
@@ -27,6 +28,7 @@ describe('resolvePageContentReferences', () => {
     return {
       pageGroupRepository,
       pageTranslationRepository,
+      taxonomyRepository: new InMemoryTaxonomyRepository(),
       reusableSectionRepository: new InMemoryReusableSectionRepository(),
     };
   }

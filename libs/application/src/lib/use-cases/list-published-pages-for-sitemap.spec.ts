@@ -13,6 +13,7 @@ import {
   InMemoryReusableSectionRepository,
   InMemorySearchPort,
   InMemorySiteRepository,
+  InMemoryTaxonomyRepository,
 } from './in-memory-repositories.test-fixture';
 
 describe('listPublishedPagesForSitemap', () => {
@@ -30,6 +31,7 @@ describe('listPublishedPagesForSitemap', () => {
       pageTranslationRepository: new InMemoryPageTranslationRepository(
         pageTranslationVersionRepository,
       ),
+      taxonomyRepository: new InMemoryTaxonomyRepository(),
       pageTranslationVersionRepository,
       siteRepository: new InMemorySiteRepository(),
       searchPort: new InMemorySearchPort(),

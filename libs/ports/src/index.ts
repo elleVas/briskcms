@@ -21,6 +21,7 @@ export * from './lib/reusable-section-version-repository.port';
 export * from './lib/site-layout-section-repository.port';
 export * from './lib/site-layout-section-version-repository.port';
 export * from './lib/site-repository.port';
+export * from './lib/taxonomy-repository.port';
 export * from './lib/site-theme-block-styles.port';
 export * from './lib/tenant-context.port';
 export * from './lib/theme-catalog.port';

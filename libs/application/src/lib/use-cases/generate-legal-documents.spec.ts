@@ -8,6 +8,7 @@ import {
   InMemoryPageTranslationRepository,
   InMemoryPageTranslationVersionRepository,
   InMemorySiteRepository,
+  InMemoryTaxonomyRepository,
 } from './in-memory-repositories.test-fixture';
 
 describe('generateLegalDocuments', () => {
@@ -29,6 +30,7 @@ describe('generateLegalDocuments', () => {
       pageGroupRepository,
       pageGroupVersionRepository,
       pageTranslationRepository,
+      taxonomyRepository: new InMemoryTaxonomyRepository(),
       pageTranslationVersionRepository,
       siteRepository,
     };

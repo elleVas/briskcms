@@ -17,6 +17,7 @@ import {
   InMemorySiteLayoutSectionRepository,
   InMemorySiteRepository,
   InMemorySiteThemeBlockStylesRepository,
+  InMemoryTaxonomyRepository,
 } from './in-memory-repositories.test-fixture';
 
 describe('getPreviewPageById', () => {
@@ -34,6 +35,7 @@ describe('getPreviewPageById', () => {
       pageTranslationRepository: new InMemoryPageTranslationRepository(
         pageTranslationVersionRepository,
       ),
+      taxonomyRepository: new InMemoryTaxonomyRepository(),
       pageTranslationVersionRepository,
       siteRepository: new InMemorySiteRepository(),
       siteLayoutSectionRepository: new InMemorySiteLayoutSectionRepository(),
