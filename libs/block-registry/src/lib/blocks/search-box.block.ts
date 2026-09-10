@@ -8,6 +8,7 @@ export const searchBoxBlock: BlockDescriptor<SearchBoxProps> = {
   type: 'SearchBox',
   label: 'blocks.searchBox.label',
   category: 'conversion',
+  icon: 'search',
   defaultProps: {
     placeholder: 'Cerca nel sito...',
     visibility: 'always',

@@ -1082,6 +1082,11 @@ export function CanvasEditorShell({
       )}
       <div style={{ flex: 1, minHeight: 0, display: 'flex' }}>
         <aside
+          // Named, so this landmark is addressable: a screen reader
+          // announces which of the two side panels it has entered, and
+          // "Testo" in the inserter stops being indistinguishable from
+          // "Testo" in the layers tree.
+          aria-label={t('canvas.insertBlock')}
           className={
             isSidebarCollapsed
               ? 'flex w-10 shrink-0 flex-col items-center border-r py-3'
@@ -1211,6 +1216,7 @@ export function CanvasEditorShell({
           )}
         </div>
         <aside
+          aria-label={t('canvas.layersTitle')}
           className={
             isLayersPanelCollapsed
               ? 'flex w-10 shrink-0 flex-col items-center border-l py-3'

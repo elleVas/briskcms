@@ -7,6 +7,7 @@ export const statsCounterBlock: BlockDescriptor<StatsCounterProps> = {
   type: 'StatsCounter',
   label: 'blocks.statsCounter.label',
   category: 'socialProof',
+  icon: 'chart-column',
   defaultProps: { display: 'grid' },
   fields: [
     {

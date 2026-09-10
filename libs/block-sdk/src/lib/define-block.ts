@@ -12,6 +12,8 @@ export interface DefineBlockConfig<Schema extends z.ZodType> {
   type: string;
   label: string;
   category: string;
+  /** See `BlockDescriptor.icon` — a lucide name, so a theme's block can declare one too. */
+  icon?: string;
   schema: Schema;
   defaultProps: z.infer<Schema>;
   fields: FieldDescriptor[];

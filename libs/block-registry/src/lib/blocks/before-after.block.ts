@@ -6,6 +6,7 @@ export const beforeAfterBlock: BlockDescriptor<BeforeAfterProps> = {
   type: 'BeforeAfter',
   label: 'blocks.beforeAfter.label',
   category: 'media',
+  icon: 'sliders-horizontal',
   defaultProps: {
     beforeImage: null,
     afterImage: null,

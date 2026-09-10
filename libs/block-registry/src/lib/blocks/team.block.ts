@@ -7,6 +7,7 @@ export const teamBlock: BlockDescriptor<TeamProps> = {
   type: 'Team',
   label: 'blocks.team.label',
   category: 'socialProof',
+  icon: 'users',
   defaultProps: { display: 'grid' },
   fields: [
     {

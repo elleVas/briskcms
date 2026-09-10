@@ -9,6 +9,7 @@ export const languageSwitcherBlock: BlockDescriptor<LanguageSwitcherProps> = {
   type: 'LanguageSwitcher',
   label: 'blocks.languageSwitcher.label',
   category: 'navigation',
+  icon: 'languages',
   defaultProps: { position: 'left', visibility: 'always' },
   fields: [positionField, visibilityField],
   stylableProperties: [...BlockStyleRegistry.STANDARD, 'gap'],

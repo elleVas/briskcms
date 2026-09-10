@@ -9,6 +9,7 @@ export const dividerBlock: BlockDescriptor<DividerProps> = {
   type: 'Divider',
   label: 'blocks.divider.label',
   category: 'layout',
+  icon: 'minus',
   defaultProps: {},
   fields: [],
   // No marginTop/marginBottom here: those two are instance-only and have

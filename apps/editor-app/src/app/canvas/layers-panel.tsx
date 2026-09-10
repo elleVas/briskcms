@@ -17,6 +17,9 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { ChevronDown, ChevronRight } from 'lucide-react';
+import { headerFooterBlocks, pageBlocks } from '@brisk/block-registry';
+import { BlockIcon } from './block-icons';
+
 import type { Block } from '@brisk/shared-types';
 import { useTranslation } from '../../lib/use-translation';
 import {
@@ -25,6 +28,19 @@ import {
   locateBlock,
   siblingsAt,
 } from './use-block-tree';
+
+/** One indent step, and the row height the elbow has to meet in the middle of. */
+const INDENT = 14;
+const ROW_HEIGHT = 22;
+
+/**
+ * A block's descriptor by type — for the icon and the name a person
+ * recognises. Built once: the registry is static, and this is read for
+ * every row of every tree.
+ */
+const DESCRIPTOR_BY_TYPE = new Map(
+  [...pageBlocks, ...headerFooterBlocks].map((block) => [block.type, block]),
+);
 
 export interface LayersPanelProps {
   blocks: Block[];
@@ -83,13 +99,27 @@ interface LayerRowProps {
   selectedBlockId: string | null;
   selectedBlockIds: string[];
   depth: number;
+  /** Whether this row is the last of its siblings — the line under it stops at its elbow. */
+  isLast?: boolean;
+  /**
+   * For each level above this row, whether the ancestor at that level was
+   * the last of its siblings.
+   *
+   * A tree guide is not just "a line per level": the line under the LAST
+   * child has to stop at its elbow, or the tree draws a branch continuing
+   * past the point where it ended. Only the row knows its own position;
+   * its ancestors' positions have to be handed down.
+   */
+  ancestorIsLast?: boolean[];
   onSelect: (blockId: string, additive: boolean) => void;
   collapsedIds: ReadonlySet<string>;
   onToggleCollapsed: (blockId: string) => void;
 }
 
 function rowClassName(isSelected: boolean, isHovered: boolean): string {
-  const base = 'w-full cursor-pointer text-left';
+  // `flex` and not the default block: the row is an icon beside a name,
+  // and a <button> lays its children out in a column otherwise.
+  const base = 'flex w-full cursor-pointer items-center gap-1.5 text-left';
   if (isSelected)
     return `${base} rounded bg-primary/10 px-2 py-1 text-sm font-medium`;
   if (isHovered) return `${base} rounded bg-muted px-2 py-1 text-sm`;
@@ -264,6 +294,8 @@ function LayerRow({
   selectedBlockId,
   selectedBlockIds,
   depth,
+  ancestorIsLast = [],
+  isLast = true,
   onSelect,
   collapsedIds,
   onToggleCollapsed,
@@ -279,11 +311,56 @@ function LayerRow({
   const blockId = block.id;
   const hasChildren = Boolean(block.children && block.children.length > 0);
   const isCollapsed = Boolean(blockId && collapsedIds.has(blockId));
-  const { t } = useTranslation();
+  const { t, tLabel } = useTranslation();
+
+  const descriptor = DESCRIPTOR_BY_TYPE.get(block.type);
 
   return (
-    <li>
-      <div className="flex items-center" style={{ paddingLeft: depth * 12 }}>
+    <li className="relative">
+      {/* One guide per level the row sits under, plus the elbow that joins
+          this row to its parent. Indentation alone stopped being readable
+          at the third level: `Columns > Column > Code` was three rows at
+          three margins, and which Column the Code belonged to was a
+          guess. The lines answer that without being read. */}
+      {Array.from({ length: depth }, (_, level) => {
+        const isOwnBranch = level === depth - 1;
+        // An ANCESTOR's line is suppressed once that ancestor was the
+        // last of its siblings — its branch has no more rows below, so a
+        // line there would be drawn past the end of it. This row's OWN
+        // branch is a different question, answered by `isLast` below:
+        // conflating the two erased almost every line in the tree.
+        if (!isOwnBranch && ancestorIsLast[level]) return null;
+        return (
+          <span
+            key={level}
+            aria-hidden
+            className="absolute w-px bg-border"
+            style={{
+              left: level * INDENT + INDENT / 2,
+              top: 0,
+              // Its own branch stops at the elbow when this is the last
+              // child; every level above runs the full height.
+              bottom: isOwnBranch && isLast ? undefined : 0,
+              height: isOwnBranch && isLast ? ROW_HEIGHT / 2 : undefined,
+            }}
+          />
+        );
+      })}
+      {depth > 0 && (
+        <span
+          aria-hidden
+          className="absolute h-px bg-border"
+          style={{
+            left: (depth - 1) * INDENT + INDENT / 2,
+            width: INDENT / 2,
+            top: ROW_HEIGHT / 2,
+          }}
+        />
+      )}
+      <div
+        className="flex items-center"
+        style={{ paddingLeft: depth * INDENT }}
+      >
         {hasChildren ? (
           <button
             type="button"
@@ -317,7 +394,18 @@ function LayerRow({
             }
           }}
         >
-          {block.type}
+          <BlockIcon
+            name={descriptor?.icon}
+            size={13}
+            className="shrink-0 text-muted-foreground"
+          />
+          {/* The name a person picked this block by, not its type: the
+              tree used to read `FeatureGrid` and `EmbedHtml`, which are
+              our words for it. Every block already had a translated
+              label — the panel simply was not asking for it. */}
+          <span className="truncate">
+            {descriptor ? tLabel(descriptor.label) : block.type}
+          </span>
         </button>
       </div>
       {hasChildren && !isCollapsed && (
@@ -330,6 +418,8 @@ function LayerRow({
                 selectedBlockId,
                 selectedBlockIds,
                 depth: depth + 1,
+                ancestorIsLast: [...ancestorIsLast, isLast],
+                isLast: index === (block.children?.length ?? 0) - 1,
                 onSelect,
                 collapsedIds,
                 onToggleCollapsed,
@@ -488,6 +578,7 @@ export function LayersPanel({
                 selectedBlockId,
                 selectedBlockIds,
                 depth: 0,
+                isLast: index === blocks.length - 1,
                 onSelect,
                 collapsedIds,
                 onToggleCollapsed: toggleCollapsed,

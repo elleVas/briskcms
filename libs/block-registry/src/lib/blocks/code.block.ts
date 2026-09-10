@@ -20,6 +20,7 @@ export const codeBlock: BlockDescriptor<CodeProps> = {
   type: 'Code',
   label: 'blocks.code.label',
   category: 'content',
+  icon: 'code',
   defaultProps: { code: '', language: 'typescript' },
   fields: [
     {

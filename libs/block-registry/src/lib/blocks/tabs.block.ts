@@ -7,6 +7,7 @@ export const tabsBlock: BlockDescriptor<TabsProps> = {
   type: 'Tabs',
   label: 'blocks.tabs.label',
   category: 'interactive',
+  icon: 'folder',
   defaultProps: {},
   fields: [],
   isContainer: true,

@@ -6,6 +6,7 @@ export const audioBlock: BlockDescriptor<AudioProps> = {
   type: 'Audio',
   label: 'blocks.audio.label',
   category: 'media',
+  icon: 'music',
   defaultProps: { media: null, title: '', loop: false },
   fields: [
     FieldBuilder.custom(

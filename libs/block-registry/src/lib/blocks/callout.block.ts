@@ -13,6 +13,7 @@ export const calloutBlock = defineBlock({
   type: 'Callout',
   label: 'blocks.callout.label',
   category: 'content',
+  icon: 'message-square-warning',
   schema: calloutPropsSchema,
   defaultProps: {
     message: 'Your message here',

@@ -6,6 +6,7 @@ export const containerBlock: BlockDescriptor<ContainerProps> = {
   type: 'Container',
   label: 'blocks.container.label',
   category: 'layout',
+  icon: 'square',
   defaultProps: { background: 'none', padding: 'md' },
   fields: [
     {

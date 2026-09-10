@@ -9,6 +9,7 @@ export const columnBlock: BlockDescriptor<ColumnProps> = {
   type: 'Column',
   label: 'blocks.column.label',
   category: 'layout',
+  icon: 'rectangle-vertical',
   defaultProps: {},
   fields: [
     {

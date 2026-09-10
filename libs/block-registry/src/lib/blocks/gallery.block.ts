@@ -8,6 +8,7 @@ export const galleryBlock: BlockDescriptor<GalleryProps> = {
   type: 'Gallery',
   label: 'blocks.gallery.label',
   category: 'content',
+  icon: 'images',
   defaultProps: {
     images: [],
     columns: 'auto',

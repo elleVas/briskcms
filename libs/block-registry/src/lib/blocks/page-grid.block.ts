@@ -16,6 +16,7 @@ export const pageGridBlock: BlockDescriptor<PageGridProps> = {
   type: 'PageGrid',
   label: 'blocks.pageGrid.label',
   category: 'content',
+  icon: 'layout-grid',
   defaultProps: {
     termId: null,
     layout: 'list',

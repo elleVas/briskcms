@@ -11,6 +11,7 @@ export const tabBlock: BlockDescriptor<{ label: string }> = {
   type: 'Tab',
   label: 'blocks.tab.label',
   category: 'interactive',
+  icon: 'file',
   defaultProps: { label: 'Tab' },
   fields: [
     {

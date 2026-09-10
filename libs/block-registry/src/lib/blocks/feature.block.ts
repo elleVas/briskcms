@@ -7,6 +7,7 @@ export const featureBlock: BlockDescriptor<FeatureProps> = {
   type: 'Feature',
   label: 'blocks.feature.label',
   category: 'interactive',
+  icon: 'badge-check',
   defaultProps: {
     icon: null,
     title: 'Titolo della feature',

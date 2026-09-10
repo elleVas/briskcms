@@ -8,6 +8,7 @@ export const bannerBlock: BlockDescriptor<BannerProps> = {
   type: 'Banner',
   label: 'blocks.banner.label',
   category: 'conversion',
+  icon: 'megaphone',
   defaultProps: {
     title: 'Titolo del banner',
     text: 'Testo del banner...',

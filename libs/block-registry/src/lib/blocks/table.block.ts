@@ -6,6 +6,7 @@ export const tableBlock: BlockDescriptor<TableProps> = {
   type: 'Table',
   label: 'blocks.table.label',
   category: 'content',
+  icon: 'table',
   defaultProps: {
     rows: [
       ['Colonna 1', 'Colonna 2'],

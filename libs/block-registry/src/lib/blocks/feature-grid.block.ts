@@ -7,6 +7,7 @@ export const featureGridBlock: BlockDescriptor<FeatureGridProps> = {
   type: 'FeatureGrid',
   label: 'blocks.featureGrid.label',
   category: 'interactive',
+  icon: 'grid-3x3',
   defaultProps: { display: 'grid' },
   fields: [
     {

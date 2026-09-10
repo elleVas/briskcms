@@ -6,6 +6,7 @@ export const logoStripBlock: BlockDescriptor<LogoStripProps> = {
   type: 'LogoStrip',
   label: 'blocks.logoStrip.label',
   category: 'media',
+  icon: 'building-2',
   defaultProps: {
     logos: [],
   },

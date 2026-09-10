@@ -7,6 +7,7 @@ export const backToTopBlock: BlockDescriptor<BackToTopProps> = {
   type: 'BackToTop',
   label: 'blocks.backToTop.label',
   category: 'chrome',
+  icon: 'arrow-up',
   defaultProps: { visibility: 'always' },
   fields: [visibilityField],
   stylableProperties: [

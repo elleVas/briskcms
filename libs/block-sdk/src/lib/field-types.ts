@@ -227,6 +227,21 @@ export interface BlockDescriptor<Props = Record<string, unknown>> {
   type: string;
   label: string;
   category: string;
+  /**
+   * The picture the editor shows for this type, as a lucide icon name in
+   * kebab-case (`layout-panel-top`, `quote`, `image`).
+   *
+   * A name and not a component, for the same reason `CustomFieldControl`
+   * is a name: a descriptor has to survive JSON so a THEME can declare a
+   * block too, and a React component does not. The editor keeps the map
+   * from name to component, which is where the React belongs.
+   *
+   * Optional so a block without one still registers — it falls back to a
+   * neutral placeholder rather than refusing to appear. A test keeps the
+   * core registry at 100%: an inserter of tiles where some tiles have no
+   * picture is worse than a list.
+   */
+  icon?: string;
   defaultProps: Props;
   fields: FieldDescriptor[];
   /** `Block.children` is real (no Puck-style "slot" mapper needed) — present only on blocks that can contain other blocks. */

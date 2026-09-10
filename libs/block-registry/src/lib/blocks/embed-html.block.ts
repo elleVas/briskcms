@@ -6,6 +6,7 @@ export const embedHtmlBlock: BlockDescriptor<EmbedHtmlProps> = {
   type: 'EmbedHtml',
   label: 'blocks.embedHtml.label',
   category: 'content',
+  icon: 'code-xml',
   defaultProps: {
     html: '',
   },
