@@ -352,6 +352,33 @@ body,
  * would silently lose the smaller of the two if this became block flow —
  * a spacing change nobody asked for, on saved content.
  */
+/*
+ * A block that rendered to nothing, in the editor only.
+ *
+ * `data-brisk-empty` is set by the preview bridge (markEmptyBlocks), and
+ * the bridge runs on the canvas and nowhere else — a visitor never sees
+ * this, which is the point: an Icon with no icon should print nothing on
+ * a real page, and should be a thing you can click on the one where you
+ * are choosing the icon.
+ *
+ * The name comes from the attribute the wrapper already carries, so this
+ * needs no list of types to stay in step with.
+ */
+[data-brisk-empty] {
+  min-height: 2.5rem;
+  border: 1px dashed var(--border);
+  border-radius: 0.375rem;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted-foreground);
+  font-size: 0.8125rem;
+}
+
+[data-brisk-empty]::after {
+  content: attr(data-brisk-block-type);
+}
+
 @layer brisk.base {
   /*
    * The rhythm between root blocks, and the reason it is a rule rather

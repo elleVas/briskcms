@@ -58,6 +58,43 @@ export function isBlockInteractive(
  * cannot edit a section from a page" (docs/adr/0059) true by construction
  * instead of true in the three code paths somebody remembered.
  */
+/**
+ * Gives a clickable box to a block that rendered to nothing.
+ *
+ * Nineteen block types render their root conditionally — an Icon with no
+ * icon picked, a Video with no URL, a Social link with no address — and
+ * the editor's own wrapper is `display: contents`, which has no box of
+ * its own. So a freshly inserted block of those types occupied zero
+ * pixels: it could not be selected, edited, or deleted from the canvas,
+ * and the only sign it existed at all was a row in the Layers panel.
+ * Measured on a page holding one of every type: six of them, including
+ * the two that were reported.
+ *
+ * Marked here rather than fixed in nineteen components: what the public
+ * page does is right — an empty block should print nothing for a
+ * visitor. It is only the EDITOR that needs to show the thing you are
+ * about to fill in, and only the editor runs this.
+ */
+export function markEmptyBlocks(root: ParentNode): void {
+  for (const element of collectBlockElements(root)) {
+    if (!(element instanceof HTMLElement)) continue;
+    // Measured with its own box restored, or a block marked empty last
+    // time would keep measuring as the placeholder we gave it.
+    element.style.removeProperty('display');
+    const isEmpty = element.getBoundingClientRect().height === 0;
+    if (isEmpty) {
+      element.dataset['briskEmpty'] = '';
+      // The wrapper is `display: contents` in the markup, which is what
+      // keeps a real block's layout untouched. An empty one has to take
+      // up room instead.
+      element.style.display = 'block';
+    } else {
+      delete element.dataset['briskEmpty'];
+      element.style.display = 'contents';
+    }
+  }
+}
+
 export function collectBlockElements(root: ParentNode): Element[] {
   return Array.from(root.querySelectorAll('[data-brisk-block-id]')).filter(
     (element) => element.closest('[data-brisk-section-content]') === null,

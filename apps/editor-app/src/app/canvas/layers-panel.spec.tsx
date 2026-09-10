@@ -158,6 +158,36 @@ describe('LayersPanel', () => {
    * without being read — and the line under the LAST child has to stop
    * at its elbow, or the tree draws a branch continuing past its end.
    */
+  /*
+   * Right-clicking a row selects it first, and NOT additively: the menu
+   * acts on the selection, so deleting from one row must not take
+   * whatever happened to be selected before it as well.
+   */
+  it('selects the row it was opened on, on its own, before offering a menu', () => {
+    const onSelect = vi.fn();
+    const onContextMenu = vi.fn();
+    render(
+      <LayersPanel
+        blocks={[
+          { id: 'hero-1', type: 'Hero', props: {} },
+          { id: 'text-1', type: 'Text', props: {} },
+        ]}
+        hoveredBlockId={null}
+        selectedBlockId="hero-1"
+        onSelect={onSelect}
+        onContextMenu={onContextMenu}
+      />,
+    );
+
+    fireEvent.contextMenu(screen.getAllByTestId('layer-row')[1]!, {
+      clientX: 120,
+      clientY: 240,
+    });
+
+    expect(onSelect).toHaveBeenCalledWith('text-1', false);
+    expect(onContextMenu).toHaveBeenCalledWith('text-1', 120, 240);
+  });
+
   it('draws a guide for every branch a row sits under, and ends the one it closes', () => {
     const blocks: Block[] = [
       {

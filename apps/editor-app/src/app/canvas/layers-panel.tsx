@@ -89,6 +89,8 @@ export interface LayersPanelProps {
    * reported from live use).
    */
   onSelect: (blockId: string, additive: boolean) => void;
+  /** Right-click on a row — the panel selects it first, then asks for a menu here. */
+  onContextMenu?: (blockId: string, x: number, y: number) => void;
   /** Every selected id (Fase 7) — `selectedBlockId` is the last of them. */
   selectedBlockIds?: string[];
 }
@@ -114,6 +116,7 @@ interface LayerRowProps {
   onSelect: (blockId: string, additive: boolean) => void;
   collapsedIds: ReadonlySet<string>;
   onToggleCollapsed: (blockId: string) => void;
+  onContextMenu?: (blockId: string, x: number, y: number) => void;
 }
 
 function rowClassName(isSelected: boolean, isHovered: boolean): string {
@@ -297,6 +300,7 @@ function LayerRow({
   ancestorIsLast = [],
   isLast = true,
   onSelect,
+  onContextMenu,
   collapsedIds,
   onToggleCollapsed,
 }: LayerRowProps) {
@@ -393,6 +397,15 @@ function LayerRow({
               onSelect(blockId, event.metaKey || event.ctrlKey);
             }
           }}
+          onContextMenu={(event) => {
+            if (!blockId || !onContextMenu) return;
+            event.preventDefault();
+            // Selected first, and NOT additively: the menu acts on the
+            // selection, so right-clicking one row and deleting must not
+            // take whatever was selected before it as well.
+            onSelect(blockId, false);
+            onContextMenu(blockId, event.clientX, event.clientY);
+          }}
         >
           <BlockIcon
             name={descriptor?.icon}
@@ -421,6 +434,7 @@ function LayerRow({
                 ancestorIsLast: [...ancestorIsLast, isLast],
                 isLast: index === (block.children?.length ?? 0) - 1,
                 onSelect,
+                onContextMenu,
                 collapsedIds,
                 onToggleCollapsed,
               },
@@ -491,6 +505,7 @@ export function LayersPanel({
   canContain,
   isContainerType,
   onSelect,
+  onContextMenu,
 }: LayersPanelProps) {
   // Expanded by default (no surprise for anyone already using the panel) —
   // a container only shows up here once the user collapses it themselves,
@@ -580,6 +595,7 @@ export function LayersPanel({
                 depth: 0,
                 isLast: index === blocks.length - 1,
                 onSelect,
+                onContextMenu,
                 collapsedIds,
                 onToggleCollapsed: toggleCollapsed,
               },
