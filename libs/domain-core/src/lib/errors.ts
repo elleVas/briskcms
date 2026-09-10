@@ -155,6 +155,13 @@ export class InvalidCaptchaError extends Error {
   }
 }
 
+export class CollectionNotFoundError extends Error {
+  constructor(collectionId: string) {
+    super(`Collection not found: ${collectionId}`);
+    this.name = 'CollectionNotFoundError';
+  }
+}
+
 export class UserNotFoundError extends Error {
   constructor(userId: string) {
     super(`User not found: ${userId}`);

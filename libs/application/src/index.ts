@@ -1,3 +1,5 @@
+export * from './lib/use-cases/move-page-group-to-collection.use-case';
+export * from './lib/use-cases/collection.use-cases';
 export * from './lib/use-cases/create-page-group.use-case';
 export * from './lib/use-cases/create-page-group-translation.use-case';
 export * from './lib/use-cases/save-page-group-content.use-case';

@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { eq } from 'drizzle-orm';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import {
+  Collection,
   PageGroup,
   PageSlugAlreadyExistsError,
   PageTranslation,
@@ -17,6 +18,7 @@ import {
   users,
   withTenant,
 } from '@brisk/postgres-db';
+import { DrizzleCollectionRepository } from './drizzle-collection.repository';
 import { DrizzlePageGroupRepository } from './drizzle-page-group.repository';
 import { DrizzlePageGroupVersionRepository } from './drizzle-page-group-version.repository';
 import { DrizzlePageTranslationRepository } from './drizzle-page-translation.repository';
@@ -30,6 +32,7 @@ import { DrizzlePageTranslationVersionRepository } from './drizzle-page-translat
  */
 describe('DrizzlePageGroupRepository / DrizzlePageTranslationRepository (integration)', () => {
   let db: BriskDb;
+  let collectionRepository: DrizzleCollectionRepository;
   let groupRepository: DrizzlePageGroupRepository;
   let groupVersionRepository: DrizzlePageGroupVersionRepository;
   let translationRepository: DrizzlePageTranslationRepository;
@@ -41,6 +44,7 @@ describe('DrizzlePageGroupRepository / DrizzlePageTranslationRepository (integra
 
   beforeAll(async () => {
     db = createAppDb();
+    collectionRepository = new DrizzleCollectionRepository(db);
     groupRepository = new DrizzlePageGroupRepository(db);
     groupVersionRepository = new DrizzlePageGroupVersionRepository(db);
     translationRepository = new DrizzlePageTranslationRepository(db);
@@ -281,6 +285,86 @@ describe('DrizzlePageGroupRepository / DrizzlePageTranslationRepository (integra
         expect(row?.lastEditedAt).toEqual(new Date('2026-05-01T00:00:00Z'));
       });
 
+      /*
+       * Three different questions, and the middle one is the reason
+       * `collectionId` is nullable-with-meaning rather than absent:
+       * "every page", "the pages in no section", "the pages in this one".
+       */
+      it('tells apart every page, the pages in no section, and the pages in one', async () => {
+        const collection = Collection.create({
+          id: randomUUID(),
+          tenantId: tenantAId,
+          siteId: siteAId,
+          name: `News ${randomUUID()}`,
+        });
+        await collectionRepository.save(collection);
+        const filed = buildGroup({ collectionId: collection.id });
+        await groupRepository.save(filed);
+        const loose = buildGroup();
+        await groupRepository.save(loose);
+
+        const list = (collectionId: string | null | undefined) =>
+          groupRepository.listBySiteFiltered(
+            tenantAId,
+            siteAId,
+            { page: 1, pageSize: 100 },
+            collectionId === undefined ? {} : { collectionId },
+          );
+
+        const everything = (await list(undefined)).items.map((one) => one.id);
+        expect(everything).toEqual(
+          expect.arrayContaining([filed.id, loose.id]),
+        );
+
+        const inNoSection = (await list(null)).items.map((one) => one.id);
+        expect(inNoSection).toContain(loose.id);
+        expect(inNoSection).not.toContain(filed.id);
+
+        const inSection = (await list(collection.id)).items.map(
+          (one) => one.id,
+        );
+        expect(inSection).toEqual([filed.id]);
+      });
+
+      it('a feed comes back newest first, with what was never published on top', async () => {
+        const collection = Collection.create({
+          id: randomUUID(),
+          tenantId: tenantAId,
+          siteId: siteAId,
+          name: `News ${randomUUID()}`,
+        });
+        await collectionRepository.save(collection);
+
+        async function article(publishedAt: Date | null) {
+          const group = buildGroup({ collectionId: collection.id });
+          await groupRepository.save(group);
+          const translation = buildTranslation(group.id);
+          if (publishedAt) {
+            translation.publish([], { by: null, now: publishedAt });
+          }
+          await translationRepository.save(translation, null);
+          return group.id;
+        }
+
+        const older = await article(new Date('2026-01-01T00:00:00Z'));
+        const newer = await article(new Date('2026-06-01T00:00:00Z'));
+        const draft = await article(null);
+
+        const result = await groupRepository.listBySiteFiltered(
+          tenantAId,
+          siteAId,
+          { page: 1, pageSize: 100 },
+          { collectionId: collection.id },
+          'newest',
+        );
+
+        expect(result.items.map((one) => one.id)).toEqual([
+          draft,
+          newer,
+          older,
+        ]);
+      });
+
       it('flags a published translation whose SHARED structure changed afterwards', async () => {
         const group = buildGroup({ now: new Date('2026-01-01T00:00:00Z') });
         await groupRepository.save(group);
@@ -399,7 +483,10 @@ describe('DrizzlePageGroupRepository / DrizzlePageTranslationRepository (integra
         const result = await groupRepository.listBySiteFiltered(
           tenantAId,
           siteAId,
-          { page: 1, pageSize: 20 },
+          // Big enough that the assertion is about the FILTER and not
+          // about how many rows the tests before it happened to leave in
+          // this tenant: tree order puts the newest last.
+          { page: 1, pageSize: 200 },
           { createdAfter: new Date('2024-01-01T00:00:00Z') },
         );
 

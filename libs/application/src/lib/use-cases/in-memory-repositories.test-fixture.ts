@@ -12,6 +12,7 @@ import type {
   Site,
   SiteLayoutSection,
   SiteLayoutSectionKind,
+  Collection,
   SiteLayoutSectionVersion,
   Taxonomy,
   Term,
@@ -20,6 +21,7 @@ import type {
 import { hasUnpublishedChanges, sniffMediaType } from '@brisk/domain-core';
 import type { PageContent, ResponsiveBlockStyle } from '@brisk/shared-types';
 import type {
+  CollectionRepositoryPort,
   FormRepositoryPort,
   FormSubmissionRepositoryPort,
   MediaRepositoryPort,
@@ -28,6 +30,7 @@ import type {
   Pagination,
   PageGroupListFilters,
   PageGroupListItem,
+  PageGroupListSort,
   PageGroupRepositoryPort,
   TaxonomyRepositoryPort,
   PageGroupSummary,
@@ -50,6 +53,33 @@ import type {
   UploadMediaResult,
   UserRepositoryPort,
 } from '@brisk/ports';
+
+export class InMemoryCollectionRepository implements CollectionRepositoryPort {
+  private collections = new Map<string, Collection>();
+
+  async save(collection: Collection): Promise<void> {
+    this.collections.set(collection.id, collection);
+  }
+
+  async findById(tenantId: string, id: string): Promise<Collection | null> {
+    const found = this.collections.get(id);
+    return found && found.tenantId === tenantId ? found : null;
+  }
+
+  async listBySite(tenantId: string, siteId: string): Promise<Collection[]> {
+    return [...this.collections.values()]
+      .filter(
+        (collection) =>
+          collection.tenantId === tenantId && collection.siteId === siteId,
+      )
+      .sort((a, b) => a.order - b.order);
+  }
+
+  async delete(tenantId: string, id: string): Promise<void> {
+    const found = this.collections.get(id);
+    if (found && found.tenantId === tenantId) this.collections.delete(id);
+  }
+}
 
 export class InMemoryPageGroupRepository implements PageGroupRepositoryPort {
   private groups = new Map<string, PageGroup>();
@@ -106,6 +136,7 @@ export class InMemoryPageGroupRepository implements PageGroupRepositoryPort {
     siteId: string,
     pagination: Pagination,
     filters: PageGroupListFilters,
+    sort: PageGroupListSort = 'tree',
   ): Promise<PaginatedResult<PageGroupListItem>> {
     let matching = [...this.groups.values()].filter(
       (group) => group.tenantId === tenantId && group.siteId === siteId,
@@ -121,6 +152,16 @@ export class InMemoryPageGroupRepository implements PageGroupRepositoryPort {
     if (filters.createdBy) {
       matching = matching.filter(
         (group) => group.createdBy === filters.createdBy,
+      );
+    }
+    if (filters.collectionId !== undefined) {
+      matching = matching.filter(
+        (group) => group.collectionId === filters.collectionId,
+      );
+    }
+    if (sort === 'newest') {
+      matching = [...matching].sort(
+        (a, b) => b.createdAt.getTime() - a.createdAt.getTime(),
       );
     }
 
@@ -159,6 +200,7 @@ export class InMemoryPageGroupRepository implements PageGroupRepositoryPort {
         );
         return {
           ...this.toSummary(group),
+          collectionId: group.collectionId,
           createdByName: null,
           lastEditedAt: lastEdit.updatedAt,
           lastEditedByName: lastEdit.updatedBy,

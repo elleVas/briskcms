@@ -1807,5 +1807,22 @@
       "remove": "Remove",
       "add": "Add image"
     }
+  },
+  "collections": {
+    "menuLabel": "Sections",
+    "actionFailed": "That change could not be made.",
+    "dialog": {
+      "title": "Sections",
+      "description": "A section holds pages of one kind — News, Events, Case studies — and gets a menu entry of its own. Underneath they are ordinary pages.",
+      "newLabel": "New section",
+      "newPlaceholder": "News",
+      "create": "Add",
+      "nameOf": "Name of {{name}}",
+      "delete": "Delete {{name}}",
+      "confirmDelete": {
+        "title": "Delete this section?",
+        "description": "{{name}} disappears from the menu. The pages it held stay, and go back to Pages."
+      }
+    }
   }
 }

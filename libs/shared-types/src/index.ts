@@ -33,5 +33,6 @@ export * from './lib/published-site';
 export * from './lib/site-record';
 export * from './lib/available-theme';
 export * from './lib/published-page';
+export * from './lib/collection-record';
 export * from './lib/page-record';
 export * from './lib/public-api-caller';

@@ -12,6 +12,8 @@ export interface CreatePageGroupInput {
   siteId: string;
   parentId?: string | null;
   content?: PageContent;
+  /** Which section of the editor this page is being created from — see the Collection entity. */
+  collectionId?: string | null;
   createdBy: string | null;
 }
 
@@ -40,6 +42,7 @@ export async function createPageGroup(
     siteId: input.siteId,
     parentId: input.parentId,
     content: input.content,
+    collectionId: input.collectionId,
     order,
     createdBy: input.createdBy,
   });

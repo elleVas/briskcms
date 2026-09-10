@@ -74,11 +74,23 @@ describe('PageGroup entity', () => {
     expect(group.contentUpdatedAt).toEqual(later);
   });
 
+  it('a page belongs to no section until somebody files it in one', () => {
+    const group = PageGroup.create(baseInput);
+    expect(group.collectionId).toBeNull();
+
+    group.moveToCollection('collection-1', { by: 'user-1' });
+    expect(group.collectionId).toBe('collection-1');
+
+    group.moveToCollection(null, { by: 'user-1' });
+    expect(group.collectionId).toBeNull();
+  });
+
   it('fromProps/toProps round-trip without loss', () => {
     const props = {
       ...baseInput,
       parentId: 'parent-1',
       order: 2,
+      collectionId: null,
       content: [{ type: 'Hero', props: { title: 'v1' } }],
       createdBy: 'user-1',
       createdAt: new Date('2025-12-01T00:00:00Z'),

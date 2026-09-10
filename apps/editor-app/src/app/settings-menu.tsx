@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import {
   Building2,
   Clock,
+  FolderTree,
   Globe,
   Languages,
   Moon,
@@ -20,6 +21,7 @@ import {
 import { Separator } from '../components/ui/separator';
 import { Switch } from '../components/ui/switch';
 import { BusinessInfoDialog } from './business-info-dialog';
+import { CollectionsDialog } from './collections-dialog';
 import { FormSubmissionRetentionDialog } from './form-submission-retention-dialog';
 import { GeneralSettingsDialog } from './general-settings-dialog';
 import { LocaleSettingsDialog } from './locale-settings-dialog';
@@ -43,6 +45,7 @@ export function SettingsMenu() {
   const [isLocaleSettingsOpen, setIsLocaleSettingsOpen] = useState(false);
   const [isFormSubmissionRetentionOpen, setIsFormSubmissionRetentionOpen] =
     useState(false);
+  const [isCollectionsOpen, setIsCollectionsOpen] = useState(false);
 
   return (
     <>
@@ -127,6 +130,14 @@ export function SettingsMenu() {
           <Button
             variant="ghost"
             className="w-full justify-start gap-2 px-1 py-1.5 text-sm"
+            onClick={() => setIsCollectionsOpen(true)}
+          >
+            <FolderTree className="size-4" />
+            {t('collections.menuLabel')}
+          </Button>
+          <Button
+            variant="ghost"
+            className="w-full justify-start gap-2 px-1 py-1.5 text-sm"
             onClick={() => setIsFormSubmissionRetentionOpen(true)}
           >
             <Clock className="size-4" />
@@ -136,6 +147,11 @@ export function SettingsMenu() {
       </Popover>
       {site && (
         <>
+          <CollectionsDialog
+            siteId={site.id}
+            open={isCollectionsOpen}
+            onOpenChange={setIsCollectionsOpen}
+          />
           <GeneralSettingsDialog
             siteId={site.id}
             open={isGeneralSettingsOpen}

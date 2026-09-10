@@ -275,6 +275,56 @@ export const siteThemeBlockStyles = pgTable(
 // pageGroups/pageTranslations replaced the old `pages` table (removed in
 // the plan's phase 5). A PageGroup owns the structure SHARED across every
 // language; a PageTranslation owns the per-locale text.
+/**
+ * A named section of the editor that holds pages of one kind — News,
+ * Events, Case studies — each with a menu entry of its own.
+ *
+ * Under the surface an article IS a page: same table, same draft and
+ * publish per language, same version history, same addresses. What a
+ * collection changes is who lists it and how: a flat list newest first,
+ * in its own screen, instead of a row in the site's tree. Mixing three
+ * hundred news items into the page tree makes both unreadable, and that
+ * is the whole reason this table exists.
+ *
+ * Pages themselves are NOT a row here. They are the absence of one
+ * (`page_groups.collection_id is null`) — inventing a "Pages" collection
+ * for every existing site would immediately raise the question of
+ * whether it can be deleted, and the answer would have to be no.
+ *
+ * Nothing here configures behaviour yet, only identity: every collection
+ * is a flat list ordered by publication date. The day one needs a
+ * different order, this is the table it belongs to.
+ */
+export const collections = pgTable(
+  'collections',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    tenantId: uuid('tenant_id')
+      .notNull()
+      .references(() => tenants.id, { onDelete: 'cascade' }),
+    siteId: uuid('site_id')
+      .notNull()
+      .references(() => sites.id, { onDelete: 'cascade' }),
+    // Plain text, not the locale-keyed JSONB a taxonomy's name uses: this
+    // is the label of a screen in the editor, read by the handful of
+    // people who administer the site, not by its visitors.
+    name: text('name').notNull(),
+    // A lucide icon name, so the entry it adds to the sidebar looks like
+    // the ones the product ships with rather than a section bolted on.
+    icon: text('icon').notNull().default('newspaper'),
+    order: integer('order').notNull().default(0),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    index('collections_tenant_site_idx').on(table.tenantId, table.siteId),
+  ],
+);
+
 export const pageGroups = pgTable(
   'page_groups',
   {
@@ -303,6 +353,16 @@ export const pageGroups = pgTable(
     // duplicate halfway through a reorder is harmless, see
     // reorderSiblingPages).
     order: integer('order').notNull().default(0),
+    // Which section of the editor lists this page — null for a page,
+    // which is the default and the majority. `set null` rather than a
+    // cascade: deleting the News section must turn its articles back
+    // into ordinary pages, never delete what it was holding.
+    collectionId: uuid('collection_id').references(
+      (): AnyPgColumn => collections.id,
+      {
+        onDelete: 'set null',
+      },
+    ),
     createdBy: uuid('created_by').references(() => users.id, {
       onDelete: 'set null',
     }),

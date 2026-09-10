@@ -2,6 +2,7 @@ import {
   and,
   asc,
   count,
+  desc,
   eq,
   exists,
   gte,
@@ -20,6 +21,7 @@ import {
 import type {
   PageGroupListFilters,
   PageGroupListItem,
+  PageGroupListSort,
   PageGroupRepositoryPort,
   PageGroupSummary,
   PaginatedResult,
@@ -38,6 +40,25 @@ import {
 } from '@brisk/postgres-db';
 import { savePageGroupVersionTx } from './save-page-group-version-tx';
 
+/**
+ * A feed orders by when a page actually went live, which lives on its
+ * translations rather than on the group — a correlated subquery, and not
+ * a sort in memory, because a list sorted after pagination is a list
+ * sorted one page at a time.
+ *
+ * `nulls first` puts what was never published at the top: in an editor
+ * that is the row asking for attention, not the least interesting one.
+ */
+function orderFor(sort: PageGroupListSort) {
+  if (sort === 'tree') {
+    return [asc(pageGroups.order), asc(pageGroups.createdAt)];
+  }
+  return [
+    sql`(select max(${pageTranslations.publishedAt}) from ${pageTranslations} where ${pageTranslations.pageGroupId} = ${pageGroups.id}) desc nulls first`,
+    desc(pageGroups.createdAt),
+  ];
+}
+
 function toRow(props: PageGroupProps) {
   return {
     id: props.id,
@@ -46,6 +67,7 @@ function toRow(props: PageGroupProps) {
     parentId: props.parentId,
     content: props.content,
     order: props.order,
+    collectionId: props.collectionId,
     createdBy: props.createdBy,
     createdAt: props.createdAt,
     updatedAt: props.updatedAt,
@@ -62,6 +84,7 @@ function fromRow(row: typeof pageGroups.$inferSelect): PageGroup {
     parentId: row.parentId,
     content: row.content,
     order: row.order,
+    collectionId: row.collectionId,
     createdBy: row.createdBy,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
@@ -162,6 +185,7 @@ export class DrizzlePageGroupRepository
     siteId: string,
     pagination: Pagination,
     filters: PageGroupListFilters,
+    sort: PageGroupListSort = 'tree',
   ): Promise<PaginatedResult<PageGroupListItem>> {
     const conditions = [
       eq(pageGroups.tenantId, tenantId),
@@ -175,6 +199,16 @@ export class DrizzlePageGroupRepository
     }
     if (filters.createdBy) {
       conditions.push(eq(pageGroups.createdBy, filters.createdBy));
+    }
+    // `undefined` is "every page, wherever it is filed" — what a sitemap
+    // wants. `null` is the Pages screen asking for the pages that belong
+    // to no section, which is a filter, not the absence of one.
+    if (filters.collectionId !== undefined) {
+      conditions.push(
+        filters.collectionId === null
+          ? isNull(pageGroups.collectionId)
+          : eq(pageGroups.collectionId, filters.collectionId),
+      );
     }
     if (filters.search) {
       conditions.push(
@@ -224,6 +258,7 @@ export class DrizzlePageGroupRepository
             siteId: pageGroups.siteId,
             parentId: pageGroups.parentId,
             order: pageGroups.order,
+            collectionId: pageGroups.collectionId,
             createdBy: pageGroups.createdBy,
             createdByName: sql<
               string | null
@@ -239,7 +274,7 @@ export class DrizzlePageGroupRepository
           .leftJoin(users, eq(users.id, pageGroups.createdBy))
           .leftJoin(editors, eq(editors.id, pageGroups.updatedBy))
           .where(scope)
-          .orderBy(asc(pageGroups.order), asc(pageGroups.createdAt))
+          .orderBy(...orderFor(sort))
           .limit(pagination.pageSize)
           .offset((pagination.page - 1) * pagination.pageSize),
         tx.select({ total: count() }).from(pageGroups).where(scope),
@@ -328,6 +363,7 @@ export class DrizzlePageGroupRepository
         siteId: row.siteId,
         parentId: row.parentId,
         order: row.order,
+        collectionId: row.collectionId,
         createdBy: row.createdBy,
         createdByName: row.createdByName,
         createdAt: row.createdAt,

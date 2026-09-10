@@ -5,7 +5,27 @@ import { QueryClientProvider } from '@tanstack/react-query';
 import * as router from '@tanstack/react-router';
 import { createTestQueryClient } from '../test-query-client';
 import * as auth from '../lib/auth-api-client';
+import * as collectionsApi from '../lib/collections-api-client';
 import { AdminShell } from './admin-shell';
+
+vi.mock('../lib/collections-api-client', async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import('../lib/collections-api-client')>();
+  return { ...actual, listCollections: vi.fn().mockResolvedValue([]) };
+});
+
+vi.mock('../lib/sites-api-client', async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import('../lib/sites-api-client')>();
+  return {
+    ...actual,
+    getCurrentSite: vi.fn().mockResolvedValue({
+      id: 'site-1',
+      defaultLocale: 'it',
+      enabledLocales: ['it'],
+    }),
+  };
+});
 
 vi.mock('../lib/auth-api-client', async (importOriginal) => {
   const actual =
@@ -74,6 +94,31 @@ describe('AdminShell', () => {
       expect(screen.queryByRole('link', { name: 'Utenti' })).toBeNull();
     },
   );
+
+  /*
+   * The user's own line: pages and news must not be mixed, even though
+   * underneath they are the same thing. A section is a menu entry.
+   */
+  it('gives every section of the site an entry of its own, under Pagine', async () => {
+    vi.mocked(router.useNavigate).mockReturnValue(vi.fn());
+    vi.mocked(collectionsApi.listCollections).mockResolvedValue([
+      {
+        id: 'collection-1',
+        tenantId: 'tenant-1',
+        siteId: 'site-1',
+        name: 'News',
+        icon: 'newspaper',
+        order: 0,
+        createdAt: '',
+        updatedAt: '',
+      },
+    ]);
+
+    renderShell('admin');
+
+    const entry = await screen.findByRole('link', { name: 'News' });
+    expect(entry.getAttribute('href')).toBe('/collections/$collectionId');
+  });
 
   it('offers Utenti to an admin', async () => {
     vi.mocked(router.useNavigate).mockReturnValue(vi.fn());

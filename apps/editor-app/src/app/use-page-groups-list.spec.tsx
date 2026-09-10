@@ -85,7 +85,10 @@ describe('usePageGroupsList', () => {
       await result.current.createPageGroup('Chi Siamo');
     });
 
-    expect(api.createPageGroup).toHaveBeenCalledWith({ siteId: 'site-1' });
+    expect(api.createPageGroup).toHaveBeenCalledWith({
+      siteId: 'site-1',
+      collectionId: null,
+    });
     expect(api.createPageGroupTranslation).toHaveBeenCalledWith('group-1', {
       locale: 'it',
       slug: 'chi-siamo',

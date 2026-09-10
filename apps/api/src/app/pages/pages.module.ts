@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { requireEnv } from '@brisk/env-config';
 import { type BriskDb } from '@brisk/postgres-db';
 import {
+  DrizzleCollectionRepository,
   DrizzlePageGroupRepository,
   DrizzlePageGroupVersionRepository,
   DrizzlePageTranslationRepository,
@@ -21,6 +22,7 @@ import {
   SEARCH_REPOSITORY,
   SITE_REPOSITORY,
   TAXONOMY_REPOSITORY,
+  COLLECTION_REPOSITORY,
 } from './pages.tokens';
 import {
   PAGE_GROUP_REPOSITORY,
@@ -38,6 +40,13 @@ import {
       // snapshot holds only the reference (docs/adr/0059).
       provide: REUSABLE_SECTION_REPOSITORY,
       useFactory: (db: BriskDb) => new DrizzleReusableSectionRepository(db),
+      inject: [DATABASE],
+    },
+    {
+      // Read-only: checking that a section a page is being filed under
+      // actually exists.
+      provide: COLLECTION_REPOSITORY,
+      useFactory: (db: BriskDb) => new DrizzleCollectionRepository(db),
       inject: [DATABASE],
     },
     {

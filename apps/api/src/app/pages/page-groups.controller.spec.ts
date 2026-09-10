@@ -10,6 +10,7 @@ import {
   PageTranslationNotFoundError,
 } from '@brisk/domain-core';
 import type {
+  CollectionRepositoryPort,
   PageGroupRepositoryPort,
   PageGroupSummary,
   PageGroupVersionRepositoryPort,
@@ -61,6 +62,7 @@ describe('PageGroupsController (unit)', () => {
   let reusableSectionRepository: jest.Mocked<ReusableSectionRepositoryPort>;
   let taxonomyRepository: jest.Mocked<TaxonomyRepositoryPort>;
   let siteRepository: jest.Mocked<SiteRepositoryPort>;
+  let collectionRepository: jest.Mocked<CollectionRepositoryPort>;
   let controller: PageGroupsController;
 
   beforeEach(() => {
@@ -137,6 +139,12 @@ describe('PageGroupsController (unit)', () => {
       findByDomain: jest.fn(),
       listByTenant: jest.fn().mockResolvedValue([]),
     };
+    collectionRepository = {
+      save: jest.fn(),
+      findById: jest.fn(),
+      listBySite: jest.fn().mockResolvedValue([]),
+      delete: jest.fn(),
+    };
     controller = new PageGroupsController(
       pageGroupRepository,
       pageGroupVersionRepository,
@@ -148,6 +156,7 @@ describe('PageGroupsController (unit)', () => {
       reusableSectionRepository,
       taxonomyRepository,
       siteRepository,
+      collectionRepository,
     );
   });
 
@@ -179,6 +188,51 @@ describe('PageGroupsController (unit)', () => {
         createdBy: 'user-1',
         locale: 'it',
       },
+      'tree',
+    );
+  });
+
+  it('a section of the editor comes back as a feed, the site tree in its own order', async () => {
+    pageGroupRepository.listBySiteFiltered.mockResolvedValue({
+      items: [],
+      total: 0,
+    });
+
+    await controller.list({
+      siteId: 'site-1',
+      page: 1,
+      pageSize: 10,
+      collection: 'collection-1',
+    });
+
+    expect(pageGroupRepository.listBySiteFiltered).toHaveBeenCalledWith(
+      'tenant-1',
+      'site-1',
+      { page: 1, pageSize: 10 },
+      expect.objectContaining({ collectionId: 'collection-1' }),
+      'newest',
+    );
+  });
+
+  it('the Pages screen asks for the pages that belong to no section', async () => {
+    pageGroupRepository.listBySiteFiltered.mockResolvedValue({
+      items: [],
+      total: 0,
+    });
+
+    await controller.list({
+      siteId: 'site-1',
+      page: 1,
+      pageSize: 10,
+      collection: 'none',
+    });
+
+    expect(pageGroupRepository.listBySiteFiltered).toHaveBeenCalledWith(
+      'tenant-1',
+      'site-1',
+      { page: 1, pageSize: 10 },
+      expect.objectContaining({ collectionId: null }),
+      'tree',
     );
   });
 
@@ -192,6 +246,7 @@ describe('PageGroupsController (unit)', () => {
           siteId: 'site-1',
           parentId: null,
           order: 0,
+          collectionId: null,
           createdBy: 'user-1',
           createdByName: 'Ada Lovelace',
           createdAt,

@@ -98,6 +98,8 @@ export const pageGroupListItemSchema = z.object({
   siteId: z.string(),
   parentId: z.string().nullable(),
   order: z.number(),
+  /** Which section of the editor lists this page, or null for a page. */
+  collectionId: z.string().nullable(),
   createdByName: z.string().nullable(),
   createdAt: z.string(),
   updatedAt: z.string(),
