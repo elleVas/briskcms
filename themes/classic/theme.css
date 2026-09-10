@@ -88,16 +88,13 @@
   --shadow-2xl: 0 32px 64px -16px rgb(0 0 0 / 0.2);
   --shadow-inner: inset 0 2px 4px 0 rgb(0 0 0 / 0.06);
 
-  /* Scala delle spaziature: senza, ogni blocco sceglie i propri rem e la
-     pagina non ha ritmo verticale. */
-  --space-2xs: 0.25rem;
-  --space-xs: 0.5rem;
-  --space-sm: 0.75rem;
-  --space-md: 1rem;
-  --space-lg: 1.5rem;
-  --space-xl: 2.5rem;
-  --space-2xl: 4rem;
-  --space-3xl: 6rem;
+  /* A spacing scale lived here — `--space-2xs`..`--space-3xl` — and
+     nothing ever read it: not a block, not this theme's own CSS, not
+     the public site. It survived because a dead custom property costs
+     nothing at runtime and so nothing complains about it. Removed with
+     the type scale that sat beside it (that one was worse: it collided
+     with Tailwind's own names). A theme that wants a spacing rhythm
+     should add the values back the day something consumes them. */
 
   /* The type scale used to live here as `--text-sm`..`--text-4xl` and
      `--leading-*`. Those are Tailwind's OWN theme variables — the ones

@@ -17,12 +17,14 @@ import {
 import { AccountMenu } from './account-menu';
 import { SettingsMenu } from './settings-menu';
 import { Separator } from '../components/ui/separator';
+import { useCurrentSession } from './use-current-session';
 
 export interface AdminShellProps {
   children: ReactNode;
 }
 
 export function AdminShell({ children }: AdminShellProps) {
+  const { isAdmin } = useCurrentSession();
   const { t } = useTranslation();
 
   return (
@@ -103,14 +105,23 @@ export function AdminShell({ children }: AdminShellProps) {
               <Cookie className="size-4" />
               {t('shell.nav.cookies')}
             </Link>
-            <Separator className="my-2" />
-            <Link
-              to="/users"
-              className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm font-medium hover:bg-muted"
-            >
-              <Users className="size-4" />
-              {t('shell.nav.users')}
-            </Link>
+            {/* Admin-only, and the sidebar now says so instead of the
+                server saying it after the click. Every screen used to be
+                offered to everybody: an Editor saw this, opened it, and
+                got a generic error page — the API was right to refuse,
+                the sidebar was wrong to ask. */}
+            {isAdmin && (
+              <>
+                <Separator className="my-2" />
+                <Link
+                  to="/users"
+                  className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm font-medium hover:bg-muted"
+                >
+                  <Users className="size-4" />
+                  {t('shell.nav.users')}
+                </Link>
+              </>
+            )}
           </div>
           <div className="flex flex-col gap-1">
             <SettingsMenu />

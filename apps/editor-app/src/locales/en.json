@@ -938,7 +938,8 @@
             "grow": "Grow",
             "dim": "Dim"
           }
-        }
+        },
+        "none": "None"
       }
     },
     "richText": {

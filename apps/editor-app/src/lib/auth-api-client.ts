@@ -11,6 +11,17 @@ export function login(
   });
 }
 
+/** Who is logged in, and what they are allowed to be shown. */
+export interface CurrentSession {
+  userId: string;
+  email: string;
+  role: 'admin' | 'publisher' | 'editor';
+}
+
+export function currentSession(): Promise<CurrentSession> {
+  return request('/auth/session');
+}
+
 export function logout(): Promise<{ success: boolean }> {
   return request('/auth/logout', { method: 'POST' });
 }

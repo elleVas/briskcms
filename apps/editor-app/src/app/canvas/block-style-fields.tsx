@@ -150,6 +150,21 @@ const SELECT_FIELD_OPTIONS: Partial<
  * fields `descriptor.stylableProperties` declares relevant for that type —
  * a Text offers no "corner radius", a Button offers all five.
  */
+/**
+ * Style properties a theme has no value for, so an unset one falls back
+ * to nothing rather than to the theme.
+ *
+ * Animation is per-instance by design (docs/adr/0057): a theme decides
+ * how a site looks at rest, not what moves when somebody scrolls past
+ * it. The empty option therefore reads "None", not "Theme default" —
+ * the label was promising a value nobody could point at.
+ */
+const NO_THEME_DEFAULT = new Set([
+  'animation',
+  'hoverEffect',
+  'animationEasing',
+]);
+
 export function BlockStyleFields({
   properties,
   blockType,
@@ -246,10 +261,18 @@ export function BlockStyleFields({
                   )
                 }
               >
-                {/* The theme's own value, not a value of its own: leaving
-                    it selected is how you say "do not override this". */}
+                {/* Leaving it selected is how you say "do not set this".
+                    For most properties that means the theme's own value —
+                    but a few have no theme-level value to fall back to
+                    (see NO_THEME_DEFAULT), and telling somebody they are
+                    getting a theme default that does not exist is worse
+                    than saying nothing. */}
                 <option value="">
-                  {tLabel('canvas.blockStyle.selects.inherit')}
+                  {tLabel(
+                    NO_THEME_DEFAULT.has(property)
+                      ? 'canvas.blockStyle.selects.none'
+                      : 'canvas.blockStyle.selects.inherit',
+                  )}
                 </option>
                 {options.map((option) => (
                   <option key={option} value={option}>

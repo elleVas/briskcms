@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Body,
   Controller,
+  Get,
   HttpCode,
   Inject,
   Post,
@@ -143,6 +144,35 @@ export class AuthController {
     }
     response.clearCookie(SESSION_COOKIE_NAME);
     return { success: true };
+  }
+
+  /**
+   * Who is asking — the one question the editor could not put to this
+   * API at all.
+   *
+   * Without it the interface cannot know a person's role, so it offered
+   * every screen to everybody and let the server say no: an Editor saw
+   * "Users" in the sidebar, clicked it, and got a generic error page.
+   * The server refusing is correct; the interface pretending the door
+   * was open is not.
+   *
+   * Deliberately no permission list, just the role. Which screens a role
+   * may open is the interface's own business, and a list here would be a
+   * second place to keep it in step with the @Roles() decorators that
+   * actually decide.
+   */
+  @UseGuards(SessionAuthGuard)
+  @Get('session')
+  async currentSession(@Req() request: AuthenticatedRequest) {
+    const user = await this.userRepository.findById(
+      request.tenantId,
+      request.userId,
+    );
+    if (!user) {
+      // The session outlived the account it belongs to.
+      throw new UnauthorizedException();
+    }
+    return { userId: user.id, email: user.email, role: user.role };
   }
 
   @UseGuards(SessionAuthGuard)
