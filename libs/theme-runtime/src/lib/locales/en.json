@@ -77,5 +77,18 @@
   "cookieConsent.cookiePolicyLink": "Cookie Policy",
   "image.lightboxOpen": "See the picture full size",
   "image.lightboxClose": "Close the picture",
-  "blockRenderer.unrenderable": "This block cannot be shown: its saved content does not match what “{type}” expects. Visitors see nothing here."
+  "blockRenderer.unrenderable": "This block cannot be shown: its saved content does not match what “{type}” expects. Visitors see nothing here.",
+  "emptyContainer.hint": "Empty container — select this block and pick an element from the sidebar to add it here.",
+  "emptyContainer.hintNamed": "Empty container — select this block and add a {child} from the sidebar.",
+  "blocks.column.label": "Column",
+  "blocks.socialLink.label": "Social link",
+  "blocks.accordionItem.label": "Question",
+  "blocks.tab.label": "Tab",
+  "blocks.feature.label": "Feature",
+  "blocks.testimonial.label": "Testimonial",
+  "blocks.teamMember.label": "Team member",
+  "blocks.pricingPlan.label": "Pricing plan",
+  "blocks.stat.label": "Statistic",
+  "blocks.timelineStep.label": "Step",
+  "blocks.navLink.label": "Navigation link"
 }

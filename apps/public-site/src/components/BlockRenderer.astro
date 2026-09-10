@@ -72,6 +72,7 @@ import type { AstroComponentFactory } from 'astro/runtime/server/index.js';
 import { resolveThemeBlockOverride } from '../lib/resolve-theme-block-override';
 import { themeBlockRegistry } from '../lib/resolve-theme-page-blocks';
 import { normalizeRenderedProps } from '../lib/normalize-rendered-content';
+import { onlyAllowedChildLabel } from '../lib/only-allowed-child-label';
 import { blockInstanceClassName, blockVariantClassName } from '@brisk/shared-types';
 
 interface Props {
@@ -741,7 +742,19 @@ const dispatchProps =
       ...(entry.stylable ? { instanceClass } : {}),
       ...(variantClass ? { variantClass } : {}),
       ...(entry.locale ? { locale } : {}),
-      ...(entry.containerProps ? { editable, hasChildren } : {}),
+      ...(entry.containerProps
+        ? {
+            editable,
+            hasChildren,
+            locale,
+            // The only child this container accepts, when it accepts
+            // exactly one. Resolved here because this is the one place
+            // holding the registry — a block component has no way to ask,
+            // and "pick an element" otherwise sends somebody hunting
+            // through fifty-four tiles for the one that is allowed.
+            emptyChildLabel: onlyAllowedChildLabel(block.type, locale),
+          }
+        : {}),
       // docs/adr/0042 — always included, not gated by a dispatch-entry
       // flag like stylable/locale above: cheap to pass to every
       // block (a plain string already resolved once per render), and

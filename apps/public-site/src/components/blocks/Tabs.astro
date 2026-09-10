@@ -2,13 +2,17 @@
 import EmptyContainerHint from '../EmptyContainerHint.astro';
 
 export interface Props {
+  /** The locale this page renders in — see EmptyContainerHint. */
+  locale?: string;
+  /** The only child type this container accepts, already translated. */
+  emptyChildLabel?: string | null;
   editable?: boolean;
   hasChildren?: boolean;
   /** The per-instance style class, from BlockRenderer — see blockInstanceClassName. */
   instanceClass?: string | null;
 }
 
-const { editable, hasChildren, instanceClass } = Astro.props;
+const { editable, hasChildren, instanceClass, locale, emptyChildLabel} = Astro.props;
 ---
 
 <div
@@ -16,7 +20,11 @@ const { editable, hasChildren, instanceClass } = Astro.props;
   data-brisk-editable-outline={editable && hasChildren ? '' : undefined}
 >
   <slot />
-  <EmptyContainerHint show={!hasChildren && Boolean(editable)} />
+  <EmptyContainerHint
+  show={!hasChildren && Boolean(editable)}
+  locale={locale}
+  childLabel={emptyChildLabel}
+/>
 </div>
 
 <script>

@@ -77,5 +77,18 @@
   "cookieConsent.cookiePolicyLink": "Cookie Policy",
   "image.lightboxOpen": "Vedi l'immagine a schermo intero",
   "image.lightboxClose": "Chiudi l'immagine",
-  "blockRenderer.unrenderable": "Questo blocco non può essere mostrato: il contenuto salvato non corrisponde a quello che “{type}” si aspetta. Chi visita il sito non vede nulla qui."
+  "blockRenderer.unrenderable": "Questo blocco non può essere mostrato: il contenuto salvato non corrisponde a quello che “{type}” si aspetta. Chi visita il sito non vede nulla qui.",
+  "emptyContainer.hint": "Contenitore vuoto — seleziona questo blocco e scegli un elemento dalla barra laterale per aggiungerlo qui.",
+  "emptyContainer.hintNamed": "Contenitore vuoto — seleziona questo blocco e aggiungi un {child} dalla barra laterale.",
+  "blocks.column.label": "Colonna",
+  "blocks.socialLink.label": "Singolo link social",
+  "blocks.accordionItem.label": "Domanda",
+  "blocks.tab.label": "Tab",
+  "blocks.feature.label": "Feature",
+  "blocks.testimonial.label": "Testimonianza",
+  "blocks.teamMember.label": "Membro del team",
+  "blocks.pricingPlan.label": "Piano prezzo",
+  "blocks.stat.label": "Statistica",
+  "blocks.timelineStep.label": "Fase",
+  "blocks.navLink.label": "Link di navigazione"
 }

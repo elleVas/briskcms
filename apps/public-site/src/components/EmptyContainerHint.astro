@@ -8,22 +8,36 @@
  * in canvas-editor-shell.tsx inserts it as a child). `show` is computed by
  * the caller (`!Astro.slots.has('default') && editable`) — never rendered
  * on the real published page, only on the preview routes.
+ *
+ * The sentence used to be written here in Italian, so an editor set to
+ * English printed one Italian line in the middle of the canvas.
+ *
+ * `childLabel` names what the container is waiting for, when it accepts
+ * exactly one type: Tabs takes a Tab and nothing else, Accordion an
+ * AccordionItem, Timeline a TimelineStep. "Pick an element" sends
+ * somebody hunting through fifty-four tiles for the one that is allowed;
+ * naming it is the difference between a prompt and a puzzle. Absent for a
+ * container that genuinely takes anything (Container, Column), where
+ * there is no single answer to give.
  */
+import { Translator } from '@brisk/theme-runtime';
+
 export interface Props {
   show: boolean;
+  /** The locale the editor is showing this page in. */
+  locale?: string | undefined;
+  /** The translated name of the only child type allowed, when there is one. */
+  childLabel?: string | null | undefined;
 }
 
-const { show } = Astro.props;
+const { show, locale, childLabel } = Astro.props;
+const i18n = new Translator(locale ?? 'en');
+const message = childLabel
+  ? i18n.t('emptyContainer.hintNamed', { child: childLabel })
+  : i18n.t('emptyContainer.hint');
 ---
 
-{
-  show && (
-    <p class="brisk-empty-container-hint">
-      Contenitore vuoto — seleziona questo blocco e scegli un elemento dalla
-      barra laterale per aggiungerlo qui.
-    </p>
-  )
-}
+{show && <p class="brisk-empty-container-hint">{message}</p>}
 
 <style>
   .brisk-empty-container-hint {
