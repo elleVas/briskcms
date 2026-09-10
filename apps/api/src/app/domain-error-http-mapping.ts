@@ -40,6 +40,7 @@ import {
   UnsupportedMediaTypeError,
   UserAlreadyActiveError,
   UserEmailAlreadyExistsError,
+  LastActiveAdminError,
   UserNotFoundError,
   FormNotFoundError,
 } from '@brisk/domain-core';
@@ -91,6 +92,10 @@ const DOMAIN_ERROR_MAPPINGS: Array<[Type<Error>, DomainErrorFactory]> = [
   [PageTranslationNotDivergedError, (m) => new ConflictException(m)],
   [UserEmailAlreadyExistsError, (m) => new ConflictException(m)],
   [UserAlreadyActiveError, (m) => new ConflictException(m)],
+  // 409, like the two above it: nothing about the caller is wrong, the
+  // tenant is simply in a state where this request would destroy access
+  // to itself.
+  [LastActiveAdminError, (m) => new ConflictException(m)],
   [PageGroupReorderMismatchError, (m) => new BadRequestException(m)],
   [InvalidFormSubmissionError, (m) => new BadRequestException(m)],
   [InvalidCaptchaError, (m) => new BadRequestException(m)],

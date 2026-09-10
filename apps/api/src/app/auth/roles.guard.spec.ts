@@ -49,6 +49,7 @@ describe('RolesGuard', () => {
       findById: jest.fn(),
       findByEmail: jest.fn(),
       list: jest.fn(),
+      countActiveAdmins: jest.fn(),
     };
   });
 

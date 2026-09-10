@@ -1,4 +1,4 @@
-import { and, eq } from 'drizzle-orm';
+import { and, count, eq } from 'drizzle-orm';
 import {
   User,
   UserEmailAlreadyExistsError,
@@ -103,5 +103,21 @@ export class DrizzleUserRepository
       users.createdAt,
       pagination,
     );
+  }
+
+  async countActiveAdmins(tenantId: string): Promise<number> {
+    const rows = await withTenant(this.db, tenantId, (tx) =>
+      tx
+        .select({ total: count() })
+        .from(users)
+        .where(
+          and(
+            eq(users.tenantId, tenantId),
+            eq(users.role, 'admin'),
+            eq(users.isActive, true),
+          ),
+        ),
+    );
+    return rows[0].total;
   }
 }

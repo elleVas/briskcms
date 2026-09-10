@@ -1,3 +1,4 @@
+import { assertNotTheLastAdmin } from './assert-not-the-last-admin';
 import { UserNotFoundError } from '@brisk/domain-core';
 import type { User } from '@brisk/domain-core';
 import type { AuthPort, UserRepositoryPort } from '@brisk/ports';
@@ -18,6 +19,11 @@ export interface SetUserActiveInput {
  * setPageParent/updateSiteLayoutSectionSticky: this is a structural
  * on/off switch, not a content edit.
  *
+ * Refuses to switch off the last administrator who can still sign in:
+ * that locks everyone out, and there is no way back through the product
+ * — an editor cannot promote anybody, so it takes an UPDATE on the
+ * database. See assertNotTheLastAdmin.
+ *
  * Deactivating also invalidates any already-open sessions (same
  * reasoning as resetPassword) — RolesGuard checking `isActive` on every
  * request would eventually catch a deactivated user anyway, but ending
@@ -36,6 +42,7 @@ export async function setUserActive(
   if (input.isActive) {
     user.reactivate();
   } else {
+    await assertNotTheLastAdmin(deps.userRepository, user);
     user.deactivate();
   }
   await deps.userRepository.save(user);

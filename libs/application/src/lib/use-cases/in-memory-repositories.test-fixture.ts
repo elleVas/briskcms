@@ -428,6 +428,13 @@ export class InMemoryUserRepository implements UserRepositoryPort {
     return null;
   }
 
+  async countActiveAdmins(tenantId: string): Promise<number> {
+    return [...this.users.values()].filter(
+      (user) =>
+        user.tenantId === tenantId && user.role === 'admin' && user.isActive,
+    ).length;
+  }
+
   async list(
     tenantId: string,
     pagination: Pagination,

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   InvalidOrExpiredTokenError,
+  LastActiveAdminError,
   User,
   UserAlreadyActiveError,
   UserEmailAlreadyExistsError,
@@ -280,6 +281,50 @@ describe('updateUserRole', () => {
   });
 });
 
+describe('updateUserRole and the last administrator', () => {
+  it('refuses to demote the last active administrator — the same lockout by another route', async () => {
+    const deps = setup();
+    await deps.userRepository.save(
+      User.create({
+        id: 'admin-1',
+        tenantId,
+        email: 'admin@example.com',
+        displayName: 'Admin',
+        passwordHash: 'irrelevant',
+        role: 'admin',
+      }),
+    );
+
+    await expect(
+      updateUserRole(deps, { tenantId, userId: 'admin-1', role: 'editor' }),
+    ).rejects.toThrow(LastActiveAdminError);
+    const saved = await deps.userRepository.findById(tenantId, 'admin-1');
+    expect(saved?.role).toBe('admin');
+  });
+
+  it('allows re-confirming the last administrator AS an administrator', async () => {
+    const deps = setup();
+    await deps.userRepository.save(
+      User.create({
+        id: 'admin-1',
+        tenantId,
+        email: 'admin@example.com',
+        displayName: 'Admin',
+        passwordHash: 'irrelevant',
+        role: 'admin',
+      }),
+    );
+
+    const result = await updateUserRole(deps, {
+      tenantId,
+      userId: 'admin-1',
+      role: 'admin',
+    });
+
+    expect(result.role).toBe('admin');
+  });
+});
+
 describe('setUserActive', () => {
   async function setupActiveUser(deps: ReturnType<typeof setup>) {
     const user = User.create({
@@ -309,6 +354,85 @@ describe('setUserActive', () => {
     const saved = await deps.userRepository.findById(tenantId, 'user-1');
     expect(saved?.isActive).toBe(false);
     expect(await deps.authPort.validateSession(session.token)).toBeNull();
+  });
+
+  /*
+   * The screen offers "deactivate" on every row, including the row of
+   * the only administrator, and there is no way back in afterwards: an
+   * editor cannot promote anybody, so recovery is an UPDATE on the
+   * database.
+   */
+  it('refuses to switch off the last administrator who can still sign in', async () => {
+    const deps = setup();
+    await deps.userRepository.save(
+      User.create({
+        id: 'admin-1',
+        tenantId,
+        email: 'admin@example.com',
+        displayName: 'Admin',
+        passwordHash: 'irrelevant',
+        role: 'admin',
+      }),
+    );
+
+    await expect(
+      setUserActive(deps, { tenantId, userId: 'admin-1', isActive: false }),
+    ).rejects.toThrow(LastActiveAdminError);
+    const saved = await deps.userRepository.findById(tenantId, 'admin-1');
+    expect(saved?.isActive).toBe(true);
+  });
+
+  it('allows switching off an administrator while another active one remains', async () => {
+    const deps = setup();
+    for (const id of ['admin-1', 'admin-2']) {
+      await deps.userRepository.save(
+        User.create({
+          id,
+          tenantId,
+          email: `${id}@example.com`,
+          displayName: id,
+          passwordHash: 'irrelevant',
+          role: 'admin',
+        }),
+      );
+    }
+
+    const result = await setUserActive(deps, {
+      tenantId,
+      userId: 'admin-1',
+      isActive: false,
+    });
+
+    expect(result.isActive).toBe(false);
+  });
+
+  it('counts only administrators who can sign in — an invited, never-accepted one does not hold the door open', async () => {
+    const deps = setup();
+    await deps.userRepository.save(
+      User.create({
+        id: 'admin-1',
+        tenantId,
+        email: 'admin@example.com',
+        displayName: 'Admin',
+        passwordHash: 'irrelevant',
+        role: 'admin',
+      }),
+    );
+    await deps.userRepository.save(
+      User.create({
+        id: 'admin-invited',
+        tenantId,
+        email: 'invited@example.com',
+        displayName: 'Invited',
+        passwordHash: 'irrelevant',
+        role: 'admin',
+        isActive: false,
+      }),
+    );
+
+    await expect(
+      setUserActive(deps, { tenantId, userId: 'admin-1', isActive: false }),
+    ).rejects.toThrow(LastActiveAdminError);
   });
 
   it('reactivates a user without touching sessions', async () => {

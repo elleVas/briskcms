@@ -163,6 +163,24 @@ export class UserNotFoundError extends Error {
 }
 
 /** A tenant's (tenantId, email) must be unique — see the unique constraint in schema.ts. */
+/**
+ * The change would leave the tenant with no admin who can sign in.
+ *
+ * Deactivating the last active admin, or demoting them, locks EVERYONE
+ * out: an editor cannot promote anybody, and there is no way back in
+ * through the product — it takes an UPDATE on the database. The screen
+ * offers both actions on every row, including your own, which is how it
+ * happened.
+ */
+export class LastActiveAdminError extends Error {
+  constructor() {
+    super(
+      'This is the last active administrator — the change would leave nobody able to administer this site',
+    );
+    this.name = 'LastActiveAdminError';
+  }
+}
+
 export class UserEmailAlreadyExistsError extends Error {
   constructor(email: string) {
     super(`A user with email "${email}" already exists`);

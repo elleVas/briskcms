@@ -1,3 +1,4 @@
+import { assertNotTheLastAdmin } from './assert-not-the-last-admin';
 import { UserNotFoundError } from '@brisk/domain-core';
 import type { User, UserRole } from '@brisk/domain-core';
 import type { UserRepositoryPort } from '@brisk/ports';
@@ -21,6 +22,9 @@ export async function updateUserRole(
     throw new UserNotFoundError(input.userId);
   }
 
+  if (input.role !== 'admin') {
+    await assertNotTheLastAdmin(deps.userRepository, user);
+  }
   user.changeRole(input.role);
   await deps.userRepository.save(user);
 

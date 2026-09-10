@@ -15,4 +15,13 @@ export interface UserRepositoryPort {
     tenantId: string,
     pagination: Pagination,
   ): Promise<PaginatedResult<User>>;
+  /**
+   * How many admins of this tenant can still sign in.
+   *
+   * A count, not a listing, because the only question asked of it is
+   * "would this change leave zero" — see LastActiveAdminError. Paging
+   * through every user to count them in memory would answer the same
+   * question by reading the whole table.
+   */
+  countActiveAdmins(tenantId: string): Promise<number>;
 }
