@@ -1562,7 +1562,8 @@
           "fieldLabel": "Layout",
           "options": {
             "list": "List",
-            "grid": "Grid"
+            "grid": "Grid",
+            "cards": "Cards"
           }
         },
         "limit": {
@@ -1570,6 +1571,13 @@
         },
         "emptyText": {
           "fieldLabel": "Text when there is nothing to list"
+        },
+        "order": {
+          "fieldLabel": "Order",
+          "options": {
+            "title": "By title",
+            "newest": "Newest first"
+          }
         }
       }
     },

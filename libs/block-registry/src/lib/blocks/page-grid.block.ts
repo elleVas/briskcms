@@ -20,6 +20,7 @@ export const pageGridBlock: BlockDescriptor<PageGridProps> = {
   defaultProps: {
     termId: null,
     layout: 'list',
+    order: 'title',
     limit: 0,
     emptyText: '',
     items: [],
@@ -40,6 +41,25 @@ export const pageGridBlock: BlockDescriptor<PageGridProps> = {
       options: [
         { label: 'blocks.pageGrid.fields.layout.options.list', value: 'list' },
         { label: 'blocks.pageGrid.fields.layout.options.grid', value: 'grid' },
+        {
+          label: 'blocks.pageGrid.fields.layout.options.cards',
+          value: 'cards',
+        },
+      ],
+    },
+    {
+      // Where an archive of news differs from a category of documentation:
+      // one is read newest first, the other alphabetically.
+      kind: 'radio',
+      key: 'order',
+      label: 'blocks.pageGrid.fields.order.fieldLabel',
+      group: 'style',
+      options: [
+        { label: 'blocks.pageGrid.fields.order.options.title', value: 'title' },
+        {
+          label: 'blocks.pageGrid.fields.order.options.newest',
+          value: 'newest',
+        },
       ],
     },
     {

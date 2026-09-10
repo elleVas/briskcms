@@ -7,6 +7,7 @@ import type {
   SiteLayoutSectionRepositoryPort,
   SiteRepositoryPort,
   SiteThemeBlockStylesPort,
+  TaxonomyRepositoryPort,
 } from '@brisk/ports';
 import { resolvePageContentReferences } from './resolve-page-content-references';
 import { resolveSiteChrome } from './resolve-site-chrome';
@@ -19,6 +20,8 @@ export interface GetPreviewReusableSectionByIdDeps {
   siteRepository: SiteRepositoryPort;
   siteLayoutSectionRepository: SiteLayoutSectionRepositoryPort;
   siteThemeBlockStylesRepository: SiteThemeBlockStylesPort;
+  /** A reusable section can hold a PageGrid, and a preview of it has to show what it lists. */
+  taxonomyRepository: TaxonomyRepositoryPort;
 }
 
 export interface GetPreviewReusableSectionByIdInput {
@@ -78,7 +81,7 @@ export async function getPreviewReusableSectionById(
     resolveSiteChrome(deps, input.tenantId, site, input.locale, {
       preview: true,
     }),
-    resolvePageContentReferences(deps, input.tenantId, input.locale, [
+    resolvePageContentReferences(deps, input.tenantId, site.id, input.locale, [
       section.content,
     ]),
   ]);

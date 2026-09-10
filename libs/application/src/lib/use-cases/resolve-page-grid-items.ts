@@ -24,6 +24,27 @@ function collectTermIds(blocks: PageContent, into: Set<string>): void {
 }
 
 /**
+ * Alphabetical, or newest first.
+ *
+ * A page with no publication date sorts last rather than first: unlike
+ * the editor, where an unpublished draft is the row asking for
+ * attention, a reader arriving at an archive is owed the most recent
+ * thing at the top, and a missing date means "we do not know", not
+ * "today".
+ */
+function compareItems(order: unknown) {
+  if (order !== 'newest') {
+    return (a: PageGridItem, b: PageGridItem) => a.title.localeCompare(b.title);
+  }
+  return (a: PageGridItem, b: PageGridItem) => {
+    if (a.publishedAt === b.publishedAt) return a.title.localeCompare(b.title);
+    if (!a.publishedAt) return 1;
+    if (!b.publishedAt) return -1;
+    return b.publishedAt.localeCompare(a.publishedAt);
+  };
+}
+
+/**
  * Fills in what each `PageGrid` block on a page is listing.
  *
  * The same treatment a picked page's address already gets
@@ -80,9 +101,11 @@ export async function resolvePageGridItems(
         pageGroupId: groupId,
         title: path.title,
         path: localePathFromAncestors(locale, path.ancestorSlugs, path.slug),
+        publishedAt: path.publishedAt ? path.publishedAt.toISOString() : null,
+        excerpt: path.description,
+        image: path.image,
       });
     }
-    items.sort((a, b) => a.title.localeCompare(b.title));
     itemsByTerm.set(termId, items);
   });
 
@@ -101,9 +124,13 @@ function fillBlocks(
       return children ? { ...block, children } : block;
     }
     const termId = block.props['termId'];
+    // Sorted here and not once per term: two grids on the same page may
+    // list the same term in two different orders, and one shared sorted
+    // array would hand the second one the first one's answer.
     const items =
       typeof termId === 'string' ? (itemsByTerm.get(termId) ?? []) : [];
-    const next: Block = { ...block, props: { ...block.props, items } };
+    const sorted = [...items].sort(compareItems(block.props['order']));
+    const next: Block = { ...block, props: { ...block.props, items: sorted } };
     return children ? { ...next, children } : next;
   });
 }

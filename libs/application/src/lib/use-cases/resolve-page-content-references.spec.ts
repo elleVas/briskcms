@@ -14,6 +14,7 @@ import {
 
 describe('resolvePageContentReferences', () => {
   const tenantId = 'tenant-1';
+  const siteId = 'site-1';
 
   function setup() {
     const pageGroupVersionRepository = new InMemoryPageGroupVersionRepository();
@@ -80,6 +81,7 @@ describe('resolvePageContentReferences', () => {
     const [resolved] = await resolvePageContentReferences(
       deps,
       tenantId,
+      siteId,
       'it',
       [content],
     );
@@ -118,6 +120,7 @@ describe('resolvePageContentReferences', () => {
     const [resolved] = await resolvePageContentReferences(
       deps,
       tenantId,
+      siteId,
       'en',
       [content],
     );
@@ -148,6 +151,7 @@ describe('resolvePageContentReferences', () => {
     const [resolvedHeader, resolvedFooter] = await resolvePageContentReferences(
       deps,
       tenantId,
+      siteId,
       'it',
       [header, footer],
     );
@@ -162,6 +166,49 @@ describe('resolvePageContentReferences', () => {
     });
   });
 
+  /*
+   * It used to be resolved on the term route alone, so the very thing
+   * the block's own description promises — "the three articles in this
+   * category, here" — rendered empty on every ordinary page and in every
+   * preview.
+   */
+  it('fills in what a PageGrid lists, wherever the page is being served from', async () => {
+    const deps = setup();
+    const { group, translation } = await createGroupWithTranslation(
+      deps,
+      'it',
+      'un-articolo',
+    );
+    translation.publish([], { by: null });
+    await deps.pageTranslationRepository.save(translation, null);
+    await deps.taxonomyRepository.setTermsForPageGroup(tenantId, group.id, [
+      'term-1',
+    ]);
+
+    const [resolved] = await resolvePageContentReferences(
+      deps,
+      tenantId,
+      siteId,
+      'it',
+      [
+        [
+          {
+            id: 'grid-1',
+            type: 'PageGrid',
+            props: { termId: 'term-1', order: 'title', items: [] },
+          },
+        ],
+      ],
+    );
+
+    expect(resolved[0].props['items']).toEqual([
+      expect.objectContaining({
+        title: 'un-articolo',
+        path: '/it/un-articolo',
+      }),
+    ]);
+  });
+
   it('returns the content trees unchanged when nothing references a page', async () => {
     const deps = setup();
     const content: PageContent = [
@@ -171,6 +218,7 @@ describe('resolvePageContentReferences', () => {
     const [resolved] = await resolvePageContentReferences(
       deps,
       tenantId,
+      siteId,
       'it',
       [content],
     );
@@ -214,6 +262,7 @@ describe('resolvePageContentReferences', () => {
       const [resolved] = await resolvePageContentReferences(
         deps,
         tenantId,
+        siteId,
         'it',
         [navLinkTo(child.id)],
       );
@@ -256,6 +305,7 @@ describe('resolvePageContentReferences', () => {
       const [resolved] = await resolvePageContentReferences(
         deps,
         tenantId,
+        siteId,
         'en',
         [navLinkTo(child.id)],
       );

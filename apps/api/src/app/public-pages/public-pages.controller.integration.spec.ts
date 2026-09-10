@@ -463,11 +463,13 @@ describe('PublicPagesController (integration)', () => {
       (block: { type: string }) => block.type === 'PageGrid',
     );
     expect(grid.props.items).toEqual([
-      {
+      // A card also carries a date, a summary and a picture — this test is
+      // about the list reaching a reader with no session, not about them.
+      expect.objectContaining({
         pageGroupId: group.body.id,
         title: 'La macchina',
         path: `/it/macchina-${suffix}`,
-      },
+      }),
     ]);
   });
 
