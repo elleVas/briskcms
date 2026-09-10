@@ -17,6 +17,7 @@ import { PublicNewsletterModule } from './public-newsletter/public-newsletter.mo
 import { PublicPagesModule } from './public-pages/public-pages.module';
 import { PublicSiteLayoutSectionsModule } from './public-site-layout-sections/public-site-layout-sections.module';
 import { ReusableSectionsModule } from './reusable-sections/reusable-sections.module';
+import { CollectionsModule } from './collections/collections.module';
 import { TaxonomiesModule } from './taxonomies/taxonomies.module';
 import { SiteLayoutSectionsModule } from './site-layout-sections/site-layout-sections.module';
 import { SitesModule } from './sites/sites.module';
@@ -40,6 +41,7 @@ import { UsersModule } from './users/users.module';
     PublicFormsModule,
     PublicNewsletterModule,
     ReusableSectionsModule,
+    CollectionsModule,
     TaxonomiesModule,
     SiteLayoutSectionsModule,
     PublicSiteLayoutSectionsModule,

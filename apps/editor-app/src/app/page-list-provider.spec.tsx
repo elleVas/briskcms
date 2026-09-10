@@ -24,6 +24,7 @@ const bilingualGroup: PageGroupListItemRecord = {
   siteId: 'site-1',
   parentId: null,
   order: 0,
+  collectionId: null,
   createdByName: null,
   lastEditedAt: '2026-09-09T10:00:00.000Z',
   lastEditedByName: 'Grace Hopper',

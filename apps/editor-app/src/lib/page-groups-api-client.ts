@@ -46,6 +46,8 @@ export function getPageGroup(id: string): Promise<PageGroupRecord> {
 export interface CreatePageGroupInput {
   siteId: string;
   parentId?: string | null;
+  /** Which section of the editor it is being created from — see the Collection entity. */
+  collectionId?: string | null;
   content?: Block[];
 }
 
@@ -64,6 +66,8 @@ export interface ListPageGroupsFilters {
   createdBefore?: Date;
   createdBy?: string;
   locale?: string;
+  /** `'none'` asks for the pages that belong to no section — see the Collection entity. */
+  collection?: 'none' | string;
 }
 
 export async function listPageGroups(
@@ -86,9 +90,20 @@ export async function listPageGroups(
   }
   if (filters.createdBy) params.set('createdBy', filters.createdBy);
   if (filters.locale) params.set('locale', filters.locale);
+  if (filters.collection) params.set('collection', filters.collection);
   return paginatedPageGroupsSchema.parse(
     await request(`/page-groups?${params.toString()}`),
   );
+}
+
+export function movePageGroupToCollection(
+  id: string,
+  collectionId: string | null,
+): Promise<PageGroupRecord> {
+  return requestGroup(`/page-groups/${id}/collection`, {
+    method: 'PATCH',
+    body: JSON.stringify({ collectionId }),
+  });
 }
 
 export function savePageGroupContent(

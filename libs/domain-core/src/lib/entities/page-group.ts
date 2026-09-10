@@ -9,6 +9,8 @@ export interface PageGroupProps {
   parentId: string | null;
   /** The position among siblings, shared for the same reason as `parentId` — see setPageOrder's own comment about the old model. */
   order: number;
+  /** Which section of the editor lists this page, or `null` for a page — see the Collection entity. */
+  collectionId: string | null;
   /** The canonical block tree. For a field marked `translatable` (see FieldDescriptor in @brisk/block-registry), the value here is the site's default language's — the fallback used until a PageTranslation has an override of its own (see mergeTranslatedContent). */
   content: PageContent;
   createdBy: string | null;
@@ -35,6 +37,7 @@ export interface CreatePageGroupProps {
   parentId?: string | null;
   content?: PageContent;
   order?: number;
+  collectionId?: string | null;
   createdBy?: string | null;
   now?: Date;
 }
@@ -59,6 +62,7 @@ export class PageGroup {
       siteId: input.siteId,
       parentId: input.parentId ?? null,
       order: input.order ?? 0,
+      collectionId: input.collectionId ?? null,
       content: input.content ?? [],
       createdBy: input.createdBy ?? null,
       createdAt: now,
@@ -96,6 +100,10 @@ export class PageGroup {
     return this.props.order;
   }
 
+  get collectionId(): string | null {
+    return this.props.collectionId;
+  }
+
   get content(): PageContent {
     return this.props.content;
   }
@@ -129,6 +137,19 @@ export class PageGroup {
   /** Reassigns the position among siblings — the same discipline as Page.reorder: the permutation's validity is the use case's business, not the entity's. */
   reorder(order: number, edit: EditContext): void {
     this.props.order = order;
+    this.touch(edit);
+  }
+
+  /**
+   * Moves this page into a section of the editor, or back out of one
+   * (`null`).
+   *
+   * It changes which screen lists the page and in what order, and
+   * nothing else: not its address, not its place in the site's tree, not
+   * what a visitor sees. An article and a page are the same object.
+   */
+  moveToCollection(collectionId: string | null, edit: EditContext): void {
+    this.props.collectionId = collectionId;
     this.touch(edit);
   }
 

@@ -31,6 +31,7 @@ export function pageGroupsQueryOptions(
       filters.createdBefore?.toISOString(),
       filters.createdBy,
       filters.locale,
+      filters.collection,
     ] as const,
     queryFn: () => listPageGroups(siteId, page, PAGE_GROUPS_PAGE_SIZE, filters),
   });

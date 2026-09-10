@@ -84,6 +84,17 @@ const ACTIONS_COLUMN = 'w-[7.5rem]';
 
 export interface PageGroupsListViewProps {
   siteId: string;
+  /**
+   * `tree` is the site's own pages, in the order somebody dragged them
+   * into; `feed` is a section, flat and newest first. The rows are the
+   * same rows — what changes is that a feed has no hierarchy to draw and
+   * no order to drag, because its order is the publication date.
+   */
+  layout?: 'tree' | 'feed';
+  /** The section being listed, so a page created here is created in it. */
+  collectionId?: string | null;
+  /** Shown as the screen's heading — a section is named by whoever made it. */
+  title?: string;
   defaultLocale: string;
   enabledLocales: string[];
   groups: PageGroupListItemRecord[];
@@ -353,6 +364,9 @@ function PageGroupRow({
  */
 export function PageGroupsListView({
   siteId,
+  layout = 'tree',
+  collectionId = null,
+  title,
   defaultLocale,
   enabledLocales,
   groups,
@@ -369,15 +383,27 @@ export function PageGroupsListView({
     duplicatePageGroup,
     isDuplicating,
     reorderPageGroups,
-  } = usePageGroupsList(siteId, defaultLocale);
-  const tree = buildHierarchyTree(groups);
+  } = usePageGroupsList(siteId, defaultLocale, collectionId);
+  // A feed has no hierarchy to build: every row sits at depth zero, which
+  // is also what makes the tree guides draw nothing.
+  const tree =
+    layout === 'feed'
+      ? groups.map((item) => ({
+          item,
+          depth: 0,
+          isLast: true,
+          ancestorIsLast: [] as readonly boolean[],
+        }))
+      : buildHierarchyTree(groups);
 
   const [state, dispatch] = useReducer(pageGroupsListReducer, initialState);
   const { selectedGroupId, openDialog, actionError } = state;
   const selectedGroup = groups.find((g) => g.id === selectedGroupId) ?? null;
   const totalPages = Math.max(1, Math.ceil(total / PAGE_GROUPS_PAGE_SIZE));
   const hasNoFilters = Object.values(filters).every((v) => v === '');
-  const canReorder = hasNoFilters && totalPages <= 1;
+  // A feed is never draggable: its order is the publication date, and a
+  // handle offering to change it would be lying.
+  const canReorder = layout === 'tree' && hasNoFilters && totalPages <= 1;
 
   // Same click-vs-drag distinction as canvas/layers-panel.tsx: without an
   // activation distance, dnd-kit would capture the pointer on a plain
@@ -444,7 +470,9 @@ export function PageGroupsListView({
     <MediaPickerProvider siteId={siteId}>
       <div className="flex flex-col gap-4">
         <div className="flex items-center justify-between">
-          <h1 className="text-lg font-semibold">{t('pages.list.title')}</h1>
+          <h1 className="text-lg font-semibold">
+            {title ?? t('pages.list.title')}
+          </h1>
           <Button
             onClick={() => dispatch({ type: 'OPEN_DIALOG', dialog: 'new' })}
           >

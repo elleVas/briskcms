@@ -19,7 +19,12 @@ import {
  * exists). Duplicate and drag-reorder ARE wired up now (were the last two
  * tracked follow-ups from Fase 4).
  */
-export function usePageGroupsList(siteId: string, defaultLocale: string) {
+export function usePageGroupsList(
+  siteId: string,
+  defaultLocale: string,
+  /** The section a new page is created in — null on the Pages screen, an id on a section's own. */
+  collectionId: string | null = null,
+) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
@@ -36,7 +41,7 @@ export function usePageGroupsList(siteId: string, defaultLocale: string) {
 
   const createPageGroupMutation = useMutation({
     mutationFn: async (name: string) => {
-      const group = await apiCreatePageGroup({ siteId });
+      const group = await apiCreatePageGroup({ siteId, collectionId });
       await apiCreatePageGroupTranslation(group.id, {
         locale: defaultLocale,
         slug: slugify(name),

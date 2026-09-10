@@ -20,6 +20,7 @@ import {
   getPageGroupById,
   getPageTranslationById,
   listPageGroups,
+  movePageGroupToCollection,
   listPageGroupTerms,
   listPageGroupTranslations,
   listPageGroupVersions,
@@ -41,6 +42,7 @@ import type {
   PageTranslationVersion,
 } from '@brisk/domain-core';
 import type {
+  CollectionRepositoryPort,
   PageGroupRepositoryPort,
   PageGroupVersionRepositoryPort,
   PageTranslationRepositoryPort,
@@ -83,6 +85,7 @@ import {
   SEARCH_REPOSITORY,
   SITE_REPOSITORY,
   TAXONOMY_REPOSITORY,
+  COLLECTION_REPOSITORY,
 } from './pages.tokens';
 import {
   type CreatePageGroupBody,
@@ -90,7 +93,9 @@ import {
   type CreatePageGroupTranslationBody,
   createPageGroupTranslationBodySchema,
   type ListPageGroupsQuery,
+  type MoveToCollectionBody,
   listPageGroupsQuerySchema,
+  moveToCollectionBodySchema,
   type ReorderPageGroupsBody,
   reorderPageGroupsBodySchema,
   type RollbackPageGroupBody,
@@ -136,6 +141,8 @@ export class PageGroupsController {
     private readonly taxonomyRepository: TaxonomyRepositoryPort,
     @Inject(SITE_REPOSITORY)
     private readonly siteRepository: SiteRepositoryPort,
+    @Inject(COLLECTION_REPOSITORY)
+    private readonly collectionRepository: CollectionRepositoryPort,
   ) {}
 
   /** What the taxonomy use cases need — the same three everywhere they are called. */
@@ -181,6 +188,12 @@ export class PageGroupsController {
           createdBefore: query.createdBefore,
           createdBy: query.createdBy,
           locale: query.locale,
+          ...(query.collection === undefined
+            ? {}
+            : {
+                collectionId:
+                  query.collection === 'none' ? null : query.collection,
+              }),
         },
       },
     );
@@ -370,6 +383,28 @@ export class PageGroupsController {
         termIds: body.termIds,
       }),
     };
+  }
+
+  /** Which section of the editor lists this page — not where it lives on the site. */
+  @Patch(':id/collection')
+  async moveToCollection(
+    @Param('id') id: string,
+    @Body(new ZodValidationPipe(moveToCollectionBodySchema))
+    body: MoveToCollectionBody,
+  ) {
+    const group = await movePageGroupToCollection(
+      {
+        pageGroupRepository: this.pageGroupRepository,
+        collectionRepository: this.collectionRepository,
+      },
+      {
+        tenantId: this.tenantContext.getCurrentTenantId(),
+        pageGroupId: id,
+        collectionId: body.collectionId,
+        actorUserId: this.tenantContext.getCurrentUserId(),
+      },
+    );
+    return this.toGroupDto(group);
   }
 
   @Patch('translations/:translationId/field-values')

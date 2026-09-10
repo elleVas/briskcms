@@ -51,6 +51,7 @@ export interface PageGroupListItem {
   createdByName: string | null;
   createdAt: Date;
   updatedAt: Date;
+  collectionId: string | null;
   /**
    * The last change to this page in ANY language, and who made it.
    *
@@ -73,7 +74,32 @@ export interface PageGroupListFilters {
   createdBy?: string;
   /** Groups that have a translation (any status) in this locale. */
   locale?: string;
+  /**
+   * Which section of the editor is asking.
+   *
+   * `undefined` means "do not filter on this" and is what the sitemap or
+   * a nav tree wants; `null` means the Pages screen, which shows the
+   * pages that belong to no section; an id means that section's own
+   * screen. The three are genuinely different questions, which is why
+   * `null` is a value here and not an omission.
+   */
+  collectionId?: string | null;
 }
+
+/**
+ * How a list of pages comes back.
+ *
+ * `tree` is the site's own order — the position among siblings an author
+ * dragged them into. `newest` is a feed: most recently published first,
+ * with what has never been published at the top, because in an editor an
+ * unpublished draft is the row that wants attention.
+ *
+ * An argument of its own rather than something inferred from the
+ * filters: "a section is a feed" is a product rule, and a repository
+ * that guesses the order from which filter happens to be set is a
+ * repository nobody can call deliberately.
+ */
+export type PageGroupListSort = 'tree' | 'newest';
 
 /**
  * Owns the SHARED structure and the position in the hierarchy — it takes
@@ -97,6 +123,7 @@ export interface PageGroupRepositoryPort {
     siteId: string,
     pagination: Pagination,
     filters: PageGroupListFilters,
+    sort?: PageGroupListSort,
   ): Promise<PaginatedResult<PageGroupListItem>>;
   /**
    * Every page group's canonical content on one site (docs/adr/0059).

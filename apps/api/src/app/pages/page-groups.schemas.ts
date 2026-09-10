@@ -14,15 +14,26 @@ export const listPageGroupsQuerySchema = z.object({
   createdBefore: z.coerce.date().optional(),
   createdBy: z.string().uuid().optional(),
   locale: z.string().min(2).optional(),
+  // Three answers, not two: absent asks for every page wherever it is
+  // filed, 'none' for the ones that belong to no section (the Pages
+  // screen), an id for one section's own screen. A literal rather than a
+  // nullable uuid because a query string has no null to send.
+  collection: z.union([z.literal('none'), z.string().uuid()]).optional(),
 });
 export type ListPageGroupsQuery = z.infer<typeof listPageGroupsQuerySchema>;
 
 export const createPageGroupBodySchema = z.object({
   siteId: z.string().uuid(),
   parentId: z.string().uuid().nullable().optional(),
+  collectionId: z.string().uuid().nullable().optional(),
   content: sanitizedPageContentSchema.optional(),
 });
 export type CreatePageGroupBody = z.infer<typeof createPageGroupBodySchema>;
+
+export const moveToCollectionBodySchema = z.object({
+  collectionId: z.string().uuid().nullable(),
+});
+export type MoveToCollectionBody = z.infer<typeof moveToCollectionBodySchema>;
 
 export const createPageGroupTranslationBodySchema = z.object({
   locale: z.string().min(2),

@@ -15,7 +15,11 @@ import {
   Users,
   type LucideIcon,
 } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
 import { AccountMenu } from './account-menu';
+import { collectionsQueryOptions } from './collections-queries';
+import { collectionIcon } from './collection-icons';
+import { siteQueryOptions } from './site-queries';
 import { SettingsMenu } from './settings-menu';
 import { Separator } from '../components/ui/separator';
 import { useCurrentSession } from './use-current-session';
@@ -40,16 +44,19 @@ export interface AdminShellProps {
  */
 function NavItem({
   to,
+  params,
   icon: Icon,
   label,
 }: {
   to: string;
+  params?: Record<string, string>;
   icon: LucideIcon;
   label: string;
 }) {
   return (
     <Link
       to={to}
+      params={params}
       activeOptions={{ exact: to === '/' }}
       className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground"
       activeProps={{ className: 'bg-muted text-foreground' }}
@@ -63,6 +70,14 @@ function NavItem({
 export function AdminShell({ children }: AdminShellProps) {
   const { isAdmin } = useCurrentSession();
   const { t } = useTranslation();
+  // A plain query, not a suspending one: the sidebar has to be on screen
+  // before the sections it may or may not have are known, and a site with
+  // none is the normal case.
+  const { data: site } = useQuery(siteQueryOptions());
+  const { data: collections } = useQuery({
+    ...collectionsQueryOptions(site?.id ?? ''),
+    enabled: Boolean(site?.id),
+  });
 
   return (
     <div className="flex h-screen flex-col">
@@ -78,6 +93,18 @@ export function AdminShell({ children }: AdminShellProps) {
               label={t('shell.nav.dashboard')}
             />
             <NavItem to="/pages" icon={FileText} label={t('shell.nav.pages')} />
+            {/* One entry per section the site has defined. They sit
+                straight under Pages because that is what they are: pages
+                of one kind, kept apart so neither list drowns the other. */}
+            {(collections ?? []).map((collection) => (
+              <NavItem
+                key={collection.id}
+                to="/collections/$collectionId"
+                params={{ collectionId: collection.id }}
+                icon={collectionIcon(collection.icon)}
+                label={collection.name}
+              />
+            ))}
             <NavItem to="/media" icon={Image} label={t('shell.nav.media')} />
             <NavItem
               to="/forms"

@@ -1807,5 +1807,22 @@
       "remove": "Rimuovi",
       "add": "Aggiungi immagine"
     }
+  },
+  "collections": {
+    "menuLabel": "Sezioni di contenuto",
+    "actionFailed": "Non è stato possibile applicare la modifica.",
+    "dialog": {
+      "title": "Sezioni di contenuto",
+      "description": "Una sezione raccoglie pagine di un tipo — News, Eventi, Casi studio — e ha una voce di menu sua. Sotto la scocca restano pagine normali.",
+      "newLabel": "Nuova sezione",
+      "newPlaceholder": "News",
+      "create": "Aggiungi",
+      "nameOf": "Nome di {{name}}",
+      "delete": "Elimina {{name}}",
+      "confirmDelete": {
+        "title": "Eliminare questa sezione?",
+        "description": "{{name}} sparisce dal menu. Le pagine che conteneva restano e tornano fra le Pagine."
+      }
+    }
   }
 }

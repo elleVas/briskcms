@@ -6,14 +6,11 @@ import {
   useSuspenseQuery,
 } from '@tanstack/react-query';
 import { z } from 'zod';
-import type { ListPageGroupsFilters } from '../lib/page-groups-api-client';
 import { pageGroupsQueryOptions } from '../app/page-groups-queries';
 import { PageGroupsListView } from '../app/page-groups-list-view';
-import {
-  EMPTY_PAGES_LIST_FILTERS,
-  type PagesListFilterValues,
-} from '../app/pages-list-filter-bar';
+import { EMPTY_PAGES_LIST_FILTERS } from '../app/pages-list-filter-bar';
 import { siteQueryOptions } from '../app/site-queries';
+import { toApiFilters } from '../app/pages-list-filters';
 import { useDebouncedValue } from '../app/use-debounced-value';
 import { requireAuth } from './-require-auth';
 
@@ -42,28 +39,11 @@ export const Route = createFileRoute('/_shell/pages/')({
       // touches the filter bar, the component below refetches via a
       // plain (non-suspense) useQuery instead, see its own comment.
       await context.queryClient.ensureQueryData(
-        pageGroupsQueryOptions(site.id, deps.page),
+        pageGroupsQueryOptions(site.id, deps.page, { collection: 'none' }),
       );
     }),
   component: PagesListRoute,
 });
-
-function toApiFilters(
-  filters: PagesListFilterValues,
-  debouncedSearch: string,
-): ListPageGroupsFilters {
-  return {
-    search: debouncedSearch || undefined,
-    createdAfter: filters.createdAfter
-      ? new Date(filters.createdAfter)
-      : undefined,
-    createdBefore: filters.createdBefore
-      ? new Date(filters.createdBefore)
-      : undefined,
-    createdBy: filters.createdBy || undefined,
-    locale: filters.locale || undefined,
-  };
-}
 
 function PagesListRoute() {
   const { page } = Route.useSearch();
@@ -86,11 +66,12 @@ function PagesListRoute() {
   // (with `isFetching` true) while a new filter combination loads, instead
   // of flashing empty.
   const { data } = useQuery({
-    ...pageGroupsQueryOptions(
-      site.id,
-      page,
-      toApiFilters(filters, debouncedSearch),
-    ),
+    ...pageGroupsQueryOptions(site.id, page, {
+      ...toApiFilters(filters, debouncedSearch),
+      // Pages, and nothing filed under a section of its own: three
+      // hundred news items in this tree would make both unreadable.
+      collection: 'none',
+    }),
     placeholderData: keepPreviousData,
   });
 
