@@ -7,6 +7,7 @@ export const columnsBlock: BlockDescriptor<ColumnsProps> = {
   type: 'Columns',
   label: 'blocks.columns.label',
   category: 'layout',
+  icon: 'columns-3',
   defaultProps: { stackBelow: 'mobile', verticalAlign: 'stretch' },
   fields: [
     {

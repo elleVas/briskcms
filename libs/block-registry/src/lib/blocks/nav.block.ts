@@ -8,6 +8,7 @@ export const navBlock: BlockDescriptor<NavProps> = {
   type: 'Nav',
   label: 'blocks.nav.label',
   category: 'navigation',
+  icon: 'menu',
   defaultProps: { visibility: 'always' },
   fields: [visibilityField],
   isContainer: true,

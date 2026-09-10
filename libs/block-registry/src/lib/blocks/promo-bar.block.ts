@@ -9,6 +9,7 @@ export const promoBarBlock: BlockDescriptor<PromoBarProps> = {
   type: 'PromoBar',
   label: 'blocks.promoBar.label',
   category: 'chrome',
+  icon: 'panel-top',
   defaultProps: {
     message: 'Messaggio promozionale...',
     linkType: 'page',

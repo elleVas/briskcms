@@ -7,6 +7,7 @@ export const teamMemberBlock: BlockDescriptor<TeamMemberProps> = {
   type: 'TeamMember',
   label: 'blocks.teamMember.label',
   category: 'socialProof',
+  icon: 'user',
   defaultProps: {
     photo: null,
     name: 'Nome Cognome',

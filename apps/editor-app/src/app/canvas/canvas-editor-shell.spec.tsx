@@ -1,5 +1,6 @@
 import {
   fireEvent,
+  within,
   render,
   screen,
   waitFor,
@@ -434,12 +435,17 @@ describe('CanvasEditorShell', () => {
     const { onChange } = renderShell({ blocks: [] });
     await getIframe();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Contenuto' }));
     // The block button is draggable (block-picker.tsx) — it uses Pointer
     // Events rather than a plain click: a down+up with no movement in
     // between is the correct simulation of an ordinary click (no drag
     // threshold crossed).
-    const testoButton = screen.getByRole('button', { name: 'Testo' });
+    // Scoped to the inserter: since the layers tree started naming blocks
+    // the way a person picked them, a Text block on the canvas is also
+    // called "Testo", and an unscoped query cannot tell the tile from
+    // the row.
+    const testoButton = within(
+      screen.getByRole('complementary', { name: 'Inserisci blocco' }),
+    ).getByRole('button', { name: 'Testo' });
     fireEvent.pointerDown(testoButton, { pointerId: 1 });
     fireEvent.pointerUp(testoButton, { pointerId: 1 });
 
@@ -459,8 +465,13 @@ describe('CanvasEditorShell', () => {
       'postMessage',
     );
 
-    fireEvent.click(screen.getByRole('button', { name: 'Contenuto' }));
-    const testoButton = screen.getByRole('button', { name: 'Testo' });
+    // Scoped to the inserter: since the layers tree started naming blocks
+    // the way a person picked them, a Text block on the canvas is also
+    // called "Testo", and an unscoped query cannot tell the tile from
+    // the row.
+    const testoButton = within(
+      screen.getByRole('complementary', { name: 'Inserisci blocco' }),
+    ).getByRole('button', { name: 'Testo' });
     fireEvent.pointerDown(testoButton, { pointerId: 1 });
     fireEvent.pointerUp(testoButton, { pointerId: 1 });
 
@@ -551,8 +562,13 @@ describe('CanvasEditorShell', () => {
     // overlay-layer.spec.tsx does) — pageX 0 is therefore "inside" the
     // canvas by construction, consistent with isOverCanvas in
     // canvas-editor-shell.tsx.
-    fireEvent.click(screen.getByRole('button', { name: 'Contenuto' }));
-    const testoButton = screen.getByRole('button', { name: 'Testo' });
+    // Scoped to the inserter: since the layers tree started naming blocks
+    // the way a person picked them, a Text block on the canvas is also
+    // called "Testo", and an unscoped query cannot tell the tile from
+    // the row.
+    const testoButton = within(
+      screen.getByRole('complementary', { name: 'Inserisci blocco' }),
+    ).getByRole('button', { name: 'Testo' });
     fireEvent.pointerDown(testoButton, {
       pointerId: 1,
       clientX: 0,
@@ -612,8 +628,9 @@ describe('CanvasEditorShell', () => {
       height: 40,
     });
 
-    fireEvent.click(screen.getByRole('button', { name: 'Layout' }));
-    const colonnaButton = screen.getByRole('button', { name: 'Colonna' });
+    const colonnaButton = within(
+      screen.getByRole('complementary', { name: 'Inserisci blocco' }),
+    ).getByRole('button', { name: 'Colonna' });
     fireEvent.pointerDown(colonnaButton, {
       pointerId: 1,
       clientX: 0,
@@ -753,8 +770,13 @@ describe('CanvasEditorShell', () => {
     const { onChange } = renderShell({ blocks: [] });
     await getIframe();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Contenuto' }));
-    const testoButton = screen.getByRole('button', { name: 'Testo' });
+    // Scoped to the inserter: since the layers tree started naming blocks
+    // the way a person picked them, a Text block on the canvas is also
+    // called "Testo", and an unscoped query cannot tell the tile from
+    // the row.
+    const testoButton = within(
+      screen.getByRole('complementary', { name: 'Inserisci blocco' }),
+    ).getByRole('button', { name: 'Testo' });
     fireEvent.pointerDown(testoButton, {
       pointerId: 1,
       clientX: 0,

@@ -8,6 +8,7 @@ export const buttonBlock: BlockDescriptor<ButtonProps> = {
   type: 'Button',
   label: 'blocks.button.label',
   category: 'conversion',
+  icon: 'mouse-pointer-click',
   defaultProps: {
     label: 'Scopri di più',
     linkType: 'page',

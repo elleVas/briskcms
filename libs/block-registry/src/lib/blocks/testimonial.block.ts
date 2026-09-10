@@ -7,6 +7,7 @@ export const testimonialBlock: BlockDescriptor<TestimonialProps> = {
   type: 'Testimonial',
   label: 'blocks.testimonial.label',
   category: 'socialProof',
+  icon: 'message-square',
   defaultProps: {
     quote: 'Testo della recensione...',
     author: 'Nome Cognome',

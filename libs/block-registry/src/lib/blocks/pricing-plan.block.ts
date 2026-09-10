@@ -8,6 +8,7 @@ export const pricingPlanBlock: BlockDescriptor<PricingPlanProps> = {
   type: 'PricingPlan',
   label: 'blocks.pricingPlan.label',
   category: 'socialProof',
+  icon: 'tag',
   defaultProps: {
     name: 'Base',
     price: '9€',

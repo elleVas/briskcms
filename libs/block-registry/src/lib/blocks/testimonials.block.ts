@@ -7,6 +7,7 @@ export const testimonialsBlock: BlockDescriptor<TestimonialsProps> = {
   type: 'Testimonials',
   label: 'blocks.testimonials.label',
   category: 'socialProof',
+  icon: 'message-square-quote',
   defaultProps: { display: 'slider' },
   fields: [
     {

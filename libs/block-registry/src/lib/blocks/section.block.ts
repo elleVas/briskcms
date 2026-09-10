@@ -6,6 +6,7 @@ export const sectionBlock: BlockDescriptor<SectionProps> = {
   type: 'Section',
   label: 'blocks.section.label',
   category: 'layout',
+  icon: 'rows-3',
   defaultProps: { section: null },
   fields: [
     // One field, and the instance's own values are NOT declared here.

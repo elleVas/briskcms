@@ -6,6 +6,7 @@ export const mapEmbedBlock: BlockDescriptor<MapEmbedProps> = {
   type: 'MapEmbed',
   label: 'blocks.mapEmbed.label',
   category: 'media',
+  icon: 'map-pin',
   defaultProps: {
     address: 'Via Roma 1, Milano',
   },

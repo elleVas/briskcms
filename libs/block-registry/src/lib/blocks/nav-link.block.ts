@@ -10,6 +10,7 @@ export const navLinkBlock: BlockDescriptor<NavLinkProps> = {
   type: 'NavLink',
   label: 'blocks.navLink.label',
   category: 'navigation',
+  icon: 'link-2',
   defaultProps: {
     label: 'Link',
     linkType: 'page',

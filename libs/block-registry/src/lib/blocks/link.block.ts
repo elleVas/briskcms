@@ -8,6 +8,7 @@ export const linkBlock: BlockDescriptor<LinkProps> = {
   type: 'Link',
   label: 'blocks.link.label',
   category: 'content',
+  icon: 'link',
   defaultProps: {
     label: 'Scopri di più',
     linkType: 'page',

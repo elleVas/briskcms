@@ -9,6 +9,7 @@ export const videoFileBlock: BlockDescriptor<VideoFileProps> = {
   type: 'VideoFile',
   label: 'blocks.videoFile.label',
   category: 'media',
+  icon: 'video',
   defaultProps: {
     media: null,
     poster: null,

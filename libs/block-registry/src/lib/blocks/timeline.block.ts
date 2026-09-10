@@ -6,6 +6,7 @@ export const timelineBlock: BlockDescriptor<TimelineProps> = {
   type: 'Timeline',
   label: 'blocks.timeline.label',
   category: 'socialProof',
+  icon: 'milestone',
   defaultProps: {},
   fields: [],
   isContainer: true,

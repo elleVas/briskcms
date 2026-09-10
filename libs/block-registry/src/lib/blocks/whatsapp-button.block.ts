@@ -7,6 +7,7 @@ export const whatsAppButtonBlock: BlockDescriptor<WhatsAppButtonProps> = {
   type: 'WhatsAppButton',
   label: 'blocks.whatsAppButton.label',
   category: 'chrome',
+  icon: 'message-circle',
   defaultProps: {
     phoneNumber: '',
     message: '',

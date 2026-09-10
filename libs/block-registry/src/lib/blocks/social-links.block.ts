@@ -9,6 +9,7 @@ export const socialLinksBlock: BlockDescriptor<SocialLinksProps> = {
   type: 'SocialLinks',
   label: 'blocks.socialLinks.label',
   category: 'navigation',
+  icon: 'share-2',
   defaultProps: { display: 'grid' },
   fields: [
     {

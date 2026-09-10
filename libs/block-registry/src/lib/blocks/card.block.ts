@@ -6,6 +6,7 @@ export const cardBlock: BlockDescriptor<CardProps> = {
   type: 'Card',
   label: 'blocks.card.label',
   category: 'layout',
+  icon: 'square-stack',
   defaultProps: {
     media: null,
     alt: '',
