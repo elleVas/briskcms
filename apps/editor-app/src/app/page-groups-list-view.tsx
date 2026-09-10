@@ -41,6 +41,21 @@ import {
 import { PAGE_GROUPS_PAGE_SIZE } from './page-groups-queries';
 import { TranslationAvailabilityBadges } from './translation-availability-badges';
 import { usePageGroupsList } from './use-page-groups-list';
+import { TreeGuides } from './tree-guides';
+
+/** One indent step in the page tree, and the row height its elbows meet. */
+const PAGE_INDENT = 20;
+const PAGE_ROW_HEIGHT = 48;
+/**
+ * Where a top-level row starts. It is an inline style, not a padding
+ * class, because the indentation is added to it: a `px-4` would be
+ * overridden by the inline `paddingLeft` and the root pages would sit
+ * flat against the list's border.
+ */
+const PAGE_ROW_INSET = 16;
+/** Reserved for the row actions, so the language column lines up with its header. */
+const ACTIONS_COLUMN = 'w-[7.5rem]';
+const LOCALES_COLUMN = 'min-w-28';
 
 export interface PageGroupsListViewProps {
   siteId: string;
@@ -112,11 +127,17 @@ function groupDisplayTitle(
 interface PageGroupRowProps {
   group: PageGroupListItemRecord;
   depth: number;
+  isLast: boolean;
+  ancestorIsLast: readonly boolean[];
   isSelected: boolean;
   defaultLocale: string;
   enabledLocales: string[];
   draggable: boolean;
+  isDuplicating: boolean;
   onToggleSelected: () => void;
+  onEdit: () => void;
+  onDuplicate: () => void;
+  onDelete: () => void;
 }
 
 /**
@@ -130,11 +151,17 @@ interface PageGroupRowProps {
 function PageGroupRow({
   group,
   depth,
+  isLast,
+  ancestorIsLast,
   isSelected,
   defaultLocale,
   enabledLocales,
   draggable,
+  isDuplicating,
   onToggleSelected,
+  onEdit,
+  onDuplicate,
+  onDelete,
 }: PageGroupRowProps) {
   const { t } = useTranslation();
   const { attributes, listeners, setNodeRef, transform, transition } =
@@ -146,10 +173,34 @@ function PageGroupRow({
       style={{
         transform: CSS.Transform.toString(transform),
         transition: transition ?? undefined,
-        paddingLeft: depth * 20,
+        paddingLeft: PAGE_ROW_INSET + depth * PAGE_INDENT,
       }}
-      className="flex items-center gap-2 px-3"
+      className={cn(
+        'relative flex items-center gap-2 pr-3',
+        // A left rule marks the selected row. The tint alone was doing
+        // the whole job, and on a dark list a tint is something you have
+        // to look for; the rule is visible without looking.
+        'before:absolute before:inset-y-0 before:left-0 before:w-[3px]',
+        // The row itself carries the state, not the button inside it: a
+        // person clicks anywhere on the line, so the whole line has to
+        // answer. Selection used to tint the title alone, which on a
+        // dark list is a colour change you have to look for.
+        isSelected
+          ? 'bg-muted before:bg-primary'
+          : 'hover:bg-muted/50 before:bg-transparent',
+      )}
     >
+      {/* The same guides the canvas Layers panel draws. This list was a
+          tree only in the sense that children were indented: at the third
+          level, which parent a page belonged to was a guess. */}
+      <TreeGuides
+        depth={depth}
+        isLast={isLast}
+        ancestorIsLast={ancestorIsLast}
+        indent={PAGE_INDENT}
+        rowHeight={PAGE_ROW_HEIGHT}
+        offset={PAGE_ROW_INSET}
+      />
       {draggable && (
         <button
           type="button"
@@ -166,12 +217,17 @@ function PageGroupRow({
         aria-pressed={isSelected}
         onClick={onToggleSelected}
         className={cn(
-          'flex flex-1 items-center gap-3 py-3 text-left',
-          isSelected && 'text-primary',
+          'flex min-h-12 flex-1 cursor-pointer items-center gap-3 py-2 text-left',
+          isSelected && 'text-foreground',
         )}
       >
         <div className="flex flex-col">
-          <span className="text-sm font-medium">
+          <span
+            className={cn(
+              'text-sm',
+              isSelected ? 'font-semibold' : 'font-medium',
+            )}
+          >
             {groupDisplayTitle(group, defaultLocale)}
           </span>
           {group.createdByName && (
@@ -180,11 +236,50 @@ function PageGroupRow({
             </span>
           )}
         </div>
-        <TranslationAvailabilityBadges
-          translations={group.translations}
-          enabledLocales={enabledLocales}
-        />
+        {/* Right-aligned in a column of its own, under the header that
+            names it: inline after the title, the badges read as part of
+            the title. */}
+        <span
+          className={cn('ml-auto flex shrink-0 justify-end', LOCALES_COLUMN)}
+        >
+          <TranslationAvailabilityBadges
+            translations={group.translations}
+            enabledLocales={enabledLocales}
+          />
+        </span>
       </button>
+      {/* The actions belong to the row they act on. Sitting up next to
+          the page title, they appeared far from the line that had just
+          been clicked, and answered "something is selected" without
+          answering "which one". The column is reserved whether or not
+          they are shown, so selecting a row never shifts the layout. */}
+      <div
+        className={cn(
+          'flex shrink-0 items-center justify-end gap-1',
+          ACTIONS_COLUMN,
+        )}
+      >
+        {isSelected && (
+          <>
+            <IconButton label={t('pages.list.actions.edit')} onClick={onEdit}>
+              <Pencil />
+            </IconButton>
+            <IconButton
+              label={t('pages.list.actions.duplicate')}
+              disabled={isDuplicating}
+              onClick={onDuplicate}
+            >
+              <Copy />
+            </IconButton>
+            <IconButton
+              label={t('pages.list.actions.delete')}
+              onClick={onDelete}
+            >
+              <Trash2 />
+            </IconButton>
+          </>
+        )}
+      </div>
     </li>
   );
 }
@@ -291,38 +386,11 @@ export function PageGroupsListView({
       <div className="flex flex-col gap-4">
         <div className="flex items-center justify-between">
           <h1 className="text-lg font-semibold">{t('pages.list.title')}</h1>
-          <div className="flex items-center gap-1">
-            {selectedGroup && (
-              <>
-                <IconButton
-                  label={t('pages.list.actions.edit')}
-                  onClick={() => void handleOpenEditor(selectedGroup.id)}
-                >
-                  <Pencil />
-                </IconButton>
-                <IconButton
-                  label={t('pages.list.actions.duplicate')}
-                  disabled={isDuplicating}
-                  onClick={() => void handleDuplicate()}
-                >
-                  <Copy />
-                </IconButton>
-                <IconButton
-                  label={t('pages.list.actions.delete')}
-                  onClick={() =>
-                    dispatch({ type: 'OPEN_DIALOG', dialog: 'delete' })
-                  }
-                >
-                  <Trash2 />
-                </IconButton>
-              </>
-            )}
-            <Button
-              onClick={() => dispatch({ type: 'OPEN_DIALOG', dialog: 'new' })}
-            >
-              {t('pages.list.newPage')}
-            </Button>
-          </div>
+          <Button
+            onClick={() => dispatch({ type: 'OPEN_DIALOG', dialog: 'new' })}
+          >
+            {t('pages.list.newPage')}
+          </Button>
         </div>
         <PagesListFilterBar
           value={filters}
@@ -348,17 +416,41 @@ export function PageGroupsListView({
               items={tree.map(({ item }) => item.id)}
               strategy={verticalListSortingStrategy}
             >
-              <ul className="divide-y rounded-md border">
-                {tree.map(({ item: group, depth }) => (
+              {/* A header, because the list has columns and was not
+                  saying so: a title with a name under it, and a row of
+                  language badges, read as one crowded line until they
+                  were named. */}
+              <div className="flex items-center gap-2 rounded-t-md border border-b-0 bg-muted/40 py-2.5 pr-3 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                <span
+                  className="flex-1"
+                  style={{ paddingLeft: PAGE_ROW_INSET }}
+                >
+                  {t('pages.list.colTitle')}
+                </span>
+                <span className={cn('shrink-0 text-right', LOCALES_COLUMN)}>
+                  {t('pages.list.colLanguages')}
+                </span>
+                <span aria-hidden className={cn('shrink-0', ACTIONS_COLUMN)} />
+              </div>
+              <ul className="divide-y rounded-b-md border">
+                {tree.map(({ item: group, depth, isLast, ancestorIsLast }) => (
                   <PageGroupRow
                     key={group.id}
                     group={group}
                     depth={depth}
+                    isLast={isLast}
+                    ancestorIsLast={ancestorIsLast}
                     isSelected={group.id === selectedGroupId}
                     defaultLocale={defaultLocale}
                     enabledLocales={enabledLocales}
                     draggable={canReorder}
+                    isDuplicating={isDuplicating}
                     onToggleSelected={() => toggleSelected(group.id)}
+                    onEdit={() => void handleOpenEditor(group.id)}
+                    onDuplicate={() => void handleDuplicate()}
+                    onDelete={() =>
+                      dispatch({ type: 'OPEN_DIALOG', dialog: 'delete' })
+                    }
                   />
                 ))}
               </ul>

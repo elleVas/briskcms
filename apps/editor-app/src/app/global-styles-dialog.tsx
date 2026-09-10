@@ -119,6 +119,27 @@ function hexOrNull(value: string): string | null {
  *   editable in the "Style" page — out of scope for a panel meant to be
  *   quick.
  */
+/**
+ * The properties that mean something when set for a whole TYPE.
+ *
+ * `marginTop`/`marginBottom` do not: the CSS for them is emitted by
+ * `spacingRules`, which the per-instance builder calls and the per-type
+ * builder does not (block-style-overrides.ts). Offering them here stored
+ * a value and rendered nothing — a control that looks like it works.
+ *
+ * The block toolbar used to filter them out of its own type popover and
+ * this screen did not, so the rule lived in one of the two places that
+ * needed it. That popover is gone; this is now the only place, and the
+ * rule came with it.
+ */
+export function typeStylableProperties(
+  descriptor: BlockDescriptor,
+): readonly string[] {
+  return (descriptor.stylableProperties ?? []).filter(
+    (property) => property !== 'marginTop' && property !== 'marginBottom',
+  );
+}
+
 export function GlobalStylesDialog({
   siteId,
   open,
@@ -340,7 +361,7 @@ export function GlobalStylesDialog({
             <BlockStyleFields
               blockType={selectedDescriptor.type}
               themeProperties={themeStyleProperties?.[selectedDescriptor.type]}
-              properties={selectedDescriptor.stylableProperties ?? []}
+              properties={typeStylableProperties(selectedDescriptor)}
               value={
                 site.themeTokens?.blockStyles[selectedDescriptor.type]?.[
                   variant

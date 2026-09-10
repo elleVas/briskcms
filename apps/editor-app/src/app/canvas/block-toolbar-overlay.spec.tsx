@@ -139,16 +139,6 @@ function baseProps() {
 }
 
 describe('BlockToolbarOverlay style buttons', () => {
-  it('hides the type-level style button for a block with no stylableProperties', () => {
-    renderOverlay(
-      <BlockToolbarOverlay {...baseProps()} descriptor={heroDescriptor} />,
-    );
-
-    expect(
-      screen.queryByRole('button', { name: /Stile di tutti i blocchi/ }),
-    ).toBeNull();
-  });
-
   it('still offers the instance style fields for a root-level block with no stylableProperties (marginTop/marginBottom are always offered there)', () => {
     renderOverlay(
       <BlockToolbarOverlay
@@ -188,30 +178,6 @@ describe('BlockToolbarOverlay style buttons', () => {
     expect(screen.getByLabelText('Raggio angoli')).toBeTruthy();
   });
 
-  it('hides the type-level "Stile" button when typeStyle/onChangeTypeStyle are not provided (no site to save to yet)', () => {
-    renderOverlay(<BlockToolbarOverlay {...baseProps()} />);
-
-    expect(
-      screen.queryByRole('button', { name: /Stile di tutti i blocchi/ }),
-    ).toBeNull();
-  });
-
-  it('shows the type-level "Stile" button once typeStyle/onChangeTypeStyle are both provided', () => {
-    renderOverlay(
-      <BlockToolbarOverlay
-        {...baseProps()}
-        typeStyle={{ base: {} }}
-        onChangeTypeStyle={vi.fn()}
-      />,
-    );
-
-    expect(
-      screen.getByRole('button', {
-        name: 'Stile di tutti i blocchi Bottone (CTA)',
-      }),
-    ).toBeTruthy();
-  });
-
   it('the instance popover is pre-filled from block.styleOverride and calls onChangeInstanceStyle on edit', () => {
     const onChangeInstanceStyle = vi.fn();
     renderOverlay(
@@ -244,36 +210,6 @@ describe('BlockToolbarOverlay style buttons', () => {
     });
   });
 
-  it('the type popover is pre-filled from typeStyle and calls onChangeTypeStyle on edit, never touching onChangeInstanceStyle', () => {
-    const onChangeTypeStyle = vi.fn();
-    const onChangeInstanceStyle = vi.fn();
-    renderOverlay(
-      <BlockToolbarOverlay
-        {...baseProps()}
-        typeStyle={{ base: { borderRadius: '4px' } }}
-        onChangeTypeStyle={onChangeTypeStyle}
-        onChangeInstanceStyle={onChangeInstanceStyle}
-      />,
-    );
-
-    fireEvent.click(
-      screen.getByRole('button', {
-        name: 'Stile di tutti i blocchi Bottone (CTA)',
-      }),
-    );
-    expect(screen.getByLabelText('Raggio angoli')).toHaveProperty(
-      'value',
-      '4px',
-    );
-
-    fireEvent.change(screen.getByLabelText('Raggio angoli'), {
-      target: { value: '9999px' },
-    });
-
-    expect(onChangeTypeStyle).toHaveBeenCalledWith({ borderRadius: '9999px' });
-    expect(onChangeInstanceStyle).not.toHaveBeenCalled();
-  });
-
   it('offers marginTop/marginBottom in the instance popover for a root-level block, and saves them via onChangeInstanceStyle', () => {
     const onChangeInstanceStyle = vi.fn();
     renderOverlay(
@@ -298,26 +234,6 @@ describe('BlockToolbarOverlay style buttons', () => {
     renderOverlay(<BlockToolbarOverlay {...baseProps()} isRootLevel={false} />);
 
     fireEvent.click(screen.getByRole('button', { name: 'Modifica proprietà' }));
-
-    expect(screen.queryByLabelText('Spazio sopra')).toBeNull();
-    expect(screen.queryByLabelText('Spazio sotto')).toBeNull();
-  });
-
-  it('never offers marginTop/marginBottom in the type-level popover, even for a root-level block', () => {
-    renderOverlay(
-      <BlockToolbarOverlay
-        {...baseProps()}
-        isRootLevel={true}
-        typeStyle={{ base: {} }}
-        onChangeTypeStyle={vi.fn()}
-      />,
-    );
-
-    fireEvent.click(
-      screen.getByRole('button', {
-        name: 'Stile di tutti i blocchi Bottone (CTA)',
-      }),
-    );
 
     expect(screen.queryByLabelText('Spazio sopra')).toBeNull();
     expect(screen.queryByLabelText('Spazio sotto')).toBeNull();
@@ -412,7 +328,7 @@ describe('BlockToolbarOverlay under a theme that refuses styling', () => {
     });
   });
 
-  it('offers no styling at all — not for the type, not for this block', async () => {
+  it('offers no styling for this block', async () => {
     renderOverlay(
       <BlockToolbarOverlay
         {...baseProps()}
@@ -423,26 +339,24 @@ describe('BlockToolbarOverlay under a theme that refuses styling', () => {
       />,
     );
 
+    fireEvent.click(screen.getByRole('button', { name: /Modifica proprietà/ }));
+
+    // The panel opens on its content fields and on nothing else: what the
+    // theme's ceiling has to keep out is the style fields inside it,
+    // including the two margins, which are offered at root level whatever
+    // the type declares.
+    //
     // Waited for rather than asserted once: the toolbar renders before
     // the capabilities answer arrives, so a single `queryBy` would pass
     // whatever the answer turned out to be — it would be checking that
     // React has not finished, not that the theme was obeyed.
     await waitFor(() => {
-      expect(
-        screen.queryByRole('button', { name: /Stile di tutti i blocchi/ }),
-      ).toBeNull();
+      expect(screen.queryByLabelText('Raggio angoli')).toBeNull();
+      expect(screen.queryByLabelText('Spazio sotto')).toBeNull();
     });
-    // Still there, so the button above went away because the theme said
-    // so and not because nothing rendered at all.
-    fireEvent.click(screen.getByRole('button', { name: /Modifica proprietà/ }));
-    // The panel opens on its content fields and on nothing else: the
-    // instance style used to be a second button, and gating that button
-    // was enough. Now the fields live inside this panel, so what the
-    // ceiling has to keep out is them — including the two margins, which
-    // are offered at root level whatever the type declares.
+    // Still there, so those went away because the theme said so and not
+    // because the panel failed to render at all.
     expect(screen.getByLabelText('Testo')).toBeTruthy();
-    expect(screen.queryByLabelText('Raggio angoli')).toBeNull();
-    expect(screen.queryByLabelText('Spazio sotto')).toBeNull();
   });
 
   // The properties popover is content, not styling: a theme's ceiling is

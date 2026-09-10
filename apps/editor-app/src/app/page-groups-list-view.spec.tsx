@@ -116,6 +116,18 @@ describe('PageGroupsListView', () => {
     expect(screen.getByRole('button', { name: 'Elimina' })).toBeTruthy();
   });
 
+  it('puts those actions on the selected row itself, not up in the page header', () => {
+    renderView();
+
+    fireEvent.click(screen.getByText('Chi siamo'));
+
+    const row = screen.getByText('Chi siamo').closest('li');
+    expect(row).not.toBeNull();
+    expect(row?.contains(screen.getByRole('button', { name: 'Elimina' }))).toBe(
+      true,
+    );
+  });
+
   it('duplicating the selected group calls duplicatePageGroup', async () => {
     vi.mocked(router.useNavigate).mockReturnValue(vi.fn());
     vi.mocked(api.duplicatePageGroup).mockResolvedValue({

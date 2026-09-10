@@ -13,6 +13,7 @@ import {
   Palette,
   Plug,
   Users,
+  type LucideIcon,
 } from 'lucide-react';
 import { AccountMenu } from './account-menu';
 import { SettingsMenu } from './settings-menu';
@@ -21,6 +22,42 @@ import { useCurrentSession } from './use-current-session';
 
 export interface AdminShellProps {
   children: ReactNode;
+}
+
+/**
+ * One entry in the sidebar, and the only place its look is decided.
+ *
+ * The eleven links each carried the same class list and none of them
+ * said which screen you were on: hovering told you what you were about
+ * to click, and after the click nothing changed — the sidebar looked
+ * identical on every page of the app.
+ *
+ * `activeProps` is the router's own answer, so "which one is current" is
+ * read from the URL rather than tracked in state that can disagree with
+ * it. `exact` for the dashboard alone: its path is `/`, a prefix of
+ * every other route, so without it every screen would light up the
+ * dashboard as well.
+ */
+function NavItem({
+  to,
+  icon: Icon,
+  label,
+}: {
+  to: string;
+  icon: LucideIcon;
+  label: string;
+}) {
+  return (
+    <Link
+      to={to}
+      activeOptions={{ exact: to === '/' }}
+      className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground"
+      activeProps={{ className: 'bg-muted text-foreground' }}
+    >
+      <Icon className="size-4" />
+      {label}
+    </Link>
+  );
 }
 
 export function AdminShell({ children }: AdminShellProps) {
@@ -35,76 +72,44 @@ export function AdminShell({ children }: AdminShellProps) {
       <div className="flex min-h-0 flex-1">
         <nav className="flex w-48 shrink-0 flex-col border-r p-3">
           <div className="flex flex-1 flex-col gap-1">
-            <Link
+            <NavItem
               to="/"
-              className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm font-medium hover:bg-muted"
-            >
-              <LayoutDashboard className="size-4" />
-              {t('shell.nav.dashboard')}
-            </Link>
-            <Link
-              to="/pages"
-              className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm font-medium hover:bg-muted"
-            >
-              <FileText className="size-4" />
-              {t('shell.nav.pages')}
-            </Link>
-            <Link
-              to="/media"
-              className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm font-medium hover:bg-muted"
-            >
-              <Image className="size-4" />
-              {t('shell.nav.media')}
-            </Link>
-            <Link
+              icon={LayoutDashboard}
+              label={t('shell.nav.dashboard')}
+            />
+            <NavItem to="/pages" icon={FileText} label={t('shell.nav.pages')} />
+            <NavItem to="/media" icon={Image} label={t('shell.nav.media')} />
+            <NavItem
               to="/forms"
-              className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm font-medium hover:bg-muted"
-            >
-              <FormInput className="size-4" />
-              {t('shell.nav.forms')}
-            </Link>
-            <Link
+              icon={FormInput}
+              label={t('shell.nav.forms')}
+            />
+            <NavItem
               to="/layout"
-              className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm font-medium hover:bg-muted"
-            >
-              <LayoutTemplate className="size-4" />
-              {t('shell.nav.layout')}
-            </Link>
-            <Link
+              icon={LayoutTemplate}
+              label={t('shell.nav.layout')}
+            />
+            <NavItem
               to="/sections"
-              className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm font-medium hover:bg-muted"
-            >
-              <Rows3 className="size-4" />
-              {t('shell.nav.sections')}
-            </Link>
-            <Link
+              icon={Rows3}
+              label={t('shell.nav.sections')}
+            />
+            <NavItem
               to="/taxonomies"
-              className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm font-medium hover:bg-muted"
-            >
-              <Tags className="size-4" />
-              {t('shell.nav.taxonomies')}
-            </Link>
-            <Link
-              to="/style"
-              className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm font-medium hover:bg-muted"
-            >
-              <Palette className="size-4" />
-              {t('shell.nav.style')}
-            </Link>
-            <Link
+              icon={Tags}
+              label={t('shell.nav.taxonomies')}
+            />
+            <NavItem to="/style" icon={Palette} label={t('shell.nav.style')} />
+            <NavItem
               to="/integrations"
-              className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm font-medium hover:bg-muted"
-            >
-              <Plug className="size-4" />
-              {t('shell.nav.integrations')}
-            </Link>
-            <Link
+              icon={Plug}
+              label={t('shell.nav.integrations')}
+            />
+            <NavItem
               to="/cookies"
-              className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm font-medium hover:bg-muted"
-            >
-              <Cookie className="size-4" />
-              {t('shell.nav.cookies')}
-            </Link>
+              icon={Cookie}
+              label={t('shell.nav.cookies')}
+            />
             {/* Admin-only, and the sidebar now says so instead of the
                 server saying it after the click. Every screen used to be
                 offered to everybody: an Editor saw this, opened it, and
@@ -113,13 +118,11 @@ export function AdminShell({ children }: AdminShellProps) {
             {isAdmin && (
               <>
                 <Separator className="my-2" />
-                <Link
+                <NavItem
                   to="/users"
-                  className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm font-medium hover:bg-muted"
-                >
-                  <Users className="size-4" />
-                  {t('shell.nav.users')}
-                </Link>
+                  icon={Users}
+                  label={t('shell.nav.users')}
+                />
               </>
             )}
           </div>

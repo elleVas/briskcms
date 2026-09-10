@@ -159,7 +159,9 @@
         "locale": "Lingua",
         "anyLocale": "Qualunque lingua",
         "clear": "Rimuovi filtri"
-      }
+      },
+      "colTitle": "Pagina",
+      "colLanguages": "Lingue"
     },
     "newPageDialog": {
       "title": "Nuova pagina",

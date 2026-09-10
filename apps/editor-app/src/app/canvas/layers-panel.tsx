@@ -19,6 +19,7 @@ import { CSS } from '@dnd-kit/utilities';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import { headerFooterBlocks, pageBlocks } from '@brisk/block-registry';
 import { BlockIcon } from './block-icons';
+import { TreeGuides } from '../tree-guides';
 
 import type { Block } from '@brisk/shared-types';
 import { useTranslation } from '../../lib/use-translation';
@@ -326,41 +327,13 @@ function LayerRow({
           at the third level: `Columns > Column > Code` was three rows at
           three margins, and which Column the Code belonged to was a
           guess. The lines answer that without being read. */}
-      {Array.from({ length: depth }, (_, level) => {
-        const isOwnBranch = level === depth - 1;
-        // An ANCESTOR's line is suppressed once that ancestor was the
-        // last of its siblings — its branch has no more rows below, so a
-        // line there would be drawn past the end of it. This row's OWN
-        // branch is a different question, answered by `isLast` below:
-        // conflating the two erased almost every line in the tree.
-        if (!isOwnBranch && ancestorIsLast[level]) return null;
-        return (
-          <span
-            key={level}
-            aria-hidden
-            className="absolute w-px bg-border"
-            style={{
-              left: level * INDENT + INDENT / 2,
-              top: 0,
-              // Its own branch stops at the elbow when this is the last
-              // child; every level above runs the full height.
-              bottom: isOwnBranch && isLast ? undefined : 0,
-              height: isOwnBranch && isLast ? ROW_HEIGHT / 2 : undefined,
-            }}
-          />
-        );
-      })}
-      {depth > 0 && (
-        <span
-          aria-hidden
-          className="absolute h-px bg-border"
-          style={{
-            left: (depth - 1) * INDENT + INDENT / 2,
-            width: INDENT / 2,
-            top: ROW_HEIGHT / 2,
-          }}
-        />
-      )}
+      <TreeGuides
+        depth={depth}
+        isLast={isLast}
+        ancestorIsLast={ancestorIsLast}
+        indent={INDENT}
+        rowHeight={ROW_HEIGHT}
+      />
       <div
         className="flex items-center"
         style={{ paddingLeft: depth * INDENT }}
