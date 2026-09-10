@@ -4,6 +4,10 @@ import OptimizedImage from '../OptimizedImage.astro';
 import EmptyContainerHint from '../EmptyContainerHint.astro';
 
 type Props = CardProps & {
+  /** The locale this page renders in — see EmptyContainerHint. */
+  locale?: string;
+  /** The only child type this container accepts, already translated. */
+  emptyChildLabel?: string | null;
   /** The per-instance style class, from BlockRenderer — see blockInstanceClassName. */
   instanceClass?: string | null;
   /** The variant's modifier class, from BlockRenderer — see blockVariantClassName. */
@@ -22,6 +26,8 @@ const {
   variantClass,
   hasChildren,
   editable,
+  locale,
+  emptyChildLabel,
 } = Astro.props;
 // Authoritative regardless of what is saved in `alt`, exactly as in
 // Image.astro: a decorative picture gets alt="" per WCAG even if a value
@@ -53,7 +59,11 @@ const resolvedAlt = isDecorative ? '' : alt;
   {(hasChildren || editable) && (
     <div class="brisk-card__body">
       <slot />
-      <EmptyContainerHint show={!hasChildren && Boolean(editable)} />
+      <EmptyContainerHint
+  show={!hasChildren && Boolean(editable)}
+  locale={locale}
+  childLabel={emptyChildLabel}
+/>
     </div>
   )}
 </article>

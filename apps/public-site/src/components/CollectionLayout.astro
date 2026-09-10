@@ -17,6 +17,8 @@ import EmptyContainerHint from './EmptyContainerHint.astro';
  * come with the arrangement it is in.
  */
 interface Props {
+  /** The only child type this container accepts, already translated. */
+  emptyChildLabel?: string | null;
   /** The block's own class, e.g. `brisk-team` — its styling still hangs off it. */
   blockClass: string;
   display: CollectionDisplay;
@@ -42,6 +44,7 @@ const {
   instanceClass,
   locale,
   step = 'item',
+  emptyChildLabel,
 } = Astro.props;
 const i18n = new Translator(locale);
 // Nav buttons belong to the scrolling arrangements, and only once there
@@ -77,7 +80,11 @@ const showNav = scrollable && hasChildren;
       </div>
     )
   }
-  {!hasChildren && <EmptyContainerHint show={Boolean(editable)} />}
+  {!hasChildren && <EmptyContainerHint
+  show={Boolean(editable)}
+  locale={locale}
+  childLabel={emptyChildLabel}
+/>}
   {
     showNav && (
       <>

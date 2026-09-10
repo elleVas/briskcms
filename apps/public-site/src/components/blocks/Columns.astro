@@ -3,6 +3,10 @@ import { columnsGridTemplate, type ColumnsProps } from '@brisk/shared-types';
 import EmptyContainerHint from '../EmptyContainerHint.astro';
 
 type Props = ColumnsProps & {
+  /** The locale this page renders in — see EmptyContainerHint. */
+  locale?: string;
+  /** The only child type this container accepts, already translated. */
+  emptyChildLabel?: string | null;
   editable?: boolean;
   hasChildren?: boolean;
   /** The per-instance style class, from BlockRenderer — see blockInstanceClassName. */
@@ -23,6 +27,8 @@ const {
   hasChildren,
   instanceClass,
   columnSpans = [],
+  locale,
+  emptyChildLabel,
 } = Astro.props;
 
 // A row with no columns yet has no tracks to declare — `grid-template-
@@ -44,7 +50,11 @@ const gridTemplate =
 >
   <slot />
 </div>
-<EmptyContainerHint show={!hasChildren && Boolean(editable)} />
+<EmptyContainerHint
+  show={!hasChildren && Boolean(editable)}
+  locale={locale}
+  childLabel={emptyChildLabel}
+/>
 
 <style>
   .brisk-columns {
