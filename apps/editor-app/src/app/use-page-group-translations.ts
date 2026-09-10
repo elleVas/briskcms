@@ -1,5 +1,8 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { createPageGroupTranslation } from '../lib/page-groups-api-client';
+import {
+  createPageGroupTranslation,
+  renamePageTranslation,
+} from '../lib/page-groups-api-client';
 import { pageGroupTranslationsQueryOptions } from './page-groups-queries';
 
 export interface CreatePageGroupTranslationForLocale {
@@ -34,8 +37,32 @@ export function usePageGroupTranslations(groupId: string) {
     },
   });
 
+  const renameMutation = useMutation({
+    mutationFn: (input: {
+      translationId: string;
+      slug: string;
+      parentGroupId: string | null;
+    }) =>
+      renamePageTranslation(
+        input.translationId,
+        input.slug,
+        input.parentGroupId,
+      ),
+    onSuccess: (renamed) => {
+      queryClient.setQueryData(
+        pageGroupTranslationsQueryOptions(groupId).queryKey,
+        (prev) =>
+          (prev ?? []).map((one) => (one.id === renamed.id ? renamed : one)),
+      );
+      // The address changed, so every list that shows one is now wrong.
+      void queryClient.invalidateQueries({ queryKey: ['page-groups'] });
+    },
+  });
+
   return {
     createTranslation: createTranslationMutation.mutateAsync,
     isCreating: createTranslationMutation.isPending,
+    rename: renameMutation.mutateAsync,
+    isRenaming: renameMutation.isPending,
   };
 }

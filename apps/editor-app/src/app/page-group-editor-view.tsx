@@ -234,6 +234,7 @@ export function PageGroupEditorView({
               />
               <PageGroupTranslationsDialog
                 groupId={groupId}
+                parentGroupId={group.parentId}
                 translations={translations}
                 enabledLocales={enabledLocales}
                 activeLocale={activeLocale}

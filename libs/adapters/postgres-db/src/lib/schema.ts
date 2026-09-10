@@ -345,6 +345,26 @@ export const pageTranslations = pgTable(
     parentGroupId: uuid('parent_group_id'),
     locale: text('locale').notNull(),
     slug: text('slug').notNull(),
+    /**
+     * Every address this translation has answered to before its current
+     * one, oldest first.
+     *
+     * A slug used to be decided once, at creation, and never again: a
+     * typo in the title a page was born from was its URL for good, and
+     * the only way out was deleting the page and losing its version
+     * history with it. Renaming without this column would be worse than
+     * not renaming at all — on a real site it silently kills every
+     * inbound link and the page's own ranking, and nothing says so.
+     *
+     * A column and not a table: a short list that only grows when
+     * somebody renames, read on exactly one query path (a lookup that
+     * found nothing), with no attributes of its own. A join table would
+     * be machinery around an array.
+     */
+    formerSlugs: text('former_slugs')
+      .array()
+      .notNull()
+      .default(sql`'{}'`),
     seoMeta: jsonb('seo_meta').notNull().default({}).$type<SeoMeta>(),
     // Override di SOLI campi `translatable`, chiavati per blocco — un
     // campo assente eredita il valore condiviso di pageGroups.content.
@@ -402,6 +422,16 @@ export const pageTranslations = pgTable(
       table.tenantId,
       table.pageGroupId,
     ),
+    // Read only when a lookup by slug found nothing, which on a healthy
+    // site is a 404 — but a crawler following an old link is exactly the
+    // visitor this column exists for, and making them wait on a
+    // sequential scan of every translation is the wrong answer to give
+    // them. GIN because the query asks "does this array contain that
+    // slug", which is what GIN answers.
+    // Not CONCURRENTLY: the migration runner wraps each file in a
+    // transaction, which Postgres forbids for a concurrent build, and no
+    // other index in this schema asks for one either.
+    index('page_translations_former_slugs_idx').using('gin', table.formerSlugs),
   ],
 );
 

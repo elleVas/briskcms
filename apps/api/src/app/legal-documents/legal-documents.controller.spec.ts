@@ -86,6 +86,7 @@ describe('LegalDocumentsController (unit)', () => {
       listByGroup: jest.fn(),
       listPublishedBySite: jest.fn().mockResolvedValue([]),
       findByParentGroupAndLocaleSlug: jest.fn().mockResolvedValue(null),
+      findByFormerSlug: jest.fn().mockResolvedValue(null),
       delete: jest.fn(),
     };
     tenantContext = {

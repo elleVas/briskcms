@@ -110,6 +110,7 @@ describe('DrizzleSearchRepository (integration)', () => {
       pageGroupId: row.pageGroupId,
       locale: row.locale,
       slug: row.slug,
+      formerSlugs: row.formerSlugs,
       seoMeta: row.seoMeta,
       fieldValues: row.fieldValues,
       status: row.status as 'draft' | 'published',

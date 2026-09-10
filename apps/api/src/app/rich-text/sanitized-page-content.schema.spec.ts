@@ -39,7 +39,17 @@ function contentAcceptingSchemas(
       if (!name.endsWith('BodySchema') || !(value instanceof z.ZodType)) {
         return false;
       }
-      return value.safeParse(bodyWithHostileContent()).success;
+      const parsed = value.safeParse(bodyWithHostileContent());
+      // Parsing the fixture is not enough: zod drops unknown keys, so a
+      // body that has nothing to do with content — renaming a page, say —
+      // parses it happily and then throws the content away. What makes a
+      // schema an ENTRANCE is that the content survives it.
+      return (
+        parsed.success &&
+        typeof parsed.data === 'object' &&
+        parsed.data !== null &&
+        'content' in parsed.data
+      );
     },
   );
 }

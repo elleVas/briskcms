@@ -1,0 +1,2 @@
+ALTER TABLE "page_translations" ADD COLUMN "former_slugs" text[] DEFAULT '{}' NOT NULL;--> statement-breakpoint
+CREATE INDEX "page_translations_former_slugs_idx" ON "page_translations" USING gin ("former_slugs");

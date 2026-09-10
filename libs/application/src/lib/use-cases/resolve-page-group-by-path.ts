@@ -13,6 +13,17 @@ export interface PageGroupByPath {
   translation: PageTranslation;
   /** Root-to-parent order, same shape as resolvePageByPath's own. */
   ancestors: PageAncestor[];
+  /**
+   * At least one segment of the requested path was an address a page has
+   * since left, so this path is not where the page lives any more.
+   *
+   * The caller answers with a 301 to `currentPath` rather than serving
+   * the page here: two addresses both serving the same content is the
+   * duplicate the whole rename mechanism exists to avoid.
+   */
+  moved: boolean;
+  /** Root-to-leaf, the addresses these pages answer at NOW. */
+  currentPath: string[];
 }
 
 /**
@@ -40,8 +51,10 @@ export async function resolvePageGroupByPath(
   }
 
   const ancestors: PageAncestor[] = [];
+  const currentPath: string[] = [];
   let parentGroupId: string | null = null;
   let translation: PageTranslation | null = null;
+  let moved = false;
 
   for (let i = 0; i < segments.length; i += 1) {
     translation =
@@ -52,7 +65,23 @@ export async function resolvePageGroupByPath(
         parentGroupId,
         segments[i],
       );
-    if (!translation) return null;
+    if (!translation) {
+      // Nothing answers here now — but something may have, before it was
+      // renamed. Asked at EVERY level, not only the last: renaming a
+      // section changes the address of everything underneath it, and a
+      // link to a child is exactly as saved and as followed as a link to
+      // the section itself.
+      translation = await deps.pageTranslationRepository.findByFormerSlug(
+        tenantId,
+        siteId,
+        locale,
+        parentGroupId,
+        segments[i],
+      );
+      if (!translation) return null;
+      moved = true;
+    }
+    currentPath.push(translation.slug);
     if (i < segments.length - 1) {
       ancestors.push({
         slug: translation.slug,
@@ -69,5 +98,5 @@ export async function resolvePageGroupByPath(
   );
   if (!group) return null;
 
-  return { group, translation, ancestors };
+  return { group, translation, ancestors, moved, currentPath };
 }

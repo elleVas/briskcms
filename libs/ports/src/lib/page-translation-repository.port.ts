@@ -83,5 +83,18 @@ export interface PageTranslationRepositoryPort {
     tenantId: string,
     siteId: string,
   ): Promise<PageTranslation[]>;
+  /**
+   * The translation that used to answer at `slug`, for the 301 a rename
+   * owes to every link somebody already saved (see
+   * `PageTranslation.updateSlug`). Asked only when the current-slug
+   * lookup found nothing.
+   */
+  findByFormerSlug(
+    tenantId: string,
+    siteId: string,
+    locale: string,
+    parentGroupId: string | null,
+    slug: string,
+  ): Promise<PageTranslation | null>;
   delete(tenantId: string, pageTranslationId: string): Promise<void>;
 }

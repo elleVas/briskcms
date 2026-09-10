@@ -12,6 +12,7 @@ import { createPageGroupTranslation } from './create-page-group-translation.use-
 import { publishPageTranslation } from './publish-page-translation.use-case';
 import { savePageGroupContent } from './save-page-group-content.use-case';
 import { getPublishedPageBySlug } from './get-published-page-by-slug.use-case';
+import { renamePageTranslation } from './rename-page-translation.use-case';
 import {
   InMemoryPageGroupRepository,
   InMemoryPageGroupVersionRepository,
@@ -162,6 +163,101 @@ describe('getPublishedPageBySlug', () => {
    * so the links pointing at the old URL keep working and hand their
    * weight to the new one.
    */
+  /*
+   * A page's address used to be decided once and never again. Now it can
+   * move — and the address it left has to keep answering, or renaming is
+   * just a quieter way of deleting every link somebody saved.
+   */
+  it('sends a visitor from an address a page has left to the one it lives at', async () => {
+    const deps = setup();
+    await seedSite(deps.siteRepository);
+    const { translation } = await createGroupAndPublish(deps, {
+      locale: 'it',
+      slug: 'chi-siamo',
+      title: 'Chi siamo',
+    });
+    await renamePageTranslation(deps, {
+      tenantId,
+      pageTranslationId: translation.id,
+      slug: 'la-nostra-storia',
+      parentGroupId: null,
+    });
+
+    const result = await getPublishedPageBySlug(deps, {
+      tenantId,
+      domain: 'example.com',
+      locale: 'it',
+      segments: ['chi-siamo'],
+    });
+
+    expect(result.page).toBeNull();
+    expect(result.redirectTo).toBe('/it/la-nostra-storia');
+  });
+
+  /*
+   * Renaming a section moves everything underneath it. A link to a child
+   * page is as saved, and as followed, as a link to the section itself —
+   * so the old address has to answer at every depth, not only the last.
+   */
+  it('sends a visitor on when it is an ancestor that moved, not the page', async () => {
+    const deps = setup();
+    await seedSite(deps.siteRepository);
+    const { group: parent, translation: parentTranslation } =
+      await createGroupAndPublish(deps, {
+        locale: 'it',
+        slug: 'servizi',
+        title: 'Servizi',
+      });
+    await createGroupAndPublish(deps, {
+      locale: 'it',
+      slug: 'idraulica',
+      title: 'Idraulica',
+      parentGroupId: parent.id,
+    });
+    await renamePageTranslation(deps, {
+      tenantId,
+      pageTranslationId: parentTranslation.id,
+      slug: 'cosa-facciamo',
+      parentGroupId: null,
+    });
+
+    const result = await getPublishedPageBySlug(deps, {
+      tenantId,
+      domain: 'example.com',
+      locale: 'it',
+      segments: ['servizi', 'idraulica'],
+    });
+
+    expect(result.page).toBeNull();
+    expect(result.redirectTo).toBe('/it/cosa-facciamo/idraulica');
+  });
+
+  it('serves the page normally at the address it actually lives at', async () => {
+    const deps = setup();
+    await seedSite(deps.siteRepository);
+    const { translation } = await createGroupAndPublish(deps, {
+      locale: 'it',
+      slug: 'chi-siamo',
+      title: 'Chi siamo',
+    });
+    await renamePageTranslation(deps, {
+      tenantId,
+      pageTranslationId: translation.id,
+      slug: 'la-nostra-storia',
+      parentGroupId: null,
+    });
+
+    const result = await getPublishedPageBySlug(deps, {
+      tenantId,
+      domain: 'example.com',
+      locale: 'it',
+      segments: ['la-nostra-storia'],
+    });
+
+    expect(result.redirectTo).toBeNull();
+    expect(result.page).not.toBeNull();
+  });
+
   it('reports a permanent move when a term has claimed the page as its landing page', async () => {
     const deps = setup();
     await seedSite(deps.siteRepository);

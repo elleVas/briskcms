@@ -12,6 +12,50 @@ describe('PageTranslation entity', () => {
     seoMeta: { title: 'Home', description: 'La home' },
   };
 
+  describe('changing address', () => {
+    /*
+     * A URL used to be decided once and never again, so the only way to
+     * fix a wrong one was deleting the page. Renaming that forgot the old
+     * address would trade that for a quieter failure — every saved link
+     * and the page's own ranking gone, with nothing to say so.
+     */
+    it('remembers the address it left, so the old one can still answer', () => {
+      const translation = PageTranslation.create(baseInput);
+
+      translation.updateSlug('chi-siamo');
+
+      expect(translation.slug).toBe('chi-siamo');
+      expect(translation.formerSlugs).toEqual(['home']);
+    });
+
+    it('keeps every address it has ever had, oldest first', () => {
+      const translation = PageTranslation.create(baseInput);
+
+      translation.updateSlug('chi-siamo');
+      translation.updateSlug('la-nostra-storia');
+
+      expect(translation.formerSlugs).toEqual(['home', 'chi-siamo']);
+    });
+
+    it('does not record a rename that changes nothing', () => {
+      const translation = PageTranslation.create(baseInput);
+
+      translation.updateSlug('home');
+
+      expect(translation.formerSlugs).toEqual([]);
+    });
+
+    it('never leaves a slug as both the current address and a redirect to itself', () => {
+      const translation = PageTranslation.create(baseInput);
+
+      translation.updateSlug('chi-siamo');
+      translation.updateSlug('home');
+
+      expect(translation.slug).toBe('home');
+      expect(translation.formerSlugs).toEqual(['chi-siamo']);
+    });
+  });
+
   it('starts as a draft, not diverged, with no field-value overrides and no published snapshot', () => {
     const translation = PageTranslation.create(baseInput);
     expect(translation.status).toBe('draft');
@@ -128,6 +172,7 @@ describe('PageTranslation entity', () => {
       ...baseInput,
       fieldValues: { 'hero-1': { title: 'Ciao' } },
       status: 'published' as const,
+      formerSlugs: [],
       publishedSnapshot: [{ type: 'Hero', props: { title: 'Ciao' } }],
       isDiverged: false,
       divergedContent: null,

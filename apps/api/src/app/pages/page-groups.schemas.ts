@@ -64,6 +64,18 @@ export type UpdatePageTranslationSeoMetaBody = z.infer<
   typeof updatePageTranslationSeoMetaBodySchema
 >;
 
+/**
+ * `pageSlugSchema` and not a bare string: this decides an address, and
+ * the same rules that governed it at creation govern every rename.
+ */
+export const renamePageTranslationBodySchema = z.object({
+  slug: pageSlugSchema,
+  parentGroupId: z.string().uuid().nullable(),
+});
+export type RenamePageTranslationBody = z.infer<
+  typeof renamePageTranslationBodySchema
+>;
+
 export const rollbackPageGroupBodySchema = z.object({
   versionId: z.string().uuid(),
 });
