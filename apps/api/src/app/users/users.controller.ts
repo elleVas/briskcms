@@ -146,6 +146,7 @@ export class UsersController {
         tenantId: this.tenantContext.getCurrentTenantId(),
         userId: id,
         role: body.role,
+        actorUserId: this.tenantContext.getCurrentUserId(),
       },
     );
     return this.toDto(user);
@@ -163,6 +164,7 @@ export class UsersController {
         tenantId: this.tenantContext.getCurrentTenantId(),
         userId: id,
         isActive: body.isActive,
+        actorUserId: this.tenantContext.getCurrentUserId(),
       },
     );
     return this.toDto(user);

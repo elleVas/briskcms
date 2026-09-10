@@ -15,11 +15,35 @@ const UPLOAD_TIMEOUT_MS = 60_000;
 export class ApiError extends Error {
   constructor(
     public readonly status: number,
-    body: unknown,
+    public readonly body: unknown,
   ) {
     super(`API ${status}: ${JSON.stringify(body)}`);
     this.name = 'ApiError';
   }
+
+  /**
+   * The server's own sentence, for showing to a person.
+   *
+   * `message` keeps the status and the raw body, which is what you want
+   * in a log and never what you want on screen: rendered with String(),
+   * an ordinary refusal reached the reader as
+   * `ApiError: API 403: {"message":"...","statusCode":403}`.
+   */
+  get displayMessage(): string | null {
+    if (!this.body || typeof this.body !== 'object') return null;
+    const message = (this.body as { message?: unknown }).message;
+    return typeof message === 'string' && message ? message : null;
+  }
+}
+
+/**
+ * What to put in front of a person when an action fails: the server's
+ * explanation when it gave one, and the caller's own fallback when it
+ * did not (a timeout, the network, a bug).
+ */
+export function actionErrorMessage(error: unknown, fallback: string): string {
+  if (error instanceof ApiError) return error.displayMessage ?? fallback;
+  return fallback;
 }
 
 export async function request<T>(path: string, init?: RequestInit): Promise<T> {

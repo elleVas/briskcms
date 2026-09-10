@@ -1,4 +1,5 @@
 import { assertNotTheLastAdmin } from './assert-not-the-last-admin';
+import { assertNotYourself } from './assert-not-yourself';
 import { UserNotFoundError } from '@brisk/domain-core';
 import type { User } from '@brisk/domain-core';
 import type { AuthPort, UserRepositoryPort } from '@brisk/ports';
@@ -12,6 +13,8 @@ export interface SetUserActiveInput {
   tenantId: string;
   userId: string;
   isActive: boolean;
+  /** Who is asking — nobody may switch off their own account, see CannotChangeYourOwnAccessError. */
+  actorUserId: string | null;
 }
 
 /**
@@ -42,6 +45,7 @@ export async function setUserActive(
   if (input.isActive) {
     user.reactivate();
   } else {
+    assertNotYourself(input.actorUserId, user);
     await assertNotTheLastAdmin(deps.userRepository, user);
     user.deactivate();
   }

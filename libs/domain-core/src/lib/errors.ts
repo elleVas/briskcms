@@ -164,6 +164,25 @@ export class UserNotFoundError extends Error {
 
 /** A tenant's (tenantId, email) must be unique — see the unique constraint in schema.ts. */
 /**
+ * Somebody is switching off, or demoting, their own account.
+ *
+ * Distinct from LastActiveAdminError, and checked before it: even with
+ * ten other admins around, doing this to yourself takes effect
+ * instantly, ends your own sessions, and the next thing the screen says
+ * is that your session expired. Nobody means to do it, and there is
+ * always another admin who can. Changing your own access is somebody
+ * else's action to take.
+ */
+export class CannotChangeYourOwnAccessError extends Error {
+  constructor() {
+    super(
+      'You cannot deactivate your own account or change your own role — another administrator has to do it',
+    );
+    this.name = 'CannotChangeYourOwnAccessError';
+  }
+}
+
+/**
  * The change would leave the tenant with no admin who can sign in.
  *
  * Deactivating the last active admin, or demoting them, locks EVERYONE
