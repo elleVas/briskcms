@@ -41,6 +41,46 @@ import {
 import { PAGE_GROUPS_PAGE_SIZE } from './page-groups-queries';
 import { TranslationAvailabilityBadges } from './translation-availability-badges';
 import { usePageGroupsList } from './use-page-groups-list';
+import { TreeGuides } from './tree-guides';
+
+/**
+ * A date the row can show, or the same dash an absent creator gets. A row
+ * is not the place to print "Invalid Date" at a person: whatever reached
+ * us that we cannot read is, to the reader, simply not there.
+ */
+function formatListDate(value: string, language: string) {
+  const date = new Date(value);
+  return Number.isNaN(date.getTime())
+    ? EMPTY_CELL
+    : date.toLocaleDateString(language);
+}
+
+/** What a column with nothing in it shows. */
+const EMPTY_CELL = '—';
+
+/** One indent step in the page tree, and the row height its elbows meet. */
+const PAGE_INDENT = 20;
+const PAGE_ROW_HEIGHT = 48;
+/**
+ * Where a top-level row starts. It is an inline style, not a padding
+ * class, because the indentation is added to it: a `px-4` would be
+ * overridden by the inline `paddingLeft` and the root pages would sit
+ * flat against the list's border.
+ */
+const PAGE_ROW_INSET = 16;
+/**
+ * The columns to the right of the title, each a fixed width so a row and
+ * the header above it line up without a table element (the rows are also
+ * a drag-reorder list and a tree, which a <table> makes harder, not
+ * easier). Author and date hide on a narrow window rather than squeezing
+ * the title they qualify.
+ */
+const LOCALES_COLUMN = 'w-28';
+const AUTHOR_COLUMN = 'hidden w-36 xl:block';
+const EDITOR_COLUMN = 'hidden w-36 lg:block';
+const UPDATED_COLUMN = 'hidden w-24 lg:block';
+/** Reserved for the row actions, shown or not, so selecting never shifts the layout. */
+const ACTIONS_COLUMN = 'w-[7.5rem]';
 
 export interface PageGroupsListViewProps {
   siteId: string;
@@ -102,21 +142,35 @@ function groupDisplayTitle(
   group: PageGroupListItemRecord,
   defaultLocale: string,
 ): string {
-  const preferred = group.translations.find(
-    (translation) => translation.locale === defaultLocale,
+  return preferredTranslation(group, defaultLocale)?.title || group.id;
+}
+
+/** The site's own language if this page has it, and whatever it does have if not. */
+function preferredTranslation(
+  group: PageGroupListItemRecord,
+  defaultLocale: string,
+) {
+  return (
+    group.translations.find(
+      (translation) => translation.locale === defaultLocale,
+    ) ?? group.translations[0]
   );
-  const fallback = group.translations[0];
-  return preferred?.title || fallback?.title || group.id;
 }
 
 interface PageGroupRowProps {
   group: PageGroupListItemRecord;
   depth: number;
+  isLast: boolean;
+  ancestorIsLast: readonly boolean[];
   isSelected: boolean;
   defaultLocale: string;
   enabledLocales: string[];
   draggable: boolean;
+  isDuplicating: boolean;
   onToggleSelected: () => void;
+  onEdit: () => void;
+  onDuplicate: () => void;
+  onDelete: () => void;
 }
 
 /**
@@ -130,13 +184,20 @@ interface PageGroupRowProps {
 function PageGroupRow({
   group,
   depth,
+  isLast,
+  ancestorIsLast,
   isSelected,
   defaultLocale,
   enabledLocales,
   draggable,
+  isDuplicating,
   onToggleSelected,
+  onEdit,
+  onDuplicate,
+  onDelete,
 }: PageGroupRowProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const translation = preferredTranslation(group, defaultLocale);
   const { attributes, listeners, setNodeRef, transform, transition } =
     useSortable({ id: group.id, disabled: !draggable });
 
@@ -146,10 +207,34 @@ function PageGroupRow({
       style={{
         transform: CSS.Transform.toString(transform),
         transition: transition ?? undefined,
-        paddingLeft: depth * 20,
+        paddingLeft: PAGE_ROW_INSET + depth * PAGE_INDENT,
       }}
-      className="flex items-center gap-2 px-3"
+      className={cn(
+        'relative flex items-center gap-2 pr-3',
+        // A left rule marks the selected row. The tint alone was doing
+        // the whole job, and on a dark list a tint is something you have
+        // to look for; the rule is visible without looking.
+        'before:absolute before:inset-y-0 before:left-0 before:w-[3px]',
+        // The row itself carries the state, not the button inside it: a
+        // person clicks anywhere on the line, so the whole line has to
+        // answer. Selection used to tint the title alone, which on a
+        // dark list is a colour change you have to look for.
+        isSelected
+          ? 'bg-muted before:bg-primary'
+          : 'hover:bg-muted/50 before:bg-transparent',
+      )}
     >
+      {/* The same guides the canvas Layers panel draws. This list was a
+          tree only in the sense that children were indented: at the third
+          level, which parent a page belonged to was a guess. */}
+      <TreeGuides
+        depth={depth}
+        isLast={isLast}
+        ancestorIsLast={ancestorIsLast}
+        indent={PAGE_INDENT}
+        rowHeight={PAGE_ROW_HEIGHT}
+        offset={PAGE_ROW_INSET}
+      />
       {draggable && (
         <button
           type="button"
@@ -166,25 +251,94 @@ function PageGroupRow({
         aria-pressed={isSelected}
         onClick={onToggleSelected}
         className={cn(
-          'flex flex-1 items-center gap-3 py-3 text-left',
-          isSelected && 'text-primary',
+          'flex min-h-12 flex-1 cursor-pointer items-center gap-3 py-2 text-left',
+          isSelected && 'text-foreground',
         )}
       >
-        <div className="flex flex-col">
-          <span className="text-sm font-medium">
+        <span className="flex min-w-0 flex-1 flex-col">
+          <span
+            className={cn(
+              'truncate text-sm',
+              isSelected ? 'font-semibold' : 'font-medium',
+            )}
+          >
             {groupDisplayTitle(group, defaultLocale)}
           </span>
-          {group.createdByName && (
-            <span className="text-xs text-muted-foreground">
-              {t('pages.list.createdBy', { name: group.createdByName })}
+          {/* The address, under the name it answers to. A page is a title
+              AND a URL, and the URL was the half you had to open the page
+              to see. */}
+          {translation && (
+            <span className="truncate font-mono text-xs text-muted-foreground">
+              /{translation.slug}
             </span>
           )}
-        </div>
-        <TranslationAvailabilityBadges
-          translations={group.translations}
-          enabledLocales={enabledLocales}
-        />
+        </span>
+        {/* Each in a column of its own, under the header that names it:
+            run together after the title, they read as part of it. */}
+        <span className={cn('flex shrink-0 justify-start', LOCALES_COLUMN)}>
+          <TranslationAvailabilityBadges
+            translations={group.translations}
+            enabledLocales={enabledLocales}
+          />
+        </span>
+        <span
+          className={cn(
+            'truncate text-xs text-muted-foreground',
+            AUTHOR_COLUMN,
+          )}
+        >
+          {group.createdByName ?? EMPTY_CELL}
+        </span>
+        <span
+          className={cn(
+            'truncate text-xs text-muted-foreground',
+            EDITOR_COLUMN,
+          )}
+        >
+          {group.lastEditedByName ?? EMPTY_CELL}
+        </span>
+        <time
+          dateTime={group.lastEditedAt}
+          className={cn(
+            'text-xs tabular-nums text-muted-foreground',
+            UPDATED_COLUMN,
+          )}
+        >
+          {formatListDate(group.lastEditedAt, i18n.language)}
+        </time>
       </button>
+      {/* The actions belong to the row they act on. Sitting up next to
+          the page title, they appeared far from the line that had just
+          been clicked, and answered "something is selected" without
+          answering "which one". The column is reserved whether or not
+          they are shown, so selecting a row never shifts the layout. */}
+      <div
+        className={cn(
+          'flex shrink-0 items-center justify-end gap-1',
+          ACTIONS_COLUMN,
+        )}
+      >
+        {isSelected && (
+          <>
+            <IconButton label={t('pages.list.actions.edit')} onClick={onEdit}>
+              <Pencil />
+            </IconButton>
+            <IconButton
+              label={t('pages.list.actions.duplicate')}
+              disabled={isDuplicating}
+              onClick={onDuplicate}
+            >
+              <Copy />
+            </IconButton>
+            <IconButton
+              label={t('pages.list.actions.delete')}
+              onClick={onDelete}
+            >
+              <Trash2 />
+            </IconButton>
+          </>
+        )}
+      </div>
     </li>
   );
 }
@@ -291,38 +445,11 @@ export function PageGroupsListView({
       <div className="flex flex-col gap-4">
         <div className="flex items-center justify-between">
           <h1 className="text-lg font-semibold">{t('pages.list.title')}</h1>
-          <div className="flex items-center gap-1">
-            {selectedGroup && (
-              <>
-                <IconButton
-                  label={t('pages.list.actions.edit')}
-                  onClick={() => void handleOpenEditor(selectedGroup.id)}
-                >
-                  <Pencil />
-                </IconButton>
-                <IconButton
-                  label={t('pages.list.actions.duplicate')}
-                  disabled={isDuplicating}
-                  onClick={() => void handleDuplicate()}
-                >
-                  <Copy />
-                </IconButton>
-                <IconButton
-                  label={t('pages.list.actions.delete')}
-                  onClick={() =>
-                    dispatch({ type: 'OPEN_DIALOG', dialog: 'delete' })
-                  }
-                >
-                  <Trash2 />
-                </IconButton>
-              </>
-            )}
-            <Button
-              onClick={() => dispatch({ type: 'OPEN_DIALOG', dialog: 'new' })}
-            >
-              {t('pages.list.newPage')}
-            </Button>
-          </div>
+          <Button
+            onClick={() => dispatch({ type: 'OPEN_DIALOG', dialog: 'new' })}
+          >
+            {t('pages.list.newPage')}
+          </Button>
         </div>
         <PagesListFilterBar
           value={filters}
@@ -348,20 +475,65 @@ export function PageGroupsListView({
               items={tree.map(({ item }) => item.id)}
               strategy={verticalListSortingStrategy}
             >
-              <ul className="divide-y rounded-md border">
-                {tree.map(({ item: group, depth }) => (
-                  <PageGroupRow
-                    key={group.id}
-                    group={group}
-                    depth={depth}
-                    isSelected={group.id === selectedGroupId}
-                    defaultLocale={defaultLocale}
-                    enabledLocales={enabledLocales}
-                    draggable={canReorder}
-                    onToggleSelected={() => toggleSelected(group.id)}
+              {/* One box around the header and the rows: they are one
+                  table, and as two bordered siblings the column names
+                  floated a gap away from the first row they named. */}
+              <div className="overflow-hidden rounded-md border">
+                {/* A header, because the list has columns and was not
+                    saying so: a title, a row of language badges, a name
+                    and a date read as one crowded line until they were
+                    named. */}
+                <div className="flex items-center gap-2 border-b bg-muted/40 py-2.5 pr-3 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  <span
+                    className="flex min-w-0 flex-1 gap-3"
+                    style={{ paddingLeft: PAGE_ROW_INSET }}
+                  >
+                    <span className="min-w-0 flex-1 truncate">
+                      {t('pages.list.colTitle')}
+                    </span>
+                    <span className={cn('shrink-0', LOCALES_COLUMN)}>
+                      {t('pages.list.colLanguages')}
+                    </span>
+                    <span className={cn('truncate', AUTHOR_COLUMN)}>
+                      {t('pages.list.colAuthor')}
+                    </span>
+                    <span className={cn('truncate', EDITOR_COLUMN)}>
+                      {t('pages.list.colEditor')}
+                    </span>
+                    <span className={cn('truncate', UPDATED_COLUMN)}>
+                      {t('pages.list.colUpdated')}
+                    </span>
+                  </span>
+                  <span
+                    aria-hidden
+                    className={cn('shrink-0', ACTIONS_COLUMN)}
                   />
-                ))}
-              </ul>
+                </div>
+                <ul className="divide-y">
+                  {tree.map(
+                    ({ item: group, depth, isLast, ancestorIsLast }) => (
+                      <PageGroupRow
+                        key={group.id}
+                        group={group}
+                        depth={depth}
+                        isLast={isLast}
+                        ancestorIsLast={ancestorIsLast}
+                        isSelected={group.id === selectedGroupId}
+                        defaultLocale={defaultLocale}
+                        enabledLocales={enabledLocales}
+                        draggable={canReorder}
+                        isDuplicating={isDuplicating}
+                        onToggleSelected={() => toggleSelected(group.id)}
+                        onEdit={() => void handleOpenEditor(group.id)}
+                        onDuplicate={() => void handleDuplicate()}
+                        onDelete={() =>
+                          dispatch({ type: 'OPEN_DIALOG', dialog: 'delete' })
+                        }
+                      />
+                    ),
+                  )}
+                </ul>
+              </div>
             </SortableContext>
           </DndContext>
         )}

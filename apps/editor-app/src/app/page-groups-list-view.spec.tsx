@@ -35,8 +35,10 @@ const groupA: PageGroupListItemRecord = {
   parentId: null,
   order: 0,
   createdByName: 'Ada Lovelace',
+  lastEditedAt: '2026-09-09T10:00:00.000Z',
+  lastEditedByName: 'Grace Hopper',
   createdAt: '',
-  updatedAt: '',
+  updatedAt: '2026-09-09T10:00:00.000Z',
   translations: [
     {
       locale: 'it',
@@ -44,6 +46,7 @@ const groupA: PageGroupListItemRecord = {
       title: 'Chi siamo',
       status: 'published',
       isDiverged: false,
+      hasUnpublishedChanges: false,
     },
   ],
 };
@@ -59,6 +62,7 @@ const groupB: PageGroupListItemRecord = {
       title: 'Contatti',
       status: 'draft',
       isDiverged: false,
+      hasUnpublishedChanges: false,
     },
   ],
 };
@@ -114,6 +118,49 @@ describe('PageGroupsListView', () => {
 
     expect(screen.getByRole('button', { name: 'Duplica pagina' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Elimina' })).toBeTruthy();
+  });
+
+  it('puts those actions on the selected row itself, not up in the page header', () => {
+    renderView();
+
+    fireEvent.click(screen.getByText('Chi siamo'));
+
+    const row = screen.getByText('Chi siamo').closest('li');
+    expect(row).not.toBeNull();
+    expect(row?.contains(screen.getByRole('button', { name: 'Elimina' }))).toBe(
+      true,
+    );
+  });
+
+  it('gives every row its address, its creator, its last editor and a badge that says its status', () => {
+    renderView();
+
+    expect(screen.getByText('/chi-siamo')).toBeTruthy();
+    expect(screen.getAllByText('Ada Lovelace')).toHaveLength(2);
+    expect(screen.getAllByText('Grace Hopper')).toHaveLength(2);
+    expect(
+      screen.getAllByText(
+        new Date('2026-09-09T10:00:00.000Z').toLocaleDateString('it'),
+      ),
+    ).toHaveLength(2);
+    expect(screen.getByLabelText('IT — Pubblicata')).toBeTruthy();
+    expect(screen.getByLabelText('IT — Bozza')).toBeTruthy();
+  });
+
+  it('shows a dash rather than "Invalid Date" when a row carries a date it cannot read', () => {
+    renderView({
+      groups: [
+        {
+          ...groupA,
+          lastEditedAt: '',
+          createdByName: null,
+          lastEditedByName: null,
+        },
+      ],
+    });
+
+    expect(screen.queryByText(/Invalid Date/)).toBeNull();
+    expect(screen.getAllByText('—')).toHaveLength(3);
   });
 
   it('duplicating the selected group calls duplicatePageGroup', async () => {

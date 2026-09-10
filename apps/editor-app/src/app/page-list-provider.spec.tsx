@@ -25,6 +25,8 @@ const bilingualGroup: PageGroupListItemRecord = {
   parentId: null,
   order: 0,
   createdByName: null,
+  lastEditedAt: '2026-09-09T10:00:00.000Z',
+  lastEditedByName: 'Grace Hopper',
   createdAt: '',
   updatedAt: '',
   translations: [
@@ -34,6 +36,7 @@ const bilingualGroup: PageGroupListItemRecord = {
       title: 'Chi siamo',
       status: 'published',
       isDiverged: false,
+      hasUnpublishedChanges: false,
     },
     {
       locale: 'en',
@@ -41,6 +44,7 @@ const bilingualGroup: PageGroupListItemRecord = {
       title: 'About us',
       status: 'published',
       isDiverged: false,
+      hasUnpublishedChanges: false,
     },
   ],
 };

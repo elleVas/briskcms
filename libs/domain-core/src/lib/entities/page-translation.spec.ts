@@ -2,6 +2,9 @@ import { describe, expect, it } from 'vitest';
 import { PageTranslation } from './page-translation';
 
 describe('PageTranslation entity', () => {
+  /** Every mutation records its author — the tests that are not about that say so once, here. */
+  const EDIT = { by: 'user-1' };
+
   const baseInput = {
     id: 'translation-1',
     tenantId: 'tenant-1',
@@ -22,7 +25,7 @@ describe('PageTranslation entity', () => {
     it('remembers the address it left, so the old one can still answer', () => {
       const translation = PageTranslation.create(baseInput);
 
-      translation.updateSlug('chi-siamo');
+      translation.updateSlug('chi-siamo', EDIT);
 
       expect(translation.slug).toBe('chi-siamo');
       expect(translation.formerSlugs).toEqual(['home']);
@@ -31,8 +34,8 @@ describe('PageTranslation entity', () => {
     it('keeps every address it has ever had, oldest first', () => {
       const translation = PageTranslation.create(baseInput);
 
-      translation.updateSlug('chi-siamo');
-      translation.updateSlug('la-nostra-storia');
+      translation.updateSlug('chi-siamo', EDIT);
+      translation.updateSlug('la-nostra-storia', EDIT);
 
       expect(translation.formerSlugs).toEqual(['home', 'chi-siamo']);
     });
@@ -40,7 +43,7 @@ describe('PageTranslation entity', () => {
     it('does not record a rename that changes nothing', () => {
       const translation = PageTranslation.create(baseInput);
 
-      translation.updateSlug('home');
+      translation.updateSlug('home', EDIT);
 
       expect(translation.formerSlugs).toEqual([]);
     });
@@ -48,8 +51,8 @@ describe('PageTranslation entity', () => {
     it('never leaves a slug as both the current address and a redirect to itself', () => {
       const translation = PageTranslation.create(baseInput);
 
-      translation.updateSlug('chi-siamo');
-      translation.updateSlug('home');
+      translation.updateSlug('chi-siamo', EDIT);
+      translation.updateSlug('home', EDIT);
 
       expect(translation.slug).toBe('home');
       expect(translation.formerSlugs).toEqual(['chi-siamo']);
@@ -80,7 +83,7 @@ describe('PageTranslation entity', () => {
 
   it('saveFieldValues replaces the overlay for this locale only', () => {
     const translation = PageTranslation.create(baseInput);
-    translation.saveFieldValues({ 'hero-1': { title: 'Ciao' } });
+    translation.saveFieldValues({ 'hero-1': { title: 'Ciao' } }, EDIT);
     expect(translation.fieldValues).toEqual({ 'hero-1': { title: 'Ciao' } });
   });
 
@@ -88,7 +91,7 @@ describe('PageTranslation entity', () => {
     const translation = PageTranslation.create(baseInput);
     const merged = [{ id: 'hero-1', type: 'Hero', props: { title: 'Ciao' } }];
 
-    translation.publish(merged);
+    translation.publish(merged, EDIT);
 
     expect(translation.status).toBe('published');
     expect(translation.publishedSnapshot).toEqual(merged);
@@ -96,11 +99,12 @@ describe('PageTranslation entity', () => {
 
   it('saveFieldValues after publish never touches the already-published snapshot', () => {
     const translation = PageTranslation.create(baseInput);
-    translation.publish([
-      { id: 'hero-1', type: 'Hero', props: { title: 'v1' } },
-    ]);
+    translation.publish(
+      [{ id: 'hero-1', type: 'Hero', props: { title: 'v1' } }],
+      EDIT,
+    );
 
-    translation.saveFieldValues({ 'hero-1': { title: 'v2' } });
+    translation.saveFieldValues({ 'hero-1': { title: 'v2' } }, EDIT);
 
     expect(translation.publishedSnapshot).toEqual([
       { id: 'hero-1', type: 'Hero', props: { title: 'v1' } },
@@ -111,7 +115,7 @@ describe('PageTranslation entity', () => {
     const translation = PageTranslation.create(baseInput);
     const merged = [{ id: 'hero-1', type: 'Hero', props: { title: 'Ciao' } }];
 
-    translation.diverge(merged);
+    translation.diverge(merged, EDIT);
 
     expect(translation.isDiverged).toBe(true);
     expect(translation.divergedContent).toEqual(merged);
@@ -119,14 +123,18 @@ describe('PageTranslation entity', () => {
 
   it('saveDivergedContent updates the independent content of an already-diverged translation', () => {
     const translation = PageTranslation.create(baseInput);
-    translation.diverge([
-      { id: 'hero-1', type: 'Hero', props: { title: 'v1' } },
-    ]);
+    translation.diverge(
+      [{ id: 'hero-1', type: 'Hero', props: { title: 'v1' } }],
+      EDIT,
+    );
 
-    translation.saveDivergedContent([
-      { id: 'hero-1', type: 'Hero', props: { title: 'v2' } },
-      { id: 'text-1', type: 'Text', props: { body: 'nuovo' } },
-    ]);
+    translation.saveDivergedContent(
+      [
+        { id: 'hero-1', type: 'Hero', props: { title: 'v2' } },
+        { id: 'text-1', type: 'Text', props: { body: 'nuovo' } },
+      ],
+      EDIT,
+    );
 
     expect(translation.divergedContent).toEqual([
       { id: 'hero-1', type: 'Hero', props: { title: 'v2' } },
@@ -136,10 +144,13 @@ describe('PageTranslation entity', () => {
 
   it('updateSeoMeta/updateSlug update independently of publish state', () => {
     const translation = PageTranslation.create(baseInput);
-    translation.publish([]);
+    translation.publish([], EDIT);
 
-    translation.updateSeoMeta({ title: 'Nuovo titolo', description: 'Nuova' });
-    translation.updateSlug('nuovo-slug');
+    translation.updateSeoMeta(
+      { title: 'Nuovo titolo', description: 'Nuova' },
+      EDIT,
+    );
+    translation.updateSlug('nuovo-slug', EDIT);
 
     expect(translation.seoMeta).toEqual({
       title: 'Nuovo titolo',
@@ -179,6 +190,9 @@ describe('PageTranslation entity', () => {
       createdBy: 'user-1',
       createdAt: new Date('2025-12-01T00:00:00Z'),
       updatedAt: new Date('2026-01-01T00:00:00Z'),
+      updatedBy: 'user-2',
+      contentUpdatedAt: new Date('2026-01-01T00:00:00Z'),
+      publishedAt: new Date('2026-01-01T00:00:00Z'),
     };
 
     const translation = PageTranslation.fromProps(props);

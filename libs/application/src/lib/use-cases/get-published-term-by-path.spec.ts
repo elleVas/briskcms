@@ -134,7 +134,9 @@ describe('getPublishedTermByPath', () => {
       seoMeta: { title, description: '' },
       createdBy: null,
     });
-    translation.publish([{ id: 'b', type: 'Text', props: { body: title } }]);
+    translation.publish([{ id: 'b', type: 'Text', props: { body: title } }], {
+      by: null,
+    });
     await deps.pageTranslationRepository.save(translation, null);
     return group;
   }

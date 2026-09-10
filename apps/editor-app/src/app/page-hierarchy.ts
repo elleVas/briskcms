@@ -45,6 +45,17 @@ export function collectDescendantIds<T extends HierarchyItem>(
 export interface HierarchyNode<T> {
   item: T;
   depth: number;
+  /**
+   * Whether this item is the last of its siblings, and the same answer
+   * for each of its ancestors.
+   *
+   * Carried on the flattened node because only the walk knows it: the
+   * list that renders these rows has lost the parent/child structure by
+   * then, and a tree guide cannot be drawn without knowing where each
+   * branch ends (see TreeGuides).
+   */
+  isLast: boolean;
+  ancestorIsLast: boolean[];
 }
 
 /**
@@ -66,14 +77,23 @@ export function buildHierarchyTree<T extends HierarchyItem>(
   );
 
   const result: HierarchyNode<T>[] = [];
-  function visit(item: T, depth: number) {
-    result.push({ item, depth });
-    for (const child of childrenByParent.get(item.id) ?? []) {
-      visit(child, depth + 1);
-    }
+  function visit(
+    item: T,
+    depth: number,
+    isLast: boolean,
+    ancestorIsLast: boolean[],
+  ) {
+    result.push({ item, depth, isLast, ancestorIsLast });
+    const children = childrenByParent.get(item.id) ?? [];
+    children.forEach((child, index) =>
+      visit(child, depth + 1, index === children.length - 1, [
+        ...ancestorIsLast,
+        isLast,
+      ]),
+    );
   }
-  for (const root of roots) {
-    visit(root, 0);
-  }
+  roots.forEach((root, index) =>
+    visit(root, 0, index === roots.length - 1, []),
+  );
   return result;
 }

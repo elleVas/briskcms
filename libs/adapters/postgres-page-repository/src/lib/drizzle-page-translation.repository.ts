@@ -49,6 +49,9 @@ function toRow(props: PageTranslationProps, parentGroupId: string | null) {
     createdBy: props.createdBy,
     createdAt: props.createdAt,
     updatedAt: props.updatedAt,
+    updatedBy: props.updatedBy,
+    contentUpdatedAt: props.contentUpdatedAt,
+    publishedAt: props.publishedAt,
   };
 }
 
@@ -70,6 +73,9 @@ function fromRow(row: typeof pageTranslations.$inferSelect): PageTranslation {
     createdBy: row.createdBy,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
+    updatedBy: row.updatedBy,
+    contentUpdatedAt: row.contentUpdatedAt,
+    publishedAt: row.publishedAt,
   });
 }
 

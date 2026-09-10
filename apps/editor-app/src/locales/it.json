@@ -159,7 +159,14 @@
         "locale": "Lingua",
         "anyLocale": "Qualunque lingua",
         "clear": "Rimuovi filtri"
-      }
+      },
+      "colTitle": "Pagina",
+      "colLanguages": "Lingue",
+      "colAuthor": "Creata da",
+      "colUpdated": "Modificata",
+      "statusMissing": "Non tradotta",
+      "colEditor": "Modificata da",
+      "statusPending": "Pubblicata, con modifiche non pubblicate"
     },
     "newPageDialog": {
       "title": "Nuova pagina",

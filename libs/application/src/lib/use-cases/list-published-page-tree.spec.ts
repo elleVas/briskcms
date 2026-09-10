@@ -113,6 +113,7 @@ describe('listPublishedPageTree', () => {
     await publishPageTranslation(deps, {
       tenantId,
       pageTranslationId: translation.id,
+      actorUserId: null,
     });
     return group;
   }
@@ -197,6 +198,7 @@ describe('listPublishedPageTree', () => {
     await publishPageTranslation(deps, {
       tenantId,
       pageTranslationId: translation.id,
+      actorUserId: null,
     });
 
     const result = await listPublishedPageTree(deps, {

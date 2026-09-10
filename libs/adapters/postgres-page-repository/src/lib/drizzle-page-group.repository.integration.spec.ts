@@ -179,7 +179,9 @@ describe('DrizzlePageGroupRepository / DrizzlePageTranslationRepository (integra
       const group = buildGroup();
       await groupRepository.save(group);
 
-      group.saveContent([{ type: 'Text', props: { body: 'updated' } }]);
+      group.saveContent([{ type: 'Text', props: { body: 'updated' } }], {
+        by: null,
+      });
       await groupRepository.save(group);
 
       const found = await groupRepository.findById(tenantAId, group.id);
@@ -233,6 +235,7 @@ describe('DrizzlePageGroupRepository / DrizzlePageTranslationRepository (integra
             title: 'About us',
             status: 'draft',
             isDiverged: false,
+            hasUnpublishedChanges: false,
           },
           {
             locale: 'it',
@@ -240,8 +243,68 @@ describe('DrizzlePageGroupRepository / DrizzlePageTranslationRepository (integra
             title: 'Chi siamo',
             status: 'draft',
             isDiverged: false,
+            hasUnpublishedChanges: false,
           },
         ]);
+      });
+
+      /*
+       * Two joins onto `users` from the same row — who created the page
+       * and who last touched it — plus a "latest edit in any language"
+       * that the group row alone cannot answer.
+       */
+      it('reports the last edit in ANY language, with its author', async () => {
+        const group = buildGroup({
+          createdBy: userAId,
+          now: new Date('2026-01-01T00:00:00Z'),
+        });
+        await groupRepository.save(group);
+        const translation = buildTranslation(group.id);
+        translation.saveFieldValues(
+          { 'block-1': { title: 'Ciao' } },
+          { by: userAId, now: new Date('2026-05-01T00:00:00Z') },
+        );
+        await translationRepository.save(translation, null);
+
+        const result = await groupRepository.listBySiteFiltered(
+          tenantAId,
+          siteAId,
+          { page: 1, pageSize: 20 },
+          {},
+        );
+
+        const row = result.items.find((item) => item.id === group.id);
+        expect(row?.createdByName).toBe('Ada Lovelace');
+        expect(row?.lastEditedByName).toBe('Ada Lovelace');
+        // The translation was edited AFTER the group was created, and it
+        // is the translation's clock the row has to report.
+        expect(row?.lastEditedAt).toEqual(new Date('2026-05-01T00:00:00Z'));
+      });
+
+      it('flags a published translation whose SHARED structure changed afterwards', async () => {
+        const group = buildGroup({ now: new Date('2026-01-01T00:00:00Z') });
+        await groupRepository.save(group);
+        const translation = buildTranslation(group.id);
+        translation.publish([], {
+          by: null,
+          now: new Date('2026-04-01T00:00:00Z'),
+        });
+        await translationRepository.save(translation, null);
+        group.saveContent([{ id: 'b', type: 'Text', props: { body: 'new' } }], {
+          by: null,
+          now: new Date('2026-06-01T00:00:00Z'),
+        });
+        await groupRepository.save(group);
+
+        const result = await groupRepository.listBySiteFiltered(
+          tenantAId,
+          siteAId,
+          { page: 1, pageSize: 20 },
+          {},
+        );
+
+        const row = result.items.find((item) => item.id === group.id);
+        expect(row?.translations[0]?.hasUnpublishedChanges).toBe(true);
       });
 
       it('filters by title, case-insensitively, matching any translation', async () => {

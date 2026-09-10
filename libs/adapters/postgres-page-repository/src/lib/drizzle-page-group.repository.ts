@@ -12,6 +12,7 @@ import {
   sql,
 } from 'drizzle-orm';
 import {
+  hasUnpublishedChanges,
   PageGroup,
   type PageGroupProps,
   type PageGroupVersion,
@@ -25,6 +26,7 @@ import type {
   Pagination,
 } from '@brisk/ports';
 import type { PageContent } from '@brisk/shared-types';
+import { alias } from 'drizzle-orm/pg-core';
 import {
   DrizzlePaginatedRepository,
   type BriskDb,
@@ -47,6 +49,8 @@ function toRow(props: PageGroupProps) {
     createdBy: props.createdBy,
     createdAt: props.createdAt,
     updatedAt: props.updatedAt,
+    updatedBy: props.updatedBy,
+    contentUpdatedAt: props.contentUpdatedAt,
   };
 }
 
@@ -61,6 +65,8 @@ function fromRow(row: typeof pageGroups.$inferSelect): PageGroup {
     createdBy: row.createdBy,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
+    updatedBy: row.updatedBy,
+    contentUpdatedAt: row.contentUpdatedAt,
   });
 }
 
@@ -205,6 +211,10 @@ export class DrizzlePageGroupRepository
     }
     const scope = and(...conditions);
 
+    // Two joins onto the same table, so each needs a name of its own:
+    // who created the page and who last touched it are rarely the same
+    // person, which is the entire reason the list shows both.
+    const editors = alias(users, 'page_group_editors');
     const [groupRows, totalRows] = await withTenant(this.db, tenantId, (tx) =>
       Promise.all([
         tx
@@ -220,9 +230,14 @@ export class DrizzlePageGroupRepository
             >`coalesce(${users.displayName}, ${users.email})`,
             createdAt: pageGroups.createdAt,
             updatedAt: pageGroups.updatedAt,
+            updatedByName: sql<
+              string | null
+            >`coalesce(${editors.displayName}, ${editors.email})`,
+            contentUpdatedAt: pageGroups.contentUpdatedAt,
           })
           .from(pageGroups)
           .leftJoin(users, eq(users.id, pageGroups.createdBy))
+          .leftJoin(editors, eq(editors.id, pageGroups.updatedBy))
           .where(scope)
           .orderBy(asc(pageGroups.order), asc(pageGroups.createdAt))
           .limit(pagination.pageSize)
@@ -232,6 +247,7 @@ export class DrizzlePageGroupRepository
     );
 
     const groupIds = groupRows.map((row) => row.id);
+    const translationEditors = alias(users, 'page_translation_editors');
     const translationRows =
       groupIds.length === 0
         ? []
@@ -244,15 +260,40 @@ export class DrizzlePageGroupRepository
                 title: sql<string>`${pageTranslations.seoMeta}->>'title'`,
                 status: pageTranslations.status,
                 isDiverged: pageTranslations.isDiverged,
+                contentUpdatedAt: pageTranslations.contentUpdatedAt,
+                publishedAt: pageTranslations.publishedAt,
+                updatedAt: pageTranslations.updatedAt,
+                updatedByName: sql<
+                  string | null
+                >`coalesce(${translationEditors.displayName}, ${translationEditors.email})`,
               })
               .from(pageTranslations)
+              .leftJoin(
+                translationEditors,
+                eq(translationEditors.id, pageTranslations.updatedBy),
+              )
               .where(inArray(pageTranslations.pageGroupId, groupIds)),
           );
 
+    const groupContentUpdatedAt = new Map(
+      groupRows.map((row) => [row.id, row.contentUpdatedAt]),
+    );
     const translationsByGroup = new Map<
       string,
       PageGroupListItem['translations']
     >();
+    // The most recent change to a page in ANY language, and its author.
+    // The group row alone cannot answer it: rewriting the Italian text
+    // never touches the shared structure.
+    const lastEditByGroup = new Map<
+      string,
+      { at: Date; byName: string | null }
+    >(
+      groupRows.map((row) => [
+        row.id,
+        { at: row.updatedAt, byName: row.updatedByName },
+      ]),
+    );
     for (const row of translationRows) {
       const list = translationsByGroup.get(row.pageGroupId) ?? [];
       list.push({
@@ -261,13 +302,38 @@ export class DrizzlePageGroupRepository
         title: row.title,
         status: row.status,
         isDiverged: row.isDiverged,
+        hasUnpublishedChanges: hasUnpublishedChanges({
+          status: row.status,
+          isDiverged: row.isDiverged,
+          contentUpdatedAt: row.contentUpdatedAt,
+          publishedAt: row.publishedAt,
+          groupContentUpdatedAt:
+            groupContentUpdatedAt.get(row.pageGroupId) ?? row.contentUpdatedAt,
+        }),
       });
       translationsByGroup.set(row.pageGroupId, list);
+      const lastEdit = lastEditByGroup.get(row.pageGroupId);
+      if (lastEdit && row.updatedAt > lastEdit.at) {
+        lastEditByGroup.set(row.pageGroupId, {
+          at: row.updatedAt,
+          byName: row.updatedByName,
+        });
+      }
     }
 
     return {
       items: groupRows.map((row) => ({
-        ...row,
+        id: row.id,
+        tenantId: row.tenantId,
+        siteId: row.siteId,
+        parentId: row.parentId,
+        order: row.order,
+        createdBy: row.createdBy,
+        createdByName: row.createdByName,
+        createdAt: row.createdAt,
+        updatedAt: row.updatedAt,
+        lastEditedAt: lastEditByGroup.get(row.id)?.at ?? row.updatedAt,
+        lastEditedByName: lastEditByGroup.get(row.id)?.byName ?? null,
         translations: translationsByGroup.get(row.id) ?? [],
       })),
       total: totalRows[0].total,

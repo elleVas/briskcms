@@ -29,6 +29,8 @@ export interface PageGroupListItemTranslation {
   title: string;
   status: 'draft' | 'published';
   isDiverged: boolean;
+  /** Published, but the draft has moved on since — see hasUnpublishedChanges in @brisk/domain-core, which is where the rule lives. */
+  hasUnpublishedChanges: boolean;
 }
 
 /**
@@ -49,6 +51,16 @@ export interface PageGroupListItem {
   createdByName: string | null;
   createdAt: Date;
   updatedAt: Date;
+  /**
+   * The last change to this page in ANY language, and who made it.
+   *
+   * Not the group row's own `updatedAt`: the shared structure is only
+   * half of a page, and someone rewriting the Italian text would
+   * otherwise leave a list that still reads "last changed three weeks
+   * ago".
+   */
+  lastEditedAt: Date;
+  lastEditedByName: string | null;
   translations: PageGroupListItemTranslation[];
 }
 

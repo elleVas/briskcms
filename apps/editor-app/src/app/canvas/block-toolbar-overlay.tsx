@@ -5,7 +5,6 @@ import {
   ChevronUp,
   Copy,
   Rows3,
-  Paintbrush,
   Pencil,
   Plus,
   Trash2,
@@ -211,10 +210,6 @@ export function BlockToolbarOverlay({
   const stylableProperties = themeAllowsStyling
     ? (descriptor.stylableProperties ?? [])
     : [];
-  const canStyleType =
-    stylableProperties.length > 0 &&
-    typeStyle !== undefined &&
-    onChangeTypeStyle !== undefined;
   // marginTop/marginBottom are per-INSTANCE only (never per-type, see the
   // comment on blockStyleOverrideSchema in site-theme-tokens.ts) and only
   // for a top-level block: they are the one place where
@@ -364,40 +359,16 @@ export function BlockToolbarOverlay({
         >
           <ChevronDown size={16} />
         </button>
-        {canStyleType && (
-          <Popover>
-            <PopoverTrigger asChild>
-              <button
-                type="button"
-                className={iconButtonClass}
-                aria-label={t('canvas.style.editType', {
-                  type: tLabel(descriptor.label),
-                })}
-              >
-                <Paintbrush size={16} />
-              </button>
-            </PopoverTrigger>
-            <PopoverContent side="right">
-              <p className="mb-3 text-xs text-muted-foreground">
-                {t('canvas.style.editTypeHint', {
-                  type: tLabel(descriptor.label),
-                })}
-              </p>
-              <BlockStyleFields
-                blockType={block.type}
-                themeProperties={themeStyleProperties?.[block.type]}
-                properties={stylableProperties}
-                value={typeStyle?.[breakpoint] ?? {}}
-                onChange={(next) => onChangeTypeStyle?.(next)}
-                defaults={styleFieldDefaults(
-                  blockStyleDefaults?.[block.type],
-                  typeStyle,
-                )}
-                themeTokens={themeTokens}
-              />
-            </PopoverContent>
-          </Popover>
-        )}
+        {/* The per-TYPE style used to sit here, behind a brush. It
+            edits `site.themeTokens.blockStyles[type]` — every block of
+            that type on the whole site — from a toolbar whose every
+            other control acts on this one block, which is a control that
+            looks local and is not.
+
+            It is not lost: the Style screen edits exactly the same
+            values, for every type, with its own breakpoint selector. What
+            goes is the shortcut of restyling a type while looking at one
+            instance of it. */}
         {/*
           Deliberately NOT gated on the theme's ceiling, unlike the
           type-level styling button above and the instance style fields

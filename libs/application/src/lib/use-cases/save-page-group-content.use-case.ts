@@ -32,7 +32,7 @@ export async function savePageGroupContent(
     throw new PageGroupNotFoundError(input.pageGroupId);
   }
 
-  group.saveContent(input.content);
+  group.saveContent(input.content, { by: input.actorUserId });
   await deps.pageGroupRepository.saveWithVersion(group, {
     id: randomUUID(),
     tenantId: group.tenantId,

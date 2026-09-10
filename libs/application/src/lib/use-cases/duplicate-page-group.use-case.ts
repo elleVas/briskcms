@@ -116,6 +116,11 @@ export async function duplicatePageGroup(
       createdBy: input.createdBy,
       createdAt: group.updatedAt,
       updatedAt: group.updatedAt,
+      updatedBy: input.createdBy,
+      contentUpdatedAt: group.updatedAt,
+      // A copy is a draft nobody has published yet, whatever the
+      // original's state.
+      publishedAt: null,
     });
     await deps.pageTranslationRepository.save(translation, group.parentId);
     translations.push(translation);

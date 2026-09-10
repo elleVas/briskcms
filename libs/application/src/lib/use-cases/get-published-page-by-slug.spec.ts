@@ -128,6 +128,7 @@ describe('getPublishedPageBySlug', () => {
     return publishPageTranslation(deps, {
       tenantId,
       pageTranslationId: translation.id,
+      actorUserId: null,
     });
   }
 
@@ -181,6 +182,7 @@ describe('getPublishedPageBySlug', () => {
       pageTranslationId: translation.id,
       slug: 'la-nostra-storia',
       parentGroupId: null,
+      actorUserId: null,
     });
 
     const result = await getPublishedPageBySlug(deps, {
@@ -219,6 +221,7 @@ describe('getPublishedPageBySlug', () => {
       pageTranslationId: parentTranslation.id,
       slug: 'cosa-facciamo',
       parentGroupId: null,
+      actorUserId: null,
     });
 
     const result = await getPublishedPageBySlug(deps, {
@@ -245,6 +248,7 @@ describe('getPublishedPageBySlug', () => {
       pageTranslationId: translation.id,
       slug: 'la-nostra-storia',
       parentGroupId: null,
+      actorUserId: null,
     });
 
     const result = await getPublishedPageBySlug(deps, {

@@ -112,6 +112,7 @@ describe('listPublishedPagesForSitemap', () => {
     await publishPageTranslation(deps, {
       tenantId,
       pageTranslationId: translation.id,
+      actorUserId: null,
     });
     return group;
   }
@@ -268,6 +269,7 @@ describe('listPublishedPagesForSitemap', () => {
     await publishPageTranslation(deps, {
       tenantId,
       pageTranslationId: translation.id,
+      actorUserId: null,
     });
     const english = await createPageGroupTranslation(deps, {
       tenantId,
@@ -280,6 +282,7 @@ describe('listPublishedPagesForSitemap', () => {
     await publishPageTranslation(deps, {
       tenantId,
       pageTranslationId: english.id,
+      actorUserId: null,
     });
     // The term answers in Italian only.
     await seedTerm(deps, {
@@ -354,6 +357,7 @@ describe('listPublishedPagesForSitemap', () => {
     await publishPageTranslation(deps, {
       tenantId,
       pageTranslationId: idraulica.id,
+      actorUserId: null,
     });
 
     const result = await listPublishedPagesForSitemap(deps, {
@@ -390,6 +394,7 @@ describe('listPublishedPagesForSitemap', () => {
     await publishPageTranslation(deps, {
       tenantId,
       pageTranslationId: idraulicaEn.id,
+      actorUserId: null,
     });
 
     const result = await listPublishedPagesForSitemap(deps, {

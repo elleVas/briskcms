@@ -52,7 +52,7 @@ export async function divergePageTranslation(
   }
 
   const merged = mergeTranslatedContent(group.content, translation.fieldValues);
-  translation.diverge(merged);
+  translation.diverge(merged, { by: input.actorUserId });
 
   await deps.pageTranslationRepository.saveWithVersion(
     translation,

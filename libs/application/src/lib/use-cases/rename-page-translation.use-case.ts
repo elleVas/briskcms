@@ -15,6 +15,8 @@ export interface RenamePageTranslationInput {
   /** Already slugified by the caller — this decides an address, it does not invent one. */
   slug: string;
   parentGroupId: string | null;
+  /** Recorded as the page's last editor — see EditContext in @brisk/domain-core. */
+  actorUserId: string | null;
 }
 
 /**
@@ -61,7 +63,7 @@ export async function renamePageTranslation(
     throw new PageSlugAlreadyExistsError(input.slug);
   }
 
-  translation.updateSlug(input.slug);
+  translation.updateSlug(input.slug, { by: input.actorUserId });
   await deps.pageTranslationRepository.save(translation, input.parentGroupId);
 
   return translation;

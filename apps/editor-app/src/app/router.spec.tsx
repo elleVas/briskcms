@@ -147,6 +147,8 @@ const samplePageGroupListItem: PageGroupListItemRecord = {
   parentId: null,
   order: 0,
   createdByName: null,
+  lastEditedAt: '2026-09-09T10:00:00.000Z',
+  lastEditedByName: 'Grace Hopper',
   createdAt: '',
   updatedAt: '',
   translations: [
@@ -156,6 +158,7 @@ const samplePageGroupListItem: PageGroupListItemRecord = {
       title: 'home',
       status: 'published',
       isDiverged: false,
+      hasUnpublishedChanges: false,
     },
   ],
 };

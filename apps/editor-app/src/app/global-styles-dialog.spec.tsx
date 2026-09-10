@@ -8,7 +8,10 @@ import type { SiteRecord } from '@brisk/shared-types';
 import { DEFAULT_COOKIE_BANNER_SETTINGS } from '@brisk/shared-types';
 import { createTestQueryClient } from '../test-query-client';
 import { TooltipProvider } from '../components/ui/tooltip';
-import { GlobalStylesDialog } from './global-styles-dialog';
+import {
+  GlobalStylesDialog,
+  typeStylableProperties,
+} from './global-styles-dialog';
 
 const heroDescriptor: BlockDescriptor = {
   type: 'Hero',
@@ -121,6 +124,30 @@ function renderDialog(
 describe('GlobalStylesDialog', () => {
   afterEach(() => {
     vi.clearAllMocks();
+  });
+
+  /*
+   * `marginTop`/`marginBottom` mean nothing for a whole TYPE: the CSS for
+   * them comes from `spacingRules`, which the per-instance builder calls
+   * and the per-type builder does not (block-style-overrides.ts). Offered
+   * here, they stored a value and rendered nothing — a control that looks
+   * like it works.
+   *
+   * The block toolbar filtered them out of its own type popover and this
+   * screen did not, so the rule lived in one of the two places that
+   * needed it. That popover is gone; this is now the only one.
+   */
+  it('never offers the two margins, which a type cannot set', () => {
+    const withMargins: BlockDescriptor = {
+      type: 'Card',
+      label: 'blocks.card.label',
+      category: 'layout',
+      defaultProps: {},
+      fields: [],
+      stylableProperties: ['borderRadius', 'marginTop', 'marginBottom'],
+    };
+
+    expect(typeStylableProperties(withMargins)).toEqual(['borderRadius']);
   });
 
   it('shows a loading state until the site arrives', async () => {

@@ -120,6 +120,9 @@ describe('DrizzleSearchRepository (integration)', () => {
       createdBy: row.createdBy,
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,
+      updatedBy: row.updatedBy,
+      contentUpdatedAt: row.contentUpdatedAt,
+      publishedAt: row.publishedAt,
     });
   }
 

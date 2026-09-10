@@ -11,6 +11,8 @@ export interface ReorderSiblingPageGroupsInput {
   parentId: string | null;
   /** The full sibling group, id-only, in the desired new order (drag-and-drop hands this back as one complete list on drop). */
   orderedPageGroupIds: string[];
+  /** Recorded as the page's last editor — see EditContext in @brisk/domain-core. */
+  actorUserId: string | null;
 }
 
 /**
@@ -49,7 +51,7 @@ export async function reorderSiblingPageGroups(
     // null under a real race (deleted between the read and here), in which
     // case there's nothing left to reorder.
     if (!group) continue;
-    group.reorder(index);
+    group.reorder(index, { by: input.actorUserId });
     await deps.pageGroupRepository.save(group);
   }
 }

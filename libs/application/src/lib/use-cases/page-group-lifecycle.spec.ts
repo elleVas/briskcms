@@ -333,6 +333,7 @@ describe('page group i18n lifecycle', () => {
         pageTranslationId: translation.id,
         seoMeta: { title: 'New title', description: 'New description' },
         parentGroupId: group.parentId,
+        actorUserId: null,
       });
 
       expect(updated.seoMeta).toEqual({
@@ -365,6 +366,7 @@ describe('page group i18n lifecycle', () => {
       const published = await publishPageTranslation(deps, {
         tenantId,
         pageTranslationId: translation.id,
+        actorUserId: null,
       });
 
       expect(published.status).toBe('published');
@@ -385,6 +387,7 @@ describe('page group i18n lifecycle', () => {
       const published = await publishPageTranslation(deps, {
         tenantId,
         pageTranslationId: translation.id,
+        actorUserId: null,
       });
 
       expect(published.publishedSnapshot).toEqual(diverged.divergedContent);
@@ -397,6 +400,7 @@ describe('page group i18n lifecycle', () => {
         publishPageTranslation(deps, {
           tenantId,
           pageTranslationId: 'does-not-exist',
+          actorUserId: null,
         }),
       ).rejects.toThrow(PageTranslationNotFoundError);
     });
@@ -480,6 +484,7 @@ describe('page group i18n lifecycle', () => {
         pageTranslationId: translation.id,
         content: [{ type: 'Text', props: { body: 'diverged edit' } }],
         parentGroupId: group.parentId,
+        actorUserId: null,
       });
 
       expect(updated.divergedContent).toEqual([
@@ -497,6 +502,7 @@ describe('page group i18n lifecycle', () => {
           pageTranslationId: translation.id,
           content: [],
           parentGroupId: group.parentId,
+          actorUserId: null,
         }),
       ).rejects.toThrow(PageTranslationNotDivergedError);
     });
@@ -510,6 +516,7 @@ describe('page group i18n lifecycle', () => {
           pageTranslationId: 'does-not-exist',
           content: [],
           parentGroupId: null,
+          actorUserId: null,
         }),
       ).rejects.toThrow(PageTranslationNotFoundError);
     });
@@ -733,6 +740,7 @@ describe('page group i18n lifecycle', () => {
         siteId,
         parentId: null,
         orderedPageGroupIds: [c.id, a.id, b.id],
+        actorUserId: null,
       });
 
       const siblings = await deps.pageGroupRepository.listSiblings(
@@ -761,6 +769,7 @@ describe('page group i18n lifecycle', () => {
           siteId,
           parentId: null,
           orderedPageGroupIds: [a.id],
+          actorUserId: null,
         }),
       ).rejects.toThrow(PageGroupReorderMismatchError);
     });
@@ -784,6 +793,7 @@ describe('page group i18n lifecycle', () => {
           siteId,
           parentId: null,
           orderedPageGroupIds: [a.id, b.id, 'does-not-exist'],
+          actorUserId: null,
         }),
       ).rejects.toThrow(PageGroupReorderMismatchError);
     });
@@ -796,6 +806,7 @@ describe('page group i18n lifecycle', () => {
       await publishPageTranslation(deps, {
         tenantId,
         pageTranslationId: translation.id,
+        actorUserId: null,
       });
 
       const result = await duplicatePageGroup(deps, {
