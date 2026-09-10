@@ -16,6 +16,7 @@ export const hamburgerMenuBlock: BlockDescriptor<{
   type: 'HamburgerMenu',
   label: 'blocks.hamburgerMenu.label',
   category: 'navigation',
+  icon: 'align-justify',
   defaultProps: { position: 'left', visibility: 'mobile-only' },
   fields: [positionField, visibilityField],
   isContainer: true,

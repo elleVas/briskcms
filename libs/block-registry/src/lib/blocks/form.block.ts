@@ -7,6 +7,7 @@ export const formBlock: BlockDescriptor<FormBlockProps> = {
   type: 'Form',
   label: 'blocks.form.label',
   category: 'conversion',
+  icon: 'clipboard-list',
   defaultProps: {
     form: null,
   },

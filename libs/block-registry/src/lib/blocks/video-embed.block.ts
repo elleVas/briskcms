@@ -7,6 +7,7 @@ export const videoEmbedBlock: BlockDescriptor<VideoEmbedProps> = {
   type: 'VideoEmbed',
   label: 'blocks.videoEmbed.label',
   category: 'media',
+  icon: 'monitor-play',
   defaultProps: {
     url: '',
     poster: null,

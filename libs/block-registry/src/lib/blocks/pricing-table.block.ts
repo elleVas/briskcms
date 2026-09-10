@@ -7,6 +7,7 @@ export const pricingTableBlock: BlockDescriptor<PricingTableProps> = {
   type: 'PricingTable',
   label: 'blocks.pricingTable.label',
   category: 'socialProof',
+  icon: 'receipt',
   defaultProps: { display: 'grid' },
   fields: [
     {

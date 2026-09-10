@@ -7,6 +7,7 @@ export const accordionItemBlock: BlockDescriptor<AccordionItemProps> = {
   type: 'AccordionItem',
   label: 'blocks.accordionItem.label',
   category: 'interactive',
+  icon: 'chevron-down',
   defaultProps: {
     question: 'Domanda...',
     answer: 'Risposta...',

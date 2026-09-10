@@ -9,6 +9,7 @@ export const countdownBlock: BlockDescriptor<CountdownProps> = {
   type: 'Countdown',
   label: 'blocks.countdown.label',
   category: 'conversion',
+  icon: 'timer',
   defaultProps: {
     targetDate: new Date(Date.now() + THIRTY_DAYS_MS)
       .toISOString()

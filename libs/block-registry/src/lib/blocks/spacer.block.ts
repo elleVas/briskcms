@@ -9,6 +9,7 @@ export const spacerBlock: BlockDescriptor<SpacerProps> = {
   type: 'Spacer',
   label: 'blocks.spacer.label',
   category: 'layout',
+  icon: 'move-vertical',
   defaultProps: {},
   fields: [],
   stylableProperties: ['minHeight', 'backgroundColor'],

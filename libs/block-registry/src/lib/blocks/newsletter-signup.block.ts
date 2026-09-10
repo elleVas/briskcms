@@ -7,6 +7,7 @@ export const newsletterSignupBlock: BlockDescriptor<NewsletterSignupProps> = {
   type: 'NewsletterSignup',
   label: 'blocks.newsletterSignup.label',
   category: 'conversion',
+  icon: 'mail',
   defaultProps: {
     title: 'Iscriviti alla newsletter',
     buttonLabel: 'Iscrivimi',

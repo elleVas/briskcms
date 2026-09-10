@@ -7,6 +7,7 @@ export const statBlock: BlockDescriptor<StatProps> = {
   type: 'Stat',
   label: 'blocks.stat.label',
   category: 'socialProof',
+  icon: 'hash',
   defaultProps: {
     value: 100,
     prefix: '',

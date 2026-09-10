@@ -15,6 +15,7 @@ export const carouselBlock: BlockDescriptor<CarouselProps> = {
   type: 'Carousel',
   label: 'blocks.carousel.label',
   category: 'layout',
+  icon: 'gallery-horizontal',
   defaultProps: { display: 'carousel' },
   fields: [
     {

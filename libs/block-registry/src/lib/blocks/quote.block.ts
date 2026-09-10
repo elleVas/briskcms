@@ -7,6 +7,7 @@ export const quoteBlock: BlockDescriptor<QuoteProps> = {
   type: 'Quote',
   label: 'blocks.quote.label',
   category: 'content',
+  icon: 'quote',
   defaultProps: {
     quote: 'Testo della citazione...',
     author: '',

@@ -10,6 +10,7 @@ export const breadcrumbBlock: BlockDescriptor<BreadcrumbProps> = {
   type: 'Breadcrumb',
   label: 'blocks.breadcrumb.label',
   category: 'chrome',
+  icon: 'chevron-right',
   defaultProps: {
     homeLabel: 'Home',
     visibility: 'always',

@@ -57,6 +57,7 @@ import {
   computeDropTarget,
   type DropCandidateRect,
 } from './compute-drop-target';
+import { LayerContextMenu } from './layer-context-menu';
 import { LayersPanel } from './layers-panel';
 import { isRectVisibleInIframe, useIframeGeometry } from './overlay-layer';
 import {
@@ -212,6 +213,12 @@ export function CanvasEditorShell({
    */
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isLayersPanelCollapsed, setIsLayersPanelCollapsed] = useState(false);
+  // Where the layers context menu is, or null when closed. Position and
+  // not just "open": it opens at the pointer, like every context menu.
+  const [layerMenuAt, setLayerMenuAt] = useState<{
+    x: number;
+    y: number;
+  } | null>(null);
 
   // A locally mutated optimistic copy (tree mutations have to show up in
   // Layers/Inspector immediately, not only after the server round-trip) —
@@ -1082,6 +1089,11 @@ export function CanvasEditorShell({
       )}
       <div style={{ flex: 1, minHeight: 0, display: 'flex' }}>
         <aside
+          // Named, so this landmark is addressable: a screen reader
+          // announces which of the two side panels it has entered, and
+          // "Testo" in the inserter stops being indistinguishable from
+          // "Testo" in the layers tree.
+          aria-label={t('canvas.insertBlock')}
           className={
             isSidebarCollapsed
               ? 'flex w-10 shrink-0 flex-col items-center border-r py-3'
@@ -1211,6 +1223,7 @@ export function CanvasEditorShell({
           )}
         </div>
         <aside
+          aria-label={t('canvas.layersTitle')}
           className={
             isLayersPanelCollapsed
               ? 'flex w-10 shrink-0 flex-col items-center border-l py-3'
@@ -1236,6 +1249,7 @@ export function CanvasEditorShell({
                 {t('canvas.layersTitle')}
               </h3>
               <LayersPanel
+                onContextMenu={(_blockId, x, y) => setLayerMenuAt({ x, y })}
                 blocks={localBlocks}
                 hoveredBlockId={bridge.hoveredBlockId}
                 selectedBlockId={bridge.selectedBlockId}
@@ -1274,6 +1288,19 @@ export function CanvasEditorShell({
           )}
         </aside>
       </div>
+      {layerMenuAt && (
+        <LayerContextMenu
+          x={layerMenuAt.x}
+          y={layerMenuAt.y}
+          canMoveUp={canMoveSelectedUp}
+          canMoveDown={canMoveSelectedDown}
+          onDuplicate={handleDuplicateSelected}
+          onDelete={handleRemoveSelected}
+          onMoveUp={() => handleMoveSelected(-1)}
+          onMoveDown={() => handleMoveSelected(1)}
+          onClose={() => setLayerMenuAt(null)}
+        />
+      )}
       {children}
     </div>
   );

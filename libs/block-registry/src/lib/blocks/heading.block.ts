@@ -5,6 +5,7 @@ export const headingBlock = defineBlock({
   type: 'Heading',
   label: 'blocks.heading.label',
   category: 'content',
+  icon: 'heading',
   schema: headingPropsSchema,
   defaultProps: {
     text: 'Section heading',

@@ -9,6 +9,7 @@ export const navDropdownBlock: BlockDescriptor<NavDropdownProps> = {
   type: 'NavDropdown',
   label: 'blocks.navDropdown.label',
   category: 'navigation',
+  icon: 'chevron-down-square',
   defaultProps: {
     label: 'Sottomenu',
     position: 'left',

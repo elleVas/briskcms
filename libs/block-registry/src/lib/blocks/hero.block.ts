@@ -6,6 +6,7 @@ export const heroBlock: BlockDescriptor<HeroProps> = {
   type: 'Hero',
   label: 'blocks.hero.label',
   category: 'content',
+  icon: 'layout-panel-top',
   defaultProps: {
     eyebrow: '',
     title: 'Titolo',

@@ -6,6 +6,7 @@ export const textBlock: BlockDescriptor<TextProps> = {
   type: 'Text',
   label: 'blocks.text.label',
   category: 'content',
+  icon: 'type',
   defaultProps: {
     body: 'Testo del blocco...',
   },

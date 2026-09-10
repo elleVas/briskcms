@@ -6,6 +6,7 @@ export const imageSliderBlock: BlockDescriptor<ImageSliderProps> = {
   type: 'ImageSlider',
   label: 'blocks.imageSlider.label',
   category: 'media',
+  icon: 'gallery-horizontal-end',
   defaultProps: {
     images: [],
   },

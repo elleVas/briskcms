@@ -28,6 +28,7 @@ import {
   applyBlockStyleCss,
   blockIdOf,
   collectBlockElements,
+  markEmptyBlocks,
   escapeHtml,
   findFieldElement,
   findFieldUnderPointer,
@@ -214,6 +215,7 @@ export function initPreviewBridge(): void {
   }
 
   function sendReady(): void {
+    markEmptyBlocks(document);
     postToParent(targetOrigin, {
       type: 'preview:ready',
       payload: {
@@ -224,6 +226,10 @@ export function initPreviewBridge(): void {
   }
 
   function sendBlockRects(): void {
+    // Before measuring, not after: a block that just became empty has to
+    // get its box before its rect is read, or the editor is told it has
+    // none and draws no selection outline around it.
+    markEmptyBlocks(document);
     postToParent(targetOrigin, {
       type: 'preview:block-rects',
       payload: { blockRects: toBlockRects(collectBlockElements(document)) },

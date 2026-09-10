@@ -7,6 +7,7 @@ export const ratingBlock: BlockDescriptor<RatingProps> = {
   type: 'Rating',
   label: 'blocks.rating.label',
   category: 'media',
+  icon: 'star',
   defaultProps: {
     rating: 5,
     label: 'Valutazione clienti',

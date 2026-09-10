@@ -5,6 +5,7 @@ export const iconBlock: BlockDescriptor<IconProps> = {
   type: 'Icon',
   label: 'blocks.icon.label',
   category: 'content',
+  icon: 'smile',
   defaultProps: { icon: null, size: 'md', label: '' },
   fields: [
     FieldBuilder.custom('icon', 'blocks.icon.fields.icon.fieldLabel', 'icon'),

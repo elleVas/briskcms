@@ -7,6 +7,7 @@ export const imageBlock: BlockDescriptor<ImageProps> = {
   type: 'Image',
   label: 'blocks.image.label',
   category: 'content',
+  icon: 'image',
   defaultProps: {
     media: null,
     alt: '',

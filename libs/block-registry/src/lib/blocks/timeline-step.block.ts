@@ -7,6 +7,7 @@ export const timelineStepBlock: BlockDescriptor<TimelineStepProps> = {
   type: 'TimelineStep',
   label: 'blocks.timelineStep.label',
   category: 'socialProof',
+  icon: 'circle-dot',
   defaultProps: {
     label: 'Fase 1',
     title: 'Titolo della fase',

@@ -1,11 +1,6 @@
 import { useRef, useState } from 'react';
 import type { BlockDescriptor } from '@brisk/block-registry';
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from '../../components/ui/accordion';
+import { BlockIcon } from './block-icons';
 import { Input } from '../../components/ui/input';
 import { useTranslation } from '../../lib/use-translation';
 
@@ -106,9 +101,20 @@ function DraggableBlockButton({
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
-      className="w-full touch-none rounded px-2 py-1.5 text-left text-sm hover:bg-muted hover:text-foreground"
+      title={tLabel(descriptor.label)}
+      className="flex w-full touch-none flex-col items-center gap-1.5 rounded border border-transparent px-1 py-2 text-center text-[11px] leading-tight hover:border-border hover:bg-muted hover:text-foreground"
     >
-      {tLabel(descriptor.label)}
+      <BlockIcon
+        name={descriptor.icon}
+        size={20}
+        className="shrink-0 text-muted-foreground"
+      />
+      {/* The name stays under every tile. An icon narrows the guess, it
+          does not make it: `Carousel` and `Image slider` are the same
+          picture to anybody who has not used both. */}
+      <span className="line-clamp-2 w-full break-words">
+        {tLabel(descriptor.label)}
+      </span>
     </button>
   );
 }
@@ -186,31 +192,29 @@ export function BlockPicker({
         Uncontrolled otherwise, so the sections a person opened by hand
         stay as they left them.
       */}
-      <Accordion
-        type="multiple"
-        {...(search !== ''
-          ? { value: nonEmptyCategories.map((category) => category.title) }
-          : {})}
-      >
-        {nonEmptyCategories.map((category) => (
-          <AccordionItem key={category.title} value={category.title}>
-            <AccordionTrigger>{tLabel(category.title)}</AccordionTrigger>
-            <AccordionContent>
-              <ul className="flex flex-col gap-0.5">
-                {category.descriptors.map((descriptor) => (
-                  <li key={descriptor.type}>
-                    <DraggableBlockButton
-                      descriptor={descriptor}
-                      onInsert={onInsert}
-                      drag={drag}
-                    />
-                  </li>
-                ))}
-              </ul>
-            </AccordionContent>
-          </AccordionItem>
-        ))}
-      </Accordion>
+      {/* Every category open, one scrolling column — not an accordion.
+          Closed sections meant the panel showed six words and no blocks:
+          to find out a Countdown exists you had to open three of them, or
+          already know its name well enough to search for it. The whole
+          job of an inserter is to answer "what can I put here". */}
+      {nonEmptyCategories.map((category) => (
+        <section key={category.title} className="mb-3">
+          <h3 className="mb-1 px-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+            {tLabel(category.title)}
+          </h3>
+          <ul className="grid grid-cols-3 gap-1">
+            {category.descriptors.map((descriptor) => (
+              <li key={descriptor.type}>
+                <DraggableBlockButton
+                  descriptor={descriptor}
+                  onInsert={onInsert}
+                  drag={drag}
+                />
+              </li>
+            ))}
+          </ul>
+        </section>
+      ))}
     </>
   );
 }

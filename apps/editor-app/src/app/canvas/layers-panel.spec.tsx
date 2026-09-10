@@ -102,7 +102,13 @@ describe('LayersPanel', () => {
     expect(container.innerHTML).toBe('');
   });
 
-  it('renders one row per top-level block, labeled by type', () => {
+  /*
+   * By the name a person picked the block by, not by its type. The tree
+   * used to read `FeatureGrid` and `EmbedHtml` — our words for it, in a
+   * panel meant for somebody arranging a page. Every block already had a
+   * translated label; the panel simply was not asking for it.
+   */
+  it('renders one row per top-level block, named the way a person picked it', () => {
     const blocks: Block[] = [
       { id: 'hero-1', type: 'Hero', props: {} },
       { id: 'text-1', type: 'Text', props: {} },
@@ -119,7 +125,7 @@ describe('LayersPanel', () => {
     const rows = screen.getAllByTestId('layer-row');
     expect(rows).toHaveLength(2);
     expect(rows[0].textContent).toBe('Hero');
-    expect(rows[1].textContent).toBe('Text');
+    expect(rows[1].textContent).toBe('Testo');
   });
 
   it('renders nested children indented under their container', () => {
@@ -142,7 +148,82 @@ describe('LayersPanel', () => {
 
     const rows = screen.getAllByTestId('layer-row');
     expect(rows).toHaveLength(2);
-    expect(rows[1].textContent).toBe('Text');
+    expect(rows[1].textContent).toBe('Testo');
+  });
+
+  /*
+   * Indentation alone stopped being readable at the third level:
+   * `Columns > Column > Code` was three rows at three margins, and which
+   * Column the Code belonged to was a guess. The guides answer that
+   * without being read — and the line under the LAST child has to stop
+   * at its elbow, or the tree draws a branch continuing past its end.
+   */
+  /*
+   * Right-clicking a row selects it first, and NOT additively: the menu
+   * acts on the selection, so deleting from one row must not take
+   * whatever happened to be selected before it as well.
+   */
+  it('selects the row it was opened on, on its own, before offering a menu', () => {
+    const onSelect = vi.fn();
+    const onContextMenu = vi.fn();
+    render(
+      <LayersPanel
+        blocks={[
+          { id: 'hero-1', type: 'Hero', props: {} },
+          { id: 'text-1', type: 'Text', props: {} },
+        ]}
+        hoveredBlockId={null}
+        selectedBlockId="hero-1"
+        onSelect={onSelect}
+        onContextMenu={onContextMenu}
+      />,
+    );
+
+    fireEvent.contextMenu(screen.getAllByTestId('layer-row')[1]!, {
+      clientX: 120,
+      clientY: 240,
+    });
+
+    expect(onSelect).toHaveBeenCalledWith('text-1', false);
+    expect(onContextMenu).toHaveBeenCalledWith('text-1', 120, 240);
+  });
+
+  it('draws a guide for every branch a row sits under, and ends the one it closes', () => {
+    const blocks: Block[] = [
+      {
+        id: 'columns-1',
+        type: 'Columns',
+        props: {},
+        children: [
+          { id: 'col-1', type: 'Column', props: {} },
+          { id: 'col-2', type: 'Column', props: {} },
+        ],
+      },
+    ];
+    const { container } = render(
+      <LayersPanel
+        blocks={blocks}
+        hoveredBlockId={null}
+        selectedBlockId={null}
+        onSelect={vi.fn()}
+      />,
+    );
+
+    const items = [...container.querySelectorAll('li')];
+    const guides = (li: Element) =>
+      [...li.children].filter(
+        (child) =>
+          child.tagName === 'SPAN' && child.hasAttribute('aria-hidden'),
+      );
+
+    // The container is at the root: nothing above it to connect to.
+    expect(guides(items[0]!)).toHaveLength(0);
+    // Each child gets its branch line plus the elbow into it.
+    expect(guides(items[1]!)).toHaveLength(2);
+    expect(guides(items[2]!)).toHaveLength(2);
+    // ...and the last child's line stops halfway, at the elbow.
+    const lastBranchLine = guides(items[2]!)[0] as HTMLElement;
+    expect(lastBranchLine.style.height).not.toBe('');
   });
 
   it('marks the hovered row distinctly from an idle one', () => {

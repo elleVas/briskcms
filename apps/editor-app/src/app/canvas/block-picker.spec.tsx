@@ -27,7 +27,13 @@ const columnsDescriptor: BlockDescriptor = {
 };
 
 describe('BlockPicker', () => {
-  it('renders one collapsed section per category, expandable to show its registered block types', () => {
+  /*
+   * Every category open, not an accordion. Closed sections meant the
+   * panel showed six words and no blocks: to learn a Countdown exists
+   * you had to open three of them, or already know its name well enough
+   * to search for it. Answering "what can I put here" is the whole job.
+   */
+  it('shows every block under its category heading, with nothing to expand first', () => {
     render(
       <BlockPicker
         categories={[{ title: 'Contenuto', types: ['Hero', 'Text'] }]}
@@ -37,10 +43,6 @@ describe('BlockPicker', () => {
     );
 
     expect(screen.getByText('Contenuto')).toBeDefined();
-    expect(screen.queryByText('Hero')).toBeNull();
-
-    fireEvent.click(screen.getByText('Contenuto'));
-
     expect(screen.getByText('Hero')).toBeDefined();
     expect(screen.getByText('Testo')).toBeDefined();
   });

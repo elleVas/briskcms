@@ -9,6 +9,7 @@ export const socialLinkBlock: BlockDescriptor<SocialLinkProps> = {
   type: 'SocialLink',
   label: 'blocks.socialLink.label',
   category: 'navigation',
+  icon: 'at-sign',
   defaultProps: { icon: null, label: '', url: '' },
   fields: [
     FieldBuilder.custom(
