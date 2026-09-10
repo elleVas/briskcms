@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { GitFork } from 'lucide-react';
+import { CircleDot, GitFork } from 'lucide-react';
 import type { PageGroupListItemTranslation } from '@brisk/shared-types';
 import { Badge } from '../components/ui/badge';
 
@@ -35,6 +35,7 @@ export function TranslationAvailabilityBadges({
           status:
             | 'pages.list.statusPublished'
             | 'pages.list.statusDraft'
+            | 'pages.list.statusPending'
             | 'pages.list.statusMissing',
         ) => `${locale.toUpperCase()} — ${t(status)}`;
         if (!translation) {
@@ -50,18 +51,29 @@ export function TranslationAvailabilityBadges({
             </Badge>
           );
         }
-        const status =
-          translation.status === 'published'
-            ? ('pages.list.statusPublished' as const)
-            : ('pages.list.statusDraft' as const);
+        // A published page whose draft has moved on is neither of the two
+        // states the fill was showing. It is the one that costs somebody
+        // something — what is online is not what they last wrote — so it
+        // gets its own word and its own mark.
+        const status = !(translation.status === 'published')
+          ? ('pages.list.statusDraft' as const)
+          : translation.hasUnpublishedChanges
+            ? ('pages.list.statusPending' as const)
+            : ('pages.list.statusPublished' as const);
         return (
           <Badge
             key={locale}
             variant={translation.status === 'published' ? 'default' : 'outline'}
+            className={
+              translation.hasUnpublishedChanges
+                ? 'bg-amber-500 text-amber-950 hover:bg-amber-500'
+                : undefined
+            }
             title={label(status)}
             aria-label={label(status)}
           >
             <span className="uppercase">{locale}</span>
+            {translation.hasUnpublishedChanges && <CircleDot size={10} />}
             {translation.isDiverged && (
               <GitFork size={10} aria-label={t('canvas.language.diverged')} />
             )}

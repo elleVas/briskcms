@@ -48,7 +48,7 @@ export async function rollbackPageGroupToVersion(
     throw new PageGroupVersionNotFoundError(input.versionId);
   }
 
-  group.saveContent(version.content);
+  group.saveContent(version.content, { by: input.actorUserId });
   await deps.pageGroupRepository.saveWithVersion(group, {
     id: randomUUID(),
     tenantId: group.tenantId,

@@ -156,7 +156,7 @@ export async function generateLegalDocuments(
           DRAFT_NOTICE_TEXT[templateLocale],
         );
         if (overlay) {
-          translation.saveFieldValues(overlay);
+          translation.saveFieldValues(overlay, { by: input.createdBy });
           await deps.pageTranslationRepository.saveWithVersion(
             translation,
             {

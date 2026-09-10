@@ -35,6 +35,8 @@ const groupA: PageGroupListItemRecord = {
   parentId: null,
   order: 0,
   createdByName: 'Ada Lovelace',
+  lastEditedAt: '2026-09-09T10:00:00.000Z',
+  lastEditedByName: 'Grace Hopper',
   createdAt: '',
   updatedAt: '2026-09-09T10:00:00.000Z',
   translations: [
@@ -44,6 +46,7 @@ const groupA: PageGroupListItemRecord = {
       title: 'Chi siamo',
       status: 'published',
       isDiverged: false,
+      hasUnpublishedChanges: false,
     },
   ],
 };
@@ -59,6 +62,7 @@ const groupB: PageGroupListItemRecord = {
       title: 'Contatti',
       status: 'draft',
       isDiverged: false,
+      hasUnpublishedChanges: false,
     },
   ],
 };
@@ -128,10 +132,12 @@ describe('PageGroupsListView', () => {
     );
   });
 
-  it('gives every row its creator, its last-changed date and a badge that says its status', () => {
+  it('gives every row its address, its creator, its last editor and a badge that says its status', () => {
     renderView();
 
+    expect(screen.getByText('/chi-siamo')).toBeTruthy();
     expect(screen.getAllByText('Ada Lovelace')).toHaveLength(2);
+    expect(screen.getAllByText('Grace Hopper')).toHaveLength(2);
     expect(
       screen.getAllByText(
         new Date('2026-09-09T10:00:00.000Z').toLocaleDateString('it'),
@@ -142,10 +148,19 @@ describe('PageGroupsListView', () => {
   });
 
   it('shows a dash rather than "Invalid Date" when a row carries a date it cannot read', () => {
-    renderView({ groups: [{ ...groupA, updatedAt: '', createdByName: null }] });
+    renderView({
+      groups: [
+        {
+          ...groupA,
+          lastEditedAt: '',
+          createdByName: null,
+          lastEditedByName: null,
+        },
+      ],
+    });
 
     expect(screen.queryByText(/Invalid Date/)).toBeNull();
-    expect(screen.getAllByText('—')).toHaveLength(2);
+    expect(screen.getAllByText('—')).toHaveLength(3);
   });
 
   it('duplicating the selected group calls duplicatePageGroup', async () => {

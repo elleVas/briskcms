@@ -448,6 +448,7 @@ describe('PageGroupsController (integration)', () => {
         title: 'Plombier à Rome',
         status: 'draft',
         isDiverged: false,
+        hasUnpublishedChanges: false,
       },
       {
         locale: 'it',
@@ -455,6 +456,7 @@ describe('PageGroupsController (integration)', () => {
         title: 'Idraulico a Roma',
         status: 'draft',
         isDiverged: false,
+        hasUnpublishedChanges: false,
       },
     ]);
   });

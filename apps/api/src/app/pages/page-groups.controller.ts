@@ -190,6 +190,7 @@ export class PageGroupsController {
         ...item,
         createdAt: item.createdAt.toISOString(),
         updatedAt: item.updatedAt.toISOString(),
+        lastEditedAt: item.lastEditedAt.toISOString(),
       })),
     });
   }
@@ -207,6 +208,7 @@ export class PageGroupsController {
         siteId: body.siteId,
         parentId: body.parentId,
         orderedPageGroupIds: body.orderedPageGroupIds,
+        actorUserId: this.tenantContext.getCurrentUserId(),
       },
     );
   }
@@ -426,6 +428,7 @@ export class PageGroupsController {
         pageTranslationId: translationId,
         content: body.content,
         parentGroupId: body.parentGroupId,
+        actorUserId: this.tenantContext.getCurrentUserId(),
       },
     );
     return this.toTranslationDto(translation);
@@ -444,6 +447,7 @@ export class PageGroupsController {
         pageTranslationId: translationId,
         seoMeta: body.seoMeta,
         parentGroupId: body.parentGroupId,
+        actorUserId: this.tenantContext.getCurrentUserId(),
       },
     );
     return this.toTranslationDto(translation);
@@ -471,6 +475,7 @@ export class PageGroupsController {
         pageTranslationId: translationId,
         slug: body.slug,
         parentGroupId: body.parentGroupId,
+        actorUserId: this.tenantContext.getCurrentUserId(),
       },
     );
     return this.toTranslationDto(translation);
@@ -492,6 +497,7 @@ export class PageGroupsController {
       {
         tenantId: this.tenantContext.getCurrentTenantId(),
         pageTranslationId: translationId,
+        actorUserId: this.tenantContext.getCurrentUserId(),
       },
     );
     return this.toTranslationDto(translation);

@@ -143,6 +143,7 @@ describe('getPreviewPageById', () => {
     await publishPageTranslation(deps, {
       tenantId,
       pageTranslationId: translation.id,
+      actorUserId: null,
     });
     // Edited again after publishing — unlike getPublishedPageBySlug's
     // frozen publishedSnapshot, preview always shows the CURRENT live

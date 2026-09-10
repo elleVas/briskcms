@@ -84,6 +84,8 @@ export const pageGroupListItemTranslationSchema = z.object({
   title: z.string(),
   status: pageStatusSchema,
   isDiverged: z.boolean(),
+  /** Published, but the draft has moved on since — the rule lives in @brisk/domain-core's hasUnpublishedChanges, never re-derived on the client. */
+  hasUnpublishedChanges: z.boolean(),
 });
 export type PageGroupListItemTranslation = z.infer<
   typeof pageGroupListItemTranslationSchema
@@ -99,6 +101,9 @@ export const pageGroupListItemSchema = z.object({
   createdByName: z.string().nullable(),
   createdAt: z.string(),
   updatedAt: z.string(),
+  /** The last change to this page in ANY language, and who made it — resolved server-side to a name, same reasoning as createdByName. */
+  lastEditedAt: z.string(),
+  lastEditedByName: z.string().nullable(),
   translations: z.array(pageGroupListItemTranslationSchema),
 });
 export type PageGroupListItemRecord = z.infer<typeof pageGroupListItemSchema>;

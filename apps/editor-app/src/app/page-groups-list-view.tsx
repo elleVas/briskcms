@@ -76,7 +76,8 @@ const PAGE_ROW_INSET = 16;
  * the title they qualify.
  */
 const LOCALES_COLUMN = 'w-28';
-const AUTHOR_COLUMN = 'hidden w-40 lg:block';
+const AUTHOR_COLUMN = 'hidden w-36 xl:block';
+const EDITOR_COLUMN = 'hidden w-36 lg:block';
 const UPDATED_COLUMN = 'hidden w-24 lg:block';
 /** Reserved for the row actions, shown or not, so selecting never shifts the layout. */
 const ACTIONS_COLUMN = 'w-[7.5rem]';
@@ -141,11 +142,19 @@ function groupDisplayTitle(
   group: PageGroupListItemRecord,
   defaultLocale: string,
 ): string {
-  const preferred = group.translations.find(
-    (translation) => translation.locale === defaultLocale,
+  return preferredTranslation(group, defaultLocale)?.title || group.id;
+}
+
+/** The site's own language if this page has it, and whatever it does have if not. */
+function preferredTranslation(
+  group: PageGroupListItemRecord,
+  defaultLocale: string,
+) {
+  return (
+    group.translations.find(
+      (translation) => translation.locale === defaultLocale,
+    ) ?? group.translations[0]
   );
-  const fallback = group.translations[0];
-  return preferred?.title || fallback?.title || group.id;
 }
 
 interface PageGroupRowProps {
@@ -188,6 +197,7 @@ function PageGroupRow({
   onDelete,
 }: PageGroupRowProps) {
   const { t, i18n } = useTranslation();
+  const translation = preferredTranslation(group, defaultLocale);
   const { attributes, listeners, setNodeRef, transform, transition } =
     useSortable({ id: group.id, disabled: !draggable });
 
@@ -245,13 +255,23 @@ function PageGroupRow({
           isSelected && 'text-foreground',
         )}
       >
-        <span
-          className={cn(
-            'min-w-0 flex-1 truncate text-sm',
-            isSelected ? 'font-semibold' : 'font-medium',
+        <span className="flex min-w-0 flex-1 flex-col">
+          <span
+            className={cn(
+              'truncate text-sm',
+              isSelected ? 'font-semibold' : 'font-medium',
+            )}
+          >
+            {groupDisplayTitle(group, defaultLocale)}
+          </span>
+          {/* The address, under the name it answers to. A page is a title
+              AND a URL, and the URL was the half you had to open the page
+              to see. */}
+          {translation && (
+            <span className="truncate font-mono text-xs text-muted-foreground">
+              /{translation.slug}
+            </span>
           )}
-        >
-          {groupDisplayTitle(group, defaultLocale)}
         </span>
         {/* Each in a column of its own, under the header that names it:
             run together after the title, they read as part of it. */}
@@ -269,14 +289,22 @@ function PageGroupRow({
         >
           {group.createdByName ?? EMPTY_CELL}
         </span>
+        <span
+          className={cn(
+            'truncate text-xs text-muted-foreground',
+            EDITOR_COLUMN,
+          )}
+        >
+          {group.lastEditedByName ?? EMPTY_CELL}
+        </span>
         <time
-          dateTime={group.updatedAt}
+          dateTime={group.lastEditedAt}
           className={cn(
             'text-xs tabular-nums text-muted-foreground',
             UPDATED_COLUMN,
           )}
         >
-          {formatListDate(group.updatedAt, i18n.language)}
+          {formatListDate(group.lastEditedAt, i18n.language)}
         </time>
       </button>
       {/* The actions belong to the row they act on. Sitting up next to
@@ -468,6 +496,9 @@ export function PageGroupsListView({
                     </span>
                     <span className={cn('truncate', AUTHOR_COLUMN)}>
                       {t('pages.list.colAuthor')}
+                    </span>
+                    <span className={cn('truncate', EDITOR_COLUMN)}>
+                      {t('pages.list.colEditor')}
                     </span>
                     <span className={cn('truncate', UPDATED_COLUMN)}>
                       {t('pages.list.colUpdated')}

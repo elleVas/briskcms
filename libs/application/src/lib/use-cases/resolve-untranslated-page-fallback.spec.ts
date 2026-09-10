@@ -105,6 +105,7 @@ describe('resolveUntranslatedPageFallback', () => {
     return publishPageTranslation(deps, {
       tenantId,
       pageTranslationId: translation.id,
+      actorUserId: null,
     });
   }
 

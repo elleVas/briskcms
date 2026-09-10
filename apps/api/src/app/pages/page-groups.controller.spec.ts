@@ -196,6 +196,8 @@ describe('PageGroupsController (unit)', () => {
           createdByName: 'Ada Lovelace',
           createdAt,
           updatedAt: createdAt,
+          lastEditedAt: createdAt,
+          lastEditedByName: 'Ada Lovelace',
           translations: [
             {
               locale: 'it',
@@ -203,6 +205,7 @@ describe('PageGroupsController (unit)', () => {
               title: 'Home',
               status: 'published',
               isDiverged: false,
+              hasUnpublishedChanges: false,
             },
           ],
         },
@@ -421,7 +424,7 @@ describe('PageGroupsController (unit)', () => {
 
   it('saveFieldValues propagates PageTranslationDivergedError once diverged, unwrapped', async () => {
     const diverged = buildTranslation();
-    diverged.diverge([]);
+    diverged.diverge([], { by: null });
     pageTranslationRepository.findById.mockResolvedValue(diverged);
 
     await expect(
@@ -445,7 +448,7 @@ describe('PageGroupsController (unit)', () => {
 
   it('saveDivergedContent saves independent content on an already-diverged translation', async () => {
     const diverged = buildTranslation();
-    diverged.diverge([]);
+    diverged.diverge([], { by: null });
     pageTranslationRepository.findById.mockResolvedValue(diverged);
 
     const result = await controller.saveDivergedContent('translation-1', {
@@ -517,7 +520,7 @@ describe('PageGroupsController (unit)', () => {
 
   it('diverge propagates PageTranslationDivergedError if already diverged, unwrapped', async () => {
     const diverged = buildTranslation();
-    diverged.diverge([]);
+    diverged.diverge([], { by: null });
     pageTranslationRepository.findById.mockResolvedValue(diverged);
 
     await expect(controller.diverge('translation-1')).rejects.toThrow(

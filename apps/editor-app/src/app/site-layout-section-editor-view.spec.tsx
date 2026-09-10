@@ -79,6 +79,8 @@ const representativeGroup: PageGroupListItemRecord = {
   parentId: null,
   order: 0,
   createdByName: null,
+  lastEditedAt: '2026-09-09T10:00:00.000Z',
+  lastEditedByName: 'Grace Hopper',
   createdAt: '',
   updatedAt: '',
   translations: [
@@ -88,6 +90,7 @@ const representativeGroup: PageGroupListItemRecord = {
       title: 'Home',
       status: 'published',
       isDiverged: false,
+      hasUnpublishedChanges: false,
     },
   ],
 };

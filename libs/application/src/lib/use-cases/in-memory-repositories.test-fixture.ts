@@ -17,7 +17,7 @@ import type {
   Term,
   User,
 } from '@brisk/domain-core';
-import { sniffMediaType } from '@brisk/domain-core';
+import { hasUnpublishedChanges, sniffMediaType } from '@brisk/domain-core';
 import type { PageContent, ResponsiveBlockStyle } from '@brisk/shared-types';
 import type {
   FormRepositoryPort,
@@ -152,21 +152,32 @@ export class InMemoryPageGroupRepository implements PageGroupRepositoryPort {
 
     const start = (pagination.page - 1) * pagination.pageSize;
     return {
-      items: matching
-        .slice(start, start + pagination.pageSize)
-        .map((group) => ({
+      items: matching.slice(start, start + pagination.pageSize).map((group) => {
+        const translations = translationsByGroup.get(group.id) ?? [];
+        const lastEdit = [group, ...translations].reduce((latest, entity) =>
+          entity.updatedAt > latest.updatedAt ? entity : latest,
+        );
+        return {
           ...this.toSummary(group),
           createdByName: null,
-          translations: (translationsByGroup.get(group.id) ?? []).map(
-            (translation) => ({
-              locale: translation.locale,
-              slug: translation.slug,
-              title: translation.seoMeta.title,
+          lastEditedAt: lastEdit.updatedAt,
+          lastEditedByName: lastEdit.updatedBy,
+          translations: translations.map((translation) => ({
+            locale: translation.locale,
+            slug: translation.slug,
+            title: translation.seoMeta.title,
+            status: translation.status,
+            isDiverged: translation.isDiverged,
+            hasUnpublishedChanges: hasUnpublishedChanges({
               status: translation.status,
               isDiverged: translation.isDiverged,
+              contentUpdatedAt: translation.contentUpdatedAt,
+              publishedAt: translation.publishedAt,
+              groupContentUpdatedAt: group.contentUpdatedAt,
             }),
-          ),
-        })),
+          })),
+        };
+      }),
       total: matching.length,
     };
   }

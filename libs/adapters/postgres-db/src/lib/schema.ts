@@ -306,10 +306,22 @@ export const pageGroups = pgTable(
     createdBy: uuid('created_by').references(() => users.id, {
       onDelete: 'set null',
     }),
+    // The last person to change anything here. `set null` rather than a
+    // cascade for the same reason as created_by: losing a user must not
+    // take the page's history with them.
+    updatedBy: uuid('updated_by').references(() => users.id, {
+      onDelete: 'set null',
+    }),
     createdAt: timestamp('created_at', { withTimezone: true })
       .notNull()
       .defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    // When the shared structure last changed, as opposed to updated_at,
+    // which also moves for a reorder or a reparenting — see PageGroup's
+    // own doc comment and hasUnpublishedChanges in @brisk/domain-core.
+    contentUpdatedAt: timestamp('content_updated_at', { withTimezone: true })
       .notNull()
       .defaultNow(),
   },
@@ -395,12 +407,24 @@ export const pageTranslations = pgTable(
     createdBy: uuid('created_by').references(() => users.id, {
       onDelete: 'set null',
     }),
+    // See page_groups.updated_by.
+    updatedBy: uuid('updated_by').references(() => users.id, {
+      onDelete: 'set null',
+    }),
     createdAt: timestamp('created_at', { withTimezone: true })
       .notNull()
       .defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true })
       .notNull()
       .defaultNow(),
+    // When THIS language's content last changed — not its address or its
+    // SEO, which are read live and need no publish. Paired with
+    // published_at, it is what tells a published page it has changes
+    // waiting: see hasUnpublishedChanges in @brisk/domain-core.
+    contentUpdatedAt: timestamp('content_updated_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    publishedAt: timestamp('published_at', { withTimezone: true }),
   },
   (table) => [
     unique().on(table.tenantId, table.pageGroupId, table.locale),

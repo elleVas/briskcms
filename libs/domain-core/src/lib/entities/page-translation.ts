@@ -3,6 +3,7 @@ import type {
   PageContent,
   SeoMeta,
 } from '@brisk/shared-types';
+import type { EditContext } from './edit-context';
 
 export type PageTranslationStatus = 'draft' | 'published';
 
@@ -31,6 +32,12 @@ export interface PageTranslationProps {
   createdBy: string | null;
   createdAt: Date;
   updatedAt: Date;
+  /** The last person to change anything here, resolved to a name only for display — see PageGroupListItem. */
+  updatedBy: string | null;
+  /** When this language's own content last changed — not its address or its SEO, both of which are read live and need no publish. Paired with `publishedAt` to tell whether what is online is still what the editor sees. */
+  contentUpdatedAt: Date;
+  /** When this language was last published, or null if it never was. */
+  publishedAt: Date | null;
 }
 
 export interface CreatePageTranslationProps {
@@ -74,6 +81,9 @@ export class PageTranslation {
       createdBy: input.createdBy ?? null,
       createdAt: now,
       updatedAt: now,
+      updatedBy: input.createdBy ?? null,
+      contentUpdatedAt: now,
+      publishedAt: null,
     });
   }
 
@@ -149,10 +159,22 @@ export class PageTranslation {
     return this.props.updatedAt;
   }
 
+  get updatedBy(): string | null {
+    return this.props.updatedBy;
+  }
+
+  get contentUpdatedAt(): Date {
+    return this.props.contentUpdatedAt;
+  }
+
+  get publishedAt(): Date | null {
+    return this.props.publishedAt;
+  }
+
   /** Updates slug/seoMeta — still per-locale as before, independent of the structure's draft/publish state (the same reasoning as Page.updateSeoMeta, ADR-0014). */
-  updateSeoMeta(seoMeta: SeoMeta, now: Date = new Date()): void {
+  updateSeoMeta(seoMeta: SeoMeta, edit: EditContext): void {
     this.props.seoMeta = seoMeta;
-    this.props.updatedAt = now;
+    this.touch(edit);
   }
 
   /**
@@ -171,30 +193,27 @@ export class PageTranslation {
    * history rather than leaving it in both places, so a slug is never
    * both the current answer and a redirect to itself.
    */
-  updateSlug(slug: string, now: Date = new Date()): void {
+  updateSlug(slug: string, edit: EditContext): void {
     if (slug === this.props.slug) return;
     this.props.formerSlugs = [
       ...this.props.formerSlugs.filter((former) => former !== slug),
       this.props.slug,
     ];
     this.props.slug = slug;
-    this.props.updatedAt = now;
+    this.touch(edit);
   }
 
   /** Saves this language's text overlay — NOT valid on an unlinked translation (the use case must check `isDiverged` before calling; the pure entity has no access to the field descriptors and cannot tell on its own). */
-  saveFieldValues(
-    fieldValues: FieldValueOverlay,
-    now: Date = new Date(),
-  ): void {
+  saveFieldValues(fieldValues: FieldValueOverlay, edit: EditContext): void {
     this.props.fieldValues = fieldValues;
-    this.props.updatedAt = now;
+    this.props.contentUpdatedAt = this.touch(edit);
   }
 
   /** Promotes the current merge (computed by the caller — mergeTranslatedContent(group.content, this.fieldValues), or `divergedContent` when unlinked) to this language's published version. */
-  publish(mergedContent: PageContent, now: Date = new Date()): void {
+  publish(mergedContent: PageContent, edit: EditContext): void {
     this.props.publishedSnapshot = mergedContent;
     this.props.status = 'published';
-    this.props.updatedAt = now;
+    this.props.publishedAt = this.touch(edit);
   }
 
   /**
@@ -206,15 +225,23 @@ export class PageTranslation {
    * `saveFieldValues`. Irreversible in v1 (there is no "relink" — see the
    * plan, it is ambiguous which changes would win).
    */
-  diverge(currentMergedContent: PageContent, now: Date = new Date()): void {
+  diverge(currentMergedContent: PageContent, edit: EditContext): void {
     this.props.isDiverged = true;
     this.props.divergedContent = currentMergedContent;
-    this.props.updatedAt = now;
+    this.props.contentUpdatedAt = this.touch(edit);
   }
 
   /** Updates the independent content of an ALREADY unlinked translation — the use case must check `isDiverged` before calling, the same discipline as saveFieldValues. */
-  saveDivergedContent(content: PageContent, now: Date = new Date()): void {
+  saveDivergedContent(content: PageContent, edit: EditContext): void {
     this.props.divergedContent = content;
+    this.props.contentUpdatedAt = this.touch(edit);
+  }
+
+  /** Records the author and the moment of a change, and hands back that moment for whoever also needs it. */
+  private touch(edit: EditContext): Date {
+    const now = edit.now ?? new Date();
     this.props.updatedAt = now;
+    this.props.updatedBy = edit.by;
+    return now;
   }
 }

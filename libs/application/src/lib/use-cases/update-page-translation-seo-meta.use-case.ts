@@ -14,6 +14,8 @@ export interface UpdatePageTranslationSeoMetaInput {
   pageTranslationId: string;
   seoMeta: SeoMeta;
   parentGroupId: string | null;
+  /** Recorded as the page's last editor — see EditContext in @brisk/domain-core. */
+  actorUserId: string | null;
 }
 
 export async function updatePageTranslationSeoMeta(
@@ -28,7 +30,9 @@ export async function updatePageTranslationSeoMeta(
     throw new PageTranslationNotFoundError(input.pageTranslationId);
   }
 
-  translation.updateSeoMeta(input.seoMeta);
+  translation.updateSeoMeta(input.seoMeta, {
+    by: input.actorUserId,
+  });
   await deps.pageTranslationRepository.save(translation, input.parentGroupId);
 
   return translation;

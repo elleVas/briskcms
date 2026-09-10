@@ -164,7 +164,9 @@
       "colLanguages": "Languages",
       "colAuthor": "Created by",
       "colUpdated": "Updated",
-      "statusMissing": "Not translated"
+      "statusMissing": "Not translated",
+      "colEditor": "Last edited by",
+      "statusPending": "Published, with unpublished changes"
     },
     "newPageDialog": {
       "title": "New page",

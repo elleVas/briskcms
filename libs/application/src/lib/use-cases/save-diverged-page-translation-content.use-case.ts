@@ -15,6 +15,8 @@ export interface SaveDivergedPageTranslationContentInput {
   pageTranslationId: string;
   content: PageContent;
   parentGroupId: string | null;
+  /** Recorded as the page's last editor — see EditContext in @brisk/domain-core. */
+  actorUserId: string | null;
 }
 
 /**
@@ -43,7 +45,9 @@ export async function saveDivergedPageTranslationContent(
     throw new PageTranslationNotDivergedError(translation.id);
   }
 
-  translation.saveDivergedContent(input.content);
+  translation.saveDivergedContent(input.content, {
+    by: input.actorUserId,
+  });
   await deps.pageTranslationRepository.save(translation, input.parentGroupId);
 
   return translation;

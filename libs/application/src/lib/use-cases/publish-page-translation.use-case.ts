@@ -22,6 +22,8 @@ export interface PublishPageTranslationDeps {
 export interface PublishPageTranslationInput {
   tenantId: string;
   pageTranslationId: string;
+  /** Recorded as the page's last editor — see EditContext in @brisk/domain-core. */
+  actorUserId: string | null;
 }
 
 /**
@@ -67,7 +69,7 @@ export async function publishPageTranslation(
     merged = mergeTranslatedContent(group.content, translation.fieldValues);
   }
 
-  translation.publish(merged);
+  translation.publish(merged, { by: input.actorUserId });
   await deps.pageTranslationRepository.save(translation, group.parentId);
   // Sections expanded first: the snapshot holds a reference where their
   // words are, so indexing it as-is would leave a page's section text

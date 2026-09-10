@@ -42,7 +42,9 @@ export async function savePageTranslationFieldValues(
     throw new PageTranslationDivergedError(translation.id);
   }
 
-  translation.saveFieldValues(input.fieldValues);
+  translation.saveFieldValues(input.fieldValues, {
+    by: input.actorUserId,
+  });
   await deps.pageTranslationRepository.saveWithVersion(
     translation,
     {

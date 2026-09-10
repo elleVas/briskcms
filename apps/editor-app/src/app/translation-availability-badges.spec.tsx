@@ -13,6 +13,7 @@ describe('TranslationAvailabilityBadges', () => {
             title: 'home',
             status: 'published',
             isDiverged: false,
+            hasUnpublishedChanges: false,
           },
         ]}
         enabledLocales={['it', 'en']}
@@ -45,6 +46,7 @@ describe('TranslationAvailabilityBadges', () => {
             title: 'home',
             status: 'published',
             isDiverged: false,
+            hasUnpublishedChanges: false,
           },
         ]}
         enabledLocales={['it']}
@@ -65,6 +67,7 @@ describe('TranslationAvailabilityBadges', () => {
             title: 'home',
             status: 'draft',
             isDiverged: false,
+            hasUnpublishedChanges: false,
           },
         ]}
         enabledLocales={['it']}
@@ -85,6 +88,7 @@ describe('TranslationAvailabilityBadges', () => {
             title: 'home',
             status: 'published',
             isDiverged: true,
+            hasUnpublishedChanges: false,
           },
           {
             locale: 'en',
@@ -92,6 +96,7 @@ describe('TranslationAvailabilityBadges', () => {
             title: 'home-en',
             status: 'published',
             isDiverged: false,
+            hasUnpublishedChanges: false,
           },
         ]}
         enabledLocales={['it', 'en']}

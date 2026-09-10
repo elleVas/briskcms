@@ -71,16 +71,19 @@ async function seedPageUsing(
     siteId,
     createdBy: null,
   });
-  group.saveContent([
-    {
-      id: 'inst-1',
-      type: 'Section',
-      props: {
-        section: { sectionId, sectionName: 'Our services' },
-        ...overrides,
+  group.saveContent(
+    [
+      {
+        id: 'inst-1',
+        type: 'Section',
+        props: {
+          section: { sectionId, sectionName: 'Our services' },
+          ...overrides,
+        },
       },
-    },
-  ]);
+    ],
+    { by: null },
+  );
   await deps.pageGroupRepository.save(group);
 
   const translation = PageTranslation.create({
@@ -97,6 +100,7 @@ async function seedPageUsing(
   await publishPageTranslation(deps, {
     tenantId,
     pageTranslationId: translation.id,
+    actorUserId: null,
   });
   return translation;
 }
@@ -220,13 +224,16 @@ describe('how many pages place a section', () => {
       siteId,
       createdBy: null,
     });
-    group.saveContent([
-      {
-        id: 'inst-x',
-        type: 'Section',
-        props: { section: { sectionId: section.id, sectionName: 'x' } },
-      },
-    ]);
+    group.saveContent(
+      [
+        {
+          id: 'inst-x',
+          type: 'Section',
+          props: { section: { sectionId: section.id, sectionName: 'x' } },
+        },
+      ],
+      { by: null },
+    );
     await deps.pageGroupRepository.save(group);
 
     const listed = await listReusableSectionsWithUsage(deps, tenantId, siteId);

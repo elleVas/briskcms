@@ -1,4 +1,5 @@
 import type { PageContent } from '@brisk/shared-types';
+import type { EditContext } from './edit-context';
 
 export interface PageGroupProps {
   id: string;
@@ -13,6 +14,18 @@ export interface PageGroupProps {
   createdBy: string | null;
   createdAt: Date;
   updatedAt: Date;
+  /** The last person to change anything here, resolved to a name only for display — see PageGroupListItem. */
+  updatedBy: string | null;
+  /**
+   * When the shared structure last changed, as opposed to `updatedAt`,
+   * which also moves for a reorder or a reparenting.
+   *
+   * The distinction is what lets a published page say honestly whether
+   * it has changes waiting: moving a page in the tree needs no publish
+   * (the public tree is read live), so counting that move as a pending
+   * change would raise an alarm nobody can clear.
+   */
+  contentUpdatedAt: Date;
 }
 
 export interface CreatePageGroupProps {
@@ -50,6 +63,8 @@ export class PageGroup {
       createdBy: input.createdBy ?? null,
       createdAt: now,
       updatedAt: now,
+      updatedBy: input.createdBy ?? null,
+      contentUpdatedAt: now,
     });
   }
 
@@ -97,21 +112,37 @@ export class PageGroup {
     return this.props.updatedAt;
   }
 
+  get updatedBy(): string | null {
+    return this.props.updatedBy;
+  }
+
+  get contentUpdatedAt(): Date {
+    return this.props.contentUpdatedAt;
+  }
+
   /** Reassigns the parent in the hierarchy — the same discipline as Page.setParent: cycle and same-site validation belong to the use case (which has repository access), since the pure entity cannot walk the chain itself. */
-  setParent(parentId: string | null, now: Date = new Date()): void {
+  setParent(parentId: string | null, edit: EditContext): void {
     this.props.parentId = parentId;
-    this.props.updatedAt = now;
+    this.touch(edit);
   }
 
   /** Reassigns the position among siblings — the same discipline as Page.reorder: the permutation's validity is the use case's business, not the entity's. */
-  reorder(order: number, now: Date = new Date()): void {
+  reorder(order: number, edit: EditContext): void {
     this.props.order = order;
-    this.props.updatedAt = now;
+    this.touch(edit);
   }
 
   /** Updates the shared structure (the draft) — it propagates to every linked PageTranslation, never to unlinked ones (see PageTranslation.isDiverged). */
-  saveContent(content: PageContent, now: Date = new Date()): void {
+  saveContent(content: PageContent, edit: EditContext): void {
     this.props.content = content;
+    this.props.contentUpdatedAt = this.touch(edit);
+  }
+
+  /** Records the author and the moment of a change, and hands back that moment for whoever also needs it. */
+  private touch(edit: EditContext): Date {
+    const now = edit.now ?? new Date();
     this.props.updatedAt = now;
+    this.props.updatedBy = edit.by;
+    return now;
   }
 }
