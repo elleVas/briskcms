@@ -161,7 +161,10 @@
         "clear": "Rimuovi filtri"
       },
       "colTitle": "Pagina",
-      "colLanguages": "Lingue"
+      "colLanguages": "Lingue",
+      "colAuthor": "Creata da",
+      "colUpdated": "Modificata",
+      "statusMissing": "Non tradotta"
     },
     "newPageDialog": {
       "title": "Nuova pagina",

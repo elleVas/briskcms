@@ -161,7 +161,10 @@
         "clear": "Clear filters"
       },
       "colTitle": "Page",
-      "colLanguages": "Languages"
+      "colLanguages": "Languages",
+      "colAuthor": "Created by",
+      "colUpdated": "Updated",
+      "statusMissing": "Not translated"
     },
     "newPageDialog": {
       "title": "New page",

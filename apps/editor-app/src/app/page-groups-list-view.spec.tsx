@@ -36,7 +36,7 @@ const groupA: PageGroupListItemRecord = {
   order: 0,
   createdByName: 'Ada Lovelace',
   createdAt: '',
-  updatedAt: '',
+  updatedAt: '2026-09-09T10:00:00.000Z',
   translations: [
     {
       locale: 'it',
@@ -126,6 +126,26 @@ describe('PageGroupsListView', () => {
     expect(row?.contains(screen.getByRole('button', { name: 'Elimina' }))).toBe(
       true,
     );
+  });
+
+  it('gives every row its creator, its last-changed date and a badge that says its status', () => {
+    renderView();
+
+    expect(screen.getAllByText('Ada Lovelace')).toHaveLength(2);
+    expect(
+      screen.getAllByText(
+        new Date('2026-09-09T10:00:00.000Z').toLocaleDateString('it'),
+      ),
+    ).toHaveLength(2);
+    expect(screen.getByLabelText('IT — Pubblicata')).toBeTruthy();
+    expect(screen.getByLabelText('IT — Bozza')).toBeTruthy();
+  });
+
+  it('shows a dash rather than "Invalid Date" when a row carries a date it cannot read', () => {
+    renderView({ groups: [{ ...groupA, updatedAt: '', createdByName: null }] });
+
+    expect(screen.queryByText(/Invalid Date/)).toBeNull();
+    expect(screen.getAllByText('—')).toHaveLength(2);
   });
 
   it('duplicating the selected group calls duplicatePageGroup', async () => {

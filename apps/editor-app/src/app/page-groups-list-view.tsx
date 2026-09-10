@@ -43,6 +43,21 @@ import { TranslationAvailabilityBadges } from './translation-availability-badges
 import { usePageGroupsList } from './use-page-groups-list';
 import { TreeGuides } from './tree-guides';
 
+/**
+ * A date the row can show, or the same dash an absent creator gets. A row
+ * is not the place to print "Invalid Date" at a person: whatever reached
+ * us that we cannot read is, to the reader, simply not there.
+ */
+function formatListDate(value: string, language: string) {
+  const date = new Date(value);
+  return Number.isNaN(date.getTime())
+    ? EMPTY_CELL
+    : date.toLocaleDateString(language);
+}
+
+/** What a column with nothing in it shows. */
+const EMPTY_CELL = '—';
+
 /** One indent step in the page tree, and the row height its elbows meet. */
 const PAGE_INDENT = 20;
 const PAGE_ROW_HEIGHT = 48;
@@ -53,9 +68,18 @@ const PAGE_ROW_HEIGHT = 48;
  * flat against the list's border.
  */
 const PAGE_ROW_INSET = 16;
-/** Reserved for the row actions, so the language column lines up with its header. */
+/**
+ * The columns to the right of the title, each a fixed width so a row and
+ * the header above it line up without a table element (the rows are also
+ * a drag-reorder list and a tree, which a <table> makes harder, not
+ * easier). Author and date hide on a narrow window rather than squeezing
+ * the title they qualify.
+ */
+const LOCALES_COLUMN = 'w-28';
+const AUTHOR_COLUMN = 'hidden w-40 lg:block';
+const UPDATED_COLUMN = 'hidden w-24 lg:block';
+/** Reserved for the row actions, shown or not, so selecting never shifts the layout. */
 const ACTIONS_COLUMN = 'w-[7.5rem]';
-const LOCALES_COLUMN = 'min-w-28';
 
 export interface PageGroupsListViewProps {
   siteId: string;
@@ -163,7 +187,7 @@ function PageGroupRow({
   onDuplicate,
   onDelete,
 }: PageGroupRowProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { attributes, listeners, setNodeRef, transform, transition } =
     useSortable({ id: group.id, disabled: !draggable });
 
@@ -221,32 +245,39 @@ function PageGroupRow({
           isSelected && 'text-foreground',
         )}
       >
-        <div className="flex flex-col">
-          <span
-            className={cn(
-              'text-sm',
-              isSelected ? 'font-semibold' : 'font-medium',
-            )}
-          >
-            {groupDisplayTitle(group, defaultLocale)}
-          </span>
-          {group.createdByName && (
-            <span className="text-xs text-muted-foreground">
-              {t('pages.list.createdBy', { name: group.createdByName })}
-            </span>
-          )}
-        </div>
-        {/* Right-aligned in a column of its own, under the header that
-            names it: inline after the title, the badges read as part of
-            the title. */}
         <span
-          className={cn('ml-auto flex shrink-0 justify-end', LOCALES_COLUMN)}
+          className={cn(
+            'min-w-0 flex-1 truncate text-sm',
+            isSelected ? 'font-semibold' : 'font-medium',
+          )}
         >
+          {groupDisplayTitle(group, defaultLocale)}
+        </span>
+        {/* Each in a column of its own, under the header that names it:
+            run together after the title, they read as part of it. */}
+        <span className={cn('flex shrink-0 justify-start', LOCALES_COLUMN)}>
           <TranslationAvailabilityBadges
             translations={group.translations}
             enabledLocales={enabledLocales}
           />
         </span>
+        <span
+          className={cn(
+            'truncate text-xs text-muted-foreground',
+            AUTHOR_COLUMN,
+          )}
+        >
+          {group.createdByName ?? EMPTY_CELL}
+        </span>
+        <time
+          dateTime={group.updatedAt}
+          className={cn(
+            'text-xs tabular-nums text-muted-foreground',
+            UPDATED_COLUMN,
+          )}
+        >
+          {formatListDate(group.updatedAt, i18n.language)}
+        </time>
       </button>
       {/* The actions belong to the row they act on. Sitting up next to
           the page title, they appeared far from the line that had just
@@ -416,44 +447,62 @@ export function PageGroupsListView({
               items={tree.map(({ item }) => item.id)}
               strategy={verticalListSortingStrategy}
             >
-              {/* A header, because the list has columns and was not
-                  saying so: a title with a name under it, and a row of
-                  language badges, read as one crowded line until they
-                  were named. */}
-              <div className="flex items-center gap-2 rounded-t-md border border-b-0 bg-muted/40 py-2.5 pr-3 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                <span
-                  className="flex-1"
-                  style={{ paddingLeft: PAGE_ROW_INSET }}
-                >
-                  {t('pages.list.colTitle')}
-                </span>
-                <span className={cn('shrink-0 text-right', LOCALES_COLUMN)}>
-                  {t('pages.list.colLanguages')}
-                </span>
-                <span aria-hidden className={cn('shrink-0', ACTIONS_COLUMN)} />
-              </div>
-              <ul className="divide-y rounded-b-md border">
-                {tree.map(({ item: group, depth, isLast, ancestorIsLast }) => (
-                  <PageGroupRow
-                    key={group.id}
-                    group={group}
-                    depth={depth}
-                    isLast={isLast}
-                    ancestorIsLast={ancestorIsLast}
-                    isSelected={group.id === selectedGroupId}
-                    defaultLocale={defaultLocale}
-                    enabledLocales={enabledLocales}
-                    draggable={canReorder}
-                    isDuplicating={isDuplicating}
-                    onToggleSelected={() => toggleSelected(group.id)}
-                    onEdit={() => void handleOpenEditor(group.id)}
-                    onDuplicate={() => void handleDuplicate()}
-                    onDelete={() =>
-                      dispatch({ type: 'OPEN_DIALOG', dialog: 'delete' })
-                    }
+              {/* One box around the header and the rows: they are one
+                  table, and as two bordered siblings the column names
+                  floated a gap away from the first row they named. */}
+              <div className="overflow-hidden rounded-md border">
+                {/* A header, because the list has columns and was not
+                    saying so: a title, a row of language badges, a name
+                    and a date read as one crowded line until they were
+                    named. */}
+                <div className="flex items-center gap-2 border-b bg-muted/40 py-2.5 pr-3 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  <span
+                    className="flex min-w-0 flex-1 gap-3"
+                    style={{ paddingLeft: PAGE_ROW_INSET }}
+                  >
+                    <span className="min-w-0 flex-1 truncate">
+                      {t('pages.list.colTitle')}
+                    </span>
+                    <span className={cn('shrink-0', LOCALES_COLUMN)}>
+                      {t('pages.list.colLanguages')}
+                    </span>
+                    <span className={cn('truncate', AUTHOR_COLUMN)}>
+                      {t('pages.list.colAuthor')}
+                    </span>
+                    <span className={cn('truncate', UPDATED_COLUMN)}>
+                      {t('pages.list.colUpdated')}
+                    </span>
+                  </span>
+                  <span
+                    aria-hidden
+                    className={cn('shrink-0', ACTIONS_COLUMN)}
                   />
-                ))}
-              </ul>
+                </div>
+                <ul className="divide-y">
+                  {tree.map(
+                    ({ item: group, depth, isLast, ancestorIsLast }) => (
+                      <PageGroupRow
+                        key={group.id}
+                        group={group}
+                        depth={depth}
+                        isLast={isLast}
+                        ancestorIsLast={ancestorIsLast}
+                        isSelected={group.id === selectedGroupId}
+                        defaultLocale={defaultLocale}
+                        enabledLocales={enabledLocales}
+                        draggable={canReorder}
+                        isDuplicating={isDuplicating}
+                        onToggleSelected={() => toggleSelected(group.id)}
+                        onEdit={() => void handleOpenEditor(group.id)}
+                        onDuplicate={() => void handleDuplicate()}
+                        onDelete={() =>
+                          dispatch({ type: 'OPEN_DIALOG', dialog: 'delete' })
+                        }
+                      />
+                    ),
+                  )}
+                </ul>
+              </div>
             </SortableContext>
           </DndContext>
         )}

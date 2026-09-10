@@ -16,6 +16,10 @@ export interface TranslationAvailabilityBadgesProps {
  * at all yet). No existing "row of per-locale status badges" component to
  * copy (closest analogs — language-switcher.tsx, page-translations-dialog.tsx
  * — are both single-purpose, not list-row summaries, see the plan).
+ *
+ * Filled-means-published is a convention nobody is born knowing, and a
+ * screen reader was being read the locale and nothing else, so each badge
+ * also SAYS its state: "EN — Published".
  */
 export function TranslationAvailabilityBadges({
   translations,
@@ -27,21 +31,35 @@ export function TranslationAvailabilityBadges({
     <div className="flex flex-wrap gap-1">
       {enabledLocales.map((locale) => {
         const translation = translations.find((tr) => tr.locale === locale);
+        const label = (
+          status:
+            | 'pages.list.statusPublished'
+            | 'pages.list.statusDraft'
+            | 'pages.list.statusMissing',
+        ) => `${locale.toUpperCase()} — ${t(status)}`;
         if (!translation) {
           return (
             <Badge
               key={locale}
               variant="outline"
               className="text-muted-foreground opacity-60"
+              title={label('pages.list.statusMissing')}
+              aria-label={label('pages.list.statusMissing')}
             >
               <span className="uppercase">{locale}</span>
             </Badge>
           );
         }
+        const status =
+          translation.status === 'published'
+            ? ('pages.list.statusPublished' as const)
+            : ('pages.list.statusDraft' as const);
         return (
           <Badge
             key={locale}
             variant={translation.status === 'published' ? 'default' : 'outline'}
+            title={label(status)}
+            aria-label={label(status)}
           >
             <span className="uppercase">{locale}</span>
             {translation.isDiverged && (
