@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
+  CannotChangeYourOwnAccessError,
   InvalidOrExpiredTokenError,
+  LastActiveAdminError,
   User,
   UserAlreadyActiveError,
   UserEmailAlreadyExistsError,
@@ -260,6 +262,7 @@ describe('updateUserRole', () => {
       tenantId,
       userId: 'user-1',
       role: 'publisher',
+      actorUserId: 'another-admin',
     });
 
     expect(result.role).toBe('publisher');
@@ -275,8 +278,142 @@ describe('updateUserRole', () => {
         tenantId,
         userId: 'does-not-exist',
         role: 'admin',
+        actorUserId: 'another-admin',
       }),
     ).rejects.toThrow(UserNotFoundError);
+  });
+});
+
+describe('updateUserRole and the last administrator', () => {
+  it('refuses to demote the last active administrator — the same lockout by another route', async () => {
+    const deps = setup();
+    await deps.userRepository.save(
+      User.create({
+        id: 'admin-1',
+        tenantId,
+        email: 'admin@example.com',
+        displayName: 'Admin',
+        passwordHash: 'irrelevant',
+        role: 'admin',
+      }),
+    );
+
+    await expect(
+      updateUserRole(deps, {
+        tenantId,
+        userId: 'admin-1',
+        role: 'editor',
+        actorUserId: 'another-admin',
+      }),
+    ).rejects.toThrow(LastActiveAdminError);
+    const saved = await deps.userRepository.findById(tenantId, 'admin-1');
+    expect(saved?.role).toBe('admin');
+  });
+
+  it('allows re-confirming the last administrator AS an administrator', async () => {
+    const deps = setup();
+    await deps.userRepository.save(
+      User.create({
+        id: 'admin-1',
+        tenantId,
+        email: 'admin@example.com',
+        displayName: 'Admin',
+        passwordHash: 'irrelevant',
+        role: 'admin',
+      }),
+    );
+
+    const result = await updateUserRole(deps, {
+      tenantId,
+      userId: 'admin-1',
+      role: 'admin',
+      actorUserId: 'another-admin',
+    });
+
+    expect(result.role).toBe('admin');
+  });
+});
+
+describe('changing your own access', () => {
+  /*
+   * The way it actually happens: you are looking at the list of users,
+   * your own row is one of them, and the switch is right there. It takes
+   * effect at once, your sessions end with it, and the next thing the
+   * screen says is that your session expired.
+   */
+  async function setupTwoAdmins(deps: ReturnType<typeof setup>) {
+    for (const id of ['admin-me', 'admin-other']) {
+      await deps.userRepository.save(
+        User.create({
+          id,
+          tenantId,
+          email: `${id}@example.com`,
+          displayName: id,
+          passwordHash: 'irrelevant',
+          role: 'admin',
+        }),
+      );
+    }
+  }
+
+  it('refuses to switch off your own account, even with other admins around', async () => {
+    const deps = setup();
+    await setupTwoAdmins(deps);
+
+    await expect(
+      setUserActive(deps, {
+        tenantId,
+        userId: 'admin-me',
+        isActive: false,
+        actorUserId: 'admin-me',
+      }),
+    ).rejects.toThrow(CannotChangeYourOwnAccessError);
+    const saved = await deps.userRepository.findById(tenantId, 'admin-me');
+    expect(saved?.isActive).toBe(true);
+  });
+
+  it('refuses to change your own role, even with other admins around', async () => {
+    const deps = setup();
+    await setupTwoAdmins(deps);
+
+    await expect(
+      updateUserRole(deps, {
+        tenantId,
+        userId: 'admin-me',
+        role: 'editor',
+        actorUserId: 'admin-me',
+      }),
+    ).rejects.toThrow(CannotChangeYourOwnAccessError);
+    const saved = await deps.userRepository.findById(tenantId, 'admin-me');
+    expect(saved?.role).toBe('admin');
+  });
+
+  it('lets another administrator do the same thing', async () => {
+    const deps = setup();
+    await setupTwoAdmins(deps);
+
+    const result = await setUserActive(deps, {
+      tenantId,
+      userId: 'admin-me',
+      isActive: false,
+      actorUserId: 'admin-other',
+    });
+
+    expect(result.isActive).toBe(false);
+  });
+
+  it('is not tripped by a role change that changes nothing', async () => {
+    const deps = setup();
+    await setupTwoAdmins(deps);
+
+    const result = await updateUserRole(deps, {
+      tenantId,
+      userId: 'admin-me',
+      role: 'admin',
+      actorUserId: 'admin-me',
+    });
+
+    expect(result.role).toBe('admin');
   });
 });
 
@@ -303,12 +440,103 @@ describe('setUserActive', () => {
       tenantId,
       userId: 'user-1',
       isActive: false,
+      actorUserId: 'another-admin',
     });
 
     expect(result.isActive).toBe(false);
     const saved = await deps.userRepository.findById(tenantId, 'user-1');
     expect(saved?.isActive).toBe(false);
     expect(await deps.authPort.validateSession(session.token)).toBeNull();
+  });
+
+  /*
+   * The screen offers "deactivate" on every row, including the row of
+   * the only administrator, and there is no way back in afterwards: an
+   * editor cannot promote anybody, so recovery is an UPDATE on the
+   * database.
+   */
+  it('refuses to switch off the last administrator who can still sign in', async () => {
+    const deps = setup();
+    await deps.userRepository.save(
+      User.create({
+        id: 'admin-1',
+        tenantId,
+        email: 'admin@example.com',
+        displayName: 'Admin',
+        passwordHash: 'irrelevant',
+        role: 'admin',
+      }),
+    );
+
+    await expect(
+      setUserActive(deps, {
+        tenantId,
+        userId: 'admin-1',
+        isActive: false,
+        actorUserId: 'another-admin',
+      }),
+    ).rejects.toThrow(LastActiveAdminError);
+    const saved = await deps.userRepository.findById(tenantId, 'admin-1');
+    expect(saved?.isActive).toBe(true);
+  });
+
+  it('allows switching off an administrator while another active one remains', async () => {
+    const deps = setup();
+    for (const id of ['admin-1', 'admin-2']) {
+      await deps.userRepository.save(
+        User.create({
+          id,
+          tenantId,
+          email: `${id}@example.com`,
+          displayName: id,
+          passwordHash: 'irrelevant',
+          role: 'admin',
+        }),
+      );
+    }
+
+    const result = await setUserActive(deps, {
+      tenantId,
+      userId: 'admin-1',
+      isActive: false,
+      actorUserId: 'another-admin',
+    });
+
+    expect(result.isActive).toBe(false);
+  });
+
+  it('counts only administrators who can sign in — an invited, never-accepted one does not hold the door open', async () => {
+    const deps = setup();
+    await deps.userRepository.save(
+      User.create({
+        id: 'admin-1',
+        tenantId,
+        email: 'admin@example.com',
+        displayName: 'Admin',
+        passwordHash: 'irrelevant',
+        role: 'admin',
+      }),
+    );
+    await deps.userRepository.save(
+      User.create({
+        id: 'admin-invited',
+        tenantId,
+        email: 'invited@example.com',
+        displayName: 'Invited',
+        passwordHash: 'irrelevant',
+        role: 'admin',
+        isActive: false,
+      }),
+    );
+
+    await expect(
+      setUserActive(deps, {
+        tenantId,
+        userId: 'admin-1',
+        isActive: false,
+        actorUserId: 'another-admin',
+      }),
+    ).rejects.toThrow(LastActiveAdminError);
   });
 
   it('reactivates a user without touching sessions', async () => {
@@ -328,6 +556,7 @@ describe('setUserActive', () => {
       tenantId,
       userId: 'user-1',
       isActive: true,
+      actorUserId: 'another-admin',
     });
 
     expect(result.isActive).toBe(true);
@@ -341,6 +570,7 @@ describe('setUserActive', () => {
         tenantId,
         userId: 'does-not-exist',
         isActive: false,
+        actorUserId: 'another-admin',
       }),
     ).rejects.toThrow(UserNotFoundError);
   });

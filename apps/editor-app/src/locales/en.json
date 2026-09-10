@@ -719,7 +719,13 @@
       "reactivate": "Reactivate",
       "pageIndicator": "Page {{page}} of {{totalPages}}",
       "previousPage": "Previous page",
-      "nextPage": "Next page"
+      "nextPage": "Next page",
+      "notOnYourself": "You cannot change your own access — another administrator has to do it",
+      "actionFailed": "That change could not be made.",
+      "deactivateConfirm": {
+        "title": "Deactivate this user?",
+        "description": "{{name}} will be signed out immediately and will not be able to sign in again until somebody reactivates them."
+      }
     },
     "inviteDialog": {
       "title": "Invite user",

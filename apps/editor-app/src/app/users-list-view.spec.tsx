@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { QueryClientProvider } from '@tanstack/react-query';
 import * as router from '@tanstack/react-router';
 import { TooltipProvider } from '../components/ui/tooltip';
+import * as auth from '../lib/auth-api-client';
 import * as api from '../lib/users-api-client';
 import type { UserDto } from '../lib/users-api-client';
 import { createTestQueryClient } from '../test-query-client';
@@ -12,6 +13,12 @@ vi.mock('@tanstack/react-router', async (importOriginal) => {
   const actual =
     await importOriginal<typeof import('@tanstack/react-router')>();
   return { ...actual, useNavigate: vi.fn() };
+});
+
+vi.mock('../lib/auth-api-client', async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import('../lib/auth-api-client')>();
+  return { ...actual, currentSession: vi.fn() };
 });
 
 vi.mock('../lib/users-api-client', async (importOriginal) => {
@@ -90,7 +97,7 @@ describe('UsersListView', () => {
     );
   });
 
-  it('deactivates an active user', async () => {
+  it('asks before deactivating a user, and does nothing until the answer is yes', async () => {
     vi.mocked(api.setUserActive).mockResolvedValue({
       ...userOne,
       isActive: false,
@@ -99,9 +106,66 @@ describe('UsersListView', () => {
     renderView([userOne]);
     fireEvent.click(screen.getByRole('button', { name: /^disattiva$/i }));
 
+    expect(screen.getByRole('alertdialog')).toBeTruthy();
+    expect(api.setUserActive).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByText('Annulla'));
+
+    await waitFor(() => expect(screen.queryByRole('alertdialog')).toBeNull());
+    expect(api.setUserActive).not.toHaveBeenCalled();
+  });
+
+  it('deactivates an active user once the question is answered', async () => {
+    vi.mocked(api.setUserActive).mockResolvedValue({
+      ...userOne,
+      isActive: false,
+    });
+
+    renderView([userOne]);
+    fireEvent.click(screen.getByRole('button', { name: /^disattiva$/i }));
+    fireEvent.click(
+      screen.getAllByRole('button', { name: /^disattiva$/i }).at(-1) as Element,
+    );
+
     await waitFor(() =>
       expect(api.setUserActive).toHaveBeenCalledWith('user-1', false),
     );
+  });
+
+  it('reactivating asks nothing — it gives access back, it does not take it away', async () => {
+    vi.mocked(api.setUserActive).mockResolvedValue({ ...userOne });
+
+    renderView([{ ...userOne, isActive: false }]);
+    fireEvent.click(screen.getByRole('button', { name: /^riattiva$/i }));
+
+    await waitFor(() =>
+      expect(api.setUserActive).toHaveBeenCalledWith('user-1', true),
+    );
+  });
+
+  /*
+   * The row that costs the most looks like every other one. Refused
+   * server-side as well — this is so the click is never worth making.
+   */
+  it('will not let you switch off, or demote, your own account', async () => {
+    vi.mocked(auth.currentSession).mockResolvedValue({
+      userId: 'user-1',
+      email: 'editor@example.com',
+      role: 'admin',
+    });
+
+    renderView([userOne]);
+
+    await waitFor(() =>
+      expect(
+        screen
+          .getByRole('button', { name: /^disattiva$/i })
+          .hasAttribute('disabled'),
+      ).toBe(true),
+    );
+    expect(
+      screen.getByRole('combobox', { name: /ruolo/i }).hasAttribute('disabled'),
+    ).toBe(true);
   });
 
   it('opens the invite dialog', () => {

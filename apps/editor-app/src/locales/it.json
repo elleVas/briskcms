@@ -719,7 +719,13 @@
       "reactivate": "Riattiva",
       "pageIndicator": "Pagina {{page}} di {{totalPages}}",
       "previousPage": "Pagina precedente",
-      "nextPage": "Pagina successiva"
+      "nextPage": "Pagina successiva",
+      "notOnYourself": "Non puoi cambiare i tuoi stessi accessi — deve farlo un altro amministratore",
+      "actionFailed": "Non è stato possibile applicare la modifica.",
+      "deactivateConfirm": {
+        "title": "Disattivare questo utente?",
+        "description": "{{name}} verrà disconnesso subito e non potrà più accedere finché qualcuno non lo riattiva."
+      }
     },
     "inviteDialog": {
       "title": "Invita utente",
