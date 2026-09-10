@@ -4,7 +4,14 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { QueryClientProvider } from '@tanstack/react-query';
 import * as router from '@tanstack/react-router';
 import { createTestQueryClient } from '../test-query-client';
+import * as auth from '../lib/auth-api-client';
 import { AdminShell } from './admin-shell';
+
+vi.mock('../lib/auth-api-client', async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import('../lib/auth-api-client')>();
+  return { ...actual, currentSession: vi.fn() };
+});
 
 vi.mock('@tanstack/react-router', async (importOriginal) => {
   const actual =
@@ -28,7 +35,12 @@ vi.mock('@tanstack/react-router', async (importOriginal) => {
   };
 });
 
-function renderShell() {
+function renderShell(role: 'admin' | 'publisher' | 'editor' = 'admin') {
+  vi.mocked(auth.currentSession).mockResolvedValue({
+    userId: 'user-1',
+    email: 'chi@esempio.it',
+    role,
+  });
   return render(
     <QueryClientProvider client={createTestQueryClient()}>
       <AdminShell>
@@ -43,7 +55,61 @@ describe('AdminShell', () => {
     vi.clearAllMocks();
   });
 
-  it('renders links to Pagine, Media, Layout, Stile and Utenti, and separate Impostazioni/Account menus', () => {
+  /*
+   * The sidebar used to offer every screen to everybody and let the API
+   * say no after the click: an Editor saw Utenti, opened it, and got a
+   * generic error page. The server refusing is right; the sidebar
+   * pretending the door is open is not.
+   */
+  it.each(['publisher', 'editor'] as const)(
+    'does not offer Utenti to a %s',
+    async (role) => {
+      vi.mocked(router.useNavigate).mockReturnValue(vi.fn());
+
+      renderShell(role);
+
+      // The rest of the sidebar is there, so this is about Utenti and not
+      // about the shell failing to render at all.
+      expect(await screen.findByRole('link', { name: 'Pagine' })).toBeTruthy();
+      expect(screen.queryByRole('link', { name: 'Utenti' })).toBeNull();
+    },
+  );
+
+  it('offers Utenti to an admin', async () => {
+    vi.mocked(router.useNavigate).mockReturnValue(vi.fn());
+
+    renderShell('admin');
+
+    expect(
+      (await screen.findByRole('link', { name: 'Utenti' })).getAttribute(
+        'href',
+      ),
+    ).toBe('/users');
+  });
+
+  /*
+   * While the role is still unknown — loading, or the request failed —
+   * the admin-only entries stay hidden. Guessing generously would put
+   * back exactly what this hides.
+   */
+  it('hides Utenti until it knows who is asking', () => {
+    vi.mocked(router.useNavigate).mockReturnValue(vi.fn());
+    vi.mocked(auth.currentSession).mockReturnValue(
+      new Promise(() => undefined),
+    );
+
+    render(
+      <QueryClientProvider client={createTestQueryClient()}>
+        <AdminShell>
+          <p>content</p>
+        </AdminShell>
+      </QueryClientProvider>,
+    );
+
+    expect(screen.queryByRole('link', { name: 'Utenti' })).toBeNull();
+  });
+
+  it('renders links to Pagine, Media, Layout, Stile and Utenti, and separate Impostazioni/Account menus', async () => {
     vi.mocked(router.useNavigate).mockReturnValue(vi.fn());
 
     renderShell();
@@ -60,8 +126,11 @@ describe('AdminShell', () => {
     expect(
       screen.getByRole('link', { name: 'Stile' }).getAttribute('href'),
     ).toBe('/style');
+    // Awaited, not synchronous: this entry now waits to know the role.
     expect(
-      screen.getByRole('link', { name: 'Utenti' }).getAttribute('href'),
+      (await screen.findByRole('link', { name: 'Utenti' })).getAttribute(
+        'href',
+      ),
     ).toBe('/users');
     expect(screen.getByText('content')).toBeTruthy();
     expect(

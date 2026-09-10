@@ -938,7 +938,8 @@
             "grow": "Si ingrandisce",
             "dim": "Si attenua"
           }
-        }
+        },
+        "none": "Nessuno"
       }
     },
     "richText": {
