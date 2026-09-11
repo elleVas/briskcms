@@ -17,6 +17,7 @@ import {
   insertBlock,
   locateBlock,
   moveBlock,
+  nearestTargetThatHolds,
   removeBlock,
   siblingsAt,
   type BlockTreeTarget,
@@ -366,10 +367,11 @@ export function useBlockTreeMutations({
   }
 
   function handleInsert(descriptor: BlockDescriptor): void {
-    const target = resolveInsertTarget(
+    const target = nearestTargetThatHolds(
       localBlocks,
       registry,
-      bridge.selectedBlockId,
+      resolveInsertTarget(localBlocks, registry, bridge.selectedBlockId),
+      [descriptor.type],
     );
     performInsert(createBlockFromDescriptor(descriptor, registry), target);
   }
@@ -377,23 +379,63 @@ export function useBlockTreeMutations({
   /**
    * Inserts a whole strip of blocks — how a TEMPLATE arrives (docs/adr/0059).
    *
-   * One at a time through `performInsert`, and forwards rather than
-   * backwards: each goes to the position after the one before it, so the
-   * strip lands in the order it was written. Reusing the single-block path
-   * is what keeps undo, the canvas patch and history working for a
-   * template exactly as they do for a block, instead of a second insert
-   * path that would have to reimplement all three.
+   * A single block goes through `performInsert`, which patches the canvas
+   * in place. Several go in as ONE operation: they used to be a loop over
+   * `performInsert`, and each call read the tree from the render it was
+   * created in, so every block after the first started from a tree that
+   * never had the ones before it. A template of three blocks landed as its
+   * last block alone — and cost three undos to take back. The same trap
+   * `handlePasteMany` documents, and now the same fix.
+   *
+   * The strip travels together, so it goes where EVERY block in it may sit
+   * — not split between a container and the level above it.
    */
   function handleInsertBlocks(blocks: (Block & { id: string })[]): void {
-    let target = resolveInsertTarget(
+    if (blocks.length === 0) {
+      return;
+    }
+    const target = nearestTargetThatHolds(
       localBlocks,
       registry,
-      bridge.selectedBlockId,
+      resolveInsertTarget(localBlocks, registry, bridge.selectedBlockId),
+      blocks.map((block) => block.type),
     );
-    for (const block of blocks) {
-      performInsert(block, target);
-      target = { parentId: target.parentId, index: target.index + 1 };
+    if (blocks.length === 1) {
+      performInsert(blocks[0], target);
+      return;
     }
+    insertManyAt(blocks, target);
+  }
+
+  /**
+   * Several blocks inserted side by side as one action — one tree write,
+   * one save, one undo — built in a loop over the same growing tree rather
+   * than over the render's own copy, which is the whole point.
+   *
+   * The canvas reloads instead of being patched block by block: the
+   * patches would be computed from a tree changing underneath them.
+   */
+  function insertManyAt(
+    blocks: (Block & { id: string })[],
+    target: BlockTreeTarget,
+  ): void {
+    const before = localBlocks;
+    let next = before;
+    let index = target.index;
+    for (const block of blocks) {
+      next = insertBlock(next, block, { parentId: target.parentId, index });
+      // Forwards, so the strip lands in the order it was written.
+      index += 1;
+    }
+    applyLocalChange(next);
+    const sync = () => reloadCanvas?.();
+    sync();
+    recordHistory({
+      before,
+      after: next,
+      syncForward: sync,
+      syncBackward: sync,
+    });
   }
 
   /**
@@ -621,28 +663,20 @@ export function useBlockTreeMutations({
       handlePaste(blocks[0]);
       return;
     }
-    const before = localBlocks;
-    const at = selectedBlock?.id ? locateBlock(before, selectedBlock.id) : null;
-    const parentId = at?.parentId ?? null;
-    let index = at ? at.index + 1 : siblingsAt(before, null).length;
-    let next = before;
-    for (const block of blocks) {
-      next = insertBlock(next, cloneBlockWithNewIds(block), {
-        parentId,
-        index,
-      });
-      // Forwards, so the strip lands in the order it was copied.
-      index += 1;
-    }
-    applyLocalChange(next);
-    const sync = () => reloadCanvas?.();
-    sync();
-    recordHistory({
-      before,
-      after: next,
-      syncForward: sync,
-      syncBackward: sync,
-    });
+    const at = selectedBlock?.id
+      ? locateBlock(localBlocks, selectedBlock.id)
+      : null;
+    insertManyAt(
+      blocks.map((block) => cloneBlockWithNewIds(block)),
+      nearestTargetThatHolds(
+        localBlocks,
+        registry,
+        at
+          ? { parentId: at.parentId, index: at.index + 1 }
+          : { parentId: null, index: siblingsAt(localBlocks, null).length },
+        blocks.map((block) => block.type),
+      ),
+    );
   }
 
   /**
@@ -804,9 +838,14 @@ export function useBlockTreeMutations({
       : null;
     performInsert(
       cloneBlockWithNewIds(block),
-      location
-        ? { parentId: location.parentId, index: location.index + 1 }
-        : { parentId: null, index: localBlocks.length },
+      nearestTargetThatHolds(
+        localBlocks,
+        registry,
+        location
+          ? { parentId: location.parentId, index: location.index + 1 }
+          : { parentId: null, index: localBlocks.length },
+        [block.type],
+      ),
     );
   }
 

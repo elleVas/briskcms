@@ -482,3 +482,246 @@ describe('useBlockTreeMutations undo/redo', () => {
     expect(onChange).not.toHaveBeenCalled();
   });
 });
+
+/*
+ * A container declares what it may hold: Testimonials takes Testimonial and
+ * nothing else. The Layers panel already refused to nest anything else
+ * there; inserting from the picker, dropping a template and pasting did
+ * not, and a Heading picked with Testimonials selected ended up inside it
+ * — saved, and rendered by a block that has no idea what a Heading is.
+ */
+describe('useBlockTreeMutations respects what a container may hold', () => {
+  const descriptors: BlockDescriptor[] = [
+    {
+      type: 'Heading',
+      label: 'Heading',
+      category: 'content',
+      defaultProps: { text: '', level: 'h2' },
+      fields: [],
+    },
+    {
+      type: 'Testimonial',
+      label: 'Testimonial',
+      category: 'socialProof',
+      defaultProps: { quote: '' },
+      fields: [],
+    },
+    {
+      type: 'Testimonials',
+      label: 'Testimonials',
+      category: 'socialProof',
+      defaultProps: {},
+      fields: [],
+      isContainer: true,
+      allowedChildTypes: ['Testimonial'],
+    },
+    {
+      type: 'Column',
+      label: 'Column',
+      category: 'layout',
+      defaultProps: {},
+      fields: [],
+      isContainer: true,
+    },
+  ];
+  const [heading, testimonial] = descriptors;
+
+  const tree: Block[] = [
+    {
+      id: 'col',
+      type: 'Column',
+      props: {},
+      children: [
+        {
+          id: 'testi',
+          type: 'Testimonials',
+          props: {},
+          children: [{ id: 't1', type: 'Testimonial', props: { quote: 'Q' } }],
+        },
+      ],
+    },
+    { id: 'after', type: 'Heading', props: { text: 'After', level: 'h2' } },
+  ];
+
+  function setupWith(selectedId: string | null) {
+    const onChange = vi.fn();
+    const selectedBlock = selectedId ? findInTree(tree, selectedId) : null;
+    const { result } = renderHook(() =>
+      useBlockTreeMutations({
+        localBlocks: tree,
+        setLocalBlocks: vi.fn(),
+        onChange,
+        registry: descriptors,
+        bridge: {
+          selectedBlockId: selectedId,
+          patchBlock: vi.fn(),
+          insertBlock: vi.fn(),
+          removeBlock: vi.fn(),
+          reorderBlocks: vi.fn(),
+        },
+        token: 'tok',
+        pageId: 'page-1',
+        selectedBlock,
+        selectedDescriptor: selectedBlock
+          ? descriptors.find((d) => d.type === selectedBlock.type)
+          : undefined,
+      }),
+    );
+    return { result, onChange };
+  }
+
+  function findInTree(blocks: Block[], id: string): Block | null {
+    for (const block of blocks) {
+      if (block.id === id) return block;
+      const found = block.children ? findInTree(block.children, id) : null;
+      if (found) return found;
+    }
+    return null;
+  }
+
+  /** Where each block ended up: its parent's id, or `root`. */
+  function parents(blocks: Block[], parent = 'root'): Record<string, string> {
+    return blocks.reduce<Record<string, string>>((acc, block) => {
+      acc[`${block.type}:${block.id}`] = parent;
+      return block.children
+        ? { ...acc, ...parents(block.children, block.id) }
+        : acc;
+    }, {});
+  }
+
+  function lastTree(onChange: ReturnType<typeof vi.fn>): Block[] {
+    return onChange.mock.calls.at(-1)?.[0] as Block[];
+  }
+
+  it('puts a block the selected container may not hold right after the container, in its parent', () => {
+    const { result, onChange } = setupWith('testi');
+
+    act(() => result.current.handleInsert(heading));
+
+    const next = lastTree(onChange);
+    const column = next.find((b) => b.id === 'col');
+    expect(column?.children?.map((b) => b.type)).toEqual([
+      'Testimonials',
+      'Heading',
+    ]);
+    expect(findInTree(next, 'testi')?.children?.map((b) => b.type)).toEqual([
+      'Testimonial',
+    ]);
+  });
+
+  it('still nests a block the selected container does accept', () => {
+    const { result, onChange } = setupWith('testi');
+
+    act(() => result.current.handleInsert(testimonial));
+
+    expect(
+      findInTree(lastTree(onChange), 'testi')?.children?.map((b) => b.type),
+    ).toEqual(['Testimonial', 'Testimonial']);
+  });
+
+  it('keeps a generic container taking anything', () => {
+    const { result, onChange } = setupWith('col');
+
+    act(() => result.current.handleInsert(heading));
+
+    expect(
+      findInTree(lastTree(onChange), 'col')?.children?.map((b) => b.type),
+    ).toEqual(['Testimonials', 'Heading']);
+  });
+
+  it('does the same for a template strip', () => {
+    const { result, onChange } = setupWith('testi');
+
+    act(() =>
+      result.current.handleInsertBlocks([
+        { id: 'tpl-1', type: 'Heading', props: {} },
+        { id: 'tpl-2', type: 'Testimonial', props: {} },
+      ]),
+    );
+
+    const placed = parents(lastTree(onChange));
+    // The strip travels together, so it goes where EVERY block in it may
+    // sit: a Testimonial could have stayed, the Heading could not.
+    expect(placed['Heading:tpl-1']).toBe('col');
+    expect(placed['Testimonial:tpl-2']).toBe('col');
+  });
+
+  /*
+   * A template of several blocks used to land as its LAST block alone: each
+   * insert started from the render's own copy of the tree, which never had
+   * the blocks inserted just before it.
+   */
+  it('inserts every block of a template, as one step', () => {
+    const { result, onChange } = setupWith(null);
+
+    act(() =>
+      result.current.handleInsertBlocks([
+        { id: 'a', type: 'Heading', props: {} },
+        { id: 'b', type: 'Heading', props: {} },
+        { id: 'c', type: 'Heading', props: {} },
+      ]),
+    );
+
+    expect(onChange).toHaveBeenCalledTimes(1);
+    expect(
+      lastTree(onChange)
+        .map((b) => b.id)
+        .slice(-3),
+    ).toEqual(['a', 'b', 'c']);
+    expect(result.current.canUndo).toBe(true);
+  });
+
+  it('pastes beside the selected block only where the pasted type may sit', () => {
+    const { result, onChange } = setupWith('t1');
+
+    act(() =>
+      result.current.handlePasteMany([
+        { id: 'copied', type: 'Heading', props: { text: 'x', level: 'h2' } },
+      ]),
+    );
+
+    const next = lastTree(onChange);
+    expect(findInTree(next, 'testi')?.children?.map((b) => b.type)).toEqual([
+      'Testimonial',
+    ]);
+    expect(findInTree(next, 'col')?.children?.map((b) => b.type)).toEqual([
+      'Testimonials',
+      'Heading',
+    ]);
+  });
+
+  it('keeps pasting a block of the same kind right beside it', () => {
+    const { result, onChange } = setupWith('t1');
+
+    act(() =>
+      result.current.handlePasteMany([
+        { id: 'copied', type: 'Testimonial', props: { quote: 'y' } },
+      ]),
+    );
+
+    expect(
+      findInTree(lastTree(onChange), 'testi')?.children?.map((b) => b.type),
+    ).toEqual(['Testimonial', 'Testimonial']);
+  });
+
+  it('does the same when pasting several blocks at once', () => {
+    const { result, onChange } = setupWith('t1');
+
+    act(() =>
+      result.current.handlePasteMany([
+        { id: 'c1', type: 'Heading', props: { text: 'x', level: 'h2' } },
+        { id: 'c2', type: 'Heading', props: { text: 'y', level: 'h2' } },
+      ]),
+    );
+
+    const next = lastTree(onChange);
+    expect(findInTree(next, 'testi')?.children?.map((b) => b.type)).toEqual([
+      'Testimonial',
+    ]);
+    expect(findInTree(next, 'col')?.children?.map((b) => b.type)).toEqual([
+      'Testimonials',
+      'Heading',
+      'Heading',
+    ]);
+  });
+});

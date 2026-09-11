@@ -7,7 +7,11 @@ import {
   type DropCandidateRect,
 } from './compute-drop-target';
 import type { IframeGeometry } from './overlay-layer';
-import { findBlockInTree, type BlockTreeTarget } from './use-block-tree';
+import {
+  canHoldChild,
+  findBlockInTree,
+  type BlockTreeTarget,
+} from './use-block-tree';
 
 export interface SidebarDragState {
   descriptor: BlockDescriptor;
@@ -105,12 +109,15 @@ export function useSidebarDrag({
     }
     const iframeX = pageX - iframeGeometry.left;
     const iframeY = pageY - iframeGeometry.top;
+    // Only the containers that may hold what is being dragged: the hit test
+    // then picks the innermost one that ACCEPTS it, so a Heading dropped on a
+    // list of testimonials lands in whatever holds the list, not inside it.
     const containerRects = blockRects.filter((rect) => {
       const block = findBlockInTree(localBlocks, rect.id);
       const blockDescriptor = block
         ? registry.find((d) => d.type === block.type)
         : undefined;
-      return Boolean(blockDescriptor?.isContainer);
+      return canHoldChild(blockDescriptor, descriptor.type);
     });
     const hitContainerId = findContainerAtPoint(
       containerRects,

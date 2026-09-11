@@ -14,6 +14,8 @@ import {
   siblingsAt,
   updateBlockProps,
   updateBlockStyleOverride,
+  canHoldChild,
+  nearestTargetThatHolds,
 } from './use-block-tree';
 
 function tree(): Block[] {
@@ -473,5 +475,106 @@ describe('blockAncestry', () => {
    */
   it('returns nothing for a block that is no longer there', () => {
     expect(blockAncestry(tree, 'gone')).toEqual([]);
+  });
+});
+
+describe('canHoldChild', () => {
+  const plain: BlockDescriptor = {
+    type: 'Heading',
+    label: 'Heading',
+    category: 'content',
+    defaultProps: {},
+    fields: [],
+  };
+  const generic: BlockDescriptor = {
+    ...plain,
+    type: 'Column',
+    isContainer: true,
+  };
+  const collection: BlockDescriptor = {
+    ...plain,
+    type: 'Testimonials',
+    isContainer: true,
+    allowedChildTypes: ['Testimonial'],
+  };
+
+  it('lets nothing into a block that is not a container', () => {
+    expect(canHoldChild(plain, 'Text')).toBe(false);
+    expect(canHoldChild(undefined, 'Text')).toBe(false);
+  });
+
+  it('lets anything into a container with no list', () => {
+    expect(canHoldChild(generic, 'Heading')).toBe(true);
+  });
+
+  it('lets only its listed types into a container with a list', () => {
+    expect(canHoldChild(collection, 'Testimonial')).toBe(true);
+    expect(canHoldChild(collection, 'Heading')).toBe(false);
+  });
+});
+
+describe('nearestTargetThatHolds', () => {
+  const registry: BlockDescriptor[] = [
+    {
+      type: 'Column',
+      label: 'Column',
+      category: 'layout',
+      defaultProps: {},
+      fields: [],
+      isContainer: true,
+    },
+    {
+      type: 'Testimonials',
+      label: 'Testimonials',
+      category: 'socialProof',
+      defaultProps: {},
+      fields: [],
+      isContainer: true,
+      allowedChildTypes: ['Testimonial'],
+    },
+  ];
+  const tree: Block[] = [
+    {
+      id: 'col',
+      type: 'Column',
+      props: {},
+      children: [
+        { id: 'first', type: 'Heading', props: {} },
+        { id: 'testi', type: 'Testimonials', props: {}, children: [] },
+      ],
+    },
+  ];
+
+  it('keeps a target whose parent accepts every type', () => {
+    expect(
+      nearestTargetThatHolds(tree, registry, { parentId: 'testi', index: 0 }, [
+        'Testimonial',
+      ]),
+    ).toEqual({ parentId: 'testi', index: 0 });
+  });
+
+  it('steps out to just after the parent that refuses, one level up', () => {
+    expect(
+      nearestTargetThatHolds(tree, registry, { parentId: 'testi', index: 0 }, [
+        'Heading',
+      ]),
+    ).toEqual({ parentId: 'col', index: 2 });
+  });
+
+  it('refuses a strip if any one of its types is refused', () => {
+    expect(
+      nearestTargetThatHolds(tree, registry, { parentId: 'testi', index: 0 }, [
+        'Testimonial',
+        'Heading',
+      ]),
+    ).toEqual({ parentId: 'col', index: 2 });
+  });
+
+  it('always has the root to fall back on', () => {
+    expect(
+      nearestTargetThatHolds(tree, registry, { parentId: null, index: 1 }, [
+        'Anything',
+      ]),
+    ).toEqual({ parentId: null, index: 1 });
   });
 });

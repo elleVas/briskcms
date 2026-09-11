@@ -230,6 +230,67 @@ export function locateBlock(
 }
 
 /**
+ * Whether a block of `parent`'s type may hold a child of `childType` —
+ * the descriptor's own rule, and the only place it is read.
+ *
+ * Not a container: nothing. A container with no `allowedChildTypes`
+ * (Container, Column): anything. A container with a list (Testimonials →
+ * Testimonial, Tabs → Tab): exactly those. The Layers panel, inserting
+ * from the picker, dropping a template, pasting and dragging from the
+ * sidebar all ask this, so no path can put a Heading inside a list of
+ * testimonials that another path would have refused.
+ */
+export function canHoldChild(
+  parent: BlockDescriptor | undefined,
+  childType: string,
+): boolean {
+  if (!parent?.isContainer) {
+    return false;
+  }
+  return (
+    !parent.allowedChildTypes || parent.allowedChildTypes.includes(childType)
+  );
+}
+
+/**
+ * The nearest position at or above `target` where every one of `childTypes`
+ * may sit.
+ *
+ * `target` stands when its parent accepts them all. Otherwise it steps out
+ * of that parent and lands right AFTER it, one level up, and asks again —
+ * so a Heading aimed inside Testimonials goes just below the Testimonials,
+ * beside what the person was looking at, rather than vanishing to the end
+ * of the page. The root accepts anything, so the walk always ends.
+ */
+export function nearestTargetThatHolds(
+  blocks: Block[],
+  registry: BlockDescriptor[],
+  target: BlockTreeTarget,
+  childTypes: string[],
+): BlockTreeTarget {
+  let current = target;
+  while (current.parentId !== null) {
+    const parent = findBlockInTree(blocks, current.parentId);
+    const descriptor = parent
+      ? registry.find((d) => d.type === parent.type)
+      : undefined;
+    if (childTypes.every((type) => canHoldChild(descriptor, type))) {
+      return current;
+    }
+    const parentLocation = locateBlock(blocks, current.parentId);
+    if (!parentLocation) {
+      // A parent that is not in the tree is no place to insert at all.
+      return { parentId: null, index: blocks.length };
+    }
+    current = {
+      parentId: parentLocation.parentId,
+      index: parentLocation.index + 1,
+    };
+  }
+  return current;
+}
+
+/**
  * The chain from the outermost block down to `id`, `id` included — what
  * the toolbar's breadcrumb shows and what makes "select the parent"
  * possible at all.

@@ -20,7 +20,17 @@ const containerDescriptor: BlockDescriptor = {
   isContainer: true,
 };
 
-const registry = [heroDescriptor, containerDescriptor];
+const testimonialsDescriptor: BlockDescriptor = {
+  type: 'Testimonials',
+  label: 'Testimonials',
+  category: 'socialProof',
+  defaultProps: {},
+  fields: [],
+  isContainer: true,
+  allowedChildTypes: ['Testimonial'],
+};
+
+const registry = [heroDescriptor, containerDescriptor, testimonialsDescriptor];
 const iframeGeometry = { top: 100, left: 50, width: 800, height: 600 };
 
 function setup(
@@ -127,6 +137,41 @@ describe('useSidebarDrag', () => {
     expect(insertNewBlockAt).toHaveBeenCalledWith(
       heroDescriptor,
       expect.objectContaining({ parentId: null }),
+    );
+  });
+
+  /*
+   * Only a container that may hold the dragged type counts as a place to
+   * drop into — a Hero let go over a list of testimonials lands in whatever
+   * holds that list, never inside it.
+   */
+  it('does not drop into a container that may not hold the dragged type', () => {
+    const { result, insertNewBlockAt } = setup({
+      localBlocks: [
+        {
+          id: 'container-1',
+          type: 'Container',
+          props: {},
+          children: [
+            { id: 'testi-1', type: 'Testimonials', props: {}, children: [] },
+          ],
+        },
+      ],
+      blockRects: [
+        { id: 'container-1', top: 0, left: 0, width: 700, height: 500 },
+        { id: 'testi-1', top: 100, left: 100, width: 400, height: 200 },
+      ],
+    });
+
+    // iframe (350, 200): inside the Testimonials rect, and inside the
+    // Container around it.
+    act(() => {
+      result.current.handleSidebarDragEnd(heroDescriptor, 400, 300);
+    });
+
+    expect(insertNewBlockAt).toHaveBeenCalledWith(
+      heroDescriptor,
+      expect.objectContaining({ parentId: 'container-1' }),
     );
   });
 

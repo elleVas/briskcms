@@ -26,6 +26,7 @@ import { siblingDropRects } from './compute-drop-target';
 import { LayerContextMenu } from './layer-context-menu';
 import { LayersPanel } from './layers-panel';
 import { isRectVisibleInIframe, useIframeGeometry } from './overlay-layer';
+import { canHoldChild } from './use-block-tree';
 import { useBlockTreeMutations } from './use-block-tree-mutations';
 import { useCanvasDraft } from './use-canvas-draft';
 import { useCanvasDragReorder } from './use-canvas-drag-reorder';
@@ -507,24 +508,18 @@ export function CanvasEditorShell({
             onReorder={handleReorder}
             onReparent={handleReparent}
             // The descriptors' own rules, as two predicates, so the panel
-            // stays free of the registry. `canContain` honours
-            // `allowedChildTypes`; inserting from the sidebar does not yet
-            // (see useSidebarDrag and resolveInsertTarget).
+            // stays free of the registry. `canHoldChild` is the same rule
+            // every insert path asks, so the panel cannot refuse a nesting
+            // the picker would allow, or the other way round.
             isContainerType={(type) =>
               Boolean(registry.find((d) => d.type === type)?.isContainer)
             }
-            canContain={(parentType, childType) => {
-              const parent = registry.find((d) => d.type === parentType);
-              if (!parent?.isContainer) {
-                return false;
-              }
-              // No list means "anything" (Container/Column); a list
-              // means exactly those (Testimonials→Testimonial).
-              return (
-                !parent.allowedChildTypes ||
-                parent.allowedChildTypes.includes(childType)
-              );
-            }}
+            canContain={(parentType, childType) =>
+              canHoldChild(
+                registry.find((d) => d.type === parentType),
+                childType,
+              )
+            }
             selectedBlockIds={bridge.selectedBlockIds}
             onSelect={(blockId, additive) => {
               bridge.selectBlock(blockId, additive);
