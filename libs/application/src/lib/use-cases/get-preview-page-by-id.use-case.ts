@@ -6,6 +6,7 @@ import type {
   SiteLayoutSectionRepositoryPort,
   SiteRepositoryPort,
   SiteThemeBlockStylesPort,
+  TaxonomyRepositoryPort,
 } from '@brisk/ports';
 import { mergeTranslatedContent, type PageContent } from '@brisk/shared-types';
 import { resolveSiteChrome } from './resolve-site-chrome';
@@ -21,6 +22,8 @@ export interface GetPreviewPageByIdDeps {
   siteRepository: SiteRepositoryPort;
   siteLayoutSectionRepository: SiteLayoutSectionRepositoryPort;
   siteThemeBlockStylesRepository: SiteThemeBlockStylesPort;
+  /** Which pages carry which term — what a PageGrid on the previewed page is asking. */
+  taxonomyRepository: TaxonomyRepositoryPort;
   previewTokenPort: PreviewTokenPort;
 }
 
@@ -102,9 +105,13 @@ export async function getPreviewPageById(
       site.defaultLocale,
       group.parentId,
     ),
-    resolvePageContentReferences(deps, input.tenantId, translation.locale, [
-      content,
-    ]),
+    resolvePageContentReferences(
+      deps,
+      input.tenantId,
+      translation.siteId,
+      translation.locale,
+      [content],
+    ),
   ]);
   // Same as the published route: a slug is not an address on its own, see
   // resolveTranslationPaths.

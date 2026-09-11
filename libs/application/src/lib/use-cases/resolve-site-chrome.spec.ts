@@ -3,6 +3,7 @@ import { DEFAULT_COOKIE_BANNER_SETTINGS } from '@brisk/shared-types';
 import { Site, SiteLayoutSection } from '@brisk/domain-core';
 import { resolveSiteChrome } from './resolve-site-chrome';
 import {
+  InMemoryTaxonomyRepository,
   InMemoryPageGroupRepository,
   InMemoryPageTranslationRepository,
   InMemoryReusableSectionRepository,
@@ -92,6 +93,7 @@ describe('resolveSiteChrome', () => {
         pageTranslationRepository: new InMemoryPageTranslationRepository(),
         pageGroupRepository: new InMemoryPageGroupRepository(),
         reusableSectionRepository: new InMemoryReusableSectionRepository(),
+        taxonomyRepository: new InMemoryTaxonomyRepository(),
       },
       tenantId,
       site,
@@ -129,6 +131,7 @@ describe('resolveSiteChrome', () => {
         pageTranslationRepository: new InMemoryPageTranslationRepository(),
         pageGroupRepository: new InMemoryPageGroupRepository(),
         reusableSectionRepository: new InMemoryReusableSectionRepository(),
+        taxonomyRepository: new InMemoryTaxonomyRepository(),
       },
       tenantId,
       site,
@@ -158,6 +161,7 @@ describe('resolveSiteChrome', () => {
         pageTranslationRepository: new InMemoryPageTranslationRepository(),
         pageGroupRepository: new InMemoryPageGroupRepository(),
         reusableSectionRepository: new InMemoryReusableSectionRepository(),
+        taxonomyRepository: new InMemoryTaxonomyRepository(),
       },
       tenantId,
       site,
@@ -200,6 +204,7 @@ describe('resolveSiteChrome', () => {
         pageTranslationRepository: new InMemoryPageTranslationRepository(),
         pageGroupRepository: new InMemoryPageGroupRepository(),
         reusableSectionRepository: new InMemoryReusableSectionRepository(),
+        taxonomyRepository: new InMemoryTaxonomyRepository(),
       },
       tenantId,
       site,
@@ -233,6 +238,7 @@ describe('resolveSiteChrome', () => {
         pageTranslationRepository: new InMemoryPageTranslationRepository(),
         pageGroupRepository: new InMemoryPageGroupRepository(),
         reusableSectionRepository: new InMemoryReusableSectionRepository(),
+        taxonomyRepository: new InMemoryTaxonomyRepository(),
       },
       tenantId,
       site,

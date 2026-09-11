@@ -12,7 +12,6 @@ import type {
 import type { Taxonomy, Term } from '@brisk/domain-core';
 import { resolveSiteChrome } from './resolve-site-chrome';
 import { resolvePageContentReferences } from './resolve-page-content-references';
-import { resolvePageGridItems } from './resolve-page-grid-items';
 
 export interface GetPublishedTermByPathDeps {
   siteRepository: SiteRepositoryPort;
@@ -92,18 +91,13 @@ export async function getPublishedTermByPath(
 
   const [chrome, [resolvedContent]] = await Promise.all([
     resolveSiteChrome(deps, input.tenantId, site, input.locale),
-    resolvePageContentReferences(deps, input.tenantId, input.locale, [content]),
+    resolvePageContentReferences(deps, input.tenantId, site.id, input.locale, [
+      content,
+    ]),
   ]);
-  const [withGrids] = await resolvePageGridItems(
-    deps,
-    input.tenantId,
-    site.id,
-    input.locale,
-    [resolvedContent],
-  );
 
   return {
-    content: withGrids,
+    content: resolvedContent,
     seoMeta: seoMetaFor(term, input.locale),
     locale: input.locale,
     translations: termTranslations(term, taxonomy, site.enabledLocales),

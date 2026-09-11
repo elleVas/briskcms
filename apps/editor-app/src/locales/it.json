@@ -1562,7 +1562,8 @@
           "fieldLabel": "Disposizione",
           "options": {
             "list": "Elenco",
-            "grid": "Griglia"
+            "grid": "Griglia",
+            "cards": "Schede"
           }
         },
         "limit": {
@@ -1570,6 +1571,13 @@
         },
         "emptyText": {
           "fieldLabel": "Testo quando non c'è niente da elencare"
+        },
+        "order": {
+          "fieldLabel": "Ordine",
+          "options": {
+            "title": "Per titolo",
+            "newest": "Prima le più recenti"
+          }
         }
       }
     },

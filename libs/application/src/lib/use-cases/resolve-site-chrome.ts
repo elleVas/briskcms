@@ -6,6 +6,7 @@ import type {
   ReusableSectionRepositoryPort,
   SiteLayoutSectionRepositoryPort,
   SiteThemeBlockStylesPort,
+  TaxonomyRepositoryPort,
 } from '@brisk/ports';
 import { resolvePageContentReferences } from './resolve-page-content-references';
 
@@ -26,6 +27,8 @@ export interface ResolveSiteChromeDeps {
   // Needed to turn a header/footer link into a reachable address: a page
   // reference resolves to the whole ancestor chain, not just its slug.
   pageGroupRepository: PageGroupRepositoryPort;
+  /** Passed straight through to the shared reference pass — a header holds links, not page grids, but the pass is one. */
+  taxonomyRepository: TaxonomyRepositoryPort;
 }
 
 /**
@@ -145,6 +148,7 @@ export async function resolveSiteChrome(
   const [resolvedHeader, resolvedFooter] = await resolvePageContentReferences(
     deps,
     tenantId,
+    site.id,
     locale,
     [header ?? [], footer ?? []],
   );

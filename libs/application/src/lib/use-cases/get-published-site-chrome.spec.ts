@@ -3,6 +3,7 @@ import { DEFAULT_COOKIE_BANNER_SETTINGS } from '@brisk/shared-types';
 import { Site, SiteLayoutSection } from '@brisk/domain-core';
 import { getPublishedSiteChrome } from './get-published-site-chrome.use-case';
 import {
+  InMemoryTaxonomyRepository,
   InMemoryPageGroupRepository,
   InMemoryPageTranslationRepository,
   InMemoryReusableSectionRepository,
@@ -28,6 +29,7 @@ describe('getPublishedSiteChrome', () => {
       siteThemeBlockStylesRepository,
       pageTranslationRepository,
       pageGroupRepository,
+      taxonomyRepository: new InMemoryTaxonomyRepository(),
       reusableSectionRepository: new InMemoryReusableSectionRepository(),
     };
   }

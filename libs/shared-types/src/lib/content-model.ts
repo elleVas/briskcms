@@ -979,6 +979,12 @@ export const pageGridItemSchema = z.object({
   title: z.string(),
   /** Ready to use as an `href`, ancestors included (ADR-0029). */
   path: z.string(),
+  /** When this language went live, ISO — `null` for a page whose publication date predates the column. */
+  publishedAt: z.string().nullable(),
+  /** The page's meta description, which is the summary its author already writes. A card that invents its own from the body would be a second, quietly different summary. */
+  excerpt: z.string(),
+  /** The page's OG image — the picture it already shows when shared, which is the same one a card wants. */
+  image: z.string().nullable(),
 });
 export type PageGridItem = z.infer<typeof pageGridItemSchema>;
 
@@ -993,7 +999,17 @@ export type PageGridItem = z.infer<typeof pageGridItemSchema>;
  */
 export const pageGridPropsSchema = z.object({
   termId: z.string().nullable().default(null),
-  layout: z.enum(['list', 'grid']).default('list'),
+  /** `cards` is the one that shows the date, the summary and the picture — a list of links has nowhere to put them. */
+  layout: z.enum(['list', 'grid', 'cards']).default('list'),
+  /**
+   * Alphabetical, or newest first.
+   *
+   * It defaults to `title` because that is what every existing list
+   * already does, and a default that silently reorders somebody's
+   * published pages is not a default, it is an edit. An archive of news
+   * says `newest`.
+   */
+  order: z.enum(['title', 'newest']).default('title'),
   /** 0 = no limit. A term with two hundred pages is a real thing; a page listing all of them is not. */
   limit: z.number().int().min(0).max(100).default(0),
   emptyText: z.string().default(''),

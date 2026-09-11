@@ -147,7 +147,7 @@ export async function getPublishedPageBySlug(
       translation.pageGroupId,
     ),
     resolveSiteChrome(deps, input.tenantId, site, input.locale),
-    resolvePageContentReferences(deps, input.tenantId, input.locale, [
+    resolvePageContentReferences(deps, input.tenantId, site.id, input.locale, [
       translation.publishedSnapshot,
     ]),
   ]);

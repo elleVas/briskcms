@@ -18,6 +18,12 @@ export interface PublishedPagePath {
   ancestorSlugs: string[];
   /** What a link to it should say: the SEO title when there is one, the slug otherwise — the same `seoMeta.title || slug` rule the rest of the codebase uses. */
   title: string;
+  /** The summary its author already wrote for search engines, reused rather than invented a second time. */
+  description: string;
+  /** The picture it already shows when shared — the same one a card wants. */
+  image: string | null;
+  /** When this language went live. `null` only for a page published before the column existed. */
+  publishedAt: Date | null;
   updatedAt: Date;
 }
 
@@ -110,6 +116,9 @@ export async function listPublishedPagePaths(
       slug: translation.slug,
       ancestorSlugs,
       title: translation.seoMeta.title.trim() || translation.slug,
+      description: translation.seoMeta.description,
+      image: translation.seoMeta.ogTags?.['image'] ?? null,
+      publishedAt: translation.publishedAt,
       updatedAt: translation.updatedAt,
     });
   }

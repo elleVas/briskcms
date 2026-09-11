@@ -386,6 +386,9 @@ const BLOCK_REGISTRY: Record<string, BlockDispatchEntry> = {
     component: PageGrid,
     schema: pageGridPropsSchema,
     stylable: true,
+    // Its cards carry a date, and a date has to be written the way the
+    // language being rendered writes dates.
+    locale: true,
   },
   Breadcrumb: {
     component: Breadcrumb,

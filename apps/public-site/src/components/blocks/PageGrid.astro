@@ -4,15 +4,37 @@ import type { PageGridProps } from '@brisk/shared-types';
 type Props = PageGridProps & {
   /** The per-instance style class, from BlockRenderer — see blockInstanceClassName. */
   instanceClass?: string | null;
+  /** The language being rendered, so a date is written the way its readers write dates. */
+  locale?: string;
 };
 
-const { layout, limit, emptyText, items, instanceClass } = Astro.props;
+const { layout, limit, emptyText, items, instanceClass, locale } = Astro.props;
 
 // `items` is resolved server-side (resolvePageGridItems) and is empty
 // both when the term has no pages and when the block has no term yet —
 // the reader is shown the same nothing either way, which is correct: an
 // author who has not chosen a term has not asked for anything.
 const shown = limit > 0 ? items.slice(0, limit) : items;
+
+// Cards are the only layout with room for a date, a summary and a
+// picture; a list of links has nowhere to put them, so it does not
+// pretend to.
+const isCards = layout === 'cards';
+
+/**
+ * The date as this language writes it, and `null` for one we cannot
+ * read: a card is not the place to print "Invalid Date" at a reader.
+ */
+function readableDate(value: string | null): string | null {
+  if (!value) return null;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+  return date.toLocaleDateString(locale ?? undefined, {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  });
+}
 ---
 
 {
@@ -26,9 +48,35 @@ const shown = limit > 0 ? items.slice(0, limit) : items;
     >
       {shown.map((item) => (
         <li class="brisk-page-grid__item">
-          <a class="brisk-page-grid__link" href={item.path}>
-            {item.title}
-          </a>
+          {isCards ? (
+            <a class="brisk-page-grid__card" href={item.path}>
+              {item.image && (
+                <img
+                  class="brisk-page-grid__image"
+                  src={item.image}
+                  alt=""
+                  loading="lazy"
+                  decoding="async"
+                />
+              )}
+              {readableDate(item.publishedAt) && (
+                <time
+                  class="brisk-page-grid__date"
+                  datetime={item.publishedAt ?? undefined}
+                >
+                  {readableDate(item.publishedAt)}
+                </time>
+              )}
+              <span class="brisk-page-grid__title">{item.title}</span>
+              {item.excerpt && (
+                <span class="brisk-page-grid__excerpt">{item.excerpt}</span>
+              )}
+            </a>
+          ) : (
+            <a class="brisk-page-grid__link" href={item.path}>
+              {item.title}
+            </a>
+          )}
         </li>
       ))}
     </ul>
@@ -61,6 +109,7 @@ const shown = limit > 0 ? items.slice(0, limit) : items;
     container-type: inline-size;
   }
 
+  .brisk-page-grid--cards,
   .brisk-page-grid--grid {
     /* `minmax(0, 1fr)` and not `1fr`: a grid item's min-width is `auto`,
        so a long title would push the track wider than its share and
@@ -83,6 +132,49 @@ const shown = limit > 0 ? items.slice(0, limit) : items;
   .brisk-page-grid__link:hover,
   .brisk-page-grid__link:focus-visible {
     text-decoration: underline;
+  }
+
+  /* The whole card is the link: a reader aiming at the picture, the
+     date or the title of an article all mean the same thing. */
+  .brisk-page-grid__card {
+    display: grid;
+    gap: 0.375rem;
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .brisk-page-grid__image {
+    width: 100%;
+    /* Never taller than wide: an article with a portrait photograph must
+       not push the card below it three screens down. */
+    aspect-ratio: 16 / 9;
+    object-fit: cover;
+    border-radius: var(--brisk-override-radius, 0.5rem);
+  }
+
+  .brisk-page-grid__date {
+    font-size: 0.8125rem;
+    color: var(--muted-foreground);
+  }
+
+  .brisk-page-grid__title {
+    font-weight: 600;
+    color: var(--brisk-override-text, inherit);
+  }
+
+  .brisk-page-grid__card:hover .brisk-page-grid__title,
+  .brisk-page-grid__card:focus-visible .brisk-page-grid__title {
+    text-decoration: underline;
+  }
+
+  .brisk-page-grid__excerpt {
+    color: var(--muted-foreground);
+    /* Three lines, whatever the author wrote: cards in one row have to
+       end at the same height or the grid reads as broken. */
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
   }
 
   .brisk-page-grid__empty {

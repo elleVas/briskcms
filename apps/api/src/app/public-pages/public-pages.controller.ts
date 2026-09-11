@@ -207,6 +207,7 @@ export class PublicPagesController {
         siteLayoutSectionRepository: this.siteLayoutSectionRepository,
         siteThemeBlockStylesRepository: this.siteThemeBlockStylesRepository,
         reusableSectionRepository: this.reusableSectionRepository,
+        taxonomyRepository: this.taxonomyRepository,
         previewTokenPort: this.previewTokenPort,
       },
       {
@@ -244,6 +245,7 @@ export class PublicPagesController {
         siteRepository: this.siteRepository,
         siteLayoutSectionRepository: this.siteLayoutSectionRepository,
         siteThemeBlockStylesRepository: this.siteThemeBlockStylesRepository,
+        taxonomyRepository: this.taxonomyRepository,
       },
       {
         tenantId: await this.tenant.require(),
@@ -273,6 +275,7 @@ export class PublicPagesController {
         reusableSectionRepository: this.reusableSectionRepository,
         pageTranslationRepository: this.pageTranslationRepository,
         pageGroupRepository: this.pageGroupRepository,
+        taxonomyRepository: this.taxonomyRepository,
       },
       {
         tenantId: await this.tenant.require(),

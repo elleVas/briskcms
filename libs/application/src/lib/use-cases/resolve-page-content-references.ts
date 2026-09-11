@@ -8,14 +8,18 @@ import type {
   PageGroupRepositoryPort,
   PageTranslationRepositoryPort,
   ReusableSectionRepositoryPort,
+  TaxonomyRepositoryPort,
 } from '@brisk/ports';
 import { resolveAncestorGroupIds } from './resolve-page-group-ancestors';
+import { resolvePageGridItems } from './resolve-page-grid-items';
 import { resolveSectionInstances } from './resolve-section-instances';
 
 export interface ResolvePageContentReferencesDeps {
   pageGroupRepository: PageGroupRepositoryPort;
   pageTranslationRepository: PageTranslationRepositoryPort;
   reusableSectionRepository: ReusableSectionRepositoryPort;
+  /** Which pages carry which term — what a PageGrid is asking. */
+  taxonomyRepository: TaxonomyRepositoryPort;
 }
 
 /**
@@ -29,6 +33,14 @@ export interface ResolvePageContentReferencesDeps {
  * the containing block since `page` isn't a `translatable` field — an IT
  * reader could get an EN link.
  *
+ * It fills in what a `PageGrid` lists, too, for the same reason and by
+ * the same rule: the block stores WHICH pages it wants (a term) and the
+ * render pass turns that into what they are. It used to be resolved on
+ * the term route alone, so the very thing the block's own description
+ * promises — "the three articles in this category, here" — rendered
+ * empty on every ordinary page and in every preview. Here it cannot: a
+ * new way of serving a page gets it without knowing it exists.
+ *
  * It also expands section instances, and it does that FIRST (docs/adr/0059).
  * The order is not a detail: a reusable section can hold a Link, and that
  * link has to be resolved in the locale being rendered like any other.
@@ -41,10 +53,21 @@ export interface ResolvePageContentReferencesDeps {
 export async function resolvePageContentReferences(
   deps: ResolvePageContentReferencesDeps,
   tenantId: string,
+  siteId: string,
   locale: string,
   rawContents: PageContent[],
 ): Promise<PageContent[]> {
-  const contents = await resolveSectionInstances(deps, tenantId, rawContents);
+  const expanded = await resolveSectionInstances(deps, tenantId, rawContents);
+  // After the sections and before the links, so a grid inside a reusable
+  // section is filled like any other, and its own links are resolved
+  // after it exists.
+  const contents = await resolvePageGridItems(
+    deps,
+    tenantId,
+    siteId,
+    locale,
+    expanded,
+  );
 
   const referencedGroupIds = new Set<string>();
   for (const content of contents) {

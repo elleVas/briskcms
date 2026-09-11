@@ -193,8 +193,16 @@ describe('getPublishedTermByPath', () => {
 
     const grid = result?.content.find((block) => block.type === 'PageGrid');
     expect(grid?.props['items']).toEqual([
-      { pageGroupId: 'g2', title: 'Alfa', path: '/it/alfa' },
-      { pageGroupId: 'g1', title: 'Zeta', path: '/it/zeta' },
+      expect.objectContaining({
+        pageGroupId: 'g2',
+        title: 'Alfa',
+        path: '/it/alfa',
+      }),
+      expect.objectContaining({
+        pageGroupId: 'g1',
+        title: 'Zeta',
+        path: '/it/zeta',
+      }),
     ]);
   });
 
