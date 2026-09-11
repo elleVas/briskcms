@@ -5,76 +5,35 @@ import {
   useRef,
   useState,
 } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import {
-  Palette,
-  PanelLeftClose,
-  PanelLeftOpen,
-  PanelRightClose,
-  PanelRightOpen,
-  Redo2,
-  Undo2,
-} from 'lucide-react';
-import {
-  buildBlockInstanceRulesCss,
-  buildBlockStyleOverridesCss,
-  DEFAULT_VARIANT,
-  withBreakpointStyle,
-  type Block,
-  type BlockAlign,
-  type BlockStyleOverride,
-  type ExposedFields,
-  type ResponsiveBlockStyle,
-} from '@brisk/shared-types';
+import type { Block, ExposedFields } from '@brisk/shared-types';
 import type { BlockDescriptor } from '@brisk/block-registry';
-import { Button } from '../../components/ui/button';
-import {
-  createReusableSectionPreviewToken,
-  createTranslationPreviewToken,
-} from '../../lib/preview-token-api-client';
 import { PUBLIC_SITE_URL } from '../../lib/public-site-url';
 import { useTranslation } from '../../lib/use-translation';
 import { usePageList } from '../page-list-context';
-import { GlobalStylesDialog } from '../global-styles-dialog';
-import { IconButton } from '../icon-button';
-import { siteQueryOptions } from '../site-queries';
-import { useToast } from '../toast-provider';
-import { useSiteThemeTokens } from '../use-site-theme-tokens';
-import {
-  createReusableSection,
-  publishReusableSection,
-} from '../../lib/reusable-sections-api-client';
 import { BlockPicker, type BlockPickerCategory } from './block-picker';
 import { TemplatePicker } from './template-picker';
 import { BlockToolbarOverlay } from './block-toolbar-overlay';
-import { BreakpointSelector, type Breakpoint } from './breakpoint-selector';
+import type { Breakpoint } from './breakpoint-selector';
 import {
   buildPreviewUrl,
   CanvasFrame,
   type EditingSection,
 } from './canvas-frame';
-import {
-  computeDropTarget,
-  type DropCandidateRect,
-} from './compute-drop-target';
+import { describeSelection } from './canvas-selection';
+import { CanvasTopBar } from './canvas-top-bar';
+import { CollapsibleSidePanel } from './collapsible-side-panel';
+import { siblingDropRects } from './compute-drop-target';
 import { LayerContextMenu } from './layer-context-menu';
 import { LayersPanel } from './layers-panel';
 import { isRectVisibleInIframe, useIframeGeometry } from './overlay-layer';
-import {
-  blockAncestry,
-  blockIds,
-  findBlockInTree,
-  locateBlock,
-  moveBlock,
-  siblingsAt,
-  updateBlockProps,
-  updateBlockStyleOverride,
-  updateBlockAlign,
-  updateBlockVariant,
-} from './use-block-tree';
 import { useBlockTreeMutations } from './use-block-tree-mutations';
+import { useCanvasDraft } from './use-canvas-draft';
+import { useCanvasDragReorder } from './use-canvas-drag-reorder';
+import { useCanvasPreviewToken } from './use-canvas-preview-token';
+import { useCanvasShortcuts } from './use-canvas-shortcuts';
+import { useMakeReusableSection } from './use-make-reusable-section';
+import { useSelectedBlockEditing } from './use-selected-block-editing';
 import { usePreviewBridge } from './use-preview-bridge';
-import { blockIdFromTimerKey, usePropertyPatch } from './use-property-patch';
 import { useSidebarDrag } from './use-sidebar-drag';
 import { useTextEdit } from './use-text-edit';
 
@@ -185,34 +144,10 @@ export function CanvasEditorShell({
 }: CanvasEditorShellProps) {
   const { t, tLabel } = useTranslation();
   const { pick: pickPage } = usePageList();
-  const { toast } = useToast();
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const bridge = usePreviewBridge(iframeRef, PUBLIC_SITE_URL);
   const iframeGeometry = useIframeGeometry(iframeRef);
   const [breakpoint, setBreakpoint] = useState<Breakpoint>('base');
-  const [isGlobalStylesOpen, setIsGlobalStylesOpen] = useState(false);
-  // Only needed for the "component-level" override (docs/adr/0022, the
-  // toolbar's "Style" button) — this query's only other consumer,
-  // global-styles-dialog.tsx, already has an independent one of its own,
-  // with the same queryKey, so React Query's cache keeps them in sync
-  // anyway. `enabled: Boolean(siteId)` no longer guards against fetching
-  // with an empty id (the query carries none now — see siteQueryOptions):
-  // it guards against fetching at all on the page editor, which has no
-  // `siteId` prop precisely because it has no component-level override.
-  const { data: site } = useQuery({
-    ...siteQueryOptions(),
-    enabled: Boolean(siteId),
-  });
-  const { updateThemeTokens } = useSiteThemeTokens(siteId ?? '');
-  /**
-   * Asked for from live use: on long pages with many blocks, being able to
-   * collapse each sidebar to give the canvas more room — two independent
-   * states (left: Insert block; right: Layers), neither persisted, both
-   * starting open again on a new mount (the same behaviour as
-   * breakpoint/isGlobalStylesOpen above).
-   */
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
-  const [isLayersPanelCollapsed, setIsLayersPanelCollapsed] = useState(false);
   // Where the layers context menu is, or null when closed. Position and
   // not just "open": it opens at the pointer, like every context menu.
   const [layerMenuAt, setLayerMenuAt] = useState<{
@@ -220,167 +155,34 @@ export function CanvasEditorShell({
     y: number;
   } | null>(null);
 
-  // A locally mutated optimistic copy (tree mutations have to show up in
-  // Layers/Inspector immediately, not only after the server round-trip) —
-  // resynced from props only on a page change or an explicit rollback
-  // (restoredAt), never on every incoming `blocks`: the caller writes back
-  // the same value onChange just sent, and resyncing there too would remount
-  // the local tree on every successful save, losing the most recent
-  // optimistic state whenever the round-trip is slow. "Adjust state during
-  // render" (React's recommended pattern for resetting state derived from a
-  // changed key prop) rather than a `useEffect` with a `setState` inside —
-  // it avoids one wasted render before the local tree reflects the new
-  // pageId/restoredAt.
   // Bumped where the canvas cannot be patched in place — replacing a block
   // with a reusable section, whose blocks the client does not hold
   // (docs/adr/0059). It is the `key` of CanvasFrame, so a bump remounts the
   // iframe with a fresh preview token.
   const [canvasNonce, setCanvasNonce] = useState(0);
-  // The editor's own clipboard. Not the system one: reading that needs a
-  // permission prompt, and writing a block to it as text would put a wall
-  // of JSON into whatever the person pastes into next. It holds the whole
-  // selection since Fase 7's multi-select, and lives as long as the editor
-  // is open — which is what "copy these, paste them on the next page"
-  // needs.
-  const [clipboard, setClipboard] = useState<(Block & { id: string })[]>([]);
   const reloadCanvas = useCallback(() => setCanvasNonce((n) => n + 1), []);
 
-  const syncKey = `${pageId}:${restoredAt}`;
-  const [lastSyncKey, setLastSyncKey] = useState(syncKey);
-  const [localBlocks, setLocalBlocks] = useState(blocks);
-  if (syncKey !== lastSyncKey) {
-    setLastSyncKey(syncKey);
-    setLocalBlocks(blocks);
-  }
-
-  const localBlocksRef = useRef(localBlocks);
-  /**
-   * `recordEdit` comes from useBlockTreeMutations, which is called further
-   * down (it needs the bridge, which needs state declared after this
-   * point). The burst callbacks below are passed to usePropertyPatch
-   * *before* that, but only ever run later — from a debounce timer — so a
-   * ref is enough to bridge the gap without reordering two hooks whose
-   * order is dictated by their real dependencies.
-   */
-  const recordEditRef = useRef<
-    ((blockId: string, after: Block[]) => void) | null
-  >(null);
-  // A separate token from the one canvas-frame.tsx mints for its own `src`
-  // — non-consuming (see PreviewTokenPort), so a second minting is cheap
-  // and does not require refactoring CanvasFrame's already-tested interface
-  // to expose it upwards.
-  const [token, setToken] = useState<string | null>(null);
-  useEffect(() => {
-    let cancelled = false;
-    // A section's fragments are authorised by a SECTION token: the
-    // endpoint validates one or the other and never both (docs/adr/0059).
-    const minted = sectionPreview
-      ? createReusableSectionPreviewToken(sectionPreview.sectionId)
-      : createTranslationPreviewToken(pageId);
-    minted.then((preview) => {
-      if (!cancelled) {
-        setToken(preview.token);
-      }
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [pageId, sectionPreview]);
-
+  const token = useCanvasPreviewToken(pageId, sectionPreview);
   const {
+    localBlocks,
+    setLocalBlocks,
+    localBlocksRef,
+    recordEditRef,
     scheduleChange,
     scheduleTextChange,
     scheduleStyleOverrideChange,
     scheduleVariantChange,
     flushAll,
-  } = usePropertyPatch({
+  } = useCanvasDraft({
+    blocks,
     pageId,
-    fragmentSection: sectionPreview,
-    token: token ?? '',
-    // One history entry per debounce burst. Only the resulting tree is
-    // passed: what to go back to is the history's own last committed
-    // state, so this never has to snapshot a "before" at burst start —
-    // which was wrong for inline typing, where the optimistic update lands
-    // during render, one keystroke ahead of the effect that schedules the
-    // save. See undo-burst-boundary.spec.tsx.
-    onBurstEnd: (timerKey) => {
-      recordEditRef.current?.(
-        blockIdFromTimerKey(timerKey),
-        localBlocksRef.current,
-      );
-    },
-    onSaveDraft: (blockId, changedKey, props) => {
-      const next = updateBlockProps(localBlocksRef.current, blockId, props);
-      setLocalBlocks(next);
-
-      // Field-level i18n: in a LINKED language other than the default, a
-      // `translatable` field never touches the shared structure — it goes
-      // to this translation's own `fieldValues` overlay instead. It reads
-      // the block type and field descriptor at the moment of the actual
-      // save (not at the render that scheduled the debounce): the
-      // selection may have changed in between.
-      const changedValue = props[changedKey];
-      const block = findBlockInTree(next, blockId);
-      const descriptor = block
-        ? registry.find((d) => d.type === block.type)
-        : undefined;
-      const fieldDescriptor = descriptor?.fields.find(
-        (f) => f.key === changedKey,
-      );
-      const isTranslatableFieldValue =
-        translationRouting &&
-        translationRouting.activeLocale !== translationRouting.defaultLocale &&
-        fieldDescriptor &&
-        'translatable' in fieldDescriptor &&
-        fieldDescriptor.translatable &&
-        typeof changedValue === 'string';
-
-      if (isTranslatableFieldValue) {
-        translationRouting.onSaveFieldValue(blockId, changedKey, changedValue);
-      } else {
-        onChange(next);
-      }
-    },
-    onSaveStyleOverride: (blockId, styleOverride) => {
-      const next = updateBlockStyleOverride(
-        localBlocksRef.current,
-        blockId,
-        styleOverride,
-      );
-      setLocalBlocks(next);
-      onChange(next);
-    },
-    onSaveVariant: (blockId, variant) => {
-      const next = updateBlockVariant(localBlocksRef.current, blockId, variant);
-      setLocalBlocks(next);
-      onChange(next);
-    },
-    patchBlock: bridge.patchBlock,
-  });
-
-  /**
-   * `localBlocksRef` is what every debounced save reads to build the tree
-   * it persists, so WHEN it is repointed decides which page a save in
-   * flight lands on. Both halves live in one effect, in this order, on
-   * purpose: splitting them into two would make the fix depend on their
-   * declaration order, which is invisible and one refactor away from
-   * silently coming undone.
-   */
-  const flushedSyncKeyRef = useRef(syncKey);
-  useEffect(() => {
-    if (flushedSyncKeyRef.current !== syncKey) {
-      // The page changed under us — switching language re-renders this
-      // shell rather than remounting it. Anything still pending belongs to
-      // the page being LEFT, and its `fire` closure still holds that
-      // page's save target; only this ref is shared. So fire it here,
-      // while the ref still points at the tree it was scheduled against.
-      // Do not close the bursts: the history has already been reset for
-      // the new page (see useBlockTreeMutations), and an entry recorded
-      // now would undo into the page you just left.
-      flushAll({ closeBursts: false });
-      flushedSyncKeyRef.current = syncKey;
-    }
-    localBlocksRef.current = localBlocks;
+    restoredAt,
+    token,
+    sectionPreview,
+    registry,
+    translationRouting,
+    onChange,
+    bridge,
   });
 
   useTextEdit({
@@ -407,97 +209,24 @@ export function CanvasEditorShell({
     },
   });
 
-  /**
-   * The rects a drop is measured against: the dragged block's real
-   * SIBLINGS, at whatever depth it sits (Fase 7).
-   *
-   * It used to be the top-level blocks and nothing else, which is why
-   * dragging on the canvas was root-only — the three columns of a Columns
-   * could be reordered from the Layers panel and not from the page they
-   * were on. `compute-drop-target.ts` never cared: it compares a pointer
-   * against a list of rects, and the list was the whole restriction.
-   *
-   * In `localBlocks` order and not the raw document order of
-   * `bridge.blockRects`, which interleaves every depth.
-   */
-  function siblingRectsFor(blockId: string | null): {
-    parentId: string | null;
-    rects: DropCandidateRect[];
-  } {
-    const parentId = blockId
-      ? (locateBlock(localBlocks, blockId)?.parentId ?? null)
-      : null;
-    const rects = siblingsAt(localBlocks, parentId).flatMap((block) => {
-      if (!block.id) {
-        return [];
-      }
-      const rect = bridge.blockRects.find((r) => r.id === block.id);
-      return rect ? [{ id: block.id, top: rect.top, height: rect.height }] : [];
-    });
-    return { parentId, rects };
-  }
-
   // A drag out of the SIDEBAR has no block in the tree yet, so it always
   // measures against the root — the level it drops at.
-  const rootRects = siblingRectsFor(null).rects;
+  const rootRects = siblingDropRects(
+    localBlocks,
+    bridge.blockRects,
+    null,
+  ).rects;
 
-  const selectedBlock = bridge.selectedBlockId
-    ? findBlockInTree(localBlocks, bridge.selectedBlockId)
-    : null;
-  const selectedDescriptor = selectedBlock
-    ? registry.find((d) => d.type === selectedBlock.type)
-    : undefined;
-  // The whole selection as blocks, in pick order. A block whose id is no
-  // longer in the tree — deleted, or undone away — simply drops out rather
-  // than reaching a mutation that would not find it.
-  const selectedBlocks = bridge.selectedBlockIds.flatMap((id) => {
-    const block = findBlockInTree(localBlocks, id);
-    return block?.id ? [block as Block & { id: string }] : [];
-  });
-  // The trail the toolbar shows, already labelled: a step whose block has
-  // no id cannot be selected and is dropped rather than rendered as a
-  // dead word.
-  const selectedAncestry = bridge.selectedBlockId
-    ? blockAncestry(localBlocks, bridge.selectedBlockId).flatMap((block) =>
-        block.id
-          ? [
-              {
-                id: block.id,
-                label: tLabel(
-                  registry.find((d) => d.type === block.type)?.label ??
-                    block.type,
-                ),
-              },
-            ]
-          : [],
-      )
-    : [];
-  const selectedRect = bridge.selectedBlockId
-    ? bridge.blockRects.find((r) => r.id === bridge.selectedBlockId)
-    : undefined;
-  const selectedRootIndex = selectedBlock?.id
-    ? localBlocks.findIndex((b) => b.id === selectedBlock.id)
-    : -1;
-  const isSelectedRootLevel = selectedRootIndex !== -1;
-  // Unlike `isSelectedRootLevel` above (which stays root-only: it STILL
-  // governs insert-before/after and the spacing fields, both valid for a
-  // top-level block alone) — move up/down now works at any depth, through
-  // `locateBlock`, which finds the real parent even for a nested block (the
-  // same mechanism duplicate already used).
-  const selectedLocation = selectedBlock?.id
-    ? locateBlock(localBlocks, selectedBlock.id)
-    : null;
-  const selectedSiblings = selectedLocation
-    ? ((selectedLocation.parentId
-        ? findBlockInTree(localBlocks, selectedLocation.parentId)?.children
-        : localBlocks) ?? [])
-    : [];
-  const canMoveSelectedUp = selectedLocation
-    ? selectedLocation.index > 0
-    : false;
-  const canMoveSelectedDown = selectedLocation
-    ? selectedLocation.index < selectedSiblings.length - 1
-    : false;
+  const {
+    selectedBlock,
+    selectedDescriptor,
+    selectedBlocks,
+    selectedAncestry,
+    selectedRect,
+    isSelectedRootLevel,
+    canMoveSelectedUp,
+    canMoveSelectedDown,
+  } = describeSelection(localBlocks, bridge, registry, tLabel);
 
   const {
     handleInsert,
@@ -532,61 +261,17 @@ export function CanvasEditorShell({
     selectedBlock,
     selectedDescriptor,
   });
-  /**
-   * "This strip belongs on other pages too" (docs/adr/0059).
-   *
-   * Creates a SHARED section from the selected block, publishes it, and
-   * replaces the block with an instance pointing at it. Published straight
-   * away rather than left as a draft: the page it was taken from would
-   * otherwise lose that strip until somebody went and published the
-   * section, which reads as the button having broken the page.
-   *
-   * A window.prompt for the name, deliberately: a name is the only thing
-   * this needs, and the alternative — a dialog with one field — is more
-   * code for a worse interruption. It stays until somebody asks for more
-   * than a name at this point.
-   *
-   * A plain function and not a `useCallback`: the React Compiler refuses
-   * to optimise the component when a manual dependency list holds a value
-   * it cannot prove stable (`selectedBlock` here), and it memoises this
-   * perfectly well on its own.
-   */
-  async function handleMakeReusable(): Promise<void> {
-    if (!siteId || !selectedBlock?.id) {
-      return;
-    }
-    const name = window.prompt(t('sections.makeReusablePrompt'));
-    if (!name?.trim()) {
-      return;
-    }
-    try {
-      const created = await createReusableSection({
-        siteId,
-        name: name.trim(),
-        kind: 'shared',
-        content: [selectedBlock],
-      });
-      await publishReusableSection(created.id);
-      handleReplaceSelected({
-        id: crypto.randomUUID(),
-        type: 'Section',
-        props: {
-          section: { sectionId: created.id, sectionName: created.name },
-        },
-      });
-    } catch (caught) {
-      window.alert(
-        String(caught).includes('409')
-          ? t('sections.nameTaken')
-          : String(caught),
-      );
-    }
-  }
+  const handleMakeReusable = useMakeReusableSection({
+    siteId,
+    selectedBlock,
+    handleReplaceSelected,
+  });
 
-  // Closes the loop opened by recordEditRef above. In an effect rather than
-  // during render (React forbids touching a ref there, and the linter says
-  // so): the burst callbacks only ever run from a debounce timer, which
-  // needs a user action first, so they can never fire before this has run.
+  // Closes the loop opened by useCanvasDraft's `recordEditRef`. In an
+  // effect rather than during render (React forbids touching a ref there,
+  // and the linter says so): the burst callbacks only ever run from a
+  // debounce timer, which needs a user action first, so they can never fire
+  // before this has run.
   useEffect(() => {
     recordEditRef.current = recordEdit;
   });
@@ -605,22 +290,7 @@ export function CanvasEditorShell({
     insertNewBlockAt,
   });
 
-  // Ctrl/Cmd+Z to undo, Ctrl/Cmd+Shift+Z (or Ctrl+Y) to redo — the standard
-  // shortcut in every editor with undo/redo. Never in conflict with TipTap
-  // text editing: that lives INSIDE the sandboxed iframe
-  // (init-preview-bridge.ts), a separate document whose keyboard events
-  // never reach this listener on the parent at all. The only guard worth
-  // having here is for the PARENT's own inputs/textareas (the editor's
-  // various dialogs and panels) — leaving their native browser undo alone
-  // rather than intercepting it.
-  // Every shortcut reads through this ref rather than being captured in
-  // the listener's closure. The listener is attached once (an empty
-  // dependency list, so it is not torn down and rebuilt on every render),
-  // and undo/redo could get away with that because they read current
-  // state at call time — the ones added here do not: they close over
-  // `selectedBlock` and the block tree, and a stale closure would delete
-  // the block that WAS selected three renders ago.
-  const shortcutsRef = useRef({
+  useCanvasShortcuts({
     undo,
     redo,
     handleMoveSelected,
@@ -628,380 +298,39 @@ export function CanvasEditorShell({
     handleRemoveMany,
     handleDuplicateMany,
     selectedBlocks,
-    clipboard,
-    setClipboard,
-  });
-  // In an effect and not during render, for recordEditRef's reason just
-  // below: React forbids touching a ref while rendering, and the linter
-  // says so. Safe here because the listener only fires on a real key
-  // press, which cannot happen before the first effect has run.
-  useEffect(() => {
-    shortcutsRef.current = {
-      undo,
-      redo,
-      handleMoveSelected,
-      handlePasteMany,
-      handleRemoveMany,
-      handleDuplicateMany,
-      selectedBlocks,
-      clipboard,
-      setClipboard,
-    };
   });
 
-  useEffect(() => {
-    function handleKeyDown(event: KeyboardEvent): void {
-      // The parent document's own inputs, dialogs and panels keep their
-      // native behaviour — Delete has to delete a character, not a block.
-      // Text editing ON THE CANVAS is not this listener's problem at all:
-      // it happens inside the sandboxed iframe, a separate document whose
-      // key events never reach here.
-      const active = document.activeElement;
-      if (
-        active instanceof HTMLInputElement ||
-        active instanceof HTMLTextAreaElement ||
-        (active instanceof HTMLElement && active.isContentEditable)
-      ) {
-        return;
-      }
+  const liveDropTarget = useCanvasDragReorder({
+    localBlocks,
+    bridge,
+    sidebarDrag,
+    iframeGeometry,
+    handleReorder,
+  });
 
-      const current = shortcutsRef.current;
-      const modifier = event.ctrlKey || event.metaKey;
-      const key = event.key.toLowerCase();
-
-      if (modifier && key === 'z') {
-        event.preventDefault();
-        if (event.shiftKey) current.redo();
-        else current.undo();
-        return;
-      }
-      if (modifier && key === 'y') {
-        event.preventDefault();
-        current.redo();
-        return;
-      }
-      if (modifier && key === 'd') {
-        event.preventDefault();
-        current.handleDuplicateMany(current.selectedBlocks.map((b) => b.id));
-        return;
-      }
-      if (modifier && key === 'c') {
-        // A clipboard of our own, not the system one. Reading the system
-        // clipboard needs a permission prompt, and writing a block to it
-        // as text would mean pasting a wall of JSON into any other app —
-        // this copies a BLOCK, and only inside the editor.
-        if (current.selectedBlocks.length > 0) {
-          event.preventDefault();
-          current.setClipboard(current.selectedBlocks);
-        }
-        return;
-      }
-      if (modifier && key === 'v') {
-        if (current.clipboard.length > 0) {
-          event.preventDefault();
-          current.handlePasteMany(current.clipboard);
-        }
-        return;
-      }
-      if (key === 'delete' || key === 'backspace') {
-        if (current.selectedBlocks.length > 0) {
-          event.preventDefault();
-          current.handleRemoveMany(current.selectedBlocks.map((b) => b.id));
-        }
-        return;
-      }
-      // Alt, not a bare arrow: the arrows scroll, and taking that away
-      // from a person reading a long page to make them move a block would
-      // be the wrong trade. Alt+Arrow is what an editor with a tree
-      // usually binds this to.
-      // One block only: "move these four up" has no single answer once
-      // they sit under different parents, and guessing one would be worse
-      // than not offering it.
-      if (event.altKey && (key === 'arrowup' || key === 'arrowdown')) {
-        if (current.selectedBlocks.length === 1) {
-          event.preventDefault();
-          current.handleMoveSelected(key === 'arrowup' ? -1 : 1);
-        }
-      }
-    }
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
-
-  // A purely derived computation (no state of its own) — it updates on
-  // every render alongside `bridge.activeDrag`/`sidebarDrag`, so the
-  // indicator follows the pointer live without a dedicated effect. For a
-  // drag out of the sidebar there is no "dragged block" already in the tree
-  // to exclude from the candidates — no real id can equal '', so
-  // computeDropTarget considers every top-level block.
-  const liveDropTarget = bridge.activeDrag
-    ? computeDropTarget(
-        siblingRectsFor(bridge.activeDrag.blockId).rects,
-        bridge.activeDrag.blockId,
-        bridge.activeDrag.pointer.y,
-      )
-    : sidebarDrag
-      ? computeDropTarget(
-          rootRects,
-          '',
-          sidebarDrag.pointerY - iframeGeometry.top,
-        )
-      : null;
-
-  // Applies the reorder once the drag ends — the same "adjust state during
-  // render" pattern already used above for lastTextChange: the optimistic
-  // update of `localBlocks` lives here (never in an effect, see
-  // react-hooks/set-state-in-effect). `pendingReorderCommit` is a second
-  // piece of state (not a ref: a ref cannot be written during render) that
-  // carries the freshly reordered tree to a dedicated effect below, the one
-  // place where it is safe to call the real side effect towards the caller
-  // (`onChange`, which in turn saves the draft) — that effect never calls
-  // `setState`, it only reads this value, so it does not fall foul of the
-  // rule against synchronous `setState` inside an effect.
-  const [lastAppliedDragEnd, setLastAppliedDragEnd] = useState(
-    bridge.dragEnded,
-  );
-  // The parent travels with the order now: a drop can reorder the children
-  // of any container, not just the page's own top level, so "which list did
-  // this reorder" is no longer always `null`.
-  const [pendingReorderCommit, setPendingReorderCommit] = useState<{
-    parentId: string | null;
-    orderedIds: string[];
-  } | null>(null);
-  if (bridge.dragEnded !== lastAppliedDragEnd) {
-    setLastAppliedDragEnd(bridge.dragEnded);
-    if (bridge.dragEnded) {
-      const { blockId, pointer } = bridge.dragEnded;
-      const { parentId, rects } = siblingRectsFor(blockId);
-      const dropTarget = computeDropTarget(rects, blockId, pointer.y);
-      if (dropTarget) {
-        const next = moveBlock(localBlocks, blockId, {
-          parentId,
-          index: dropTarget.index,
-        });
-        // Dropped where it already was (no real movement) — the same
-        // courtesy computeNestedReorder extends in layers-panel.tsx: do not
-        // save an identical draft just because moveBlock always returns a
-        // new array by construction. Compared among the SIBLINGS, since
-        // those are what the drop reordered.
-        const before = blockIds(siblingsAt(localBlocks, parentId));
-        const after = blockIds(siblingsAt(next, parentId));
-        if (before.join() !== after.join()) {
-          setPendingReorderCommit({ parentId, orderedIds: after });
-        }
-      }
-    }
-  }
-  useEffect(() => {
-    if (pendingReorderCommit) {
-      // Through handleReorder, not around it. This used to apply the move
-      // and save it by hand, which worked but left the drag as the only
-      // structural mutation with no history entry: the SAME reorder was
-      // undoable from the Layers panel and not from the canvas. Routing it
-      // here also means one implementation of "reorder" rather than two
-      // that can drift.
-      //
-      // Not cleared afterwards, deliberately: every drop stores a brand new
-      // array, so identity alone re-runs this. Setting it back to null
-      // would be a setState inside an effect for no gain — the very thing
-      // the comment above this state was written to avoid.
-      handleReorder(
-        pendingReorderCommit.parentId,
-        pendingReorderCommit.orderedIds,
-      );
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- reacts only to a NEW pendingReorderCommit; handleReorder is recreated every render but reads current state at call time.
-  }, [pendingReorderCommit]);
-
-  function handleChangeProp(key: string, value: unknown): void {
-    // Hoisted to a local: TypeScript drops the narrowing of a PROPERTY
-    // (`selectedBlock.id`) as soon as it is read inside a callback, since
-    // in principle the object could have changed by then. A `const` keeps
-    // it, so the cast this used to need disappears.
-    const blockId = selectedBlock?.id;
-    if (!blockId) {
-      return;
-    }
-    const nextProps = { ...selectedBlock.props, [key]: value };
-    setLocalBlocks((prev) => updateBlockProps(prev, blockId, nextProps));
-    scheduleChange(
-      blockId,
-      selectedBlock.type,
-      key,
-      nextProps,
-      selectedBlock.children,
-      // Without these the re-rendered fragment comes back stripped of its
-      // per-instance class and its variant class, so editing a label made
-      // the block lose its styling in the canvas until a reload.
-      {
-        styleOverride: selectedBlock.styleOverride,
-        variant: selectedBlock.variant,
-      },
-    );
-  }
-
-  /** Per-INSTANCE override (docs/adr/0022) — a popover on the selected block, touching only that block. Same "optimistic immediately, debounce the real save" pattern as handleChangeProp above. */
-  /**
-   * The block style sheet the iframe shows, both tiers at once.
-   *
-   * They travel together because they live in ONE `<style>` in there, and
-   * because the order between them is what makes an instance beat its
-   * type — pushing one without the other would leave the layer
-   * declaration referring to rules that are not there.
-   *
-   * The per-type CSS is remembered rather than recomputed: it comes back
-   * from the save that produced it, and the instance side changes far more
-   * often than it does.
-   */
-  const typeStyleCssRef = useRef('');
-  function pushBlockStyleCss(nextTypeCss?: string): void {
-    if (nextTypeCss !== undefined) {
-      typeStyleCssRef.current = nextTypeCss;
-    }
-    const tiers = [
-      typeStyleCssRef.current,
-      buildBlockInstanceRulesCss([localBlocksRef.current]),
-    ].filter(Boolean);
-    bridge.updateBlockStyleCss(
-      tiers.length > 0
-        ? ['@layer brisk.class, brisk.instance;', ...tiers].join('\n')
-        : '',
-    );
-  }
-
-  /**
-   * Which of the type's declared looks the selected block wears
-   * (ADR-0047). A field of the block, so it travels the same route as the
-   * per-instance override rather than through `props`.
-   */
-  function handleChangeVariant(variant: string | undefined): void {
-    const blockId = selectedBlock?.id;
-    if (!blockId) {
-      return;
-    }
-    setLocalBlocks((prev) => updateBlockVariant(prev, blockId, variant));
-    scheduleVariantChange(
-      blockId,
-      selectedBlock.type,
-      selectedBlock.props,
-      variant,
-      selectedBlock.children,
-      selectedBlock.styleOverride,
-    );
-  }
-
-  /**
-   * How much of the page's width the selected ROOT block claims
-   * (ADR-0049).
-   *
-   * No render round trip, unlike the variant above: the value ends up as
-   * an attribute on the wrapper AROUND the block, so re-rendering the
-   * block's own HTML would not carry it. The bridge sets that attribute
-   * directly and the CSS does the rest — the canvas reflows as the select
-   * changes, with nothing to wait for.
-   */
-  function handleChangeAlign(align: BlockAlign | undefined): void {
-    const blockId = selectedBlock?.id;
-    if (!blockId) {
-      return;
-    }
-    const next = updateBlockAlign(localBlocksRef.current, blockId, align);
-    setLocalBlocks(next);
-    onChange(next);
-    bridge.setBlockAlign(blockId, align ?? null);
-  }
-
-  /**
-   * The fields edit ONE size at a time — whichever the breakpoint selector
-   * is showing — and that flat override is merged back into the block's
-   * per-breakpoint style here. Deliberately not in the fields themselves:
-   * they stay a plain editor of a flat override, which is also what the
-   * per-type popover and (later) a variant's style need.
-   */
-  function handleChangeStyleOverride(styleOverride: BlockStyleOverride): void {
-    const blockId = selectedBlock?.id;
-    if (!blockId) {
-      return;
-    }
-    const next = withBreakpointStyle(
-      selectedBlock.styleOverride,
-      breakpoint,
-      styleOverride,
-    );
-    setLocalBlocks((prev) => updateBlockStyleOverride(prev, blockId, next));
-    scheduleStyleOverrideChange(
-      blockId,
-      selectedBlock.type,
-      selectedBlock.props,
-      next,
-      selectedBlock.children,
-      selectedBlock.variant,
-    );
-    // The style is a RULE now, not an inline attribute (ADR-0047), so
-    // re-rendering the block's fragment no longer carries it — the sheet
-    // has to be pushed alongside, or the canvas would show the change only
-    // after a reload.
-    pushBlockStyleCss();
-  }
-
-  /**
-   * Per-TYPE override (docs/adr/0022) — touches `site.themeTokens.blockStyles[type]`:
-   * EVERY instance of that type across the site. No local optimistic update
-   * of the tree (unlike handleChangeStyleOverride above): it is not in the
-   * page's tree, it is in the site's theme tokens — `useSiteThemeTokens`
-   * already invalidates the site query on success, so `site.themeTokens`
-   * above updates by itself. Shared by two callers (docs/adr/0022, part 2):
-   * the toolbar's "Style" button (the selected block's type) and the new
-   * "Global style" dialog (any type picked from the list, with no need for
-   * an instance of it on the canvas).
-   */
-  /**
-   * The error is caught here, not in the callers (handleChangeTypeStyle
-   * below, and global-styles-dialog.tsx which calls it through
-   * `onSaveTypeStyle`): one place to show the toast instead of duplicating
-   * it in both. It does not rethrow — the canvas keeps the last good CSS
-   * until the next save retries, unchanged from before; the only difference
-   * is that the user now knows.
-   */
-  async function saveTypeStyle(
-    blockType: string,
-    variant: string,
-    style: ResponsiveBlockStyle,
-  ): Promise<void> {
-    try {
-      const updated = await updateThemeTokens({ blockType, variant, style });
-      // Updates the <style> inside the iframe straight away (docs/adr/0022)
-      // — without this, every already-visible instance of that type would
-      // keep its old look until the iframe reloads, even though the save
-      // already succeeded.
-      pushBlockStyleCss(
-        buildBlockStyleOverridesCss(updated.themeTokens?.blockStyles ?? {}),
-      );
-    } catch {
-      toast(t('canvas.style.saveError'), 'destructive');
-    }
-  }
-
-  function handleChangeTypeStyle(style: BlockStyleOverride): void {
-    if (!selectedDescriptor) {
-      return;
-    }
-    // The variant the SELECTED block wears, not the type's default:
-    // "style every Button like this one" means every Button that looks
-    // like this one. Painting the default from a ghost button would
-    // recolour the primaries and leave the ghost the user was looking at
-    // untouched (ADR-0047).
-    const variant = selectedBlock?.variant ?? DEFAULT_VARIANT;
-    void saveTypeStyle(
-      selectedDescriptor.type,
-      variant,
-      withBreakpointStyle(
-        site?.themeTokens?.blockStyles[selectedDescriptor.type]?.[variant],
-        breakpoint,
-        style,
-      ),
-    );
-  }
+  const {
+    handleChangeProp,
+    handleChangeVariant,
+    handleChangeAlign,
+    handleChangeStyleOverride,
+    handleChangeTypeStyle,
+    typeStyle,
+    saveTypeStyle,
+  } = useSelectedBlockEditing({
+    siteId,
+    selectedBlock,
+    selectedDescriptor,
+    breakpoint,
+    bridge,
+    localBlocksRef,
+    setLocalBlocks,
+    onChange,
+    patch: {
+      scheduleChange,
+      scheduleVariantChange,
+      scheduleStyleOverrideChange,
+    },
+  });
 
   /**
    * Firing any still-pending debounced save NOW (instead of waiting out its
@@ -1035,107 +364,56 @@ export function CanvasEditorShell({
 
   return (
     <div style={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
-      <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3 border-b px-3 py-1.5 text-xs text-muted-foreground">
-        <div className="flex items-center gap-3">
-          {backLink}
-          {pageSwitcher}
-          {languageSwitcher}
-          <span>{statusText}</span>
-          {actions}
-        </div>
-        <div className="flex items-center justify-center gap-2">
-          <IconButton
-            label={t('canvas.undo')}
-            onClick={undo}
-            disabled={!canUndo}
-          >
-            <Undo2 />
-          </IconButton>
-          <IconButton
-            label={t('canvas.redo')}
-            onClick={redo}
-            disabled={!canRedo}
-          >
-            <Redo2 />
-          </IconButton>
-          <BreakpointSelector value={breakpoint} onChange={setBreakpoint} />
-          {siteId && (
-            <IconButton
-              label={t('globalStyles.open')}
-              onClick={() => setIsGlobalStylesOpen(true)}
-            >
-              <Palette />
-            </IconButton>
-          )}
-        </div>
-        <div className="flex items-center justify-end gap-2">
-          <Button variant="outline" size="sm" onClick={handleOpenPreview}>
-            {t('canvas.preview')}
-          </Button>
-          <Button size="sm" onClick={handlePublish}>
-            {t('canvas.publish')}
-          </Button>
-        </div>
-      </div>
-      {siteId && (
-        <GlobalStylesDialog
-          siteId={siteId}
-          open={isGlobalStylesOpen}
-          onOpenChange={setIsGlobalStylesOpen}
-          registry={registry}
-          categories={categories}
-          onSaveTypeStyle={saveTypeStyle}
-        />
-      )}
+      <CanvasTopBar
+        backLink={backLink}
+        pageSwitcher={pageSwitcher}
+        languageSwitcher={languageSwitcher}
+        statusText={statusText}
+        actions={actions}
+        undo={undo}
+        redo={redo}
+        canUndo={canUndo}
+        canRedo={canRedo}
+        breakpoint={breakpoint}
+        onBreakpointChange={setBreakpoint}
+        globalStyles={
+          siteId
+            ? {
+                siteId,
+                registry,
+                categories,
+                onSaveTypeStyle: saveTypeStyle,
+              }
+            : undefined
+        }
+        onOpenPreview={handleOpenPreview}
+        onPublish={handlePublish}
+      />
       <div style={{ flex: 1, minHeight: 0, display: 'flex' }}>
-        <aside
-          // Named, so this landmark is addressable: a screen reader
-          // announces which of the two side panels it has entered, and
-          // "Testo" in the inserter stops being indistinguishable from
-          // "Testo" in the layers tree.
-          aria-label={t('canvas.insertBlock')}
-          className={
-            isSidebarCollapsed
-              ? 'flex w-10 shrink-0 flex-col items-center border-r py-3'
-              : 'w-64 shrink-0 overflow-y-auto border-r p-3'
-          }
+        <CollapsibleSidePanel
+          side="left"
+          title={t('canvas.insertBlock')}
+          expandLabel={t('canvas.expandSidebar')}
+          collapseLabel={t('canvas.collapseSidebar')}
         >
-          <IconButton
-            label={
-              isSidebarCollapsed
-                ? t('canvas.expandSidebar')
-                : t('canvas.collapseSidebar')
-            }
-            onClick={() => setIsSidebarCollapsed((collapsed) => !collapsed)}
-            className={isSidebarCollapsed ? undefined : 'mb-2 -ml-1'}
-          >
-            {isSidebarCollapsed ? <PanelLeftOpen /> : <PanelLeftClose />}
-          </IconButton>
-          {!isSidebarCollapsed && (
-            <>
-              <h3 className="mb-2 text-sm font-medium">
-                {t('canvas.insertBlock')}
-              </h3>
-              <BlockPicker
-                categories={categories}
-                registry={registry}
-                onInsert={handleInsert}
-                drag={{
-                  onDragStart: handleSidebarDragStart,
-                  onDragMove: handleSidebarDragMove,
-                  onDragEnd: handleSidebarDragEnd,
-                }}
-              />
-              {/* Not inside the section editor: a template dropped into a
-                  section would be a copy inside a thing that already IS
-                  the shared original, which is a muddle rather than a
-                  feature. */}
-              {siteId && !sectionPreview && (
-                <TemplatePicker siteId={siteId} onInsert={handleInsertBlocks} />
-              )}
-            </>
+          <BlockPicker
+            categories={categories}
+            registry={registry}
+            onInsert={handleInsert}
+            drag={{
+              onDragStart: handleSidebarDragStart,
+              onDragMove: handleSidebarDragMove,
+              onDragEnd: handleSidebarDragEnd,
+            }}
+          />
+          {/* Not inside the section editor: a template dropped into a
+              section would be a copy inside a thing that already IS
+              the shared original, which is a muddle rather than a
+              feature. */}
+          {siteId && !sectionPreview && (
+            <TemplatePicker siteId={siteId} onInsert={handleInsertBlocks} />
           )}
-        </aside>
+        </CollapsibleSidePanel>
         <div style={{ flex: 1, minHeight: 0, position: 'relative' }}>
           <CanvasFrame
             key={canvasNonce}
@@ -1187,14 +465,8 @@ export function CanvasEditorShell({
                     : undefined
                 }
                 breakpoint={breakpoint}
-                typeStyle={
-                  site
-                    ? (site.themeTokens?.blockStyles[selectedDescriptor.type]?.[
-                        selectedBlock.variant ?? DEFAULT_VARIANT
-                      ] ?? { base: {} })
-                    : undefined
-                }
-                onChangeTypeStyle={site ? handleChangeTypeStyle : undefined}
+                typeStyle={typeStyle}
+                onChangeTypeStyle={handleChangeTypeStyle}
                 onChangeInstanceStyle={handleChangeStyleOverride}
                 onMoveUp={() => handleMoveSelected(-1)}
                 onMoveDown={() => handleMoveSelected(1)}
@@ -1222,71 +494,50 @@ export function CanvasEditorShell({
             </div>
           )}
         </div>
-        <aside
-          aria-label={t('canvas.layersTitle')}
-          className={
-            isLayersPanelCollapsed
-              ? 'flex w-10 shrink-0 flex-col items-center border-l py-3'
-              : 'w-64 shrink-0 overflow-y-auto border-l p-3'
-          }
+        <CollapsibleSidePanel
+          side="right"
+          title={t('canvas.layersTitle')}
+          expandLabel={t('canvas.expandLayersPanel')}
+          collapseLabel={t('canvas.collapseLayersPanel')}
         >
-          <IconButton
-            label={
-              isLayersPanelCollapsed
-                ? t('canvas.expandLayersPanel')
-                : t('canvas.collapseLayersPanel')
+          <LayersPanel
+            onContextMenu={(_blockId, x, y) => setLayerMenuAt({ x, y })}
+            blocks={localBlocks}
+            hoveredBlockId={bridge.hoveredBlockId}
+            selectedBlockId={bridge.selectedBlockId}
+            onReorder={handleReorder}
+            onReparent={handleReparent}
+            // The descriptors' own rules, as two predicates, so the panel
+            // stays free of the registry. `canContain` honours
+            // `allowedChildTypes`; inserting from the sidebar does not yet
+            // (see useSidebarDrag and resolveInsertTarget).
+            isContainerType={(type) =>
+              Boolean(registry.find((d) => d.type === type)?.isContainer)
             }
-            onClick={() => setIsLayersPanelCollapsed((collapsed) => !collapsed)}
-            className={
-              isLayersPanelCollapsed ? undefined : 'mb-2 -mr-1 self-end'
-            }
-          >
-            {isLayersPanelCollapsed ? <PanelRightOpen /> : <PanelRightClose />}
-          </IconButton>
-          {!isLayersPanelCollapsed && (
-            <>
-              <h3 className="mb-2 text-sm font-medium">
-                {t('canvas.layersTitle')}
-              </h3>
-              <LayersPanel
-                onContextMenu={(_blockId, x, y) => setLayerMenuAt({ x, y })}
-                blocks={localBlocks}
-                hoveredBlockId={bridge.hoveredBlockId}
-                selectedBlockId={bridge.selectedBlockId}
-                onReorder={handleReorder}
-                onReparent={handleReparent}
-                // The descriptors' own rules, as two predicates: the panel
-                // stays free of the registry, and the answer is the same
-                // one the drag-from-sidebar path already uses.
-                isContainerType={(type) =>
-                  Boolean(registry.find((d) => d.type === type)?.isContainer)
-                }
-                canContain={(parentType, childType) => {
-                  const parent = registry.find((d) => d.type === parentType);
-                  if (!parent?.isContainer) {
-                    return false;
-                  }
-                  // No list means "anything" (Container/Column); a list
-                  // means exactly those (Testimonials→Testimonial).
-                  return (
-                    !parent.allowedChildTypes ||
-                    parent.allowedChildTypes.includes(childType)
-                  );
-                }}
-                selectedBlockIds={bridge.selectedBlockIds}
-                onSelect={(blockId, additive) => {
-                  bridge.selectBlock(blockId, additive);
-                  // Only a plain click scrolls: adding a fourth block to a
-                  // selection should not yank the canvas away from the
-                  // three you are looking at.
-                  if (!additive) {
-                    bridge.scrollToBlock(blockId);
-                  }
-                }}
-              />
-            </>
-          )}
-        </aside>
+            canContain={(parentType, childType) => {
+              const parent = registry.find((d) => d.type === parentType);
+              if (!parent?.isContainer) {
+                return false;
+              }
+              // No list means "anything" (Container/Column); a list
+              // means exactly those (Testimonials→Testimonial).
+              return (
+                !parent.allowedChildTypes ||
+                parent.allowedChildTypes.includes(childType)
+              );
+            }}
+            selectedBlockIds={bridge.selectedBlockIds}
+            onSelect={(blockId, additive) => {
+              bridge.selectBlock(blockId, additive);
+              // Only a plain click scrolls: adding a fourth block to a
+              // selection should not yank the canvas away from the
+              // three you are looking at.
+              if (!additive) {
+                bridge.scrollToBlock(blockId);
+              }
+            }}
+          />
+        </CollapsibleSidePanel>
       </div>
       {layerMenuAt && (
         <LayerContextMenu

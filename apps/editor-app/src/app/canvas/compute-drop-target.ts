@@ -1,3 +1,6 @@
+import type { Block, BlockRect } from '@brisk/shared-types';
+import { locateBlock, siblingsAt } from './use-block-tree';
+
 export interface DropCandidateRect {
   id: string;
   top: number;
@@ -99,4 +102,37 @@ export function findContainerAtPoint(
     }
   }
   return best?.id ?? null;
+}
+
+/**
+ * The rects a drop is measured against: the dragged block's real SIBLINGS,
+ * at whatever depth it sits (Fase 7), and the parent they share.
+ *
+ * It used to be the top-level blocks and nothing else, which is why
+ * dragging on the canvas was root-only — the three columns of a Columns
+ * could be reordered from the Layers panel and not from the page they were
+ * on. `computeDropTarget` never cared: it compares a pointer against a list
+ * of rects, and the list was the whole restriction.
+ *
+ * In tree order and not the raw document order of `blockRects`, which
+ * interleaves every depth. `null` asks for the root — a drag out of the
+ * sidebar has no block in the tree yet, so it measures against the level it
+ * drops at.
+ */
+export function siblingDropRects(
+  blocks: Block[],
+  blockRects: BlockRect[],
+  blockId: string | null,
+): { parentId: string | null; rects: DropCandidateRect[] } {
+  const parentId = blockId
+    ? (locateBlock(blocks, blockId)?.parentId ?? null)
+    : null;
+  const rects = siblingsAt(blocks, parentId).flatMap((block) => {
+    if (!block.id) {
+      return [];
+    }
+    const rect = blockRects.find((r) => r.id === block.id);
+    return rect ? [{ id: block.id, top: rect.top, height: rect.height }] : [];
+  });
+  return { parentId, rects };
 }
