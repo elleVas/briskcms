@@ -246,6 +246,10 @@ describe('useSidebarDrag', () => {
    * Side by side, the siblings' midpoints say nothing about which side of
    * the container the pointer was on: every one of them has the same top.
    */
+  /*
+   * Side by side, every block starts at the same height: which half of the
+   * block the pointer is in can only be read across, not down.
+   */
   describe('over a refusing container in a row of blocks', () => {
     const tree: Block[] = [
       {
@@ -266,15 +270,15 @@ describe('useSidebarDrag', () => {
       { id: 'right', top: 0, left: 600, width: 300, height: 300 },
     ];
 
-    it('drops right after the left one from its lower half', () => {
+    it('drops right after the left one from its right half', () => {
       const { result, insertNewBlockAt } = setup({
         localBlocks: tree,
         blockRects,
       });
 
-      // iframe (100, 250): inside `left`, below its middle.
+      // iframe (250, 250): inside `left` (0..300), right of its middle.
       act(() => {
-        result.current.handleSidebarDragEnd(heroDescriptor, 150, 350);
+        result.current.handleSidebarDragEnd(heroDescriptor, 300, 350);
       });
 
       expect(insertNewBlockAt).toHaveBeenCalledWith(heroDescriptor, {
@@ -283,13 +287,31 @@ describe('useSidebarDrag', () => {
       });
     });
 
-    it('drops right before the right one from its upper half', () => {
+    it('drops before the left one from its left half, whatever the height', () => {
       const { result, insertNewBlockAt } = setup({
         localBlocks: tree,
         blockRects,
       });
 
-      // iframe (700, 50): inside `right`, above its middle.
+      // iframe (100, 250): inside `left`, left of its middle and low down —
+      // the height is what the vertical rule would have read.
+      act(() => {
+        result.current.handleSidebarDragEnd(heroDescriptor, 150, 350);
+      });
+
+      expect(insertNewBlockAt).toHaveBeenCalledWith(heroDescriptor, {
+        parentId: 'row',
+        index: 0,
+      });
+    });
+
+    it('drops right before the right one from its left half', () => {
+      const { result, insertNewBlockAt } = setup({
+        localBlocks: tree,
+        blockRects,
+      });
+
+      // iframe (700, 50): inside `right` (600..900), left of its middle.
       act(() => {
         result.current.handleSidebarDragEnd(heroDescriptor, 750, 150);
       });

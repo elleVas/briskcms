@@ -240,6 +240,7 @@ export function CanvasEditorShell({
     handleReorder,
     handleRemoveSelected,
     handleMoveSelected,
+    handleAlignSelected,
     handleDuplicateSelected,
     handlePasteMany,
     handleReparent,
@@ -321,7 +322,6 @@ export function CanvasEditorShell({
   const {
     handleChangeProp,
     handleChangeVariant,
-    handleChangeAlign,
     handleChangeStyleOverride,
     typeStyle,
     saveTypeStyle,
@@ -330,7 +330,6 @@ export function CanvasEditorShell({
     selectedBlock,
     selectedDescriptor,
     breakpoint,
-    bridge,
     styleSheet,
     localBlocksRef,
     setLocalBlocks,
@@ -473,7 +472,7 @@ export function CanvasEditorShell({
                   // attribute (they space their blocks with a flex `gap`),
                   // and a nested block's width is its container's business.
                   isSelectedRootLevel && !editingSection
-                    ? handleChangeAlign
+                    ? handleAlignSelected
                     : undefined
                 }
                 breakpoint={breakpoint}

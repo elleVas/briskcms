@@ -32,6 +32,7 @@ function setup(localBlocks: Block[]) {
     insertBlock: vi.fn(),
     removeBlock: vi.fn(),
     reorderBlocks: vi.fn(),
+    setBlockAlign: vi.fn(),
   };
   const { result, rerender } = renderHook(
     (props: {
@@ -561,6 +562,7 @@ describe('useBlockTreeMutations respects what a container may hold', () => {
           insertBlock: vi.fn(),
           removeBlock: vi.fn(),
           reorderBlocks: vi.fn(),
+          setBlockAlign: vi.fn(),
         },
         token: 'tok',
         pageId: 'page-1',
@@ -771,6 +773,7 @@ describe('useBlockTreeMutations keeps the canvas in step without reloading', () 
       insertBlock: vi.fn(),
       removeBlock: vi.fn(),
       reorderBlocks: vi.fn(),
+      setBlockAlign: vi.fn(),
     };
     const { result } = renderHook(
       () =>
@@ -805,9 +808,12 @@ describe('useBlockTreeMutations keeps the canvas in step without reloading', () 
           waiting.push(() => resolve(`<div>${input.blockId}</div>`));
         }),
     );
-    return async () => {
-      waiting.splice(0).forEach((release) => release());
-      await flush();
+    return async ({ newestFirst = false } = {}) => {
+      const released = waiting.splice(0);
+      for (const release of newestFirst ? released.reverse() : released) {
+        release();
+        await flush();
+      }
       await flush();
     };
   }
@@ -1122,6 +1128,95 @@ describe('useBlockTreeMutations keeps the canvas in step without reloading', () 
       'b',
       'c',
     ]);
+  });
+
+  /*
+   * Two inserts into the same container are two history entries, each with
+   * its own turn, so the render that came back second used to win — showing
+   * the container as it was one change ago.
+   */
+  it('shows the newest render of a container, whichever change asked for it', async () => {
+    const box: Block = {
+      id: 'box',
+      type: 'Container',
+      props: {},
+      children: [],
+    };
+    const { result, bridge } = setupCanvas([box], box);
+    const release = holdFragments();
+
+    act(() => result.current.handleInsert(heading));
+    act(() => result.current.handleInsert(heading));
+    // Newest first: the older render lands last and must not be applied.
+    await release({ newestFirst: true });
+
+    expect(blockFragmentApi.renderBlockFragment).toHaveBeenCalledTimes(2);
+    expect(bridge.patchBlock).toHaveBeenCalledTimes(1);
+  });
+
+  it('drops the re-render of a container whose insert was undone while it rendered', async () => {
+    const box: Block = {
+      id: 'box',
+      type: 'Container',
+      props: {},
+      children: [],
+    };
+    const { result, bridge } = setupCanvas([box], box);
+    const release = holdFragments();
+
+    act(() => result.current.handleInsert(heading));
+    act(() => result.current.undo());
+    await release();
+
+    // Both renders happen; only the undo's own reaches the canvas.
+    expect(blockFragmentApi.renderBlockFragment).toHaveBeenCalledTimes(2);
+    expect(bridge.patchBlock).toHaveBeenCalledTimes(1);
+  });
+
+  it('reloads rather than re-render a container holding a section when an edit is undone', async () => {
+    const box: Block = {
+      id: 'box',
+      type: 'Container',
+      props: { title: 'before' },
+      children: [
+        {
+          id: 'shared',
+          type: 'Section',
+          props: { section: { sectionId: 's1', sectionName: 'Footer CTA' } },
+        },
+      ],
+    };
+    const edited: Block[] = [{ ...box, props: { title: 'after' } }];
+    const { result, reloadCanvas } = setupCanvas([box], box);
+
+    act(() => result.current.recordEdit('box', edited));
+    act(() => result.current.undo());
+    await flush();
+
+    expect(blockFragmentApi.renderBlockFragment).not.toHaveBeenCalled();
+    expect(reloadCanvas).toHaveBeenCalled();
+  });
+
+  /*
+   * Alignment is an attribute on the wrapper around the block, so it never
+   * went through a render — and used not to go through the history either,
+   * which left the tree and the canvas disagreeing after an undo.
+   */
+  it('takes back the width a root block was given, in the tree and on the canvas', () => {
+    const hero: Block = { id: 'hero', type: 'Heading', props: {} };
+    const { result, onChange, bridge } = setupCanvas([hero], hero);
+
+    act(() => result.current.handleAlignSelected('full'));
+
+    expect(onChange.mock.calls.at(-1)?.[0]).toEqual([
+      { ...hero, align: 'full' },
+    ]);
+    expect(bridge.setBlockAlign).toHaveBeenCalledWith('hero', 'full');
+
+    act(() => result.current.undo());
+
+    expect(onChange.mock.calls.at(-1)?.[0]).toEqual([hero]);
+    expect(bridge.setBlockAlign).toHaveBeenLastCalledWith('hero', null);
   });
 
   it('gives every pasted copy a fresh id', () => {

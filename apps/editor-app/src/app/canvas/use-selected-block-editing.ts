@@ -5,7 +5,6 @@ import {
   DEFAULT_VARIANT,
   withBreakpointStyle,
   type Block,
-  type BlockAlign,
   type BlockStyleOverride,
   type ResponsiveBlockStyle,
 } from '@brisk/shared-types';
@@ -17,12 +16,10 @@ import { useSiteThemeTokens } from '../use-site-theme-tokens';
 import type { Breakpoint } from './breakpoint-selector';
 import type { BlockStyleSheet } from './use-block-style-sheet';
 import {
-  updateBlockAlign,
   updateBlockProps,
   updateBlockStyleOverride,
   updateBlockVariant,
 } from './use-block-tree';
-import type { PreviewBridgeState } from './use-preview-bridge';
 import type { UsePropertyPatchResult } from './use-property-patch';
 
 export interface UseSelectedBlockEditingParams {
@@ -31,7 +28,6 @@ export interface UseSelectedBlockEditingParams {
   selectedBlock: Block | null;
   selectedDescriptor: BlockDescriptor | undefined;
   breakpoint: Breakpoint;
-  bridge: Pick<PreviewBridgeState, 'setBlockAlign'>;
   /** Shared with the tree mutations, which put styled blocks on the canvas too. */
   styleSheet: BlockStyleSheet;
   localBlocksRef: MutableRefObject<Block[]>;
@@ -46,7 +42,6 @@ export interface UseSelectedBlockEditingParams {
 export interface SelectedBlockEditing {
   handleChangeProp: (key: string, value: unknown) => void;
   handleChangeVariant: (variant: string | undefined) => void;
-  handleChangeAlign: (align: BlockAlign | undefined) => void;
   handleChangeStyleOverride: (styleOverride: BlockStyleOverride) => void;
   /** The per-type style the selected block's variant currently has, `undefined` with no site. */
   typeStyle: ResponsiveBlockStyle | undefined;
@@ -73,7 +68,6 @@ export function useSelectedBlockEditing({
   selectedBlock,
   selectedDescriptor,
   breakpoint,
-  bridge,
   styleSheet,
   localBlocksRef,
   setLocalBlocks,
@@ -132,25 +126,6 @@ export function useSelectedBlockEditing({
       selectedBlock.children,
       selectedBlock.styleOverride,
     );
-  }
-
-  /**
-   * How much of the page's width the selected ROOT block claims (ADR-0049).
-   *
-   * No render round trip, unlike the variant: the value ends up as an
-   * attribute on the wrapper AROUND the block, so re-rendering the block's
-   * own HTML would not carry it. The bridge sets that attribute directly
-   * and the CSS reflows the canvas with nothing to wait for.
-   */
-  function handleChangeAlign(align: BlockAlign | undefined): void {
-    const blockId = selectedBlock?.id;
-    if (!blockId) {
-      return;
-    }
-    const next = updateBlockAlign(localBlocksRef.current, blockId, align);
-    setLocalBlocks(next);
-    onChange(next);
-    bridge.setBlockAlign(blockId, align ?? null);
   }
 
   /**
@@ -221,7 +196,6 @@ export function useSelectedBlockEditing({
   return {
     handleChangeProp,
     handleChangeVariant,
-    handleChangeAlign,
     handleChangeStyleOverride,
     typeStyle:
       site && selectedDescriptor

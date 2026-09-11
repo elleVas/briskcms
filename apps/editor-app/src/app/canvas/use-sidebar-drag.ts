@@ -12,8 +12,18 @@ import {
   findBlockInTree,
   locateBlock,
   nearestTargetThatHolds,
+  siblingsAt,
   type BlockTreeTarget,
 } from './use-block-tree';
+
+/** A measured block in the canvas, in the iframe's own coordinates. */
+interface BlockHitRect {
+  id: string;
+  top: number;
+  left: number;
+  width: number;
+  height: number;
+}
 
 export interface SidebarDragState {
   descriptor: BlockDescriptor;
@@ -27,13 +37,7 @@ export interface UseSidebarDragParams {
   iframeGeometry: IframeGeometry;
   /** The rects of top-level blocks, the same array the caller already computed for native canvas reordering — this avoids recomputing it a second time here. */
   rootRects: DropCandidateRect[];
-  blockRects: {
-    id: string;
-    top: number;
-    left: number;
-    width: number;
-    height: number;
-  }[];
+  blockRects: BlockHitRect[];
   /** From use-block-tree-mutations.ts — the same mechanism as every other insert, with a target computed here rather than from a selected position. */
   insertNewBlockAt: (
     descriptor: BlockDescriptor,
@@ -137,7 +141,13 @@ export function useSidebarDrag({
       nearestTargetThatHolds(
         localBlocks,
         registry,
-        dropTargetAt(hitContainer, descriptorOf, descriptor.type, iframeY),
+        dropTargetAt(
+          hitContainer,
+          descriptorOf,
+          descriptor.type,
+          iframeX,
+          iframeY,
+        ),
         [descriptor.type],
       ),
     );
@@ -148,6 +158,7 @@ export function useSidebarDrag({
     hitContainer: Block | null,
     descriptorOf: (blockId: string) => BlockDescriptor | undefined,
     draggedType: string,
+    iframeX: number,
     iframeY: number,
   ): BlockTreeTarget {
     if (!hitContainer?.id) {
@@ -172,11 +183,50 @@ export function useSidebarDrag({
     if (!location || !rect) {
       return { parentId: null, index: localBlocks.length };
     }
-    const pastItsMiddle = iframeY > rect.top + rect.height / 2;
+    const siblingRects = siblingsAt(localBlocks, location.parentId).flatMap(
+      (sibling) => {
+        const found =
+          sibling.id && sibling.id !== hitContainer.id
+            ? blockRects.find((r) => r.id === sibling.id)
+            : undefined;
+        return found ? [found] : [];
+      },
+    );
     return {
       parentId: location.parentId,
-      index: location.index + (pastItsMiddle ? 1 : 0),
+      index:
+        location.index +
+        (dropsAfter(rect, siblingRects, iframeX, iframeY) ? 1 : 0),
     };
+  }
+
+  /**
+   * Which side of a block the pointer was let go on — along the axis its
+   * siblings are laid out on.
+   *
+   * Vertically for a stack, which is what a page usually is. In a ROW the
+   * vertical midpoint says nothing: every block in it starts at the same
+   * height, so a drop on the right-hand block's upper half would read as
+   * "before it" and land the new block at the start of the row. A sibling
+   * sharing this block's vertical band while sitting beside it is what
+   * makes it a row.
+   */
+  function dropsAfter(
+    rect: BlockHitRect,
+    siblingRects: BlockHitRect[],
+    iframeX: number,
+    iframeY: number,
+  ): boolean {
+    const inARow = siblingRects.some(
+      (sibling) =>
+        sibling.top < rect.top + rect.height &&
+        sibling.top + sibling.height > rect.top &&
+        (sibling.left >= rect.left + rect.width ||
+          sibling.left + sibling.width <= rect.left),
+    );
+    return inARow
+      ? iframeX > rect.left + rect.width / 2
+      : iframeY > rect.top + rect.height / 2;
   }
 
   return {

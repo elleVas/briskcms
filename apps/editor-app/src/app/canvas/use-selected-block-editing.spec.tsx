@@ -33,7 +33,6 @@ describe('useSelectedBlockEditing', () => {
           selectedBlock: block,
           selectedDescriptor: undefined,
           breakpoint: 'base',
-          bridge: { setBlockAlign: vi.fn() },
           styleSheet: { refresh, replaceTypeCss: vi.fn() },
           localBlocksRef: { current: tree },
           setLocalBlocks: vi.fn(),
