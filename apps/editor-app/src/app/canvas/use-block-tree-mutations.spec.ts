@@ -544,7 +544,7 @@ describe('useBlockTreeMutations respects what a container may hold', () => {
   ];
 
   function setupWith(selectedId: string | null) {
-    const onChange = vi.fn();
+    const onChange = vi.fn<(blocks: Block[]) => void>();
     const selectedBlock = selectedId ? findInTree(tree, selectedId) : null;
     const { result } = renderHook(() =>
       useBlockTreeMutations({
@@ -589,8 +589,10 @@ describe('useBlockTreeMutations respects what a container may hold', () => {
     }, {});
   }
 
-  function lastTree(onChange: ReturnType<typeof vi.fn>): Block[] {
-    return onChange.mock.calls.at(-1)?.[0] as Block[];
+  function lastTree(
+    onChange: ReturnType<typeof vi.fn<(b: Block[]) => void>>,
+  ): Block[] {
+    return onChange.mock.calls.at(-1)?.[0] ?? [];
   }
 
   it('puts a block the selected container may not hold right after the container, in its parent', () => {
@@ -723,5 +725,175 @@ describe('useBlockTreeMutations respects what a container may hold', () => {
       'Heading',
       'Heading',
     ]);
+  });
+});
+
+/*
+ * What reaches the live canvas when blocks are added, without reloading
+ * the iframe: a reload jumps the page back to the top, and can show a draft
+ * from before the insert if a save was still on its way.
+ */
+describe('useBlockTreeMutations keeps the canvas in step without reloading', () => {
+  const heading: BlockDescriptor = {
+    type: 'Heading',
+    label: 'Heading',
+    category: 'content',
+    defaultProps: { text: '', level: 'h2' },
+    fields: [],
+  };
+
+  const box: BlockDescriptor = {
+    type: 'Container',
+    label: 'Container',
+    category: 'layout',
+    defaultProps: {},
+    fields: [],
+    isContainer: true,
+  };
+
+  function setupCanvas(localBlocks: Block[], selected: Block | null = null) {
+    vi.mocked(blockFragmentApi.renderBlockFragment).mockResolvedValue(
+      '<div>fragment</div>',
+    );
+    const onChange = vi.fn<(blocks: Block[]) => void>();
+    const reloadCanvas = vi.fn();
+    const refreshStyleSheet = vi.fn<(blocks: Block[]) => void>();
+    const bridge = {
+      selectedBlockId: selected?.id ?? null,
+      patchBlock: vi.fn(),
+      insertBlock: vi.fn(),
+      removeBlock: vi.fn(),
+      reorderBlocks: vi.fn(),
+    };
+    const { result } = renderHook(() =>
+      useBlockTreeMutations({
+        localBlocks,
+        setLocalBlocks: vi.fn(),
+        onChange,
+        registry: [heading, box],
+        bridge,
+        token: 'tok',
+        pageId: 'page-1',
+        reloadCanvas,
+        refreshStyleSheet,
+        selectedBlock: selected,
+        selectedDescriptor: selected ? heading : undefined,
+      }),
+    );
+    return { result, onChange, reloadCanvas, refreshStyleSheet, bridge };
+  }
+
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
+  /*
+   * A copy used to be rendered without its variant and without its own
+   * style, and the editor's style sheet was never told a new instance
+   * existed: a styled block duplicated in the canvas showed up plain until
+   * the page was reloaded.
+   */
+  it('renders a duplicated block with its variant and its own style, and refreshes the style sheet', async () => {
+    const styled: Block = {
+      id: 'styled',
+      type: 'Heading',
+      props: { text: 'Hi', level: 'h2' },
+      variant: 'accent',
+      styleOverride: { base: { textColor: '#ff0000' } },
+    };
+    const { result, refreshStyleSheet } = setupCanvas([styled], styled);
+
+    act(() => result.current.handleDuplicateSelected());
+    await flush();
+
+    expect(blockFragmentApi.renderBlockFragment).toHaveBeenCalledWith(
+      expect.objectContaining({
+        variant: 'accent',
+        styleOverride: { base: { textColor: '#ff0000' } },
+      }),
+    );
+    const refreshedWith = refreshStyleSheet.mock.calls.at(-1)?.[0] ?? [];
+    expect(refreshedWith).toHaveLength(2);
+  });
+
+  it('re-renders a styled container that gains a child with its variant and its own style', async () => {
+    const container: Block = {
+      id: 'box',
+      type: 'Container',
+      props: {},
+      variant: 'boxed',
+      styleOverride: { base: { backgroundColor: '#000000' } },
+      children: [],
+    };
+    const { result, bridge } = setupCanvas([container], container);
+
+    act(() => result.current.handleInsert(heading));
+    await flush();
+
+    expect(blockFragmentApi.renderBlockFragment).toHaveBeenCalledWith(
+      expect.objectContaining({
+        blockId: 'box',
+        variant: 'boxed',
+        styleOverride: { base: { backgroundColor: '#000000' } },
+      }),
+    );
+    expect(bridge.patchBlock).toHaveBeenCalledWith(
+      'box',
+      '<div>fragment</div>',
+    );
+  });
+
+  it('puts a template of several blocks into the canvas in place, in order, and takes it all back with one undo', async () => {
+    const original: Block[] = [
+      { id: 'existing', type: 'Heading', props: { text: 'x', level: 'h2' } },
+    ];
+    const { result, onChange, reloadCanvas, bridge } = setupCanvas(original);
+
+    act(() =>
+      result.current.handleInsertBlocks([
+        { id: 'a', type: 'Heading', props: {} },
+        { id: 'b', type: 'Heading', props: {} },
+        { id: 'c', type: 'Heading', props: {} },
+      ]),
+    );
+    await flush();
+    await flush();
+    await flush();
+
+    expect(reloadCanvas).not.toHaveBeenCalled();
+    expect(
+      vi
+        .mocked(blockFragmentApi.renderBlockFragment)
+        .mock.calls.map(([input]) => input.blockId),
+    ).toEqual(['a', 'b', 'c']);
+    expect(bridge.insertBlock).toHaveBeenCalledTimes(3);
+
+    act(() => result.current.undo());
+
+    expect(onChange.mock.calls.at(-1)?.[0]).toEqual(original);
+    expect(bridge.removeBlock.mock.calls.map(([id]) => id)).toEqual([
+      'a',
+      'b',
+      'c',
+    ]);
+  });
+
+  it('gives every pasted copy a fresh id', () => {
+    const original: Block[] = [
+      { id: 'existing', type: 'Heading', props: { text: 'x', level: 'h2' } },
+    ];
+    const { result, onChange } = setupCanvas(original);
+
+    act(() =>
+      result.current.handlePasteMany([
+        { id: 'copied-1', type: 'Heading', props: {} },
+        { id: 'copied-2', type: 'Heading', props: {} },
+      ]),
+    );
+
+    const ids = (onChange.mock.calls.at(-1)?.[0] ?? []).map((b) => b.id);
+    expect(ids).toHaveLength(3);
+    expect(ids).not.toContain('copied-1');
+    expect(ids).not.toContain('copied-2');
   });
 });

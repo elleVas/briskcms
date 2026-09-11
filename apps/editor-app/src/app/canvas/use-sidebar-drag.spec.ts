@@ -30,7 +30,20 @@ const testimonialsDescriptor: BlockDescriptor = {
   allowedChildTypes: ['Testimonial'],
 };
 
-const registry = [heroDescriptor, containerDescriptor, testimonialsDescriptor];
+const testimonialDescriptor: BlockDescriptor = {
+  type: 'Testimonial',
+  label: 'Testimonial',
+  category: 'socialProof',
+  defaultProps: {},
+  fields: [],
+};
+
+const registry = [
+  heroDescriptor,
+  containerDescriptor,
+  testimonialsDescriptor,
+  testimonialDescriptor,
+];
 const iframeGeometry = { top: 100, left: 50, width: 800, height: 600 };
 
 function setup(
@@ -141,38 +154,80 @@ describe('useSidebarDrag', () => {
   });
 
   /*
-   * Only a container that may hold the dragged type counts as a place to
-   * drop into — a Hero let go over a list of testimonials lands in whatever
-   * holds that list, never inside it.
+   * A container that refuses the dragged type is not a place to drop INTO,
+   * but it is still where the person let go: the block lands beside it, on
+   * the side of it the pointer was on — not at the bottom of whatever holds
+   * it, which could be a screen away.
    */
-  it('does not drop into a container that may not hold the dragged type', () => {
-    const { result, insertNewBlockAt } = setup({
-      localBlocks: [
-        {
-          id: 'container-1',
-          type: 'Container',
-          props: {},
-          children: [
-            { id: 'testi-1', type: 'Testimonials', props: {}, children: [] },
-          ],
-        },
-      ],
-      blockRects: [
-        { id: 'container-1', top: 0, left: 0, width: 700, height: 500 },
-        { id: 'testi-1', top: 100, left: 100, width: 400, height: 200 },
-      ],
+  describe('over a container that may not hold the dragged type', () => {
+    const tree: Block[] = [
+      {
+        id: 'container-1',
+        type: 'Container',
+        props: {},
+        children: [
+          { id: 'h-top', type: 'Hero', props: {} },
+          { id: 'testi-1', type: 'Testimonials', props: {}, children: [] },
+          { id: 'h-bottom', type: 'Hero', props: {} },
+        ],
+      },
+    ];
+    const blockRects = [
+      { id: 'container-1', top: 0, left: 0, width: 700, height: 600 },
+      { id: 'h-top', top: 0, left: 0, width: 700, height: 100 },
+      { id: 'testi-1', top: 100, left: 0, width: 700, height: 200 },
+      { id: 'h-bottom', top: 300, left: 0, width: 700, height: 100 },
+    ];
+
+    it('drops just after it when the pointer is on its lower half', () => {
+      const { result, insertNewBlockAt } = setup({
+        localBlocks: tree,
+        blockRects,
+      });
+
+      // iframe y = 350 - 100 = 250: inside Testimonials, below its middle.
+      act(() => {
+        result.current.handleSidebarDragEnd(heroDescriptor, 400, 350);
+      });
+
+      expect(insertNewBlockAt).toHaveBeenCalledWith(heroDescriptor, {
+        parentId: 'container-1',
+        index: 2,
+      });
     });
 
-    // iframe (350, 200): inside the Testimonials rect, and inside the
-    // Container around it.
-    act(() => {
-      result.current.handleSidebarDragEnd(heroDescriptor, 400, 300);
+    it('drops just before it when the pointer is on its upper half', () => {
+      const { result, insertNewBlockAt } = setup({
+        localBlocks: tree,
+        blockRects,
+      });
+
+      // iframe y = 250 - 100 = 150: inside Testimonials, above its middle.
+      act(() => {
+        result.current.handleSidebarDragEnd(heroDescriptor, 400, 250);
+      });
+
+      expect(insertNewBlockAt).toHaveBeenCalledWith(heroDescriptor, {
+        parentId: 'container-1',
+        index: 1,
+      });
     });
 
-    expect(insertNewBlockAt).toHaveBeenCalledWith(
-      heroDescriptor,
-      expect.objectContaining({ parentId: 'container-1' }),
-    );
+    it('still drops a type it DOES accept inside it', () => {
+      const { result, insertNewBlockAt } = setup({
+        localBlocks: tree,
+        blockRects,
+      });
+
+      act(() => {
+        result.current.handleSidebarDragEnd(testimonialDescriptor, 400, 350);
+      });
+
+      expect(insertNewBlockAt).toHaveBeenCalledWith(testimonialDescriptor, {
+        parentId: 'testi-1',
+        index: 0,
+      });
+    });
   });
 
   it('inserts as a child of the container under the drop point', () => {

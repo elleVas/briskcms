@@ -25,6 +25,13 @@ export interface BlockTreeTarget {
  * mutates its input.
  */
 
+export type IdentifiedBlock = Block & { id: string };
+
+/** A block with an id is one the editor can select, move and patch. */
+export function hasId(block: Block | null): block is IdentifiedBlock {
+  return Boolean(block?.id);
+}
+
 export function findBlockInTree(blocks: Block[], id: string): Block | null {
   for (const block of blocks) {
     if (block.id === id) {

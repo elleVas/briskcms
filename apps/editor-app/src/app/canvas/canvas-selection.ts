@@ -1,13 +1,12 @@
 import type { Block, BlockRect } from '@brisk/shared-types';
 import type { BlockDescriptor } from '@brisk/block-registry';
-import { blockAncestry, findBlockInTree, locateBlock } from './use-block-tree';
-
-type IdentifiedBlock = Block & { id: string };
-
-/** A block with an id is one the editor can select, move and patch. */
-function hasId(block: Block | null): block is IdentifiedBlock {
-  return Boolean(block?.id);
-}
+import {
+  blockAncestry,
+  findBlockInTree,
+  hasId,
+  locateBlock,
+  type IdentifiedBlock,
+} from './use-block-tree';
 
 export interface CanvasSelection {
   /** The block the toolbar acts on — the last one picked. */

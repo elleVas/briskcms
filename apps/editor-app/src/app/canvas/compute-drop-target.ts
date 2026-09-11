@@ -76,7 +76,7 @@ export interface ContainerHitRect {
  * selected one, the block ended up in the wrong place with no visual
  * indication why). It returns the id of the deepest container (the smallest
  * area among those whose coordinates contain the point) — the caller
- * (canvas-editor-shell.tsx) passes only rects already filtered down to
+ * (use-sidebar-drag.ts) passes only rects already filtered down to
  * containers: this module knows nothing about the block registry. `null`
  * when the point falls in no container — the caller then falls back to the
  * root-level position through `computeDropTarget` above.

@@ -1,12 +1,6 @@
-import {
-  type Dispatch,
-  type MutableRefObject,
-  type SetStateAction,
-  useRef,
-} from 'react';
+import type { Dispatch, MutableRefObject, SetStateAction } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
-  buildBlockInstanceRulesCss,
   buildBlockStyleOverridesCss,
   DEFAULT_VARIANT,
   withBreakpointStyle,
@@ -21,6 +15,7 @@ import { siteQueryOptions } from '../site-queries';
 import { useToast } from '../toast-provider';
 import { useSiteThemeTokens } from '../use-site-theme-tokens';
 import type { Breakpoint } from './breakpoint-selector';
+import type { BlockStyleSheet } from './use-block-style-sheet';
 import {
   updateBlockAlign,
   updateBlockProps,
@@ -36,7 +31,9 @@ export interface UseSelectedBlockEditingParams {
   selectedBlock: Block | null;
   selectedDescriptor: BlockDescriptor | undefined;
   breakpoint: Breakpoint;
-  bridge: Pick<PreviewBridgeState, 'updateBlockStyleCss' | 'setBlockAlign'>;
+  bridge: Pick<PreviewBridgeState, 'setBlockAlign'>;
+  /** Shared with the tree mutations, which put styled blocks on the canvas too. */
+  styleSheet: BlockStyleSheet;
   localBlocksRef: MutableRefObject<Block[]>;
   setLocalBlocks: Dispatch<SetStateAction<Block[]>>;
   onChange: (blocks: Block[]) => void;
@@ -77,6 +74,7 @@ export function useSelectedBlockEditing({
   selectedDescriptor,
   breakpoint,
   bridge,
+  styleSheet,
   localBlocksRef,
   setLocalBlocks,
   onChange,
@@ -116,34 +114,6 @@ export function useSelectedBlockEditing({
         styleOverride: selectedBlock.styleOverride,
         variant: selectedBlock.variant,
       },
-    );
-  }
-
-  /**
-   * The block style sheet the iframe shows, both tiers at once.
-   *
-   * They travel together because they live in ONE `<style>` in there, and
-   * because the order between them is what makes an instance beat its
-   * type — pushing one without the other would leave the layer
-   * declaration referring to rules that are not there.
-   *
-   * The per-type CSS is remembered rather than recomputed: it comes back
-   * from the save that produced it, and the instance side changes far more
-   * often than it does.
-   */
-  const typeStyleCssRef = useRef('');
-  function pushBlockStyleCss(nextTypeCss?: string): void {
-    if (nextTypeCss !== undefined) {
-      typeStyleCssRef.current = nextTypeCss;
-    }
-    const tiers = [
-      typeStyleCssRef.current,
-      buildBlockInstanceRulesCss([localBlocksRef.current]),
-    ].filter(Boolean);
-    bridge.updateBlockStyleCss(
-      tiers.length > 0
-        ? ['@layer brisk.class, brisk.instance;', ...tiers].join('\n')
-        : '',
     );
   }
 
@@ -208,7 +178,7 @@ export function useSelectedBlockEditing({
       selectedBlock.children,
       selectedBlock.variant,
     );
-    pushBlockStyleCss();
+    styleSheet.refresh();
   }
 
   /**
@@ -229,7 +199,7 @@ export function useSelectedBlockEditing({
       const updated = await updateThemeTokens({ blockType, variant, style });
       // Without this, every already-visible instance of that type keeps its
       // old look until the iframe reloads, though the save succeeded.
-      pushBlockStyleCss(
+      styleSheet.replaceTypeCss(
         buildBlockStyleOverridesCss(updated.themeTokens?.blockStyles ?? {}),
       );
     } catch {

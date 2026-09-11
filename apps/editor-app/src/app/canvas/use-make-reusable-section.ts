@@ -1,13 +1,17 @@
 import type { Block } from '@brisk/shared-types';
+import type { BlockDescriptor } from '@brisk/block-registry';
 import {
   createReusableSection,
   publishReusableSection,
 } from '../../lib/reusable-sections-api-client';
 import { useTranslation } from '../../lib/use-translation';
+import { canHoldChild, findBlockInTree, locateBlock } from './use-block-tree';
 
 export interface UseMakeReusableSectionParams {
   siteId: string | undefined;
   selectedBlock: Block | null;
+  localBlocks: Block[];
+  registry: BlockDescriptor[];
   /** Swaps the selected block for the instance, as one undoable step. */
   handleReplaceSelected: (replacement: Block & { id: string }) => void;
 }
@@ -23,20 +27,43 @@ export interface UseMakeReusableSectionParams {
  *
  * A window.prompt for the name, deliberately: a name is the only thing this
  * needs, and a dialog with one field is more code for a worse interruption.
+ *
+ * `undefined` without a site to create the section in, and where the
+ * instance could not stand: the block is swapped for a Section in place,
+ * and a container that only takes one kind of child — the testimonials of
+ * a Testimonials, the tracks of a Columns — may not hold one. The page's
+ * own top level takes anything.
  */
 export function useMakeReusableSection({
   siteId,
   selectedBlock,
+  localBlocks,
+  registry,
   handleReplaceSelected,
-}: UseMakeReusableSectionParams): () => Promise<void> {
+}: UseMakeReusableSectionParams): (() => Promise<void>) | undefined {
   const { t } = useTranslation();
+
+  const parentId = selectedBlock?.id
+    ? locateBlock(localBlocks, selectedBlock.id)?.parentId
+    : null;
+  const parent = parentId ? findBlockInTree(localBlocks, parentId) : null;
+  if (
+    !siteId ||
+    (parent &&
+      !canHoldChild(
+        registry.find((descriptor) => descriptor.type === parent.type),
+        'Section',
+      ))
+  ) {
+    return undefined;
+  }
 
   // A plain function and not a `useCallback`: the React Compiler refuses to
   // optimise a component when a manual dependency list holds a value it
   // cannot prove stable (`selectedBlock` here), and it memoises this
   // perfectly well on its own.
   return async function handleMakeReusable(): Promise<void> {
-    if (!siteId || !selectedBlock?.id) {
+    if (!selectedBlock?.id) {
       return;
     }
     const name = window.prompt(t('sections.makeReusablePrompt'));

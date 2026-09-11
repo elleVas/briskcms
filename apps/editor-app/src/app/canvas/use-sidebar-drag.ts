@@ -4,12 +4,15 @@ import type { BlockDescriptor } from '@brisk/block-registry';
 import {
   computeDropTarget,
   findContainerAtPoint,
+  siblingDropRects,
   type DropCandidateRect,
 } from './compute-drop-target';
 import type { IframeGeometry } from './overlay-layer';
 import {
   canHoldChild,
   findBlockInTree,
+  nearestTargetThatHolds,
+  siblingsAt,
   type BlockTreeTarget,
 } from './use-block-tree';
 
@@ -90,9 +93,15 @@ export function useSidebarDrag({
    * (content and toolbar positioned somewhere other than the real drop).
    * `blockRects` already includes every nested block, not only top-level
    * ones (unlike `rootRects`, which is scoped to sibling reordering) — here
-   * it is filtered down to the blocks the registry marks as containers, and
-   * then the smallest rect (the deepest container) containing the point is
-   * picked.
+   * it is narrowed to the blocks the registry marks as containers, and the
+   * smallest rect (the deepest container) containing the point wins.
+   *
+   * That container is where the person let go, whether or not it may hold
+   * what they dragged. When it may, the block goes in at its end. When it
+   * may not — a Heading over a list of testimonials — the block goes BESIDE
+   * it, on the side the pointer was on: taking the innermost container that
+   * accepts instead used to put the block at the bottom of whatever held
+   * the list, which could be a screen away from the drop.
    */
   function handleSidebarDragEnd(
     descriptor: BlockDescriptor,
@@ -109,16 +118,13 @@ export function useSidebarDrag({
     }
     const iframeX = pageX - iframeGeometry.left;
     const iframeY = pageY - iframeGeometry.top;
-    // Only the containers that may hold what is being dragged: the hit test
-    // then picks the innermost one that ACCEPTS it, so a Heading dropped on a
-    // list of testimonials lands in whatever holds the list, not inside it.
-    const containerRects = blockRects.filter((rect) => {
-      const block = findBlockInTree(localBlocks, rect.id);
-      const blockDescriptor = block
-        ? registry.find((d) => d.type === block.type)
-        : undefined;
-      return canHoldChild(blockDescriptor, descriptor.type);
-    });
+    const descriptorOf = (blockId: string) => {
+      const block = findBlockInTree(localBlocks, blockId);
+      return block ? registry.find((d) => d.type === block.type) : undefined;
+    };
+    const containerRects = blockRects.filter(
+      (rect) => descriptorOf(rect.id)?.isContainer,
+    );
     const hitContainerId = findContainerAtPoint(
       containerRects,
       iframeX,
@@ -127,15 +133,49 @@ export function useSidebarDrag({
     const hitContainer = hitContainerId
       ? findBlockInTree(localBlocks, hitContainerId)
       : null;
-    const target: BlockTreeTarget = hitContainer?.id
-      ? { parentId: hitContainer.id, index: hitContainer.children?.length ?? 0 }
-      : {
-          parentId: null,
-          index:
-            computeDropTarget(rootRects, '', iframeY)?.index ??
-            localBlocks.length,
-        };
-    insertNewBlockAt(descriptor, target);
+    insertNewBlockAt(
+      descriptor,
+      nearestTargetThatHolds(
+        localBlocks,
+        registry,
+        dropTargetAt(hitContainer, descriptorOf, descriptor.type, iframeY),
+        [descriptor.type],
+      ),
+    );
+  }
+
+  /** Where a drop lands before asking whether its parent may hold it — see handleSidebarDragEnd. */
+  function dropTargetAt(
+    hitContainer: Block | null,
+    descriptorOf: (blockId: string) => BlockDescriptor | undefined,
+    draggedType: string,
+    iframeY: number,
+  ): BlockTreeTarget {
+    if (!hitContainer?.id) {
+      return {
+        parentId: null,
+        index:
+          computeDropTarget(rootRects, '', iframeY)?.index ??
+          localBlocks.length,
+      };
+    }
+    if (canHoldChild(descriptorOf(hitContainer.id), draggedType)) {
+      return {
+        parentId: hitContainer.id,
+        index: hitContainer.children?.length ?? 0,
+      };
+    }
+    const { parentId, rects } = siblingDropRects(
+      localBlocks,
+      blockRects,
+      hitContainer.id,
+    );
+    return {
+      parentId,
+      index:
+        computeDropTarget(rects, '', iframeY)?.index ??
+        siblingsAt(localBlocks, parentId).length,
+    };
   }
 
   return {

@@ -14,6 +14,7 @@ import {
   createBlockFromDescriptor,
   findBlockInTree,
   blockIds,
+  hasId,
   insertBlock,
   locateBlock,
   moveBlock,
@@ -83,6 +84,12 @@ export interface UseBlockTreeMutationsParams {
   fragmentSection?: { sectionId: string; locale: string };
   /** Remounts the canvas iframe — used where no fragment can be patched in (docs/adr/0059). */
   reloadCanvas?: () => void;
+  /**
+   * Sends the editor's block style sheet again, built from the tree given.
+   * A block's own style is a rule keyed by its id, not something its
+   * fragment carries, so a copy with a fresh id shows up plain without it.
+   */
+  refreshStyleSheet?: (blocks: Block[]) => void;
   selectedBlock: Block | null;
   selectedDescriptor: BlockDescriptor | undefined;
 }
@@ -163,6 +170,7 @@ export function useBlockTreeMutations({
   pageId,
   fragmentSection,
   reloadCanvas,
+  refreshStyleSheet,
   selectedBlock,
   selectedDescriptor,
 }: UseBlockTreeMutationsParams): UseBlockTreeMutationsResult {
@@ -205,9 +213,16 @@ export function useBlockTreeMutations({
     // eslint-disable-next-line react-hooks/exhaustive-deps -- re-baselines on a PAGE change only; localBlocks changes on every edit, and re-running then would defeat the point.
   }, [pageId]);
 
+  /**
+   * Every change of the tree goes through here, undo and redo included —
+   * which is why the style sheet is refreshed here and not in the handlers
+   * that happen to add a styled block: whichever path brings an instance
+   * back, its rule comes with it.
+   */
   function applyLocalChange(next: Block[]): void {
     setLocalBlocks(next);
     onChange(next);
+    refreshStyleSheet?.(next);
   }
 
   /** Records a new action — always clearing the "future" (redo stops making sense after a fresh mutation, the same convention as every editor with undo/redo). */
@@ -224,8 +239,7 @@ export function useBlockTreeMutations({
       }
       const entry = prev[prev.length - 1];
       lastCommittedRef.current = entry.before;
-      setLocalBlocks(entry.before);
-      onChange(entry.before);
+      applyLocalChange(entry.before);
       entry.syncBackward();
       setFuture((f) => [entry, ...f]);
       return prev.slice(0, -1);
@@ -239,11 +253,34 @@ export function useBlockTreeMutations({
       }
       const entry = prev[0];
       lastCommittedRef.current = entry.after;
-      setLocalBlocks(entry.after);
-      onChange(entry.after);
+      applyLocalChange(entry.after);
       entry.syncForward();
       setPast((p) => [...p, entry].slice(-MAX_HISTORY_ENTRIES));
       return prev.slice(1);
+    });
+  }
+
+  /**
+   * The HTML of one block as the canvas has to show it: with its variant and
+   * its own style class, not only its props. The three places that render a
+   * fragment here used to pass props alone, so a container re-rendered
+   * after gaining a child, or a block pasted or duplicated, lost its looks
+   * until a reload.
+   */
+  function renderFragmentOf(
+    block: Block & { id: string },
+    previewToken: string,
+  ) {
+    return renderBlockFragment({
+      pageId,
+      ...(fragmentSection ?? {}),
+      token: previewToken,
+      blockId: block.id,
+      blockType: block.type,
+      props: block.props,
+      children: block.children,
+      styleOverride: block.styleOverride,
+      variant: block.variant,
     });
   }
 
@@ -268,19 +305,11 @@ export function useBlockTreeMutations({
       return;
     }
     const parent = findBlockInTree(treeWithUpdatedChildren, parentId);
-    if (!parent?.id) {
+    if (!hasId(parent)) {
       return;
     }
     try {
-      const html = await renderBlockFragment({
-        pageId,
-        ...(fragmentSection ?? {}),
-        token,
-        blockId: parent.id,
-        blockType: parent.type,
-        props: parent.props,
-        children: parent.children,
-      });
+      const html = await renderFragmentOf(parent, token);
       bridge.patchBlock(parent.id, html);
     } catch {
       // Resta nell'albero locale/nella bozza salvata, riappare corretto al
@@ -299,15 +328,7 @@ export function useBlockTreeMutations({
       return;
     }
     try {
-      const html = await renderBlockFragment({
-        pageId,
-        ...(fragmentSection ?? {}),
-        token,
-        blockId: block.id,
-        blockType: block.type,
-        props: block.props,
-        children: block.children,
-      });
+      const html = await renderFragmentOf(block, token);
       bridge.insertBlock(html, parentId, beforeBlockId);
     } catch {
       // The block stays in the local tree and in the saved draft either way
@@ -412,8 +433,9 @@ export function useBlockTreeMutations({
    * one save, one undo — built in a loop over the same growing tree rather
    * than over the render's own copy, which is the whole point.
    *
-   * The canvas reloads instead of being patched block by block: the
-   * patches would be computed from a tree changing underneath them.
+   * Patched into the canvas in place, like a single insert. It used to
+   * reload the iframe, which threw the page back to the top and could show
+   * the draft from before the insert if its save had not landed yet.
    */
   function insertManyAt(
     blocks: (Block & { id: string })[],
@@ -428,14 +450,35 @@ export function useBlockTreeMutations({
       index += 1;
     }
     applyLocalChange(next);
-    const sync = () => reloadCanvas?.();
-    sync();
-    recordHistory({
-      before,
-      after: next,
-      syncForward: sync,
-      syncBackward: sync,
-    });
+    const parentId = target.parentId;
+    // Taken from `before`, once: the block the whole strip goes in front of.
+    // Every block is grafted before that same one, so they end up in order
+    // without any position being recomputed from a tree that is changing.
+    const beforeBlockId = siblingsAt(before, null)[target.index]?.id ?? null;
+    const syncForward = () => {
+      if (parentId) {
+        void patchParentBlock(parentId, next);
+        return;
+      }
+      void (async () => {
+        // One after the other: grafting in parallel would put them in the
+        // order their fragments happened to come back.
+        for (const block of blocks) {
+          await insertBlockIntoCanvasAt(block, null, beforeBlockId);
+        }
+      })();
+    };
+    const syncBackward = () => {
+      if (parentId) {
+        void patchParentBlock(parentId, before);
+        return;
+      }
+      for (const block of blocks) {
+        bridge.removeBlock(block.id);
+      }
+    };
+    syncForward();
+    recordHistory({ before, after: next, syncForward, syncBackward });
   }
 
   /**
@@ -459,20 +502,10 @@ export function useBlockTreeMutations({
     // Without a preview token the fragment cannot be rendered — the same
     // guard patchParentBlock makes. Undo still restores and saves the tree;
     // only the live canvas stays behind until the next reload.
-    if (!token || !block) {
+    if (!token || !hasId(block)) {
       return;
     }
-    void renderBlockFragment({
-      pageId,
-      ...(fragmentSection ?? {}),
-      token,
-      blockId,
-      blockType: block.type,
-      props: block.props,
-      children: block.children,
-      styleOverride: block.styleOverride,
-      variant: block.variant,
-    })
+    void renderFragmentOf(block, token)
       .then((html) => bridge.patchBlock(blockId, html))
       .catch(() => {
         /* see the comment above — the tree is already correct and saved. */

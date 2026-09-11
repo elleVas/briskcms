@@ -27,6 +27,7 @@ import { LayerContextMenu } from './layer-context-menu';
 import { LayersPanel } from './layers-panel';
 import { isRectVisibleInIframe, useIframeGeometry } from './overlay-layer';
 import { canHoldChild } from './use-block-tree';
+import { useBlockStyleSheet } from './use-block-style-sheet';
 import { useBlockTreeMutations } from './use-block-tree-mutations';
 import { useCanvasDraft } from './use-canvas-draft';
 import { useCanvasDragReorder } from './use-canvas-drag-reorder';
@@ -229,6 +230,10 @@ export function CanvasEditorShell({
     canMoveSelectedDown,
   } = describeSelection(localBlocks, bridge, registry, tLabel);
 
+  // Before the mutations, which send it too: a copy of a styled block is
+  // a new id, and its rule has to reach the iframe with it.
+  const styleSheet = useBlockStyleSheet(bridge, localBlocksRef);
+
   const {
     handleInsert,
     handleInsertBlocks,
@@ -259,12 +264,15 @@ export function CanvasEditorShell({
     pageId,
     fragmentSection: sectionPreview,
     reloadCanvas,
+    refreshStyleSheet: styleSheet.refresh,
     selectedBlock,
     selectedDescriptor,
   });
   const handleMakeReusable = useMakeReusableSection({
     siteId,
     selectedBlock,
+    localBlocks,
+    registry,
     handleReplaceSelected,
   });
 
@@ -323,6 +331,7 @@ export function CanvasEditorShell({
     selectedDescriptor,
     breakpoint,
     bridge,
+    styleSheet,
     localBlocksRef,
     setLocalBlocks,
     onChange,
@@ -451,8 +460,10 @@ export function CanvasEditorShell({
                 onMakeReusable={
                   // Not in the section editor (a section inside itself) and
                   // not in the header/footer, which are already applied to
-                  // every page and have nothing to gain (docs/adr/0059).
-                  siteId && !sectionPreview && !editingSection
+                  // every page and have nothing to gain (docs/adr/0059). The
+                  // hook itself says no inside a container that may not
+                  // hold a section.
+                  !sectionPreview && !editingSection
                     ? handleMakeReusable
                     : undefined
                 }
