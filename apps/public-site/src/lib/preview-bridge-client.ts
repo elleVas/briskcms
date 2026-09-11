@@ -1,6 +1,10 @@
-import { type BlockAlign, type BlockRect } from '@brisk/shared-types';
+import {
+  type BlockAlign,
+  type BlockRect,
+  type RootBlockLayout,
+} from '@brisk/shared-types';
 import { getBlockRect } from './get-block-rect';
-import { ROOT_BLOCK_CLASS } from './root-block-layout';
+import { ROOT_BLOCK_CLASS, rootBlockWrapper } from './root-block-layout';
 import { preferredScrollBehavior } from './scroll-behavior';
 
 /**
@@ -193,9 +197,19 @@ export function applyBlockPatch(
  * and an insert-before hands its own position to the sibling), so it takes
  * the last block's spacing: no default gap below it.
  */
-function wrapRootBlock(blockEl: Element): Element {
+function wrapRootBlock(blockEl: Element, layout: RootBlockLayout): Element {
+  const { classNames, align, hover } = rootBlockWrapper({
+    id: blockEl.getAttribute('data-brisk-block-id') ?? undefined,
+    ...layout,
+  });
   const wrapper = document.createElement('div');
-  wrapper.className = ROOT_BLOCK_CLASS;
+  wrapper.className = classNames.join(' ');
+  if (align) {
+    wrapper.setAttribute('data-brisk-align', align);
+  }
+  if (hover) {
+    wrapper.setAttribute('data-brisk-hover', hover);
+  }
   wrapper.appendChild(blockEl);
   return wrapper;
 }
@@ -269,6 +283,7 @@ export function applyBlockInsert(
   parentId: string | null,
   beforeBlockId: string | null,
   editingSection: EditingSection | null,
+  rootLayout: RootBlockLayout = {},
 ): Element | null {
   const beforeBlockEl = beforeBlockId
     ? root.querySelector(`[data-brisk-block-id="${beforeBlockId}"]`)
@@ -353,7 +368,9 @@ export function applyBlockInsert(
   // root-block-layout.ts is shared with the page renderer precisely so the
   // two agree: a wrapper missing here is a block rendered outside the
   // content column until the next reload.
-  const insertedNode: Element = isRootInsert ? wrapRootBlock(newNode) : newNode;
+  const insertedNode: Element = isRootInsert
+    ? wrapRootBlock(newNode, rootLayout)
+    : newNode;
 
   if (beforeEl) {
     container.insertBefore(insertedNode, beforeEl);

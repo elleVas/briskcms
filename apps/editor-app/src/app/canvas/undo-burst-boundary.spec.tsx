@@ -33,7 +33,7 @@ interface Recorded {
   after: Block[];
 }
 
-/** The shell's wiring, reduced to what decides the burst boundary — same hooks, same declaration order. */
+/** The canvas's wiring, reduced to what decides the burst boundary — the same hooks useCanvasDraft and the shell assemble, in the same declaration order. */
 function Harness({
   textChange,
   recorded,
@@ -48,7 +48,7 @@ function Harness({
   // Stands in for useBlockTreeMutations' own baseline.
   const lastCommittedRef = useRef(localBlocks);
 
-  // canvas-editor-shell.tsx:194 — before every other effect in the file.
+  // Stands in for the ref repoint inside useCanvasDraft.
   useEffect(() => {
     localBlocksRef.current = localBlocks;
   });
@@ -74,7 +74,7 @@ function Harness({
     },
   });
 
-  // canvas-editor-shell.tsx:279 — its effect therefore runs AFTER the one above.
+  // Called by the shell after useCanvasDraft, so its effect runs AFTER the one above.
   useTextEdit({
     bridge: {
       lastTextChange: textChange,

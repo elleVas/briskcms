@@ -1,3 +1,4 @@
+import { StrictMode } from 'react';
 import { act, renderHook } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { Block } from '@brisk/shared-types';
@@ -31,6 +32,7 @@ function setup(localBlocks: Block[]) {
     insertBlock: vi.fn(),
     removeBlock: vi.fn(),
     reorderBlocks: vi.fn(),
+    setBlockAlign: vi.fn(),
   };
   const { result, rerender } = renderHook(
     (props: {
@@ -125,6 +127,7 @@ describe('useBlockTreeMutations undo/redo', () => {
       '<div>hero</div>',
       null,
       null,
+      {},
     );
     expect(result.current.canUndo).toBe(true);
     expect(result.current.canRedo).toBe(false);
@@ -163,6 +166,7 @@ describe('useBlockTreeMutations undo/redo', () => {
       '<div>hero</div>',
       null,
       'text-1',
+      {},
     );
   });
 
@@ -480,5 +484,870 @@ describe('useBlockTreeMutations undo/redo', () => {
     });
 
     expect(onChange).not.toHaveBeenCalled();
+  });
+});
+
+/*
+ * A container declares what it may hold: Testimonials takes Testimonial and
+ * nothing else. The Layers panel already refused to nest anything else
+ * there; inserting from the picker, dropping a template and pasting did
+ * not, and a Heading picked with Testimonials selected ended up inside it
+ * — saved, and rendered by a block that has no idea what a Heading is.
+ */
+describe('useBlockTreeMutations respects what a container may hold', () => {
+  const descriptors: BlockDescriptor[] = [
+    {
+      type: 'Heading',
+      label: 'Heading',
+      category: 'content',
+      defaultProps: { text: '', level: 'h2' },
+      fields: [],
+    },
+    {
+      type: 'Testimonial',
+      label: 'Testimonial',
+      category: 'socialProof',
+      defaultProps: { quote: '' },
+      fields: [],
+    },
+    {
+      type: 'Testimonials',
+      label: 'Testimonials',
+      category: 'socialProof',
+      defaultProps: {},
+      fields: [],
+      isContainer: true,
+      allowedChildTypes: ['Testimonial'],
+    },
+    {
+      type: 'Column',
+      label: 'Column',
+      category: 'layout',
+      defaultProps: {},
+      fields: [],
+      isContainer: true,
+    },
+  ];
+  const [heading, testimonial] = descriptors;
+
+  const tree: Block[] = [
+    {
+      id: 'col',
+      type: 'Column',
+      props: {},
+      children: [
+        {
+          id: 'testi',
+          type: 'Testimonials',
+          props: {},
+          children: [{ id: 't1', type: 'Testimonial', props: { quote: 'Q' } }],
+        },
+      ],
+    },
+    { id: 'after', type: 'Heading', props: { text: 'After', level: 'h2' } },
+  ];
+
+  function setupWith(selectedId: string | null) {
+    const onChange = vi.fn<(blocks: Block[]) => void>();
+    const selectedBlock = selectedId ? findInTree(tree, selectedId) : null;
+    const { result } = renderHook(() =>
+      useBlockTreeMutations({
+        localBlocks: tree,
+        setLocalBlocks: vi.fn(),
+        onChange,
+        registry: descriptors,
+        bridge: {
+          selectedBlockId: selectedId,
+          patchBlock: vi.fn(),
+          insertBlock: vi.fn(),
+          removeBlock: vi.fn(),
+          reorderBlocks: vi.fn(),
+          setBlockAlign: vi.fn(),
+        },
+        token: 'tok',
+        pageId: 'page-1',
+        selectedBlock,
+        selectedDescriptor: selectedBlock
+          ? descriptors.find((d) => d.type === selectedBlock.type)
+          : undefined,
+      }),
+    );
+    return { result, onChange };
+  }
+
+  function findInTree(blocks: Block[], id: string): Block | null {
+    for (const block of blocks) {
+      if (block.id === id) return block;
+      const found = block.children ? findInTree(block.children, id) : null;
+      if (found) return found;
+    }
+    return null;
+  }
+
+  /** Where each block ended up: its parent's id, or `root`. */
+  function parents(blocks: Block[], parent = 'root'): Record<string, string> {
+    return blocks.reduce<Record<string, string>>((acc, block) => {
+      acc[`${block.type}:${block.id}`] = parent;
+      return block.children
+        ? { ...acc, ...parents(block.children, block.id) }
+        : acc;
+    }, {});
+  }
+
+  function lastTree(
+    onChange: ReturnType<typeof vi.fn<(b: Block[]) => void>>,
+  ): Block[] {
+    return onChange.mock.calls.at(-1)?.[0] ?? [];
+  }
+
+  it('puts a block the selected container may not hold right after the container, in its parent', () => {
+    const { result, onChange } = setupWith('testi');
+
+    act(() => result.current.handleInsert(heading));
+
+    const next = lastTree(onChange);
+    const column = next.find((b) => b.id === 'col');
+    expect(column?.children?.map((b) => b.type)).toEqual([
+      'Testimonials',
+      'Heading',
+    ]);
+    expect(findInTree(next, 'testi')?.children?.map((b) => b.type)).toEqual([
+      'Testimonial',
+    ]);
+  });
+
+  it('still nests a block the selected container does accept', () => {
+    const { result, onChange } = setupWith('testi');
+
+    act(() => result.current.handleInsert(testimonial));
+
+    expect(
+      findInTree(lastTree(onChange), 'testi')?.children?.map((b) => b.type),
+    ).toEqual(['Testimonial', 'Testimonial']);
+  });
+
+  it('keeps a generic container taking anything', () => {
+    const { result, onChange } = setupWith('col');
+
+    act(() => result.current.handleInsert(heading));
+
+    expect(
+      findInTree(lastTree(onChange), 'col')?.children?.map((b) => b.type),
+    ).toEqual(['Testimonials', 'Heading']);
+  });
+
+  it('does the same for a template strip', () => {
+    const { result, onChange } = setupWith('testi');
+
+    act(() =>
+      result.current.handleInsertBlocks([
+        { id: 'tpl-1', type: 'Heading', props: {} },
+        { id: 'tpl-2', type: 'Testimonial', props: {} },
+      ]),
+    );
+
+    const placed = parents(lastTree(onChange));
+    // The strip travels together, so it goes where EVERY block in it may
+    // sit: a Testimonial could have stayed, the Heading could not.
+    expect(placed['Heading:tpl-1']).toBe('col');
+    expect(placed['Testimonial:tpl-2']).toBe('col');
+  });
+
+  /*
+   * A template of several blocks used to land as its LAST block alone: each
+   * insert started from the render's own copy of the tree, which never had
+   * the blocks inserted just before it.
+   */
+  it('inserts every block of a template, as one step', () => {
+    const { result, onChange } = setupWith(null);
+
+    act(() =>
+      result.current.handleInsertBlocks([
+        { id: 'a', type: 'Heading', props: {} },
+        { id: 'b', type: 'Heading', props: {} },
+        { id: 'c', type: 'Heading', props: {} },
+      ]),
+    );
+
+    expect(onChange).toHaveBeenCalledTimes(1);
+    expect(
+      lastTree(onChange)
+        .map((b) => b.id)
+        .slice(-3),
+    ).toEqual(['a', 'b', 'c']);
+    expect(result.current.canUndo).toBe(true);
+  });
+
+  it('pastes beside the selected block only where the pasted type may sit', () => {
+    const { result, onChange } = setupWith('t1');
+
+    act(() =>
+      result.current.handlePasteMany([
+        { id: 'copied', type: 'Heading', props: { text: 'x', level: 'h2' } },
+      ]),
+    );
+
+    const next = lastTree(onChange);
+    expect(findInTree(next, 'testi')?.children?.map((b) => b.type)).toEqual([
+      'Testimonial',
+    ]);
+    expect(findInTree(next, 'col')?.children?.map((b) => b.type)).toEqual([
+      'Testimonials',
+      'Heading',
+    ]);
+  });
+
+  it('keeps pasting a block of the same kind right beside it', () => {
+    const { result, onChange } = setupWith('t1');
+
+    act(() =>
+      result.current.handlePasteMany([
+        { id: 'copied', type: 'Testimonial', props: { quote: 'y' } },
+      ]),
+    );
+
+    expect(
+      findInTree(lastTree(onChange), 'testi')?.children?.map((b) => b.type),
+    ).toEqual(['Testimonial', 'Testimonial']);
+  });
+
+  it('does the same when pasting several blocks at once', () => {
+    const { result, onChange } = setupWith('t1');
+
+    act(() =>
+      result.current.handlePasteMany([
+        { id: 'c1', type: 'Heading', props: { text: 'x', level: 'h2' } },
+        { id: 'c2', type: 'Heading', props: { text: 'y', level: 'h2' } },
+      ]),
+    );
+
+    const next = lastTree(onChange);
+    expect(findInTree(next, 'testi')?.children?.map((b) => b.type)).toEqual([
+      'Testimonial',
+    ]);
+    expect(findInTree(next, 'col')?.children?.map((b) => b.type)).toEqual([
+      'Testimonials',
+      'Heading',
+      'Heading',
+    ]);
+  });
+});
+
+/*
+ * What reaches the live canvas when blocks are added, without reloading
+ * the iframe: a reload jumps the page back to the top, and can show a draft
+ * from before the insert if a save was still on its way.
+ */
+describe('useBlockTreeMutations keeps the canvas in step without reloading', () => {
+  const heading: BlockDescriptor = {
+    type: 'Heading',
+    label: 'Heading',
+    category: 'content',
+    defaultProps: { text: '', level: 'h2' },
+    fields: [],
+  };
+
+  const box: BlockDescriptor = {
+    type: 'Container',
+    label: 'Container',
+    category: 'layout',
+    defaultProps: {},
+    fields: [],
+    isContainer: true,
+  };
+
+  function setupCanvas(
+    localBlocks: Block[],
+    selected: Block | null = null,
+    options: { strict?: boolean } = {},
+  ) {
+    vi.mocked(blockFragmentApi.renderBlockFragment).mockResolvedValue(
+      '<div>fragment</div>',
+    );
+    const onChange = vi.fn<(blocks: Block[]) => void>();
+    const reloadCanvas = vi.fn();
+    const refreshStyleSheet = vi.fn<(blocks: Block[]) => void>();
+    const bridge = {
+      selectedBlockId: selected?.id ?? null,
+      patchBlock: vi.fn(),
+      insertBlock: vi.fn(),
+      removeBlock: vi.fn(),
+      reorderBlocks: vi.fn(),
+      setBlockAlign: vi.fn(),
+    };
+    const { result } = renderHook(
+      () =>
+        useBlockTreeMutations({
+          localBlocks,
+          setLocalBlocks: vi.fn(),
+          onChange,
+          registry: [heading, box],
+          bridge,
+          token: 'tok',
+          pageId: 'page-1',
+          reloadCanvas,
+          refreshStyleSheet,
+          selectedBlock: selected,
+          selectedDescriptor: selected ? heading : undefined,
+        }),
+      options.strict ? { wrapper: StrictMode } : undefined,
+    );
+    return { result, onChange, reloadCanvas, refreshStyleSheet, bridge };
+  }
+
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
+  /** Every fragment render waits until `release` is called — to act while blocks are still on their way. */
+  function holdFragments() {
+    const waiting: (() => void)[] = [];
+    vi.mocked(blockFragmentApi.renderBlockFragment).mockImplementation(
+      (input) =>
+        new Promise((resolve) => {
+          waiting.push(() => resolve(`<div>${input.blockId}</div>`));
+        }),
+    );
+    return async ({ newestFirst = false } = {}) => {
+      const released = waiting.splice(0);
+      for (const release of newestFirst ? released.reverse() : released) {
+        release();
+        await flush();
+      }
+      await flush();
+    };
+  }
+
+  const strip: (Block & { id: string })[] = [
+    { id: 'a', type: 'Heading', props: {} },
+    { id: 'b', type: 'Heading', props: {} },
+  ];
+
+  /*
+   * The fragment is the block alone; the wrapper a root block sits in is
+   * built in the iframe, and reads the block's width and hover effect. A
+   * duplicate of a full-width block used to land at content width.
+   */
+  it("sends a root block's width and style along with its fragment, for its wrapper", async () => {
+    const wide: Block = {
+      id: 'wide',
+      type: 'Heading',
+      props: {},
+      align: 'full',
+      styleOverride: { base: { hoverEffect: 'lift' } },
+    };
+    const { result, bridge } = setupCanvas([wide], wide);
+
+    act(() => result.current.handleDuplicateSelected());
+    await flush();
+
+    expect(bridge.insertBlock).toHaveBeenCalledWith(
+      '<div>fragment</div>',
+      null,
+      null,
+      { align: 'full', styleOverride: { base: { hoverEffect: 'lift' } } },
+    );
+  });
+
+  it('grafts a strip in order in front of the block that stood where it goes', async () => {
+    const first: Block = { id: 'first', type: 'Heading', props: {} };
+    const last: Block = { id: 'last', type: 'Heading', props: {} };
+    const { result, onChange, bridge } = setupCanvas([first, last], first);
+    vi.mocked(blockFragmentApi.renderBlockFragment).mockImplementation(
+      async (input) => `<div>${input.blockId}</div>`,
+    );
+
+    act(() => result.current.handlePasteMany(strip));
+    await flush();
+    await flush();
+
+    const pasted = (onChange.mock.calls.at(-1)?.[0] ?? [])
+      .map((block) => block.id)
+      .slice(1, 3);
+    expect(bridge.insertBlock.mock.calls).toEqual(
+      pasted.map((id) => [`<div>${id}</div>`, null, 'last', {}]),
+    );
+  });
+
+  it('drops the fragments of a strip that was undone while they were rendering', async () => {
+    const { result, bridge } = setupCanvas([]);
+    const release = holdFragments();
+
+    act(() => result.current.handleInsertBlocks(strip));
+    act(() => result.current.undo());
+    await release();
+
+    expect(bridge.removeBlock.mock.calls.map(([id]) => id)).toEqual(['a', 'b']);
+    expect(bridge.insertBlock).not.toHaveBeenCalled();
+  });
+
+  it('grafts each block once when undo and redo both land before the fragments do', async () => {
+    const { result, bridge } = setupCanvas([]);
+    const release = holdFragments();
+
+    act(() => result.current.handleInsertBlocks(strip));
+    act(() => result.current.undo());
+    act(() => result.current.redo());
+    await release();
+
+    expect(bridge.insertBlock).toHaveBeenCalledTimes(2);
+  });
+
+  /*
+   * React calls state updaters twice under StrictMode, which the editor
+   * runs in development. Redo used to insert from inside one.
+   */
+  it('redoes an insert once under StrictMode', async () => {
+    const { result, bridge } = setupCanvas([], null, { strict: true });
+
+    act(() => result.current.handleInsertBlocks([strip[0]]));
+    await flush();
+    act(() => result.current.undo());
+    act(() => result.current.redo());
+    await flush();
+
+    expect(bridge.removeBlock).toHaveBeenCalledTimes(1);
+    expect(bridge.insertBlock).toHaveBeenCalledTimes(2);
+  });
+
+  it('sends the style sheet for the tree an undo or a redo puts back', () => {
+    const original: Block[] = [
+      {
+        id: 'styled',
+        type: 'Heading',
+        props: {},
+        styleOverride: { base: { textColor: '#ff0000' } },
+      },
+    ];
+    const { result, refreshStyleSheet } = setupCanvas(original);
+
+    act(() => result.current.handleInsertBlocks([strip[0]]));
+    const inserted = refreshStyleSheet.mock.calls.at(-1)?.[0];
+    act(() => result.current.undo());
+    expect(refreshStyleSheet.mock.calls.at(-1)?.[0]).toEqual(original);
+    act(() => result.current.redo());
+    expect(refreshStyleSheet.mock.calls.at(-1)?.[0]).toEqual(inserted);
+  });
+
+  it('re-renders the container a strip goes into, and re-renders it without the strip on undo', async () => {
+    const box: Block = {
+      id: 'box',
+      type: 'Container',
+      props: {},
+      children: [{ id: 'kept', type: 'Heading', props: {} }],
+    };
+    const { result, bridge } = setupCanvas([box], box);
+
+    act(() => result.current.handleInsertBlocks(strip));
+    await flush();
+    act(() => result.current.undo());
+    await flush();
+
+    const renders = vi
+      .mocked(blockFragmentApi.renderBlockFragment)
+      .mock.calls.map(([input]) => [
+        input.blockId,
+        (input.children ?? []).map((child) => child.id),
+      ]);
+    expect(renders).toEqual([
+      ['box', ['kept', 'a', 'b']],
+      ['box', ['kept']],
+    ]);
+    expect(bridge.patchBlock).toHaveBeenCalledTimes(2);
+    expect(bridge.insertBlock).not.toHaveBeenCalled();
+  });
+
+  /*
+   * A reusable section's blocks are grafted on when the page is read; the
+   * fragment endpoint only has the block it is handed, and rendered the
+   * section as "not published yet".
+   */
+  it('reloads the canvas for a pasted reusable section instead of rendering a placeholder', async () => {
+    const { result, reloadCanvas, bridge } = setupCanvas([]);
+
+    act(() =>
+      result.current.handlePasteMany([
+        { id: 'h', type: 'Heading', props: {} },
+        {
+          id: 'shared',
+          type: 'Section',
+          props: { section: { sectionId: 's1', sectionName: 'Footer CTA' } },
+        },
+      ]),
+    );
+    await flush();
+
+    expect(reloadCanvas).toHaveBeenCalledTimes(1);
+    expect(blockFragmentApi.renderBlockFragment).not.toHaveBeenCalled();
+    expect(bridge.insertBlock).not.toHaveBeenCalled();
+  });
+
+  it('reloads the canvas when the container being re-rendered holds a reusable section', async () => {
+    const box: Block = {
+      id: 'box',
+      type: 'Container',
+      props: {},
+      children: [
+        {
+          id: 'shared',
+          type: 'Section',
+          props: { section: { sectionId: 's1', sectionName: 'Footer CTA' } },
+        },
+      ],
+    };
+    const { result, reloadCanvas } = setupCanvas([box], box);
+
+    act(() => result.current.handleInsert(heading));
+    await flush();
+
+    expect(reloadCanvas).toHaveBeenCalledTimes(1);
+    expect(blockFragmentApi.renderBlockFragment).not.toHaveBeenCalled();
+  });
+
+  /*
+   * Undo used to replay the forward steps against the old tree: a block
+   * moved from the page into a container was removed from the canvas
+   * instead of coming back.
+   */
+  it('puts a block moved into a container back on the page when the move is undone', async () => {
+    const tree: Block[] = [
+      { id: 'lone', type: 'Heading', props: {} },
+      { id: 'box', type: 'Container', props: {}, children: [] },
+    ];
+    const { result, bridge } = setupCanvas(tree);
+    vi.mocked(blockFragmentApi.renderBlockFragment).mockImplementation(
+      async (input) => `<div>${input.blockId}</div>`,
+    );
+
+    act(() => result.current.handleReparent('lone', 'box', 0));
+    await flush();
+    expect(bridge.removeBlock).toHaveBeenCalledWith('lone');
+    expect(bridge.patchBlock).toHaveBeenLastCalledWith('box', '<div>box</div>');
+
+    act(() => result.current.undo());
+    await flush();
+
+    expect(bridge.insertBlock).toHaveBeenCalledWith(
+      '<div>lone</div>',
+      null,
+      'box',
+      {},
+    );
+    expect(
+      vi.mocked(blockFragmentApi.renderBlockFragment).mock.calls.at(-2)?.[0]
+        .children,
+    ).toEqual([]);
+  });
+
+  /*
+   * A copy used to be rendered without its variant and without its own
+   * style, and the editor's style sheet was never told a new instance
+   * existed: a styled block duplicated in the canvas showed up plain until
+   * the page was reloaded.
+   */
+  it('renders a duplicated block with its variant and its own style, and refreshes the style sheet', async () => {
+    const styled: Block = {
+      id: 'styled',
+      type: 'Heading',
+      props: { text: 'Hi', level: 'h2' },
+      variant: 'accent',
+      styleOverride: { base: { textColor: '#ff0000' } },
+    };
+    const { result, refreshStyleSheet } = setupCanvas([styled], styled);
+
+    act(() => result.current.handleDuplicateSelected());
+    await flush();
+
+    expect(blockFragmentApi.renderBlockFragment).toHaveBeenCalledWith(
+      expect.objectContaining({
+        variant: 'accent',
+        styleOverride: { base: { textColor: '#ff0000' } },
+      }),
+    );
+    const refreshedWith = refreshStyleSheet.mock.calls.at(-1)?.[0] ?? [];
+    expect(refreshedWith).toHaveLength(2);
+  });
+
+  it('re-renders a styled container that gains a child with its variant and its own style', async () => {
+    const container: Block = {
+      id: 'box',
+      type: 'Container',
+      props: {},
+      variant: 'boxed',
+      styleOverride: { base: { backgroundColor: '#000000' } },
+      children: [],
+    };
+    const { result, bridge } = setupCanvas([container], container);
+
+    act(() => result.current.handleInsert(heading));
+    await flush();
+
+    expect(blockFragmentApi.renderBlockFragment).toHaveBeenCalledWith(
+      expect.objectContaining({
+        blockId: 'box',
+        variant: 'boxed',
+        styleOverride: { base: { backgroundColor: '#000000' } },
+      }),
+    );
+    expect(bridge.patchBlock).toHaveBeenCalledWith(
+      'box',
+      '<div>fragment</div>',
+    );
+  });
+
+  it('puts a template of several blocks into the canvas in place, in order, and takes it all back with one undo', async () => {
+    const original: Block[] = [
+      { id: 'existing', type: 'Heading', props: { text: 'x', level: 'h2' } },
+    ];
+    const { result, onChange, reloadCanvas, bridge } = setupCanvas(original);
+
+    act(() =>
+      result.current.handleInsertBlocks([
+        { id: 'a', type: 'Heading', props: {} },
+        { id: 'b', type: 'Heading', props: {} },
+        { id: 'c', type: 'Heading', props: {} },
+      ]),
+    );
+    await flush();
+    await flush();
+    await flush();
+
+    expect(reloadCanvas).not.toHaveBeenCalled();
+    expect(
+      vi
+        .mocked(blockFragmentApi.renderBlockFragment)
+        .mock.calls.map(([input]) => input.blockId),
+    ).toEqual(['a', 'b', 'c']);
+    expect(bridge.insertBlock).toHaveBeenCalledTimes(3);
+
+    act(() => result.current.undo());
+
+    expect(onChange.mock.calls.at(-1)?.[0]).toEqual(original);
+    expect(bridge.removeBlock.mock.calls.map(([id]) => id)).toEqual([
+      'a',
+      'b',
+      'c',
+    ]);
+  });
+
+  /*
+   * Two inserts into the same container are two history entries, each with
+   * its own turn, so the render that came back second used to win — showing
+   * the container as it was one change ago.
+   */
+  it('shows the newest render of a container, whichever change asked for it', async () => {
+    const box: Block = {
+      id: 'box',
+      type: 'Container',
+      props: {},
+      children: [],
+    };
+    const { result, bridge } = setupCanvas([box], box);
+    const release = holdFragments();
+
+    act(() => result.current.handleInsert(heading));
+    act(() => result.current.handleInsert(heading));
+    // Newest first: the older render lands last and must not be applied.
+    await release({ newestFirst: true });
+
+    expect(blockFragmentApi.renderBlockFragment).toHaveBeenCalledTimes(2);
+    expect(bridge.patchBlock).toHaveBeenCalledTimes(1);
+  });
+
+  it('drops the re-render of a container whose insert was undone while it rendered', async () => {
+    const box: Block = {
+      id: 'box',
+      type: 'Container',
+      props: {},
+      children: [],
+    };
+    const { result, bridge } = setupCanvas([box], box);
+    const release = holdFragments();
+
+    act(() => result.current.handleInsert(heading));
+    act(() => result.current.undo());
+    await release();
+
+    // Both renders happen; only the undo's own reaches the canvas.
+    expect(blockFragmentApi.renderBlockFragment).toHaveBeenCalledTimes(2);
+    expect(bridge.patchBlock).toHaveBeenCalledTimes(1);
+  });
+
+  it('reloads rather than re-render a container holding a section when an edit is undone', async () => {
+    const box: Block = {
+      id: 'box',
+      type: 'Container',
+      props: { title: 'before' },
+      children: [
+        {
+          id: 'shared',
+          type: 'Section',
+          props: { section: { sectionId: 's1', sectionName: 'Footer CTA' } },
+        },
+      ],
+    };
+    const edited: Block[] = [{ ...box, props: { title: 'after' } }];
+    const { result, reloadCanvas } = setupCanvas([box], box);
+
+    act(() => result.current.recordEdit('box', edited));
+    act(() => result.current.undo());
+    await flush();
+
+    expect(blockFragmentApi.renderBlockFragment).not.toHaveBeenCalled();
+    expect(reloadCanvas).toHaveBeenCalled();
+  });
+
+  /*
+   * Alignment is an attribute on the wrapper around the block, so it never
+   * went through a render — and used not to go through the history either,
+   * which left the tree and the canvas disagreeing after an undo.
+   */
+  it('takes back the width a root block was given, in the tree and on the canvas', () => {
+    const hero: Block = { id: 'hero', type: 'Heading', props: {} };
+    const { result, onChange, bridge } = setupCanvas([hero], hero);
+
+    act(() => result.current.handleAlignSelected('full'));
+
+    expect(onChange.mock.calls.at(-1)?.[0]).toEqual([
+      { ...hero, align: 'full' },
+    ]);
+    expect(bridge.setBlockAlign).toHaveBeenCalledWith('hero', 'full');
+
+    act(() => result.current.undo());
+
+    expect(onChange.mock.calls.at(-1)?.[0]).toEqual([hero]);
+    expect(bridge.setBlockAlign).toHaveBeenLastCalledWith('hero', null);
+  });
+
+  it('gives every pasted copy a fresh id', () => {
+    const original: Block[] = [
+      { id: 'existing', type: 'Heading', props: { text: 'x', level: 'h2' } },
+    ];
+    const { result, onChange } = setupCanvas(original);
+
+    act(() =>
+      result.current.handlePasteMany([
+        { id: 'copied-1', type: 'Heading', props: {} },
+        { id: 'copied-2', type: 'Heading', props: {} },
+      ]),
+    );
+
+    const ids = (onChange.mock.calls.at(-1)?.[0] ?? []).map((b) => b.id);
+    expect(ids).toHaveLength(3);
+    expect(ids).not.toContain('copied-1');
+    expect(ids).not.toContain('copied-2');
+  });
+});
+
+/*
+ * Some blocks only make sense inside one container: a Column without the
+ * Columns grid is a plain box. The insert paths ask before placing, and say
+ * so when there is nowhere to place.
+ */
+describe('useBlockTreeMutations places a block only where it belongs', () => {
+  const columns: BlockDescriptor = {
+    type: 'Columns',
+    label: 'Columns',
+    category: 'layout',
+    defaultProps: {},
+    fields: [],
+    isContainer: true,
+    allowedChildTypes: ['Column'],
+  };
+  const column: BlockDescriptor = {
+    type: 'Column',
+    label: 'Column',
+    category: 'layout',
+    defaultProps: {},
+    fields: [],
+    isContainer: true,
+    allowedParentTypes: ['Columns'],
+  };
+  const heading: BlockDescriptor = {
+    type: 'Heading',
+    label: 'Heading',
+    category: 'content',
+    defaultProps: {},
+    fields: [],
+  };
+
+  const grid: Block = {
+    id: 'grid',
+    type: 'Columns',
+    props: {},
+    children: [{ id: 'col-1', type: 'Column', props: {}, children: [] }],
+  };
+  const tree: Block[] = [{ id: 'intro', type: 'Heading', props: {} }, grid];
+
+  function setupPlacement(selected: Block | null) {
+    const onChange = vi.fn<(blocks: Block[]) => void>();
+    const onPlacementRefused = vi.fn<(types: string[]) => void>();
+    const { result } = renderHook(() =>
+      useBlockTreeMutations({
+        localBlocks: tree,
+        setLocalBlocks: vi.fn(),
+        onChange,
+        registry: [columns, column, heading],
+        bridge: {
+          selectedBlockId: selected?.id ?? null,
+          patchBlock: vi.fn(),
+          insertBlock: vi.fn(),
+          removeBlock: vi.fn(),
+          reorderBlocks: vi.fn(),
+          setBlockAlign: vi.fn(),
+        },
+        token: null,
+        pageId: 'page-1',
+        onPlacementRefused,
+        selectedBlock: selected,
+        selectedDescriptor: undefined,
+      }),
+    );
+    return { result, onChange, onPlacementRefused };
+  }
+
+  it('does not offer a column while nothing holds it', () => {
+    const { result } = setupPlacement(null);
+
+    expect(result.current.canInsertType('Column')).toBe(false);
+    expect(result.current.canInsertType('Heading')).toBe(true);
+  });
+
+  it('offers it once the grid it belongs in is selected', () => {
+    const { result } = setupPlacement(grid);
+
+    expect(result.current.canInsertType('Column')).toBe(true);
+  });
+
+  it('offers it beside a column too, where it lands in the same grid', () => {
+    const { result } = setupPlacement(grid.children?.[0] ?? null);
+
+    expect(result.current.canInsertType('Column')).toBe(true);
+  });
+
+  it('refuses to paste one where nothing can hold it, and says so', () => {
+    const { result, onChange, onPlacementRefused } = setupPlacement(null);
+
+    act(() =>
+      result.current.handlePaste({ id: 'copied', type: 'Column', props: {} }),
+    );
+
+    expect(onChange).not.toHaveBeenCalled();
+    expect(onPlacementRefused).toHaveBeenCalledWith(['Column']);
+  });
+
+  it('still pastes it into the grid that holds it', () => {
+    const { result, onChange, onPlacementRefused } = setupPlacement(
+      grid.children?.[0] ?? null,
+    );
+
+    act(() =>
+      result.current.handlePaste({ id: 'copied', type: 'Column', props: {} }),
+    );
+
+    expect(onPlacementRefused).not.toHaveBeenCalled();
+    expect(
+      (onChange.mock.calls.at(-1)?.[0] ?? [])[1]?.children?.map((c) => c.type),
+    ).toEqual(['Column', 'Column']);
   });
 });

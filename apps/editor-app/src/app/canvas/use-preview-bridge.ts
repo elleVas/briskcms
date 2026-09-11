@@ -6,6 +6,7 @@ import {
   type BlockAlign,
   type BlockRect,
   type RichTextMenuLabels,
+  type RootBlockLayout,
 } from '@brisk/shared-types';
 
 /**
@@ -116,6 +117,7 @@ export interface PreviewBridgeState {
     html: string,
     parentId: string | null,
     beforeBlockId: string | null,
+    rootLayout?: RootBlockLayout,
   ) => void;
   /** Removes an already-rendered block from the iframe's DOM — see EditorRemoveBlockMessage. */
   removeBlock: (blockId: string) => void;
@@ -336,13 +338,18 @@ export function usePreviewBridge(
   );
 
   const insertBlock = useCallback(
-    (html: string, parentId: string | null, beforeBlockId: string | null) => {
+    (
+      html: string,
+      parentId: string | null,
+      beforeBlockId: string | null,
+      rootLayout?: RootBlockLayout,
+    ) => {
       iframeRef.current?.contentWindow?.postMessage(
         {
           source: PREVIEW_BRIDGE_SOURCE,
           v: PREVIEW_BRIDGE_VERSION,
           type: 'editor:insert-block',
-          payload: { html, parentId, beforeBlockId },
+          payload: { html, parentId, beforeBlockId, rootLayout },
         },
         '*',
       );

@@ -369,6 +369,28 @@ describe('initPreviewBridge', () => {
     );
   });
 
+  it('builds the root wrapper of an inserted block from the layout the message carries', () => {
+    document.body.innerHTML = '<main data-brisk-root-blocks="page"></main>';
+    initPreviewBridge();
+
+    dispatchPostMessage({
+      source: PREVIEW_BRIDGE_SOURCE,
+      v: PREVIEW_BRIDGE_VERSION,
+      type: 'editor:insert-block',
+      payload: {
+        html: '<div data-brisk-block-id="wide-1" data-brisk-block-type="Text" style="display:contents"><p>Wide</p></div>',
+        parentId: null,
+        beforeBlockId: null,
+        rootLayout: { align: 'wide' },
+      },
+    });
+
+    const wrapper = document.querySelector(
+      '[data-brisk-block-id="wide-1"]',
+    )?.parentElement;
+    expect(wrapper?.getAttribute('data-brisk-align')).toBe('wide');
+  });
+
   it('scrolls the window to center the matching block on editor:scroll-to-block, ignoring a message from the wrong origin', () => {
     initPreviewBridge();
     // heroFixture's block is measured via the shared Range mock from

@@ -45,6 +45,7 @@ import DefaultFooter from '../components/regions/DefaultFooter.astro';
 import DefaultContentShell from '../components/regions/DefaultContentShell.astro';
 import '../lib/theme-fonts';
 import '../styles/global.css';
+import { CASCADE_LAYER_ORDER_CSS } from '../lib/cascade-layers';
 import '../styles/visibility.css';
 
 interface Props {
@@ -343,6 +344,8 @@ const blockStyleCss =
 <html lang={locale} dir={localeDirection(locale)} data-brisk-theme={resolvedThemeName}>
 	<head>
 		<meta charset="utf-8" />
+		{/* Before any other style: see cascade-layers.ts. */}
+		<style set:html={CASCADE_LAYER_ORDER_CSS} />
 		{
 			themeBaseTokenDeclarations && (
 				<style set:html={`:root { ${themeBaseTokenDeclarations} }`} />

@@ -69,7 +69,6 @@ export interface BlockToolbarOverlayProps {
    * button simply does not appear until they are.
    */
   typeStyle?: ResponsiveBlockStyle;
-  onChangeTypeStyle?: (style: BlockStyleOverride) => void;
   /**
    * Which size the style fields edit — the breakpoint selector's current
    * value (ADR-0047). The fields themselves stay flat: this picks the
@@ -157,7 +156,6 @@ export function BlockToolbarOverlay({
   onChangeProp,
   breakpoint,
   typeStyle,
-  onChangeTypeStyle,
   onChangeInstanceStyle,
   onChangeVariant,
   onChangeAlign,

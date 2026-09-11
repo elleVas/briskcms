@@ -36,6 +36,9 @@ export const timelineStepBlock: BlockDescriptor<TimelineStepProps> = {
       inlineEditable: true,
     },
   ],
+  // The line and the gutter its marker sits in belong to Timeline; on its
+  // own the marker hangs outside the content column.
+  allowedParentTypes: ['Timeline'],
   stylableProperties: BlockStyleRegistry.STANDARD,
   defaultStyle: BLOCK_STYLE_DEFAULTS.TimelineStep,
 };

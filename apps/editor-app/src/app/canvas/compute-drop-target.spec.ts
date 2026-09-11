@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { computeDropTarget, findContainerAtPoint } from './compute-drop-target';
+import type { Block } from '@brisk/shared-types';
+import {
+  computeDropTarget,
+  findContainerAtPoint,
+  siblingDropRects,
+} from './compute-drop-target';
 
 const rects = [
   { id: 'a', top: 0, height: 100 },
@@ -83,5 +88,54 @@ describe('findContainerAtPoint', () => {
       index: 0,
       indicatorTop: 0,
     });
+  });
+});
+
+describe('siblingDropRects', () => {
+  const tree: Block[] = [
+    { id: 'hero', type: 'Hero', props: {} },
+    {
+      id: 'columns',
+      type: 'Columns',
+      props: {},
+      children: [
+        { id: 'col-1', type: 'Column', props: {} },
+        { id: 'col-2', type: 'Column', props: {} },
+      ],
+    },
+  ];
+  // In document order, which interleaves every depth — exactly what the
+  // function must not hand back as-is.
+  const blockRects = [
+    { id: 'hero', top: 0, left: 0, width: 100, height: 50 },
+    { id: 'columns', top: 50, left: 0, width: 100, height: 100 },
+    { id: 'col-1', top: 50, left: 0, width: 50, height: 100 },
+    { id: 'col-2', top: 50, left: 50, width: 50, height: 100 },
+  ];
+
+  it('measures a nested block against its own siblings, not the root', () => {
+    expect(siblingDropRects(tree, blockRects, 'col-2')).toEqual({
+      parentId: 'columns',
+      rects: [
+        { id: 'col-1', top: 50, height: 100 },
+        { id: 'col-2', top: 50, height: 100 },
+      ],
+    });
+  });
+
+  it('measures against the root when no block is being dragged yet', () => {
+    expect(siblingDropRects(tree, blockRects, null)).toEqual({
+      parentId: null,
+      rects: [
+        { id: 'hero', top: 0, height: 50 },
+        { id: 'columns', top: 50, height: 100 },
+      ],
+    });
+  });
+
+  it('leaves out a sibling the canvas has not reported a rect for', () => {
+    expect(siblingDropRects(tree, blockRects.slice(0, 1), null).rects).toEqual([
+      { id: 'hero', top: 0, height: 50 },
+    ]);
   });
 });

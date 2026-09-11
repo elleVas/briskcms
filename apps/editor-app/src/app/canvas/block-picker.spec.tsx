@@ -28,6 +28,34 @@ const columnsDescriptor: BlockDescriptor = {
 
 describe('BlockPicker', () => {
   /*
+   * A Column belongs inside Columns. Offering it with nothing selected
+   * offers a block that cannot be placed anywhere.
+   */
+  it('leaves out the blocks that have nowhere to go right now', () => {
+    render(
+      <BlockPicker
+        categories={[{ title: 'Layout', types: ['Columns', 'Column'] }]}
+        registry={[
+          columnsDescriptor,
+          {
+            type: 'Column',
+            label: 'Colonna',
+            category: 'layout',
+            defaultProps: {},
+            fields: [],
+            allowedParentTypes: ['Columns'],
+          },
+        ]}
+        onInsert={vi.fn()}
+        canInsert={(descriptor) => descriptor.type !== 'Column'}
+      />,
+    );
+
+    expect(screen.getByText('Colonne')).toBeTruthy();
+    expect(screen.queryByText('Colonna')).toBeNull();
+  });
+
+  /*
    * Every category open, not an accordion. Closed sections meant the
    * panel showed six words and no blocks: to learn a Countdown exists
    * you had to open three of them, or already know its name well enough

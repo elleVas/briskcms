@@ -203,7 +203,7 @@ describe('applyBlockInsert', () => {
         '<div class="brisk-root-block">' +
         '<div data-brisk-block-id="a">first</div>' +
         '</div>' +
-        '<div class="brisk-root-block">' +
+        '<div class="brisk-root-block brisk-rb-b">' +
         '<div data-brisk-block-id="b">second</div>' +
         '</div>' +
         '</div>',
@@ -228,7 +228,7 @@ describe('applyBlockInsert', () => {
 
     expect(document.body.innerHTML).toBe(
       '<div data-brisk-root-blocks="page">' +
-        '<div class="brisk-root-block">' +
+        '<div class="brisk-root-block brisk-rb-b">' +
         '<div data-brisk-block-id="b">new</div>' +
         '</div>' +
         '<div class="brisk-root-block">' +
@@ -280,6 +280,55 @@ describe('applyBlockInsert', () => {
     expect(
       wrappers[1].querySelector('[data-brisk-block-id]')?.textContent,
     ).toBe('second');
+  });
+
+  /*
+   * The page renders each root wrapper with the class holding the block's
+   * own margins and animation, its width and its hover effect. A wrapper
+   * built here had none of the three, so a pasted or duplicated block lost
+   * them until the page was reloaded.
+   */
+  it('builds the wrapper the page would have rendered for that block', () => {
+    document.body.innerHTML = rootList(
+      '<div data-brisk-block-id="a" style="display:contents">first</div>',
+    );
+
+    applyBlockInsert(
+      document,
+      '<div data-brisk-block-id="copy-1" style="display:contents">copy</div>',
+      null,
+      null,
+      null,
+      { align: 'full', styleOverride: { base: { hoverEffect: 'lift' } } },
+    );
+
+    const wrapper = document.querySelector(
+      '[data-brisk-block-id="copy-1"]',
+    )?.parentElement;
+    expect(wrapper?.className).toBe('brisk-root-block brisk-rb-copy-1');
+    expect(wrapper?.getAttribute('data-brisk-align')).toBe('full');
+    expect(wrapper?.getAttribute('data-brisk-hover')).toBe('lift');
+  });
+
+  it('leaves out the attributes a block does not ask for, as the page does', () => {
+    document.body.innerHTML = rootList(
+      '<div data-brisk-block-id="a" style="display:contents">first</div>',
+    );
+
+    applyBlockInsert(
+      document,
+      '<div data-brisk-block-id="plain" style="display:contents">plain</div>',
+      null,
+      null,
+      null,
+      { align: 'content' },
+    );
+
+    const wrapper = document.querySelector(
+      '[data-brisk-block-id="plain"]',
+    )?.parentElement;
+    expect(wrapper?.hasAttribute('data-brisk-align')).toBe(false);
+    expect(wrapper?.hasAttribute('data-brisk-hover')).toBe(false);
   });
 
   it('inserts a new wrapper BESIDE an existing root block, never inside its neighbour', () => {

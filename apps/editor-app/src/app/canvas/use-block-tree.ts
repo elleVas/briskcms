@@ -25,6 +25,13 @@ export interface BlockTreeTarget {
  * mutates its input.
  */
 
+export type IdentifiedBlock = Block & { id: string };
+
+/** A block with an id is one the editor can select, move and patch. */
+export function hasId(block: Block | null): block is IdentifiedBlock {
+  return Boolean(block?.id);
+}
+
 export function findBlockInTree(blocks: Block[], id: string): Block | null {
   for (const block of blocks) {
     if (block.id === id) {
@@ -230,14 +237,99 @@ export function locateBlock(
 }
 
 /**
- * The chain from the outermost block down to `id`, `id` included — what
- * the toolbar's breadcrumb shows and what makes "select the parent"
- * possible at all.
+ * Whether a block of `parent`'s type may hold a child of `childType` —
+ * the descriptor's own rule, and the only place it is read.
  *
- * `[]` when the id is not in the tree, which the caller renders as
- * nothing rather than as an error: a selection can outlive the block it
- * pointed at for one render, after an undo or a delete.
+ * Not a container: nothing. A container with no `allowedChildTypes`
+ * (Container, Column): anything. A container with a list (Testimonials →
+ * Testimonial, Tabs → Tab): exactly those. The Layers panel, inserting
+ * from the picker, dropping a template, pasting and dragging from the
+ * sidebar all ask this, so no path can put a Heading inside a list of
+ * testimonials that another path would have refused.
  */
+export function canHoldChild(
+  parent: BlockDescriptor | undefined,
+  childType: string,
+): boolean {
+  if (!parent?.isContainer) {
+    return false;
+  }
+  return (
+    !parent.allowedChildTypes || parent.allowedChildTypes.includes(childType)
+  );
+}
+
+/**
+ * The nearest position at or above `target` where every one of `childTypes`
+ * may sit.
+ *
+ * `target` stands when its parent accepts them all. Otherwise it steps out
+ * of that parent and lands right AFTER it, one level up, and asks again —
+ * so a Heading aimed inside Testimonials goes just below the Testimonials,
+ * beside what the person was looking at, rather than vanishing to the end
+ * of the page. The root accepts anything, so the walk always ends.
+ */
+/**
+ * Whether a block of `childType` may sit under `parentType` — `null` being
+ * the page's own top level.
+ *
+ * Both ends have a say. A container declares what it takes
+ * (`allowedChildTypes`), and a child declares where it belongs
+ * (`allowedParentTypes`): a Tab outside Tabs is a panel with no tab to open
+ * it, a Column outside Columns is a plain box with no width of its own. The
+ * top level takes anything that does not name a parent.
+ */
+export function canPlace(
+  registry: BlockDescriptor[],
+  parentType: string | null,
+  childType: string,
+): boolean {
+  const child = registry.find((d) => d.type === childType);
+  if (
+    child?.allowedParentTypes &&
+    !(parentType !== null && child.allowedParentTypes.includes(parentType))
+  ) {
+    return false;
+  }
+  if (parentType === null) {
+    return true;
+  }
+  return canHoldChild(
+    registry.find((d) => d.type === parentType),
+    childType,
+  );
+}
+
+export function nearestTargetThatHolds(
+  blocks: Block[],
+  registry: BlockDescriptor[],
+  target: BlockTreeTarget,
+  childTypes: string[],
+): BlockTreeTarget | null {
+  let current = target;
+  while (current.parentId !== null) {
+    const parent = findBlockInTree(blocks, current.parentId);
+    const parentLocation = locateBlock(blocks, current.parentId);
+    if (!parent || !parentLocation) {
+      // A parent that is not in the tree is no place to insert at all.
+      current = { parentId: null, index: blocks.length };
+      break;
+    }
+    if (childTypes.every((type) => canPlace(registry, parent.type, type))) {
+      return current;
+    }
+    current = {
+      parentId: parentLocation.parentId,
+      index: parentLocation.index + 1,
+    };
+  }
+  // The top level is the last candidate, and it can refuse too: a block
+  // that names its parents has nowhere to go once none of them is left.
+  return childTypes.every((type) => canPlace(registry, null, type))
+    ? current
+    : null;
+}
+
 export function blockAncestry(blocks: Block[], id: string): Block[] {
   for (const block of blocks) {
     if (block.id === id) {
@@ -266,6 +358,19 @@ export function siblingsAt(blocks: Block[], parentId: string | null): Block[] {
     return blocks;
   }
   return findBlockInTree(blocks, parentId)?.children ?? [];
+}
+
+/**
+ * Whether a reusable section is placed anywhere in these blocks, at any
+ * depth. Its blocks are not in the page tree — they are grafted on when the
+ * page is read (docs/adr/0059) — so nothing rendered from the tree alone can
+ * show them.
+ */
+export function containsSectionInstance(blocks: Block[]): boolean {
+  return blocks.some(
+    (block) =>
+      block.type === 'Section' || containsSectionInstance(block.children ?? []),
+  );
 }
 
 /**

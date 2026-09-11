@@ -1,4 +1,4 @@
-import type { BlockAlign } from './content-model';
+import type { Block, BlockAlign } from './content-model';
 
 /**
  * The postMessage protocol between the canvas (apps/editor-app, the parent)
@@ -238,11 +238,25 @@ export type EditorExitTextEditMessage = PreviewBridgeEnvelope<
  * `container.renderToString` renders the nested ones too). `parentId: null`
  * = the page root; `beforeBlockId: null` = at the end of the list (root or
  * inside the parent) rather than before a specific sibling.
+ *
+ * `rootLayout` is what the wrapper around a ROOT block reads — its width on
+ * the page and its hover effect. The fragment is the block alone and the
+ * wrapper is built in the iframe, so without these a block arriving with
+ * either showed at content width, with no hover, until a reload. Ignored
+ * for a nested insert, which has no wrapper.
  */
 export type EditorInsertBlockMessage = PreviewBridgeEnvelope<
   'editor:insert-block',
-  { html: string; parentId: string | null; beforeBlockId: string | null }
+  {
+    html: string;
+    parentId: string | null;
+    beforeBlockId: string | null;
+    rootLayout?: RootBlockLayout;
+  }
 >;
+
+/** See EditorInsertBlockMessage. */
+export type RootBlockLayout = Pick<Block, 'align' | 'styleOverride'>;
 
 /** A deleted block (the toolbar's "Remove block") — the iframe removes the `[data-brisk-block-id=blockId]` node from its own DOM, with no reload. */
 export type EditorRemoveBlockMessage = PreviewBridgeEnvelope<

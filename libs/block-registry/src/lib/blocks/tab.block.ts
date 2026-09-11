@@ -23,6 +23,9 @@ export const tabBlock: BlockDescriptor<{ label: string }> = {
   ],
   isContainer: true,
   allowedChildTypes: ['Hero', 'Text', 'Image', 'Gallery', 'Form'],
+  // Its label becomes a button only when Tabs builds the tab list around
+  // its panels (block-behaviors/tabs.ts); anywhere else there is no tab.
+  allowedParentTypes: ['Tabs'],
   stylableProperties: BlockStyleRegistry.STANDARD,
   defaultStyle: BLOCK_STYLE_DEFAULTS.Tab,
 };
