@@ -1006,6 +1006,9 @@
         "choose": "Scegli icona",
         "remove": "Rimuovi icona"
       }
+    },
+    "placement": {
+      "refused": "{{block}} sta solo dentro {{parents}}, quindi qui non c'è posto per inserirlo."
     }
   },
   "toast": {

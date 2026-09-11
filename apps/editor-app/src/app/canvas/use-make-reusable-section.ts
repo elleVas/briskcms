@@ -5,7 +5,7 @@ import {
   publishReusableSection,
 } from '../../lib/reusable-sections-api-client';
 import { useTranslation } from '../../lib/use-translation';
-import { canHoldChild, findBlockInTree, locateBlock } from './use-block-tree';
+import { canPlace, findBlockInTree, locateBlock } from './use-block-tree';
 
 export interface UseMakeReusableSectionParams {
   siteId: string | undefined;
@@ -47,14 +47,7 @@ export function useMakeReusableSection({
     ? locateBlock(localBlocks, selectedBlock.id)?.parentId
     : null;
   const parent = parentId ? findBlockInTree(localBlocks, parentId) : null;
-  if (
-    !siteId ||
-    (parent &&
-      !canHoldChild(
-        registry.find((descriptor) => descriptor.type === parent.type),
-        'Section',
-      ))
-  ) {
+  if (!siteId || (parent && !canPlace(registry, parent.type, 'Section'))) {
     return undefined;
   }
 

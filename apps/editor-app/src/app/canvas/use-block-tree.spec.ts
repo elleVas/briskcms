@@ -15,6 +15,7 @@ import {
   updateBlockProps,
   updateBlockStyleOverride,
   canHoldChild,
+  canPlace,
   nearestTargetThatHolds,
 } from './use-block-tree';
 
@@ -576,5 +577,97 @@ describe('nearestTargetThatHolds', () => {
         'Anything',
       ]),
     ).toEqual({ parentId: null, index: 1 });
+  });
+});
+
+/*
+ * A container says what it takes; a child says where it belongs. A Tab
+ * outside Tabs is a panel with no tab to open it, so the rule has to ask
+ * both ends — `allowedChildTypes` alone let the page root hold anything.
+ */
+describe('canPlace', () => {
+  const tabs: BlockDescriptor = {
+    type: 'Tabs',
+    label: 'Tabs',
+    category: 'layout',
+    defaultProps: {},
+    fields: [],
+    isContainer: true,
+    allowedChildTypes: ['Tab'],
+  };
+  const tab: BlockDescriptor = {
+    type: 'Tab',
+    label: 'Tab',
+    category: 'layout',
+    defaultProps: {},
+    fields: [],
+    isContainer: true,
+    allowedParentTypes: ['Tabs'],
+  };
+  const box: BlockDescriptor = {
+    type: 'Container',
+    label: 'Container',
+    category: 'layout',
+    defaultProps: {},
+    fields: [],
+    isContainer: true,
+  };
+  const heading: BlockDescriptor = {
+    type: 'Heading',
+    label: 'Heading',
+    category: 'content',
+    defaultProps: {},
+    fields: [],
+  };
+  const registry = [tabs, tab, box, heading];
+
+  it('lets a block with no parents named sit at the top level', () => {
+    expect(canPlace(registry, null, 'Heading')).toBe(true);
+  });
+
+  it('keeps a block that names its parents off the top level', () => {
+    expect(canPlace(registry, null, 'Tab')).toBe(false);
+  });
+
+  it('keeps it out of a container that is not one of them', () => {
+    expect(canPlace(registry, 'Container', 'Tab')).toBe(false);
+  });
+
+  it('puts it inside the container it names', () => {
+    expect(canPlace(registry, 'Tabs', 'Tab')).toBe(true);
+  });
+
+  it('still asks the container what it takes', () => {
+    expect(canPlace(registry, 'Tabs', 'Heading')).toBe(false);
+    expect(canPlace(registry, 'Container', 'Heading')).toBe(true);
+  });
+
+  it('has nowhere to put a child-only block when its container is not in the tree', () => {
+    const tree: Block[] = [
+      { id: 'box', type: 'Container', props: {}, children: [] },
+    ];
+
+    expect(
+      nearestTargetThatHolds(tree, registry, { parentId: 'box', index: 0 }, [
+        'Tab',
+      ]),
+    ).toBeNull();
+  });
+
+  it('finds the container it belongs in when the aim was a child of it', () => {
+    const tree: Block[] = [
+      {
+        id: 'tabs',
+        type: 'Tabs',
+        props: {},
+        children: [{ id: 'tab-1', type: 'Tab', props: {}, children: [] }],
+      },
+    ];
+
+    expect(
+      nearestTargetThatHolds(tree, registry, { parentId: 'tab-1', index: 0 }, [
+        'Tab',
+      ]),
+    ).toEqual({ parentId: 'tabs', index: 1 });
   });
 });

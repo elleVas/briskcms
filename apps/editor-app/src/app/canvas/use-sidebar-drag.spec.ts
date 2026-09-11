@@ -49,7 +49,29 @@ const testimonialsWallDescriptor: BlockDescriptor = {
   allowedChildTypes: ['Testimonials'],
 };
 
+const columnsDescriptor: BlockDescriptor = {
+  type: 'Columns',
+  label: 'Colonne',
+  category: 'layout',
+  defaultProps: {},
+  fields: [],
+  isContainer: true,
+  allowedChildTypes: ['Column'],
+};
+
+const columnDescriptor: BlockDescriptor = {
+  type: 'Column',
+  label: 'Colonna',
+  category: 'layout',
+  defaultProps: {},
+  fields: [],
+  isContainer: true,
+  allowedParentTypes: ['Columns'],
+};
+
 const registry = [
+  columnsDescriptor,
+  columnDescriptor,
   heroDescriptor,
   containerDescriptor,
   testimonialsDescriptor,
@@ -72,6 +94,7 @@ function setup(
   } = {},
 ) {
   const insertNewBlockAt = vi.fn();
+  const onPlacementRefused = vi.fn<(types: string[]) => void>();
   const { result } = renderHook(() =>
     useSidebarDrag({
       localBlocks: overrides.localBlocks ?? [],
@@ -80,9 +103,10 @@ function setup(
       rootRects: overrides.rootRects ?? [],
       blockRects: overrides.blockRects ?? [],
       insertNewBlockAt,
+      onPlacementRefused,
     }),
   );
-  return { result, insertNewBlockAt };
+  return { result, insertNewBlockAt, onPlacementRefused };
 }
 
 describe('useSidebarDrag', () => {
@@ -376,6 +400,56 @@ describe('useSidebarDrag', () => {
 
     expect(insertNewBlockAt).toHaveBeenCalledWith(heroDescriptor, {
       parentId: 'container-1',
+      index: 0,
+    });
+  });
+});
+
+/*
+ * A block that belongs inside one kind of container can be dropped anywhere
+ * on the canvas. Dropping it outside used to put it wherever the pointer
+ * happened to be.
+ */
+describe('useSidebarDrag with a block that names its container', () => {
+  const tree: Block[] = [
+    { id: 'top', type: 'Hero', props: {} },
+    { id: 'grid', type: 'Columns', props: {}, children: [] },
+  ];
+  const blockRects = [
+    { id: 'top', top: 0, left: 0, width: 700, height: 200 },
+    { id: 'grid', top: 200, left: 0, width: 700, height: 200 },
+  ];
+
+  it('refuses a drop that lands nowhere it may sit, and says so', () => {
+    const { result, insertNewBlockAt, onPlacementRefused } = setup({
+      localBlocks: tree,
+      blockRects,
+    });
+
+    // iframe (350, 100): over the Hero, so the page root is the only
+    // candidate — and a Column does not belong there.
+    act(() => {
+      result.current.handleSidebarDragEnd(columnDescriptor, 400, 200);
+    });
+
+    expect(insertNewBlockAt).not.toHaveBeenCalled();
+    expect(onPlacementRefused).toHaveBeenCalledWith(['Column']);
+  });
+
+  it('drops it into the grid it belongs in', () => {
+    const { result, insertNewBlockAt, onPlacementRefused } = setup({
+      localBlocks: tree,
+      blockRects,
+    });
+
+    // iframe (350, 300): inside the Columns block.
+    act(() => {
+      result.current.handleSidebarDragEnd(columnDescriptor, 400, 400);
+    });
+
+    expect(onPlacementRefused).not.toHaveBeenCalled();
+    expect(insertNewBlockAt).toHaveBeenCalledWith(columnDescriptor, {
+      parentId: 'grid',
       index: 0,
     });
   });

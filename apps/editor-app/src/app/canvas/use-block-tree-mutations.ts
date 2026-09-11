@@ -112,6 +112,12 @@ export interface UseBlockTreeMutationsParams {
   /** Remounts the canvas iframe — used where no fragment can be patched in (docs/adr/0059). */
   reloadCanvas?: () => void;
   /**
+   * Told when a block was refused everywhere it could have gone — a Column
+   * pasted with nothing but the page around it, say. Without it the block
+   * would simply not appear, with nothing saying why.
+   */
+  onPlacementRefused?: (blockTypes: string[]) => void;
+  /**
    * Sends the editor's block style sheet again, built from the tree given.
    * A block's own style is a rule keyed by its id, not something its
    * fragment carries, so a copy with a fresh id shows up plain without it.
@@ -154,6 +160,8 @@ export interface UseBlockTreeMutationsResult {
     descriptor: BlockDescriptor,
     target: BlockTreeTarget,
   ) => void;
+  /** Whether a block of this type has anywhere to go right now — what the picker asks before offering it. */
+  canInsertType: (blockType: string) => boolean;
   /**
    * Records an edit that changed a block's props or its per-instance style
    * rather than the shape of the tree — a typed character, a field in the
@@ -200,6 +208,7 @@ export function useBlockTreeMutations({
   fragmentSection,
   reloadCanvas,
   refreshStyleSheet,
+  onPlacementRefused,
   selectedBlock,
   selectedDescriptor,
 }: UseBlockTreeMutationsParams): UseBlockTreeMutationsResult {
@@ -471,13 +480,45 @@ export function useBlockTreeMutations({
     insertManyAt([block], target);
   }
 
-  function handleInsert(descriptor: BlockDescriptor): void {
-    const target = nearestTargetThatHolds(
+  /**
+   * Where these types may go from the target aimed at, or `null` when
+   * nowhere will have them — and then whoever asked is told, so a refusal
+   * is a message rather than a block that never appears.
+   */
+  function placementFor(
+    target: BlockTreeTarget,
+    blockTypes: string[],
+  ): BlockTreeTarget | null {
+    const placed = nearestTargetThatHolds(
       localBlocks,
       registry,
-      resolveInsertTarget(localBlocks, registry, bridge.selectedBlockId),
-      [descriptor.type],
+      target,
+      blockTypes,
     );
+    if (!placed) {
+      onPlacementRefused?.(blockTypes);
+    }
+    return placed;
+  }
+
+  /** The target a click in the picker aims at, before asking whether it holds. */
+  function selectedInsertTarget(): BlockTreeTarget {
+    return resolveInsertTarget(localBlocks, registry, bridge.selectedBlockId);
+  }
+
+  function canInsertType(blockType: string): boolean {
+    return (
+      nearestTargetThatHolds(localBlocks, registry, selectedInsertTarget(), [
+        blockType,
+      ]) !== null
+    );
+  }
+
+  function handleInsert(descriptor: BlockDescriptor): void {
+    const target = placementFor(selectedInsertTarget(), [descriptor.type]);
+    if (!target) {
+      return;
+    }
     performInsert(createBlockFromDescriptor(descriptor, registry), target);
   }
 
@@ -498,12 +539,13 @@ export function useBlockTreeMutations({
     if (blocks.length === 0) {
       return;
     }
-    const target = nearestTargetThatHolds(
-      localBlocks,
-      registry,
-      resolveInsertTarget(localBlocks, registry, bridge.selectedBlockId),
+    const target = placementFor(
+      selectedInsertTarget(),
       blocks.map((block) => block.type),
     );
+    if (!target) {
+      return;
+    }
     insertManyAt(blocks, target);
   }
 
@@ -830,16 +872,18 @@ export function useBlockTreeMutations({
     const at = selectedBlock?.id
       ? locateBlock(localBlocks, selectedBlock.id)
       : null;
+    const target = placementFor(
+      at
+        ? { parentId: at.parentId, index: at.index + 1 }
+        : { parentId: null, index: siblingsAt(localBlocks, null).length },
+      blocks.map((block) => block.type),
+    );
+    if (!target) {
+      return;
+    }
     insertManyAt(
       blocks.map((block) => cloneBlockWithNewIds(block)),
-      nearestTargetThatHolds(
-        localBlocks,
-        registry,
-        at
-          ? { parentId: at.parentId, index: at.index + 1 }
-          : { parentId: null, index: siblingsAt(localBlocks, null).length },
-        blocks.map((block) => block.type),
-      ),
+      target,
     );
   }
 
@@ -999,17 +1043,16 @@ export function useBlockTreeMutations({
     const location = selectedBlock?.id
       ? locateBlock(localBlocks, selectedBlock.id)
       : null;
-    performInsert(
-      cloneBlockWithNewIds(block),
-      nearestTargetThatHolds(
-        localBlocks,
-        registry,
-        location
-          ? { parentId: location.parentId, index: location.index + 1 }
-          : { parentId: null, index: localBlocks.length },
-        [block.type],
-      ),
+    const target = placementFor(
+      location
+        ? { parentId: location.parentId, index: location.index + 1 }
+        : { parentId: null, index: localBlocks.length },
+      [block.type],
     );
+    if (!target) {
+      return;
+    }
+    performInsert(cloneBlockWithNewIds(block), target);
   }
 
   /**
@@ -1066,6 +1109,7 @@ export function useBlockTreeMutations({
 
   return {
     recordEdit,
+    canInsertType,
     handleInsert,
     handleInsertBlocks,
     handlePaste,

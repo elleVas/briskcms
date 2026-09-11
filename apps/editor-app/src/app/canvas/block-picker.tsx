@@ -23,6 +23,8 @@ export interface BlockPickerProps {
   categories: BlockPickerCategory[];
   registry: BlockDescriptor[];
   onInsert: (descriptor: BlockDescriptor) => void;
+  /** Whether a block of this type has anywhere to go right now — a block that belongs inside one kind of container is not offered elsewhere. */
+  canInsert?: (descriptor: BlockDescriptor) => boolean;
   /** When present, every button also becomes draggable onto the canvas — see canvas-editor-shell.tsx for the release-point computation. A plain click (no movement past the threshold) stays `onInsert` as today. */
   drag?: BlockDragHandlers;
 }
@@ -144,6 +146,7 @@ export function BlockPicker({
   categories,
   registry,
   onInsert,
+  canInsert,
   drag,
 }: BlockPickerProps) {
   const { t, tLabel } = useTranslation();
@@ -160,6 +163,11 @@ export function BlockPicker({
         // reads "Immagine" in the list and types that, while somebody
         // reading the docs types "Image". Refusing either would be a
         // search that only works if you already knew where to look.
+        // A block that belongs inside a specific container (a Column, a
+        // Tab) is offered only while that container is the one an insert
+        // would land in — offering it anywhere else is offering a block
+        // that cannot be placed.
+        .filter((descriptor) => !canInsert || canInsert(descriptor))
         .filter(
           (descriptor) =>
             search === '' ||

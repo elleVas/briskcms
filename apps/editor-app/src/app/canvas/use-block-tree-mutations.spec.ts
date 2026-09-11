@@ -1238,3 +1238,116 @@ describe('useBlockTreeMutations keeps the canvas in step without reloading', () 
     expect(ids).not.toContain('copied-2');
   });
 });
+
+/*
+ * Some blocks only make sense inside one container: a Column without the
+ * Columns grid is a plain box. The insert paths ask before placing, and say
+ * so when there is nowhere to place.
+ */
+describe('useBlockTreeMutations places a block only where it belongs', () => {
+  const columns: BlockDescriptor = {
+    type: 'Columns',
+    label: 'Columns',
+    category: 'layout',
+    defaultProps: {},
+    fields: [],
+    isContainer: true,
+    allowedChildTypes: ['Column'],
+  };
+  const column: BlockDescriptor = {
+    type: 'Column',
+    label: 'Column',
+    category: 'layout',
+    defaultProps: {},
+    fields: [],
+    isContainer: true,
+    allowedParentTypes: ['Columns'],
+  };
+  const heading: BlockDescriptor = {
+    type: 'Heading',
+    label: 'Heading',
+    category: 'content',
+    defaultProps: {},
+    fields: [],
+  };
+
+  const grid: Block = {
+    id: 'grid',
+    type: 'Columns',
+    props: {},
+    children: [{ id: 'col-1', type: 'Column', props: {}, children: [] }],
+  };
+  const tree: Block[] = [{ id: 'intro', type: 'Heading', props: {} }, grid];
+
+  function setupPlacement(selected: Block | null) {
+    const onChange = vi.fn<(blocks: Block[]) => void>();
+    const onPlacementRefused = vi.fn<(types: string[]) => void>();
+    const { result } = renderHook(() =>
+      useBlockTreeMutations({
+        localBlocks: tree,
+        setLocalBlocks: vi.fn(),
+        onChange,
+        registry: [columns, column, heading],
+        bridge: {
+          selectedBlockId: selected?.id ?? null,
+          patchBlock: vi.fn(),
+          insertBlock: vi.fn(),
+          removeBlock: vi.fn(),
+          reorderBlocks: vi.fn(),
+          setBlockAlign: vi.fn(),
+        },
+        token: null,
+        pageId: 'page-1',
+        onPlacementRefused,
+        selectedBlock: selected,
+        selectedDescriptor: undefined,
+      }),
+    );
+    return { result, onChange, onPlacementRefused };
+  }
+
+  it('does not offer a column while nothing holds it', () => {
+    const { result } = setupPlacement(null);
+
+    expect(result.current.canInsertType('Column')).toBe(false);
+    expect(result.current.canInsertType('Heading')).toBe(true);
+  });
+
+  it('offers it once the grid it belongs in is selected', () => {
+    const { result } = setupPlacement(grid);
+
+    expect(result.current.canInsertType('Column')).toBe(true);
+  });
+
+  it('offers it beside a column too, where it lands in the same grid', () => {
+    const { result } = setupPlacement(grid.children?.[0] ?? null);
+
+    expect(result.current.canInsertType('Column')).toBe(true);
+  });
+
+  it('refuses to paste one where nothing can hold it, and says so', () => {
+    const { result, onChange, onPlacementRefused } = setupPlacement(null);
+
+    act(() =>
+      result.current.handlePaste({ id: 'copied', type: 'Column', props: {} }),
+    );
+
+    expect(onChange).not.toHaveBeenCalled();
+    expect(onPlacementRefused).toHaveBeenCalledWith(['Column']);
+  });
+
+  it('still pastes it into the grid that holds it', () => {
+    const { result, onChange, onPlacementRefused } = setupPlacement(
+      grid.children?.[0] ?? null,
+    );
+
+    act(() =>
+      result.current.handlePaste({ id: 'copied', type: 'Column', props: {} }),
+    );
+
+    expect(onPlacementRefused).not.toHaveBeenCalled();
+    expect(
+      (onChange.mock.calls.at(-1)?.[0] ?? [])[1]?.children?.map((c) => c.type),
+    ).toEqual(['Column', 'Column']);
+  });
+});

@@ -1006,6 +1006,9 @@
         "choose": "Choose icon",
         "remove": "Remove icon"
       }
+    },
+    "placement": {
+      "refused": "{{block}} only belongs inside {{parents}}, so there is nowhere to put it here."
     }
   },
   "toast": {

@@ -9,6 +9,7 @@ import type { Block, ExposedFields } from '@brisk/shared-types';
 import type { BlockDescriptor } from '@brisk/block-registry';
 import { PUBLIC_SITE_URL } from '../../lib/public-site-url';
 import { useTranslation } from '../../lib/use-translation';
+import { useToast } from '../toast-provider';
 import { usePageList } from '../page-list-context';
 import { BlockPicker, type BlockPickerCategory } from './block-picker';
 import { TemplatePicker } from './template-picker';
@@ -26,7 +27,7 @@ import { siblingDropRects } from './compute-drop-target';
 import { LayerContextMenu } from './layer-context-menu';
 import { LayersPanel } from './layers-panel';
 import { isRectVisibleInIframe, useIframeGeometry } from './overlay-layer';
-import { canHoldChild } from './use-block-tree';
+import { canPlace } from './use-block-tree';
 import { useBlockStyleSheet } from './use-block-style-sheet';
 import { useBlockTreeMutations } from './use-block-tree-mutations';
 import { useCanvasDraft } from './use-canvas-draft';
@@ -145,6 +146,7 @@ export function CanvasEditorShell({
   children,
 }: CanvasEditorShellProps) {
   const { t, tLabel } = useTranslation();
+  const { toast } = useToast();
   const { pick: pickPage } = usePageList();
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const bridge = usePreviewBridge(iframeRef, PUBLIC_SITE_URL);
@@ -230,11 +232,37 @@ export function CanvasEditorShell({
     canMoveSelectedDown,
   } = describeSelection(localBlocks, bridge, registry, tLabel);
 
+  /**
+   * A block that belongs inside one kind of container (a Column, a Tab) can
+   * be aimed somewhere that will not have it — pasted with only the page
+   * around it, say. Saying so beats a click that does nothing.
+   */
+  function notifyPlacementRefused(blockTypes: string[]): void {
+    const refused = blockTypes
+      .map((type) => registry.find((d) => d.type === type))
+      .find((descriptor) => descriptor?.allowedParentTypes?.length);
+    if (!refused?.allowedParentTypes) {
+      return;
+    }
+    toast(
+      t('canvas.placement.refused', {
+        block: tLabel(refused.label),
+        parents: refused.allowedParentTypes
+          .map((type) =>
+            tLabel(registry.find((d) => d.type === type)?.label ?? type),
+          )
+          .join(', '),
+      }),
+      'destructive',
+    );
+  }
+
   // Before the mutations, which send it too: a copy of a styled block is
   // a new id, and its rule has to reach the iframe with it.
   const styleSheet = useBlockStyleSheet(bridge, localBlocksRef);
 
   const {
+    canInsertType,
     handleInsert,
     handleInsertBlocks,
     handleReorder,
@@ -266,6 +294,7 @@ export function CanvasEditorShell({
     fragmentSection: sectionPreview,
     reloadCanvas,
     refreshStyleSheet: styleSheet.refresh,
+    onPlacementRefused: notifyPlacementRefused,
     selectedBlock,
     selectedDescriptor,
   });
@@ -298,6 +327,7 @@ export function CanvasEditorShell({
     rootRects,
     blockRects: bridge.blockRects,
     insertNewBlockAt,
+    onPlacementRefused: notifyPlacementRefused,
   });
 
   useCanvasShortcuts({
@@ -409,6 +439,7 @@ export function CanvasEditorShell({
             categories={categories}
             registry={registry}
             onInsert={handleInsert}
+            canInsert={(descriptor) => canInsertType(descriptor.type)}
             drag={{
               onDragStart: handleSidebarDragStart,
               onDragMove: handleSidebarDragMove,
@@ -525,10 +556,7 @@ export function CanvasEditorShell({
               Boolean(registry.find((d) => d.type === type)?.isContainer)
             }
             canContain={(parentType, childType) =>
-              canHoldChild(
-                registry.find((d) => d.type === parentType),
-                childType,
-              )
+              canPlace(registry, parentType, childType)
             }
             selectedBlockIds={bridge.selectedBlockIds}
             onSelect={(blockId, additive) => {

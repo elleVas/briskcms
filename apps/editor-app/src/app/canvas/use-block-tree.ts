@@ -269,43 +269,67 @@ export function canHoldChild(
  * beside what the person was looking at, rather than vanishing to the end
  * of the page. The root accepts anything, so the walk always ends.
  */
+/**
+ * Whether a block of `childType` may sit under `parentType` — `null` being
+ * the page's own top level.
+ *
+ * Both ends have a say. A container declares what it takes
+ * (`allowedChildTypes`), and a child declares where it belongs
+ * (`allowedParentTypes`): a Tab outside Tabs is a panel with no tab to open
+ * it, a Column outside Columns is a plain box with no width of its own. The
+ * top level takes anything that does not name a parent.
+ */
+export function canPlace(
+  registry: BlockDescriptor[],
+  parentType: string | null,
+  childType: string,
+): boolean {
+  const child = registry.find((d) => d.type === childType);
+  if (
+    child?.allowedParentTypes &&
+    !(parentType !== null && child.allowedParentTypes.includes(parentType))
+  ) {
+    return false;
+  }
+  if (parentType === null) {
+    return true;
+  }
+  return canHoldChild(
+    registry.find((d) => d.type === parentType),
+    childType,
+  );
+}
+
 export function nearestTargetThatHolds(
   blocks: Block[],
   registry: BlockDescriptor[],
   target: BlockTreeTarget,
   childTypes: string[],
-): BlockTreeTarget {
+): BlockTreeTarget | null {
   let current = target;
   while (current.parentId !== null) {
     const parent = findBlockInTree(blocks, current.parentId);
-    const descriptor = parent
-      ? registry.find((d) => d.type === parent.type)
-      : undefined;
-    if (childTypes.every((type) => canHoldChild(descriptor, type))) {
-      return current;
-    }
     const parentLocation = locateBlock(blocks, current.parentId);
-    if (!parentLocation) {
+    if (!parent || !parentLocation) {
       // A parent that is not in the tree is no place to insert at all.
-      return { parentId: null, index: blocks.length };
+      current = { parentId: null, index: blocks.length };
+      break;
+    }
+    if (childTypes.every((type) => canPlace(registry, parent.type, type))) {
+      return current;
     }
     current = {
       parentId: parentLocation.parentId,
       index: parentLocation.index + 1,
     };
   }
-  return current;
+  // The top level is the last candidate, and it can refuse too: a block
+  // that names its parents has nowhere to go once none of them is left.
+  return childTypes.every((type) => canPlace(registry, null, type))
+    ? current
+    : null;
 }
 
-/**
- * The chain from the outermost block down to `id`, `id` included — what
- * the toolbar's breadcrumb shows and what makes "select the parent"
- * possible at all.
- *
- * `[]` when the id is not in the tree, which the caller renders as
- * nothing rather than as an error: a selection can outlive the block it
- * pointed at for one render, after an undo or a delete.
- */
 export function blockAncestry(blocks: Block[], id: string): Block[] {
   for (const block of blocks) {
     if (block.id === id) {

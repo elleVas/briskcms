@@ -8,7 +8,7 @@ import {
 } from './compute-drop-target';
 import type { IframeGeometry } from './overlay-layer';
 import {
-  canHoldChild,
+  canPlace,
   findBlockInTree,
   locateBlock,
   nearestTargetThatHolds,
@@ -43,6 +43,8 @@ export interface UseSidebarDragParams {
     descriptor: BlockDescriptor,
     target: BlockTreeTarget,
   ) => void;
+  /** Told when the dragged block has nowhere it may sit — see useBlockTreeMutations. */
+  onPlacementRefused?: (blockTypes: string[]) => void;
 }
 
 export interface UseSidebarDragResult {
@@ -73,6 +75,7 @@ export function useSidebarDrag({
   rootRects,
   blockRects,
   insertNewBlockAt,
+  onPlacementRefused,
 }: UseSidebarDragParams): UseSidebarDragResult {
   const [sidebarDrag, setSidebarDrag] = useState<SidebarDragState | null>(null);
 
@@ -136,27 +139,22 @@ export function useSidebarDrag({
     const hitContainer = hitContainerId
       ? findBlockInTree(localBlocks, hitContainerId)
       : null;
-    insertNewBlockAt(
-      descriptor,
-      nearestTargetThatHolds(
-        localBlocks,
-        registry,
-        dropTargetAt(
-          hitContainer,
-          descriptorOf,
-          descriptor.type,
-          iframeX,
-          iframeY,
-        ),
-        [descriptor.type],
-      ),
+    const target = nearestTargetThatHolds(
+      localBlocks,
+      registry,
+      dropTargetAt(hitContainer, descriptor.type, iframeX, iframeY),
+      [descriptor.type],
     );
+    if (!target) {
+      onPlacementRefused?.([descriptor.type]);
+      return;
+    }
+    insertNewBlockAt(descriptor, target);
   }
 
   /** Where a drop lands before asking whether its parent may hold it — see handleSidebarDragEnd. */
   function dropTargetAt(
     hitContainer: Block | null,
-    descriptorOf: (blockId: string) => BlockDescriptor | undefined,
     draggedType: string,
     iframeX: number,
     iframeY: number,
@@ -169,7 +167,7 @@ export function useSidebarDrag({
           localBlocks.length,
       };
     }
-    if (canHoldChild(descriptorOf(hitContainer.id), draggedType)) {
+    if (canPlace(registry, hitContainer.type, draggedType)) {
       return {
         parentId: hitContainer.id,
         index: hitContainer.children?.length ?? 0,
