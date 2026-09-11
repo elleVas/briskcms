@@ -433,13 +433,15 @@ export function initPreviewBridge(): void {
         return;
       }
       case 'editor:insert-block': {
-        const { html, parentId, beforeBlockId } = event.data.payload;
+        const { html, parentId, beforeBlockId, rootLayout } =
+          event.data.payload;
         const inserted = applyBlockInsert(
           document,
           html,
           parentId,
           beforeBlockId,
           editingSection,
+          rootLayout,
         );
         if (inserted) {
           resizeObserver.observe(inserted);

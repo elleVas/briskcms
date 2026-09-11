@@ -126,6 +126,7 @@ describe('useBlockTreeMutations undo/redo', () => {
       '<div>hero</div>',
       null,
       null,
+      {},
     );
     expect(result.current.canUndo).toBe(true);
     expect(result.current.canRedo).toBe(false);
@@ -164,6 +165,7 @@ describe('useBlockTreeMutations undo/redo', () => {
       '<div>hero</div>',
       null,
       'text-1',
+      {},
     );
   });
 
@@ -815,6 +817,32 @@ describe('useBlockTreeMutations keeps the canvas in step without reloading', () 
     { id: 'b', type: 'Heading', props: {} },
   ];
 
+  /*
+   * The fragment is the block alone; the wrapper a root block sits in is
+   * built in the iframe, and reads the block's width and hover effect. A
+   * duplicate of a full-width block used to land at content width.
+   */
+  it("sends a root block's width and style along with its fragment, for its wrapper", async () => {
+    const wide: Block = {
+      id: 'wide',
+      type: 'Heading',
+      props: {},
+      align: 'full',
+      styleOverride: { base: { hoverEffect: 'lift' } },
+    };
+    const { result, bridge } = setupCanvas([wide], wide);
+
+    act(() => result.current.handleDuplicateSelected());
+    await flush();
+
+    expect(bridge.insertBlock).toHaveBeenCalledWith(
+      '<div>fragment</div>',
+      null,
+      null,
+      { align: 'full', styleOverride: { base: { hoverEffect: 'lift' } } },
+    );
+  });
+
   it('grafts a strip in order in front of the block that stood where it goes', async () => {
     const first: Block = { id: 'first', type: 'Heading', props: {} };
     const last: Block = { id: 'last', type: 'Heading', props: {} };
@@ -831,7 +859,7 @@ describe('useBlockTreeMutations keeps the canvas in step without reloading', () 
       .map((block) => block.id)
       .slice(1, 3);
     expect(bridge.insertBlock.mock.calls).toEqual(
-      pasted.map((id) => [`<div>${id}</div>`, null, 'last']),
+      pasted.map((id) => [`<div>${id}</div>`, null, 'last', {}]),
     );
   });
 
@@ -997,6 +1025,7 @@ describe('useBlockTreeMutations keeps the canvas in step without reloading', () 
       '<div>lone</div>',
       null,
       'box',
+      {},
     );
     expect(
       vi.mocked(blockFragmentApi.renderBlockFragment).mock.calls.at(-2)?.[0]

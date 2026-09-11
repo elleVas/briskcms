@@ -1,4 +1,9 @@
-import type { BlockAlign } from '@brisk/shared-types';
+import {
+  rootBlockHoverAttr,
+  rootBlockInstanceClassName,
+  type Block,
+  type BlockAlign,
+} from '@brisk/shared-types';
 
 /**
  * The wrapper every ROOT-level block gets, in one place (ADR-0049).
@@ -23,4 +28,30 @@ export function rootBlockAlignAttr(
   align: BlockAlign | undefined,
 ): BlockAlign | undefined {
   return align && align !== 'content' ? align : undefined;
+}
+
+export interface RootBlockWrapper {
+  classNames: string[];
+  align: BlockAlign | undefined;
+  hover: string | undefined;
+}
+
+/**
+ * Everything the wrapper carries for one block: its classes and its two
+ * attributes. The class holding the block's own margins and animation
+ * (`brisk-rb-<id>`) and the hover attribute used to be written only by the
+ * page renderer, so a block inserted on the canvas lost all three until
+ * the next reload.
+ */
+export function rootBlockWrapper(
+  block: Pick<Block, 'id' | 'align' | 'styleOverride'>,
+): RootBlockWrapper {
+  const instanceClass = block.id ? rootBlockInstanceClassName(block.id) : null;
+  return {
+    classNames: instanceClass
+      ? [ROOT_BLOCK_CLASS, instanceClass]
+      : [ROOT_BLOCK_CLASS],
+    align: rootBlockAlignAttr(block.align),
+    hover: rootBlockHoverAttr(block.styleOverride),
+  };
 }

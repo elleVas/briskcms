@@ -398,15 +398,21 @@ export function useBlockTreeMutations({
     if (!isCurrent()) {
       return;
     }
-    for (const result of rendered) {
+    rendered.forEach((result, index) => {
+      const { align, styleOverride } = blocks[index];
       if (result.status === 'fulfilled') {
-        bridge.insertBlock(result.value, parentId, beforeBlockId);
+        // What the wrapper around a root block reads: the fragment is the
+        // block alone, and the wrapper is built in the iframe.
+        bridge.insertBlock(result.value, parentId, beforeBlockId, {
+          align,
+          styleOverride,
+        });
       }
       // A rejected one stays in the local tree and in the saved draft
       // either way (applyLocalChange has already happened) — it will
       // reappear on the canvas at the iframe's next reload, the same
       // behaviour as today for any network failure.
-    }
+    });
   }
 
   async function insertBlockIntoCanvasAt(

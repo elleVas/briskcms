@@ -4,8 +4,6 @@ import PageLayout from '../layouts/PageLayout.astro';
 import {
   buildBlockInstanceRulesCss,
   buildRootBlockSpacingCss,
-  rootBlockInstanceClassName,
-  rootBlockHoverAttr,
 } from '@brisk/shared-types';
 import BlockRenderer from './BlockRenderer.astro';
 import ErrorPageShell from './ErrorPageShell.astro';
@@ -14,10 +12,7 @@ import { getPublishedSiteChrome } from '../lib/public-api-client';
 // The one definition of a root block's wrapper — shared with the canvas
 // bridge, which has to build the identical thing for a block inserted
 // live. See root-block-layout.ts for why that matters.
-import {
-  ROOT_BLOCK_CLASS,
-  rootBlockAlignAttr,
-} from '../lib/root-block-layout';
+import { rootBlockWrapper } from '../lib/root-block-layout';
 
 // Purely presentational — the 404 status itself must be set by the calling
 // page route (src/pages/index.astro, src/pages/[slug].astro), not here:
@@ -140,26 +135,26 @@ const errorPageTranslations =
         class="flex flex-col"
         data-brisk-root-blocks={editable ? 'page' : undefined}
       >
-        {page.content.map((block) => (
-          <div
-            class:list={[
-              ROOT_BLOCK_CLASS,
-              block.id ? rootBlockInstanceClassName(block.id) : null,
-            ]}
-            data-brisk-align={rootBlockAlignAttr(block.align)}
-            data-brisk-hover={rootBlockHoverAttr(block.styleOverride)}
-          >
-            <BlockRenderer
-              block={block}
-              locale={page.locale}
-              translations={page.translations}
-              site={page.site}
-              ancestors={page.ancestors}
-              currentPageTitle={page.seoMeta.title}
-              editable={editable}
-            />
-          </div>
-        ))}
+        {page.content.map((block) => {
+          const wrapper = rootBlockWrapper(block);
+          return (
+            <div
+              class:list={wrapper.classNames}
+              data-brisk-align={wrapper.align}
+              data-brisk-hover={wrapper.hover}
+            >
+              <BlockRenderer
+                block={block}
+                locale={page.locale}
+                translations={page.translations}
+                site={page.site}
+                ancestors={page.ancestors}
+                currentPageTitle={page.seoMeta.title}
+                editable={editable}
+              />
+            </div>
+          );
+        })}
       </main>
     </PageLayout>
   ) : chrome && locale ? (
