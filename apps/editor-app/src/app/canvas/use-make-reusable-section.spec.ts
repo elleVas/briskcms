@@ -41,14 +41,14 @@ const tree: Block[] = [
   },
 ];
 
-function offered(selectedId: string) {
+function offered(selectedId: string, siteId: string | null = 'site-1') {
   const selectedBlock =
     [tree[0], tree[1].children?.[0], tree[2].children?.[0]].find(
       (block) => block?.id === selectedId,
     ) ?? null;
   const { result } = renderHook(() =>
     useMakeReusableSection({
-      siteId: 'site-1',
+      siteId: siteId ?? undefined,
       selectedBlock,
       localBlocks: tree,
       registry,
@@ -74,5 +74,9 @@ describe('useMakeReusableSection', () => {
 
   it('is not offered inside a container that may not hold a Section', () => {
     expect(offered('t1')).toBe(false);
+  });
+
+  it('is not offered without a site to create the section in', () => {
+    expect(offered('root-heading', null)).toBe(false);
   });
 });

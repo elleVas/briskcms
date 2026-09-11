@@ -14,6 +14,7 @@ import {
   createBlockFromDescriptor,
   findBlockInTree,
   blockIds,
+  containsSectionInstance,
   hasId,
   insertBlock,
   locateBlock,
@@ -22,6 +23,7 @@ import {
   removeBlock,
   siblingsAt,
   type BlockTreeTarget,
+  type IdentifiedBlock,
 } from './use-block-tree';
 
 /** At the root when the selected block is not a container, otherwise at the end of its children — the "selected container or root" rule from the visual editor plan, Day 3. */
@@ -65,6 +67,29 @@ interface HistoryEntry {
 /** A bounded history — a content editor does not need unlimited undo, and a stack growing forever through a long session is waste either way. */
 const MAX_HISTORY_ENTRIES = 50;
 
+/**
+ * Turns for the canvas syncs of ONE history entry: starting a sync makes
+ * any earlier one of the same entry stale, and the stale one drops what it
+ * was about to graft once its fragment comes back.
+ *
+ * A sync that renders first and grafts later is not over when it returns.
+ * Undo arriving in between removed the blocks, and the fragments still on
+ * their way were then inserted anyway: blocks on the canvas that are not in
+ * the tree, and after a redo, the same block twice.
+ *
+ * Per entry and not for the whole history, deliberately: undoing one insert
+ * must not cancel a different insert still rendering.
+ */
+function syncTurns(): () => () => boolean {
+  let turn = 0;
+  return () => {
+    const mine = ++turn;
+    return () => turn === mine;
+  };
+}
+
+const ALWAYS_CURRENT = () => true;
+
 export interface UseBlockTreeMutationsParams {
   localBlocks: Block[];
   setLocalBlocks: Dispatch<SetStateAction<Block[]>>;
@@ -97,7 +122,7 @@ export interface UseBlockTreeMutationsParams {
 export interface UseBlockTreeMutationsResult {
   handleInsert: (descriptor: BlockDescriptor) => void;
   /** A whole strip at once — how a template lands on the page (docs/adr/0059). */
-  handleInsertBlocks: (blocks: (Block & { id: string })[]) => void;
+  handleInsertBlocks: (blocks: IdentifiedBlock[]) => void;
   /** Inserts a copy beside the selection — see the implementation on why the ids change. */
   handlePaste: (block: Block) => void;
   /** Moves a block under a different parent, keeping its id, style and text. */
@@ -115,7 +140,7 @@ export interface UseBlockTreeMutationsResult {
   handleReorder: (parentId: string | null, orderedIds: string[]) => void;
   handleRemoveSelected: () => void;
   /** Swaps the selected block for another at the same place — see the implementation. */
-  handleReplaceSelected: (replacement: Block & { id: string }) => void;
+  handleReplaceSelected: (replacement: IdentifiedBlock) => void;
   handleMoveSelected: (direction: -1 | 1) => void;
   handleDuplicateSelected: () => void;
   handleAddChild: () => void;
@@ -152,9 +177,9 @@ export interface UseBlockTreeMutationsResult {
  * Move/duplicate/delete/insert a block — the most entangled of the three
  * pieces extracted from canvas-editor-shell.tsx (bridge + token +
  * localBlocks all three at once), which is why it was the last to be
- * isolated rather than the first. `performInsert` below is the shared core
+ * isolated rather than the first. `insertManyAt` below is the shared core
  * reused by EVERY handler that inserts a block (previously four nearly
- * identical copies of insertBlock + applyLocalChange + insertIntoCanvas in
+ * identical copies of insertBlock + applyLocalChange + a canvas insert in
  * the original file). It also hosts undo/redo (a command pattern, one
  * explicit entry per mutation): it is the only place that already sees
  * EVERY structural mutation of the tree, and therefore the natural point to
@@ -174,8 +199,25 @@ export function useBlockTreeMutations({
   selectedBlock,
   selectedDescriptor,
 }: UseBlockTreeMutationsParams): UseBlockTreeMutationsResult {
-  const [past, setPast] = useState<HistoryEntry[]>([]);
-  const [future, setFuture] = useState<HistoryEntry[]>([]);
+  /**
+   * The stacks themselves live in a ref; the state below only mirrors their
+   * sizes for the undo/redo buttons.
+   *
+   * Undo and redo used to run their side effects inside `setPast`/
+   * `setFuture` updaters. React may call an updater twice — StrictMode does,
+   * on every update in development — so a redo inserted its blocks twice.
+   * Reading the stack from a ref and writing it back is what lets the side
+   * effects run once, in the handler.
+   */
+  const historyRef = useRef<{ past: HistoryEntry[]; future: HistoryEntry[] }>({
+    past: [],
+    future: [],
+  });
+  const [historySize, setHistorySize] = useState({ past: 0, future: 0 });
+  function setHistory(past: HistoryEntry[], future: HistoryEntry[]): void {
+    historyRef.current = { past, future };
+    setHistorySize({ past: past.length, future: future.length });
+  }
   /**
    * The tree as of the last point the history knows about — the state undo
    * would return to. Every entry below is built from it, which is what
@@ -202,13 +244,14 @@ export function useBlockTreeMutations({
   const [historyPageId, setHistoryPageId] = useState(pageId);
   if (historyPageId !== pageId) {
     setHistoryPageId(pageId);
-    setPast([]);
-    setFuture([]);
+    setHistorySize({ past: 0, future: 0 });
   }
-  // The baseline follows, in an effect because a ref may not be written
-  // during render. By the time it runs, the shell's own resync has already
-  // put the new page's tree in `localBlocks`.
+  // The stacks and the baseline follow, in an effect because a ref may not
+  // be written during render. By the time it runs, the shell's own resync
+  // has already put the new page's tree in `localBlocks`, and no undo can
+  // have happened in between: that takes a user action.
   useEffect(() => {
+    historyRef.current = { past: [], future: [] };
     lastCommittedRef.current = localBlocks;
     // eslint-disable-next-line react-hooks/exhaustive-deps -- re-baselines on a PAGE change only; localBlocks changes on every edit, and re-running then would defeat the point.
   }, [pageId]);
@@ -228,36 +271,34 @@ export function useBlockTreeMutations({
   /** Records a new action — always clearing the "future" (redo stops making sense after a fresh mutation, the same convention as every editor with undo/redo). */
   function recordHistory(entry: HistoryEntry): void {
     lastCommittedRef.current = entry.after;
-    setPast((prev) => [...prev, entry].slice(-MAX_HISTORY_ENTRIES));
-    setFuture([]);
+    setHistory(
+      [...historyRef.current.past, entry].slice(-MAX_HISTORY_ENTRIES),
+      [],
+    );
   }
 
   function undo(): void {
-    setPast((prev) => {
-      if (prev.length === 0) {
-        return prev;
-      }
-      const entry = prev[prev.length - 1];
-      lastCommittedRef.current = entry.before;
-      applyLocalChange(entry.before);
-      entry.syncBackward();
-      setFuture((f) => [entry, ...f]);
-      return prev.slice(0, -1);
-    });
+    const { past, future } = historyRef.current;
+    const entry = past[past.length - 1];
+    if (!entry) {
+      return;
+    }
+    setHistory(past.slice(0, -1), [entry, ...future]);
+    lastCommittedRef.current = entry.before;
+    applyLocalChange(entry.before);
+    entry.syncBackward();
   }
 
   function redo(): void {
-    setFuture((prev) => {
-      if (prev.length === 0) {
-        return prev;
-      }
-      const entry = prev[0];
-      lastCommittedRef.current = entry.after;
-      applyLocalChange(entry.after);
-      entry.syncForward();
-      setPast((p) => [...p, entry].slice(-MAX_HISTORY_ENTRIES));
-      return prev.slice(1);
-    });
+    const { past, future } = historyRef.current;
+    const [entry, ...rest] = future;
+    if (!entry) {
+      return;
+    }
+    setHistory([...past, entry].slice(-MAX_HISTORY_ENTRIES), rest);
+    lastCommittedRef.current = entry.after;
+    applyLocalChange(entry.after);
+    entry.syncForward();
   }
 
   /**
@@ -267,10 +308,7 @@ export function useBlockTreeMutations({
    * after gaining a child, or a block pasted or duplicated, lost its looks
    * until a reload.
    */
-  function renderFragmentOf(
-    block: Block & { id: string },
-    previewToken: string,
-  ) {
+  function renderFragmentOf(block: IdentifiedBlock, previewToken: string) {
     return renderBlockFragment({
       pageId,
       ...(fragmentSection ?? {}),
@@ -300,6 +338,7 @@ export function useBlockTreeMutations({
   async function patchParentBlock(
     parentId: string,
     treeWithUpdatedChildren: Block[],
+    isCurrent: () => boolean = ALWAYS_CURRENT,
   ): Promise<void> {
     if (!token) {
       return;
@@ -308,9 +347,15 @@ export function useBlockTreeMutations({
     if (!hasId(parent)) {
       return;
     }
+    if (needsReload([parent])) {
+      reloadCanvas?.();
+      return;
+    }
     try {
       const html = await renderFragmentOf(parent, token);
-      bridge.patchBlock(parent.id, html);
+      if (isCurrent()) {
+        bridge.patchBlock(parent.id, html);
+      }
     } catch {
       // Resta nell'albero locale/nella bozza salvata, riappare corretto al
       // prossimo reload — stesso comportamento del fallimento di rete negli
@@ -318,24 +363,59 @@ export function useBlockTreeMutations({
     }
   }
 
-  /** The shared core of every root-level insert: it renders the fragment and asks the bridge to graft it at an EXPLICIT point (no recomputation of `beforeBlockId` from a "current" state that may no longer be the right one for a later redo — see handleRemoveSelected's syncBackward for the case where this genuinely matters). */
-  async function insertBlockIntoCanvasAt(
-    block: Block & { id: string },
+  /**
+   * Whether these blocks can only reach the canvas through a reload.
+   *
+   * A reusable section's blocks live on the server and are grafted on when
+   * the page is read (docs/adr/0059); the fragment endpoint renders the one
+   * block it is handed, so a Section inside it — pasted, duplicated, put
+   * back by an undo, or sitting in a container being re-rendered — came
+   * back as "this section has not been published yet".
+   */
+  function needsReload(blocks: Block[]): boolean {
+    return containsSectionInstance(blocks);
+  }
+
+  /** The shared core of every root-level insert: it renders the fragments and asks the bridge to graft them, in order, at an EXPLICIT point (no recomputation of `beforeBlockId` from a "current" state that may no longer be the right one for a later redo — see handleRemoveSelected's syncBackward for the case where this genuinely matters). */
+  async function insertBlocksIntoCanvasAt(
+    blocks: IdentifiedBlock[],
     parentId: string | null,
     beforeBlockId: string | null,
+    isCurrent: () => boolean = ALWAYS_CURRENT,
   ): Promise<void> {
     if (!token) {
       return;
     }
-    try {
-      const html = await renderFragmentOf(block, token);
-      bridge.insertBlock(html, parentId, beforeBlockId);
-    } catch {
-      // The block stays in the local tree and in the saved draft either way
-      // (applyLocalChange has already happened) — it will reappear on the
-      // canvas at the iframe's next reload, the same behaviour as today for
-      // any network failure.
+    if (needsReload(blocks)) {
+      reloadCanvas?.();
+      return;
     }
+    // Rendered together, grafted in order and in one go: grafting each as
+    // its fragment came back would put them in the order the network chose.
+    const rendered = await Promise.allSettled(
+      blocks.map((block) => renderFragmentOf(block, token)),
+    );
+    if (!isCurrent()) {
+      return;
+    }
+    for (const result of rendered) {
+      if (result.status === 'fulfilled') {
+        bridge.insertBlock(result.value, parentId, beforeBlockId);
+      }
+      // A rejected one stays in the local tree and in the saved draft
+      // either way (applyLocalChange has already happened) — it will
+      // reappear on the canvas at the iframe's next reload, the same
+      // behaviour as today for any network failure.
+    }
+  }
+
+  async function insertBlockIntoCanvasAt(
+    block: IdentifiedBlock,
+    parentId: string | null,
+    beforeBlockId: string | null,
+    isCurrent: () => boolean = ALWAYS_CURRENT,
+  ): Promise<void> {
+    await insertBlocksIntoCanvasAt([block], parentId, beforeBlockId, isCurrent);
   }
 
   /**
@@ -354,37 +434,11 @@ export function useBlockTreeMutations({
    * For a NESTED insert (`target.parentId` non-null) see `patchParentBlock`
    * above — the parent is re-patched, the child is not inserted on its own.
    */
-  async function insertIntoCanvas(
-    block: Block & { id: string },
-    target: BlockTreeTarget,
-    nextBlocks: Block[],
-  ): Promise<void> {
-    if (target.parentId !== null) {
-      await patchParentBlock(target.parentId, nextBlocks);
-      return;
-    }
-    const siblingsBefore = siblingsAt(localBlocks, target.parentId);
-    const beforeBlockId = siblingsBefore[target.index]?.id ?? null;
-    await insertBlockIntoCanvasAt(block, target.parentId, beforeBlockId);
-  }
-
   function performInsert(
-    block: Block & { id: string },
+    block: IdentifiedBlock,
     target: BlockTreeTarget,
   ): void {
-    const before = localBlocks;
-    const next = insertBlock(before, block, target);
-    applyLocalChange(next);
-    const syncForward = () => void insertIntoCanvas(block, target, next);
-    const syncBackward = () => {
-      if (target.parentId) {
-        void patchParentBlock(target.parentId, before);
-      } else {
-        bridge.removeBlock(block.id);
-      }
-    };
-    syncForward();
-    recordHistory({ before, after: next, syncForward, syncBackward });
+    insertManyAt([block], target);
   }
 
   function handleInsert(descriptor: BlockDescriptor): void {
@@ -400,8 +454,7 @@ export function useBlockTreeMutations({
   /**
    * Inserts a whole strip of blocks — how a TEMPLATE arrives (docs/adr/0059).
    *
-   * A single block goes through `performInsert`, which patches the canvas
-   * in place. Several go in as ONE operation: they used to be a loop over
+   * Several blocks go in as ONE operation: they used to be a loop over
    * `performInsert`, and each call read the tree from the render it was
    * created in, so every block after the first started from a tree that
    * never had the ones before it. A template of three blocks landed as its
@@ -411,7 +464,7 @@ export function useBlockTreeMutations({
    * The strip travels together, so it goes where EVERY block in it may sit
    * — not split between a container and the level above it.
    */
-  function handleInsertBlocks(blocks: (Block & { id: string })[]): void {
+  function handleInsertBlocks(blocks: IdentifiedBlock[]): void {
     if (blocks.length === 0) {
       return;
     }
@@ -421,24 +474,27 @@ export function useBlockTreeMutations({
       resolveInsertTarget(localBlocks, registry, bridge.selectedBlockId),
       blocks.map((block) => block.type),
     );
-    if (blocks.length === 1) {
-      performInsert(blocks[0], target);
-      return;
-    }
     insertManyAt(blocks, target);
   }
 
   /**
-   * Several blocks inserted side by side as one action — one tree write,
-   * one save, one undo — built in a loop over the same growing tree rather
-   * than over the render's own copy, which is the whole point.
+   * Blocks inserted side by side as one action — one tree write, one save,
+   * one undo — built in a loop over the same growing tree rather than over
+   * the render's own copy, which is the whole point. One block is simply
+   * the shortest strip: every insert in this file ends up here.
    *
-   * Patched into the canvas in place, like a single insert. It used to
-   * reload the iframe, which threw the page back to the top and could show
-   * the draft from before the insert if its save had not landed yet.
+   * Patched into the canvas in place. A strip used to reload the iframe,
+   * which threw the page back to the top and could show the draft from
+   * before the insert if its save had not landed yet.
+   *
+   * `beforeBlockId` is the id of whoever occupies the target position
+   * today, taken from `before` once: every block is grafted in front of
+   * that same one, so a later redo does not recompute it from a tree that
+   * has moved on. For a NESTED insert see `patchParentBlock` — the parent
+   * is re-rendered, the children are not inserted on their own.
    */
   function insertManyAt(
-    blocks: (Block & { id: string })[],
+    blocks: IdentifiedBlock[],
     target: BlockTreeTarget,
   ): void {
     const before = localBlocks;
@@ -451,26 +507,18 @@ export function useBlockTreeMutations({
     }
     applyLocalChange(next);
     const parentId = target.parentId;
-    // Taken from `before`, once: the block the whole strip goes in front of.
-    // Every block is grafted before that same one, so they end up in order
-    // without any position being recomputed from a tree that is changing.
     const beforeBlockId = siblingsAt(before, null)[target.index]?.id ?? null;
+    const takeTurn = syncTurns();
     const syncForward = () => {
-      if (parentId) {
-        void patchParentBlock(parentId, next);
-        return;
-      }
-      void (async () => {
-        // One after the other: grafting in parallel would put them in the
-        // order their fragments happened to come back.
-        for (const block of blocks) {
-          await insertBlockIntoCanvasAt(block, null, beforeBlockId);
-        }
-      })();
+      const isCurrent = takeTurn();
+      void (parentId
+        ? patchParentBlock(parentId, next, isCurrent)
+        : insertBlocksIntoCanvasAt(blocks, null, beforeBlockId, isCurrent));
     };
     const syncBackward = () => {
+      const isCurrent = takeTurn();
       if (parentId) {
-        void patchParentBlock(parentId, before);
+        void patchParentBlock(parentId, before, isCurrent);
         return;
       }
       for (const block of blocks) {
@@ -550,7 +598,7 @@ export function useBlockTreeMutations({
    * neither the block nor the section, which is the state nobody asked
    * for.
    */
-  function handleReplaceSelected(replacement: Block & { id: string }): void {
+  function handleReplaceSelected(replacement: IdentifiedBlock): void {
     if (!selectedBlock?.id) {
       return;
     }
@@ -583,12 +631,12 @@ export function useBlockTreeMutations({
   }
 
   function handleRemoveSelected(): void {
-    if (!selectedBlock?.id) {
+    if (!hasId(selectedBlock)) {
       return;
     }
     const location = locateBlock(localBlocks, selectedBlock.id);
     const before = localBlocks;
-    const removedBlock = selectedBlock as Block & { id: string };
+    const removedBlock = selectedBlock;
     const next = removeBlock(before, selectedBlock.id);
     applyLocalChange(next);
     // A removed nested block can change its parent's "chrome" (Testimonials
@@ -610,10 +658,9 @@ export function useBlockTreeMutations({
       if (location.parentId) {
         void patchParentBlock(location.parentId, before);
       } else {
-        // Reinserts at the ORIGINAL position — it does not reuse
-        // insertIntoCanvas (which would recompute beforeBlockId from
-        // `localBlocks`, no longer `before` by the time of a later redo):
-        // the real next sibling has to be taken here, straight from
+        // Reinserts at the ORIGINAL position — the next sibling is not
+        // recomputed from `localBlocks`, no longer `before` by the time of
+        // a later redo: the real next sibling has to be taken here, straight from
         // `before`, the snapshot of the tree at the moment of the original
         // removal.
         const siblingsBefore = siblingsAt(before, null);
@@ -809,51 +856,48 @@ export function useBlockTreeMutations({
     const before = localBlocks;
     const block = findBlockInTree(before, blockId);
     const from = locateBlock(before, blockId);
-    if (!block?.id || !from) {
+    if (!hasId(block) || !from) {
       return;
     }
-    const next = insertBlock(
-      removeBlock(before, blockId),
-      block as Block & { id: string },
-      {
-        parentId,
-        index,
-      },
-    );
+    const to: BlockTreeTarget = { parentId, index };
+    const next = insertBlock(removeBlock(before, blockId), block, to);
     applyLocalChange(next);
     // Both ends of the move have to be re-rendered, and the fragments
     // involved are the two PARENTS rather than the block: a container
     // shows different chrome when it gains or loses a child (an empty-state
     // hint appearing, a collection's arrows), which patching only the moved
-    // node would leave stale.
-    const sync = (tree: Block[]) => () => {
-      if (from.parentId) {
-        void patchParentBlock(from.parentId, tree);
-      } else {
-        bridge.removeBlock(blockId);
-      }
-      if (parentId) {
-        void patchParentBlock(parentId, tree);
-      }
-      // Out of a container and back to the root: there is no parent
-      // fragment to re-render, so the block is grafted in directly.
-      if (!parentId) {
-        const siblings = siblingsAt(tree, null);
-        const beforeBlockId = siblings[index + 1]?.id ?? null;
-        void insertBlockIntoCanvasAt(
-          block as Block & { id: string },
-          null,
-          beforeBlockId,
-        );
-      }
-    };
-    sync(next)();
-    recordHistory({
-      before,
-      after: next,
-      syncForward: sync(next),
-      syncBackward: sync(before),
-    });
+    // node would leave stale. At the root there is no parent fragment, so
+    // the block itself is removed or grafted in.
+    //
+    // Each direction takes the block OUT of where it was in the tree it
+    // leaves and puts it IN where it is in the tree it arrives at. Undo used
+    // to replay the forward steps against the old tree, so a block moved
+    // from the root into a container was removed from the canvas instead of
+    // coming back.
+    const move =
+      (
+        out: { parentId: string | null },
+        into: BlockTreeTarget,
+        arrivingTree: Block[],
+      ) =>
+      () => {
+        if (out.parentId) {
+          void patchParentBlock(out.parentId, arrivingTree);
+        } else {
+          bridge.removeBlock(blockId);
+        }
+        if (into.parentId) {
+          void patchParentBlock(into.parentId, arrivingTree);
+        } else {
+          const beforeBlockId =
+            siblingsAt(arrivingTree, null)[into.index + 1]?.id ?? null;
+          void insertBlockIntoCanvasAt(block, null, beforeBlockId);
+        }
+      };
+    const syncForward = move(from, to, next);
+    const syncBackward = move(to, from, before);
+    syncForward();
+    recordHistory({ before, after: next, syncForward, syncBackward });
   }
 
   /**
@@ -953,7 +997,7 @@ export function useBlockTreeMutations({
     insertNewBlockAt,
     undo,
     redo,
-    canUndo: past.length > 0,
-    canRedo: future.length > 0,
+    canUndo: historySize.past > 0,
+    canRedo: historySize.future > 0,
   };
 }

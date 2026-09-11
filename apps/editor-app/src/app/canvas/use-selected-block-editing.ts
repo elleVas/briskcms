@@ -170,6 +170,13 @@ export function useSelectedBlockEditing({
       styleOverride,
     );
     setLocalBlocks((prev) => updateBlockStyleOverride(prev, blockId, next));
+    // Built here and handed over: the sheet used to read the draft ref,
+    // which only catches up after the next render — so every style edit
+    // sent the sheet as it was BEFORE that edit, and a control that fires
+    // once (a swatch, a select) showed the previous value.
+    styleSheet.refresh(
+      updateBlockStyleOverride(localBlocksRef.current, blockId, next),
+    );
     patch.scheduleStyleOverrideChange(
       blockId,
       selectedBlock.type,
@@ -178,7 +185,6 @@ export function useSelectedBlockEditing({
       selectedBlock.children,
       selectedBlock.variant,
     );
-    styleSheet.refresh();
   }
 
   /**

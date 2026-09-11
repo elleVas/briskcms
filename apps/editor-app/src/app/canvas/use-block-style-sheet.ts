@@ -1,5 +1,9 @@
 import { type MutableRefObject, useRef } from 'react';
-import { buildBlockInstanceRulesCss, type Block } from '@brisk/shared-types';
+import {
+  buildBlockInstanceRulesCss,
+  buildRootBlockSpacingCss,
+  type Block,
+} from '@brisk/shared-types';
 import type { PreviewBridgeState } from './use-preview-bridge';
 
 export interface BlockStyleSheet {
@@ -37,9 +41,15 @@ export function useBlockStyleSheet(
   const typeStyleCssRef = useRef('');
 
   function refresh(tree?: Block[]): void {
+    const blocks = tree ?? localBlocksRef.current;
     const tiers = [
       typeStyleCssRef.current,
-      buildBlockInstanceRulesCss([tree ?? localBlocksRef.current]),
+      buildBlockInstanceRulesCss([blocks]),
+      // The margins and the entrance animation of a root block are rules
+      // on its WRAPPER (`.brisk-rb-<id>`), which the page renders beside the
+      // instance rules. Without them a root block given a margin in the
+      // canvas, or arriving with one, kept the default until a reload.
+      buildRootBlockSpacingCss(blocks),
     ].filter(Boolean);
     bridge.updateBlockStyleCss(
       tiers.length > 0

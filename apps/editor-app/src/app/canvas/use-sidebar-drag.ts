@@ -4,15 +4,14 @@ import type { BlockDescriptor } from '@brisk/block-registry';
 import {
   computeDropTarget,
   findContainerAtPoint,
-  siblingDropRects,
   type DropCandidateRect,
 } from './compute-drop-target';
 import type { IframeGeometry } from './overlay-layer';
 import {
   canHoldChild,
   findBlockInTree,
+  locateBlock,
   nearestTargetThatHolds,
-  siblingsAt,
   type BlockTreeTarget,
 } from './use-block-tree';
 
@@ -165,16 +164,18 @@ export function useSidebarDrag({
         index: hitContainer.children?.length ?? 0,
       };
     }
-    const { parentId, rects } = siblingDropRects(
-      localBlocks,
-      blockRects,
-      hitContainer.id,
-    );
+    // Beside the container itself, by its own box: which half of IT the
+    // pointer is in. Measuring against every sibling's midpoint put a drop
+    // at the far end of a row when the siblings sit side by side.
+    const location = locateBlock(localBlocks, hitContainer.id);
+    const rect = blockRects.find((r) => r.id === hitContainer.id);
+    if (!location || !rect) {
+      return { parentId: null, index: localBlocks.length };
+    }
+    const pastItsMiddle = iframeY > rect.top + rect.height / 2;
     return {
-      parentId,
-      index:
-        computeDropTarget(rects, '', iframeY)?.index ??
-        siblingsAt(localBlocks, parentId).length,
+      parentId: location.parentId,
+      index: location.index + (pastItsMiddle ? 1 : 0),
     };
   }
 

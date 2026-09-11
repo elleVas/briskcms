@@ -337,6 +337,19 @@ export function siblingsAt(blocks: Block[], parentId: string | null): Block[] {
 }
 
 /**
+ * Whether a reusable section is placed anywhere in these blocks, at any
+ * depth. Its blocks are not in the page tree — they are grafted on when the
+ * page is read (docs/adr/0059) — so nothing rendered from the tree alone can
+ * show them.
+ */
+export function containsSectionInstance(blocks: Block[]): boolean {
+  return blocks.some(
+    (block) =>
+      block.type === 'Section' || containsSectionInstance(block.children ?? []),
+  );
+}
+
+/**
  * The ids of a flat list of blocks, in order — the form both the preview
  * bridge (`reorderBlocks`) and `handleReorder` speak in.
  *

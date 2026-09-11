@@ -1,3 +1,4 @@
+import { StrictMode } from 'react';
 import { act, renderHook } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { Block } from '@brisk/shared-types';
@@ -751,7 +752,11 @@ describe('useBlockTreeMutations keeps the canvas in step without reloading', () 
     isContainer: true,
   };
 
-  function setupCanvas(localBlocks: Block[], selected: Block | null = null) {
+  function setupCanvas(
+    localBlocks: Block[],
+    selected: Block | null = null,
+    options: { strict?: boolean } = {},
+  ) {
     vi.mocked(blockFragmentApi.renderBlockFragment).mockResolvedValue(
       '<div>fragment</div>',
     );
@@ -765,26 +770,238 @@ describe('useBlockTreeMutations keeps the canvas in step without reloading', () 
       removeBlock: vi.fn(),
       reorderBlocks: vi.fn(),
     };
-    const { result } = renderHook(() =>
-      useBlockTreeMutations({
-        localBlocks,
-        setLocalBlocks: vi.fn(),
-        onChange,
-        registry: [heading, box],
-        bridge,
-        token: 'tok',
-        pageId: 'page-1',
-        reloadCanvas,
-        refreshStyleSheet,
-        selectedBlock: selected,
-        selectedDescriptor: selected ? heading : undefined,
-      }),
+    const { result } = renderHook(
+      () =>
+        useBlockTreeMutations({
+          localBlocks,
+          setLocalBlocks: vi.fn(),
+          onChange,
+          registry: [heading, box],
+          bridge,
+          token: 'tok',
+          pageId: 'page-1',
+          reloadCanvas,
+          refreshStyleSheet,
+          selectedBlock: selected,
+          selectedDescriptor: selected ? heading : undefined,
+        }),
+      options.strict ? { wrapper: StrictMode } : undefined,
     );
     return { result, onChange, reloadCanvas, refreshStyleSheet, bridge };
   }
 
   afterEach(() => {
     vi.clearAllMocks();
+  });
+
+  /** Every fragment render waits until `release` is called — to act while blocks are still on their way. */
+  function holdFragments() {
+    const waiting: (() => void)[] = [];
+    vi.mocked(blockFragmentApi.renderBlockFragment).mockImplementation(
+      (input) =>
+        new Promise((resolve) => {
+          waiting.push(() => resolve(`<div>${input.blockId}</div>`));
+        }),
+    );
+    return async () => {
+      waiting.splice(0).forEach((release) => release());
+      await flush();
+      await flush();
+    };
+  }
+
+  const strip: (Block & { id: string })[] = [
+    { id: 'a', type: 'Heading', props: {} },
+    { id: 'b', type: 'Heading', props: {} },
+  ];
+
+  it('grafts a strip in order in front of the block that stood where it goes', async () => {
+    const first: Block = { id: 'first', type: 'Heading', props: {} };
+    const last: Block = { id: 'last', type: 'Heading', props: {} };
+    const { result, onChange, bridge } = setupCanvas([first, last], first);
+    vi.mocked(blockFragmentApi.renderBlockFragment).mockImplementation(
+      async (input) => `<div>${input.blockId}</div>`,
+    );
+
+    act(() => result.current.handlePasteMany(strip));
+    await flush();
+    await flush();
+
+    const pasted = (onChange.mock.calls.at(-1)?.[0] ?? [])
+      .map((block) => block.id)
+      .slice(1, 3);
+    expect(bridge.insertBlock.mock.calls).toEqual(
+      pasted.map((id) => [`<div>${id}</div>`, null, 'last']),
+    );
+  });
+
+  it('drops the fragments of a strip that was undone while they were rendering', async () => {
+    const { result, bridge } = setupCanvas([]);
+    const release = holdFragments();
+
+    act(() => result.current.handleInsertBlocks(strip));
+    act(() => result.current.undo());
+    await release();
+
+    expect(bridge.removeBlock.mock.calls.map(([id]) => id)).toEqual(['a', 'b']);
+    expect(bridge.insertBlock).not.toHaveBeenCalled();
+  });
+
+  it('grafts each block once when undo and redo both land before the fragments do', async () => {
+    const { result, bridge } = setupCanvas([]);
+    const release = holdFragments();
+
+    act(() => result.current.handleInsertBlocks(strip));
+    act(() => result.current.undo());
+    act(() => result.current.redo());
+    await release();
+
+    expect(bridge.insertBlock).toHaveBeenCalledTimes(2);
+  });
+
+  /*
+   * React calls state updaters twice under StrictMode, which the editor
+   * runs in development. Redo used to insert from inside one.
+   */
+  it('redoes an insert once under StrictMode', async () => {
+    const { result, bridge } = setupCanvas([], null, { strict: true });
+
+    act(() => result.current.handleInsertBlocks([strip[0]]));
+    await flush();
+    act(() => result.current.undo());
+    act(() => result.current.redo());
+    await flush();
+
+    expect(bridge.removeBlock).toHaveBeenCalledTimes(1);
+    expect(bridge.insertBlock).toHaveBeenCalledTimes(2);
+  });
+
+  it('sends the style sheet for the tree an undo or a redo puts back', () => {
+    const original: Block[] = [
+      {
+        id: 'styled',
+        type: 'Heading',
+        props: {},
+        styleOverride: { base: { textColor: '#ff0000' } },
+      },
+    ];
+    const { result, refreshStyleSheet } = setupCanvas(original);
+
+    act(() => result.current.handleInsertBlocks([strip[0]]));
+    const inserted = refreshStyleSheet.mock.calls.at(-1)?.[0];
+    act(() => result.current.undo());
+    expect(refreshStyleSheet.mock.calls.at(-1)?.[0]).toEqual(original);
+    act(() => result.current.redo());
+    expect(refreshStyleSheet.mock.calls.at(-1)?.[0]).toEqual(inserted);
+  });
+
+  it('re-renders the container a strip goes into, and re-renders it without the strip on undo', async () => {
+    const box: Block = {
+      id: 'box',
+      type: 'Container',
+      props: {},
+      children: [{ id: 'kept', type: 'Heading', props: {} }],
+    };
+    const { result, bridge } = setupCanvas([box], box);
+
+    act(() => result.current.handleInsertBlocks(strip));
+    await flush();
+    act(() => result.current.undo());
+    await flush();
+
+    const renders = vi
+      .mocked(blockFragmentApi.renderBlockFragment)
+      .mock.calls.map(([input]) => [
+        input.blockId,
+        (input.children ?? []).map((child) => child.id),
+      ]);
+    expect(renders).toEqual([
+      ['box', ['kept', 'a', 'b']],
+      ['box', ['kept']],
+    ]);
+    expect(bridge.patchBlock).toHaveBeenCalledTimes(2);
+    expect(bridge.insertBlock).not.toHaveBeenCalled();
+  });
+
+  /*
+   * A reusable section's blocks are grafted on when the page is read; the
+   * fragment endpoint only has the block it is handed, and rendered the
+   * section as "not published yet".
+   */
+  it('reloads the canvas for a pasted reusable section instead of rendering a placeholder', async () => {
+    const { result, reloadCanvas, bridge } = setupCanvas([]);
+
+    act(() =>
+      result.current.handlePasteMany([
+        { id: 'h', type: 'Heading', props: {} },
+        {
+          id: 'shared',
+          type: 'Section',
+          props: { section: { sectionId: 's1', sectionName: 'Footer CTA' } },
+        },
+      ]),
+    );
+    await flush();
+
+    expect(reloadCanvas).toHaveBeenCalledTimes(1);
+    expect(blockFragmentApi.renderBlockFragment).not.toHaveBeenCalled();
+    expect(bridge.insertBlock).not.toHaveBeenCalled();
+  });
+
+  it('reloads the canvas when the container being re-rendered holds a reusable section', async () => {
+    const box: Block = {
+      id: 'box',
+      type: 'Container',
+      props: {},
+      children: [
+        {
+          id: 'shared',
+          type: 'Section',
+          props: { section: { sectionId: 's1', sectionName: 'Footer CTA' } },
+        },
+      ],
+    };
+    const { result, reloadCanvas } = setupCanvas([box], box);
+
+    act(() => result.current.handleInsert(heading));
+    await flush();
+
+    expect(reloadCanvas).toHaveBeenCalledTimes(1);
+    expect(blockFragmentApi.renderBlockFragment).not.toHaveBeenCalled();
+  });
+
+  /*
+   * Undo used to replay the forward steps against the old tree: a block
+   * moved from the page into a container was removed from the canvas
+   * instead of coming back.
+   */
+  it('puts a block moved into a container back on the page when the move is undone', async () => {
+    const tree: Block[] = [
+      { id: 'lone', type: 'Heading', props: {} },
+      { id: 'box', type: 'Container', props: {}, children: [] },
+    ];
+    const { result, bridge } = setupCanvas(tree);
+    vi.mocked(blockFragmentApi.renderBlockFragment).mockImplementation(
+      async (input) => `<div>${input.blockId}</div>`,
+    );
+
+    act(() => result.current.handleReparent('lone', 'box', 0));
+    await flush();
+    expect(bridge.removeBlock).toHaveBeenCalledWith('lone');
+    expect(bridge.patchBlock).toHaveBeenLastCalledWith('box', '<div>box</div>');
+
+    act(() => result.current.undo());
+    await flush();
+
+    expect(bridge.insertBlock).toHaveBeenCalledWith(
+      '<div>lone</div>',
+      null,
+      'box',
+    );
+    expect(
+      vi.mocked(blockFragmentApi.renderBlockFragment).mock.calls.at(-2)?.[0]
+        .children,
+    ).toEqual([]);
   });
 
   /*

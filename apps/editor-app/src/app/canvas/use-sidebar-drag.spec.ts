@@ -38,11 +38,23 @@ const testimonialDescriptor: BlockDescriptor = {
   fields: [],
 };
 
+/** A container that takes only Testimonials — so a Hero refused by the list inside it is refused here too. */
+const testimonialsWallDescriptor: BlockDescriptor = {
+  type: 'TestimonialsWall',
+  label: 'Testimonials wall',
+  category: 'socialProof',
+  defaultProps: {},
+  fields: [],
+  isContainer: true,
+  allowedChildTypes: ['Testimonials'],
+};
+
 const registry = [
   heroDescriptor,
   containerDescriptor,
   testimonialsDescriptor,
   testimonialDescriptor,
+  testimonialsWallDescriptor,
 ];
 const iframeGeometry = { top: 100, left: 50, width: 800, height: 600 };
 
@@ -227,6 +239,96 @@ describe('useSidebarDrag', () => {
         parentId: 'testi-1',
         index: 0,
       });
+    });
+  });
+
+  /*
+   * Side by side, the siblings' midpoints say nothing about which side of
+   * the container the pointer was on: every one of them has the same top.
+   */
+  describe('over a refusing container in a row of blocks', () => {
+    const tree: Block[] = [
+      {
+        id: 'row',
+        type: 'Container',
+        props: {},
+        children: [
+          { id: 'left', type: 'Testimonials', props: {}, children: [] },
+          { id: 'middle', type: 'Hero', props: {} },
+          { id: 'right', type: 'Testimonials', props: {}, children: [] },
+        ],
+      },
+    ];
+    const blockRects = [
+      { id: 'row', top: 0, left: 0, width: 900, height: 300 },
+      { id: 'left', top: 0, left: 0, width: 300, height: 300 },
+      { id: 'middle', top: 0, left: 300, width: 300, height: 300 },
+      { id: 'right', top: 0, left: 600, width: 300, height: 300 },
+    ];
+
+    it('drops right after the left one from its lower half', () => {
+      const { result, insertNewBlockAt } = setup({
+        localBlocks: tree,
+        blockRects,
+      });
+
+      // iframe (100, 250): inside `left`, below its middle.
+      act(() => {
+        result.current.handleSidebarDragEnd(heroDescriptor, 150, 350);
+      });
+
+      expect(insertNewBlockAt).toHaveBeenCalledWith(heroDescriptor, {
+        parentId: 'row',
+        index: 1,
+      });
+    });
+
+    it('drops right before the right one from its upper half', () => {
+      const { result, insertNewBlockAt } = setup({
+        localBlocks: tree,
+        blockRects,
+      });
+
+      // iframe (700, 50): inside `right`, above its middle.
+      act(() => {
+        result.current.handleSidebarDragEnd(heroDescriptor, 750, 150);
+      });
+
+      expect(insertNewBlockAt).toHaveBeenCalledWith(heroDescriptor, {
+        parentId: 'row',
+        index: 2,
+      });
+    });
+  });
+
+  it('steps out of every container that refuses the dragged type, not only the one under the pointer', () => {
+    const tree: Block[] = [
+      { id: 'top', type: 'Hero', props: {} },
+      {
+        id: 'wall',
+        type: 'TestimonialsWall',
+        props: {},
+        children: [
+          { id: 'list', type: 'Testimonials', props: {}, children: [] },
+        ],
+      },
+    ];
+    const { result, insertNewBlockAt } = setup({
+      localBlocks: tree,
+      blockRects: [
+        { id: 'top', top: 0, left: 0, width: 700, height: 100 },
+        { id: 'wall', top: 100, left: 0, width: 700, height: 300 },
+        { id: 'list', top: 150, left: 50, width: 600, height: 200 },
+      ],
+    });
+
+    act(() => {
+      result.current.handleSidebarDragEnd(heroDescriptor, 400, 450);
+    });
+
+    expect(insertNewBlockAt).toHaveBeenCalledWith(heroDescriptor, {
+      parentId: null,
+      index: 2,
     });
   });
 
