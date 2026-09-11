@@ -13,6 +13,7 @@ import { resolveSiteChrome } from './resolve-site-chrome';
 import { resolvePageGroupAncestors } from './resolve-page-group-ancestors';
 import { resolveTranslationPaths } from './resolve-translation-paths';
 import { resolvePageContentReferences } from './resolve-page-content-references';
+import { loadPublishedSections } from './resolve-section-instances';
 import type { PublishedPage } from './get-published-page-by-slug.use-case';
 
 export interface GetPreviewPageByIdDeps {
@@ -125,6 +126,16 @@ export async function getPreviewPageById(
     siblings.filter((sibling) => sibling.status === 'published'),
   );
 
+  // What the CANVAS needs on top of the page itself: the blocks of the
+  // sections it uses, so re-rendering one block at a time can graft them
+  // (see loadPublishedSections). A read of its own, on the preview route
+  // only — the published route has no use for it.
+  const sections = await loadPublishedSections(deps, input.tenantId, [
+    content,
+    chrome.header ?? [],
+    chrome.footer ?? [],
+  ]);
+
   return {
     content: resolvedContent,
     seoMeta: translation.seoMeta,
@@ -135,5 +146,6 @@ export async function getPreviewPageById(
     footer: chrome.footer,
     headerSticky: chrome.headerSticky,
     site: chrome.site,
+    ...(sections.size > 0 ? { sections: Object.fromEntries(sections) } : {}),
   };
 }

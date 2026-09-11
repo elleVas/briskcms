@@ -1,16 +1,11 @@
 import type { APIRoute } from 'astro';
 import { experimental_AstroContainer as AstroContainer } from 'astro/container';
 import {
-  collectResolvedPageRefs,
-  resolvePageReferences,
-  type Block,
-} from '@brisk/shared-types';
-import {
   getPreviewPageById,
   getPreviewSectionById,
 } from '../../lib/public-api-client';
-import { findBlockById } from '../../lib/find-block-by-id';
 import {
+  buildFragmentBlock,
   isValidRenderBlockFragmentBody,
   renderBlockFragmentCorsHeaders,
 } from '../../lib/render-block-fragment-helpers';
@@ -57,42 +52,7 @@ export const POST: APIRoute = async ({ request }) => {
     });
   }
 
-  // The `children` have to be preserved when the block is a container — a
-  // property change from the Inspector never touches them. It prefers the
-  // ones the caller passed (already known client-side, with no race against
-  // the draft save happening in parallel — see RenderBlockFragmentBody);
-  // the server read stays only as a fallback for older calls that do not
-  // pass them yet.
-  const children =
-    body.children ??
-    findBlockById(page.content, body.blockId)?.children ??
-    findBlockById(page.header ?? [], body.blockId)?.children ??
-    findBlockById(page.footer ?? [], body.blockId)?.children;
-
-  const rawBlock: Block = {
-    id: body.blockId,
-    type: body.blockType,
-    props: body.props,
-    ...(children ? { children } : {}),
-    ...(body.styleOverride ? { styleOverride: body.styleOverride } : {}),
-    ...(body.variant ? { variant: body.variant } : {}),
-  };
-
-  // i18n a livello di campo (see the plan) — `body.props.page` (Link/
-  // NavLink/etc.'s picked destination) arrives here as the editor's raw,
-  // UNRESOLVED `{pageGroupId, title}` (see the plan's PagePickerField
-  // fix): reuse whatever this exact group already resolved to elsewhere on
-  // the SAME page (content/header/footer, already fetched above) rather
-  // than a second round-trip just for this one block's own preview. A
-  // brand-new reference not seen anywhere else on the page yet resolves to
-  // `null` (a dead link, same as a field that was never picked at all)
-  // until the next full reload — narrow, accepted gap, not a broken href.
-  const resolvedRefs = new Map([
-    ...collectResolvedPageRefs(page.content),
-    ...collectResolvedPageRefs(page.header ?? []),
-    ...collectResolvedPageRefs(page.footer ?? []),
-  ]);
-  const [block] = resolvePageReferences([rawBlock], resolvedRefs);
+  const block = buildFragmentBlock(body, page);
 
   const container = await AstroContainer.create();
   const html = await container.renderToString(RenderSingleBlock, {

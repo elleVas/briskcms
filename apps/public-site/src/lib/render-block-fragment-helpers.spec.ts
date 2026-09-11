@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  buildFragmentBlock,
   isValidRenderBlockFragmentBody,
   renderBlockFragmentCorsHeaders,
 } from './render-block-fragment-helpers';
@@ -75,5 +76,85 @@ describe('renderBlockFragmentCorsHeaders', () => {
       'http://localhost:4200',
     );
     expect(headers['Access-Control-Allow-Methods']).toBe('POST, OPTIONS');
+  });
+});
+
+/*
+ * A reusable section keeps its blocks on the server: the page's own render
+ * grafts them at read time, but the canvas re-renders ONE block, and a
+ * Section handed over on its own carries a reference and nothing else. It
+ * used to come back as "this section has not been published yet" — for a
+ * section plainly published and visible further up the same page.
+ */
+describe('buildFragmentBlock', () => {
+  const page = {
+    content: [
+      {
+        id: 'placed',
+        type: 'Section',
+        props: { section: { sectionId: 'cta', sectionName: 'Footer CTA' } },
+        children: [{ id: 'placed--h', type: 'Heading', props: { text: 'Hi' } }],
+      },
+    ],
+    seoMeta: { title: '', description: '' },
+    locale: 'en',
+    translations: [],
+    ancestors: [],
+    site: {} as never,
+    header: null,
+    footer: null,
+    headerSticky: false,
+    sections: {
+      cta: [{ id: 'h', type: 'Heading', props: { text: 'Hi' } }],
+    },
+  } as never;
+
+  it('grafts the blocks of a section the page uses', () => {
+    const block = buildFragmentBlock(
+      {
+        pageId: 'p1',
+        token: 'tok',
+        blockId: 'copy',
+        blockType: 'Section',
+        props: { section: { sectionId: 'cta', sectionName: 'Footer CTA' } },
+      },
+      page,
+    );
+
+    expect(block.children?.map((child) => child.type)).toEqual(['Heading']);
+    // The ids are derived from the instance, so two copies of one section
+    // on a page never share a per-instance style rule.
+    expect(block.children?.[0]?.id).toBe('copy--h');
+  });
+
+  it('leaves a section the page does not use empty, for the editor to reload', () => {
+    const block = buildFragmentBlock(
+      {
+        pageId: 'p1',
+        token: 'tok',
+        blockId: 'copy',
+        blockType: 'Section',
+        props: { section: { sectionId: 'unknown', sectionName: 'Other' } },
+      },
+      page,
+    );
+
+    expect(block.children).toEqual([]);
+  });
+
+  it('keeps the children the caller passed rather than reading the page back', () => {
+    const block = buildFragmentBlock(
+      {
+        pageId: 'p1',
+        token: 'tok',
+        blockId: 'box',
+        blockType: 'Container',
+        props: {},
+        children: [{ id: 'fresh', type: 'Text', props: { body: 'new' } }],
+      },
+      page,
+    );
+
+    expect(block.children?.map((child) => child.id)).toEqual(['fresh']);
   });
 });

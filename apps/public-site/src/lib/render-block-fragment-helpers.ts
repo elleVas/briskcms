@@ -1,5 +1,14 @@
-import type { Block, ResponsiveBlockStyle } from '@brisk/shared-types';
+import {
+  collectResolvedPageRefs,
+  resolvePageReferences,
+  resolveSectionBlocks,
+  type Block,
+  type PageContent,
+  type PublishedPage,
+  type ResponsiveBlockStyle,
+} from '@brisk/shared-types';
 import { editorAppUrl } from './editor-app-url';
+import { findBlockById } from './find-block-by-id';
 
 export interface RenderBlockFragmentBody {
   pageId: string;
@@ -73,4 +82,55 @@ export function renderBlockFragmentCorsHeaders(): Record<string, string> {
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type',
   };
+}
+
+/**
+ * The one block the canvas asked for, as the page would render it.
+ *
+ * Three things have to be put back that the request cannot carry:
+ *
+ * - its `children`, when the caller did not pass them (an older call);
+ * - the blocks of any reusable section inside it, which live on the server
+ *   (docs/adr/0059) — taken from the sections the PAGE uses, which the
+ *   preview payload carries. Without this a section pasted, duplicated or
+ *   restored by an undo came back saying it had not been published, for a
+ *   section plainly published further up the same page. One the page does
+ *   not use yet is still unknown here; the editor reloads for that;
+ * - its page references, resolved into the locale being rendered, reusing
+ *   what the rest of the page already resolved rather than a second round
+ *   trip.
+ *
+ * Sections first and links after, the same order the page render uses: a
+ * section can hold a Link, and that link has to be resolved too.
+ */
+export function buildFragmentBlock(
+  body: RenderBlockFragmentBody,
+  page: PublishedPage,
+): Block {
+  const children =
+    body.children ??
+    findBlockById(page.content, body.blockId)?.children ??
+    findBlockById(page.header ?? [], body.blockId)?.children ??
+    findBlockById(page.footer ?? [], body.blockId)?.children;
+
+  const rawBlock: Block = {
+    id: body.blockId,
+    type: body.blockType,
+    props: body.props,
+    ...(children ? { children } : {}),
+    ...(body.styleOverride ? { styleOverride: body.styleOverride } : {}),
+    ...(body.variant ? { variant: body.variant } : {}),
+  };
+
+  const publishedSections = new Map<string, PageContent>(
+    Object.entries(page.sections ?? {}),
+  );
+  const [withSections] = resolveSectionBlocks([rawBlock], publishedSections);
+  const resolvedRefs = new Map([
+    ...collectResolvedPageRefs(page.content),
+    ...collectResolvedPageRefs(page.header ?? []),
+    ...collectResolvedPageRefs(page.footer ?? []),
+  ]);
+  const [block] = resolvePageReferences([withSections], resolvedRefs);
+  return block;
 }

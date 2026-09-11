@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
+  applyRootLayout,
   applyBlockInsert,
   applyBlockPatch,
   applyBlockRemove,
@@ -329,6 +330,45 @@ describe('applyBlockInsert', () => {
     )?.parentElement;
     expect(wrapper?.hasAttribute('data-brisk-align')).toBe(false);
     expect(wrapper?.hasAttribute('data-brisk-hover')).toBe(false);
+  });
+
+  /*
+   * Width and hover effect both live on the wrapper, and both are written
+   * as the absence of the attribute at their default — the same shape the
+   * page renders, so the canvas and a reload cannot disagree.
+   */
+  it('writes the width and the hover effect a root block was given', () => {
+    document.body.innerHTML = rootList(
+      '<div data-brisk-block-id="a">first</div>',
+    );
+
+    expect(applyRootLayout(document, 'a', 'full', 'lift')).toBe(true);
+
+    const wrapper = document.querySelector('.brisk-root-block');
+    expect(wrapper?.getAttribute('data-brisk-align')).toBe('full');
+    expect(wrapper?.getAttribute('data-brisk-hover')).toBe('lift');
+  });
+
+  it('takes them off again at their default', () => {
+    document.body.innerHTML = rootList(
+      '<div data-brisk-block-id="a">first</div>',
+    );
+    const wrapper = document.querySelector('.brisk-root-block');
+    wrapper?.setAttribute('data-brisk-align', 'full');
+    wrapper?.setAttribute('data-brisk-hover', 'lift');
+
+    applyRootLayout(document, 'a', 'content', null);
+
+    expect(wrapper?.hasAttribute('data-brisk-align')).toBe(false);
+    expect(wrapper?.hasAttribute('data-brisk-hover')).toBe(false);
+  });
+
+  it('says no for a block that has no wrapper of its own', () => {
+    document.body.innerHTML = rootList(
+      '<div data-brisk-block-id="box"><div data-brisk-block-id="inner">nested</div></div>',
+    );
+
+    expect(applyRootLayout(document, 'inner', 'full', 'lift')).toBe(false);
   });
 
   it('inserts a new wrapper BESIDE an existing root block, never inside its neighbour', () => {

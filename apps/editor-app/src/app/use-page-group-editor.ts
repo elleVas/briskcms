@@ -138,7 +138,7 @@ export function usePageGroupEditor(groupId: string, initialLocale: string) {
   // being left, so the save reaches the target captured when it was
   // scheduled. See its `flushedSyncKeyRef` effect, and the regression test
   // "saves an in-flight edit against the page it was made on".
-  const onChange = useSingleFlightSave<Block[]>(
+  const [onChange, whenContentSaved] = useSingleFlightSave<Block[]>(
     useCallback(
       (content) =>
         activeTranslation.isDiverged
@@ -177,7 +177,7 @@ export function usePageGroupEditor(groupId: string, initialLocale: string) {
       setStatus({ kind: 'error', message: String(error) }),
   });
 
-  const scheduleFieldValuesSave = useSingleFlightSave<{
+  const [scheduleFieldValuesSave, whenFieldValuesSaved] = useSingleFlightSave<{
     translationId: string;
     fieldValues: FieldValueOverlay;
   }>(
@@ -243,6 +243,11 @@ export function usePageGroupEditor(groupId: string, initialLocale: string) {
     [divergeMutation, activeTranslation.id],
   );
 
+  /** Both save queues drained — what the canvas waits for before reading the draft back. */
+  const whenSaved = useCallback(async (): Promise<void> => {
+    await Promise.all([whenContentSaved(), whenFieldValuesSaved()]);
+  }, [whenContentSaved, whenFieldValuesSaved]);
+
   return {
     group,
     translations,
@@ -252,6 +257,7 @@ export function usePageGroupEditor(groupId: string, initialLocale: string) {
     displayedBlocks,
     status,
     onChange,
+    whenSaved,
     onSaveFieldValue,
     handlePublish,
     handleDiverge,

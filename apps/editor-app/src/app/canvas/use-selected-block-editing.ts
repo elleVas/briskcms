@@ -2,6 +2,7 @@ import type { Dispatch, MutableRefObject, SetStateAction } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
   buildBlockStyleOverridesCss,
+  rootBlockHoverAttr,
   DEFAULT_VARIANT,
   withBreakpointStyle,
   type Block,
@@ -15,6 +16,7 @@ import { useToast } from '../toast-provider';
 import { useSiteThemeTokens } from '../use-site-theme-tokens';
 import type { Breakpoint } from './breakpoint-selector';
 import type { BlockStyleSheet } from './use-block-style-sheet';
+import type { PreviewBridgeState } from './use-preview-bridge';
 import {
   updateBlockProps,
   updateBlockStyleOverride,
@@ -28,6 +30,8 @@ export interface UseSelectedBlockEditingParams {
   selectedBlock: Block | null;
   selectedDescriptor: BlockDescriptor | undefined;
   breakpoint: Breakpoint;
+  /** Only what a style edit needs to tell the iframe: the wrapper attributes of a ROOT block. */
+  bridge: Pick<PreviewBridgeState, 'setRootLayout'>;
   /** Shared with the tree mutations, which put styled blocks on the canvas too. */
   styleSheet: BlockStyleSheet;
   localBlocksRef: MutableRefObject<Block[]>;
@@ -68,6 +72,7 @@ export function useSelectedBlockEditing({
   selectedBlock,
   selectedDescriptor,
   breakpoint,
+  bridge,
   styleSheet,
   localBlocksRef,
   setLocalBlocks,
@@ -149,9 +154,24 @@ export function useSelectedBlockEditing({
     // which only catches up after the next render — so every style edit
     // sent the sheet as it was BEFORE that edit, and a control that fires
     // once (a swatch, a select) showed the previous value.
-    styleSheet.refresh(
-      updateBlockStyleOverride(localBlocksRef.current, blockId, next),
+    const nextTree = updateBlockStyleOverride(
+      localBlocksRef.current,
+      blockId,
+      next,
     );
+    styleSheet.refresh(nextTree);
+    // The hover effect is an ATTRIBUTE on the wrapper around a root block,
+    // not a rule (it is two declarations and a transition, so no custom
+    // property can hold it) — re-rendering the block would not carry it,
+    // and the page had only ever written it server-side. Changing it in
+    // the canvas did nothing visible until a reload.
+    if (nextTree.some((block) => block.id === blockId)) {
+      bridge.setRootLayout(
+        blockId,
+        selectedBlock.align ?? null,
+        rootBlockHoverAttr(next) ?? null,
+      );
+    }
     patch.scheduleStyleOverrideChange(
       blockId,
       selectedBlock.type,

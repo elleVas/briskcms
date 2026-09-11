@@ -334,9 +334,14 @@ export type EditorApplyPageLinkMessage = PreviewBridgeEnvelope<
  * `align: null` is the default content column, matching how the renderer
  * writes it: the attribute is removed rather than set to a value.
  */
-export type EditorSetBlockAlignMessage = PreviewBridgeEnvelope<
-  'editor:set-block-align',
-  { blockId: string; align: BlockAlign | null }
+export type EditorSetRootLayoutMessage = PreviewBridgeEnvelope<
+  'editor:set-root-layout',
+  {
+    blockId: string;
+    align: BlockAlign | null;
+    /** The hover effect's own value (`lift`, `grow`, `dim`), `null` for none. */
+    hover: string | null;
+  }
 >;
 
 export type ParentToPreviewMessage =
@@ -349,7 +354,7 @@ export type ParentToPreviewMessage =
   | EditorUpdateBlockStyleCssMessage
   | EditorScrollToBlockMessage
   | EditorApplyPageLinkMessage
-  | EditorSetBlockAlignMessage;
+  | EditorSetRootLayoutMessage;
 
 export type AnyPreviewBridgeMessage =
   PreviewToParentMessage | ParentToPreviewMessage;
