@@ -12,7 +12,9 @@ import type { Block } from '@brisk/shared-types';
 import { TooltipProvider } from '../components/ui/tooltip';
 import * as api from '../lib/page-groups-api-client';
 import * as previewTokenApi from '../lib/preview-token-api-client';
+import type { CollectionRecord } from '../lib/collections-api-client';
 import { createTestQueryClient } from '../test-query-client';
+import { collectionsQueryOptions } from './collections-queries';
 import { ToastProvider } from './toast-provider';
 import {
   pageGroupQueryOptions,
@@ -60,6 +62,7 @@ const sampleGroup: api.PageGroupRecord = {
   siteId: 'site-1',
   parentId: null,
   order: 0,
+  collectionId: null,
   content: groupContent,
   createdBy: null,
   createdAt: '',
@@ -87,6 +90,8 @@ const enTranslation: api.PageTranslationRecord = {
 function renderView(
   translations: api.PageTranslationRecord[] = [enTranslation],
   enabledLocales: string[] = ['en', 'it'],
+  group: api.PageGroupRecord = sampleGroup,
+  collections: CollectionRecord[] = [],
 ) {
   vi.mocked(previewTokenApi.createTranslationPreviewToken).mockResolvedValue({
     token: 'tok123',
@@ -94,9 +99,10 @@ function renderView(
   });
 
   const queryClient = createTestQueryClient();
+  queryClient.setQueryData(pageGroupQueryOptions('group-1').queryKey, group);
   queryClient.setQueryData(
-    pageGroupQueryOptions('group-1').queryKey,
-    sampleGroup,
+    collectionsQueryOptions(group.siteId).queryKey,
+    collections,
   );
   queryClient.setQueryData(
     pageGroupTranslationsQueryOptions('group-1').queryKey,
@@ -221,5 +227,40 @@ describe('PageGroupEditorView', () => {
     // Switching to the newly-created locale shows it as active in the
     // language switcher (uppercase locale code in the top bar).
     await waitFor(() => expect(screen.getByText('it')).toBeTruthy());
+  });
+
+  /*
+   * A page filed in a section belongs to that section's screen. Sending
+   * somebody who opened an article from News back to Pages drops them
+   * somewhere they were not, with their article nowhere in the list.
+   */
+  it('goes back to the section the page is filed in, by its name', async () => {
+    renderView(
+      [enTranslation],
+      ['en', 'it'],
+      { ...sampleGroup, collectionId: 'collection-1' },
+      [
+        {
+          id: 'collection-1',
+          tenantId: 'tenant-1',
+          siteId: sampleGroup.siteId,
+          name: 'News',
+          icon: 'newspaper',
+          order: 0,
+          createdAt: '',
+          updatedAt: '',
+        },
+      ],
+    );
+
+    const back = await screen.findByRole('link', { name: /News/ });
+    expect(back.getAttribute('href')).toBe('/collections/$collectionId');
+  });
+
+  it('goes back to Pages for a page that is in no section', async () => {
+    renderView();
+
+    const back = await screen.findByRole('link', { name: /Pagine/ });
+    expect(back.getAttribute('href')).toBe('/pages');
   });
 });

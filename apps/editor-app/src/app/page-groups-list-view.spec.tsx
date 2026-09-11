@@ -172,6 +172,7 @@ describe('PageGroupsListView', () => {
       siteId: 'site-1',
       parentId: null,
       order: 2,
+      collectionId: null,
       content: [],
       createdBy: null,
       createdAt: '',

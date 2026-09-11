@@ -597,6 +597,7 @@ export class PageGroupsController {
       siteId: props.siteId,
       parentId: props.parentId,
       order: props.order,
+      collectionId: props.collectionId,
       content: props.content,
       createdBy: props.createdBy,
       createdAt: props.createdAt.toISOString(),
