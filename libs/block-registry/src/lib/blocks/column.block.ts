@@ -5,6 +5,8 @@ import { BlockStyleRegistry } from '../block-style-registry';
 
 // No allowedChildTypes — a Column is meant to hold whatever the page
 // needs side by side with its siblings, same reason as the Container.
+// Only inside Columns, though: the grid that gives a column its width is
+// Columns' (see Column.astro), and outside it a Column is a plain box.
 export const columnBlock: BlockDescriptor<ColumnProps> = {
   type: 'Column',
   label: 'blocks.column.label',
@@ -26,6 +28,7 @@ export const columnBlock: BlockDescriptor<ColumnProps> = {
     },
   ],
   isContainer: true,
+  allowedParentTypes: ['Columns'],
   stylableProperties: BlockStyleRegistry.STANDARD,
   defaultStyle: BLOCK_STYLE_DEFAULTS.Column,
 };

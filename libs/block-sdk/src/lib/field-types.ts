@@ -249,6 +249,18 @@ export interface BlockDescriptor<Props = Record<string, unknown>> {
   /** No list = any registered block can go inside (e.g. Column/Container). */
   allowedChildTypes?: string[];
   /**
+   * The only containers this block may sit in — for a block that does not
+   * work outside its parent. A Tab is a panel whose label becomes a button
+   * only inside Tabs; at the page root it rendered as bare content with no
+   * way to reach it.
+   *
+   * No list = anywhere a container accepts it, the page root included. The
+   * other side of `allowedChildTypes`: that one is the parent saying what
+   * it takes, this one is the child saying where it belongs, and a
+   * placement has to satisfy both.
+   */
+  allowedParentTypes?: string[];
+  /**
    * Which shared style properties (docs/adr/0022) make sense for this
    * type — not every block uses every property (Text has no sensible
    * "border radius"). Absent/empty = no "Style" button or per-instance
