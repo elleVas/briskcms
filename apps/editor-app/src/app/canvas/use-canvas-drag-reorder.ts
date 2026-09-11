@@ -3,6 +3,7 @@ import type { Block } from '@brisk/shared-types';
 import {
   computeDropTarget,
   siblingDropRects,
+  type DropCandidateRect,
   type DropTarget,
 } from './compute-drop-target';
 import type { IframeGeometry } from './overlay-layer';
@@ -14,6 +15,8 @@ export interface UseCanvasDragReorderParams {
   localBlocks: Block[];
   bridge: Pick<PreviewBridgeState, 'activeDrag' | 'dragEnded' | 'blockRects'>;
   sidebarDrag: SidebarDragState | null;
+  /** The root's drop rects, which the shell already measures for the sidebar drag. */
+  rootRects: DropCandidateRect[];
   iframeGeometry: IframeGeometry;
   /** The one implementation of "reorder" — the Layers panel uses it too, so a drop on the canvas gets the same history entry. */
   handleReorder: (parentId: string | null, orderedIds: string[]) => void;
@@ -29,6 +32,7 @@ export function useCanvasDragReorder({
   localBlocks,
   bridge,
   sidebarDrag,
+  rootRects,
   iframeGeometry,
   handleReorder,
 }: UseCanvasDragReorderParams): DropTarget | null {
@@ -49,7 +53,7 @@ export function useCanvasDragReorder({
       )
     : sidebarDrag
       ? computeDropTarget(
-          siblingDropRects(localBlocks, bridge.blockRects, null).rects,
+          rootRects,
           '',
           sidebarDrag.pointerY - iframeGeometry.top,
         )

@@ -51,8 +51,6 @@ export interface SelectedBlockEditing {
   handleChangeVariant: (variant: string | undefined) => void;
   handleChangeAlign: (align: BlockAlign | undefined) => void;
   handleChangeStyleOverride: (styleOverride: BlockStyleOverride) => void;
-  /** `undefined` when there is no site to write a per-type style to. */
-  handleChangeTypeStyle: ((style: BlockStyleOverride) => void) | undefined;
   /** The per-type style the selected block's variant currently has, `undefined` with no site. */
   typeStyle: ResponsiveBlockStyle | undefined;
   /** Also what the Global styles dialog saves through, for a type with no instance on the canvas. */
@@ -86,10 +84,10 @@ export function useSelectedBlockEditing({
 }: UseSelectedBlockEditingParams): SelectedBlockEditing {
   const { t } = useTranslation();
   const { toast } = useToast();
-  // Only needed for the per-type override (docs/adr/0022). The Global
-  // styles dialog has its own query with the same key, so the cache keeps
-  // them in sync. `enabled` guards the editors that have no site to write
-  // to — the header/footer editor and the section editor.
+  // Only needed for the per-type style (docs/adr/0022). The Global styles
+  // dialog has its own query with the same key, so the cache keeps them in
+  // sync. Every editor that mounts the shell today passes a `siteId`;
+  // `enabled` only keeps a future caller without one from fetching.
   const { data: site } = useQuery({
     ...siteQueryOptions(),
     enabled: Boolean(siteId),
@@ -244,29 +242,11 @@ export function useSelectedBlockEditing({
   // one (ADR-0047).
   const selectedVariant = selectedBlock?.variant ?? DEFAULT_VARIANT;
 
-  function handleChangeTypeStyle(style: BlockStyleOverride): void {
-    if (!selectedDescriptor) {
-      return;
-    }
-    void saveTypeStyle(
-      selectedDescriptor.type,
-      selectedVariant,
-      withBreakpointStyle(
-        site?.themeTokens?.blockStyles[selectedDescriptor.type]?.[
-          selectedVariant
-        ],
-        breakpoint,
-        style,
-      ),
-    );
-  }
-
   return {
     handleChangeProp,
     handleChangeVariant,
     handleChangeAlign,
     handleChangeStyleOverride,
-    handleChangeTypeStyle: site ? handleChangeTypeStyle : undefined,
     typeStyle:
       site && selectedDescriptor
         ? (site.themeTokens?.blockStyles[selectedDescriptor.type]?.[

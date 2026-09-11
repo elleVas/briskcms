@@ -304,6 +304,7 @@ export function CanvasEditorShell({
     localBlocks,
     bridge,
     sidebarDrag,
+    rootRects,
     iframeGeometry,
     handleReorder,
   });
@@ -313,7 +314,6 @@ export function CanvasEditorShell({
     handleChangeVariant,
     handleChangeAlign,
     handleChangeStyleOverride,
-    handleChangeTypeStyle,
     typeStyle,
     saveTypeStyle,
   } = useSelectedBlockEditing({
@@ -466,7 +466,6 @@ export function CanvasEditorShell({
                 }
                 breakpoint={breakpoint}
                 typeStyle={typeStyle}
-                onChangeTypeStyle={handleChangeTypeStyle}
                 onChangeInstanceStyle={handleChangeStyleOverride}
                 onMoveUp={() => handleMoveSelected(-1)}
                 onMoveDown={() => handleMoveSelected(1)}

@@ -335,7 +335,6 @@ describe('BlockToolbarOverlay under a theme that refuses styling', () => {
         descriptor={withFields}
         isRootLevel={true}
         typeStyle={{ base: {} }}
-        onChangeTypeStyle={vi.fn()}
       />,
     );
 

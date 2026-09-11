@@ -21,7 +21,7 @@ export interface CanvasTopBarProps {
   canRedo: boolean;
   breakpoint: Breakpoint;
   onBreakpointChange: (breakpoint: Breakpoint) => void;
-  /** Present when there is a site to style — both the page editor and the header/footer editor have one; the section editor does not. */
+  /** Present when there is a site to style — every editor that mounts the shell today has one. */
   globalStyles?: {
     siteId: string;
     registry: BlockDescriptor[];
