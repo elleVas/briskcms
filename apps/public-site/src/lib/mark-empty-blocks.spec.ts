@@ -9,6 +9,14 @@ import { markEmptyBlocks } from './preview-bridge-client';
  * select, edit or delete from the canvas, with a row in the Layers panel
  * as the only sign it existed.
  */
+/** jsdom reports zero for every box, so a rendered child has to say so itself. */
+function withBox(el: HTMLElement, height: number): void {
+  Object.defineProperty(el, 'getBoundingClientRect', {
+    value: () => ({ width: 100, height }) as DOMRect,
+    configurable: true,
+  });
+}
+
 function wrapper(type: string, inner: string): HTMLElement {
   const el = document.createElement('div');
   el.setAttribute('data-brisk-block-id', `${type}-1`);
@@ -50,16 +58,55 @@ describe('markEmptyBlocks', () => {
     markEmptyBlocks(root);
     expect(el.dataset['briskEmpty']).toBe('');
 
-    // Filled in — and measuring must start from its own box again, or a
-    // block marked once would keep measuring as the placeholder.
-    Object.defineProperty(el, 'getBoundingClientRect', {
-      value: () => ({ height: 24 }) as DOMRect,
-      configurable: true,
-    });
+    // Filled in — and the answer comes from what is UNDER the block, so
+    // a block marked once does not keep measuring as its own placeholder.
+    el.innerHTML = '<svg></svg>';
+    withBox(el.firstElementChild as HTMLElement, 24);
     markEmptyBlocks(root);
 
     expect(el.dataset['briskEmpty']).toBeUndefined();
     expect(el.style.display).toBe('contents');
+  });
+
+  it('counts a block with only text as rendered, box or no box', () => {
+    const root = document.createElement('div');
+    const el = wrapper('Text', 'Ciao');
+    root.append(el);
+
+    markEmptyBlocks(root);
+
+    expect(el.dataset['briskEmpty']).toBeUndefined();
+  });
+
+  /*
+   * This runs from a ResizeObserver watching these very elements. A write
+   * on every pass is a write that schedules the next pass: measured at
+   * ~900 attribute changes a second on a seven-block page, which is what
+   * a flickering canvas is made of. The second pass must touch nothing.
+   */
+  it('writes nothing on a second pass, which is what stops the canvas flickering', () => {
+    const root = document.createElement('div');
+    const empty = wrapper('Icon', '');
+    const filled = wrapper('Hero', '<h1>Titolo</h1>');
+    withBox(filled.firstElementChild as HTMLElement, 40);
+    root.append(empty, filled);
+    markEmptyBlocks(root);
+
+    let writes = 0;
+    const observer = new MutationObserver((records) => {
+      writes += records.length;
+    });
+    observer.observe(root, {
+      attributes: true,
+      attributeFilter: ['style', 'data-brisk-empty'],
+      subtree: true,
+    });
+    markEmptyBlocks(root);
+    // jsdom delivers mutation records on a microtask.
+    return Promise.resolve().then(() => {
+      observer.disconnect();
+      expect(writes).toBe(0);
+    });
   });
 
   it('leaves a block belonging to a section instance alone', () => {

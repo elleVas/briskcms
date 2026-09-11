@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from '@tanstack/react-router';
+import { useQuery } from '@tanstack/react-query';
 import {
   ExternalLink,
   GitFork,
@@ -9,7 +10,9 @@ import {
   Search,
   Tags,
 } from 'lucide-react';
+import type { PageGroupRecord } from '../lib/page-groups-api-client';
 import { CanvasEditorShell } from './canvas/canvas-editor-shell';
+import { collectionsQueryOptions } from './collections-queries';
 import { LanguageSwitcher } from './canvas/language-switcher';
 import { ConfirmActionDialog } from './confirm-action-dialog';
 import { FormListProvider } from './form-list-provider';
@@ -26,6 +29,43 @@ import { usePageBlockRegistry } from './use-page-block-registry';
 import { usePageGroupEditor, type SaveStatus } from './use-page-group-editor';
 import { usePageGroupVersions } from './use-page-group-versions';
 import { VersionHistoryDialog } from './version-history-dialog';
+
+/**
+ * Back to where this page is listed, which is not always Pages.
+ *
+ * A page filed in a section belongs to that section's screen: sending
+ * somebody who opened an article from News back to Pages drops them
+ * somewhere they were not, with their article nowhere in the list. It
+ * reads the page's own section rather than the history, so it is still
+ * right on a reloaded tab or a shared link.
+ */
+function BackToList({ group }: { group: PageGroupRecord }) {
+  const { t } = useTranslation();
+  const { data: collections } = useQuery({
+    ...collectionsQueryOptions(group.siteId),
+    enabled: group.collectionId !== null,
+  });
+  const collection = (collections ?? []).find(
+    (one) => one.id === group.collectionId,
+  );
+
+  if (!collection) {
+    return (
+      <Link to="/pages" className="hover:underline">
+        ← {t('pages.editor.backToList')}
+      </Link>
+    );
+  }
+  return (
+    <Link
+      to="/collections/$collectionId"
+      params={{ collectionId: collection.id }}
+      className="hover:underline"
+    >
+      ← {collection.name}
+    </Link>
+  );
+}
 
 export interface PageGroupEditorViewProps {
   groupId: string;
@@ -131,11 +171,7 @@ export function PageGroupEditorView({
         <IconListProvider>
           <PageListProvider siteId={group.siteId} locale={activeLocale}>
             <CanvasEditorShell
-              backLink={
-                <Link to="/pages" className="hover:underline">
-                  ← {t('pages.editor.backToList')}
-                </Link>
-              }
+              backLink={<BackToList group={group} />}
               languageSwitcher={
                 <LanguageSwitcher
                   translations={translations}

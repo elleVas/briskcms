@@ -140,6 +140,8 @@ export const pageGroupRecordSchema = z.object({
   siteId: z.string(),
   parentId: z.string().nullable(),
   order: z.number(),
+  /** Which section of the editor lists this page — the editor needs it to know where "back" goes. */
+  collectionId: z.string().nullable(),
   content: z.array(blockSchema),
   createdBy: z.string().nullable(),
   createdAt: z.string(),

@@ -78,21 +78,50 @@ export function isBlockInteractive(
 export function markEmptyBlocks(root: ParentNode): void {
   for (const element of collectBlockElements(root)) {
     if (!(element instanceof HTMLElement)) continue;
-    // Measured with its own box restored, or a block marked empty last
-    // time would keep measuring as the placeholder we gave it.
-    element.style.removeProperty('display');
-    const isEmpty = element.getBoundingClientRect().height === 0;
-    if (isEmpty) {
-      element.dataset['briskEmpty'] = '';
+    const isEmpty = rendersNothing(element);
+    // Written only when it would change something. This function runs
+    // from a ResizeObserver watching these very elements, so a write on
+    // every pass is a write that schedules the next pass: measured at
+    // ~900 attribute changes a second on a seven-block page, which is
+    // what a flickering canvas is made of.
+    const display = isEmpty ? 'block' : 'contents';
+    if (element.style.display !== display) {
       // The wrapper is `display: contents` in the markup, which is what
       // keeps a real block's layout untouched. An empty one has to take
       // up room instead.
-      element.style.display = 'block';
-    } else {
+      element.style.display = display;
+    }
+    const marked = element.dataset['briskEmpty'] !== undefined;
+    if (isEmpty && !marked) {
+      element.dataset['briskEmpty'] = '';
+    } else if (!isEmpty && marked) {
       delete element.dataset['briskEmpty'];
-      element.style.display = 'contents';
     }
   }
+}
+
+/**
+ * Whether this block put anything on the page, asked without touching it.
+ *
+ * The wrapper is `display: contents`, so it has no box of its own to
+ * measure — the previous answer was to strip the property, read the
+ * height and put it back, which is two layout changes per block per
+ * pass, and the pass is triggered by layout changes. Reading the
+ * DESCENDANTS instead answers the same question: a block that rendered
+ * something has something with a box under it, however deeply nested,
+ * and a block marked empty stays empty because its placeholder is a
+ * pseudo-element rather than a child.
+ *
+ * Width OR height, not height alone: a rule that draws as a hairline is
+ * a real thing on the page.
+ */
+function rendersNothing(element: HTMLElement): boolean {
+  if (element.textContent?.trim()) return false;
+  for (const descendant of element.querySelectorAll('*')) {
+    const rect = descendant.getBoundingClientRect();
+    if (rect.width > 0 || rect.height > 0) return false;
+  }
+  return true;
 }
 
 export function collectBlockElements(root: ParentNode): Element[] {
