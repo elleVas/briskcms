@@ -22,12 +22,17 @@ export function useCanvasPreviewToken(
   sectionPreview: { sectionId: string; locale: string } | undefined,
 ): string | null {
   const [token, setToken] = useState<string | null>(null);
+  // The id, not the object. The section editor passes `sectionPreview` as
+  // an object literal, a new one on every render, and depending on the
+  // object asked the API for a fresh token each time the editor re-rendered
+  // — every save-status change. Only the id decides which token is needed.
+  const sectionId = sectionPreview?.sectionId;
   useEffect(() => {
     let cancelled = false;
     // A section's fragments are authorised by a SECTION token: the
     // endpoint validates one or the other and never both (docs/adr/0059).
-    const minted = sectionPreview
-      ? createReusableSectionPreviewToken(sectionPreview.sectionId)
+    const minted = sectionId
+      ? createReusableSectionPreviewToken(sectionId)
       : createTranslationPreviewToken(pageId);
     minted.then((preview) => {
       if (!cancelled) {
@@ -37,6 +42,6 @@ export function useCanvasPreviewToken(
     return () => {
       cancelled = true;
     };
-  }, [pageId, sectionPreview]);
+  }, [pageId, sectionId]);
   return token;
 }
