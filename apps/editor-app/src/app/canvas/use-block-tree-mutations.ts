@@ -8,6 +8,7 @@ import {
 import {
   collectSectionReferences,
   rootBlockHoverAttr,
+  SERVER_FILLED_BLOCK_TYPES,
   type Block,
   type BlockAlign,
 } from '@brisk/shared-types';
@@ -426,9 +427,29 @@ export function useBlockTreeMutations({
     return [...collectSectionReferences([blocks])];
   }
 
+  /**
+   * And the same is true of a block the SERVER fills in — a page list, a
+   * filter, an article's own date. What the editor holds is the question
+   * ("this term", "at most three"), never the answer, so a fragment
+   * rendered from it draws an empty block: the reader of the canvas sees
+   * "nothing here" for a list that has ten entries. One reload and the
+   * page comes back with them.
+   */
+  function hasServerFilledBlock(blocks: Block[]): boolean {
+    return blocks.some(
+      (block) =>
+        SERVER_FILLED_BLOCK_TYPES.includes(
+          block.type as (typeof SERVER_FILLED_BLOCK_TYPES)[number],
+        ) || (block.children ? hasServerFilledBlock(block.children) : false),
+    );
+  }
+
   function needsReload(blocks: Block[]): boolean {
-    return sectionIdsOf(blocks).some(
-      (sectionId) => !sectionIdsOf(localBlocks).includes(sectionId),
+    return (
+      hasServerFilledBlock(blocks) ||
+      sectionIdsOf(blocks).some(
+        (sectionId) => !sectionIdsOf(localBlocks).includes(sectionId),
+      )
     );
   }
 

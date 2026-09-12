@@ -1133,6 +1133,22 @@ export const termListPropsSchema = z.object({
 });
 export type TermListProps = z.infer<typeof termListPropsSchema>;
 
+/**
+ * The blocks whose content is an ANSWER, filled in when the page is read.
+ *
+ * They have one thing in common that matters to the editor: their props
+ * as stored say what they want, not what they show, so rendering one from
+ * the editor's own copy draws an empty block. The canvas reads this list
+ * to know that inserting one is a case for a reload rather than a patch.
+ */
+export const SERVER_FILLED_BLOCK_TYPES = [
+  'PageGrid',
+  'ArticleMeta',
+  'ArticleNav',
+  'RelatedPages',
+  'TermList',
+] as const;
+
 export const searchBoxPropsSchema = z.object({
   placeholder: z.string().default('Cerca nel sito...'),
   visibility: visibilitySchema.default('always'),
