@@ -196,9 +196,9 @@
     },
     "editor": {
       "backToList": "Pagine",
-      "draftSaved": "Bozza salvata",
       "published": "Pubblicato",
-      "viewPage": "Visualizza pagina"
+      "viewPage": "Visualizza pagina",
+      "unpublishedChangesAt": "Modifiche non pubblicate — salvate alle {{time}}"
     },
     "versionHistory": {
       "open": "Cronologia versioni",
@@ -320,7 +320,6 @@
     "deleteConfirm": "Eliminare questa sezione? Le pagine che la usano non mostreranno più niente al suo posto.",
     "exposeField": "Una pagina può cambiarlo",
     "backToList": "← Torna alle sezioni",
-    "draftSaved": "Bozza salvata",
     "published": "Pubblicata — tutte le pagine che la usano sono aggiornate",
     "nameTaken": "Esiste già una sezione con questo nome.",
     "templates": "Template",
@@ -340,7 +339,6 @@
     "editFooterDescription": "Contenuto e link in fondo a ogni pagina.",
     "editor": {
       "backToList": "Layout",
-      "draftSaved": "Bozza salvata",
       "published": "Pubblicato",
       "sticky": "Fisso durante lo scroll",
       "noPageToPreview": "Crea prima una pagina in questa lingua — il canvas ha bisogno di una pagina vera su cui visualizzare l'anteprima di {{section}}."
@@ -1017,6 +1015,10 @@
     },
     "placement": {
       "refused": "{{block}} sta solo dentro {{parents}}, quindi qui non c'è posto per inserirlo."
+    },
+    "status": {
+      "saving": "Salvataggio…",
+      "draftSavedAt": "Bozza salvata alle {{time}}"
     }
   },
   "toast": {
@@ -1831,7 +1833,7 @@
     }
   },
   "collections": {
-    "menuLabel": "Sezioni di contenuto",
+    "menuLabel": "Collezioni",
     "actionFailed": "Non è stato possibile applicare la modifica.",
     "dialog": {
       "title": "Sezioni di contenuto",

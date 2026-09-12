@@ -38,19 +38,36 @@ vi.mock('@tanstack/react-router', async (importOriginal) => {
     await importOriginal<typeof import('@tanstack/react-router')>();
   return {
     ...actual,
+    // Mimics the real Link closely enough for the active-item test below:
+    // the router marks the current link with `data-status="active"` and
+    // CONCATENATES `activeProps.className` onto `className`. Pages stands
+    // in for "the screen you are on".
     Link: ({
       children,
       to,
       className,
+      activeProps,
     }: {
       children: ReactNode;
       to: string;
       className?: string;
-    }) => (
-      <a href={to} className={className}>
-        {children}
-      </a>
-    ),
+      activeProps?: { className?: string };
+    }) => {
+      const isActive = to === '/pages';
+      return (
+        <a
+          href={to}
+          data-status={isActive ? 'active' : undefined}
+          className={
+            isActive && activeProps?.className
+              ? `${className ?? ''} ${activeProps.className}`
+              : className
+          }
+        >
+          {children}
+        </a>
+      );
+    },
     useNavigate: vi.fn(),
   };
 });
@@ -193,6 +210,27 @@ describe('AdminShell', () => {
     expect(screen.getByRole('switch', { name: /lingua/i })).toBeTruthy();
     expect(screen.getByRole('switch', { name: /tema scuro/i })).toBeTruthy();
     expect(screen.queryByRole('button', { name: /^esci$/i })).toBeNull();
+  });
+
+  /*
+   * The active entry said where you were with its background alone. Its
+   * colour came in as `activeProps.className`, which the router appends to
+   * `className` — so `text-muted-foreground` and `text-foreground` sat in
+   * one attribute, where being written second wins nothing, and the
+   * computed colour of the current screen's entry was the muted one, the
+   * same as every other entry's.
+   */
+  it('colours the active nav item through a variant, not a second class', () => {
+    vi.mocked(router.useNavigate).mockReturnValue(vi.fn());
+
+    renderShell();
+    const active = screen.getByRole('link', { name: 'Pagine' });
+
+    expect(active.getAttribute('data-status')).toBe('active');
+    expect(active.className).toContain('data-[status=active]:text-foreground');
+    // The point of the fix: nothing hands the link a bare colour that has
+    // to out-order another bare colour in the same attribute.
+    expect(active.className.split(/\s+/)).not.toContain('text-foreground');
   });
 
   it('exposes logout inside Account', () => {

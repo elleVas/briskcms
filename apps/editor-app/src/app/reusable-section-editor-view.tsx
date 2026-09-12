@@ -1,7 +1,7 @@
 import { Link } from '@tanstack/react-router';
 import { pageBlockCategories, pageBlocks } from '@brisk/block-registry';
 import { useTranslation } from '../lib/use-translation';
-import type { SaveStatus } from './save-status';
+import { useSaveStatusText } from './save-status-text';
 import { CanvasEditorShell } from './canvas/canvas-editor-shell';
 import { IconListProvider } from './icon-list-provider';
 import { MediaPickerProvider } from './media-picker-provider';
@@ -13,20 +13,6 @@ export interface ReusableSectionEditorViewProps {
   siteId: string;
   /** A section has no locale of its own — this is the one its links resolve in. */
   locale: string;
-}
-
-function useStatusText(status: SaveStatus): string {
-  const { t } = useTranslation();
-  switch (status.kind) {
-    case 'idle':
-      return '';
-    case 'saved':
-      return t('sections.draftSaved');
-    case 'published':
-      return t('sections.published');
-    case 'error':
-      return status.message;
-  }
 }
 
 /**
@@ -44,9 +30,17 @@ export function ReusableSectionEditorView({
   locale,
 }: ReusableSectionEditorViewProps) {
   const { t } = useTranslation();
-  const { section, status, handleChange, handlePublish, toggleExposedField } =
-    useReusableSectionEditor(sectionId);
-  const statusText = useStatusText(status);
+  const {
+    section,
+    status,
+    isSaving,
+    handleChange,
+    handlePublish,
+    toggleExposedField,
+  } = useReusableSectionEditor(sectionId);
+  const statusText = useSaveStatusText(status, {
+    publishedKey: 'sections.published',
+  });
 
   return (
     <MediaPickerProvider siteId={siteId}>
@@ -60,6 +54,7 @@ export function ReusableSectionEditorView({
             }
             siteId={siteId}
             statusText={statusText}
+            isSaving={isSaving}
             registry={pageBlocks}
             categories={pageBlockCategories}
             blocks={section.content}

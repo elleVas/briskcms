@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Block, ResponsiveBlockStyle } from '@brisk/shared-types';
 import { renderBlockFragment } from '../../lib/block-fragment-api-client';
 
@@ -102,6 +102,16 @@ export interface UsePropertyPatchResult {
    * at the OLD page's tree.
    */
   flushAll: (options?: { closeBursts?: boolean }) => void;
+  /**
+   * Whether a change has been made and not yet written — the debounce
+   * window, and nothing else.
+   *
+   * It is the window in which closing the tab loses the last edit without
+   * a word, which is what useUnsavedChangesGuard exists to stop. State
+   * rather than a ref on purpose: something has to re-render when it
+   * flips, or the guard would read whatever it happened to see first.
+   */
+  hasPendingWrites: boolean;
 }
 
 /**
@@ -167,6 +177,7 @@ export function usePropertyPatch({
       { timeout: ReturnType<typeof setTimeout>; fire: () => void }
     >(),
   );
+  const [hasPendingWrites, setHasPendingWrites] = useState(false);
 
   useEffect(() => {
     const timersAtMount = timers.current;
@@ -190,16 +201,19 @@ export function usePropertyPatch({
     }
     const timeout = setTimeout(() => {
       timers.current.delete(timerKey);
+      setHasPendingWrites(timers.current.size > 0);
       fire();
       onBurstEnd?.(timerKey);
     }, debounceMs);
     timers.current.set(timerKey, { timeout, fire });
+    setHasPendingWrites(true);
   }
 
   const flushAll = useCallback(
     ({ closeBursts = true }: { closeBursts?: boolean } = {}) => {
       const pending = [...timers.current.entries()];
       timers.current.clear();
+      setHasPendingWrites(false);
       for (const [timerKey, { timeout, fire }] of pending) {
         clearTimeout(timeout);
         fire();
@@ -333,5 +347,6 @@ export function usePropertyPatch({
     scheduleStyleOverrideChange,
     scheduleVariantChange,
     flushAll,
+    hasPendingWrites,
   };
 }

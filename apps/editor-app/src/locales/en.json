@@ -196,9 +196,9 @@
     },
     "editor": {
       "backToList": "Pages",
-      "draftSaved": "Draft saved",
       "published": "Published",
-      "viewPage": "View page"
+      "viewPage": "View page",
+      "unpublishedChangesAt": "Unpublished changes — saved at {{time}}"
     },
     "versionHistory": {
       "open": "Version history",
@@ -320,7 +320,6 @@
     "deleteConfirm": "Delete this section? Pages using it will show nothing where it was.",
     "exposeField": "A page may change this",
     "backToList": "← Back to sections",
-    "draftSaved": "Draft saved",
     "published": "Published — every page using it is updated",
     "nameTaken": "A section with that name already exists.",
     "templates": "Templates",
@@ -340,7 +339,6 @@
     "editFooterDescription": "Content and links at the bottom of every page.",
     "editor": {
       "backToList": "Layout",
-      "draftSaved": "Draft saved",
       "published": "Published",
       "sticky": "Stick while scrolling",
       "noPageToPreview": "Create a page in this language first — the canvas needs a real page to preview {{section}} against."
@@ -1017,6 +1015,10 @@
     },
     "placement": {
       "refused": "{{block}} only belongs inside {{parents}}, so there is nowhere to put it here."
+    },
+    "status": {
+      "saving": "Saving…",
+      "draftSavedAt": "Draft saved at {{time}}"
     }
   },
   "toast": {
@@ -1831,7 +1833,7 @@
     }
   },
   "collections": {
-    "menuLabel": "Sections",
+    "menuLabel": "Collections",
     "actionFailed": "That change could not be made.",
     "dialog": {
       "title": "Sections",

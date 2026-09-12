@@ -189,6 +189,23 @@ export function useCanvasDraft({
     localBlocksRef.current = localBlocks;
   });
 
+  /**
+   * Leaving the editor by a link is not leaving the browser: the app is
+   * still running, so a save fired here reaches the server exactly as it
+   * would have when its timer expired. This is why in-app navigation needs
+   * no "are you sure" — the change goes with you.
+   *
+   * `closeBursts: false` for the same reason as the page change above: the
+   * history is about to go away with the component, and an undo entry
+   * recorded on the way out has nothing left to undo into.
+   */
+  useEffect(
+    () => () => {
+      flushAll({ closeBursts: false });
+    },
+    [flushAll],
+  );
+
   return {
     ...patch,
     localBlocks,

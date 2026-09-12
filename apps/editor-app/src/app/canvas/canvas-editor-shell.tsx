@@ -11,6 +11,7 @@ import { PUBLIC_SITE_URL } from '../../lib/public-site-url';
 import { useTranslation } from '../../lib/use-translation';
 import { useToast } from '../toast-provider';
 import { usePageList } from '../page-list-context';
+import { useUnsavedChangesGuard } from '../use-unsaved-changes-guard';
 import { BlockPicker, type BlockPickerCategory } from './block-picker';
 import { TemplatePicker } from './template-picker';
 import { BlockToolbarOverlay } from './block-toolbar-overlay';
@@ -87,6 +88,13 @@ export interface CanvasEditorShellProps {
   /** Se presente, mostra l'icona "Stile globale" nella barra in alto (Fase 2a del piano editor visuale, parte 2) — entrambi gli editor (pagina, Header/Footer) hanno un site a cui applicare lo stile. */
   siteId?: string;
   statusText: string;
+  /**
+   * Whether a write this editor's own hook owns is on the wire. It joins
+   * the canvas's debounce window to decide when leaving the BROWSER is
+   * worth interrupting somebody over (see useUnsavedChangesGuard) — the
+   * shell can see the debounce, only the caller can see the request.
+   */
+  isSaving?: boolean;
   actions?: ReactNode;
   registry: BlockDescriptor[];
   categories: BlockPickerCategory[];
@@ -141,6 +149,7 @@ export function CanvasEditorShell({
   translationRouting,
   siteId,
   statusText,
+  isSaving = false,
   actions,
   registry,
   categories,
@@ -195,6 +204,7 @@ export function CanvasEditorShell({
     scheduleStyleOverrideChange,
     scheduleVariantChange,
     flushAll,
+    hasPendingWrites,
   } = useCanvasDraft({
     blocks,
     pageId,
@@ -205,6 +215,14 @@ export function CanvasEditorShell({
     translationRouting,
     onChange,
     bridge,
+  });
+
+  // Closing the tab inside the debounce used to lose the last change in
+  // silence. Both halves of "not written yet" count: the timer this shell
+  // owns, and the request the caller owns.
+  useUnsavedChangesGuard({
+    hasUnsavedChanges: hasPendingWrites || isSaving,
+    onBeforeUnload: flushAll,
   });
 
   useTextEdit({
@@ -427,7 +445,11 @@ export function CanvasEditorShell({
         backLink={backLink}
         pageSwitcher={pageSwitcher}
         languageSwitcher={languageSwitcher}
-        statusText={statusText}
+        // The caller's status records the last write that LANDED; a
+        // change still in the debounce has not been written at all, and
+        // saying "Draft saved" over it is the one thing the bar must not
+        // do.
+        statusText={hasPendingWrites ? t('canvas.status.saving') : statusText}
         actions={actions}
         undo={undo}
         redo={redo}

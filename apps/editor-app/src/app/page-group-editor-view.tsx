@@ -26,7 +26,8 @@ import { PageListProvider } from './page-list-provider';
 import { publicPagePath } from '../lib/public-page-path';
 import { PUBLIC_SITE_URL } from '../lib/public-site-url';
 import { usePageBlockRegistry } from './use-page-block-registry';
-import { usePageGroupEditor, type SaveStatus } from './use-page-group-editor';
+import { useSaveStatusText } from './save-status-text';
+import { usePageGroupEditor } from './use-page-group-editor';
 import { usePageGroupVersions } from './use-page-group-versions';
 import { VersionHistoryDialog } from './version-history-dialog';
 
@@ -83,20 +84,6 @@ export interface PageGroupEditorViewProps {
   enabledLocales: string[];
 }
 
-function useStatusText(status: SaveStatus): string {
-  const { t } = useTranslation();
-  switch (status.kind) {
-    case 'idle':
-      return '';
-    case 'saved':
-      return t('pages.editor.draftSaved');
-    case 'published':
-      return t('pages.editor.published');
-    case 'error':
-      return status.message;
-  }
-}
-
 /**
  * i18n a livello di campo (see the plan) — PageGroupEditorView is
  * page-editor-view.tsx's counterpart for the new PageGroup/PageTranslation
@@ -130,13 +117,24 @@ export function PageGroupEditorView({
     activeTranslation,
     displayedBlocks,
     status,
+    isSaving,
     onChange,
     whenSaved,
     onSaveFieldValue,
     handlePublish,
     handleDiverge,
   } = usePageGroupEditor(groupId, initialLocale);
-  const statusText = useStatusText(status);
+  const statusText = useSaveStatusText(status, {
+    publishedKey: 'pages.editor.published',
+    // Once the page IS published, a landed save has moved the draft past
+    // what a visitor sees. "Draft saved" would be true and beside the
+    // point; the fact worth a line in the bar is that the two no longer
+    // match. Until the first publish there is nothing online to be behind.
+    savedKey:
+      activeTranslation.status === 'published'
+        ? 'pages.editor.unpublishedChangesAt'
+        : undefined,
+  });
   const [isDivergeConfirmOpen, setIsDivergeConfirmOpen] = useState(false);
   const [isSeoOpen, setIsSeoOpen] = useState(false);
   const [isTermsOpen, setIsTermsOpen] = useState(false);
@@ -191,6 +189,7 @@ export function PageGroupEditorView({
               }
               siteId={group.siteId}
               statusText={statusText}
+              isSaving={isSaving}
               actions={
                 <>
                   <IconButton

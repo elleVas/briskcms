@@ -78,7 +78,12 @@ describe('useSiteLayoutSectionEditor', () => {
     });
 
     expect(api.saveDraft).toHaveBeenCalledWith(sampleSection.id, sampleContent);
-    expect(result.current.status).toEqual({ kind: 'saved' });
+    // The time it landed travels with the status: the bar names it rather
+    // than saying "Draft saved" for the rest of the session.
+    expect(result.current.status).toMatchObject({ kind: 'saved' });
+    expect(
+      result.current.status.kind === 'saved' && result.current.status.at,
+    ).toBeTypeOf('number');
   });
 
   it('handleChange sets an error status when the save fails', async () => {
