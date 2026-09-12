@@ -327,6 +327,38 @@ export async function listPublishedPagesForSitemap(
   return res.json();
 }
 
+export interface FeedEntryDto {
+  title: string;
+  path: string;
+  description: string;
+  /** ISO, or `null` for a page published before the column existed. */
+  publishedAt: string | null;
+}
+
+export interface FeedListingDto {
+  siteName: string;
+  entries: FeedEntryDto[];
+}
+
+/** The site's most recent pages, or one term's, for the RSS route. */
+export async function listPublishedFeedEntries(
+  domain: string,
+  locale: string,
+  options: { term?: string; limit?: number } = {},
+): Promise<FeedListingDto> {
+  const params = new URLSearchParams({ domain, locale });
+  if (options.term) params.set('term', options.term);
+  if (options.limit) params.set('limit', String(options.limit));
+  const res = await timedFetcher.fetch(
+    `${apiUrl()}/public/pages/feed?${params.toString()}`,
+  );
+
+  if (!res.ok) {
+    throw new Error(`Public pages API error: ${res.status}`);
+  }
+  return res.json();
+}
+
 export interface SearchResultDto {
   pageId: string;
   slug: string;

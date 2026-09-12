@@ -402,6 +402,14 @@ const blockStyleCss =
 		<title>{seoMeta.title}</title>
 		<meta name="description" content={seoMeta.description} />
 		<link rel="canonical" href={canonicalUrl} />
+		{/* How a reader's app finds the feed without being told it exists:
+		    every page of a language points at that language's feed. */}
+		<link
+			rel="alternate"
+			type="application/rss+xml"
+			title={`${site.name} — ${locale}`}
+			href={`/${locale}/rss.xml`}
+		/>
 		{
 			!site.searchEngineIndexingEnabled && (
 				<meta name="robots" content="noindex, nofollow" />

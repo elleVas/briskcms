@@ -31,6 +31,7 @@ export * from './lib/use-cases/get-published-site-chrome.use-case';
 export * from './lib/use-cases/get-preview-page-by-id.use-case';
 export * from './lib/use-cases/get-preview-site-layout-section-by-id.use-case';
 export * from './lib/use-cases/list-published-pages-for-sitemap.use-case';
+export * from './lib/use-cases/list-published-feed-entries.use-case';
 export * from './lib/use-cases/list-published-page-tree.use-case';
 export * from './lib/use-cases/search-pages.use-case';
 export * from './lib/use-cases/upload-media.use-case';

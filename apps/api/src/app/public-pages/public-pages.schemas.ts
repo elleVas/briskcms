@@ -46,6 +46,16 @@ export type PublicPagesSitemapQuery = z.infer<
   typeof publicPagesSitemapQuerySchema
 >;
 
+export const publicPagesFeedQuerySchema = z.object({
+  domain: domainSchema,
+  locale: z.string().min(2),
+  /** One term's feed rather than the whole site's — the slug it answers at in this language. */
+  term: z.string().trim().min(1).optional(),
+  /** Coerced, because a query string has only strings in it. */
+  limit: z.coerce.number().int().min(1).max(100).optional(),
+});
+export type PublicPagesFeedQuery = z.infer<typeof publicPagesFeedQuerySchema>;
+
 export const publicPagesSearchQuerySchema = z.object({
   domain: domainSchema,
   locale: z.string().min(2),
