@@ -75,7 +75,7 @@ async function seedPage(
   );
   if (!stored) throw new Error('the translation just created is missing');
   stored.publish([], { by: null, now: input.publishedAt ?? new Date() });
-  await deps.pageTranslationRepository.save(stored);
+  await deps.pageTranslationRepository.save(stored, null);
   return { group, translation: stored };
 }
 
@@ -279,7 +279,14 @@ describe('resolveArticleBlocks', () => {
 
   it('lists the pages that share a term, newest first, itself excluded', async () => {
     const deps = setup();
-    const term = Term.create({ id: 'term-1', tenantId, taxonomyId: 'tax-1' });
+    const term = Term.create({
+      id: 'term-1',
+      tenantId,
+      siteId,
+      taxonomyId: 'tax-1',
+      name: { [locale]: 'QA tema' },
+      slugs: { [locale]: 'qa-tema' },
+    });
     await deps.taxonomyRepository.saveTerm(term);
     const self = await seedPage(deps, {
       slug: 'io',
