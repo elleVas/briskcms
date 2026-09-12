@@ -1022,6 +1022,32 @@
     "status": {
       "saving": "Saving…",
       "draftSavedAt": "Draft saved at {{time}}"
+    },
+    "resizeSidebar": "Resize the block panel",
+    "resizeLayersPanel": "Resize the right panel",
+    "rightPanel": {
+      "label": "Layers and properties",
+      "layers": "Layers",
+      "properties": "Properties"
+    },
+    "properties": {
+      "noSelection": "Select a block on the canvas or in Layers to change what it says and how it looks."
+    },
+    "pageMenu": {
+      "label": "Page"
+    },
+    "shortcuts": {
+      "open": "Keyboard shortcuts",
+      "title": "Keyboard shortcuts",
+      "description": "They work on the canvas, whenever you are not typing in a field.",
+      "undo": "Undo",
+      "redo": "Redo",
+      "duplicate": "Duplicate the selection",
+      "copy": "Copy the selection",
+      "paste": "Paste",
+      "delete": "Delete the selection",
+      "moveUp": "Move the block up",
+      "moveDown": "Move the block down"
     }
   },
   "toast": {

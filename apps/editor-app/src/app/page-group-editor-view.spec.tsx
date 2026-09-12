@@ -125,6 +125,15 @@ function renderView(
   );
 }
 
+/**
+ * The page's own actions used to be six unlabelled icons on the bar. They
+ * are a labelled menu now, so every one of them is one click further in —
+ * and finally readable.
+ */
+async function openPageMenu() {
+  fireEvent.click(await screen.findByRole('button', { name: 'Pagina' }));
+}
+
 describe('PageGroupEditorView', () => {
   afterEach(() => {
     vi.clearAllMocks();
@@ -137,6 +146,7 @@ describe('PageGroupEditorView', () => {
     });
     renderView();
 
+    await openPageMenu();
     fireEvent.click(await screen.findByRole('button', { name: 'SEO' }));
 
     const titleInput = await screen.findByLabelText('Titolo SEO');
@@ -179,6 +189,7 @@ describe('PageGroupEditorView', () => {
     });
     renderView();
 
+    await openPageMenu();
     fireEvent.click(
       await screen.findByRole('button', { name: 'Cronologia versioni' }),
     );
@@ -207,6 +218,7 @@ describe('PageGroupEditorView', () => {
     vi.mocked(api.createPageGroupTranslation).mockResolvedValue(itTranslation);
     renderView();
 
+    await openPageMenu();
     fireEvent.click(await screen.findByRole('button', { name: 'Traduzioni' }));
 
     const dialog = within(await screen.findByRole('dialog'));

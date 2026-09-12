@@ -1022,6 +1022,32 @@
     "status": {
       "saving": "Salvataggio…",
       "draftSavedAt": "Bozza salvata alle {{time}}"
+    },
+    "resizeSidebar": "Ridimensiona il pannello dei blocchi",
+    "resizeLayersPanel": "Ridimensiona il pannello di destra",
+    "rightPanel": {
+      "label": "Livelli e proprietà",
+      "layers": "Livelli",
+      "properties": "Proprietà"
+    },
+    "properties": {
+      "noSelection": "Seleziona un blocco sul canvas o nei Livelli per cambiare cosa dice e come appare."
+    },
+    "pageMenu": {
+      "label": "Pagina"
+    },
+    "shortcuts": {
+      "open": "Scorciatoie da tastiera",
+      "title": "Scorciatoie da tastiera",
+      "description": "Funzionano sul canvas, quando non stai scrivendo in un campo.",
+      "undo": "Annulla",
+      "redo": "Ripeti",
+      "duplicate": "Duplica la selezione",
+      "copy": "Copia la selezione",
+      "paste": "Incolla",
+      "delete": "Elimina la selezione",
+      "moveUp": "Sposta il blocco su",
+      "moveDown": "Sposta il blocco giù"
     }
   },
   "toast": {
