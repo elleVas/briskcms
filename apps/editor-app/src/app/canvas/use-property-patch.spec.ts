@@ -14,6 +14,18 @@ vi.mock('../../lib/block-fragment-api-client', async (importOriginal) => {
 describe('usePropertyPatch', () => {
   beforeEach(() => {
     vi.useFakeTimers();
+    // Cleared HERE and not only in afterEach: testing-library's automatic
+    // unmount runs after this describe's own afterEach, and unmounting now
+    // fires whatever is still pending — so a call made during the previous
+    // test's teardown would otherwise be counted against this one.
+    vi.clearAllMocks();
+    // Every test needs one now, whether or not it cares about the
+    // fragment: unmounting fires what is still pending (see the unmount
+    // effect), so a test that schedules a change and ends inside the
+    // debounce window reaches this call on the way out.
+    vi.mocked(blockFragmentApi.renderBlockFragment).mockResolvedValue(
+      '<div>patched</div>',
+    );
   });
 
   afterEach(() => {
@@ -26,7 +38,7 @@ describe('usePropertyPatch', () => {
     const onSaveStyleOverride = vi.fn();
     const onSaveVariant = vi.fn();
     const patchBlock = vi.fn();
-    const { result } = renderHook(() =>
+    const { result, unmount } = renderHook(() =>
       usePropertyPatch({
         pageId: 'page-1',
         token: 'tok',
@@ -39,6 +51,7 @@ describe('usePropertyPatch', () => {
     );
     return {
       result,
+      unmount,
       onSaveDraft,
       onSaveStyleOverride,
       onSaveVariant,
@@ -48,7 +61,7 @@ describe('usePropertyPatch', () => {
 
   function setupWithBursts(debounceMs = 300) {
     const ends: string[] = [];
-    const { result } = renderHook(() =>
+    const { result, unmount } = renderHook(() =>
       usePropertyPatch({
         pageId: 'page-1',
         token: 'tok',
@@ -60,8 +73,51 @@ describe('usePropertyPatch', () => {
         debounceMs,
       }),
     );
-    return { result, ends };
+    return { result, ends, unmount };
   }
+
+  /*
+   * Leaving the editor inside the debounce used to throw the change away:
+   * the unmount cleanup called clearTimeout on every timer and emptied the
+   * map. The app is still running when a person follows a link, so the
+   * save can and must still happen.
+   */
+  it('fires a pending save on unmount instead of dropping it', () => {
+    const { result, onSaveDraft, unmount } = setup();
+
+    act(() => {
+      result.current.scheduleChange('hero-1', 'Hero', 'title', {
+        title: 'Scritto e subito via',
+      });
+    });
+    expect(onSaveDraft).not.toHaveBeenCalled();
+
+    act(() => {
+      unmount();
+    });
+
+    expect(onSaveDraft).toHaveBeenCalledWith('hero-1', 'title', {
+      title: 'Scritto e subito via',
+    });
+  });
+
+  /*
+   * ...but it must not record an undo entry on the way out: the history is
+   * going away with the component, and an entry made now has nothing left
+   * to undo into.
+   */
+  it('does not close the burst on unmount', () => {
+    const { result, ends, unmount } = setupWithBursts();
+
+    act(() => {
+      result.current.scheduleChange('hero-1', 'Hero', 'title', { title: 'x' });
+    });
+    act(() => {
+      unmount();
+    });
+
+    expect(ends).toEqual([]);
+  });
 
   it('does nothing before the debounce window elapses', () => {
     const { result, onSaveDraft } = setup();

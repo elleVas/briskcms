@@ -432,6 +432,40 @@ describe('CanvasEditorShell', () => {
     ).toBeTruthy();
   });
 
+  /*
+   * Leaving the editor by a link is not leaving the browser: the app is
+   * still running, so a save fired on the way out reaches the server
+   * exactly as it would have when its timer expired. This is why in-app
+   * navigation asks no question — the change goes with you — and it is the
+   * half of "nothing is lost" that a beforeunload prompt cannot cover.
+   */
+  it('writes a change still inside the debounce when the editor is left', async () => {
+    vi.mocked(blockFragmentApi.renderBlockFragment).mockResolvedValue(
+      '<div>patched</div>',
+    );
+    const { onChange, unmount } = renderShell();
+    const iframe = await getIframe();
+
+    selectBlockWithRect(iframe, 'hero-1', HERO_RECT);
+    fireEvent.change(screen.getByDisplayValue('Titolo'), {
+      target: { value: 'Scritto e subito via' },
+    });
+    // Nothing has been written yet: the timer has not run.
+    expect(onChange).not.toHaveBeenCalled();
+
+    await act(async () => {
+      unmount();
+    });
+
+    expect(onChange).toHaveBeenCalledWith([
+      {
+        id: 'hero-1',
+        type: 'Hero',
+        props: { title: 'Scritto e subito via', subtitle: 'Sottotitolo' },
+      },
+    ]);
+  });
+
   it('changing a property in the Inspector updates onChange after the debounce, and patches the fragment', async () => {
     vi.mocked(blockFragmentApi.renderBlockFragment).mockResolvedValue(
       '<div>patched</div>',

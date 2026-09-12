@@ -179,16 +179,6 @@ export function usePropertyPatch({
   );
   const [hasPendingWrites, setHasPendingWrites] = useState(false);
 
-  useEffect(() => {
-    const timersAtMount = timers.current;
-    return () => {
-      for (const { timeout } of timersAtMount.values()) {
-        clearTimeout(timeout);
-      }
-      timersAtMount.clear();
-    };
-  }, []);
-
   // A debounce key distinct from a plain blockId (see scheduleTextChange
   // below) — a non-text property change and text being edited on the same
   // block have independent timers, and neither resets the other's debounce.
@@ -228,6 +218,30 @@ export function usePropertyPatch({
     // eslint-disable-next-line react-hooks/exhaustive-deps -- onBurstEnd is redefined on every render but only ever reads refs; depending on it would break flushAll's stable identity, which handlePublish and the page-change flush both rely on.
     [],
   );
+
+  /**
+   * On the way out, fire what is pending rather than dropping it.
+   *
+   * This used to be a cleanup that called clearTimeout on every timer and
+   * emptied the map — which meant leaving the editor by a link threw away
+   * whatever was still inside the 300ms debounce, silently. The app is
+   * still running when that happens, so the save reaches the server exactly
+   * as it would have when the timer expired.
+   *
+   * It has to live HERE, next to flushAll, and not in a caller: effect
+   * cleanups run in declaration order within a component, so a flush added
+   * by a hook further down was running after this one had already cleared
+   * the timers and found nothing to do. Caught by a test, not by reading.
+   *
+   * `closeBursts: false` because the history is going away with the
+   * component, and an undo entry recorded on the way out has nothing left
+   * to undo into.
+   */
+  useEffect(() => {
+    return () => {
+      flushAll({ closeBursts: false });
+    };
+  }, [flushAll]);
 
   const scheduleChange = useCallback(
     (
