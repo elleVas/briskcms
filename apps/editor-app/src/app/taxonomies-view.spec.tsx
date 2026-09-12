@@ -63,7 +63,7 @@ describe('TaxonomiesView', () => {
     renderView([]);
 
     expect(
-      await screen.findByText('Nessuna dimensione, per ora.'),
+      await screen.findByText(/Una dimensione è un modo di classificare/),
     ).toBeTruthy();
   });
 
@@ -75,7 +75,7 @@ describe('TaxonomiesView', () => {
    */
   it('leaves the prefix out entirely when none was typed', async () => {
     renderView([]);
-    await screen.findByText('Nessuna dimensione, per ora.');
+    await screen.findByText(/Una dimensione è un modo di classificare/);
 
     fireEvent.change(screen.getByLabelText('Nome'), {
       target: { value: 'Famiglia' },
@@ -94,7 +94,7 @@ describe('TaxonomiesView', () => {
 
   it('sends a null prefix when the dimension is mounted at the root', async () => {
     renderView([]);
-    await screen.findByText('Nessuna dimensione, per ora.');
+    await screen.findByText(/Una dimensione è un modo di classificare/);
 
     fireEvent.change(screen.getByLabelText('Nome'), {
       target: { value: 'Famiglia' },
@@ -115,7 +115,7 @@ describe('TaxonomiesView', () => {
 
   it('sends the prefix that was typed', async () => {
     renderView([]);
-    await screen.findByText('Nessuna dimensione, per ora.');
+    await screen.findByText(/Una dimensione è un modo di classificare/);
 
     fireEvent.change(screen.getByLabelText('Nome'), {
       target: { value: 'Famiglia' },
@@ -161,7 +161,7 @@ describe('TaxonomiesView', () => {
 
   it('reports a taken address in words a person can act on', async () => {
     renderView([]);
-    await screen.findByText('Nessuna dimensione, per ora.');
+    await screen.findByText(/Una dimensione è un modo di classificare/);
     vi.mocked(api.createTaxonomy).mockRejectedValue(new Error('API 409: {}'));
 
     fireEvent.change(screen.getByLabelText('Nome'), {

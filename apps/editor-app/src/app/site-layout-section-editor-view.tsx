@@ -104,14 +104,18 @@ export function SiteLayoutSectionEditorView({
                 isSaving={isSaving}
                 actions={
                   <>
+                    {/* "Stick while scrolling" on its own, in a bar above
+                        a canvas — of WHAT, it did not say. It is the
+                        header, and it is the header editor's one setting,
+                        so it says so. */}
                     {kind === 'header' && (
-                      <label className="flex items-center gap-1.5">
+                      <label className="flex items-center gap-1.5 whitespace-nowrap">
                         <Switch
                           size="sm"
                           checked={section.sticky}
                           onCheckedChange={handleStickyChange}
                         />
-                        {t('layout.editor.sticky')}
+                        {t('layout.editor.stickyLabelled')}
                       </label>
                     )}
                     <IconButton

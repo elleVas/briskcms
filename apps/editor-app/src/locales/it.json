@@ -82,7 +82,10 @@
       "style": "Stile",
       "integrations": "Integrazioni",
       "cookies": "Cookie banner",
-      "users": "Utenti"
+      "users": "Utenti",
+      "groupContent": "Contenuti",
+      "groupSite": "Sito",
+      "groupSettings": "Impostazioni"
     },
     "settings": {
       "label": "Impostazioni",
@@ -108,10 +111,6 @@
         "title": "Media",
         "description": "{{count}} file caricati"
       },
-      "published": {
-        "title": "Pubblicate",
-        "description": "Live sul sito pubblico in questo momento"
-      },
       "forms": {
         "title": "Moduli",
         "description_one": "{{count}} risposta ricevuta",
@@ -130,7 +129,12 @@
         "published": "Pubblicata"
       }
     },
-    "emptyState": "Questo sito non ha ancora pagine o media — inizia dalla sezione Pagine."
+    "emptyState": "Questo sito non ha ancora pagine o media — inizia dalla sezione Pagine.",
+    "actions": {
+      "newPage": "Pagine",
+      "uploadMedia": "Media",
+      "openSite": "Apri il sito"
+    }
   },
   "pages": {
     "list": {
@@ -268,7 +272,6 @@
     "rootMounted": "Nessun prefisso (radice del sito)",
     "create": "Aggiungi dimensione",
     "prefixTaken": "Un'altra dimensione o una pagina risponde già a quell'indirizzo.",
-    "empty": "Nessuna dimensione, per ora.",
     "atRoot": "alla radice del sito",
     "delete": "Elimina dimensione",
     "deleteConfirm": "Eliminare questa dimensione e tutti i suoi termini? Le pagine restano, smettono solo di essere classificate così.",
@@ -298,12 +301,13 @@
     "landingPageChosen": "Una pagina è impostata",
     "landingPageChoose": "Scegli una pagina",
     "landingPageChange": "Cambia",
-    "landingPageClear": "Torna alla disposizione predefinita"
+    "landingPageClear": "Torna alla disposizione predefinita",
+    "emptyExplainer": "Una dimensione è un modo di classificare le pagine — Argomento, Autore, Linea di prodotto. Ogni suo termine ha un URL suo, che elenca le pagine classificate così.",
+    "emptyAction": "Dai un nome alla prima dimensione"
   },
   "sections": {
     "title": "Sezioni",
     "subtitle": "Costruisci una fascia di blocchi una volta e usala su tante pagine.",
-    "empty": "Nessuna sezione.",
     "create": "Nuova sezione",
     "createTitle": "Nuova sezione",
     "nameLabel": "Nome",
@@ -333,7 +337,9 @@
     "usedOnPages_one": "su {{count}} pagina",
     "usedOnPages_other": "su {{count}} pagine",
     "usedNowhere": "non ancora inserita da nessuna parte",
-    "deleteConfirmUsed": "Eliminare “{{name}}”? È su {{count}} pagine, e ognuna non mostrerà più niente al suo posto."
+    "deleteConfirmUsed": "Eliminare “{{name}}”? È su {{count}} pagine, e ognuna non mostrerà più niente al suo posto.",
+    "emptyExplainer": "Una sezione è una striscia di blocchi che costruisci una volta e metti su tante pagine: la modifichi qui e cambia su tutte.",
+    "emptyAction": "Dai un nome alla prima sezione"
   },
   "layout": {
     "title": "Layout",
@@ -345,8 +351,8 @@
     "editor": {
       "backToList": "Layout",
       "published": "Pubblicato",
-      "sticky": "Fisso durante lo scroll",
-      "noPageToPreview": "Crea prima una pagina in questa lingua — il canvas ha bisogno di una pagina vera su cui visualizzare l'anteprima di {{section}}."
+      "noPageToPreview": "Crea prima una pagina in questa lingua — il canvas ha bisogno di una pagina vera su cui visualizzare l'anteprima di {{section}}.",
+      "stickyLabelled": "Header: fisso durante lo scroll"
     }
   },
   "media": {
@@ -356,7 +362,7 @@
     "grid": {
       "upload": "Carica file",
       "uploading": "Caricamento in corso...",
-      "empty": "Nessun file ancora.",
+      "empty": "Ancora niente nella libreria. Carica un’immagine, un video o un audio e diventa disponibile per ogni blocco che ne chiede uno.",
       "delete": "Elimina",
       "previousPage": "Pagina precedente",
       "nextPage": "Pagina successiva",
@@ -692,7 +698,11 @@
         "date": "Data",
         "time": "Ora",
         "file": "Caricamento file"
-      }
+      },
+      "unsaved": "Modifiche non salvate",
+      "leaveTitle": "Uscire senza salvare?",
+      "leaveBody": "Questo modulo si salva solo quando premi Salva. Quello che hai cambiato da allora andrà perso.",
+      "leaveAction": "Esci"
     },
     "submissions": {
       "title": "Iscrizioni ricevute",

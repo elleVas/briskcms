@@ -82,7 +82,10 @@
       "style": "Style",
       "integrations": "Integrations",
       "cookies": "Cookie banner",
-      "users": "Users"
+      "users": "Users",
+      "groupContent": "Content",
+      "groupSite": "Site",
+      "groupSettings": "Settings"
     },
     "settings": {
       "label": "Settings",
@@ -108,10 +111,6 @@
         "title": "Media",
         "description": "{{count}} files uploaded"
       },
-      "published": {
-        "title": "Published",
-        "description": "Live on the public site right now"
-      },
       "forms": {
         "title": "Forms",
         "description_one": "{{count}} submission received",
@@ -130,7 +129,12 @@
         "published": "Published"
       }
     },
-    "emptyState": "This site doesn't have any pages or media yet — start from the Pages section."
+    "emptyState": "This site doesn't have any pages or media yet — start from the Pages section.",
+    "actions": {
+      "newPage": "Pages",
+      "uploadMedia": "Media",
+      "openSite": "Open the site"
+    }
   },
   "pages": {
     "list": {
@@ -268,7 +272,6 @@
     "rootMounted": "No prefix (site root)",
     "create": "Add dimension",
     "prefixTaken": "Another dimension or a page already answers at that address.",
-    "empty": "No dimension yet.",
     "atRoot": "at the site root",
     "delete": "Delete dimension",
     "deleteConfirm": "Delete this dimension and all its terms? The pages themselves stay, they simply stop being classified along it.",
@@ -298,12 +301,13 @@
     "landingPageChosen": "A page is set",
     "landingPageChoose": "Choose a page",
     "landingPageChange": "Change",
-    "landingPageClear": "Back to the default layout"
+    "landingPageClear": "Back to the default layout",
+    "emptyExplainer": "A dimension is a way of filing pages — Topic, Author, Product range. Each of its terms gets a URL of its own, listing every page filed under it.",
+    "emptyAction": "Name your first dimension"
   },
   "sections": {
     "title": "Sections",
     "subtitle": "Build a strip of blocks once, use it on many pages.",
-    "empty": "No section yet.",
     "create": "New section",
     "createTitle": "New section",
     "nameLabel": "Name",
@@ -333,7 +337,9 @@
     "usedOnPages_one": "on {{count}} page",
     "usedOnPages_other": "on {{count}} pages",
     "usedNowhere": "not placed anywhere yet",
-    "deleteConfirmUsed": "Delete “{{name}}”? It is on {{count}} page(s), and each will show nothing where it was."
+    "deleteConfirmUsed": "Delete “{{name}}”? It is on {{count}} page(s), and each will show nothing where it was.",
+    "emptyExplainer": "A section is a strip of blocks you build once and place on many pages — edit it here and every page showing it changes with it.",
+    "emptyAction": "Name your first section"
   },
   "layout": {
     "title": "Layout",
@@ -345,8 +351,8 @@
     "editor": {
       "backToList": "Layout",
       "published": "Published",
-      "sticky": "Stick while scrolling",
-      "noPageToPreview": "Create a page in this language first — the canvas needs a real page to preview {{section}} against."
+      "noPageToPreview": "Create a page in this language first — the canvas needs a real page to preview {{section}} against.",
+      "stickyLabelled": "Header: stick while scrolling"
     }
   },
   "media": {
@@ -356,7 +362,7 @@
     "grid": {
       "upload": "Upload file",
       "uploading": "Uploading...",
-      "empty": "No files yet.",
+      "empty": "Nothing in the library yet. Upload an image, a video or an audio file and it becomes available to every block that asks for one.",
       "delete": "Delete",
       "previousPage": "Previous page",
       "nextPage": "Next page",
@@ -692,7 +698,11 @@
         "date": "Date",
         "time": "Time",
         "file": "File upload"
-      }
+      },
+      "unsaved": "Unsaved changes",
+      "leaveTitle": "Leave without saving?",
+      "leaveBody": "This form saves only when you press Save. What you have changed since then will be lost.",
+      "leaveAction": "Leave"
     },
     "submissions": {
       "title": "Submissions",

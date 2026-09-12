@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Link } from '@tanstack/react-router';
 import {
   useMutation,
@@ -32,6 +32,7 @@ export function SectionsListView({ siteId }: SectionsListViewProps) {
   const queryClient = useQueryClient();
   const queryOptions = reusableSectionsQueryOptions(siteId);
   const { data: sections } = useSuspenseQuery(queryOptions);
+  const nameInputRef = useRef<HTMLInputElement>(null);
   const [name, setName] = useState('');
   const [kind, setKind] = useState<ReusableSectionKind>('shared');
   const [error, setError] = useState<string | null>(null);
@@ -80,7 +81,11 @@ export function SectionsListView({ siteId }: SectionsListViewProps) {
           <span className="text-xs font-medium text-muted-foreground">
             {t('sections.nameLabel')}
           </span>
-          <Input value={name} onChange={(e) => setName(e.target.value)} />
+          <Input
+            ref={nameInputRef}
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+          />
         </label>
         <label className="flex min-w-64 flex-1 flex-col gap-1.5">
           <span className="text-xs font-medium text-muted-foreground">
@@ -102,7 +107,20 @@ export function SectionsListView({ siteId }: SectionsListViewProps) {
       </form>
 
       {sections.length === 0 ? (
-        <p className="text-sm text-muted-foreground">{t('sections.empty')}</p>
+        // "No section yet." was the whole message, about a concept a
+        // client has never met. It says what one IS now, and takes you to
+        // the field that makes one.
+        <div className="flex flex-col items-start gap-3 rounded-lg border border-dashed p-6">
+          <p className="text-sm text-muted-foreground">
+            {t('sections.emptyExplainer')}
+          </p>
+          <Button
+            variant="outline"
+            onClick={() => nameInputRef.current?.focus()}
+          >
+            {t('sections.emptyAction')}
+          </Button>
+        </div>
       ) : (
         <ul className="flex flex-col divide-y rounded-lg border">
           {sections.map((section) => (

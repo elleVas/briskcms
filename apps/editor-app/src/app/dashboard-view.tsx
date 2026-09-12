@@ -1,6 +1,8 @@
 import { useTranslation } from 'react-i18next';
 import { Link } from '@tanstack/react-router';
 import { FileText, Image as ImageIcon } from 'lucide-react';
+import { Button } from '../components/ui/button';
+import { PUBLIC_SITE_URL } from '../lib/public-site-url';
 import {
   Card,
   CardContent,
@@ -33,12 +35,40 @@ export function DashboardView({ stats }: DashboardViewProps) {
 
   return (
     <div className="flex flex-col gap-4">
-      <h1 className="text-lg font-semibold">{t('dashboard.title')}</h1>
+      <h1 className="text-xl font-semibold tracking-tight">
+        {t('dashboard.title')}
+      </h1>
 
+      {/*
+        The first screen after login had no action on it at all — four
+        cards of numbers and a list. These are the three things somebody
+        arrives wanting to do.
+      */}
+      <div className="flex flex-wrap items-center gap-2">
+        <Button asChild>
+          <Link to="/pages">{t('dashboard.actions.newPage')}</Link>
+        </Button>
+        <Button asChild variant="outline">
+          <Link to="/media">{t('dashboard.actions.uploadMedia')}</Link>
+        </Button>
+        <Button asChild variant="outline">
+          <a href={PUBLIC_SITE_URL} target="_blank" rel="noopener noreferrer">
+            {t('dashboard.actions.openSite')}
+          </a>
+        </Button>
+      </div>
+
+      {/* Three cards in a grid of three. It was four in a grid of three,
+          so "Published" sat alone on a second row — and its single number
+          is already the first half of the Pages card's own breakdown. */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <Card>
           <CardHeader>
-            <CardTitle>{t('dashboard.stats.pages.title')}</CardTitle>
+            <CardTitle>
+              <Link to="/pages" className="hover:underline">
+                {t('dashboard.stats.pages.title')}
+              </Link>
+            </CardTitle>
             <CardDescription>
               {t('dashboard.stats.pages.description', { count: totalPages })}
             </CardDescription>
@@ -131,20 +161,6 @@ export function DashboardView({ stats }: DashboardViewProps) {
                 ))}
               </ul>
             )}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>{t('dashboard.stats.published.title')}</CardTitle>
-            <CardDescription>
-              {t('dashboard.stats.published.description')}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <span className="text-2xl font-semibold">
-              {stats.pages.publishedCount}
-            </span>
           </CardContent>
         </Card>
       </div>

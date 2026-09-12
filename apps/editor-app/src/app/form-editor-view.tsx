@@ -10,10 +10,25 @@ import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { FormFieldEditorRow } from './form-field-editor-row';
 import { IconButton } from './icon-button';
+import { ConfirmActionDialog } from './confirm-action-dialog';
 import { useFormEditor } from './use-form-editor';
+import {
+  useNavigationBlocker,
+  useUnsavedChangesGuard,
+} from './use-unsaved-changes-guard';
 
 export interface FormEditorViewProps {
   formId: string;
+}
+
+/** Everything the Save button would send, as one comparable string. */
+function serializeDraft(
+  name: string,
+  fields: FormField[],
+  steps: FormStep[],
+  notificationEmail: string | null,
+): string {
+  return JSON.stringify({ name, fields, steps, notificationEmail });
 }
 
 export function FormEditorView({ formId }: FormEditorViewProps) {
@@ -38,6 +53,29 @@ export function FormEditorView({ formId }: FormEditorViewProps) {
   );
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState('');
+
+  /*
+   * This editor has no autosave: it writes only when somebody presses
+   * Save, and until now it let you walk away from a half-built form
+   * without a word — no dirty mark, no question, nothing.
+   *
+   * The baseline is what the server last confirmed, so a change that is
+   * typed and then typed back does not count as unsaved. State rather than
+   * a ref: it is read while rendering — the dirty mark and the guard both
+   * follow it — and reading a ref there is what the React Compiler's rule
+   * forbids, for the good reason that nothing would re-render when it
+   * moved.
+   */
+  const [baseline, setBaseline] = useState(() =>
+    serializeDraft(form.name, form.fields, form.steps, form.notificationEmail),
+  );
+  const isDirty =
+    serializeDraft(name, fields, steps, notificationEmail || null) !== baseline;
+  useUnsavedChangesGuard({ hasUnsavedChanges: isDirty });
+  // And a question in front of an in-app link too, which the canvas does
+  // not need: there is nothing here that saves itself, so following one
+  // really does throw the work away.
+  const guard = useNavigationBlocker(isDirty);
 
   function updateField(index: number, next: FormField) {
     setFields((current) => current.map((f, i) => (i === index ? next : f)));
@@ -115,6 +153,14 @@ export function FormEditorView({ formId }: FormEditorViewProps) {
         steps,
         notificationEmail: notificationEmail.trim() || null,
       });
+      setBaseline(
+        serializeDraft(
+          name,
+          fields.map(sanitizeOptions),
+          steps,
+          notificationEmail.trim() || null,
+        ),
+      );
       setSaved(true);
     } catch (err) {
       setError(String(err));
@@ -130,9 +176,18 @@ export function FormEditorView({ formId }: FormEditorViewProps) {
         >
           ← {t('forms.editor.backToList')}
         </Link>
-        <Button disabled={isSaving} onClick={() => void handleSave()}>
-          {isSaving ? t('forms.editor.saving') : t('forms.editor.save')}
-        </Button>
+        <div className="flex items-center gap-3">
+          {/* A dirty mark, which this screen had none of: "Save" looked
+              exactly the same whether or not there was anything to save. */}
+          {isDirty && !isSaving && (
+            <span className="text-xs text-muted-foreground">
+              {t('forms.editor.unsaved')}
+            </span>
+          )}
+          <Button disabled={isSaving} onClick={() => void handleSave()}>
+            {isSaving ? t('forms.editor.saving') : t('forms.editor.save')}
+          </Button>
+        </div>
       </div>
       {/* Two panels rather than one long page: editing what a form asks
           and reading what people answered are different jobs, done at
@@ -271,6 +326,16 @@ export function FormEditorView({ formId }: FormEditorViewProps) {
           </div>
         </div>
       )}
+      {/* Leaving really does throw the work away here — there is no
+          autosave behind this screen, only the Save button. */}
+      <ConfirmActionDialog
+        open={guard.isBlocked}
+        onOpenChange={(open) => !open && guard.stay()}
+        title={t('forms.editor.leaveTitle')}
+        description={t('forms.editor.leaveBody')}
+        onConfirm={guard.proceed}
+        actionLabel={t('forms.editor.leaveAction')}
+      />
     </div>
   );
 }

@@ -2,13 +2,13 @@ import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from '@tanstack/react-router';
 import {
+  ClipboardList,
   Cookie,
   FileText,
-  FormInput,
   Image,
   LayoutDashboard,
-  LayoutTemplate,
-  Rows3,
+  LayoutList,
+  PanelsTopLeft,
   Tags,
   Palette,
   Plug,
@@ -21,7 +21,6 @@ import { collectionsQueryOptions } from './collections-queries';
 import { collectionIcon } from './collection-icons';
 import { siteQueryOptions } from './site-queries';
 import { SettingsMenu } from './settings-menu';
-import { Separator } from '../components/ui/separator';
 import { useCurrentSession } from './use-current-session';
 
 export interface AdminShellProps {
@@ -76,6 +75,24 @@ function NavItem({
   );
 }
 
+/**
+ * A heading and the entries under it.
+ *
+ * `<ul>` under a heading rather than a run of links: the sidebar has
+ * fifteen destinations in it, and a screen reader was being read them as
+ * one undifferentiated list.
+ */
+function NavGroup({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <div className="flex flex-col gap-1">
+      <h2 className="px-2 text-[0.6875rem] font-semibold uppercase tracking-wide text-muted-foreground">
+        {title}
+      </h2>
+      {children}
+    </div>
+  );
+}
+
 export function AdminShell({ children }: AdminShellProps) {
   const { isAdmin } = useCurrentSession();
   const { t } = useTranslation();
@@ -89,18 +106,40 @@ export function AdminShell({ children }: AdminShellProps) {
   });
 
   return (
-    <div className="flex h-screen flex-col">
-      <header className="flex items-center justify-between border-b px-4 py-2">
-        <span className="text-sm font-semibold">Brisk</span>
-      </header>
-      <div className="flex min-h-0 flex-1">
-        <nav className="flex w-48 shrink-0 flex-col border-r border-sidebar-border bg-sidebar p-3 text-sidebar-foreground">
-          <div className="flex flex-1 flex-col gap-1">
-            <NavItem
-              to="/"
-              icon={LayoutDashboard}
-              label={t('shell.nav.dashboard')}
-            />
+    <div className="flex h-screen">
+      {/*
+        The wordmark used to have a 37px bar of its own across the whole
+        window, holding the single word "Brisk" at 14px — thirty-seven
+        pixels of every screen spent on it, and the canvas editor already
+        did without it. It sits at the top of the sidebar instead, where a
+        product's name goes, and the "B" wears the accent so the app has a
+        mark rather than a word.
+      */}
+      <nav className="flex w-52 shrink-0 flex-col gap-4 overflow-y-auto border-r border-sidebar-border bg-sidebar p-3 text-sidebar-foreground">
+        <span className="flex items-center gap-2 px-2 pt-1 text-sm font-semibold">
+          <span
+            aria-hidden
+            className="flex size-6 items-center justify-center rounded-md bg-primary text-sm font-bold text-primary-foreground"
+          >
+            B
+          </span>
+          Brisk
+        </span>
+        <div className="flex flex-1 flex-col gap-4">
+          <NavItem
+            to="/"
+            icon={LayoutDashboard}
+            label={t('shell.nav.dashboard')}
+          />
+          {/*
+            Twelve flat entries, and a Settings menu holding six more, with
+            no readable criterion between them: Style, Integrations and
+            Cookie banner are settings and lived in the sidebar, while
+            Languages and Business info are settings and lived in the menu.
+            Three groups now, by what an entry is ABOUT — what the site
+            says, what it looks like, and how it is set up.
+          */}
+          <NavGroup title={t('shell.nav.groupContent')}>
             <NavItem to="/pages" icon={FileText} label={t('shell.nav.pages')} />
             {/* One entry per section the site has defined. They sit
                 straight under Pages because that is what they are: pages
@@ -117,17 +156,19 @@ export function AdminShell({ children }: AdminShellProps) {
             <NavItem to="/media" icon={Image} label={t('shell.nav.media')} />
             <NavItem
               to="/forms"
-              icon={FormInput}
+              icon={ClipboardList}
               label={t('shell.nav.forms')}
             />
+          </NavGroup>
+          <NavGroup title={t('shell.nav.groupSite')}>
             <NavItem
               to="/layout"
-              icon={LayoutTemplate}
+              icon={PanelsTopLeft}
               label={t('shell.nav.layout')}
             />
             <NavItem
               to="/sections"
-              icon={Rows3}
+              icon={LayoutList}
               label={t('shell.nav.sections')}
             />
             <NavItem
@@ -136,6 +177,8 @@ export function AdminShell({ children }: AdminShellProps) {
               label={t('shell.nav.taxonomies')}
             />
             <NavItem to="/style" icon={Palette} label={t('shell.nav.style')} />
+          </NavGroup>
+          <NavGroup title={t('shell.nav.groupSettings')}>
             <NavItem
               to="/integrations"
               icon={Plug}
@@ -146,29 +189,20 @@ export function AdminShell({ children }: AdminShellProps) {
               icon={Cookie}
               label={t('shell.nav.cookies')}
             />
-            {/* Admin-only, and the sidebar now says so instead of the
-                server saying it after the click. Every screen used to be
-                offered to everybody: an Editor saw this, opened it, and
-                got a generic error page — the API was right to refuse,
-                the sidebar was wrong to ask. */}
+            {/* Admin-only, and the sidebar says so instead of the server
+                saying it after the click. Every screen used to be offered
+                to everybody: an Editor saw this, opened it, and got a
+                generic error page — the API was right to refuse, the
+                sidebar was wrong to ask. */}
             {isAdmin && (
-              <>
-                <Separator className="my-2" />
-                <NavItem
-                  to="/users"
-                  icon={Users}
-                  label={t('shell.nav.users')}
-                />
-              </>
+              <NavItem to="/users" icon={Users} label={t('shell.nav.users')} />
             )}
-          </div>
-          <div className="flex flex-col gap-1">
             <SettingsMenu />
-            <AccountMenu />
-          </div>
-        </nav>
-        <main className="flex-1 overflow-auto p-6">{children}</main>
-      </div>
+          </NavGroup>
+        </div>
+        <AccountMenu />
+      </nav>
+      <main className="flex-1 overflow-auto p-6">{children}</main>
     </div>
   );
 }

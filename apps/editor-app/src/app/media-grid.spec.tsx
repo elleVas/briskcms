@@ -103,7 +103,7 @@ describe('MediaGrid', () => {
   it('shows an empty state when there are no items', () => {
     renderGrid({ items: [], total: 0 });
 
-    expect(screen.getByText(/nessun file/i)).toBeTruthy();
+    expect(screen.getByText(/ancora niente nella libreria/i)).toBeTruthy();
   });
 
   it('renders a thumbnail for every item', () => {

@@ -225,6 +225,25 @@ describe('AdminShell', () => {
    * computed colour of the current screen's entry was the muted one, the
    * same as every other entry's.
    */
+  /*
+   * Twelve flat entries plus a menu with six more, and no readable
+   * criterion between them: Style, Integrations and Cookie banner are
+   * settings and lived in the sidebar, while Languages and Business info
+   * are settings and lived in the menu.
+   */
+  it('groups the sidebar by what an entry is about', () => {
+    vi.mocked(router.useNavigate).mockReturnValue(vi.fn());
+
+    renderShell();
+
+    const groups = screen.getAllByRole('heading', { level: 2 });
+    expect(groups.map((heading) => heading.textContent)).toEqual([
+      'Contenuti',
+      'Sito',
+      'Impostazioni',
+    ]);
+  });
+
   it('colours the active nav item through a variant, not a second class', () => {
     vi.mocked(router.useNavigate).mockReturnValue(vi.fn());
 
