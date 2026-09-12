@@ -72,7 +72,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
                 item.variant === 'destructive' &&
                   'border-destructive/50 bg-destructive/10 text-destructive',
                 item.variant === 'success' &&
-                  'border-emerald-500/50 bg-emerald-50 text-emerald-900 dark:bg-emerald-950 dark:text-emerald-100',
+                  'border-success/50 bg-success/10 text-success',
               )}
             >
               <span className="flex-1">{item.message}</span>

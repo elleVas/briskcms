@@ -208,7 +208,12 @@ describe('AdminShell', () => {
     fireEvent.click(screen.getByRole('button', { name: /^impostazioni$/i }));
 
     expect(screen.getByRole('switch', { name: /lingua/i })).toBeTruthy();
-    expect(screen.getByRole('switch', { name: /tema scuro/i })).toBeTruthy();
+    // Three choices rather than a dark on/off switch: "follow the system"
+    // is the default now, and a two-position toggle cannot say it.
+    expect(screen.getByRole('radiogroup', { name: /tema/i })).toBeTruthy();
+    expect(
+      screen.getByRole('radio', { name: /come il sistema/i }),
+    ).toBeTruthy();
     expect(screen.queryByRole('button', { name: /^esci$/i })).toBeNull();
   });
 

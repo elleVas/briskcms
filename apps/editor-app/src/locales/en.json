@@ -87,7 +87,10 @@
     "settings": {
       "label": "Settings",
       "language": "Language",
-      "theme": "Dark theme"
+      "theme": "Theme",
+      "themeLight": "Light",
+      "themeDark": "Dark",
+      "themeSystem": "Follow the system"
     },
     "account": {
       "label": "Account"

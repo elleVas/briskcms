@@ -416,7 +416,7 @@ export function GlobalStylesDialog({
                               </p>
                             )}
                           {primaryContrast && !primaryContrast.passesAA && (
-                            <p className="text-xs text-amber-600 dark:text-amber-500">
+                            <p className="text-xs text-warning">
                               {t('themeSettings.contrastWarning', {
                                 ratio: primaryContrast.ratio.toFixed(1),
                               })}
@@ -452,7 +452,7 @@ export function GlobalStylesDialog({
                               </p>
                             )}
                           {secondaryContrast && !secondaryContrast.passesAA && (
-                            <p className="text-xs text-amber-600 dark:text-amber-500">
+                            <p className="text-xs text-warning">
                               {t('themeSettings.contrastWarning', {
                                 ratio: secondaryContrast.ratio.toFixed(1),
                               })}

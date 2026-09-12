@@ -87,7 +87,10 @@
     "settings": {
       "label": "Impostazioni",
       "language": "Lingua",
-      "theme": "Tema scuro"
+      "theme": "Tema",
+      "themeLight": "Chiaro",
+      "themeDark": "Scuro",
+      "themeSystem": "Come il sistema"
     },
     "account": {
       "label": "Account"

@@ -312,7 +312,7 @@ export function InspectorPanel({
             onChange={(value) => onChangeProp(field.key, value)}
           />
           {showRequiredWarning && (
-            <span className="text-xs text-amber-600 dark:text-amber-500">
+            <span className="text-xs text-warning">
               {t('canvas.requiredField')}
             </span>
           )}

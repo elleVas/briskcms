@@ -94,7 +94,7 @@ export function AdminShell({ children }: AdminShellProps) {
         <span className="text-sm font-semibold">Brisk</span>
       </header>
       <div className="flex min-h-0 flex-1">
-        <nav className="flex w-48 shrink-0 flex-col border-r p-3">
+        <nav className="flex w-48 shrink-0 flex-col border-r border-sidebar-border bg-sidebar p-3 text-sidebar-foreground">
           <div className="flex flex-1 flex-col gap-1">
             <NavItem
               to="/"
