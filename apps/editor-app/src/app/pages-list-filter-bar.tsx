@@ -1,5 +1,7 @@
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
+import { SlidersHorizontal } from 'lucide-react';
 import { getLocaleDisplayName } from '@brisk/shared-types';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -12,6 +14,15 @@ import {
   SelectValue,
 } from '../components/ui/select';
 import { allUsersQueryOptions } from './users-queries';
+import { Badge } from '../components/ui/badge';
+
+/** Everything the "Filters" button hides — search stays out, it is the one people reach for. */
+const SECONDARY_FILTER_KEYS = [
+  'createdAfter',
+  'createdBefore',
+  'createdBy',
+  'locale',
+] as const satisfies readonly (keyof PagesListFilterValues)[];
 
 export interface PagesListFilterValues {
   search: string;
@@ -71,104 +82,132 @@ export function PagesListFilterBar({
   }
 
   const hasActiveFilters = Object.values(value).some((v) => v !== '');
+  const activeSecondaryCount = SECONDARY_FILTER_KEYS.filter(
+    (key) => value[key] !== '',
+  ).length;
+  /*
+   * The five controls were always on screen, and at 1024px they took two
+   * full rows above a list that had not started yet. Four of them go behind
+   * a button; search stays out, because it is the one people actually reach
+   * for. Open from the start when something is already filtering, so a
+   * reloaded address does not hide the reason the list is short.
+   */
+  const [isOpen, setIsOpen] = useState(activeSecondaryCount > 0);
 
   return (
-    <div className="mb-3 flex flex-wrap items-end gap-3">
-      <div className="flex flex-col gap-1">
-        <Label htmlFor="pages-filter-search">
-          {t('pages.list.filters.search')}
-        </Label>
-        <Input
-          id="pages-filter-search"
-          className="w-48"
-          value={value.search}
-          onChange={(event) => set('search', event.target.value)}
-          placeholder={t('pages.list.filters.searchPlaceholder')}
-        />
-      </div>
-      <div className="flex flex-col gap-1">
-        <Label htmlFor="pages-filter-created-after">
-          {t('pages.list.filters.createdAfter')}
-        </Label>
-        <Input
-          id="pages-filter-created-after"
-          type="date"
-          className="w-36"
-          value={value.createdAfter}
-          onChange={(event) => set('createdAfter', event.target.value)}
-        />
-      </div>
-      <div className="flex flex-col gap-1">
-        <Label htmlFor="pages-filter-created-before">
-          {t('pages.list.filters.createdBefore')}
-        </Label>
-        <Input
-          id="pages-filter-created-before"
-          type="date"
-          className="w-36"
-          value={value.createdBefore}
-          onChange={(event) => set('createdBefore', event.target.value)}
-        />
-      </div>
-      <div className="flex flex-col gap-1">
-        <Label htmlFor="pages-filter-created-by">
-          {t('pages.list.filters.createdBy')}
-        </Label>
-        <Select
-          value={value.createdBy || ANY_SENTINEL}
-          onValueChange={(next) =>
-            set('createdBy', next === ANY_SENTINEL ? '' : next)
-          }
-        >
-          <SelectTrigger id="pages-filter-created-by" className="w-40">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value={ANY_SENTINEL}>
-              {t('pages.list.filters.anyCreator')}
-            </SelectItem>
-            {usersData?.items.map((user) => (
-              <SelectItem key={user.id} value={user.id}>
-                {user.displayName || user.email}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-      <div className="flex flex-col gap-1">
-        <Label htmlFor="pages-filter-locale">
-          {t('pages.list.filters.locale')}
-        </Label>
-        <Select
-          value={value.locale || ANY_SENTINEL}
-          onValueChange={(next) =>
-            set('locale', next === ANY_SENTINEL ? '' : next)
-          }
-        >
-          <SelectTrigger id="pages-filter-locale" className="w-36">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value={ANY_SENTINEL}>
-              {t('pages.list.filters.anyLocale')}
-            </SelectItem>
-            {enabledLocales.map((locale) => (
-              <SelectItem key={locale} value={locale}>
-                {getLocaleDisplayName(locale, i18n.language)}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-      {hasActiveFilters && (
+    <div className="mb-3 flex flex-col gap-3">
+      <div className="flex flex-wrap items-end gap-3">
+        <div className="flex flex-col gap-1">
+          <Label htmlFor="pages-filter-search">
+            {t('pages.list.filters.search')}
+          </Label>
+          <Input
+            id="pages-filter-search"
+            className="w-48"
+            value={value.search}
+            onChange={(event) => set('search', event.target.value)}
+            placeholder={t('pages.list.filters.searchPlaceholder')}
+          />
+        </div>
         <Button
           type="button"
-          variant="ghost"
-          size="sm"
-          onClick={() => onChange(EMPTY_PAGES_LIST_FILTERS)}
+          variant="outline"
+          aria-expanded={isOpen}
+          onClick={() => setIsOpen((open) => !open)}
         >
-          {t('pages.list.filters.clear')}
+          <SlidersHorizontal />
+          {t('pages.list.filters.toggle')}
+          {activeSecondaryCount > 0 && (
+            <Badge variant="secondary">{activeSecondaryCount}</Badge>
+          )}
         </Button>
+        {hasActiveFilters && (
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={() => onChange(EMPTY_PAGES_LIST_FILTERS)}
+          >
+            {t('pages.list.filters.clear')}
+          </Button>
+        )}
+      </div>
+      {isOpen && (
+        <div className="flex flex-wrap items-end gap-3">
+          <div className="flex flex-col gap-1">
+            <Label htmlFor="pages-filter-created-after">
+              {t('pages.list.filters.createdAfter')}
+            </Label>
+            <Input
+              id="pages-filter-created-after"
+              type="date"
+              className="w-36"
+              value={value.createdAfter}
+              onChange={(event) => set('createdAfter', event.target.value)}
+            />
+          </div>
+          <div className="flex flex-col gap-1">
+            <Label htmlFor="pages-filter-created-before">
+              {t('pages.list.filters.createdBefore')}
+            </Label>
+            <Input
+              id="pages-filter-created-before"
+              type="date"
+              className="w-36"
+              value={value.createdBefore}
+              onChange={(event) => set('createdBefore', event.target.value)}
+            />
+          </div>
+          <div className="flex flex-col gap-1">
+            <Label htmlFor="pages-filter-created-by">
+              {t('pages.list.filters.createdBy')}
+            </Label>
+            <Select
+              value={value.createdBy || ANY_SENTINEL}
+              onValueChange={(next) =>
+                set('createdBy', next === ANY_SENTINEL ? '' : next)
+              }
+            >
+              <SelectTrigger id="pages-filter-created-by" className="w-40">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={ANY_SENTINEL}>
+                  {t('pages.list.filters.anyCreator')}
+                </SelectItem>
+                {usersData?.items.map((user) => (
+                  <SelectItem key={user.id} value={user.id}>
+                    {user.displayName || user.email}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex flex-col gap-1">
+            <Label htmlFor="pages-filter-locale">
+              {t('pages.list.filters.locale')}
+            </Label>
+            <Select
+              value={value.locale || ANY_SENTINEL}
+              onValueChange={(next) =>
+                set('locale', next === ANY_SENTINEL ? '' : next)
+              }
+            >
+              <SelectTrigger id="pages-filter-locale" className="w-36">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={ANY_SENTINEL}>
+                  {t('pages.list.filters.anyLocale')}
+                </SelectItem>
+                {enabledLocales.map((locale) => (
+                  <SelectItem key={locale} value={locale}>
+                    {getLocaleDisplayName(locale, i18n.language)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
       )}
     </div>
   );

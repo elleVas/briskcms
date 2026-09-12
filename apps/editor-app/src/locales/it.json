@@ -162,7 +162,8 @@
         "anyCreator": "Chiunque",
         "locale": "Lingua",
         "anyLocale": "Qualunque lingua",
-        "clear": "Rimuovi filtri"
+        "clear": "Rimuovi filtri",
+        "toggle": "Filtri"
       },
       "colTitle": "Pagina",
       "colLanguages": "Lingue",
@@ -170,7 +171,8 @@
       "colUpdated": "Modificata",
       "statusMissing": "Non tradotta",
       "colEditor": "Modificata da",
-      "statusPending": "Pubblicata, con modifiche non pubblicate"
+      "statusPending": "Pubblicata, con modifiche non pubblicate",
+      "colStatus": "Stato"
     },
     "newPageDialog": {
       "title": "Nuova pagina",

@@ -80,6 +80,10 @@ describe('PagesListFilterBar', () => {
   it('calls onChange with the updated date range', () => {
     const { onChange } = renderBar();
 
+    // The four secondary filters sit behind a button now: they were always
+    // on screen and took two full rows at 1024px, above a list that had not
+    // started yet.
+    fireEvent.click(screen.getByRole('button', { name: /^filtri/i }));
     fireEvent.change(screen.getByLabelText('Da'), {
       target: { value: '2026-01-01' },
     });
@@ -94,6 +98,23 @@ describe('PagesListFilterBar', () => {
     renderBar();
 
     expect(screen.queryByRole('button', { name: 'Rimuovi filtri' })).toBeNull();
+  });
+
+  /*
+   * A button that hides four controls has to say how many of them are
+   * doing something, or a short list has no visible explanation.
+   */
+  it('counts the hidden filters that are active, and starts open when any is', () => {
+    renderBar({
+      ...EMPTY_PAGES_LIST_FILTERS,
+      createdBy: 'user-1',
+      locale: 'en',
+    });
+
+    expect(
+      screen.getByRole('button', { name: /^filtri/i }).textContent,
+    ).toContain('2');
+    expect(screen.getByLabelText('Da')).toBeTruthy();
   });
 
   it('shows the clear button once a filter is active, and resets everything on click', () => {

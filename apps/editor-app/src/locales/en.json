@@ -162,7 +162,8 @@
         "anyCreator": "Anyone",
         "locale": "Language",
         "anyLocale": "Any language",
-        "clear": "Clear filters"
+        "clear": "Clear filters",
+        "toggle": "Filters"
       },
       "colTitle": "Page",
       "colLanguages": "Languages",
@@ -170,7 +171,8 @@
       "colUpdated": "Updated",
       "statusMissing": "Not translated",
       "colEditor": "Last edited by",
-      "statusPending": "Published, with unpublished changes"
+      "statusPending": "Published, with unpublished changes",
+      "colStatus": "Status"
     },
     "newPageDialog": {
       "title": "New page",
