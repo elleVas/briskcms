@@ -74,6 +74,8 @@ function renderView(
     page: number;
     total: number;
     filters: typeof EMPTY_PAGES_LIST_FILTERS;
+    collectionId: string | null;
+    layout: 'tree' | 'feed';
   }> = {},
 ) {
   const onFiltersChange = vi.fn();
@@ -82,6 +84,8 @@ function renderView(
       <TooltipProvider>
         <PageGroupsListView
           siteId="site-1"
+          collectionId={overrides.collectionId ?? null}
+          layout={overrides.layout ?? 'tree'}
           defaultLocale="it"
           enabledLocales={['it']}
           groups={overrides.groups ?? [groupA, groupB]}
@@ -210,5 +214,45 @@ describe('PageGroupsListView', () => {
     expect(
       screen.queryByRole('button', { name: 'Trascina per riordinare' }),
     ).toBeNull();
+  });
+});
+
+/*
+ * A section's list is the same screen with a narrower question, so its
+ * pagination has to come back to it: it used to send you to the page tree
+ * as soon as a section grew past one page of results, which reads as the
+ * section having lost everything in it.
+ */
+describe('PageGroupsListView pagination', () => {
+  it('stays on the section it is listing', async () => {
+    const navigate = vi.fn();
+    vi.mocked(router.useNavigate).mockReturnValue(navigate);
+    renderView({
+      collectionId: 'news',
+      layout: 'feed',
+      page: 1,
+      total: 40,
+    });
+
+    fireEvent.click(screen.getByLabelText('Pagina successiva'));
+
+    expect(navigate).toHaveBeenCalledWith({
+      to: '/collections/$collectionId',
+      params: { collectionId: 'news' },
+      search: { page: 2 },
+    });
+  });
+
+  it('goes back to Pages when it is the page tree', async () => {
+    const navigate = vi.fn();
+    vi.mocked(router.useNavigate).mockReturnValue(navigate);
+    renderView({ page: 1, total: 40 });
+
+    fireEvent.click(screen.getByLabelText('Pagina successiva'));
+
+    expect(navigate).toHaveBeenCalledWith({
+      to: '/pages',
+      search: { page: 2 },
+    });
   });
 });

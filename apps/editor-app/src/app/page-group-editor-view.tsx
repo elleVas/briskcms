@@ -131,6 +131,7 @@ export function PageGroupEditorView({
     displayedBlocks,
     status,
     onChange,
+    whenSaved,
     onSaveFieldValue,
     handlePublish,
     handleDiverge,
@@ -243,6 +244,7 @@ export function PageGroupEditorView({
               categories={categories}
               blocks={displayedBlocks}
               onChange={onChange}
+              whenSaved={whenSaved}
               onPublish={handlePublish}
               pageId={activeTranslation.id}
               restoredAt={restoredAt}

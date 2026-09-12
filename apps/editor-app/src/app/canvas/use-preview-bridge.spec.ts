@@ -56,7 +56,7 @@ describe('usePreviewBridge', () => {
       exitTextEdit: expect.any(Function),
       selectBlock: expect.any(Function),
       updateBlockStyleCss: expect.any(Function),
-      setBlockAlign: expect.any(Function),
+      setRootLayout: expect.any(Function),
       scrollToBlock: expect.any(Function),
     });
   });
@@ -249,7 +249,7 @@ describe('usePreviewBridge', () => {
       exitTextEdit: expect.any(Function),
       selectBlock: expect.any(Function),
       updateBlockStyleCss: expect.any(Function),
-      setBlockAlign: expect.any(Function),
+      setRootLayout: expect.any(Function),
       scrollToBlock: expect.any(Function),
     });
   });

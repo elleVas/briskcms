@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { DEFAULT_COOKIE_BANNER_SETTINGS } from '@brisk/shared-types';
-import { Site, SiteLayoutSection } from '@brisk/domain-core';
+import { ReusableSection, Site, SiteLayoutSection } from '@brisk/domain-core';
 import { createPageGroup } from './create-page-group.use-case';
 import { createPageGroupTranslation } from './create-page-group-translation.use-case';
 import { publishPageTranslation } from './publish-page-translation.use-case';
@@ -206,6 +206,82 @@ describe('getPreviewPageById', () => {
     expect(result?.header).toEqual([
       { type: 'Header', props: { label: 'draft header' } },
     ]);
+  });
+
+  /*
+   * The canvas re-renders one block at a time, and a `Section` block on its
+   * own carries a reference and no blocks (docs/adr/0059) — so the editor
+   * could only show a pasted or restored section by reloading the whole
+   * iframe. The preview carries the blocks of the sections the page uses so
+   * that render can graft them itself.
+   */
+  it('carries the published blocks of every section the page places', async () => {
+    const deps = setup();
+    await seedSite(deps.siteRepository);
+    const section = ReusableSection.create({
+      id: 'section-1',
+      tenantId,
+      siteId: 'site-1',
+      name: 'Footer CTA',
+      kind: 'shared',
+      content: [{ type: 'Text', props: { body: 'Call us' } }],
+    });
+    section.publish();
+    await deps.reusableSectionRepository.save(section);
+    const { translation } = await createGroupAndTranslation(
+      deps,
+      'contatti',
+      'Contatti',
+      [
+        {
+          type: 'Section',
+          props: {
+            section: { sectionId: 'section-1', sectionName: 'Footer CTA' },
+          },
+        },
+      ],
+    );
+    const { token } = await deps.previewTokenPort.createToken(
+      tenantId,
+      'page',
+      translation.id,
+      60_000,
+    );
+
+    const result = await getPreviewPageById(deps, {
+      tenantId,
+      pageId: translation.id,
+      token,
+    });
+
+    expect(result?.sections?.['section-1']?.map((block) => block.type)).toEqual(
+      ['Text'],
+    );
+  });
+
+  it('carries no sections for a page that places none', async () => {
+    const deps = setup();
+    await seedSite(deps.siteRepository);
+    const { translation } = await createGroupAndTranslation(
+      deps,
+      'semplice',
+      'Semplice',
+      [{ type: 'Text', props: { body: 'niente sezioni' } }],
+    );
+    const { token } = await deps.previewTokenPort.createToken(
+      tenantId,
+      'page',
+      translation.id,
+      60_000,
+    );
+
+    const result = await getPreviewPageById(deps, {
+      tenantId,
+      pageId: translation.id,
+      token,
+    });
+
+    expect(result?.sections).toBeUndefined();
   });
 
   it('returns null for a missing/expired/mismatched token', async () => {

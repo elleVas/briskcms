@@ -438,7 +438,16 @@ export function PageGroupsListView({
   }
 
   async function goToPage(target: number) {
-    await navigate({ to: '/pages', search: { page: target } });
+    // Back to the screen this list IS, not to Pages: a section's own list
+    // sent you to the generic page tree as soon as it grew past one page
+    // of results, which read as the section having lost its contents.
+    await (collectionId
+      ? navigate({
+          to: '/collections/$collectionId',
+          params: { collectionId },
+          search: { page: target },
+        })
+      : navigate({ to: '/pages', search: { page: target } }));
   }
 
   async function handleOpenEditor(groupId: string) {

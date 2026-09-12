@@ -5,7 +5,12 @@ import {
   type Dispatch,
   type SetStateAction,
 } from 'react';
-import type { Block, BlockAlign } from '@brisk/shared-types';
+import {
+  collectSectionReferences,
+  rootBlockHoverAttr,
+  type Block,
+  type BlockAlign,
+} from '@brisk/shared-types';
 import type { BlockDescriptor } from '@brisk/block-registry';
 import { renderBlockFragment } from '../../lib/block-fragment-api-client';
 import type { PreviewBridgeState } from './use-preview-bridge';
@@ -103,7 +108,7 @@ export interface UseBlockTreeMutationsParams {
     | 'insertBlock'
     | 'removeBlock'
     | 'reorderBlocks'
-    | 'setBlockAlign'
+    | 'setRootLayout'
   >;
   token: string | null;
   pageId: string;
@@ -111,6 +116,8 @@ export interface UseBlockTreeMutationsParams {
   fragmentSection?: { sectionId: string; locale: string };
   /** Remounts the canvas iframe — used where no fragment can be patched in (docs/adr/0059). */
   reloadCanvas?: () => void;
+  /** Resolves when the queued draft saves have landed — awaited before asking the server to render a block whose content it holds. */
+  whenSaved?: () => Promise<void>;
   /**
    * Told when a block was refused everywhere it could have gone — a Column
    * pasted with nothing but the page around it, say. Without it the block
@@ -207,6 +214,7 @@ export function useBlockTreeMutations({
   pageId,
   fragmentSection,
   reloadCanvas,
+  whenSaved,
   refreshStyleSheet,
   onPlacementRefused,
   selectedBlock,
@@ -382,6 +390,9 @@ export function useBlockTreeMutations({
       reloadCanvas?.();
       return;
     }
+    if (containsSectionInstance([parent])) {
+      await whenSaved?.();
+    }
     const turn = (parentRenderTurns.current.get(parentId) ?? 0) + 1;
     parentRenderTurns.current.set(parentId, turn);
     try {
@@ -399,14 +410,26 @@ export function useBlockTreeMutations({
   /**
    * Whether these blocks can only reach the canvas through a reload.
    *
-   * A reusable section's blocks live on the server and are grafted on when
-   * the page is read (docs/adr/0059); the fragment endpoint renders the one
-   * block it is handed, so a Section inside it — pasted, duplicated, put
-   * back by an undo, or sitting in a container being re-rendered — came
-   * back as "this section has not been published yet".
+   * A reusable section's blocks live on the server (docs/adr/0059), and the
+   * fragment endpoint grafts them from the ones the PAGE uses — which it
+   * learns from the preview payload. So a section already placed on this
+   * page renders fine on its own: a copy of it, or one an undo brings back,
+   * is patched in like any other block.
+   *
+   * A section the page does not use yet — one arriving inside a template —
+   * is not in that payload, and renders as "not published yet". That is the
+   * case still worth a reload: afterwards the page uses it, so the payload
+   * has it.
    */
+  /** Which reusable sections these blocks place, at any depth. */
+  function sectionIdsOf(blocks: Block[]): string[] {
+    return [...collectSectionReferences([blocks])];
+  }
+
   function needsReload(blocks: Block[]): boolean {
-    return containsSectionInstance(blocks);
+    return sectionIdsOf(blocks).some(
+      (sectionId) => !sectionIdsOf(localBlocks).includes(sectionId),
+    );
   }
 
   /** The shared core of every root-level insert: it renders the fragments and asks the bridge to graft them, in order, at an EXPLICIT point (no recomputation of `beforeBlockId` from a "current" state that may no longer be the right one for a later redo — see handleRemoveSelected's syncBackward for the case where this genuinely matters). */
@@ -422,6 +445,11 @@ export function useBlockTreeMutations({
     if (needsReload(blocks)) {
       reloadCanvas?.();
       return;
+    }
+    // A section's blocks come from the page as the SERVER has it, so the
+    // draft has to be there before it is asked to render one.
+    if (containsSectionInstance(blocks)) {
+      await whenSaved?.();
     }
     // Rendered together, grafted in order and in one go: grafting each as
     // its fragment came back would put them in the order the network chose.
@@ -833,8 +861,11 @@ export function useBlockTreeMutations({
     const before = localBlocks;
     const next = updateBlockAlign(before, blockId, align);
     applyLocalChange(next);
-    const syncForward = () => bridge.setBlockAlign(blockId, align ?? null);
-    const syncBackward = () => bridge.setBlockAlign(blockId, previous ?? null);
+    const hover = rootBlockHoverAttr(selectedBlock.styleOverride) ?? null;
+    const syncForward = () =>
+      bridge.setRootLayout(blockId, align ?? null, hover);
+    const syncBackward = () =>
+      bridge.setRootLayout(blockId, previous ?? null, hover);
     syncForward();
     recordHistory({ before, after: next, syncForward, syncBackward });
   }

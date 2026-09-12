@@ -240,25 +240,40 @@ function rootWrapperOf(el: Element): Element | null {
  * level, and a message arriving for anything else asks for something the
  * page has no way to express.
  */
-export function applyBlockAlign(
+export function applyRootLayout(
   root: ParentNode,
   blockId: string,
   align: BlockAlign | null,
+  hover: string | null,
 ): boolean {
   const target = root.querySelector(`[data-brisk-block-id="${blockId}"]`);
   const wrapper = target ? rootWrapperOf(target) : null;
   if (!wrapper) {
     return false;
   }
-  // `content` is written as the ABSENCE of the attribute, matching how the
-  // server renders it — anything else leaves two ways to express the same
-  // page, and the canvas showing one while a reload shows the other.
-  if (align && align !== 'content') {
-    wrapper.setAttribute('data-brisk-align', align);
-  } else {
-    wrapper.removeAttribute('data-brisk-align');
-  }
+  // Both are written as the ABSENCE of the attribute at their default
+  // value, matching how the server renders them — anything else leaves two
+  // ways to express the same page, and the canvas showing one while a
+  // reload shows the other.
+  setOrRemove(
+    wrapper,
+    'data-brisk-align',
+    align && align !== 'content' ? align : null,
+  );
+  setOrRemove(wrapper, 'data-brisk-hover', hover);
   return true;
+}
+
+function setOrRemove(
+  el: Element,
+  attribute: string,
+  value: string | null,
+): void {
+  if (value) {
+    el.setAttribute(attribute, value);
+  } else {
+    el.removeAttribute(attribute);
+  }
 }
 
 /**

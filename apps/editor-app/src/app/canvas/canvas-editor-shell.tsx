@@ -93,6 +93,15 @@ export interface CanvasEditorShellProps {
   blocks: Block[];
   /** Chiamato con l'albero aggiornato ad ogni mutazione (proprietà, testo, inserimento, riordino, rimozione) — il chiamante possiede il salvataggio bozza reale. */
   onChange: (blocks: Block[]) => void;
+  /**
+   * Resolves when every draft save the caller has queued has landed.
+   *
+   * The canvas asks before it reads the draft back — reloading the iframe,
+   * or rendering a block whose content lives on the server (a reusable
+   * section). Without it the iframe could fetch the draft from before the
+   * change that caused the reload.
+   */
+  whenSaved?: () => Promise<void>;
   onPublish: (blocks: Block[]) => unknown;
   /**
    * Always the id of ONE PageTranslation (field-level i18n), even while
@@ -137,6 +146,7 @@ export function CanvasEditorShell({
   categories,
   blocks,
   onChange,
+  whenSaved,
   onPublish,
   pageId,
   editingSection,
@@ -164,7 +174,15 @@ export function CanvasEditorShell({
   // (docs/adr/0059). It is the `key` of CanvasFrame, so a bump remounts the
   // iframe with a fresh preview token.
   const [canvasNonce, setCanvasNonce] = useState(0);
-  const reloadCanvas = useCallback(() => setCanvasNonce((n) => n + 1), []);
+  // After the save it is reloading BECAUSE of: the fresh iframe reads the
+  // draft from the server, so remounting while that save was still in
+  // flight showed the page as it was one change ago.
+  const reloadCanvas = useCallback(() => {
+    void (async () => {
+      await whenSaved?.();
+      setCanvasNonce((n) => n + 1);
+    })();
+  }, [whenSaved]);
 
   const token = useCanvasPreviewToken(pageId, sectionPreview);
   const {
@@ -293,6 +311,7 @@ export function CanvasEditorShell({
     pageId,
     fragmentSection: sectionPreview,
     reloadCanvas,
+    whenSaved,
     refreshStyleSheet: styleSheet.refresh,
     onPlacementRefused: notifyPlacementRefused,
     selectedBlock,
@@ -360,6 +379,7 @@ export function CanvasEditorShell({
     selectedBlock,
     selectedDescriptor,
     breakpoint,
+    bridge,
     styleSheet,
     localBlocksRef,
     setLocalBlocks,

@@ -26,6 +26,10 @@ describe('useSelectedBlockEditing', () => {
     const block: Block = { id: 'h1', type: 'Heading', props: {} };
     const tree = [block];
     const refresh = vi.fn<(tree?: Block[]) => void>();
+    const setRootLayout =
+      vi.fn<
+        (blockId: string, align: string | null, hover: string | null) => void
+      >();
     const { result } = renderHook(
       () =>
         useSelectedBlockEditing({
@@ -33,6 +37,7 @@ describe('useSelectedBlockEditing', () => {
           selectedBlock: block,
           selectedDescriptor: undefined,
           breakpoint: 'base',
+          bridge: { setRootLayout },
           styleSheet: { refresh, replaceTypeCss: vi.fn() },
           localBlocksRef: { current: tree },
           setLocalBlocks: vi.fn(),
@@ -54,5 +59,88 @@ describe('useSelectedBlockEditing', () => {
     expect(refresh.mock.calls[0][0]).toEqual([
       { ...block, styleOverride: { base: { textColor: '#ff0000' } } },
     ]);
+  });
+
+  /*
+   * A hover effect is two declarations and a transition on the WRAPPER
+   * around a root block, not a rule keyed by the block — so no style sheet
+   * and no re-render carries it. Setting one in the canvas did nothing
+   * visible until the page was reloaded.
+   */
+  it('sends the hover effect of a root block to its wrapper', () => {
+    const block: Block = {
+      id: 'h1',
+      type: 'Heading',
+      props: {},
+      align: 'full',
+    };
+    const refresh = vi.fn<(tree?: Block[]) => void>();
+    const setRootLayout =
+      vi.fn<
+        (blockId: string, align: string | null, hover: string | null) => void
+      >();
+    const { result } = renderHook(
+      () =>
+        useSelectedBlockEditing({
+          siteId: undefined,
+          selectedBlock: block,
+          selectedDescriptor: undefined,
+          breakpoint: 'base',
+          bridge: { setRootLayout },
+          styleSheet: { refresh, replaceTypeCss: vi.fn() },
+          localBlocksRef: { current: [block] },
+          setLocalBlocks: vi.fn(),
+          onChange: vi.fn(),
+          patch: {
+            scheduleChange: vi.fn(),
+            scheduleVariantChange: vi.fn(),
+            scheduleStyleOverrideChange: vi.fn(),
+          },
+        }),
+      { wrapper },
+    );
+
+    act(() =>
+      result.current.handleChangeStyleOverride({ hoverEffect: 'lift' }),
+    );
+
+    expect(setRootLayout).toHaveBeenCalledWith('h1', 'full', 'lift');
+  });
+
+  it('leaves the wrapper alone for a nested block, which has none', () => {
+    const child: Block = { id: 'inner', type: 'Heading', props: {} };
+    const tree: Block[] = [
+      { id: 'box', type: 'Container', props: {}, children: [child] },
+    ];
+    const setRootLayout =
+      vi.fn<
+        (blockId: string, align: string | null, hover: string | null) => void
+      >();
+    const { result } = renderHook(
+      () =>
+        useSelectedBlockEditing({
+          siteId: undefined,
+          selectedBlock: child,
+          selectedDescriptor: undefined,
+          breakpoint: 'base',
+          bridge: { setRootLayout },
+          styleSheet: { refresh: vi.fn(), replaceTypeCss: vi.fn() },
+          localBlocksRef: { current: tree },
+          setLocalBlocks: vi.fn(),
+          onChange: vi.fn(),
+          patch: {
+            scheduleChange: vi.fn(),
+            scheduleVariantChange: vi.fn(),
+            scheduleStyleOverrideChange: vi.fn(),
+          },
+        }),
+      { wrapper },
+    );
+
+    act(() =>
+      result.current.handleChangeStyleOverride({ hoverEffect: 'lift' }),
+    );
+
+    expect(setRootLayout).not.toHaveBeenCalled();
   });
 });

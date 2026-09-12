@@ -52,6 +52,17 @@ export const publishedPageSchema = z.object({
   header: z.array(blockSchema).nullable(),
   footer: z.array(blockSchema).nullable(),
   headerSticky: z.boolean(),
+  /**
+   * The published blocks of every reusable section this page uses, by id —
+   * PREVIEW ONLY, and absent everywhere else.
+   *
+   * A published page has nothing to do with them: its sections are already
+   * expanded into `content`. The canvas does: it re-renders one block at a
+   * time, and a `Section` block on its own carries a reference and no
+   * blocks (docs/adr/0059), so without this the editor could only show a
+   * pasted or restored section by reloading the whole iframe.
+   */
+  sections: z.record(z.string(), z.array(blockSchema)).optional(),
 });
 export type PublishedPage = z.infer<typeof publishedPageSchema>;
 

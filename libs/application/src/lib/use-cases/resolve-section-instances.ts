@@ -32,9 +32,34 @@ export async function resolveSectionInstances(
   tenantId: string,
   contents: PageContent[],
 ): Promise<PageContent[]> {
+  const publishedById = await loadPublishedSections(deps, tenantId, contents);
+  if (publishedById.size === 0) {
+    return contents;
+  }
+  return contents.map((content) =>
+    resolveSectionBlocks(content, publishedById),
+  );
+}
+
+/**
+ * The published blocks of every section these trees reference, by id.
+ *
+ * Its own function because the canvas needs the same thing without the
+ * expansion: the editor renders ONE block at a time through
+ * render-block-fragment, and a `Section` block handed to it alone has no
+ * children — the page it belongs to is what knows them. The preview
+ * payload carries this map so that endpoint can graft them itself, instead
+ * of answering "this section has not been published yet" for a section
+ * that plainly has.
+ */
+export async function loadPublishedSections(
+  deps: ResolveSectionInstancesDeps,
+  tenantId: string,
+  contents: PageContent[],
+): Promise<Map<string, PageContent>> {
   const referenced = collectSectionReferences(contents);
   if (referenced.size === 0) {
-    return contents;
+    return new Map();
   }
   const sections = await deps.reusableSectionRepository.findByIds(tenantId, [
     ...referenced,
@@ -45,7 +70,5 @@ export async function resolveSectionInstances(
       publishedById.set(section.id, section.publishedContent);
     }
   }
-  return contents.map((content) =>
-    resolveSectionBlocks(content, publishedById),
-  );
+  return publishedById;
 }

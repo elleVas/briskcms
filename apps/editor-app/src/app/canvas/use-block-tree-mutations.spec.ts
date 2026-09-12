@@ -32,7 +32,7 @@ function setup(localBlocks: Block[]) {
     insertBlock: vi.fn(),
     removeBlock: vi.fn(),
     reorderBlocks: vi.fn(),
-    setBlockAlign: vi.fn(),
+    setRootLayout: vi.fn(),
   };
   const { result, rerender } = renderHook(
     (props: {
@@ -562,7 +562,7 @@ describe('useBlockTreeMutations respects what a container may hold', () => {
           insertBlock: vi.fn(),
           removeBlock: vi.fn(),
           reorderBlocks: vi.fn(),
-          setBlockAlign: vi.fn(),
+          setRootLayout: vi.fn(),
         },
         token: 'tok',
         pageId: 'page-1',
@@ -766,6 +766,7 @@ describe('useBlockTreeMutations keeps the canvas in step without reloading', () 
     );
     const onChange = vi.fn<(blocks: Block[]) => void>();
     const reloadCanvas = vi.fn();
+    const whenSaved = vi.fn<() => Promise<void>>(() => Promise.resolve());
     const refreshStyleSheet = vi.fn<(blocks: Block[]) => void>();
     const bridge = {
       selectedBlockId: selected?.id ?? null,
@@ -773,7 +774,7 @@ describe('useBlockTreeMutations keeps the canvas in step without reloading', () 
       insertBlock: vi.fn(),
       removeBlock: vi.fn(),
       reorderBlocks: vi.fn(),
-      setBlockAlign: vi.fn(),
+      setRootLayout: vi.fn(),
     };
     const { result } = renderHook(
       () =>
@@ -786,13 +787,21 @@ describe('useBlockTreeMutations keeps the canvas in step without reloading', () 
           token: 'tok',
           pageId: 'page-1',
           reloadCanvas,
+          whenSaved,
           refreshStyleSheet,
           selectedBlock: selected,
           selectedDescriptor: selected ? heading : undefined,
         }),
       options.strict ? { wrapper: StrictMode } : undefined,
     );
-    return { result, onChange, reloadCanvas, refreshStyleSheet, bridge };
+    return {
+      result,
+      onChange,
+      reloadCanvas,
+      whenSaved,
+      refreshStyleSheet,
+      bridge,
+    };
   }
 
   afterEach(() => {
@@ -982,7 +991,7 @@ describe('useBlockTreeMutations keeps the canvas in step without reloading', () 
     expect(bridge.insertBlock).not.toHaveBeenCalled();
   });
 
-  it('reloads the canvas when the container being re-rendered holds a reusable section', async () => {
+  it('re-renders a container holding a section the page already uses, once the draft is saved', async () => {
     const box: Block = {
       id: 'box',
       type: 'Container',
@@ -995,9 +1004,32 @@ describe('useBlockTreeMutations keeps the canvas in step without reloading', () 
         },
       ],
     };
-    const { result, reloadCanvas } = setupCanvas([box], box);
+    const { result, reloadCanvas, whenSaved } = setupCanvas([box], box);
 
     act(() => result.current.handleInsert(heading));
+    await flush();
+    await flush();
+
+    // The server renders the section from the page it belongs to, so the
+    // draft has to have landed before it is asked for it.
+    expect(whenSaved).toHaveBeenCalled();
+    expect(blockFragmentApi.renderBlockFragment).toHaveBeenCalled();
+    expect(reloadCanvas).not.toHaveBeenCalled();
+  });
+
+  it('still reloads for a section the page does not use yet', async () => {
+    const { result, reloadCanvas } = setupCanvas([]);
+
+    act(() =>
+      result.current.handleInsertBlocks([
+        { id: 'h', type: 'Heading', props: {} },
+        {
+          id: 'fresh',
+          type: 'Section',
+          props: { section: { sectionId: 'brand-new', sectionName: 'CTA' } },
+        },
+      ]),
+    );
     await flush();
 
     expect(reloadCanvas).toHaveBeenCalledTimes(1);
@@ -1173,7 +1205,7 @@ describe('useBlockTreeMutations keeps the canvas in step without reloading', () 
     expect(bridge.patchBlock).toHaveBeenCalledTimes(1);
   });
 
-  it('reloads rather than re-render a container holding a section when an edit is undone', async () => {
+  it('re-renders rather than reload when an edit is undone on a container holding a section the page uses', async () => {
     const box: Block = {
       id: 'box',
       type: 'Container',
@@ -1193,8 +1225,8 @@ describe('useBlockTreeMutations keeps the canvas in step without reloading', () 
     act(() => result.current.undo());
     await flush();
 
-    expect(blockFragmentApi.renderBlockFragment).not.toHaveBeenCalled();
-    expect(reloadCanvas).toHaveBeenCalled();
+    expect(blockFragmentApi.renderBlockFragment).toHaveBeenCalled();
+    expect(reloadCanvas).not.toHaveBeenCalled();
   });
 
   /*
@@ -1211,12 +1243,12 @@ describe('useBlockTreeMutations keeps the canvas in step without reloading', () 
     expect(onChange.mock.calls.at(-1)?.[0]).toEqual([
       { ...hero, align: 'full' },
     ]);
-    expect(bridge.setBlockAlign).toHaveBeenCalledWith('hero', 'full');
+    expect(bridge.setRootLayout).toHaveBeenCalledWith('hero', 'full', null);
 
     act(() => result.current.undo());
 
     expect(onChange.mock.calls.at(-1)?.[0]).toEqual([hero]);
-    expect(bridge.setBlockAlign).toHaveBeenLastCalledWith('hero', null);
+    expect(bridge.setRootLayout).toHaveBeenLastCalledWith('hero', null, null);
   });
 
   it('gives every pasted copy a fresh id', () => {
@@ -1294,7 +1326,7 @@ describe('useBlockTreeMutations places a block only where it belongs', () => {
           insertBlock: vi.fn(),
           removeBlock: vi.fn(),
           reorderBlocks: vi.fn(),
-          setBlockAlign: vi.fn(),
+          setRootLayout: vi.fn(),
         },
         token: null,
         pageId: 'page-1',
