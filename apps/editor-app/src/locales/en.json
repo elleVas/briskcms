@@ -155,7 +155,7 @@
         "publish": "Publish",
         "delete": "Delete",
         "duplicate": "Duplicate page",
-        "move": "Move to a section"
+        "move": "Move to a collection"
       },
       "filters": {
         "search": "Title",
@@ -256,9 +256,9 @@
       "none": "— None (root level) —"
     },
     "moveToCollection": {
-      "title": "Move to a section",
+      "title": "Move to a collection",
       "description": "Where “{{name}}” is listed. It keeps its address, its place in the tree and everything on it.",
-      "none": "Pages (no section)",
+      "none": "Pages (no collection)",
       "confirm": "Move",
       "failed": "That page could not be moved."
     }
@@ -1920,15 +1920,15 @@
     "menuLabel": "Collections",
     "actionFailed": "That change could not be made.",
     "dialog": {
-      "title": "Sections",
-      "description": "A section holds pages of one kind — News, Events, Case studies — and gets a menu entry of its own. Underneath they are ordinary pages.",
-      "newLabel": "New section",
+      "title": "Collections",
+      "description": "A collection holds pages of one kind — News, Events, Case studies — and gets a menu entry of its own. Underneath they are ordinary pages.",
+      "newLabel": "New collection",
       "newPlaceholder": "News",
       "create": "Add",
       "nameOf": "Name of {{name}}",
       "delete": "Delete {{name}}",
       "confirmDelete": {
-        "title": "Delete this section?",
+        "title": "Delete this collection?",
         "description": "{{name}} disappears from the menu. The pages it held stay, and go back to Pages."
       }
     }

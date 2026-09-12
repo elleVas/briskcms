@@ -135,11 +135,11 @@ describe('PageGroupsListView', () => {
 
     fireEvent.click(screen.getByText('Chi siamo'));
     fireEvent.click(
-      screen.getByRole('button', { name: 'Sposta in una sezione' }),
+      screen.getByRole('button', { name: 'Sposta in una collezione' }),
     );
 
     expect(
-      await screen.findByRole('heading', { name: 'Sposta in una sezione' }),
+      await screen.findByRole('heading', { name: 'Sposta in una collezione' }),
     ).toBeTruthy();
   });
 

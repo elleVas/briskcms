@@ -67,7 +67,7 @@ describe('MoveToCollectionDialog', () => {
 
     expect(await screen.findByText('News')).toBeTruthy();
     expect(screen.getByText('Events')).toBeTruthy();
-    expect(screen.getByText('Pagine (nessuna sezione)')).toBeTruthy();
+    expect(screen.getByText('Pagine (nessuna collezione)')).toBeTruthy();
   });
 
   it('starts on the section the page is filed in', async () => {
@@ -102,7 +102,7 @@ describe('MoveToCollectionDialog', () => {
     const confirm = screen.getByRole('button', { name: 'Sposta' });
     expect((confirm as HTMLButtonElement).disabled).toBe(true);
 
-    fireEvent.click(screen.getByText('Pagine (nessuna sezione)'));
+    fireEvent.click(screen.getByText('Pagine (nessuna collezione)'));
     expect((confirm as HTMLButtonElement).disabled).toBe(false);
   });
 });

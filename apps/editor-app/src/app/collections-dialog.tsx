@@ -34,11 +34,11 @@ export interface CollectionsDialogProps {
 }
 
 /**
- * Where the sections of the editor are created and named.
+ * Where the collections of the editor are created and named.
  *
- * In the settings menu rather than a screen of its own: making a section
+ * In the settings menu rather than a screen of its own: making a collection
  * is something a site does once or twice, and a permanent entry in the
- * sidebar for it would sit next to the sections it produces, which is
+ * sidebar for it would sit next to the collections it produces, which is
  * where the confusion would start.
  */
 export function CollectionsDialog({
@@ -158,7 +158,7 @@ export function CollectionsDialog({
             </Button>
           </div>
           {/* The icon is picked here and never again: it is what the
-              section is recognised by in a sidebar of eleven entries. */}
+              collection is recognised by in a sidebar of eleven entries. */}
           <div className="flex flex-wrap gap-1 pt-1">
             {COLLECTION_ICON_NAMES.map((candidate) => (
               <button

@@ -33,10 +33,10 @@ import { VersionHistoryDialog } from './version-history-dialog';
 /**
  * Back to where this page is listed, which is not always Pages.
  *
- * A page filed in a section belongs to that section's screen: sending
+ * A page filed in a collection belongs to that collection's screen: sending
  * somebody who opened an article from News back to Pages drops them
  * somewhere they were not, with their article nowhere in the list. It
- * reads the page's own section rather than the history, so it is still
+ * reads the page's own collection rather than the history, so it is still
  * right on a reloaded tab or a shared link.
  */
 function BackToList({ group }: { group: PageGroupRecord }) {

@@ -155,7 +155,7 @@
         "publish": "Pubblica",
         "delete": "Elimina",
         "duplicate": "Duplica pagina",
-        "move": "Sposta in una sezione"
+        "move": "Sposta in una collezione"
       },
       "filters": {
         "search": "Titolo",
@@ -256,9 +256,9 @@
       "none": "— Nessuno (livello radice) —"
     },
     "moveToCollection": {
-      "title": "Sposta in una sezione",
+      "title": "Sposta in una collezione",
       "description": "Dove “{{name}}” viene elencata. Mantiene il suo indirizzo, il suo posto nell’albero e tutto quello che ha dentro.",
-      "none": "Pagine (nessuna sezione)",
+      "none": "Pagine (nessuna collezione)",
       "confirm": "Sposta",
       "failed": "Non è stato possibile spostare la pagina."
     }
@@ -1920,15 +1920,15 @@
     "menuLabel": "Collezioni",
     "actionFailed": "Non è stato possibile applicare la modifica.",
     "dialog": {
-      "title": "Sezioni di contenuto",
-      "description": "Una sezione raccoglie pagine di un tipo — News, Eventi, Casi studio — e ha una voce di menu sua. Sotto la scocca restano pagine normali.",
-      "newLabel": "Nuova sezione",
+      "title": "Collezioni",
+      "description": "Una collezione raccoglie pagine di un tipo — News, Eventi, Casi studio — e ha una voce di menu sua. Sotto la scocca restano pagine normali.",
+      "newLabel": "Nuova collezione",
       "newPlaceholder": "News",
       "create": "Aggiungi",
       "nameOf": "Nome di {{name}}",
       "delete": "Elimina {{name}}",
       "confirmDelete": {
-        "title": "Eliminare questa sezione?",
+        "title": "Eliminare questa collezione?",
         "description": "{{name}} sparisce dal menu. Le pagine che conteneva restano e tornano fra le Pagine."
       }
     }

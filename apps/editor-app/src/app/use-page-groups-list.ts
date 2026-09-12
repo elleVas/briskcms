@@ -23,7 +23,7 @@ import {
 export function usePageGroupsList(
   siteId: string,
   defaultLocale: string,
-  /** The section a new page is created in — null on the Pages screen, an id on a section's own. */
+  /** The collection a new page is created in — null on the Pages screen, an id on a collection's own. */
   collectionId: string | null = null,
 ) {
   const navigate = useNavigate();
@@ -76,11 +76,11 @@ export function usePageGroupsList(
   });
 
   /**
-   * Files an existing page under a section, or takes it out of one.
+   * Files an existing page under a collection, or takes it out of one.
    *
-   * The endpoint has been there since sections arrived; nothing in the
-   * editor called it, so the only way into a section was to create the
-   * page from inside it — and a page written before the section existed
+   * The endpoint has been there since collections arrived; nothing in the
+   * editor called it, so the only way into a collection was to create the
+   * page from inside it — and a page written before the collection existed
    * had to be written again. It changes where the page is LISTED and
    * nothing else: not its address, not its place in the tree
    * (moveToCollection, in the domain).
