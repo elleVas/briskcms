@@ -22,6 +22,7 @@ export const pageGridBlock: BlockDescriptor<PageGridProps> = {
     layout: 'list',
     order: 'title',
     limit: 0,
+    perPage: 0,
     emptyText: '',
     items: [],
   },
@@ -66,6 +67,17 @@ export const pageGridBlock: BlockDescriptor<PageGridProps> = {
       kind: 'number',
       key: 'limit',
       label: 'blocks.pageGrid.fields.limit.fieldLabel',
+      min: 0,
+      max: 100,
+      group: 'advanced',
+    },
+    {
+      // An archive nobody can page through is an archive of its first
+      // ten articles: everything older is written, published, and
+      // unreachable.
+      kind: 'number',
+      key: 'perPage',
+      label: 'blocks.pageGrid.fields.perPage.fieldLabel',
       min: 0,
       max: 100,
       group: 'advanced',

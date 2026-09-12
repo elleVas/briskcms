@@ -147,7 +147,8 @@
         "edit": "Open editor",
         "publish": "Publish",
         "delete": "Delete",
-        "duplicate": "Duplicate page"
+        "duplicate": "Duplicate page",
+        "move": "Move to a section"
       },
       "filters": {
         "search": "Title",
@@ -243,6 +244,13 @@
     "parent": {
       "label": "Parent page",
       "none": "— None (root level) —"
+    },
+    "moveToCollection": {
+      "title": "Move to a section",
+      "description": "Where “{{name}}” is listed. It keeps its address, its place in the tree and everything on it.",
+      "none": "Pages (no section)",
+      "confirm": "Move",
+      "failed": "That page could not be moved."
     }
   },
   "taxonomies": {
@@ -1581,6 +1589,9 @@
             "title": "By title",
             "newest": "Newest first"
           }
+        },
+        "perPage": {
+          "fieldLabel": "How many per page (0 = all on one page)"
         }
       }
     },

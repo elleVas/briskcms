@@ -147,7 +147,8 @@
         "edit": "Apri editor",
         "publish": "Pubblica",
         "delete": "Elimina",
-        "duplicate": "Duplica pagina"
+        "duplicate": "Duplica pagina",
+        "move": "Sposta in una sezione"
       },
       "filters": {
         "search": "Titolo",
@@ -243,6 +244,13 @@
     "parent": {
       "label": "Pagina genitore",
       "none": "— Nessuno (livello radice) —"
+    },
+    "moveToCollection": {
+      "title": "Sposta in una sezione",
+      "description": "Dove “{{name}}” viene elencata. Mantiene il suo indirizzo, il suo posto nell’albero e tutto quello che ha dentro.",
+      "none": "Pagine (nessuna sezione)",
+      "confirm": "Sposta",
+      "failed": "Non è stato possibile spostare la pagina."
     }
   },
   "taxonomies": {
@@ -1581,6 +1589,9 @@
             "title": "Per titolo",
             "newest": "Prima le più recenti"
           }
+        },
+        "perPage": {
+          "fieldLabel": "Quante per pagina (0 = tutte su una pagina)"
         }
       }
     },
