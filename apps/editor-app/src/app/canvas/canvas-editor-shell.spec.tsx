@@ -268,13 +268,17 @@ describe('CanvasEditorShell', () => {
     await getIframe();
 
     fireEvent.click(
-      screen.getByRole('button', { name: 'Comprimi pannello Livelli' }),
+      screen.getByRole('button', {
+        name: 'Comprimi il pannello Livelli e proprietà',
+      }),
     );
     expect(screen.queryByText('Livelli')).toBeNull();
     expect(screen.getByText('Inserisci blocco')).toBeTruthy();
 
     fireEvent.click(
-      screen.getByRole('button', { name: 'Espandi pannello Livelli' }),
+      screen.getByRole('button', {
+        name: 'Espandi il pannello Livelli e proprietà',
+      }),
     );
     expect(screen.getByText('Livelli')).toBeTruthy();
     expect(screen.getByText('Inserisci blocco')).toBeTruthy();
@@ -365,7 +369,9 @@ describe('CanvasEditorShell', () => {
     const iframe = await getIframe();
 
     fireEvent.click(
-      screen.getByRole('button', { name: 'Comprimi pannello Livelli' }),
+      screen.getByRole('button', {
+        name: 'Comprimi il pannello Livelli e proprietà',
+      }),
     );
     selectBlockWithRect(iframe, 'hero-1', HERO_RECT);
     expect(screen.queryByRole('tab', { name: 'Proprietà' })).toBeNull();
@@ -420,7 +426,9 @@ describe('CanvasEditorShell', () => {
     await getIframe();
 
     fireEvent.click(
-      screen.getByRole('button', { name: 'Comprimi pannello Livelli' }),
+      screen.getByRole('button', {
+        name: 'Comprimi il pannello Livelli e proprietà',
+      }),
     );
     first.unmount();
 
@@ -428,7 +436,9 @@ describe('CanvasEditorShell', () => {
     await getIframe();
 
     expect(
-      screen.getByRole('button', { name: 'Espandi pannello Livelli' }),
+      screen.getByRole('button', {
+        name: 'Espandi il pannello Livelli e proprietà',
+      }),
     ).toBeTruthy();
   });
 

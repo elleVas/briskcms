@@ -63,15 +63,18 @@ function NavItem({
   label: string;
 }) {
   return (
-    <Link
-      to={to}
-      params={params}
-      activeOptions={{ exact: to === '/' }}
-      className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background data-[status=active]:bg-muted data-[status=active]:text-foreground"
-    >
-      <Icon className="size-4" />
-      {label}
-    </Link>
+    // One entry, one list item — see NavGroup on why the group is a list.
+    <li className="contents">
+      <Link
+        to={to}
+        params={params}
+        activeOptions={{ exact: to === '/' }}
+        className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background data-[status=active]:bg-muted data-[status=active]:text-foreground"
+      >
+        <Icon className="size-4" />
+        {label}
+      </Link>
+    </li>
   );
 }
 
@@ -88,7 +91,11 @@ function NavGroup({ title, children }: { title: string; children: ReactNode }) {
       <h2 className="px-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
         {title}
       </h2>
-      {children}
+      {/* A real list, not a run of links: the heading alone told a screen
+          reader where a group started and nothing about how many
+          destinations were in it. The `contents` display keeps the layout
+          exactly as the flex column above draws it. */}
+      <ul className="contents">{children}</ul>
     </div>
   );
 }

@@ -14,7 +14,10 @@ const mediaListSearchSchema = z.object({
   // In the URL rather than in component state, for the same reason as the
   // page number above it: a search worth doing is a search worth reloading
   // into and sending to somebody.
-  search: z.string().optional().catch(undefined),
+  // The same 200 the API enforces (media.schemas.ts): without it, pasting
+  // something longer turned a search into a 400 in the error boundary
+  // instead of "nothing matches".
+  search: z.string().max(200).optional().catch(undefined),
   kind: z.enum(['image', 'video', 'audio']).optional().catch(undefined),
 });
 

@@ -84,6 +84,48 @@ describe('FormEditorView — unsaved work', () => {
     );
   });
 
+  /*
+   * The dirty mark compared the raw state against a baseline built from
+   * the SAVED — trimmed, tidied — one, so anything the save normalised
+   * left the editor permanently unsaved: the mark stayed on a form that
+   * had just been written, and the guard then put "you will lose your
+   * work" in front of every link. A warning that is always wrong is worse
+   * than none, because people learn to click through it.
+   */
+  it('is clean after saving a select whose options end in a blank line', async () => {
+    // The notification email cannot get stuck the same way, even though
+    // the save trims it too: `type="email"` makes the browser strip the
+    // spaces before React ever sees them. The options textarea has no such
+    // help, which is why this is the case worth pinning.
+    const withSelect: FormDto = {
+      ...sampleForm,
+      fields: [
+        {
+          id: 'scelta',
+          label: 'Scelta',
+          type: 'select',
+          required: false,
+          options: ['A'],
+        },
+      ],
+    };
+    vi.mocked(api.updateForm).mockResolvedValue({
+      ...withSelect,
+      fields: [{ ...withSelect.fields[0], options: ['A', 'B'] }],
+    });
+    renderView(withSelect);
+
+    // What a textarea leaves behind when somebody presses Enter after the
+    // last option: an empty string the save drops.
+    fireEvent.change(screen.getByLabelText('Opzioni (una per riga)'), {
+      target: { value: 'A\nB\n' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Salva' }));
+
+    await screen.findByText('Modulo salvato');
+    expect(screen.queryByText('Modifiche non salvate')).toBeNull();
+  });
+
   it('stops being dirty when a change is typed back to what was saved', () => {
     renderView();
     const name = screen.getByLabelText('Nome modulo');

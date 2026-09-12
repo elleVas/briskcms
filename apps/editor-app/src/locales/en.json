@@ -1051,7 +1051,10 @@
     "rightPanel": {
       "label": "Layers and properties",
       "layers": "Layers",
-      "properties": "Properties"
+      "properties": "Properties",
+      "expand": "Expand Layers and properties panel",
+      "collapse": "Collapse Layers and properties panel",
+      "resize": "Resize Layers and properties panel"
     },
     "properties": {
       "noSelection": "Select a block on the canvas or in Layers to change what it says and how it looks."

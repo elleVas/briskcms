@@ -635,10 +635,14 @@ export function CanvasEditorShell({
         <CollapsibleSidePanel
           side="right"
           panel={inspectorPanel}
-          title={t('canvas.layersTitle')}
-          expandLabel={t('canvas.expandLayersPanel')}
-          collapseLabel={t('canvas.collapseLayersPanel')}
-          resizeLabel={t('canvas.resizeLayersPanel')}
+          // Named for what the panel holds now that it holds two things:
+          // a screen reader entering it was still being told "Layers",
+          // and the collapse button said so while the Properties tab was
+          // the one on screen.
+          title={t('canvas.rightPanel.label')}
+          expandLabel={t('canvas.rightPanel.expand')}
+          collapseLabel={t('canvas.rightPanel.collapse')}
+          resizeLabel={t('canvas.rightPanel.resize')}
           header={
             <RightPanelTabs value={rightPanelTab} onChange={setRightPanelTab} />
           }

@@ -1051,7 +1051,10 @@
     "rightPanel": {
       "label": "Livelli e proprietà",
       "layers": "Livelli",
-      "properties": "Proprietà"
+      "properties": "Proprietà",
+      "expand": "Espandi il pannello Livelli e proprietà",
+      "collapse": "Comprimi il pannello Livelli e proprietà",
+      "resize": "Ridimensiona il pannello Livelli e proprietà"
     },
     "properties": {
       "noSelection": "Seleziona un blocco sul canvas o nei Livelli per cambiare cosa dice e come appare."

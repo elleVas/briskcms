@@ -22,13 +22,44 @@ export interface FormEditorViewProps {
 }
 
 /** Everything the Save button would send, as one comparable string. */
-function serializeDraft(
+/** A select's options as they are stored: trimmed, and without the empty one a trailing newline in the textarea leaves behind. */
+function sanitizeOptions(field: FormField): FormField {
+  if (field.type !== 'select') return field;
+  return {
+    ...field,
+    options: (field.options ?? [])
+      .map((option) => option.trim())
+      .filter((option) => option.length > 0),
+  };
+}
+
+/**
+ * The form as it would be SAVED, which is the only shape worth comparing.
+ *
+ * The dirty mark used to compare the raw state against a baseline built
+ * from the sanitised one, so anything the save tidied up — an option list
+ * ending in a newline, an email with a trailing space — left the editor
+ * permanently "unsaved": the mark stayed on a saved form, and the guard
+ * put "you will lose your work" in front of every link from then on. A
+ * warning that is always wrong is worse than no warning, because people
+ * learn to click through it.
+ */
+function draftOf(
   name: string,
   fields: FormField[],
   steps: FormStep[],
-  notificationEmail: string | null,
-): string {
-  return JSON.stringify({ name, fields, steps, notificationEmail });
+  notificationEmail: string,
+) {
+  return {
+    name,
+    fields: fields.map(sanitizeOptions),
+    steps,
+    notificationEmail: notificationEmail.trim() || null,
+  };
+}
+
+function serializeDraft(draft: ReturnType<typeof draftOf>): string {
+  return JSON.stringify(draft);
 }
 
 export function FormEditorView({ formId }: FormEditorViewProps) {
@@ -67,10 +98,12 @@ export function FormEditorView({ formId }: FormEditorViewProps) {
    * moved.
    */
   const [baseline, setBaseline] = useState(() =>
-    serializeDraft(form.name, form.fields, form.steps, form.notificationEmail),
+    serializeDraft(
+      draftOf(form.name, form.fields, form.steps, form.notificationEmail ?? ''),
+    ),
   );
-  const isDirty =
-    serializeDraft(name, fields, steps, notificationEmail || null) !== baseline;
+  const draft = draftOf(name, fields, steps, notificationEmail);
+  const isDirty = serializeDraft(draft) !== baseline;
   useUnsavedChangesGuard({ hasUnsavedChanges: isDirty });
   // And a question in front of an in-app link too, which the canvas does
   // not need: there is nothing here that saves itself, so following one
@@ -133,32 +166,23 @@ export function FormEditorView({ formId }: FormEditorViewProps) {
   // while the user is typing, so a newly pressed Enter never immediately
   // collapses back — this is the one point where that raw text turns into
   // clean, saved option strings.
-  function sanitizeOptions(field: FormField): FormField {
-    if (field.type !== 'select') return field;
-    return {
-      ...field,
-      options: (field.options ?? [])
-        .map((option) => option.trim())
-        .filter((option) => option.length > 0),
-    };
-  }
-
   async function handleSave() {
     setError('');
     setSaved(false);
     try {
-      await save({
-        name,
-        fields: fields.map(sanitizeOptions),
-        steps,
-        notificationEmail: notificationEmail.trim() || null,
-      });
+      const saved = await save(draft);
+      // From what came BACK, not from what was sent: the comment above
+      // promises the baseline is what the server confirmed, and anything
+      // the server normalises on its way in would otherwise leave the
+      // editor dirty exactly as the client-side tidying used to.
       setBaseline(
         serializeDraft(
-          name,
-          fields.map(sanitizeOptions),
-          steps,
-          notificationEmail.trim() || null,
+          draftOf(
+            saved?.name ?? draft.name,
+            saved?.fields ?? draft.fields,
+            saved?.steps ?? draft.steps,
+            saved?.notificationEmail ?? draft.notificationEmail ?? '',
+          ),
         ),
       );
       setSaved(true);
