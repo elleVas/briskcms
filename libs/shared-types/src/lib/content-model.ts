@@ -1012,6 +1012,16 @@ export const pageGridPropsSchema = z.object({
   order: z.enum(['title', 'newest']).default('title'),
   /** 0 = no limit. A term with two hundred pages is a real thing; a page listing all of them is not. */
   limit: z.number().int().min(0).max(100).default(0),
+  /**
+   * How many entries a reader sees at once, `0` for all of them on one
+   * page.
+   *
+   * Separate from `limit`, which is a cap on the whole list: an archive
+   * of two hundred articles wants every one of them reachable, ten at a
+   * time, not the first ten and nothing else. Applied after the cap, so
+   * the two compose rather than argue.
+   */
+  perPage: z.number().int().min(0).max(100).default(0),
   emptyText: z.string().default(''),
   items: z.array(pageGridItemSchema).default([]),
 });

@@ -90,5 +90,9 @@
   "blocks.pricingPlan.label": "Piano prezzo",
   "blocks.stat.label": "Statistica",
   "blocks.timelineStep.label": "Fase",
-  "blocks.navLink.label": "Link di navigazione"
+  "blocks.navLink.label": "Link di navigazione",
+  "pageGrid.previous": "Precedente",
+  "pageGrid.next": "Successiva",
+  "pageGrid.pagerLabel": "Pagine dell’archivio",
+  "pageGrid.pageOf": "Pagina {page} di {total}"
 }

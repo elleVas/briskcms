@@ -90,5 +90,9 @@
   "blocks.pricingPlan.label": "Pricing plan",
   "blocks.stat.label": "Statistic",
   "blocks.timelineStep.label": "Step",
-  "blocks.navLink.label": "Navigation link"
+  "blocks.navLink.label": "Navigation link",
+  "pageGrid.previous": "Previous",
+  "pageGrid.next": "Next",
+  "pageGrid.pagerLabel": "Archive pages",
+  "pageGrid.pageOf": "Page {page} of {total}"
 }
