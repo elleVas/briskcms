@@ -27,6 +27,7 @@ import type {
   PageGroupRepositoryPort,
   PageTranslationRepositoryPort,
   PreviewTokenPort,
+  UserRepositoryPort,
   SearchPort,
   SiteLayoutSectionRepositoryPort,
   ReusableSectionRepositoryPort,
@@ -57,6 +58,7 @@ import {
   PAGE_GROUP_REPOSITORY,
   PAGE_TRANSLATION_REPOSITORY,
   PREVIEW_TOKEN_PORT,
+  USER_REPOSITORY,
   REUSABLE_SECTION_REPOSITORY,
   SEARCH_REPOSITORY,
   SITE_LAYOUT_SECTION_REPOSITORY,
@@ -92,6 +94,10 @@ export class PublicPagesController {
     private readonly tenant: DeploymentTenantResolver,
     @Inject(PREVIEW_TOKEN_PORT)
     private readonly previewTokenPort: PreviewTokenPort,
+    // Only an article's byline reads it, and only on a page that carries
+    // the block that shows one.
+    @Inject(USER_REPOSITORY)
+    private readonly userRepository: UserRepositoryPort,
   ) {}
 
   /**
@@ -145,6 +151,7 @@ export class PublicPagesController {
         siteThemeBlockStylesRepository: this.siteThemeBlockStylesRepository,
         reusableSectionRepository: this.reusableSectionRepository,
         taxonomyRepository: this.taxonomyRepository,
+        userRepository: this.userRepository,
       },
       {
         tenantId: await this.tenant.require(),
@@ -209,6 +216,7 @@ export class PublicPagesController {
         reusableSectionRepository: this.reusableSectionRepository,
         taxonomyRepository: this.taxonomyRepository,
         previewTokenPort: this.previewTokenPort,
+        userRepository: this.userRepository,
       },
       {
         tenantId: await this.tenant.require(),

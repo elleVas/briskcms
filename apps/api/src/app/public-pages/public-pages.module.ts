@@ -10,6 +10,7 @@ import { PreviewTokenAdapter } from '@brisk/preview-token-adapter';
 import { DrizzleSearchRepository } from '@brisk/postgres-search-repository';
 import { DrizzleTaxonomyRepository } from '@brisk/postgres-taxonomy-repository';
 import { DrizzleReusableSectionRepository } from '@brisk/postgres-reusable-section-repository';
+import { DrizzleUserRepository } from '@brisk/postgres-user-repository';
 import { DrizzleSiteLayoutSectionRepository } from '@brisk/postgres-site-layout-section-repository';
 import {
   DrizzleSiteRepository,
@@ -28,6 +29,7 @@ import {
   SITE_REPOSITORY,
   SITE_THEME_BLOCK_STYLES_REPOSITORY,
   TAXONOMY_REPOSITORY,
+  USER_REPOSITORY,
 } from './public-pages.tokens';
 
 @Module({
@@ -82,6 +84,13 @@ import {
       // address and the pages filed under it (docs/adr/0064).
       provide: TAXONOMY_REPOSITORY,
       useFactory: (db: BriskDb) => new DrizzleTaxonomyRepository(db),
+      inject: [DATABASE],
+    },
+    {
+      // Read for one thing only: the display name behind an article's
+      // byline. Never the account's email.
+      provide: USER_REPOSITORY,
+      useFactory: (db: BriskDb) => new DrizzleUserRepository(db),
       inject: [DATABASE],
     },
     {

@@ -372,6 +372,28 @@ export const BLOCK_STYLE_DEFAULTS: Record<string, BlockStyleDefaults> = {
     // owns nothing else.
     maxWidth: 'none',
   },
+  ArticleMeta: {
+    backgroundColor: 'transparent',
+    textColor: 'inherit',
+    borderRadius: '0',
+    paddingX: '0',
+    paddingY: '0',
+  },
+  ArticleNav: {
+    backgroundColor: 'transparent',
+    textColor: 'inherit',
+    borderRadius: '0',
+    paddingX: '0',
+    paddingY: '0',
+  },
+  RelatedPages: {
+    backgroundColor: 'transparent',
+    textColor: 'inherit',
+    borderRadius: '0',
+    paddingX: '0',
+    paddingY: '0',
+    gap: '0.75rem',
+  },
   PageGrid: {
     backgroundColor: 'transparent',
     textColor: 'inherit',

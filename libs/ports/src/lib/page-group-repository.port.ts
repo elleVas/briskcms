@@ -16,6 +16,8 @@ export interface PageGroupSummary {
   siteId: string;
   parentId: string | null;
   order: number;
+  /** Which section of the editor lists it (docs/adr/0015) — also what scopes "the previous article" to the right set of pages. */
+  collectionId: string | null;
   createdBy: string | null;
   createdAt: Date;
   updatedAt: Date;

@@ -1,0 +1,95 @@
+---
+import type { ArticleNavProps } from '@brisk/shared-types';
+import { Translator } from '@brisk/theme-runtime';
+
+type Props = ArticleNavProps & {
+  /** The per-instance style class, from BlockRenderer — see blockInstanceClassName. */
+  instanceClass?: string | null;
+  /** The language being rendered — the two labels are the block's only words. */
+  locale?: string;
+};
+
+const { previous, next, instanceClass, locale } = Astro.props;
+const i18n = new Translator(locale ?? '');
+---
+
+{
+  /* Both ends are filled in by the render pass (resolveArticleBlocks). A
+     page outside every section gets neither, and then there is no way on
+     to draw — an empty bar with two dead ends is worse than nothing. */
+  (previous || next) && (
+    <nav
+      class:list={['brisk-article-nav', instanceClass]}
+      aria-label={i18n.t('articleNav.label')}
+    >
+      {previous ? (
+        <a class="brisk-article-nav__link" href={previous.path} rel="prev">
+          <span class="brisk-article-nav__direction">
+            {i18n.t('articleNav.previous')}
+          </span>
+          <span class="brisk-article-nav__title">{previous.title}</span>
+        </a>
+      ) : (
+        <span />
+      )}
+      {next && (
+        <a
+          class="brisk-article-nav__link brisk-article-nav__link--next"
+          href={next.path}
+          rel="next"
+        >
+          <span class="brisk-article-nav__direction">
+            {i18n.t('articleNav.next')}
+          </span>
+          <span class="brisk-article-nav__title">{next.title}</span>
+        </a>
+      )}
+    </nav>
+  )
+}
+
+<style>
+  /* Two columns with the older one on the left, so the pair reads the way
+     the archive does. On a narrow screen they stack, oldest first. */
+  .brisk-article-nav {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--brisk-override-gap, 1rem);
+    background: var(--brisk-override-bg, transparent);
+    border-radius: var(--brisk-override-radius, 0);
+    padding: var(--brisk-override-padding-y, 0)
+      var(--brisk-override-padding-x, 0);
+  }
+
+  @container (max-width: 30rem) {
+    .brisk-article-nav {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .brisk-article-nav__link {
+    display: grid;
+    gap: 0.25rem;
+    min-width: 0;
+    color: var(--brisk-override-text, inherit);
+    text-decoration: none;
+  }
+
+  .brisk-article-nav__link--next {
+    text-align: end;
+  }
+
+  .brisk-article-nav__direction {
+    font-size: 0.8125rem;
+    color: var(--muted-foreground);
+  }
+
+  .brisk-article-nav__title {
+    font-weight: 600;
+  }
+
+  .brisk-article-nav__link:hover .brisk-article-nav__title,
+  .brisk-article-nav__link:focus-visible .brisk-article-nav__title {
+    text-decoration: underline;
+  }
+</style>

@@ -1,0 +1,64 @@
+---
+import type { ArticleMetaProps } from '@brisk/shared-types';
+
+type Props = ArticleMetaProps & {
+  /** The per-instance style class, from BlockRenderer — see blockInstanceClassName. */
+  instanceClass?: string | null;
+  /** The language being rendered, so a date is written the way its readers write dates. */
+  locale?: string;
+};
+
+const { showDate, showAuthor, publishedAt, authorName, instanceClass, locale } =
+  Astro.props;
+
+/**
+ * The date as this language writes it, and `null` for one we cannot read:
+ * a byline is not the place to print "Invalid Date" at a reader.
+ */
+function readableDate(value: string | null): string | null {
+  if (!value) return null;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+  return date.toLocaleDateString(locale ?? undefined, {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  });
+}
+
+const date = showDate ? readableDate(publishedAt) : null;
+const author = showAuthor ? authorName.trim() : '';
+---
+
+{
+  /* Nothing at all rather than an empty line: a page that has never been
+     published, or whose author never set a name, has no byline to show,
+     and a stray separator would read as something having gone missing. */
+  (date || author) && (
+    <p class:list={['brisk-article-meta', instanceClass]}>
+      {date && <time datetime={publishedAt ?? undefined}>{date}</time>}
+      {date && author && <span class="brisk-article-meta__sep">·</span>}
+      {author && <span class="brisk-article-meta__author">{author}</span>}
+    </p>
+  )
+}
+
+<style>
+  .brisk-article-meta {
+    margin: 0;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    color: var(--brisk-override-text, var(--muted-foreground));
+    background: var(--brisk-override-bg, transparent);
+    border-radius: var(--brisk-override-radius, 0);
+    padding: var(--brisk-override-padding-y, 0)
+      var(--brisk-override-padding-x, 0);
+  }
+
+  .brisk-article-meta__sep {
+    opacity: 0.6;
+  }
+</style>

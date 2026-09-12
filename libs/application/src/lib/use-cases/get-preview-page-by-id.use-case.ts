@@ -7,6 +7,7 @@ import type {
   SiteRepositoryPort,
   SiteThemeBlockStylesPort,
   TaxonomyRepositoryPort,
+  UserRepositoryPort,
 } from '@brisk/ports';
 import { mergeTranslatedContent, type PageContent } from '@brisk/shared-types';
 import { resolveSiteChrome } from './resolve-site-chrome';
@@ -14,6 +15,7 @@ import { resolvePageGroupAncestors } from './resolve-page-group-ancestors';
 import { resolveTranslationPaths } from './resolve-translation-paths';
 import { resolvePageContentReferences } from './resolve-page-content-references';
 import { loadPublishedSections } from './resolve-section-instances';
+import { currentArticleOf } from './resolve-article-blocks';
 import type { PublishedPage } from './get-published-page-by-slug.use-case';
 
 export interface GetPreviewPageByIdDeps {
@@ -26,6 +28,8 @@ export interface GetPreviewPageByIdDeps {
   /** Which pages carry which term — what a PageGrid on the previewed page is asking. */
   taxonomyRepository: TaxonomyRepositoryPort;
   previewTokenPort: PreviewTokenPort;
+  /** Only for an article's byline — read once, and only on a page that carries an ArticleMeta block. */
+  userRepository?: UserRepositoryPort;
 }
 
 export interface GetPreviewPageByIdInput {
@@ -112,6 +116,7 @@ export async function getPreviewPageById(
       translation.siteId,
       translation.locale,
       [content],
+      () => currentArticleOf(deps, input.tenantId, translation),
     ),
   ]);
   // Same as the published route: a slug is not an address on its own, see

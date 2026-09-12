@@ -9,10 +9,16 @@ import type {
   PageTranslationRepositoryPort,
   ReusableSectionRepositoryPort,
   TaxonomyRepositoryPort,
+  UserRepositoryPort,
 } from '@brisk/ports';
 import { resolveAncestorGroupIds } from './resolve-page-group-ancestors';
 import { resolvePageGridItems } from './resolve-page-grid-items';
 import { resolveSectionInstances } from './resolve-section-instances';
+import {
+  hasArticleBlocks,
+  resolveArticleBlocks,
+  type CurrentArticle,
+} from './resolve-article-blocks';
 
 export interface ResolvePageContentReferencesDeps {
   pageGroupRepository: PageGroupRepositoryPort;
@@ -20,6 +26,8 @@ export interface ResolvePageContentReferencesDeps {
   reusableSectionRepository: ReusableSectionRepositoryPort;
   /** Which pages carry which term — what a PageGrid is asking. */
   taxonomyRepository: TaxonomyRepositoryPort;
+  /** Only the author's display name, for an article's byline — absent where no article is being rendered. */
+  userRepository?: UserRepositoryPort;
 }
 
 /**
@@ -56,6 +64,17 @@ export async function resolvePageContentReferences(
   siteId: string,
   locale: string,
   rawContents: PageContent[],
+  /**
+   * How to find out which page these trees belong to, when they belong to
+   * one: an article's own blocks (its date, its neighbours, what is
+   * related to it) can only be filled in by something that knows.
+   *
+   * A function and not a value, because answering it costs a read of the
+   * page's own row, and almost no page carries one of those blocks — it
+   * is called only once one is actually there. Absent for the header and
+   * footer, and for a term's own route.
+   */
+  currentArticle?: () => Promise<CurrentArticle | null>,
 ): Promise<PageContent[]> {
   const expanded = await resolveSectionInstances(deps, tenantId, rawContents);
   // After the sections and before the links, so a grid inside a reusable
@@ -69,14 +88,32 @@ export async function resolvePageContentReferences(
     expanded,
   );
 
+  // After the grids and before the links, for the grids' own reason: an
+  // article block inside a reusable section is filled like any other, and
+  // whatever it links to is resolved afterwards.
+  const article =
+    currentArticle && hasArticleBlocks(contents)
+      ? await currentArticle()
+      : null;
+  const withArticle = article
+    ? await resolveArticleBlocks(
+        deps,
+        tenantId,
+        siteId,
+        locale,
+        article,
+        contents,
+      )
+    : contents;
+
   const referencedGroupIds = new Set<string>();
-  for (const content of contents) {
+  for (const content of withArticle) {
     for (const groupId of collectPageGroupReferences(content)) {
       referencedGroupIds.add(groupId);
     }
   }
   if (referencedGroupIds.size === 0) {
-    return contents;
+    return withArticle;
   }
 
   // Memoised across the whole pass: a navigation menu of eight links into
@@ -131,7 +168,7 @@ export async function resolvePageContentReferences(
     }),
   );
 
-  return contents.map((content) =>
+  return withArticle.map((content) =>
     resolvePageReferences(content, slugByGroupId),
   );
 }
