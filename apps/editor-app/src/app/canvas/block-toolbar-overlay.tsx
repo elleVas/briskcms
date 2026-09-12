@@ -113,19 +113,6 @@ export function BlockToolbarOverlay({
 
   const canAddChild =
     descriptor.isContainer && descriptor.allowedChildTypes?.length === 1;
-  /*
-   * Whether the panel has anything to say about this block. Read off the
-   * descriptor alone, deliberately: the old popover asked the theme's
-   * styling ceiling as well, which meant four queries had to resolve before
-   * a toolbar could decide whether to draw a button. The panel itself still
-   * asks — this only decides whether to offer a shortcut to it.
-   */
-  const hasAnythingToEdit =
-    descriptor.fields.length > 0 ||
-    (descriptor.variants?.length ?? 0) > 0 ||
-    (descriptor.stylableProperties?.length ?? 0) > 0 ||
-    isRootLevel;
-
   return (
     <div className="pointer-events-none absolute inset-0 overflow-visible">
       {isRootLevel && (
@@ -184,7 +171,11 @@ export function BlockToolbarOverlay({
             acts on this one block, which is a control that looks local and
             is not. It is not lost: the Style screen edits exactly the same
             values, for every type, with its own breakpoint selector. */}
-        {hasAnythingToEdit && onFocusProperties && (
+        {/* Always offered. The old popover hid this button when the block
+            had no fields, no looks and nothing stylable — it would have
+            opened an empty box. The Properties tab exists whatever is
+            selected, so there is always somewhere for this to take you. */}
+        {onFocusProperties && (
           <>
             <ToolbarSeparator />
             <button

@@ -1,11 +1,8 @@
 import {
-  forwardRef,
   type KeyboardEvent as ReactKeyboardEvent,
   type PointerEvent as ReactPointerEvent,
   type ReactNode,
-  useCallback,
   useRef,
-  useState,
 } from 'react';
 import {
   PanelLeftClose,
@@ -18,11 +15,8 @@ import {
   clampPanelWidth,
   MAX_PANEL_WIDTH,
   MIN_PANEL_WIDTH,
-  readPanelCollapsed,
-  readPanelWidth,
-  writePanelCollapsed,
-  writePanelWidth,
 } from './side-panel-preferences';
+import type { SidePanelState } from './use-side-panel';
 
 export interface CollapsibleSidePanelProps {
   /** Which edge of the canvas it sits on — decides the border, the icons, where the toggle aligns and which way a drag widens it. */
@@ -31,10 +25,17 @@ export interface CollapsibleSidePanelProps {
   title: string;
   expandLabel: string;
   collapseLabel: string;
-  /** Distinguishes this panel's remembered width and collapsed state from the other's. */
-  storageKey: string;
   /** The drag handle's accessible name. */
   resizeLabel: string;
+  /**
+   * Collapsed state and width, owned by the caller (see useSidePanel).
+   *
+   * Not internal state: a collapsed panel renders neither header nor
+   * content, so the toolbar's way into the Properties tab did nothing at
+   * all when the panel happened to be shut — and nothing outside the panel
+   * could open it, because nothing outside could see that it was.
+   */
+  panel: SidePanelState;
   /** Replaces the plain title — the right panel puts its two tabs here. */
   header?: ReactNode;
   children: ReactNode;
@@ -44,48 +45,32 @@ export interface CollapsibleSidePanelProps {
  * One of the two panels either side of the canvas — Insert block on the
  * left, Layers and Properties on the right.
  *
- * Both are collapsible, and both now REMEMBER being collapsed and how wide
- * they were left. They used to do neither: a fixed `w-64` and component
- * state that reset on every mount, so on a small screen the canvas stayed
- * narrow and the collapsing had to be redone on every page. The width is
- * what changed the stakes — the right panel holds the selected block's
- * properties now, and a Hero's seven fields need more than 256 pixels.
+ * Both are collapsible and resizable, and both remember how they were left.
+ * They used to be a fixed `w-64` with collapsed state that reset on every
+ * mount, so on a thirteen-inch screen the canvas stayed narrow and the
+ * collapsing had to be redone on the next page. Width is what changed the
+ * stakes: the right panel holds the selected block's properties now, and a
+ * Hero's seven fields in 256 pixels is a column of half-visible controls.
  *
  * They were the same thirty lines written twice, differing only in which
- * edge they sit on; the resize handle is the same, mirrored.
+ * edge they sit on; the resize handle is the same one, mirrored.
  */
-export const CollapsibleSidePanel = forwardRef<
-  HTMLElement,
-  CollapsibleSidePanelProps
->(function CollapsibleSidePanel(
-  {
-    side,
-    title,
-    expandLabel,
-    collapseLabel,
-    storageKey,
-    resizeLabel,
-    header,
-    children,
-  },
-  ref,
-) {
-  const [isCollapsed, setIsCollapsed] = useState(() =>
-    readPanelCollapsed(storageKey),
-  );
-  const [width, setWidth] = useState(() => readPanelWidth(storageKey));
+export function CollapsibleSidePanel({
+  side,
+  title,
+  expandLabel,
+  collapseLabel,
+  resizeLabel,
+  panel,
+  header,
+  children,
+}: CollapsibleSidePanelProps) {
+  const { isCollapsed, width, toggleCollapsed, setWidth, commitWidth } = panel;
   // The width at the moment the drag started, plus where the pointer was:
   // reading the panel's live box on every move would feed its own resizing
   // back into the calculation.
   const dragRef = useRef<{ startX: number; startWidth: number } | null>(null);
   const edge = side === 'left' ? 'border-r' : 'border-l';
-
-  const toggleCollapsed = useCallback(() => {
-    setIsCollapsed((collapsed) => {
-      writePanelCollapsed(storageKey, !collapsed);
-      return !collapsed;
-    });
-  }, [storageKey]);
 
   function handleResizeStart(event: ReactPointerEvent<HTMLDivElement>): void {
     if (event.button !== 0) {
@@ -107,7 +92,7 @@ export const CollapsibleSidePanel = forwardRef<
       side === 'left'
         ? event.clientX - drag.startX
         : drag.startX - event.clientX;
-    setWidth(clampPanelWidth(drag.startWidth + delta));
+    setWidth(drag.startWidth + delta);
   }
 
   function handleResizeEnd(): void {
@@ -115,42 +100,36 @@ export const CollapsibleSidePanel = forwardRef<
       return;
     }
     dragRef.current = null;
-    writePanelWidth(storageKey, width);
+    commitWidth(width);
   }
 
   /** The keyboard's version of the drag — a resize nobody can reach with Tab is a resize half the people cannot use. */
   function handleResizeKeyDown(
     event: ReactKeyboardEvent<HTMLDivElement>,
   ): void {
-    const step = event.shiftKey ? 48 : 16;
-    const towards = side === 'left' ? 1 : -1;
-    let next: number | null = null;
-    if (event.key === 'ArrowLeft') {
-      next = width + step * towards * -1;
-    } else if (event.key === 'ArrowRight') {
-      next = width + step * towards;
-    }
-    if (next === null) {
+    if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') {
       return;
     }
     event.preventDefault();
-    const clamped = clampPanelWidth(next);
-    setWidth(clamped);
-    writePanelWidth(storageKey, clamped);
+    const step = event.shiftKey ? 48 : 16;
+    // Arrow right always moves the handle right, whichever panel it belongs
+    // to; which of the two that widens is what `side` decides.
+    const towards = event.key === 'ArrowRight' ? 1 : -1;
+    commitWidth(
+      clampPanelWidth(width + step * towards * (side === 'left' ? 1 : -1)),
+    );
   }
 
   return (
     <aside
-      ref={ref}
       // Named, so the landmark is addressable: a screen reader announces
       // which of the two panels it has entered, and "Text" in the inserter
       // stops being indistinguishable from "Text" in the layers tree.
       aria-label={title}
-      tabIndex={-1}
       className={
         isCollapsed
-          ? `flex w-10 shrink-0 flex-col items-center ${edge} py-3 outline-none`
-          : `relative flex shrink-0 flex-col ${edge} outline-none`
+          ? `flex w-10 shrink-0 flex-col items-center ${edge} py-3`
+          : `relative flex shrink-0 flex-col ${edge}`
       }
       style={isCollapsed ? undefined : { width }}
     >
@@ -158,7 +137,7 @@ export const CollapsibleSidePanel = forwardRef<
         className={
           isCollapsed
             ? 'contents'
-            : `flex min-h-0 flex-1 flex-col overflow-y-auto p-3`
+            : 'flex min-h-0 flex-1 flex-col overflow-y-auto p-3'
         }
       >
         <IconButton
@@ -168,8 +147,8 @@ export const CollapsibleSidePanel = forwardRef<
             isCollapsed
               ? undefined
               : side === 'left'
-                ? 'mb-2 -ml-1'
-                : 'mb-2 -mr-1 self-end'
+                ? 'mb-2 -ml-1 shrink-0 self-start'
+                : 'mb-2 -mr-1 shrink-0 self-end'
           }
         >
           {/* Four static elements rather than an icon picked into a variable:
@@ -215,4 +194,4 @@ export const CollapsibleSidePanel = forwardRef<
       )}
     </aside>
   );
-});
+}

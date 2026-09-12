@@ -354,6 +354,63 @@ describe('CanvasEditorShell', () => {
   });
 
   /*
+   * The pencil switches to the Properties tab and puts the keyboard in it.
+   * A collapsed panel renders neither its tabs nor its content, so while it
+   * was the panel's own private state the button quietly did nothing at all
+   * when the panel happened to be shut: the focus landed on a forty-pixel
+   * strip and the person stayed exactly where they were.
+   */
+  it('the properties button opens the right panel when it is collapsed', async () => {
+    renderShell();
+    const iframe = await getIframe();
+
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Comprimi pannello Livelli' }),
+    );
+    selectBlockWithRect(iframe, 'hero-1', HERO_RECT);
+    expect(screen.queryByRole('tab', { name: 'Proprietà' })).toBeNull();
+
+    focusPropertiesPanel();
+
+    expect(
+      screen
+        .getByRole('tab', { name: 'Proprietà' })
+        .getAttribute('aria-selected'),
+    ).toBe('true');
+    expect(screen.getByDisplayValue('Titolo')).toBeTruthy();
+  });
+
+  /*
+   * A tab strip a keyboard cannot drive is not a tab strip: the arrows are
+   * how you move between tabs once Tab has brought you to the strip.
+   */
+  it('moves between the two tabs with the arrow keys', async () => {
+    renderShell();
+    await getIframe();
+
+    const layers = screen.getByRole('tab', { name: 'Livelli' });
+    expect(layers.getAttribute('aria-controls')).toBe(
+      screen.getByRole('tabpanel').getAttribute('id'),
+    );
+    // Roving tabindex: only the selected tab is in the tab order.
+    expect(layers.getAttribute('tabindex')).toBe('0');
+    expect(
+      screen.getByRole('tab', { name: 'Proprietà' }).getAttribute('tabindex'),
+    ).toBe('-1');
+
+    fireEvent.keyDown(layers, { key: 'ArrowRight' });
+
+    expect(
+      screen
+        .getByRole('tab', { name: 'Proprietà' })
+        .getAttribute('aria-selected'),
+    ).toBe('true');
+    expect(screen.getByRole('tabpanel').getAttribute('aria-labelledby')).toBe(
+      screen.getByRole('tab', { name: 'Proprietà' }).getAttribute('id'),
+    );
+  });
+
+  /*
    * The panels were a fixed `w-64` whose collapsed state reset on every
    * mount: on a small screen the canvas stayed narrow, and collapsing a
    * panel to get room had to be redone on the next page.

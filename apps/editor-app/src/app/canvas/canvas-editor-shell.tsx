@@ -5,7 +5,6 @@ import {
   useRef,
   useState,
 } from 'react';
-import { cn } from '../../lib/utils';
 import type { Block, ExposedFields } from '@brisk/shared-types';
 import type { BlockDescriptor } from '@brisk/block-registry';
 import { PUBLIC_SITE_URL } from '../../lib/public-site-url';
@@ -26,6 +25,13 @@ import { describeSelection } from './canvas-selection';
 import { CanvasTopBar, type CanvasPageMenuItem } from './canvas-top-bar';
 import { CollapsibleSidePanel } from './collapsible-side-panel';
 import { PropertiesPanel } from './properties-panel';
+import {
+  RightPanelTabs,
+  rightPanelId,
+  rightPanelTabId,
+  type RightPanelTab,
+} from './right-panel-tabs';
+import { useSidePanel } from './use-side-panel';
 import { siblingDropRects } from './compute-drop-target';
 import { LayerContextMenu } from './layer-context-menu';
 import { LayersPanel } from './layers-panel';
@@ -42,9 +48,6 @@ import { useSelectedBlockEditing } from './use-selected-block-editing';
 import { usePreviewBridge } from './use-preview-bridge';
 import { useSidebarDrag } from './use-sidebar-drag';
 import { useTextEdit } from './use-text-edit';
-
-/** The right panel's two tabs, in the order they are drawn. */
-const RIGHT_PANEL_TABS = ['layers', 'properties'] as const;
 
 /**
  * The per-BLOCK slice of the section editor's expose controls. A function
@@ -189,10 +192,17 @@ export function CanvasEditorShell({
    * order to change it, and the panel that changes it is the one you want
    * to be looking at.
    */
-  const [rightPanelTab, setRightPanelTab] = useState<'layers' | 'properties'>(
-    'layers',
-  );
-  const rightPanelRef = useRef<HTMLElement>(null);
+  const [rightPanelTab, setRightPanelTab] = useState<RightPanelTab>('layers');
+  const inserterPanel = useSidePanel('inserter');
+  const inspectorPanel = useSidePanel('inspector');
+  /**
+   * Bumped by the toolbar's pencil. The focus has to happen AFTER the panel
+   * has opened and the tab has switched, which is a render away — so it is
+   * a request the effect below answers, not a `focus()` on a DOM node that
+   * may not be there yet.
+   */
+  const [focusPropertiesRequest, setFocusPropertiesRequest] = useState(0);
+  const propertiesPanelRef = useRef<HTMLDivElement>(null);
   // Where the layers context menu is, or null when closed. Position and
   // not just "open": it opens at the pointer, like every context menu.
   const [layerMenuAt, setLayerMenuAt] = useState<{
@@ -309,11 +319,23 @@ export function CanvasEditorShell({
     }
   }
 
-  /** The pencil in the floating toolbar: the panel is always there now, so this only has to put the keyboard in it. */
+  /**
+   * The pencil in the floating toolbar. It opens the panel first: a
+   * collapsed one renders neither its tabs nor its content, so switching
+   * the tab and focusing would have put the keyboard on a forty-pixel strip
+   * and left the person exactly where they were.
+   */
   const focusProperties = useCallback(() => {
+    inspectorPanel.expand();
     setRightPanelTab('properties');
-    rightPanelRef.current?.focus();
-  }, []);
+    setFocusPropertiesRequest((request) => request + 1);
+  }, [inspectorPanel]);
+
+  useEffect(() => {
+    if (focusPropertiesRequest > 0) {
+      propertiesPanelRef.current?.focus();
+    }
+  }, [focusPropertiesRequest]);
 
   /**
    * A block that belongs inside one kind of container (a Column, a Tab) can
@@ -524,7 +546,7 @@ export function CanvasEditorShell({
       <div style={{ flex: 1, minHeight: 0, display: 'flex' }}>
         <CollapsibleSidePanel
           side="left"
-          storageKey="inserter"
+          panel={inserterPanel}
           title={t('canvas.insertBlock')}
           expandLabel={t('canvas.expandSidebar')}
           collapseLabel={t('canvas.collapseSidebar')}
@@ -611,91 +633,82 @@ export function CanvasEditorShell({
           )}
         </div>
         <CollapsibleSidePanel
-          ref={rightPanelRef}
           side="right"
-          storageKey="inspector"
+          panel={inspectorPanel}
           title={t('canvas.layersTitle')}
           expandLabel={t('canvas.expandLayersPanel')}
           collapseLabel={t('canvas.collapseLayersPanel')}
           resizeLabel={t('canvas.resizeLayersPanel')}
           header={
-            <div
-              role="tablist"
-              aria-label={t('canvas.rightPanel.label')}
-              className="mb-2 flex items-center gap-0.5 rounded-md bg-muted p-0.5"
-            >
-              {RIGHT_PANEL_TABS.map((tab) => (
-                <button
-                  key={tab}
-                  type="button"
-                  role="tab"
-                  aria-selected={rightPanelTab === tab}
-                  onClick={() => setRightPanelTab(tab)}
-                  className={cn(
-                    'flex-1 rounded-md px-2 py-1 text-xs font-medium text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-                    rightPanelTab === tab && 'bg-background text-foreground',
-                  )}
-                >
-                  {t(`canvas.rightPanel.${tab}`)}
-                </button>
-              ))}
-            </div>
+            <RightPanelTabs value={rightPanelTab} onChange={setRightPanelTab} />
           }
         >
-          {rightPanelTab === 'properties' ? (
-            <PropertiesPanel
-              block={selectedBlock ?? null}
-              descriptor={selectedDescriptor ?? null}
-              isRootLevel={isSelectedRootLevel}
-              onChangeProp={handleChangeProp}
-              onChangeVariant={handleChangeVariant}
-              onChangeAlign={
-                // Root level, and the page's own content: the header and
-                // footer lists have no per-block wrapper to carry the
-                // attribute (they space their blocks with a flex `gap`),
-                // and a nested block's width is its container's business.
-                isSelectedRootLevel && !editingSection
-                  ? handleAlignSelected
-                  : undefined
-              }
-              onChangeInstanceStyle={handleChangeStyleOverride}
-              typeStyle={typeStyle}
-              breakpoint={breakpoint}
-              sectionEditing={buildSectionEditing(
-                sectionEditing,
-                selectedBlock?.id,
-              )}
-            />
-          ) : (
-            <LayersPanel
-              onContextMenu={(_blockId, x, y) => setLayerMenuAt({ x, y })}
-              blocks={localBlocks}
-              hoveredBlockId={bridge.hoveredBlockId}
-              selectedBlockId={bridge.selectedBlockId}
-              onReorder={handleReorder}
-              onReparent={handleReparent}
-              // The descriptors' own rules, as two predicates, so the panel
-              // stays free of the registry. `canHoldChild` is the same rule
-              // every insert path asks, so the panel cannot refuse a nesting
-              // the picker would allow, or the other way round.
-              isContainerType={(type) =>
-                Boolean(registry.find((d) => d.type === type)?.isContainer)
-              }
-              canContain={(parentType, childType) =>
-                canPlace(registry, parentType, childType)
-              }
-              selectedBlockIds={bridge.selectedBlockIds}
-              onSelect={(blockId, additive) => {
-                bridge.selectBlock(blockId, additive);
-                // Only a plain click scrolls: adding a fourth block to a
-                // selection should not yank the canvas away from the
-                // three you are looking at.
-                if (!additive) {
-                  bridge.scrollToBlock(blockId);
+          {/* The panel the tab strip above controls, and where the
+              toolbar's pencil puts the keyboard. `tabIndex={-1}` so it can
+              take focus without joining the tab order. */}
+          <div
+            ref={propertiesPanelRef}
+            role="tabpanel"
+            id={rightPanelId(rightPanelTab)}
+            aria-labelledby={rightPanelTabId(rightPanelTab)}
+            tabIndex={-1}
+            className="flex min-h-0 flex-1 flex-col outline-none"
+          >
+            {rightPanelTab === 'properties' ? (
+              <PropertiesPanel
+                block={selectedBlock ?? null}
+                descriptor={selectedDescriptor ?? null}
+                isRootLevel={isSelectedRootLevel}
+                onChangeProp={handleChangeProp}
+                onChangeVariant={handleChangeVariant}
+                onChangeAlign={
+                  // Root level, and the page's own content: the header and
+                  // footer lists have no per-block wrapper to carry the
+                  // attribute (they space their blocks with a flex `gap`),
+                  // and a nested block's width is its container's business.
+                  isSelectedRootLevel && !editingSection
+                    ? handleAlignSelected
+                    : undefined
                 }
-              }}
-            />
-          )}
+                onChangeInstanceStyle={handleChangeStyleOverride}
+                typeStyle={typeStyle}
+                breakpoint={breakpoint}
+                sectionEditing={buildSectionEditing(
+                  sectionEditing,
+                  selectedBlock?.id,
+                )}
+              />
+            ) : (
+              <LayersPanel
+                onContextMenu={(_blockId, x, y) => setLayerMenuAt({ x, y })}
+                blocks={localBlocks}
+                hoveredBlockId={bridge.hoveredBlockId}
+                selectedBlockId={bridge.selectedBlockId}
+                onReorder={handleReorder}
+                onReparent={handleReparent}
+                // The descriptors' own rules, as two predicates, so the panel
+                // stays free of the registry. `canHoldChild` is the same rule
+                // every insert path asks, so the panel cannot refuse a nesting
+                // the picker would allow, or the other way round.
+                isContainerType={(type) =>
+                  Boolean(registry.find((d) => d.type === type)?.isContainer)
+                }
+                canContain={(parentType, childType) =>
+                  canPlace(registry, parentType, childType)
+                }
+                selectedBlockIds={bridge.selectedBlockIds}
+                onSelect={(blockId, additive) => {
+                  bridge.selectBlock(blockId, additive);
+                  // Only a plain click scrolls: adding a fourth block to a
+                  // selection should not yank the canvas away from the
+                  // three you are looking at.
+                  if (!additive) {
+                    bridge.scrollToBlock(blockId);
+                  }
+                }}
+              />
+            )}
+          </div>
         </CollapsibleSidePanel>
       </div>
       {layerMenuAt && (
