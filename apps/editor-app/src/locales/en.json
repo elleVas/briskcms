@@ -176,7 +176,8 @@
       "statusMissing": "Not translated",
       "colEditor": "Last edited by",
       "statusPending": "Published, with unpublished changes",
-      "colStatus": "Status"
+      "colStatus": "Status",
+      "statusPendingShort": "Unpublished changes"
     },
     "newPageDialog": {
       "title": "New page",

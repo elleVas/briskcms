@@ -85,7 +85,7 @@ const LOCALES_COLUMN = 'w-28';
  * draft has moved on", and nothing on the screen said so — no legend, no
  * column, no heading. You knew it only if you already knew it.
  */
-const STATUS_COLUMN = 'hidden w-36 md:block';
+const STATUS_COLUMN = 'hidden w-44 md:block';
 const AUTHOR_COLUMN = 'hidden w-36 xl:block';
 const EDITOR_COLUMN = 'hidden w-36 lg:block';
 const UPDATED_COLUMN = 'hidden w-24 lg:block';
@@ -180,13 +180,16 @@ function groupStatusKey(
 ):
   | 'pages.list.statusPublished'
   | 'pages.list.statusDraft'
-  | 'pages.list.statusPending' {
+  | 'pages.list.statusPendingShort' {
   const translation = preferredTranslation(group, defaultLocale);
   if (!translation || translation.status !== 'published') {
     return 'pages.list.statusDraft';
   }
+  // The SHORT wording. `statusPending` reads "Published, with unpublished
+  // changes", which is right for a badge's tooltip ("EN — ...") and, in a
+  // column, truncated to "Published, with unpublis…".
   return translation.hasUnpublishedChanges
-    ? 'pages.list.statusPending'
+    ? 'pages.list.statusPendingShort'
     : 'pages.list.statusPublished';
 }
 
