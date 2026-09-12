@@ -13,6 +13,7 @@ import type {
 } from '@brisk/ports';
 import { resolveAncestorGroupIds } from './resolve-page-group-ancestors';
 import { resolvePageGridItems } from './resolve-page-grid-items';
+import { resolveTermLists } from './resolve-term-lists';
 import { resolveSectionInstances } from './resolve-section-instances';
 import {
   hasArticleBlocks,
@@ -77,6 +78,16 @@ export async function resolvePageContentReferences(
   currentArticle?: () => Promise<CurrentArticle | null>,
 ): Promise<PageContent[]> {
   const expanded = await resolveSectionInstances(deps, tenantId, rawContents);
+  // Before the grids, not after: a filter says which terms are on offer,
+  // and every entry of every grid then has to carry the ones it answers
+  // to. Asked the other way round the grids would be filled already, and
+  // narrowing them would be a second pass over the same lists.
+  const { contents: withFilters, slugsByGroup } = await resolveTermLists(
+    deps,
+    tenantId,
+    locale,
+    expanded,
+  );
   // After the sections and before the links, so a grid inside a reusable
   // section is filled like any other, and its own links are resolved
   // after it exists.
@@ -85,7 +96,8 @@ export async function resolvePageContentReferences(
     tenantId,
     siteId,
     locale,
-    expanded,
+    withFilters,
+    slugsByGroup,
   );
 
   // After the grids and before the links, for the grids' own reason: an

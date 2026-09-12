@@ -45,6 +45,7 @@ import {
   articleNavPropsSchema,
   pageGridPropsSchema,
   relatedPagesPropsSchema,
+  termListPropsSchema,
   newsletterSignupPropsSchema,
   pricingPlanPropsSchema,
   pricingTablePropsSchema,
@@ -124,6 +125,8 @@ import ArticleMetaCore from './blocks/ArticleMeta.astro';
 const ArticleMeta = resolveThemeBlockOverride('ArticleMeta', ArticleMetaCore, themeName);
 import ArticleNavCore from './blocks/ArticleNav.astro';
 const ArticleNav = resolveThemeBlockOverride('ArticleNav', ArticleNavCore, themeName);
+import TermListCore from './blocks/TermList.astro';
+const TermList = resolveThemeBlockOverride('TermList', TermListCore, themeName);
 import RelatedPagesCore from './blocks/RelatedPages.astro';
 const RelatedPages = resolveThemeBlockOverride('RelatedPages', RelatedPagesCore, themeName);
 import BreadcrumbCore from './blocks/Breadcrumb.astro';
@@ -410,6 +413,14 @@ const BLOCK_REGISTRY: Record<string, BlockDispatchEntry> = {
     component: RelatedPages,
     schema: relatedPagesPropsSchema,
     stylable: true,
+    locale: true,
+  },
+  TermList: {
+    component: TermList,
+    schema: termListPropsSchema,
+    stylable: true,
+    // Every word it shows is its own — "All", "Apply" — and the terms
+    // themselves are already resolved in the language being read.
     locale: true,
   },
   PageGrid: {

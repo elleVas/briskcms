@@ -65,6 +65,12 @@ export async function resolvePageGridItems(
   siteId: string,
   locale: string,
   contents: PageContent[],
+  /**
+   * Which of the terms a filter on this page offers each page carries —
+   * see `resolveTermLists`. Empty when the page has no filter on it, and
+   * then every entry simply says it answers to nothing.
+   */
+  slugsByGroup: Map<string, string[]> = new Map(),
 ): Promise<PageContent[]> {
   const termIds = new Set<string>();
   for (const content of contents) collectTermIds(content, termIds);
@@ -104,6 +110,7 @@ export async function resolvePageGridItems(
         publishedAt: path.publishedAt ? path.publishedAt.toISOString() : null,
         excerpt: path.description,
         image: path.image,
+        termSlugs: slugsByGroup.get(groupId) ?? [],
       });
     }
     itemsByTerm.set(termId, items);

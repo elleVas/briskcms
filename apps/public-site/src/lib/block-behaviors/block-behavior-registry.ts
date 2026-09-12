@@ -10,6 +10,7 @@ import { hamburgerMenuBehaviors } from './hamburger-menu';
 import { promoBarBehaviors } from './promo-bar';
 import { statBehaviors } from './stat';
 import { tabsBehaviors } from './tabs';
+import { termListBehaviors } from './term-list';
 import { turnstileBehaviors } from './turnstile';
 import type { BlockBehavior } from './types';
 
@@ -52,4 +53,7 @@ export const BLOCK_BEHAVIOR_REGISTRY: Record<string, BlockBehavior[]> = {
   VideoEmbed: consentGatedEmbedBehaviors,
   MapEmbed: consentGatedEmbedBehaviors,
   EmbedHtml: embedHtmlBehaviors,
+  // Its links work without this; the behaviour only spares the round
+  // trip, and re-runs after a live canvas insert like every other.
+  TermList: termListBehaviors,
 };

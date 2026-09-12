@@ -1900,6 +1900,37 @@
           "fieldLabel": "How many at most"
         }
       }
+    },
+    "termList": {
+      "label": "Categories & tags",
+      "fields": {
+        "taxonomyId": {
+          "fieldLabel": "Which classification"
+        },
+        "behaviour": {
+          "fieldLabel": "A click",
+          "options": {
+            "filter": "Narrows this page",
+            "browse": "Opens the term's own page"
+          }
+        },
+        "style": {
+          "fieldLabel": "Shown as",
+          "options": {
+            "chips": "Chips",
+            "buttons": "Buttons",
+            "links": "Links",
+            "dropdown": "Dropdown"
+          }
+        },
+        "showAll": {
+          "fieldLabel": "Offer a way back to everything"
+        }
+      },
+      "picker": {
+        "none": "No classification chosen",
+        "unnamed": "Unnamed"
+      }
     }
   },
   "gallery": {

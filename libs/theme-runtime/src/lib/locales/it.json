@@ -97,5 +97,10 @@
   "pageGrid.pageOf": "Pagina {page} di {total}",
   "articleNav.label": "Navigazione fra gli articoli",
   "articleNav.previous": "Articolo precedente",
-  "articleNav.next": "Articolo successivo"
+  "articleNav.next": "Articolo successivo",
+  "termList.label": "Filtra per categoria",
+  "termList.browseLabel": "Categorie",
+  "termList.all": "Tutte",
+  "termList.apply": "Applica",
+  "termList.selectLabel": "Restringi a"
 }

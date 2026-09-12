@@ -10,7 +10,7 @@ function items(count: number): PageGridItem[] {
     publishedAt: null,
     excerpt: '',
     image: null,
-    authorName: '',
+    termSlugs: [],
   }));
 }
 

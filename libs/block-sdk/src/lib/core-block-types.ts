@@ -71,6 +71,7 @@ export const CORE_BLOCK_TYPES: readonly string[] = [
   'StatsCounter',
   'Tab',
   'Table',
+  'TermList',
   'Tabs',
   'Team',
   'TeamMember',

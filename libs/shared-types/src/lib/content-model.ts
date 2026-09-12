@@ -985,6 +985,15 @@ export const pageGridItemSchema = z.object({
   excerpt: z.string(),
   /** The page's OG image — the picture it already shows when shared, which is the same one a card wants. */
   image: z.string().nullable(),
+  /**
+   * The terms this page carries, as the slugs they answer at in the
+   * language being rendered — what a `TermList` filter matches against.
+   *
+   * Filled only for the dimensions a filter on the same page actually
+   * offers: every other term would be a slug nobody can select, paid for
+   * on every archive that has no filter at all.
+   */
+  termSlugs: z.array(z.string()).default([]),
 });
 export type PageGridItem = z.infer<typeof pageGridItemSchema>;
 
@@ -1080,6 +1089,49 @@ export const relatedPagesPropsSchema = z.object({
   items: z.array(pageGridItemSchema).default([]),
 });
 export type RelatedPagesProps = z.infer<typeof relatedPagesPropsSchema>;
+
+/**
+ * One term a `TermList` offers, filled in by the render pass.
+ *
+ * `slug` and `path` are two different answers because the block asks two
+ * different questions: narrowing this page needs the slug that goes in
+ * `?term=`, opening the term's own page needs its address.
+ */
+export const termChoiceSchema = z.object({
+  id: z.string(),
+  label: z.string(),
+  /** What `?term=` carries — the term's slug in the language being rendered. */
+  slug: z.string(),
+  /** The term's own page (ADR-0066), for a list that browses rather than filters. */
+  path: z.string(),
+});
+export type TermChoice = z.infer<typeof termChoiceSchema>;
+
+/**
+ * The terms of one dimension, as something a reader can click.
+ *
+ * Two behaviours, because the same row of chips answers two different
+ * needs: `filter` narrows the lists already on this page, keeping the
+ * reader where they are, and `browse` sends them to the term's own page.
+ * The first is what an archive with a `PageGrid` wants; the second is a
+ * category index.
+ *
+ * `choices` is not a field. Like `PageGrid.items` it is the answer to a
+ * query, filled by the render pass for the language being read — a list
+ * typed by hand would be a second index of the site's own classification,
+ * wrong the first time somebody adds a term.
+ */
+export const termListPropsSchema = z.object({
+  /** Which dimension to offer. `null` on a freshly inserted block: it draws nothing until somebody says. */
+  taxonomyId: z.string().nullable().default(null),
+  behaviour: z.enum(['filter', 'browse']).default('filter'),
+  /** `dropdown` is a real `<form method="get">`, so it narrows the page with JavaScript switched off too. */
+  style: z.enum(['chips', 'buttons', 'links', 'dropdown']).default('chips'),
+  /** The way back to the unfiltered list. Off for a browse list, where "all" is the page the reader is already on. */
+  showAll: z.boolean().default(true),
+  choices: z.array(termChoiceSchema).default([]),
+});
+export type TermListProps = z.infer<typeof termListPropsSchema>;
 
 export const searchBoxPropsSchema = z.object({
   placeholder: z.string().default('Cerca nel sito...'),

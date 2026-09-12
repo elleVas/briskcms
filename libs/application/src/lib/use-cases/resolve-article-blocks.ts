@@ -94,6 +94,10 @@ function toItem(path: PublishedPagePath, locale: string): PageGridItem {
     publishedAt: path.publishedAt ? path.publishedAt.toISOString() : null,
     excerpt: path.description,
     image: path.image,
+    // Nothing to narrow here: neighbours and related pages are answers to
+    // a question a filter does not ask, and no `TermList` ever offers
+    // them.
+    termSlugs: [],
   };
 }
 

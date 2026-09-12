@@ -41,6 +41,7 @@ import { articleMetaBlock } from './blocks/article-meta.block';
 import { articleNavBlock } from './blocks/article-nav.block';
 import { pageGridBlock } from './blocks/page-grid.block';
 import { relatedPagesBlock } from './blocks/related-pages.block';
+import { termListBlock } from './blocks/term-list.block';
 import { searchBoxBlock } from './blocks/search-box.block';
 import { sectionBlock } from './blocks/section.block';
 import { statBlock } from './blocks/stat.block';
@@ -101,6 +102,7 @@ export {
   articleMetaBlock,
   articleNavBlock,
   relatedPagesBlock,
+  termListBlock,
   searchBoxBlock,
   statBlock,
   statsCounterBlock,
@@ -166,6 +168,7 @@ export const pageBlocks: BlockDescriptor[] = [
   articleMetaBlock,
   articleNavBlock,
   relatedPagesBlock,
+  termListBlock,
   searchBoxBlock,
   videoEmbedBlock,
   mapEmbedBlock,
@@ -220,6 +223,7 @@ export const pageBlockCategories: { title: string; types: string[] }[] = [
       'ArticleMeta',
       'ArticleNav',
       'RelatedPages',
+      'TermList',
     ],
   },
   {

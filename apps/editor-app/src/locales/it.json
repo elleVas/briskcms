@@ -1900,6 +1900,37 @@
           "fieldLabel": "Quante al massimo"
         }
       }
+    },
+    "termList": {
+      "label": "Categorie e tag",
+      "fields": {
+        "taxonomyId": {
+          "fieldLabel": "Quale classificazione"
+        },
+        "behaviour": {
+          "fieldLabel": "Un clic",
+          "options": {
+            "filter": "Restringe questa pagina",
+            "browse": "Apre la pagina del termine"
+          }
+        },
+        "style": {
+          "fieldLabel": "Si presenta come",
+          "options": {
+            "chips": "Pillole",
+            "buttons": "Bottoni",
+            "links": "Collegamenti",
+            "dropdown": "Menu a tendina"
+          }
+        },
+        "showAll": {
+          "fieldLabel": "Offri il modo di tornare a tutto"
+        }
+      },
+      "picker": {
+        "none": "Nessuna classificazione scelta",
+        "unnamed": "Senza nome"
+      }
     }
   },
   "gallery": {
