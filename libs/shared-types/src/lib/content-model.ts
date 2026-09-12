@@ -1027,6 +1027,60 @@ export const pageGridPropsSchema = z.object({
 });
 export type PageGridProps = z.infer<typeof pageGridPropsSchema>;
 
+/**
+ * The line an article carries: when it went out, and who wrote it.
+ *
+ * Both values are FILLED BY THE RENDER PASS from the page the block sits
+ * on, never authored — the same rule `PageGrid.items` follows. A date
+ * somebody could type here would be a second, quietly different answer to
+ * "when was this published", and the two would disagree the first time a
+ * page was republished.
+ *
+ * The author is the display name of whoever created the page, and only
+ * that: an account's email address is not something a page publishes.
+ */
+export const articleMetaPropsSchema = z.object({
+  showDate: z.boolean().default(true),
+  showAuthor: z.boolean().default(true),
+  /** Filled: ISO, `null` when the page has never been published or predates the column. */
+  publishedAt: z.string().nullable().default(null),
+  /** Filled: empty when the account has no display name, and then nothing is drawn rather than a blank byline. */
+  authorName: z.string().default(''),
+});
+export type ArticleMetaProps = z.infer<typeof articleMetaPropsSchema>;
+
+/**
+ * The two neighbours of this article inside its own section, by date.
+ *
+ * "Previous" is the older one and "next" the newer, which is how a reader
+ * moving through an archive expects to travel. A page that is not in a
+ * section has no set to be a neighbour in, and the block draws nothing
+ * rather than inventing one out of the page tree.
+ */
+export const articleNavPropsSchema = z.object({
+  /** Filled: the older neighbour, `null` at the end of the archive. */
+  previous: pageGridItemSchema.nullable().default(null),
+  /** Filled: the newer neighbour, `null` on the most recent article. */
+  next: pageGridItemSchema.nullable().default(null),
+});
+export type ArticleNavProps = z.infer<typeof articleNavPropsSchema>;
+
+/**
+ * Other pages filed under the same terms as this one.
+ *
+ * The query, not a list somebody keeps up to date by hand: an author who
+ * had to pick related articles would be maintaining a second index of the
+ * site, and it would go stale the day after it was written.
+ */
+export const relatedPagesPropsSchema = z.object({
+  /** `list` and `cards` are the two the reader can tell apart; cards are the ones with room for a date and a summary. */
+  layout: z.enum(['list', 'cards']).default('cards'),
+  limit: z.number().int().min(1).max(12).default(3),
+  /** Filled: newest first, this page never among them. */
+  items: z.array(pageGridItemSchema).default([]),
+});
+export type RelatedPagesProps = z.infer<typeof relatedPagesPropsSchema>;
+
 export const searchBoxPropsSchema = z.object({
   placeholder: z.string().default('Cerca nel sito...'),
   visibility: visibilitySchema.default('always'),

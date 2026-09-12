@@ -339,6 +339,7 @@ describe('PageGroupsController (unit)', () => {
       siteId: 'site-1',
       parentId: null,
       order: 0,
+      collectionId: null,
       createdBy: null,
       createdAt: new Date(),
       updatedAt: new Date(),

@@ -25,6 +25,8 @@ export interface PublishedPagePath {
   /** When this language went live. `null` only for a page published before the column existed. */
   publishedAt: Date | null;
   updatedAt: Date;
+  /** Which section of the editor lists it — what scopes "the previous article" to the right set of pages. */
+  collectionId: string | null;
 }
 
 // Same "5-15 pagine, siti vetrina" scale assumption as everywhere else.
@@ -93,6 +95,9 @@ export async function listPublishedPagePaths(
   const parentIdByGroup = new Map<string, string | null>(
     groups.map((group) => [group.id, group.parentId]),
   );
+  const collectionIdByGroup = new Map<string, string | null>(
+    groups.map((group) => [group.id, group.collectionId]),
+  );
   const translationsByGroupAndLocale = new Map<string, PageTranslation>(
     translations.map((translation) => [
       `${translation.pageGroupId}:${translation.locale}`,
@@ -120,6 +125,7 @@ export async function listPublishedPagePaths(
       image: translation.seoMeta.ogTags?.['image'] ?? null,
       publishedAt: translation.publishedAt,
       updatedAt: translation.updatedAt,
+      collectionId: collectionIdByGroup.get(translation.pageGroupId) ?? null,
     });
   }
   return paths;

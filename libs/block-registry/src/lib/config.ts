@@ -37,7 +37,10 @@ import { pricingPlanBlock } from './blocks/pricing-plan.block';
 import { pricingTableBlock } from './blocks/pricing-table.block';
 import { quoteBlock } from './blocks/quote.block';
 import { ratingBlock } from './blocks/rating.block';
+import { articleMetaBlock } from './blocks/article-meta.block';
+import { articleNavBlock } from './blocks/article-nav.block';
 import { pageGridBlock } from './blocks/page-grid.block';
+import { relatedPagesBlock } from './blocks/related-pages.block';
 import { searchBoxBlock } from './blocks/search-box.block';
 import { sectionBlock } from './blocks/section.block';
 import { statBlock } from './blocks/stat.block';
@@ -95,6 +98,9 @@ export {
   quoteBlock,
   ratingBlock,
   pageGridBlock,
+  articleMetaBlock,
+  articleNavBlock,
+  relatedPagesBlock,
   searchBoxBlock,
   statBlock,
   statsCounterBlock,
@@ -157,6 +163,9 @@ export const pageBlocks: BlockDescriptor[] = [
   featureGridBlock,
   featureBlock,
   pageGridBlock,
+  articleMetaBlock,
+  articleNavBlock,
+  relatedPagesBlock,
   searchBoxBlock,
   videoEmbedBlock,
   mapEmbedBlock,
@@ -208,6 +217,9 @@ export const pageBlockCategories: { title: string; types: string[] }[] = [
       'Breadcrumb',
       'Icon',
       'PageGrid',
+      'ArticleMeta',
+      'ArticleNav',
+      'RelatedPages',
     ],
   },
   {

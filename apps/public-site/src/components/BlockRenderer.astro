@@ -41,7 +41,10 @@ import {
   navDropdownPropsSchema,
   navLinkPropsSchema,
   navPropsSchema,
+  articleMetaPropsSchema,
+  articleNavPropsSchema,
   pageGridPropsSchema,
+  relatedPagesPropsSchema,
   newsletterSignupPropsSchema,
   pricingPlanPropsSchema,
   pricingTablePropsSchema,
@@ -117,6 +120,12 @@ import BeforeAfterCore from './blocks/BeforeAfter.astro';
 const BeforeAfter = resolveThemeBlockOverride('BeforeAfter', BeforeAfterCore, themeName);
 import PageGridCore from './blocks/PageGrid.astro';
 const PageGrid = resolveThemeBlockOverride('PageGrid', PageGridCore, themeName);
+import ArticleMetaCore from './blocks/ArticleMeta.astro';
+const ArticleMeta = resolveThemeBlockOverride('ArticleMeta', ArticleMetaCore, themeName);
+import ArticleNavCore from './blocks/ArticleNav.astro';
+const ArticleNav = resolveThemeBlockOverride('ArticleNav', ArticleNavCore, themeName);
+import RelatedPagesCore from './blocks/RelatedPages.astro';
+const RelatedPages = resolveThemeBlockOverride('RelatedPages', RelatedPagesCore, themeName);
 import BreadcrumbCore from './blocks/Breadcrumb.astro';
 const Breadcrumb = resolveThemeBlockOverride('Breadcrumb', BreadcrumbCore, themeName);
 import ButtonCore from './blocks/Button.astro';
@@ -381,6 +390,27 @@ const BLOCK_REGISTRY: Record<string, BlockDispatchEntry> = {
     locale: true,
     extra: (ctx) => ({ translations: ctx.translations, site: ctx.site }),
     stylable: true,
+  },
+  ArticleMeta: {
+    component: ArticleMeta,
+    schema: articleMetaPropsSchema,
+    stylable: true,
+    // It prints a date, and a date has to be written the way the language
+    // being rendered writes dates.
+    locale: true,
+  },
+  ArticleNav: {
+    component: ArticleNav,
+    schema: articleNavPropsSchema,
+    stylable: true,
+    // Its two labels are the only words of its own it has.
+    locale: true,
+  },
+  RelatedPages: {
+    component: RelatedPages,
+    schema: relatedPagesPropsSchema,
+    stylable: true,
+    locale: true,
   },
   PageGrid: {
     component: PageGrid,

@@ -94,5 +94,8 @@
   "pageGrid.previous": "Previous",
   "pageGrid.next": "Next",
   "pageGrid.pagerLabel": "Archive pages",
-  "pageGrid.pageOf": "Page {page} of {total}"
+  "pageGrid.pageOf": "Page {page} of {total}",
+  "articleNav.label": "Article navigation",
+  "articleNav.previous": "Previous article",
+  "articleNav.next": "Next article"
 }

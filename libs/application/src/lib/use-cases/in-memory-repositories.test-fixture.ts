@@ -232,6 +232,7 @@ export class InMemoryPageGroupRepository implements PageGroupRepositoryPort {
       siteId: props.siteId,
       parentId: props.parentId,
       order: props.order,
+      collectionId: props.collectionId,
       createdBy: props.createdBy,
       createdAt: props.createdAt,
       updatedAt: props.updatedAt,

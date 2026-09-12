@@ -140,6 +140,14 @@ export const BLOCKS_WITHOUT_SEARCHABLE_TEXT = [
   // Genuinely no prose of their own — pure layout/container/config blocks,
   // or (EmbedHtml) raw markup that would pollute the index rather than
   // read as prose.
+  //
+  // The three article blocks are here for a different reason: every word
+  // they show is filled in from elsewhere on the site (the page's own
+  // date, its neighbours, its related pages), so indexing them would file
+  // other pages' titles under this one.
+  'ArticleMeta',
+  'ArticleNav',
+  'RelatedPages',
   'Accordion',
   'Column',
   'Columns',

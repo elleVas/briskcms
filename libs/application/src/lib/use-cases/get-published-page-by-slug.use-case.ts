@@ -7,12 +7,14 @@ import type {
   SiteRepositoryPort,
   SiteThemeBlockStylesPort,
   TaxonomyRepositoryPort,
+  UserRepositoryPort,
 } from '@brisk/ports';
 import { resolveSiteChrome } from './resolve-site-chrome';
 import { termPathFor } from './get-published-term-by-path.use-case';
 import { localePathFromAncestors } from '@brisk/theme-runtime';
 import { resolvePageGroupByPath } from './resolve-page-group-by-path';
 import { resolvePageContentReferences } from './resolve-page-content-references';
+import { currentArticleOf } from './resolve-article-blocks';
 import { resolveTranslationPaths } from './resolve-translation-paths';
 
 export type { PublishedPage };
@@ -30,6 +32,8 @@ export interface GetPublishedPageBySlugDeps {
   pageTranslationRepository: PageTranslationRepositoryPort;
   siteLayoutSectionRepository: SiteLayoutSectionRepositoryPort;
   siteThemeBlockStylesRepository: SiteThemeBlockStylesPort;
+  /** Only for an article's byline — read once, and only on a page that carries an ArticleMeta block. */
+  userRepository?: UserRepositoryPort;
 }
 
 /**
@@ -147,9 +151,14 @@ export async function getPublishedPageBySlug(
       translation.pageGroupId,
     ),
     resolveSiteChrome(deps, input.tenantId, site, input.locale),
-    resolvePageContentReferences(deps, input.tenantId, site.id, input.locale, [
-      translation.publishedSnapshot,
-    ]),
+    resolvePageContentReferences(
+      deps,
+      input.tenantId,
+      site.id,
+      input.locale,
+      [translation.publishedSnapshot],
+      () => currentArticleOf(deps, input.tenantId, translation),
+    ),
   ]);
   // Not `{ locale, slug }`: a slug alone is not an address once slugs are
   // sibling-scoped (ADR-0029). See resolveTranslationPaths — it also drops

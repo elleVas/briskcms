@@ -1814,6 +1814,35 @@
     },
     "carousel": {
       "label": "Carousel"
+    },
+    "articleMeta": {
+      "label": "Article meta",
+      "fields": {
+        "showDate": {
+          "fieldLabel": "Show the publication date"
+        },
+        "showAuthor": {
+          "fieldLabel": "Show the author"
+        }
+      }
+    },
+    "articleNav": {
+      "label": "Previous / next article"
+    },
+    "relatedPages": {
+      "label": "Related pages",
+      "fields": {
+        "layout": {
+          "fieldLabel": "Layout",
+          "options": {
+            "list": "List",
+            "cards": "Cards"
+          }
+        },
+        "limit": {
+          "fieldLabel": "How many at most"
+        }
+      }
     }
   },
   "gallery": {
