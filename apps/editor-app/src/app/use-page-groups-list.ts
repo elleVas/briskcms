@@ -7,6 +7,7 @@ import {
   createPageGroupTranslation as apiCreatePageGroupTranslation,
   deletePageGroup as apiDeletePageGroup,
   duplicatePageGroup as apiDuplicatePageGroup,
+  movePageGroupToCollection as apiMovePageGroupToCollection,
   reorderPageGroups as apiReorderPageGroups,
 } from '../lib/page-groups-api-client';
 
@@ -74,6 +75,27 @@ export function usePageGroupsList(
     },
   });
 
+  /**
+   * Files an existing page under a section, or takes it out of one.
+   *
+   * The endpoint has been there since sections arrived; nothing in the
+   * editor called it, so the only way into a section was to create the
+   * page from inside it — and a page written before the section existed
+   * had to be written again. It changes where the page is LISTED and
+   * nothing else: not its address, not its place in the tree
+   * (moveToCollection, in the domain).
+   */
+  const moveToCollectionMutation = useMutation({
+    mutationFn: ({
+      groupId,
+      targetCollectionId,
+    }: {
+      groupId: string;
+      targetCollectionId: string | null;
+    }) => apiMovePageGroupToCollection(groupId, targetCollectionId),
+    onSuccess: invalidateList,
+  });
+
   const reorderPageGroupsMutation = useMutation({
     mutationFn: ({
       parentId,
@@ -92,6 +114,9 @@ export function usePageGroupsList(
     isDeleting: deletePageGroupMutation.isPending,
     duplicatePageGroup: duplicatePageGroupMutation.mutateAsync,
     isDuplicating: duplicatePageGroupMutation.isPending,
+    moveToCollection: (groupId: string, targetCollectionId: string | null) =>
+      moveToCollectionMutation.mutateAsync({ groupId, targetCollectionId }),
+    isMoving: moveToCollectionMutation.isPending,
     reorderPageGroups: (
       parentId: string | null,
       orderedPageGroupIds: string[],

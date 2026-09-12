@@ -21,6 +21,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Copy,
+  FolderInput,
   GripVertical,
   Pencil,
   Trash2,
@@ -33,6 +34,7 @@ import { ConfirmActionDialog } from './confirm-action-dialog';
 import { buildHierarchyTree } from './page-hierarchy';
 import { IconButton } from './icon-button';
 import { MediaPickerProvider } from './media-picker-provider';
+import { MoveToCollectionDialog } from './move-to-collection-dialog';
 import { NewPageGroupDialog } from './new-page-group-dialog';
 import {
   PagesListFilterBar,
@@ -104,7 +106,7 @@ export interface PageGroupsListViewProps {
   onFiltersChange: (next: PagesListFilterValues) => void;
 }
 
-type DialogKind = 'new' | 'delete';
+type DialogKind = 'new' | 'delete' | 'move';
 
 interface PageGroupsListState {
   selectedGroupId: string | null;
@@ -181,6 +183,7 @@ interface PageGroupRowProps {
   onToggleSelected: () => void;
   onEdit: () => void;
   onDuplicate: () => void;
+  onMove: () => void;
   onDelete: () => void;
 }
 
@@ -205,6 +208,7 @@ function PageGroupRow({
   onToggleSelected,
   onEdit,
   onDuplicate,
+  onMove,
   onDelete,
 }: PageGroupRowProps) {
   const { t, i18n } = useTranslation();
@@ -341,6 +345,9 @@ function PageGroupRow({
             >
               <Copy />
             </IconButton>
+            <IconButton label={t('pages.list.actions.move')} onClick={onMove}>
+              <FolderInput />
+            </IconButton>
             <IconButton
               label={t('pages.list.actions.delete')}
               onClick={onDelete}
@@ -382,6 +389,8 @@ export function PageGroupsListView({
     deletePageGroup,
     duplicatePageGroup,
     isDuplicating,
+    moveToCollection,
+    isMoving,
     reorderPageGroups,
   } = usePageGroupsList(siteId, defaultLocale, collectionId);
   // A feed has no hierarchy to build: every row sits at depth zero, which
@@ -554,6 +563,9 @@ export function PageGroupsListView({
                         onToggleSelected={() => toggleSelected(group.id)}
                         onEdit={() => void handleOpenEditor(group.id)}
                         onDuplicate={() => void handleDuplicate()}
+                        onMove={() =>
+                          dispatch({ type: 'OPEN_DIALOG', dialog: 'move' })
+                        }
                         onDelete={() =>
                           dispatch({ type: 'OPEN_DIALOG', dialog: 'delete' })
                         }
@@ -591,6 +603,19 @@ export function PageGroupsListView({
           onOpenChange={(open) => !open && closeDialog()}
           onCreate={createPageGroup}
         />
+        {selectedGroup && (
+          <MoveToCollectionDialog
+            siteId={siteId}
+            open={openDialog === 'move'}
+            onOpenChange={(open) => !open && closeDialog()}
+            pageTitle={groupDisplayTitle(selectedGroup, defaultLocale)}
+            currentCollectionId={selectedGroup.collectionId ?? null}
+            onMove={(targetCollectionId) =>
+              moveToCollection(selectedGroup.id, targetCollectionId)
+            }
+            isMoving={isMoving}
+          />
+        )}
         {selectedGroup && (
           <ConfirmActionDialog
             open={openDialog === 'delete'}

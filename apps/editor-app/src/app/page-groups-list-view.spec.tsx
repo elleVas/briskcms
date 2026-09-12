@@ -121,6 +121,24 @@ describe('PageGroupsListView', () => {
     expect(screen.getByRole('button', { name: 'Elimina' })).toBeTruthy();
   });
 
+  /*
+   * Filing an existing page under a section had no door at all: the
+   * endpoint existed, nothing in the editor called it, and the only way
+   * in was to create the page from inside the section.
+   */
+  it('offers to move the selected page into a section', async () => {
+    renderView();
+
+    fireEvent.click(screen.getByText('Chi siamo'));
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Sposta in una sezione' }),
+    );
+
+    expect(
+      await screen.findByRole('heading', { name: 'Sposta in una sezione' }),
+    ).toBeTruthy();
+  });
+
   it('puts those actions on the selected row itself, not up in the page header', () => {
     renderView();
 
