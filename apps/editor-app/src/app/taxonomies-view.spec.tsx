@@ -59,12 +59,25 @@ function renderView(taxonomies: TaxonomyDto[]) {
 describe('TaxonomiesView', () => {
   afterEach(() => vi.clearAllMocks());
 
-  it('shows an empty state when the site classifies along nothing yet', async () => {
+  /*
+   * "No dimension yet." was the whole message, about a concept a client has
+   * never met — it said the screen was empty and nothing about what would
+   * fill it, or how.
+   */
+  it('shows an empty state that explains what a dimension is, and leads to the first step', async () => {
     renderView([]);
 
     expect(
       await screen.findByText(/Una dimensione è un modo di classificare/),
     ).toBeTruthy();
+
+    fireEvent.click(
+      screen.getByRole('button', { name: /Dai un nome alla prima dimensione/ }),
+    );
+
+    // The button is the first step, not decoration: it puts the cursor
+    // where the answer goes.
+    expect(document.activeElement).toBe(screen.getAllByLabelText('Nome')[0]);
   });
 
   /*
