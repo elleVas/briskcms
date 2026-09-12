@@ -622,7 +622,7 @@ export function CanvasEditorShell({
           {sidebarDrag && (
             <div
               data-testid="sidebar-drag-ghost"
-              className="pointer-events-none fixed z-50 rounded bg-primary px-2 py-1 text-xs font-medium text-primary-foreground shadow-md"
+              className="pointer-events-none fixed z-50 rounded-md bg-primary px-2 py-1 text-xs font-medium text-primary-foreground shadow-md"
               style={{
                 top: sidebarDrag.pointerY + 12,
                 left: sidebarDrag.pointerX + 12,

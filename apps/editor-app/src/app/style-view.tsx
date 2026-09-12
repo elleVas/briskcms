@@ -156,7 +156,9 @@ export function StyleView({ siteId, site }: StyleViewProps) {
 
   return (
     <div className="flex max-w-lg flex-col gap-4">
-      <h1 className="text-lg font-semibold">{t('themeSettings.title')}</h1>
+      <h1 className="text-xl font-semibold tracking-tight">
+        {t('themeSettings.title')}
+      </h1>
       <p className="text-xs text-muted-foreground">
         {t('themeSettings.intro')}
       </p>

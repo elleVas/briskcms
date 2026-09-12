@@ -538,7 +538,7 @@ export function GlobalStylesDialog({
                                   onClick={() =>
                                     setSelectedType(descriptor.type)
                                   }
-                                  className="w-full rounded px-2 py-1.5 text-left text-sm hover:bg-muted hover:text-foreground"
+                                  className="w-full rounded-md px-2 py-1.5 text-left text-sm hover:bg-muted hover:text-foreground"
                                 >
                                   {tLabel(descriptor.label)}
                                 </button>

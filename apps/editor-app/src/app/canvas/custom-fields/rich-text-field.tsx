@@ -1,4 +1,16 @@
 import { useEffect } from 'react';
+import {
+  Bold,
+  Italic,
+  Link as LinkIcon,
+  Link2Off,
+  List,
+  ListOrdered,
+  Strikethrough,
+  Underline,
+  ExternalLink,
+  type LucideIcon,
+} from 'lucide-react';
 import { EditorContent, useEditor, type Editor } from '@tiptap/react';
 import { buildPageLinkHref } from '@brisk/shared-types';
 import { useTranslation } from 'react-i18next';
@@ -11,19 +23,29 @@ export interface RichTextFieldProps {
   placeholder?: string;
 }
 
+/**
+ * 28×28, and an icon rather than a letter.
+ *
+ * These were 20×16px buttons carrying the letters "B I U S" at 12px, plus
+ * "•", "1.", "¶→", "↗" and "⊘" — under any minimum for a pointer target
+ * (WCAG 2.5.8 asks 24×24), and the last three were symbols nobody could be
+ * expected to read. The same lucide set the rest of the editor uses, at the
+ * same 16px, in a button the same size as every other icon button on the
+ * canvas.
+ */
 const BUTTON_CLASS =
-  'rounded px-1.5 py-0.5 text-xs leading-none hover:bg-accent disabled:opacity-40';
-const ACTIVE_CLASS = 'bg-accent font-semibold';
+  'flex size-7 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-40';
+const ACTIVE_CLASS = 'bg-accent text-foreground';
 
 function ToolbarButton({
   editor,
-  label,
+  icon: Icon,
   title,
   isActive,
   onClick,
 }: {
   editor: Editor;
-  label: string;
+  icon: LucideIcon;
   title: string;
   isActive?: boolean;
   onClick: () => void;
@@ -41,7 +63,7 @@ function ToolbarButton({
       onClick={onClick}
       disabled={!editor.isEditable}
     >
-      {label}
+      <Icon size={16} />
     </button>
   );
 }
@@ -129,31 +151,31 @@ export function RichTextField({
 
   return (
     <div className="flex flex-col">
-      <div className="flex flex-wrap items-center gap-0.5 rounded-t-lg border border-input bg-muted/40 px-1 py-1">
+      <div className="flex flex-wrap items-center gap-0.5 rounded-t-lg border border-input bg-muted/40 p-1">
         <ToolbarButton
           editor={editor}
-          label="B"
+          icon={Bold}
           title={t('canvas.richText.bold')}
           isActive={editor.isActive('bold')}
           onClick={() => editor.chain().focus().toggleBold().run()}
         />
         <ToolbarButton
           editor={editor}
-          label="I"
+          icon={Italic}
           title={t('canvas.richText.italic')}
           isActive={editor.isActive('italic')}
           onClick={() => editor.chain().focus().toggleItalic().run()}
         />
         <ToolbarButton
           editor={editor}
-          label="U"
+          icon={Underline}
           title={t('canvas.richText.underline')}
           isActive={editor.isActive('underline')}
           onClick={() => editor.chain().focus().toggleUnderline().run()}
         />
         <ToolbarButton
           editor={editor}
-          label="S"
+          icon={Strikethrough}
           title={t('canvas.richText.strike')}
           isActive={editor.isActive('strike')}
           onClick={() => editor.chain().focus().toggleStrike().run()}
@@ -161,14 +183,14 @@ export function RichTextField({
         <span className="mx-1 h-4 w-px bg-border" />
         <ToolbarButton
           editor={editor}
-          label="•"
+          icon={List}
           title={t('canvas.richText.bulletList')}
           isActive={editor.isActive('bulletList')}
           onClick={() => editor.chain().focus().toggleBulletList().run()}
         />
         <ToolbarButton
           editor={editor}
-          label="1."
+          icon={ListOrdered}
           title={t('canvas.richText.orderedList')}
           isActive={editor.isActive('orderedList')}
           onClick={() => editor.chain().focus().toggleOrderedList().run()}
@@ -176,20 +198,20 @@ export function RichTextField({
         <span className="mx-1 h-4 w-px bg-border" />
         <ToolbarButton
           editor={editor}
-          label="¶→"
+          icon={LinkIcon}
           title={t('canvas.richText.linkToPage')}
           isActive={editor.isActive('link')}
           onClick={() => void handleLinkToPage()}
         />
         <ToolbarButton
           editor={editor}
-          label="↗"
+          icon={ExternalLink}
           title={t('canvas.richText.linkToUrl')}
           onClick={handleLinkToUrl}
         />
         <ToolbarButton
           editor={editor}
-          label="⊘"
+          icon={Link2Off}
           title={t('canvas.richText.unlink')}
           onClick={() => editor.chain().focus().unsetLink().run()}
         />

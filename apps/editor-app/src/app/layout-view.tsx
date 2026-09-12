@@ -26,7 +26,9 @@ export function LayoutView({ enabledLocales, locale }: LayoutViewProps) {
 
   return (
     <div className="flex flex-col gap-4">
-      <h1 className="text-lg font-semibold">{t('layout.title')}</h1>
+      <h1 className="text-xl font-semibold tracking-tight">
+        {t('layout.title')}
+      </h1>
       {enabledLocales.length > 1 && (
         <div className="flex items-center gap-2">
           <span className="text-sm text-muted-foreground">

@@ -125,8 +125,8 @@ function rowClassName(isSelected: boolean, isHovered: boolean): string {
   // and a <button> lays its children out in a column otherwise.
   const base = 'flex w-full cursor-pointer items-center gap-1.5 text-left';
   if (isSelected)
-    return `${base} rounded bg-primary/10 px-2 py-1 text-sm font-medium`;
-  if (isHovered) return `${base} rounded bg-muted px-2 py-1 text-sm`;
+    return `${base} rounded-md bg-primary/10 px-2 py-1 text-sm font-medium`;
+  if (isHovered) return `${base} rounded-md bg-muted px-2 py-1 text-sm`;
   return `${base} px-2 py-1 text-sm text-muted-foreground`;
 }
 
@@ -382,7 +382,7 @@ function LayerRow({
         >
           <BlockIcon
             name={descriptor?.icon}
-            size={13}
+            size={16}
             className="shrink-0 text-muted-foreground"
           />
           {/* The name a person picked this block by, not its type: the

@@ -50,7 +50,7 @@ function DraggableBlockButton({
       <button
         type="button"
         onClick={() => onInsert(descriptor)}
-        className="w-full rounded px-2 py-1.5 text-left text-sm hover:bg-muted hover:text-foreground"
+        className="w-full rounded-md px-2 py-1.5 text-left text-sm hover:bg-muted hover:text-foreground"
       >
         {tLabel(descriptor.label)}
       </button>
@@ -104,12 +104,12 @@ function DraggableBlockButton({
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
       title={tLabel(descriptor.label)}
-      className="flex w-full touch-none flex-col items-center gap-1.5 rounded border border-transparent px-1 py-2 text-center text-[11px] leading-tight hover:border-border hover:bg-muted hover:text-foreground"
+      className="group flex w-full touch-none flex-col items-center gap-1.5 rounded-md border border-transparent px-1 py-2 text-center text-xs leading-tight text-muted-foreground hover:border-border hover:bg-muted hover:text-foreground"
     >
       <BlockIcon
         name={descriptor.icon}
         size={20}
-        className="shrink-0 text-muted-foreground"
+        className="shrink-0 text-foreground group-hover:text-primary"
       />
       {/* The name stays under every tile. An icon narrows the guess, it
           does not make it: `Carousel` and `Image slider` are the same
@@ -207,7 +207,7 @@ export function BlockPicker({
           job of an inserter is to answer "what can I put here". */}
       {nonEmptyCategories.map((category) => (
         <section key={category.title} className="mb-3">
-          <h3 className="mb-1 px-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+          <h3 className="mb-1 px-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
             {tLabel(category.title)}
           </h3>
           <ul className="grid grid-cols-3 gap-1">

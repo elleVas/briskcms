@@ -546,7 +546,7 @@ export function PageGroupsListView({
     <MediaPickerProvider siteId={siteId}>
       <div className="flex flex-col gap-4">
         <div className="flex items-center justify-between">
-          <h1 className="text-lg font-semibold">
+          <h1 className="text-xl font-semibold tracking-tight">
             {title ?? t('pages.list.title')}
           </h1>
           <Button
@@ -587,7 +587,7 @@ export function PageGroupsListView({
                     saying so: a title, a row of language badges, a name
                     and a date read as one crowded line until they were
                     named. */}
-                <div className="flex items-center gap-2 border-b bg-muted/40 py-2.5 pr-3 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                <div className="flex h-9 items-center gap-2 border-b bg-muted/40 pr-3 text-xs font-medium uppercase tracking-wide text-muted-foreground">
                   <span
                     className="flex min-w-0 flex-1 gap-3"
                     style={{ paddingLeft: PAGE_ROW_INSET }}

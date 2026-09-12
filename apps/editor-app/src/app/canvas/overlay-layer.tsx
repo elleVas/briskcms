@@ -282,8 +282,8 @@ export function OverlayLayer({
             data-state={isSelected ? 'selected' : 'hovered'}
             className={
               isSelected
-                ? 'absolute rounded-sm border-2 border-primary'
-                : 'absolute rounded-sm border-2 border-primary/50'
+                ? 'absolute rounded-md border-2 border-primary'
+                : 'absolute rounded-md border-2 border-primary/50'
             }
             style={toOverlayStyle(geometry, rect)}
           />

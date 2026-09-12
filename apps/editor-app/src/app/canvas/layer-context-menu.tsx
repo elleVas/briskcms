@@ -111,7 +111,7 @@ export function LayerContextMenu({
           type="button"
           role="menuitem"
           disabled={!item.enabled}
-          className={`flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-sm disabled:opacity-40 ${
+          className={`flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm disabled:opacity-40 ${
             item.destructive
               ? 'text-destructive hover:bg-destructive/10'
               : 'hover:bg-muted'

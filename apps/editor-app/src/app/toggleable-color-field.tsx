@@ -49,7 +49,7 @@ export function ToggleableColorField({
             type="color"
             value={value}
             onChange={(event) => onValueChange(event.target.value)}
-            className="h-9 w-14 rounded border border-input bg-transparent"
+            className="h-9 w-14 rounded-md border border-input bg-transparent"
           />
           <span className="text-xs text-muted-foreground">{value}</span>
         </div>

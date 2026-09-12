@@ -120,7 +120,7 @@ function FieldRow({ field, value, onChange, blockId }: FieldRowProps) {
       return (
         <input
           type="checkbox"
-          className="size-4 rounded border-input"
+          className="size-4 rounded-sm border-input"
           checked={Boolean(value)}
           onChange={(event) => onChange(event.target.checked)}
         />
