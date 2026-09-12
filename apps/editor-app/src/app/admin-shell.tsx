@@ -85,7 +85,7 @@ function NavItem({
 function NavGroup({ title, children }: { title: string; children: ReactNode }) {
   return (
     <div className="flex flex-col gap-1">
-      <h2 className="px-2 text-[0.6875rem] font-semibold uppercase tracking-wide text-muted-foreground">
+      <h2 className="px-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
         {title}
       </h2>
       {children}
