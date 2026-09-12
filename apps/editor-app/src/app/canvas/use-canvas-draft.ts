@@ -189,6 +189,10 @@ export function useCanvasDraft({
     localBlocksRef.current = localBlocks;
   });
 
+  // Leaving the editor flushes what is still in the debounce — see the
+  // unmount effect in usePropertyPatch, which owns the timers and is the
+  // only place that can do it in the right order.
+
   return {
     ...patch,
     localBlocks,

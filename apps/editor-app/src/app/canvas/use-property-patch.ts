@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Block, ResponsiveBlockStyle } from '@brisk/shared-types';
 import { renderBlockFragment } from '../../lib/block-fragment-api-client';
 
@@ -102,6 +102,16 @@ export interface UsePropertyPatchResult {
    * at the OLD page's tree.
    */
   flushAll: (options?: { closeBursts?: boolean }) => void;
+  /**
+   * Whether a change has been made and not yet written — the debounce
+   * window, and nothing else.
+   *
+   * It is the window in which closing the tab loses the last edit without
+   * a word, which is what useUnsavedChangesGuard exists to stop. State
+   * rather than a ref on purpose: something has to re-render when it
+   * flips, or the guard would read whatever it happened to see first.
+   */
+  hasPendingWrites: boolean;
 }
 
 /**
@@ -167,16 +177,7 @@ export function usePropertyPatch({
       { timeout: ReturnType<typeof setTimeout>; fire: () => void }
     >(),
   );
-
-  useEffect(() => {
-    const timersAtMount = timers.current;
-    return () => {
-      for (const { timeout } of timersAtMount.values()) {
-        clearTimeout(timeout);
-      }
-      timersAtMount.clear();
-    };
-  }, []);
+  const [hasPendingWrites, setHasPendingWrites] = useState(false);
 
   // A debounce key distinct from a plain blockId (see scheduleTextChange
   // below) — a non-text property change and text being edited on the same
@@ -190,16 +191,19 @@ export function usePropertyPatch({
     }
     const timeout = setTimeout(() => {
       timers.current.delete(timerKey);
+      setHasPendingWrites(timers.current.size > 0);
       fire();
       onBurstEnd?.(timerKey);
     }, debounceMs);
     timers.current.set(timerKey, { timeout, fire });
+    setHasPendingWrites(true);
   }
 
   const flushAll = useCallback(
     ({ closeBursts = true }: { closeBursts?: boolean } = {}) => {
       const pending = [...timers.current.entries()];
       timers.current.clear();
+      setHasPendingWrites(false);
       for (const [timerKey, { timeout, fire }] of pending) {
         clearTimeout(timeout);
         fire();
@@ -214,6 +218,30 @@ export function usePropertyPatch({
     // eslint-disable-next-line react-hooks/exhaustive-deps -- onBurstEnd is redefined on every render but only ever reads refs; depending on it would break flushAll's stable identity, which handlePublish and the page-change flush both rely on.
     [],
   );
+
+  /**
+   * On the way out, fire what is pending rather than dropping it.
+   *
+   * This used to be a cleanup that called clearTimeout on every timer and
+   * emptied the map — which meant leaving the editor by a link threw away
+   * whatever was still inside the 300ms debounce, silently. The app is
+   * still running when that happens, so the save reaches the server exactly
+   * as it would have when the timer expired.
+   *
+   * It has to live HERE, next to flushAll, and not in a caller: effect
+   * cleanups run in declaration order within a component, so a flush added
+   * by a hook further down was running after this one had already cleared
+   * the timers and found nothing to do. Caught by a test, not by reading.
+   *
+   * `closeBursts: false` because the history is going away with the
+   * component, and an undo entry recorded on the way out has nothing left
+   * to undo into.
+   */
+  useEffect(() => {
+    return () => {
+      flushAll({ closeBursts: false });
+    };
+  }, [flushAll]);
 
   const scheduleChange = useCallback(
     (
@@ -333,5 +361,6 @@ export function usePropertyPatch({
     scheduleStyleOverrideChange,
     scheduleVariantChange,
     flushAll,
+    hasPendingWrites,
   };
 }

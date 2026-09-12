@@ -40,6 +40,7 @@ function renderView(
           items={items}
           page={options.page ?? 1}
           total={options.total ?? items.length}
+          filters={{}}
         />
       </TooltipProvider>
     </QueryClientProvider>,
@@ -58,6 +59,36 @@ describe('MediaLibraryView', () => {
 
     expect(screen.getByRole('heading', { name: 'Media' })).toBeTruthy();
     expect(container.querySelectorAll('img')).toHaveLength(1);
+  });
+
+  /*
+   * The search lives in the address on purpose — one worth doing is worth
+   * reloading into and sending to somebody — but writing it there on every
+   * keystroke meant a history entry and a loader round trip per character:
+   * six of each to type "report", and six presses of Back to leave the
+   * screen. The pages list had already written that lesson down.
+   */
+  it('waits for the typing to settle before touching the address', async () => {
+    const navigate = vi.fn();
+    vi.mocked(router.useNavigate).mockReturnValue(navigate);
+    renderView([mediaOne]);
+    const box = screen.getByLabelText('Cerca per nome');
+
+    fireEvent.change(box, { target: { value: 'r' } });
+    fireEvent.change(box, { target: { value: 're' } });
+    fireEvent.change(box, { target: { value: 'rep' } });
+
+    // What was typed is on screen straight away, whatever the address says.
+    expect((box as HTMLInputElement).value).toBe('rep');
+    expect(navigate).not.toHaveBeenCalled();
+
+    await waitFor(() => expect(navigate).toHaveBeenCalledTimes(1));
+    expect(navigate).toHaveBeenCalledWith({
+      to: '/media',
+      search: { page: 1, search: 'rep', kind: undefined },
+      // One search, one history entry — not one per character.
+      replace: true,
+    });
   });
 
   it('navigates via /media search params when paging', async () => {

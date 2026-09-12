@@ -8,19 +8,14 @@
 @theme inline {
   --font-heading: var(--font-sans);
   --font-sans: 'Geist Variable', sans-serif;
-  --color-sidebar-ring: var(--sidebar-ring);
+  --color-canvas-stage: var(--canvas-stage);
+  --color-success-foreground: var(--success-foreground);
+  --color-success: var(--success);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-warning: var(--warning);
   --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-  --color-sidebar-accent: var(--sidebar-accent);
-  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-  --color-sidebar-primary: var(--sidebar-primary);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar: var(--sidebar);
-  --color-chart-5: var(--chart-5);
-  --color-chart-4: var(--chart-4);
-  --color-chart-3: var(--chart-3);
-  --color-chart-2: var(--chart-2);
-  --color-chart-1: var(--chart-1);
   --color-ring: var(--ring);
   --color-input: var(--input);
   --color-border: var(--border);
@@ -48,6 +43,13 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
+/*
+ * The light theme, which nobody had looked at in months: dark is the
+ * default and theme.ts ignored the system preference, so the only way here
+ * was the toggle. It was a wireframe — white cards on white, an accent that
+ * was simply black, a grey focus ring — because it was still shadcn's
+ * neutral default with the brand colour added to `.dark` alone.
+ */
 :root {
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
@@ -55,44 +57,86 @@
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
+  /*
+   * Tailwind's blue ramp, the same one the dark theme wears — 600 here,
+   * 300 there. One accent read at two lightnesses, rather than two
+   * products: before this the primary button, the "Published" badge,
+   * "Publish" itself and the selected row in Layers were BLACK in the light
+   * theme and blue in the dark one, so changing theme changed brand.
+   * White text on it, measured at 5.26:1 (AA); against the page it reads
+   * 5.26:1 as well, where the old near-black read 17.9:1 and looked like
+   * body text that had been emboldened.
+   */
+  --primary: oklch(0.546 0.245 262.9);
+  --primary-foreground: oklch(1 0 0);
   --secondary: oklch(0.97 0 0);
   --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
+  --muted: oklch(0.955 0 0);
   --muted-foreground: oklch(0.556 0 0);
   --accent: oklch(0.97 0 0);
   --accent-foreground: oklch(0.205 0 0);
   --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
+  /*
+   * WCAG 1.4.11 asks 3:1 of the boundary of a UI component, and no border
+   * in this app has ever been near it: these were 1.26:1 on the page, which
+   * is why "you cannot see where a field ends". They are 1.44:1 and 1.58:1
+   * now — a real improvement that is still short of the bar, and
+   * deliberately so: 3:1 in the light theme means a mid-grey rule around
+   * every input, which reads as a form from 2004. The fill (`bg-input/30`)
+   * carries the rest of the job.
+   */
+  --border: oklch(0.88 0 0);
+  --input: oklch(0.85 0 0);
+  /* The focus ring is the accent in both themes, so being focused looks
+     like the product rather than like the browser's default outline. */
+  --ring: var(--primary);
+  /*
+   * State, as opposed to brand. "Unpublished changes" was `bg-amber-500
+   * text-amber-950` written into a component, the only saturated colour in
+   * the interface besides the accent, and it read as an error; "Published"
+   * borrowed `--primary`, which encodes a state with the brand colour. Two
+   * tokens instead, with a variant of Badge each. Each one is also the
+   * colour of a warning SENTENCE, not only of a pill, so it is picked to
+   * read on the page: `text-amber-600` measured 3.19:1 on white, under AA
+   * for body text, and every "this field is required" line in the app wore
+   * it. This reads 5.72:1, and white on it as a fill reads the same.
+   */
+  --warning: oklch(0.52 0.14 62);
+  --warning-foreground: oklch(1 0 0);
+  --success: oklch(0.508 0.118 165.6);
+  --success-foreground: oklch(1 0 0);
   --radius: 0.625rem;
   --sidebar: oklch(0.985 0 0);
   --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --sidebar-border: oklch(0.88 0 0);
+  /* What sits behind the page in the canvas — a plane, so the page has an
+     edge instead of starting out of nowhere. */
+  --canvas-stage: oklch(0.95 0 0);
 }
 
+/*
+ * Three planes, not one. The dark theme was a black sheet: background
+ * #0a0a0a, cards #171717 at 1.10:1 against it, borders white/10% at
+ * 1.25:1, and a sidebar with no background at all. Nothing had an edge, so
+ * nothing looked like it sat on anything.
+ */
 .dark {
   --background: oklch(0.145 0 0);
   --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
+  /* 1.10:1 -> 1.14:1 against the page. Small numbers, but they are the
+     difference between a card and a rectangle of the same colour. */
+  --card: oklch(0.22 0 0);
   --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
+  --popover: oklch(0.22 0 0);
   --popover-foreground: oklch(0.985 0 0);
-  /* Indigo/periwinkle accent, sampled from ellevas.dev's dark theme
-     (rgb(165 180 252) on rgb(28 28 30)) — the neutral shadcn default had
-     no color of its own here, this is the only deliberate brand accent. */
+  /*
+   * Tailwind's blue-300 — unchanged, and now the light theme's 600 is the
+   * same ramp rather than a different idea. The comment that used to sit
+   * here claimed an indigo/periwinkle sampled from ellevas.dev at
+   * rgb(165 180 252); that colour is hue 275, and this token has always
+   * been hue 252. Twenty-three degrees apart, and the comment was the half
+   * that was wrong.
+   */
   --primary: oklch(0.809 0.105 251.813);
   --primary-foreground: oklch(0.145 0 0);
   --secondary: oklch(0.269 0 0);
@@ -102,84 +146,22 @@
   --accent: oklch(0.269 0 0);
   --accent-foreground: oklch(0.985 0 0);
   --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.809 0.105 251.813);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --sidebar: oklch(0.205 0 0);
+  /* 1.25:1 -> 1.47:1, and the input border 1.47:1 -> 1.98:1. See the
+     light theme's note for why neither goes to 3:1. */
+  --border: oklch(1 0 0 / 15%);
+  --input: oklch(1 0 0 / 23%);
+  --ring: var(--primary);
+  /* 11.07:1 on the page as text, and near-black on it as a fill. */
+  --warning: oklch(0.82 0.16 75);
+  --warning-foreground: oklch(0.145 0 0);
+  --success: oklch(0.845 0.143 164.978);
+  --success-foreground: oklch(0.145 0 0);
+  /* Between the page and a card: the sidebar is a quieter surface than
+     the things you read, not the same surface as the void behind them. */
+  --sidebar: oklch(0.185 0 0);
   --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.809 0.105 251.813);
-  --sidebar-primary-foreground: oklch(0.145 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.809 0.105 251.813);
-}
-
-/* Bridges Puck's own token system (--puck-color-*, from @puckeditor/core's
-   puck.css) to ours, so the editor chrome (Blocks/Outline panels, top
-   toolbar, Page settings panel) follows the app theme instead of always
-   being light. Puck ships no dark theme of its own — these are the tokens
-   that drive its panel/toolbar surfaces and text; the accent-scale tokens
-   (interactive/focus/selection states) are left at Puck's defaults, which
-   read fine on dark surfaces without remapping.
-   --puck-color-surface-muted is deliberately NOT remapped here: it's what
-   colors the canvas backdrop behind the page preview (and the floating
-   viewport/zoom controls sitting on it) — that area reads as part of the
-   light canvas, not the dark chrome, so it stays at Puck's own light
-   default. --puck-canvas-color-text follows from that: the viewport/zoom
-   icon buttons have no color of their own (IconButton.module.css falls
-   back to `currentColor`), so they inherit whatever text color is set on
-   the canvas wrapper — without this override that's --puck-color-text
-   above (near-white), making them unreadable on the light backdrop.
-   --puck-color-text-inverse is deliberately NOT remapped either, for the
-   same reason: it's what the block-level ActionBar (the duplicate/delete
-   toolbar that floats over a selected block) uses for its icon/label
-   color, meant to read against Puck's own fixed-dark pill background
-   (--puck-color-surface-inverse, also untouched) regardless of app theme.
-   Remapping it to follow the app's own dark background made it near-black
-   text on that already-dark pill — invisible except on :hover, which
-   switches to the (untouched) accent color instead. */
-.dark {
-  --puck-color-surface: var(--sidebar);
-  --puck-color-surface-subtle: var(--muted);
-  --puck-color-text: var(--foreground);
-  --puck-color-text-secondary: var(--foreground);
-  --puck-color-text-muted: var(--muted-foreground);
-  --puck-color-text-subtle: var(--muted-foreground);
-  --puck-color-text-disabled: var(--muted-foreground);
-  --puck-color-border: var(--border);
-  --puck-color-border-muted: var(--border);
-  --puck-color-border-hover: var(--ring);
-  --puck-color-border-inverse: var(--border);
-  --puck-color-bg-disabled: var(--muted);
-  --puck-canvas-color-text: var(--puck-color-black);
-}
-
-/* The canvas itself (where blocks actually render) must NOT follow the
-   admin's theme preference: it's a preview of the public page, which is
-   still light-only (see apps/public-site). Puck's AutoFrame clones our
-   stylesheet into the preview iframe including the `.dark` class on
-   <html>, so without this the canvas goes dark right along with the app
-   chrome. [data-puck-entry] is Puck's own mount point for the iframe body
-   — targeting it (rather than the iframe some other way) keeps this rule
-   working regardless of dark mode, iframe/no-iframe, etc. Keep this in
-   sync with :root's light values above if blocks start using more tokens. */
-body:has([data-puck-entry]) {
-  color-scheme: light;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --border: oklch(0.922 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
+  --sidebar-border: oklch(1 0 0 / 15%);
+  --canvas-stage: oklch(0.17 0 0);
 }
 
 @layer base {

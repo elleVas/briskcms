@@ -120,7 +120,7 @@ function FieldRow({ field, value, onChange, blockId }: FieldRowProps) {
       return (
         <input
           type="checkbox"
-          className="size-4 rounded border-input"
+          className="size-4 rounded-sm border-input"
           checked={Boolean(value)}
           onChange={(event) => onChange(event.target.checked)}
         />
@@ -312,7 +312,7 @@ export function InspectorPanel({
             onChange={(value) => onChangeProp(field.key, value)}
           />
           {showRequiredWarning && (
-            <span className="text-xs text-amber-600 dark:text-amber-500">
+            <span className="text-xs text-warning">
               {t('canvas.requiredField')}
             </span>
           )}

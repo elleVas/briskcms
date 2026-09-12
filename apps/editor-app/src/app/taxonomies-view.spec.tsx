@@ -59,12 +59,25 @@ function renderView(taxonomies: TaxonomyDto[]) {
 describe('TaxonomiesView', () => {
   afterEach(() => vi.clearAllMocks());
 
-  it('shows an empty state when the site classifies along nothing yet', async () => {
+  /*
+   * "No dimension yet." was the whole message, about a concept a client has
+   * never met — it said the screen was empty and nothing about what would
+   * fill it, or how.
+   */
+  it('shows an empty state that explains what a dimension is, and leads to the first step', async () => {
     renderView([]);
 
     expect(
-      await screen.findByText('Nessuna dimensione, per ora.'),
+      await screen.findByText(/Una dimensione è un modo di classificare/),
     ).toBeTruthy();
+
+    fireEvent.click(
+      screen.getByRole('button', { name: /Dai un nome alla prima dimensione/ }),
+    );
+
+    // The button is the first step, not decoration: it puts the cursor
+    // where the answer goes.
+    expect(document.activeElement).toBe(screen.getAllByLabelText('Nome')[0]);
   });
 
   /*
@@ -75,7 +88,7 @@ describe('TaxonomiesView', () => {
    */
   it('leaves the prefix out entirely when none was typed', async () => {
     renderView([]);
-    await screen.findByText('Nessuna dimensione, per ora.');
+    await screen.findByText(/Una dimensione è un modo di classificare/);
 
     fireEvent.change(screen.getByLabelText('Nome'), {
       target: { value: 'Famiglia' },
@@ -94,7 +107,7 @@ describe('TaxonomiesView', () => {
 
   it('sends a null prefix when the dimension is mounted at the root', async () => {
     renderView([]);
-    await screen.findByText('Nessuna dimensione, per ora.');
+    await screen.findByText(/Una dimensione è un modo di classificare/);
 
     fireEvent.change(screen.getByLabelText('Nome'), {
       target: { value: 'Famiglia' },
@@ -115,7 +128,7 @@ describe('TaxonomiesView', () => {
 
   it('sends the prefix that was typed', async () => {
     renderView([]);
-    await screen.findByText('Nessuna dimensione, per ora.');
+    await screen.findByText(/Una dimensione è un modo di classificare/);
 
     fireEvent.change(screen.getByLabelText('Nome'), {
       target: { value: 'Famiglia' },
@@ -161,7 +174,7 @@ describe('TaxonomiesView', () => {
 
   it('reports a taken address in words a person can act on', async () => {
     renderView([]);
-    await screen.findByText('Nessuna dimensione, per ora.');
+    await screen.findByText(/Una dimensione è un modo di classificare/);
     vi.mocked(api.createTaxonomy).mockRejectedValue(new Error('API 409: {}'));
 
     fireEvent.change(screen.getByLabelText('Nome'), {

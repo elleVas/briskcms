@@ -71,7 +71,9 @@ export function UsersListView({ items, page, total }: UsersListViewProps) {
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-lg font-semibold">{t('users.list.title')}</h1>
+        <h1 className="text-xl font-semibold tracking-tight">
+          {t('users.list.title')}
+        </h1>
         <Button onClick={() => setIsInviteDialogOpen(true)}>
           {t('users.list.invite')}
         </Button>

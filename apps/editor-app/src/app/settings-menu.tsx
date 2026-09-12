@@ -7,6 +7,7 @@ import {
   FolderTree,
   Globe,
   Languages,
+  Monitor,
   Moon,
   Search,
   Settings,
@@ -28,6 +29,21 @@ import { LocaleSettingsDialog } from './locale-settings-dialog';
 import { SeoSettingsDialog } from './seo-settings-dialog';
 import { siteQueryOptions } from './site-queries';
 import { useTheme } from './use-theme';
+import { cn } from '../lib/utils';
+import type { Theme } from '../theme';
+
+const THEME_CHOICES: readonly {
+  value: Theme;
+  icon: typeof Sun;
+  labelKey:
+    | 'shell.settings.themeLight'
+    | 'shell.settings.themeDark'
+    | 'shell.settings.themeSystem';
+}[] = [
+  { value: 'light', icon: Sun, labelKey: 'shell.settings.themeLight' },
+  { value: 'dark', icon: Moon, labelKey: 'shell.settings.themeDark' },
+  { value: 'system', icon: Monitor, labelKey: 'shell.settings.themeSystem' },
+];
 
 export function SettingsMenu() {
   const { t, i18n } = useTranslation();
@@ -77,21 +93,37 @@ export function SettingsMenu() {
               <span className="text-xs text-muted-foreground">EN</span>
             </div>
           </div>
+          {/* Three choices, not a switch: "follow the system" is now the
+              default and a two-position toggle cannot express it. It used
+              to be dark-or-light with dark forced on first visit, so
+              somebody whose machine is light got a black editor and no way
+              to say "just do what everything else does". */}
           <div className="flex items-center justify-between px-1 py-1 text-sm">
             <span className="text-muted-foreground">
               {t('shell.settings.theme')}
             </span>
-            <div className="flex items-center gap-2">
-              <Sun className="size-3.5 text-muted-foreground" />
-              <Switch
-                size="sm"
-                checked={theme === 'dark'}
-                onCheckedChange={(checked) =>
-                  setTheme(checked ? 'dark' : 'light')
-                }
-                aria-label={t('shell.settings.theme')}
-              />
-              <Moon className="size-3.5 text-muted-foreground" />
+            <div
+              role="radiogroup"
+              aria-label={t('shell.settings.theme')}
+              className="flex items-center gap-0.5 rounded-md border p-0.5"
+            >
+              {THEME_CHOICES.map(({ value, icon: Icon, labelKey }) => (
+                <button
+                  key={value}
+                  type="button"
+                  role="radio"
+                  aria-checked={theme === value}
+                  aria-label={t(labelKey)}
+                  title={t(labelKey)}
+                  onClick={() => setTheme(value)}
+                  className={cn(
+                    'flex size-6 items-center justify-center rounded-md text-muted-foreground hover:text-foreground',
+                    theme === value && 'bg-muted text-foreground',
+                  )}
+                >
+                  <Icon className="size-3.5" />
+                </button>
+              ))}
             </div>
           </div>
           <Separator className="my-1" />

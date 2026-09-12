@@ -10,10 +10,56 @@ import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { FormFieldEditorRow } from './form-field-editor-row';
 import { IconButton } from './icon-button';
+import { ConfirmActionDialog } from './confirm-action-dialog';
 import { useFormEditor } from './use-form-editor';
+import {
+  useNavigationBlocker,
+  useUnsavedChangesGuard,
+} from './use-unsaved-changes-guard';
 
 export interface FormEditorViewProps {
   formId: string;
+}
+
+/** Everything the Save button would send, as one comparable string. */
+/** A select's options as they are stored: trimmed, and without the empty one a trailing newline in the textarea leaves behind. */
+function sanitizeOptions(field: FormField): FormField {
+  if (field.type !== 'select') return field;
+  return {
+    ...field,
+    options: (field.options ?? [])
+      .map((option) => option.trim())
+      .filter((option) => option.length > 0),
+  };
+}
+
+/**
+ * The form as it would be SAVED, which is the only shape worth comparing.
+ *
+ * The dirty mark used to compare the raw state against a baseline built
+ * from the sanitised one, so anything the save tidied up — an option list
+ * ending in a newline, an email with a trailing space — left the editor
+ * permanently "unsaved": the mark stayed on a saved form, and the guard
+ * put "you will lose your work" in front of every link from then on. A
+ * warning that is always wrong is worse than no warning, because people
+ * learn to click through it.
+ */
+function draftOf(
+  name: string,
+  fields: FormField[],
+  steps: FormStep[],
+  notificationEmail: string,
+) {
+  return {
+    name,
+    fields: fields.map(sanitizeOptions),
+    steps,
+    notificationEmail: notificationEmail.trim() || null,
+  };
+}
+
+function serializeDraft(draft: ReturnType<typeof draftOf>): string {
+  return JSON.stringify(draft);
 }
 
 export function FormEditorView({ formId }: FormEditorViewProps) {
@@ -38,6 +84,31 @@ export function FormEditorView({ formId }: FormEditorViewProps) {
   );
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState('');
+
+  /*
+   * This editor has no autosave: it writes only when somebody presses
+   * Save, and until now it let you walk away from a half-built form
+   * without a word — no dirty mark, no question, nothing.
+   *
+   * The baseline is what the server last confirmed, so a change that is
+   * typed and then typed back does not count as unsaved. State rather than
+   * a ref: it is read while rendering — the dirty mark and the guard both
+   * follow it — and reading a ref there is what the React Compiler's rule
+   * forbids, for the good reason that nothing would re-render when it
+   * moved.
+   */
+  const [baseline, setBaseline] = useState(() =>
+    serializeDraft(
+      draftOf(form.name, form.fields, form.steps, form.notificationEmail ?? ''),
+    ),
+  );
+  const draft = draftOf(name, fields, steps, notificationEmail);
+  const isDirty = serializeDraft(draft) !== baseline;
+  useUnsavedChangesGuard({ hasUnsavedChanges: isDirty });
+  // And a question in front of an in-app link too, which the canvas does
+  // not need: there is nothing here that saves itself, so following one
+  // really does throw the work away.
+  const guard = useNavigationBlocker(isDirty);
 
   function updateField(index: number, next: FormField) {
     setFields((current) => current.map((f, i) => (i === index ? next : f)));
@@ -95,26 +166,25 @@ export function FormEditorView({ formId }: FormEditorViewProps) {
   // while the user is typing, so a newly pressed Enter never immediately
   // collapses back — this is the one point where that raw text turns into
   // clean, saved option strings.
-  function sanitizeOptions(field: FormField): FormField {
-    if (field.type !== 'select') return field;
-    return {
-      ...field,
-      options: (field.options ?? [])
-        .map((option) => option.trim())
-        .filter((option) => option.length > 0),
-    };
-  }
-
   async function handleSave() {
     setError('');
     setSaved(false);
     try {
-      await save({
-        name,
-        fields: fields.map(sanitizeOptions),
-        steps,
-        notificationEmail: notificationEmail.trim() || null,
-      });
+      const saved = await save(draft);
+      // From what came BACK, not from what was sent: the comment above
+      // promises the baseline is what the server confirmed, and anything
+      // the server normalises on its way in would otherwise leave the
+      // editor dirty exactly as the client-side tidying used to.
+      setBaseline(
+        serializeDraft(
+          draftOf(
+            saved?.name ?? draft.name,
+            saved?.fields ?? draft.fields,
+            saved?.steps ?? draft.steps,
+            saved?.notificationEmail ?? draft.notificationEmail ?? '',
+          ),
+        ),
+      );
       setSaved(true);
     } catch (err) {
       setError(String(err));
@@ -130,9 +200,18 @@ export function FormEditorView({ formId }: FormEditorViewProps) {
         >
           ← {t('forms.editor.backToList')}
         </Link>
-        <Button disabled={isSaving} onClick={() => void handleSave()}>
-          {isSaving ? t('forms.editor.saving') : t('forms.editor.save')}
-        </Button>
+        <div className="flex items-center gap-3">
+          {/* A dirty mark, which this screen had none of: "Save" looked
+              exactly the same whether or not there was anything to save. */}
+          {isDirty && !isSaving && (
+            <span className="text-xs text-muted-foreground">
+              {t('forms.editor.unsaved')}
+            </span>
+          )}
+          <Button disabled={isSaving} onClick={() => void handleSave()}>
+            {isSaving ? t('forms.editor.saving') : t('forms.editor.save')}
+          </Button>
+        </div>
       </div>
       {/* Two panels rather than one long page: editing what a form asks
           and reading what people answered are different jobs, done at
@@ -271,6 +350,16 @@ export function FormEditorView({ formId }: FormEditorViewProps) {
           </div>
         </div>
       )}
+      {/* Leaving really does throw the work away here — there is no
+          autosave behind this screen, only the Save button. */}
+      <ConfirmActionDialog
+        open={guard.isBlocked}
+        onOpenChange={(open) => !open && guard.stay()}
+        title={t('forms.editor.leaveTitle')}
+        description={t('forms.editor.leaveBody')}
+        onConfirm={guard.proceed}
+        actionLabel={t('forms.editor.leaveAction')}
+      />
     </div>
   );
 }

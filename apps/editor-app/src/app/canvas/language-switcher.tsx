@@ -49,7 +49,7 @@ export function LanguageSwitcher({
       <PopoverTrigger asChild>
         <button
           type="button"
-          className="flex items-center gap-1 rounded px-1.5 py-0.5 text-xs hover:bg-muted hover:text-foreground"
+          className="flex items-center gap-1 rounded-md px-1.5 py-0.5 text-xs hover:bg-muted hover:text-foreground"
         >
           <span className="font-medium uppercase">{value}</span>
           {active?.isDiverged && (
@@ -69,7 +69,7 @@ export function LanguageSwitcher({
               type="button"
               onClick={() => handleSelect(translation.locale)}
               className={cn(
-                'flex w-full items-center justify-between gap-2 rounded px-2 py-1.5 text-left text-sm hover:bg-muted',
+                'flex w-full items-center justify-between gap-2 rounded-md px-2 py-1.5 text-left text-sm hover:bg-muted',
                 translation.locale === value && 'bg-muted font-medium',
               )}
             >

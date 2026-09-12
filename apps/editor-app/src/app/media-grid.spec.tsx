@@ -39,6 +39,8 @@ function renderGrid(props: Partial<ComponentProps<typeof MediaGrid>> = {}) {
           page={1}
           total={1}
           onPageChange={vi.fn()}
+          filters={{}}
+          onFiltersChange={vi.fn()}
           {...props}
         />
       </TooltipProvider>
@@ -47,6 +49,53 @@ function renderGrid(props: Partial<ComponentProps<typeof MediaGrid>> = {}) {
 }
 
 describe('MediaGrid', () => {
+  /*
+   * The grid was thumbnails and nothing else: no name, no kind, no size,
+   * no date. With nineteen files it was already a wall of dark rectangles
+   * — every screenshot in the docs is a black image — and the only way to
+   * find one was to recognise it by sight.
+   */
+  it('names every file, with its format and size', () => {
+    renderGrid();
+
+    expect(screen.getByText('foto.png')).toBeTruthy();
+    expect(screen.getByText(/WEBP/)).toBeTruthy();
+    expect(screen.getByText(/1\.2 KB/)).toBeTruthy();
+  });
+
+  it('asks the caller for a new search rather than filtering the page it was given', () => {
+    const onFiltersChange = vi.fn();
+    renderGrid({ onFiltersChange });
+
+    fireEvent.change(
+      screen.getByRole('searchbox', { name: /cerca per nome/i }),
+      {
+        target: { value: 'foto' },
+      },
+    );
+
+    // The server answers it: the library is paginated, so filtering what
+    // came back would search the newest page and stay silent about the rest.
+    expect(onFiltersChange).toHaveBeenCalledWith({ search: 'foto' });
+  });
+
+  it('narrows to one kind of file', () => {
+    const onFiltersChange = vi.fn();
+    renderGrid({ onFiltersChange });
+
+    fireEvent.click(screen.getByRole('radio', { name: 'Video' }));
+
+    expect(onFiltersChange).toHaveBeenCalledWith({ kind: 'video' });
+  });
+
+  it('says "nothing matches" rather than "no files yet" when a filter is on', () => {
+    renderGrid({ items: [], total: 0, filters: { search: 'zzz' } });
+
+    // "No files yet" would send somebody off to upload what they already
+    // have.
+    expect(screen.getByText(/nessun file corrisponde/i)).toBeTruthy();
+  });
+
   afterEach(() => {
     vi.clearAllMocks();
   });
@@ -54,7 +103,7 @@ describe('MediaGrid', () => {
   it('shows an empty state when there are no items', () => {
     renderGrid({ items: [], total: 0 });
 
-    expect(screen.getByText(/nessun file/i)).toBeTruthy();
+    expect(screen.getByText(/ancora niente nella libreria/i)).toBeTruthy();
   });
 
   it('renders a thumbnail for every item', () => {

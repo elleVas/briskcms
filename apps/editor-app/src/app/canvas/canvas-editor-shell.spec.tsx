@@ -208,13 +208,23 @@ function selectBlockWithRect(
 
 const HERO_RECT = { top: 0, left: 0, width: 800, height: 100 };
 
-function openPropertiesPopover() {
+/**
+ * The pencil no longer opens anything — the properties are a tab of the
+ * right panel, and selecting a block already switches to it. Clicking it
+ * still puts the keyboard there, which is what it is for now.
+ */
+function focusPropertiesPanel() {
   fireEvent.click(screen.getByRole('button', { name: 'Modifica proprietà' }));
 }
 
 describe('CanvasEditorShell', () => {
   beforeEach(() => {
     vi.useFakeTimers({ shouldAdvanceTime: true });
+    // The panels remember being collapsed now (see
+    // side-panel-preferences.ts), and localStorage outlives a test: without
+    // this, the test that collapses the right panel leaves it collapsed for
+    // every test after it.
+    localStorage.clear();
   });
 
   afterEach(() => {
@@ -258,13 +268,17 @@ describe('CanvasEditorShell', () => {
     await getIframe();
 
     fireEvent.click(
-      screen.getByRole('button', { name: 'Comprimi pannello Livelli' }),
+      screen.getByRole('button', {
+        name: 'Comprimi il pannello Livelli e proprietà',
+      }),
     );
     expect(screen.queryByText('Livelli')).toBeNull();
     expect(screen.getByText('Inserisci blocco')).toBeTruthy();
 
     fireEvent.click(
-      screen.getByRole('button', { name: 'Espandi pannello Livelli' }),
+      screen.getByRole('button', {
+        name: 'Espandi il pannello Livelli e proprietà',
+      }),
     );
     expect(screen.getByText('Livelli')).toBeTruthy();
     expect(screen.getByText('Inserisci blocco')).toBeTruthy();
@@ -279,7 +293,7 @@ describe('CanvasEditorShell', () => {
     expect(screen.getByTestId('block-breadcrumb').textContent).toBe('Hero');
     expect(screen.getByRole('button', { name: 'Rimuovi blocco' })).toBeTruthy();
 
-    openPropertiesPopover();
+    focusPropertiesPanel();
     expect(screen.getByDisplayValue('Titolo')).toBeTruthy();
   });
 
@@ -293,6 +307,15 @@ describe('CanvasEditorShell', () => {
 
     fireEvent.click(screen.getByTestId('layer-row'));
 
+    // Selecting a block brings up its properties — that is the whole point
+    // of the right panel having two tabs (the properties used to open as a
+    // popover over the canvas). Layers is one click away.
+    expect(
+      screen
+        .getByRole('tab', { name: 'Proprietà' })
+        .getAttribute('aria-selected'),
+    ).toBe('true');
+    fireEvent.click(screen.getByRole('tab', { name: 'Livelli' }));
     expect(screen.getByTestId('layer-row').getAttribute('data-state')).toBe(
       'selected',
     );
@@ -307,6 +330,152 @@ describe('CanvasEditorShell', () => {
     );
   });
 
+  /*
+   * The properties used to be a `Popover` behind the toolbar's pencil: with
+   * a Hero selected it covered half the Hero AND the top bar with the
+   * breakpoints, so seeing the effect of a change meant closing it and the
+   * next change meant opening it again. They are a tab of the right panel
+   * now, and selecting a block is what brings them up.
+   */
+  it('selecting a block on the canvas brings up its properties in the right panel, with no popover', async () => {
+    renderShell();
+    const iframe = await getIframe();
+
+    expect(
+      screen
+        .getByRole('tab', { name: 'Livelli' })
+        .getAttribute('aria-selected'),
+    ).toBe('true');
+
+    selectBlockWithRect(iframe, 'hero-1', HERO_RECT);
+
+    expect(
+      screen
+        .getByRole('tab', { name: 'Proprietà' })
+        .getAttribute('aria-selected'),
+    ).toBe('true');
+    expect(screen.getByDisplayValue('Titolo')).toBeTruthy();
+  });
+
+  /*
+   * The pencil switches to the Properties tab and puts the keyboard in it.
+   * A collapsed panel renders neither its tabs nor its content, so while it
+   * was the panel's own private state the button quietly did nothing at all
+   * when the panel happened to be shut: the focus landed on a forty-pixel
+   * strip and the person stayed exactly where they were.
+   */
+  it('the properties button opens the right panel when it is collapsed', async () => {
+    renderShell();
+    const iframe = await getIframe();
+
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: 'Comprimi il pannello Livelli e proprietà',
+      }),
+    );
+    selectBlockWithRect(iframe, 'hero-1', HERO_RECT);
+    expect(screen.queryByRole('tab', { name: 'Proprietà' })).toBeNull();
+
+    focusPropertiesPanel();
+
+    expect(
+      screen
+        .getByRole('tab', { name: 'Proprietà' })
+        .getAttribute('aria-selected'),
+    ).toBe('true');
+    expect(screen.getByDisplayValue('Titolo')).toBeTruthy();
+  });
+
+  /*
+   * A tab strip a keyboard cannot drive is not a tab strip: the arrows are
+   * how you move between tabs once Tab has brought you to the strip.
+   */
+  it('moves between the two tabs with the arrow keys', async () => {
+    renderShell();
+    await getIframe();
+
+    const layers = screen.getByRole('tab', { name: 'Livelli' });
+    expect(layers.getAttribute('aria-controls')).toBe(
+      screen.getByRole('tabpanel').getAttribute('id'),
+    );
+    // Roving tabindex: only the selected tab is in the tab order.
+    expect(layers.getAttribute('tabindex')).toBe('0');
+    expect(
+      screen.getByRole('tab', { name: 'Proprietà' }).getAttribute('tabindex'),
+    ).toBe('-1');
+
+    fireEvent.keyDown(layers, { key: 'ArrowRight' });
+
+    expect(
+      screen
+        .getByRole('tab', { name: 'Proprietà' })
+        .getAttribute('aria-selected'),
+    ).toBe('true');
+    expect(screen.getByRole('tabpanel').getAttribute('aria-labelledby')).toBe(
+      screen.getByRole('tab', { name: 'Proprietà' }).getAttribute('id'),
+    );
+  });
+
+  /*
+   * The panels were a fixed `w-64` whose collapsed state reset on every
+   * mount: on a small screen the canvas stayed narrow, and collapsing a
+   * panel to get room had to be redone on the next page.
+   */
+  it('remembers a collapsed panel across a remount', async () => {
+    const first = renderShell();
+    await getIframe();
+
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: 'Comprimi il pannello Livelli e proprietà',
+      }),
+    );
+    first.unmount();
+
+    renderShell();
+    await getIframe();
+
+    expect(
+      screen.getByRole('button', {
+        name: 'Espandi il pannello Livelli e proprietà',
+      }),
+    ).toBeTruthy();
+  });
+
+  /*
+   * Leaving the editor by a link is not leaving the browser: the app is
+   * still running, so a save fired on the way out reaches the server
+   * exactly as it would have when its timer expired. This is why in-app
+   * navigation asks no question — the change goes with you — and it is the
+   * half of "nothing is lost" that a beforeunload prompt cannot cover.
+   */
+  it('writes a change still inside the debounce when the editor is left', async () => {
+    vi.mocked(blockFragmentApi.renderBlockFragment).mockResolvedValue(
+      '<div>patched</div>',
+    );
+    const { onChange, unmount } = renderShell();
+    const iframe = await getIframe();
+
+    selectBlockWithRect(iframe, 'hero-1', HERO_RECT);
+    fireEvent.change(screen.getByDisplayValue('Titolo'), {
+      target: { value: 'Scritto e subito via' },
+    });
+    // Nothing has been written yet: the timer has not run.
+    expect(onChange).not.toHaveBeenCalled();
+
+    await act(async () => {
+      unmount();
+    });
+
+    expect(onChange).toHaveBeenCalledWith([
+      {
+        id: 'hero-1',
+        type: 'Hero',
+        props: { title: 'Scritto e subito via', subtitle: 'Sottotitolo' },
+      },
+    ]);
+  });
+
   it('changing a property in the Inspector updates onChange after the debounce, and patches the fragment', async () => {
     vi.mocked(blockFragmentApi.renderBlockFragment).mockResolvedValue(
       '<div>patched</div>',
@@ -319,7 +488,7 @@ describe('CanvasEditorShell', () => {
     );
 
     selectBlockWithRect(iframe, 'hero-1', HERO_RECT);
-    openPropertiesPopover();
+    focusPropertiesPanel();
 
     const input = screen.getByDisplayValue('Titolo');
     fireEvent.change(input, { target: { value: 'Nuovo titolo' } });
@@ -981,7 +1150,7 @@ describe('CanvasEditorShell', () => {
 
     // Aggiornamento ottico immediato, prima del debounce di salvataggio.
     selectBlockWithRect(iframe, 'hero-1', HERO_RECT);
-    openPropertiesPopover();
+    focusPropertiesPanel();
     expect(screen.getByDisplayValue('Digitato dal vivo')).toBeTruthy();
 
     await act(async () => {
@@ -1218,7 +1387,7 @@ describe('CanvasEditorShell', () => {
     const iframe = await getIframe();
 
     selectBlockWithRect(iframe, 'hero-1', HERO_RECT);
-    openPropertiesPopover();
+    focusPropertiesPanel();
     fireEvent.change(screen.getByDisplayValue('Ciao'), {
       target: { value: 'Ciao a tutti' },
     });
@@ -1250,6 +1419,11 @@ describe('CanvasEditorShell', () => {
 describe('CanvasEditorShell keyboard shortcuts', () => {
   beforeEach(() => {
     vi.useFakeTimers({ shouldAdvanceTime: true });
+    // The panels remember being collapsed now (see
+    // side-panel-preferences.ts), and localStorage outlives a test: without
+    // this, the test that collapses the right panel leaves it collapsed for
+    // every test after it.
+    localStorage.clear();
   });
   afterEach(() => {
     vi.clearAllMocks();
@@ -1367,6 +1541,11 @@ describe('CanvasEditorShell keyboard shortcuts', () => {
 describe('CanvasEditorShell nested canvas drag', () => {
   beforeEach(() => {
     vi.useFakeTimers({ shouldAdvanceTime: true });
+    // The panels remember being collapsed now (see
+    // side-panel-preferences.ts), and localStorage outlives a test: without
+    // this, the test that collapses the right panel leaves it collapsed for
+    // every test after it.
+    localStorage.clear();
   });
   afterEach(() => {
     vi.clearAllMocks();
@@ -1438,6 +1617,11 @@ describe('CanvasEditorShell nested canvas drag', () => {
 describe('CanvasEditorShell multi-select', () => {
   beforeEach(() => {
     vi.useFakeTimers({ shouldAdvanceTime: true });
+    // The panels remember being collapsed now (see
+    // side-panel-preferences.ts), and localStorage outlives a test: without
+    // this, the test that collapses the right panel leaves it collapsed for
+    // every test after it.
+    localStorage.clear();
   });
   afterEach(() => {
     vi.clearAllMocks();

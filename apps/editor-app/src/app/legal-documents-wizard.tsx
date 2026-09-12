@@ -179,7 +179,7 @@ export function LegalDocumentsWizard({
   if (result) {
     return (
       <div className="flex max-w-2xl flex-col gap-4">
-        <h1 className="text-lg font-semibold">
+        <h1 className="text-xl font-semibold tracking-tight">
           {t('legalDocuments.successTitle')}
         </h1>
         <p className="text-sm text-muted-foreground">
@@ -214,7 +214,9 @@ export function LegalDocumentsWizard({
       className="flex max-w-2xl flex-col gap-6"
     >
       <div>
-        <h1 className="text-lg font-semibold">{t('legalDocuments.title')}</h1>
+        <h1 className="text-xl font-semibold tracking-tight">
+          {t('legalDocuments.title')}
+        </h1>
         <p className="text-xs text-muted-foreground">
           {t('legalDocuments.intro')}
         </p>
@@ -487,7 +489,7 @@ export function LegalDocumentsWizard({
 
       {step === 'review' && (
         <div className="flex flex-col gap-4">
-          <p className="rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm">
+          <p className="rounded-md border border-warning/40 bg-warning/10 px-3 py-2 text-sm">
             {t('legalDocuments.disclaimer')}
           </p>
 

@@ -80,7 +80,9 @@ export function IntegrationsView({ siteId, site }: IntegrationsViewProps) {
 
   return (
     <div className="flex max-w-lg flex-col gap-4">
-      <h1 className="text-lg font-semibold">{t('integrations.title')}</h1>
+      <h1 className="text-xl font-semibold tracking-tight">
+        {t('integrations.title')}
+      </h1>
       <p className="text-xs text-muted-foreground">{t('integrations.intro')}</p>
 
       <div className="flex flex-col gap-2">

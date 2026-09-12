@@ -82,12 +82,18 @@
       "style": "Style",
       "integrations": "Integrations",
       "cookies": "Cookie banner",
-      "users": "Users"
+      "users": "Users",
+      "groupContent": "Content",
+      "groupSite": "Site",
+      "groupSettings": "Settings"
     },
     "settings": {
       "label": "Settings",
       "language": "Language",
-      "theme": "Dark theme"
+      "theme": "Theme",
+      "themeLight": "Light",
+      "themeDark": "Dark",
+      "themeSystem": "Follow the system"
     },
     "account": {
       "label": "Account"
@@ -104,10 +110,6 @@
       "media": {
         "title": "Media",
         "description": "{{count}} files uploaded"
-      },
-      "published": {
-        "title": "Published",
-        "description": "Live on the public site right now"
       },
       "forms": {
         "title": "Forms",
@@ -127,7 +129,12 @@
         "published": "Published"
       }
     },
-    "emptyState": "This site doesn't have any pages or media yet — start from the Pages section."
+    "emptyState": "This site doesn't have any pages or media yet — start from the Pages section.",
+    "actions": {
+      "newPage": "Pages",
+      "uploadMedia": "Media",
+      "openSite": "Open the site"
+    }
   },
   "pages": {
     "list": {
@@ -159,7 +166,8 @@
         "anyCreator": "Anyone",
         "locale": "Language",
         "anyLocale": "Any language",
-        "clear": "Clear filters"
+        "clear": "Clear filters",
+        "toggle": "Filters"
       },
       "colTitle": "Page",
       "colLanguages": "Languages",
@@ -167,7 +175,9 @@
       "colUpdated": "Updated",
       "statusMissing": "Not translated",
       "colEditor": "Last edited by",
-      "statusPending": "Published, with unpublished changes"
+      "statusPending": "Published, with unpublished changes",
+      "colStatus": "Status",
+      "statusPendingShort": "Unpublished changes"
     },
     "newPageDialog": {
       "title": "New page",
@@ -196,9 +206,9 @@
     },
     "editor": {
       "backToList": "Pages",
-      "draftSaved": "Draft saved",
       "published": "Published",
-      "viewPage": "View page"
+      "viewPage": "View page",
+      "unpublishedChangesAt": "Unpublished changes — saved at {{time}}"
     },
     "versionHistory": {
       "open": "Version history",
@@ -263,7 +273,6 @@
     "rootMounted": "No prefix (site root)",
     "create": "Add dimension",
     "prefixTaken": "Another dimension or a page already answers at that address.",
-    "empty": "No dimension yet.",
     "atRoot": "at the site root",
     "delete": "Delete dimension",
     "deleteConfirm": "Delete this dimension and all its terms? The pages themselves stay, they simply stop being classified along it.",
@@ -293,12 +302,13 @@
     "landingPageChosen": "A page is set",
     "landingPageChoose": "Choose a page",
     "landingPageChange": "Change",
-    "landingPageClear": "Back to the default layout"
+    "landingPageClear": "Back to the default layout",
+    "emptyExplainer": "A dimension is a way of filing pages — Topic, Author, Product range. Each of its terms gets a URL of its own, listing every page filed under it.",
+    "emptyAction": "Name your first dimension"
   },
   "sections": {
     "title": "Sections",
     "subtitle": "Build a strip of blocks once, use it on many pages.",
-    "empty": "No section yet.",
     "create": "New section",
     "createTitle": "New section",
     "nameLabel": "Name",
@@ -320,7 +330,6 @@
     "deleteConfirm": "Delete this section? Pages using it will show nothing where it was.",
     "exposeField": "A page may change this",
     "backToList": "← Back to sections",
-    "draftSaved": "Draft saved",
     "published": "Published — every page using it is updated",
     "nameTaken": "A section with that name already exists.",
     "templates": "Templates",
@@ -329,7 +338,9 @@
     "usedOnPages_one": "on {{count}} page",
     "usedOnPages_other": "on {{count}} pages",
     "usedNowhere": "not placed anywhere yet",
-    "deleteConfirmUsed": "Delete “{{name}}”? It is on {{count}} page(s), and each will show nothing where it was."
+    "deleteConfirmUsed": "Delete “{{name}}”? It is on {{count}} page(s), and each will show nothing where it was.",
+    "emptyExplainer": "A section is a strip of blocks you build once and place on many pages — edit it here and every page showing it changes with it.",
+    "emptyAction": "Name your first section"
   },
   "layout": {
     "title": "Layout",
@@ -340,10 +351,9 @@
     "editFooterDescription": "Content and links at the bottom of every page.",
     "editor": {
       "backToList": "Layout",
-      "draftSaved": "Draft saved",
       "published": "Published",
-      "sticky": "Stick while scrolling",
-      "noPageToPreview": "Create a page in this language first — the canvas needs a real page to preview {{section}} against."
+      "noPageToPreview": "Create a page in this language first — the canvas needs a real page to preview {{section}} against.",
+      "stickyLabelled": "Header: stick while scrolling"
     }
   },
   "media": {
@@ -351,20 +361,30 @@
       "title": "Media"
     },
     "grid": {
-      "upload": "Upload image",
+      "upload": "Upload file",
       "uploading": "Uploading...",
-      "empty": "No files yet.",
+      "empty": "Nothing in the library yet. Upload an image, a video or an audio file and it becomes available to every block that asks for one.",
       "delete": "Delete",
       "previousPage": "Previous page",
       "nextPage": "Next page",
-      "pageIndicator": "Page {{page}} of {{totalPages}}"
+      "pageIndicator": "Page {{page}} of {{totalPages}}",
+      "noMatches": "No file matches what you are looking for."
     },
     "deleteDialog": {
       "title": "Delete this file?",
       "description": "\"{{name}}\" will be permanently deleted. This action cannot be undone."
     },
     "picker": {
-      "title": "Choose an image"
+      "title": "Choose a file"
+    },
+    "filters": {
+      "searchLabel": "Search by name",
+      "searchPlaceholder": "Search by name",
+      "kindLabel": "Kind of file",
+      "kindAll": "All",
+      "kindImage": "Images",
+      "kindVideo": "Video",
+      "kindAudio": "Audio"
     }
   },
   "icons": {
@@ -679,7 +699,11 @@
         "date": "Date",
         "time": "Time",
         "file": "File upload"
-      }
+      },
+      "unsaved": "Unsaved changes",
+      "leaveTitle": "Leave without saving?",
+      "leaveBody": "This form saves only when you press Save. What you have changed since then will be lost.",
+      "leaveAction": "Leave"
     },
     "submissions": {
       "title": "Submissions",
@@ -1017,6 +1041,39 @@
     },
     "placement": {
       "refused": "{{block}} only belongs inside {{parents}}, so there is nowhere to put it here."
+    },
+    "status": {
+      "saving": "Saving…",
+      "draftSavedAt": "Draft saved at {{time}}"
+    },
+    "resizeSidebar": "Resize the block panel",
+    "resizeLayersPanel": "Resize the right panel",
+    "rightPanel": {
+      "label": "Layers and properties",
+      "layers": "Layers",
+      "properties": "Properties",
+      "expand": "Expand Layers and properties panel",
+      "collapse": "Collapse Layers and properties panel",
+      "resize": "Resize Layers and properties panel"
+    },
+    "properties": {
+      "noSelection": "Select a block on the canvas or in Layers to change what it says and how it looks."
+    },
+    "pageMenu": {
+      "label": "Page"
+    },
+    "shortcuts": {
+      "open": "Keyboard shortcuts",
+      "title": "Keyboard shortcuts",
+      "description": "They work on the canvas, whenever you are not typing in a field.",
+      "undo": "Undo",
+      "redo": "Redo",
+      "duplicate": "Duplicate the selection",
+      "copy": "Copy the selection",
+      "paste": "Paste",
+      "delete": "Delete the selection",
+      "moveUp": "Move the block up",
+      "moveDown": "Move the block down"
     }
   },
   "toast": {
@@ -1831,7 +1888,7 @@
     }
   },
   "collections": {
-    "menuLabel": "Sections",
+    "menuLabel": "Collections",
     "actionFailed": "That change could not be made.",
     "dialog": {
       "title": "Sections",

@@ -2,6 +2,8 @@ import { useEffect, useRef } from 'react';
 
 interface TurnstileRenderOptions {
   sitekey: string;
+  /** 'flexible' fills the container's width instead of the widget's own fixed 300px. */
+  size?: 'normal' | 'flexible' | 'compact';
   callback: (token: string) => void;
   'expired-callback'?: () => void;
   'error-callback'?: () => void;
@@ -84,6 +86,11 @@ export function TurnstileWidget({
       }
       widgetIdRef.current = window.turnstile.render(containerRef.current, {
         sitekey: siteKey,
+        // The widget renders at a fixed 300px inside a 350px form, so it
+        // sat visibly off-centre under fields that filled the width.
+        // `flexible` lets it take the width it is given; the container
+        // below is what gives it one.
+        size: 'flexible',
         callback: (token) => onToken(token),
         'expired-callback': () => onToken(null),
         'error-callback': () => onToken(null),
@@ -117,5 +124,5 @@ export function TurnstileWidget({
     }
   }, [resetSignal]);
 
-  return <div ref={containerRef} />;
+  return <div ref={containerRef} className="w-full" />;
 }

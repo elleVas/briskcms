@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import {
   useMutation,
   useQueryClient,
@@ -43,6 +43,7 @@ export function TaxonomiesView({ siteId }: TaxonomiesViewProps) {
   const options = taxonomiesQueryOptions(siteId);
   const { data: taxonomies } = useSuspenseQuery(options);
   const { data: site } = useSuspenseQuery(siteQueryOptions());
+  const nameInputRef = useRef<HTMLInputElement>(null);
   const [name, setName] = useState('');
   const [prefix, setPrefix] = useState('');
   const [rootMounted, setRootMounted] = useState(false);
@@ -117,7 +118,11 @@ export function TaxonomiesView({ siteId }: TaxonomiesViewProps) {
             <span className="text-xs font-medium text-muted-foreground">
               {t('taxonomies.nameLabel')}
             </span>
-            <Input value={name} onChange={(e) => setName(e.target.value)} />
+            <Input
+              ref={nameInputRef}
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+            />
           </label>
           <label className="flex min-w-48 flex-1 flex-col gap-1.5">
             <span className="text-xs font-medium text-muted-foreground">
@@ -148,9 +153,20 @@ export function TaxonomiesView({ siteId }: TaxonomiesViewProps) {
         </form>
 
         {taxonomies.length === 0 ? (
-          <p className="text-sm text-muted-foreground">
-            {t('taxonomies.empty')}
-          </p>
+          // "No dimension yet." over a concept nobody is born knowing. It
+          // says what a dimension IS, with an example, and takes you to the
+          // field that makes one.
+          <div className="flex flex-col items-start gap-3 rounded-lg border border-dashed p-6">
+            <p className="text-sm text-muted-foreground">
+              {t('taxonomies.emptyExplainer')}
+            </p>
+            <Button
+              variant="outline"
+              onClick={() => nameInputRef.current?.focus()}
+            >
+              {t('taxonomies.emptyAction')}
+            </Button>
+          </div>
         ) : (
           taxonomies.map((taxonomy) => (
             <section

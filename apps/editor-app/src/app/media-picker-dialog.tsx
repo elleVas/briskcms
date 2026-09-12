@@ -7,7 +7,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '../components/ui/dialog';
-import type { MediaDto } from '../lib/media-api-client';
+import type { MediaDto, MediaFilters } from '../lib/media-api-client';
 import { MediaGrid } from './media-grid';
 import { mediaQueryOptions } from './media-queries';
 
@@ -26,18 +26,25 @@ export function MediaPickerDialog({
 }: MediaPickerDialogProps) {
   const { t } = useTranslation();
   const [page, setPage] = useState(1);
+  // Local, not in the URL: the library page's filters belong to an address
+  // somebody can come back to, a dialog's do not.
+  const [filters, setFilters] = useState<MediaFilters>({});
   // Gated on `open`: this dialog is mounted for the lifetime of the page
   // editor (see MediaPickerProvider), not just while visible, so an
   // unconditional query would hit the media API on every editor load even
   // if the user never opens the picker.
   const { data } = useQuery({
-    ...mediaQueryOptions(siteId, page),
+    ...mediaQueryOptions(siteId, page, filters),
     enabled: open,
   });
 
   function handleOpenChange(next: boolean) {
-    // Always reopen on page 1, whatever page browsing left off on.
-    if (!next) setPage(1);
+    // Always reopen on page 1 with nothing filtered, whatever browsing
+    // left off on.
+    if (!next) {
+      setPage(1);
+      setFilters({});
+    }
     onOpenChange(next);
   }
 
@@ -54,6 +61,11 @@ export function MediaPickerDialog({
             page={page}
             total={data.total}
             onPageChange={setPage}
+            filters={filters}
+            onFiltersChange={(next) => {
+              setPage(1);
+              setFilters(next);
+            }}
             onSelect={onSelect}
           />
         )}

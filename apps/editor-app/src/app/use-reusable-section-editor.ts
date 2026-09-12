@@ -25,7 +25,7 @@ export function useReusableSectionEditor(sectionId: string) {
     mutationFn: (content: Block[]) => saveDraft(section.id, content),
     onSuccess: (updated) => {
       queryClient.setQueryData(queryOptions.queryKey, updated);
-      setStatus({ kind: 'saved' });
+      setStatus({ kind: 'saved', at: Date.now() });
     },
     onError: (error: unknown) =>
       setStatus({ kind: 'error', message: String(error) }),
@@ -85,5 +85,16 @@ export function useReusableSectionEditor(sectionId: string) {
     [section.exposedFields, exposedFieldsMutation],
   );
 
-  return { section, status, handleChange, handlePublish, toggleExposedField };
+  // See usePageGroupEditor: derived from the mutation rather than recorded,
+  // so "what is happening" and "what last happened" cannot disagree.
+  const isSaving = saveDraftMutation.isPending;
+
+  return {
+    section,
+    status: isSaving ? ({ kind: 'saving' } as const) : status,
+    isSaving,
+    handleChange,
+    handlePublish,
+    toggleExposedField,
+  };
 }

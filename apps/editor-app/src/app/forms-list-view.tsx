@@ -67,7 +67,9 @@ export function FormsListView({
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-lg font-semibold">{t('forms.list.title')}</h1>
+        <h1 className="text-xl font-semibold tracking-tight">
+          {t('forms.list.title')}
+        </h1>
         <div className="flex items-center gap-1">
           {selectedForm && (
             <>

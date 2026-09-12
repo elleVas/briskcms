@@ -78,6 +78,14 @@ const PAGE_ROW_INSET = 16;
  * the title they qualify.
  */
 const LOCALES_COLUMN = 'w-28';
+/**
+ * What is online, in a word.
+ *
+ * The row said it in colour alone: an amber badge meant "published, and the
+ * draft has moved on", and nothing on the screen said so — no legend, no
+ * column, no heading. You knew it only if you already knew it.
+ */
+const STATUS_COLUMN = 'hidden w-44 md:block';
 const AUTHOR_COLUMN = 'hidden w-36 xl:block';
 const EDITOR_COLUMN = 'hidden w-36 lg:block';
 const UPDATED_COLUMN = 'hidden w-24 lg:block';
@@ -158,6 +166,33 @@ function groupDisplayTitle(
   return preferredTranslation(group, defaultLocale)?.title || group.id;
 }
 
+/**
+ * The page's state, read off the translation the row is already showing.
+ *
+ * Deliberately that one and not "any of them": the row's title, address and
+ * date all come from the same translation, so a status taken from a
+ * different language would be the one line of the row talking about
+ * something else.
+ */
+function groupStatusKey(
+  group: PageGroupListItemRecord,
+  defaultLocale: string,
+):
+  | 'pages.list.statusPublished'
+  | 'pages.list.statusDraft'
+  | 'pages.list.statusPendingShort' {
+  const translation = preferredTranslation(group, defaultLocale);
+  if (!translation || translation.status !== 'published') {
+    return 'pages.list.statusDraft';
+  }
+  // The SHORT wording. `statusPending` reads "Published, with unpublished
+  // changes", which is right for a badge's tooltip ("EN — ...") and, in a
+  // column, truncated to "Published, with unpublis…".
+  return translation.hasUnpublishedChanges
+    ? 'pages.list.statusPendingShort'
+    : 'pages.list.statusPublished';
+}
+
 /** The site's own language if this page has it, and whatever it does have if not. */
 function preferredTranslation(
   group: PageGroupListItemRecord,
@@ -180,6 +215,14 @@ interface PageGroupRowProps {
   enabledLocales: string[];
   draggable: boolean;
   isDuplicating: boolean;
+  /**
+   * Whether either author column is being drawn at all. "Created by" and
+   * "Last edited by" are "—" on fifteen rows out of sixteen, and between
+   * them they took a third of the table to say nothing — so a page of
+   * results where nobody is named does not draw them.
+   */
+  showCreatedBy: boolean;
+  showLastEditedBy: boolean;
   onToggleSelected: () => void;
   onEdit: () => void;
   onDuplicate: () => void;
@@ -205,6 +248,8 @@ function PageGroupRow({
   enabledLocales,
   draggable,
   isDuplicating,
+  showCreatedBy,
+  showLastEditedBy,
   onToggleSelected,
   onEdit,
   onDuplicate,
@@ -296,22 +341,29 @@ function PageGroupRow({
             enabledLocales={enabledLocales}
           />
         </span>
-        <span
-          className={cn(
-            'truncate text-xs text-muted-foreground',
-            AUTHOR_COLUMN,
-          )}
-        >
-          {group.createdByName ?? EMPTY_CELL}
+        <span className={cn('truncate text-xs', STATUS_COLUMN)}>
+          {t(groupStatusKey(group, defaultLocale))}
         </span>
-        <span
-          className={cn(
-            'truncate text-xs text-muted-foreground',
-            EDITOR_COLUMN,
-          )}
-        >
-          {group.lastEditedByName ?? EMPTY_CELL}
-        </span>
+        {showCreatedBy && (
+          <span
+            className={cn(
+              'truncate text-xs text-muted-foreground',
+              AUTHOR_COLUMN,
+            )}
+          >
+            {group.createdByName ?? EMPTY_CELL}
+          </span>
+        )}
+        {showLastEditedBy && (
+          <span
+            className={cn(
+              'truncate text-xs text-muted-foreground',
+              EDITOR_COLUMN,
+            )}
+          >
+            {group.lastEditedByName ?? EMPTY_CELL}
+          </span>
+        )}
         <time
           dateTime={group.lastEditedAt}
           className={cn(
@@ -410,6 +462,15 @@ export function PageGroupsListView({
   const selectedGroup = groups.find((g) => g.id === selectedGroupId) ?? null;
   const totalPages = Math.max(1, Math.ceil(total / PAGE_GROUPS_PAGE_SIZE));
   const hasNoFilters = Object.values(filters).every((v) => v === '');
+  /*
+   * Whether either author column has anything to show on THIS page of
+   * results. Measured live: one row in sixteen carried a name, and the two
+   * columns between them took a third of the width to print an em dash.
+   * Per page rather than per site, because that is the question the header
+   * is answering — "is there an author to read here".
+   */
+  const showCreatedBy = groups.some((group) => group.createdByName);
+  const showLastEditedBy = groups.some((group) => group.lastEditedByName);
   // A feed is never draggable: its order is the publication date, and a
   // handle offering to change it would be lying.
   const canReorder = layout === 'tree' && hasNoFilters && totalPages <= 1;
@@ -488,7 +549,7 @@ export function PageGroupsListView({
     <MediaPickerProvider siteId={siteId}>
       <div className="flex flex-col gap-4">
         <div className="flex items-center justify-between">
-          <h1 className="text-lg font-semibold">
+          <h1 className="text-xl font-semibold tracking-tight">
             {title ?? t('pages.list.title')}
           </h1>
           <Button
@@ -529,7 +590,7 @@ export function PageGroupsListView({
                     saying so: a title, a row of language badges, a name
                     and a date read as one crowded line until they were
                     named. */}
-                <div className="flex items-center gap-2 border-b bg-muted/40 py-2.5 pr-3 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                <div className="flex h-9 items-center gap-2 border-b bg-muted/40 pr-3 text-xs font-medium uppercase tracking-wide text-muted-foreground">
                   <span
                     className="flex min-w-0 flex-1 gap-3"
                     style={{ paddingLeft: PAGE_ROW_INSET }}
@@ -540,12 +601,19 @@ export function PageGroupsListView({
                     <span className={cn('shrink-0', LOCALES_COLUMN)}>
                       {t('pages.list.colLanguages')}
                     </span>
-                    <span className={cn('truncate', AUTHOR_COLUMN)}>
-                      {t('pages.list.colAuthor')}
+                    <span className={cn('truncate', STATUS_COLUMN)}>
+                      {t('pages.list.colStatus')}
                     </span>
-                    <span className={cn('truncate', EDITOR_COLUMN)}>
-                      {t('pages.list.colEditor')}
-                    </span>
+                    {showCreatedBy && (
+                      <span className={cn('truncate', AUTHOR_COLUMN)}>
+                        {t('pages.list.colAuthor')}
+                      </span>
+                    )}
+                    {showLastEditedBy && (
+                      <span className={cn('truncate', EDITOR_COLUMN)}>
+                        {t('pages.list.colEditor')}
+                      </span>
+                    )}
                     <span className={cn('truncate', UPDATED_COLUMN)}>
                       {t('pages.list.colUpdated')}
                     </span>
@@ -569,6 +637,8 @@ export function PageGroupsListView({
                         enabledLocales={enabledLocales}
                         draggable={canReorder}
                         isDuplicating={isDuplicating}
+                        showCreatedBy={showCreatedBy}
+                        showLastEditedBy={showLastEditedBy}
                         onToggleSelected={() => toggleSelected(group.id)}
                         onEdit={() => void handleOpenEditor(group.id)}
                         onDuplicate={() => void handleDuplicate()}

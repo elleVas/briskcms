@@ -127,6 +127,18 @@ const themeBaseTokens = parseRootCustomProperties(
 );
 const i18n = new Translator(locale);
 
+// The consent banner belongs to a visitor, and the canvas has no visitor.
+// The editor's iframe is sandboxed WITHOUT allow-same-origin (see
+// canvas-frame.tsx), so its document has an opaque origin and cannot write
+// `brisk_consent` at all: the banner could not be dismissed there even
+// once, and it came back over the bottom of the frame every time the editor
+// was opened — a third of it at the mobile breakpoint. Its bootstrap goes
+// with it: all that script does is activate the gated tracker templates for
+// a consent record that, here, can never exist.
+// Only the EMBEDDED preview, never the real page and never the "Preview"
+// tab, which is a page somebody reads as a visitor would.
+const isEditorCanvas = editable === true;
+
 const themeRegionProps = {
 	locale,
 	currentPath: Astro.url.pathname.replace(/\/+$/, '') || '/',
@@ -454,11 +466,15 @@ const blockStyleCss =
 			)}
 		/>
 		<Fragment set:html={renderGatedScripts(headTrackerScripts.gated)} />
-		<script
-			is:inline
-			nonce={Astro.locals.cspNonce}
-			set:html={buildCookieConsentBootstrap(Astro.locals.cspNonce)}
-		/>
+		{
+			!isEditorCanvas && (
+				<script
+					is:inline
+					nonce={Astro.locals.cspNonce}
+					set:html={buildCookieConsentBootstrap(Astro.locals.cspNonce)}
+				/>
+			)
+		}
 	</head>
 	<body
 		class:list={[{ 'brisk-body--sticky-footer': themeManifest.stickyFooter }]}
@@ -527,7 +543,7 @@ const blockStyleCss =
 		/>
 		<Fragment set:html={renderGatedScripts(bodyTrackerScripts.gated)} />
 		{
-			site.cookieBannerSettings.enabled && (
+			site.cookieBannerSettings.enabled && !isEditorCanvas && (
 				<CookieConsent
 					settings={site.cookieBannerSettings}
 					locale={locale}

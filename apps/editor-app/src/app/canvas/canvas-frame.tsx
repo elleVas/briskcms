@@ -167,9 +167,21 @@ export function CanvasFrame({
   const width = BREAKPOINT_WIDTHS[breakpoint];
 
   return (
-    <div className="h-full w-full overflow-auto bg-muted/30">
+    /*
+     * The page needs an edge. The stage behind it used to be the same
+     * colour as the rest of the app, and the iframe had no border, no
+     * radius and no shadow — so the site simply started, mid-screen, at
+     * x=256 with nothing to say it had. At a narrow breakpoint it was
+     * worse: a centred frame with no frame around it reads as a hole in
+     * the page rather than as a phone.
+     */
+    <div className="h-full w-full overflow-auto bg-canvas-stage">
       <div
-        className="relative mx-auto h-full overflow-hidden bg-background"
+        className={
+          width
+            ? 'relative mx-auto my-4 h-[calc(100%-2rem)] overflow-hidden rounded-lg border bg-background shadow-lg'
+            : 'relative mx-auto h-full overflow-hidden rounded-t-lg border border-b-0 bg-background shadow-lg'
+        }
         style={width ? { width } : { width: '100%' }}
       >
         {src && (

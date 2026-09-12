@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Link } from '@tanstack/react-router';
 import { History } from 'lucide-react';
 import { headerFooterBlocks } from '@brisk/block-registry';
-import type { SaveStatus } from './save-status';
+import { useSaveStatusText } from './save-status-text';
 import { CanvasEditorShell } from './canvas/canvas-editor-shell';
 import { IconButton } from './icon-button';
 import { IconListProvider } from './icon-list-provider';
@@ -33,20 +33,6 @@ export interface SiteLayoutSectionEditorViewProps {
   kind: SiteLayoutSectionKind;
 }
 
-function useStatusText(status: SaveStatus): string {
-  const { t } = useTranslation();
-  switch (status.kind) {
-    case 'idle':
-      return '';
-    case 'saved':
-      return t('layout.editor.draftSaved');
-    case 'published':
-      return t('layout.editor.published');
-    case 'error':
-      return status.message;
-  }
-}
-
 /**
  * A single generic view for both Header and Footer (docs/adr/0018), not
  * two near-identical components — they share the exact same lifecycle,
@@ -58,9 +44,17 @@ export function SiteLayoutSectionEditorView({
   kind,
 }: SiteLayoutSectionEditorViewProps) {
   const { t } = useTranslation();
-  const { section, status, handleChange, handlePublish, handleStickyChange } =
-    useSiteLayoutSectionEditor(siteId, locale, kind);
-  const statusText = useStatusText(status);
+  const {
+    section,
+    status,
+    isSaving,
+    handleChange,
+    handlePublish,
+    handleStickyChange,
+  } = useSiteLayoutSectionEditor(siteId, locale, kind);
+  const statusText = useSaveStatusText(status, {
+    publishedKey: 'layout.editor.published',
+  });
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [restoredAt, setRestoredAt] = useState(0);
   const {
@@ -107,16 +101,21 @@ export function SiteLayoutSectionEditorView({
                 }
                 siteId={siteId}
                 statusText={statusText}
+                isSaving={isSaving}
                 actions={
                   <>
+                    {/* "Stick while scrolling" on its own, in a bar above
+                        a canvas — of WHAT, it did not say. It is the
+                        header, and it is the header editor's one setting,
+                        so it says so. */}
                     {kind === 'header' && (
-                      <label className="flex items-center gap-1.5">
+                      <label className="flex items-center gap-1.5 whitespace-nowrap">
                         <Switch
                           size="sm"
                           checked={section.sticky}
                           onCheckedChange={handleStickyChange}
                         />
-                        {t('layout.editor.sticky')}
+                        {t('layout.editor.stickyLabelled')}
                       </label>
                     )}
                     <IconButton

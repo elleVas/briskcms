@@ -156,13 +156,15 @@ export function StyleView({ siteId, site }: StyleViewProps) {
 
   return (
     <div className="flex max-w-lg flex-col gap-4">
-      <h1 className="text-lg font-semibold">{t('themeSettings.title')}</h1>
+      <h1 className="text-xl font-semibold tracking-tight">
+        {t('themeSettings.title')}
+      </h1>
       <p className="text-xs text-muted-foreground">
         {t('themeSettings.intro')}
       </p>
 
       {!themeAllowsStyling && (
-        <p className="rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-xs text-amber-700 dark:text-amber-400">
+        <p className="rounded-md border border-warning/40 bg-warning/10 p-3 text-xs text-warning">
           {t('themeSettings.themeLocked')}
         </p>
       )}
@@ -201,7 +203,7 @@ export function StyleView({ siteId, site }: StyleViewProps) {
             onValueChange={setPrimaryColor}
           />
           {primaryContrast && !primaryContrast.passesAA && (
-            <p className="text-xs text-amber-600 dark:text-amber-500">
+            <p className="text-xs text-warning">
               {t('themeSettings.contrastWarning', {
                 ratio: primaryContrast.ratio.toFixed(1),
               })}
@@ -220,7 +222,7 @@ export function StyleView({ siteId, site }: StyleViewProps) {
             onValueChange={setSecondaryColor}
           />
           {secondaryContrast && !secondaryContrast.passesAA && (
-            <p className="text-xs text-amber-600 dark:text-amber-500">
+            <p className="text-xs text-warning">
               {t('themeSettings.contrastWarning', {
                 ratio: secondaryContrast.ratio.toFixed(1),
               })}

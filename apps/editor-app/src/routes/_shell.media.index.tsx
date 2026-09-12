@@ -11,11 +11,22 @@ import { requireAuth } from './-require-auth';
 // and falls back cleanly on a garbled value (?page=abc).
 const mediaListSearchSchema = z.object({
   page: z.coerce.number().int().min(1).default(1).catch(1),
+  // In the URL rather than in component state, for the same reason as the
+  // page number above it: a search worth doing is a search worth reloading
+  // into and sending to somebody.
+  // The same 200 the API enforces (media.schemas.ts): without it, pasting
+  // something longer turned a search into a 400 in the error boundary
+  // instead of "nothing matches".
+  search: z.string().max(200).optional().catch(undefined),
+  kind: z.enum(['image', 'video', 'audio']).optional().catch(undefined),
 });
 
 export const Route = createFileRoute('/_shell/media/')({
   validateSearch: mediaListSearchSchema,
-  loaderDeps: ({ search }) => ({ page: search.page }),
+  loaderDeps: ({ search }) => ({
+    page: search.page,
+    filters: { search: search.search, kind: search.kind },
+  }),
   // The site is resolved first because its id is what scopes the list —
   // one extra await, not one extra request: the entry is shared with every
   // other screen.
@@ -24,16 +35,17 @@ export const Route = createFileRoute('/_shell/media/')({
       const site =
         await context.queryClient.ensureQueryData(siteQueryOptions());
       await context.queryClient.ensureQueryData(
-        mediaQueryOptions(site.id, deps.page),
+        mediaQueryOptions(site.id, deps.page, deps.filters),
       );
     }),
   component: MediaLibraryRoute,
 });
 
 function MediaLibraryRoute() {
-  const { page } = Route.useSearch();
+  const { page, search, kind } = Route.useSearch();
+  const filters = { search, kind };
   const { data: site } = useSuspenseQuery(siteQueryOptions());
-  const { data } = useSuspenseQuery(mediaQueryOptions(site.id, page));
+  const { data } = useSuspenseQuery(mediaQueryOptions(site.id, page, filters));
 
   return (
     <MediaLibraryView
@@ -41,6 +53,7 @@ function MediaLibraryRoute() {
       items={data.items}
       page={page}
       total={data.total}
+      filters={filters}
     />
   );
 }

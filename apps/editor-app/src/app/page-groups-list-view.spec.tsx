@@ -183,7 +183,11 @@ describe('PageGroupsListView', () => {
     });
 
     expect(screen.queryByText(/Invalid Date/)).toBeNull();
-    expect(screen.getAllByText('—')).toHaveLength(3);
+    // One dash, not three: the two author columns are not drawn at all
+    // when nobody on this page of results is named. They were "—" on
+    // fifteen rows in sixteen and took a third of the table between them.
+    expect(screen.getAllByText('—')).toHaveLength(1);
+    expect(screen.queryByText('Creata da')).toBeNull();
   });
 
   it('duplicating the selected group calls duplicatePageGroup', async () => {

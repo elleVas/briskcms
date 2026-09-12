@@ -60,15 +60,21 @@ export function TranslationAvailabilityBadges({
           : translation.hasUnpublishedChanges
             ? ('pages.list.statusPending' as const)
             : ('pages.list.statusPublished' as const);
+        // Three states, three variants — no call-site colour. "Published"
+        // used to wear `default`, which is the brand accent, and "has
+        // unpublished changes" was a raw amber written here: the one
+        // saturated colour in the list, reading as an error rather than as
+        // "there is something to publish".
+        const variant =
+          status === 'pages.list.statusPublished'
+            ? ('success' as const)
+            : status === 'pages.list.statusPending'
+              ? ('warning' as const)
+              : ('outline' as const);
         return (
           <Badge
             key={locale}
-            variant={translation.status === 'published' ? 'default' : 'outline'}
-            className={
-              translation.hasUnpublishedChanges
-                ? 'bg-amber-500 text-amber-950 hover:bg-amber-500'
-                : undefined
-            }
+            variant={variant}
             title={label(status)}
             aria-label={label(status)}
           >

@@ -16,7 +16,6 @@ import { collectionsQueryOptions } from './collections-queries';
 import { LanguageSwitcher } from './canvas/language-switcher';
 import { ConfirmActionDialog } from './confirm-action-dialog';
 import { FormListProvider } from './form-list-provider';
-import { IconButton } from './icon-button';
 import { IconListProvider } from './icon-list-provider';
 import { MediaPickerProvider } from './media-picker-provider';
 import { PageGroupSeoPanelDialog } from './page-group-seo-panel-dialog';
@@ -26,7 +25,8 @@ import { PageListProvider } from './page-list-provider';
 import { publicPagePath } from '../lib/public-page-path';
 import { PUBLIC_SITE_URL } from '../lib/public-site-url';
 import { usePageBlockRegistry } from './use-page-block-registry';
-import { usePageGroupEditor, type SaveStatus } from './use-page-group-editor';
+import { useSaveStatusText } from './save-status-text';
+import { usePageGroupEditor } from './use-page-group-editor';
 import { usePageGroupVersions } from './use-page-group-versions';
 import { VersionHistoryDialog } from './version-history-dialog';
 
@@ -83,20 +83,6 @@ export interface PageGroupEditorViewProps {
   enabledLocales: string[];
 }
 
-function useStatusText(status: SaveStatus): string {
-  const { t } = useTranslation();
-  switch (status.kind) {
-    case 'idle':
-      return '';
-    case 'saved':
-      return t('pages.editor.draftSaved');
-    case 'published':
-      return t('pages.editor.published');
-    case 'error':
-      return status.message;
-  }
-}
-
 /**
  * i18n a livello di campo (see the plan) — PageGroupEditorView is
  * page-editor-view.tsx's counterpart for the new PageGroup/PageTranslation
@@ -130,13 +116,24 @@ export function PageGroupEditorView({
     activeTranslation,
     displayedBlocks,
     status,
+    isSaving,
     onChange,
     whenSaved,
     onSaveFieldValue,
     handlePublish,
     handleDiverge,
   } = usePageGroupEditor(groupId, initialLocale);
-  const statusText = useStatusText(status);
+  const statusText = useSaveStatusText(status, {
+    publishedKey: 'pages.editor.published',
+    // Once the page IS published, a landed save has moved the draft past
+    // what a visitor sees. "Draft saved" would be true and beside the
+    // point; the fact worth a line in the bar is that the two no longer
+    // match. Until the first publish there is nothing online to be behind.
+    savedKey:
+      activeTranslation.status === 'published'
+        ? 'pages.editor.unpublishedChangesAt'
+        : undefined,
+  });
   const [isDivergeConfirmOpen, setIsDivergeConfirmOpen] = useState(false);
   const [isSeoOpen, setIsSeoOpen] = useState(false);
   const [isTermsOpen, setIsTermsOpen] = useState(false);
@@ -190,56 +187,63 @@ export function PageGroupEditorView({
                     }
               }
               siteId={group.siteId}
-              statusText={statusText}
-              actions={
-                <>
-                  <IconButton
-                    label={t('pages.seo.open')}
-                    onClick={() => setIsSeoOpen(true)}
-                  >
-                    <Search />
-                  </IconButton>
-                  <IconButton
-                    label={t('taxonomies.pageTitle')}
-                    onClick={() => setIsTermsOpen(true)}
-                  >
-                    <Tags />
-                  </IconButton>
-                  <IconButton
-                    label={t('pages.versionHistory.open')}
-                    onClick={() => setIsHistoryOpen(true)}
-                  >
-                    <History />
-                  </IconButton>
-                  <IconButton
-                    label={t('pages.translations.open')}
-                    onClick={() => setIsTranslationsOpen(true)}
-                  >
-                    <Languages />
-                  </IconButton>
-                  {!activeTranslation.isDiverged && (
-                    <IconButton
-                      label={t('canvas.language.divergeAction')}
-                      onClick={() => setIsDivergeConfirmOpen(true)}
-                    >
-                      <GitFork />
-                    </IconButton>
-                  )}
-                  {/* Same "only once there's something live to see" gate as
-                    page-editor-view.tsx. */}
-                  {activeTranslation.status === 'published' && (
-                    <IconButton label={t('pages.editor.viewPage')} asChild>
-                      <a
-                        href={`${PUBLIC_SITE_URL}${publicPagePath(activeTranslation.locale, activeTranslation.slug)}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        <ExternalLink />
-                      </a>
-                    </IconButton>
-                  )}
-                </>
+              // The middle of the bar was empty — the page being edited was
+              // named nowhere in the editor at all.
+              title={
+                activeTranslation.seoMeta.title || `/${activeTranslation.slug}`
               }
+              statusText={statusText}
+              isSaving={isSaving}
+              /*
+               * Six unlabelled icons became a menu that says what each of
+               * them does. They are the actions on the PAGE — its SEO, its
+               * classification, its languages, its history — and sitting
+               * next to undo and redo as icons there was nothing to
+               * distinguish them from the actions on the CANVAS.
+               */
+              pageMenu={[
+                {
+                  label: t('pages.seo.open'),
+                  icon: Search,
+                  onSelect: () => setIsSeoOpen(true),
+                },
+                {
+                  label: t('taxonomies.pageTitle'),
+                  icon: Tags,
+                  onSelect: () => setIsTermsOpen(true),
+                },
+                {
+                  label: t('pages.translations.open'),
+                  icon: Languages,
+                  onSelect: () => setIsTranslationsOpen(true),
+                },
+                {
+                  label: t('pages.versionHistory.open'),
+                  icon: History,
+                  onSelect: () => setIsHistoryOpen(true),
+                },
+                ...(activeTranslation.isDiverged
+                  ? []
+                  : [
+                      {
+                        label: t('canvas.language.divergeAction'),
+                        icon: GitFork,
+                        onSelect: () => setIsDivergeConfirmOpen(true),
+                      },
+                    ]),
+                // Same "only once there's something live to see" gate as
+                // before, and still a real link so it can be middle-clicked
+                // or copied.
+                ...(activeTranslation.status === 'published'
+                  ? [
+                      {
+                        label: t('pages.editor.viewPage'),
+                        icon: ExternalLink,
+                        href: `${PUBLIC_SITE_URL}${publicPagePath(activeTranslation.locale, activeTranslation.slug)}`,
+                      },
+                    ]
+                  : []),
+              ]}
               registry={registry}
               categories={categories}
               blocks={displayedBlocks}

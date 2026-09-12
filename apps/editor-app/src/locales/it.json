@@ -82,12 +82,18 @@
       "style": "Stile",
       "integrations": "Integrazioni",
       "cookies": "Cookie banner",
-      "users": "Utenti"
+      "users": "Utenti",
+      "groupContent": "Contenuti",
+      "groupSite": "Sito",
+      "groupSettings": "Impostazioni"
     },
     "settings": {
       "label": "Impostazioni",
       "language": "Lingua",
-      "theme": "Tema scuro"
+      "theme": "Tema",
+      "themeLight": "Chiaro",
+      "themeDark": "Scuro",
+      "themeSystem": "Come il sistema"
     },
     "account": {
       "label": "Account"
@@ -104,10 +110,6 @@
       "media": {
         "title": "Media",
         "description": "{{count}} file caricati"
-      },
-      "published": {
-        "title": "Pubblicate",
-        "description": "Live sul sito pubblico in questo momento"
       },
       "forms": {
         "title": "Moduli",
@@ -127,7 +129,12 @@
         "published": "Pubblicata"
       }
     },
-    "emptyState": "Questo sito non ha ancora pagine o media — inizia dalla sezione Pagine."
+    "emptyState": "Questo sito non ha ancora pagine o media — inizia dalla sezione Pagine.",
+    "actions": {
+      "newPage": "Pagine",
+      "uploadMedia": "Media",
+      "openSite": "Apri il sito"
+    }
   },
   "pages": {
     "list": {
@@ -159,7 +166,8 @@
         "anyCreator": "Chiunque",
         "locale": "Lingua",
         "anyLocale": "Qualunque lingua",
-        "clear": "Rimuovi filtri"
+        "clear": "Rimuovi filtri",
+        "toggle": "Filtri"
       },
       "colTitle": "Pagina",
       "colLanguages": "Lingue",
@@ -167,7 +175,9 @@
       "colUpdated": "Modificata",
       "statusMissing": "Non tradotta",
       "colEditor": "Modificata da",
-      "statusPending": "Pubblicata, con modifiche non pubblicate"
+      "statusPending": "Pubblicata, con modifiche non pubblicate",
+      "colStatus": "Stato",
+      "statusPendingShort": "Modifiche non pubblicate"
     },
     "newPageDialog": {
       "title": "Nuova pagina",
@@ -196,9 +206,9 @@
     },
     "editor": {
       "backToList": "Pagine",
-      "draftSaved": "Bozza salvata",
       "published": "Pubblicato",
-      "viewPage": "Visualizza pagina"
+      "viewPage": "Visualizza pagina",
+      "unpublishedChangesAt": "Modifiche non pubblicate — salvate alle {{time}}"
     },
     "versionHistory": {
       "open": "Cronologia versioni",
@@ -263,7 +273,6 @@
     "rootMounted": "Nessun prefisso (radice del sito)",
     "create": "Aggiungi dimensione",
     "prefixTaken": "Un'altra dimensione o una pagina risponde già a quell'indirizzo.",
-    "empty": "Nessuna dimensione, per ora.",
     "atRoot": "alla radice del sito",
     "delete": "Elimina dimensione",
     "deleteConfirm": "Eliminare questa dimensione e tutti i suoi termini? Le pagine restano, smettono solo di essere classificate così.",
@@ -293,12 +302,13 @@
     "landingPageChosen": "Una pagina è impostata",
     "landingPageChoose": "Scegli una pagina",
     "landingPageChange": "Cambia",
-    "landingPageClear": "Torna alla disposizione predefinita"
+    "landingPageClear": "Torna alla disposizione predefinita",
+    "emptyExplainer": "Una dimensione è un modo di classificare le pagine — Argomento, Autore, Linea di prodotto. Ogni suo termine ha un URL suo, che elenca le pagine classificate così.",
+    "emptyAction": "Dai un nome alla prima dimensione"
   },
   "sections": {
     "title": "Sezioni",
     "subtitle": "Costruisci una fascia di blocchi una volta e usala su tante pagine.",
-    "empty": "Nessuna sezione.",
     "create": "Nuova sezione",
     "createTitle": "Nuova sezione",
     "nameLabel": "Nome",
@@ -320,7 +330,6 @@
     "deleteConfirm": "Eliminare questa sezione? Le pagine che la usano non mostreranno più niente al suo posto.",
     "exposeField": "Una pagina può cambiarlo",
     "backToList": "← Torna alle sezioni",
-    "draftSaved": "Bozza salvata",
     "published": "Pubblicata — tutte le pagine che la usano sono aggiornate",
     "nameTaken": "Esiste già una sezione con questo nome.",
     "templates": "Template",
@@ -329,7 +338,9 @@
     "usedOnPages_one": "su {{count}} pagina",
     "usedOnPages_other": "su {{count}} pagine",
     "usedNowhere": "non ancora inserita da nessuna parte",
-    "deleteConfirmUsed": "Eliminare “{{name}}”? È su {{count}} pagine, e ognuna non mostrerà più niente al suo posto."
+    "deleteConfirmUsed": "Eliminare “{{name}}”? È su {{count}} pagine, e ognuna non mostrerà più niente al suo posto.",
+    "emptyExplainer": "Una sezione è una striscia di blocchi che costruisci una volta e metti su tante pagine: la modifichi qui e cambia su tutte.",
+    "emptyAction": "Dai un nome alla prima sezione"
   },
   "layout": {
     "title": "Layout",
@@ -340,10 +351,9 @@
     "editFooterDescription": "Contenuto e link in fondo a ogni pagina.",
     "editor": {
       "backToList": "Layout",
-      "draftSaved": "Bozza salvata",
       "published": "Pubblicato",
-      "sticky": "Fisso durante lo scroll",
-      "noPageToPreview": "Crea prima una pagina in questa lingua — il canvas ha bisogno di una pagina vera su cui visualizzare l'anteprima di {{section}}."
+      "noPageToPreview": "Crea prima una pagina in questa lingua — il canvas ha bisogno di una pagina vera su cui visualizzare l'anteprima di {{section}}.",
+      "stickyLabelled": "Header: fisso durante lo scroll"
     }
   },
   "media": {
@@ -351,20 +361,30 @@
       "title": "Media"
     },
     "grid": {
-      "upload": "Carica immagine",
+      "upload": "Carica file",
       "uploading": "Caricamento in corso...",
-      "empty": "Nessun file ancora.",
+      "empty": "Ancora niente nella libreria. Carica un’immagine, un video o un audio e diventa disponibile per ogni blocco che ne chiede uno.",
       "delete": "Elimina",
       "previousPage": "Pagina precedente",
       "nextPage": "Pagina successiva",
-      "pageIndicator": "Pagina {{page}} di {{totalPages}}"
+      "pageIndicator": "Pagina {{page}} di {{totalPages}}",
+      "noMatches": "Nessun file corrisponde a quello che cerchi."
     },
     "deleteDialog": {
       "title": "Eliminare questo file?",
       "description": "\"{{name}}\" verrà eliminato definitivamente. L'azione non può essere annullata."
     },
     "picker": {
-      "title": "Scegli un'immagine"
+      "title": "Scegli un file"
+    },
+    "filters": {
+      "searchLabel": "Cerca per nome",
+      "searchPlaceholder": "Cerca per nome",
+      "kindLabel": "Tipo di file",
+      "kindAll": "Tutti",
+      "kindImage": "Immagini",
+      "kindVideo": "Video",
+      "kindAudio": "Audio"
     }
   },
   "icons": {
@@ -679,7 +699,11 @@
         "date": "Data",
         "time": "Ora",
         "file": "Caricamento file"
-      }
+      },
+      "unsaved": "Modifiche non salvate",
+      "leaveTitle": "Uscire senza salvare?",
+      "leaveBody": "Questo modulo si salva solo quando premi Salva. Quello che hai cambiato da allora andrà perso.",
+      "leaveAction": "Esci"
     },
     "submissions": {
       "title": "Iscrizioni ricevute",
@@ -1017,6 +1041,39 @@
     },
     "placement": {
       "refused": "{{block}} sta solo dentro {{parents}}, quindi qui non c'è posto per inserirlo."
+    },
+    "status": {
+      "saving": "Salvataggio…",
+      "draftSavedAt": "Bozza salvata alle {{time}}"
+    },
+    "resizeSidebar": "Ridimensiona il pannello dei blocchi",
+    "resizeLayersPanel": "Ridimensiona il pannello di destra",
+    "rightPanel": {
+      "label": "Livelli e proprietà",
+      "layers": "Livelli",
+      "properties": "Proprietà",
+      "expand": "Espandi il pannello Livelli e proprietà",
+      "collapse": "Comprimi il pannello Livelli e proprietà",
+      "resize": "Ridimensiona il pannello Livelli e proprietà"
+    },
+    "properties": {
+      "noSelection": "Seleziona un blocco sul canvas o nei Livelli per cambiare cosa dice e come appare."
+    },
+    "pageMenu": {
+      "label": "Pagina"
+    },
+    "shortcuts": {
+      "open": "Scorciatoie da tastiera",
+      "title": "Scorciatoie da tastiera",
+      "description": "Funzionano sul canvas, quando non stai scrivendo in un campo.",
+      "undo": "Annulla",
+      "redo": "Ripeti",
+      "duplicate": "Duplica la selezione",
+      "copy": "Copia la selezione",
+      "paste": "Incolla",
+      "delete": "Elimina la selezione",
+      "moveUp": "Sposta il blocco su",
+      "moveDown": "Sposta il blocco giù"
     }
   },
   "toast": {
@@ -1831,7 +1888,7 @@
     }
   },
   "collections": {
-    "menuLabel": "Sezioni di contenuto",
+    "menuLabel": "Collezioni",
     "actionFailed": "Non è stato possibile applicare la modifica.",
     "dialog": {
       "title": "Sezioni di contenuto",

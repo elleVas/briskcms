@@ -99,7 +99,7 @@ export function usePageGroupEditor(groupId: string, initialLocale: string) {
         pageGroupQueryOptions(groupId).queryKey,
         updated,
       );
-      setStatus({ kind: 'saved' });
+      setStatus({ kind: 'saved', at: Date.now() });
     },
     onError: (error: unknown) =>
       setStatus({ kind: 'error', message: String(error) }),
@@ -120,7 +120,7 @@ export function usePageGroupEditor(groupId: string, initialLocale: string) {
       ),
     onSuccess: (updated) => {
       updateTranslationsCache(updated);
-      setStatus({ kind: 'saved' });
+      setStatus({ kind: 'saved', at: Date.now() });
     },
     onError: (error: unknown) =>
       setStatus({ kind: 'error', message: String(error) }),
@@ -171,7 +171,7 @@ export function usePageGroupEditor(groupId: string, initialLocale: string) {
       ),
     onSuccess: (updated) => {
       updateTranslationsCache(updated);
-      setStatus({ kind: 'saved' });
+      setStatus({ kind: 'saved', at: Date.now() });
     },
     onError: (error: unknown) =>
       setStatus({ kind: 'error', message: String(error) }),
@@ -233,7 +233,7 @@ export function usePageGroupEditor(groupId: string, initialLocale: string) {
       divergePageTranslation(translationId),
     onSuccess: (updated) => {
       updateTranslationsCache(updated);
-      setStatus({ kind: 'saved' });
+      setStatus({ kind: 'saved', at: Date.now() });
     },
     onError: (error: unknown) =>
       setStatus({ kind: 'error', message: String(error) }),
@@ -248,6 +248,23 @@ export function usePageGroupEditor(groupId: string, initialLocale: string) {
     await Promise.all([whenContentSaved(), whenFieldValuesSaved()]);
   }, [whenContentSaved, whenFieldValuesSaved]);
 
+  /**
+   * A write is on the wire right now. Derived from the mutations rather
+   * than tracked in `status`, so the two can never disagree: `status`
+   * records what LAST happened, this says what is happening.
+   *
+   * Distinct from `whenSaved` above, which is the queue's own promise and
+   * exists so the canvas can wait for a save before reading the draft back.
+   * This one is for the person: it decides what the top bar says, and it is
+   * half of the unsaved-changes guard — the other half is the debounce
+   * window inside the canvas, which this hook never sees (see
+   * useUnsavedChangesGuard).
+   */
+  const isSaving =
+    saveGroupContentMutation.isPending ||
+    saveDivergedContentMutation.isPending ||
+    saveFieldValuesMutation.isPending;
+
   return {
     group,
     translations,
@@ -255,7 +272,8 @@ export function usePageGroupEditor(groupId: string, initialLocale: string) {
     setActiveLocale,
     activeTranslation,
     displayedBlocks,
-    status,
+    status: isSaving ? ({ kind: 'saving' } as const) : status,
+    isSaving,
     onChange,
     whenSaved,
     onSaveFieldValue,
