@@ -57,7 +57,7 @@ describe('MediaPickerDialog', () => {
 
     renderDialog({ open: false });
 
-    expect(screen.queryByText(/scegli un.immagine/i)).toBeNull();
+    expect(screen.queryByText(/scegli un file/i)).toBeNull();
   });
 
   it('loads and shows the media library when open', async () => {
@@ -69,7 +69,7 @@ describe('MediaPickerDialog', () => {
     renderDialog();
 
     expect(
-      await screen.findByRole('heading', { name: /scegli un.immagine/i }),
+      await screen.findByRole('heading', { name: /scegli un file/i }),
     ).toBeTruthy();
     // DialogContent renders via a Radix Portal (outside the local render
     // container), so query the whole document via `screen`, not `container`.

@@ -62,6 +62,7 @@ export class MediaController {
         siteId: query.siteId,
         page: query.page,
         pageSize: query.pageSize,
+        filter: { search: query.search, kind: query.kind },
       },
     );
     return {

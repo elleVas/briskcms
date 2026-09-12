@@ -40,6 +40,7 @@ function renderView(
           items={items}
           page={options.page ?? 1}
           total={options.total ?? items.length}
+          filters={{}}
         />
       </TooltipProvider>
     </QueryClientProvider>,

@@ -1,6 +1,7 @@
-import { and, eq } from 'drizzle-orm';
+import { and, eq, ilike, like, type SQL } from 'drizzle-orm';
 import { Media, type MediaProps } from '@brisk/domain-core';
 import type {
+  MediaFilter,
   MediaRepositoryPort,
   PaginatedResult,
   Pagination,
@@ -31,6 +32,11 @@ function fromRow(row: typeof media.$inferSelect): Media {
   return Media.fromProps(row);
 }
 
+/** Neutralises LIKE's own wildcards so a filename containing one is searched for literally. */
+function escapeLikePattern(value: string): string {
+  return value.replace(/[\\%_]/g, (char) => `\\${char}`);
+}
+
 /** Connects as `brisk_app` — see docs/adr/0002-non-superuser-role-for-rls-enforcement.md. */
 export class DrizzleMediaRepository
   extends DrizzlePaginatedRepository<typeof media.$inferSelect, Media>
@@ -57,10 +63,27 @@ export class DrizzleMediaRepository
     tenantId: string,
     siteId: string,
     pagination: Pagination,
+    filter: MediaFilter = {},
   ): Promise<PaginatedResult<Media>> {
+    const conditions: SQL[] = [
+      eq(media.tenantId, tenantId),
+      eq(media.siteId, siteId),
+    ];
+    // `%` and `_` in a filename would otherwise be wildcards: somebody
+    // searching for "report_final" would match "reportXfinal" too.
+    const search = filter.search?.trim();
+    if (search) {
+      conditions.push(ilike(media.filename, `%${escapeLikePattern(search)}%`));
+    }
+    // The MIME type's own prefix, which is what the sniffer decided the
+    // file really was when it was stored (ADR-0054) — never the extension,
+    // which a caller picks.
+    if (filter.kind) {
+      conditions.push(like(media.mimeType, `${filter.kind}/%`));
+    }
     return this.listPaginatedTx(
       tenantId,
-      and(eq(media.tenantId, tenantId), eq(media.siteId, siteId)),
+      and(...conditions),
       media.createdAt,
       pagination,
     );

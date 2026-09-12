@@ -352,20 +352,30 @@
       "title": "Media"
     },
     "grid": {
-      "upload": "Upload image",
+      "upload": "Upload file",
       "uploading": "Uploading...",
       "empty": "No files yet.",
       "delete": "Delete",
       "previousPage": "Previous page",
       "nextPage": "Next page",
-      "pageIndicator": "Page {{page}} of {{totalPages}}"
+      "pageIndicator": "Page {{page}} of {{totalPages}}",
+      "noMatches": "No file matches what you are looking for."
     },
     "deleteDialog": {
       "title": "Delete this file?",
       "description": "\"{{name}}\" will be permanently deleted. This action cannot be undone."
     },
     "picker": {
-      "title": "Choose an image"
+      "title": "Choose a file"
+    },
+    "filters": {
+      "searchLabel": "Search by name",
+      "searchPlaceholder": "Search by name",
+      "kindLabel": "Kind of file",
+      "kindAll": "All",
+      "kindImage": "Images",
+      "kindVideo": "Video",
+      "kindAudio": "Audio"
     }
   },
   "icons": {

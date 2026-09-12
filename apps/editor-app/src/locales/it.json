@@ -352,20 +352,30 @@
       "title": "Media"
     },
     "grid": {
-      "upload": "Carica immagine",
+      "upload": "Carica file",
       "uploading": "Caricamento in corso...",
       "empty": "Nessun file ancora.",
       "delete": "Elimina",
       "previousPage": "Pagina precedente",
       "nextPage": "Pagina successiva",
-      "pageIndicator": "Pagina {{page}} di {{totalPages}}"
+      "pageIndicator": "Pagina {{page}} di {{totalPages}}",
+      "noMatches": "Nessun file corrisponde a quello che cerchi."
     },
     "deleteDialog": {
       "title": "Eliminare questo file?",
       "description": "\"{{name}}\" verrà eliminato definitivamente. L'azione non può essere annullata."
     },
     "picker": {
-      "title": "Scegli un'immagine"
+      "title": "Scegli un file"
+    },
+    "filters": {
+      "searchLabel": "Cerca per nome",
+      "searchPlaceholder": "Cerca per nome",
+      "kindLabel": "Tipo di file",
+      "kindAll": "Tutti",
+      "kindImage": "Immagini",
+      "kindVideo": "Video",
+      "kindAudio": "Audio"
     }
   },
   "icons": {
