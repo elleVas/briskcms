@@ -394,6 +394,14 @@ export const BLOCK_STYLE_DEFAULTS: Record<string, BlockStyleDefaults> = {
     paddingY: '0',
     gap: '0.75rem',
   },
+  TermList: {
+    backgroundColor: 'transparent',
+    textColor: 'inherit',
+    borderRadius: '0',
+    paddingX: '0',
+    paddingY: '0',
+    gap: '0.5rem',
+  },
   PageGrid: {
     backgroundColor: 'transparent',
     textColor: 'inherit',

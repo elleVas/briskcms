@@ -1037,6 +1037,51 @@ describe('useBlockTreeMutations keeps the canvas in step without reloading', () 
   });
 
   /*
+   * A page list, a filter and an article's own date are all filled in
+   * when the page is READ. Patched in from the editor's own copy they
+   * draw an empty block — a list with ten entries showing "nothing here"
+   * — so inserting one is a case for a reload, like a section the page
+   * does not use yet.
+   */
+  it('reloads for a block the server fills in, rather than patching an empty one', async () => {
+    const { result, reloadCanvas } = setupCanvas([]);
+
+    act(() =>
+      result.current.handleInsertBlocks([
+        {
+          id: 'grid',
+          type: 'PageGrid',
+          props: { termId: 'term-1', items: [] },
+        },
+      ]),
+    );
+    await flush();
+
+    expect(reloadCanvas).toHaveBeenCalledTimes(1);
+    expect(blockFragmentApi.renderBlockFragment).not.toHaveBeenCalled();
+  });
+
+  it('reloads for one nested inside a container too', async () => {
+    const { result, reloadCanvas } = setupCanvas([]);
+
+    act(() =>
+      result.current.handleInsertBlocks([
+        {
+          id: 'box',
+          type: 'Container',
+          props: {},
+          children: [
+            { id: 'filter', type: 'TermList', props: { taxonomyId: 'tax-1' } },
+          ],
+        },
+      ]),
+    );
+    await flush();
+
+    expect(reloadCanvas).toHaveBeenCalledTimes(1);
+  });
+
+  /*
    * Undo used to replay the forward steps against the old tree: a block
    * moved from the page into a container was removed from the canvas
    * instead of coming back.

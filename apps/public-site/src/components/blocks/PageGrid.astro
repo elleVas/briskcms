@@ -5,23 +5,48 @@ import {
   gridPageHref,
   paginateGridItems,
 } from '../../lib/paginate-grid-items';
+import { filterGridItems, selectedTermSlugs } from '../../lib/filter-grid-items';
 
 type Props = PageGridProps & {
   /** The per-instance style class, from BlockRenderer — see blockInstanceClassName. */
   instanceClass?: string | null;
   /** The language being rendered, so a date is written the way its readers write dates. */
   locale?: string;
+  /**
+   * Whether a `TermList` on this page may narrow this list.
+   *
+   * True for an archive, which is what a filter is for. False where the
+   * list is an answer about one page rather than a list of the site's
+   * own — `RelatedPages` delegates here, and narrowing "what else to
+   * read" by the filter the reader set on some other list would empty it
+   * for no reason they could see.
+   */
+  filterable?: boolean;
 };
 
-const { layout, limit, perPage, emptyText, items, instanceClass, locale } =
-  Astro.props;
+const {
+  layout,
+  limit,
+  perPage,
+  emptyText,
+  items,
+  instanceClass,
+  locale,
+  filterable = true,
+} = Astro.props;
 const i18n = new Translator(locale ?? '');
 
 // `items` is resolved server-side (resolvePageGridItems) and is empty
 // both when the term has no pages and when the block has no term yet —
 // the reader is shown the same nothing either way, which is correct: an
 // author who has not chosen a term has not asked for anything.
-const capped = limit > 0 ? items.slice(0, limit) : items;
+// The reader's own narrowing first, then the author's cap, then the
+// slice: a filtered archive of three articles is three articles, not the
+// first three of everything with two of them hidden.
+const narrowed = filterable
+  ? filterGridItems(items, selectedTermSlugs(Astro.url))
+  : items;
+const capped = limit > 0 ? narrowed.slice(0, limit) : narrowed;
 
 // The slice this reader asked for. The page number lives in the address
 // so that a page of an archive can be linked, shared and indexed; with
@@ -54,6 +79,11 @@ function readableDate(value: string | null): string | null {
 }
 ---
 
+<!-- One region, so a filter can put a narrowed list in its place without
+     reloading the page: the entries and the pager change together, and
+     the pager of a list that is no longer there would be a set of links
+     to nowhere. See block-behaviors/term-list.ts. -->
+<div class="brisk-page-grid__region" data-brisk-grid>
 {
   shown.length > 0 ? (
     <ul
@@ -138,6 +168,7 @@ function readableDate(value: string | null): string | null {
     </nav>
   )
 }
+</div>
 
 <style>
   /* Every fallback is what an unstyled list of links already looked

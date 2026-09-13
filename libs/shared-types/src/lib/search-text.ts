@@ -173,6 +173,9 @@ export const BLOCKS_WITHOUT_SEARCHABLE_TEXT = [
   // themselves — indexing them again here would make one page answer for
   // words that are not on it (ADR-0064).
   'PageGrid',
+  // The names of terms, which the term's own page already answers for:
+  // a filter is a way to move through a list, not words this page says.
+  'TermList',
 
   // Real prose, not wired up yet — a genuine backlog item (found during
   // the 2026-09-02 Extension Manifest planning session, deliberately left

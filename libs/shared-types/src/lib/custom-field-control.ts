@@ -27,6 +27,7 @@ export const customFieldControlSchema = z.enum([
   'page',
   'section',
   'table-data',
+  'taxonomy',
   'term',
 ]);
 

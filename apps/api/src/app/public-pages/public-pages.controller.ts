@@ -18,6 +18,7 @@ import {
   getPublishedPageBySlug,
   getPublishedSiteChrome,
   getPublishedTermByPath,
+  listPublishedFeedEntries,
   listPublishedPagesForSitemap,
   listPublishedPageTree,
   resolveUntranslatedPageFallback,
@@ -45,6 +46,8 @@ import {
   publicSectionPreviewQuerySchema,
   type PublicPagesChromeQuery,
   publicPagesChromeQuerySchema,
+  type PublicPagesFeedQuery,
+  publicPagesFeedQuerySchema,
   type PublicPagesSearchQuery,
   publicPagesSearchQuerySchema,
   type PublicPagesSitemapQuery,
@@ -343,6 +346,33 @@ export class PublicPagesController {
     // same "nothing to show" collapse as listForSitemap below, and a
     // search box has nowhere useful to send a 404 to anyway.
     return { items: result ?? [] };
+  }
+
+  @Get('feed')
+  async feed(
+    @Query(new ZodValidationPipe(publicPagesFeedQuerySchema))
+    query: PublicPagesFeedQuery,
+  ) {
+    const result = await listPublishedFeedEntries(
+      {
+        siteRepository: this.siteRepository,
+        pageGroupRepository: this.pageGroupRepository,
+        pageTranslationRepository: this.pageTranslationRepository,
+        taxonomyRepository: this.taxonomyRepository,
+      },
+      {
+        tenantId: await this.tenant.require(),
+        domain: query.domain,
+        locale: query.locale,
+        termSlug: query.term,
+        limit: query.limit,
+      },
+    );
+    // An unknown domain answers with an empty feed rather than a 404 — the
+    // same posture the sitemap takes below, and for the same reason: a
+    // feed reader pointed at a domain this deployment does not serve has
+    // made a mistake nobody reading the feed can fix.
+    return result ?? { siteName: '', entries: [] };
   }
 
   @Get()

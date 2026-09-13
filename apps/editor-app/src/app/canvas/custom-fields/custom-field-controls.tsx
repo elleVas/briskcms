@@ -9,6 +9,7 @@ import { MediaPickerField } from './media-picker-field';
 import { PagePickerField } from './page-picker-field';
 import { SectionPickerField } from './section-picker-field';
 import { TableDataField } from './table-data-field';
+import { TaxonomyPickerField } from './taxonomy-picker-field';
 import { TermPickerField } from './term-picker-field';
 
 type ControlComponent = ComponentType<{
@@ -48,4 +49,5 @@ export const CUSTOM_FIELD_CONTROLS: Record<
   section: SectionPickerField as ControlComponent,
   'table-data': TableDataField as ControlComponent,
   term: TermPickerField as ControlComponent,
+  taxonomy: TaxonomyPickerField as ControlComponent,
 };
