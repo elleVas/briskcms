@@ -89,8 +89,14 @@ const STATUS_COLUMN = 'hidden w-44 md:block';
 const AUTHOR_COLUMN = 'hidden w-36 xl:block';
 const EDITOR_COLUMN = 'hidden w-36 lg:block';
 const UPDATED_COLUMN = 'hidden w-24 lg:block';
-/** Reserved for the row actions, shown or not, so selecting never shifts the layout. */
-const ACTIONS_COLUMN = 'w-[7.5rem]';
+/**
+ * Reserved for the row actions, shown or not, so selecting never shifts the
+ * layout — from `md` up. On a narrow screen those 120px were more than a
+ * third of the row, kept empty for buttons that only appear on selection,
+ * and titles truncated to three letters; there the actions take a line of
+ * their own under the selected row instead.
+ */
+const ACTIONS_COLUMN = 'md:w-[7.5rem]';
 
 export interface PageGroupsListViewProps {
   siteId: string;
@@ -270,7 +276,7 @@ function PageGroupRow({
         paddingLeft: PAGE_ROW_INSET + depth * PAGE_INDENT,
       }}
       className={cn(
-        'relative flex items-center gap-2 pr-3',
+        'relative flex flex-wrap items-center gap-2 pr-3 md:flex-nowrap',
         // A left rule marks the selected row. The tint alone was doing
         // the whole job, and on a dark list a tint is something you have
         // to look for; the rule is visible without looking.
@@ -311,7 +317,11 @@ function PageGroupRow({
         aria-pressed={isSelected}
         onClick={onToggleSelected}
         className={cn(
-          'flex min-h-12 flex-1 cursor-pointer items-center gap-3 py-2 text-left',
+          // `min-w-0`: a flex item cannot shrink below its content unless
+          // told it may, so a long title pushed the language badges past the
+          // edge of a narrow screen instead of truncating — the `truncate`
+          // inside it only works when every flex ancestor can shrink too.
+          'flex min-h-12 min-w-0 flex-1 cursor-pointer items-center gap-3 py-2 text-left',
           isSelected && 'text-foreground',
         )}
       >
@@ -383,6 +393,9 @@ function PageGroupRow({
         className={cn(
           'flex shrink-0 items-center justify-end gap-1',
           ACTIONS_COLUMN,
+          isSelected
+            ? 'basis-full pb-2 md:basis-auto md:pb-0'
+            : 'hidden md:flex',
         )}
       >
         {isSelected && (
@@ -620,7 +633,7 @@ export function PageGroupsListView({
                   </span>
                   <span
                     aria-hidden
-                    className={cn('shrink-0', ACTIONS_COLUMN)}
+                    className={cn('hidden shrink-0 md:block', ACTIONS_COLUMN)}
                   />
                 </div>
                 <ul className="divide-y">

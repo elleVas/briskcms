@@ -97,6 +97,10 @@
     },
     "account": {
       "label": "Account"
+    },
+    "menu": {
+      "open": "Apri il menu",
+      "title": "Menu"
     }
   },
   "dashboard": {
