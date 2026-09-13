@@ -14,7 +14,8 @@ import { z } from 'zod';
  * `media` means an image, for history's sake: it was named before the
  * library held anything else, and theme descriptors already use it that
  * way. `video` and `audio` are its siblings, so a field says which kind
- * it takes and the picker offers nothing else.
+ * it takes and the picker offers nothing else — and `file` is the one
+ * that takes any kind at all, for a download.
  *
  * A closed set on purpose: it is the contract between a descriptor, which
  * is data, and the editor, which is the only place that can draw
@@ -26,6 +27,7 @@ export const customFieldControlSchema = z.enum([
   'audio',
   'color',
   'feature-list',
+  'file',
   'form',
   'gallery',
   'icon',

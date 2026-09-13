@@ -1,0 +1,33 @@
+---
+import type { SiteMapProps } from '@brisk/shared-types';
+import { Translator } from '@brisk/theme-runtime';
+import SiteMapTree from './SiteMapTree.astro';
+
+type Props = SiteMapProps & {
+  instanceClass?: string | null;
+  locale?: string;
+};
+
+const { tree, instanceClass, locale } = Astro.props;
+const i18n = new Translator(locale ?? '');
+// `tree` comes from resolveSiteNavigationBlocks, already cut to the depth
+// asked for and without the pages filed in a collection.
+---
+
+{
+  tree.length > 0 && (
+    <nav class:list={['brisk-site-map', instanceClass]} aria-label={i18n.t('siteMap.label')}>
+      <SiteMapTree nodes={tree} />
+    </nav>
+  )
+}
+
+<style>
+  .brisk-site-map {
+    background: var(--brisk-override-bg, transparent);
+    color: var(--brisk-override-text, inherit);
+    border-radius: var(--brisk-override-radius, 0);
+    padding: var(--brisk-override-padding-y, 0)
+      var(--brisk-override-padding-x, 0);
+  }
+</style>

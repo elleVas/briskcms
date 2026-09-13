@@ -156,6 +156,13 @@ export type TextProps = z.infer<typeof textPropsSchema>;
 export const headingPropsSchema = z.object({
   text: z.string(),
   level: z.enum(['h1', 'h2', 'h3']),
+  /**
+   * The `id` this heading answers to, so a table of contents can link to
+   * it. Filled by the render pass, and only on a page that has a
+   * `TableOfContents`: every other heading keeps rendering exactly as it
+   * did, with no id nobody links to.
+   */
+  anchorId: z.string().optional(),
 });
 export type HeadingProps = z.infer<typeof headingPropsSchema>;
 
@@ -242,6 +249,14 @@ export const pickedMediaSchema = z.object({
   url: z.string(),
   width: z.number().nullish(),
   height: z.number().nullish(),
+  /**
+   * What a download link says about the file — its name, type and size —
+   * captured when it is picked. Absent on every media picked before
+   * `FileDownload` existed, and on images, which never show them.
+   */
+  filename: z.string().optional(),
+  mimeType: z.string().optional(),
+  size: z.number().optional(),
 });
 export type PickedMedia = z.infer<typeof pickedMediaSchema>;
 
@@ -1147,6 +1162,10 @@ export const SERVER_FILLED_BLOCK_TYPES = [
   'ArticleNav',
   'RelatedPages',
   'TermList',
+  'TableOfContents',
+  'SubPages',
+  'SiblingPages',
+  'SiteMap',
 ] as const;
 
 export const searchBoxPropsSchema = z.object({

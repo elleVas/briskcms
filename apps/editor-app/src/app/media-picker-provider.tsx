@@ -61,6 +61,11 @@ export function MediaPickerProvider({
             url: media.url,
             width: media.width,
             height: media.height,
+            // What a download link shows about the file. Harmless on an
+            // image field, which never reads them.
+            filename: media.filename,
+            mimeType: media.mimeType,
+            size: media.size,
           })
         }
       />

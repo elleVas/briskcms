@@ -1,0 +1,33 @@
+---
+import type { SubPagesProps } from '@brisk/shared-types';
+import PageGrid from './PageGrid.astro';
+
+type Props = SubPagesProps & {
+  instanceClass?: string | null;
+  locale?: string;
+};
+
+const { layout, items, instanceClass, locale } = Astro.props;
+
+// The same list and cards a page grid draws, delegated rather than copied
+// (RelatedPages does the same, for the same reason). The cap was applied
+// when the children were chosen, and a filter set on some other list on
+// the page has nothing to say about this one.
+---
+
+{
+  items.length > 0 && (
+    <PageGrid
+      termId={null}
+      layout={layout}
+      order="title"
+      limit={0}
+      perPage={0}
+      emptyText=""
+      items={items}
+      filterable={false}
+      instanceClass={instanceClass}
+      locale={locale}
+    />
+  )
+}

@@ -1,0 +1,142 @@
+---
+import type { MarqueeProps } from '@brisk/shared-types';
+import EmptyContainerHint from '../EmptyContainerHint.astro';
+
+type Props = MarqueeProps & {
+  locale?: string;
+  emptyChildLabel?: string | null;
+  editable?: boolean;
+  hasChildren?: boolean;
+  instanceClass?: string | null;
+};
+
+const {
+  speed,
+  direction,
+  pauseOnHover,
+  locale,
+  emptyChildLabel,
+  editable,
+  hasChildren,
+  instanceClass,
+} = Astro.props;
+
+// In the canvas nothing moves and nothing is copied: a block that slides
+// away while somebody is trying to click it cannot be edited, and a copy
+// would be a second set of the same blocks to select by mistake.
+const animated = !editable && hasChildren;
+const content = animated ? await Astro.slots.render('default') : '';
+---
+
+<div
+  class:list={[
+    'brisk-marquee',
+    `brisk-marquee--${speed}`,
+    `brisk-marquee--${direction}`,
+    pauseOnHover && 'brisk-marquee--pause-on-hover',
+    animated && 'brisk-marquee--animated',
+    instanceClass,
+  ]}
+  data-brisk-editable-outline={editable && hasChildren ? '' : undefined}
+>
+  {
+    animated ? (
+      <div class="brisk-marquee__track">
+        <div class="brisk-marquee__group" set:html={content} />
+        {/* The second copy is what makes the loop seamless. It is hidden
+            from assistive technology and unreachable by keyboard, so the
+            content is read and tabbed through once. */}
+        <div class="brisk-marquee__group" aria-hidden="true" inert set:html={content} />
+      </div>
+    ) : (
+      <div class="brisk-marquee__group">
+        <slot />
+        <EmptyContainerHint
+          show={!hasChildren && Boolean(editable)}
+          locale={locale}
+          childLabel={emptyChildLabel}
+        />
+      </div>
+    )
+  }
+</div>
+
+<style>
+  .brisk-marquee {
+    overflow: hidden;
+    background: var(--brisk-override-bg, transparent);
+    color: var(--brisk-override-text, inherit);
+    border-radius: var(--brisk-override-radius, 0);
+    padding: var(--brisk-override-padding-y, 0)
+      var(--brisk-override-padding-x, 0);
+    --brisk-marquee-duration: 30s;
+  }
+
+  .brisk-marquee--slow {
+    --brisk-marquee-duration: 50s;
+  }
+
+  .brisk-marquee--fast {
+    --brisk-marquee-duration: 15s;
+  }
+
+  .brisk-marquee__track {
+    display: flex;
+    width: max-content;
+    gap: var(--brisk-override-gap, 2.5rem);
+    animation: brisk-marquee var(--brisk-marquee-duration) linear infinite;
+  }
+
+  .brisk-marquee__group {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--brisk-override-gap, 2.5rem);
+  }
+
+  .brisk-marquee--animated .brisk-marquee__group {
+    flex-wrap: nowrap;
+    flex-shrink: 0;
+  }
+
+  .brisk-marquee--backward .brisk-marquee__track {
+    animation-direction: reverse;
+  }
+
+  .brisk-marquee--pause-on-hover:hover .brisk-marquee__track,
+  .brisk-marquee--pause-on-hover:focus-within .brisk-marquee__track {
+    animation-play-state: paused;
+  }
+
+  /* Half the track, plus half a gap, is exactly one copy: the second copy
+     then sits where the first began, and the jump back is invisible. */
+  @keyframes brisk-marquee {
+    to {
+      transform: translateX(calc(-50% - var(--brisk-override-gap, 2.5rem) / 2));
+    }
+  }
+
+  :global([dir='rtl']) .brisk-marquee__track {
+    animation-direction: reverse;
+  }
+
+  :global([dir='rtl']) .brisk-marquee--backward .brisk-marquee__track {
+    animation-direction: normal;
+  }
+
+  /* A reader who asked for less motion gets the content, still and
+     wrapped, with the copy removed. */
+  @media (prefers-reduced-motion: reduce) {
+    .brisk-marquee__track {
+      animation: none;
+      width: auto;
+      flex-wrap: wrap;
+    }
+    .brisk-marquee__group[aria-hidden='true'] {
+      display: none;
+    }
+    .brisk-marquee--animated .brisk-marquee__group {
+      flex-wrap: wrap;
+    }
+  }
+</style>

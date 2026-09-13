@@ -1052,6 +1052,10 @@
         "change": "Change icon",
         "choose": "Choose icon",
         "remove": "Remove icon"
+      },
+      "file": {
+        "choose": "Choose a file",
+        "change": "Change file"
       }
     },
     "placement": {
@@ -1945,6 +1949,201 @@
       "picker": {
         "none": "No classification chosen",
         "unnamed": "Unnamed"
+      }
+    },
+    "anchor": {
+      "label": "Anchor",
+      "fields": {
+        "name": {
+          "fieldLabel": "Name (the part after # in a link)"
+        }
+      }
+    },
+    "readingProgress": {
+      "label": "Reading progress",
+      "fields": {
+        "position": {
+          "fieldLabel": "Position",
+          "options": {
+            "top": "Top of the window",
+            "bottom": "Bottom of the window"
+          }
+        }
+      }
+    },
+    "tableOfContents": {
+      "label": "Table of contents",
+      "fields": {
+        "title": {
+          "fieldLabel": "Title"
+        },
+        "depth": {
+          "fieldLabel": "Headings to list",
+          "options": {
+            "h2": "Sections only (H2)",
+            "h3": "Sections and subsections (H2 and H3)"
+          }
+        },
+        "numbered": {
+          "fieldLabel": "Number the entries"
+        }
+      }
+    },
+    "subPages": {
+      "label": "Subpages",
+      "fields": {
+        "parent": {
+          "fieldLabel": "Pages under (empty = this page)"
+        },
+        "layout": {
+          "fieldLabel": "Layout"
+        },
+        "limit": {
+          "fieldLabel": "How many at most (0 = all)"
+        }
+      }
+    },
+    "siblingPages": {
+      "label": "Previous / next page"
+    },
+    "siteMap": {
+      "label": "Site map",
+      "fields": {
+        "depth": {
+          "fieldLabel": "Levels to show"
+        }
+      }
+    },
+    "list": {
+      "label": "List",
+      "fields": {
+        "marker": {
+          "fieldLabel": "Marker",
+          "options": {
+            "bullet": "Bullets",
+            "number": "Numbers",
+            "check": "Check marks",
+            "icon": "Icon"
+          }
+        },
+        "icon": {
+          "fieldLabel": "Icon"
+        }
+      }
+    },
+    "listItem": {
+      "label": "List item",
+      "fields": {
+        "text": {
+          "fieldLabel": "Text"
+        }
+      }
+    },
+    "mediaText": {
+      "label": "Image and text",
+      "fields": {
+        "media": {
+          "fieldLabel": "Image"
+        },
+        "alt": {
+          "fieldLabel": "Alternative text"
+        },
+        "heading": {
+          "fieldLabel": "Heading"
+        },
+        "body": {
+          "fieldLabel": "Text"
+        },
+        "mediaSide": {
+          "fieldLabel": "Image side",
+          "options": {
+            "start": "Start of the line",
+            "end": "End of the line"
+          }
+        },
+        "mediaWidth": {
+          "fieldLabel": "Image width",
+          "options": {
+            "third": "A third",
+            "half": "Half",
+            "twoThirds": "Two thirds"
+          }
+        },
+        "verticalAlign": {
+          "fieldLabel": "Vertical alignment",
+          "options": {
+            "start": "Top",
+            "center": "Middle",
+            "end": "Bottom"
+          }
+        }
+      }
+    },
+    "faq": {
+      "label": "FAQ",
+      "fields": {
+        "structuredData": {
+          "fieldLabel": "Tell search engines these are questions and answers (schema.org)"
+        }
+      }
+    },
+    "marquee": {
+      "label": "Marquee",
+      "fields": {
+        "speed": {
+          "fieldLabel": "Speed",
+          "options": {
+            "slow": "Slow",
+            "normal": "Normal",
+            "fast": "Fast"
+          }
+        },
+        "direction": {
+          "fieldLabel": "Direction",
+          "options": {
+            "forward": "Forward",
+            "backward": "Backward"
+          }
+        },
+        "pauseOnHover": {
+          "fieldLabel": "Pause when pointed at"
+        }
+      }
+    },
+    "contactDetails": {
+      "label": "Contact details",
+      "fields": {
+        "showAddress": {
+          "fieldLabel": "Show the address"
+        },
+        "showPhone": {
+          "fieldLabel": "Show the phone number"
+        },
+        "showMapLink": {
+          "fieldLabel": "Link the address to a map"
+        }
+      }
+    },
+    "openingHours": {
+      "label": "Opening hours",
+      "fields": {
+        "title": {
+          "fieldLabel": "Title"
+        }
+      }
+    },
+    "fileDownload": {
+      "label": "File download",
+      "fields": {
+        "file": {
+          "fieldLabel": "File"
+        },
+        "label": {
+          "fieldLabel": "Link text (empty = the file name)"
+        },
+        "showDetails": {
+          "fieldLabel": "Show type and size"
+        }
       }
     }
   },

@@ -46,6 +46,20 @@ import {
   pageGridPropsSchema,
   relatedPagesPropsSchema,
   termListPropsSchema,
+  anchorPropsSchema,
+  readingProgressPropsSchema,
+  tableOfContentsPropsSchema,
+  subPagesPropsSchema,
+  siblingPagesPropsSchema,
+  siteMapPropsSchema,
+  listPropsSchema,
+  listItemPropsSchema,
+  mediaTextPropsSchema,
+  faqPropsSchema,
+  marqueePropsSchema,
+  contactDetailsPropsSchema,
+  openingHoursPropsSchema,
+  fileDownloadPropsSchema,
   newsletterSignupPropsSchema,
   pricingPlanPropsSchema,
   pricingTablePropsSchema,
@@ -125,6 +139,34 @@ import ArticleMetaCore from './blocks/ArticleMeta.astro';
 const ArticleMeta = resolveThemeBlockOverride('ArticleMeta', ArticleMetaCore, themeName);
 import ArticleNavCore from './blocks/ArticleNav.astro';
 const ArticleNav = resolveThemeBlockOverride('ArticleNav', ArticleNavCore, themeName);
+import AnchorCore from './blocks/Anchor.astro';
+const Anchor = resolveThemeBlockOverride('Anchor', AnchorCore, themeName);
+import ReadingProgressCore from './blocks/ReadingProgress.astro';
+const ReadingProgress = resolveThemeBlockOverride('ReadingProgress', ReadingProgressCore, themeName);
+import TableOfContentsCore from './blocks/TableOfContents.astro';
+const TableOfContents = resolveThemeBlockOverride('TableOfContents', TableOfContentsCore, themeName);
+import SubPagesCore from './blocks/SubPages.astro';
+const SubPages = resolveThemeBlockOverride('SubPages', SubPagesCore, themeName);
+import SiblingPagesCore from './blocks/SiblingPages.astro';
+const SiblingPages = resolveThemeBlockOverride('SiblingPages', SiblingPagesCore, themeName);
+import SiteMapCore from './blocks/SiteMap.astro';
+const SiteMap = resolveThemeBlockOverride('SiteMap', SiteMapCore, themeName);
+import ListCore from './blocks/List.astro';
+const List = resolveThemeBlockOverride('List', ListCore, themeName);
+import ListItemCore from './blocks/ListItem.astro';
+const ListItem = resolveThemeBlockOverride('ListItem', ListItemCore, themeName);
+import MediaTextCore from './blocks/MediaText.astro';
+const MediaText = resolveThemeBlockOverride('MediaText', MediaTextCore, themeName);
+import FaqCore from './blocks/Faq.astro';
+const Faq = resolveThemeBlockOverride('Faq', FaqCore, themeName);
+import MarqueeCore from './blocks/Marquee.astro';
+const Marquee = resolveThemeBlockOverride('Marquee', MarqueeCore, themeName);
+import ContactDetailsCore from './blocks/ContactDetails.astro';
+const ContactDetails = resolveThemeBlockOverride('ContactDetails', ContactDetailsCore, themeName);
+import OpeningHoursCore from './blocks/OpeningHours.astro';
+const OpeningHours = resolveThemeBlockOverride('OpeningHours', OpeningHoursCore, themeName);
+import FileDownloadCore from './blocks/FileDownload.astro';
+const FileDownload = resolveThemeBlockOverride('FileDownload', FileDownloadCore, themeName);
 import TermListCore from './blocks/TermList.astro';
 const TermList = resolveThemeBlockOverride('TermList', TermListCore, themeName);
 import RelatedPagesCore from './blocks/RelatedPages.astro';
@@ -414,6 +456,97 @@ const BLOCK_REGISTRY: Record<string, BlockDispatchEntry> = {
     schema: relatedPagesPropsSchema,
     stylable: true,
     locale: true,
+  },
+  Anchor: {
+    component: Anchor,
+    schema: anchorPropsSchema,
+    // Invisible on the site; in the canvas it needs a marker to be found.
+    extra: (ctx) => ({ editable: ctx.editable }),
+  },
+  ReadingProgress: {
+    component: ReadingProgress,
+    schema: readingProgressPropsSchema,
+    stylable: true,
+  },
+  TableOfContents: {
+    component: TableOfContents,
+    schema: tableOfContentsPropsSchema,
+    stylable: true,
+    locale: true,
+  },
+  SubPages: {
+    component: SubPages,
+    schema: subPagesPropsSchema,
+    stylable: true,
+    locale: true,
+  },
+  SiblingPages: {
+    component: SiblingPages,
+    schema: siblingPagesPropsSchema,
+    stylable: true,
+    locale: true,
+  },
+  SiteMap: {
+    component: SiteMap,
+    schema: siteMapPropsSchema,
+    stylable: true,
+    locale: true,
+  },
+  List: {
+    component: List,
+    schema: listPropsSchema,
+    stylable: true,
+    recurseChildren: true,
+    containerProps: true,
+  },
+  ListItem: {
+    component: ListItem,
+    schema: listItemPropsSchema,
+    stylable: true,
+  },
+  MediaText: {
+    component: MediaText,
+    schema: mediaTextPropsSchema,
+    stylable: true,
+  },
+  Faq: {
+    component: Faq,
+    schema: faqPropsSchema,
+    stylable: true,
+    recurseChildren: true,
+    containerProps: true,
+    // Its structured data is made of its own questions, which a container
+    // cannot read from inside its <slot/>.
+    extra: (ctx) => ({ items: ctx.block.children ?? [] }),
+  },
+  Marquee: {
+    component: Marquee,
+    schema: marqueePropsSchema,
+    stylable: true,
+    recurseChildren: true,
+    containerProps: true,
+  },
+  ContactDetails: {
+    component: ContactDetails,
+    schema: contactDetailsPropsSchema,
+    stylable: true,
+    locale: true,
+    // Business info is the site's, not the block's: read, never retyped.
+    extra: (ctx) => ({ site: ctx.site, editable: ctx.editable }),
+  },
+  OpeningHours: {
+    component: OpeningHours,
+    schema: openingHoursPropsSchema,
+    stylable: true,
+    locale: true,
+    extra: (ctx) => ({ site: ctx.site, editable: ctx.editable }),
+  },
+  FileDownload: {
+    component: FileDownload,
+    schema: fileDownloadPropsSchema,
+    stylable: true,
+    locale: true,
+    extra: (ctx) => ({ editable: ctx.editable }),
   },
   TermList: {
     component: TermList,

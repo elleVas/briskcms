@@ -119,6 +119,12 @@ const PROSE_FIELD_EXTRACTORS: Partial<Record<string, ProseFieldExtractor>> = {
   PromoBar: (props) => [asString(props['message'])],
   WhatsAppButton: (props) => [asString(props['message'])],
   Callout: (props) => [asString(props['message'])],
+  // What a person wrote on the page, so what a search should find it by.
+  ListItem: (props) => [asString(props['text'])],
+  MediaText: (props) => [asString(props['heading']), asString(props['body'])],
+  TableOfContents: (props) => [asString(props['title'])],
+  OpeningHours: (props) => [asString(props['title'])],
+  FileDownload: (props) => [asString(props['label'])],
   NavLink: (props) => [asString(props['label'])],
   NavDropdown: (props) => [asString(props['label'])],
 };
@@ -176,6 +182,18 @@ export const BLOCKS_WITHOUT_SEARCHABLE_TEXT = [
   // The names of terms, which the term's own page already answers for:
   // a filter is a way to move through a list, not words this page says.
   'TermList',
+  // A point, a bar, and containers: nothing of their own to read.
+  'Anchor',
+  'ReadingProgress',
+  'List',
+  'Faq',
+  'Marquee',
+  // Other pages' titles, indexed on those pages themselves (ADR-0064).
+  'SubPages',
+  'SiblingPages',
+  'SiteMap',
+  // The site's own address and phone: Business info, not this page's words.
+  'ContactDetails',
 
   // Real prose, not wired up yet — a genuine backlog item (found during
   // the 2026-09-02 Extension Manifest planning session, deliberately left
