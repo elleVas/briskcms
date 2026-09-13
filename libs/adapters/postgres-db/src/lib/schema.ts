@@ -134,6 +134,7 @@ export const sites = pgTable(
     // with none of them set renders plain WebSite/WebPage instead.
     businessAddress: text('business_address'),
     businessPhone: text('business_phone'),
+    businessEmail: text('business_email'),
     businessType: text('business_type'),
     openingHours: jsonb('opening_hours').$type<OpeningHoursDay[]>(),
     // Defaults to false (opt-in): a site mid-build shouldn't be indexed until

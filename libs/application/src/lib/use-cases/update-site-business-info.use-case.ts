@@ -11,6 +11,7 @@ export interface UpdateSiteBusinessInfoInput {
   siteId: string;
   businessAddress: string | null;
   businessPhone: string | null;
+  businessEmail: string | null;
   businessType: string | null;
   openingHours: OpeningHoursDay[] | null;
 }
@@ -27,6 +28,7 @@ export async function updateSiteBusinessInfo(
   site.updateBusinessInfo({
     businessAddress: input.businessAddress,
     businessPhone: input.businessPhone,
+    businessEmail: input.businessEmail,
     businessType: input.businessType,
     openingHours: input.openingHours,
   });

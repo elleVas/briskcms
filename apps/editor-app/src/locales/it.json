@@ -6,7 +6,8 @@
     "cancel": "Annulla",
     "delete": "Elimina",
     "yes": "Sì",
-    "no": "No"
+    "no": "No",
+    "close": "Chiudi"
   },
   "auth": {
     "login": {
@@ -97,6 +98,10 @@
     },
     "account": {
       "label": "Account"
+    },
+    "menu": {
+      "open": "Apri il menu",
+      "title": "Menu"
     }
   },
   "dashboard": {
@@ -601,7 +606,6 @@
     "loading": "Caricamento...",
     "save": "Salva",
     "saving": "Salvataggio in corso...",
-    "close": "Chiudi",
     "back": "Indietro",
     "colorsTitle": "Colori",
     "themeTitle": "Tema",
@@ -633,6 +637,8 @@
     "description": "Usati per generare i dati strutturati (schema.org LocalBusiness) del sito — utili per i risultati arricchiti su Google.",
     "addressLabel": "Indirizzo",
     "phoneLabel": "Telefono",
+    "emailLabel": "Email",
+    "emailInvalid": "Questo non sembra un indirizzo email.",
     "typeLabel": "Tipo di attività",
     "typePlaceholder": "Es. Restaurant, ProfessionalService, Store...",
     "hoursLabel": "Orari di apertura",
@@ -2118,6 +2124,9 @@
         },
         "showPhone": {
           "fieldLabel": "Mostra il telefono"
+        },
+        "showEmail": {
+          "fieldLabel": "Mostra l'email"
         },
         "showMapLink": {
           "fieldLabel": "Collega l'indirizzo a una mappa"

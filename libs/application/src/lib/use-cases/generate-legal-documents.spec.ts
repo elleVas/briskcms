@@ -51,6 +51,7 @@ describe('generateLegalDocuments', () => {
       untranslatedPageFallback: 'redirect-to-default',
       businessAddress: null,
       businessPhone: null,
+      businessEmail: null,
       businessType: null,
       openingHours: null,
       searchEngineIndexingEnabled: false,

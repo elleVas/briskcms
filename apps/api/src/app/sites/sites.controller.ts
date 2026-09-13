@@ -333,6 +333,7 @@ export class SitesController {
       untranslatedPageFallback: props.untranslatedPageFallback,
       businessAddress: props.businessAddress,
       businessPhone: props.businessPhone,
+      businessEmail: props.businessEmail,
       businessType: props.businessType,
       openingHours: props.openingHours,
       searchEngineIndexingEnabled: props.searchEngineIndexingEnabled,

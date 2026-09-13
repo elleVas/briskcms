@@ -14,6 +14,7 @@ const baseSite: PublishedSite = {
   untranslatedPageFallback: 'redirect-to-default',
   businessAddress: null,
   businessPhone: null,
+  businessEmail: null,
   businessType: null,
   openingHours: null,
   searchEngineIndexingEnabled: false,
@@ -65,12 +66,26 @@ describe('buildSchemaOrgGraph', () => {
     expect(business?.telephone).toBe('+39 02 1234567');
   });
 
+  it('declares the email on the LocalBusiness node, and a site with only an email still gets one', () => {
+    const graph = buildSchemaOrgGraph({
+      site: { ...baseSite, businessEmail: 'ciao@example.com' },
+      seoMeta,
+      pageUrl: 'https://example.com/chi-siamo',
+    }) as { '@graph': { '@type': string; email?: string }[] };
+
+    const business = graph['@graph'].find(
+      (node) => node['@type'] !== 'WebSite' && node['@type'] !== 'WebPage',
+    );
+    expect(business?.email).toBe('ciao@example.com');
+  });
+
   it('uses the site businessType as the schema.org @type when set', () => {
     const graph = buildSchemaOrgGraph({
       site: {
         ...baseSite,
         businessType: 'Restaurant',
         businessPhone: '+39 02 1234567',
+        businessEmail: null,
       },
       seoMeta,
       pageUrl: 'https://example.com/chi-siamo',

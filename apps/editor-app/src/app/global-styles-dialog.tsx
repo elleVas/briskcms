@@ -561,7 +561,7 @@ export function GlobalStylesDialog({
               variant="outline"
               onClick={() => onOpenChange(false)}
             >
-              {t('globalStyles.close')}
+              {t('common.close')}
             </Button>
           </div>
         )}

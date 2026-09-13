@@ -20,6 +20,7 @@ const sampleSite: SiteRecord = {
   untranslatedPageFallback: 'redirect-to-default',
   businessAddress: null,
   businessPhone: null,
+  businessEmail: null,
   businessType: null,
   openingHours: null,
   searchEngineIndexingEnabled: false,
@@ -75,6 +76,7 @@ describe('sites-api-client', () => {
     await updateBusinessInfo('site-1', {
       businessAddress: 'Via Roma 1',
       businessPhone: '+39 02 1234567',
+      businessEmail: null,
       businessType: 'Restaurant',
       openingHours: [{ dayOfWeek: 'monday', ranges: [] }],
     });
@@ -86,6 +88,7 @@ describe('sites-api-client', () => {
         body: JSON.stringify({
           businessAddress: 'Via Roma 1',
           businessPhone: '+39 02 1234567',
+          businessEmail: null,
           businessType: 'Restaurant',
           openingHours: [{ dayOfWeek: 'monday', ranges: [] }],
         }),

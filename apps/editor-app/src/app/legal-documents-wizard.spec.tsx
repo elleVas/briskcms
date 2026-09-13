@@ -51,6 +51,7 @@ const site: SiteRecord = {
   untranslatedPageFallback: 'redirect-to-default',
   businessAddress: 'Via Roma 1',
   businessPhone: '+39 02 1234567',
+  businessEmail: 'privacy@example.com',
   businessType: null,
   openingHours: null,
   searchEngineIndexingEnabled: false,
@@ -101,10 +102,17 @@ describe('LegalDocumentsWizard', () => {
     expect(screen.getByDisplayValue('example.com')).toBeTruthy();
     expect(screen.getByDisplayValue('Via Roma 1')).toBeTruthy();
     expect(screen.getByDisplayValue('+39 02 1234567')).toBeTruthy();
+    // The one identity field it used to ask for from scratch every time.
+    expect(screen.getByDisplayValue('privacy@example.com')).toBeTruthy();
   });
 
   it('blocks moving to the next step when a required field is empty', async () => {
     renderWizard();
+    // Emptied by hand: it arrives prefilled from Business info now, and
+    // what this checks is the rule for a required field left blank.
+    fireEvent.change(screen.getByDisplayValue('privacy@example.com'), {
+      target: { value: '' },
+    });
 
     fireEvent.click(screen.getByRole('button', { name: /avanti/i }));
 

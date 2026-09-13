@@ -49,6 +49,7 @@ describe('site layout section lifecycle: get-or-create -> draft -> publish -> ro
       untranslatedPageFallback: 'redirect-to-default',
       businessAddress: null,
       businessPhone: null,
+      businessEmail: null,
       businessType: null,
       openingHours: null,
       searchEngineIndexingEnabled: false,

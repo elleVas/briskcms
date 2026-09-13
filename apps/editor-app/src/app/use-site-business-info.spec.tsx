@@ -25,6 +25,7 @@ const sampleSite: SiteRecord = {
   untranslatedPageFallback: 'redirect-to-default',
   businessAddress: 'Via Roma 1',
   businessPhone: null,
+  businessEmail: null,
   businessType: null,
   openingHours: null,
   searchEngineIndexingEnabled: false,
@@ -69,6 +70,7 @@ describe('useSiteBusinessInfo', () => {
       await result.current.updateBusinessInfo({
         businessAddress: 'Via Roma 1',
         businessPhone: null,
+        businessEmail: null,
         businessType: null,
         openingHours: null,
       });
@@ -77,6 +79,7 @@ describe('useSiteBusinessInfo', () => {
     expect(api.updateBusinessInfo).toHaveBeenCalledWith('site-1', {
       businessAddress: 'Via Roma 1',
       businessPhone: null,
+      businessEmail: null,
       businessType: null,
       openingHours: null,
     });

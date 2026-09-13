@@ -107,6 +107,7 @@ describe('DrizzleSiteRepository (integration)', () => {
     site.updateBusinessInfo({
       businessAddress: 'Via Roma 1, Milano',
       businessPhone: '+39 02 1234567',
+      businessEmail: null,
       businessType: 'Restaurant',
       openingHours: [
         {

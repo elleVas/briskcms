@@ -111,11 +111,12 @@
   "contactDetails.address": "Indirizzo",
   "contactDetails.phone": "Telefono",
   "contactDetails.openMap": "Apri su una mappa",
-  "contactDetails.empty": "Nessun indirizzo o telefono: aggiungili in Impostazioni → Dati attività.",
+  "contactDetails.empty": "Nessun indirizzo, telefono o email: aggiungili in Impostazioni → Dati attività.",
   "openingHours.label": "Orari di apertura",
   "openingHours.closed": "Chiuso",
   "openingHours.empty": "Nessun orario: aggiungilo in Impostazioni → Dati attività.",
   "fileDownload.download": "Scarica",
   "fileDownload.empty": "Scegli un file dalla libreria.",
-  "blocks.listItem.label": "Voce di elenco"
+  "blocks.listItem.label": "Voce di elenco",
+  "contactDetails.email": "Email"
 }

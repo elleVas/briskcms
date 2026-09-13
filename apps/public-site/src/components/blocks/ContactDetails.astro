@@ -9,12 +9,22 @@ type Props = ContactDetailsProps & {
   instanceClass?: string | null;
 };
 
-const { showAddress, showPhone, showMapLink, site, locale, editable, instanceClass } =
+const {
+  showAddress,
+  showPhone,
+  showEmail,
+  showMapLink,
+  site,
+  locale,
+  editable,
+  instanceClass,
+} =
   Astro.props;
 const i18n = new Translator(locale ?? '');
 
 const address = showAddress ? site.businessAddress?.trim() : '';
 const phone = showPhone ? site.businessPhone?.trim() : '';
+const email = showEmail ? site.businessEmail?.trim() : '';
 // `tel:` wants the digits, not the spaces and dashes a person reads.
 const phoneHref = phone ? `tel:${phone.replace(/[^\d+]/g, '')}` : '';
 const mapHref = address
@@ -23,7 +33,7 @@ const mapHref = address
 ---
 
 {
-  address || phone ? (
+  address || phone || email ? (
     <address class:list={['brisk-contact-details', instanceClass]}>
       {address && (
         <p class="brisk-contact-details__row">
@@ -41,6 +51,14 @@ const mapHref = address
           <span class="brisk-contact-details__label">{i18n.t('contactDetails.phone')}</span>
           <a class="brisk-contact-details__value" href={phoneHref}>
             {phone}
+          </a>
+        </p>
+      )}
+      {email && (
+        <p class="brisk-contact-details__row">
+          <span class="brisk-contact-details__label">{i18n.t('contactDetails.email')}</span>
+          <a class="brisk-contact-details__value" href={`mailto:${email}`}>
+            {email}
           </a>
         </p>
       )}

@@ -25,6 +25,7 @@ function hasBusinessInfo(site: PublishedSite): boolean {
   return (
     site.businessAddress !== null ||
     site.businessPhone !== null ||
+    site.businessEmail !== null ||
     site.businessType !== null ||
     site.openingHours !== null
   );
@@ -46,6 +47,7 @@ function buildLocalBusinessNode(site: PublishedSite): object {
   // recommend. Revisit if that ever becomes a real limitation.
   if (site.businessAddress) business['address'] = site.businessAddress;
   if (site.businessPhone) business['telephone'] = site.businessPhone;
+  if (site.businessEmail) business['email'] = site.businessEmail;
   if (site.openingHours) {
     business['openingHoursSpecification'] = site.openingHours.flatMap(
       (day: OpeningHoursDay) =>

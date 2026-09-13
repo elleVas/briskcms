@@ -185,6 +185,7 @@ export async function resolveSiteChrome(
       untranslatedPageFallback: site.untranslatedPageFallback,
       businessAddress: site.businessAddress,
       businessPhone: site.businessPhone,
+      businessEmail: site.businessEmail,
       businessType: site.businessType,
       openingHours: site.openingHours,
       searchEngineIndexingEnabled: site.searchEngineIndexingEnabled,

@@ -153,6 +153,7 @@ export type MarqueeProps = z.infer<typeof marqueePropsSchema>;
 export const contactDetailsPropsSchema = z.object({
   showAddress: z.boolean().default(true),
   showPhone: z.boolean().default(true),
+  showEmail: z.boolean().default(true),
   /** A link that opens the address in the reader's maps app. */
   showMapLink: z.boolean().default(true),
 });

@@ -67,6 +67,7 @@ describe('getPublishedPageBySlug', () => {
       untranslatedPageFallback: 'redirect-to-default',
       businessAddress: null,
       businessPhone: null,
+      businessEmail: null,
       businessType: null,
       openingHours: null,
       searchEngineIndexingEnabled: false,
@@ -353,6 +354,7 @@ describe('getPublishedPageBySlug', () => {
         untranslatedPageFallback: 'redirect-to-default',
         businessAddress: null,
         businessPhone: null,
+        businessEmail: null,
         businessType: null,
         openingHours: null,
         searchEngineIndexingEnabled: false,
@@ -564,6 +566,7 @@ describe('getPublishedPageBySlug', () => {
     await seedSite(deps.siteRepository, {
       businessAddress: 'Via Roma 1, Milano',
       businessPhone: '+39 02 1234567',
+      businessEmail: null,
       businessType: 'ProfessionalService',
       openingHours: [
         { dayOfWeek: 'monday', ranges: [{ opens: '09:00', closes: '18:00' }] },
@@ -587,6 +590,7 @@ describe('getPublishedPageBySlug', () => {
     expect(result?.site).toMatchObject({
       businessAddress: 'Via Roma 1, Milano',
       businessPhone: '+39 02 1234567',
+      businessEmail: null,
       businessType: 'ProfessionalService',
       openingHours: [
         { dayOfWeek: 'monday', ranges: [{ opens: '09:00', closes: '18:00' }] },

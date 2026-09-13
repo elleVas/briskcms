@@ -1,3 +1,4 @@
+import { z } from 'zod';
 import { useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
@@ -41,6 +42,7 @@ export interface BusinessInfoDialogProps {
 interface BusinessInfoFormValues {
   address: string;
   phone: string;
+  email: string;
   businessType: string;
   openingHours: OpeningHoursDay[];
 }
@@ -49,6 +51,7 @@ function toFormValues(site: SiteRecord): BusinessInfoFormValues {
   return {
     address: site.businessAddress ?? '',
     phone: site.businessPhone ?? '',
+    email: site.businessEmail ?? '',
     businessType: site.businessType ?? '',
     openingHours: site.openingHours ?? emptyWeek(),
   };
@@ -71,15 +74,22 @@ export function BusinessInfoDialog({
   const { updateBusinessInfo, isSaving } = useSiteBusinessInfo(siteId);
   const [error, setError] = useState('');
 
-  const { register, handleSubmit, reset, control, setValue } =
-    useForm<BusinessInfoFormValues>({
-      defaultValues: {
-        address: '',
-        phone: '',
-        businessType: '',
-        openingHours: emptyWeek(),
-      },
-    });
+  const {
+    register,
+    handleSubmit,
+    reset,
+    control,
+    setValue,
+    formState: { errors },
+  } = useForm<BusinessInfoFormValues>({
+    defaultValues: {
+      address: '',
+      phone: '',
+      email: '',
+      businessType: '',
+      openingHours: emptyWeek(),
+    },
+  });
   useResetFormOnOpen(open, site, reset, (currentSite) => {
     setError('');
     return toFormValues(currentSite);
@@ -93,6 +103,7 @@ export function BusinessInfoDialog({
       await updateBusinessInfo({
         businessAddress: values.address.trim() || null,
         businessPhone: values.phone.trim() || null,
+        businessEmail: values.email.trim() || null,
         businessType: values.businessType.trim() || null,
         openingHours: values.openingHours.some((day) => day.ranges.length > 0)
           ? values.openingHours
@@ -129,6 +140,42 @@ export function BusinessInfoDialog({
                   {t('businessInfo.phoneLabel')}
                 </Label>
                 <Input id="business-phone" {...register('phone')} />
+              </div>
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="business-email">
+                  {t('businessInfo.emailLabel')}
+                </Label>
+                {/* Checked here as well as by the API, so a typo is a line
+                    under the field and not "something went wrong" after
+                    pressing Save. Empty is fine: not every business
+                    publishes an address to write to. */}
+                {/* `inputMode`, not `type="email"`: the same keyboard on a
+                    phone, without the browser's own validation popping a
+                    different message, by different rules, before this one. */}
+                <Input
+                  id="business-email"
+                  inputMode="email"
+                  autoComplete="email"
+                  aria-invalid={errors.email ? true : undefined}
+                  aria-describedby={
+                    errors.email ? 'business-email-error' : undefined
+                  }
+                  {...register('email', {
+                    validate: (value) =>
+                      value.trim() === '' ||
+                      z.string().email().safeParse(value.trim()).success ||
+                      t('businessInfo.emailInvalid'),
+                  })}
+                />
+                {errors.email && (
+                  <p
+                    id="business-email-error"
+                    role="alert"
+                    className="text-sm text-destructive"
+                  >
+                    {errors.email.message}
+                  </p>
+                )}
               </div>
               <div className="flex flex-col gap-2">
                 <Label htmlFor="business-type">

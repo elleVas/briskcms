@@ -14,6 +14,7 @@ describe('Site entity', () => {
     untranslatedPageFallback: 'redirect-to-default' as const,
     businessAddress: null,
     businessPhone: null,
+    businessEmail: null,
     businessType: null,
     openingHours: null,
     searchEngineIndexingEnabled: false,
@@ -76,12 +77,22 @@ describe('Site entity', () => {
     expect(site.hasBusinessInfo()).toBe(true);
   });
 
+  it('counts an email on its own as business info', () => {
+    const site = Site.fromProps({
+      ...props,
+      businessEmail: 'ciao@example.com',
+    });
+
+    expect(site.hasBusinessInfo()).toBe(true);
+  });
+
   it('updateBusinessInfo replaces the business fields', () => {
     const site = Site.fromProps(props);
 
     site.updateBusinessInfo({
       businessAddress: 'Via Roma 1, Milano',
       businessPhone: '+39 02 1234567',
+      businessEmail: null,
       businessType: 'Restaurant',
       openingHours: [{ dayOfWeek: 'monday', ranges: [] }],
     });

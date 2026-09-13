@@ -3,6 +3,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { QueryClientProvider } from '@tanstack/react-query';
 import * as router from '@tanstack/react-router';
+import { TooltipProvider } from '../components/ui/tooltip';
 import { createTestQueryClient } from '../test-query-client';
 import * as auth from '../lib/auth-api-client';
 import * as collectionsApi from '../lib/collections-api-client';
@@ -79,10 +80,14 @@ function renderShell(role: 'admin' | 'publisher' | 'editor' = 'admin') {
     role,
   });
   return render(
+    // The app mounts the tooltip provider at its root (main.tsx); the
+    // narrow bar's menu button is an IconButton, which needs it.
     <QueryClientProvider client={createTestQueryClient()}>
-      <AdminShell>
-        <p>content</p>
-      </AdminShell>
+      <TooltipProvider>
+        <AdminShell>
+          <p>content</p>
+        </AdminShell>
+      </TooltipProvider>
     </QueryClientProvider>,
   );
 }
@@ -162,9 +167,11 @@ describe('AdminShell', () => {
 
     render(
       <QueryClientProvider client={createTestQueryClient()}>
-        <AdminShell>
-          <p>content</p>
-        </AdminShell>
+        <TooltipProvider>
+          <AdminShell>
+            <p>content</p>
+          </AdminShell>
+        </TooltipProvider>
       </QueryClientProvider>,
     );
 
@@ -255,6 +262,32 @@ describe('AdminShell', () => {
     // The point of the fix: nothing hands the link a bare colour that has
     // to out-order another bare colour in the same attribute.
     expect(active.className.split(/\s+/)).not.toContain('text-foreground');
+  });
+
+  /*
+   * On a narrow screen the sidebar was a fixed 208px column that took more
+   * than half of a phone, on every screen. Below `md` it is a bar with a
+   * button, and the same navigation opens in a dialog: focus trapped,
+   * Escape closes it, and following a link closes it too.
+   */
+  it('opens the same navigation from the narrow bar, and closes once a link is followed', async () => {
+    vi.mocked(router.useNavigate).mockReturnValue(vi.fn());
+    renderShell();
+
+    expect(screen.queryByRole('dialog')).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Apri il menu' }));
+
+    const menu = await screen.findByRole('dialog', { name: 'Menu' });
+    const inMenu = [...menu.querySelectorAll('a')].map((a) => a.textContent);
+    expect(inMenu).toContain('Pagine');
+    expect(inMenu).toContain('Media');
+
+    const media = [...menu.querySelectorAll('a')].find(
+      (a) => a.textContent === 'Media',
+    );
+    if (!media) throw new Error('the menu has no Media link');
+    fireEvent.click(media);
+    expect(screen.queryByRole('dialog')).toBeNull();
   });
 
   it('exposes logout inside Account', () => {
