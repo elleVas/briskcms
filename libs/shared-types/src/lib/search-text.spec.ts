@@ -218,6 +218,170 @@ describe('extractSearchableText', () => {
   });
 });
 
+/*
+ * The last family of the hundred-blocks plan. Each block with words of its
+ * own is found by them; the containers, whose words all live in their
+ * children, add none of their own.
+ */
+describe('the shop, local-business and editorial blocks', () => {
+  const index = (blocks: PageContent) =>
+    extractSearchableText({ title: '', description: '' }, blocks);
+
+  it.each<[string, Record<string, unknown>, string[]]>([
+    [
+      'ProductCard',
+      { name: 'Linen shirt', description: 'Made in Italy', badge: 'New' },
+      ['Linen shirt', 'Made in Italy', 'New'],
+    ],
+    [
+      'ProductGallery',
+      { images: [{ alt: 'Front view' }, { alt: 'Back view' }] },
+      ['Front view', 'Back view'],
+    ],
+    ['DiscountPrice', { note: 'VAT included' }, ['VAT included']],
+    ['BuyButton', { label: 'Buy now' }, ['Buy now']],
+    [
+      'ProductVariants',
+      { label: 'Sizes', options: 'Small\nLarge' },
+      ['Sizes', 'Small', 'Large'],
+    ],
+    [
+      'ProductReview',
+      { quote: 'Fits well', author: 'Anna', role: 'Bologna' },
+      ['Fits well', 'Anna', 'Bologna'],
+    ],
+    [
+      'Testimonial',
+      { quote: 'Lovely', author: 'Marco', role: 'Client' },
+      ['Lovely', 'Marco', 'Client'],
+    ],
+    ['ComparisonTable', { columns: 'Base\nPro' }, ['Base', 'Pro']],
+    [
+      'ComparisonRow',
+      { feature: 'Custom domain', values: 'no\nyes' },
+      ['Custom domain'],
+    ],
+    [
+      'PromoCode',
+      { code: 'SUMMER10', description: 'Ten percent off' },
+      ['SUMMER10', 'Ten percent off'],
+    ],
+    [
+      'ShippingReturns',
+      {
+        shippingTitle: 'Shipping',
+        shippingText: '<p>Two days</p>',
+        returnsTitle: 'Returns',
+        returnsText: 'Thirty days',
+        supportTitle: 'Help',
+        supportText: 'Call us',
+      },
+      ['Shipping', 'Two days', 'Returns', 'Thirty days', 'Help', 'Call us'],
+    ],
+    ['TrustBadges', { text: 'Secure payments' }, ['Secure payments']],
+    [
+      'MenuItem',
+      {
+        name: 'Tagliatelle',
+        description: 'Fresh pasta',
+        dietary: 'vegan',
+        allergens: 'gluten',
+      },
+      ['Tagliatelle', 'Fresh pasta', 'vegan', 'gluten'],
+    ],
+    [
+      'EventItem',
+      {
+        title: 'Autumn concert',
+        location: 'Bologna',
+        description: 'Free entry',
+      },
+      ['Autumn concert', 'Bologna', 'Free entry'],
+    ],
+    ['ShareButtons', { label: 'Share this' }, ['Share this']],
+    ['CookiePreferences', { label: 'Cookie settings' }, ['Cookie settings']],
+    [
+      'Step',
+      { title: 'Choose', description: 'Pick a plan' },
+      ['Choose', 'Pick a plan'],
+    ],
+    ['SpecItem', { label: 'Weight', value: '1.2 kg' }, ['Weight', '1.2 kg']],
+    ['ProgressBar', { label: 'Fundraiser' }, ['Fundraiser']],
+    [
+      'ProfileCard',
+      { name: 'Giulia Rossi', role: 'Founder', bio: 'Runs the shop' },
+      ['Giulia Rossi', 'Founder', 'Runs the shop'],
+    ],
+    [
+      'TeamMember',
+      { name: 'Luca', role: 'Chef', bio: 'Cooks' },
+      ['Luca', 'Chef', 'Cooks'],
+    ],
+    ['FileList', { title: 'Downloads' }, ['Downloads']],
+    [
+      'GlossaryTerm',
+      { term: 'Anchor', definition: '<p>A point a link lands on</p>' },
+      ['Anchor', 'A point a link lands on'],
+    ],
+    [
+      'PullQuote',
+      { quote: 'Design is how it works', author: 'Someone', role: 'Designer' },
+      ['Design is how it works', 'Someone', 'Designer'],
+    ],
+    ['ImageHotspots', { alt: 'The editor' }, ['The editor']],
+    [
+      'Hotspot',
+      { title: 'Top left', text: 'Opens downwards' },
+      ['Top left', 'Opens downwards'],
+    ],
+    [
+      'MasonryGallery',
+      { images: [{ alt: 'Portrait' }, { alt: 'Landscape' }] },
+      ['Portrait', 'Landscape'],
+    ],
+  ])('indexes the words of %s', (type, props, words) => {
+    const text = index([{ type, props }]);
+    for (const word of words) {
+      expect(text).toContain(word);
+    }
+  });
+
+  it('skips a picture list entry that is not a picture instead of throwing', () => {
+    expect(
+      index([
+        {
+          type: 'MasonryGallery',
+          props: { images: [null, 'x', { alt: 'Kept' }] },
+        },
+        { type: 'ProductGallery', props: { images: 'not a list' } },
+      ]),
+    ).toBe('Kept');
+  });
+
+  it.each([
+    'ProductGrid',
+    'ProductReviews',
+    'RestaurantMenu',
+    'EventList',
+    'Steps',
+    'SpecList',
+    'Glossary',
+    'VideoPlaylist',
+    'StickyContactBar',
+    'BookingEmbed',
+  ])('adds nothing of its own for %s', (type) => {
+    expect(
+      index([
+        {
+          type,
+          props: { title: 'Not indexed', url: 'https://example.com' },
+          children: [{ type: 'Text', props: { body: 'Child words' } }],
+        },
+      ]),
+    ).toBe('Child words');
+  });
+});
+
 describe('rich text in the index', () => {
   // Without stripping, a search for "strong" would match every emphasised
   // word on the site, and a search for the phrase around a link would
