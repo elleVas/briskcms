@@ -16,7 +16,12 @@ import {
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ThrottlerGuard } from '@nestjs/throttler';
 import { memoryStorage } from 'multer';
-import { deleteMedia, listMedia, uploadMedia } from '@brisk/application';
+import {
+  countMediaByKind,
+  deleteMedia,
+  listMedia,
+  uploadMedia,
+} from '@brisk/application';
 import { type Media } from '@brisk/domain-core';
 import type {
   MediaRepositoryPort,
@@ -26,6 +31,8 @@ import type {
 import { SessionAuthGuard } from '../auth/session-auth.guard';
 import { ZodValidationPipe } from '../zod-validation.pipe';
 import {
+  type CountMediaByKindQuery,
+  countMediaByKindQuerySchema,
   type ListMediaQuery,
   listMediaQuerySchema,
   type UploadMediaBody,
@@ -69,6 +76,24 @@ export class MediaController {
       items: result.items.map((item) => this.toDto(item)),
       total: result.total,
     };
+  }
+
+  /**
+   * What the library's folders show before one is opened. Registered as a
+   * literal segment, so it is never mistaken for a media id.
+   */
+  @Get('kinds')
+  countByKind(
+    @Query(new ZodValidationPipe(countMediaByKindQuerySchema))
+    query: CountMediaByKindQuery,
+  ) {
+    return countMediaByKind(
+      { mediaRepository: this.mediaRepository },
+      {
+        tenantId: this.tenantContext.getCurrentTenantId(),
+        siteId: query.siteId,
+      },
+    );
   }
 
   @Post()

@@ -14,6 +14,12 @@ export interface MediaFilterBarProps {
    * way to pick something the field cannot use.
    */
   lockedKind?: MediaKind;
+  /**
+   * False on the library page, where the folders ARE the choice of kind:
+   * a row of kind buttons above a folder would be the same question asked
+   * twice, in two places that could disagree.
+   */
+  showKindChoice?: boolean;
 }
 
 /** "Everything" first, then the five kinds a file can be (ADR-0070). */
@@ -53,12 +59,13 @@ export function MediaFilterBar({
   value,
   onChange,
   lockedKind,
+  showKindChoice = true,
 }: MediaFilterBarProps) {
   const { t } = useTranslation();
 
   return (
     <div className="flex flex-wrap items-center gap-2">
-      <label className="relative flex min-w-56 flex-1 items-center">
+      <label className="relative flex min-w-[min(14rem,100%)] flex-1 items-center">
         <span className="sr-only">{t('media.filters.searchLabel')}</span>
         <Search className="pointer-events-none absolute left-2.5 size-3.5 text-muted-foreground" />
         <Input
@@ -71,7 +78,7 @@ export function MediaFilterBar({
           }
         />
       </label>
-      {!lockedKind && (
+      {showKindChoice && !lockedKind && (
         <div
           role="radiogroup"
           aria-label={t('media.filters.kindLabel')}

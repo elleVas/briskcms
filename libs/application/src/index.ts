@@ -36,6 +36,7 @@ export * from './lib/use-cases/list-published-page-tree.use-case';
 export * from './lib/use-cases/search-pages.use-case';
 export * from './lib/use-cases/upload-media.use-case';
 export * from './lib/use-cases/list-media.use-case';
+export * from './lib/use-cases/count-media-by-kind.use-case';
 export * from './lib/use-cases/delete-media.use-case';
 export * from './lib/use-cases/login-user.use-case';
 export * from './lib/use-cases/logout-user.use-case';

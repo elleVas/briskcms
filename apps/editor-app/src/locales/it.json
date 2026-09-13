@@ -392,6 +392,14 @@
       "kindAudio": "Audio",
       "kindDocument": "Documenti",
       "kindOther": "Altro"
+    },
+    "folders": {
+      "label": "Cartelle",
+      "count_one": "{{count}} file",
+      "count_other": "{{count}} file",
+      "titleWithCount": "{{name}} ({{count}})",
+      "searchResults": "Risultati della ricerca",
+      "breadcrumb": "Dove ti trovi"
     }
   },
   "icons": {

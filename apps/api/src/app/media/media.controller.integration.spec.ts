@@ -320,6 +320,32 @@ describe('MediaController (integration)', () => {
       .expect(404);
   });
 
+  it("counts the site's files by kind, for the library's folders", async () => {
+    const pdf = await agent
+      .post('/media')
+      .field('siteId', siteId)
+      .attach('file', Buffer.from('%PDF-1.7\n'), 'da-contare.pdf')
+      .expect(201);
+    uploadedStorageKeys.push(pdf.body.storageKey);
+
+    const res = await agent.get('/media/kinds').query({ siteId }).expect(200);
+
+    expect(Object.keys(res.body).sort()).toEqual([
+      'audio',
+      'document',
+      'image',
+      'other',
+      'video',
+    ]);
+    expect(res.body.document).toBeGreaterThanOrEqual(1);
+    // And the number is the folder's own contents, not a separate guess.
+    const listed = await agent
+      .get('/media')
+      .query({ siteId, kind: 'document', pageSize: 100 })
+      .expect(200);
+    expect(res.body.document).toBe(listed.body.total);
+  });
+
   it('404s deleting media that does not exist', async () => {
     await agent.delete(`/media/${randomUUID()}`).expect(404);
   });

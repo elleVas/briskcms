@@ -3,14 +3,35 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { QueryClientProvider } from '@tanstack/react-query';
 import * as router from '@tanstack/react-router';
 import { TooltipProvider } from '../components/ui/tooltip';
-import type { MediaDto } from '../lib/media-api-client';
+import type { MediaDto, MediaFilters } from '../lib/media-api-client';
 import { createTestQueryClient } from '../test-query-client';
 import { MediaLibraryView } from './media-library-view';
 
 vi.mock('@tanstack/react-router', async (importOriginal) => {
   const actual =
     await importOriginal<typeof import('@tanstack/react-router')>();
-  return { ...actual, useNavigate: vi.fn() };
+  return {
+    ...actual,
+    useNavigate: vi.fn(),
+    // No router in these tests: a folder is a link, and what matters here
+    // is where it points.
+    Link: ({
+      children,
+      search,
+      ...rest
+    }: {
+      children: React.ReactNode;
+      search?: Record<string, unknown>;
+      className?: string;
+    }) => (
+      <a
+        href={`/media?${new URLSearchParams(search as Record<string, string>)}`}
+        {...rest}
+      >
+        {children}
+      </a>
+    ),
+  };
 });
 
 const mediaOne: MediaDto = {
@@ -28,9 +49,11 @@ const mediaOne: MediaDto = {
   url: 'http://localhost/uploads/abc.webp',
 };
 
+const counts = { image: 21, video: 0, audio: 2, document: 3, other: 1 };
+
 function renderView(
   items: MediaDto[],
-  options: { page?: number; total?: number } = {},
+  options: { page?: number; total?: number; filters?: MediaFilters } = {},
 ) {
   return render(
     <QueryClientProvider client={createTestQueryClient()}>
@@ -40,7 +63,8 @@ function renderView(
           items={items}
           page={options.page ?? 1}
           total={options.total ?? items.length}
-          filters={{}}
+          filters={options.filters ?? {}}
+          counts={counts}
         />
       </TooltipProvider>
     </QueryClientProvider>,
@@ -52,13 +76,60 @@ describe('MediaLibraryView', () => {
     vi.clearAllMocks();
   });
 
-  it('renders the title and the media grid', () => {
+  /*
+   * The library used to open onto every file at once. It opens onto five
+   * folders now, each with how many files it holds, and no file is shown
+   * until one is opened.
+   */
+  it('opens onto one folder per kind, each with its count and its own address', () => {
     vi.mocked(router.useNavigate).mockReturnValue(vi.fn());
 
     const { container } = renderView([mediaOne]);
 
     expect(screen.getByRole('heading', { name: 'Media' })).toBeTruthy();
+    const folders = screen.getByRole('navigation', { name: 'Cartelle' });
+    const links = [...folders.querySelectorAll('a')];
+    expect(links.map((link) => link.textContent)).toEqual([
+      'Immagini21 file',
+      'Video0 file',
+      'Audio2 file',
+      'Documenti3 file',
+      'Altro1 file',
+    ]);
+    expect(links[3].getAttribute('href')).toBe('/media?page=1&kind=document');
+    // An empty folder is still there: the library's shape does not change
+    // with its contents.
+    expect(links[1].textContent).toContain('0 file');
+    expect(container.querySelectorAll('img')).toHaveLength(0);
+  });
+
+  it("shows a folder's files under a way back to the folders", () => {
+    vi.mocked(router.useNavigate).mockReturnValue(vi.fn());
+
+    const { container } = renderView([mediaOne], {
+      filters: { kind: 'image' },
+    });
+
+    expect(screen.getByRole('heading', { name: 'Immagini (21)' })).toBeTruthy();
+    const trail = screen.getByRole('navigation', { name: 'Dove ti trovi' });
+    expect(trail.querySelector('a')?.getAttribute('href')).toBe(
+      '/media?page=1',
+    );
     expect(container.querySelectorAll('img')).toHaveLength(1);
+    // The folder is the choice of kind; offering the kind buttons again
+    // inside it would ask the same question twice.
+    expect(screen.queryByRole('radiogroup')).toBeNull();
+  });
+
+  it('searches every folder when the search is typed at the front door', () => {
+    vi.mocked(router.useNavigate).mockReturnValue(vi.fn());
+
+    renderView([mediaOne], { filters: { search: 'foto' } });
+
+    expect(
+      screen.getByRole('heading', { name: 'Risultati della ricerca' }),
+    ).toBeTruthy();
+    expect(screen.getByText('foto.png')).toBeTruthy();
   });
 
   /*
@@ -95,13 +166,17 @@ describe('MediaLibraryView', () => {
     const navigate = vi.fn();
     vi.mocked(router.useNavigate).mockReturnValue(navigate);
 
-    renderView([mediaOne], { page: 2, total: 100 });
+    renderView([mediaOne], {
+      page: 2,
+      total: 100,
+      filters: { kind: 'image' },
+    });
     fireEvent.click(screen.getByRole('button', { name: /pagina successiva/i }));
 
     await waitFor(() =>
       expect(navigate).toHaveBeenCalledWith({
         to: '/media',
-        search: { page: 3 },
+        search: { kind: 'image', page: 3 },
       }),
     );
   });

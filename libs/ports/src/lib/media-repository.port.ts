@@ -31,5 +31,14 @@ export interface MediaRepositoryPort {
     pagination: Pagination,
     filter?: MediaFilter,
   ): Promise<PaginatedResult<Media>>;
+  /**
+   * How many files of each kind a site has — what the library's folders
+   * show before anybody opens one. One question to the database, not one
+   * per folder.
+   */
+  countByKind(
+    tenantId: string,
+    siteId: string,
+  ): Promise<Record<MediaKind, number>>;
   delete(tenantId: string, mediaId: string): Promise<void>;
 }

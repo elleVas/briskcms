@@ -28,6 +28,16 @@ export interface MediaFilters {
   kind?: MediaKind;
 }
 
+/** How many files each of the library's folders holds. */
+export function countMediaByKind(
+  siteId: string,
+): Promise<Record<MediaKind, number>> {
+  const params = new URLSearchParams({ siteId });
+  return request<Record<MediaKind, number>>(
+    `/media/kinds?${params.toString()}`,
+  );
+}
+
 export function listMedia(
   siteId: string,
   page: number,
