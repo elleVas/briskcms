@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { Media, MediaTooLargeError, sniffMediaType } from '@brisk/domain-core';
+import { classifyUpload, Media, MediaTooLargeError } from '@brisk/domain-core';
 import type { MediaRepositoryPort, MediaStoragePort } from '@brisk/ports';
 
 export interface UploadMediaDeps {
@@ -32,18 +32,25 @@ export const MAX_UPLOAD_BYTES_BY_KIND = {
   image: 10 * 1024 * 1024,
   audio: 20 * 1024 * 1024,
   video: 64 * 1024 * 1024,
+  // A price list or a brochure, not an archive of scans: generous for a
+  // real document, and still what one buffered request can reasonably
+  // hold.
+  document: 20 * 1024 * 1024,
+  // A zip, a font, a design file — the same ceiling the controller
+  // already puts on any request, since there is no kind-specific reason
+  // to go lower or room to go higher.
+  other: 64 * 1024 * 1024,
 } as const;
 
 export async function uploadMedia(
   deps: UploadMediaDeps,
   input: UploadMediaInput,
 ): Promise<Media> {
-  // Sniffed here as well as in the storage adapter, and deliberately: the
-  // limit is a rule about what this application accepts, and it needs to
-  // know what the file IS before it can say how big it may be. The
-  // adapter's own check guards the write itself, the same two-barrier
-  // shape the CSS override path uses.
-  const kind = sniffMediaType(input.data).kind;
+  // Classified here as well as in the storage adapter, and deliberately:
+  // the limit is a rule about what this application accepts, and it needs
+  // to know what the file IS before it can say how big it may be. Nothing
+  // is refused for its type any more (ADR-0070) — only for its size.
+  const { kind } = classifyUpload(input.data, input.filename);
   const limit = MAX_UPLOAD_BYTES_BY_KIND[kind];
   if (input.data.byteLength > limit) {
     throw new MediaTooLargeError(kind, limit);

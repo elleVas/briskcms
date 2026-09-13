@@ -1,3 +1,4 @@
+import { MEDIA_KINDS, mediaKindOfMime } from '@brisk/shared-types';
 import { randomUUID } from 'node:crypto';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { Media } from '@brisk/domain-core';
@@ -207,6 +208,63 @@ describe('DrizzleMediaRepository (integration)', () => {
       { search: 'report' },
     );
     expect(fromOtherTenant.items).toHaveLength(0);
+  });
+
+  /*
+   * Five kinds since the library takes any file (ADR-0070). The SQL has to
+   * say exactly what `mediaKindOfMime` says — the two are the same rule
+   * written twice, once for the database and once for everyone else — so
+   * every fixture here is checked against BOTH, rather than against a
+   * list of expected names somebody could get wrong the same way twice.
+   */
+  it('files every stored type under the kind mediaKindOfMime gives it', async () => {
+    const [site] = await withTenant(db, tenantAId, (tx) =>
+      tx
+        .insert(sites)
+        .values({
+          tenantId: tenantAId,
+          name: `Site for kinds ${randomUUID()}`,
+          defaultLocale: 'it',
+        })
+        .returning({ id: sites.id }),
+    );
+    const fixtures = [
+      ['foto.webp', 'image/webp'],
+      ['logo.svg', 'image/svg+xml'],
+      ['clip.mp4', 'video/mp4'],
+      ['girato.mov', 'video/quicktime'],
+      ['jingle.mp3', 'audio/mpeg'],
+      ['listino.pdf', 'application/pdf'],
+      ['note.txt', 'text/plain'],
+      [
+        'offerta.docx',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      ],
+      ['archivio.zip', 'application/zip'],
+      ['sconosciuto', 'application/octet-stream'],
+    ] as const;
+    for (const [filename, mimeType] of fixtures) {
+      await mediaRepository.save(
+        buildMedia({ siteId: site.id, filename, mimeType }),
+      );
+    }
+
+    for (const kind of MEDIA_KINDS) {
+      const result = await mediaRepository.listBySite(
+        tenantAId,
+        site.id,
+        { page: 1, pageSize: 50 },
+        { kind },
+      );
+      const expected = fixtures
+        .filter(([, mimeType]) => mediaKindOfMime(mimeType) === kind)
+        .map(([filename]) => filename)
+        .sort();
+      expect({
+        kind,
+        names: result.items.map((item) => item.filename).sort(),
+      }).toEqual({ kind, names: expected });
+    }
   });
 
   it('save() upserts: a second save updates the same row instead of inserting a new one', async () => {

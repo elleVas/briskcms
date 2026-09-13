@@ -18,7 +18,11 @@ import type {
   Term,
   User,
 } from '@brisk/domain-core';
-import { hasUnpublishedChanges, sniffMediaType } from '@brisk/domain-core';
+import {
+  classifyUpload,
+  hasUnpublishedChanges,
+  safeDownloadName,
+} from '@brisk/domain-core';
 import type { PageContent, ResponsiveBlockStyle } from '@brisk/shared-types';
 import type {
   CollectionRepositoryPort,
@@ -774,12 +778,22 @@ export class InMemoryMediaStorage implements MediaStoragePort {
 
   async upload(input: UploadMediaInput): Promise<UploadMediaResult> {
     this.uploads.push(input);
-    // Mirrors what the real adapters do (ADR-0054): an image is
-    // re-encoded to WebP, while video and audio are stored as uploaded
-    // and keep their own sniffed type. A fake that answered `image/webp`
-    // to everything would let a test assert a video had been stored
-    // correctly when nothing of the kind had happened.
-    const sniffed = sniffMediaType(input.data);
+    // Mirrors what the real adapters do (ADR-0054, ADR-0070): an image is
+    // re-encoded to WebP, video and audio are stored as uploaded with
+    // their own sniffed type, and anything the sniffer does not vouch for
+    // is kept under `files/` with its own name, for download. A fake that
+    // answered `image/webp` to everything would let a test assert a file
+    // had been stored correctly when nothing of the kind had happened.
+    const sniffed = classifyUpload(input.data, input.filename);
+    if (!sniffed.inline) {
+      return {
+        storageKey: `files/fake-${this.uploads.length}/${safeDownloadName(input.filename)}`,
+        mimeType: sniffed.mimeType,
+        size: input.data.byteLength,
+        width: 0,
+        height: 0,
+      };
+    }
     if (sniffed.kind === 'image') {
       return {
         storageKey: `fake-${this.uploads.length}.webp`,

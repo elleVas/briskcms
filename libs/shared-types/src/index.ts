@@ -3,6 +3,7 @@ export * from './lib/migrate-responsive-block-styles';
 export * from './lib/migrate-columns-layout';
 export * from './lib/migrate-variant-props';
 export * from './lib/business-info';
+export * from './lib/media-kind';
 export * from './lib/content-model';
 export * from './lib/custom-field-control';
 export * from './lib/rich-text-to-plain-text';

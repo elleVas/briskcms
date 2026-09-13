@@ -1,9 +1,10 @@
 import { useCallback, useMemo, useRef, useState, type ReactNode } from 'react';
 import {
   MediaPickerContext,
+  type MediaPickOptions,
   type MediaPickerPort,
 } from './media-picker-context';
-import type { PickedMedia } from '@brisk/shared-types';
+import type { MediaKind, PickedMedia } from '@brisk/shared-types';
 import { MediaPickerDialog } from './media-picker-dialog';
 
 export interface MediaPickerProviderProps {
@@ -22,14 +23,19 @@ export function MediaPickerProvider({
   children,
 }: MediaPickerProviderProps) {
   const [open, setOpen] = useState(false);
+  const [lockedKind, setLockedKind] = useState<MediaKind | undefined>();
   const resolveRef = useRef<((value: PickedMedia | null) => void) | null>(null);
 
-  const pick = useCallback((): Promise<PickedMedia | null> => {
-    setOpen(true);
-    return new Promise((resolve) => {
-      resolveRef.current = resolve;
-    });
-  }, []);
+  const pick = useCallback(
+    (options?: MediaPickOptions): Promise<PickedMedia | null> => {
+      setLockedKind(options?.kind);
+      setOpen(true);
+      return new Promise((resolve) => {
+        resolveRef.current = resolve;
+      });
+    },
+    [],
+  );
 
   function resolveAndClose(value: PickedMedia | null) {
     resolveRef.current?.(value);
@@ -45,6 +51,7 @@ export function MediaPickerProvider({
       <MediaPickerDialog
         siteId={siteId}
         open={open}
+        lockedKind={lockedKind}
         onOpenChange={(next) => {
           if (!next) resolveAndClose(null);
         }}

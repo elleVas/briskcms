@@ -52,6 +52,29 @@ describe('MediaPickerDialog', () => {
     vi.clearAllMocks();
   });
 
+  /*
+   * Every field used to open the same picker with everything in it: a
+   * video field could be given a photo, a poster a video, and — once the
+   * library took any file (ADR-0070) — an image field a PDF. The field
+   * now says what it takes, and the SERVER is asked for only that.
+   */
+  it('asks the server only for the kind the field can use, and says so', async () => {
+    vi.mocked(api.listMedia).mockResolvedValue({ items: [], total: 0 });
+
+    renderDialog({ lockedKind: 'video' });
+
+    await waitFor(() =>
+      expect(api.listMedia).toHaveBeenCalledWith(
+        'site-1',
+        1,
+        expect.any(Number),
+        expect.objectContaining({ kind: 'video' }),
+      ),
+    );
+    expect(screen.getByText('Scegli un video')).toBeTruthy();
+    expect(screen.queryByRole('radiogroup')).toBeNull();
+  });
+
   it('is not rendered when closed', () => {
     vi.mocked(api.listMedia).mockResolvedValue({ items: [], total: 0 });
 

@@ -19,10 +19,12 @@ export const videoFileBlock: BlockDescriptor<VideoFileProps> = {
     controls: true,
   },
   fields: [
+    // `video`, not `media`: with `media` the picker offered every file in
+    // the library, and a photo chosen here drew an empty player.
     FieldBuilder.custom(
       'media',
       'blocks.videoFile.fields.media.fieldLabel',
-      'media',
+      'video',
     ),
     FieldBuilder.custom(
       'poster',

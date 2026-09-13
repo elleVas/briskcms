@@ -363,19 +363,24 @@
     "grid": {
       "upload": "Upload file",
       "uploading": "Uploading...",
-      "empty": "Nothing in the library yet. Upload an image, a video or an audio file and it becomes available to every block that asks for one.",
+      "empty": "Nothing in the library yet. Upload any file — an image, a video, a PDF — and it becomes available to every block that asks for one.",
       "delete": "Delete",
       "previousPage": "Previous page",
       "nextPage": "Next page",
       "pageIndicator": "Page {{page}} of {{totalPages}}",
-      "noMatches": "No file matches what you are looking for."
+      "noMatches": "No file matches what you are looking for.",
+      "uploadWarning": "Any file can be uploaded, and Brisk does not check what is inside it: only upload files from sources you trust. Anything that is not an image, a video or an audio file is downloaded when opened, never displayed."
     },
     "deleteDialog": {
       "title": "Delete this file?",
       "description": "\"{{name}}\" will be permanently deleted. This action cannot be undone."
     },
     "picker": {
-      "title": "Choose a file"
+      "title": "Choose a file",
+      "titleImage": "Choose an image",
+      "titleVideo": "Choose a video",
+      "titleAudio": "Choose an audio file",
+      "titleDocument": "Choose a document"
     },
     "filters": {
       "searchLabel": "Search by name",
@@ -384,7 +389,9 @@
       "kindAll": "All",
       "kindImage": "Images",
       "kindVideo": "Video",
-      "kindAudio": "Audio"
+      "kindAudio": "Audio",
+      "kindDocument": "Documents",
+      "kindOther": "Other"
     }
   },
   "icons": {

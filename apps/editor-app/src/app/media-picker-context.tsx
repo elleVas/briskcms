@@ -1,5 +1,5 @@
 import { createContext, useContext } from 'react';
-import type { PickedMedia } from '@brisk/shared-types';
+import type { MediaKind, PickedMedia } from '@brisk/shared-types';
 
 /**
  * The Image/Gallery/BeforeAfter/etc. blocks need a way to let the
@@ -11,8 +11,18 @@ import type { PickedMedia } from '@brisk/shared-types';
  * by apps/editor-app and provided through this context — the same
  * inversion already used for auth/tenant context on the backend.
  */
+export interface MediaPickOptions {
+  /**
+   * The only kind this field can use. Omitted for a field that takes any
+   * file. Without it every picker offered everything, so a video field
+   * could be given a photo and a poster a video — and, once the library
+   * took any file (ADR-0070), an image field a PDF.
+   */
+  kind?: MediaKind;
+}
+
 export interface MediaPickerPort {
-  pick(): Promise<PickedMedia | null>;
+  pick(options?: MediaPickOptions): Promise<PickedMedia | null>;
 }
 
 export const MediaPickerContext = createContext<MediaPickerPort | null>(null);

@@ -11,6 +11,11 @@ import { z } from 'zod';
  * duplicating it would mean a theme could name a control the type system
  * accepts and the schema rejects, or the reverse.
  *
+ * `media` means an image, for history's sake: it was named before the
+ * library held anything else, and theme descriptors already use it that
+ * way. `video` and `audio` are its siblings, so a field says which kind
+ * it takes and the picker offers nothing else.
+ *
  * A closed set on purpose: it is the contract between a descriptor, which
  * is data, and the editor, which is the only place that can draw
  * anything. A name that is not in it renders nothing at all — no error,
@@ -18,6 +23,7 @@ import { z } from 'zod';
  * rather than trusted.
  */
 export const customFieldControlSchema = z.enum([
+  'audio',
   'color',
   'feature-list',
   'form',
@@ -29,6 +35,7 @@ export const customFieldControlSchema = z.enum([
   'table-data',
   'taxonomy',
   'term',
+  'video',
 ]);
 
 export type CustomFieldControl = z.infer<typeof customFieldControlSchema>;

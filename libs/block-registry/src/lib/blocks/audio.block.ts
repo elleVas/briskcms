@@ -9,10 +9,11 @@ export const audioBlock: BlockDescriptor<AudioProps> = {
   icon: 'music',
   defaultProps: { media: null, title: '', loop: false },
   fields: [
+    // `audio`, not `media` — see the same field on VideoFile.
     FieldBuilder.custom(
       'media',
       'blocks.audio.fields.media.fieldLabel',
-      'media',
+      'audio',
     ),
     {
       kind: 'text',

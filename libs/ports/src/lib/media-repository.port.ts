@@ -1,4 +1,5 @@
-import type { Media, MediaKind } from '@brisk/domain-core';
+import type { Media } from '@brisk/domain-core';
+import type { MediaKind } from '@brisk/shared-types';
 import type { PaginatedResult, Pagination } from './pagination';
 
 /**
@@ -12,7 +13,7 @@ import type { PaginatedResult, Pagination } from './pagination';
 export interface MediaFilter {
   /** Matched against the filename, case-insensitively, anywhere in it. */
   search?: string;
-  /** Images, video or audio — decided from the stored MIME type's own prefix. */
+  /** One of the library's five kinds — see `mediaKindOfMime` for which MIME type belongs where. */
   kind?: MediaKind;
 }
 

@@ -363,19 +363,24 @@
     "grid": {
       "upload": "Carica file",
       "uploading": "Caricamento in corso...",
-      "empty": "Ancora niente nella libreria. Carica un’immagine, un video o un audio e diventa disponibile per ogni blocco che ne chiede uno.",
+      "empty": "La libreria è ancora vuota. Carica un file qualsiasi — un'immagine, un video, un PDF — e diventa disponibile per ogni blocco che ne chiede uno.",
       "delete": "Elimina",
       "previousPage": "Pagina precedente",
       "nextPage": "Pagina successiva",
       "pageIndicator": "Pagina {{page}} di {{totalPages}}",
-      "noMatches": "Nessun file corrisponde a quello che cerchi."
+      "noMatches": "Nessun file corrisponde a quello che cerchi.",
+      "uploadWarning": "Puoi caricare qualsiasi file, e Brisk non controlla cosa contiene: carica solo file che arrivano da fonti di cui ti fidi. Tutto ciò che non è un'immagine, un video o un audio si scarica quando lo apri, non viene mai mostrato."
     },
     "deleteDialog": {
       "title": "Eliminare questo file?",
       "description": "\"{{name}}\" verrà eliminato definitivamente. L'azione non può essere annullata."
     },
     "picker": {
-      "title": "Scegli un file"
+      "title": "Scegli un file",
+      "titleImage": "Scegli un'immagine",
+      "titleVideo": "Scegli un video",
+      "titleAudio": "Scegli un audio",
+      "titleDocument": "Scegli un documento"
     },
     "filters": {
       "searchLabel": "Cerca per nome",
@@ -384,7 +389,9 @@
       "kindAll": "Tutti",
       "kindImage": "Immagini",
       "kindVideo": "Video",
-      "kindAudio": "Audio"
+      "kindAudio": "Audio",
+      "kindDocument": "Documenti",
+      "kindOther": "Altro"
     }
   },
   "icons": {

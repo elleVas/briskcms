@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
-import { unlink } from 'node:fs/promises';
+import { mkdir, rmdir, stat, unlink, writeFile } from 'node:fs/promises';
+import { dirname, join } from 'node:path';
 import { type INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { HttpExceptionFilter } from '../http-exception.filter';
@@ -92,6 +93,9 @@ describe('MediaController (integration)', () => {
     const uploadDir = process.env.MEDIA_UPLOAD_DIR as string;
     for (const key of uploadedStorageKeys) {
       await unlink(`${uploadDir}/${key}`).catch(() => undefined);
+      if (key.startsWith('files/')) {
+        await rmdir(join(uploadDir, dirname(key))).catch(() => undefined);
+      }
     }
     await deleteIntegrationFixtures(db, tenantId, {
       siteIds: [siteId],
@@ -133,14 +137,6 @@ describe('MediaController (integration)', () => {
       .get(`/uploads/${uploadRes.body.storageKey}`)
       .expect(200);
     expect(servedRes.headers['content-type']).toContain('image/webp');
-  });
-
-  it('400s uploading a non-image file', async () => {
-    await agent
-      .post('/media')
-      .field('siteId', siteId)
-      .attach('file', Buffer.from('not an image'), 'documento.pdf')
-      .expect(400);
   });
 
   /**
@@ -188,17 +184,106 @@ describe('MediaController (integration)', () => {
     expect(servedRes.headers['content-disposition']).toBeUndefined();
   });
 
-  it('refuses a file whose bytes are not what its name and type claim', async () => {
-    // The declared MIME type says video, the extension says video, and
-    // the content is a script. Only the bytes are checked (ADR-0054).
-    await agent
+  /*
+   * The library used to refuse this. It now takes any file (ADR-0070), and
+   * what has to hold instead is that nothing whose bytes proved nothing
+   * is ever opened in place: the declared type says video, the name says
+   * video, the content is a script — so it is kept, and only downloadable.
+   */
+  it('takes a script disguised as a video, but only ever as a download', async () => {
+    const uploadRes = await agent
       .post('/media')
       .field('siteId', siteId)
       .attach('file', Buffer.from('<svg onload="alert(1)">'), {
         filename: 'clip.mp4',
         contentType: 'video/mp4',
       })
-      .expect(400);
+      .expect(201);
+    uploadedStorageKeys.push(uploadRes.body.storageKey);
+
+    expect(uploadRes.body.storageKey).toMatch(/^files\/[^/]+\/clip\.mp4$/);
+    const servedRes = await request(app.getHttpServer())
+      .get(`/uploads/${uploadRes.body.storageKey}`)
+      .expect(200);
+    expect(servedRes.headers['content-disposition']).toBe('attachment');
+    expect(servedRes.headers['x-content-type-options']).toBe('nosniff');
+  });
+
+  it('takes a PDF as a document, under the name it was uploaded with', async () => {
+    const uploadRes = await agent
+      .post('/media')
+      .field('siteId', siteId)
+      .attach('file', Buffer.from('%PDF-1.7\n'), 'Listino 2026.pdf')
+      .expect(201);
+    uploadedStorageKeys.push(uploadRes.body.storageKey);
+
+    expect(uploadRes.body.mimeType).toBe('application/pdf');
+    expect(uploadRes.body.storageKey).toMatch(
+      /^files\/[^/]+\/Listino-2026\.pdf$/,
+    );
+  });
+
+  /*
+   * The rule used to hang off the URL prefix, and the URL is not the
+   * file: `%66iles` does not match `/uploads/files`, falls through to the
+   * general mount, and is decoded back to the very same file — served
+   * inline. Found by trying it against the running API on 2026-09-13.
+   */
+  it('keeps an uploaded HTML file a download however its address is spelled', async () => {
+    const uploadRes = await agent
+      .post('/media')
+      .field('siteId', siteId)
+      .attach('file', Buffer.from('<script>alert(1)</script>'), 'page.html')
+      .expect(201);
+    uploadedStorageKeys.push(uploadRes.body.storageKey);
+    const key: string = uploadRes.body.storageKey;
+
+    for (const address of [
+      `/uploads/${key}`,
+      `/uploads/${key.replace(/^files/, '%66iles')}`,
+      `/uploads/${key.replace(/^files/, '%66%69%6c%65%73')}`,
+      `/uploads/./${key}`,
+    ]) {
+      const res = await request(app.getHttpServer()).get(address);
+      // Either it is not found, or it is a download. Never a page.
+      if (res.status === 200) {
+        expect({
+          address,
+          disposition: res.headers['content-disposition'],
+        }).toEqual({ address, disposition: 'attachment' });
+      } else {
+        expect(res.status).toBe(404);
+      }
+    }
+  });
+
+  it('keeps a form attachment a download under a disguised address too', async () => {
+    const uploadDir = process.env.MEDIA_UPLOAD_DIR as string;
+    const name = `${randomUUID()}.pdf`;
+    await mkdir(join(uploadDir, 'attachments'), { recursive: true });
+    await writeFile(join(uploadDir, 'attachments', name), '%PDF-1.7\n');
+    try {
+      const res = await request(app.getHttpServer())
+        .get(`/uploads/%61ttachments/${name}`)
+        .expect(200);
+      expect(res.headers['content-disposition']).toBe('attachment');
+    } finally {
+      await unlink(join(uploadDir, 'attachments', name)).catch(() => undefined);
+    }
+  });
+
+  it('deletes a downloadable file and the directory it was kept in', async () => {
+    const uploadRes = await agent
+      .post('/media')
+      .field('siteId', siteId)
+      .attach('file', Buffer.from('ciao'), 'nota.txt')
+      .expect(201);
+    const key: string = uploadRes.body.storageKey;
+
+    await agent.delete(`/media/${uploadRes.body.id}`).expect(204);
+
+    const uploadDir = process.env.MEDIA_UPLOAD_DIR as string;
+    await expect(stat(join(uploadDir, dirname(key)))).rejects.toThrow();
   });
 
   it('400s with no file attached', async () => {

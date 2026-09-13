@@ -1,10 +1,16 @@
 import { UnsupportedMediaTypeError } from './errors';
 
-export type MediaKind = 'image' | 'video' | 'audio';
+/**
+ * The three kinds a browser renders in a page — and so the only three a
+ * sniffer ever vouches for. Not `MediaKind` from shared-types, which also
+ * has documents and everything else: those are never served inline, so
+ * there is nothing for their bytes to prove.
+ */
+export type InlineMediaKind = 'image' | 'video' | 'audio';
 
 export interface SniffedMediaType {
   mimeType: string;
-  kind: MediaKind;
+  kind: InlineMediaKind;
   /** No leading dot, e.g. 'mp4'. */
   extension: string;
 }
@@ -42,7 +48,7 @@ function ascii(text: string): number[] {
 
 interface MediaSignature {
   mimeType: string;
-  kind: MediaKind;
+  kind: InlineMediaKind;
   extension: string;
   matches: (bytes: Uint8Array) => boolean;
 }

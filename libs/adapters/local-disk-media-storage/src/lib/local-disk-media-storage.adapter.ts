@@ -1,8 +1,8 @@
 import { randomUUID } from 'node:crypto';
-import { mkdir, unlink, writeFile } from 'node:fs/promises';
-import { join } from 'node:path';
+import { mkdir, rmdir, unlink, writeFile } from 'node:fs/promises';
+import { dirname, join } from 'node:path';
 import sharp from 'sharp';
-import { sniffMediaType } from '@brisk/domain-core';
+import { classifyUpload, safeDownloadName } from '@brisk/domain-core';
 import type {
   MediaStoragePort,
   UploadMediaInput,
@@ -29,12 +29,29 @@ export class LocalDiskMediaStorageAdapter implements MediaStoragePort {
   constructor(private readonly options: LocalDiskMediaStorageOptions) {}
 
   async upload(input: UploadMediaInput): Promise<UploadMediaResult> {
-    // The file's own bytes decide, not the declared type (ADR-0054): a
-    // caller can set any header it likes, and for video and audio — which
-    // are stored exactly as uploaded, since sharp cannot re-encode them —
-    // this is the only check there will ever be. It throws
-    // UnsupportedMediaTypeError for anything not on the allow-list.
-    const sniffed = sniffMediaType(input.data);
+    // The file's own bytes decide what may be OPENED, not the declared
+    // type (ADR-0054): a caller can set any header it likes. What the
+    // bytes do not vouch for is still taken (ADR-0070), but only as a
+    // download — see media-static.ts, which serves `files/` that way.
+    const sniffed = classifyUpload(input.data, input.filename);
+
+    if (!sniffed.inline) {
+      // Its own directory, so the file can keep the name it was uploaded
+      // with: a download is saved under the last segment of its address,
+      // and "listino-2026.pdf" should arrive as that, not as a UUID.
+      const key = `files/${randomUUID()}/${safeDownloadName(input.filename)}`;
+      await mkdir(dirname(join(this.options.uploadDir, key)), {
+        recursive: true,
+      });
+      await writeFile(join(this.options.uploadDir, key), input.data);
+      return {
+        storageKey: key,
+        mimeType: sniffed.mimeType,
+        size: input.data.byteLength,
+        width: 0,
+        height: 0,
+      };
+    }
 
     if (sniffed.kind !== 'image') {
       await mkdir(this.options.uploadDir, { recursive: true });
@@ -100,6 +117,14 @@ export class LocalDiskMediaStorageAdapter implements MediaStoragePort {
       if ((error as NodeJS.ErrnoException).code !== 'ENOENT') {
         throw error;
       }
+    }
+    // A download lives alone in its own directory; leaving the empty
+    // directory behind would grow `files/` by one entry for every file
+    // anybody ever deleted.
+    if (storageKey.startsWith('files/')) {
+      await rmdir(dirname(join(this.options.uploadDir, storageKey))).catch(
+        () => undefined,
+      );
     }
   }
 }
