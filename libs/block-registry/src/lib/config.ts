@@ -42,6 +42,20 @@ import { articleNavBlock } from './blocks/article-nav.block';
 import { pageGridBlock } from './blocks/page-grid.block';
 import { relatedPagesBlock } from './blocks/related-pages.block';
 import { termListBlock } from './blocks/term-list.block';
+import { anchorBlock } from './blocks/anchor.block';
+import { readingProgressBlock } from './blocks/reading-progress.block';
+import { tableOfContentsBlock } from './blocks/table-of-contents.block';
+import { subPagesBlock } from './blocks/sub-pages.block';
+import { siblingPagesBlock } from './blocks/sibling-pages.block';
+import { siteMapBlock } from './blocks/site-map.block';
+import { listBlock } from './blocks/list.block';
+import { listItemBlock } from './blocks/list-item.block';
+import { mediaTextBlock } from './blocks/media-text.block';
+import { faqBlock } from './blocks/faq.block';
+import { marqueeBlock } from './blocks/marquee.block';
+import { contactDetailsBlock } from './blocks/contact-details.block';
+import { openingHoursBlock } from './blocks/opening-hours.block';
+import { fileDownloadBlock } from './blocks/file-download.block';
 import { searchBoxBlock } from './blocks/search-box.block';
 import { sectionBlock } from './blocks/section.block';
 import { statBlock } from './blocks/stat.block';
@@ -103,6 +117,20 @@ export {
   articleNavBlock,
   relatedPagesBlock,
   termListBlock,
+  anchorBlock,
+  readingProgressBlock,
+  tableOfContentsBlock,
+  subPagesBlock,
+  siblingPagesBlock,
+  siteMapBlock,
+  listBlock,
+  listItemBlock,
+  mediaTextBlock,
+  faqBlock,
+  marqueeBlock,
+  contactDetailsBlock,
+  openingHoursBlock,
+  fileDownloadBlock,
   searchBoxBlock,
   statBlock,
   statsCounterBlock,
@@ -169,6 +197,20 @@ export const pageBlocks: BlockDescriptor[] = [
   articleNavBlock,
   relatedPagesBlock,
   termListBlock,
+  anchorBlock,
+  readingProgressBlock,
+  tableOfContentsBlock,
+  subPagesBlock,
+  siblingPagesBlock,
+  siteMapBlock,
+  listBlock,
+  listItemBlock,
+  mediaTextBlock,
+  faqBlock,
+  marqueeBlock,
+  contactDetailsBlock,
+  openingHoursBlock,
+  fileDownloadBlock,
   searchBoxBlock,
   videoEmbedBlock,
   mapEmbedBlock,
@@ -201,6 +243,7 @@ export const pageBlockCategories: { title: string; types: string[] }[] = [
       'Carousel',
       'Divider',
       'Spacer',
+      'Anchor',
     ],
   },
   {
@@ -224,6 +267,14 @@ export const pageBlockCategories: { title: string; types: string[] }[] = [
       'ArticleNav',
       'RelatedPages',
       'TermList',
+      'TableOfContents',
+      'SubPages',
+      'SiblingPages',
+      'SiteMap',
+      'List',
+      'ListItem',
+      'ContactDetails',
+      'OpeningHours',
     ],
   },
   {
@@ -250,6 +301,8 @@ export const pageBlockCategories: { title: string; types: string[] }[] = [
       'Rating',
       'VideoFile',
       'Audio',
+      'MediaText',
+      'FileDownload',
     ],
   },
   {
@@ -276,6 +329,9 @@ export const pageBlockCategories: { title: string; types: string[] }[] = [
       'Tab',
       'FeatureGrid',
       'Feature',
+      'ReadingProgress',
+      'Faq',
+      'Marquee',
     ],
   },
 ];

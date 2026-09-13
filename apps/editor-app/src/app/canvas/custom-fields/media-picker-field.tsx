@@ -20,12 +20,15 @@ function KindPickerField({
   value,
   onChange,
   kind,
-}: MediaPickerFieldProps & { kind: MediaKind }) {
+}: MediaPickerFieldProps & {
+  /** Omitted for a field that takes any file at all. */
+  kind?: MediaKind;
+}) {
   const { t } = useTranslation();
   const { pick } = useMediaPicker();
 
   async function handlePick() {
-    const picked = await pick({ kind });
+    const picked = await pick(kind ? { kind } : undefined);
     if (picked) onChange(picked);
   }
 
@@ -48,6 +51,16 @@ function KindPickerField({
       {value && kind === 'audio' && (
         <audio src={value.url} preload="none" controls className="w-full" />
       )}
+      {value && !kind && (
+        // A download has nothing to preview; its name is what tells two
+        // price lists apart.
+        <span
+          className="truncate text-xs text-muted-foreground"
+          title={value.filename}
+        >
+          {value.filename ?? value.url}
+        </span>
+      )}
       <Button
         type="button"
         variant="outline"
@@ -55,9 +68,13 @@ function KindPickerField({
         className="self-start"
         onClick={() => void handlePick()}
       >
-        {value
-          ? t('canvas.pickers.media.change')
-          : t('canvas.pickers.media.choose')}
+        {kind
+          ? value
+            ? t('canvas.pickers.media.change')
+            : t('canvas.pickers.media.choose')
+          : value
+            ? t('canvas.pickers.file.change')
+            : t('canvas.pickers.file.choose')}
       </Button>
     </div>
   );
@@ -76,4 +93,9 @@ export function VideoPickerField(props: MediaPickerFieldProps) {
 /** `control: 'audio'`. */
 export function AudioPickerField(props: MediaPickerFieldProps) {
   return <KindPickerField {...props} kind="audio" />;
+}
+
+/** `control: 'file'` — any kind of file, for a download (ADR-0070). */
+export function FilePickerField(props: MediaPickerFieldProps) {
+  return <KindPickerField {...props} />;
 }

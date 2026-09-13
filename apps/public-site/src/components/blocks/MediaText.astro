@@ -1,0 +1,106 @@
+---
+import type { MediaTextProps } from '@brisk/shared-types';
+import OptimizedImage from '../OptimizedImage.astro';
+
+type Props = MediaTextProps & { instanceClass?: string | null };
+
+const { media, alt, heading, body, mediaSide, mediaWidth, verticalAlign, instanceClass } =
+  Astro.props;
+---
+
+<div
+  class:list={[
+    'brisk-media-text',
+    `brisk-media-text--media-${mediaSide}`,
+    `brisk-media-text--width-${mediaWidth}`,
+    `brisk-media-text--align-${verticalAlign}`,
+    instanceClass,
+  ]}
+>
+  <div class="brisk-media-text__inner">
+    <div class="brisk-media-text__media">
+      {media && <OptimizedImage media={media} alt={alt} class="brisk-media-text__image" />}
+    </div>
+    <div class="brisk-media-text__content">
+      {heading && (
+        <h2 class="brisk-media-text__heading" data-brisk-field="heading">
+          {heading}
+        </h2>
+      )}
+      <div class="brisk-media-text__body brisk-rich-text" data-brisk-field="body" set:html={body} />
+    </div>
+  </div>
+</div>
+
+<style>
+  /* Measured by its own box, not by the screen: the same block sits in a
+     full-width band or in one column of three (ADR-0050). A container
+     cannot query itself, hence the inner element (the trap from PR #162). */
+  .brisk-media-text {
+    container-type: inline-size;
+    background: var(--brisk-override-bg, transparent);
+    color: var(--brisk-override-text, inherit);
+    border-radius: var(--brisk-override-radius, 0);
+    padding: var(--brisk-override-padding-y, 0)
+      var(--brisk-override-padding-x, 0);
+  }
+
+  .brisk-media-text__inner {
+    display: grid;
+    gap: var(--brisk-override-gap, 2rem);
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .brisk-media-text__media,
+  .brisk-media-text__content {
+    min-width: 0;
+  }
+
+  .brisk-media-text__media :global(img) {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+    border-radius: var(--radius);
+  }
+
+  .brisk-media-text__heading {
+    margin: 0 0 0.75rem;
+  }
+
+  @container (min-width: 36rem) {
+    .brisk-media-text__inner {
+      grid-template-columns: var(--brisk-media-text-columns);
+    }
+    .brisk-media-text--width-third .brisk-media-text__inner {
+      --brisk-media-text-columns: minmax(0, 1fr) minmax(0, 2fr);
+    }
+    .brisk-media-text--width-half .brisk-media-text__inner {
+      --brisk-media-text-columns: minmax(0, 1fr) minmax(0, 1fr);
+    }
+    .brisk-media-text--width-two-thirds .brisk-media-text__inner {
+      --brisk-media-text-columns: minmax(0, 2fr) minmax(0, 1fr);
+    }
+    /* `end` swaps the columns by ORDER, never by physical side, so the
+       picture follows the page's reading direction. The column widths are
+       flipped with it, so "a third" stays the picture's share. */
+    .brisk-media-text--media-end .brisk-media-text__media {
+      order: 2;
+    }
+    .brisk-media-text--media-end.brisk-media-text--width-third .brisk-media-text__inner {
+      --brisk-media-text-columns: minmax(0, 2fr) minmax(0, 1fr);
+    }
+    .brisk-media-text--media-end.brisk-media-text--width-two-thirds .brisk-media-text__inner {
+      --brisk-media-text-columns: minmax(0, 1fr) minmax(0, 2fr);
+    }
+    .brisk-media-text--align-start .brisk-media-text__inner {
+      align-items: start;
+    }
+    .brisk-media-text--align-center .brisk-media-text__inner {
+      align-items: center;
+    }
+    .brisk-media-text--align-end .brisk-media-text__inner {
+      align-items: end;
+    }
+  }
+</style>

@@ -3,16 +3,25 @@ import type { HeadingProps } from '@brisk/shared-types';
 
 type Props = HeadingProps & { instanceClass?: string | null };
 
-const { text, level, instanceClass } = Astro.props;
+const { text, level, anchorId, instanceClass } = Astro.props;
 const Tag = level;
 ---
 
-<Tag class:list={['brisk-heading', instanceClass]} data-brisk-field="text">
+{/* `anchorId` exists only on a page with a table of contents, filled by
+    resolveTableOfContents; everywhere else the heading has no id. */}
+<Tag
+  id={anchorId}
+  class:list={['brisk-heading', instanceClass]}
+  data-brisk-field="text"
+>
   {text}
 </Tag>
 
 <style>
   .brisk-heading {
     color: var(--brisk-override-text, inherit);
+    /* A link from the table of contents lands with the heading clear of a
+       sticky header, not underneath it. */
+    scroll-margin-top: 5rem;
   }
 </style>

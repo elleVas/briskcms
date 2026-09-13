@@ -102,5 +102,20 @@
   "termList.browseLabel": "Categories",
   "termList.all": "All",
   "termList.apply": "Apply",
-  "termList.selectLabel": "Narrow by"
+  "termList.selectLabel": "Narrow by",
+  "tableOfContents.label": "Contents",
+  "siblingPages.label": "Page navigation",
+  "siblingPages.previous": "Previous page",
+  "siblingPages.next": "Next page",
+  "siteMap.label": "Site map",
+  "contactDetails.address": "Address",
+  "contactDetails.phone": "Phone",
+  "contactDetails.openMap": "Open in a map",
+  "contactDetails.empty": "No address or phone yet: add them under Settings → Business info.",
+  "openingHours.label": "Opening hours",
+  "openingHours.closed": "Closed",
+  "openingHours.empty": "No opening hours yet: add them under Settings → Business info.",
+  "fileDownload.download": "Download",
+  "fileDownload.empty": "Choose a file from the library.",
+  "blocks.listItem.label": "List item"
 }

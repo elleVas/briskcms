@@ -229,7 +229,10 @@ body,
 .brisk-testimonials,
 .brisk-timeline,
 .brisk-carousel,
-.brisk-social-links {
+.brisk-social-links,
+.brisk-list,
+.brisk-faq,
+.brisk-marquee {
   container-type: inline-size;
 }
 
@@ -401,6 +404,17 @@ body,
     margin-bottom: 4rem;
   }
   .brisk-root-block:last-child {
+    margin-bottom: 0;
+  }
+  /* A block with no box of its own in the flow — a point a link lands on,
+     a bar fixed to the window — takes no share of the rhythm either.
+     Otherwise dropping an anchor between two paragraphs pushed them 4rem
+     further apart, for a block nobody can see. Still in brisk.base, so a
+     margin somebody sets on the block itself wins as usual. Not
+     `:only-child`: a root wrapper holds exactly one block, and a block with
+     behaviour also emits its <script> beside it. */
+  .brisk-root-block:has(> .brisk-anchor),
+  .brisk-root-block:has(> .brisk-reading-progress) {
     margin-bottom: 0;
   }
 }

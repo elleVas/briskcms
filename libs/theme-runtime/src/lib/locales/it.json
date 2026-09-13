@@ -102,5 +102,20 @@
   "termList.browseLabel": "Categorie",
   "termList.all": "Tutte",
   "termList.apply": "Applica",
-  "termList.selectLabel": "Restringi a"
+  "termList.selectLabel": "Restringi a",
+  "tableOfContents.label": "Indice",
+  "siblingPages.label": "Navigazione tra le pagine",
+  "siblingPages.previous": "Pagina precedente",
+  "siblingPages.next": "Pagina successiva",
+  "siteMap.label": "Mappa del sito",
+  "contactDetails.address": "Indirizzo",
+  "contactDetails.phone": "Telefono",
+  "contactDetails.openMap": "Apri su una mappa",
+  "contactDetails.empty": "Nessun indirizzo o telefono: aggiungili in Impostazioni → Dati attività.",
+  "openingHours.label": "Orari di apertura",
+  "openingHours.closed": "Chiuso",
+  "openingHours.empty": "Nessun orario: aggiungilo in Impostazioni → Dati attività.",
+  "fileDownload.download": "Scarica",
+  "fileDownload.empty": "Scegli un file dalla libreria.",
+  "blocks.listItem.label": "Voce di elenco"
 }

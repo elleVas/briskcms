@@ -1,0 +1,31 @@
+---
+import type { ListItemProps } from '@brisk/shared-types';
+
+type Props = ListItemProps & { instanceClass?: string | null };
+
+const { text, instanceClass } = Astro.props;
+---
+
+<li
+  class:list={['brisk-list-item', instanceClass]}
+  data-brisk-field="text"
+>
+  <span class="brisk-list-item__text brisk-rich-text" set:html={text} />
+</li>
+
+<style>
+  .brisk-list-item {
+    min-width: 0;
+    background: var(--brisk-override-bg, transparent);
+    color: var(--brisk-override-text, inherit);
+    border-radius: var(--brisk-override-radius, 0);
+    padding: var(--brisk-override-padding-y, 0)
+      var(--brisk-override-padding-x, 0);
+  }
+
+  /* Rich text wraps its words in a paragraph; inside a list item that
+     paragraph's own margins would push every item apart twice. */
+  .brisk-list-item__text :global(p) {
+    margin: 0;
+  }
+</style>

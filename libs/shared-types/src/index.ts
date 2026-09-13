@@ -5,6 +5,7 @@ export * from './lib/migrate-variant-props';
 export * from './lib/business-info';
 export * from './lib/media-kind';
 export * from './lib/content-model';
+export * from './lib/content-and-navigation-blocks';
 export * from './lib/custom-field-control';
 export * from './lib/rich-text-to-plain-text';
 export * from './lib/rich-text-page-links';

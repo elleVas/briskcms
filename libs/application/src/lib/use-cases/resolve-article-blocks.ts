@@ -1,5 +1,4 @@
 import type { Block, PageContent, PageGridItem } from '@brisk/shared-types';
-import { localePathFromAncestors } from '@brisk/theme-runtime';
 import type {
   PageGroupRepositoryPort,
   PageTranslationRepositoryPort,
@@ -8,6 +7,7 @@ import type {
 } from '@brisk/ports';
 import {
   listPublishedPagePaths,
+  toPageGridItem,
   type PublishedPagePath,
 } from './list-published-page-paths';
 
@@ -83,21 +83,6 @@ export async function currentArticleOf(
       : null,
     authorUserId: group.createdBy,
     collectionId: group.collectionId,
-  };
-}
-
-function toItem(path: PublishedPagePath, locale: string): PageGridItem {
-  return {
-    pageGroupId: path.groupId,
-    title: path.title,
-    path: localePathFromAncestors(locale, path.ancestorSlugs, path.slug),
-    publishedAt: path.publishedAt ? path.publishedAt.toISOString() : null,
-    excerpt: path.description,
-    image: path.image,
-    // Nothing to narrow here: neighbours and related pages are answers to
-    // a question a filter does not ask, and no `TermList` ever offers
-    // them.
-    termSlugs: [],
   };
 }
 
@@ -217,8 +202,8 @@ function findNeighbours(
   const older = ordered[index + 1];
   const newer = ordered[index - 1];
   return {
-    previous: older ? toItem(older, locale) : null,
-    next: newer ? toItem(newer, locale) : null,
+    previous: older ? toPageGridItem(older, locale) : null,
+    next: newer ? toPageGridItem(newer, locale) : null,
   };
 }
 
@@ -245,7 +230,7 @@ async function findRelated(
   return paths
     .filter((path) => sharing.has(path.groupId))
     .sort(newestFirst)
-    .map((path) => toItem(path, locale));
+    .map((path) => toPageGridItem(path, locale));
 }
 
 function fill(

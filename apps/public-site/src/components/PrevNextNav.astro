@@ -1,0 +1,99 @@
+---
+import type { PageGridItem } from '@brisk/shared-types';
+
+interface Props {
+  previous: PageGridItem | null;
+  next: PageGridItem | null;
+  /** What the navigation is, for a screen reader: "Article navigation", "Page navigation". */
+  label: string;
+  previousLabel: string;
+  nextLabel: string;
+  instanceClass?: string | null;
+}
+
+const { previous, next, label, previousLabel, nextLabel, instanceClass } =
+  Astro.props;
+
+/*
+ * The way on to the page before and the page after — one component for
+ * the two blocks that have it. ArticleNav orders a collection by date and
+ * SiblingPages orders a manual by the page tree; what they draw is the same
+ * pair of links, and two copies of it would be two designs that drift.
+ */
+---
+
+{
+  // Neither end is a way on to nothing: an empty bar with two dead ends is
+  // worse than no bar.
+  (previous || next) && (
+    <nav class:list={['brisk-prev-next', instanceClass]} aria-label={label}>
+      {previous ? (
+        <a class="brisk-prev-next__link" href={previous.path} rel="prev">
+          <span class="brisk-prev-next__direction">{previousLabel}</span>
+          <span class="brisk-prev-next__title">{previous.title}</span>
+        </a>
+      ) : (
+        <span />
+      )}
+      {next && (
+        <a
+          class="brisk-prev-next__link brisk-prev-next__link--next"
+          href={next.path}
+          rel="next"
+        >
+          <span class="brisk-prev-next__direction">{nextLabel}</span>
+          <span class="brisk-prev-next__title">{next.title}</span>
+        </a>
+      )}
+    </nav>
+  )
+}
+
+<style>
+  /* Two columns with the earlier one first, so the pair reads the way the
+     list does. When the space it has is narrow they stack, earlier first. */
+  .brisk-prev-next {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--brisk-override-gap, 1rem);
+    background: var(--brisk-override-bg, transparent);
+    border-radius: var(--brisk-override-radius, 0);
+    padding: var(--brisk-override-padding-y, 0)
+      var(--brisk-override-padding-x, 0);
+  }
+
+  @container (max-width: 30rem) {
+    .brisk-prev-next {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .brisk-prev-next__link {
+    display: grid;
+    gap: 0.25rem;
+    min-width: 0;
+    color: var(--brisk-override-text, inherit);
+    text-decoration: none;
+  }
+
+  /* `end`, not `right`: the next page sits at the far edge in either
+     reading direction. */
+  .brisk-prev-next__link--next {
+    text-align: end;
+  }
+
+  .brisk-prev-next__direction {
+    font-size: 0.8125rem;
+    color: var(--muted-foreground);
+  }
+
+  .brisk-prev-next__title {
+    font-weight: 600;
+    overflow-wrap: anywhere;
+  }
+
+  .brisk-prev-next__link:hover .brisk-prev-next__title,
+  .brisk-prev-next__link:focus-visible .brisk-prev-next__title {
+    text-decoration: underline;
+  }
+</style>

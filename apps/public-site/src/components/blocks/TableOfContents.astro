@@ -1,0 +1,86 @@
+---
+import type { TableOfContentsProps } from '@brisk/shared-types';
+import { Translator } from '@brisk/theme-runtime';
+
+type Props = TableOfContentsProps & {
+  instanceClass?: string | null;
+  locale?: string;
+};
+
+const { title, numbered, entries, instanceClass, locale } = Astro.props;
+const i18n = new Translator(locale ?? '');
+const ListTag = numbered ? 'ol' : 'ul';
+// `entries` comes from resolveTableOfContents, which also gave every
+// heading it lists the id these links point at.
+---
+
+{
+  entries.length > 0 && (
+    <nav
+      class:list={['brisk-toc', numbered && 'brisk-toc--numbered', instanceClass]}
+      aria-label={title || i18n.t('tableOfContents.label')}
+    >
+      {title && <p class="brisk-toc__title">{title}</p>}
+      <ListTag class="brisk-toc__list">
+        {entries.map((entry) => (
+          <li class:list={['brisk-toc__item', `brisk-toc__item--${entry.level}`]}>
+            <a class="brisk-toc__link" href={`#${entry.anchorId}`}>
+              {entry.text}
+            </a>
+          </li>
+        ))}
+      </ListTag>
+    </nav>
+  )
+}
+
+<style>
+  .brisk-toc {
+    background: var(--brisk-override-bg, transparent);
+    color: var(--brisk-override-text, inherit);
+    border-radius: var(--brisk-override-radius, 0);
+    padding: var(--brisk-override-padding-y, 0)
+      var(--brisk-override-padding-x, 0);
+  }
+
+  .brisk-toc__title {
+    margin: 0 0 0.5rem;
+    font-weight: 600;
+  }
+
+  .brisk-toc__list {
+    display: grid;
+    gap: var(--brisk-override-gap, 0.375rem);
+    margin: 0;
+    padding-inline-start: 1.25rem;
+  }
+
+  /* Stated, not inherited: the global reset takes every list's markers
+     away, so an <ol> left to its defaults shows no numbers at all. */
+  .brisk-toc--numbered .brisk-toc__list {
+    list-style: decimal;
+  }
+
+  .brisk-toc:not(.brisk-toc--numbered) .brisk-toc__list {
+    list-style: none;
+    padding-inline-start: 0;
+  }
+
+  /* Indented with a logical property, so an h3 steps in from the right in a
+     right-to-left page. */
+  .brisk-toc__item--h3 {
+    margin-inline-start: 1rem;
+    font-size: 0.9375em;
+  }
+
+  .brisk-toc__link {
+    color: inherit;
+    text-decoration: none;
+    overflow-wrap: anywhere;
+  }
+
+  .brisk-toc__link:hover,
+  .brisk-toc__link:focus-visible {
+    text-decoration: underline;
+  }
+</style>

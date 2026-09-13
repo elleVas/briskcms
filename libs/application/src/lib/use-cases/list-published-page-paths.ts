@@ -1,3 +1,5 @@
+import type { PageGridItem } from '@brisk/shared-types';
+import { localePathFromAncestors } from '@brisk/theme-runtime';
 import type {
   PageGroupRepositoryPort,
   PageTranslationRepositoryPort,
@@ -27,6 +29,10 @@ export interface PublishedPagePath {
   updatedAt: Date;
   /** Which section of the editor lists it — what scopes "the previous article" to the right set of pages. */
   collectionId: string | null;
+  /** Its parent in the page tree, `null` at the root — what "the pages under this one" is asked of. */
+  parentId: string | null;
+  /** Its place among its siblings, the order a manual is read in. */
+  order: number;
 }
 
 // Same "5-15 pagine, siti vetrina" scale assumption as everywhere else.
@@ -98,6 +104,9 @@ export async function listPublishedPagePaths(
   const collectionIdByGroup = new Map<string, string | null>(
     groups.map((group) => [group.id, group.collectionId]),
   );
+  const orderByGroup = new Map<string, number>(
+    groups.map((group) => [group.id, group.order]),
+  );
   const translationsByGroupAndLocale = new Map<string, PageTranslation>(
     translations.map((translation) => [
       `${translation.pageGroupId}:${translation.locale}`,
@@ -126,7 +135,34 @@ export async function listPublishedPagePaths(
       publishedAt: translation.publishedAt,
       updatedAt: translation.updatedAt,
       collectionId: collectionIdByGroup.get(translation.pageGroupId) ?? null,
+      parentId: parentIdByGroup.get(translation.pageGroupId) ?? null,
+      order: orderByGroup.get(translation.pageGroupId) ?? 0,
     });
   }
   return paths;
+}
+
+/**
+ * What a list of pages says about one of them — its title, address, date,
+ * summary and picture — in the language it is being read in.
+ *
+ * Here, next to the paths it is made from, because four blocks build the
+ * same card from the same path: the article's neighbours and related
+ * pages, a page's children and siblings. One copy each would be four
+ * cards that could drift apart.
+ */
+export function toPageGridItem(
+  path: PublishedPagePath,
+  locale: string,
+): PageGridItem {
+  return {
+    pageGroupId: path.groupId,
+    title: path.title,
+    path: localePathFromAncestors(locale, path.ancestorSlugs, path.slug),
+    publishedAt: path.publishedAt ? path.publishedAt.toISOString() : null,
+    excerpt: path.description,
+    image: path.image,
+    // Nothing to narrow: none of these lists is one a TermList filters.
+    termSlugs: [],
+  };
 }

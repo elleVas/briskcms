@@ -52,10 +52,13 @@ describe('blocks that only work inside their parent', () => {
 
     // Checked by rendering each child at the page root (2026-09-11): a Tab
     // has no tab to reach it, a Column is a box with no grid, a timeline
-    // step's marker hangs outside the content column. The others render as
-    // cards of their own and stay free on purpose.
+    // step's marker hangs outside the content column. A list item outside a
+    // list is an <li> with no <ul> around it — markup that is not valid, and
+    // that a screen reader does not announce as a list at all. The others
+    // render as cards of their own and stay free on purpose.
     expect(declared).toEqual({
       Column: ['Columns'],
+      ListItem: ['List'],
       Tab: ['Tabs'],
       TimelineStep: ['Timeline'],
     });

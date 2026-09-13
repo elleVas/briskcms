@@ -7,6 +7,7 @@ import { GalleryPickerField } from './gallery-picker-field';
 import { IconPickerField } from './icon-picker-field';
 import {
   AudioPickerField,
+  FilePickerField,
   MediaPickerField,
   VideoPickerField,
 } from './media-picker-field';
@@ -46,6 +47,7 @@ export const CUSTOM_FIELD_CONTROLS: Record<
   audio: AudioPickerField as ControlComponent,
   color: ColorPickerField as ControlComponent,
   'feature-list': FeatureListField as ControlComponent,
+  file: FilePickerField as ControlComponent,
   form: FormPickerField as ControlComponent,
   gallery: GalleryPickerField as ControlComponent,
   icon: IconPickerField as ControlComponent,

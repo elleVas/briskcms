@@ -11,6 +11,7 @@ import { promoBarBehaviors } from './promo-bar';
 import { statBehaviors } from './stat';
 import { tabsBehaviors } from './tabs';
 import { termListBehaviors } from './term-list';
+import { readingProgressBehaviors } from './reading-progress';
 import { turnstileBehaviors } from './turnstile';
 import type { BlockBehavior } from './types';
 
@@ -56,4 +57,5 @@ export const BLOCK_BEHAVIOR_REGISTRY: Record<string, BlockBehavior[]> = {
   // Its links work without this; the behaviour only spares the round
   // trip, and re-runs after a live canvas insert like every other.
   TermList: termListBehaviors,
+  ReadingProgress: readingProgressBehaviors,
 };

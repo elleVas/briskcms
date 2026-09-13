@@ -14,6 +14,11 @@ import type {
 import { resolveAncestorGroupIds } from './resolve-page-group-ancestors';
 import { resolvePageGridItems } from './resolve-page-grid-items';
 import { resolveTermLists } from './resolve-term-lists';
+import { resolveTableOfContents } from './resolve-table-of-contents';
+import {
+  hasSiteNavigationBlocks,
+  resolveSiteNavigationBlocks,
+} from './resolve-site-navigation-blocks';
 import { resolveSectionInstances } from './resolve-section-instances';
 import {
   hasArticleBlocks,
@@ -100,32 +105,46 @@ export async function resolvePageContentReferences(
     slugsByGroup,
   );
 
+  // Pure, and needs only the page's own headings — after the sections, so
+  // a heading inside a reusable section is a heading of the page too.
+  const withContents = resolveTableOfContents(contents);
+
   // After the grids and before the links, for the grids' own reason: an
   // article block inside a reusable section is filled like any other, and
-  // whatever it links to is resolved afterwards.
+  // whatever it links to is resolved afterwards. The page's own row is read
+  // once, and only when a block actually needs to know which page this is.
+  const needsCurrentPage =
+    hasArticleBlocks(withContents) || hasSiteNavigationBlocks(withContents);
   const article =
-    currentArticle && hasArticleBlocks(contents)
-      ? await currentArticle()
-      : null;
-  const withArticle = article
-    ? await resolveArticleBlocks(
-        deps,
-        tenantId,
-        siteId,
-        locale,
-        article,
-        contents,
-      )
-    : contents;
+    currentArticle && needsCurrentPage ? await currentArticle() : null;
+  const withArticle =
+    article && hasArticleBlocks(withContents)
+      ? await resolveArticleBlocks(
+          deps,
+          tenantId,
+          siteId,
+          locale,
+          article,
+          withContents,
+        )
+      : withContents;
+  const withNavigation = await resolveSiteNavigationBlocks(
+    deps,
+    tenantId,
+    siteId,
+    locale,
+    article?.pageGroupId ?? null,
+    withArticle,
+  );
 
   const referencedGroupIds = new Set<string>();
-  for (const content of withArticle) {
+  for (const content of withNavigation) {
     for (const groupId of collectPageGroupReferences(content)) {
       referencedGroupIds.add(groupId);
     }
   }
   if (referencedGroupIds.size === 0) {
-    return withArticle;
+    return withNavigation;
   }
 
   // Memoised across the whole pass: a navigation menu of eight links into
@@ -180,7 +199,7 @@ export async function resolvePageContentReferences(
     }),
   );
 
-  return withArticle.map((content) =>
+  return withNavigation.map((content) =>
     resolvePageReferences(content, slugByGroupId),
   );
 }
