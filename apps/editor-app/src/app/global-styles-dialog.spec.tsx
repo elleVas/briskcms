@@ -277,7 +277,9 @@ describe('GlobalStylesDialog', () => {
     renderDialog(true, onOpenChange);
     await waitFor(() => screen.getByText('Colore primario'));
 
-    fireEvent.click(screen.getByRole('button', { name: /chiudi/i }));
+    // The footer button, by its own visible text: since the corner X is
+    // named in Italian too, "a button called Chiudi" is two buttons.
+    fireEvent.click(screen.getByText('Chiudi', { selector: 'button' }));
 
     expect(onOpenChange).toHaveBeenCalledWith(false);
     expect(api.updateThemeSettings).not.toHaveBeenCalled();

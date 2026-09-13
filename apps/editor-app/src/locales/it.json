@@ -6,7 +6,8 @@
     "cancel": "Annulla",
     "delete": "Elimina",
     "yes": "Sì",
-    "no": "No"
+    "no": "No",
+    "close": "Chiudi"
   },
   "auth": {
     "login": {
@@ -605,7 +606,6 @@
     "loading": "Caricamento...",
     "save": "Salva",
     "saving": "Salvataggio in corso...",
-    "close": "Chiudi",
     "back": "Indietro",
     "colorsTitle": "Colori",
     "themeTitle": "Tema",

@@ -6,7 +6,8 @@
     "cancel": "Cancel",
     "delete": "Delete",
     "yes": "Yes",
-    "no": "No"
+    "no": "No",
+    "close": "Close"
   },
   "auth": {
     "login": {
@@ -605,7 +606,6 @@
     "loading": "Loading...",
     "save": "Save",
     "saving": "Saving...",
-    "close": "Close",
     "back": "Back",
     "colorsTitle": "Colors",
     "themeTitle": "Theme",

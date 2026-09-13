@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Dialog as DialogPrimitive } from 'radix-ui';
 import { XIcon } from 'lucide-react';
 
@@ -53,6 +54,7 @@ function DialogContent({
 }: React.ComponentProps<typeof DialogPrimitive.Content> & {
   showCloseButton?: boolean;
 }) {
+  const { t } = useTranslation();
   return (
     <DialogPortal>
       <DialogOverlay />
@@ -73,7 +75,10 @@ function DialogContent({
               size="icon-sm"
             >
               <XIcon />
-              <span className="sr-only">Close</span>
+              {/* The name a screen reader gives the button, so it has to be
+                  in the language of the editor. It was a literal "Close"
+                  on every dialog, in the middle of an Italian interface. */}
+              <span className="sr-only">{t('common.close')}</span>
             </Button>
           </DialogPrimitive.Close>
         )}
