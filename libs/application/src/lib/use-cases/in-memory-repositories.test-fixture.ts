@@ -23,7 +23,12 @@ import {
   hasUnpublishedChanges,
   safeDownloadName,
 } from '@brisk/domain-core';
-import type { PageContent, ResponsiveBlockStyle } from '@brisk/shared-types';
+import {
+  mediaKindOfMime,
+  type MediaKind,
+  type PageContent,
+  type ResponsiveBlockStyle,
+} from '@brisk/shared-types';
 import type {
   CollectionRepositoryPort,
   FormRepositoryPort,
@@ -669,6 +674,25 @@ export class InMemoryMediaRepository implements MediaRepositoryPort {
       items: matching.slice(start, start + pagination.pageSize),
       total: matching.length,
     };
+  }
+
+  async countByKind(
+    tenantId: string,
+    siteId: string,
+  ): Promise<Record<MediaKind, number>> {
+    const counts: Record<MediaKind, number> = {
+      image: 0,
+      video: 0,
+      audio: 0,
+      document: 0,
+      other: 0,
+    };
+    for (const item of this.media.values()) {
+      if (item.tenantId === tenantId && item.siteId === siteId) {
+        counts[mediaKindOfMime(item.mimeType)] += 1;
+      }
+    }
+    return counts;
   }
 
   async delete(tenantId: string, mediaId: string): Promise<void> {

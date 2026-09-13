@@ -15,6 +15,11 @@ export const listMediaQuerySchema = z.object({
 });
 export type ListMediaQuery = z.infer<typeof listMediaQuerySchema>;
 
+export const countMediaByKindQuerySchema = z.object({
+  siteId: z.string().uuid(),
+});
+export type CountMediaByKindQuery = z.infer<typeof countMediaByKindQuerySchema>;
+
 export const uploadMediaBodySchema = z.object({
   siteId: z.string().uuid(),
 });

@@ -2,7 +2,10 @@ import { createFileRoute } from '@tanstack/react-router';
 import { useSuspenseQuery } from '@tanstack/react-query';
 import { z } from 'zod';
 import { MEDIA_KINDS } from '@brisk/shared-types';
-import { mediaQueryOptions } from '../app/media-queries';
+import {
+  mediaKindCountsQueryOptions,
+  mediaQueryOptions,
+} from '../app/media-queries';
 import { MediaLibraryView } from '../app/media-library-view';
 import { siteQueryOptions } from '../app/site-queries';
 import { requireAuth } from './-require-auth';
@@ -35,9 +38,14 @@ export const Route = createFileRoute('/_shell/media/')({
     requireAuth(async () => {
       const site =
         await context.queryClient.ensureQueryData(siteQueryOptions());
-      await context.queryClient.ensureQueryData(
-        mediaQueryOptions(site.id, deps.page, deps.filters),
-      );
+      await Promise.all([
+        context.queryClient.ensureQueryData(
+          mediaQueryOptions(site.id, deps.page, deps.filters),
+        ),
+        context.queryClient.ensureQueryData(
+          mediaKindCountsQueryOptions(site.id),
+        ),
+      ]);
     }),
   component: MediaLibraryRoute,
 });
@@ -47,6 +55,9 @@ function MediaLibraryRoute() {
   const filters = { search, kind };
   const { data: site } = useSuspenseQuery(siteQueryOptions());
   const { data } = useSuspenseQuery(mediaQueryOptions(site.id, page, filters));
+  const { data: counts } = useSuspenseQuery(
+    mediaKindCountsQueryOptions(site.id),
+  );
 
   return (
     <MediaLibraryView
@@ -55,6 +66,7 @@ function MediaLibraryRoute() {
       page={page}
       total={data.total}
       filters={filters}
+      counts={counts}
     />
   );
 }

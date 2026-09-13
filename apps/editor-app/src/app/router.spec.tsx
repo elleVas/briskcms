@@ -74,7 +74,7 @@ vi.mock('../lib/page-groups-api-client', async (importOriginal) => {
 vi.mock('../lib/media-api-client', async (importOriginal) => {
   const actual =
     await importOriginal<typeof import('../lib/media-api-client')>();
-  return { ...actual, listMedia: vi.fn() };
+  return { ...actual, listMedia: vi.fn(), countMediaByKind: vi.fn() };
 });
 
 vi.mock('../lib/dashboard-api-client', async (importOriginal) => {
@@ -323,10 +323,20 @@ describe('router', () => {
 
   it('renders the media library inside the shell when authenticated', async () => {
     vi.mocked(mediaApi.listMedia).mockResolvedValue({ items: [], total: 0 });
+    vi.mocked(mediaApi.countMediaByKind).mockResolvedValue({
+      image: 0,
+      video: 0,
+      audio: 0,
+      document: 0,
+      other: 0,
+    });
 
     renderApp('/media');
 
     expect(await screen.findByRole('heading', { name: 'Media' })).toBeTruthy();
+    // It opens onto the folders, which is the screen the loader had to
+    // fetch the counts for.
+    expect(screen.getByRole('navigation', { name: 'Cartelle' })).toBeTruthy();
   });
 
   it('redirects to /login when opening a page group editor while unauthenticated', async () => {

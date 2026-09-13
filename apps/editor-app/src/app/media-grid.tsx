@@ -1,13 +1,13 @@
-import { useRef, useState, type ChangeEvent } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ChevronLeft, ChevronRight, ShieldAlert, Trash2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Trash2 } from 'lucide-react';
 import type { MediaKind } from '@brisk/shared-types';
-import { Button } from '../components/ui/button';
 import type { MediaDto, MediaFilters } from '../lib/media-api-client';
 import { ConfirmActionDialog } from './confirm-action-dialog';
 import { IconButton } from './icon-button';
 import { MediaFilterBar } from './media-filter-bar';
 import { MediaMeta, MediaThumbnail } from './media-card';
+import { MediaUploadButton, MediaUploadWarning } from './media-upload';
 import { MEDIA_PAGE_SIZE } from './media-queries';
 import { useMediaLibrary } from './use-media-library';
 
@@ -28,25 +28,11 @@ export interface MediaGridProps {
   // library" as separate actions instead of tangling one dialog's state
   // with the other's.
   showDelete?: boolean;
-  /** The one kind a picker is choosing — see MediaFilterBar. */
+  /** The one kind a picker, or a folder, is showing — see MediaFilterBar. */
   lockedKind?: MediaKind;
+  /** See MediaFilterBar.showKindChoice. */
+  showKindChoice?: boolean;
 }
-
-/**
- * What the file chooser suggests, and only when a field has already said
- * what it takes.
- *
- * It used to be the server's exact allow-list, always. The library now
- * takes any file (ADR-0070), so on the library page there is nothing to
- * suggest — and inside a picker for a video field, `video/*` spares
- * somebody choosing a PDF that would then not appear in the list they
- * are looking at.
- */
-const ACCEPT_BY_KIND: Partial<Record<MediaKind, string>> = {
-  image: 'image/*',
-  video: 'video/*',
-  audio: 'audio/*',
-};
 
 export function MediaGrid({
   siteId,
@@ -59,28 +45,15 @@ export function MediaGrid({
   onSelect,
   showDelete = false,
   lockedKind,
+  showKindChoice,
 }: MediaGridProps) {
   const { t } = useTranslation();
-  const { uploadMedia, isUploading, deleteMedia } = useMediaLibrary(siteId);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const { deleteMedia } = useMediaLibrary(siteId);
   const [actionError, setActionError] = useState('');
   const [mediaToDelete, setMediaToDelete] = useState<MediaDto | null>(null);
 
   const totalPages = Math.max(1, Math.ceil(total / MEDIA_PAGE_SIZE));
   const hasFilters = Boolean(filters.search?.trim() || filters.kind);
-
-  async function handleFileChange(event: ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0];
-    // Reset so picking the same file again later still fires onChange.
-    event.target.value = '';
-    if (!file) return;
-    setActionError('');
-    try {
-      await uploadMedia(file);
-    } catch (err) {
-      setActionError(String(err));
-    }
-  }
 
   async function handleConfirmDelete() {
     if (!mediaToDelete) return;
@@ -100,33 +73,15 @@ export function MediaGrid({
           value={filters}
           onChange={onFiltersChange}
           lockedKind={lockedKind}
+          showKindChoice={showKindChoice}
         />
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept={lockedKind ? ACCEPT_BY_KIND[lockedKind] : undefined}
-          className="hidden"
-          onChange={(event) => void handleFileChange(event)}
+        <MediaUploadButton
+          siteId={siteId}
+          kind={lockedKind}
+          onError={setActionError}
         />
-        {/* "Upload image" until now, and it has taken video and audio
-            since PR #158 — the button was describing a restriction that no
-            longer existed. */}
-        <Button
-          onClick={() => fileInputRef.current?.click()}
-          disabled={isUploading}
-        >
-          {isUploading ? t('media.grid.uploading') : t('media.grid.upload')}
-        </Button>
       </div>
-      {/* The warning the owner asked for, in place of a check we do not
-          make (ADR-0070): any file is taken, nothing is scanned, and the
-          one protection there is — whatever is not an image, a video or
-          an audio file downloads instead of opening — is not a reason to
-          upload something you do not trust. */}
-      <p className="flex items-start gap-1.5 text-xs text-muted-foreground">
-        <ShieldAlert className="mt-px size-3.5 shrink-0" aria-hidden />
-        {t('media.grid.uploadWarning')}
-      </p>
+      <MediaUploadWarning />
       {actionError && (
         <p role="alert" className="text-sm text-destructive">
           {actionError}

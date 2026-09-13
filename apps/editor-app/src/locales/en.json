@@ -392,6 +392,14 @@
       "kindAudio": "Audio",
       "kindDocument": "Documents",
       "kindOther": "Other"
+    },
+    "folders": {
+      "label": "Folders",
+      "count_one": "{{count}} file",
+      "count_other": "{{count}} files",
+      "titleWithCount": "{{name}} ({{count}})",
+      "searchResults": "Search results",
+      "breadcrumb": "Where you are"
     }
   },
   "icons": {

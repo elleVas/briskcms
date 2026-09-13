@@ -1,5 +1,15 @@
 import { DOCUMENT_MIME_TYPES, type MediaKind } from '@brisk/shared-types';
-import { and, eq, ilike, inArray, like, not, or, type SQL } from 'drizzle-orm';
+import {
+  and,
+  eq,
+  ilike,
+  inArray,
+  like,
+  not,
+  or,
+  sql,
+  type SQL,
+} from 'drizzle-orm';
 import { Media, type MediaProps } from '@brisk/domain-core';
 import type {
   MediaFilter,
@@ -11,6 +21,7 @@ import {
   DrizzlePaginatedRepository,
   type BriskDb,
   media,
+  withTenant,
 } from '@brisk/postgres-db';
 
 function toRow(props: MediaProps) {
@@ -85,6 +96,32 @@ export class DrizzleMediaRepository
       media.createdAt,
       pagination,
     );
+  }
+
+  async countByKind(
+    tenantId: string,
+    siteId: string,
+  ): Promise<Record<MediaKind, number>> {
+    // `count(*) filter (where …)` once per kind, in a single scan: the same
+    // conditions `listBySite` filters by, so a folder's number and the
+    // folder's contents can never disagree.
+    const countOf = (kind: MediaKind) =>
+      sql<number>`count(*) filter (where ${kindCondition(kind)})`.mapWith(
+        Number,
+      );
+    const [row] = await withTenant(this.db, tenantId, (tx) =>
+      tx
+        .select({
+          image: countOf('image'),
+          video: countOf('video'),
+          audio: countOf('audio'),
+          document: countOf('document'),
+          other: countOf('other'),
+        })
+        .from(media)
+        .where(and(eq(media.tenantId, tenantId), eq(media.siteId, siteId))),
+    );
+    return row;
   }
 }
 

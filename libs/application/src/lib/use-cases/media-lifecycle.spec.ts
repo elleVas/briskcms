@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { MediaNotFoundError, MediaTooLargeError } from '@brisk/domain-core';
 import { MAX_UPLOAD_BYTES_BY_KIND, uploadMedia } from './upload-media.use-case';
 import { listMedia } from './list-media.use-case';
+import { countMediaByKind } from './count-media-by-kind.use-case';
 import { deleteMedia } from './delete-media.use-case';
 import {
   InMemoryMediaRepository,
@@ -218,5 +219,26 @@ describe('media lifecycle: upload -> list -> delete', () => {
         data: new Uint8Array(MAX_UPLOAD_BYTES_BY_KIND.document + 1),
       }),
     ).rejects.toThrow(MediaTooLargeError);
+  });
+
+  it("counts a site's files by kind, and nothing from any other site", async () => {
+    const deps = setup();
+    const upload = (siteId: string, filename: string, data: Uint8Array) =>
+      uploadMedia(deps, {
+        tenantId,
+        siteId,
+        filename,
+        mimeType: 'application/octet-stream',
+        data,
+      });
+    await upload('site-1', 'foto.png', pngBytes(1, 2, 3));
+    await upload('site-1', 'listino.pdf', new TextEncoder().encode('%PDF'));
+    await upload('site-1', 'menu.pdf', new TextEncoder().encode('%PDF'));
+    await upload('site-1', 'archivio.zip', new TextEncoder().encode('PK'));
+    await upload('site-2', 'altro-sito.pdf', new TextEncoder().encode('%PDF'));
+
+    expect(
+      await countMediaByKind(deps, { tenantId, siteId: 'site-1' }),
+    ).toEqual({ image: 1, video: 0, audio: 0, document: 2, other: 1 });
   });
 });

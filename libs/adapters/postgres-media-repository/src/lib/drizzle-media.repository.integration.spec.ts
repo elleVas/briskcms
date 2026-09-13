@@ -265,6 +265,18 @@ describe('DrizzleMediaRepository (integration)', () => {
         names: result.items.map((item) => item.filename).sort(),
       }).toEqual({ kind, names: expected });
     }
+
+    // The folder counts come from the same conditions, so each one has to
+    // equal the length of the list that folder opens onto.
+    const counts = await mediaRepository.countByKind(tenantAId, site.id);
+    for (const kind of MEDIA_KINDS) {
+      expect({ kind, count: counts[kind] }).toEqual({
+        kind,
+        count: fixtures.filter(
+          ([, mimeType]) => mediaKindOfMime(mimeType) === kind,
+        ).length,
+      });
+    }
   });
 
   it('save() upserts: a second save updates the same row instead of inserting a new one', async () => {
