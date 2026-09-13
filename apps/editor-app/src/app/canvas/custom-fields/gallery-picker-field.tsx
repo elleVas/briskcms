@@ -36,7 +36,7 @@ export function GalleryPickerField({
   const { t } = useTranslation();
 
   async function handlePickAt(index: number) {
-    const picked = await pick();
+    const picked = await pick({ kind: 'image' });
     if (!picked) return;
     const next = value.slice();
     next[index] = { ...next[index], media: picked };

@@ -1,6 +1,7 @@
 import { useRef, useState, type ChangeEvent } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ChevronLeft, ChevronRight, Trash2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ShieldAlert, Trash2 } from 'lucide-react';
+import type { MediaKind } from '@brisk/shared-types';
 import { Button } from '../components/ui/button';
 import type { MediaDto, MediaFilters } from '../lib/media-api-client';
 import { ConfirmActionDialog } from './confirm-action-dialog';
@@ -27,22 +28,25 @@ export interface MediaGridProps {
   // library" as separate actions instead of tangling one dialog's state
   // with the other's.
   showDelete?: boolean;
+  /** The one kind a picker is choosing — see MediaFilterBar. */
+  lockedKind?: MediaKind;
 }
 
 /**
- * The exact formats the server accepts (ADR-0054), rather than
- * `image/*`: a hint that matches the allow-list spares people picking a
- * file only to have it refused. Extensions AND MIME types, because
- * browsers differ on which they match. It is a hint and nothing more —
- * an upload's own bytes are what actually decides, server-side.
+ * What the file chooser suggests, and only when a field has already said
+ * what it takes.
+ *
+ * It used to be the server's exact allow-list, always. The library now
+ * takes any file (ADR-0070), so on the library page there is nothing to
+ * suggest — and inside a picker for a video field, `video/*` spares
+ * somebody choosing a PDF that would then not appear in the list they
+ * are looking at.
  */
-const UPLOAD_ACCEPT = [
-  '.png,.jpg,.jpeg,.gif,.webp,.avif',
-  '.mp4,.webm,.mp3,.ogg,.wav',
-  'image/png,image/jpeg,image/gif,image/webp,image/avif',
-  'video/mp4,video/webm',
-  'audio/mpeg,audio/ogg,audio/wav',
-].join(',');
+const ACCEPT_BY_KIND: Partial<Record<MediaKind, string>> = {
+  image: 'image/*',
+  video: 'video/*',
+  audio: 'audio/*',
+};
 
 export function MediaGrid({
   siteId,
@@ -54,6 +58,7 @@ export function MediaGrid({
   onFiltersChange,
   onSelect,
   showDelete = false,
+  lockedKind,
 }: MediaGridProps) {
   const { t } = useTranslation();
   const { uploadMedia, isUploading, deleteMedia } = useMediaLibrary(siteId);
@@ -91,11 +96,15 @@ export function MediaGrid({
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <MediaFilterBar value={filters} onChange={onFiltersChange} />
+        <MediaFilterBar
+          value={filters}
+          onChange={onFiltersChange}
+          lockedKind={lockedKind}
+        />
         <input
           ref={fileInputRef}
           type="file"
-          accept={UPLOAD_ACCEPT}
+          accept={lockedKind ? ACCEPT_BY_KIND[lockedKind] : undefined}
           className="hidden"
           onChange={(event) => void handleFileChange(event)}
         />
@@ -109,6 +118,15 @@ export function MediaGrid({
           {isUploading ? t('media.grid.uploading') : t('media.grid.upload')}
         </Button>
       </div>
+      {/* The warning the owner asked for, in place of a check we do not
+          make (ADR-0070): any file is taken, nothing is scanned, and the
+          one protection there is — whatever is not an image, a video or
+          an audio file downloads instead of opening — is not a reason to
+          upload something you do not trust. */}
+      <p className="flex items-start gap-1.5 text-xs text-muted-foreground">
+        <ShieldAlert className="mt-px size-3.5 shrink-0" aria-hidden />
+        {t('media.grid.uploadWarning')}
+      </p>
       {actionError && (
         <p role="alert" className="text-sm text-destructive">
           {actionError}

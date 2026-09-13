@@ -1,5 +1,5 @@
 import express from 'express';
-import { join } from 'node:path';
+import { resolve, sep } from 'node:path';
 import type { INestApplication } from '@nestjs/common';
 
 /**
@@ -18,6 +18,13 @@ import type { INestApplication } from '@nestjs/common';
  *   forced to download here as a second, independent layer: even a type
  *   that slipped through can never execute as HTML or SVG in a browser
  *   (security review 2026-08-25).
+ * - **files** — the library's files that are not images, video or audio
+ *   the sniffer vouched for (ADR-0070): PDFs, documents, archives, and
+ *   anything whose bytes proved nothing. Forced to download, for the same
+ *   reason as attachments — their type came from a name somebody chose,
+ *   and a `.html` or `.svg` opened in place runs its scripts with the
+ *   session of whoever clicked it. An `<img>` still shows an SVG from
+ *   here: a page loading a subresource ignores this header.
  * - **media** — the library. Served INLINE, deliberately: an `<img>`,
  *   `<video>` or `<audio>` cannot render a file the server told the
  *   browser to save. What makes that safe is upstream — images are
@@ -33,22 +40,33 @@ export function mountMediaStatic(
   mediaUploadDir: string,
   prefix = '',
 ): void {
-  // Mounted before the general media route below so it wins for this
-  // subpath.
-  app.use(
-    `${prefix}/uploads/attachments`,
-    express.static(join(mediaUploadDir, 'attachments'), {
-      setHeaders: (res) => {
-        res.setHeader('Content-Disposition', 'attachment');
-        res.setHeader('X-Content-Type-Options', 'nosniff');
-      },
-    }),
+  const downloadOnly = ['attachments', 'files'].map((dir) =>
+    `${resolve(mediaUploadDir, dir)}${sep}`.toLowerCase(),
   );
+
+  // ONE static mount, and the download rule decided by where the file
+  // really is on disk — never by the URL that asked for it.
+  //
+  // It used to be a mount per directory, matched on the URL prefix. The
+  // URL is not the file: `/uploads/%61ttachments/x.pdf` does not match
+  // `/uploads/attachments`, falls through to the general mount, and
+  // serve-static decodes it back to the very same file — served INLINE.
+  // Measured on 2026-09-13 against the running API, not reasoned about.
+  // For an attachment that was a second barrier quietly missing; for
+  // `files/`, where an uploaded `.html` lives, it would have been the only
+  // one.
+  //
+  // Lower-cased because a case-insensitive disk (macOS, and some mounted
+  // volumes) serves `/uploads/Files/…` from `files/` too.
   app.use(
     `${prefix}/uploads`,
     express.static(mediaUploadDir, {
-      setHeaders: (res) => {
+      setHeaders: (res, filePath) => {
         res.setHeader('X-Content-Type-Options', 'nosniff');
+        const onDisk = resolve(filePath).toLowerCase();
+        if (downloadOnly.some((dir) => onDisk.startsWith(dir))) {
+          res.setHeader('Content-Disposition', 'attachment');
+        }
       },
     }),
   );

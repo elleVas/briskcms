@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { MEDIA_KINDS } from '@brisk/shared-types';
 
 export const listMediaQuerySchema = z.object({
   siteId: z.string().uuid(),
@@ -10,7 +11,7 @@ export const listMediaQuerySchema = z.object({
    * would be a search that only ever looked at the newest page.
    */
   search: z.string().trim().max(200).optional(),
-  kind: z.enum(['image', 'video', 'audio']).optional(),
+  kind: z.enum(MEDIA_KINDS).optional(),
 });
 export type ListMediaQuery = z.infer<typeof listMediaQuerySchema>;
 

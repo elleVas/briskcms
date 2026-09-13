@@ -5,7 +5,7 @@ import {
   S3Client,
 } from '@aws-sdk/client-s3';
 import sharp from 'sharp';
-import { sniffMediaType } from '@brisk/domain-core';
+import { classifyUpload, safeDownloadName } from '@brisk/domain-core';
 import type {
   MediaStoragePort,
   UploadMediaInput,
@@ -51,10 +51,33 @@ export class S3MediaStorageAdapter implements MediaStoragePort {
   }
 
   async upload(input: UploadMediaInput): Promise<UploadMediaResult> {
-    // The bytes decide, not the declared type — see the same call in
-    // LocalDiskMediaStorageAdapter and ADR-0054 for why video and audio
-    // make this necessary rather than merely tidy.
-    const sniffed = sniffMediaType(input.data);
+    // The bytes decide what may be opened, not the declared type — see
+    // the same call in LocalDiskMediaStorageAdapter, and ADR-0054/0070.
+    const sniffed = classifyUpload(input.data, input.filename);
+
+    if (!sniffed.inline) {
+      const name = safeDownloadName(input.filename);
+      const key = `files/${randomUUID()}/${name}`;
+      await this.client.send(
+        new PutObjectCommand({
+          Bucket: this.options.bucket,
+          Key: key,
+          Body: input.data,
+          ContentType: sniffed.mimeType,
+          // The bucket serves the file, not our API, so the rule
+          // media-static.ts applies to `files/` has to travel with the
+          // object itself: a download, never a page a browser renders.
+          ContentDisposition: `attachment; filename="${name}"`,
+        }),
+      );
+      return {
+        storageKey: key,
+        mimeType: sniffed.mimeType,
+        size: input.data.byteLength,
+        width: 0,
+        height: 0,
+      };
+    }
 
     if (sniffed.kind !== 'image') {
       const key = `${randomUUID()}.${sniffed.extension}`;

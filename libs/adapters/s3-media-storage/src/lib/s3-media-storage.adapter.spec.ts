@@ -1,7 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import sharp from 'sharp';
 import { S3Client } from '@aws-sdk/client-s3';
-import { UnsupportedMediaTypeError } from '@brisk/domain-core';
 import { S3MediaStorageAdapter } from './s3-media-storage.adapter';
 
 const sendMock = vi.fn();
@@ -91,17 +90,29 @@ describe('S3MediaStorageAdapter', () => {
     expect(result.height).toBe(800);
   });
 
-  it('rejects a non-image mime type before touching S3', async () => {
-    await expect(
-      adapter.upload({
-        tenantId: 'tenant-1',
-        siteId: 'site-1',
-        filename: 'documento.pdf',
-        mimeType: 'application/pdf',
-        data: new Uint8Array([1, 2, 3]),
-      }),
-    ).rejects.toThrow(UnsupportedMediaTypeError);
-    expect(sendMock).not.toHaveBeenCalled();
+  /*
+   * Refused until ADR-0070. The bucket serves these files itself, so the
+   * rule that they download rather than open has to travel WITH the
+   * object — our API is not in the path to add the header later.
+   */
+  it('stores a file it cannot vouch for as a download, under its own name', async () => {
+    sendMock.mockResolvedValueOnce({});
+
+    const result = await adapter.upload({
+      tenantId: 'tenant-1',
+      siteId: 'site-1',
+      filename: 'pagina.html',
+      mimeType: 'text/html',
+      data: new TextEncoder().encode('<script>alert(1)</script>'),
+    });
+
+    expect(result.storageKey).toMatch(/^files\/[^/]+\/pagina\.html$/);
+    const command = sendMock.mock.calls[0][0];
+    expect(command.input.Key).toBe(result.storageKey);
+    expect(command.input.ContentType).toBe('text/html');
+    expect(command.input.ContentDisposition).toBe(
+      'attachment; filename="pagina.html"',
+    );
   });
 
   it('exposes its provider as "s3"', () => {

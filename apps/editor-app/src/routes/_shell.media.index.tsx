@@ -1,6 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { useSuspenseQuery } from '@tanstack/react-query';
 import { z } from 'zod';
+import { MEDIA_KINDS } from '@brisk/shared-types';
 import { mediaQueryOptions } from '../app/media-queries';
 import { MediaLibraryView } from '../app/media-library-view';
 import { siteQueryOptions } from '../app/site-queries';
@@ -18,7 +19,7 @@ const mediaListSearchSchema = z.object({
   // something longer turned a search into a 400 in the error boundary
   // instead of "nothing matches".
   search: z.string().max(200).optional().catch(undefined),
-  kind: z.enum(['image', 'video', 'audio']).optional().catch(undefined),
+  kind: z.enum(MEDIA_KINDS).optional().catch(undefined),
 });
 
 export const Route = createFileRoute('/_shell/media/')({

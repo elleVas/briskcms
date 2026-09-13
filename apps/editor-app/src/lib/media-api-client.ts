@@ -1,3 +1,4 @@
+import type { MediaKind } from '@brisk/shared-types';
 import { request } from './http-client';
 
 export interface MediaDto {
@@ -24,7 +25,7 @@ export interface PaginatedMedia {
 export interface MediaFilters {
   /** Part of a filename. */
   search?: string;
-  kind?: 'image' | 'video' | 'audio';
+  kind?: MediaKind;
 }
 
 export function listMedia(

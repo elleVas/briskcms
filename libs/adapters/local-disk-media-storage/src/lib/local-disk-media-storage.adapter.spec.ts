@@ -4,7 +4,6 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import sharp from 'sharp';
-import { UnsupportedMediaTypeError } from '@brisk/domain-core';
 import { LocalDiskMediaStorageAdapter } from './local-disk-media-storage.adapter';
 
 async function fileExists(path: string): Promise<boolean> {
@@ -74,16 +73,43 @@ describe('LocalDiskMediaStorageAdapter', () => {
     expect(result.height).toBe(800);
   });
 
-  it('rejects a non-image mime type before touching disk', async () => {
-    await expect(
-      adapter.upload({
-        tenantId: 'tenant-1',
-        siteId: 'site-1',
-        filename: 'documento.pdf',
-        mimeType: 'application/pdf',
-        data: new Uint8Array([1, 2, 3]),
-      }),
-    ).rejects.toThrow(UnsupportedMediaTypeError);
+  /*
+   * This used to be refused (ADR-0054). The library takes any file now
+   * (ADR-0070): what the adapter owes instead is to keep a file its bytes
+   * did not vouch for OUT of the tree served inline, under its own name so
+   * it downloads as what it is.
+   */
+  it('keeps a file it cannot vouch for under files/, with the name it was uploaded as', async () => {
+    const result = await adapter.upload({
+      tenantId: 'tenant-1',
+      siteId: 'site-1',
+      filename: 'Listino 2026.pdf',
+      mimeType: 'application/pdf',
+      data: new Uint8Array([1, 2, 3]),
+    });
+
+    expect(result.storageKey).toMatch(/^files\/[^/]+\/Listino-2026\.pdf$/);
+    expect(result.mimeType).toBe('application/pdf');
+    expect(result.size).toBe(3);
+    expect(await fileExists(join(uploadDir, result.storageKey))).toBe(true);
+  });
+
+  it('removes the file and the directory it was kept in', async () => {
+    const result = await adapter.upload({
+      tenantId: 'tenant-1',
+      siteId: 'site-1',
+      filename: 'nota.txt',
+      mimeType: 'text/plain',
+      data: new Uint8Array([1, 2, 3]),
+    });
+
+    await adapter.delete(result.storageKey);
+
+    expect(
+      await fileExists(
+        join(uploadDir, result.storageKey.split('/').slice(0, 2).join('/')),
+      ),
+    ).toBe(false);
   });
 
   it('exposes its provider as "local"', () => {

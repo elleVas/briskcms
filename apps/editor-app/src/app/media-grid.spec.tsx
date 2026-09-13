@@ -63,6 +63,38 @@ describe('MediaGrid', () => {
     expect(screen.getByText(/1\.2 KB/)).toBeTruthy();
   });
 
+  /*
+   * The library takes any file now (ADR-0070). Two things have to be true
+   * of one that is not a picture: it is not drawn as a broken image, and
+   * it is labelled by the format a person recognises, not by a MIME type.
+   */
+  it('draws a document as a document, labelled by its own extension', () => {
+    renderGrid({
+      items: [
+        {
+          ...mediaOne,
+          id: 'doc-1',
+          filename: 'offerta.docx',
+          mimeType:
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        },
+      ],
+    });
+
+    expect(screen.queryByRole('img', { name: 'offerta.docx' })).toBeNull();
+    expect(screen.getByText(/DOCX/)).toBeTruthy();
+  });
+
+  it('warns that nothing uploaded is checked', () => {
+    renderGrid();
+    expect(screen.getByText(/brisk non controlla cosa contiene/i)).toBeTruthy();
+  });
+
+  it('offers no choice of kind when the field has already made it', () => {
+    renderGrid({ lockedKind: 'video' });
+    expect(screen.queryByRole('radiogroup')).toBeNull();
+  });
+
   it('asks the caller for a new search rather than filtering the page it was given', () => {
     const onFiltersChange = vi.fn();
     renderGrid({ onFiltersChange });
@@ -103,7 +135,7 @@ describe('MediaGrid', () => {
   it('shows an empty state when there are no items', () => {
     renderGrid({ items: [], total: 0 });
 
-    expect(screen.getByText(/ancora niente nella libreria/i)).toBeTruthy();
+    expect(screen.getByText(/la libreria è ancora vuota/i)).toBeTruthy();
   });
 
   it('renders a thumbnail for every item', () => {

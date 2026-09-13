@@ -1,9 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  MediaNotFoundError,
-  MediaTooLargeError,
-  UnsupportedMediaTypeError,
-} from '@brisk/domain-core';
+import { MediaNotFoundError, MediaTooLargeError } from '@brisk/domain-core';
 import { MAX_UPLOAD_BYTES_BY_KIND, uploadMedia } from './upload-media.use-case';
 import { listMedia } from './list-media.use-case';
 import { deleteMedia } from './delete-media.use-case';
@@ -170,20 +166,57 @@ describe('media lifecycle: upload -> list -> delete', () => {
     expect(media.mimeType).toBe('video/mp4');
   });
 
-  it('refuses a file whose bytes are not an allowed format, whatever it claims', async () => {
+  /*
+   * The library used to refuse this outright. It now takes any file
+   * (ADR-0070) — and what has to stay true is the other half of that
+   * rule: claiming to be a PNG must never make a file an image. Its bytes
+   * are not one, so it is kept as an opaque download under `files/`, never
+   * served inline where a browser would run what is inside it.
+   */
+  it('takes a file whose bytes are not what it claims, but never as the image it pretends to be', async () => {
     const deps = setup();
     const svg = new TextEncoder().encode('<svg><script>alert(1)</script>');
+
+    const media = await uploadMedia(deps, {
+      tenantId,
+      siteId: 'site-1',
+      filename: 'innocuo.png',
+      mimeType: 'image/png',
+      data: svg,
+    });
+
+    // Filed where its name says — an image — and kept where nothing is
+    // ever opened in place.
+    expect(media.mimeType).toBe('image/png');
+    expect(media.storageKey).toMatch(/^files\//);
+  });
+
+  it('takes a PDF as a document, stored under its own name for download', async () => {
+    const deps = setup();
+
+    const media = await uploadMedia(deps, {
+      tenantId,
+      siteId: 'site-1',
+      filename: 'Listino 2026.pdf',
+      mimeType: 'application/pdf',
+      data: new TextEncoder().encode('%PDF-1.7'),
+    });
+
+    expect(media.mimeType).toBe('application/pdf');
+    expect(media.storageKey).toMatch(/^files\/.+\/Listino-2026\.pdf$/);
+  });
+
+  it('still refuses a document larger than a document may be', async () => {
+    const deps = setup();
 
     await expect(
       uploadMedia(deps, {
         tenantId,
         siteId: 'site-1',
-        filename: 'innocuo.png',
-        // Claiming to be a PNG changes nothing: the bytes are what is
-        // checked, and they are the only thing a caller cannot fake.
-        mimeType: 'image/png',
-        data: svg,
+        filename: 'huge.pdf',
+        mimeType: 'application/pdf',
+        data: new Uint8Array(MAX_UPLOAD_BYTES_BY_KIND.document + 1),
       }),
-    ).rejects.toThrow(UnsupportedMediaTypeError);
+    ).rejects.toThrow(MediaTooLargeError);
   });
 });

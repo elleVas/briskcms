@@ -1,6 +1,6 @@
 # 0054 — Hosted video and audio, and what an upload is allowed to be
 
-**Status**: Accepted — 2026-09-08
+**Status**: Accepted — 2026-09-08. Amended by [0070](0070-the-library-takes-any-file.md): files outside the allow-list are no longer refused, they are kept and served as downloads.
 
 ## Context
 

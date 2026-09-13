@@ -5,7 +5,11 @@ import { FeatureListField } from './feature-list-field';
 import { FormPickerField } from './form-picker-field';
 import { GalleryPickerField } from './gallery-picker-field';
 import { IconPickerField } from './icon-picker-field';
-import { MediaPickerField } from './media-picker-field';
+import {
+  AudioPickerField,
+  MediaPickerField,
+  VideoPickerField,
+} from './media-picker-field';
 import { PagePickerField } from './page-picker-field';
 import { SectionPickerField } from './section-picker-field';
 import { TableDataField } from './table-data-field';
@@ -39,6 +43,7 @@ export const CUSTOM_FIELD_CONTROLS: Record<
   CustomFieldControl,
   ControlComponent
 > = {
+  audio: AudioPickerField as ControlComponent,
   color: ColorPickerField as ControlComponent,
   'feature-list': FeatureListField as ControlComponent,
   form: FormPickerField as ControlComponent,
@@ -50,4 +55,5 @@ export const CUSTOM_FIELD_CONTROLS: Record<
   'table-data': TableDataField as ControlComponent,
   term: TermPickerField as ControlComponent,
   taxonomy: TaxonomyPickerField as ControlComponent,
+  video: VideoPickerField as ControlComponent,
 };

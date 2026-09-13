@@ -1,4 +1,5 @@
-import { and, eq, ilike, like, type SQL } from 'drizzle-orm';
+import { DOCUMENT_MIME_TYPES, type MediaKind } from '@brisk/shared-types';
+import { and, eq, ilike, inArray, like, not, or, type SQL } from 'drizzle-orm';
 import { Media, type MediaProps } from '@brisk/domain-core';
 import type {
   MediaFilter,
@@ -75,11 +76,8 @@ export class DrizzleMediaRepository
     if (search) {
       conditions.push(ilike(media.filename, `%${escapeLikePattern(search)}%`));
     }
-    // The MIME type's own prefix, which is what the sniffer decided the
-    // file really was when it was stored (ADR-0054) — never the extension,
-    // which a caller picks.
     if (filter.kind) {
-      conditions.push(like(media.mimeType, `${filter.kind}/%`));
+      conditions.push(kindCondition(filter.kind));
     }
     return this.listPaginatedTx(
       tenantId,
@@ -88,4 +86,52 @@ export class DrizzleMediaRepository
       pagination,
     );
   }
+}
+
+/**
+ * The SQL spelling of `mediaKindOfMime` (@brisk/shared-types), which is
+ * the definition — this has to agree with it, and the integration spec
+ * checks that it does for every kind.
+ *
+ * Asked of the stored MIME type, which for an image, a video or an audio
+ * file is what its bytes proved it was (ADR-0054), and for anything else
+ * is what its name said (ADR-0070) — never what the uploader declared.
+ */
+function kindCondition(kind: MediaKind): SQL {
+  const isDocument = defined(
+    or(
+      like(media.mimeType, 'text/%'),
+      inArray(media.mimeType, [...DOCUMENT_MIME_TYPES]),
+    ),
+  );
+  switch (kind) {
+    case 'image':
+    case 'video':
+    case 'audio':
+      return like(media.mimeType, `${kind}/%`);
+    case 'document':
+      return isDocument;
+    case 'other':
+      return defined(
+        and(
+          not(like(media.mimeType, 'image/%')),
+          not(like(media.mimeType, 'video/%')),
+          not(like(media.mimeType, 'audio/%')),
+          not(isDocument),
+        ),
+      );
+  }
+}
+
+/**
+ * drizzle types `and()`/`or()` as possibly `undefined`, because every one
+ * of their arguments may be. Here every argument is a real condition, so
+ * the undefined branch cannot happen — checked rather than cast, so that
+ * if it ever does it says so instead of silently matching every row.
+ */
+function defined(condition: SQL | undefined): SQL {
+  if (!condition) {
+    throw new Error('A media kind condition was built from no conditions');
+  }
+  return condition;
 }
