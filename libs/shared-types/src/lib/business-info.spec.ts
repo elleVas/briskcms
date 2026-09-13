@@ -42,6 +42,7 @@ describe('business-info schemas', () => {
     const result = businessInfoSchema.safeParse({
       businessAddress: null,
       businessPhone: null,
+      businessEmail: null,
       businessType: null,
       openingHours: null,
     });
@@ -52,6 +53,7 @@ describe('business-info schemas', () => {
     const result = businessInfoSchema.safeParse({
       businessAddress: 'Via Roma 1, 20100 Milano, IT',
       businessPhone: '+39 02 1234567',
+      businessEmail: null,
       businessType: 'Restaurant',
       openingHours: [{ dayOfWeek: 'monday', ranges: [] }],
     });

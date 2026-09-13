@@ -633,6 +633,8 @@
     "description": "Used to generate the site's structured data (schema.org LocalBusiness) — helps with rich results on Google.",
     "addressLabel": "Address",
     "phoneLabel": "Phone",
+    "emailLabel": "Email",
+    "emailInvalid": "This does not look like an email address.",
     "typeLabel": "Business type",
     "typePlaceholder": "E.g. Restaurant, ProfessionalService, Store...",
     "hoursLabel": "Opening hours",
@@ -2118,6 +2120,9 @@
         },
         "showPhone": {
           "fieldLabel": "Show the phone number"
+        },
+        "showEmail": {
+          "fieldLabel": "Show the email"
         },
         "showMapLink": {
           "fieldLabel": "Link the address to a map"

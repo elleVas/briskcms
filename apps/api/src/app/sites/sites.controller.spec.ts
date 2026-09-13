@@ -31,6 +31,7 @@ function buildSite(
     untranslatedPageFallback: 'redirect-to-default',
     businessAddress: null,
     businessPhone: null,
+    businessEmail: null,
     businessType: null,
     openingHours: null,
     searchEngineIndexingEnabled: false,
@@ -135,6 +136,7 @@ describe('SitesController (unit)', () => {
       controller.updateBusinessInfo('missing', {
         businessAddress: null,
         businessPhone: null,
+        businessEmail: null,
         businessType: null,
         openingHours: null,
       }),
@@ -147,6 +149,7 @@ describe('SitesController (unit)', () => {
     const result = await controller.updateBusinessInfo('site-1', {
       businessAddress: 'Via Roma 1',
       businessPhone: '+39 02 1234567',
+      businessEmail: null,
       businessType: 'Restaurant',
       openingHours: null,
     });

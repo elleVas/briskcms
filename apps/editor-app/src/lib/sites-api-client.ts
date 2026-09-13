@@ -31,6 +31,7 @@ export function getCurrentSite(): Promise<SiteRecord> {
 export interface UpdateBusinessInfoInput {
   businessAddress: string | null;
   businessPhone: string | null;
+  businessEmail: string | null;
   businessType: string | null;
   openingHours: OpeningHoursDay[] | null;
 }

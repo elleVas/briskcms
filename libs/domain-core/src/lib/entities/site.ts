@@ -19,6 +19,7 @@ export interface SiteProps {
   untranslatedPageFallback: UntranslatedPageFallback;
   businessAddress: string | null;
   businessPhone: string | null;
+  businessEmail: string | null;
   businessType: string | null;
   openingHours: OpeningHoursDay[] | null;
   searchEngineIndexingEnabled: boolean;
@@ -44,6 +45,7 @@ export interface SiteProps {
 export interface UpdateBusinessInfoInput {
   businessAddress: string | null;
   businessPhone: string | null;
+  businessEmail: string | null;
   businessType: string | null;
   openingHours: OpeningHoursDay[] | null;
 }
@@ -128,6 +130,10 @@ export class Site {
     return this.props.businessPhone;
   }
 
+  get businessEmail(): string | null {
+    return this.props.businessEmail;
+  }
+
   get businessType(): string | null {
     return this.props.businessType;
   }
@@ -193,6 +199,7 @@ export class Site {
     return (
       this.props.businessAddress !== null ||
       this.props.businessPhone !== null ||
+      this.props.businessEmail !== null ||
       this.props.businessType !== null ||
       this.props.openingHours !== null
     );
@@ -201,6 +208,7 @@ export class Site {
   updateBusinessInfo(input: UpdateBusinessInfoInput): void {
     this.props.businessAddress = input.businessAddress;
     this.props.businessPhone = input.businessPhone;
+    this.props.businessEmail = input.businessEmail;
     this.props.businessType = input.businessType;
     this.props.openingHours = input.openingHours;
   }

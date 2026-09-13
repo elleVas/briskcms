@@ -38,6 +38,12 @@ export type OpeningHours = z.infer<typeof openingHoursSchema>;
 export const businessInfoSchema = z.object({
   businessAddress: z.string().nullable(),
   businessPhone: z.string().nullable(),
+  /**
+   * The address people write to. It was the one contact detail Business
+   * info did not have, so the Contact details block could show a phone and
+   * not an email, and the legal documents wizard asked for one every time.
+   */
+  businessEmail: z.string().nullable(),
   businessType: z.string().nullable(),
   openingHours: openingHoursSchema.nullable(),
 });

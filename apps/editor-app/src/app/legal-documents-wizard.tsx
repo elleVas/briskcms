@@ -62,7 +62,9 @@ function dedupe(values: string[]): string[] {
 function toDefaultValues(site: SiteRecord): WizardFormValues {
   return {
     legalEntityName: site.name,
-    contactEmail: '',
+    // The site's own email once Business info has one: the wizard asked
+    // for it from scratch every time, the one field it could not prefill.
+    contactEmail: site.businessEmail ?? '',
     address: site.businessAddress ?? '',
     phone: site.businessPhone ?? '',
     vatId: '',

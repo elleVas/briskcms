@@ -14,7 +14,12 @@ export const contactDetailsBlock: BlockDescriptor<ContactDetailsProps> = {
   label: 'blocks.contactDetails.label',
   category: 'content',
   icon: 'contact',
-  defaultProps: { showAddress: true, showPhone: true, showMapLink: true },
+  defaultProps: {
+    showAddress: true,
+    showPhone: true,
+    showEmail: true,
+    showMapLink: true,
+  },
   fields: [
     {
       kind: 'boolean',
@@ -25,6 +30,11 @@ export const contactDetailsBlock: BlockDescriptor<ContactDetailsProps> = {
       kind: 'boolean',
       key: 'showPhone',
       label: 'blocks.contactDetails.fields.showPhone.fieldLabel',
+    },
+    {
+      kind: 'boolean',
+      key: 'showEmail',
+      label: 'blocks.contactDetails.fields.showEmail.fieldLabel',
     },
     {
       kind: 'boolean',

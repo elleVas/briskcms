@@ -111,11 +111,12 @@
   "contactDetails.address": "Address",
   "contactDetails.phone": "Phone",
   "contactDetails.openMap": "Open in a map",
-  "contactDetails.empty": "No address or phone yet: add them under Settings → Business info.",
+  "contactDetails.empty": "No address, phone or email yet: add them under Settings → Business info.",
   "openingHours.label": "Opening hours",
   "openingHours.closed": "Closed",
   "openingHours.empty": "No opening hours yet: add them under Settings → Business info.",
   "fileDownload.download": "Download",
   "fileDownload.empty": "Choose a file from the library.",
-  "blocks.listItem.label": "List item"
+  "blocks.listItem.label": "List item",
+  "contactDetails.email": "Email"
 }

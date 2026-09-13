@@ -135,6 +135,7 @@ describe('SitesController (integration)', () => {
       .send({
         businessAddress: 'Via Roma 1, Milano',
         businessPhone: '+39 02 1234567',
+        businessEmail: null,
         businessType: 'Restaurant',
         openingHours: [
           {
@@ -156,12 +157,35 @@ describe('SitesController (integration)', () => {
     expect(getRes.body.businessPhone).toBe('+39 02 1234567');
   });
 
+  it('stores the email trimmed, and refuses one that is not an address', async () => {
+    const base = {
+      businessAddress: null,
+      businessPhone: null,
+      businessType: null,
+      openingHours: null,
+    };
+    const saved = await agent
+      .patch(`/sites/${siteId}/business-info`)
+      .send({ ...base, businessEmail: '  ciao@example.com ' })
+      .expect(200);
+    expect(saved.body.businessEmail).toBe('ciao@example.com');
+
+    await agent
+      .patch(`/sites/${siteId}/business-info`)
+      .send({ ...base, businessEmail: 'non-una-email' })
+      .expect(400);
+    // The refused update changed nothing.
+    const after = await agent.get(`/sites/${siteId}`).expect(200);
+    expect(after.body.businessEmail).toBe('ciao@example.com');
+  });
+
   it('400s an opening hours entry not in HH:MM format', async () => {
     await agent
       .patch(`/sites/${siteId}/business-info`)
       .send({
         businessAddress: null,
         businessPhone: null,
+        businessEmail: null,
         businessType: null,
         openingHours: [
           { dayOfWeek: 'monday', ranges: [{ opens: '9am', closes: '13:00' }] },
@@ -176,6 +200,7 @@ describe('SitesController (integration)', () => {
       .send({
         businessAddress: null,
         businessPhone: null,
+        businessEmail: null,
         businessType: null,
         openingHours: null,
       })

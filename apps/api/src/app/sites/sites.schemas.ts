@@ -11,6 +11,10 @@ import { domainSchema } from '../public-pages/public-pages.schemas';
 export const updateBusinessInfoBodySchema = z.object({
   businessAddress: z.string().nullable(),
   businessPhone: z.string().nullable(),
+  // Checked here and not in the shared shape: a stored value has already
+  // been through this, and a published page must not fail to render over
+  // an address somebody typed before the rule existed.
+  businessEmail: z.string().trim().email().nullable(),
   businessType: z.string().nullable(),
   openingHours: openingHoursSchema.nullable(),
 });

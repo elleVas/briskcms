@@ -25,6 +25,7 @@ const sampleSite: SiteRecord = {
   untranslatedPageFallback: 'redirect-to-default',
   businessAddress: 'Via Roma 1, Milano',
   businessPhone: '+39 02 1234567',
+  businessEmail: null,
   businessType: 'Restaurant',
   openingHours: null,
   searchEngineIndexingEnabled: false,
@@ -99,11 +100,37 @@ describe('BusinessInfoDialog', () => {
     );
   });
 
+  it('saves the email, and says so under the field when it is not one', async () => {
+    vi.mocked(api.getCurrentSite).mockResolvedValue(sampleSite);
+    vi.mocked(api.updateBusinessInfo).mockResolvedValue(sampleSite);
+
+    renderDialog();
+    const email = await screen.findByLabelText('Email');
+    fireEvent.change(email, { target: { value: 'non-una-email' } });
+    fireEvent.click(screen.getByRole('button', { name: /^salva$/i }));
+
+    expect(
+      await screen.findByText('Questo non sembra un indirizzo email.'),
+    ).toBeTruthy();
+    expect(api.updateBusinessInfo).not.toHaveBeenCalled();
+
+    fireEvent.change(email, { target: { value: ' ciao@example.com ' } });
+    fireEvent.click(screen.getByRole('button', { name: /^salva$/i }));
+
+    await waitFor(() =>
+      expect(api.updateBusinessInfo).toHaveBeenCalledWith(
+        'site-1',
+        expect.objectContaining({ businessEmail: 'ciao@example.com' }),
+      ),
+    );
+  });
+
   it('sends null for blank optional fields, not empty strings', async () => {
     vi.mocked(api.getCurrentSite).mockResolvedValue({
       ...sampleSite,
       businessAddress: null,
       businessPhone: null,
+      businessEmail: null,
       businessType: null,
     });
     vi.mocked(api.updateBusinessInfo).mockResolvedValue(sampleSite);
@@ -116,6 +143,7 @@ describe('BusinessInfoDialog', () => {
       expect(api.updateBusinessInfo).toHaveBeenCalledWith('site-1', {
         businessAddress: null,
         businessPhone: null,
+        businessEmail: null,
         businessType: null,
         openingHours: null,
       }),
