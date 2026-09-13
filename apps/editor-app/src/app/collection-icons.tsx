@@ -14,10 +14,10 @@ import {
 } from 'lucide-react';
 
 /**
- * The icons a section can wear in the sidebar.
+ * The icons a collection can wear in the sidebar.
  *
  * A short curated list, not the whole lucide set: the choice is made
- * once when somebody names a section, and a thousand-icon picker turns a
+ * once when somebody names a collection, and a thousand-icon picker turns a
  * two-second decision into a browsing session. Everything unknown falls
  * back rather than rendering a hole in a list of eleven entries.
  */

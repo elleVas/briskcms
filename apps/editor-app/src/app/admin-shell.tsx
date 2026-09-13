@@ -104,7 +104,7 @@ export function AdminShell({ children }: AdminShellProps) {
   const { isAdmin } = useCurrentSession();
   const { t } = useTranslation();
   // A plain query, not a suspending one: the sidebar has to be on screen
-  // before the sections it may or may not have are known, and a site with
+  // before the collections it may or may not have are known, and a site with
   // none is the normal case.
   const { data: site } = useQuery(siteQueryOptions());
   const { data: collections } = useQuery({
@@ -148,7 +148,7 @@ export function AdminShell({ children }: AdminShellProps) {
           */}
           <NavGroup title={t('shell.nav.groupContent')}>
             <NavItem to="/pages" icon={FileText} label={t('shell.nav.pages')} />
-            {/* One entry per section the site has defined. They sit
+            {/* One entry per collection the site has defined. They sit
                 straight under Pages because that is what they are: pages
                 of one kind, kept apart so neither list drowns the other. */}
             {(collections ?? []).map((collection) => (

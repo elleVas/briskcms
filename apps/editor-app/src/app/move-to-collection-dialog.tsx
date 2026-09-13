@@ -30,17 +30,17 @@ export interface MoveToCollectionDialogProps {
 }
 
 /**
- * Which section of the editor lists a page that already exists.
+ * Which collection of the editor lists a page that already exists.
  *
- * Until now the only way into a section was to create the page from
- * inside it: a page written before its section existed had to be written
- * again to get in. The endpoint has been there since sections arrived —
+ * Until now the only way into a collection was to create the page from
+ * inside it: a page written before its collection existed had to be written
+ * again to get in. The endpoint has been there since collections arrived —
  * this is the door to it.
  *
- * A radio list rather than a dropdown: a site has a handful of sections,
+ * A radio list rather than a dropdown: a site has a handful of collections,
  * and seeing them all at once, with the one the page is in already
  * marked, answers "where is this filed" as much as it changes it. "Pages"
- * is one of the options rather than a separate "remove from section"
+ * is one of the options rather than a separate "remove from collection"
  * button — to the person deciding, they are one question, and the page
  * tree is one of the places a page can be listed.
  */
@@ -54,7 +54,7 @@ export function MoveToCollectionDialog({
   isMoving,
 }: MoveToCollectionDialogProps) {
   const { t } = useTranslation();
-  // Only while it is open: the sections are read on every screen already,
+  // Only while it is open: the collections are read on every screen already,
   // and a closed dialog has no question to answer.
   const { data: collections } = useQuery({
     ...collectionsQueryOptions(siteId),

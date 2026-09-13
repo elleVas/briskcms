@@ -5,7 +5,7 @@ export const collectionsQueryKey = (siteId: string) =>
   ['collections', siteId] as const;
 
 /**
- * The sections this site has. Asked once and kept: they are read on
+ * The collections this site has. Asked once and kept: they are read on
  * every screen (the sidebar renders one entry each) and change about as
  * often as the site's languages do.
  */

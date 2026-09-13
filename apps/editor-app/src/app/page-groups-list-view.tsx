@@ -96,14 +96,14 @@ export interface PageGroupsListViewProps {
   siteId: string;
   /**
    * `tree` is the site's own pages, in the order somebody dragged them
-   * into; `feed` is a section, flat and newest first. The rows are the
+   * into; `feed` is a collection, flat and newest first. The rows are the
    * same rows — what changes is that a feed has no hierarchy to draw and
    * no order to drag, because its order is the publication date.
    */
   layout?: 'tree' | 'feed';
-  /** The section being listed, so a page created here is created in it. */
+  /** The collection being listed, so a page created here is created in it. */
   collectionId?: string | null;
-  /** Shown as the screen's heading — a section is named by whoever made it. */
+  /** Shown as the screen's heading — a collection is named by whoever made it. */
   title?: string;
   defaultLocale: string;
   enabledLocales: string[];
@@ -508,9 +508,9 @@ export function PageGroupsListView({
   }
 
   async function goToPage(target: number) {
-    // Back to the screen this list IS, not to Pages: a section's own list
+    // Back to the screen this list IS, not to Pages: a collection's own list
     // sent you to the generic page tree as soon as it grew past one page
-    // of results, which read as the section having lost its contents.
+    // of results, which read as the collection having lost its contents.
     await (collectionId
       ? navigate({
           to: '/collections/$collectionId',
