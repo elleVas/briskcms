@@ -26,6 +26,7 @@ import { z } from 'zod';
 export const customFieldControlSchema = z.enum([
   'audio',
   'color',
+  'date',
   'feature-list',
   'file',
   'form',
@@ -37,6 +38,7 @@ export const customFieldControlSchema = z.enum([
   'table-data',
   'taxonomy',
   'term',
+  'time',
   'video',
 ]);
 

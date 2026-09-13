@@ -56,6 +56,38 @@ function asString(value: unknown): string {
 
 type ProseFieldExtractor = (props: Record<string, unknown>) => string[];
 
+/**
+ * A quote and who said it — Quote's fields, which a testimonial, a
+ * product review and a pull quote all share because they are drawn by
+ * the same two components.
+ */
+function quoteProse(props: Record<string, unknown>): string[] {
+  return [
+    asString(props['quote']),
+    asString(props['author']),
+    asString(props['role']),
+  ];
+}
+
+/** A person: TeamMember's fields, which the profile card shares. */
+function teamMemberProse(props: Record<string, unknown>): string[] {
+  return [
+    asString(props['name']),
+    asString(props['role']),
+    asString(props['bio']),
+  ];
+}
+
+/** The alt text of an `images` list — Gallery's shape, which three blocks share. */
+function imageAlts(props: Record<string, unknown>): string[] {
+  const images = Array.isArray(props['images']) ? props['images'] : [];
+  return images.map((image: unknown) =>
+    image && typeof image === 'object' && 'alt' in image
+      ? asString(image.alt)
+      : '',
+  );
+}
+
 const PROSE_FIELD_EXTRACTORS: Partial<Record<string, ProseFieldExtractor>> = {
   Hero: (props) => [asString(props['title']), asString(props['subtitle'])],
   // The accessible name of an icon-only link is real prose and the only
@@ -87,17 +119,8 @@ const PROSE_FIELD_EXTRACTORS: Partial<Record<string, ProseFieldExtractor>> = {
     Object.entries(props)
       .filter(([key]) => parseSectionOverrideKey(key) !== null)
       .map(([, value]) => asString(value)),
-  Gallery: (props) => {
-    const images = Array.isArray(props['images']) ? props['images'] : [];
-    return images.map((image) =>
-      asString((image as Record<string, unknown>)?.['alt']),
-    );
-  },
-  Quote: (props) => [
-    asString(props['quote']),
-    asString(props['author']),
-    asString(props['role']),
-  ],
+  Gallery: (props) => imageAlts(props),
+  Quote: quoteProse,
   Rating: (props) => [asString(props['label'])],
   Countdown: (props) => [asString(props['label'])],
   Tab: (props) => [asString(props['label'])],
@@ -125,6 +148,69 @@ const PROSE_FIELD_EXTRACTORS: Partial<Record<string, ProseFieldExtractor>> = {
   TableOfContents: (props) => [asString(props['title'])],
   OpeningHours: (props) => [asString(props['title'])],
   FileDownload: (props) => [asString(props['label'])],
+  // The last family of the hundred-blocks plan. Every one of these is
+  // words somebody typed on this page — a product's name, a dish, an
+  // event, a definition — so it is what a search should find the page by.
+  ProductCard: (props) => [
+    asString(props['name']),
+    asString(props['description']),
+    asString(props['badge']),
+  ],
+  // The pictures' alt text, for Gallery's reason.
+  ProductGallery: (props) => imageAlts(props),
+  DiscountPrice: (props) => [asString(props['note'])],
+  BuyButton: (props) => [asString(props['label'])],
+  ProductVariants: (props) => [
+    asString(props['label']),
+    asString(props['options']),
+  ],
+  ProductReview: quoteProse,
+  Testimonial: quoteProse,
+  ComparisonTable: (props) => [asString(props['columns'])],
+  ComparisonRow: (props) => [
+    asString(props['feature']),
+    asString(props['values']),
+  ],
+  PromoCode: (props) => [
+    asString(props['code']),
+    asString(props['description']),
+  ],
+  ShippingReturns: (props) => [
+    asString(props['shippingTitle']),
+    asString(props['shippingText']),
+    asString(props['returnsTitle']),
+    asString(props['returnsText']),
+    asString(props['supportTitle']),
+    asString(props['supportText']),
+  ],
+  TrustBadges: (props) => [asString(props['text'])],
+  MenuItem: (props) => [
+    asString(props['name']),
+    asString(props['description']),
+    asString(props['dietary']),
+    asString(props['allergens']),
+  ],
+  EventItem: (props) => [
+    asString(props['title']),
+    asString(props['location']),
+    asString(props['description']),
+  ],
+  ShareButtons: (props) => [asString(props['label'])],
+  CookiePreferences: (props) => [asString(props['label'])],
+  Step: (props) => [asString(props['title']), asString(props['description'])],
+  SpecItem: (props) => [asString(props['label']), asString(props['value'])],
+  ProgressBar: (props) => [asString(props['label'])],
+  ProfileCard: teamMemberProse,
+  TeamMember: teamMemberProse,
+  FileList: (props) => [asString(props['title'])],
+  GlossaryTerm: (props) => [
+    asString(props['term']),
+    asString(props['definition']),
+  ],
+  PullQuote: quoteProse,
+  ImageHotspots: (props) => [asString(props['alt'])],
+  Hotspot: (props) => [asString(props['title']), asString(props['text'])],
+  MasonryGallery: (props) => imageAlts(props),
   NavLink: (props) => [asString(props['label'])],
   NavDropdown: (props) => [asString(props['label'])],
 };
@@ -194,6 +280,19 @@ export const BLOCKS_WITHOUT_SEARCHABLE_TEXT = [
   'SiteMap',
   // The site's own address and phone: Business info, not this page's words.
   'ContactDetails',
+  // Containers and arrangements whose words all live in their children,
+  // which index themselves.
+  'ProductGrid',
+  'ProductReviews',
+  'RestaurantMenu',
+  'EventList',
+  'Steps',
+  'SpecList',
+  'Glossary',
+  'VideoPlaylist',
+  // Business info again, and a third party's booking page.
+  'StickyContactBar',
+  'BookingEmbed',
 
   // Real prose, not wired up yet — a genuine backlog item (found during
   // the 2026-09-02 Extension Manifest planning session, deliberately left
@@ -215,8 +314,6 @@ export const BLOCKS_WITHOUT_SEARCHABLE_TEXT = [
   'Stat',
   'StatsCounter',
   'Team',
-  'TeamMember',
-  'Testimonial',
   'Testimonials',
   'Timeline',
   'TimelineStep',

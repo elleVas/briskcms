@@ -24,6 +24,10 @@ const href = message
   target="_blank"
   rel="noopener noreferrer"
   class:list={[
+    // The type class the site-wide style of WhatsAppButton targets —
+    // `whats-app`, as the type name splits — beside the one its own
+    // stylesheet has always used.
+    'brisk-whats-app-button',
     'brisk-whatsapp-button',
     { 'brisk-visibility-desktop-only': visibility === 'desktop-only' },
     { 'brisk-visibility-mobile-only': visibility === 'mobile-only' },

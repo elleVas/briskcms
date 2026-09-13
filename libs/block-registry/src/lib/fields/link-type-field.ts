@@ -23,14 +23,23 @@ export const linkTypeField: FieldDescriptor = {
  * (Banner, Button, Link, NavLink, PricingPlan, PromoBar) — a single
  * place they're derived from.
  */
-export function ctaLinkFields(): FieldDescriptor[] {
+export function ctaLinkFields({
+  required = true,
+}: {
+  /**
+   * `false` for a block that is whole without a link — a product card or
+   * an event that simply does not point anywhere yet. Warning that the
+   * field is required there would be telling somebody off for a choice.
+   */
+  required?: boolean;
+} = {}): FieldDescriptor[] {
   return [
     linkTypeField,
     FieldBuilder.custom(
       'page',
       'blocks.shared.linkType.pageFieldLabel',
       'page',
-      { showWhen: { field: 'linkType', equals: 'page' }, required: true },
+      { showWhen: { field: 'linkType', equals: 'page' }, required },
     ),
     {
       kind: 'text',
@@ -39,7 +48,7 @@ export function ctaLinkFields(): FieldDescriptor[] {
       // Both destinations are required, and only ever one of them is on
       // screen: whichever the block says it points at is the one that
       // has to be filled in, or it points nowhere (ADR-0063).
-      required: true,
+      required,
       label: 'blocks.shared.linkType.urlFieldLabel',
       // Found live during the i18n backfill (not just theorized): a real
       // site often uses this field for a hand-written relative internal

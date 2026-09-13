@@ -15,6 +15,37 @@ const SCHEMA_ORG_DAY: Record<DayOfWeek, string> = {
   sunday: 'Sunday',
 };
 
+/**
+ * An address as schema.org wants it — absolute — or `undefined` when there
+ * is none worth giving.
+ *
+ * Structured data sits inside a block's render, so this must never throw:
+ * `new URL('https://')`, which is what somebody leaves behind while typing
+ * a link, raised straight out of ProductCard and the page stopped after
+ * the first block with "Internal server error". A search engine is also
+ * only ever given a web address, never `javascript:` or `mailto:`.
+ */
+export function absoluteSchemaUrl(
+  value: string | null | undefined,
+  origin: string,
+): string | undefined {
+  const trimmed = value?.trim();
+  if (!trimmed) {
+    return undefined;
+  }
+  // A path is resolved against the site. Anything else has to be a whole
+  // address on its own: resolved against the site too, a bare "https:"
+  // would quietly become the home page.
+  const base = trimmed.startsWith('/') ? origin : undefined;
+  if (!URL.canParse(trimmed, base)) {
+    return undefined;
+  }
+  const url = new URL(trimmed, base);
+  return url.protocol === 'https:' || url.protocol === 'http:'
+    ? url.href
+    : undefined;
+}
+
 export interface BuildSchemaOrgGraphInput {
   site: PublishedSite;
   seoMeta: SeoMeta;

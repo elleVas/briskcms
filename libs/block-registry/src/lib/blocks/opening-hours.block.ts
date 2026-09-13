@@ -7,7 +7,7 @@ import { BlockStyleRegistry } from '../block-style-registry';
 export const openingHoursBlock: BlockDescriptor<OpeningHoursProps> = {
   type: 'OpeningHours',
   label: 'blocks.openingHours.label',
-  category: 'content',
+  category: 'localBusiness',
   icon: 'clock',
   defaultProps: { title: '' },
   fields: [

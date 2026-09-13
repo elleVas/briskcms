@@ -1,18 +1,23 @@
 import { backToTopBehaviors } from './back-to-top';
 import { beforeAfterBehaviors } from './before-after';
 import { consentGatedEmbedBehaviors } from './consent-gated-embed';
+import { cookiePreferencesBehaviors } from './cookie-preferences';
+import { copyButtonBehaviors } from './copy-button';
 import { countdownBehaviors } from './countdown';
 import { embedHtmlBehaviors } from './embed-html';
 import { formBehaviors } from './form';
 import { collectionBehaviors } from './collection';
 import { lightboxBehaviors } from './lightbox';
 import { hamburgerMenuBehaviors } from './hamburger-menu';
+import { hotspotBehaviors } from './hotspots';
+import { productGalleryBehaviors } from './product-gallery';
 import { promoBarBehaviors } from './promo-bar';
 import { statBehaviors } from './stat';
 import { tabsBehaviors } from './tabs';
 import { termListBehaviors } from './term-list';
 import { readingProgressBehaviors } from './reading-progress';
 import { turnstileBehaviors } from './turnstile';
+import { videoPlaylistBehaviors } from './video-playlist';
 import type { BlockBehavior } from './types';
 
 // Keyed by Block.type (see @brisk/shared-types), for the preview-bridge
@@ -58,4 +63,18 @@ export const BLOCK_BEHAVIOR_REGISTRY: Record<string, BlockBehavior[]> = {
   // trip, and re-runs after a live canvas insert like every other.
   TermList: termListBehaviors,
   ReadingProgress: readingProgressBehaviors,
+  ProductGrid: collectionBehaviors,
+  ProductReviews: collectionBehaviors,
+  EventList: collectionBehaviors,
+  ProductGallery: productGalleryBehaviors,
+  // Both copy something — a code, the page's address — with one button.
+  PromoCode: copyButtonBehaviors,
+  ShareButtons: copyButtonBehaviors,
+  CookiePreferences: cookiePreferencesBehaviors,
+  BookingEmbed: consentGatedEmbedBehaviors,
+  // Listened for on the picture, not on each point: a point added in the
+  // canvas works without the picture being wired again.
+  ImageHotspots: hotspotBehaviors,
+  MasonryGallery: lightboxBehaviors,
+  VideoPlaylist: videoPlaylistBehaviors,
 };

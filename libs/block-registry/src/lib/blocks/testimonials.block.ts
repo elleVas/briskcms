@@ -2,6 +2,7 @@ import type { TestimonialsProps } from '@brisk/shared-types';
 import { BLOCK_STYLE_DEFAULTS } from '@brisk/shared-types';
 import type { BlockDescriptor } from '../field-types';
 import { BlockStyleRegistry } from '../block-style-registry';
+import { displayField } from '../fields/display-field';
 
 export const testimonialsBlock: BlockDescriptor<TestimonialsProps> = {
   type: 'Testimonials',
@@ -9,27 +10,7 @@ export const testimonialsBlock: BlockDescriptor<TestimonialsProps> = {
   category: 'socialProof',
   icon: 'message-square-quote',
   defaultProps: { display: 'slider' },
-  fields: [
-    {
-      kind: 'select',
-      key: 'display',
-      label: 'blocks.shared.display.fieldLabel',
-      options: [
-        {
-          label: 'blocks.shared.display.options.grid',
-          value: 'grid',
-        },
-        {
-          label: 'blocks.shared.display.options.slider',
-          value: 'slider',
-        },
-        {
-          label: 'blocks.shared.display.options.carousel',
-          value: 'carousel',
-        },
-      ],
-    },
-  ],
+  fields: [displayField],
   isContainer: true,
   allowedChildTypes: ['Testimonial'],
   stylableProperties: BlockStyleRegistry.STANDARD,

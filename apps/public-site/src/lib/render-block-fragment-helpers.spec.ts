@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  FragmentComponentScripts,
   buildFragmentBlock,
   isValidRenderBlockFragmentBody,
   renderBlockFragmentCorsHeaders,
@@ -156,5 +157,58 @@ describe('buildFragmentBlock', () => {
     );
 
     expect(block.children?.map((child) => child.id)).toEqual(['fresh']);
+  });
+});
+
+/*
+ * Found by review on 2026-09-13: every fragment of a block with a
+ * behaviour carried `<script type="module" src="/Users/…/Tabs.astro?astro…">`
+ * — the server's absolute path, handed to the editor. The route itself
+ * cannot run under vitest (it imports an .astro file); what it does with
+ * the container is exercised here with the tag exactly as Astro writes it
+ * (astro/dist/runtime/server/render/script.js), and live against the build.
+ */
+describe('FragmentComponentScripts', () => {
+  it('gives Astro a placeholder that is not the module path', async () => {
+    const scripts = new FragmentComponentScripts();
+    const resolved = await scripts.resolve(
+      '/Users/someone/project/apps/public-site/src/components/blocks/Tabs.astro?astro&type=script&index=0&lang.ts',
+    );
+
+    expect(resolved).not.toContain('/Users/');
+    expect(resolved).not.toContain('.astro');
+  });
+
+  it('removes the component scripts it resolved and nothing else', async () => {
+    const scripts = new FragmentComponentScripts();
+    const first = await scripts.resolve(
+      '/a/Tabs.astro?astro&type=script&index=0&lang.ts',
+    );
+    const second = await scripts.resolve(
+      '/a/Form.astro?astro&type=script&index=0&lang.ts',
+    );
+    const turnstile =
+      '<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>';
+    const jsonLd = '<script type="application/ld+json">{"a":1}</script>';
+    const html = [
+      '<div data-brisk-block-id="b1">Tabs</div>',
+      `<script type="module" src="${first}"></script>`,
+      turnstile,
+      jsonLd,
+      `<script type="module" src="${second}"></script>`,
+    ].join('');
+
+    expect(scripts.strip(html)).toBe(
+      `<div data-brisk-block-id="b1">Tabs</div>${turnstile}${jsonLd}`,
+    );
+  });
+
+  it('never matches a placeholder another fragment resolved', async () => {
+    const one = new FragmentComponentScripts();
+    const other = new FragmentComponentScripts();
+    const placeholder = await one.resolve('/a/Tabs.astro?astro&type=script');
+    const html = `<script type="module" src="${placeholder}"></script>`;
+
+    expect(other.strip(html)).toBe(html);
   });
 });

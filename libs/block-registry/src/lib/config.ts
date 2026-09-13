@@ -56,6 +56,41 @@ import { marqueeBlock } from './blocks/marquee.block';
 import { contactDetailsBlock } from './blocks/contact-details.block';
 import { openingHoursBlock } from './blocks/opening-hours.block';
 import { fileDownloadBlock } from './blocks/file-download.block';
+import { productGridBlock } from './blocks/product-grid.block';
+import { productCardBlock } from './blocks/product-card.block';
+import { productGalleryBlock } from './blocks/product-gallery.block';
+import { discountPriceBlock } from './blocks/discount-price.block';
+import { buyButtonBlock } from './blocks/buy-button.block';
+import { productVariantsBlock } from './blocks/product-variants.block';
+import { productReviewsBlock } from './blocks/product-reviews.block';
+import { productReviewBlock } from './blocks/product-review.block';
+import { comparisonTableBlock } from './blocks/comparison-table.block';
+import { comparisonRowBlock } from './blocks/comparison-row.block';
+import { promoCodeBlock } from './blocks/promo-code.block';
+import { shippingReturnsBlock } from './blocks/shipping-returns.block';
+import { trustBadgesBlock } from './blocks/trust-badges.block';
+import { restaurantMenuBlock } from './blocks/restaurant-menu.block';
+import { menuItemBlock } from './blocks/menu-item.block';
+import { eventListBlock } from './blocks/event-list.block';
+import { eventItemBlock } from './blocks/event-item.block';
+import { stickyContactBarBlock } from './blocks/sticky-contact-bar.block';
+import { shareButtonsBlock } from './blocks/share-buttons.block';
+import { cookiePreferencesBlock } from './blocks/cookie-preferences.block';
+import { stepsBlock } from './blocks/steps.block';
+import { stepBlock } from './blocks/step.block';
+import { specListBlock } from './blocks/spec-list.block';
+import { specItemBlock } from './blocks/spec-item.block';
+import { progressBarBlock } from './blocks/progress-bar.block';
+import { profileCardBlock } from './blocks/profile-card.block';
+import { bookingEmbedBlock } from './blocks/booking-embed.block';
+import { fileListBlock } from './blocks/file-list.block';
+import { glossaryBlock } from './blocks/glossary.block';
+import { glossaryTermBlock } from './blocks/glossary-term.block';
+import { pullQuoteBlock } from './blocks/pull-quote.block';
+import { imageHotspotsBlock } from './blocks/image-hotspots.block';
+import { hotspotBlock } from './blocks/hotspot.block';
+import { masonryGalleryBlock } from './blocks/masonry-gallery.block';
+import { videoPlaylistBlock } from './blocks/video-playlist.block';
 import { searchBoxBlock } from './blocks/search-box.block';
 import { sectionBlock } from './blocks/section.block';
 import { statBlock } from './blocks/stat.block';
@@ -131,6 +166,41 @@ export {
   contactDetailsBlock,
   openingHoursBlock,
   fileDownloadBlock,
+  productGridBlock,
+  productCardBlock,
+  productGalleryBlock,
+  discountPriceBlock,
+  buyButtonBlock,
+  productVariantsBlock,
+  productReviewsBlock,
+  productReviewBlock,
+  comparisonTableBlock,
+  comparisonRowBlock,
+  promoCodeBlock,
+  shippingReturnsBlock,
+  trustBadgesBlock,
+  restaurantMenuBlock,
+  menuItemBlock,
+  eventListBlock,
+  eventItemBlock,
+  stickyContactBarBlock,
+  shareButtonsBlock,
+  cookiePreferencesBlock,
+  stepsBlock,
+  stepBlock,
+  specListBlock,
+  specItemBlock,
+  progressBarBlock,
+  profileCardBlock,
+  bookingEmbedBlock,
+  fileListBlock,
+  glossaryBlock,
+  glossaryTermBlock,
+  pullQuoteBlock,
+  imageHotspotsBlock,
+  hotspotBlock,
+  masonryGalleryBlock,
+  videoPlaylistBlock,
   searchBoxBlock,
   statBlock,
   statsCounterBlock,
@@ -211,6 +281,41 @@ export const pageBlocks: BlockDescriptor[] = [
   contactDetailsBlock,
   openingHoursBlock,
   fileDownloadBlock,
+  productGridBlock,
+  productCardBlock,
+  productGalleryBlock,
+  discountPriceBlock,
+  buyButtonBlock,
+  productVariantsBlock,
+  productReviewsBlock,
+  productReviewBlock,
+  comparisonTableBlock,
+  comparisonRowBlock,
+  promoCodeBlock,
+  shippingReturnsBlock,
+  trustBadgesBlock,
+  restaurantMenuBlock,
+  menuItemBlock,
+  eventListBlock,
+  eventItemBlock,
+  stickyContactBarBlock,
+  shareButtonsBlock,
+  cookiePreferencesBlock,
+  stepsBlock,
+  stepBlock,
+  specListBlock,
+  specItemBlock,
+  progressBarBlock,
+  profileCardBlock,
+  bookingEmbedBlock,
+  fileListBlock,
+  glossaryBlock,
+  glossaryTermBlock,
+  pullQuoteBlock,
+  imageHotspotsBlock,
+  hotspotBlock,
+  masonryGalleryBlock,
+  videoPlaylistBlock,
   searchBoxBlock,
   videoEmbedBlock,
   mapEmbedBlock,
@@ -273,8 +378,15 @@ export const pageBlockCategories: { title: string; types: string[] }[] = [
       'SiteMap',
       'List',
       'ListItem',
-      'ContactDetails',
-      'OpeningHours',
+      'Steps',
+      'Step',
+      'SpecList',
+      'SpecItem',
+      'ProgressBar',
+      'ProfileCard',
+      'Glossary',
+      'GlossaryTerm',
+      'PullQuote',
     ],
   },
   {
@@ -288,6 +400,37 @@ export const pageBlockCategories: { title: string; types: string[] }[] = [
       'Banner',
       'SocialLinks',
       'SocialLink',
+      'ShareButtons',
+    ],
+  },
+  {
+    title: 'blocks.categories.shop',
+    types: [
+      'ProductGrid',
+      'ProductCard',
+      'ProductGallery',
+      'DiscountPrice',
+      'BuyButton',
+      'ProductVariants',
+      'ProductReviews',
+      'ProductReview',
+      'ComparisonTable',
+      'ComparisonRow',
+      'PromoCode',
+      'ShippingReturns',
+      'TrustBadges',
+    ],
+  },
+  {
+    title: 'blocks.categories.localBusiness',
+    types: [
+      'ContactDetails',
+      'OpeningHours',
+      'RestaurantMenu',
+      'MenuItem',
+      'EventList',
+      'EventItem',
+      'StickyContactBar',
     ],
   },
   {
@@ -303,6 +446,12 @@ export const pageBlockCategories: { title: string; types: string[] }[] = [
       'Audio',
       'MediaText',
       'FileDownload',
+      'FileList',
+      'BookingEmbed',
+      'ImageHotspots',
+      'Hotspot',
+      'MasonryGallery',
+      'VideoPlaylist',
     ],
   },
   {
@@ -332,6 +481,7 @@ export const pageBlockCategories: { title: string; types: string[] }[] = [
       'ReadingProgress',
       'Faq',
       'Marquee',
+      'CookiePreferences',
     ],
   },
 ];

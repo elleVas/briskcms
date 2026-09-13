@@ -1131,6 +1131,8 @@
       "media": "Media",
       "socialProof": "Prova sociale",
       "interactive": "Interattivo",
+      "shop": "Negozio",
+      "localBusiness": "Attività locale",
       "headerFooter": "Blocchi"
     },
     "section": {
@@ -1203,6 +1205,17 @@
       },
       "caption": {
         "fieldLabel": "Didascalia"
+      },
+      "price": {
+        "priceFieldLabel": "Prezzo",
+        "compareAtPriceFieldLabel": "Prezzo prima dello sconto (appare barrato)",
+        "currencyFieldLabel": "Valuta",
+        "currencies": {
+          "EUR": "Euro (€)",
+          "USD": "Dollaro USA ($)",
+          "GBP": "Sterlina (£)",
+          "CHF": "Franco svizzero (CHF)"
+        }
       }
     },
     "accordionItem": {
@@ -2154,6 +2167,452 @@
           "fieldLabel": "Mostra tipo e dimensione"
         }
       }
+    },
+    "productGrid": {
+      "label": "Griglia prodotti"
+    },
+    "productCard": {
+      "label": "Prodotto",
+      "fields": {
+        "image": {
+          "fieldLabel": "Immagine"
+        },
+        "alt": {
+          "fieldLabel": "Descrizione dell'immagine (testo alternativo)"
+        },
+        "name": {
+          "fieldLabel": "Nome del prodotto"
+        },
+        "description": {
+          "fieldLabel": "Descrizione breve"
+        },
+        "badge": {
+          "fieldLabel": "Etichetta (es. \"Novità\", \"-20%\")"
+        },
+        "structuredData": {
+          "fieldLabel": "Comunica il prezzo ai motori di ricerca (schema.org Product)"
+        }
+      }
+    },
+    "productGallery": {
+      "label": "Galleria prodotto",
+      "fields": {
+        "images": {
+          "fieldLabel": "Immagini (la prima è quella grande)"
+        }
+      }
+    },
+    "discountPrice": {
+      "label": "Prezzo scontato",
+      "fields": {
+        "note": {
+          "fieldLabel": "Nota (es. \"IVA inclusa\")"
+        }
+      }
+    },
+    "buyButton": {
+      "label": "Pulsante acquista",
+      "fields": {
+        "label": {
+          "fieldLabel": "Testo del pulsante (vuoto = \"Acquista\")"
+        },
+        "url": {
+          "fieldLabel": "Link di pagamento (Stripe, PayPal…)"
+        }
+      }
+    },
+    "productVariants": {
+      "label": "Varianti prodotto",
+      "fields": {
+        "label": {
+          "fieldLabel": "Titolo (es. \"Taglie\")"
+        },
+        "options": {
+          "fieldLabel": "Opzioni, una per riga"
+        }
+      }
+    },
+    "productReviews": {
+      "label": "Recensioni prodotto",
+      "fields": {
+        "structuredData": {
+          "fieldLabel": "Comunica ai motori di ricerca che sono recensioni di un prodotto (schema.org)"
+        },
+        "productName": {
+          "fieldLabel": "Nome del prodotto recensito"
+        }
+      }
+    },
+    "productReview": {
+      "label": "Recensione prodotto"
+    },
+    "comparisonTable": {
+      "label": "Tabella di confronto",
+      "fields": {
+        "columns": {
+          "fieldLabel": "Cosa si confronta, uno per riga (es. Base, Pro)"
+        },
+        "highlightColumn": {
+          "fieldLabel": "Colonna evidenziata (0 = nessuna)"
+        }
+      }
+    },
+    "comparisonRow": {
+      "label": "Riga di confronto",
+      "fields": {
+        "feature": {
+          "fieldLabel": "Caratteristica"
+        },
+        "values": {
+          "fieldLabel": "Un valore per colonna, uno per riga (\"sì\"/\"no\" diventano ✓/✗)"
+        }
+      }
+    },
+    "promoCode": {
+      "label": "Codice sconto",
+      "fields": {
+        "code": {
+          "fieldLabel": "Codice"
+        },
+        "description": {
+          "fieldLabel": "Cosa dà (es. \"10% sul primo ordine\")"
+        },
+        "expiresOn": {
+          "fieldLabel": "Valido fino al (vuoto = senza scadenza)"
+        }
+      }
+    },
+    "shippingReturns": {
+      "label": "Spedizioni e resi",
+      "fields": {
+        "shippingTitle": {
+          "fieldLabel": "Spedizioni — titolo"
+        },
+        "shippingText": {
+          "fieldLabel": "Spedizioni — testo"
+        },
+        "returnsTitle": {
+          "fieldLabel": "Resi — titolo"
+        },
+        "returnsText": {
+          "fieldLabel": "Resi — testo"
+        },
+        "supportTitle": {
+          "fieldLabel": "Assistenza — titolo"
+        },
+        "supportText": {
+          "fieldLabel": "Assistenza — testo"
+        }
+      }
+    },
+    "trustBadges": {
+      "label": "Metodi di pagamento",
+      "fields": {
+        "visa": {
+          "fieldLabel": "Visa"
+        },
+        "mastercard": {
+          "fieldLabel": "Mastercard"
+        },
+        "americanexpress": {
+          "fieldLabel": "American Express"
+        },
+        "paypal": {
+          "fieldLabel": "PayPal"
+        },
+        "applepay": {
+          "fieldLabel": "Apple Pay"
+        },
+        "googlepay": {
+          "fieldLabel": "Google Pay"
+        },
+        "klarna": {
+          "fieldLabel": "Klarna"
+        },
+        "stripe": {
+          "fieldLabel": "Stripe"
+        },
+        "text": {
+          "fieldLabel": "Testo accanto ai loghi (es. \"Pagamenti sicuri\")"
+        }
+      }
+    },
+    "restaurantMenu": {
+      "label": "Menù",
+      "fields": {
+        "columns": {
+          "fieldLabel": "Colonne",
+          "options": {
+            "one": "Una",
+            "two": "Due"
+          }
+        }
+      }
+    },
+    "menuItem": {
+      "label": "Piatto",
+      "fields": {
+        "name": {
+          "fieldLabel": "Nome"
+        },
+        "description": {
+          "fieldLabel": "Descrizione"
+        },
+        "price": {
+          "fieldLabel": "Prezzo (come vuoi che sia scritto, es. \"12\" o \"8 / 12\")"
+        },
+        "dietary": {
+          "fieldLabel": "Indicazioni, separate da virgola (es. vegano, senza glutine)"
+        },
+        "allergens": {
+          "fieldLabel": "Allergeni, separati da virgola"
+        }
+      }
+    },
+    "eventList": {
+      "label": "Eventi"
+    },
+    "eventItem": {
+      "label": "Evento",
+      "fields": {
+        "title": {
+          "fieldLabel": "Titolo"
+        },
+        "startDate": {
+          "fieldLabel": "Data"
+        },
+        "startTime": {
+          "fieldLabel": "Ora (vuota = tutto il giorno)"
+        },
+        "endDate": {
+          "fieldLabel": "Data di fine (per eventi di più giorni)"
+        },
+        "location": {
+          "fieldLabel": "Dove"
+        },
+        "description": {
+          "fieldLabel": "Descrizione"
+        },
+        "image": {
+          "fieldLabel": "Immagine"
+        },
+        "hideWhenPast": {
+          "fieldLabel": "Nascondilo dal sito quando è passato"
+        },
+        "structuredData": {
+          "fieldLabel": "Comunica ai motori di ricerca che è un evento (schema.org Event)"
+        }
+      }
+    },
+    "stickyContactBar": {
+      "label": "Barra contatti (mobile)",
+      "fields": {
+        "showCall": {
+          "fieldLabel": "Pulsante chiama (telefono da Dati attività)"
+        },
+        "whatsappNumber": {
+          "fieldLabel": "Numero WhatsApp, con prefisso internazionale (vuoto = nessun pulsante)"
+        },
+        "showDirections": {
+          "fieldLabel": "Pulsante mappa (indirizzo da Dati attività)"
+        },
+        "showEmail": {
+          "fieldLabel": "Pulsante email (email da Dati attività)"
+        }
+      }
+    },
+    "shareButtons": {
+      "label": "Pulsanti di condivisione",
+      "fields": {
+        "label": {
+          "fieldLabel": "Titolo (es. \"Condividi\")"
+        },
+        "whatsapp": {
+          "fieldLabel": "WhatsApp"
+        },
+        "facebook": {
+          "fieldLabel": "Facebook"
+        },
+        "linkedin": {
+          "fieldLabel": "LinkedIn"
+        },
+        "x": {
+          "fieldLabel": "X"
+        },
+        "email": {
+          "fieldLabel": "Email"
+        },
+        "copyLink": {
+          "fieldLabel": "Copia link"
+        }
+      }
+    },
+    "cookiePreferences": {
+      "label": "Preferenze cookie",
+      "fields": {
+        "label": {
+          "fieldLabel": "Testo del link (vuoto = \"Preferenze cookie\")"
+        }
+      }
+    },
+    "steps": {
+      "label": "Passaggi",
+      "fields": {
+        "orientation": {
+          "fieldLabel": "Direzione",
+          "options": {
+            "horizontal": "Affiancati",
+            "vertical": "Uno sotto l'altro"
+          }
+        }
+      }
+    },
+    "step": {
+      "label": "Passaggio",
+      "fields": {
+        "title": {
+          "fieldLabel": "Titolo"
+        },
+        "description": {
+          "fieldLabel": "Descrizione"
+        }
+      }
+    },
+    "specList": {
+      "label": "Specifiche",
+      "fields": {
+        "columns": {
+          "fieldLabel": "Colonne",
+          "options": {
+            "one": "Una",
+            "two": "Due"
+          }
+        }
+      }
+    },
+    "specItem": {
+      "label": "Specifica",
+      "fields": {
+        "label": {
+          "fieldLabel": "Nome (es. \"Peso\")"
+        },
+        "value": {
+          "fieldLabel": "Valore (es. \"1,2 kg\")"
+        }
+      }
+    },
+    "progressBar": {
+      "label": "Barra di avanzamento",
+      "fields": {
+        "label": {
+          "fieldLabel": "Etichetta"
+        },
+        "value": {
+          "fieldLabel": "Avanzamento (0–100)"
+        },
+        "showValue": {
+          "fieldLabel": "Mostra la percentuale"
+        }
+      }
+    },
+    "profileCard": {
+      "label": "Scheda profilo",
+      "fields": {
+        "email": {
+          "fieldLabel": "Email"
+        },
+        "phone": {
+          "fieldLabel": "Telefono"
+        }
+      }
+    },
+    "bookingEmbed": {
+      "label": "Calendario prenotazioni",
+      "fields": {
+        "provider": {
+          "fieldLabel": "Servizio",
+          "options": {
+            "calendly": "Calendly",
+            "calcom": "Cal.com",
+            "google": "Google Calendar"
+          }
+        },
+        "url": {
+          "fieldLabel": "Indirizzo della tua pagina di prenotazione"
+        },
+        "height": {
+          "fieldLabel": "Altezza",
+          "options": {
+            "short": "Bassa",
+            "medium": "Media",
+            "tall": "Alta"
+          }
+        }
+      }
+    },
+    "fileList": {
+      "label": "Elenco file",
+      "fields": {
+        "title": {
+          "fieldLabel": "Titolo"
+        }
+      }
+    },
+    "glossary": {
+      "label": "Glossario",
+      "fields": {
+        "showIndex": {
+          "fieldLabel": "Mostra l'indice A–Z"
+        }
+      }
+    },
+    "glossaryTerm": {
+      "label": "Voce di glossario",
+      "fields": {
+        "term": {
+          "fieldLabel": "Termine"
+        },
+        "definition": {
+          "fieldLabel": "Definizione"
+        }
+      }
+    },
+    "pullQuote": {
+      "label": "Citazione in evidenza"
+    },
+    "imageHotspots": {
+      "label": "Immagine con punti",
+      "fields": {
+        "image": {
+          "fieldLabel": "Immagine"
+        },
+        "alt": {
+          "fieldLabel": "Descrizione dell'immagine (testo alternativo)"
+        }
+      }
+    },
+    "hotspot": {
+      "label": "Punto",
+      "fields": {
+        "x": {
+          "fieldLabel": "Posizione da sinistra (%)"
+        },
+        "y": {
+          "fieldLabel": "Posizione dall'alto (%)"
+        },
+        "title": {
+          "fieldLabel": "Titolo"
+        },
+        "text": {
+          "fieldLabel": "Testo"
+        }
+      }
+    },
+    "masonryGallery": {
+      "label": "Galleria a mosaico"
+    },
+    "videoPlaylist": {
+      "label": "Playlist video"
     }
   },
   "gallery": {

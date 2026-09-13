@@ -1,0 +1,73 @@
+---
+import type { StepProps } from '@brisk/shared-types';
+
+type Props = StepProps & { instanceClass?: string | null };
+
+const { title, description, instanceClass } = Astro.props;
+---
+
+<li class:list={['brisk-step', instanceClass]}>
+  <span class="brisk-step__number" aria-hidden="true"></span>
+  <div class="brisk-step__content">
+    <h3 class="brisk-step__title" data-brisk-field="title">{title}</h3>
+    {description && (
+      <div
+        class="brisk-step__description brisk-rich-text"
+        data-brisk-field="description"
+        set:html={description}
+      />
+    )}
+  </div>
+</li>
+
+<style>
+  /* Number above the words by default; Steps puts them beside it, through
+     `--brisk-step-columns`, when the steps are one under the other. */
+  .brisk-step {
+    counter-increment: brisk-step;
+    display: grid;
+    grid-template-columns: var(--brisk-step-columns, minmax(0, 1fr));
+    align-content: start;
+    gap: 0.75rem;
+    min-width: 0;
+    background: var(--brisk-override-bg, transparent);
+    color: var(--brisk-override-text, inherit);
+    border-radius: var(--brisk-override-radius, 0);
+    padding: var(--brisk-override-padding-y, 0)
+      var(--brisk-override-padding-x, 0);
+  }
+
+  .brisk-step__number {
+    display: grid;
+    place-items: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 50%;
+    background: var(--primary);
+    color: var(--primary-foreground);
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .brisk-step__number::before {
+    content: counter(brisk-step);
+  }
+
+  .brisk-step__content {
+    display: grid;
+    gap: 0.25rem;
+    min-width: 0;
+  }
+
+  .brisk-step__title {
+    margin: 0;
+    font-size: 1.0625rem;
+    font-weight: 600;
+    overflow-wrap: anywhere;
+  }
+
+  .brisk-step__description {
+    font-size: 0.9375rem;
+    color: var(--muted-foreground);
+  }
+</style>

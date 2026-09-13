@@ -232,8 +232,45 @@ body,
 .brisk-social-links,
 .brisk-list,
 .brisk-faq,
-.brisk-marquee {
+.brisk-marquee,
+.brisk-product-grid,
+.brisk-product-reviews,
+.brisk-comparison-table,
+.brisk-restaurant-menu,
+.brisk-event-list,
+.brisk-steps,
+.brisk-spec-list,
+.brisk-file-list,
+.brisk-glossary,
+.brisk-image-hotspots,
+.brisk-video-playlist {
   container-type: inline-size;
+}
+
+/*
+ * Words for a screen reader that a sighted reader gets from the layout —
+ * "Original price" before a struck-through number, "Included" behind a
+ * tick. Clipped rather than `display: none`, which would hide them from
+ * the screen reader too.
+ *
+ * In the flow, and NOT the usual `position: absolute`. Measured on the
+ * comparison table at 390px: an absolutely positioned span takes the page
+ * as its containing block, so inside a box that scrolls sideways it
+ * escapes the scrolling and the clipping, and the cells scrolled out of
+ * view made the whole PAGE 20px wider. A 1px inline box stays inside
+ * whatever clips it — a table that scrolls, a carousel track. No negative
+ * margin to win that pixel back: measured, it made a button holding one
+ * of these a pixel narrower than its own label, and "Copy link" wrapped.
+ */
+.brisk-visually-hidden {
+  display: inline-block;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 
 /*
@@ -414,7 +451,12 @@ body,
      `:only-child`: a root wrapper holds exactly one block, and a block with
      behaviour also emits its <script> beside it. */
   .brisk-root-block:has(> .brisk-anchor),
-  .brisk-root-block:has(> .brisk-reading-progress) {
+  .brisk-root-block:has(> .brisk-reading-progress),
+  .brisk-root-block:has(> .brisk-sticky-contact-bar--live),
+  /* And a block that rendered nothing at all — an event that is over, a
+     cookie link on a site with no banner: nothing there, no gap either.
+     Its <script>, when it has one, is all that is left beside it. */
+  .brisk-root-block:not(:has(> :not(script))) {
     margin-bottom: 0;
   }
 }

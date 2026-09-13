@@ -105,7 +105,7 @@ export const themeFieldDescriptorSchema = z.discriminatedUnion('kind', [
 ]);
 export type ThemeFieldDescriptor = z.infer<typeof themeFieldDescriptorSchema>;
 
-// The six sidebar categories a theme block can slot into — the same
+// The sidebar categories a theme block can slot into — the same
 // buckets `pageBlockCategories` (libs/block-registry/src/lib/config.ts)
 // already groups every core block under, reused rather than inventing a
 // separate "theme blocks" bucket (apps/editor-app's merge logic places a
@@ -117,6 +117,10 @@ export const themeBlockCategorySchema = z.enum([
   'media',
   'socialProof',
   'interactive',
+  // Added with the shop and local-business blocks: a theme's own product
+  // or event block belongs beside core's.
+  'shop',
+  'localBusiness',
 ]);
 export type ThemeBlockCategory = z.infer<typeof themeBlockCategorySchema>;
 

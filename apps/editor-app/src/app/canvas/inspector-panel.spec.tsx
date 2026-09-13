@@ -11,6 +11,7 @@ vi.mock('./custom-fields/custom-field-controls', () => ({
         Scegli immagine
       </button>
     ),
+    date: () => <input type="date" />,
   },
 }));
 
@@ -683,6 +684,33 @@ describe('InspectorPanel required fields beyond text', () => {
    */
   it('warns when a required picker has nothing picked', () => {
     renderButton({ linkType: 'page', page: null });
+
+    expect(screen.getByText('Campo obbligatorio')).toBeTruthy();
+  });
+
+  it('warns for a required date that is still the empty string', () => {
+    render(
+      <InspectorPanel
+        block={{ id: 'e1', type: 'EventItem', props: { startDate: '' } }}
+        descriptor={{
+          type: 'EventItem',
+          label: 'Evento',
+          category: 'localBusiness',
+          defaultProps: { startDate: '' },
+          fields: [
+            {
+              kind: 'custom',
+              key: 'startDate',
+              label: 'Data',
+              control: 'date',
+              required: true,
+            },
+          ],
+        }}
+        onChangeProp={vi.fn()}
+        onChangeVariant={vi.fn()}
+      />,
+    );
 
     expect(screen.getByText('Campo obbligatorio')).toBeTruthy();
   });

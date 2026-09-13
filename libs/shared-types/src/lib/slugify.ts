@@ -12,3 +12,16 @@ export function slugify(input: string): string {
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '');
 }
+
+/**
+ * Whether `value` already is a slug — what `slugify` would leave unchanged.
+ *
+ * The one test for "valid slug", shared by the API, which refuses anything
+ * else, and the public site, which must not even ask the API about a path
+ * that cannot be a page: `/en/wp-login.php` is not a slug, and asking about
+ * it made the API answer 400 and the site answer 500 — to every bot that
+ * probes for WordPress, which is most of them.
+ */
+export function isCanonicalSlug(value: string): boolean {
+  return value.length > 0 && value === slugify(value);
+}

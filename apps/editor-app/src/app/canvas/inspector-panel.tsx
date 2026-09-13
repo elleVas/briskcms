@@ -212,10 +212,12 @@ function isRequiredFieldEmpty(
   }
   const value = props[field.key];
   // A picker holds an object or nothing at all — the page picker is the
-  // reason this function stopped being about text (ADR-0063). Everything
+  // reason this function stopped being about text (ADR-0063). A date or a
+  // time control holds a string, and the empty one is its nothing: an
+  // event with no date is exactly what the warning is for. Everything
   // else here is judged as text, which is what the remaining kinds that
   // declare `required` actually hold.
-  if (field.kind === 'custom') return value == null;
+  if (field.kind === 'custom') return value == null || value === '';
   return typeof value !== 'string' || value.trim().length === 0;
 }
 

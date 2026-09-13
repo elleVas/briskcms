@@ -25,9 +25,15 @@ interface Props {
   posterUrl?: string | null;
   /** The gate must be the same shape as the thing it stands in for, or the page reflows the moment it loads. */
   aspectRatio?: string | null;
+  /**
+   * A fixed height instead of a shape, for what is tall whatever its
+   * width — a booking calendar is as long on a phone as on a desktop, and
+   * a ratio would make it shortest exactly where it needs the most room.
+   */
+  height?: string | null;
 }
 
-const { src, title, buttonLabel, instanceClass, posterUrl, aspectRatio } =
+const { src, title, buttonLabel, instanceClass, posterUrl, aspectRatio, height } =
   Astro.props;
 ---
 
@@ -36,6 +42,7 @@ const { src, title, buttonLabel, instanceClass, posterUrl, aspectRatio } =
   style={[
     posterUrl ? `--brisk-embed-poster: url(${JSON.stringify(posterUrl)});` : '',
     aspectRatio ? `--brisk-embed-ratio: ${aspectRatio};` : '',
+    height ? `--brisk-embed-height: ${height};` : '',
   ]
     .filter(Boolean)
     .join(' ')}
@@ -68,6 +75,9 @@ const { src, title, buttonLabel, instanceClass, posterUrl, aspectRatio } =
     position: relative;
     aspect-ratio: var(--brisk-embed-ratio, 16 / 9);
     width: 100%;
+    /* With a definite width and a definite height, the ratio above has
+       nothing left to decide — which is exactly what a height asks for. */
+    height: var(--brisk-embed-height, auto);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -98,12 +108,18 @@ const { src, title, buttonLabel, instanceClass, posterUrl, aspectRatio } =
     font-size: 0.9rem;
     cursor: pointer;
   }
-  .brisk-consent-embed__iframe {
+  /* `:global()`, and not by taste: the iframe is created by the behaviour
+     script when the visitor asks for it, so it never carries the scoped
+     attribute Astro puts on this file's own markup. Scoped, this rule
+     matched nothing and every loaded video, map and booking calendar
+     sat in the browser's default 300×150 box in a corner of its frame. */
+  :global(.brisk-consent-embed__iframe) {
     position: absolute;
     inset: 0;
     width: 100%;
     height: 100%;
     border: 0;
-    border-radius: 8px;
+    /* The frame's own corners, override included, not a second number. */
+    border-radius: inherit;
   }
 </style>

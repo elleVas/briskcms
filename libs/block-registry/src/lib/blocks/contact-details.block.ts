@@ -12,7 +12,7 @@ import { BlockStyleRegistry } from '../block-style-registry';
 export const contactDetailsBlock: BlockDescriptor<ContactDetailsProps> = {
   type: 'ContactDetails',
   label: 'blocks.contactDetails.label',
-  category: 'content',
+  category: 'localBusiness',
   icon: 'contact',
   defaultProps: {
     showAddress: true,

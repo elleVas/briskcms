@@ -3,11 +3,14 @@ import {
   STAR_ICON_PATH,
   type TestimonialProps,
 } from '@brisk/shared-types';
+import { Translator } from '@brisk/theme-runtime';
 import OptimizedImage from '../OptimizedImage.astro';
 
-type Props = TestimonialProps & { instanceClass?: string | null };
+type Props = TestimonialProps & { locale?: string; instanceClass?: string | null };
 
-const { quote, author, role, avatar, rating, instanceClass } = Astro.props;
+const { quote, author, role, avatar, rating, locale, instanceClass } = Astro.props;
+// Rating.astro's reason: the stars were announced in Italian everywhere.
+const i18n = new Translator(locale ?? '');
 
 const STAR_POSITIONS = [1, 2, 3, 4, 5];
 ---
@@ -16,7 +19,7 @@ const STAR_POSITIONS = [1, 2, 3, 4, 5];
   <div
     class="brisk-testimonial__stars"
     role="img"
-    aria-label={`${rating} su 5 stelle`}
+    aria-label={i18n.t('rating.label', { value: rating })}
   >
     {
       // Filled stars stay literal amber regardless of theme — same

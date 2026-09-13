@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { slugify } from '@brisk/shared-types';
+import { isCanonicalSlug } from '@brisk/shared-types';
 
 // Never trust a client-computed slug: re-derive it with the same slugify()
 // the frontend uses for its live preview, and reject anything that isn't
@@ -9,7 +9,7 @@ export const pageSlugSchema = z
   .string()
   .min(1)
   .max(200)
-  .refine((slug) => slug === slugify(slug), {
+  .refine(isCanonicalSlug, {
     message: 'slug must be lowercase, alphanumeric, hyphen-separated',
   });
 
@@ -23,9 +23,7 @@ export const pagePathSchema = z
   .min(1)
   .transform((path) => path.split('/').filter(Boolean))
   .refine(
-    (segments) =>
-      segments.length > 0 &&
-      segments.every((segment) => segment === slugify(segment)),
+    (segments) => segments.length > 0 && segments.every(isCanonicalSlug),
     {
       message:
         'path segments must be lowercase, alphanumeric, hyphen-separated',

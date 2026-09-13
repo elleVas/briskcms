@@ -1,0 +1,77 @@
+---
+import type { StepsProps } from '@brisk/shared-types';
+import EmptyContainerHint from '../EmptyContainerHint.astro';
+
+type Props = StepsProps & {
+  locale?: string;
+  editable?: boolean;
+  hasChildren?: boolean;
+  emptyChildLabel?: string | null;
+  instanceClass?: string | null;
+};
+
+const { orientation, locale, editable, hasChildren, emptyChildLabel, instanceClass } =
+  Astro.props;
+---
+
+{/* `role="list"`: WebKit stops announcing an <ol> as a list once its
+    markers are removed, and the numbers here are drawn, not listed. */}
+<ol
+  class:list={['brisk-steps', `brisk-steps--${orientation}`, instanceClass]}
+  role="list"
+  data-brisk-editable-outline={editable && hasChildren ? '' : undefined}
+>
+  <slot />
+  <EmptyContainerHint
+    show={!hasChildren && Boolean(editable)}
+    locale={locale}
+    childLabel={emptyChildLabel}
+  />
+</ol>
+
+<style>
+  .brisk-steps {
+    /* Counted by the page: move a step and every number follows it. */
+    counter-reset: brisk-step;
+    display: grid;
+    gap: var(--brisk-override-gap, 1.5rem);
+    margin: 0;
+    list-style: none;
+    background: var(--brisk-override-bg, transparent);
+    color: var(--brisk-override-text, inherit);
+    border-radius: var(--brisk-override-radius, 0);
+    padding: var(--brisk-override-padding-y, 0)
+      var(--brisk-override-padding-x, 0);
+  }
+
+  /* Side by side, each an equal share; `grid-auto-columns` rather than a
+     width on the steps, for the editor wrapper's reason (global.css,
+     the collection rules). */
+  .brisk-steps--horizontal {
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(0, 1fr);
+  }
+
+  /* How a step lays out its number and its words is handed down as a
+     variable rather than set on the step from here: a step is inside
+     this block, and a query about one would measure this block instead of
+     what holds it (container-query-scope.spec.ts). Beside the words when
+     the steps are one under the other, above them otherwise. */
+  .brisk-steps--vertical {
+    --brisk-step-columns: auto minmax(0, 1fr);
+  }
+
+  /* Four steps side by side in a narrow column are four slivers. */
+  @container (max-width: 40rem) {
+    .brisk-steps--horizontal {
+      grid-auto-flow: row;
+      --brisk-step-columns: auto minmax(0, 1fr);
+    }
+  }
+
+  .brisk-steps[data-brisk-editable-outline] {
+    outline: 1px dashed var(--border);
+    outline-offset: -4px;
+    padding: 0.5rem;
+  }
+</style>

@@ -330,6 +330,27 @@ export function nearestTargetThatHolds(
     : null;
 }
 
+/**
+ * The block the canvas has to re-render after `id` changed: its parent,
+ * when the parent draws from its children's props
+ * (`BlockDescriptor.rendersFromChildren`), otherwise nothing — the block
+ * itself is enough. Read from `blocks`, which must already hold the change.
+ */
+export function parentRenderedFromChildren(
+  blocks: Block[],
+  registry: BlockDescriptor[],
+  id: string,
+): IdentifiedBlock | null {
+  const ancestry = blockAncestry(blocks, id);
+  const parent = ancestry[ancestry.length - 2] ?? null;
+  if (!hasId(parent)) {
+    return null;
+  }
+  return registry.find((d) => d.type === parent.type)?.rendersFromChildren
+    ? parent
+    : null;
+}
+
 export function blockAncestry(blocks: Block[], id: string): Block[] {
   for (const block of blocks) {
     if (block.id === id) {

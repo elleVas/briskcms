@@ -1,4 +1,5 @@
 ---
+import { isCanonicalSlug } from '@brisk/shared-types';
 import {
   getPublishedPageBySlug,
   getPublishedTermByPath,
@@ -27,9 +28,16 @@ export const prerender = false;
 const { locale } = Astro.params;
 const requestedPath = Astro.params.slug ?? '';
 const segments = requestedPath.split('/').filter(Boolean);
+// A path that cannot be a slug cannot be a page or a term either, and it
+// is not asked about. The API refuses it with a 400, which surfaced here
+// as a 500 — for `/en/wp-login.php`, `/en/.env` and every other address a
+// bot tries on any site it finds. It is a 404, like any other page that
+// is not there.
+const lookupable =
+  Boolean(locale) && segments.length > 0 && segments.every(isCanonicalSlug);
 
 const result =
-  locale && segments.length > 0
+  locale && lookupable
     ? await getPublishedPageBySlug(Astro.url.hostname, locale, segments)
     : null;
 
@@ -49,7 +57,7 @@ if (result && !result.found && result.movedTo) {
 // 404, the rendering — treats the two the same.
 const page =
   (result?.found ? result.page : null) ??
-  (locale && segments.length > 0 && segments.length <= 2
+  (locale && lookupable && segments.length <= 2
     ? await getPublishedTermByPath(Astro.url.hostname, locale, segments)
     : null);
 

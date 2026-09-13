@@ -1,0 +1,155 @@
+---
+import type { Block, VideoPlaylistProps } from '@brisk/shared-types';
+import { Translator } from '@brisk/theme-runtime';
+import EmptyContainerHint from '../EmptyContainerHint.astro';
+
+type Props = VideoPlaylistProps & {
+  /** The videos, read off the block's own children for their titles (Faq.astro's reason). */
+  items?: Block[];
+  locale: string;
+  editable?: boolean;
+  hasChildren?: boolean;
+  emptyChildLabel?: string | null;
+  instanceClass?: string | null;
+};
+
+const { items = [], locale, editable, hasChildren, emptyChildLabel, instanceClass } =
+  Astro.props;
+const i18n = new Translator(locale);
+// A video's caption is its title here; one without gets its number.
+const titles = items
+  .filter((item) => item.type === 'VideoEmbed')
+  .map((item, index) => {
+    const caption = item.props['caption'];
+    return typeof caption === 'string' && caption.trim()
+      ? caption.trim()
+      : i18n.t('videoPlaylist.untitled', { index: index + 1 });
+  });
+---
+
+<div
+  class:list={['brisk-video-playlist', instanceClass]}
+  data-brisk-video-playlist
+  data-brisk-editable-outline={editable && hasChildren ? '' : undefined}
+>
+  <div class="brisk-video-playlist__stage">
+    <slot />
+  </div>
+  {titles.length > 1 && (
+    <ol class="brisk-video-playlist__list" aria-label={i18n.t('videoPlaylist.label')}>
+      {titles.map((title, index) => (
+        <li>
+          <button
+            type="button"
+            class="brisk-video-playlist__choice"
+            aria-pressed={index === 0 ? 'true' : 'false'}
+          >
+            <span class="brisk-video-playlist__number" aria-hidden="true">
+              {index + 1}
+            </span>
+            <span>{title}</span>
+          </button>
+        </li>
+      ))}
+    </ol>
+  )}
+  <EmptyContainerHint
+    show={!hasChildren && Boolean(editable)}
+    locale={locale}
+    childLabel={emptyChildLabel}
+  />
+</div>
+
+<script>
+  import { videoPlaylistBehaviors } from '../../lib/block-behaviors/video-playlist';
+  import { runBlockBehaviors } from '../../lib/block-behaviors/run-block-behaviors';
+  runBlockBehaviors(document, videoPlaylistBehaviors);
+</script>
+
+<style>
+  .brisk-video-playlist {
+    display: grid;
+    gap: var(--brisk-override-gap, 1rem);
+    background: var(--brisk-override-bg, transparent);
+    color: var(--brisk-override-text, inherit);
+    border-radius: var(--brisk-override-radius, 0);
+    padding: var(--brisk-override-padding-y, 0)
+      var(--brisk-override-padding-x, 0);
+  }
+
+  /* One video at a time. Until the behaviour has run — or if it never
+     does — the first one is the one shown, so the page does not start
+     with every video stacked and then jump. `!important` because in the
+     canvas each video's wrapper carries an inline display value of its
+     own, which a stylesheet rule would otherwise lose to. */
+  .brisk-video-playlist:not([data-brisk-video-playlist-ready])
+    .brisk-video-playlist__stage
+    > :global(:not(:first-child)),
+  .brisk-video-playlist__stage > :global(.brisk-video-playlist__item--hidden) {
+    display: none !important;
+  }
+
+  /* A video's caption is its title in the list right below: said once. */
+  .brisk-video-playlist__stage :global(.brisk-video-embed__caption) {
+    display: none;
+  }
+
+  .brisk-video-playlist__list {
+    display: grid;
+    gap: 0.25rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    max-height: 20rem;
+    overflow-y: auto;
+  }
+
+  .brisk-video-playlist__choice {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid transparent;
+    border-radius: var(--radius);
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    text-align: start;
+    cursor: pointer;
+  }
+
+  .brisk-video-playlist__choice:hover {
+    background: var(--muted);
+  }
+
+  .brisk-video-playlist__choice[aria-pressed='true'] {
+    border-color: var(--border);
+    background: var(--muted);
+    font-weight: 600;
+  }
+
+  .brisk-video-playlist__choice:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+  }
+
+  .brisk-video-playlist__number {
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    width: 1.75rem;
+    height: 1.75rem;
+    border-radius: 50%;
+    background: var(--primary);
+    color: var(--primary-foreground);
+    font-size: 0.8125rem;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .brisk-video-playlist[data-brisk-editable-outline] {
+    outline: 1px dashed var(--border);
+    outline-offset: -4px;
+    padding: 0.5rem;
+  }
+</style>

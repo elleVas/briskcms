@@ -5,6 +5,7 @@ import {
   getPreviewSectionById,
 } from '../../lib/public-api-client';
 import {
+  FragmentComponentScripts,
   buildFragmentBlock,
   isValidRenderBlockFragmentBody,
   renderBlockFragmentCorsHeaders,
@@ -54,8 +55,11 @@ export const POST: APIRoute = async ({ request }) => {
 
   const block = buildFragmentBlock(body, page);
 
-  const container = await AstroContainer.create();
-  const html = await container.renderToString(RenderSingleBlock, {
+  // See FragmentComponentScripts: without its `resolve`, every block with
+  // a behaviour sent back the server's absolute path to its component.
+  const scripts = new FragmentComponentScripts();
+  const container = await AstroContainer.create({ resolve: scripts.resolve });
+  const rendered = await container.renderToString(RenderSingleBlock, {
     props: {
       block,
       locale: page.locale,
@@ -65,6 +69,7 @@ export const POST: APIRoute = async ({ request }) => {
       currentPageTitle: page.seoMeta.title,
     },
   });
+  const html = scripts.strip(rendered);
 
   return new Response(JSON.stringify({ html }), {
     status: 200,

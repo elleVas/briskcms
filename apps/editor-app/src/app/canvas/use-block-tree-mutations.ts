@@ -26,6 +26,7 @@ import {
   locateBlock,
   moveBlock,
   nearestTargetThatHolds,
+  parentRenderedFromChildren,
   removeBlock,
   siblingsAt,
   updateBlockAlign,
@@ -670,7 +671,11 @@ export function useBlockTreeMutations({
    * loses nothing: `undo` has already restored and saved the real tree.
    */
   function patchBlockFromTree(tree: Block[], blockId: string): void {
-    const block = findBlockInTree(tree, blockId);
+    // Undoing a renamed glossary term has to put the index back too: the
+    // same parent an edit re-renders is the one its undo re-renders.
+    const block =
+      parentRenderedFromChildren(tree, registry, blockId) ??
+      findBlockInTree(tree, blockId);
     // Without a preview token the fragment cannot be rendered — the same
     // guard patchParentBlock makes. Undo still restores and saves the tree;
     // only the live canvas stays behind until the next reload.
@@ -685,7 +690,7 @@ export function useBlockTreeMutations({
       return;
     }
     void renderFragmentOf(block, token)
-      .then((html) => bridge.patchBlock(blockId, html))
+      .then((html) => bridge.patchBlock(block.id, html))
       .catch(() => {
         /* see the comment above — the tree is already correct and saved. */
       });
