@@ -1,6 +1,7 @@
 ---
 import type { SubPagesProps } from '@brisk/shared-types';
 import PageGrid from './PageGrid.astro';
+import { delegatedRootClass } from '../../lib/delegated-root-class';
 
 type Props = SubPagesProps & {
   instanceClass?: string | null;
@@ -26,7 +27,7 @@ const { layout, items, instanceClass, locale } = Astro.props;
       emptyText=""
       items={items}
       filterable={false}
-      instanceClass={instanceClass}
+      instanceClass={delegatedRootClass('brisk-sub-pages', instanceClass)}
       locale={locale}
     />
   )

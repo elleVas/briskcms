@@ -3,6 +3,7 @@ import { act, renderHook } from '@testing-library/react';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { describe, expect, it, vi } from 'vitest';
 import type { Block } from '@brisk/shared-types';
+import type { BlockDescriptor } from '@brisk/block-registry';
 import { createTestQueryClient } from '../../test-query-client';
 import { ToastProvider } from '../toast-provider';
 import { useSelectedBlockEditing } from './use-selected-block-editing';
@@ -36,6 +37,7 @@ describe('useSelectedBlockEditing', () => {
           siteId: undefined,
           selectedBlock: block,
           selectedDescriptor: undefined,
+          registry: [],
           breakpoint: 'base',
           bridge: { setRootLayout },
           styleSheet: { refresh, replaceTypeCss: vi.fn() },
@@ -85,6 +87,7 @@ describe('useSelectedBlockEditing', () => {
           siteId: undefined,
           selectedBlock: block,
           selectedDescriptor: undefined,
+          registry: [],
           breakpoint: 'base',
           bridge: { setRootLayout },
           styleSheet: { refresh, replaceTypeCss: vi.fn() },
@@ -122,6 +125,7 @@ describe('useSelectedBlockEditing', () => {
           siteId: undefined,
           selectedBlock: child,
           selectedDescriptor: undefined,
+          registry: [],
           breakpoint: 'base',
           bridge: { setRootLayout },
           styleSheet: { refresh: vi.fn(), replaceTypeCss: vi.fn() },
@@ -142,5 +146,91 @@ describe('useSelectedBlockEditing', () => {
     );
 
     expect(setRootLayout).not.toHaveBeenCalled();
+  });
+
+  /*
+   * A glossary's A–Z index is made of its terms, a playlist's list of its
+   * videos' captions. The canvas re-rendered only the edited child, so a
+   * term renamed from "Beta" to "Zeta" stayed filed under B until a reload
+   * — found live on the canvas, not by reading.
+   */
+  describe('a child whose parent draws from its children', () => {
+    const registry: BlockDescriptor[] = [
+      {
+        type: 'Glossary',
+        label: 'Glossary',
+        category: 'content',
+        defaultProps: {},
+        fields: [],
+        isContainer: true,
+        rendersFromChildren: true,
+      },
+      {
+        type: 'Container',
+        label: 'Container',
+        category: 'layout',
+        defaultProps: {},
+        fields: [],
+        isContainer: true,
+      },
+    ];
+
+    function editChild(parentType: string) {
+      const child: Block = {
+        id: 'term',
+        type: 'GlossaryTerm',
+        props: { term: 'Beta', definition: '' },
+      };
+      const parent: Block = {
+        id: 'parent',
+        type: parentType,
+        props: {},
+        children: [child],
+      };
+      const scheduleChange = vi.fn();
+      const { result } = renderHook(
+        () =>
+          useSelectedBlockEditing({
+            siteId: undefined,
+            selectedBlock: child,
+            selectedDescriptor: undefined,
+            registry,
+            breakpoint: 'base',
+            bridge: { setRootLayout: vi.fn() },
+            styleSheet: { refresh: vi.fn(), replaceTypeCss: vi.fn() },
+            localBlocksRef: { current: [parent] },
+            setLocalBlocks: vi.fn(),
+            onChange: vi.fn(),
+            patch: {
+              scheduleChange,
+              scheduleVariantChange: vi.fn(),
+              scheduleStyleOverrideChange: vi.fn(),
+            },
+          }),
+        { wrapper },
+      );
+      act(() => result.current.handleChangeProp('term', 'Zeta'));
+      return scheduleChange.mock.calls[0];
+    }
+
+    it('saves the child and re-renders the parent with the edit inside it', () => {
+      const [blockId, , key, props, , , renderInstead] = editChild('Glossary');
+
+      expect([blockId, key, props]).toEqual([
+        'term',
+        'term',
+        { term: 'Zeta', definition: '' },
+      ]);
+      expect(renderInstead).toMatchObject({
+        id: 'parent',
+        type: 'Glossary',
+        children: [{ id: 'term', props: { term: 'Zeta' } }],
+      });
+    });
+
+    it('re-renders only the child when the parent does not read its children', () => {
+      const call = editChild('Container');
+      expect(call[6]).toBeUndefined();
+    });
   });
 });

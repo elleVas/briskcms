@@ -59,6 +59,13 @@ export interface UsePropertyPatchResult {
     props: Record<string, unknown>,
     children?: Block[],
     presentation?: BlockPresentation,
+    /**
+     * The block to re-render in the canvas instead of the edited one — its
+     * parent, already carrying the edit, when that parent draws from its
+     * children's props (`BlockDescriptor.rendersFromChildren`). The draft
+     * save is still the edited block's own.
+     */
+    renderInstead?: Block & { id: string },
   ) => void;
   /**
    * To be called on every `preview:text-changed` (Day 4) — the same
@@ -251,20 +258,27 @@ export function usePropertyPatch({
       props: Record<string, unknown>,
       children?: Block[],
       presentation?: BlockPresentation,
+      renderInstead?: Block & { id: string },
     ) => {
       schedule(blockId, () => {
         onSaveDraft(blockId, changedKey, props);
+        const rendered = renderInstead
+          ? {
+              blockId: renderInstead.id,
+              blockType: renderInstead.type,
+              props: renderInstead.props,
+              children: renderInstead.children,
+              styleOverride: renderInstead.styleOverride,
+              variant: renderInstead.variant,
+            }
+          : { blockId, blockType, props, children, ...presentation };
         renderBlockFragment({
           pageId,
           ...(fragmentSection ?? {}),
           token,
-          blockId,
-          blockType,
-          props,
-          children,
-          ...presentation,
+          ...rendered,
         })
-          .then((html) => patchBlock(blockId, html))
+          .then((html) => patchBlock(rendered.blockId, html))
           .catch(() => {
             /* the draft is already saved above — a failure here only leaves the canvas one change behind visually, it loses no data. */
           });

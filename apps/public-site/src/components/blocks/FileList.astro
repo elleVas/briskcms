@@ -1,0 +1,70 @@
+---
+import type { FileListProps } from '@brisk/shared-types';
+import EmptyContainerHint from '../EmptyContainerHint.astro';
+
+type Props = FileListProps & {
+  locale?: string;
+  editable?: boolean;
+  hasChildren?: boolean;
+  emptyChildLabel?: string | null;
+  instanceClass?: string | null;
+};
+
+const { title, locale, editable, hasChildren, emptyChildLabel, instanceClass } =
+  Astro.props;
+---
+
+<section
+  class:list={['brisk-file-list', instanceClass]}
+  data-brisk-editable-outline={editable && hasChildren ? '' : undefined}
+>
+  {title && (
+    <h3 class="brisk-file-list__title" data-brisk-field="title">
+      {title}
+    </h3>
+  )}
+  <div class="brisk-file-list__items">
+    <slot />
+  </div>
+  <EmptyContainerHint
+    show={!hasChildren && Boolean(editable)}
+    locale={locale}
+    childLabel={emptyChildLabel}
+  />
+</section>
+
+<style>
+  .brisk-file-list {
+    display: grid;
+    gap: 0.75rem;
+    background: var(--brisk-override-bg, transparent);
+    color: var(--brisk-override-text, inherit);
+    border-radius: var(--brisk-override-radius, 0);
+    padding: var(--brisk-override-padding-y, 0)
+      var(--brisk-override-padding-x, 0);
+  }
+
+  .brisk-file-list__title {
+    margin: 0;
+    font-size: 1.0625rem;
+    font-weight: 600;
+  }
+
+  /* One under the other, each as wide as the list: a column of downloads
+     reads as a list, a row of boxes as a set of buttons. */
+  .brisk-file-list__items {
+    display: grid;
+    gap: var(--brisk-override-gap, 0.5rem);
+  }
+
+  .brisk-file-list__items > :global(.brisk-file-download),
+  .brisk-file-list__items > :global(* > .brisk-file-download) {
+    display: flex;
+  }
+
+  .brisk-file-list[data-brisk-editable-outline] {
+    outline: 1px dashed var(--border);
+    outline-offset: -4px;
+    padding: 0.5rem;
+  }
+</style>

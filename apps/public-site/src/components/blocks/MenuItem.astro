@@ -1,0 +1,110 @@
+---
+import type { MenuItemProps } from '@brisk/shared-types';
+import { Translator } from '@brisk/theme-runtime';
+
+type Props = MenuItemProps & {
+  locale: string;
+  instanceClass?: string | null;
+};
+
+const { name, description, price, dietary, allergens, locale, instanceClass } =
+  Astro.props;
+const i18n = new Translator(locale);
+const tags = dietary
+  .split(',')
+  .map((tag) => tag.trim())
+  .filter(Boolean);
+const allergenList = allergens
+  .split(',')
+  .map((allergen) => allergen.trim())
+  .filter(Boolean);
+---
+
+<div class:list={['brisk-menu-item', instanceClass]}>
+  <p class="brisk-menu-item__head">
+    <span class="brisk-menu-item__name" data-brisk-field="name">{name}</span>
+    {/* The dotted line a printed menu draws from the dish to its price. */}
+    {price && <span class="brisk-menu-item__leader" aria-hidden="true" />}
+    {price && (
+      <span class="brisk-menu-item__price" data-brisk-field="price">{price}</span>
+    )}
+  </p>
+  {description && <p class="brisk-menu-item__description">{description}</p>}
+  {(tags.length > 0 || allergenList.length > 0) && (
+    <ul class="brisk-menu-item__tags">
+      {tags.map((tag) => (
+        <li class="brisk-menu-item__tag">{tag}</li>
+      ))}
+      {allergenList.length > 0 && (
+        <li class="brisk-menu-item__allergens">
+          {i18n.t('menuItem.allergens', { list: allergenList.join(', ') })}
+        </li>
+      )}
+    </ul>
+  )}
+</div>
+
+<style>
+  .brisk-menu-item {
+    display: grid;
+    gap: 0.25rem;
+    min-width: 0;
+    background: var(--brisk-override-bg, transparent);
+    color: var(--brisk-override-text, inherit);
+    border-radius: var(--brisk-override-radius, 0);
+    padding: var(--brisk-override-padding-y, 0)
+      var(--brisk-override-padding-x, 0);
+  }
+
+  .brisk-menu-item__head {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+    margin: 0;
+    font-weight: 600;
+  }
+
+  .brisk-menu-item__name {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .brisk-menu-item__leader {
+    flex: 1 1 1rem;
+    min-width: 1rem;
+    border-block-end: 2px dotted var(--border);
+    transform: translateY(-0.25em);
+  }
+
+  .brisk-menu-item__price {
+    flex-shrink: 0;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+
+  .brisk-menu-item__description {
+    margin: 0;
+    font-size: 0.875rem;
+    color: var(--muted-foreground);
+  }
+
+  .brisk-menu-item__tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem 0.5rem;
+    margin: 0.125rem 0 0;
+    padding: 0;
+    list-style: none;
+    font-size: 0.75rem;
+  }
+
+  .brisk-menu-item__tag {
+    padding: 0 0.5rem;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+  }
+
+  .brisk-menu-item__allergens {
+    color: var(--muted-foreground);
+  }
+</style>

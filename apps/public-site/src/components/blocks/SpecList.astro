@@ -1,0 +1,56 @@
+---
+import type { SpecListProps } from '@brisk/shared-types';
+import EmptyContainerHint from '../EmptyContainerHint.astro';
+
+type Props = SpecListProps & {
+  locale?: string;
+  editable?: boolean;
+  hasChildren?: boolean;
+  emptyChildLabel?: string | null;
+  instanceClass?: string | null;
+};
+
+const { columns, locale, editable, hasChildren, emptyChildLabel, instanceClass } =
+  Astro.props;
+---
+
+<dl
+  class:list={['brisk-spec-list', `brisk-spec-list--${columns}`, instanceClass]}
+  data-brisk-editable-outline={editable && hasChildren ? '' : undefined}
+>
+  <slot />
+  <EmptyContainerHint
+    show={!hasChildren && Boolean(editable)}
+    locale={locale}
+    childLabel={emptyChildLabel}
+  />
+</dl>
+
+<style>
+  .brisk-spec-list {
+    display: grid;
+    column-gap: var(--brisk-override-gap, 2rem);
+    margin: 0;
+    background: var(--brisk-override-bg, transparent);
+    color: var(--brisk-override-text, inherit);
+    border-radius: var(--brisk-override-radius, 0);
+    padding: var(--brisk-override-padding-y, 0)
+      var(--brisk-override-padding-x, 0);
+  }
+
+  .brisk-spec-list--two {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  @container (max-width: 36rem) {
+    .brisk-spec-list--two {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+
+  .brisk-spec-list[data-brisk-editable-outline] {
+    outline: 1px dashed var(--border);
+    outline-offset: -4px;
+    padding: 0.5rem;
+  }
+</style>

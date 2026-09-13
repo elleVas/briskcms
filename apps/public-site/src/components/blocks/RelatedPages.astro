@@ -1,6 +1,7 @@
 ---
 import type { RelatedPagesProps } from '@brisk/shared-types';
 import PageGrid from './PageGrid.astro';
+import { delegatedRootClass } from '../../lib/delegated-root-class';
 
 type Props = RelatedPagesProps & {
   /** The per-instance style class, from BlockRenderer — see blockInstanceClassName. */
@@ -32,7 +33,7 @@ const { layout, items, instanceClass, locale } = Astro.props;
       emptyText=""
       items={items}
       filterable={false}
-      instanceClass={instanceClass}
+      instanceClass={delegatedRootClass('brisk-related-pages', instanceClass)}
       locale={locale}
     />
   )

@@ -67,6 +67,25 @@ describe('buildContentSecurityPolicy', () => {
     expect(frameSrc).toContain('https://www.google.com');
   });
 
+  it('allows the booking services BookingEmbed frames, and no look-alike of them', () => {
+    const policy = buildContentSecurityPolicy(`'self'`, 'abc123');
+    const frameSrc = policy
+      .split(';')
+      .find((directive) => directive.trim().startsWith('frame-src'));
+    const sources = frameSrc?.trim().split(/\s+/).slice(1) ?? [];
+
+    expect(sources).toEqual(
+      expect.arrayContaining([
+        'https://calendly.com',
+        'https://cal.com',
+        'https://app.cal.com',
+        'https://calendar.google.com',
+      ]),
+    );
+    // Exact hosts, never a wildcard that would let any subdomain in.
+    expect(sources.some((source) => source.includes('*'))).toBe(false);
+  });
+
   it('allows the GTM/GA4/Meta Pixel origins the Tier 1 head/body script field needs', () => {
     const policy = buildContentSecurityPolicy(`'self'`, 'abc123');
     const scriptSrc = policy

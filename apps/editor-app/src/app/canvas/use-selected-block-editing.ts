@@ -18,6 +18,7 @@ import type { Breakpoint } from './breakpoint-selector';
 import type { BlockStyleSheet } from './use-block-style-sheet';
 import type { PreviewBridgeState } from './use-preview-bridge';
 import {
+  parentRenderedFromChildren,
   updateBlockProps,
   updateBlockStyleOverride,
   updateBlockVariant,
@@ -29,6 +30,8 @@ export interface UseSelectedBlockEditingParams {
   siteId: string | undefined;
   selectedBlock: Block | null;
   selectedDescriptor: BlockDescriptor | undefined;
+  /** To know whether the selected block's parent draws from its children. */
+  registry: BlockDescriptor[];
   breakpoint: Breakpoint;
   /** Only what a style edit needs to tell the iframe: the wrapper attributes of a ROOT block. */
   bridge: Pick<PreviewBridgeState, 'setRootLayout'>;
@@ -71,6 +74,7 @@ export function useSelectedBlockEditing({
   siteId,
   selectedBlock,
   selectedDescriptor,
+  registry,
   breakpoint,
   bridge,
   styleSheet,
@@ -100,6 +104,14 @@ export function useSelectedBlockEditing({
     }
     const nextProps = { ...selectedBlock.props, [key]: value };
     setLocalBlocks((prev) => updateBlockProps(prev, blockId, nextProps));
+    // A glossary term renamed has to move in its glossary's index, a
+    // video's caption is its title in the playlist: the parent is what
+    // shows the change, so the parent is what gets re-rendered.
+    const parent = parentRenderedFromChildren(
+      updateBlockProps(localBlocksRef.current, blockId, nextProps),
+      registry,
+      blockId,
+    );
     patch.scheduleChange(
       blockId,
       selectedBlock.type,
@@ -113,6 +125,7 @@ export function useSelectedBlockEditing({
         styleOverride: selectedBlock.styleOverride,
         variant: selectedBlock.variant,
       },
+      parent ?? undefined,
     );
   }
 

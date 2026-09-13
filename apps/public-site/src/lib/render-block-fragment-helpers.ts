@@ -76,6 +76,49 @@ export function isValidRenderBlockFragmentBody(
   );
 }
 
+/**
+ * The component scripts of a fragment, kept out of what is sent back.
+ *
+ * Rendered through the Container API, a block's bundled `<script>` has no
+ * page to be hoisted into, and Astro writes it out with whatever the
+ * container's `resolve` makes of the module id — which, with no `resolve`,
+ * is the module id itself: the ABSOLUTE PATH of the component on the
+ * server (`/Users/…/apps/public-site/src/components/blocks/Tabs.astro?astro
+ * &type=script…`, `/app/…` in a container). Every fragment of a block with
+ * a behaviour handed the editor the server's directory layout, and the
+ * canvas then asked the site for that path and got a 404.
+ *
+ * The canvas never needed those tags: a patched or inserted block is wired
+ * by `runBlockBehaviorsInSubtree` from BLOCK_BEHAVIOR_REGISTRY, the only
+ * thing that ever made its behaviour work. So `resolve` hands Astro a
+ * placeholder that names nothing, and `strip` removes the tags written
+ * with it — by the exact string Astro emits, not by pattern, so nothing
+ * else in the fragment (an author's embed, Turnstile's own `<script src>`)
+ * can be touched. Were Astro ever to write the tag differently, what is
+ * left is a placeholder, still not a path.
+ */
+export class FragmentComponentScripts {
+  readonly #prefix = `brisk-fragment-script:${crypto.randomUUID()}:`;
+  readonly #emitted: string[] = [];
+
+  /** For `AstroContainer.create({ resolve })`. */
+  readonly resolve = (_specifier: string): Promise<string> => {
+    const placeholder = `${this.#prefix}${this.#emitted.length}`;
+    this.#emitted.push(placeholder);
+    return Promise.resolve(placeholder);
+  };
+
+  strip(html: string): string {
+    return this.#emitted.reduce(
+      (remaining, placeholder) =>
+        remaining
+          .split(`<script type="module" src="${placeholder}"></script>`)
+          .join(''),
+      html,
+    );
+  }
+}
+
 export function renderBlockFragmentCorsHeaders(): Record<string, string> {
   return {
     'Access-Control-Allow-Origin': editorAppUrl(),

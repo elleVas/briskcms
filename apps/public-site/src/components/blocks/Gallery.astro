@@ -7,16 +7,33 @@ type Props = GalleryProps & {
   locale: string;
   /** The per-instance style class, from BlockRenderer — see blockInstanceClassName. */
   instanceClass?: string | null;
+  /**
+   * `masonry` is MasonryGallery: the same pictures in columns, each at its
+   * own height. Not a prop of the Gallery block — its column count means
+   * the same thing in both, its shapes do not.
+   */
+  layout?: 'grid' | 'masonry';
 };
 
-const { images, columns, aspectRatio, lightbox, locale, instanceClass } =
-  Astro.props;
+const {
+  images,
+  columns,
+  aspectRatio,
+  lightbox,
+  locale,
+  instanceClass,
+  layout = 'grid',
+} = Astro.props;
 const i18n = new Translator(locale);
 ---
 
 <div
   class:list={[
+    // The type class, for the site-wide style of Gallery; `gallery` is
+    // what everything written before it already targets.
+    'brisk-gallery',
     'gallery',
+    { 'gallery--masonry': layout === 'masonry' },
     `gallery--cols-${columns}`,
     `gallery--ratio-${aspectRatio}`,
     instanceClass,
@@ -129,6 +146,37 @@ const i18n = new Translator(locale);
   .gallery-item {
     margin: 0;
     min-width: 0;
+  }
+
+  /* MasonryGallery. CSS columns rather than a grid: a grid row is as tall
+     as its tallest picture, which is the gap masonry exists to close.
+     Pictures run down each column in page order, and a figure is never
+     split across two. */
+  .gallery--masonry {
+    display: block;
+    columns: var(--brisk-masonry-columns, 3);
+    column-gap: var(--brisk-override-gap, 0.5rem);
+  }
+  .gallery--masonry.gallery--cols-2 {
+    --brisk-masonry-columns: 2;
+  }
+  .gallery--masonry.gallery--cols-4 {
+    --brisk-masonry-columns: 4;
+  }
+  .gallery--masonry .gallery-item {
+    break-inside: avoid;
+    margin-block-end: var(--brisk-override-gap, 0.5rem);
+  }
+  @container (max-width: 768px) {
+    .gallery--masonry.gallery--cols-4 {
+      --brisk-masonry-columns: 3;
+    }
+  }
+  @container (max-width: 480px) {
+    .gallery--masonry.gallery--cols-3,
+    .gallery--masonry.gallery--cols-4 {
+      --brisk-masonry-columns: 2;
+    }
   }
   .gallery-item__zoom {
     display: block;

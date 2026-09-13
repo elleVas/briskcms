@@ -1,0 +1,39 @@
+---
+import type { SpecItemProps } from '@brisk/shared-types';
+
+type Props = SpecItemProps & { instanceClass?: string | null };
+
+const { label, value, instanceClass } = Astro.props;
+---
+
+{/* A <div> grouping one <dt> with its <dd> is what HTML allows inside a
+    <dl>, and what lets a row have a border of its own. */}
+<div class:list={['brisk-spec-item', instanceClass]}>
+  <dt class="brisk-spec-item__label" data-brisk-field="label">{label}</dt>
+  <dd class="brisk-spec-item__value" data-brisk-field="value">{value}</dd>
+</div>
+
+<style>
+  .brisk-spec-item {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 0.25rem 1rem;
+    border-block-end: 1px solid var(--border);
+    background: var(--brisk-override-bg, transparent);
+    color: var(--brisk-override-text, inherit);
+    padding: var(--brisk-override-padding-y, 0.5rem)
+      var(--brisk-override-padding-x, 0);
+  }
+
+  .brisk-spec-item__label {
+    color: var(--muted-foreground);
+  }
+
+  .brisk-spec-item__value {
+    margin: 0;
+    font-weight: 500;
+    text-align: end;
+    overflow-wrap: anywhere;
+  }
+</style>

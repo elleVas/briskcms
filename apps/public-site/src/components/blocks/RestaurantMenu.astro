@@ -1,0 +1,62 @@
+---
+import type { RestaurantMenuProps } from '@brisk/shared-types';
+import EmptyContainerHint from '../EmptyContainerHint.astro';
+
+type Props = RestaurantMenuProps & {
+  locale?: string;
+  editable?: boolean;
+  hasChildren?: boolean;
+  emptyChildLabel?: string | null;
+  instanceClass?: string | null;
+};
+
+const { columns, locale, editable, hasChildren, emptyChildLabel, instanceClass } =
+  Astro.props;
+---
+
+<div
+  class:list={[
+    'brisk-restaurant-menu',
+    `brisk-restaurant-menu--${columns}`,
+    instanceClass,
+  ]}
+  data-brisk-editable-outline={editable && hasChildren ? '' : undefined}
+>
+  <slot />
+  <EmptyContainerHint
+    show={!hasChildren && Boolean(editable)}
+    locale={locale}
+    childLabel={emptyChildLabel}
+  />
+</div>
+
+<style>
+  .brisk-restaurant-menu {
+    display: grid;
+    row-gap: var(--brisk-override-gap, 1.25rem);
+    column-gap: 3rem;
+    background: var(--brisk-override-bg, transparent);
+    color: var(--brisk-override-text, inherit);
+    border-radius: var(--brisk-override-radius, 0);
+    padding: var(--brisk-override-padding-y, 0)
+      var(--brisk-override-padding-x, 0);
+  }
+
+  .brisk-restaurant-menu--two {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  /* Measured against what holds the menu, not the screen (ADR-0047): two
+     columns of dishes in a sidebar are two columns of broken lines. */
+  @container (max-width: 40rem) {
+    .brisk-restaurant-menu--two {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+
+  .brisk-restaurant-menu[data-brisk-editable-outline] {
+    outline: 1px dashed var(--border);
+    outline-offset: -4px;
+    padding: 0.5rem;
+  }
+</style>

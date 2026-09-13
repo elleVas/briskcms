@@ -1,0 +1,116 @@
+---
+import type { Block, ProductReviewsProps } from '@brisk/shared-types';
+import { richTextToPlainText } from '@brisk/shared-types';
+import CollectionLayout from '../CollectionLayout.astro';
+
+export type Props = ProductReviewsProps & {
+  /** The reviews, read off the block's own children for the structured data (Faq.astro's reason). */
+  items?: Block[];
+  editable?: boolean;
+  hasChildren?: boolean;
+  instanceClass?: string | null;
+  emptyChildLabel?: string | null;
+  locale: string;
+};
+
+const {
+  display,
+  structuredData,
+  productName,
+  items = [],
+  editable,
+  hasChildren,
+  instanceClass,
+  emptyChildLabel,
+  locale,
+} = Astro.props;
+
+/*
+ * schema.org Product with its reviews and their average — only when the
+ * author turned it on AND named the product, and only from reviews that
+ * say who wrote them: a review with no author is one Google rejects, and
+ * an average over reviews nobody signed is not a rating anyone gave.
+ */
+const reviews = items
+  .filter((item) => item.type === 'ProductReview')
+  .map((item) => ({
+    author: String(item.props['author'] ?? '').trim(),
+    body: richTextToPlainText(String(item.props['quote'] ?? '')).trim(),
+    rating: Number(item.props['rating']),
+  }))
+  .filter(
+    (review) =>
+      review.author && Number.isFinite(review.rating) && review.rating >= 1,
+  );
+const average =
+  reviews.length > 0
+    ? reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length
+    : 0;
+const jsonLd =
+  structuredData && productName.trim() && reviews.length > 0
+    ? JSON.stringify({
+        '@context': 'https://schema.org',
+        '@type': 'Product',
+        name: productName.trim(),
+        aggregateRating: {
+          '@type': 'AggregateRating',
+          ratingValue: average.toFixed(1),
+          bestRating: 5,
+          reviewCount: reviews.length,
+        },
+        review: reviews.map((review) => ({
+          '@type': 'Review',
+          author: { '@type': 'Person', name: review.author },
+          reviewRating: {
+            '@type': 'Rating',
+            ratingValue: review.rating,
+            bestRating: 5,
+          },
+          ...(review.body ? { reviewBody: review.body } : {}),
+        })),
+      }).replace(/</g, '\\u003c')
+    : null;
+---
+
+<CollectionLayout
+  blockClass="brisk-product-reviews"
+  display={display}
+  editable={editable}
+  hasChildren={hasChildren}
+  instanceClass={instanceClass}
+  emptyChildLabel={emptyChildLabel}
+  locale={locale}
+  step="item"
+>
+  <slot />
+</CollectionLayout>
+{jsonLd && <script is:inline type="application/ld+json" set:html={jsonLd} />}
+
+<script>
+  import { collectionBehaviors } from '../../lib/block-behaviors/collection';
+  import { runBlockBehaviors } from '../../lib/block-behaviors/run-block-behaviors';
+  runBlockBehaviors(document, collectionBehaviors);
+</script>
+
+<style>
+  :global(.brisk-product-reviews) {
+    background: var(--brisk-override-bg, transparent);
+    color: var(--brisk-override-text, inherit);
+    border-radius: var(--brisk-override-radius, 0);
+    padding: var(--brisk-override-padding-y, 0)
+      var(--brisk-override-padding-x, 0);
+  }
+  :global(.brisk-product-reviews.brisk-collection--grid) {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr));
+    gap: var(--brisk-override-gap, 1.5rem);
+  }
+  :global(.brisk-product-reviews .brisk-collection__track) {
+    padding-block: 0.5rem;
+  }
+  :global(.brisk-product-reviews[data-brisk-editable-outline]) {
+    outline: 1px dashed var(--border);
+    outline-offset: -4px;
+    padding: 0.5rem;
+  }
+</style>

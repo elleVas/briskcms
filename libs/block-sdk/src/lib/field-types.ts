@@ -261,6 +261,20 @@ export interface BlockDescriptor<Props = Record<string, unknown>> {
    */
   allowedParentTypes?: string[];
   /**
+   * What this container draws depends on its children's PROPS, not only on
+   * the children being there: a FAQ's structured data is made of its
+   * questions, a glossary's A–Z index of its terms, a playlist's list of
+   * its videos' captions, a row of columns of its columns' widths.
+   *
+   * The canvas re-renders only the block that was edited, so without this
+   * an edited child left its parent saying the old thing — a glossary term
+   * renamed from "Beta" to "Zeta" still listed under B. With it, editing a
+   * child re-renders the parent, children included, the way inserting one
+   * already does. `block-renderer-children.spec.ts` in apps/public-site
+   * holds this flag to what BlockRenderer actually reads.
+   */
+  rendersFromChildren?: boolean;
+  /**
    * Which shared style properties (docs/adr/0022) make sense for this
    * type — not every block uses every property (Text has no sensible
    * "border radius"). Absent/empty = no "Style" button or per-instance

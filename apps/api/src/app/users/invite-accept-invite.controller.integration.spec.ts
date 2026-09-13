@@ -60,14 +60,30 @@ const POLL_INTERVAL_MS = 200;
 
 interface MailpitMessage {
   ID: string;
+  To: { Address: string }[];
 }
 
+/**
+ * The messages sent to `toEmail`, newest first.
+ *
+ * Through Mailpit's SEARCH endpoint. This used `/api/v1/messages?query=`,
+ * and that endpoint ignores `query`: it returned the whole mailbox, so the
+ * "invite" read below was whichever email arrived last to anyone. The test
+ * passed only while that happened to be its own — and failed, reading
+ * another test's email, whenever a suite running alongside sent one after
+ * it ("10 email(s) for invitee-…, none carrying an inviteToken").
+ *
+ * Filtered on the address as well, so a search that matches more loosely
+ * than asked can never hand back someone else's message.
+ */
 async function messagesFor(toEmail: string): Promise<MailpitMessage[]> {
   const res = await fetch(
-    `${MAILPIT_URL}/api/v1/messages?query=${encodeURIComponent(`to:${toEmail}`)}`,
+    `${MAILPIT_URL}/api/v1/search?query=${encodeURIComponent(`to:"${toEmail}"`)}`,
   );
-  const body = (await res.json()) as { messages: MailpitMessage[] };
-  return body.messages;
+  const body = (await res.json()) as { messages: MailpitMessage[] | null };
+  return (body.messages ?? []).filter((message) =>
+    message.To.some((recipient) => recipient.Address === toEmail),
+  );
 }
 
 /**

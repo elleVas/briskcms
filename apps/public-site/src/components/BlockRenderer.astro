@@ -60,6 +60,42 @@ import {
   contactDetailsPropsSchema,
   openingHoursPropsSchema,
   fileDownloadPropsSchema,
+  productGridPropsSchema,
+  productCardPropsSchema,
+  productGalleryPropsSchema,
+  discountPricePropsSchema,
+  buyButtonPropsSchema,
+  productVariantsPropsSchema,
+  productReviewsPropsSchema,
+  productReviewPropsSchema,
+  comparisonTablePropsSchema,
+  comparisonRowPropsSchema,
+  promoCodePropsSchema,
+  shippingReturnsPropsSchema,
+  trustBadgesPropsSchema,
+  restaurantMenuPropsSchema,
+  menuItemPropsSchema,
+  eventListPropsSchema,
+  eventItemPropsSchema,
+  stickyContactBarPropsSchema,
+  shareButtonsPropsSchema,
+  cookiePreferencesPropsSchema,
+  stepsPropsSchema,
+  stepPropsSchema,
+  specListPropsSchema,
+  specItemPropsSchema,
+  progressBarPropsSchema,
+  profileCardPropsSchema,
+  bookingEmbedPropsSchema,
+  fileListPropsSchema,
+  glossaryPropsSchema,
+  glossaryTermPropsSchema,
+  pullQuotePropsSchema,
+  imageHotspotsPropsSchema,
+  hotspotPropsSchema,
+  masonryGalleryPropsSchema,
+  videoPlaylistPropsSchema,
+  PAYMENT_METHODS,
   newsletterSignupPropsSchema,
   pricingPlanPropsSchema,
   pricingTablePropsSchema,
@@ -281,6 +317,76 @@ import TextCore from './blocks/Text.astro';
 const Text = resolveThemeBlockOverride('Text', TextCore, themeName);
 import VideoEmbedCore from './blocks/VideoEmbed.astro';
 const VideoEmbed = resolveThemeBlockOverride('VideoEmbed', VideoEmbedCore, themeName);
+import ProductGridCore from './blocks/ProductGrid.astro';
+const ProductGrid = resolveThemeBlockOverride('ProductGrid', ProductGridCore, themeName);
+import ProductCardCore from './blocks/ProductCard.astro';
+const ProductCard = resolveThemeBlockOverride('ProductCard', ProductCardCore, themeName);
+import ProductGalleryCore from './blocks/ProductGallery.astro';
+const ProductGallery = resolveThemeBlockOverride('ProductGallery', ProductGalleryCore, themeName);
+import DiscountPriceCore from './blocks/DiscountPrice.astro';
+const DiscountPrice = resolveThemeBlockOverride('DiscountPrice', DiscountPriceCore, themeName);
+import BuyButtonCore from './blocks/BuyButton.astro';
+const BuyButton = resolveThemeBlockOverride('BuyButton', BuyButtonCore, themeName);
+import ProductVariantsCore from './blocks/ProductVariants.astro';
+const ProductVariants = resolveThemeBlockOverride('ProductVariants', ProductVariantsCore, themeName);
+import ProductReviewsCore from './blocks/ProductReviews.astro';
+const ProductReviews = resolveThemeBlockOverride('ProductReviews', ProductReviewsCore, themeName);
+import ProductReviewCore from './blocks/ProductReview.astro';
+const ProductReview = resolveThemeBlockOverride('ProductReview', ProductReviewCore, themeName);
+import ComparisonTableCore from './blocks/ComparisonTable.astro';
+const ComparisonTable = resolveThemeBlockOverride('ComparisonTable', ComparisonTableCore, themeName);
+import ComparisonRowCore from './blocks/ComparisonRow.astro';
+const ComparisonRow = resolveThemeBlockOverride('ComparisonRow', ComparisonRowCore, themeName);
+import PromoCodeCore from './blocks/PromoCode.astro';
+const PromoCode = resolveThemeBlockOverride('PromoCode', PromoCodeCore, themeName);
+import ShippingReturnsCore from './blocks/ShippingReturns.astro';
+const ShippingReturns = resolveThemeBlockOverride('ShippingReturns', ShippingReturnsCore, themeName);
+import TrustBadgesCore from './blocks/TrustBadges.astro';
+const TrustBadges = resolveThemeBlockOverride('TrustBadges', TrustBadgesCore, themeName);
+import RestaurantMenuCore from './blocks/RestaurantMenu.astro';
+const RestaurantMenu = resolveThemeBlockOverride('RestaurantMenu', RestaurantMenuCore, themeName);
+import MenuItemCore from './blocks/MenuItem.astro';
+const MenuItem = resolveThemeBlockOverride('MenuItem', MenuItemCore, themeName);
+import EventListCore from './blocks/EventList.astro';
+const EventList = resolveThemeBlockOverride('EventList', EventListCore, themeName);
+import EventItemCore from './blocks/EventItem.astro';
+const EventItem = resolveThemeBlockOverride('EventItem', EventItemCore, themeName);
+import StickyContactBarCore from './blocks/StickyContactBar.astro';
+const StickyContactBar = resolveThemeBlockOverride('StickyContactBar', StickyContactBarCore, themeName);
+import ShareButtonsCore from './blocks/ShareButtons.astro';
+const ShareButtons = resolveThemeBlockOverride('ShareButtons', ShareButtonsCore, themeName);
+import CookiePreferencesCore from './blocks/CookiePreferences.astro';
+const CookiePreferences = resolveThemeBlockOverride('CookiePreferences', CookiePreferencesCore, themeName);
+import StepsCore from './blocks/Steps.astro';
+const Steps = resolveThemeBlockOverride('Steps', StepsCore, themeName);
+import StepCore from './blocks/Step.astro';
+const Step = resolveThemeBlockOverride('Step', StepCore, themeName);
+import SpecListCore from './blocks/SpecList.astro';
+const SpecList = resolveThemeBlockOverride('SpecList', SpecListCore, themeName);
+import SpecItemCore from './blocks/SpecItem.astro';
+const SpecItem = resolveThemeBlockOverride('SpecItem', SpecItemCore, themeName);
+import ProgressBarCore from './blocks/ProgressBar.astro';
+const ProgressBar = resolveThemeBlockOverride('ProgressBar', ProgressBarCore, themeName);
+import ProfileCardCore from './blocks/ProfileCard.astro';
+const ProfileCard = resolveThemeBlockOverride('ProfileCard', ProfileCardCore, themeName);
+import BookingEmbedCore from './blocks/BookingEmbed.astro';
+const BookingEmbed = resolveThemeBlockOverride('BookingEmbed', BookingEmbedCore, themeName);
+import FileListCore from './blocks/FileList.astro';
+const FileList = resolveThemeBlockOverride('FileList', FileListCore, themeName);
+import GlossaryCore from './blocks/Glossary.astro';
+const Glossary = resolveThemeBlockOverride('Glossary', GlossaryCore, themeName);
+import GlossaryTermCore from './blocks/GlossaryTerm.astro';
+const GlossaryTerm = resolveThemeBlockOverride('GlossaryTerm', GlossaryTermCore, themeName);
+import PullQuoteCore from './blocks/PullQuote.astro';
+const PullQuote = resolveThemeBlockOverride('PullQuote', PullQuoteCore, themeName);
+import ImageHotspotsCore from './blocks/ImageHotspots.astro';
+const ImageHotspots = resolveThemeBlockOverride('ImageHotspots', ImageHotspotsCore, themeName);
+import HotspotCore from './blocks/Hotspot.astro';
+const Hotspot = resolveThemeBlockOverride('Hotspot', HotspotCore, themeName);
+import MasonryGalleryCore from './blocks/MasonryGallery.astro';
+const MasonryGallery = resolveThemeBlockOverride('MasonryGallery', MasonryGalleryCore, themeName);
+import VideoPlaylistCore from './blocks/VideoPlaylist.astro';
+const VideoPlaylist = resolveThemeBlockOverride('VideoPlaylist', VideoPlaylistCore, themeName);
 import WhatsAppButtonCore from './blocks/WhatsAppButton.astro';
 import UnrenderableBlockHint from './UnrenderableBlockHint.astro';
 const WhatsAppButton = resolveThemeBlockOverride('WhatsAppButton', WhatsAppButtonCore, themeName);
@@ -315,7 +421,7 @@ interface BlockRenderContext {
 }
 
 /**
- * One entry for each of the 48 block types — replacing the old
+ * One entry for each block type — replacing the old
  * `{block.type === 'X' && (<X .../>)}` dispatch repeated 48 times (see this
  * file's git history). The variation between types is entirely STATIC
  * metadata known when the file is written (5 independent facts: is it
@@ -410,7 +516,13 @@ const BLOCK_REGISTRY: Record<string, BlockDispatchEntry> = {
   },
   Quote: { component: Quote, schema: quotePropsSchema, stylable: true },
   Callout: { component: Callout, schema: calloutPropsSchema, stylable: true },
-  Rating: { component: Rating, schema: ratingPropsSchema, stylable: true },
+  Rating: {
+    component: Rating,
+    schema: ratingPropsSchema,
+    stylable: true,
+    // Its stars are announced in words, in the page's language.
+    locale: true,
+  },
   Countdown: {
     component: Countdown,
     schema: countdownPropsSchema,
@@ -547,6 +659,273 @@ const BLOCK_REGISTRY: Record<string, BlockDispatchEntry> = {
     stylable: true,
     locale: true,
     extra: (ctx) => ({ editable: ctx.editable }),
+  },
+  // The last family of the hundred-blocks plan: a shop window, a local
+  // business, editorial content.
+  ProductGrid: {
+    component: ProductGrid,
+    schema: productGridPropsSchema,
+    stylable: true,
+    locale: true,
+    recurseChildren: true,
+    containerProps: true,
+  },
+  ProductCard: {
+    component: ProductCard,
+    schema: productCardPropsSchema,
+    stylable: true,
+    locale: true,
+    extra: (ctx) => ({ editable: ctx.editable }),
+  },
+  ProductGallery: {
+    component: ProductGallery,
+    schema: productGalleryPropsSchema,
+    stylable: true,
+    locale: true,
+    extra: (ctx) => ({ editable: ctx.editable }),
+  },
+  DiscountPrice: {
+    component: DiscountPrice,
+    schema: discountPricePropsSchema,
+    stylable: true,
+    locale: true,
+    extra: (ctx) => ({ editable: ctx.editable }),
+  },
+  BuyButton: {
+    component: BuyButton,
+    schema: buyButtonPropsSchema,
+    stylable: true,
+    locale: true,
+  },
+  ProductVariants: {
+    component: ProductVariants,
+    schema: productVariantsPropsSchema,
+    stylable: true,
+    locale: true,
+    extra: (ctx) => ({ editable: ctx.editable }),
+  },
+  ProductReviews: {
+    component: ProductReviews,
+    schema: productReviewsPropsSchema,
+    stylable: true,
+    locale: true,
+    recurseChildren: true,
+    containerProps: true,
+    // Its structured data is made of its own reviews (Faq's reason).
+    extra: (ctx) => ({ items: ctx.block.children ?? [] }),
+  },
+  ProductReview: {
+    component: ProductReview,
+    schema: productReviewPropsSchema,
+    stylable: true,
+    locale: true,
+  },
+  ComparisonTable: {
+    component: ComparisonTable,
+    schema: comparisonTablePropsSchema,
+    stylable: true,
+    locale: true,
+    recurseChildren: true,
+    containerProps: true,
+  },
+  ComparisonRow: {
+    component: ComparisonRow,
+    schema: comparisonRowPropsSchema,
+    stylable: true,
+    locale: true,
+  },
+  PromoCode: {
+    component: PromoCode,
+    schema: promoCodePropsSchema,
+    stylable: true,
+    locale: true,
+    extra: (ctx) => ({ editable: ctx.editable }),
+  },
+  ShippingReturns: {
+    component: ShippingReturns,
+    schema: shippingReturnsPropsSchema,
+    stylable: true,
+    locale: true,
+    extra: (ctx) => ({ editable: ctx.editable }),
+  },
+  TrustBadges: {
+    component: TrustBadges,
+    schema: trustBadgesPropsSchema,
+    stylable: true,
+    locale: true,
+    // Logos from the brand set, resolved here for the reason `iconSvg` is:
+    // a block never reaches into the icon registry itself.
+    extra: (ctx) => ({
+      editable: ctx.editable,
+      paymentIcons: Object.fromEntries(
+        PAYMENT_METHODS.map((method) => [
+          method,
+          resolveIconSvg(`brand:${method}`, ctx.site.themeName),
+        ]),
+      ),
+    }),
+  },
+  RestaurantMenu: {
+    component: RestaurantMenu,
+    schema: restaurantMenuPropsSchema,
+    stylable: true,
+    locale: true,
+    recurseChildren: true,
+    containerProps: true,
+  },
+  MenuItem: {
+    component: MenuItem,
+    schema: menuItemPropsSchema,
+    stylable: true,
+    locale: true,
+  },
+  EventList: {
+    component: EventList,
+    schema: eventListPropsSchema,
+    stylable: true,
+    locale: true,
+    recurseChildren: true,
+    containerProps: true,
+  },
+  EventItem: {
+    component: EventItem,
+    schema: eventItemPropsSchema,
+    stylable: true,
+    locale: true,
+    extra: (ctx) => ({ editable: ctx.editable }),
+  },
+  StickyContactBar: {
+    component: StickyContactBar,
+    schema: stickyContactBarPropsSchema,
+    stylable: true,
+    locale: true,
+    // Business info is the site's, not the block's (ContactDetails' reason).
+    extra: (ctx) => ({ site: ctx.site, editable: ctx.editable }),
+  },
+  ShareButtons: {
+    component: ShareButtons,
+    schema: shareButtonsPropsSchema,
+    stylable: true,
+    locale: true,
+    extra: (ctx) => ({
+      translations: ctx.translations,
+      pageTitle: ctx.currentPageTitle,
+      brandIcons: {
+        whatsapp: resolveIconSvg('brand:whatsapp', ctx.site.themeName),
+        facebook: resolveIconSvg('brand:facebook', ctx.site.themeName),
+        x: resolveIconSvg('brand:x', ctx.site.themeName),
+      },
+    }),
+  },
+  CookiePreferences: {
+    component: CookiePreferences,
+    schema: cookiePreferencesPropsSchema,
+    stylable: true,
+    locale: true,
+    extra: (ctx) => ({ site: ctx.site, editable: ctx.editable }),
+  },
+  Steps: {
+    component: Steps,
+    schema: stepsPropsSchema,
+    stylable: true,
+    recurseChildren: true,
+    containerProps: true,
+  },
+  Step: {
+    component: Step,
+    schema: stepPropsSchema,
+    stylable: true,
+  },
+  SpecList: {
+    component: SpecList,
+    schema: specListPropsSchema,
+    stylable: true,
+    recurseChildren: true,
+    containerProps: true,
+  },
+  SpecItem: {
+    component: SpecItem,
+    schema: specItemPropsSchema,
+    stylable: true,
+  },
+  ProgressBar: {
+    component: ProgressBar,
+    schema: progressBarPropsSchema,
+    stylable: true,
+    locale: true,
+  },
+  ProfileCard: {
+    component: ProfileCard,
+    schema: profileCardPropsSchema,
+    stylable: true,
+    locale: true,
+  },
+  BookingEmbed: {
+    component: BookingEmbed,
+    schema: bookingEmbedPropsSchema,
+    stylable: true,
+    locale: true,
+    extra: (ctx) => ({ editable: ctx.editable }),
+  },
+  FileList: {
+    component: FileList,
+    schema: fileListPropsSchema,
+    stylable: true,
+    recurseChildren: true,
+    containerProps: true,
+  },
+  Glossary: {
+    component: Glossary,
+    schema: glossaryPropsSchema,
+    stylable: true,
+    locale: true,
+    recurseChildren: true,
+    containerProps: true,
+    // The A–Z index is made of its own terms, which a container cannot
+    // read from inside its <slot/>.
+    extra: (ctx) => ({ items: ctx.block.children ?? [] }),
+  },
+  GlossaryTerm: {
+    component: GlossaryTerm,
+    schema: glossaryTermPropsSchema,
+    stylable: true,
+    // Its element's id is what the glossary's index links to.
+    extra: (ctx) => ({ blockId: ctx.block.id }),
+  },
+  PullQuote: {
+    component: PullQuote,
+    schema: pullQuotePropsSchema,
+    stylable: true,
+  },
+  ImageHotspots: {
+    component: ImageHotspots,
+    schema: imageHotspotsPropsSchema,
+    stylable: true,
+    locale: true,
+    recurseChildren: true,
+    containerProps: true,
+  },
+  Hotspot: {
+    component: Hotspot,
+    schema: hotspotPropsSchema,
+    stylable: true,
+    locale: true,
+  },
+  MasonryGallery: {
+    component: MasonryGallery,
+    schema: masonryGalleryPropsSchema,
+    stylable: true,
+    locale: true,
+  },
+  VideoPlaylist: {
+    component: VideoPlaylist,
+    schema: videoPlaylistPropsSchema,
+    stylable: true,
+    locale: true,
+    recurseChildren: true,
+    containerProps: true,
+    // The list of titles is made of its own videos' captions.
+    extra: (ctx) => ({ items: ctx.block.children ?? [] }),
   },
   TermList: {
     component: TermList,
@@ -750,6 +1129,7 @@ const BLOCK_REGISTRY: Record<string, BlockDispatchEntry> = {
     component: Testimonial,
     schema: testimonialPropsSchema,
     stylable: true,
+    locale: true,
   },
   Team: {
     component: Team,

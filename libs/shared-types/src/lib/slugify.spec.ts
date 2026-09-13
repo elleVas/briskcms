@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { slugify } from './slugify';
+import { isCanonicalSlug, slugify } from './slugify';
 
 describe('slugify', () => {
   it('lowercases and hyphenates spaces', () => {
@@ -17,4 +17,18 @@ describe('slugify', () => {
   it('trims leading and trailing hyphens', () => {
     expect(slugify('-già pronto-')).toBe('gia-pronto');
   });
+});
+
+describe('isCanonicalSlug', () => {
+  it('accepts what slugify leaves as it is', () => {
+    expect(isCanonicalSlug('chi-siamo')).toBe(true);
+    expect(isCanonicalSlug('2026')).toBe(true);
+  });
+
+  it.each(['wp-login.php', '.env', 'Chi-Siamo', 'a b', '-x', 'perché', ''])(
+    'refuses "%s"',
+    (value) => {
+      expect(isCanonicalSlug(value)).toBe(false);
+    },
+  );
 });

@@ -1,0 +1,62 @@
+---
+import type { GlossaryTermProps } from '@brisk/shared-types';
+import { glossaryTermAnchor } from '../../lib/glossary-index';
+
+type Props = GlossaryTermProps & {
+  /** Its own block id, which the glossary's index links to. */
+  blockId?: string;
+  instanceClass?: string | null;
+};
+
+const { term, definition, blockId, instanceClass } = Astro.props;
+---
+
+<div
+  class:list={['brisk-glossary-term', instanceClass]}
+  id={blockId ? glossaryTermAnchor(blockId) : undefined}
+>
+  {/* <dfn>: this is where the word is defined, which is what a reader
+      jumping here from the index — or a screen reader — is looking for. */}
+  <dt class="brisk-glossary-term__term">
+    <dfn data-brisk-field="term">{term}</dfn>
+  </dt>
+  {definition && (
+    <dd
+      class="brisk-glossary-term__definition brisk-rich-text"
+      data-brisk-field="definition"
+      set:html={definition}
+    />
+  )}
+</div>
+
+<style>
+  .brisk-glossary-term {
+    display: grid;
+    gap: 0.25rem;
+    /* A sticky header must not cover the term the index jumped to. */
+    scroll-margin-block-start: 6rem;
+    background: var(--brisk-override-bg, transparent);
+    color: var(--brisk-override-text, inherit);
+    border-radius: var(--brisk-override-radius, 0);
+    padding: var(--brisk-override-padding-y, 0)
+      var(--brisk-override-padding-x, 0);
+  }
+
+  .brisk-glossary-term__term {
+    font-weight: 600;
+  }
+
+  .brisk-glossary-term__term dfn {
+    font-style: normal;
+  }
+
+  .brisk-glossary-term__definition {
+    margin: 0;
+    color: var(--muted-foreground);
+  }
+
+  .brisk-glossary-term:target {
+    outline: 2px solid var(--primary);
+    outline-offset: 0.25rem;
+  }
+</style>

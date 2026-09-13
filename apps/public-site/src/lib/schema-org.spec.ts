@@ -3,7 +3,7 @@ import {
   DEFAULT_COOKIE_BANNER_SETTINGS,
   type PublishedSite,
 } from '@brisk/shared-types';
-import { buildSchemaOrgGraph } from './schema-org';
+import { absoluteSchemaUrl, buildSchemaOrgGraph } from './schema-org';
 
 const baseSite: PublishedSite = {
   name: 'Il mio sito',
@@ -143,5 +143,36 @@ describe('buildSchemaOrgGraph', () => {
         closes: '19:00',
       },
     ]);
+  });
+});
+
+describe('absoluteSchemaUrl', () => {
+  const origin = 'https://shop.example';
+
+  it('makes a path absolute against the site', () => {
+    expect(absoluteSchemaUrl('/uploads/shirt.webp', origin)).toBe(
+      'https://shop.example/uploads/shirt.webp',
+    );
+    expect(absoluteSchemaUrl(' https://example.com/buy ', origin)).toBe(
+      'https://example.com/buy',
+    );
+  });
+
+  // Each of these threw from `new URL` inside ProductCard and took the
+  // rest of the page with it.
+  it.each(['https://', 'https:', 'https://exa mple.com', '//'])(
+    'gives nothing for the half-typed "%s" instead of throwing',
+    (value) => {
+      expect(absoluteSchemaUrl(value, origin)).toBeUndefined();
+    },
+  );
+
+  it('gives a search engine only web addresses', () => {
+    expect(absoluteSchemaUrl('javascript:alert(1)', origin)).toBeUndefined();
+    expect(
+      absoluteSchemaUrl('mailto:shop@example.com', origin),
+    ).toBeUndefined();
+    expect(absoluteSchemaUrl('', origin)).toBeUndefined();
+    expect(absoluteSchemaUrl(null, origin)).toBeUndefined();
   });
 });

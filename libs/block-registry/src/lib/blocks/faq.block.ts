@@ -26,6 +26,7 @@ export const faqBlock: BlockDescriptor<FaqProps> = {
     },
   ],
   isContainer: true,
+  rendersFromChildren: true,
   allowedChildTypes: ['AccordionItem'],
   stylableProperties: BlockStyleRegistry.STANDARD,
   defaultStyle: BLOCK_STYLE_DEFAULTS.Faq,

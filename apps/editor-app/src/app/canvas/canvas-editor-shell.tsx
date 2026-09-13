@@ -465,6 +465,7 @@ export function CanvasEditorShell({
     siteId,
     selectedBlock,
     selectedDescriptor,
+    registry,
     breakpoint,
     bridge,
     styleSheet,

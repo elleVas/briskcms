@@ -1,6 +1,7 @@
 import type { ComponentType } from 'react';
 import type { CustomFieldControl } from '@brisk/block-registry';
 import { ColorPickerField } from './color-picker-field';
+import { DateField, TimeField } from './date-time-fields';
 import { FeatureListField } from './feature-list-field';
 import { FormPickerField } from './form-picker-field';
 import { GalleryPickerField } from './gallery-picker-field';
@@ -46,6 +47,7 @@ export const CUSTOM_FIELD_CONTROLS: Record<
 > = {
   audio: AudioPickerField as ControlComponent,
   color: ColorPickerField as ControlComponent,
+  date: DateField as ControlComponent,
   'feature-list': FeatureListField as ControlComponent,
   file: FilePickerField as ControlComponent,
   form: FormPickerField as ControlComponent,
@@ -57,5 +59,6 @@ export const CUSTOM_FIELD_CONTROLS: Record<
   'table-data': TableDataField as ControlComponent,
   term: TermPickerField as ControlComponent,
   taxonomy: TaxonomyPickerField as ControlComponent,
+  time: TimeField as ControlComponent,
   video: VideoPickerField as ControlComponent,
 };

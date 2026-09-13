@@ -3,6 +3,7 @@ import type { TrackerDomainEntry } from '@brisk/shared-types';
 import { PROMO_BAR_DISMISS_SCRIPT } from '../components/blocks/promo-bar-dismiss-script';
 import { COOKIE_CONSENT_DISMISS_SCRIPT } from '../components/cookie-consent-dismiss-script';
 import { COOKIE_CONSENT_PANEL_SCRIPT } from '../components/cookie-consent-panel-script';
+import { BOOKING_EMBED_HOSTS } from './booking-embed';
 
 /**
  * Most core blocks' own `<script>` (no `is:inline`) get bundled by Astro
@@ -60,6 +61,11 @@ const EMBEDDABLE_FRAME_ORIGINS = [
   'https://www.youtube-nocookie.com',
   'https://player.vimeo.com',
   'https://www.google.com',
+  // BookingEmbed — the booking services' own hosts, the same list
+  // booking-embed.ts accepts an address from.
+  ...Object.values(BOOKING_EMBED_HOSTS)
+    .flat()
+    .map((host) => `https://${host}`),
 ];
 
 /**

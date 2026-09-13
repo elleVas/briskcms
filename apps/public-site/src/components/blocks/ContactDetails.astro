@@ -1,6 +1,7 @@
 ---
 import type { ContactDetailsProps, PublishedSite } from '@brisk/shared-types';
 import { Translator } from '@brisk/theme-runtime';
+import { mapSearchHref, telHref } from '../../lib/contact-links';
 
 type Props = ContactDetailsProps & {
   site: PublishedSite;
@@ -25,11 +26,8 @@ const i18n = new Translator(locale ?? '');
 const address = showAddress ? site.businessAddress?.trim() : '';
 const phone = showPhone ? site.businessPhone?.trim() : '';
 const email = showEmail ? site.businessEmail?.trim() : '';
-// `tel:` wants the digits, not the spaces and dashes a person reads.
-const phoneHref = phone ? `tel:${phone.replace(/[^\d+]/g, '')}` : '';
-const mapHref = address
-  ? `https://www.openstreetmap.org/search?query=${encodeURIComponent(address)}`
-  : '';
+const phoneHref = phone ? telHref(phone) : '';
+const mapHref = address ? mapSearchHref(address) : '';
 ---
 
 {

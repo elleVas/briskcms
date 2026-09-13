@@ -17,7 +17,7 @@ const ListTag = numbered ? 'ol' : 'ul';
 {
   entries.length > 0 && (
     <nav
-      class:list={['brisk-toc', numbered && 'brisk-toc--numbered', instanceClass]}
+      class:list={['brisk-table-of-contents', 'brisk-toc', numbered && 'brisk-toc--numbered', instanceClass]}
       aria-label={title || i18n.t('tableOfContents.label')}
     >
       {title && <p class="brisk-toc__title">{title}</p>}

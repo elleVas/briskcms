@@ -1,0 +1,64 @@
+---
+import type { DiscountPriceProps } from '@brisk/shared-types';
+import { Translator } from '@brisk/theme-runtime';
+import Price from '../Price.astro';
+
+type Props = DiscountPriceProps & {
+  locale: string;
+  editable?: boolean;
+  instanceClass?: string | null;
+};
+
+const { price, compareAtPrice, currency, note, locale, editable, instanceClass } =
+  Astro.props;
+const i18n = new Translator(locale);
+---
+
+{
+  price !== null ? (
+    <div class:list={['brisk-discount-price', instanceClass]}>
+      <Price
+        price={price}
+        compareAtPrice={compareAtPrice}
+        currency={currency}
+        locale={locale}
+        size="large"
+      />
+      {note && (
+        <p class="brisk-discount-price__note" data-brisk-field="note">
+          {note}
+        </p>
+      )}
+    </div>
+  ) : (
+    editable && (
+      <p class="brisk-discount-price brisk-discount-price--empty">
+        {i18n.t('discountPrice.empty')}
+      </p>
+    )
+  )
+}
+
+<style>
+  .brisk-discount-price {
+    display: grid;
+    gap: 0.25rem;
+    justify-items: start;
+    background: var(--brisk-override-bg, transparent);
+    color: var(--brisk-override-text, inherit);
+    border-radius: var(--brisk-override-radius, 0);
+    padding: var(--brisk-override-padding-y, 0)
+      var(--brisk-override-padding-x, 0);
+  }
+
+  .brisk-discount-price__note {
+    margin: 0;
+    font-size: 0.8125rem;
+    color: var(--muted-foreground);
+  }
+
+  .brisk-discount-price--empty {
+    font-size: 0.875rem;
+    color: var(--muted-foreground);
+  }
+</style>

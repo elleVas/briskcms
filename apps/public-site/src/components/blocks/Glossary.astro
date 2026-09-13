@@ -1,0 +1,105 @@
+---
+import type { Block, GlossaryProps } from '@brisk/shared-types';
+import { Translator } from '@brisk/theme-runtime';
+import EmptyContainerHint from '../EmptyContainerHint.astro';
+import { glossaryIndex } from '../../lib/glossary-index';
+
+type Props = GlossaryProps & {
+  /** The terms, read off the block's own children for the index (Faq.astro's reason). */
+  items?: Block[];
+  locale: string;
+  editable?: boolean;
+  hasChildren?: boolean;
+  emptyChildLabel?: string | null;
+  instanceClass?: string | null;
+};
+
+const {
+  showIndex,
+  items = [],
+  locale,
+  editable,
+  hasChildren,
+  emptyChildLabel,
+  instanceClass,
+} = Astro.props;
+const i18n = new Translator(locale);
+const index = showIndex ? glossaryIndex(items, locale) : [];
+---
+
+<div
+  class:list={['brisk-glossary', instanceClass]}
+  data-brisk-editable-outline={editable && hasChildren ? '' : undefined}
+>
+  {/* One letter is not an index, just a letter. */}
+  {index.length > 1 && (
+    <nav class="brisk-glossary__index" aria-label={i18n.t('glossary.index')}>
+      <ul class="brisk-glossary__letters">
+        {index.map((entry) => (
+          <li>
+            <a class="brisk-glossary__letter" href={`#${entry.anchor}`}>
+              {entry.letter}
+            </a>
+          </li>
+        ))}
+      </ul>
+    </nav>
+  )}
+  <dl class="brisk-glossary__terms">
+    <slot />
+  </dl>
+  <EmptyContainerHint
+    show={!hasChildren && Boolean(editable)}
+    locale={locale}
+    childLabel={emptyChildLabel}
+  />
+</div>
+
+<style>
+  .brisk-glossary {
+    display: grid;
+    gap: 1.25rem;
+    background: var(--brisk-override-bg, transparent);
+    color: var(--brisk-override-text, inherit);
+    border-radius: var(--brisk-override-radius, 0);
+    padding: var(--brisk-override-padding-y, 0)
+      var(--brisk-override-padding-x, 0);
+  }
+
+  .brisk-glossary__letters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .brisk-glossary__letter {
+    display: grid;
+    place-items: center;
+    min-width: 2.25rem;
+    height: 2.25rem;
+    border: 1px solid var(--border);
+    border-radius: calc(var(--radius) * 0.75);
+    color: inherit;
+    font-weight: 600;
+    text-decoration: none;
+  }
+
+  .brisk-glossary__letter:hover {
+    border-color: currentColor;
+  }
+
+  .brisk-glossary__terms {
+    display: grid;
+    gap: var(--brisk-override-gap, 1rem);
+    margin: 0;
+  }
+
+  .brisk-glossary[data-brisk-editable-outline] {
+    outline: 1px dashed var(--border);
+    outline-offset: -4px;
+    padding: 0.5rem;
+  }
+</style>

@@ -54,6 +54,7 @@ export const columnsBlock: BlockDescriptor<ColumnsProps> = {
     },
   ],
   isContainer: true,
+  rendersFromChildren: true,
   allowedChildTypes: ['Column'],
   // `gap` on top of the standard set (ADR-0050): the space between columns
   // was a hardcoded 1.5rem, which made a row of tight cards and a row of
