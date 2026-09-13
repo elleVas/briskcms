@@ -10,6 +10,7 @@ import {
   InMemoryPageGroupVersionRepository,
   InMemoryPageTranslationRepository,
   InMemoryPageTranslationVersionRepository,
+  InMemoryReusableSectionRepository,
   InMemorySearchPort,
   InMemorySiteRepository,
   InMemoryTaxonomyRepository,
@@ -35,6 +36,7 @@ function setup() {
     taxonomyRepository: new InMemoryTaxonomyRepository(),
     siteRepository: new InMemorySiteRepository(),
     searchPort: new InMemorySearchPort(),
+    reusableSectionRepository: new InMemoryReusableSectionRepository(),
   };
 }
 
@@ -94,7 +96,6 @@ async function publishPage(
   await publishPageTranslation(deps, {
     tenantId,
     pageTranslationId: translation.id,
-    parentGroupId: null,
     actorUserId: 'user-1',
   });
   // The in-memory publish stamps "now"; a feed is about order, so the
