@@ -80,10 +80,68 @@ describe('User entity', () => {
       isActive: true,
       emailVerifiedAt: new Date('2026-01-01T00:00:00Z'),
       createdAt: new Date('2025-12-01T00:00:00Z'),
+      slug: 'giulia-rossi',
+      formerSlugs: ['giulia'],
+      bio: { it: 'Scrive di caffè', en: 'Writes about coffee' },
+      avatar: { storageKey: 'a.webp', width: 256, height: 256 },
     };
 
     const user = User.fromProps(props);
 
     expect(user.toProps()).toEqual(props);
+  });
+
+  describe('the author profile', () => {
+    it('starts with no address, no bio and no picture', () => {
+      const user = User.create(baseInput);
+      expect([user.slug, user.formerSlugs, user.bio, user.avatar]).toEqual([
+        null,
+        [],
+        {},
+        null,
+      ]);
+    });
+
+    it('takes the address it was created with', () => {
+      expect(User.create({ ...baseInput, slug: 'mario' }).slug).toBe('mario');
+    });
+
+    it('remembers every address it left, so each can redirect', () => {
+      const user = User.create({ ...baseInput, slug: 'mario' });
+      user.changeSlug('mario-rossi');
+      user.changeSlug('m-rossi');
+
+      expect(user.slug).toBe('m-rossi');
+      expect(user.formerSlugs).toEqual(['mario', 'mario-rossi']);
+    });
+
+    it('does not keep an address as both current and former when going back to it', () => {
+      const user = User.create({ ...baseInput, slug: 'mario' });
+      user.changeSlug('mario-rossi');
+      user.changeSlug('mario');
+
+      expect(user.slug).toBe('mario');
+      expect(user.formerSlugs).toEqual(['mario-rossi']);
+    });
+
+    it('leaves nothing behind when given its first address', () => {
+      const user = User.create(baseInput);
+      user.changeSlug('mario');
+      expect(user.formerSlugs).toEqual([]);
+    });
+
+    it('keeps a bio only in the languages something was written in', () => {
+      const user = User.create(baseInput);
+      user.changeBio({ it: '  Cuoco  ', en: '   ', fr: '' });
+      expect(user.bio).toEqual({ it: 'Cuoco' });
+    });
+
+    it('hands back the picture it replaces, for storage to delete', () => {
+      const user = User.create(baseInput);
+      const first = { storageKey: 'one.webp', width: 10, height: 10 };
+      expect(user.changeAvatar(first)).toBeNull();
+      expect(user.changeAvatar(null)).toEqual(first);
+      expect(user.avatar).toBeNull();
+    });
   });
 });

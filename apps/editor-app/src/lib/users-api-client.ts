@@ -7,6 +7,9 @@ export interface UserDto {
   tenantId: string;
   email: string;
   displayName: string | null;
+  /** Their author page's address — docs/adr/0071. */
+  slug: string | null;
+  avatarUrl: string | null;
   role: UserRole;
   isActive: boolean;
   emailVerifiedAt: string | null;

@@ -16,3 +16,5 @@ export const REUSABLE_SECTION_REPOSITORY = Symbol(
 );
 export const TAXONOMY_REPOSITORY = Symbol('PUBLIC_TAXONOMY_REPOSITORY');
 export const USER_REPOSITORY = Symbol('PUBLIC_USER_REPOSITORY');
+/** Only the address of an author's picture — nothing here uploads or deletes. */
+export const MEDIA_STORAGE = Symbol('PUBLIC_MEDIA_STORAGE');

@@ -65,6 +65,7 @@ import {
   Timer,
   Type,
   User,
+  UserPen,
   Users,
   Video,
   type LucideIcon,
@@ -243,6 +244,7 @@ const BLOCK_ICONS: Record<string, LucideIcon> = {
   timer: Timer,
   type: Type,
   user: User,
+  'user-pen': UserPen,
   users: Users,
   video: Video,
 };

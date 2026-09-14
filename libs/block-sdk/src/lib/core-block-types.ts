@@ -23,6 +23,7 @@ export const CORE_BLOCK_TYPES: readonly string[] = [
   'ArticleMeta',
   'ArticleNav',
   'Audio',
+  'AuthorBox',
   'BackToTop',
   'Banner',
   'BeforeAfter',

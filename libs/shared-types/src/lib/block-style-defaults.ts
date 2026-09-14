@@ -400,6 +400,16 @@ export const BLOCK_STYLE_DEFAULTS: Record<string, BlockStyleDefaults> = {
     paddingY: '0',
     gap: '1rem',
   },
+  AuthorBox: {
+    backgroundColor: 'transparent',
+    textColor: 'inherit',
+    borderRadius: 'var(--radius)',
+    paddingX: '1.25rem',
+    paddingY: '1.25rem',
+    borderWidth: '1px',
+    borderStyle: 'solid',
+    borderColor: 'var(--border)',
+  },
   AccordionItem: {
     backgroundColor: 'transparent',
     textColor: 'inherit',

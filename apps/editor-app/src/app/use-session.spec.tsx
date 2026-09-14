@@ -82,6 +82,32 @@ describe('useSession', () => {
     expect(navigate).toHaveBeenCalledWith({ to: '/login' });
   });
 
+  /*
+   * The next person to sign in on the same tab saw the last one's name and
+   * email in the account menu until the profile was fetched again.
+   */
+  it('handleLogout forgets everything read while signed in', async () => {
+    vi.mocked(router.useNavigate).mockReturnValue(vi.fn());
+    vi.mocked(authApi.logout).mockResolvedValue({ success: true });
+    const queryClient = createTestQueryClient();
+    queryClient.setQueryData(['account', 'profile'], {
+      email: 'a@example.com',
+    });
+    const { result } = renderHook(() => useSession(), {
+      wrapper: ({ children }: { children: ReactNode }) => (
+        <QueryClientProvider client={queryClient}>
+          {children}
+        </QueryClientProvider>
+      ),
+    });
+
+    await act(async () => {
+      await result.current.handleLogout();
+    });
+
+    expect(queryClient.getQueryData(['account', 'profile'])).toBeUndefined();
+  });
+
   it('handleLogout still navigates to /login even if the server call fails', async () => {
     const navigate = vi.fn();
     vi.mocked(router.useNavigate).mockReturnValue(navigate);

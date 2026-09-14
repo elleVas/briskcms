@@ -246,6 +246,7 @@ export function CanvasEditorShell({
     registry,
     translationRouting,
     onChange,
+    whenSaved,
     bridge,
   });
 

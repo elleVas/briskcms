@@ -1,9 +1,11 @@
 import {
   PageSlugCollidesWithTermError,
   TaxonomyPrefixAlreadyExistsError,
+  TaxonomyPrefixReservedError,
   TermAddressCollidesWithPageError,
   TermAddressTakenError,
 } from '@brisk/domain-core';
+import { RESERVED_AUTHOR_PATH_SEGMENTS } from '@brisk/shared-types';
 import type {
   PageTranslationRepositoryPort,
   TaxonomyRepositoryPort,
@@ -103,6 +105,12 @@ export async function assertTaxonomyPrefixAvailable(
   input: TaxonomyPrefixInput,
 ): Promise<void> {
   if (input.prefix === null) return;
+  // Its terms would sit at the authors' addresses — `/it/autore/giulia` a
+  // term and a person at once — and on every site at once, whatever
+  // languages it publishes, since a prefix is one word for all of them.
+  if (RESERVED_AUTHOR_PATH_SEGMENTS.has(input.prefix)) {
+    throw new TaxonomyPrefixReservedError(input.prefix);
+  }
 
   const existing = await deps.taxonomyRepository.listTaxonomiesBySite(
     input.tenantId,

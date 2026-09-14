@@ -16,6 +16,7 @@ import { resolvePageGroupByPath } from './resolve-page-group-by-path';
 import { resolvePageContentReferences } from './resolve-page-content-references';
 import { currentArticleOf } from './resolve-article-blocks';
 import { resolveTranslationPaths } from './resolve-translation-paths';
+import type { MediaUrlResolver } from './author-profile';
 
 export type { PublishedPage };
 
@@ -34,6 +35,8 @@ export interface GetPublishedPageBySlugDeps {
   siteThemeBlockStylesRepository: SiteThemeBlockStylesPort;
   /** Only for an article's byline — read once, and only on a page that carries an ArticleMeta block. */
   userRepository?: UserRepositoryPort;
+  /** Only for the author's picture in an AuthorBox. */
+  mediaStorage?: MediaUrlResolver;
 }
 
 /**

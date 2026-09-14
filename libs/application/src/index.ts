@@ -85,3 +85,6 @@ export * from './lib/use-cases/update-site-form-submission-retention.use-case';
 export * from './lib/use-cases/update-site-cookie-banner-settings.use-case';
 export * from './lib/use-cases/bootstrap-deployment.use-case';
 export * from './lib/use-cases/list-form-submissions.use-case';
+export * from './lib/use-cases/author-profile';
+export * from './lib/use-cases/account-profile.use-cases';
+export * from './lib/use-cases/get-published-author-by-slug.use-case';

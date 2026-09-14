@@ -97,12 +97,42 @@
       "themeSystem": "Follow the system"
     },
     "account": {
-      "label": "Account"
+      "label": "Account",
+      "menuLabel": "Account: {{name}}",
+      "profile": "My profile"
     },
     "menu": {
       "open": "Open the menu",
       "title": "Menu"
     }
+  },
+  "account": {
+    "title": "My profile",
+    "intro": "Your name and picture in the editor, and what your author page on the site says about you.",
+    "picture": "Picture",
+    "uploadPicture": "Upload a picture",
+    "changePicture": "Change picture",
+    "removePicture": "Remove",
+    "pictureHint": "A photo of you, square works best. Without one, your initial is shown.",
+    "pictureNotImage": "That file is not a picture. Choose a JPG, PNG, WebP, GIF or AVIF.",
+    "pictureTooLarge": "That picture is larger than 10 MB. Choose a smaller one.",
+    "pictureFailed": "The picture could not be saved. Try again.",
+    "displayName": "Name",
+    "displayNameHint": "Shown under the articles you write and on your author page.",
+    "slug": "Author page address",
+    "slugHint": "Made from your name the first time you save it. Change it and the old address sends visitors to the new one.",
+    "slugInvalid": "Use only lowercase letters, numbers and hyphens.",
+    "slugTaken": "Someone else already uses this address. Choose another one.",
+    "bio": "Bio",
+    "bioHint": "A few lines about you, in each language of the site. Leave a language empty to show no bio in it.",
+    "bioCount": "{{count}} / {{max}}",
+    "email": "Email",
+    "role": "Role",
+    "authorPageNote": "Your author page goes online once you have a name and at least one published article in a collection.",
+    "save": "Save",
+    "saved": "Saved",
+    "invalid": "Some of what you entered could not be saved. Check the fields and try again.",
+    "saveFailed": "Your profile could not be saved. Try again."
   },
   "dashboard": {
     "title": "Dashboard",
@@ -1918,6 +1948,17 @@
         },
         "showAuthor": {
           "fieldLabel": "Show the author"
+        }
+      }
+    },
+    "authorBox": {
+      "label": "Author box",
+      "fields": {
+        "showBio": {
+          "fieldLabel": "Show the bio"
+        },
+        "showArticlesLink": {
+          "fieldLabel": "Link to all their articles"
         }
       }
     },

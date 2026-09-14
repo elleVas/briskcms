@@ -8,6 +8,7 @@ import type {
   VerificationTokenPort,
 } from '@brisk/ports';
 import { buildInviteEmail } from '../emails/invite-email.template';
+import { chooseAuthorSlug } from './author-profile';
 
 // Longer than password-reset's 1h: accepting an invite isn't a
 // time-sensitive security action, and an admin realistically expects a
@@ -54,14 +55,19 @@ export async function inviteUser(
   const unguessablePassword = randomUUID() + randomUUID();
   const passwordHash = await deps.authPort.hashPassword(unguessablePassword);
 
+  const id = randomUUID();
   const user = User.create({
-    id: randomUUID(),
+    id,
     tenantId: input.tenantId,
     email: input.email,
     displayName: input.displayName,
     passwordHash,
     role: input.role,
     isActive: false,
+    // Their author address, made now from the name they were invited
+    // with — a person with a name should never have to set one to get a
+    // byline that links somewhere (docs/adr/0071).
+    slug: await chooseAuthorSlug(deps, input.tenantId, input.displayName, id),
   });
   await deps.userRepository.save(user);
 

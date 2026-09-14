@@ -28,6 +28,23 @@ vi.mock('../lib/sites-api-client', async (importOriginal) => {
   };
 });
 
+vi.mock('../lib/account-api-client', async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import('../lib/account-api-client')>();
+  return {
+    ...actual,
+    getAccountProfile: vi.fn().mockResolvedValue({
+      id: 'user-1',
+      email: 'chi@esempio.it',
+      role: 'editor',
+      displayName: 'Giulia Rossi',
+      slug: 'giulia-rossi',
+      bio: {},
+      avatarUrl: null,
+    }),
+  };
+});
+
 vi.mock('../lib/auth-api-client', async (importOriginal) => {
   const actual =
     await importOriginal<typeof import('../lib/auth-api-client')>();
@@ -205,7 +222,9 @@ describe('AdminShell', () => {
     expect(
       screen.getByRole('button', { name: /^impostazioni$/i }),
     ).toBeTruthy();
-    expect(screen.getByRole('button', { name: /^account$/i })).toBeTruthy();
+    expect(
+      await screen.findByRole('button', { name: 'Account: Giulia Rossi' }),
+    ).toBeTruthy();
   });
 
   it('exposes the language/theme toggles inside Impostazioni', () => {
@@ -290,13 +309,37 @@ describe('AdminShell', () => {
     expect(screen.queryByRole('dialog')).toBeNull();
   });
 
-  it('exposes logout inside Account', () => {
+  it('exposes the profile and logout inside Account', async () => {
     vi.mocked(router.useNavigate).mockReturnValue(vi.fn());
 
     renderShell();
-    fireEvent.click(screen.getByRole('button', { name: /^account$/i }));
+    fireEvent.click(
+      await screen.findByRole('button', { name: 'Account: Giulia Rossi' }),
+    );
 
+    expect(
+      screen.getByRole('link', { name: 'Il mio profilo' }).getAttribute('href'),
+    ).toBe('/account');
     expect(screen.getByRole('button', { name: /^esci$/i })).toBeTruthy();
     expect(screen.queryByRole('switch', { name: /lingua/i })).toBeNull();
+  });
+
+  /*
+   * Who is signed in, at a glance: before, the foot of the sidebar said
+   * "Account" to everybody.
+   */
+  it('shows the person signed in: their initial, name and role', async () => {
+    vi.mocked(router.useNavigate).mockReturnValue(vi.fn());
+
+    renderShell('editor');
+
+    const trigger = await screen.findByRole('button', {
+      name: 'Account: Giulia Rossi',
+    });
+    expect(trigger.textContent).toContain('Giulia Rossi');
+    expect(trigger.textContent).toContain('Editor');
+    expect(
+      trigger.querySelector('[data-testid="user-avatar-initial"]')?.textContent,
+    ).toBe('G');
   });
 });

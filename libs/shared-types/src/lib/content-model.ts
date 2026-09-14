@@ -1023,6 +1023,12 @@ export type PageGridItem = z.infer<typeof pageGridItemSchema>;
  */
 export const pageGridPropsSchema = z.object({
   termId: z.string().nullable().default(null),
+  /**
+   * The articles one person wrote, instead of a term's pages — what an
+   * author's page lists. Not a field in the editor: it is set by the
+   * layout an author's page is built with, the way `items` is filled.
+   */
+  authorId: z.string().nullable().default(null),
   /** `cards` is the one that shows the date, the summary and the picture — a list of links has nowhere to put them. */
   layout: z.enum(['list', 'grid', 'cards']).default('list'),
   /**
@@ -1070,6 +1076,8 @@ export const articleMetaPropsSchema = z.object({
   publishedAt: z.string().nullable().default(null),
   /** Filled: empty when the account has no display name, and then nothing is drawn rather than a blank byline. */
   authorName: z.string().default(''),
+  /** Filled: the author's page, `null` when they have none to link to. */
+  authorPath: z.string().nullable().default(null),
 });
 export type ArticleMetaProps = z.infer<typeof articleMetaPropsSchema>;
 
@@ -1147,26 +1155,6 @@ export const termListPropsSchema = z.object({
   choices: z.array(termChoiceSchema).default([]),
 });
 export type TermListProps = z.infer<typeof termListPropsSchema>;
-
-/**
- * The blocks whose content is an ANSWER, filled in when the page is read.
- *
- * They have one thing in common that matters to the editor: their props
- * as stored say what they want, not what they show, so rendering one from
- * the editor's own copy draws an empty block. The canvas reads this list
- * to know that inserting one is a case for a reload rather than a patch.
- */
-export const SERVER_FILLED_BLOCK_TYPES = [
-  'PageGrid',
-  'ArticleMeta',
-  'ArticleNav',
-  'RelatedPages',
-  'TermList',
-  'TableOfContents',
-  'SubPages',
-  'SiblingPages',
-  'SiteMap',
-] as const;
 
 export const searchBoxPropsSchema = z.object({
   placeholder: z.string().default('Cerca nel sito...'),

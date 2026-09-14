@@ -6,6 +6,7 @@ import {
 import type { PublishedSiteChromeDto } from './public-api-client';
 import {
   getPublicForm,
+  getPublishedAuthorBySlug,
   getPublishedPageBySlug,
   getPublishedSiteChrome,
   listPublishedPagesForSitemap,
@@ -163,6 +164,61 @@ describe('public-api-client', () => {
     await expect(
       getPublishedPageBySlug('example.com', 'it', ['chi-siamo']),
     ).rejects.toThrow('Public pages API error: 500');
+  });
+
+  describe('an author page', () => {
+    const sampleAuthor = {
+      ...samplePage,
+      author: {
+        id: 'u1',
+        name: 'Giulia Rossi',
+        bio: '',
+        avatar: null,
+        path: '/it/autore/giulia-rossi',
+      },
+    };
+
+    it("fetches it by domain, locale and the person's address", async () => {
+      vi.mocked(fetch).mockResolvedValue(jsonResponse(sampleAuthor));
+
+      const result = await getPublishedAuthorBySlug(
+        'example.com',
+        'it',
+        'giulia-rossi',
+      );
+
+      expect(fetch).toHaveBeenCalledWith(
+        expect.stringContaining(
+          '/public/pages/author-by-slug?domain=example.com&locale=it&slug=giulia-rossi',
+        ),
+        expect.objectContaining({ signal: expect.anything() }),
+      );
+      expect(result).toEqual({ found: true, author: sampleAuthor });
+    });
+
+    it('surfaces where a person moved their page, and nothing for no page', async () => {
+      vi.mocked(fetch).mockResolvedValueOnce(
+        jsonResponse({ fallback: null, movedTo: '/it/autore/giulia' }, 404),
+      );
+      vi.mocked(fetch).mockResolvedValueOnce(
+        jsonResponse({ message: 'Author not found' }, 404),
+      );
+
+      expect(
+        await getPublishedAuthorBySlug('example.com', 'it', 'giulia-rossi'),
+      ).toEqual({ found: false, movedTo: '/it/autore/giulia' });
+      expect(
+        await getPublishedAuthorBySlug('example.com', 'it', 'nessuno'),
+      ).toEqual({ found: false, movedTo: null });
+    });
+
+    it('throws on any other non-ok response', async () => {
+      vi.mocked(fetch).mockResolvedValue(jsonResponse({}, 500));
+
+      await expect(
+        getPublishedAuthorBySlug('example.com', 'it', 'giulia-rossi'),
+      ).rejects.toThrow('Public authors API error: 500');
+    });
   });
 
   it('fetches the site chrome by domain and locale, with no slug in the picture', async () => {

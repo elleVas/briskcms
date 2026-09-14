@@ -29,6 +29,8 @@ export interface PublishedPagePath {
   updatedAt: Date;
   /** Which section of the editor lists it — what scopes "the previous article" to the right set of pages. */
   collectionId: string | null;
+  /** Who created it — what an author's page lists (docs/adr/0071). `null` when the account is gone. */
+  authorUserId: string | null;
   /** Its parent in the page tree, `null` at the root — what "the pages under this one" is asked of. */
   parentId: string | null;
   /** Its place among its siblings, the order a manual is read in. */
@@ -104,6 +106,9 @@ export async function listPublishedPagePaths(
   const collectionIdByGroup = new Map<string, string | null>(
     groups.map((group) => [group.id, group.collectionId]),
   );
+  const authorByGroup = new Map<string, string | null>(
+    groups.map((group) => [group.id, group.createdBy]),
+  );
   const orderByGroup = new Map<string, number>(
     groups.map((group) => [group.id, group.order]),
   );
@@ -135,6 +140,7 @@ export async function listPublishedPagePaths(
       publishedAt: translation.publishedAt,
       updatedAt: translation.updatedAt,
       collectionId: collectionIdByGroup.get(translation.pageGroupId) ?? null,
+      authorUserId: authorByGroup.get(translation.pageGroupId) ?? null,
       parentId: parentIdByGroup.get(translation.pageGroupId) ?? null,
       order: orderByGroup.get(translation.pageGroupId) ?? 0,
     });
@@ -154,6 +160,8 @@ export async function listPublishedPagePaths(
 export function toPageGridItem(
   path: PublishedPagePath,
   locale: string,
+  /** The filter terms the page answers to — empty for a list no TermList narrows. */
+  termSlugs: string[] = [],
 ): PageGridItem {
   return {
     pageGroupId: path.groupId,
@@ -162,7 +170,6 @@ export function toPageGridItem(
     publishedAt: path.publishedAt ? path.publishedAt.toISOString() : null,
     excerpt: path.description,
     image: path.image,
-    // Nothing to narrow: none of these lists is one a TermList filters.
-    termSlugs: [],
+    termSlugs,
   };
 }

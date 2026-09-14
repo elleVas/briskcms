@@ -469,4 +469,85 @@ describe('usePropertyPatch', () => {
       expect(blockIdFromTimerKey('style:abc')).toBe('abc');
     });
   });
+
+  describe('a block the server fills', () => {
+    function setupWaitingForSave() {
+      let settle: () => void = () => undefined;
+      const whenSaved = vi.fn(
+        () =>
+          new Promise<void>((resolve) => {
+            settle = resolve;
+          }),
+      );
+      const { result } = renderHook(() =>
+        usePropertyPatch({
+          pageId: 'page-1',
+          token: 'tok',
+          onSaveDraft: vi.fn(),
+          onSaveStyleOverride: vi.fn(),
+          onSaveVariant: vi.fn(),
+          patchBlock: vi.fn(),
+          whenSaved,
+          debounceMs: 300,
+        }),
+      );
+      return { result, whenSaved, settle: () => settle() };
+    }
+
+    /*
+     * Its answer comes from the page as saved (buildFragmentBlock): asked
+     * for before the save lands, a list whose term just changed came back
+     * listing the old term.
+     */
+    it('is re-rendered only once the edit is saved', async () => {
+      const { result, whenSaved, settle } = setupWaitingForSave();
+
+      act(() => {
+        result.current.scheduleChange('grid-1', 'PageGrid', 'termId', {
+          termId: 'term-2',
+        });
+      });
+      act(() => {
+        vi.advanceTimersByTime(300);
+      });
+
+      expect(whenSaved).toHaveBeenCalled();
+      expect(blockFragmentApi.renderBlockFragment).not.toHaveBeenCalled();
+
+      await act(async () => {
+        settle();
+        await Promise.resolve();
+      });
+
+      expect(blockFragmentApi.renderBlockFragment).toHaveBeenCalledWith(
+        expect.objectContaining({ blockId: 'grid-1', blockType: 'PageGrid' }),
+      );
+    });
+
+    it('waits for a container holding one, too — but not for an ordinary block', () => {
+      const { result, whenSaved } = setupWaitingForSave();
+
+      act(() => {
+        result.current.scheduleChange('hero-1', 'Hero', 'title', {
+          title: 'Subito',
+        });
+        vi.advanceTimersByTime(300);
+      });
+      expect(whenSaved).not.toHaveBeenCalled();
+      expect(blockFragmentApi.renderBlockFragment).toHaveBeenCalledTimes(1);
+
+      act(() => {
+        result.current.scheduleChange(
+          'box-1',
+          'Container',
+          'gap',
+          { gap: 'lg' },
+          [{ id: 'meta', type: 'ArticleMeta', props: {} }],
+        );
+        vi.advanceTimersByTime(300);
+      });
+      expect(whenSaved).toHaveBeenCalledTimes(1);
+      expect(blockFragmentApi.renderBlockFragment).toHaveBeenCalledTimes(1);
+    });
+  });
 });

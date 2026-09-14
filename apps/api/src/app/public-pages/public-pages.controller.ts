@@ -15,6 +15,7 @@ import { PublicPagesThrottlerGuard } from './public-pages-throttler.guard';
 import {
   getPreviewPageById,
   getPreviewReusableSectionById,
+  getPublishedAuthorBySlug,
   getPublishedPageBySlug,
   getPublishedSiteChrome,
   getPublishedTermByPath,
@@ -25,6 +26,7 @@ import {
   searchPages,
 } from '@brisk/application';
 import type {
+  MediaStoragePort,
   PageGroupRepositoryPort,
   PageTranslationRepositoryPort,
   PreviewTokenPort,
@@ -38,6 +40,8 @@ import type {
 } from '@brisk/ports';
 import { ZodValidationPipe } from '../zod-validation.pipe';
 import {
+  type PublicAuthorBySlugQuery,
+  publicAuthorBySlugQuerySchema,
   type PublicPageBySlugQuery,
   publicPageBySlugQuerySchema,
   type PublicPagePreviewQuery,
@@ -58,6 +62,7 @@ import {
   publicTermByPathQuerySchema,
 } from './public-pages.schemas';
 import {
+  MEDIA_STORAGE,
   PAGE_GROUP_REPOSITORY,
   PAGE_TRANSLATION_REPOSITORY,
   PREVIEW_TOKEN_PORT,
@@ -97,11 +102,60 @@ export class PublicPagesController {
     private readonly tenant: DeploymentTenantResolver,
     @Inject(PREVIEW_TOKEN_PORT)
     private readonly previewTokenPort: PreviewTokenPort,
-    // Only an article's byline reads it, and only on a page that carries
-    // the block that shows one.
+    // What an author shows of themselves: an article's byline and author
+    // box, their own page, and the sitemap entry for it.
     @Inject(USER_REPOSITORY)
     private readonly userRepository: UserRepositoryPort,
+    // Only the address of an author's picture.
+    @Inject(MEDIA_STORAGE)
+    private readonly mediaStorage: MediaStoragePort,
   ) {}
+
+  /**
+   * An author's own page (docs/adr/0071).
+   *
+   * Asked by apps/public-site after both the page and the term lookups
+   * have come back empty, like `term-by-path` after `by-slug`: a page or a
+   * term an editor put at the same address always wins over one the
+   * system made.
+   */
+  @Get('author-by-slug')
+  async findAuthorBySlug(
+    @Query(new ZodValidationPipe(publicAuthorBySlugQuerySchema))
+    query: PublicAuthorBySlugQuery,
+  ) {
+    const result = await getPublishedAuthorBySlug(
+      {
+        siteRepository: this.siteRepository,
+        userRepository: this.userRepository,
+        pageGroupRepository: this.pageGroupRepository,
+        pageTranslationRepository: this.pageTranslationRepository,
+        siteLayoutSectionRepository: this.siteLayoutSectionRepository,
+        siteThemeBlockStylesRepository: this.siteThemeBlockStylesRepository,
+        reusableSectionRepository: this.reusableSectionRepository,
+        taxonomyRepository: this.taxonomyRepository,
+        mediaStorage: this.mediaStorage,
+      },
+      {
+        tenantId: await this.tenant.require(),
+        domain: query.domain,
+        locale: query.locale,
+        slug: query.slug,
+      },
+    );
+    // The person changed their address: a 404 with somewhere to go, the
+    // same shape `by-slug` answers a moved page with.
+    if (result.redirectTo) {
+      throw new NotFoundException({
+        fallback: null,
+        movedTo: result.redirectTo,
+      });
+    }
+    if (!result.author) {
+      throw new NotFoundException('Author not found');
+    }
+    return result.author;
+  }
 
   /**
    * A term's own page (docs/adr/0064).
@@ -155,6 +209,7 @@ export class PublicPagesController {
         reusableSectionRepository: this.reusableSectionRepository,
         taxonomyRepository: this.taxonomyRepository,
         userRepository: this.userRepository,
+        mediaStorage: this.mediaStorage,
       },
       {
         tenantId: await this.tenant.require(),
@@ -220,6 +275,7 @@ export class PublicPagesController {
         taxonomyRepository: this.taxonomyRepository,
         previewTokenPort: this.previewTokenPort,
         userRepository: this.userRepository,
+        mediaStorage: this.mediaStorage,
       },
       {
         tenantId: await this.tenant.require(),
@@ -386,6 +442,7 @@ export class PublicPagesController {
         pageGroupRepository: this.pageGroupRepository,
         pageTranslationRepository: this.pageTranslationRepository,
         taxonomyRepository: this.taxonomyRepository,
+        userRepository: this.userRepository,
       },
       { tenantId: await this.tenant.require(), domain: query.domain },
     );

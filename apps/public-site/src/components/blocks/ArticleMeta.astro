@@ -8,8 +8,15 @@ type Props = ArticleMetaProps & {
   locale?: string;
 };
 
-const { showDate, showAuthor, publishedAt, authorName, instanceClass, locale } =
-  Astro.props;
+const {
+  showDate,
+  showAuthor,
+  publishedAt,
+  authorName,
+  authorPath,
+  instanceClass,
+  locale,
+} = Astro.props;
 
 /**
  * The date as this language writes it, and `null` for one we cannot read:
@@ -38,7 +45,15 @@ const author = showAuthor ? authorName.trim() : '';
     <p class:list={['brisk-article-meta', instanceClass]}>
       {date && <time datetime={publishedAt ?? undefined}>{date}</time>}
       {date && author && <span class="brisk-article-meta__sep">·</span>}
-      {author && <span class="brisk-article-meta__author">{author}</span>}
+      {author &&
+        (authorPath ? (
+          // To everything else they wrote, when they have a page for it.
+          <a class="brisk-article-meta__author" href={authorPath}>
+            {author}
+          </a>
+        ) : (
+          <span class="brisk-article-meta__author">{author}</span>
+        ))}
     </p>
   )
 }
@@ -60,5 +75,23 @@ const author = showAuthor ? authorName.trim() : '';
 
   .brisk-article-meta__sep {
     opacity: 0.6;
+  }
+
+  /* A name with no spaces in it — or an address used as one — breaks
+     wherever it has to rather than widening the page past the screen. */
+  .brisk-article-meta__author {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  a.brisk-article-meta__author {
+    color: inherit;
+    text-decoration: underline;
+    text-decoration-color: color-mix(in srgb, currentColor 40%, transparent);
+    text-underline-offset: 0.2em;
+  }
+
+  a.brisk-article-meta__author:hover {
+    text-decoration-color: currentColor;
   }
 </style>

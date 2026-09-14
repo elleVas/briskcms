@@ -240,6 +240,9 @@ export const BLOCKS_WITHOUT_SEARCHABLE_TEXT = [
   'ArticleMeta',
   'ArticleNav',
   'RelatedPages',
+  // A person's name and bio, from their profile: indexing them would file
+  // the author's biography under every article they wrote.
+  'AuthorBox',
   'Accordion',
   'Column',
   'Columns',

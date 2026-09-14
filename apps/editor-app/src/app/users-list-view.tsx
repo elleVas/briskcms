@@ -10,6 +10,7 @@ import { ConfirmActionDialog } from './confirm-action-dialog';
 import { IconButton } from './icon-button';
 import { InviteUserDialog } from './invite-user-dialog';
 import { useCurrentSession } from './use-current-session';
+import { UserAvatar } from './user-avatar';
 import { USERS_PAGE_SIZE } from './users-queries';
 import { useUsers } from './use-users';
 
@@ -92,7 +93,12 @@ export function UsersListView({ items, page, total }: UsersListViewProps) {
               key={user.id}
               className="flex flex-wrap items-center gap-3 px-3 py-2"
             >
-              <div className="flex flex-1 flex-col">
+              <UserAvatar
+                seed={user.id}
+                name={user.displayName || user.email}
+                imageUrl={user.avatarUrl}
+              />
+              <div className="flex min-w-0 flex-1 flex-col">
                 <span className="text-sm font-medium">
                   {user.displayName || user.email}
                 </span>

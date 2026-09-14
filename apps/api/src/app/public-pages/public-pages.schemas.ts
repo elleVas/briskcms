@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { pagePathSchema } from '../pages/page-slug.schemas';
+import { pagePathSchema, pageSlugSchema } from '../pages/page-slug.schemas';
 
 // Rejects anything that isn't a plausible hostname before it ever reaches a
 // query — a malformed Host header shouldn't get as far as the database.
@@ -38,6 +38,16 @@ export const publicTermByPathQuerySchema = z.object({
   }),
 });
 export type PublicTermByPathQuery = z.infer<typeof publicTermByPathQuerySchema>;
+
+/** An author's page: `/{locale}/{word for author}/{slug}` — the word is the site's business, the slug is the person. */
+export const publicAuthorBySlugQuerySchema = z.object({
+  domain: domainSchema,
+  locale: z.string().min(2),
+  slug: pageSlugSchema,
+});
+export type PublicAuthorBySlugQuery = z.infer<
+  typeof publicAuthorBySlugQuerySchema
+>;
 
 export const publicPagesSitemapQuerySchema = z.object({
   domain: domainSchema,

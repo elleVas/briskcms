@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { DEFAULT_COOKIE_BANNER_SETTINGS } from '@brisk/shared-types';
-import { Site, Taxonomy, Term } from '@brisk/domain-core';
+import { Site, Taxonomy, Term, User } from '@brisk/domain-core';
 import { createPageGroup } from './create-page-group.use-case';
 import { createPageGroupTranslation } from './create-page-group-translation.use-case';
 import { publishPageTranslation } from './publish-page-translation.use-case';
@@ -14,6 +14,7 @@ import {
   InMemorySearchPort,
   InMemorySiteRepository,
   InMemoryTaxonomyRepository,
+  InMemoryUserRepository,
 } from './in-memory-repositories.test-fixture';
 
 describe('listPublishedPagesForSitemap', () => {
@@ -32,6 +33,7 @@ describe('listPublishedPagesForSitemap', () => {
         pageTranslationVersionRepository,
       ),
       taxonomyRepository: new InMemoryTaxonomyRepository(),
+      userRepository: new InMemoryUserRepository(),
       pageTranslationVersionRepository,
       siteRepository: new InMemorySiteRepository(),
       searchPort: new InMemorySearchPort(),
@@ -421,6 +423,109 @@ describe('listPublishedPagesForSitemap', () => {
       slug: 'chi-siamo',
       locale: 'it',
       groupId: group.id,
+    });
+  });
+
+  describe('author pages', () => {
+    async function seedAuthor(
+      deps: ReturnType<typeof setup>,
+      displayName = 'Giulia Rossi',
+    ) {
+      await deps.userRepository.save(
+        User.create({
+          id: 'user-1',
+          tenantId,
+          email: 'giulia@example.com',
+          displayName,
+          passwordHash: 'x',
+          role: 'editor',
+          slug: 'giulia-rossi',
+        }),
+      );
+    }
+
+    async function publishArticle(
+      deps: ReturnType<typeof setup>,
+      slug: string,
+      collectionId: string | null,
+    ) {
+      const group = await createPageGroup(deps, {
+        tenantId,
+        siteId: 'site-1',
+        collectionId,
+        createdBy: 'user-1',
+      });
+      const translation = await createPageGroupTranslation(deps, {
+        tenantId,
+        pageGroupId: group.id,
+        locale: 'it',
+        slug,
+        seoMeta: { title: slug, description: '' },
+        createdBy: 'user-1',
+      });
+      await publishPageTranslation(deps, {
+        tenantId,
+        pageTranslationId: translation.id,
+        actorUserId: null,
+      });
+    }
+
+    const authorItems = (items: { groupId: string }[]) =>
+      items.filter((item) => item.groupId.startsWith('author:'));
+
+    it('lists the page of someone who wrote an article, under the word of its language', async () => {
+      const deps = setup();
+      await seedSite(deps.siteRepository, { enabledLocales: ['it', 'en'] });
+      await seedAuthor(deps);
+      await publishArticle(deps, 'articolo', 'news');
+
+      const result = await listPublishedPagesForSitemap(deps, {
+        tenantId,
+        domain: 'example.com',
+      });
+
+      // Only Italian: there is no English article, so no English page.
+      expect(authorItems(result?.items ?? [])).toEqual([
+        {
+          slug: 'giulia-rossi',
+          locale: 'it',
+          groupId: 'author:user-1',
+          ancestorSlugs: ['autore'],
+          updatedAt: expect.any(Date),
+        },
+      ]);
+    });
+
+    it('lists no page for someone whose pages are not articles, or who has no name', async () => {
+      const deps = setup();
+      await seedSite(deps.siteRepository);
+      await seedAuthor(deps);
+      await publishArticle(deps, 'chi-siamo', null);
+      expect(
+        authorItems(
+          (
+            await listPublishedPagesForSitemap(deps, {
+              tenantId,
+              domain: 'example.com',
+            })
+          )?.items ?? [],
+        ),
+      ).toEqual([]);
+
+      const nameless = setup();
+      await seedSite(nameless.siteRepository);
+      await seedAuthor(nameless, '');
+      await publishArticle(nameless, 'articolo', 'news');
+      expect(
+        authorItems(
+          (
+            await listPublishedPagesForSitemap(nameless, {
+              tenantId,
+              domain: 'example.com',
+            })
+          )?.items ?? [],
+        ),
+      ).toEqual([]);
     });
   });
 });

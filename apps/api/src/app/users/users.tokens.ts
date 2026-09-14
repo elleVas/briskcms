@@ -1,0 +1,1 @@
+export const USERS_MEDIA_STORAGE = Symbol('USERS_MEDIA_STORAGE');

@@ -1,10 +1,11 @@
 import { useCallback } from 'react';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
 import { login as apiLogin, logout as apiLogout } from '../lib/auth-api-client';
 
 export function useSession() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   // Errors intentionally propagate to the caller (LoginForm shows them).
   const loginMutation = useMutation({
@@ -23,9 +24,16 @@ export function useSession() {
   // (e.g. the session already expired) — logging out always lands on
   // /login, that's a single, non-negotiable policy, not a per-caller
   // choice.
+  //
+  // Everything read while signed in goes with the session: the next person
+  // to sign in on this tab would otherwise see the last one's name, email
+  // and screens until each query happened to be fetched again.
   const logoutMutation = useMutation({
     mutationFn: () => apiLogout(),
-    onSettled: () => navigate({ to: '/login' }),
+    onSettled: () => {
+      queryClient.clear();
+      return navigate({ to: '/login' });
+    },
   });
 
   const handleLogin = useCallback(

@@ -8,7 +8,7 @@ import {
 import {
   collectSectionReferences,
   rootBlockHoverAttr,
-  SERVER_FILLED_BLOCK_TYPES,
+  hasServerFilledBlock,
   type Block,
   type BlockAlign,
 } from '@brisk/shared-types';
@@ -436,15 +436,6 @@ export function useBlockTreeMutations({
    * "nothing here" for a list that has ten entries. One reload and the
    * page comes back with them.
    */
-  function hasServerFilledBlock(blocks: Block[]): boolean {
-    return blocks.some(
-      (block) =>
-        SERVER_FILLED_BLOCK_TYPES.includes(
-          block.type as (typeof SERVER_FILLED_BLOCK_TYPES)[number],
-        ) || (block.children ? hasServerFilledBlock(block.children) : false),
-    );
-  }
-
   function needsReload(blocks: Block[]): boolean {
     return (
       hasServerFilledBlock(blocks) ||

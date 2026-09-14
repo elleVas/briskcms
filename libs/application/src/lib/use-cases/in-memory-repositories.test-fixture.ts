@@ -16,10 +16,10 @@ import type {
   SiteLayoutSectionVersion,
   Taxonomy,
   Term,
-  User,
 } from '@brisk/domain-core';
 import {
   classifyUpload,
+  User,
   hasUnpublishedChanges,
   safeDownloadName,
 } from '@brisk/domain-core';
@@ -477,6 +477,32 @@ export class InMemoryUserRepository implements UserRepositoryPort {
     this.users.set(user.id, user);
   }
 
+  /** Only the profile's own fields, onto whatever the stored row holds now — like the real one. */
+  async saveProfile(user: User): Promise<void> {
+    const stored = this.users.get(user.id);
+    if (!stored) return;
+    const { displayName, slug, formerSlugs, bio } = user.toProps();
+    this.users.set(
+      user.id,
+      User.fromProps({
+        ...stored.toProps(),
+        displayName,
+        slug,
+        formerSlugs,
+        bio,
+      }),
+    );
+  }
+
+  async saveAvatar(user: User): Promise<void> {
+    const stored = this.users.get(user.id);
+    if (!stored) return;
+    this.users.set(
+      user.id,
+      User.fromProps({ ...stored.toProps(), avatar: user.avatar }),
+    );
+  }
+
   async findById(tenantId: string, userId: string): Promise<User | null> {
     const user = this.users.get(userId);
     return user && user.tenantId === tenantId ? user : null;
@@ -489,6 +515,35 @@ export class InMemoryUserRepository implements UserRepositoryPort {
       }
     }
     return null;
+  }
+
+  async findBySlug(tenantId: string, slug: string): Promise<User | null> {
+    return (
+      [...this.users.values()].find(
+        (user) => user.tenantId === tenantId && user.slug === slug,
+      ) ?? null
+    );
+  }
+
+  async findByFormerSlug(tenantId: string, slug: string): Promise<User | null> {
+    return (
+      [...this.users.values()].find(
+        (user) => user.tenantId === tenantId && user.formerSlugs.includes(slug),
+      ) ?? null
+    );
+  }
+
+  async isSlugTaken(
+    tenantId: string,
+    slug: string,
+    exceptUserId: string | null,
+  ): Promise<boolean> {
+    return [...this.users.values()].some(
+      (user) =>
+        user.tenantId === tenantId &&
+        user.id !== exceptUserId &&
+        (user.slug === slug || user.formerSlugs.includes(slug)),
+    );
   }
 
   async countActiveAdmins(tenantId: string): Promise<number> {

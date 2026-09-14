@@ -25,6 +25,7 @@ export const articleMetaBlock: BlockDescriptor<ArticleMetaProps> = {
     showAuthor: true,
     publishedAt: null,
     authorName: '',
+    authorPath: null,
   },
   fields: [
     {
