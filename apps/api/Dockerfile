@@ -46,15 +46,18 @@ WORKDIR /app
 RUN addgroup -S brisk && adduser -S brisk -G brisk
 COPY --from=build /workspace/apps/api/dist/ ./
 COPY --from=build /workspace/theme-manifests/ ./themes/
-# Nx's prune-lockfile/copy-workspace-modules don't carry the workspace
-# root's pnpm-workspace.yaml into the pruned dist/ — but its `overrides`
-# (a pinned vite version, unrelated to this app but part of what the
-# pruned lockfile was generated against) and `onlyBuiltDependencies:
-# [sharp]` (without it, pnpm silently skips sharp's install script and it
-# fails at request time instead of here — hit almost exactly this failure
-# mode once already for astro:assets) both need to be present for this
-# isolated install to reproduce the same one the monorepo itself gets.
-COPY --from=build /workspace/pnpm-workspace.yaml ./
+# No copy of the workspace root's pnpm-workspace.yaml here any more. Up to
+# Nx 23.1 the pruned lockfile still declared the root `overrides` (a pinned
+# vite) while nothing in dist/ did, and `onlyBuiltDependencies: [sharp]` was
+# nowhere either, so the root file was copied in to match. Since 23.2 the
+# prune strips `overrides` from the pruned lockfile (they are already
+# resolved into it), writes its own settings-only pnpm-workspace.yaml into
+# dist/, and moves `onlyBuiltDependencies: [sharp]` into the pruned
+# package.json, where pnpm 10 reads it. Copying the root file over that
+# reintroduced `overrides` the lockfile no longer declares, and the frozen
+# install below refused with ERR_PNPM_LOCKFILE_CONFIG_MISMATCH. sharp's
+# install script still has to run — without it the failure moves to request
+# time (hit once for astro:assets) — and the pruned package.json allows it.
 # Installed here, inside the target image, on purpose — not copied in from
 # the build stage's own node_modules. sharp ships prebuilt native binaries
 # per platform (linuxmusl-x64 for this base image); installing on the
