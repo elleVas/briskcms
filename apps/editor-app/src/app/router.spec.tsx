@@ -8,6 +8,9 @@ import {
 } from '@tanstack/react-router';
 import { TooltipProvider } from '../components/ui/tooltip';
 import * as authApi from '../lib/auth-api-client';
+import * as collectionsApi from '../lib/collections-api-client';
+import * as previewTokenApi from '../lib/preview-token-api-client';
+import * as sectionsListApi from '../lib/reusable-sections-api-client';
 import * as dashboardApi from '../lib/dashboard-api-client';
 import * as setupApi from '../lib/setup-api-client';
 import * as formsApi from '../lib/forms-api-client';
@@ -54,7 +57,33 @@ vi.mock('../lib/auth-api-client', async (importOriginal) => {
     logout: vi.fn(),
     verifyEmail: vi.fn(),
     acceptInvite: vi.fn(),
+    currentSession: vi.fn(),
   };
+});
+
+// Mocked for the same reason as the session above: left real, the shell
+// asked the API running on this machine for them, and a 401 landing after
+// its test had finished failed whichever test happened to be running.
+vi.mock('../lib/collections-api-client', async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import('../lib/collections-api-client')>();
+  return { ...actual, listCollections: vi.fn() };
+});
+
+// The canvas the editor test opens asks for these three: a preview token,
+// the templates beside the blocks, and the themes a site can use.
+vi.mock('../lib/preview-token-api-client', async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import('../lib/preview-token-api-client')>();
+  return { ...actual, createTranslationPreviewToken: vi.fn() };
+});
+
+vi.mock('../lib/reusable-sections-api-client', async (importOriginal) => {
+  const actual =
+    await importOriginal<
+      typeof import('../lib/reusable-sections-api-client')
+    >();
+  return { ...actual, listReusableSections: vi.fn() };
 });
 
 vi.mock('../lib/account-api-client', async (importOriginal) => {
@@ -115,7 +144,7 @@ vi.mock('../lib/users-api-client', async (importOriginal) => {
 vi.mock('../lib/sites-api-client', async (importOriginal) => {
   const actual =
     await importOriginal<typeof import('../lib/sites-api-client')>();
-  return { ...actual, getCurrentSite: vi.fn() };
+  return { ...actual, getCurrentSite: vi.fn(), listAvailableThemes: vi.fn() };
 });
 
 vi.mock('../lib/site-layout-sections-api-client', async (importOriginal) => {
@@ -280,6 +309,18 @@ function renderApp(initialPath: string) {
 describe('router', () => {
   beforeEach(() => {
     vi.mocked(sitesApi.getCurrentSite).mockResolvedValue(sampleSite);
+    vi.mocked(authApi.currentSession).mockResolvedValue({
+      userId: 'user-1',
+      email: 'admin@example.test',
+      role: 'admin',
+    });
+    vi.mocked(collectionsApi.listCollections).mockResolvedValue([]);
+    vi.mocked(previewTokenApi.createTranslationPreviewToken).mockResolvedValue({
+      token: 'preview-token',
+      expiresAt: new Date().toISOString(),
+    });
+    vi.mocked(sectionsListApi.listReusableSections).mockResolvedValue([]);
+    vi.mocked(sitesApi.listAvailableThemes).mockResolvedValue([]);
     // Reset per test rather than once in the mock factory: the one test
     // that flips it to false would otherwise leave every test after it
     // looking at a wizard instead of a login form.
@@ -370,6 +411,27 @@ describe('router', () => {
     renderApp('/page-groups/group-1');
 
     expect(await screen.findByRole('heading', { name: 'Accedi' })).toBeTruthy();
+  });
+
+  /*
+   * A page with no language — what a New page refused for its address used
+   * to leave behind — opened the editor onto "Something went wrong". It
+   * says what it is now (docs/adr/0072).
+   */
+  it('opens a page with no language onto an explanation instead of crashing', async () => {
+    vi.mocked(pageGroupsApi.getPageGroup).mockResolvedValue(samplePageGroup);
+    vi.mocked(pageGroupsApi.listPageGroupTranslations).mockResolvedValue([]);
+
+    renderApp('/page-groups/group-1');
+
+    expect(
+      await screen.findByRole('heading', {
+        name: 'Questa pagina non ha nessuna lingua',
+      }),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole('link', { name: 'Torna alle pagine' }),
+    ).toBeTruthy();
   });
 
   it('navigates from the pages list to the editor and back', async () => {

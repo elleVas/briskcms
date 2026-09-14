@@ -9,6 +9,8 @@ export const collectionRecordSchema = z.object({
   /** A lucide icon name, so its sidebar entry looks like the ones the product ships with. */
   icon: z.string(),
   order: z.number(),
+  /** The template the New page dialog preselects in this collection, or `null` to start blank (docs/adr/0072). */
+  defaultTemplateId: z.string().nullable(),
   createdAt: z.string(),
   updatedAt: z.string(),
 });

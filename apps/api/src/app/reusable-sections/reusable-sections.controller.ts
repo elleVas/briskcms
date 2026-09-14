@@ -98,9 +98,10 @@ export class ReusableSectionsController {
     // The count travels with the row rather than as a second endpoint: it
     // is one number the list always shows, and a separate call would mean
     // the name and the count could disagree on screen.
-    return sections.map(({ section, usedOnPages }) => ({
+    return sections.map(({ section, usedOnPages, usedInTemplates }) => ({
       ...section.toProps(),
       usedOnPages,
+      usedInTemplates,
     }));
   }
 

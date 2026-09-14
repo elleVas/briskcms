@@ -1,4 +1,8 @@
-import type { PageGroup, PageGroupVersion } from '@brisk/domain-core';
+import type {
+  PageGroup,
+  PageGroupVersion,
+  PageTranslation,
+} from '@brisk/domain-core';
 import type { PageContent } from '@brisk/shared-types';
 import type { Pagination, PaginatedResult } from './pagination';
 
@@ -113,6 +117,20 @@ export interface PageGroupRepositoryPort {
   save(group: PageGroup): Promise<void>;
   /** The same atomic transaction as PageRepositoryPort.saveWithVersion, for the same reason: never a structure saved without its matching version row. */
   saveWithVersion(group: PageGroup, version: PageGroupVersion): Promise<void>;
+  /**
+   * A page that did not exist yet: the group, its first structure version
+   * and its first language, in ONE transaction (docs/adr/0072).
+   *
+   * Written apart, a language refused for its address left the group
+   * behind — a page with no language, listed with no title, that the
+   * editor could not even open. Throws `PageSlugAlreadyExistsError` when
+   * the address was taken in the meantime, having written nothing.
+   */
+  saveNewWithTranslation(
+    group: PageGroup,
+    version: PageGroupVersion,
+    translation: PageTranslation,
+  ): Promise<void>;
   findById(tenantId: string, pageGroupId: string): Promise<PageGroup | null>;
   listBySite(
     tenantId: string,

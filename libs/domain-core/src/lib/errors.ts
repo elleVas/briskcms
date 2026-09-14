@@ -113,6 +113,21 @@ export class ReusableSectionNameAlreadyExistsError extends Error {
   }
 }
 
+/**
+ * A page can start only from a PUBLISHED `template` (docs/adr/0072).
+ *
+ * Not a shared section: copying one onto a new page would hand out, as a
+ * loose copy, the thing whose whole promise is that it is never copied.
+ * And not a draft: what a template hands out is what its author signed
+ * off on, the same rule the canvas follows when it inserts one.
+ */
+export class NotAPageTemplateError extends Error {
+  constructor(sectionId: string) {
+    super(`Section ${sectionId} is not a published template`);
+    this.name = 'NotAPageTemplateError';
+  }
+}
+
 export class SiteLayoutSectionNotFoundError extends Error {
   constructor(id: string) {
     super(`Site layout section not found: ${id}`);

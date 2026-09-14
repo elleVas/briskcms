@@ -1,6 +1,9 @@
 import { randomUUID } from 'node:crypto';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { ReusableSection } from '@brisk/domain-core';
+import {
+  ReusableSection,
+  ReusableSectionNameAlreadyExistsError,
+} from '@brisk/domain-core';
 import {
   type BriskDb,
   createAppDb,
@@ -87,6 +90,20 @@ describe('DrizzleReusableSectionRepository (integration)', () => {
     // The other tenant does not see it. Not a nicety: this is the claim
     // docs/adr/0002 makes, checked through the same role the app uses.
     expect(await sectionRepository.findById(tenantBId, section.id)).toBeNull();
+  });
+
+  /*
+   * Two requests with one name can both pass the use case's own check; the
+   * second then meets the constraint, and must hear "that name is taken"
+   * rather than a raw driver error the API would answer with a 500.
+   */
+  it('turns a name another section already has into the domain error', async () => {
+    const name = `Newsletter ${randomUUID()}`;
+    await sectionRepository.save(buildSection({ name }));
+
+    await expect(
+      sectionRepository.save(buildSection({ name, kind: 'template' })),
+    ).rejects.toThrow(ReusableSectionNameAlreadyExistsError);
   });
 
   it('keeps the draft and the published content apart', async () => {

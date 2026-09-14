@@ -14,6 +14,13 @@ export function slugify(input: string): string {
 }
 
 /**
+ * How long a page's address segment may be. The API refuses anything
+ * longer, and the New page dialog says so before asking — `slugify` does
+ * not shorten, so a long enough name would otherwise fail only once sent.
+ */
+export const PAGE_SLUG_MAX_LENGTH = 200;
+
+/**
  * Whether `value` already is a slug — what `slugify` would leave unchanged.
  *
  * The one test for "valid slug", shared by the API, which refuses anything

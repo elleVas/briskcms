@@ -21,7 +21,9 @@ import * as blockFragmentApi from '../../lib/block-fragment-api-client';
 import * as previewTokenApi from '../../lib/preview-token-api-client';
 import { PUBLIC_SITE_URL } from '../../lib/public-site-url';
 import { ToastProvider } from '../toast-provider';
+import { LayoutTemplate } from 'lucide-react';
 import { CanvasEditorShell } from './canvas-editor-shell';
+import type { CanvasPageMenuItem } from './canvas-top-bar';
 import { PageListContext } from '../page-list-context';
 
 // The shell needs it the same way production does: page links are picked
@@ -98,6 +100,7 @@ function renderShell(
     blocks?: Block[];
     onChange?: (blocks: Block[]) => void;
     onPublish?: (blocks: Block[]) => unknown;
+    pageMenu?: CanvasPageMenuItem[];
   } = {},
 ) {
   vi.mocked(router.useNavigate).mockReturnValue(vi.fn());
@@ -131,6 +134,7 @@ function renderShell(
               onChange={onChange}
               onPublish={onPublish}
               pageId="page-1"
+              pageMenu={overrides.pageMenu}
             />
           </PageListContext.Provider>
         </ToastProvider>
@@ -472,6 +476,52 @@ describe('CanvasEditorShell', () => {
         id: 'hero-1',
         type: 'Hero',
         props: { title: 'Scritto e subito via', subtitle: 'Sottotitolo' },
+      },
+    ]);
+  });
+
+  /*
+   * "Save as template" copies the page on the server. Run over a change
+   * still waiting out the debounce, it would copy the page minus the edit
+   * made a moment before — so the change is sent first, for every page
+   * action (the one that needs it to land then waits for the save).
+   */
+  it('writes a change still inside the debounce before a page action runs', async () => {
+    vi.mocked(blockFragmentApi.renderBlockFragment).mockResolvedValue(
+      '<div>patched</div>',
+    );
+    const order: string[] = [];
+    const onChange = vi.fn(() => {
+      order.push('written');
+    });
+    const onSelect = vi.fn(() => {
+      order.push('action');
+    });
+    renderShell({
+      onChange,
+      pageMenu: [
+        { label: 'Salva come template', icon: LayoutTemplate, onSelect },
+      ],
+    });
+    const iframe = await getIframe();
+
+    selectBlockWithRect(iframe, 'hero-1', HERO_RECT);
+    fireEvent.change(screen.getByDisplayValue('Titolo'), {
+      target: { value: 'Ultima modifica' },
+    });
+    expect(onChange).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Pagina' }));
+    fireEvent.click(
+      await screen.findByRole('button', { name: 'Salva come template' }),
+    );
+
+    expect(order).toEqual(['written', 'action']);
+    expect(onChange).toHaveBeenCalledWith([
+      {
+        id: 'hero-1',
+        type: 'Hero',
+        props: { title: 'Ultima modifica', subtitle: 'Sottotitolo' },
       },
     ]);
   });

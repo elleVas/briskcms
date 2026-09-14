@@ -11,6 +11,7 @@ function toRow(props: CollectionProps) {
     name: props.name,
     icon: props.icon,
     order: props.order,
+    defaultTemplateId: props.defaultTemplateId,
     createdAt: props.createdAt,
     updatedAt: props.updatedAt,
   };
@@ -24,6 +25,7 @@ function fromRow(row: typeof collections.$inferSelect): Collection {
     name: row.name,
     icon: row.icon,
     order: row.order,
+    defaultTemplateId: row.defaultTemplateId,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   });

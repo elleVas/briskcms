@@ -222,7 +222,12 @@
       "cancel": "Annulla",
       "create": "Crea",
       "creating": "Creazione in corso...",
-      "slugTaken": "Esiste già una pagina con questo nome in questo sito."
+      "slugTaken": "Esiste già una pagina con questo nome in questo sito.",
+      "templateLabel": "Parti da",
+      "templateHint": "I blocchi del template vengono copiati nella pagina nuova: dopo, la pagina è libera di cambiare.",
+      "templateUnavailable": "Quel template non è più disponibile. Scegline un altro.",
+      "failed": "Non è stato possibile creare la pagina.",
+      "nameTooLong": "Il nome è troppo lungo per diventare un indirizzo: al massimo {{max}} caratteri."
     },
     "duplicateDialog": {
       "title": "Duplica pagina",
@@ -243,7 +248,12 @@
       "backToList": "Pagine",
       "published": "Pubblicato",
       "viewPage": "Visualizza pagina",
-      "unpublishedChangesAt": "Modifiche non pubblicate — salvate alle {{time}}"
+      "unpublishedChangesAt": "Modifiche non pubblicate — salvate alle {{time}}",
+      "noLanguage": {
+        "title": "Questa pagina non ha nessuna lingua",
+        "body": "È rimasta a metà di una creazione non riuscita, quindi non c’è niente da modificare. Puoi eliminarla dall’elenco delle pagine.",
+        "back": "Torna alle pagine"
+      }
     },
     "versionHistory": {
       "open": "Cronologia versioni",
@@ -296,6 +306,13 @@
       "none": "Pagine (nessuna collezione)",
       "confirm": "Sposta",
       "failed": "Non è stato possibile spostare la pagina."
+    },
+    "saveAsTemplate": {
+      "open": "Salva come template",
+      "prompt": "Nome del template:",
+      "saved": "Template “{{name}}” salvato: lo trovi quando crei una nuova pagina.",
+      "failed": "Non è stato possibile salvare il template.",
+      "unsaved": "L’ultima modifica non è arrivata al server, quindi il template non la conterrebbe. Fai una piccola modifica alla pagina per salvarla di nuovo, poi riprova."
     }
   },
   "taxonomies": {
@@ -375,7 +392,11 @@
     "usedNowhere": "non ancora inserita da nessuna parte",
     "deleteConfirmUsed": "Eliminare “{{name}}”? È su {{count}} pagine, e ognuna non mostrerà più niente al suo posto.",
     "emptyExplainer": "Una sezione è una striscia di blocchi che costruisci una volta e metti su tante pagine: la modifichi qui e cambia su tutte.",
-    "emptyAction": "Dai un nome alla prima sezione"
+    "emptyAction": "Dai un nome alla prima sezione",
+    "usedInTemplates_one": "in {{count}} template",
+    "usedInTemplates_other": "in {{count}} template",
+    "deleteConfirmInTemplates_one": "Sta anche dentro un template: le pagine create da lì in poi avranno una striscia vuota al suo posto.",
+    "deleteConfirmInTemplates_other": "Sta anche dentro {{count}} template: le pagine create da lì in poi avranno una striscia vuota al suo posto."
   },
   "layout": {
     "title": "Layout",
@@ -2684,7 +2705,11 @@
       "confirmDelete": {
         "title": "Eliminare questa collezione?",
         "description": "{{name}} sparisce dal menu. Le pagine che conteneva restano e tornano fra le Pagine."
-      }
+      },
+      "defaultTemplate": "Nuove pagine da"
     }
+  },
+  "pageTemplates": {
+    "blank": "Pagina vuota"
   }
 }

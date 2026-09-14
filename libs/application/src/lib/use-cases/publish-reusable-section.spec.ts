@@ -213,6 +213,53 @@ describe('how many pages place a section', () => {
     expect(bySection.get(template.id)).toBe(0);
   });
 
+  /*
+   * The newsletter in the template: deleting it takes a strip out of every
+   * page made from the template afterwards, so the list has to say it is
+   * there, not only on which pages it already stands.
+   */
+  it('counts the templates that hold a section, draft or published, once each', async () => {
+    const deps = setup();
+    const newsletter = await seedSection(deps, [
+      { id: 'b1', type: 'Heading', props: { text: 'Newsletter' } },
+    ]);
+    const instance = (id: string) => ({
+      id,
+      type: 'Section',
+      props: {
+        section: { sectionId: newsletter.id, sectionName: 'Newsletter' },
+      },
+    });
+    const published = ReusableSection.create({
+      id: randomUUID(),
+      tenantId,
+      siteId,
+      name: 'Service page',
+      kind: 'template',
+      content: [instance('i1'), instance('i2')],
+    });
+    published.publish();
+    const draftOnly = ReusableSection.create({
+      id: randomUUID(),
+      tenantId,
+      siteId,
+      name: 'Article',
+      kind: 'template',
+      content: [instance('i3')],
+    });
+    await deps.reusableSectionRepository.save(published);
+    await deps.reusableSectionRepository.save(draftOnly);
+    await seedPageUsing(deps, newsletter.id);
+
+    const listed = await listReusableSectionsWithUsage(deps, tenantId, siteId);
+    const row = listed.find((one) => one.section.id === newsletter.id);
+    expect(row?.usedOnPages).toBe(1);
+    expect(row?.usedInTemplates).toBe(2);
+    expect(
+      listed.find((one) => one.section.id === published.id)?.usedInTemplates,
+    ).toBe(0);
+  });
+
   it('counts a page whose draft holds it but which was never published', async () => {
     const deps = setup();
     const section = await seedSection(deps, [

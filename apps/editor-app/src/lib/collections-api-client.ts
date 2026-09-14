@@ -35,7 +35,7 @@ export async function createCollection(
 
 export async function updateCollection(
   id: string,
-  input: { name?: string; icon?: string },
+  input: { name?: string; icon?: string; defaultTemplateId?: string | null },
 ): Promise<CollectionRecord> {
   return collectionRecordSchema.parse(
     await request(`/collections/${id}`, {

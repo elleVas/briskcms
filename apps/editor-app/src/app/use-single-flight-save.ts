@@ -14,11 +14,24 @@ import { useCallback, useRef } from 'react';
  * cannot patch a block in place it reloads the iframe, and the iframe reads
  * the saved draft back — so reloading while a save was still in flight
  * showed the page as it was one change ago.
+ *
+ * And whether the last save got through. A settled queue is not a saved
+ * draft: a save that failed settles too, and anything that then asks the
+ * server to act on "the page as it is" — saving it as a template — would
+ * act on the page as it was before the edit that failed.
  */
+export interface SingleFlightSave<T> {
+  schedule: (value: T) => void;
+  whenSettled: () => Promise<void>;
+  /** True from a failed save until the next one succeeds. Each save sends the whole value, so a later success covers an earlier failure. */
+  lastSaveFailed: () => boolean;
+}
+
 export function useSingleFlightSave<T>(
   save: (value: T) => Promise<unknown>,
-): [schedule: (value: T) => void, whenSettled: () => Promise<void>] {
+): SingleFlightSave<T> {
   const isSavingRef = useRef(false);
+  const lastSaveFailedRef = useRef(false);
   const pendingRef = useRef<T | null>(null);
   /** The run currently draining the queue, `null` when there is nothing to wait for. */
   const runningRef = useRef<Promise<void> | null>(null);
@@ -37,10 +50,12 @@ export function useSingleFlightSave<T>(
         pendingRef.current = null;
         try {
           await save(next);
+          lastSaveFailedRef.current = false;
         } catch {
           // The caller's own mutation onError (if any) already ran — this
           // just needs to not block the queue, so a later schedule() can
           // still retry.
+          lastSaveFailedRef.current = true;
         }
       }
     } finally {
@@ -68,5 +83,7 @@ export function useSingleFlightSave<T>(
     [],
   );
 
-  return [schedule, whenSettled];
+  const lastSaveFailed = useCallback(() => lastSaveFailedRef.current, []);
+
+  return { schedule, whenSettled, lastSaveFailed };
 }

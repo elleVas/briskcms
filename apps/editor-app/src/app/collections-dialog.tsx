@@ -25,6 +25,8 @@ import {
 } from './collections-queries';
 import { ConfirmActionDialog } from './confirm-action-dialog';
 import { IconButton } from './icon-button';
+import { PageTemplateSelect } from './page-template-select';
+import { publishedTemplatesQueryOptions } from './reusable-sections-queries';
 import { cn } from '../lib/utils';
 
 export interface CollectionsDialogProps {
@@ -49,6 +51,10 @@ export function CollectionsDialog({
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const { data: collections } = useQuery(collectionsQueryOptions(siteId));
+  const { data: templates = [] } = useQuery({
+    ...publishedTemplatesQueryOptions(siteId),
+    enabled: open,
+  });
   const [name, setName] = useState('');
   const [icon, setIcon] = useState(COLLECTION_ICON_NAMES[0]);
   const [error, setError] = useState('');
@@ -78,6 +84,16 @@ export function CollectionsDialog({
       setError(actionErrorMessage(err, t('collections.actionFailed'))),
   });
 
+  const setDefaultTemplate = useMutation({
+    mutationFn: (input: { id: string; defaultTemplateId: string | null }) =>
+      updateCollection(input.id, {
+        defaultTemplateId: input.defaultTemplateId,
+      }),
+    onSuccess: invalidate,
+    onError: (err) =>
+      setError(actionErrorMessage(err, t('collections.actionFailed'))),
+  });
+
   const remove = useMutation({
     mutationFn: (id: string) => deleteCollection(id),
     onSuccess: invalidate,
@@ -101,36 +117,66 @@ export function CollectionsDialog({
         )}
         <ul className="flex flex-col gap-2">
           {(collections ?? []).map((collection) => (
-            <li key={collection.id} className="flex items-center gap-2">
-              <CollectionIcon
-                name={collection.icon}
-                className="size-4 shrink-0 text-muted-foreground"
-              />
-              <Input
-                aria-label={t('collections.dialog.nameOf', {
-                  name: collection.name,
-                })}
-                defaultValue={collection.name}
-                onBlur={(event) => {
-                  const next = event.target.value.trim();
-                  if (next && next !== collection.name) {
-                    rename.mutate({ id: collection.id, name: next });
-                  }
-                }}
-              />
-              <IconButton
-                label={t('collections.dialog.delete', {
-                  name: collection.name,
-                })}
-                onClick={() =>
-                  setPendingDeletion({
-                    id: collection.id,
+            <li key={collection.id} className="flex flex-col gap-1.5">
+              <div className="flex items-center gap-2">
+                <CollectionIcon
+                  name={collection.icon}
+                  className="size-4 shrink-0 text-muted-foreground"
+                />
+                <Input
+                  aria-label={t('collections.dialog.nameOf', {
                     name: collection.name,
-                  })
-                }
-              >
-                <Trash2 />
-              </IconButton>
+                  })}
+                  defaultValue={collection.name}
+                  onBlur={(event) => {
+                    const next = event.target.value.trim();
+                    if (next && next !== collection.name) {
+                      rename.mutate({ id: collection.id, name: next });
+                    }
+                  }}
+                />
+                <IconButton
+                  label={t('collections.dialog.delete', {
+                    name: collection.name,
+                  })}
+                  onClick={() =>
+                    setPendingDeletion({
+                      id: collection.id,
+                      name: collection.name,
+                    })
+                  }
+                >
+                  <Trash2 />
+                </IconButton>
+              </div>
+              {/* Only once the site has a template: a choice between
+                  "blank" and nothing is not a choice (docs/adr/0072).
+                  Stacked on a phone, where side by side the label left
+                  the select half the row and cut a template's name
+                  mid-word. */}
+              {templates.length > 0 && (
+                <div className="flex min-w-0 flex-col gap-1 pl-6 sm:flex-row sm:items-center sm:gap-2">
+                  <Label
+                    htmlFor={`collection-template-${collection.id}`}
+                    className="shrink-0 text-xs font-normal text-muted-foreground"
+                  >
+                    {t('collections.dialog.defaultTemplate')}
+                  </Label>
+                  <PageTemplateSelect
+                    id={`collection-template-${collection.id}`}
+                    templates={templates}
+                    value={collection.defaultTemplateId}
+                    onChange={(defaultTemplateId) =>
+                      setDefaultTemplate.mutate({
+                        id: collection.id,
+                        defaultTemplateId,
+                      })
+                    }
+                    size="sm"
+                    className="w-full min-w-0 sm:w-auto sm:flex-1"
+                  />
+                </div>
+              )}
             </li>
           ))}
         </ul>

@@ -1,12 +1,22 @@
 import { and, asc, eq, inArray } from 'drizzle-orm';
-import { ReusableSection, type ReusableSectionProps } from '@brisk/domain-core';
+import {
+  ReusableSection,
+  ReusableSectionNameAlreadyExistsError,
+  type ReusableSectionProps,
+} from '@brisk/domain-core';
 import type { ReusableSectionRepositoryPort } from '@brisk/ports';
 import {
   DrizzlePaginatedRepository,
   type BriskDb,
+  isUniqueViolation,
   reusableSections,
   withTenant,
 } from '@brisk/postgres-db';
+
+// Spelled out rather than derived: `isUniqueViolation` compares exactly,
+// and this is the name drizzle/0011_reusable_sections.sql created.
+const NAME_UNIQUE_CONSTRAINT =
+  'reusable_sections_tenant_id_site_id_name_unique';
 
 function toRow(props: ReusableSectionProps) {
   return {
@@ -53,6 +63,23 @@ export class DrizzleReusableSectionRepository
     row: typeof reusableSections.$inferSelect,
   ): ReusableSection {
     return fromRow(row);
+  }
+
+  /**
+   * The use cases check the name first, but two requests can both pass that
+   * check — two "Save as template" clicks with one name, say — and the
+   * second then reaches the constraint. It has to come back as the same
+   * "that name is taken" the check gives, not as a 500.
+   */
+  override async save(section: ReusableSection): Promise<void> {
+    try {
+      await super.save(section);
+    } catch (error) {
+      if (isUniqueViolation(error, NAME_UNIQUE_CONSTRAINT)) {
+        throw new ReusableSectionNameAlreadyExistsError(section.name);
+      }
+      throw error;
+    }
   }
 
   /**

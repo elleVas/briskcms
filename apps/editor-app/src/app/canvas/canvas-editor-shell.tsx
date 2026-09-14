@@ -498,6 +498,26 @@ export function CanvasEditorShell({
     onPublish(localBlocksRef.current);
   }
 
+  /*
+   * A change still waiting out the debounce is sent the moment any page
+   * action is chosen, rather than up to 300ms later. Sending is all this
+   * does: an action that needs the server to HOLD the edit before it runs
+   * waits for the save itself — "Save as template" does, with `whenSaved`,
+   * because it copies the page on the server. The others (history, SEO,
+   * languages, fork) only start the save sooner; they do not wait for it.
+   */
+  const flushedPageMenu = pageMenu?.map(({ onSelect, ...item }) => ({
+    ...item,
+    ...(onSelect
+      ? {
+          onSelect: () => {
+            flushAll();
+            onSelect();
+          },
+        }
+      : {}),
+  }));
+
   /** The same `token` already in state for `usePropertyPatch` — opens the preview URL in a new tab, available even for a draft that was never published (unlike a direct link to the public site). */
   function handleOpenPreview(): void {
     if (!token) {
@@ -519,7 +539,7 @@ export function CanvasEditorShell({
         title={title}
         breadcrumb={selectedAncestry}
         onSelectBlock={bridge.selectBlock}
-        pageMenu={pageMenu}
+        pageMenu={flushedPageMenu}
         // The caller's status records the last write that LANDED; a
         // change still in the debounce has not been written at all, and
         // saying "Draft saved" over it is the one thing the bar must not

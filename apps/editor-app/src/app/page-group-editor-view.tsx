@@ -1,16 +1,21 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from '@tanstack/react-router';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   ExternalLink,
   GitFork,
   History,
   Languages,
+  LayoutTemplate,
   Search,
   Tags,
 } from 'lucide-react';
-import type { PageGroupRecord } from '../lib/page-groups-api-client';
+import { ApiError, actionErrorMessage } from '../lib/http-client';
+import {
+  savePageGroupAsTemplate,
+  type PageGroupRecord,
+} from '../lib/page-groups-api-client';
 import { CanvasEditorShell } from './canvas/canvas-editor-shell';
 import { collectionsQueryOptions } from './collections-queries';
 import { LanguageSwitcher } from './canvas/language-switcher';
@@ -22,6 +27,8 @@ import { PageGroupSeoPanelDialog } from './page-group-seo-panel-dialog';
 import { PageGroupTermsDialog } from './page-group-terms-dialog';
 import { PageGroupTranslationsDialog } from './page-group-translations-dialog';
 import { PageListProvider } from './page-list-provider';
+import { reusableSectionsQueryKey } from './reusable-sections-queries';
+import { useToast } from './toast-provider';
 import { publicPagePath } from '../lib/public-page-path';
 import { PUBLIC_SITE_URL } from '../lib/public-site-url';
 import { usePageBlockRegistry } from './use-page-block-registry';
@@ -119,6 +126,7 @@ export function PageGroupEditorView({
     isSaving,
     onChange,
     whenSaved,
+    hasFailedSave,
     onSaveFieldValue,
     handlePublish,
     handleDiverge,
@@ -140,6 +148,8 @@ export function PageGroupEditorView({
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [isTranslationsOpen, setIsTranslationsOpen] = useState(false);
   const [restoredAt, setRestoredAt] = useState(0);
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
   const {
     versions,
     isLoading: isLoadingVersions,
@@ -149,6 +159,56 @@ export function PageGroupEditorView({
   async function confirmDiverge() {
     setIsDivergeConfirmOpen(false);
     await handleDiverge();
+  }
+
+  /**
+   * "Save as template" (docs/adr/0072). The name is asked with a prompt,
+   * as "turn into a reusable section" asks it: a name is the only thing
+   * this needs. It starts from the page's title in the site's default
+   * language, which is the language the template will hold.
+   *
+   * The canvas has already sent any change still in its debounce by the
+   * time this runs (see CanvasEditorShell's page menu); waiting for that
+   * save to land, and refusing when it did not, is what makes the template
+   * the page as it is on screen.
+   */
+  async function handleSaveAsTemplate() {
+    const inDefaultLanguage = translations.find(
+      (translation) => translation.locale === defaultLocale,
+    );
+    const name = window
+      .prompt(
+        t('pages.saveAsTemplate.prompt'),
+        (inDefaultLanguage ?? activeTranslation).seoMeta.title,
+      )
+      ?.trim();
+    if (!name) {
+      return;
+    }
+    try {
+      await whenSaved();
+      // A save that failed has settled too, and the server would copy the
+      // page as it was before that edit while the toast said "saved".
+      if (hasFailedSave()) {
+        toast(t('pages.saveAsTemplate.unsaved'), 'destructive');
+        return;
+      }
+      const template = await savePageGroupAsTemplate(groupId, name);
+      await queryClient.invalidateQueries({
+        queryKey: reusableSectionsQueryKey(group.siteId),
+      });
+      toast(
+        t('pages.saveAsTemplate.saved', { name: template.name }),
+        'success',
+      );
+    } catch (caught) {
+      toast(
+        caught instanceof ApiError && caught.status === 409
+          ? t('sections.nameTaken')
+          : actionErrorMessage(caught, t('pages.saveAsTemplate.failed')),
+        'destructive',
+      );
+    }
   }
 
   async function handleRollback(versionId: string) {
@@ -221,6 +281,11 @@ export function PageGroupEditorView({
                   label: t('pages.versionHistory.open'),
                   icon: History,
                   onSelect: () => setIsHistoryOpen(true),
+                },
+                {
+                  label: t('pages.saveAsTemplate.open'),
+                  icon: LayoutTemplate,
+                  onSelect: () => void handleSaveAsTemplate(),
                 },
                 ...(activeTranslation.isDiverged
                   ? []

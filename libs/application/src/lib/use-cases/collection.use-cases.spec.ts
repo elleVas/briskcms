@@ -1,9 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import {
   CollectionNotFoundError,
+  NotAPageTemplateError,
   PageGroup,
   PageGroupNotFoundError,
+  ReusableSection,
+  ReusableSectionNotFoundError,
 } from '@brisk/domain-core';
+import type { ReusableSectionKind } from '@brisk/shared-types';
 import {
   createCollection,
   deleteCollection,
@@ -14,6 +18,7 @@ import { movePageGroupToCollection } from './move-page-group-to-collection.use-c
 import {
   InMemoryCollectionRepository,
   InMemoryPageGroupRepository,
+  InMemoryReusableSectionRepository,
 } from './in-memory-repositories.test-fixture';
 
 const tenantId = 'tenant-1';
@@ -23,6 +28,7 @@ function setup() {
   return {
     collectionRepository: new InMemoryCollectionRepository(),
     pageGroupRepository: new InMemoryPageGroupRepository(),
+    reusableSectionRepository: new InMemoryReusableSectionRepository(),
   };
 }
 
@@ -89,6 +95,101 @@ describe('collections', () => {
     await createCollection(deps, { tenantId, siteId, name: 'News' });
 
     expect(await listCollections(deps, 'tenant-2', siteId)).toEqual([]);
+  });
+});
+
+describe("a collection's default template", () => {
+  async function seedSection(
+    deps: ReturnType<typeof setup>,
+    id: string,
+    options: {
+      kind?: ReusableSectionKind;
+      published?: boolean;
+      site?: string;
+    } = {},
+  ) {
+    const section = ReusableSection.create({
+      id,
+      tenantId,
+      siteId: options.site ?? siteId,
+      name: id,
+      kind: options.kind ?? 'template',
+      content: [{ id: 'hero-1', type: 'Hero', props: { title: 'Hi' } }],
+    });
+    if (options.published ?? true) {
+      section.publish();
+    }
+    await deps.reusableSectionRepository.save(section);
+  }
+
+  it('is set to a published template of the site, and cleared with null', async () => {
+    const deps = setup();
+    await seedSection(deps, 'article-template');
+    const collection = await createCollection(deps, {
+      tenantId,
+      siteId,
+      name: 'News',
+    });
+
+    const withDefault = await updateCollection(deps, {
+      tenantId,
+      collectionId: collection.id,
+      defaultTemplateId: 'article-template',
+    });
+    expect(withDefault.defaultTemplateId).toBe('article-template');
+
+    const renamed = await updateCollection(deps, {
+      tenantId,
+      collectionId: collection.id,
+      name: 'Press',
+    });
+    expect(renamed.defaultTemplateId).toBe('article-template');
+
+    const cleared = await updateCollection(deps, {
+      tenantId,
+      collectionId: collection.id,
+      defaultTemplateId: null,
+    });
+    expect(cleared.defaultTemplateId).toBeNull();
+  });
+
+  /*
+   * The New page dialog offers only published templates of the site, so
+   * a default it cannot offer would be preselected as nothing at all.
+   */
+  it('refuses anything the New page dialog could not offer, and keeps the old one', async () => {
+    const deps = setup();
+    await seedSection(deps, 'article-template');
+    await seedSection(deps, 'newsletter', { kind: 'shared' });
+    await seedSection(deps, 'unfinished', { published: false });
+    await seedSection(deps, 'elsewhere', { site: 'site-2' });
+    const collection = await createCollection(deps, {
+      tenantId,
+      siteId,
+      name: 'News',
+    });
+    await updateCollection(deps, {
+      tenantId,
+      collectionId: collection.id,
+      defaultTemplateId: 'article-template',
+    });
+
+    for (const [defaultTemplateId, error] of [
+      ['newsletter', NotAPageTemplateError],
+      ['unfinished', NotAPageTemplateError],
+      ['elsewhere', ReusableSectionNotFoundError],
+      ['missing', ReusableSectionNotFoundError],
+    ] as const) {
+      await expect(
+        updateCollection(deps, {
+          tenantId,
+          collectionId: collection.id,
+          defaultTemplateId,
+        }),
+      ).rejects.toThrow(error);
+    }
+    const [stored] = await listCollections(deps, tenantId, siteId);
+    expect(stored.defaultTemplateId).toBe('article-template');
   });
 });
 

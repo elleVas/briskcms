@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { copySectionBlocks, type Block } from '@brisk/shared-types';
 import { useTranslation } from '../../lib/use-translation';
-import { reusableSectionsQueryOptions } from '../reusable-sections-queries';
+import { publishedTemplatesQueryOptions } from '../reusable-sections-queries';
 
 export interface TemplatePickerProps {
   siteId: string;
@@ -23,9 +23,8 @@ export interface TemplatePickerProps {
  */
 export function TemplatePicker({ siteId, onInsert }: TemplatePickerProps) {
   const { t } = useTranslation();
-  const { data: sections } = useQuery(reusableSectionsQueryOptions(siteId));
-  const templates = (sections ?? []).filter(
-    (section) => section.kind === 'template' && section.publishedContent,
+  const { data: templates = [] } = useQuery(
+    publishedTemplatesQueryOptions(siteId),
   );
 
   if (templates.length === 0) {
@@ -47,7 +46,7 @@ export function TemplatePicker({ siteId, onInsert }: TemplatePickerProps) {
               // New ids on every copy: two copies of one template on one
               // page would otherwise share block ids, and a per-instance
               // style set on one would land on both.
-              copySectionBlocks(template.publishedContent ?? [], () =>
+              copySectionBlocks(template.publishedContent, () =>
                 crypto.randomUUID(),
               ) as (Block & { id: string })[],
             )

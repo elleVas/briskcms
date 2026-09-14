@@ -138,7 +138,11 @@ export function usePageGroupEditor(groupId: string, initialLocale: string) {
   // being left, so the save reaches the target captured when it was
   // scheduled. See its `flushedSyncKeyRef` effect, and the regression test
   // "saves an in-flight edit against the page it was made on".
-  const [onChange, whenContentSaved] = useSingleFlightSave<Block[]>(
+  const {
+    schedule: onChange,
+    whenSettled: whenContentSaved,
+    lastSaveFailed: lastContentSaveFailed,
+  } = useSingleFlightSave<Block[]>(
     useCallback(
       (content) =>
         activeTranslation.isDiverged
@@ -177,7 +181,11 @@ export function usePageGroupEditor(groupId: string, initialLocale: string) {
       setStatus({ kind: 'error', message: String(error) }),
   });
 
-  const [scheduleFieldValuesSave, whenFieldValuesSaved] = useSingleFlightSave<{
+  const {
+    schedule: scheduleFieldValuesSave,
+    whenSettled: whenFieldValuesSaved,
+    lastSaveFailed: lastFieldValuesSaveFailed,
+  } = useSingleFlightSave<{
     translationId: string;
     fieldValues: FieldValueOverlay;
   }>(
@@ -248,6 +256,12 @@ export function usePageGroupEditor(groupId: string, initialLocale: string) {
     await Promise.all([whenContentSaved(), whenFieldValuesSaved()]);
   }, [whenContentSaved, whenFieldValuesSaved]);
 
+  /** Whether the server is missing an edit because its save failed — read after `whenSaved`, before acting on the page as the server holds it. */
+  const hasFailedSave = useCallback(
+    () => lastContentSaveFailed() || lastFieldValuesSaveFailed(),
+    [lastContentSaveFailed, lastFieldValuesSaveFailed],
+  );
+
   /**
    * A write is on the wire right now. Derived from the mutations rather
    * than tracked in `status`, so the two can never disagree: `status`
@@ -276,6 +290,7 @@ export function usePageGroupEditor(groupId: string, initialLocale: string) {
     isSaving,
     onChange,
     whenSaved,
+    hasFailedSave,
     onSaveFieldValue,
     handlePublish,
     handleDiverge,

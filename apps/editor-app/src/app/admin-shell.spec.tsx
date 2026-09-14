@@ -148,6 +148,7 @@ describe('AdminShell', () => {
         name: 'News',
         icon: 'newspaper',
         order: 0,
+        defaultTemplateId: null,
         createdAt: '',
         updatedAt: '',
       },

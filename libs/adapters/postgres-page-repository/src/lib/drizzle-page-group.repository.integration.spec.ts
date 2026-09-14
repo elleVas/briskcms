@@ -578,6 +578,75 @@ describe('DrizzlePageGroupRepository / DrizzlePageTranslationRepository (integra
         expect(versions.map((v) => v.id)).toEqual(versionIds.slice(1));
       });
     });
+
+    describe('saveNewWithTranslation', () => {
+      function versionOf(group: PageGroup) {
+        return {
+          id: randomUUID(),
+          tenantId: tenantAId,
+          pageGroupId: group.id,
+          content: group.content,
+          createdBy: null,
+          createdAt: group.updatedAt,
+        };
+      }
+
+      it('writes the group, its version and its first language together', async () => {
+        const group = buildGroup();
+        const version = versionOf(group);
+        const translation = buildTranslation(group.id);
+
+        await groupRepository.saveNewWithTranslation(
+          group,
+          version,
+          translation,
+        );
+
+        expect((await groupRepository.findById(tenantAId, group.id))?.id).toBe(
+          group.id,
+        );
+        expect(
+          (await groupVersionRepository.listByGroup(tenantAId, group.id)).map(
+            (v) => v.id,
+          ),
+        ).toEqual([version.id]);
+        expect(
+          (await translationRepository.listByGroup(tenantAId, group.id)).map(
+            (t) => t.slug,
+          ),
+        ).toEqual([translation.slug]);
+      });
+
+      /*
+       * The address check in the use case can race another request; the
+       * constraint is what catches that, and when it does the group must
+       * not survive the refusal — a page with no language is the bug this
+       * method exists to remove (docs/adr/0072).
+       */
+      it('writes nothing at all when the language is refused for its address', async () => {
+        const slug = `taken-${randomUUID()}`;
+        const other = buildGroup();
+        await groupRepository.save(other);
+        await translationRepository.save(
+          buildTranslation(other.id, { slug }),
+          null,
+        );
+        const group = buildGroup();
+
+        await expect(
+          groupRepository.saveNewWithTranslation(
+            group,
+            versionOf(group),
+            buildTranslation(group.id, { slug }),
+          ),
+        ).rejects.toThrow(PageSlugAlreadyExistsError);
+
+        expect(await groupRepository.findById(tenantAId, group.id)).toBeNull();
+        expect(
+          await groupVersionRepository.listByGroup(tenantAId, group.id),
+        ).toEqual([]);
+      });
+    });
   });
 
   describe('PageTranslation', () => {
