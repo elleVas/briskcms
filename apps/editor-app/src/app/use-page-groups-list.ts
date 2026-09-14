@@ -4,12 +4,17 @@ import { useNavigate } from '@tanstack/react-router';
 import { slugify } from '@brisk/shared-types';
 import {
   createPageGroup as apiCreatePageGroup,
-  createPageGroupTranslation as apiCreatePageGroupTranslation,
   deletePageGroup as apiDeletePageGroup,
   duplicatePageGroup as apiDuplicatePageGroup,
   movePageGroupToCollection as apiMovePageGroupToCollection,
   reorderPageGroups as apiReorderPageGroups,
 } from '../lib/page-groups-api-client';
+
+export interface NewPageGroupInput {
+  name: string;
+  /** Start from a copy of this template's blocks, or `null` to start blank (docs/adr/0072). */
+  templateId: string | null;
+}
 
 /**
  * i18n a livello di campo (see the plan) — mirrors use-pages-list.ts's own
@@ -41,15 +46,20 @@ export function usePageGroupsList(
   );
 
   const createPageGroupMutation = useMutation({
-    mutationFn: async (name: string) => {
-      const group = await apiCreatePageGroup({ siteId, collectionId });
-      await apiCreatePageGroupTranslation(group.id, {
-        locale: defaultLocale,
-        slug: slugify(name),
-        seoMeta: { title: name, description: '' },
-      });
-      return group;
-    },
+    // One request: the page and its first language are written together
+    // (docs/adr/0072). As two, a language refused for its address left a
+    // page with no language behind.
+    mutationFn: ({ name, templateId }: NewPageGroupInput) =>
+      apiCreatePageGroup({
+        siteId,
+        collectionId,
+        ...(templateId ? { templateId } : {}),
+        translation: {
+          locale: defaultLocale,
+          slug: slugify(name),
+          seoMeta: { title: name, description: '' },
+        },
+      }),
     onSuccess: async (group) => {
       await invalidateList();
       await navigate({

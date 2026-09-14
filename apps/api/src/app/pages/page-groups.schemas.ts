@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { fieldValueOverlaySchema, seoMetaSchema } from '@brisk/shared-types';
 import { sanitizedPageContentSchema } from '../rich-text/sanitized-page-content.schema';
 import { pageSlugSchema } from './page-slug.schemas';
+import { reusableSectionNameSchema } from '../reusable-sections/reusable-sections.schemas';
 
 // Fase 4's pages-list view — every filter optional, an absent one just
 // doesn't narrow the query (see DrizzlePageGroupRepository.listBySiteFiltered).
@@ -22,19 +23,6 @@ export const listPageGroupsQuerySchema = z.object({
 });
 export type ListPageGroupsQuery = z.infer<typeof listPageGroupsQuerySchema>;
 
-export const createPageGroupBodySchema = z.object({
-  siteId: z.string().uuid(),
-  parentId: z.string().uuid().nullable().optional(),
-  collectionId: z.string().uuid().nullable().optional(),
-  content: sanitizedPageContentSchema.optional(),
-});
-export type CreatePageGroupBody = z.infer<typeof createPageGroupBodySchema>;
-
-export const moveToCollectionBodySchema = z.object({
-  collectionId: z.string().uuid().nullable(),
-});
-export type MoveToCollectionBody = z.infer<typeof moveToCollectionBodySchema>;
-
 export const createPageGroupTranslationBodySchema = z.object({
   locale: z.string().min(2),
   slug: pageSlugSchema,
@@ -43,6 +31,47 @@ export const createPageGroupTranslationBodySchema = z.object({
 export type CreatePageGroupTranslationBody = z.infer<
   typeof createPageGroupTranslationBodySchema
 >;
+
+export const createPageGroupBodySchema = z
+  .object({
+    siteId: z.string().uuid(),
+    parentId: z.string().uuid().nullable().optional(),
+    collectionId: z.string().uuid().nullable().optional(),
+    content: sanitizedPageContentSchema.optional(),
+    /** Start from a copy of this template's published blocks (docs/adr/0072). */
+    templateId: z.string().uuid().optional(),
+    /**
+     * The page's first language, written in the same transaction as the
+     * page (docs/adr/0072). Without it the page is created alone and the
+     * language added by a second request — which, refused, used to leave a
+     * page with no language behind.
+     */
+    translation: createPageGroupTranslationBodySchema.optional(),
+  })
+  // Two answers to "what does the page start with" in one request would
+  // leave the server to pick one of them silently.
+  .refine((body) => !(body.templateId && body.content), {
+    message: 'Send either content or templateId, not both',
+    path: ['templateId'],
+  })
+  // A page started from a template is always created with its language:
+  // the two-request way is the one that could leave half a page behind,
+  // and a feature this new has no caller that needs it.
+  .refine((body) => !body.templateId || body.translation, {
+    message: 'A page started from a template needs its first translation',
+    path: ['translation'],
+  });
+export type CreatePageGroupBody = z.infer<typeof createPageGroupBodySchema>;
+
+export const saveAsTemplateBodySchema = z.object({
+  name: reusableSectionNameSchema,
+});
+export type SaveAsTemplateBody = z.infer<typeof saveAsTemplateBodySchema>;
+
+export const moveToCollectionBodySchema = z.object({
+  collectionId: z.string().uuid().nullable(),
+});
+export type MoveToCollectionBody = z.infer<typeof moveToCollectionBodySchema>;
 
 export const savePageGroupContentBodySchema = z.object({
   content: sanitizedPageContentSchema,

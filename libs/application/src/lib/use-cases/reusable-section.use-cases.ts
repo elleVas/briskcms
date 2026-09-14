@@ -75,6 +75,13 @@ export interface CreateReusableSectionInput {
   kind: ReusableSectionKind;
   /** The blocks it starts from — how "turn this strip into a section" arrives here. */
   content?: PageContent;
+  /**
+   * Written already published, in the same save that creates it. For a
+   * section nothing references yet, so publishing re-indexes nothing — and
+   * a separate publish that failed would leave a draft holding the name,
+   * which a retry then finds taken.
+   */
+  published?: boolean;
   actorUserId: string | null;
 }
 
@@ -83,8 +90,9 @@ export async function createReusableSection(
   input: CreateReusableSectionInput,
 ): Promise<ReusableSection> {
   // Checked here as well as by the unique constraint, so the person gets
-  // "that name is taken" rather than a 500 from a driver error. The
-  // constraint stays: this check races, and the database does not.
+  // "that name is taken" in the common case. The constraint stays: this
+  // check races, and the database does not — the repository turns what
+  // it refuses into the same error.
   const existing = await deps.reusableSectionRepository.listBySite(
     input.tenantId,
     input.siteId,
@@ -102,6 +110,9 @@ export async function createReusableSection(
     content: input.content,
     createdBy: input.actorUserId,
   });
+  if (input.published) {
+    section.publish();
+  }
   return saveWithVersion(deps, section, input.actorUserId);
 }
 
@@ -117,6 +128,12 @@ export interface ReusableSectionWithUsage {
   section: ReusableSection;
   /** How many pages place this section. Always 0 for a template — see below. */
   usedOnPages: number;
+  /**
+   * How many templates hold this section (docs/adr/0072). Every page made
+   * from one of them will place it too, so deleting it takes a strip out of
+   * pages that do not exist yet — which the page count alone cannot say.
+   */
+  usedInTemplates: number;
 }
 
 /**
@@ -132,6 +149,10 @@ export interface ReusableSectionWithUsage {
  * copies its blocks and leaves nothing pointing back, so there is nothing
  * to count. Reporting a number there would suggest a link that does not
  * exist.
+ *
+ * The templates that hold a section are counted apart, over both their
+ * draft and their published blocks: a template is where a section is placed
+ * for pages still to come, and that is part of "where is this used".
  */
 export async function listReusableSectionsWithUsage(
   deps: ReusableSectionDeps & {
@@ -157,9 +178,23 @@ export async function listReusableSectionsWithUsage(
       usage.set(sectionId, (usage.get(sectionId) ?? 0) + 1);
     }
   }
+  const inTemplates = new Map<string, number>();
+  for (const template of sections) {
+    if (template.kind !== 'template') {
+      continue;
+    }
+    const references = collectSectionReferences([
+      template.content,
+      template.publishedContent ?? [],
+    ]);
+    for (const sectionId of references) {
+      inTemplates.set(sectionId, (inTemplates.get(sectionId) ?? 0) + 1);
+    }
+  }
   return sections.map((section) => ({
     section,
     usedOnPages: usage.get(section.id) ?? 0,
+    usedInTemplates: inTemplates.get(section.id) ?? 0,
   }));
 }
 

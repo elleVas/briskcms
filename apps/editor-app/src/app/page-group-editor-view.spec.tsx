@@ -10,6 +10,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { QueryClientProvider } from '@tanstack/react-query';
 import type { Block } from '@brisk/shared-types';
 import { TooltipProvider } from '../components/ui/tooltip';
+import { ApiError } from '../lib/http-client';
 import * as api from '../lib/page-groups-api-client';
 import * as previewTokenApi from '../lib/preview-token-api-client';
 import type { CollectionRecord } from '../lib/collections-api-client';
@@ -43,6 +44,23 @@ vi.mock('../lib/page-groups-api-client', async (importOriginal) => {
     listPageGroupVersions: vi.fn(),
     rollbackPageGroupToVersion: vi.fn(),
     createPageGroupTranslation: vi.fn(),
+    savePageGroupAsTemplate: vi.fn(),
+  };
+});
+
+const hasFailedSave = vi.hoisted(() => vi.fn(() => false));
+
+// The real hook, with one answer taken over: making a save fail for real
+// would need an edit on the canvas iframe, and what is under test here is
+// only what the view does with that answer.
+vi.mock('./use-page-group-editor', async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import('./use-page-group-editor')>();
+  return {
+    ...actual,
+    usePageGroupEditor: (
+      ...args: Parameters<typeof actual.usePageGroupEditor>
+    ) => ({ ...actual.usePageGroupEditor(...args), hasFailedSave }),
   };
 });
 
@@ -241,6 +259,106 @@ describe('PageGroupEditorView', () => {
     await waitFor(() => expect(screen.getByText('it')).toBeTruthy());
   });
 
+  describe('save as template', () => {
+    afterEach(() => {
+      vi.restoreAllMocks();
+    });
+
+    const savedTemplate = {
+      id: 'template-1',
+      tenantId: 'tenant-1',
+      siteId: 'site-1',
+      name: 'Scheda servizio',
+      kind: 'template' as const,
+      status: 'published' as const,
+      content: groupContent,
+      publishedContent: groupContent,
+      exposedFields: {},
+      createdBy: null,
+      createdAt: '',
+      updatedAt: '',
+    };
+
+    it("asks for a name, starting from the default language's title, and says where the template went", async () => {
+      const prompt = vi
+        .spyOn(window, 'prompt')
+        .mockReturnValue('  Scheda servizio  ');
+      vi.mocked(api.savePageGroupAsTemplate).mockResolvedValue(savedTemplate);
+      renderView();
+
+      await openPageMenu();
+      fireEvent.click(
+        await screen.findByRole('button', { name: 'Salva come template' }),
+      );
+
+      expect(prompt).toHaveBeenCalledWith('Nome del template:', 'Home');
+      await waitFor(() =>
+        expect(api.savePageGroupAsTemplate).toHaveBeenCalledWith(
+          'group-1',
+          'Scheda servizio',
+        ),
+      );
+      expect(
+        await screen.findByText(
+          'Template “Scheda servizio” salvato: lo trovi quando crei una nuova pagina.',
+        ),
+      ).toBeTruthy();
+    });
+
+    it('does nothing when the name is left empty or the question is dismissed', async () => {
+      const prompt = vi.spyOn(window, 'prompt').mockReturnValue(null);
+      renderView();
+
+      await openPageMenu();
+      fireEvent.click(
+        await screen.findByRole('button', { name: 'Salva come template' }),
+      );
+      prompt.mockReturnValue('   ');
+      await openPageMenu();
+      fireEvent.click(
+        await screen.findByRole('button', { name: 'Salva come template' }),
+      );
+
+      expect(prompt).toHaveBeenCalledTimes(2);
+      expect(api.savePageGroupAsTemplate).not.toHaveBeenCalled();
+    });
+
+    it('refuses when the last edit never reached the server, instead of copying the page without it', async () => {
+      vi.spyOn(window, 'prompt').mockReturnValue('Scheda servizio');
+      hasFailedSave.mockReturnValueOnce(true);
+      renderView();
+
+      await openPageMenu();
+      fireEvent.click(
+        await screen.findByRole('button', { name: 'Salva come template' }),
+      );
+
+      expect(
+        await screen.findByText(
+          'L’ultima modifica non è arrivata al server, quindi il template non la conterrebbe. Fai una piccola modifica alla pagina per salvarla di nuovo, poi riprova.',
+        ),
+      ).toBeTruthy();
+      expect(api.savePageGroupAsTemplate).not.toHaveBeenCalled();
+    });
+
+    it('says the name is taken rather than printing the status', async () => {
+      vi.spyOn(window, 'prompt').mockReturnValue('Scheda servizio');
+      vi.mocked(api.savePageGroupAsTemplate).mockRejectedValue(
+        new ApiError(409, { message: 'taken' }),
+      );
+      renderView();
+
+      await openPageMenu();
+      fireEvent.click(
+        await screen.findByRole('button', { name: 'Salva come template' }),
+      );
+
+      expect(
+        await screen.findByText('Esiste già una sezione con questo nome.'),
+      ).toBeTruthy();
+    });
+  });
+
   /*
    * A page filed in a section belongs to that section's screen. Sending
    * somebody who opened an article from News back to Pages drops them
@@ -259,6 +377,7 @@ describe('PageGroupEditorView', () => {
           name: 'News',
           icon: 'newspaper',
           order: 0,
+          defaultTemplateId: null,
           createdAt: '',
           updatedAt: '',
         },

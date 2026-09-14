@@ -9,7 +9,6 @@ import type {
   TaxonomyRepositoryPort,
   UserRepositoryPort,
 } from '@brisk/ports';
-import { mergeTranslatedContent, type PageContent } from '@brisk/shared-types';
 import { resolveSiteChrome } from './resolve-site-chrome';
 import { resolvePageGroupAncestors } from './resolve-page-group-ancestors';
 import { resolveTranslationPaths } from './resolve-translation-paths';
@@ -89,17 +88,7 @@ export async function getPreviewPageById(
     return null;
   }
 
-  let content: PageContent;
-  if (translation.isDiverged) {
-    if (!translation.divergedContent) {
-      throw new Error(
-        `Page translation ${translation.id} is diverged but has no divergedContent`,
-      );
-    }
-    content = translation.divergedContent;
-  } else {
-    content = mergeTranslatedContent(group.content, translation.fieldValues);
-  }
+  const content = translation.currentContent(group.content);
 
   const [siblings, chrome, ancestors, [resolvedContent]] = await Promise.all([
     deps.pageTranslationRepository.listByGroup(input.tenantId, group.id),

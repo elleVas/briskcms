@@ -9,7 +9,10 @@ import {
   DrizzlePageTranslationVersionRepository,
 } from '@brisk/postgres-page-repository';
 import { PreviewTokenAdapter } from '@brisk/preview-token-adapter';
-import { DrizzleReusableSectionRepository } from '@brisk/postgres-reusable-section-repository';
+import {
+  DrizzleReusableSectionRepository,
+  DrizzleReusableSectionVersionRepository,
+} from '@brisk/postgres-reusable-section-repository';
 import { DrizzleSearchRepository } from '@brisk/postgres-search-repository';
 import { DrizzleSiteRepository } from '@brisk/postgres-site-repository';
 import { DrizzleTaxonomyRepository } from '@brisk/postgres-taxonomy-repository';
@@ -19,6 +22,7 @@ import { PageGroupsController } from './page-groups.controller';
 import {
   PREVIEW_TOKEN_PORT,
   REUSABLE_SECTION_REPOSITORY,
+  REUSABLE_SECTION_VERSION_REPOSITORY,
   SEARCH_REPOSITORY,
   SITE_REPOSITORY,
   TAXONOMY_REPOSITORY,
@@ -37,9 +41,18 @@ import {
   providers: [
     {
       // Publishing a page indexes it with its sections expanded — the
-      // snapshot holds only the reference (docs/adr/0059).
+      // snapshot holds only the reference (docs/adr/0059) — and a page
+      // can start from a template, or be saved as one (docs/adr/0072).
       provide: REUSABLE_SECTION_REPOSITORY,
       useFactory: (db: BriskDb) => new DrizzleReusableSectionRepository(db),
+      inject: [DATABASE],
+    },
+    {
+      // "Save as template" writes a template's first version, the same
+      // invariant every other section save holds (docs/adr/0072).
+      provide: REUSABLE_SECTION_VERSION_REPOSITORY,
+      useFactory: (db: BriskDb) =>
+        new DrizzleReusableSectionVersionRepository(db),
       inject: [DATABASE],
     },
     {

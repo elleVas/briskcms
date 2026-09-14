@@ -222,7 +222,12 @@
       "cancel": "Cancel",
       "create": "Create",
       "creating": "Creating...",
-      "slugTaken": "A page with this name already exists on this site."
+      "slugTaken": "A page with this name already exists on this site.",
+      "templateLabel": "Start from",
+      "templateHint": "The template's blocks are copied into the new page; after that, the page is free to change.",
+      "templateUnavailable": "That template is no longer available. Pick another one.",
+      "failed": "The page could not be created.",
+      "nameTooLong": "The name is too long to become an address: {{max}} characters at most."
     },
     "duplicateDialog": {
       "title": "Duplicate page",
@@ -243,7 +248,12 @@
       "backToList": "Pages",
       "published": "Published",
       "viewPage": "View page",
-      "unpublishedChangesAt": "Unpublished changes — saved at {{time}}"
+      "unpublishedChangesAt": "Unpublished changes — saved at {{time}}",
+      "noLanguage": {
+        "title": "This page has no language",
+        "body": "It was left half-made by a creation that did not go through, so there is nothing to edit. You can delete it from the pages list.",
+        "back": "Back to pages"
+      }
     },
     "versionHistory": {
       "open": "Version history",
@@ -296,6 +306,13 @@
       "none": "Pages (no collection)",
       "confirm": "Move",
       "failed": "That page could not be moved."
+    },
+    "saveAsTemplate": {
+      "open": "Save as template",
+      "prompt": "Template name:",
+      "saved": "Template “{{name}}” saved — pick it when you create a new page.",
+      "failed": "The template could not be saved.",
+      "unsaved": "Your last edit did not reach the server, so the template would leave it out. Make any small change to the page to save it again, then try once more."
     }
   },
   "taxonomies": {
@@ -375,7 +392,11 @@
     "usedNowhere": "not placed anywhere yet",
     "deleteConfirmUsed": "Delete “{{name}}”? It is on {{count}} page(s), and each will show nothing where it was.",
     "emptyExplainer": "A section is a strip of blocks you build once and place on many pages — edit it here and every page showing it changes with it.",
-    "emptyAction": "Name your first section"
+    "emptyAction": "Name your first section",
+    "usedInTemplates_one": "in {{count}} template",
+    "usedInTemplates_other": "in {{count}} templates",
+    "deleteConfirmInTemplates_one": "It is also inside a template: pages made from it from now on will show nothing where it was.",
+    "deleteConfirmInTemplates_other": "It is also inside {{count}} templates: pages made from them from now on will show nothing where it was."
   },
   "layout": {
     "title": "Layout",
@@ -2684,7 +2705,11 @@
       "confirmDelete": {
         "title": "Delete this collection?",
         "description": "{{name}} disappears from the menu. The pages it held stay, and go back to Pages."
-      }
+      },
+      "defaultTemplate": "New pages start from"
     }
+  },
+  "pageTemplates": {
+    "blank": "Blank page"
   }
 }

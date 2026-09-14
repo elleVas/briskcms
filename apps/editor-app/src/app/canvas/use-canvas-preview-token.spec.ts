@@ -1,5 +1,6 @@
 import { renderHook, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { ApiError } from '../../lib/http-client';
 import * as previewTokenApi from '../../lib/preview-token-api-client';
 import { useCanvasPreviewToken } from './use-canvas-preview-token';
 
@@ -52,6 +53,29 @@ describe('useCanvasPreviewToken', () => {
     expect(
       previewTokenApi.createReusableSectionPreviewToken,
     ).toHaveBeenCalledTimes(1);
+  });
+
+  /*
+   * A session that expired while the editor was open: the request is
+   * refused. The hook stays without a token — the frame says what went
+   * wrong — and the refusal never becomes an unhandled rejection, which
+   * vitest would fail the run for.
+   */
+  it('stays without a token when the request is refused', async () => {
+    const refused = Promise.reject(
+      new ApiError(401, { message: 'No session' }),
+    );
+    vi.mocked(previewTokenApi.createTranslationPreviewToken).mockReturnValue(
+      refused,
+    );
+
+    const { result } = renderHook(() =>
+      useCanvasPreviewToken('page-1', undefined),
+    );
+
+    await refused.catch(() => undefined);
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(result.current).toBeNull();
   });
 
   it('mints a new one when the section itself changes', async () => {

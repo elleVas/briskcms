@@ -19,6 +19,7 @@ import type {
 } from '@brisk/domain-core';
 import {
   classifyUpload,
+  PageSlugAlreadyExistsError,
   User,
   hasUnpublishedChanges,
   safeDownloadName,
@@ -113,6 +114,32 @@ export class InMemoryPageGroupRepository implements PageGroupRepositoryPort {
   ): Promise<void> {
     this.groups.set(group.id, group);
     await this.versionRepository?.save(version);
+  }
+
+  /** All or nothing, as the real adapter's transaction: the address is refused before anything is stored. */
+  async saveNewWithTranslation(
+    group: PageGroup,
+    version: PageGroupVersion,
+    translation: PageTranslation,
+  ): Promise<void> {
+    if (!this.translationRepository) {
+      throw new Error(
+        'InMemoryPageGroupRepository needs its translation repository to save a page with its language',
+      );
+    }
+    const taken =
+      await this.translationRepository.findByParentGroupAndLocaleSlug(
+        group.tenantId,
+        group.siteId,
+        translation.locale,
+        group.parentId,
+        translation.slug,
+      );
+    if (taken) {
+      throw new PageSlugAlreadyExistsError(translation.slug);
+    }
+    await this.saveWithVersion(group, version);
+    await this.translationRepository.save(translation, group.parentId);
   }
 
   async findById(

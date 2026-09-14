@@ -15,6 +15,7 @@ import {
   type SeoMeta,
 } from '@brisk/shared-types';
 import { request } from './http-client';
+import type { ReusableSectionDto } from './reusable-sections-api-client';
 
 export type {
   PageGroupListItemRecord,
@@ -49,6 +50,14 @@ export interface CreatePageGroupInput {
   /** Which section of the editor it is being created from — see the Collection entity. */
   collectionId?: string | null;
   content?: Block[];
+  /** Start from a copy of this template's published blocks instead — never together with `content` (docs/adr/0072). */
+  templateId?: string;
+  /** The first language, written in the same transaction as the page — required with `templateId`. */
+  translation?: {
+    locale: string;
+    slug: string;
+    seoMeta: SeoMeta;
+  };
 }
 
 export function createPageGroup(
@@ -128,6 +137,21 @@ export function reorderPageGroups(
   return request('/page-groups/reorder', {
     method: 'PATCH',
     body: JSON.stringify({ siteId, parentId, orderedPageGroupIds }),
+  });
+}
+
+/**
+ * A published template holding what this page shows in the site's default
+ * language (docs/adr/0072). Answered with the template itself, in the shape
+ * the sections list reads.
+ */
+export function savePageGroupAsTemplate(
+  id: string,
+  name: string,
+): Promise<ReusableSectionDto> {
+  return request(`/page-groups/${id}/save-as-template`, {
+    method: 'POST',
+    body: JSON.stringify({ name }),
   });
 }
 

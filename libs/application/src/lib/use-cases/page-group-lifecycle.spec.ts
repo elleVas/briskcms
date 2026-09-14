@@ -829,6 +829,34 @@ describe('page group i18n lifecycle', () => {
       expect(duplicatedTranslation.publishedSnapshot).toBeNull();
     });
 
+    it('keeps the copy in the collection the original is listed in', async () => {
+      const deps = setup();
+      const article = await createPageGroup(deps, {
+        tenantId,
+        siteId,
+        collectionId: 'collection-news',
+        createdBy: 'user-1',
+      });
+      await createPageGroupTranslation(deps, {
+        tenantId,
+        pageGroupId: article.id,
+        locale: 'en',
+        slug: 'launch',
+        seoMeta: { title: 'Launch', description: '' },
+        createdBy: 'user-1',
+      });
+
+      const result = await duplicatePageGroup(deps, {
+        tenantId,
+        sourceGroupId: article.id,
+        createdBy: 'user-1',
+      });
+
+      // Duplicated from the News screen, the copy has to be on the News
+      // screen — not filed under Pages, where nobody looking for it would.
+      expect(result.group.collectionId).toBe('collection-news');
+    });
+
     it('picks a further-suffixed slug when the first candidate is already taken', async () => {
       const deps = setup();
       const { group } = await createGroupWithEnTranslation(deps);

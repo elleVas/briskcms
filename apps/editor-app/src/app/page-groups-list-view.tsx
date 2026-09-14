@@ -691,6 +691,8 @@ export function PageGroupsListView({
           </div>
         )}
         <NewPageGroupDialog
+          siteId={siteId}
+          collectionId={collectionId}
           open={openDialog === 'new'}
           onOpenChange={(open) => !open && closeDialog()}
           onCreate={createPageGroup}

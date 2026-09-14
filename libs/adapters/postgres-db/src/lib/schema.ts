@@ -328,6 +328,13 @@ export const collections = pgTable(
     // the ones the product ships with rather than a section bolted on.
     icon: text('icon').notNull().default('newspaper'),
     order: integer('order').notNull().default(0),
+    // The template a new page here starts from (docs/adr/0072). `set null`
+    // on delete: removing a template takes away a suggestion, it must not
+    // take the collection with it or refuse to go.
+    defaultTemplateId: uuid('default_template_id').references(
+      (): AnyPgColumn => reusableSections.id,
+      { onDelete: 'set null' },
+    ),
     createdAt: timestamp('created_at', { withTimezone: true })
       .notNull()
       .defaultNow(),

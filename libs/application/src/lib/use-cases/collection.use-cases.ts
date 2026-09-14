@@ -1,6 +1,10 @@
 import { randomUUID } from 'node:crypto';
 import { Collection, CollectionNotFoundError } from '@brisk/domain-core';
-import type { CollectionRepositoryPort } from '@brisk/ports';
+import type {
+  CollectionRepositoryPort,
+  ReusableSectionRepositoryPort,
+} from '@brisk/ports';
+import { assertPageTemplate } from './page-template.use-cases';
 
 export interface CollectionDeps {
   collectionRepository: CollectionRepositoryPort;
@@ -49,15 +53,22 @@ export function listCollections(
   return deps.collectionRepository.listBySite(tenantId, siteId);
 }
 
+export interface UpdateCollectionDeps extends CollectionDeps {
+  /** Only to check that a default template is one a page of this site can start from. */
+  reusableSectionRepository: ReusableSectionRepositoryPort;
+}
+
 export interface UpdateCollectionInput {
   tenantId: string;
   collectionId: string;
   name?: string;
   icon?: string;
+  /** `null` clears it; left out, it stays as it is. */
+  defaultTemplateId?: string | null;
 }
 
 export async function updateCollection(
-  deps: CollectionDeps,
+  deps: UpdateCollectionDeps,
   input: UpdateCollectionInput,
 ): Promise<Collection> {
   const collection = await deps.collectionRepository.findById(
@@ -69,6 +80,20 @@ export async function updateCollection(
   }
   if (input.name !== undefined) collection.rename(input.name);
   if (input.icon !== undefined) collection.changeIcon(input.icon);
+  if (input.defaultTemplateId !== undefined) {
+    // Checked when it is set, not only when it is used: a default the
+    // New page dialog cannot offer — a shared section, a draft, another
+    // site's — would be preselected as nothing, silently.
+    if (input.defaultTemplateId !== null) {
+      await assertPageTemplate(
+        deps.reusableSectionRepository,
+        input.tenantId,
+        collection.siteId,
+        input.defaultTemplateId,
+      );
+    }
+    collection.setDefaultTemplate(input.defaultTemplateId);
+  }
   await deps.collectionRepository.save(collection);
   return collection;
 }

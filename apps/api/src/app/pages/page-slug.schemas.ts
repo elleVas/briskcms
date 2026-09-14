@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { isCanonicalSlug } from '@brisk/shared-types';
+import { isCanonicalSlug, PAGE_SLUG_MAX_LENGTH } from '@brisk/shared-types';
 
 // Never trust a client-computed slug: re-derive it with the same slugify()
 // the frontend uses for its live preview, and reject anything that isn't
@@ -8,7 +8,7 @@ import { isCanonicalSlug } from '@brisk/shared-types';
 export const pageSlugSchema = z
   .string()
   .min(1)
-  .max(200)
+  .max(PAGE_SLUG_MAX_LENGTH)
   .refine(isCanonicalSlug, {
     message: 'slug must be lowercase, alphanumeric, hyphen-separated',
   });

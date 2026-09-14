@@ -7,6 +7,12 @@ export interface CollectionProps {
   /** A lucide icon name, so its sidebar entry looks like the ones the product ships with. */
   icon: string;
   order: number;
+  /**
+   * The template a new page in this collection starts from, preselected
+   * in the New page dialog — or `null` to start blank (docs/adr/0072).
+   * A suggestion the person creating the page can change, not a rule.
+   */
+  defaultTemplateId: string | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -40,7 +46,9 @@ export const DEFAULT_COLLECTION_ICON = 'newspaper';
  * needs a different order, this is the entity it belongs to. What it
  * must never grow is FIELDS of its own — a collection that can add a
  * field is a content-type engine, and custom fields are the Block SDK's
- * job (see ADR-0041).
+ * job (see ADR-0041). A default template is not such a field: it decides
+ * which blocks a new page STARTS with, and the page owns them from then
+ * on, exactly as if somebody had inserted them by hand.
  */
 export class Collection {
   private constructor(private props: CollectionProps) {}
@@ -54,6 +62,7 @@ export class Collection {
       name: input.name,
       icon: input.icon || DEFAULT_COLLECTION_ICON,
       order: input.order ?? 0,
+      defaultTemplateId: null,
       createdAt: now,
       updatedAt: now,
     });
@@ -91,6 +100,10 @@ export class Collection {
     return this.props.order;
   }
 
+  get defaultTemplateId(): string | null {
+    return this.props.defaultTemplateId;
+  }
+
   get createdAt(): Date {
     return this.props.createdAt;
   }
@@ -107,6 +120,12 @@ export class Collection {
   /** An empty icon falls back rather than being stored: a sidebar entry with no icon is a hole in a list of eleven. */
   changeIcon(icon: string, now: Date = new Date()): void {
     this.props.icon = icon || DEFAULT_COLLECTION_ICON;
+    this.props.updatedAt = now;
+  }
+
+  /** Whether the id names a template of this site is the use case's to check: the entity cannot see the sections. */
+  setDefaultTemplate(templateId: string | null, now: Date = new Date()): void {
+    this.props.defaultTemplateId = templateId;
     this.props.updatedAt = now;
   }
 
