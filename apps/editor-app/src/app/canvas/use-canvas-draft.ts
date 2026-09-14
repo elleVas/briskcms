@@ -38,6 +38,8 @@ export interface UseCanvasDraftParams {
   registry: BlockDescriptor[];
   translationRouting: CanvasTranslationRouting | undefined;
   onChange: (blocks: Block[]) => void;
+  /** Resolves once the draft is saved — see usePropertyPatch. */
+  whenSaved?: () => Promise<void>;
   bridge: Pick<PreviewBridgeState, 'patchBlock'>;
 }
 
@@ -81,6 +83,7 @@ export function useCanvasDraft({
   registry,
   translationRouting,
   onChange,
+  whenSaved,
   bridge,
 }: UseCanvasDraftParams): CanvasDraft {
   // "Adjust state during render" — React's recommended way to reset state
@@ -161,6 +164,7 @@ export function useCanvasDraft({
       onChange(next);
     },
     patchBlock: bridge.patchBlock,
+    whenSaved,
   });
   const { flushAll } = patch;
 

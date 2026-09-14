@@ -38,6 +38,7 @@ import { pricingTableBlock } from './blocks/pricing-table.block';
 import { quoteBlock } from './blocks/quote.block';
 import { ratingBlock } from './blocks/rating.block';
 import { articleMetaBlock } from './blocks/article-meta.block';
+import { authorBoxBlock } from './blocks/author-box.block';
 import { articleNavBlock } from './blocks/article-nav.block';
 import { pageGridBlock } from './blocks/page-grid.block';
 import { relatedPagesBlock } from './blocks/related-pages.block';
@@ -149,6 +150,7 @@ export {
   ratingBlock,
   pageGridBlock,
   articleMetaBlock,
+  authorBoxBlock,
   articleNavBlock,
   relatedPagesBlock,
   termListBlock,
@@ -264,6 +266,7 @@ export const pageBlocks: BlockDescriptor[] = [
   featureBlock,
   pageGridBlock,
   articleMetaBlock,
+  authorBoxBlock,
   articleNavBlock,
   relatedPagesBlock,
   termListBlock,
@@ -369,6 +372,7 @@ export const pageBlockCategories: { title: string; types: string[] }[] = [
       'Icon',
       'PageGrid',
       'ArticleMeta',
+      'AuthorBox',
       'ArticleNav',
       'RelatedPages',
       'TermList',

@@ -1,4 +1,9 @@
-import type { Block, PageContent, PageGridItem } from '@brisk/shared-types';
+import type {
+  Block,
+  PageContent,
+  PageGridItem,
+  PublicAuthor,
+} from '@brisk/shared-types';
 import type {
   PageGroupRepositoryPort,
   PageTranslationRepositoryPort,
@@ -10,6 +15,7 @@ import {
   toPageGridItem,
   type PublishedPagePath,
 } from './list-published-page-paths';
+import { toPublicAuthor, type MediaUrlResolver } from './author-profile';
 
 export interface ResolveArticleBlocksDeps {
   pageGroupRepository: PageGroupRepositoryPort;
@@ -17,6 +23,8 @@ export interface ResolveArticleBlocksDeps {
   taxonomyRepository: TaxonomyRepositoryPort;
   /** Only for the author's display name — absent on a route that has no article to write a byline for. */
   userRepository?: UserRepositoryPort;
+  /** Only for the author's picture, in the AuthorBox. Absent: no picture, the initial is drawn instead. */
+  mediaStorage?: MediaUrlResolver;
 }
 
 /** The page being rendered, as the article blocks need to know it. */
@@ -34,6 +42,7 @@ const ARTICLE_BLOCK_TYPES = new Set([
   'ArticleMeta',
   'ArticleNav',
   'RelatedPages',
+  'AuthorBox',
 ]);
 
 function hasArticleBlock(blocks: PageContent): boolean {
@@ -130,8 +139,8 @@ export async function resolveArticleBlocks(
     return contents;
   }
 
-  const [authorName, paths, termIds] = await Promise.all([
-    resolveAuthorName(deps, tenantId, current.authorUserId),
+  const [authorUser, paths, termIds] = await Promise.all([
+    resolveAuthor(deps, tenantId, current.authorUserId),
     listPublishedPagePaths(deps, tenantId, siteId),
     deps.taxonomyRepository.listTermIdsForPageGroup(
       tenantId,
@@ -140,6 +149,10 @@ export async function resolveArticleBlocks(
   ]);
 
   const inThisLanguage = paths.filter((path) => path.locale === locale);
+  const author =
+    authorUser === null
+      ? null
+      : toPublicAuthor(authorUser, locale, paths, deps.mediaStorage);
   const neighbours = findNeighbours(inThisLanguage, current, locale);
   const related = await findRelated(
     deps,
@@ -153,26 +166,34 @@ export async function resolveArticleBlocks(
   return contents.map((content) =>
     fill(
       content,
-      { publishedAt: current.publishedAt, authorName },
+      {
+        publishedAt: current.publishedAt,
+        authorName: author?.name ?? '',
+        authorPath: author?.path ?? null,
+      },
       neighbours,
       related,
+      // A person with no name has no byline, and no box to put one in.
+      author?.name ? author : null,
     ),
   );
 }
 
-async function resolveAuthorName(
+/**
+ * Who wrote the page. What is published of them is decided by
+ * `toPublicAuthor`: the display name, their bio and picture, their author
+ * page — never the account's email address. A page whose author never set
+ * a name simply carries no byline.
+ */
+async function resolveAuthor(
   deps: ResolveArticleBlocksDeps,
   tenantId: string,
   userId: string | null,
-): Promise<string> {
+) {
   if (!userId || !deps.userRepository) {
-    return '';
+    return null;
   }
-  const user = await deps.userRepository.findById(tenantId, userId);
-  // The display name and nothing else: an account's email address is not
-  // something a page publishes, and a page whose author never set a name
-  // simply carries no byline.
-  return user?.displayName?.trim() ?? '';
+  return deps.userRepository.findById(tenantId, userId);
 }
 
 /**
@@ -235,13 +256,18 @@ async function findRelated(
 
 function fill(
   blocks: PageContent,
-  meta: { publishedAt: string | null; authorName: string },
+  meta: {
+    publishedAt: string | null;
+    authorName: string;
+    authorPath: string | null;
+  },
   neighbours: { previous: PageGridItem | null; next: PageGridItem | null },
   related: PageGridItem[],
+  author: PublicAuthor | null,
 ): PageContent {
   return blocks.map((block): Block => {
     const children = block.children
-      ? fill(block.children, meta, neighbours, related)
+      ? fill(block.children, meta, neighbours, related, author)
       : undefined;
     const withChildren = (next: Block): Block =>
       children ? { ...next, children } : next;
@@ -253,6 +279,14 @@ function fill(
       return withChildren({
         ...block,
         props: { ...block.props, ...neighbours },
+      });
+    }
+    if (block.type === 'AuthorBox') {
+      return withChildren({
+        ...block,
+        // Never a profile page here: this is a byline under an article,
+        // and the article already has its own title.
+        props: { ...block.props, author, isProfilePage: false },
       });
     }
     if (block.type === 'RelatedPages') {

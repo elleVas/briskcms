@@ -16,6 +16,8 @@ import {
 } from '@brisk/postgres-db';
 import { AUTH_PORT } from '../auth/auth.tokens';
 import { DATABASE } from '../database.module';
+import { AccountModule } from '../account/account.module';
+import { CollectionsModule } from '../collections/collections.module';
 import { PagesModule } from '../pages/pages.module';
 import { TaxonomiesModule } from '../taxonomies/taxonomies.module';
 import { SiteLayoutSectionsModule } from '../site-layout-sections/site-layout-sections.module';
@@ -50,6 +52,8 @@ describe('PublicPagesController (integration)', () => {
         SiteLayoutSectionsModule,
         PublicPagesModule,
         TaxonomiesModule,
+        CollectionsModule,
+        AccountModule,
       ],
     }).compile();
 
@@ -589,6 +593,107 @@ describe('PublicPagesController (integration)', () => {
       items: [],
       searchEngineIndexingEnabled: true,
       defaultLocale: 'it',
+    });
+  });
+
+  /*
+   * It gives the suite's one person a name and an address: no other test
+   * here reads a byline, so none of them depends on it being empty.
+   */
+  describe('an author page', () => {
+    it('serves the person and what they wrote — never their email — and says where a left address went', async () => {
+      const collectionRes = await agent
+        .post('/collections')
+        .send({ siteId, name: 'News' })
+        .expect(201);
+      const groupRes = await agent
+        .post('/page-groups')
+        .send({
+          siteId,
+          collectionId: collectionRes.body.id,
+          content: [{ type: 'AuthorBox', props: {} }],
+        })
+        .expect(201);
+      const translationRes = await agent
+        .post(`/page-groups/${groupRes.body.id}/translations`)
+        .send({
+          locale: 'it',
+          slug: 'articolo-firmato',
+          seoMeta: { title: 'Articolo firmato', description: '' },
+        })
+        .expect(201);
+      await agent
+        .post(`/page-groups/translations/${translationRes.body.id}/publish`)
+        .expect(201);
+      const slug = `autrice-${randomUUID().slice(0, 8)}`;
+      await agent
+        .patch('/account/profile')
+        .send({
+          displayName: 'Autrice Prova',
+          slug,
+          bio: { it: 'Scrive di prove.' },
+        })
+        .expect(200);
+
+      const res = await request(app.getHttpServer())
+        .get('/public/pages/author-by-slug')
+        .query({ domain, locale: 'it', slug })
+        .expect(200);
+
+      expect(res.body.author).toEqual({
+        id: userId,
+        name: 'Autrice Prova',
+        bio: 'Scrive di prove.',
+        avatar: null,
+        path: `/it/autore/${slug}`,
+      });
+      expect(res.body.content[0].type).toBe('AuthorBox');
+      expect(res.body.content[0].props.isProfilePage).toBe(true);
+      expect(
+        res.body.content[1].props.items.map(
+          (item: { title: string }) => item.title,
+        ),
+      ).toEqual(['Articolo firmato']);
+      expect(JSON.stringify(res.body)).not.toContain('public-integration-');
+      expect(JSON.stringify(res.body)).not.toContain('"role"');
+
+      // The article's own box is filled with the same person.
+      const article = await request(app.getHttpServer())
+        .get('/public/pages/by-slug')
+        .query({ domain, locale: 'it', path: 'articolo-firmato' })
+        .expect(200);
+      expect(article.body.content[0].props.author.path).toBe(
+        `/it/autore/${slug}`,
+      );
+
+      // Listed for search engines, at the same address.
+      const sitemap = await request(app.getHttpServer())
+        .get('/public/pages')
+        .query({ domain })
+        .expect(200);
+      expect(sitemap.body.items).toContainEqual(
+        expect.objectContaining({
+          groupId: `author:${userId}`,
+          slug,
+          ancestorSlugs: ['autore'],
+        }),
+      );
+
+      // A language the site does not publish has no author page.
+      await request(app.getHttpServer())
+        .get('/public/pages/author-by-slug')
+        .query({ domain, locale: 'en', slug })
+        .expect(404);
+
+      await agent
+        .patch('/account/profile')
+        .send({ displayName: 'Autrice Prova', slug: `${slug}-nuova`, bio: {} })
+        .expect(200);
+      const moved = await request(app.getHttpServer())
+        .get('/public/pages/author-by-slug')
+        .query({ domain, locale: 'it', slug })
+        .expect(404);
+      expect(moved.body.movedTo).toBe(`/it/autore/${slug}-nuova`);
     });
   });
 

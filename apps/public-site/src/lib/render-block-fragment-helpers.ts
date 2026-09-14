@@ -1,7 +1,9 @@
 import {
   collectResolvedPageRefs,
+  isServerFilledBlockType,
   resolvePageReferences,
   resolveSectionBlocks,
+  SERVER_FILLED_PROPS,
   type Block,
   type PageContent,
   type PublishedPage,
@@ -143,6 +145,12 @@ export function renderBlockFragmentCorsHeaders(): Record<string, string> {
  *   what the rest of the page already resolved rather than a second round
  *   trip.
  *
+ * - the ANSWER of a block the server fills (an article's date, a page
+ *   list, an author), taken from the page as the server just resolved it:
+ *   the editor holds only the question, and a block re-rendered from that
+ *   alone came back empty — the byline vanished the moment an option of
+ *   it was switched.
+ *
  * Sections first and links after, the same order the page render uses: a
  * section can hold a Link, and that link has to be resolved too.
  */
@@ -165,10 +173,16 @@ export function buildFragmentBlock(
     ...(body.variant ? { variant: body.variant } : {}),
   };
 
+  const answered = withServerAnswers(rawBlock, [
+    page.content,
+    page.header ?? [],
+    page.footer ?? [],
+  ]);
+
   const publishedSections = new Map<string, PageContent>(
     Object.entries(page.sections ?? {}),
   );
-  const [withSections] = resolveSectionBlocks([rawBlock], publishedSections);
+  const [withSections] = resolveSectionBlocks([answered], publishedSections);
   const resolvedRefs = new Map([
     ...collectResolvedPageRefs(page.content),
     ...collectResolvedPageRefs(page.header ?? []),
@@ -176,4 +190,36 @@ export function buildFragmentBlock(
   ]);
   const [block] = resolvePageReferences([withSections], resolvedRefs);
   return block;
+}
+
+/**
+ * This block — and every block inside it — with the answer the server gave
+ * for it on the resolved page, where the page has one: the props the editor
+ * sent stay as sent (they are the edit), and only the props that ARE the
+ * answer (SERVER_FILLED_PROPS) are copied over.
+ *
+ * A block the resolved page does not have yet — one just inserted — keeps
+ * its empty answer; the editor reloads the canvas for those.
+ */
+function withServerAnswers(block: Block, resolvedTrees: PageContent[]): Block {
+  const children = block.children?.map((child) =>
+    withServerAnswers(child, resolvedTrees),
+  );
+  const withChildren = children ? { ...block, children } : block;
+  if (!block.id || !isServerFilledBlockType(block.type)) {
+    return withChildren;
+  }
+  const blockId = block.id;
+  const resolved = resolvedTrees
+    .map((tree) => findBlockById(tree, blockId))
+    .find((found) => found?.type === block.type);
+  if (!resolved) {
+    return withChildren;
+  }
+  const answer = Object.fromEntries(
+    SERVER_FILLED_PROPS[block.type]
+      .filter((key) => key in resolved.props)
+      .map((key) => [key, resolved.props[key]]),
+  );
+  return { ...withChildren, props: { ...block.props, ...answer } };
 }

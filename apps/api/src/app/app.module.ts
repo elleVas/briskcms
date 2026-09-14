@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ScheduleModule } from '@nestjs/schedule';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { AccountModule } from './account/account.module';
 import { AuthModule } from './auth/auth.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { DeploymentTenantModule } from './deployment-tenant.module';
@@ -29,6 +30,7 @@ import { UsersModule } from './users/users.module';
     SetupModule,
     ScheduleModule.forRoot(),
     AuthModule,
+    AccountModule,
     DashboardModule,
     HealthModule,
     MaintenanceModule,

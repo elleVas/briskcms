@@ -9,6 +9,7 @@ import {
   resolveArticleBlocks,
 } from './resolve-article-blocks';
 import {
+  InMemoryMediaStorage,
   InMemoryPageGroupRepository,
   InMemoryPageGroupVersionRepository,
   InMemoryPageTranslationRepository,
@@ -93,6 +94,28 @@ function propsOf(content: PageContent, id: string): Record<string, unknown> {
   return content.find((block) => block.id === id)?.props ?? {};
 }
 
+/** The article blocks as the render pass fills them on this page. */
+async function renderArticle(
+  deps: ReturnType<typeof setup> & { mediaStorage?: InMemoryMediaStorage },
+  page: { group: { id: string }; translation: { publishedAt: Date | null } },
+  content: PageContent = articleContent,
+): Promise<PageContent> {
+  const current = await currentArticleOf(deps, tenantId, {
+    pageGroupId: page.group.id,
+    publishedAt: page.translation.publishedAt,
+  });
+  if (!current) throw new Error('the page just seeded is missing');
+  const [filled] = await resolveArticleBlocks(
+    deps,
+    tenantId,
+    siteId,
+    locale,
+    current,
+    [content],
+  );
+  return filled;
+}
+
 describe('hasArticleBlocks', () => {
   /*
    * Asked before the page's own row is read, because almost no page
@@ -139,18 +162,7 @@ describe('resolveArticleBlocks', () => {
       createdBy: 'user-1',
     });
 
-    const current = await currentArticleOf(deps, tenantId, {
-      pageGroupId: group.id,
-      publishedAt: translation.publishedAt,
-    });
-    const [content] = await resolveArticleBlocks(
-      deps,
-      tenantId,
-      siteId,
-      locale,
-      current!,
-      [articleContent],
-    );
+    const content = await renderArticle(deps, { group, translation });
 
     expect(propsOf(content, 'meta')['authorName']).toBe('Giulia Rossi');
     expect(typeof propsOf(content, 'meta')['publishedAt']).toBe('string');
@@ -178,18 +190,7 @@ describe('resolveArticleBlocks', () => {
       createdBy: 'user-2',
     });
 
-    const current = await currentArticleOf(deps, tenantId, {
-      pageGroupId: group.id,
-      publishedAt: translation.publishedAt,
-    });
-    const [content] = await resolveArticleBlocks(
-      deps,
-      tenantId,
-      siteId,
-      locale,
-      current!,
-      [articleContent],
-    );
+    const content = await renderArticle(deps, { group, translation });
 
     expect(propsOf(content, 'meta')['authorName']).toBe('');
   });
@@ -222,18 +223,7 @@ describe('resolveArticleBlocks', () => {
       publishedAt: new Date('2026-02-15T10:00:00Z'),
     });
 
-    const current = await currentArticleOf(deps, tenantId, {
-      pageGroupId: middle.group.id,
-      publishedAt: middle.translation.publishedAt,
-    });
-    const [content] = await resolveArticleBlocks(
-      deps,
-      tenantId,
-      siteId,
-      locale,
-      current!,
-      [articleContent],
-    );
+    const content = await renderArticle(deps, middle);
 
     const nav = propsOf(content, 'nav');
     expect((nav['previous'] as { title: string } | null)?.title).toBe(
@@ -260,18 +250,7 @@ describe('resolveArticleBlocks', () => {
       publishedAt: new Date('2026-02-01T10:00:00Z'),
     });
 
-    const current = await currentArticleOf(deps, tenantId, {
-      pageGroupId: lone.group.id,
-      publishedAt: lone.translation.publishedAt,
-    });
-    const [content] = await resolveArticleBlocks(
-      deps,
-      tenantId,
-      siteId,
-      locale,
-      current!,
-      [articleContent],
-    );
+    const content = await renderArticle(deps, lone);
 
     expect(propsOf(content, 'nav')['previous']).toBeNull();
     expect(propsOf(content, 'nav')['next']).toBeNull();
@@ -316,22 +295,141 @@ describe('resolveArticleBlocks', () => {
       );
     }
 
-    const current = await currentArticleOf(deps, tenantId, {
-      pageGroupId: self.group.id,
-      publishedAt: self.translation.publishedAt,
-    });
-    const [content] = await resolveArticleBlocks(
-      deps,
-      tenantId,
-      siteId,
-      locale,
-      current!,
-      [articleContent],
-    );
+    const content = await renderArticle(deps, self);
 
     const items = propsOf(content, 'related')['items'] as { title: string }[];
     // Capped at the block's own limit of two, newest first, and never the
     // page it is sitting on.
     expect(items.map((item) => item.title)).toEqual(['Terza', 'Nuova']);
+  });
+
+  describe('the author', () => {
+    const withBox: PageContent = [
+      ...articleContent,
+      { id: 'box', type: 'AuthorBox', props: { showBio: true } },
+    ];
+
+    async function seedGiulia(
+      deps: ReturnType<typeof setup>,
+      displayName = 'Giulia Rossi',
+    ) {
+      const user = User.create({
+        id: 'giulia',
+        tenantId,
+        email: 'giulia@example.com',
+        displayName,
+        passwordHash: 'x',
+        role: 'editor',
+        slug: 'giulia-rossi',
+      });
+      user.changeBio({ it: 'Scrive di caffè.', en: 'Writes about coffee.' });
+      user.changeAvatar({ storageKey: 'giulia.webp', width: 320, height: 320 });
+      await deps.userRepository.save(user);
+    }
+
+    it('puts the person in the box, and links the byline to their page', async () => {
+      const deps = { ...setup(), mediaStorage: new InMemoryMediaStorage() };
+      await seedGiulia(deps);
+      const page = await seedPage(deps, {
+        slug: 'articolo',
+        title: 'Articolo',
+        collectionId: 'news',
+        createdBy: 'giulia',
+      });
+
+      const content = await renderArticle(deps, page, withBox);
+
+      expect(propsOf(content, 'box')).toEqual({
+        showBio: true,
+        isProfilePage: false,
+        author: {
+          id: 'giulia',
+          name: 'Giulia Rossi',
+          bio: 'Scrive di caffè.',
+          avatar: {
+            mediaId: 'avatar:giulia.webp',
+            url: 'https://fake-storage.test/giulia.webp',
+            width: 320,
+            height: 320,
+          },
+          path: '/it/autore/giulia-rossi',
+        },
+      });
+      expect(propsOf(content, 'meta')['authorPath']).toBe(
+        '/it/autore/giulia-rossi',
+      );
+    });
+
+    /*
+     * A page outside every collection is not an article, so it gives its
+     * author no page to link to — but the box still says who made it.
+     */
+    it('links nowhere when the person has no article to be listed for', async () => {
+      const deps = setup();
+      await seedGiulia(deps);
+      const page = await seedPage(deps, {
+        slug: 'chi-siamo',
+        title: 'Chi siamo',
+        createdBy: 'giulia',
+      });
+
+      const content = await renderArticle(deps, page, withBox);
+
+      const author = propsOf(content, 'box')['author'] as {
+        path: string | null;
+        avatar: unknown;
+      };
+      expect(author.path).toBeNull();
+      // No storage to ask: the box draws the initial instead.
+      expect(author.avatar).toBeNull();
+      expect(propsOf(content, 'meta')['authorPath']).toBeNull();
+    });
+
+    /*
+     * Their name stays on what they wrote; the picture, the bio and the
+     * page were theirs to publish while they were on the team, and nobody
+     * else can take them down for them.
+     */
+    it('keeps only the name of someone who has left the team', async () => {
+      const deps = { ...setup(), mediaStorage: new InMemoryMediaStorage() };
+      await seedGiulia(deps);
+      const user = await deps.userRepository.findById(tenantId, 'giulia');
+      user?.deactivate();
+      if (user) await deps.userRepository.save(user);
+      const page = await seedPage(deps, {
+        slug: 'articolo',
+        title: 'Articolo',
+        collectionId: 'news',
+        createdBy: 'giulia',
+      });
+
+      const content = await renderArticle(deps, page, withBox);
+
+      expect(propsOf(content, 'box')['author']).toEqual({
+        id: 'giulia',
+        name: 'Giulia Rossi',
+        bio: '',
+        avatar: null,
+        path: null,
+      });
+      expect(propsOf(content, 'meta')['authorName']).toBe('Giulia Rossi');
+      expect(propsOf(content, 'meta')['authorPath']).toBeNull();
+    });
+
+    it('leaves the box empty for someone with no name', async () => {
+      const deps = setup();
+      await seedGiulia(deps, '');
+      const page = await seedPage(deps, {
+        slug: 'anonimo',
+        title: 'Anonimo',
+        collectionId: 'news',
+        createdBy: 'giulia',
+      });
+
+      const content = await renderArticle(deps, page, withBox);
+
+      expect(propsOf(content, 'box')['author']).toBeNull();
+      expect(propsOf(content, 'meta')['authorPath']).toBeNull();
+    });
   });
 });

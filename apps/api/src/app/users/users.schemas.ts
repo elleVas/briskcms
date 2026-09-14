@@ -10,7 +10,8 @@ export type ListUsersQuery = z.infer<typeof listUsersQuerySchema>;
 
 export const inviteUserBodySchema = z.object({
   email: z.string().email(),
-  displayName: z.string().min(1),
+  // The same ceiling the person's own profile has (account.schemas.ts).
+  displayName: z.string().min(1).max(120),
   role: userRoleSchema,
 });
 export type InviteUserBody = z.infer<typeof inviteUserBodySchema>;

@@ -32,6 +32,7 @@ import {
   TaxonomyNotFoundError,
   TaxonomyNotHierarchicalError,
   TaxonomyPrefixAlreadyExistsError,
+  TaxonomyPrefixReservedError,
   TermAddressCollidesWithPageError,
   TermAddressTakenError,
   TermCycleError,
@@ -41,6 +42,9 @@ import {
   UnsupportedMediaTypeError,
   UserAlreadyActiveError,
   UserEmailAlreadyExistsError,
+  UserSlugAlreadyExistsError,
+  InvalidUserSlugError,
+  AvatarNotAnImageError,
   CannotChangeYourOwnAccessError,
   CollectionNotFoundError,
   LastActiveAdminError,
@@ -107,6 +111,11 @@ const DOMAIN_ERROR_MAPPINGS: Array<[Type<Error>, DomainErrorFactory]> = [
   [PageGroupReorderMismatchError, (m) => new BadRequestException(m)],
   [InvalidFormSubmissionError, (m) => new BadRequestException(m)],
   [InvalidCaptchaError, (m) => new BadRequestException(m)],
+  [UserSlugAlreadyExistsError, (m) => new ConflictException(m)],
+  [InvalidUserSlugError, (m) => new BadRequestException(m)],
+  // 415 would be the literal status, but the editor shows every refused
+  // upload the same way, and the library's own refusals are 400s too.
+  [AvatarNotAnImageError, (m) => new BadRequestException(m)],
   [UnsupportedAttachmentTypeError, (m) => new BadRequestException(m)],
   [UnsupportedMediaTypeError, (m) => new BadRequestException(m)],
   // 413, not 400: the request was well formed, it was too big — and the
@@ -121,6 +130,7 @@ const DOMAIN_ERROR_MAPPINGS: Array<[Type<Error>, DomainErrorFactory]> = [
   // page, because "that address is taken" without saying by what sends
   // somebody hunting through the wrong list (docs/adr/0064).
   [TaxonomyPrefixAlreadyExistsError, (m) => new ConflictException(m)],
+  [TaxonomyPrefixReservedError, (m) => new ConflictException(m)],
   [TermAddressTakenError, (m) => new ConflictException(m)],
   [TermAddressCollidesWithPageError, (m) => new ConflictException(m)],
   [PageSlugCollidesWithTermError, (m) => new ConflictException(m)],

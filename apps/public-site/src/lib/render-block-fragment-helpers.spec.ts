@@ -212,3 +212,118 @@ describe('FragmentComponentScripts', () => {
     expect(other.strip(html)).toBe(html);
   });
 });
+
+describe('buildFragmentBlock — a block the server fills', () => {
+  const author = {
+    id: 'u1',
+    name: 'Giulia Rossi',
+    bio: 'Scrive di caffè.',
+    avatar: null,
+    path: '/it/autore/giulia-rossi',
+  };
+  const page = {
+    content: [
+      {
+        id: 'box',
+        type: 'Container',
+        props: {},
+        children: [
+          {
+            id: 'author',
+            type: 'AuthorBox',
+            props: { showBio: true, author, isProfilePage: false },
+          },
+        ],
+      },
+      {
+        id: 'meta',
+        type: 'ArticleMeta',
+        props: {
+          showDate: true,
+          publishedAt: '2026-09-01T00:00:00.000Z',
+          authorName: 'Giulia Rossi',
+          authorPath: '/it/autore/giulia-rossi',
+        },
+      },
+    ],
+    seoMeta: { title: '', description: '' },
+    locale: 'it',
+    translations: [],
+    ancestors: [],
+    site: {} as never,
+    header: null,
+    footer: null,
+    headerSticky: false,
+  } as never;
+
+  /*
+   * Found live: switching off an article's date re-rendered the byline from
+   * the editor's copy — no date, no author — and the whole line vanished
+   * from the canvas until a reload.
+   */
+  it('keeps the edit as sent and takes the answer from the resolved page', () => {
+    const block = buildFragmentBlock(
+      {
+        pageId: 'p1',
+        token: 'tok',
+        blockId: 'meta',
+        blockType: 'ArticleMeta',
+        props: {
+          showDate: false,
+          publishedAt: null,
+          authorName: '',
+          authorPath: null,
+        },
+      },
+      page,
+    );
+
+    expect(block.props).toEqual({
+      showDate: false,
+      publishedAt: '2026-09-01T00:00:00.000Z',
+      authorName: 'Giulia Rossi',
+      authorPath: '/it/autore/giulia-rossi',
+    });
+  });
+
+  it('fills one nested in a container being re-rendered', () => {
+    const block = buildFragmentBlock(
+      {
+        pageId: 'p1',
+        token: 'tok',
+        blockId: 'box',
+        blockType: 'Container',
+        props: {},
+        children: [
+          {
+            id: 'author',
+            type: 'AuthorBox',
+            props: { showBio: false, author: null, isProfilePage: false },
+          },
+        ],
+      },
+      page,
+    );
+
+    expect(block.children?.[0]?.props).toEqual({
+      showBio: false,
+      author,
+      isProfilePage: false,
+    });
+  });
+
+  it('leaves a block the page does not have yet as it came', () => {
+    const block = buildFragmentBlock(
+      {
+        pageId: 'p1',
+        token: 'tok',
+        blockId: 'just-inserted',
+        blockType: 'AuthorBox',
+        props: { showBio: true, author: null, isProfilePage: false },
+      },
+      page,
+    );
+
+    expect(block.props['author']).toBeNull();
+  });
+});

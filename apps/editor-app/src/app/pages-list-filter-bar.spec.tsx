@@ -27,6 +27,8 @@ function renderBar(
         tenantId: 'tenant-1',
         email: 'ada@example.test',
         displayName: 'Ada Lovelace',
+        slug: null,
+        avatarUrl: null,
         role: 'admin',
         isActive: true,
         emailVerifiedAt: null,

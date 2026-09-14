@@ -21,6 +21,7 @@ import type { User } from '@brisk/domain-core';
 import type {
   AuthPort,
   EmailPort,
+  MediaStoragePort,
   TenantContextPort,
   UserRepositoryPort,
   VerificationTokenPort,
@@ -47,6 +48,7 @@ import {
   type UpdateUserRoleBody,
   updateUserRoleBodySchema,
 } from './users.schemas';
+import { USERS_MEDIA_STORAGE } from './users.tokens';
 
 // Every endpoint here is admin-only (Fase 5c: "Admin: tutto, incluse
 // gestione utenti") — gated at the controller level, not per-method,
@@ -66,6 +68,8 @@ export class UsersController {
     @Inject(EDITOR_APP_URL) private readonly editorAppUrl: string,
     @Inject(TENANT_CONTEXT)
     private readonly tenantContext: TenantContextPort,
+    @Inject(USERS_MEDIA_STORAGE)
+    private readonly mediaStorage: MediaStoragePort,
   ) {}
 
   @Get()
@@ -178,6 +182,10 @@ export class UsersController {
       tenantId: props.tenantId,
       email: props.email,
       displayName: props.displayName,
+      slug: props.slug,
+      avatarUrl: props.avatar
+        ? this.mediaStorage.getUrl(props.avatar.storageKey)
+        : null,
       role: props.role,
       isActive: props.isActive,
       emailVerifiedAt: props.emailVerifiedAt,

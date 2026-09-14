@@ -187,4 +187,126 @@ describe('resolvePageGridItems', () => {
     expect(titles(content[0])).toEqual(['Alfa', 'Zeta']);
     expect(titles(content[1])).toEqual(['Zeta', 'Alfa']);
   });
+
+  describe('an author page', () => {
+    async function seedWritten(
+      deps: ReturnType<typeof setup>,
+      input: {
+        id: string;
+        title: string;
+        createdBy: string;
+        collectionId: string | null;
+      },
+    ) {
+      const group = PageGroup.create({
+        id: input.id,
+        tenantId,
+        siteId,
+        createdBy: input.createdBy,
+        collectionId: input.collectionId,
+      });
+      await deps.pageGroupRepository.save(group);
+      const translation = PageTranslation.create({
+        id: `${input.id}-it`,
+        tenantId,
+        siteId,
+        pageGroupId: group.id,
+        locale: 'it',
+        slug: input.id,
+        seoMeta: { title: input.title, description: '' },
+      });
+      translation.publish([], { by: null });
+      await deps.pageTranslationRepository.save(translation, null);
+    }
+
+    const authorGrid = (
+      authorId: string,
+      termId: string | null = null,
+    ): Block => ({
+      id: 'grid-author',
+      type: 'PageGrid',
+      props: { termId, authorId, order: 'title', items: [] },
+    });
+
+    it('lists the articles the person wrote, and nothing else they made', async () => {
+      const deps = setup();
+      await seedWritten(deps, {
+        id: 'b',
+        title: 'Beta',
+        createdBy: 'giulia',
+        collectionId: 'news',
+      });
+      await seedWritten(deps, {
+        id: 'a',
+        title: 'Alfa',
+        createdBy: 'giulia',
+        collectionId: 'blog',
+      });
+      await seedWritten(deps, {
+        id: 'home',
+        title: 'Home',
+        createdBy: 'giulia',
+        collectionId: null,
+      });
+      await seedWritten(deps, {
+        id: 'c',
+        title: 'Di Mario',
+        createdBy: 'mario',
+        collectionId: 'news',
+      });
+
+      const [content] = await resolvePageGridItems(
+        deps,
+        tenantId,
+        siteId,
+        'it',
+        [[authorGrid('giulia')]],
+      );
+
+      expect(
+        (content[0].props['items'] as PageGridItem[]).map((item) => item.title),
+      ).toEqual(['Alfa', 'Beta']);
+    });
+
+    it('lists a term when the grid names one, whoever wrote the pages', async () => {
+      const deps = setup();
+      await seedArticle(deps, {
+        id: 'termed',
+        title: 'Nel termine',
+        publishedAt: new Date('2026-03-01T00:00:00Z'),
+      });
+      await seedWritten(deps, {
+        id: 'mine',
+        title: 'Mio',
+        createdBy: 'giulia',
+        collectionId: 'news',
+      });
+
+      const [content] = await resolvePageGridItems(
+        deps,
+        tenantId,
+        siteId,
+        'it',
+        [[authorGrid('giulia', termId)]],
+      );
+
+      expect(
+        (content[0].props['items'] as PageGridItem[]).map((item) => item.title),
+      ).toEqual(['Nel termine']);
+    });
+
+    it('gives someone who wrote nothing an empty list', async () => {
+      const deps = setup();
+
+      const [content] = await resolvePageGridItems(
+        deps,
+        tenantId,
+        siteId,
+        'it',
+        [[authorGrid('nobody')]],
+      );
+
+      expect(content[0].props['items']).toEqual([]);
+    });
+  });
 });

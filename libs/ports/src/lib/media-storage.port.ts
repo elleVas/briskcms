@@ -2,7 +2,8 @@ import type { StorageProvider } from '@brisk/domain-core';
 
 export interface UploadMediaInput {
   tenantId: string;
-  siteId: string;
+  /** `null` for a file that belongs to no site: a person's profile picture follows them across every site of the tenant. */
+  siteId: string | null;
   filename: string;
   mimeType: string;
   data: Uint8Array;

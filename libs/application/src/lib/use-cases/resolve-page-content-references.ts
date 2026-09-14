@@ -25,6 +25,7 @@ import {
   resolveArticleBlocks,
   type CurrentArticle,
 } from './resolve-article-blocks';
+import type { MediaUrlResolver } from './author-profile';
 
 export interface ResolvePageContentReferencesDeps {
   pageGroupRepository: PageGroupRepositoryPort;
@@ -34,6 +35,8 @@ export interface ResolvePageContentReferencesDeps {
   taxonomyRepository: TaxonomyRepositoryPort;
   /** Only the author's display name, for an article's byline — absent where no article is being rendered. */
   userRepository?: UserRepositoryPort;
+  /** Only the author's picture, for an AuthorBox. */
+  mediaStorage?: MediaUrlResolver;
 }
 
 /**

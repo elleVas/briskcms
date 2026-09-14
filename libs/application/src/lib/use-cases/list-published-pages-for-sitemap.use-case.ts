@@ -1,10 +1,16 @@
+import { authorPathSegment } from '@brisk/shared-types';
 import type {
   PageGroupRepositoryPort,
   PageTranslationRepositoryPort,
   SiteRepositoryPort,
   TaxonomyRepositoryPort,
+  UserRepositoryPort,
 } from '@brisk/ports';
-import { listPublishedPagePaths } from './list-published-page-paths';
+import {
+  listPublishedPagePaths,
+  type PublishedPagePath,
+} from './list-published-page-paths';
+import { articlesIn, hasAuthorPage } from './author-profile';
 
 export interface ListPublishedPagesForSitemapDeps {
   siteRepository: SiteRepositoryPort;
@@ -12,6 +18,8 @@ export interface ListPublishedPagesForSitemapDeps {
   pageTranslationRepository: PageTranslationRepositoryPort;
   /** Terms are addresses too, and a page a term claimed is no longer one (docs/adr/0067). */
   taxonomyRepository: TaxonomyRepositoryPort;
+  /** Authors' pages are addresses too (docs/adr/0071). */
+  userRepository: UserRepositoryPort;
 }
 
 export interface ListPublishedPagesForSitemapInput {
@@ -108,6 +116,13 @@ export async function listPublishedPagesForSitemap(
     }
   }
 
+  const authorEntries = await listAuthorEntries(
+    deps,
+    input.tenantId,
+    site.enabledLocales,
+    paths,
+  );
+
   return {
     items: [
       ...paths
@@ -120,8 +135,57 @@ export async function listPublishedPagesForSitemap(
           updatedAt: path.updatedAt,
         })),
       ...termEntries,
+      ...authorEntries,
     ],
     searchEngineIndexingEnabled: site.searchEngineIndexingEnabled,
     defaultLocale: site.defaultLocale,
   };
+}
+
+/**
+ * An author's page, in every language it answers in — the same rule the
+ * page itself answers by (`hasAuthorPage`), so the sitemap never lists an
+ * address that 404s. Dated by their newest article there: that is what
+ * changes what the page shows.
+ *
+ * Only the people whose articles are published here are read, not every
+ * account of the tenant: an admin who never wrote is not asked about.
+ */
+async function listAuthorEntries(
+  deps: Pick<ListPublishedPagesForSitemapDeps, 'userRepository'>,
+  tenantId: string,
+  locales: readonly string[],
+  paths: readonly PublishedPagePath[],
+): Promise<SitemapEntry[]> {
+  const authorIds = new Set(
+    paths
+      .filter((path) => path.collectionId !== null)
+      .map((path) => path.authorUserId)
+      .filter((id): id is string => id !== null),
+  );
+  const authors = await Promise.all(
+    [...authorIds].map((id) => deps.userRepository.findById(tenantId, id)),
+  );
+
+  const entries: SitemapEntry[] = [];
+  for (const user of authors) {
+    if (!user?.slug) continue;
+    for (const locale of locales) {
+      if (!hasAuthorPage(user, locale, paths)) continue;
+      const newest = articlesIn(paths, locale)
+        .filter((path) => path.authorUserId === user.id)
+        .reduce(
+          (latest, path) => (path.updatedAt > latest ? path.updatedAt : latest),
+          new Date(0),
+        );
+      entries.push({
+        slug: user.slug,
+        locale,
+        groupId: `author:${user.id}`,
+        ancestorSlugs: [authorPathSegment(locale)],
+        updatedAt: newest,
+      });
+    }
+  }
+  return entries;
 }

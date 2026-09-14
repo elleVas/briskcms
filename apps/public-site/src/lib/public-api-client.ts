@@ -6,12 +6,14 @@ import {
 } from '@brisk/shared-types';
 import { currentVisitorIp } from './request-context';
 import {
+  publishedAuthorSchema,
   publishedPageSchema,
   publishedSiteSchema,
   publishedTermSchema,
   type Block,
   type FormField,
   type FormStep,
+  type PublishedAuthor,
   type PublishedPage,
   type PublishedSite,
   type PublishedTerm,
@@ -184,6 +186,48 @@ export async function getPublishedTermByPath(
     throw new Error(`Public terms API error: ${res.status}`);
   }
   return publishedTermSchema.parse(await res.json());
+}
+
+export type PublishedAuthorLookupResult =
+  | { found: true; author: PublishedAuthor }
+  | { found: false; movedTo: string | null };
+
+/**
+ * An author's own page (docs/adr/0071), asked for only after the page and
+ * the term lookups came back empty: what an editor put at an address
+ * always wins over what the system made there.
+ *
+ * `movedTo` is the person's current address when they left this one — the
+ * route turns it into a 301, as it does for a moved page.
+ */
+export async function getPublishedAuthorBySlug(
+  domain: string,
+  locale: string,
+  slug: string,
+): Promise<PublishedAuthorLookupResult> {
+  const params = new URLSearchParams({ domain, locale, slug });
+  const res = await timedFetcher.fetch(
+    `${apiUrl()}/public/pages/author-by-slug?${params.toString()}`,
+  );
+
+  if (res.status === 404 || res.status === 400) {
+    const body: unknown = await res.json().catch(() => null);
+    const movedTo =
+      body && typeof body === 'object' && 'movedTo' in body
+        ? body.movedTo
+        : null;
+    return {
+      found: false,
+      movedTo: typeof movedTo === 'string' ? movedTo : null,
+    };
+  }
+  if (!res.ok) {
+    throw new Error(`Public authors API error: ${res.status}`);
+  }
+  return {
+    found: true,
+    author: publishedAuthorSchema.parse(await res.json()),
+  };
 }
 
 /**

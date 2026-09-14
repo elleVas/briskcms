@@ -207,6 +207,30 @@ export class LastActiveAdminError extends Error {
   }
 }
 
+/** Another person of this tenant already answers at this author address — now, or as a former address still redirecting. */
+export class UserSlugAlreadyExistsError extends Error {
+  constructor(slug: string) {
+    super(`The author address "${slug}" is already taken`);
+    this.name = 'UserSlugAlreadyExistsError';
+  }
+}
+
+/** An author address has to be a slug: lowercase letters, digits and single hyphens. */
+export class InvalidUserSlugError extends Error {
+  constructor(slug: string) {
+    super(`"${slug}" is not a valid author address`);
+    this.name = 'InvalidUserSlugError';
+  }
+}
+
+/** A profile picture has to be a picture: the upload's own bytes say it is not one. */
+export class AvatarNotAnImageError extends Error {
+  constructor() {
+    super('A profile picture has to be an image');
+    this.name = 'AvatarNotAnImageError';
+  }
+}
+
 export class UserEmailAlreadyExistsError extends Error {
   constructor(email: string) {
     super(`A user with email "${email}" already exists`);
@@ -349,6 +373,16 @@ export class TaxonomyPrefixAlreadyExistsError extends Error {
   constructor(prefix: string) {
     super(`Another taxonomy already uses the prefix "${prefix}"`);
     this.name = 'TaxonomyPrefixAlreadyExistsError';
+  }
+}
+
+/** The word authors' pages start with (`autore`, `author`) is not a dimension's to take — docs/adr/0071. */
+export class TaxonomyPrefixReservedError extends Error {
+  constructor(prefix: string) {
+    super(
+      `The prefix "${prefix}" is where authors' pages live: choose another one`,
+    );
+    this.name = 'TaxonomyPrefixReservedError';
   }
 }
 

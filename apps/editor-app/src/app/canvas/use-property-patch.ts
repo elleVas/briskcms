@@ -1,5 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { Block, ResponsiveBlockStyle } from '@brisk/shared-types';
+import {
+  hasServerFilledBlock,
+  type Block,
+  type ResponsiveBlockStyle,
+} from '@brisk/shared-types';
 import { renderBlockFragment } from '../../lib/block-fragment-api-client';
 
 export interface UsePropertyPatchInput {
@@ -47,6 +51,14 @@ export interface UsePropertyPatchInput {
    * knows what came before; it does not need to be told.
    */
   onBurstEnd?: (timerKey: string) => void;
+  /**
+   * Resolves once the draft is saved. A block the server fills (a page
+   * list, an article's byline) is re-rendered with the answer the server
+   * gives for the SAVED page, so its fragment waits for the edit to land:
+   * asked for earlier, a list whose term just changed would come back
+   * listing the old term.
+   */
+  whenSaved?: () => Promise<void>;
   debounceMs?: number;
 }
 
@@ -176,6 +188,7 @@ export function usePropertyPatch({
   onSaveVariant,
   patchBlock,
   onBurstEnd,
+  whenSaved,
   debounceMs = DEFAULT_DEBOUNCE_MS,
 }: UsePropertyPatchInput): UsePropertyPatchResult {
   const timers = useRef(
@@ -272,20 +285,43 @@ export function usePropertyPatch({
               variant: renderInstead.variant,
             }
           : { blockId, blockType, props, children, ...presentation };
-        renderBlockFragment({
-          pageId,
-          ...(fragmentSection ?? {}),
-          token,
-          ...rendered,
-        })
-          .then((html) => patchBlock(rendered.blockId, html))
-          .catch(() => {
-            /* the draft is already saved above — a failure here only leaves the canvas one change behind visually, it loses no data. */
-          });
+        const render = () =>
+          renderBlockFragment({
+            pageId,
+            ...(fragmentSection ?? {}),
+            token,
+            ...rendered,
+          })
+            .then((html) => patchBlock(rendered.blockId, html))
+            .catch(() => {
+              /* the draft is already saved above — a failure here only leaves the canvas one change behind visually, it loses no data. */
+            });
+        const answeredByServer =
+          whenSaved &&
+          hasServerFilledBlock([
+            {
+              type: rendered.blockType,
+              props: rendered.props,
+              children: rendered.children,
+            },
+          ]);
+        if (answeredByServer) {
+          void whenSaved().then(render);
+        } else {
+          void render();
+        }
       });
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps -- `schedule` is redefined on every render but reads only `timers` (a ref, stable) and `debounceMs` (already an explicit dependency) — including it would break scheduleChange's stable identity for no benefit.
-    [pageId, fragmentSection, token, onSaveDraft, patchBlock, debounceMs],
+    [
+      pageId,
+      fragmentSection,
+      token,
+      onSaveDraft,
+      patchBlock,
+      whenSaved,
+      debounceMs,
+    ],
   );
 
   const scheduleTextChange = useCallback(

@@ -97,12 +97,42 @@
       "themeSystem": "Come il sistema"
     },
     "account": {
-      "label": "Account"
+      "label": "Account",
+      "menuLabel": "Account: {{name}}",
+      "profile": "Il mio profilo"
     },
     "menu": {
       "open": "Apri il menu",
       "title": "Menu"
     }
+  },
+  "account": {
+    "title": "Il mio profilo",
+    "intro": "Il tuo nome e la tua foto nell’editor, e quello che la tua pagina autore sul sito dice di te.",
+    "picture": "Foto",
+    "uploadPicture": "Carica una foto",
+    "changePicture": "Cambia foto",
+    "removePicture": "Rimuovi",
+    "pictureHint": "Una tua foto, meglio se quadrata. Senza, compare la tua iniziale.",
+    "pictureNotImage": "Questo file non è un’immagine. Scegli un JPG, PNG, WebP, GIF o AVIF.",
+    "pictureTooLarge": "Questa foto supera i 10 MB. Scegline una più leggera.",
+    "pictureFailed": "Non è stato possibile salvare la foto. Riprova.",
+    "displayName": "Nome",
+    "displayNameHint": "Compare sotto gli articoli che scrivi e nella tua pagina autore.",
+    "slug": "Indirizzo della pagina autore",
+    "slugHint": "Viene creato dal tuo nome al primo salvataggio. Se lo cambi, il vecchio indirizzo porta al nuovo.",
+    "slugInvalid": "Usa solo lettere minuscole, numeri e trattini.",
+    "slugTaken": "Questo indirizzo è già usato da un’altra persona. Scegline un altro.",
+    "bio": "Bio",
+    "bioHint": "Qualche riga su di te, in ogni lingua del sito. Lascia vuota una lingua per non mostrare la bio in quella lingua.",
+    "bioCount": "{{count}} / {{max}}",
+    "email": "Email",
+    "role": "Ruolo",
+    "authorPageNote": "La tua pagina autore va online quando hai un nome e almeno un articolo pubblicato in una collezione.",
+    "save": "Salva",
+    "saved": "Salvato",
+    "invalid": "Una parte di quello che hai inserito non può essere salvata. Controlla i campi e riprova.",
+    "saveFailed": "Non è stato possibile salvare il profilo. Riprova."
   },
   "dashboard": {
     "title": "Dashboard",
@@ -1918,6 +1948,17 @@
         },
         "showAuthor": {
           "fieldLabel": "Mostra l’autore"
+        }
+      }
+    },
+    "authorBox": {
+      "label": "Riquadro dell’autore",
+      "fields": {
+        "showBio": {
+          "fieldLabel": "Mostra la bio"
+        },
+        "showArticlesLink": {
+          "fieldLabel": "Link a tutti i suoi articoli"
         }
       }
     },

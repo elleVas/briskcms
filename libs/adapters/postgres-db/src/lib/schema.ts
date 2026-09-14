@@ -107,8 +107,22 @@ export const users = pgTable(
     createdAt: timestamp('created_at', { withTimezone: true })
       .notNull()
       .defaultNow(),
+    // The person's author page (docs/adr/0071). Nullable: a person with no
+    // display name has no address, since one made from an email would
+    // publish part of it. Unique per tenant among the ones that exist —
+    // Postgres lets any number of NULLs through a unique constraint.
+    slug: text('slug'),
+    formerSlugs: text('former_slugs').array().notNull().default([]),
+    bio: jsonb('bio').$type<Record<string, string>>().notNull().default({}),
+    avatarStorageKey: text('avatar_storage_key'),
+    avatarWidth: integer('avatar_width'),
+    avatarHeight: integer('avatar_height'),
   },
-  (table) => [unique().on(table.tenantId, table.email)],
+  (table) => [
+    unique().on(table.tenantId, table.email),
+    unique('users_tenant_id_slug_unique').on(table.tenantId, table.slug),
+    index('users_former_slugs_idx').using('gin', table.formerSlugs),
+  ],
 );
 
 export const sites = pgTable(

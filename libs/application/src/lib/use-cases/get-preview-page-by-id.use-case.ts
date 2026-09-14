@@ -17,6 +17,7 @@ import { resolvePageContentReferences } from './resolve-page-content-references'
 import { loadPublishedSections } from './resolve-section-instances';
 import { currentArticleOf } from './resolve-article-blocks';
 import type { PublishedPage } from './get-published-page-by-slug.use-case';
+import type { MediaUrlResolver } from './author-profile';
 
 export interface GetPreviewPageByIdDeps {
   reusableSectionRepository: ReusableSectionRepositoryPort;
@@ -30,6 +31,8 @@ export interface GetPreviewPageByIdDeps {
   previewTokenPort: PreviewTokenPort;
   /** Only for an article's byline — read once, and only on a page that carries an ArticleMeta block. */
   userRepository?: UserRepositoryPort;
+  /** Only for the author's picture in an AuthorBox. */
+  mediaStorage?: MediaUrlResolver;
 }
 
 export interface GetPreviewPageByIdInput {

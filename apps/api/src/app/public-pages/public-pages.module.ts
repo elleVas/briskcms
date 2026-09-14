@@ -18,6 +18,7 @@ import {
 } from '@brisk/postgres-site-repository';
 import { DATABASE, DatabaseModule } from '../database.module';
 import { DeploymentTenantModule } from '../deployment-tenant.module';
+import { createMediaStorage } from '../media/media.module';
 import { PublicPagesController } from './public-pages.controller';
 import {
   PAGE_GROUP_REPOSITORY,
@@ -30,6 +31,7 @@ import {
   SITE_THEME_BLOCK_STYLES_REPOSITORY,
   TAXONOMY_REPOSITORY,
   USER_REPOSITORY,
+  MEDIA_STORAGE,
 } from './public-pages.tokens';
 
 @Module({
@@ -87,11 +89,16 @@ import {
       inject: [DATABASE],
     },
     {
-      // Read for one thing only: the display name behind an article's
-      // byline. Never the account's email.
+      // Read for what an author shows of themselves: the name behind an
+      // article's byline, their bio and picture, their author page
+      // (docs/adr/0071). Never the account's email.
       provide: USER_REPOSITORY,
       useFactory: (db: BriskDb) => new DrizzleUserRepository(db),
       inject: [DATABASE],
+    },
+    {
+      provide: MEDIA_STORAGE,
+      useFactory: createMediaStorage,
     },
     {
       provide: SEARCH_REPOSITORY,

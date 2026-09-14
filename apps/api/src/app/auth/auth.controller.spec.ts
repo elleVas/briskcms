@@ -54,6 +54,11 @@ describe('AuthController', () => {
       findByEmail: jest.fn(),
       list: jest.fn(),
       countActiveAdmins: jest.fn(),
+      findBySlug: jest.fn(),
+      findByFormerSlug: jest.fn(),
+      isSlugTaken: jest.fn(),
+      saveProfile: jest.fn(),
+      saveAvatar: jest.fn(),
     };
     authPort = {
       hashPassword: jest.fn(),

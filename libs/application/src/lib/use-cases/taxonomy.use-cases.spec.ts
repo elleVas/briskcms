@@ -1,5 +1,9 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { PageTranslation, Site } from '@brisk/domain-core';
+import {
+  PageTranslation,
+  Site,
+  TaxonomyPrefixReservedError,
+} from '@brisk/domain-core';
 import { DEFAULT_COOKIE_BANNER_SETTINGS } from '@brisk/shared-types';
 import {
   InMemoryPageTranslationRepository,
@@ -130,6 +134,33 @@ describe('taxonomy use cases', () => {
         name: { it: 'Categoria' },
       }),
     ).rejects.toThrow('prefix');
+  });
+
+  /*
+   * A dimension called "Autore" would put its terms at the authors'
+   * addresses — `/it/autore/giulia-rossi` a term and a person at once.
+   */
+  it("refuses the word authors' pages start with, in any language, on create and on rename", async () => {
+    await expect(
+      createTaxonomy(deps(), { tenantId, siteId, name: { it: 'Autore' } }),
+    ).rejects.toThrow(TaxonomyPrefixReservedError);
+    await expect(
+      createTaxonomy(deps(), {
+        tenantId,
+        siteId,
+        name: { it: 'Scrittori' },
+        prefix: 'forfatter',
+      }),
+    ).rejects.toThrow(TaxonomyPrefixReservedError);
+
+    const writers = await createTaxonomy(deps(), {
+      tenantId,
+      siteId,
+      name: { it: 'Autori' },
+    });
+    await expect(
+      updateTaxonomy(deps(), { tenantId, id: writers.id, prefix: 'author' }),
+    ).rejects.toThrow(TaxonomyPrefixReservedError);
   });
 
   /*

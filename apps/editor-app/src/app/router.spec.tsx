@@ -57,6 +57,23 @@ vi.mock('../lib/auth-api-client', async (importOriginal) => {
   };
 });
 
+vi.mock('../lib/account-api-client', async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import('../lib/account-api-client')>();
+  return {
+    ...actual,
+    getAccountProfile: vi.fn().mockResolvedValue({
+      id: 'user-1',
+      email: 'editor@example.com',
+      role: 'admin',
+      displayName: 'Giulia Rossi',
+      slug: 'giulia-rossi',
+      bio: {},
+      avatarUrl: null,
+    }),
+  };
+});
+
 vi.mock('../lib/page-groups-api-client', async (importOriginal) => {
   const actual =
     await importOriginal<typeof import('../lib/page-groups-api-client')>();
@@ -234,6 +251,8 @@ const sampleUser: UserDto = {
   tenantId: 'tenant-1',
   email: 'editor@example.com',
   displayName: 'Editor',
+  slug: null,
+  avatarUrl: null,
   role: 'editor',
   isActive: true,
   emailVerifiedAt: '2026-01-01T00:00:00.000Z',
@@ -471,7 +490,9 @@ describe('router', () => {
     vi.mocked(authApi.logout).mockResolvedValue({ success: true });
 
     renderApp('/pages');
-    fireEvent.click(await screen.findByRole('button', { name: /^account$/i }));
+    fireEvent.click(
+      await screen.findByRole('button', { name: 'Account: Giulia Rossi' }),
+    );
     fireEvent.click(await screen.findByRole('button', { name: /^esci$/i }));
 
     expect(await screen.findByRole('heading', { name: 'Accedi' })).toBeTruthy();

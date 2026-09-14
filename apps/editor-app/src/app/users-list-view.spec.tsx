@@ -37,6 +37,8 @@ const userOne: UserDto = {
   tenantId: 'tenant-1',
   email: 'editor@example.com',
   displayName: 'Editor One',
+  slug: null,
+  avatarUrl: null,
   role: 'editor',
   isActive: true,
   emailVerifiedAt: '2026-01-01T00:00:00.000Z',

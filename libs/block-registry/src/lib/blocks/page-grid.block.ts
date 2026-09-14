@@ -19,6 +19,7 @@ export const pageGridBlock: BlockDescriptor<PageGridProps> = {
   icon: 'layout-grid',
   defaultProps: {
     termId: null,
+    authorId: null,
     layout: 'list',
     order: 'title',
     limit: 0,
