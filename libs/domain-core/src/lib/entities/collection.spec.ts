@@ -68,12 +68,32 @@ describe('Collection entity', () => {
     expect(collection.updatedAt).toEqual(new Date('2026-03-01T00:00:00Z'));
   });
 
+  it('starts with no default template, and can be given one and have it taken away', () => {
+    const collection = Collection.create({
+      ...base,
+      name: 'News',
+      now: new Date('2026-01-01T00:00:00Z'),
+    });
+    expect(collection.defaultTemplateId).toBeNull();
+
+    collection.setDefaultTemplate(
+      'template-1',
+      new Date('2026-03-01T00:00:00Z'),
+    );
+    expect(collection.defaultTemplateId).toBe('template-1');
+    expect(collection.updatedAt).toEqual(new Date('2026-03-01T00:00:00Z'));
+
+    collection.setDefaultTemplate(null);
+    expect(collection.defaultTemplateId).toBeNull();
+  });
+
   it('fromProps/toProps round-trip without loss', () => {
     const props = {
       ...base,
       name: 'Events',
       icon: 'calendar-days',
       order: 2,
+      defaultTemplateId: 'template-1',
       createdAt: new Date('2025-12-01T00:00:00Z'),
       updatedAt: new Date('2026-01-01T00:00:00Z'),
     };

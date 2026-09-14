@@ -1,59 +1,21 @@
 import { and, eq, isNull, sql } from 'drizzle-orm';
 import {
-  PageSlugAlreadyExistsError,
   PageTranslation,
-  PageTranslationLocaleAlreadyExistsError,
-  type PageTranslationProps,
   type PageTranslationVersion,
 } from '@brisk/domain-core';
 import type { PageTranslationRepositoryPort } from '@brisk/ports';
 import {
   type BriskDb,
   type BriskTx,
-  isUniqueViolation,
   pageTranslations,
   withTenant,
 } from '@brisk/postgres-db';
+import {
+  pageTranslationRow,
+  upsertPageTranslationTx,
+  withPageTranslationUniqueViolations,
+} from './page-translation-write-tx';
 import { savePageTranslationVersionTx } from './save-page-translation-version-tx';
-
-// The second name is the one ACTUALLY applied in Postgres, not the one
-// Drizzle generates before truncation: Postgres identifiers are capped at
-// 63 bytes, and this auto-generated name exceeds them — verified live with
-// `select conname from pg_constraint where conrelid =
-// 'page_translations'::regclass`, not assumed by analogy with `pages`'
-// shorter name. `isUniqueViolation` does an exact comparison, and a wrong
-// name here would let a raw PostgresError surface instead of the domain
-// error.
-const SLUG_UNIQUE_CONSTRAINT =
-  'page_translations_tenant_id_site_id_locale_parent_group_id_slug';
-const ROOT_SLUG_UNIQUE_CONSTRAINT = 'page_translations_root_slug_unique';
-const LOCALE_UNIQUE_CONSTRAINT =
-  'page_translations_tenant_id_page_group_id_locale_unique';
-
-function toRow(props: PageTranslationProps, parentGroupId: string | null) {
-  return {
-    id: props.id,
-    tenantId: props.tenantId,
-    siteId: props.siteId,
-    pageGroupId: props.pageGroupId,
-    parentGroupId,
-    locale: props.locale,
-    slug: props.slug,
-    formerSlugs: props.formerSlugs,
-    seoMeta: props.seoMeta,
-    fieldValues: props.fieldValues,
-    status: props.status,
-    publishedSnapshot: props.publishedSnapshot,
-    isDiverged: props.isDiverged,
-    divergedContent: props.divergedContent,
-    createdBy: props.createdBy,
-    createdAt: props.createdAt,
-    updatedAt: props.updatedAt,
-    updatedBy: props.updatedBy,
-    contentUpdatedAt: props.contentUpdatedAt,
-    publishedAt: props.publishedAt,
-  };
-}
 
 function fromRow(row: typeof pageTranslations.$inferSelect): PageTranslation {
   return PageTranslation.fromProps({
@@ -95,9 +57,11 @@ export class DrizzlePageTranslationRepository implements PageTranslationReposito
     translation: PageTranslation,
     parentGroupId: string | null,
   ): Promise<void> {
-    const row = toRow(translation.toProps(), parentGroupId);
-    await this.withUniqueViolationMapping(row, () =>
-      withTenant(this.db, row.tenantId, (tx) => this.upsertTx(tx, row)),
+    const row = pageTranslationRow(translation.toProps(), parentGroupId);
+    await withPageTranslationUniqueViolations(row, () =>
+      withTenant(this.db, row.tenantId, (tx) =>
+        upsertPageTranslationTx(tx, row),
+      ),
     );
   }
 
@@ -107,41 +71,13 @@ export class DrizzlePageTranslationRepository implements PageTranslationReposito
     version: PageTranslationVersion,
     parentGroupId: string | null,
   ): Promise<void> {
-    const row = toRow(translation.toProps(), parentGroupId);
-    await this.withUniqueViolationMapping(row, () =>
+    const row = pageTranslationRow(translation.toProps(), parentGroupId);
+    await withPageTranslationUniqueViolations(row, () =>
       withTenant(this.db, row.tenantId, async (tx: BriskTx) => {
-        await this.upsertTx(tx, row);
+        await upsertPageTranslationTx(tx, row);
         await savePageTranslationVersionTx(tx, version);
       }),
     );
-  }
-
-  private upsertTx(tx: BriskTx, row: ReturnType<typeof toRow>) {
-    return tx
-      .insert(pageTranslations)
-      .values(row)
-      .onConflictDoUpdate({ target: pageTranslations.id, set: row });
-  }
-
-  /** The same reason as its namesake in DrizzlePageRepository: a conflict under real concurrency has to be translated into the same domain error the use case throws in the common case, not left to surface as a raw 500. */
-  private async withUniqueViolationMapping<T>(
-    row: ReturnType<typeof toRow>,
-    fn: () => Promise<T>,
-  ): Promise<T> {
-    try {
-      return await fn();
-    } catch (error) {
-      if (
-        isUniqueViolation(error, SLUG_UNIQUE_CONSTRAINT) ||
-        isUniqueViolation(error, ROOT_SLUG_UNIQUE_CONSTRAINT)
-      ) {
-        throw new PageSlugAlreadyExistsError(row.slug);
-      }
-      if (isUniqueViolation(error, LOCALE_UNIQUE_CONSTRAINT)) {
-        throw new PageTranslationLocaleAlreadyExistsError(row.locale);
-      }
-      throw error;
-    }
   }
 
   async findById(

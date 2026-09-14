@@ -17,6 +17,7 @@ import {
   PageGroup,
   type PageGroupProps,
   type PageGroupVersion,
+  type PageTranslation,
 } from '@brisk/domain-core';
 import type {
   PageGroupListFilters,
@@ -38,6 +39,11 @@ import {
   users,
   withTenant,
 } from '@brisk/postgres-db';
+import {
+  pageTranslationRow,
+  upsertPageTranslationTx,
+  withPageTranslationUniqueViolations,
+} from './page-translation-write-tx';
 import { savePageGroupVersionTx } from './save-page-group-version-tx';
 
 /**
@@ -133,6 +139,30 @@ export class DrizzlePageGroupRepository
       await this.upsertTx(tx, row);
       await savePageGroupVersionTx(tx, version);
     });
+  }
+
+  /**
+   * The group, its first version and its first language in ONE transaction
+   * — see the port. The language row is written, and its address refused,
+   * by the same code a translation saved on its own goes through.
+   */
+  async saveNewWithTranslation(
+    group: PageGroup,
+    version: PageGroupVersion,
+    translation: PageTranslation,
+  ): Promise<void> {
+    const groupRow = this.toRow(group);
+    const translationRow = pageTranslationRow(
+      translation.toProps(),
+      group.parentId,
+    );
+    await withPageTranslationUniqueViolations(translationRow, () =>
+      withTenant(this.db, groupRow.tenantId, async (tx: BriskTx) => {
+        await this.upsertTx(tx, groupRow);
+        await savePageGroupVersionTx(tx, version);
+        await upsertPageTranslationTx(tx, translationRow);
+      }),
+    );
   }
 
   async listBySite(

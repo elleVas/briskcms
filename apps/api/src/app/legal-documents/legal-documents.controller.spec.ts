@@ -72,6 +72,7 @@ describe('LegalDocumentsController (unit)', () => {
     pageGroupRepository = {
       save: jest.fn(),
       saveWithVersion: jest.fn(),
+      saveNewWithTranslation: jest.fn(),
       findById: jest.fn(),
       listBySite: jest.fn(),
       listBySiteFiltered: jest.fn(),

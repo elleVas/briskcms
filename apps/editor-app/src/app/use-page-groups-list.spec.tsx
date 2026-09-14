@@ -39,24 +39,6 @@ const sampleGroup: api.PageGroupRecord = {
   updatedAt: '',
 };
 
-const sampleTranslation: api.PageTranslationRecord = {
-  id: 'translation-1',
-  tenantId: 'tenant-1',
-  siteId: 'site-1',
-  pageGroupId: 'group-1',
-  locale: 'it',
-  slug: 'chi-siamo',
-  seoMeta: { title: 'Chi Siamo', description: '' },
-  fieldValues: {},
-  status: 'draft',
-  publishedSnapshot: null,
-  isDiverged: false,
-  divergedContent: null,
-  createdBy: null,
-  createdAt: '',
-  updatedAt: '',
-};
-
 function wrapper({ children }: { children: ReactNode }) {
   return (
     <QueryClientProvider client={createTestQueryClient()}>
@@ -70,37 +52,67 @@ describe('usePageGroupsList', () => {
     vi.clearAllMocks();
   });
 
-  it('createPageGroup creates the group, seeds a default-locale translation from the slugified name, and navigates to the new editor', async () => {
+  it('createPageGroup creates the page and its default-locale translation in one request, and opens the editor', async () => {
     const navigate = vi.fn();
     vi.mocked(router.useNavigate).mockReturnValue(navigate);
     vi.mocked(api.createPageGroup).mockResolvedValue(sampleGroup);
-    vi.mocked(api.createPageGroupTranslation).mockResolvedValue(
-      sampleTranslation,
-    );
 
     const { result } = renderHook(() => usePageGroupsList('site-1', 'it'), {
       wrapper,
     });
 
     await act(async () => {
-      await result.current.createPageGroup('Chi Siamo');
+      await result.current.createPageGroup({
+        name: 'Chi Siamo',
+        templateId: null,
+      });
     });
 
     expect(api.createPageGroup).toHaveBeenCalledWith({
       siteId: 'site-1',
       collectionId: null,
+      translation: {
+        locale: 'it',
+        slug: 'chi-siamo',
+        seoMeta: { title: 'Chi Siamo', description: '' },
+      },
     });
-    expect(api.createPageGroupTranslation).toHaveBeenCalledWith('group-1', {
-      locale: 'it',
-      slug: 'chi-siamo',
-      seoMeta: { title: 'Chi Siamo', description: '' },
-    });
+    // Never a second request that could fail after the page exists.
+    expect(api.createPageGroupTranslation).not.toHaveBeenCalled();
     await waitFor(() =>
       expect(navigate).toHaveBeenCalledWith({
         to: '/page-groups/$groupId',
         params: { groupId: sampleGroup.id },
       }),
     );
+  });
+
+  it('createPageGroup starts from the chosen template, in the collection it was created in', async () => {
+    vi.mocked(router.useNavigate).mockReturnValue(vi.fn());
+    vi.mocked(api.createPageGroup).mockResolvedValue(sampleGroup);
+
+    const { result } = renderHook(
+      () => usePageGroupsList('site-1', 'it', 'collection-news'),
+      { wrapper },
+    );
+
+    await act(async () => {
+      await result.current.createPageGroup({
+        name: 'Nuovo articolo',
+        templateId: 'template-1',
+      });
+    });
+
+    expect(api.createPageGroup).toHaveBeenCalledWith({
+      siteId: 'site-1',
+      collectionId: 'collection-news',
+      templateId: 'template-1',
+      translation: {
+        locale: 'it',
+        slug: 'nuovo-articolo',
+        seoMeta: { title: 'Nuovo articolo', description: '' },
+      },
+    });
   });
 
   it('deletePageGroup removes the group', async () => {

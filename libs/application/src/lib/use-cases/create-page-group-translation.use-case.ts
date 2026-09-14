@@ -1,7 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import {
   PageGroupNotFoundError,
-  PageSlugAlreadyExistsError,
   PageTranslation,
   PageTranslationLocaleAlreadyExistsError,
 } from '@brisk/domain-core';
@@ -11,7 +10,7 @@ import type {
   PageTranslationRepositoryPort,
   TaxonomyRepositoryPort,
 } from '@brisk/ports';
-import { assertPageSlugFreeOfTerms } from './term-address';
+import { assertPageTranslationAddressFree } from './page-translation-address';
 
 export interface CreatePageGroupTranslationDeps {
   pageGroupRepository: PageGroupRepositoryPort;
@@ -61,36 +60,13 @@ export async function createPageGroupTranslation(
     throw new PageTranslationLocaleAlreadyExistsError(input.locale);
   }
 
-  const slugTaken =
-    await deps.pageTranslationRepository.findByParentGroupAndLocaleSlug(
-      input.tenantId,
-      group.siteId,
-      input.locale,
-      group.parentId,
-      input.slug,
-    );
-  if (slugTaken) {
-    throw new PageSlugAlreadyExistsError(input.slug);
-  }
-
-  // Only at the root: a nested page's address begins with its ancestors'
-  // slugs, and no term can be there — a taxonomy prefix is refused as a
-  // root page slug in the first place, so nothing can own that first
-  // segment except a page.
-  if (group.parentId === null) {
-    await assertPageSlugFreeOfTerms(
-      {
-        taxonomyRepository: deps.taxonomyRepository,
-        pageTranslationRepository: deps.pageTranslationRepository,
-      },
-      {
-        tenantId: input.tenantId,
-        siteId: group.siteId,
-        locale: input.locale,
-        slug: input.slug,
-      },
-    );
-  }
+  await assertPageTranslationAddressFree(deps, {
+    tenantId: input.tenantId,
+    siteId: group.siteId,
+    locale: input.locale,
+    parentGroupId: group.parentId,
+    slug: input.slug,
+  });
 
   const translation = PageTranslation.create({
     id: randomUUID(),

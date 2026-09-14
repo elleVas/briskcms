@@ -15,5 +15,7 @@ export type CreateCollectionBody = z.infer<typeof createCollectionBodySchema>;
 export const updateCollectionBodySchema = z.object({
   name: z.string().min(1).max(60).optional(),
   icon: z.string().min(1).max(40).optional(),
+  /** `null` clears it — a new page here then starts blank (docs/adr/0072). */
+  defaultTemplateId: z.string().uuid().nullable().optional(),
 });
 export type UpdateCollectionBody = z.infer<typeof updateCollectionBodySchema>;

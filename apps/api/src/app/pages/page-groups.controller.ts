@@ -12,6 +12,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import {
+  createPage,
   createPageGroup,
   createPageGroupTranslation,
   deletePageGroup,
@@ -29,6 +30,7 @@ import {
   reorderSiblingPageGroups,
   rollbackPageGroupToVersion,
   saveDivergedPageTranslationContent,
+  savePageGroupAsTemplate,
   savePageGroupContent,
   savePageTranslationFieldValues,
   setPageGroupTerms,
@@ -49,6 +51,7 @@ import type {
   PageTranslationVersionRepositoryPort,
   PreviewTokenPort,
   ReusableSectionRepositoryPort,
+  ReusableSectionVersionRepositoryPort,
   SearchPort,
   SiteRepositoryPort,
   TaxonomyRepositoryPort,
@@ -82,6 +85,7 @@ import {
 import {
   PREVIEW_TOKEN_PORT,
   REUSABLE_SECTION_REPOSITORY,
+  REUSABLE_SECTION_VERSION_REPOSITORY,
   SEARCH_REPOSITORY,
   SITE_REPOSITORY,
   TAXONOMY_REPOSITORY,
@@ -90,6 +94,8 @@ import {
 import {
   type CreatePageGroupBody,
   createPageGroupBodySchema,
+  type SaveAsTemplateBody,
+  saveAsTemplateBodySchema,
   type CreatePageGroupTranslationBody,
   createPageGroupTranslationBodySchema,
   type ListPageGroupsQuery,
@@ -143,6 +149,8 @@ export class PageGroupsController {
     private readonly siteRepository: SiteRepositoryPort,
     @Inject(COLLECTION_REPOSITORY)
     private readonly collectionRepository: CollectionRepositoryPort,
+    @Inject(REUSABLE_SECTION_VERSION_REPOSITORY)
+    private readonly reusableSectionVersionRepository: ReusableSectionVersionRepositoryPort,
   ) {}
 
   /** What the taxonomy use cases need — the same three everywhere they are called. */
@@ -159,15 +167,62 @@ export class PageGroupsController {
     @Body(new ZodValidationPipe(createPageGroupBodySchema))
     body: CreatePageGroupBody,
   ) {
-    const group = await createPageGroup(
-      { pageGroupRepository: this.pageGroupRepository },
+    const { translation, templateId, ...rest } = body;
+    const input = {
+      ...rest,
+      createdBy: this.tenantContext.getCurrentUserId(),
+      tenantId: this.tenantContext.getCurrentTenantId(),
+    };
+    // With its first language, the page is written in one transaction —
+    // what the editor always sends (docs/adr/0072). Without it, the group
+    // alone, as the API has always allowed.
+    const group = translation
+      ? (
+          await createPage(
+            {
+              pageGroupRepository: this.pageGroupRepository,
+              pageTranslationRepository: this.pageTranslationRepository,
+              taxonomyRepository: this.taxonomyRepository,
+              reusableSectionRepository: this.reusableSectionRepository,
+            },
+            { ...input, ...translation, templateId },
+          )
+        ).group
+      : await createPageGroup(
+          { pageGroupRepository: this.pageGroupRepository },
+          input,
+        );
+    return this.toGroupDto(group);
+  }
+
+  /**
+   * "Save as template": a published template holding what this page shows
+   * in the site's default language (docs/adr/0072). Answered with the
+   * template in the same shape `GET /reusable-sections/:id` returns, since
+   * that is the list the editor refreshes afterwards.
+   */
+  @Post(':id/save-as-template')
+  async saveAsTemplate(
+    @Param('id') id: string,
+    @Body(new ZodValidationPipe(saveAsTemplateBodySchema))
+    body: SaveAsTemplateBody,
+  ) {
+    const template = await savePageGroupAsTemplate(
       {
-        ...body,
-        createdBy: this.tenantContext.getCurrentUserId(),
+        pageGroupRepository: this.pageGroupRepository,
+        pageTranslationRepository: this.pageTranslationRepository,
+        siteRepository: this.siteRepository,
+        reusableSectionRepository: this.reusableSectionRepository,
+        reusableSectionVersionRepository: this.reusableSectionVersionRepository,
+      },
+      {
         tenantId: this.tenantContext.getCurrentTenantId(),
+        pageGroupId: id,
+        name: body.name,
+        actorUserId: this.tenantContext.getCurrentUserId(),
       },
     );
-    return this.toGroupDto(group);
+    return template.toProps();
   }
 
   @Get()

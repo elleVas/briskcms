@@ -1,7 +1,8 @@
-import type {
-  FieldValueOverlay,
-  PageContent,
-  SeoMeta,
+import {
+  mergeTranslatedContent,
+  type FieldValueOverlay,
+  type PageContent,
+  type SeoMeta,
 } from '@brisk/shared-types';
 import type { EditContext } from './edit-context';
 
@@ -171,6 +172,31 @@ export class PageTranslation {
     return this.props.publishedAt;
   }
 
+  /**
+   * What this language shows right now, given the shared structure it
+   * hangs off: its own fork when unlinked, otherwise the group's blocks
+   * with this language's text laid over them.
+   *
+   * One definition, because three callers need exactly this answer —
+   * publishing freezes it, the preview renders it, and saving a page as a
+   * template copies it — and a second copy of the rule is how one of them
+   * would quietly start disagreeing about an unlinked translation.
+   */
+  currentContent(groupContent: PageContent): PageContent {
+    if (!this.props.isDiverged) {
+      return mergeTranslatedContent(groupContent, this.props.fieldValues);
+    }
+    // diverge() sets both in the same call, so an unlinked translation
+    // with nothing of its own is a corrupted row — not a case to fall
+    // back from silently onto the group's structure.
+    if (!this.props.divergedContent) {
+      throw new Error(
+        `Page translation ${this.props.id} is diverged but has no divergedContent`,
+      );
+    }
+    return this.props.divergedContent;
+  }
+
   /** Updates slug/seoMeta — still per-locale as before, independent of the structure's draft/publish state (the same reasoning as Page.updateSeoMeta, ADR-0014). */
   updateSeoMeta(seoMeta: SeoMeta, edit: EditContext): void {
     this.props.seoMeta = seoMeta;
@@ -209,7 +235,7 @@ export class PageTranslation {
     this.props.contentUpdatedAt = this.touch(edit);
   }
 
-  /** Promotes the current merge (computed by the caller — mergeTranslatedContent(group.content, this.fieldValues), or `divergedContent` when unlinked) to this language's published version. */
+  /** Promotes the current merge (computed by the caller with `currentContent`) to this language's published version. */
   publish(mergedContent: PageContent, edit: EditContext): void {
     this.props.publishedSnapshot = mergedContent;
     this.props.status = 'published';

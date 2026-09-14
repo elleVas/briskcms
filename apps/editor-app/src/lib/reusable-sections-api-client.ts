@@ -18,9 +18,10 @@ export interface ReusableSectionDto {
   updatedAt: string;
 }
 
-/** The list row: a section plus how many pages place it (docs/adr/0059). */
+/** The list row: a section plus how many pages place it (docs/adr/0059) and how many templates hold it (docs/adr/0072). */
 export interface ReusableSectionListItemDto extends ReusableSectionDto {
   usedOnPages: number;
+  usedInTemplates: number;
 }
 
 export function listReusableSections(

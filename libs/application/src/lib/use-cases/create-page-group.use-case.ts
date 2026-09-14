@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { PageGroup } from '@brisk/domain-core';
+import { PageGroup, type PageGroupVersion } from '@brisk/domain-core';
 import type { PageContent } from '@brisk/shared-types';
 import type { PageGroupRepositoryPort } from '@brisk/ports';
 
@@ -17,19 +17,24 @@ export interface CreatePageGroupInput {
   createdBy: string | null;
 }
 
+export interface BuiltPageGroup {
+  group: PageGroup;
+  /** The version row its first save has to carry — never a structure saved without one. */
+  version: PageGroupVersion;
+}
+
 /**
- * Creates only the shared structure (see createPageGroup vs.
- * createPageGroupTranslation in the i18n plan) — a group with zero
- * translations is a valid intermediate state, the caller adds at least one
- * locale next.
+ * A new group, appended after its siblings, with its first version — built
+ * and NOT saved, so a caller that must write it together with something
+ * else (its first language, see createPage) can do so in one transaction.
  */
-export async function createPageGroup(
-  deps: CreatePageGroupDeps,
+export async function buildPageGroup(
+  pageGroupRepository: PageGroupRepositoryPort,
   input: CreatePageGroupInput,
-): Promise<PageGroup> {
-  // Same -1 seed as createPage: Math.max over an empty sibling array is
-  // -Infinity, not a sensible "no siblings yet" default.
-  const siblings = await deps.pageGroupRepository.listSiblings(
+): Promise<BuiltPageGroup> {
+  // The -1 seed: Math.max over an empty sibling array is -Infinity, not a
+  // sensible "no siblings yet" default.
+  const siblings = await pageGroupRepository.listSiblings(
     input.tenantId,
     input.siteId,
     input.parentId ?? null,
@@ -46,15 +51,35 @@ export async function createPageGroup(
     order,
     createdBy: input.createdBy,
   });
+  return {
+    group,
+    version: {
+      id: randomUUID(),
+      tenantId: group.tenantId,
+      pageGroupId: group.id,
+      content: group.content,
+      createdBy: input.createdBy,
+      createdAt: group.updatedAt,
+    },
+  };
+}
 
-  await deps.pageGroupRepository.saveWithVersion(group, {
-    id: randomUUID(),
-    tenantId: group.tenantId,
-    pageGroupId: group.id,
-    content: group.content,
-    createdBy: input.createdBy,
-    createdAt: group.updatedAt,
-  });
-
+/**
+ * Creates only the shared structure (see createPageGroup vs.
+ * createPageGroupTranslation in the i18n plan) — a group with zero
+ * translations is a valid intermediate state for the API, the caller adds
+ * at least one locale next. The editor does not go this way any more: it
+ * creates a page and its first language together (createPage), because a
+ * language refused for its address used to leave the group behind.
+ */
+export async function createPageGroup(
+  deps: CreatePageGroupDeps,
+  input: CreatePageGroupInput,
+): Promise<PageGroup> {
+  const { group, version } = await buildPageGroup(
+    deps.pageGroupRepository,
+    input,
+  );
+  await deps.pageGroupRepository.saveWithVersion(group, version);
   return group;
 }

@@ -11,7 +11,9 @@ import {
   createReusableSection,
   deleteReusableSection,
   type ReusableSectionKind,
+  type ReusableSectionListItemDto,
 } from '../lib/reusable-sections-api-client';
+import { collectionsQueryKey } from './collections-queries';
 import { reusableSectionsQueryOptions } from './reusable-sections-queries';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -19,6 +21,10 @@ import { IconButton } from './icon-button';
 
 export interface SectionsListViewProps {
   siteId: string;
+}
+
+function isSectionKind(value: string): value is ReusableSectionKind {
+  return value === 'shared' || value === 'template';
 }
 
 /**
@@ -57,9 +63,32 @@ export function SectionsListView({ siteId }: SectionsListViewProps) {
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => deleteReusableSection(id),
-    onSuccess: () =>
-      void queryClient.invalidateQueries({ queryKey: queryOptions.queryKey }),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: queryOptions.queryKey });
+      // A deleted template may have been a collection's default, which
+      // the database has just cleared (docs/adr/0072).
+      void queryClient.invalidateQueries({
+        queryKey: collectionsQueryKey(siteId),
+      });
+    },
   });
+
+  function usageText(
+    section: Pick<
+      ReusableSectionListItemDto,
+      'usedOnPages' | 'usedInTemplates'
+    >,
+  ): string {
+    const parts = [
+      ...(section.usedOnPages > 0
+        ? [t('sections.usedOnPages', { count: section.usedOnPages })]
+        : []),
+      ...(section.usedInTemplates > 0
+        ? [t('sections.usedInTemplates', { count: section.usedInTemplates })]
+        : []),
+    ];
+    return parts.length > 0 ? parts.join(' · ') : t('sections.usedNowhere');
+  }
 
   return (
     <div className="flex flex-col gap-6 p-6">
@@ -94,7 +123,9 @@ export function SectionsListView({ siteId }: SectionsListViewProps) {
           <select
             className="h-9 rounded-lg border border-input bg-transparent px-2.5 text-sm"
             value={kind}
-            onChange={(e) => setKind(e.target.value as ReusableSectionKind)}
+            onChange={(e) => {
+              if (isSectionKind(e.target.value)) setKind(e.target.value);
+            }}
           >
             <option value="shared">{t('sections.kind.shared')}</option>
             <option value="template">{t('sections.kind.template')}</option>
@@ -143,13 +174,7 @@ export function SectionsListView({ siteId }: SectionsListViewProps) {
                       copies its blocks and leaves nothing pointing back,
                       so there is nothing to count and a "0" there would
                       suggest a link that does not exist. */}
-                  {section.kind === 'shared' &&
-                    ' · ' +
-                      (section.usedOnPages === 0
-                        ? t('sections.usedNowhere')
-                        : t('sections.usedOnPages', {
-                            count: section.usedOnPages,
-                          }))}
+                  {section.kind === 'shared' && ` · ${usageText(section)}`}
                 </span>
               </div>
               <IconButton
@@ -158,13 +183,21 @@ export function SectionsListView({ siteId }: SectionsListViewProps) {
                   // The count is in the question when there is one:
                   // "delete this?" and "delete this, which eight pages
                   // are showing?" are different decisions.
-                  const question =
+                  const onPages =
                     section.usedOnPages > 0
                       ? t('sections.deleteConfirmUsed', {
                           name: section.name,
                           count: section.usedOnPages,
                         })
                       : t('sections.deleteConfirm');
+                  // A template holding it hands out an empty strip to
+                  // every page made from it afterwards (docs/adr/0072).
+                  const question =
+                    section.usedInTemplates > 0
+                      ? `${onPages} ${t('sections.deleteConfirmInTemplates', {
+                          count: section.usedInTemplates,
+                        })}`
+                      : onPages;
                   if (window.confirm(question)) {
                     deleteMutation.mutate(section.id);
                   }

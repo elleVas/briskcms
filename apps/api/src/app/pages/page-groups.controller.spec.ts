@@ -1,4 +1,5 @@
 import {
+  NotAPageTemplateError,
   PageGroup,
   PageGroupNotFoundError,
   PageGroupReorderMismatchError,
@@ -8,6 +9,7 @@ import {
   PageTranslationLocaleAlreadyExistsError,
   PageTranslationNotDivergedError,
   PageTranslationNotFoundError,
+  ReusableSection,
 } from '@brisk/domain-core';
 import type {
   CollectionRepositoryPort,
@@ -18,6 +20,7 @@ import type {
   PageTranslationVersionRepositoryPort,
   PreviewTokenPort,
   ReusableSectionRepositoryPort,
+  ReusableSectionVersionRepositoryPort,
   SiteRepositoryPort,
   TaxonomyRepositoryPort,
   SearchPort,
@@ -63,12 +66,14 @@ describe('PageGroupsController (unit)', () => {
   let taxonomyRepository: jest.Mocked<TaxonomyRepositoryPort>;
   let siteRepository: jest.Mocked<SiteRepositoryPort>;
   let collectionRepository: jest.Mocked<CollectionRepositoryPort>;
+  let reusableSectionVersionRepository: jest.Mocked<ReusableSectionVersionRepositoryPort>;
   let controller: PageGroupsController;
 
   beforeEach(() => {
     pageGroupRepository = {
       save: jest.fn(),
       saveWithVersion: jest.fn(),
+      saveNewWithTranslation: jest.fn(),
       findById: jest.fn(),
       listBySite: jest.fn(),
       listBySiteFiltered: jest.fn(),
@@ -145,6 +150,11 @@ describe('PageGroupsController (unit)', () => {
       listBySite: jest.fn().mockResolvedValue([]),
       delete: jest.fn(),
     };
+    reusableSectionVersionRepository = {
+      save: jest.fn(),
+      findById: jest.fn(),
+      listBySection: jest.fn(),
+    };
     controller = new PageGroupsController(
       pageGroupRepository,
       pageGroupVersionRepository,
@@ -157,6 +167,7 @@ describe('PageGroupsController (unit)', () => {
       taxonomyRepository,
       siteRepository,
       collectionRepository,
+      reusableSectionVersionRepository,
     );
   });
 
@@ -582,6 +593,87 @@ describe('PageGroupsController (unit)', () => {
     await expect(controller.diverge('translation-1')).rejects.toThrow(
       PageTranslationDivergedError,
     );
+  });
+
+  describe('templates', () => {
+    function buildTemplate(kind: 'shared' | 'template') {
+      const section = ReusableSection.create({
+        id: 'template-1',
+        tenantId: 'tenant-1',
+        siteId: 'site-1',
+        name: 'Service page',
+        kind,
+        content: [{ id: 'hero-1', type: 'Hero', props: { title: 'Hi' } }],
+      });
+      section.publish();
+      return section;
+    }
+
+    const firstTranslation = {
+      locale: 'en',
+      slug: 'plumber',
+      seoMeta: { title: 'Plumber', description: '' },
+    };
+
+    it('create with a template writes the copied page and its first language in one save', async () => {
+      reusableSectionRepository.findById.mockResolvedValue(
+        buildTemplate('template'),
+      );
+      pageGroupRepository.listSiblings.mockResolvedValue([]);
+      pageTranslationRepository.findByParentGroupAndLocaleSlug.mockResolvedValue(
+        null,
+      );
+
+      const result = await controller.create({
+        siteId: 'site-1',
+        templateId: 'template-1',
+        translation: firstTranslation,
+      });
+
+      expect(result.content).toHaveLength(1);
+      expect(result.content[0].props).toEqual({ title: 'Hi' });
+      expect(result.content[0].id).not.toBe('hero-1');
+      expect(pageGroupRepository.saveNewWithTranslation).toHaveBeenCalledTimes(
+        1,
+      );
+      const [, , translation] =
+        pageGroupRepository.saveNewWithTranslation.mock.calls[0];
+      expect(translation.slug).toBe('plumber');
+      expect(pageGroupRepository.saveWithVersion).not.toHaveBeenCalled();
+    });
+
+    it('create without a translation still creates the group alone, reading no section', async () => {
+      pageGroupRepository.listSiblings.mockResolvedValue([]);
+
+      await controller.create({ siteId: 'site-1' });
+
+      expect(pageGroupRepository.saveWithVersion).toHaveBeenCalledTimes(1);
+      expect(reusableSectionRepository.findById).not.toHaveBeenCalled();
+    });
+
+    it('create propagates NotAPageTemplateError for a shared section, unwrapped, and writes nothing', async () => {
+      reusableSectionRepository.findById.mockResolvedValue(
+        buildTemplate('shared'),
+      );
+
+      await expect(
+        controller.create({
+          siteId: 'site-1',
+          templateId: 'template-1',
+          translation: firstTranslation,
+        }),
+      ).rejects.toThrow(NotAPageTemplateError);
+      expect(pageGroupRepository.saveNewWithTranslation).not.toHaveBeenCalled();
+    });
+
+    it('saveAsTemplate propagates PageGroupNotFoundError, unwrapped', async () => {
+      pageGroupRepository.findById.mockResolvedValue(null);
+
+      await expect(
+        controller.saveAsTemplate('missing', { name: 'Service page' }),
+      ).rejects.toThrow(PageGroupNotFoundError);
+      expect(reusableSectionRepository.save).not.toHaveBeenCalled();
+    });
   });
 
   it('lets unexpected errors propagate unchanged', async () => {

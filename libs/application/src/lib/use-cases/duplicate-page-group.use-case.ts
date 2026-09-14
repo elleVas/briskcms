@@ -1,13 +1,14 @@
 import { randomUUID } from 'node:crypto';
 import {
-  PageGroup,
   PageGroupNotFoundError,
   PageTranslation,
+  type PageGroup,
 } from '@brisk/domain-core';
 import type {
   PageGroupRepositoryPort,
   PageTranslationRepositoryPort,
 } from '@brisk/ports';
+import { buildPageGroup } from './create-page-group.use-case';
 import { findAvailableSlug } from './find-available-slug';
 
 export interface DuplicatePageGroupDeps {
@@ -60,30 +61,18 @@ export async function duplicatePageGroup(
     source.id,
   );
 
-  const siblings = await deps.pageGroupRepository.listSiblings(
-    input.tenantId,
-    source.siteId,
-    source.parentId,
-  );
-  const order = Math.max(-1, ...siblings.map((sibling) => sibling.order)) + 1;
-
-  const group = PageGroup.create({
-    id: randomUUID(),
+  const { group, version } = await buildPageGroup(deps.pageGroupRepository, {
     tenantId: input.tenantId,
     siteId: source.siteId,
     parentId: source.parentId,
     content: source.content,
-    order,
+    // Listed where the original is: an article duplicated from the News
+    // screen that lands under Pages has, as far as the person who clicked
+    // Duplicate can tell, vanished.
+    collectionId: source.collectionId,
     createdBy: input.createdBy,
   });
-  await deps.pageGroupRepository.saveWithVersion(group, {
-    id: randomUUID(),
-    tenantId: group.tenantId,
-    pageGroupId: group.id,
-    content: group.content,
-    createdBy: input.createdBy,
-    createdAt: group.updatedAt,
-  });
+  await deps.pageGroupRepository.saveWithVersion(group, version);
 
   const translations: PageTranslation[] = [];
   for (const sourceTranslation of sourceTranslations) {

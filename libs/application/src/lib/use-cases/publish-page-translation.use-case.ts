@@ -3,7 +3,6 @@ import {
   PageTranslationNotFoundError,
   type PageTranslation,
 } from '@brisk/domain-core';
-import { mergeTranslatedContent, type PageContent } from '@brisk/shared-types';
 import type {
   PageGroupRepositoryPort,
   PageTranslationRepositoryPort,
@@ -54,20 +53,7 @@ export async function publishPageTranslation(
     throw new PageGroupNotFoundError(translation.pageGroupId);
   }
 
-  let merged: PageContent;
-  if (translation.isDiverged) {
-    // diverge() always sets divergedContent in the same call that sets
-    // isDiverged — a diverged translation with no divergedContent means
-    // the row is corrupted, not a case to silently fall back from.
-    if (!translation.divergedContent) {
-      throw new Error(
-        `Page translation ${translation.id} is diverged but has no divergedContent`,
-      );
-    }
-    merged = translation.divergedContent;
-  } else {
-    merged = mergeTranslatedContent(group.content, translation.fieldValues);
-  }
+  const merged = translation.currentContent(group.content);
 
   translation.publish(merged, { by: input.actorUserId });
   await deps.pageTranslationRepository.save(translation, group.parentId);

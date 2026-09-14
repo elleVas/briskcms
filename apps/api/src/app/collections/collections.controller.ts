@@ -18,7 +18,11 @@ import {
   updateCollection,
 } from '@brisk/application';
 import type { Collection } from '@brisk/domain-core';
-import type { CollectionRepositoryPort, TenantContextPort } from '@brisk/ports';
+import type {
+  CollectionRepositoryPort,
+  ReusableSectionRepositoryPort,
+  TenantContextPort,
+} from '@brisk/ports';
 import { collectionRecordSchema } from '@brisk/shared-types';
 import { SessionAuthGuard } from '../auth/session-auth.guard';
 import { TENANT_CONTEXT } from '../auth/auth.tokens';
@@ -31,7 +35,10 @@ import {
   type ListCollectionsQuery,
   type UpdateCollectionBody,
 } from './collections.schemas';
-import { COLLECTION_REPOSITORY } from './collections.tokens';
+import {
+  COLLECTION_REPOSITORY,
+  REUSABLE_SECTION_REPOSITORY,
+} from './collections.tokens';
 
 /**
  * The editor's own sections — News, Events, Case studies.
@@ -47,10 +54,15 @@ export class CollectionsController {
     @Inject(COLLECTION_REPOSITORY)
     private readonly collectionRepository: CollectionRepositoryPort,
     @Inject(TENANT_CONTEXT) private readonly tenantContext: TenantContextPort,
+    @Inject(REUSABLE_SECTION_REPOSITORY)
+    private readonly reusableSectionRepository: ReusableSectionRepositoryPort,
   ) {}
 
   private get deps() {
-    return { collectionRepository: this.collectionRepository };
+    return {
+      collectionRepository: this.collectionRepository,
+      reusableSectionRepository: this.reusableSectionRepository,
+    };
   }
 
   private get tenantId(): string {
@@ -95,6 +107,7 @@ export class CollectionsController {
       collectionId: id,
       name: body.name,
       icon: body.icon,
+      defaultTemplateId: body.defaultTemplateId,
     });
     return this.toDto(collection);
   }
@@ -115,6 +128,7 @@ export class CollectionsController {
       name: props.name,
       icon: props.icon,
       order: props.order,
+      defaultTemplateId: props.defaultTemplateId,
       createdAt: props.createdAt.toISOString(),
       updatedAt: props.updatedAt.toISOString(),
     });

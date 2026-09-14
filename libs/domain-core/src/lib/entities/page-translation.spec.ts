@@ -111,6 +111,45 @@ describe('PageTranslation entity', () => {
     ]);
   });
 
+  describe('currentContent', () => {
+    const groupContent = [
+      { id: 'hero-1', type: 'Hero', props: { title: 'Hello', align: 'left' } },
+    ];
+
+    it("lays this language's text over the shared structure while linked", () => {
+      const translation = PageTranslation.create({
+        ...baseInput,
+        fieldValues: { 'hero-1': { title: 'Ciao' } },
+      });
+
+      expect(translation.currentContent(groupContent)).toEqual([
+        { id: 'hero-1', type: 'Hero', props: { title: 'Ciao', align: 'left' } },
+      ]);
+    });
+
+    it('ignores the shared structure entirely once unlinked', () => {
+      const translation = PageTranslation.create(baseInput);
+      const fork = [
+        { id: 'text-9', type: 'Text', props: { body: 'Solo mio' } },
+      ];
+      translation.diverge(fork, EDIT);
+
+      expect(translation.currentContent(groupContent)).toEqual(fork);
+    });
+
+    it('refuses an unlinked translation with nothing of its own rather than falling back', () => {
+      const translation = PageTranslation.fromProps({
+        ...PageTranslation.create(baseInput).toProps(),
+        isDiverged: true,
+        divergedContent: null,
+      });
+
+      expect(() => translation.currentContent(groupContent)).toThrow(
+        /diverged but has no divergedContent/,
+      );
+    });
+  });
+
   it('diverge forks the current merged content and flips isDiverged', () => {
     const translation = PageTranslation.create(baseInput);
     const merged = [{ id: 'hero-1', type: 'Hero', props: { title: 'Ciao' } }];

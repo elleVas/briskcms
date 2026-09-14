@@ -34,11 +34,17 @@ export function useCanvasPreviewToken(
     const minted = sectionId
       ? createReusableSectionPreviewToken(sectionId)
       : createTranslationPreviewToken(pageId);
-    minted.then((preview) => {
-      if (!cancelled) {
-        setToken(preview.token);
-      }
-    });
+    minted
+      .then((preview) => {
+        if (!cancelled) {
+          setToken(preview.token);
+        }
+      })
+      // Refused (a session that has expired, the network gone): the token
+      // stays `null`, and CanvasFrame — which asks for its own — is what
+      // tells the person. Left uncaught, it was an unhandled rejection in
+      // the console on every failure.
+      .catch(() => undefined);
     return () => {
       cancelled = true;
     };

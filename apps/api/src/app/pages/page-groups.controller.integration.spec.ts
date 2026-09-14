@@ -8,13 +8,17 @@ import request from 'supertest';
 import type { AuthPort } from '@brisk/ports';
 import {
   type BriskDb,
+  collections,
   deleteIntegrationFixtures,
+  reusableSections,
   sites,
   users,
   withTenant,
 } from '@brisk/postgres-db';
 import { AUTH_PORT } from '../auth/auth.tokens';
+import { CollectionsModule } from '../collections/collections.module';
 import { DATABASE } from '../database.module';
+import { ReusableSectionsModule } from '../reusable-sections/reusable-sections.module';
 import { PagesModule } from './pages.module';
 
 /**
@@ -35,7 +39,10 @@ describe('PageGroupsController (integration)', () => {
 
   beforeAll(async () => {
     const moduleRef = await Test.createTestingModule({
-      imports: [PagesModule],
+      // Collections and sections too, for the rule that spans all three:
+      // the template a collection preselects must be one a page can start
+      // from, and deleting it must take only the suggestion away.
+      imports: [PagesModule, CollectionsModule, ReusableSectionsModule],
     }).compile();
 
     app = moduleRef.createNestApplication();
@@ -382,6 +389,298 @@ describe('PageGroupsController (integration)', () => {
       status: 'draft',
       seoMeta: { title: 'Plombier' },
     });
+  });
+
+  /*
+   * The editor's New page: the page and its first language in one request.
+   * Refused for its address, it must leave nothing behind — it used to
+   * leave a page with no language, which crashed the editor that opened it.
+   */
+  it('creates a page with its first language in one request, and nothing when the address is taken', async () => {
+    const slug = `about-${randomUUID()}`;
+    const translation = {
+      locale: 'en',
+      slug,
+      seoMeta: { title: 'About', description: '' },
+    };
+    const created = await agent
+      .post('/page-groups')
+      .send({ siteId, translation })
+      .expect(201);
+    const translations = await agent
+      .get(`/page-groups/${created.body.id}/translations`)
+      .expect(200);
+    expect(translations.body).toHaveLength(1);
+    const before = await agent
+      .get('/page-groups')
+      .query({ siteId, pageSize: 100 })
+      .expect(200);
+
+    await agent
+      .post('/page-groups')
+      .send({
+        siteId,
+        translation: {
+          ...translation,
+          seoMeta: { title: 'Again', description: '' },
+        },
+      })
+      .expect(409);
+
+    const after = await agent
+      .get('/page-groups')
+      .query({ siteId, pageSize: 100 })
+      .expect(200);
+    expect(after.body.total).toBe(before.body.total);
+  });
+
+  it('keeps a duplicated article in its collection, over the real HTTP endpoint', async () => {
+    const [news] = await withTenant(db, tenantId, (tx) =>
+      tx
+        .insert(collections)
+        .values({ tenantId, siteId, name: `News ${randomUUID()}` })
+        .returning({ id: collections.id }),
+    );
+    const articleRes = await agent
+      .post('/page-groups')
+      .send({ siteId, collectionId: news.id })
+      .expect(201);
+
+    const duplicateRes = await agent
+      .post(`/page-groups/${articleRes.body.id}/duplicate`)
+      .expect(201);
+
+    expect(duplicateRes.body.collectionId).toBe(news.id);
+  });
+
+  it('saves a page as a template and starts a new page from it, over the real HTTP endpoint', async () => {
+    const pageRes = await agent
+      .post('/page-groups')
+      .send({
+        siteId,
+        content: [
+          { id: 'hero-1', type: 'Hero', props: { title: 'Plumber' } },
+          {
+            id: 'newsletter-1',
+            type: 'Section',
+            props: {
+              section: {
+                sectionId: randomUUID(),
+                sectionName: 'Newsletter',
+              },
+            },
+          },
+        ],
+      })
+      .expect(201);
+    const pageId = pageRes.body.id;
+    await agent
+      .post(`/page-groups/${pageId}/translations`)
+      .send({
+        locale: 'en',
+        slug: `plumber-${randomUUID()}`,
+        seoMeta: { title: 'Plumber', description: '' },
+      })
+      .expect(201);
+    const itRes = await agent
+      .post(`/page-groups/${pageId}/translations`)
+      .send({
+        locale: 'it',
+        slug: `idraulico-${randomUUID()}`,
+        seoMeta: { title: 'Idraulico', description: '' },
+      })
+      .expect(201);
+    await agent
+      .patch(`/page-groups/translations/${itRes.body.id}/field-values`)
+      .send({
+        fieldValues: { 'hero-1': { title: 'Idraulico' } },
+        parentGroupId: null,
+      })
+      .expect(200);
+
+    const templateName = `Service page ${randomUUID()}`;
+    const templateRes = await agent
+      .post(`/page-groups/${pageId}/save-as-template`)
+      .send({ name: templateName })
+      .expect(201);
+    // The site's default language is English: the Italian overlay stays
+    // behind, and the template is ready to use at once.
+    expect(templateRes.body).toMatchObject({
+      name: templateName,
+      kind: 'template',
+      status: 'published',
+      siteId,
+    });
+    expect(templateRes.body.content[0].props).toEqual({ title: 'Plumber' });
+    expect(templateRes.body.publishedContent).toEqual(templateRes.body.content);
+
+    await agent
+      .post(`/page-groups/${pageId}/save-as-template`)
+      .send({ name: templateName })
+      .expect(409);
+
+    // Without its first language, a page may not start from a template.
+    await agent
+      .post('/page-groups')
+      .send({ siteId, templateId: templateRes.body.id })
+      .expect(400);
+    const fromTemplateSlug = `from-template-${randomUUID()}`;
+    const fromTemplateRes = await agent
+      .post('/page-groups')
+      .send({
+        siteId,
+        templateId: templateRes.body.id,
+        translation: {
+          locale: 'en',
+          slug: fromTemplateSlug,
+          seoMeta: { title: 'From a template', description: '' },
+        },
+      })
+      .expect(201);
+    const fromTemplateTranslations = await agent
+      .get(`/page-groups/${fromTemplateRes.body.id}/translations`)
+      .expect(200);
+    expect(
+      fromTemplateTranslations.body.map((t: { slug: string }) => t.slug),
+    ).toEqual([fromTemplateSlug]);
+    const content = fromTemplateRes.body.content as {
+      id: string;
+      type: string;
+      props: Record<string, unknown>;
+    }[];
+    expect(content.map((block) => block.type)).toEqual(['Hero', 'Section']);
+    expect(content[0].props).toEqual({ title: 'Plumber' });
+    // The newsletter is still a reference to the shared section, not a copy.
+    expect(content[1].props).toEqual(pageRes.body.content[1].props);
+    for (const block of content) {
+      expect(['hero-1', 'newsletter-1']).not.toContain(block.id);
+    }
+  });
+
+  it('refuses to start a page from anything but a published template of the site, over the real HTTP endpoint', async () => {
+    const [shared, draft] = await withTenant(db, tenantId, (tx) =>
+      tx
+        .insert(reusableSections)
+        .values([
+          {
+            tenantId,
+            siteId,
+            name: `Shared ${randomUUID()}`,
+            kind: 'shared',
+            status: 'published',
+            content: [],
+            publishedContent: [],
+          },
+          {
+            tenantId,
+            siteId,
+            name: `Draft ${randomUUID()}`,
+            kind: 'template',
+            status: 'draft',
+            content: [],
+          },
+        ])
+        .returning({ id: reusableSections.id }),
+    );
+
+    const translation = {
+      locale: 'en',
+      slug: `refused-${randomUUID()}`,
+      seoMeta: { title: 'Refused', description: '' },
+    };
+    const pagesBefore = await agent
+      .get('/page-groups')
+      .query({ siteId, pageSize: 100 })
+      .expect(200);
+
+    // A shared section, a draft and a missing id are one answer to the
+    // person starting a page: there is no such template to start from.
+    for (const templateId of [shared.id, draft.id, randomUUID()]) {
+      await agent
+        .post('/page-groups')
+        .send({ siteId, templateId, translation })
+        .expect(404);
+    }
+    await agent
+      .post('/page-groups')
+      .send({ siteId, templateId: draft.id, content: [], translation })
+      .expect(400);
+
+    const pagesAfter = await agent
+      .get('/page-groups')
+      .query({ siteId, pageSize: 100 })
+      .expect(200);
+    expect(pagesAfter.body.total).toBe(pagesBefore.body.total);
+  });
+
+  it('gives a collection a default template, refuses one a page cannot start from, and forgets it when the template goes, over the real HTTP endpoint', async () => {
+    const [template, shared] = await withTenant(db, tenantId, (tx) =>
+      tx
+        .insert(reusableSections)
+        .values([
+          {
+            tenantId,
+            siteId,
+            name: `Article ${randomUUID()}`,
+            kind: 'template',
+            status: 'published',
+            content: [],
+            publishedContent: [],
+          },
+          {
+            tenantId,
+            siteId,
+            name: `Newsletter ${randomUUID()}`,
+            kind: 'shared',
+            status: 'published',
+            content: [],
+            publishedContent: [],
+          },
+        ])
+        .returning({ id: reusableSections.id }),
+    );
+    const collectionRes = await agent
+      .post('/collections')
+      .send({ siteId, name: 'News' })
+      .expect(201);
+    expect(collectionRes.body.defaultTemplateId).toBeNull();
+    const collectionId = collectionRes.body.id;
+
+    const setRes = await agent
+      .patch(`/collections/${collectionId}`)
+      .send({ defaultTemplateId: template.id })
+      .expect(200);
+    expect(setRes.body.defaultTemplateId).toBe(template.id);
+
+    await agent
+      .patch(`/collections/${collectionId}`)
+      .send({ defaultTemplateId: shared.id })
+      .expect(404);
+    const listRes = await agent
+      .get('/collections')
+      .query({ siteId })
+      .expect(200);
+    const listed = listRes.body.find(
+      (one: { id: string }) => one.id === collectionId,
+    );
+    expect(listed.defaultTemplateId).toBe(template.id);
+
+    // Deleting the template takes the suggestion away, not the collection.
+    await agent.delete(`/reusable-sections/${template.id}`).expect(200);
+    const afterDeleteRes = await agent
+      .get('/collections')
+      .query({ siteId })
+      .expect(200);
+    expect(
+      afterDeleteRes.body.find((one: { id: string }) => one.id === collectionId)
+        .defaultTemplateId,
+    ).toBeNull();
+
+    const clearedRes = await agent
+      .patch(`/collections/${collectionId}`)
+      .send({ defaultTemplateId: null })
+      .expect(200);
+    expect(clearedRes.body.defaultTemplateId).toBeNull();
   });
 
   it('lists groups filtered by title search and locale, over the real public HTTP endpoint', async () => {

@@ -14,6 +14,7 @@ import {
   InvalidFormSubmissionError,
   InvalidThemeNameError,
   MediaNotFoundError,
+  NotAPageTemplateError,
   PageGroupNotFoundError,
   PageGroupReorderMismatchError,
   PageGroupVersionNotFoundError,
@@ -138,6 +139,12 @@ const DOMAIN_ERROR_MAPPINGS: Array<[Type<Error>, DomainErrorFactory]> = [
   // simply impossible — a term cannot descend from itself, and a flat
   // dimension has no parents to offer.
   [TermCycleError, (m) => new BadRequestException(m)],
+  // 404, the same answer as a template that does not exist: to the person
+  // starting a page, a shared section or a draft is no template to start
+  // from either (docs/adr/0072). It also keeps 400 meaning "the request
+  // itself is malformed", which is what lets the editor tell "that
+  // template has gone" apart from a name too long for an address.
+  [NotAPageTemplateError, (m) => new NotFoundException(m)],
   [TaxonomyNotHierarchicalError, (m) => new BadRequestException(m)],
 ];
 

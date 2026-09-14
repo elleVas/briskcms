@@ -5,6 +5,7 @@ import {
 } from '../app/page-groups-queries';
 import { siteQueryOptions } from '../app/site-queries';
 import { PageGroupEditorView } from '../app/page-group-editor-view';
+import { PageGroupWithoutLanguage } from '../app/page-group-without-language';
 import { requireAuth } from './-require-auth';
 
 export const Route = createFileRoute('/page-groups/$groupId')({
@@ -32,11 +33,15 @@ export const Route = createFileRoute('/page-groups/$groupId')({
 function PageGroupEditorRoute() {
   const { groupId } = Route.useParams();
   const { site, translations } = Route.useLoaderData();
+  // Everything in the editor hangs off the language being edited.
+  if (translations.length === 0) {
+    return <PageGroupWithoutLanguage />;
+  }
   const initialLocale = translations.some(
     (translation) => translation.locale === site.defaultLocale,
   )
     ? site.defaultLocale
-    : (translations[0]?.locale ?? site.defaultLocale);
+    : translations[0].locale;
   return (
     <PageGroupEditorView
       key={groupId}
