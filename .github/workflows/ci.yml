@@ -287,11 +287,8 @@ jobs:
           cache: 'pnpm'
       - run: pnpm install --frozen-lockfile
 
-      # Non-blocking for now (continue-on-error): as of 2026-08-28 this
-      # finds 5 advisories (2 moderate, 3 high), all in transitive
-      # toolchain deps (nx/webpack, drizzle-kit's esbuild, webpack-dev-
-      # server's sockjs/uuid) — not in code that ships to users. Surfacing
-      # them without failing the build until they're cleaned up; flip to
-      # blocking once `pnpm audit --audit-level moderate` is clean.
+      # Blocking since 2026-09-16: the workspace audits clean, so a new
+      # advisory is news, not noise. What cannot be fixed by a version
+      # range is pinned in pnpm-workspace.yaml's overrides, each with the
+      # reason it is safe here.
       - run: pnpm audit --audit-level moderate
-        continue-on-error: true
