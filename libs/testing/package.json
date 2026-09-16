@@ -16,6 +16,11 @@
       "import": "./src/index.ts",
       "default": "./src/index.ts"
     },
+    "./records": {
+      "types": "./src/records.ts",
+      "import": "./src/records.ts",
+      "default": "./src/records.ts"
+    },
     "./package.json": "./package.json"
   },
   "dependencies": {

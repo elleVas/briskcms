@@ -7,10 +7,12 @@ import {
 } from '@testing-library/react';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { buildCollectionRecord } from '@brisk/testing/records';
 import * as collectionsApi from '../lib/collections-api-client';
 import { ApiError } from '../lib/http-client';
 import * as sectionsApi from '../lib/reusable-sections-api-client';
-import { createTestQueryClient } from '../test-query-client';
+import { createTestQueryClient } from '../test/query-client.test-fixture';
+import { buildReusableSectionListItemDto } from '../test/dtos.test-fixture';
 import { NewPageGroupDialog } from './new-page-group-dialog';
 import type { NewPageGroupInput } from './use-page-groups-list';
 
@@ -32,23 +34,13 @@ function section(
   overrides: Partial<sectionsApi.ReusableSectionListItemDto>,
 ): sectionsApi.ReusableSectionListItemDto {
   const blocks = [{ id: 'hero-1', type: 'Hero', props: { title: 'Hi' } }];
-  return {
-    id: 'section-1',
-    tenantId: 'tenant-1',
-    siteId: 'site-1',
-    name: 'Section',
+  return buildReusableSectionListItemDto({
     kind: 'template',
     status: 'published',
     content: blocks,
     publishedContent: blocks,
-    exposedFields: {},
-    createdBy: null,
-    createdAt: '',
-    updatedAt: '',
-    usedOnPages: 0,
-    usedInTemplates: 0,
     ...overrides,
-  };
+  });
 }
 
 const serviceTemplate = section({ id: 'service', name: 'Scheda servizio' });
@@ -74,17 +66,7 @@ function renderDialog({
     Promise.resolve(sections),
   );
   vi.mocked(collectionsApi.listCollections).mockResolvedValue([
-    {
-      id: 'news',
-      tenantId: 'tenant-1',
-      siteId: 'site-1',
-      name: 'News',
-      icon: 'newspaper',
-      order: 0,
-      defaultTemplateId,
-      createdAt: '',
-      updatedAt: '',
-    },
+    buildCollectionRecord({ id: 'news', defaultTemplateId }),
   ]);
   render(
     <QueryClientProvider client={createTestQueryClient()}>

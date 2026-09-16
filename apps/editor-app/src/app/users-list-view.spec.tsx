@@ -6,7 +6,8 @@ import { TooltipProvider } from '../components/ui/tooltip';
 import * as auth from '../lib/auth-api-client';
 import * as api from '../lib/users-api-client';
 import type { UserDto } from '../lib/users-api-client';
-import { createTestQueryClient } from '../test-query-client';
+import { createTestQueryClient } from '../test/query-client.test-fixture';
+import { buildUserDto } from '../test/dtos.test-fixture';
 import { UsersListView } from './users-list-view';
 
 vi.mock('@tanstack/react-router', async (importOriginal) => {
@@ -32,18 +33,12 @@ vi.mock('../lib/users-api-client', async (importOriginal) => {
   };
 });
 
-const userOne: UserDto = {
-  id: 'user-1',
-  tenantId: 'tenant-1',
+const userOne = buildUserDto({
   email: 'editor@example.com',
   displayName: 'Editor One',
-  slug: null,
-  avatarUrl: null,
   role: 'editor',
-  isActive: true,
   emailVerifiedAt: '2026-01-01T00:00:00.000Z',
-  createdAt: '',
-};
+});
 
 function renderView(
   items: UserDto[],

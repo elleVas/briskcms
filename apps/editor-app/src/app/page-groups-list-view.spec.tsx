@@ -3,9 +3,14 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { QueryClientProvider } from '@tanstack/react-query';
 import * as router from '@tanstack/react-router';
 import type { PageGroupListItemRecord } from '@brisk/shared-types';
+import {
+  buildPageGroupListItemRecord,
+  buildPageGroupListItemTranslation,
+  buildPageGroupRecord,
+} from '@brisk/testing/records';
 import * as api from '../lib/page-groups-api-client';
 import { TooltipProvider } from '../components/ui/tooltip';
-import { createTestQueryClient } from '../test-query-client';
+import { createTestQueryClient } from '../test/query-client.test-fixture';
 import { EMPTY_PAGES_LIST_FILTERS } from './pages-list-filter-bar';
 import { PageGroupsListView } from './page-groups-list-view';
 
@@ -28,43 +33,30 @@ vi.mock('../lib/page-groups-api-client', async (importOriginal) => {
   };
 });
 
-const groupA: PageGroupListItemRecord = {
+const groupA = buildPageGroupListItemRecord({
   id: 'group-a',
-  tenantId: 'tenant-1',
-  siteId: 'site-1',
-  parentId: null,
-  order: 0,
-  collectionId: null,
   createdByName: 'Ada Lovelace',
   lastEditedAt: '2026-09-09T10:00:00.000Z',
   lastEditedByName: 'Grace Hopper',
-  createdAt: '',
-  updatedAt: '2026-09-09T10:00:00.000Z',
   translations: [
-    {
-      locale: 'it',
+    buildPageGroupListItemTranslation({
       slug: 'chi-siamo',
       title: 'Chi siamo',
       status: 'published',
-      isDiverged: false,
-      hasUnpublishedChanges: false,
-    },
+    }),
   ],
-};
+});
 
 const groupB: PageGroupListItemRecord = {
   ...groupA,
   id: 'group-b',
   order: 1,
   translations: [
-    {
-      locale: 'it',
+    buildPageGroupListItemTranslation({
       slug: 'contatti',
       title: 'Contatti',
       status: 'draft',
-      isDiverged: false,
-      hasUnpublishedChanges: false,
-    },
+    }),
   ],
 };
 
@@ -192,18 +184,9 @@ describe('PageGroupsListView', () => {
 
   it('duplicating the selected group calls duplicatePageGroup', async () => {
     vi.mocked(router.useNavigate).mockReturnValue(vi.fn());
-    vi.mocked(api.duplicatePageGroup).mockResolvedValue({
-      id: 'group-a-copy',
-      tenantId: 'tenant-1',
-      siteId: 'site-1',
-      parentId: null,
-      order: 2,
-      collectionId: null,
-      content: [],
-      createdBy: null,
-      createdAt: '',
-      updatedAt: '',
-    });
+    vi.mocked(api.duplicatePageGroup).mockResolvedValue(
+      buildPageGroupRecord({ id: 'group-a-copy', order: 2 }),
+    );
     renderView();
 
     fireEvent.click(screen.getByText('Chi siamo'));

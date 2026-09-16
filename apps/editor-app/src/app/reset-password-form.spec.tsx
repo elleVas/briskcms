@@ -2,7 +2,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { QueryClientProvider } from '@tanstack/react-query';
 import * as api from '../lib/auth-api-client';
-import { createTestQueryClient } from '../test-query-client';
+import { createTestQueryClient } from '../test/query-client.test-fixture';
 import { ResetPasswordForm } from './reset-password-form';
 
 vi.mock('../lib/auth-api-client', async (importOriginal) => {

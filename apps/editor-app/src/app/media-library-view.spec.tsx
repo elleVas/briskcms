@@ -4,7 +4,8 @@ import { QueryClientProvider } from '@tanstack/react-query';
 import * as router from '@tanstack/react-router';
 import { TooltipProvider } from '../components/ui/tooltip';
 import type { MediaDto, MediaFilters } from '../lib/media-api-client';
-import { createTestQueryClient } from '../test-query-client';
+import { createTestQueryClient } from '../test/query-client.test-fixture';
+import { buildMediaDto } from '../test/dtos.test-fixture';
 import { MediaLibraryView } from './media-library-view';
 
 vi.mock('@tanstack/react-router', async (importOriginal) => {
@@ -34,20 +35,7 @@ vi.mock('@tanstack/react-router', async (importOriginal) => {
   };
 });
 
-const mediaOne: MediaDto = {
-  id: 'media-1',
-  tenantId: 'tenant-1',
-  siteId: 'site-1',
-  filename: 'foto.png',
-  storageKey: 'abc.webp',
-  storageProvider: 'local',
-  mimeType: 'image/webp',
-  size: 1234,
-  width: 800,
-  height: 600,
-  createdAt: '',
-  url: 'http://localhost/uploads/abc.webp',
-};
+const mediaOne = buildMediaDto();
 
 const counts = { image: 21, video: 0, audio: 2, document: 3, other: 1 };
 

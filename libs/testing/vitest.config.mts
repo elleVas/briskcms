@@ -18,7 +18,12 @@ export default defineConfig(() => ({
       // `*.test-fixture.ts`, and docs/adr/0009 keeps fixtures out of the
       // denominator: they are the tests, not the thing under test. The
       // in-memory repositories are exercised by every spec that uses them.
-      exclude: ['src/**/*.spec.ts', 'src/**/*.test-fixture.ts', 'src/index.ts'],
+      exclude: [
+        'src/**/*.spec.ts',
+        'src/**/*.test-fixture.ts',
+        'src/index.ts',
+        'src/records.ts',
+      ],
       thresholds: {
         statements: 80,
         branches: 80,

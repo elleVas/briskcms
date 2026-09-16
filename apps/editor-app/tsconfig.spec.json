@@ -33,6 +33,7 @@
     "src/**/*.spec.js",
     "src/**/*.test.jsx",
     "src/**/*.spec.jsx",
+    "src/**/*.test-fixture.ts",
     "src/**/*.d.ts"
   ],
   "references": [

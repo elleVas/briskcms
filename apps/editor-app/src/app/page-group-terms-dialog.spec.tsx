@@ -2,8 +2,8 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { QueryClientProvider } from '@tanstack/react-query';
 import * as api from '../lib/taxonomies-api-client';
-import type { TaxonomyDto, TermDto } from '../lib/taxonomies-api-client';
-import { createTestQueryClient } from '../test-query-client';
+import { createTestQueryClient } from '../test/query-client.test-fixture';
+import { buildTaxonomyDto, buildTermDto } from '../test/dtos.test-fixture';
 import { PageGroupTermsDialog } from './page-group-terms-dialog';
 
 vi.mock('../lib/taxonomies-api-client', async (importOriginal) => {
@@ -18,33 +18,12 @@ vi.mock('../lib/taxonomies-api-client', async (importOriginal) => {
   };
 });
 
-const taxonomy: TaxonomyDto = {
-  id: 'taxonomy-1',
-  tenantId: 'tenant-1',
-  siteId: 'site-1',
-  prefix: 'categoria',
-  name: { it: 'Categoria' },
-  hierarchical: true,
-  order: 0,
-  createdAt: '',
-  updatedAt: '',
-};
+const taxonomy = buildTaxonomyDto({ name: { it: 'Categoria' } });
 
-const espresso: TermDto = {
-  id: 'term-1',
-  tenantId: 'tenant-1',
-  siteId: 'site-1',
-  taxonomyId: 'taxonomy-1',
-  parentId: null,
+const espresso = buildTermDto({
   name: { it: 'Espresso' },
-  description: {},
-  seoMeta: {},
-  landingPageGroupId: null,
-  order: 0,
   slugs: { it: 'espresso' },
-  createdAt: '',
-  updatedAt: '',
-};
+});
 
 function renderDialog(assigned: string[]) {
   vi.mocked(api.listTaxonomies).mockResolvedValue([taxonomy]);

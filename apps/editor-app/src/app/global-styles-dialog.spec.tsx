@@ -4,9 +4,8 @@ import { QueryClientProvider } from '@tanstack/react-query';
 import type { BlockDescriptor } from '@brisk/block-registry';
 import * as api from '../lib/sites-api-client';
 import * as themeApi from '../lib/theme-api-client';
-import type { SiteRecord } from '@brisk/shared-types';
-import { DEFAULT_COOKIE_BANNER_SETTINGS } from '@brisk/shared-types';
-import { createTestQueryClient } from '../test-query-client';
+import { buildSiteRecord } from '@brisk/testing/records';
+import { createTestQueryClient } from '../test/query-client.test-fixture';
 import { TooltipProvider } from '../components/ui/tooltip';
 import {
   GlobalStylesDialog,
@@ -64,41 +63,6 @@ vi.mock('../lib/theme-api-client', () => ({
   }),
 }));
 
-function buildSite(overrides: Partial<SiteRecord> = {}): SiteRecord {
-  return {
-    id: 'site-1',
-    tenantId: 'tenant-1',
-    name: 'Il mio sito',
-    domain: null,
-    themeName: 'classic',
-    defaultLocale: 'it',
-    enabledLocales: ['it'],
-    untranslatedPageFallback: 'redirect-to-default',
-    businessAddress: null,
-    businessPhone: null,
-    businessEmail: null,
-    businessType: null,
-    openingHours: null,
-    searchEngineIndexingEnabled: false,
-    themePrimaryColor: null,
-    themeSecondaryColor: null,
-    themeFontFamily: null,
-    themeCustomCss: null,
-    themeContentWidth: null,
-    themeHeadScript: null,
-    themeBodyScript: null,
-    themeFaviconUrl: null,
-    themeOverridesEnabled: true,
-    themeAllowedTrackerDomains: [],
-    formSubmissionRetentionDays: null,
-    themeTrackerScripts: [],
-    cookieBannerSettings: DEFAULT_COOKIE_BANNER_SETTINGS,
-    themeTokens: { blockStyles: {} },
-    createdAt: '',
-    ...overrides,
-  };
-}
-
 function renderDialog(
   open: boolean,
   onOpenChange = vi.fn(),
@@ -152,7 +116,7 @@ describe('GlobalStylesDialog', () => {
   });
 
   it('shows a loading state until the site arrives', async () => {
-    vi.mocked(api.getCurrentSite).mockResolvedValue(buildSite());
+    vi.mocked(api.getCurrentSite).mockResolvedValue(buildSiteRecord());
     renderDialog(true);
 
     expect(screen.getByText('Caricamento...')).toBeTruthy();
@@ -162,7 +126,7 @@ describe('GlobalStylesDialog', () => {
   });
 
   it('shows both colors off when never customized', async () => {
-    vi.mocked(api.getCurrentSite).mockResolvedValue(buildSite());
+    vi.mocked(api.getCurrentSite).mockResolvedValue(buildSiteRecord());
     renderDialog(true);
 
     await waitFor(() =>
@@ -181,7 +145,7 @@ describe('GlobalStylesDialog', () => {
       fontSansValue: 'Sora, sans-serif',
       radius: '1rem',
     });
-    vi.mocked(api.getCurrentSite).mockResolvedValue(buildSite());
+    vi.mocked(api.getCurrentSite).mockResolvedValue(buildSiteRecord());
     renderDialog(true);
 
     await waitFor(() =>
@@ -194,7 +158,7 @@ describe('GlobalStylesDialog', () => {
   });
 
   it('keeps the old generic placeholder when the theme has no base tokens (e.g. still on oklch(), like classic)', async () => {
-    vi.mocked(api.getCurrentSite).mockResolvedValue(buildSite());
+    vi.mocked(api.getCurrentSite).mockResolvedValue(buildSiteRecord());
     renderDialog(true);
 
     await waitFor(() =>
@@ -209,7 +173,7 @@ describe('GlobalStylesDialog', () => {
 
   it('pre-fills the enabled color from the current site', async () => {
     vi.mocked(api.getCurrentSite).mockResolvedValue(
-      buildSite({ themePrimaryColor: '#ff0000' }),
+      buildSiteRecord({ themePrimaryColor: '#ff0000' }),
     );
     renderDialog(true);
 
@@ -220,7 +184,7 @@ describe('GlobalStylesDialog', () => {
     // Mocked theme foreground is #ffffff (see the theme-api-client mock
     // above) — a white primary color has zero contrast against it.
     vi.mocked(api.getCurrentSite).mockResolvedValue(
-      buildSite({ themePrimaryColor: '#ffffff' }),
+      buildSiteRecord({ themePrimaryColor: '#ffffff' }),
     );
     renderDialog(true);
 
@@ -230,7 +194,7 @@ describe('GlobalStylesDialog', () => {
   });
 
   it('shows no contrast warning when the color is not enabled', async () => {
-    vi.mocked(api.getCurrentSite).mockResolvedValue(buildSite());
+    vi.mocked(api.getCurrentSite).mockResolvedValue(buildSiteRecord());
     renderDialog(true);
 
     await waitFor(() => screen.getByText('Colore primario'));
@@ -239,7 +203,7 @@ describe('GlobalStylesDialog', () => {
 
   it('shows no contrast warning when the enabled color already passes AA', async () => {
     vi.mocked(api.getCurrentSite).mockResolvedValue(
-      buildSite({ themePrimaryColor: '#000000' }),
+      buildSiteRecord({ themePrimaryColor: '#000000' }),
     );
     renderDialog(true);
 
@@ -249,9 +213,9 @@ describe('GlobalStylesDialog', () => {
 
   it('saves the colors category, passing through the other theme-settings fields unchanged', async () => {
     vi.mocked(api.getCurrentSite).mockResolvedValue(
-      buildSite({ themeFontFamily: 'inter' }),
+      buildSiteRecord({ themeFontFamily: 'inter' }),
     );
-    vi.mocked(api.updateThemeSettings).mockResolvedValue(buildSite());
+    vi.mocked(api.updateThemeSettings).mockResolvedValue(buildSiteRecord());
     renderDialog(true);
     await waitFor(() => screen.getByText('Colore primario'));
 
@@ -272,7 +236,7 @@ describe('GlobalStylesDialog', () => {
   });
 
   it('closes without saving when Chiudi is clicked', async () => {
-    vi.mocked(api.getCurrentSite).mockResolvedValue(buildSite());
+    vi.mocked(api.getCurrentSite).mockResolvedValue(buildSiteRecord());
     const onOpenChange = vi.fn();
     renderDialog(true, onOpenChange);
     await waitFor(() => screen.getByText('Colore primario'));
@@ -286,7 +250,7 @@ describe('GlobalStylesDialog', () => {
   });
 
   it('lists only styleable block types, grouped by category', async () => {
-    vi.mocked(api.getCurrentSite).mockResolvedValue(buildSite());
+    vi.mocked(api.getCurrentSite).mockResolvedValue(buildSiteRecord());
     renderDialog(true);
     await waitFor(() => screen.getByText('Contenuto'));
 
@@ -297,7 +261,7 @@ describe('GlobalStylesDialog', () => {
   });
 
   it('opens a per-type style editor and saves a field change via onSaveTypeStyle', async () => {
-    vi.mocked(api.getCurrentSite).mockResolvedValue(buildSite());
+    vi.mocked(api.getCurrentSite).mockResolvedValue(buildSiteRecord());
     const onSaveTypeStyle = vi.fn().mockResolvedValue(undefined);
     renderDialog(true, vi.fn(), onSaveTypeStyle);
     await waitFor(() => screen.getByText('Contenuto'));
@@ -320,7 +284,7 @@ describe('GlobalStylesDialog', () => {
 
   it("marks the site's current theme as selected in the theme dropdown", async () => {
     vi.mocked(api.getCurrentSite).mockResolvedValue(
-      buildSite({ themeName: 'docs-showcase' }),
+      buildSiteRecord({ themeName: 'docs-showcase' }),
     );
     renderDialog(true);
     await waitFor(() => screen.getByText('Tema'));
@@ -333,9 +297,9 @@ describe('GlobalStylesDialog', () => {
   });
 
   it('switches theme immediately on selection, without the Salva button', async () => {
-    vi.mocked(api.getCurrentSite).mockResolvedValue(buildSite());
+    vi.mocked(api.getCurrentSite).mockResolvedValue(buildSiteRecord());
     vi.mocked(api.updateThemePackage).mockResolvedValue(
-      buildSite({ themeName: 'docs-showcase' }),
+      buildSiteRecord({ themeName: 'docs-showcase' }),
     );
     renderDialog(true);
     await waitFor(() => screen.getByText('Tema'));
@@ -352,7 +316,7 @@ describe('GlobalStylesDialog', () => {
   });
 
   it('goes back to the list from the per-type editor', async () => {
-    vi.mocked(api.getCurrentSite).mockResolvedValue(buildSite());
+    vi.mocked(api.getCurrentSite).mockResolvedValue(buildSiteRecord());
     renderDialog(true);
     await waitFor(() => screen.getByText('Contenuto'));
     fireEvent.click(screen.getByText('Contenuto'));
@@ -367,7 +331,7 @@ describe('GlobalStylesDialog', () => {
 
 describe('GlobalStylesDialog under a theme that refuses styling', () => {
   it('says so instead of listing block types', async () => {
-    vi.mocked(api.getCurrentSite).mockResolvedValue(buildSite());
+    vi.mocked(api.getCurrentSite).mockResolvedValue(buildSiteRecord());
     vi.mocked(themeApi.fetchThemeCapabilities).mockResolvedValue({
       allowStyleOverrides: false,
     });

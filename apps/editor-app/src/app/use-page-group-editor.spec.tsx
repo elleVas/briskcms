@@ -3,8 +3,12 @@ import { act, renderHook } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { QueryClientProvider } from '@tanstack/react-query';
 import type { Block } from '@brisk/shared-types';
+import {
+  buildPageGroupRecord,
+  buildPageTranslationRecord,
+} from '@brisk/testing/records';
 import * as api from '../lib/page-groups-api-client';
-import { createTestQueryClient } from '../test-query-client';
+import { createTestQueryClient } from '../test/query-client.test-fixture';
 import {
   pageGroupQueryOptions,
   pageGroupTranslationsQueryOptions,
@@ -28,36 +32,12 @@ const groupContent: Block[] = [
   { id: 'hero-1', type: 'Hero', props: { title: 'Hello' } },
 ];
 
-const sampleGroup: api.PageGroupRecord = {
-  id: 'group-1',
-  tenantId: 'tenant-1',
-  siteId: 'site-1',
-  parentId: null,
-  order: 0,
-  collectionId: null,
-  content: groupContent,
-  createdBy: null,
-  createdAt: '',
-  updatedAt: '',
-};
+const sampleGroup = buildPageGroupRecord({ content: groupContent });
 
-const enTranslation: api.PageTranslationRecord = {
+const enTranslation = buildPageTranslationRecord({
   id: 'translation-en',
-  tenantId: 'tenant-1',
-  siteId: 'site-1',
-  pageGroupId: 'group-1',
   locale: 'en',
-  slug: 'home',
-  seoMeta: { title: 'Home', description: '' },
-  fieldValues: {},
-  status: 'draft',
-  publishedSnapshot: null,
-  isDiverged: false,
-  divergedContent: null,
-  createdBy: null,
-  createdAt: '',
-  updatedAt: '',
-};
+});
 
 const itTranslation: api.PageTranslationRecord = {
   ...enTranslation,

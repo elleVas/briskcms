@@ -2,10 +2,9 @@ import type { ReactNode } from 'react';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { QueryClientProvider } from '@tanstack/react-query';
-import type { SiteRecord } from '@brisk/shared-types';
-import { DEFAULT_COOKIE_BANNER_SETTINGS } from '@brisk/shared-types';
+import { buildSiteRecord } from '@brisk/testing/records';
 import * as api from '../lib/legal-documents-api-client';
-import { createTestQueryClient } from '../test-query-client';
+import { createTestQueryClient } from '../test/query-client.test-fixture';
 import { LegalDocumentsWizard } from './legal-documents-wizard';
 
 vi.mock('../lib/legal-documents-api-client', async (importOriginal) => {
@@ -40,30 +39,12 @@ vi.mock('@tanstack/react-router', async (importOriginal) => {
   };
 });
 
-const site: SiteRecord = {
-  id: 'site-1',
-  tenantId: 'tenant-1',
+const site = buildSiteRecord({
   name: 'Il mio sito',
-  domain: 'example.com',
-  themeName: 'classic',
-  defaultLocale: 'it',
   enabledLocales: ['it', 'en'],
-  untranslatedPageFallback: 'redirect-to-default',
   businessAddress: 'Via Roma 1',
   businessPhone: '+39 02 1234567',
   businessEmail: 'privacy@example.com',
-  businessType: null,
-  openingHours: null,
-  searchEngineIndexingEnabled: false,
-  themePrimaryColor: null,
-  themeSecondaryColor: null,
-  themeFontFamily: null,
-  themeCustomCss: null,
-  themeContentWidth: null,
-  themeHeadScript: null,
-  themeBodyScript: null,
-  themeFaviconUrl: null,
-  themeOverridesEnabled: true,
   themeAllowedTrackerDomains: [
     { label: 'Hotjar', domain: 'static.hotjar.com' },
   ],
@@ -77,10 +58,7 @@ const site: SiteRecord = {
       html: '',
     },
   ],
-  cookieBannerSettings: DEFAULT_COOKIE_BANNER_SETTINGS,
-  themeTokens: { blockStyles: {} },
-  createdAt: '',
-};
+});
 
 function renderWizard() {
   return render(

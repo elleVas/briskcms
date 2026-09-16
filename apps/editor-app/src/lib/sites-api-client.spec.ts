@@ -1,6 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { SiteRecord } from '@brisk/shared-types';
-import { DEFAULT_COOKIE_BANNER_SETTINGS } from '@brisk/shared-types';
+import { buildSiteRecord } from '@brisk/testing/records';
 import {
   getCurrentSite,
   updateBusinessInfo,
@@ -9,37 +8,7 @@ import {
   updateSeoSettings,
 } from './sites-api-client';
 
-const sampleSite: SiteRecord = {
-  id: 'site-1',
-  tenantId: 'tenant-1',
-  name: 'Il mio sito',
-  domain: 'example.com',
-  themeName: 'classic',
-  defaultLocale: 'it',
-  enabledLocales: ['it'],
-  untranslatedPageFallback: 'redirect-to-default',
-  businessAddress: null,
-  businessPhone: null,
-  businessEmail: null,
-  businessType: null,
-  openingHours: null,
-  searchEngineIndexingEnabled: false,
-  themePrimaryColor: null,
-  themeSecondaryColor: null,
-  themeFontFamily: null,
-  themeCustomCss: null,
-  themeContentWidth: null,
-  themeHeadScript: null,
-  themeBodyScript: null,
-  themeFaviconUrl: null,
-  themeOverridesEnabled: true,
-  themeAllowedTrackerDomains: [],
-  formSubmissionRetentionDays: null,
-  themeTrackerScripts: [],
-  cookieBannerSettings: DEFAULT_COOKIE_BANNER_SETTINGS,
-  themeTokens: { blockStyles: {} },
-  createdAt: '',
-};
+const sampleSite = buildSiteRecord();
 
 function jsonResponse(body: unknown) {
   return {

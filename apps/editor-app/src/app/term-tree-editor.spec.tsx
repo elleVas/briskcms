@@ -3,8 +3,9 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { TooltipProvider } from '../components/ui/tooltip';
 import * as api from '../lib/taxonomies-api-client';
-import type { TaxonomyDto, TermDto } from '../lib/taxonomies-api-client';
-import { createTestQueryClient } from '../test-query-client';
+import type { TermDto } from '../lib/taxonomies-api-client';
+import { createTestQueryClient } from '../test/query-client.test-fixture';
+import { buildTaxonomyDto, buildTermDto } from '../test/dtos.test-fixture';
 import { MediaPickerProvider } from './media-picker-provider';
 import { TermTreeEditor } from './term-tree-editor';
 
@@ -21,34 +22,14 @@ vi.mock('../lib/taxonomies-api-client', async (importOriginal) => {
   };
 });
 
-const taxonomy: TaxonomyDto = {
-  id: 'taxonomy-1',
-  tenantId: 'tenant-1',
-  siteId: 'site-1',
-  prefix: 'categoria',
-  name: { it: 'Categoria' },
-  hierarchical: true,
-  order: 0,
-  createdAt: '',
-  updatedAt: '',
-};
+const taxonomy = buildTaxonomyDto();
 
 function term(overrides: Partial<TermDto> & { id: string }): TermDto {
-  return {
-    tenantId: 'tenant-1',
-    siteId: 'site-1',
-    taxonomyId: 'taxonomy-1',
-    parentId: null,
+  return buildTermDto({
     name: { it: overrides.id },
-    description: {},
-    seoMeta: {},
-    landingPageGroupId: null,
-    order: 0,
     slugs: { it: overrides.id },
-    createdAt: '',
-    updatedAt: '',
     ...overrides,
-  };
+  });
 }
 
 function renderEditor(terms: TermDto[]) {

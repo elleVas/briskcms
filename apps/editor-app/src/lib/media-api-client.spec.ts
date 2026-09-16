@@ -1,25 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import {
-  deleteMedia,
-  listMedia,
-  uploadMedia,
-  type MediaDto,
-} from './media-api-client';
+import { deleteMedia, listMedia, uploadMedia } from './media-api-client';
+import { buildMediaDto } from '../test/dtos.test-fixture';
 
-const sampleMedia: MediaDto = {
-  id: 'media-1',
-  tenantId: 'tenant-1',
-  siteId: 'site-1',
-  filename: 'foto.png',
-  storageKey: 'abc.webp',
-  storageProvider: 'local',
-  mimeType: 'image/webp',
-  size: 1234,
-  width: 800,
-  height: 600,
-  createdAt: '',
-  url: 'http://localhost/uploads/abc.webp',
-};
+const sampleMedia = buildMediaDto();
 
 function jsonResponse(body: unknown) {
   return {

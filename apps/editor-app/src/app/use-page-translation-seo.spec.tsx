@@ -2,8 +2,9 @@ import type { ReactNode } from 'react';
 import { act, renderHook } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { QueryClientProvider } from '@tanstack/react-query';
+import { buildPageTranslationRecord } from '@brisk/testing/records';
 import * as api from '../lib/page-groups-api-client';
-import { createTestQueryClient } from '../test-query-client';
+import { createTestQueryClient } from '../test/query-client.test-fixture';
 import { pageGroupTranslationsQueryOptions } from './page-groups-queries';
 import { usePageTranslationSeo } from './use-page-translation-seo';
 
@@ -13,23 +14,7 @@ vi.mock('../lib/page-groups-api-client', async (importOriginal) => {
   return { ...actual, updatePageTranslationSeoMeta: vi.fn() };
 });
 
-const translation: api.PageTranslationRecord = {
-  id: 'translation-1',
-  tenantId: 'tenant-1',
-  siteId: 'site-1',
-  pageGroupId: 'group-1',
-  locale: 'it',
-  slug: 'home',
-  seoMeta: { title: 'Home', description: '' },
-  fieldValues: {},
-  status: 'draft',
-  publishedSnapshot: null,
-  isDiverged: false,
-  divergedContent: null,
-  createdBy: null,
-  createdAt: '',
-  updatedAt: '',
-};
+const translation = buildPageTranslationRecord();
 
 function renderWithClient() {
   const queryClient = createTestQueryClient();

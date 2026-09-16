@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { QueryClientProvider } from '@tanstack/react-query';
 import type { BlockRect } from '@brisk/shared-types';
 import type { BlockDescriptor } from '@brisk/block-registry';
-import { createTestQueryClient } from '../../test-query-client';
+import { createTestQueryClient } from '../../test/query-client.test-fixture';
 import { BlockToolbarOverlay } from './block-toolbar-overlay';
 
 function renderOverlay(ui: ReactElement) {

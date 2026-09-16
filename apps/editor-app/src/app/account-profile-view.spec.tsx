@@ -2,7 +2,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { QueryClientProvider } from '@tanstack/react-query';
 import type { AccountProfile } from '@brisk/shared-types';
-import { createTestQueryClient } from '../test-query-client';
+import { createTestQueryClient } from '../test/query-client.test-fixture';
 import * as accountApi from '../lib/account-api-client';
 import { ApiError } from '../lib/http-client';
 import { PUBLIC_SITE_URL } from '../lib/public-site-url';

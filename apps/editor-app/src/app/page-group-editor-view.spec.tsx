@@ -9,12 +9,19 @@ import {
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { QueryClientProvider } from '@tanstack/react-query';
 import type { Block } from '@brisk/shared-types';
+import {
+  buildCollectionRecord,
+  buildPageGroupRecord,
+  buildPageGroupVersionRecord,
+  buildPageTranslationRecord,
+} from '@brisk/testing/records';
 import { TooltipProvider } from '../components/ui/tooltip';
 import { ApiError } from '../lib/http-client';
 import * as api from '../lib/page-groups-api-client';
 import * as previewTokenApi from '../lib/preview-token-api-client';
 import type { CollectionRecord } from '../lib/collections-api-client';
-import { createTestQueryClient } from '../test-query-client';
+import { createTestQueryClient } from '../test/query-client.test-fixture';
+import { buildReusableSectionDto } from '../test/dtos.test-fixture';
 import { collectionsQueryOptions } from './collections-queries';
 import { ToastProvider } from './toast-provider';
 import {
@@ -74,36 +81,13 @@ const groupContent: Block[] = [
   { id: 'hero-1', type: 'Hero', props: { title: 'Hello' } },
 ];
 
-const sampleGroup: api.PageGroupRecord = {
-  id: 'group-1',
-  tenantId: 'tenant-1',
-  siteId: 'site-1',
-  parentId: null,
-  order: 0,
-  collectionId: null,
-  content: groupContent,
-  createdBy: null,
-  createdAt: '',
-  updatedAt: '',
-};
+const sampleGroup = buildPageGroupRecord({ content: groupContent });
 
-const enTranslation: api.PageTranslationRecord = {
+const enTranslation = buildPageTranslationRecord({
   id: 'translation-en',
-  tenantId: 'tenant-1',
-  siteId: 'site-1',
-  pageGroupId: 'group-1',
   locale: 'en',
-  slug: 'home',
   seoMeta: { title: 'Home', description: 'The home page' },
-  fieldValues: {},
-  status: 'draft',
-  publishedSnapshot: null,
-  isDiverged: false,
-  divergedContent: null,
-  createdBy: null,
-  createdAt: '',
-  updatedAt: '',
-};
+});
 
 function renderView(
   translations: api.PageTranslationRecord[] = [enTranslation],
@@ -184,22 +168,16 @@ describe('PageGroupEditorView', () => {
 
   it('opens version history and restores a previous version', async () => {
     vi.mocked(api.listPageGroupVersions).mockResolvedValue([
-      {
+      buildPageGroupVersionRecord({
         id: 'v1',
-        tenantId: 'tenant-1',
-        pageGroupId: 'group-1',
         content: groupContent,
-        createdBy: null,
         createdAt: '2026-01-01T00:00:00.000Z',
-      },
-      {
+      }),
+      buildPageGroupVersionRecord({
         id: 'v2',
-        tenantId: 'tenant-1',
-        pageGroupId: 'group-1',
         content: [{ id: 'hero-1', type: 'Hero', props: { title: 'Old' } }],
-        createdBy: null,
         createdAt: '2026-01-02T00:00:00.000Z',
-      },
+      }),
     ]);
     vi.mocked(api.rollbackPageGroupToVersion).mockResolvedValue({
       ...sampleGroup,
@@ -264,20 +242,14 @@ describe('PageGroupEditorView', () => {
       vi.restoreAllMocks();
     });
 
-    const savedTemplate = {
+    const savedTemplate = buildReusableSectionDto({
       id: 'template-1',
-      tenantId: 'tenant-1',
-      siteId: 'site-1',
       name: 'Scheda servizio',
-      kind: 'template' as const,
-      status: 'published' as const,
+      kind: 'template',
+      status: 'published',
       content: groupContent,
       publishedContent: groupContent,
-      exposedFields: {},
-      createdBy: null,
-      createdAt: '',
-      updatedAt: '',
-    };
+    });
 
     it("asks for a name, starting from the default language's title, and says where the template went", async () => {
       const prompt = vi
@@ -370,17 +342,11 @@ describe('PageGroupEditorView', () => {
       ['en', 'it'],
       { ...sampleGroup, collectionId: 'collection-1' },
       [
-        {
+        buildCollectionRecord({
           id: 'collection-1',
-          tenantId: 'tenant-1',
           siteId: sampleGroup.siteId,
           name: 'News',
-          icon: 'newspaper',
-          order: 0,
-          defaultTemplateId: null,
-          createdAt: '',
-          updatedAt: '',
-        },
+        }),
       ],
     );
 

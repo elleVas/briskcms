@@ -2,8 +2,9 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { QueryClientProvider } from '@tanstack/react-query';
 import type { PageTranslationRecord } from '@brisk/shared-types';
+import { buildPageTranslationRecord } from '@brisk/testing/records';
 import * as api from '../lib/page-groups-api-client';
-import { createTestQueryClient } from '../test-query-client';
+import { createTestQueryClient } from '../test/query-client.test-fixture';
 import { PageGroupTranslationsDialog } from './page-group-translations-dialog';
 
 vi.mock('../lib/page-groups-api-client', async (importOriginal) => {
@@ -19,22 +20,12 @@ vi.mock('../lib/page-groups-api-client', async (importOriginal) => {
 function translation(
   overrides: Partial<PageTranslationRecord> & { id: string; locale: string },
 ): PageTranslationRecord {
-  return {
-    tenantId: 'tenant-1',
-    siteId: 'site-1',
-    pageGroupId: 'group-1',
+  return buildPageTranslationRecord({
     slug: 'chi-siamo',
     seoMeta: { title: 'Chi siamo', description: '' },
-    fieldValues: {},
     status: 'published',
-    publishedSnapshot: null,
-    isDiverged: false,
-    divergedContent: null,
-    createdBy: null,
-    createdAt: '',
-    updatedAt: '',
     ...overrides,
-  } as PageTranslationRecord;
+  });
 }
 
 function renderDialog(translations: PageTranslationRecord[]) {

@@ -16,7 +16,7 @@ import {
 } from '@brisk/shared-types';
 import type { BlockDescriptor } from '@brisk/block-registry';
 import { TooltipProvider } from '../../components/ui/tooltip';
-import { createTestQueryClient } from '../../test-query-client';
+import { createTestQueryClient } from '../../test/query-client.test-fixture';
 import * as blockFragmentApi from '../../lib/block-fragment-api-client';
 import * as previewTokenApi from '../../lib/preview-token-api-client';
 import { PUBLIC_SITE_URL } from '../../lib/public-site-url';

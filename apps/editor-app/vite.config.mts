@@ -85,6 +85,8 @@ export default defineConfig(({ mode }) => ({
       include: ['src/**/*.{ts,tsx}'],
       exclude: [
         'src/**/*.spec.{ts,tsx}',
+        // Helpers for specs, not code under test (docs/adr/0009).
+        'src/**/*.test-fixture.ts',
         'src/main.tsx',
         'src/test-setup.ts',
         'src/routeTree.gen.ts',
