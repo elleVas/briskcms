@@ -1,24 +1,12 @@
 import { ForbiddenException, UnauthorizedException } from '@nestjs/common';
 import type { ExecutionContext } from '@nestjs/common';
 import type { Reflector } from '@nestjs/core';
-import { User } from '@brisk/domain-core';
 import type { UserRepositoryPort } from '@brisk/ports';
+import { buildUser } from '@brisk/testing';
 import { RolesGuard } from './roles.guard';
 import type { AuthenticatedRequest } from './session-auth.guard';
 
 const tenantId = 'tenant-1';
-
-function buildUser(overrides: Partial<Parameters<typeof User.create>[0]> = {}) {
-  return User.create({
-    id: 'user-1',
-    tenantId,
-    email: 'lele@example.com',
-    displayName: 'Lele',
-    passwordHash: 'hashed',
-    role: 'admin',
-    ...overrides,
-  });
-}
 
 // Express's Request has 100+ members — only `tenantId`/`userId` are read
 // here, so a minimal double stands in via `unknown` rather than

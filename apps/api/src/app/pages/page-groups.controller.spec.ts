@@ -1,10 +1,8 @@
 import {
   NotAPageTemplateError,
-  PageGroup,
   PageGroupNotFoundError,
   PageGroupReorderMismatchError,
   PageGroupVersionNotFoundError,
-  PageTranslation,
   PageTranslationDivergedError,
   PageTranslationLocaleAlreadyExistsError,
   PageTranslationNotDivergedError,
@@ -21,38 +19,16 @@ import type {
   PreviewTokenPort,
   ReusableSectionRepositoryPort,
   ReusableSectionVersionRepositoryPort,
-  SiteRepositoryPort,
   TaxonomyRepositoryPort,
   SearchPort,
   TenantContextPort,
 } from '@brisk/ports';
+import {
+  buildPageGroup,
+  buildPageTranslation,
+  InMemorySiteRepository,
+} from '@brisk/testing';
 import { PageGroupsController } from './page-groups.controller';
-
-function buildGroup(
-  overrides: Partial<Parameters<typeof PageGroup.create>[0]> = {},
-) {
-  return PageGroup.create({
-    id: 'group-1',
-    tenantId: 'tenant-1',
-    siteId: 'site-1',
-    ...overrides,
-  });
-}
-
-function buildTranslation(
-  overrides: Partial<Parameters<typeof PageTranslation.create>[0]> = {},
-) {
-  return PageTranslation.create({
-    id: 'translation-1',
-    tenantId: 'tenant-1',
-    siteId: 'site-1',
-    pageGroupId: 'group-1',
-    locale: 'en',
-    slug: 'home',
-    seoMeta: { title: 'Home', description: '' },
-    ...overrides,
-  });
-}
 
 describe('PageGroupsController (unit)', () => {
   let pageGroupRepository: jest.Mocked<PageGroupRepositoryPort>;
@@ -64,7 +40,7 @@ describe('PageGroupsController (unit)', () => {
   let searchPort: jest.Mocked<SearchPort>;
   let reusableSectionRepository: jest.Mocked<ReusableSectionRepositoryPort>;
   let taxonomyRepository: jest.Mocked<TaxonomyRepositoryPort>;
-  let siteRepository: jest.Mocked<SiteRepositoryPort>;
+  let siteRepository: InMemorySiteRepository;
   let collectionRepository: jest.Mocked<CollectionRepositoryPort>;
   let reusableSectionVersionRepository: jest.Mocked<ReusableSectionVersionRepositoryPort>;
   let controller: PageGroupsController;
@@ -138,12 +114,7 @@ describe('PageGroupsController (unit)', () => {
       setTermsForPageGroup: jest.fn(),
       listPageGroupIdsForTerm: jest.fn().mockResolvedValue([]),
     };
-    siteRepository = {
-      save: jest.fn(),
-      findById: jest.fn(),
-      findByDomain: jest.fn(),
-      listByTenant: jest.fn().mockResolvedValue([]),
-    };
+    siteRepository = new InMemorySiteRepository();
     collectionRepository = {
       save: jest.fn(),
       findById: jest.fn(),
@@ -302,7 +273,7 @@ describe('PageGroupsController (unit)', () => {
   });
 
   it('rollback restores the group content from a version belonging to it', async () => {
-    const group = buildGroup({
+    const group = buildPageGroup({
       content: [{ id: 'block-1', type: 'Hero', props: { title: 'Current' } }],
     });
     pageGroupRepository.findById.mockResolvedValue(group);
@@ -326,7 +297,7 @@ describe('PageGroupsController (unit)', () => {
   });
 
   it('rollback propagates PageGroupVersionNotFoundError for a version belonging to another group, unwrapped', async () => {
-    pageGroupRepository.findById.mockResolvedValue(buildGroup());
+    pageGroupRepository.findById.mockResolvedValue(buildPageGroup());
     pageGroupVersionRepository.findById.mockResolvedValue({
       id: 'version-1',
       tenantId: 'tenant-1',
@@ -390,13 +361,13 @@ describe('PageGroupsController (unit)', () => {
   });
 
   it('duplicate copies the source group and every translation', async () => {
-    const source = buildGroup({
+    const source = buildPageGroup({
       content: [{ id: 'block-1', type: 'Hero', props: { title: 'Hello' } }],
     });
     pageGroupRepository.findById.mockResolvedValue(source);
     pageGroupRepository.listSiblings.mockResolvedValue([]);
     pageTranslationRepository.listByGroup.mockResolvedValue([
-      buildTranslation({ locale: 'en', slug: 'home' }),
+      buildPageTranslation({ locale: 'en', slug: 'home' }),
     ]);
     pageTranslationRepository.findByParentGroupAndLocaleSlug.mockResolvedValue(
       null,
@@ -425,7 +396,7 @@ describe('PageGroupsController (unit)', () => {
   });
 
   it('delete calls the repository once the group is found', async () => {
-    pageGroupRepository.findById.mockResolvedValue(buildGroup());
+    pageGroupRepository.findById.mockResolvedValue(buildPageGroup());
 
     await controller.delete('group-1');
 
@@ -464,9 +435,9 @@ describe('PageGroupsController (unit)', () => {
   });
 
   it('createTranslation propagates PageTranslationLocaleAlreadyExistsError, unwrapped', async () => {
-    pageGroupRepository.findById.mockResolvedValue(buildGroup());
+    pageGroupRepository.findById.mockResolvedValue(buildPageGroup());
     pageTranslationRepository.findByGroupAndLocale.mockResolvedValue(
-      buildTranslation(),
+      buildPageTranslation(),
     );
 
     await expect(
@@ -490,7 +461,7 @@ describe('PageGroupsController (unit)', () => {
   });
 
   it('saveFieldValues propagates PageTranslationDivergedError once diverged, unwrapped', async () => {
-    const diverged = buildTranslation();
+    const diverged = buildPageTranslation();
     diverged.diverge([], { by: null });
     pageTranslationRepository.findById.mockResolvedValue(diverged);
 
@@ -503,7 +474,9 @@ describe('PageGroupsController (unit)', () => {
   });
 
   it('saveDivergedContent propagates PageTranslationNotDivergedError on a still-linked translation, unwrapped', async () => {
-    pageTranslationRepository.findById.mockResolvedValue(buildTranslation());
+    pageTranslationRepository.findById.mockResolvedValue(
+      buildPageTranslation(),
+    );
 
     await expect(
       controller.saveDivergedContent('translation-1', {
@@ -514,7 +487,7 @@ describe('PageGroupsController (unit)', () => {
   });
 
   it('saveDivergedContent saves independent content on an already-diverged translation', async () => {
-    const diverged = buildTranslation();
+    const diverged = buildPageTranslation();
     diverged.diverge([], { by: null });
     pageTranslationRepository.findById.mockResolvedValue(diverged);
 
@@ -537,10 +510,10 @@ describe('PageGroupsController (unit)', () => {
   });
 
   it('publish freezes the merged group+fieldValues content', async () => {
-    const group = buildGroup({
+    const group = buildPageGroup({
       content: [{ id: 'block-1', type: 'Hero', props: { title: 'Hello' } }],
     });
-    const translation = buildTranslation({
+    const translation = buildPageTranslation({
       fieldValues: { 'block-1': { title: 'Ciao' } },
     });
     pageTranslationRepository.findById.mockResolvedValue(translation);
@@ -564,7 +537,9 @@ describe('PageGroupsController (unit)', () => {
   });
 
   it("createPreviewToken issues a token scoped to (tenant, 'page', translationId)", async () => {
-    pageTranslationRepository.findById.mockResolvedValue(buildTranslation());
+    pageTranslationRepository.findById.mockResolvedValue(
+      buildPageTranslation(),
+    );
     const expiresAt = new Date();
     previewTokenPort.createToken.mockResolvedValue({
       token: 'opaque-token',
@@ -586,7 +561,7 @@ describe('PageGroupsController (unit)', () => {
   });
 
   it('diverge propagates PageTranslationDivergedError if already diverged, unwrapped', async () => {
-    const diverged = buildTranslation();
+    const diverged = buildPageTranslation();
     diverged.diverge([], { by: null });
     pageTranslationRepository.findById.mockResolvedValue(diverged);
 
@@ -677,7 +652,7 @@ describe('PageGroupsController (unit)', () => {
   });
 
   it('lets unexpected errors propagate unchanged', async () => {
-    pageGroupRepository.findById.mockResolvedValue(buildGroup());
+    pageGroupRepository.findById.mockResolvedValue(buildPageGroup());
     pageGroupRepository.saveWithVersion.mockRejectedValue(
       new Error('db exploded'),
     );

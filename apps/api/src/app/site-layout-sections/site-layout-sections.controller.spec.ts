@@ -1,7 +1,5 @@
 import { NotFoundException } from '@nestjs/common';
 import {
-  Site,
-  SiteLayoutSection,
   SiteLayoutSectionNotFoundError,
   SiteLayoutSectionVersionNotFoundError,
   SiteNotFoundError,
@@ -10,65 +8,19 @@ import type {
   PreviewTokenPort,
   SiteLayoutSectionRepositoryPort,
   SiteLayoutSectionVersionRepositoryPort,
-  SiteRepositoryPort,
   TenantContextPort,
 } from '@brisk/ports';
-import { DEFAULT_COOKIE_BANNER_SETTINGS } from '@brisk/shared-types';
+import {
+  buildSite,
+  buildSiteLayoutSection,
+  InMemorySiteRepository,
+} from '@brisk/testing';
 import { SiteLayoutSectionsController } from './site-layout-sections.controller';
-
-function buildSection(
-  overrides: Partial<Parameters<typeof SiteLayoutSection.create>[0]> = {},
-) {
-  return SiteLayoutSection.create({
-    id: 'section-1',
-    tenantId: 'tenant-1',
-    siteId: 'site-1',
-    locale: 'it',
-    kind: 'header',
-    ...overrides,
-  });
-}
-
-function buildSite(
-  overrides: Partial<Parameters<typeof Site.fromProps>[0]> = {},
-) {
-  return Site.fromProps({
-    id: 'site-1',
-    tenantId: 'tenant-1',
-    name: 'Il mio sito',
-    domain: 'example.com',
-    themeName: 'classic',
-    defaultLocale: 'it',
-    enabledLocales: ['it'],
-    untranslatedPageFallback: 'redirect-to-default',
-    businessAddress: null,
-    businessPhone: null,
-    businessEmail: null,
-    businessType: null,
-    openingHours: null,
-    searchEngineIndexingEnabled: false,
-    themePrimaryColor: null,
-    themeSecondaryColor: null,
-    themeFontFamily: null,
-    themeCustomCss: null,
-    themeContentWidth: null,
-    themeHeadScript: null,
-    themeBodyScript: null,
-    themeFaviconUrl: null,
-    themeOverridesEnabled: true,
-    themeAllowedTrackerDomains: [],
-    formSubmissionRetentionDays: null,
-    themeTrackerScripts: [],
-    cookieBannerSettings: DEFAULT_COOKIE_BANNER_SETTINGS,
-    createdAt: new Date(),
-    ...overrides,
-  });
-}
 
 describe('SiteLayoutSectionsController (unit)', () => {
   let siteLayoutSectionRepository: jest.Mocked<SiteLayoutSectionRepositoryPort>;
   let siteLayoutSectionVersionRepository: jest.Mocked<SiteLayoutSectionVersionRepositoryPort>;
-  let siteRepository: jest.Mocked<SiteRepositoryPort>;
+  let siteRepository: InMemorySiteRepository;
   let tenantContext: TenantContextPort;
   let previewTokenPort: jest.Mocked<PreviewTokenPort>;
   let controller: SiteLayoutSectionsController;
@@ -84,12 +36,7 @@ describe('SiteLayoutSectionsController (unit)', () => {
       findById: jest.fn(),
       listBySection: jest.fn(),
     };
-    siteRepository = {
-      save: jest.fn(),
-      findById: jest.fn(),
-      findByDomain: jest.fn(),
-      listByTenant: jest.fn(),
-    };
+    siteRepository = new InMemorySiteRepository();
     tenantContext = {
       getCurrentTenantId: () => 'tenant-1',
       getCurrentUserId: () => 'user-1',
@@ -119,8 +66,6 @@ describe('SiteLayoutSectionsController (unit)', () => {
   // (see http-exception.filter.spec.ts), not here — the controller's own
   // contract is just to let the domain error propagate unwrapped.
   it('getOrCreate propagates SiteNotFoundError, unwrapped', async () => {
-    siteRepository.findById.mockResolvedValue(null);
-
     await expect(
       controller.getOrCreate({
         siteId: 'site-1',
@@ -147,7 +92,7 @@ describe('SiteLayoutSectionsController (unit)', () => {
   });
 
   it('rollback propagates SiteLayoutSectionVersionNotFoundError, unwrapped', async () => {
-    const section = buildSection();
+    const section = buildSiteLayoutSection();
     siteLayoutSectionRepository.findById.mockResolvedValue(section);
     siteLayoutSectionVersionRepository.findById.mockResolvedValue(null);
 
@@ -157,7 +102,7 @@ describe('SiteLayoutSectionsController (unit)', () => {
   });
 
   it('lets unexpected errors propagate unchanged', async () => {
-    const section = buildSection();
+    const section = buildSiteLayoutSection();
     siteLayoutSectionRepository.findById.mockResolvedValue(section);
     siteLayoutSectionRepository.save.mockRejectedValue(
       new Error('db exploded'),
@@ -177,7 +122,7 @@ describe('SiteLayoutSectionsController (unit)', () => {
   });
 
   it('updateSticky flips the flag and persists it', async () => {
-    const section = buildSection();
+    const section = buildSiteLayoutSection();
     siteLayoutSectionRepository.findById.mockResolvedValue(section);
 
     const result = await controller.updateSticky(section.id, {
@@ -189,8 +134,8 @@ describe('SiteLayoutSectionsController (unit)', () => {
   });
 
   it('getOrCreate returns the existing section instead of creating a new one', async () => {
-    siteRepository.findById.mockResolvedValue(buildSite());
-    const existing = buildSection();
+    await siteRepository.save(buildSite());
+    const existing = buildSiteLayoutSection();
     siteLayoutSectionRepository.findBySiteLocaleKind.mockResolvedValue(
       existing,
     );
@@ -215,7 +160,7 @@ describe('SiteLayoutSectionsController (unit)', () => {
   });
 
   it("createPreviewToken issues a token scoped to (tenant, section's own kind, sectionId)", async () => {
-    const section = buildSection({ kind: 'footer' });
+    const section = buildSiteLayoutSection({ kind: 'footer' });
     siteLayoutSectionRepository.findById.mockResolvedValue(section);
     const expiresAt = new Date();
     previewTokenPort.createToken.mockResolvedValue({

@@ -1,17 +1,9 @@
 import { randomUUID } from 'node:crypto';
 import { type INestApplication } from '@nestjs/common';
-import { Test } from '@nestjs/testing';
-import { HttpExceptionFilter } from '../http-exception.filter';
-import { requestIdMiddleware } from '../request-id.middleware';
-import cookieParser from 'cookie-parser';
 import request from 'supertest';
-import type { AuthPort } from '@brisk/ports';
-import { type BriskDb, users, withTenant } from '@brisk/postgres-db';
-import { deleteIntegrationFixtures } from '@brisk/postgres-db/testing';
-import { AUTH_PORT } from '../auth/auth.tokens';
 import { AuthModule } from '../auth/auth.module';
-import { DATABASE } from '../database.module';
 import { UsersModule } from './users.module';
+import { IntegrationApp } from '../../test/integration-app.test-fixture';
 
 const MAILPIT_URL = `http://localhost:${process.env['MAILPIT_UI_PORT'] ?? '8025'}`;
 
@@ -146,54 +138,22 @@ async function waitForMessageCount(
 }
 
 describe('Invite -> accept-invite (integration)', () => {
+  let integration: IntegrationApp;
   let app: INestApplication;
-  let db: BriskDb;
   let adminAgent: ReturnType<typeof request.agent>;
-  let tenantId: string;
-  const createdUserIds: string[] = [];
 
   beforeAll(async () => {
-    const moduleRef = await Test.createTestingModule({
+    integration = await IntegrationApp.start({
       imports: [UsersModule, AuthModule],
-    }).compile();
-
-    app = moduleRef.createNestApplication();
-    app.use(cookieParser());
-    app.useGlobalFilters(new HttpExceptionFilter());
-    app.use(requestIdMiddleware);
-    await app.init();
-    db = app.get<BriskDb>(DATABASE);
-
-    tenantId = process.env.DEFAULT_TENANT_ID as string;
-    const authPort = app.get<AuthPort>(AUTH_PORT);
-    const email = `invite-flow-admin-${randomUUID()}@example.test`;
-    const password = randomUUID();
-    const passwordHash = await authPort.hashPassword(password);
-    const [admin] = await withTenant(db, tenantId, (tx) =>
-      tx
-        .insert(users)
-        .values({
-          tenantId,
-          email,
-          passwordHash,
-          role: 'admin',
-          displayName: 'Invite Flow Admin',
-        })
-        .returning({ id: users.id }),
+    });
+    app = integration.app;
+    adminAgent = await integration.login(
+      await integration.createUser({ displayName: 'Invite Flow Admin' }),
     );
-    createdUserIds.push(admin.id);
-
-    adminAgent = request.agent(app.getHttpServer());
-    await adminAgent
-      .post('/auth/login')
-      .send({ email, password, captchaToken: 'test-token' })
-      .expect(200);
   });
 
   afterAll(async () => {
-    await deleteIntegrationFixtures(db, tenantId, { userIds: createdUserIds });
-    await app.close();
-    await db.$client.end();
+    await integration.close();
   });
 
   it('invites a user, accepts the invite from the emailed link, and logs in with the new password', async () => {
@@ -208,7 +168,7 @@ describe('Invite -> accept-invite (integration)', () => {
       })
       .expect(201);
     expect(inviteRes.body.isActive).toBe(false);
-    createdUserIds.push(inviteRes.body.id);
+    integration.trackUser(inviteRes.body.id);
 
     const inviteToken = await fetchInviteToken(inviteeEmail);
     const newPassword = 'a-brand-new-password';
@@ -248,7 +208,7 @@ describe('Invite -> accept-invite (integration)', () => {
         role: 'editor',
       })
       .expect(201);
-    createdUserIds.push(inviteRes.body.id);
+    integration.trackUser(inviteRes.body.id);
     const inviteToken = await fetchInviteToken(inviteeEmail);
 
     await request(app.getHttpServer())
@@ -270,28 +230,12 @@ describe('Invite -> accept-invite (integration)', () => {
   });
 
   it('403s a non-admin inviting a user', async () => {
-    const authPort = app.get<AuthPort>(AUTH_PORT);
-    const editorEmail = `invite-flow-editor-${randomUUID()}@example.test`;
-    const password = randomUUID();
-    const passwordHash = await authPort.hashPassword(password);
-    const [editor] = await withTenant(db, tenantId, (tx) =>
-      tx
-        .insert(users)
-        .values({
-          tenantId,
-          email: editorEmail,
-          passwordHash,
-          role: 'editor',
-          displayName: 'Invite Flow Editor',
-        })
-        .returning({ id: users.id }),
+    const editorAgent = await integration.login(
+      await integration.createUser({
+        role: 'editor',
+        displayName: 'Invite Flow Editor',
+      }),
     );
-    createdUserIds.push(editor.id);
-    const editorAgent = request.agent(app.getHttpServer());
-    await editorAgent
-      .post('/auth/login')
-      .send({ email: editorEmail, password, captchaToken: 'test-token' })
-      .expect(200);
 
     await editorAgent
       .post('/users/invite')
@@ -313,7 +257,7 @@ describe('Invite -> accept-invite (integration)', () => {
         role: 'editor',
       })
       .expect(201);
-    createdUserIds.push(inviteRes.body.id);
+    integration.trackUser(inviteRes.body.id);
     await fetchInviteToken(inviteeEmail);
 
     await adminAgent
@@ -338,7 +282,7 @@ describe('Invite -> accept-invite (integration)', () => {
         role: 'editor',
       })
       .expect(201);
-    createdUserIds.push(inviteRes.body.id);
+    integration.trackUser(inviteRes.body.id);
     const inviteToken = await fetchInviteToken(inviteeEmail);
     await request(app.getHttpServer())
       .post('/auth/accept-invite')
@@ -356,7 +300,7 @@ describe('Invite -> accept-invite (integration)', () => {
       .post('/users/invite')
       .send({ email: inviteeEmail, displayName: 'Prima Volta', role: 'editor' })
       .expect(201);
-    createdUserIds.push(inviteRes.body.id);
+    integration.trackUser(inviteRes.body.id);
 
     await adminAgent
       .post('/users/invite')

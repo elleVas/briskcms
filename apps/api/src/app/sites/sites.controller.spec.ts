@@ -1,11 +1,6 @@
 import { NotFoundException } from '@nestjs/common';
-import {
-  InvalidThemeNameError,
-  Site,
-  SiteNotFoundError,
-} from '@brisk/domain-core';
+import { InvalidThemeNameError, SiteNotFoundError } from '@brisk/domain-core';
 import type {
-  SiteRepositoryPort,
   SiteThemeBlockStylesPort,
   TenantContextPort,
   ThemeCatalogPort,
@@ -14,59 +9,26 @@ import {
   DEFAULT_COOKIE_BANNER_SETTINGS,
   DEFAULT_VARIANT,
 } from '@brisk/shared-types';
+import { buildSite, InMemorySiteRepository } from '@brisk/testing';
 import { DeploymentSiteResolver } from './deployment-site.resolver';
 import { SitesController } from './sites.controller';
 
-function buildSite(
-  overrides: Partial<Parameters<typeof Site.fromProps>[0]> = {},
-) {
-  return Site.fromProps({
-    id: 'site-1',
-    tenantId: 'tenant-1',
-    name: 'Il mio sito',
-    domain: 'example.com',
-    themeName: 'classic',
-    defaultLocale: 'it',
-    enabledLocales: ['it'],
-    untranslatedPageFallback: 'redirect-to-default',
-    businessAddress: null,
-    businessPhone: null,
-    businessEmail: null,
-    businessType: null,
-    openingHours: null,
-    searchEngineIndexingEnabled: false,
-    themePrimaryColor: null,
-    themeSecondaryColor: null,
-    themeFontFamily: null,
-    themeCustomCss: null,
-    themeContentWidth: null,
-    themeHeadScript: null,
-    themeBodyScript: null,
-    themeFaviconUrl: null,
-    themeOverridesEnabled: true,
-    themeAllowedTrackerDomains: [],
-    formSubmissionRetentionDays: null,
-    themeTrackerScripts: [],
-    cookieBannerSettings: DEFAULT_COOKIE_BANNER_SETTINGS,
-    createdAt: new Date(),
-    ...overrides,
-  });
-}
-
 describe('SitesController (unit)', () => {
-  let siteRepository: jest.Mocked<SiteRepositoryPort>;
+  let siteRepository: InMemorySiteRepository;
   let siteThemeBlockStylesRepository: jest.Mocked<SiteThemeBlockStylesPort>;
   let themeCatalog: jest.Mocked<ThemeCatalogPort>;
   let tenantContext: TenantContextPort;
   let controller: SitesController;
 
-  beforeEach(() => {
-    siteRepository = {
-      findByDomain: jest.fn(),
-      listByTenant: jest.fn(),
-      findById: jest.fn(),
-      save: jest.fn(),
-    };
+  beforeEach(async () => {
+    // One site, `site-1`; every "not found" case asks for `missing`. Spied
+    // on after it is stored, so a test can tell whether the controller
+    // saved: the stored site is the very object the controller changes, so
+    // reading it back would look updated even if nothing was saved.
+    siteRepository = new InMemorySiteRepository();
+    await siteRepository.save(buildSite({ name: 'Il mio sito' }));
+    jest.spyOn(siteRepository, 'listByTenant');
+    jest.spyOn(siteRepository, 'save');
     siteThemeBlockStylesRepository = {
       listBySite: jest.fn().mockResolvedValue({}),
       upsert: jest.fn(),
@@ -80,7 +42,7 @@ describe('SitesController (unit)', () => {
       getCurrentTenantId: () => 'tenant-1',
       getCurrentUserId: () => 'user-1',
     };
-    // A real resolver over the same mocked repository, not a mock of its
+    // A real resolver over the same repository, not a mock of its
     // own: its whole behaviour is which repository call it makes and what
     // it does with the result, so mocking it would test nothing.
     controller = new SitesController(
@@ -93,9 +55,6 @@ describe('SitesController (unit)', () => {
   });
 
   it('findCurrent returns the site this deployment edits, without being given an id', async () => {
-    const site = buildSite();
-    siteRepository.listByTenant.mockResolvedValue([site]);
-
     const dto = await controller.findCurrent();
 
     expect(siteRepository.listByTenant).toHaveBeenCalledWith('tenant-1');
@@ -103,15 +62,12 @@ describe('SitesController (unit)', () => {
   });
 
   it('findById throws a NotFoundException when no site matches', async () => {
-    siteRepository.findById.mockResolvedValue(null);
-
     await expect(controller.findById('missing')).rejects.toThrow(
       NotFoundException,
     );
   });
 
   it('findById returns the site props, with themeTokens composed from the block styles repository', async () => {
-    siteRepository.findById.mockResolvedValue(buildSite());
     siteThemeBlockStylesRepository.listBySite.mockResolvedValue({
       Button: { default: { base: { borderRadius: '9999px' } } },
     });
@@ -130,8 +86,6 @@ describe('SitesController (unit)', () => {
   // (see http-exception.filter.spec.ts), not here — the controller's own
   // contract is just to let the domain error propagate unwrapped.
   it('updateBusinessInfo propagates SiteNotFoundError, unwrapped', async () => {
-    siteRepository.findById.mockResolvedValue(null);
-
     await expect(
       controller.updateBusinessInfo('missing', {
         businessAddress: null,
@@ -144,8 +98,6 @@ describe('SitesController (unit)', () => {
   });
 
   it('updateBusinessInfo saves the updated site', async () => {
-    siteRepository.findById.mockResolvedValue(buildSite());
-
     const result = await controller.updateBusinessInfo('site-1', {
       businessAddress: 'Via Roma 1',
       businessPhone: '+39 02 1234567',
@@ -159,8 +111,6 @@ describe('SitesController (unit)', () => {
   });
 
   it('updateGeneralSettings propagates SiteNotFoundError, unwrapped', async () => {
-    siteRepository.findById.mockResolvedValue(null);
-
     await expect(
       controller.updateGeneralSettings('missing', {
         name: 'x',
@@ -170,8 +120,6 @@ describe('SitesController (unit)', () => {
   });
 
   it('updateGeneralSettings saves the updated site', async () => {
-    siteRepository.findById.mockResolvedValue(buildSite());
-
     const result = await controller.updateGeneralSettings('site-1', {
       name: 'Il mio ristorante',
       domain: 'ilmioristorante.it',
@@ -183,8 +131,6 @@ describe('SitesController (unit)', () => {
   });
 
   it('updateSeoSettings propagates SiteNotFoundError, unwrapped', async () => {
-    siteRepository.findById.mockResolvedValue(null);
-
     await expect(
       controller.updateSeoSettings('missing', {
         searchEngineIndexingEnabled: true,
@@ -193,8 +139,6 @@ describe('SitesController (unit)', () => {
   });
 
   it('updateSeoSettings saves the updated site', async () => {
-    siteRepository.findById.mockResolvedValue(buildSite());
-
     const result = await controller.updateSeoSettings('site-1', {
       searchEngineIndexingEnabled: true,
     });
@@ -204,8 +148,6 @@ describe('SitesController (unit)', () => {
   });
 
   it('updateFormSubmissionRetention propagates SiteNotFoundError, unwrapped', async () => {
-    siteRepository.findById.mockResolvedValue(null);
-
     await expect(
       controller.updateFormSubmissionRetention('missing', {
         formSubmissionRetentionDays: 30,
@@ -214,8 +156,6 @@ describe('SitesController (unit)', () => {
   });
 
   it('updateFormSubmissionRetention saves the updated site', async () => {
-    siteRepository.findById.mockResolvedValue(buildSite());
-
     const result = await controller.updateFormSubmissionRetention('site-1', {
       formSubmissionRetentionDays: 30,
     });
@@ -231,16 +171,12 @@ describe('SitesController (unit)', () => {
   });
 
   it('updateThemePackage propagates SiteNotFoundError, unwrapped', async () => {
-    siteRepository.findById.mockResolvedValue(null);
-
     await expect(
       controller.updateThemePackage('missing', { themeName: 'classic' }),
     ).rejects.toThrow(SiteNotFoundError);
   });
 
   it('updateThemePackage rejects a themeName not in the catalog', async () => {
-    siteRepository.findById.mockResolvedValue(buildSite());
-
     await expect(
       controller.updateThemePackage('site-1', { themeName: 'not-bundled' }),
     ).rejects.toThrow(InvalidThemeNameError);
@@ -248,8 +184,6 @@ describe('SitesController (unit)', () => {
   });
 
   it('updateThemePackage saves the updated site', async () => {
-    siteRepository.findById.mockResolvedValue(buildSite());
-
     const result = await controller.updateThemePackage('site-1', {
       themeName: 'docs-showcase',
     });
@@ -259,8 +193,6 @@ describe('SitesController (unit)', () => {
   });
 
   it('updateThemeSettings propagates SiteNotFoundError, unwrapped', async () => {
-    siteRepository.findById.mockResolvedValue(null);
-
     await expect(
       controller.updateThemeSettings('missing', {
         primaryColor: null,
@@ -279,8 +211,6 @@ describe('SitesController (unit)', () => {
   });
 
   it('updateThemeSettings saves the updated site', async () => {
-    siteRepository.findById.mockResolvedValue(buildSite());
-
     const result = await controller.updateThemeSettings('site-1', {
       primaryColor: '#18181b',
       secondaryColor: null,
@@ -301,8 +231,6 @@ describe('SitesController (unit)', () => {
   });
 
   it('updateCookieBannerSettings propagates SiteNotFoundError, unwrapped', async () => {
-    siteRepository.findById.mockResolvedValue(null);
-
     await expect(
       controller.updateCookieBannerSettings('missing', {
         ...DEFAULT_COOKIE_BANNER_SETTINGS,
@@ -311,8 +239,6 @@ describe('SitesController (unit)', () => {
   });
 
   it('updateCookieBannerSettings saves the updated site', async () => {
-    siteRepository.findById.mockResolvedValue(buildSite());
-
     const result = await controller.updateCookieBannerSettings('site-1', {
       ...DEFAULT_COOKIE_BANNER_SETTINGS,
       enabled: true,
@@ -325,8 +251,6 @@ describe('SitesController (unit)', () => {
   });
 
   it('updateThemeTokens propagates SiteNotFoundError, unwrapped', async () => {
-    siteRepository.findById.mockResolvedValue(null);
-
     await expect(
       controller.updateThemeTokens('missing', {
         blockType: 'Button',
@@ -338,7 +262,6 @@ describe('SitesController (unit)', () => {
   });
 
   it('updateThemeTokens upserts the override for only the block type given', async () => {
-    siteRepository.findById.mockResolvedValue(buildSite());
     siteThemeBlockStylesRepository.listBySite.mockResolvedValue({
       Button: {
         default: { base: { borderRadius: '9999px', paddingX: '1.5rem' } },

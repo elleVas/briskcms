@@ -43,6 +43,8 @@ module.exports = {
   collectCoverageFrom: [
     '<rootDir>/src/**/*.ts',
     '!<rootDir>/src/**/*.spec.ts',
+    // Helpers for specs, not code under test (docs/adr/0009).
+    '!<rootDir>/src/**/*.test-fixture.ts',
     '!<rootDir>/src/main.ts',
   ],
   coverageThreshold: {

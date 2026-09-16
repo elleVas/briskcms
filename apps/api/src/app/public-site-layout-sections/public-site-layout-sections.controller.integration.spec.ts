@@ -1,17 +1,9 @@
 import { randomUUID } from 'node:crypto';
 import { type INestApplication } from '@nestjs/common';
-import { Test } from '@nestjs/testing';
-import { HttpExceptionFilter } from '../http-exception.filter';
-import { requestIdMiddleware } from '../request-id.middleware';
-import cookieParser from 'cookie-parser';
 import request from 'supertest';
-import type { AuthPort } from '@brisk/ports';
-import { type BriskDb, sites, users, withTenant } from '@brisk/postgres-db';
-import { deleteIntegrationFixtures } from '@brisk/postgres-db/testing';
-import { AUTH_PORT } from '../auth/auth.tokens';
-import { DATABASE } from '../database.module';
 import { SiteLayoutSectionsModule } from '../site-layout-sections/site-layout-sections.module';
 import { PublicSiteLayoutSectionsModule } from './public-site-layout-sections.module';
+import { IntegrationApp } from '../../test/integration-app.test-fixture';
 
 /**
  * Runs against a real Postgres — see docs/development.md. Combines
@@ -21,65 +13,22 @@ import { PublicSiteLayoutSectionsModule } from './public-site-layout-sections.mo
  * same "real visitor" verification as public-pages.controller.integration.spec.ts.
  */
 describe('PublicSiteLayoutSectionsController (integration)', () => {
+  let integration: IntegrationApp;
   let app: INestApplication;
-  let db: BriskDb;
   let agent: ReturnType<typeof request.agent>;
   let siteId: string;
-  let tenantId: string;
-  let userId: string;
 
   beforeAll(async () => {
-    const moduleRef = await Test.createTestingModule({
+    integration = await IntegrationApp.start({
       imports: [SiteLayoutSectionsModule, PublicSiteLayoutSectionsModule],
-    }).compile();
-
-    app = moduleRef.createNestApplication();
-    app.use(cookieParser());
-    app.useGlobalFilters(new HttpExceptionFilter());
-    app.use(requestIdMiddleware);
-    await app.init();
-    db = app.get<BriskDb>(DATABASE);
-
-    tenantId = process.env.DEFAULT_TENANT_ID as string;
-
-    const [site] = await withTenant(db, tenantId, (tx) =>
-      tx
-        .insert(sites)
-        .values({
-          tenantId,
-          name: `Integration Site ${randomUUID()}`,
-          defaultLocale: 'it',
-        })
-        .returning({ id: sites.id }),
-    );
-    siteId = site.id;
-
-    const authPort = app.get<AuthPort>(AUTH_PORT);
-    const email = `integration-${randomUUID()}@example.test`;
-    const password = randomUUID();
-    const passwordHash = await authPort.hashPassword(password);
-    const [user] = await withTenant(db, tenantId, (tx) =>
-      tx
-        .insert(users)
-        .values({ tenantId, email, passwordHash, role: 'admin' })
-        .returning({ id: users.id }),
-    );
-    userId = user.id;
-
-    agent = request.agent(app.getHttpServer());
-    await agent
-      .post('/auth/login')
-      .send({ email, password, captchaToken: 'test-token' })
-      .expect(200);
+    });
+    app = integration.app;
+    siteId = await integration.createSite();
+    agent = await integration.login(await integration.createUser());
   });
 
   afterAll(async () => {
-    await deleteIntegrationFixtures(db, tenantId, {
-      siteIds: [siteId],
-      userIds: [userId],
-    });
-    await app.close();
-    await db.$client.end();
+    await integration.close();
   });
 
   it('serves the real draft, unpublished, behind a valid preview token — without a session', async () => {

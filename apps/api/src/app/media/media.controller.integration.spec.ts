@@ -2,19 +2,11 @@ import { randomUUID } from 'node:crypto';
 import { mkdir, rmdir, stat, unlink, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { type INestApplication } from '@nestjs/common';
-import { Test } from '@nestjs/testing';
-import { HttpExceptionFilter } from '../http-exception.filter';
-import { requestIdMiddleware } from '../request-id.middleware';
-import cookieParser from 'cookie-parser';
 import request from 'supertest';
 import sharp from 'sharp';
-import type { AuthPort } from '@brisk/ports';
-import { type BriskDb, sites, users, withTenant } from '@brisk/postgres-db';
-import { deleteIntegrationFixtures } from '@brisk/postgres-db/testing';
-import { AUTH_PORT } from '../auth/auth.tokens';
-import { DATABASE } from '../database.module';
 import { MediaModule } from './media.module';
 import { mountMediaStatic } from '../media-static';
+import { IntegrationApp } from '../../test/integration-app.test-fixture';
 
 /**
  * Runs against a real Postgres and writes real files under MEDIA_UPLOAD_DIR
@@ -24,64 +16,27 @@ import { mountMediaStatic } from '../media-static';
  * MEDIA_UPLOAD_DIR isn't test-scoped the way an in-memory fixture would be).
  */
 describe('MediaController (integration)', () => {
+  let integration: IntegrationApp;
   let app: INestApplication;
-  let db: BriskDb;
   let agent: ReturnType<typeof request.agent>;
   let siteId: string;
-  let tenantId: string;
-  let userId: string;
   const uploadedStorageKeys: string[] = [];
 
   beforeAll(async () => {
-    const moduleRef = await Test.createTestingModule({
+    integration = await IntegrationApp.start({
       imports: [MediaModule],
-    }).compile();
-
-    app = moduleRef.createNestApplication();
-    app.use(cookieParser());
-    app.useGlobalFilters(new HttpExceptionFilter());
-    app.use(requestIdMiddleware);
-    // Mirrors main.ts's static-serving setup (minus the global prefix,
-    // which this isolated test harness — like the sibling integration
-    // specs — never sets either) so this suite exercises the real
-    // upload-then-served-back path, not just the controller in isolation.
-    // The real serving configuration, not a bare static mount: a test
-    // that sets up its own headers is testing itself.
-    mountMediaStatic(app, process.env.MEDIA_UPLOAD_DIR as string);
-    await app.init();
-    db = app.get<BriskDb>(DATABASE);
-
-    tenantId = process.env.DEFAULT_TENANT_ID as string;
-
-    const [site] = await withTenant(db, tenantId, (tx) =>
-      tx
-        .insert(sites)
-        .values({
-          tenantId,
-          name: `Integration Site ${randomUUID()}`,
-          defaultLocale: 'it',
-        })
-        .returning({ id: sites.id }),
-    );
-    siteId = site.id;
-
-    const authPort = app.get<AuthPort>(AUTH_PORT);
-    const email = `media-integration-${randomUUID()}@example.test`;
-    const password = randomUUID();
-    const passwordHash = await authPort.hashPassword(password);
-    const [user] = await withTenant(db, tenantId, (tx) =>
-      tx
-        .insert(users)
-        .values({ tenantId, email, passwordHash, role: 'admin' })
-        .returning({ id: users.id }),
-    );
-    userId = user.id;
-
-    agent = request.agent(app.getHttpServer());
-    await agent
-      .post('/auth/login')
-      .send({ email, password, captchaToken: 'test-token' })
-      .expect(200);
+      // Mirrors main.ts's static-serving setup (minus the global prefix,
+      // which this isolated test harness — like the sibling integration
+      // specs — never sets either) so this suite exercises the real
+      // upload-then-served-back path, not just the controller in isolation.
+      // The real serving configuration, not a bare static mount: a test
+      // that sets up its own headers is testing itself.
+      beforeInit: (nestApp) =>
+        mountMediaStatic(nestApp, process.env.MEDIA_UPLOAD_DIR as string),
+    });
+    app = integration.app;
+    siteId = await integration.createSite();
+    agent = await integration.login(await integration.createUser());
   });
 
   afterAll(async () => {
@@ -92,12 +47,7 @@ describe('MediaController (integration)', () => {
         await rmdir(join(uploadDir, dirname(key))).catch(() => undefined);
       }
     }
-    await deleteIntegrationFixtures(db, tenantId, {
-      siteIds: [siteId],
-      userIds: [userId],
-    });
-    await app.close();
-    await db.$client.end();
+    await integration.close();
   });
 
   function pngBuffer(width: number, height: number): Promise<Buffer> {

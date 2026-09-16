@@ -1,46 +1,13 @@
-import { Site, SiteNotFoundError } from '@brisk/domain-core';
-import { DEFAULT_COOKIE_BANNER_SETTINGS } from '@brisk/shared-types';
-import type {
-  PageGroupRepositoryPort,
-  PageTranslationRepositoryPort,
-  SiteRepositoryPort,
-  TenantContextPort,
-} from '@brisk/ports';
+import { SiteNotFoundError } from '@brisk/domain-core';
+import type { TenantContextPort } from '@brisk/ports';
+import {
+  buildSite,
+  InMemoryPageGroupRepository,
+  InMemoryPageTranslationRepository,
+  InMemorySiteRepository,
+} from '@brisk/testing';
 import { LegalDocumentsController } from './legal-documents.controller';
 import type { GenerateLegalDocumentsBody } from './legal-documents.schemas';
-
-function buildSite() {
-  return Site.fromProps({
-    id: 'site-1',
-    tenantId: 'tenant-1',
-    name: 'Il mio sito',
-    domain: 'example.com',
-    themeName: 'classic',
-    defaultLocale: 'it',
-    enabledLocales: ['it', 'en'],
-    untranslatedPageFallback: 'redirect-to-default',
-    businessAddress: null,
-    businessPhone: null,
-    businessEmail: null,
-    businessType: null,
-    openingHours: null,
-    searchEngineIndexingEnabled: false,
-    themePrimaryColor: null,
-    themeSecondaryColor: null,
-    themeFontFamily: null,
-    themeCustomCss: null,
-    themeContentWidth: null,
-    themeHeadScript: null,
-    themeBodyScript: null,
-    themeFaviconUrl: null,
-    themeOverridesEnabled: true,
-    themeAllowedTrackerDomains: [],
-    formSubmissionRetentionDays: null,
-    themeTrackerScripts: [],
-    cookieBannerSettings: DEFAULT_COOKIE_BANNER_SETTINGS,
-    createdAt: new Date(),
-  });
-}
 
 const answers: GenerateLegalDocumentsBody['answers'] = {
   legalEntityName: 'Acme Srl',
@@ -56,41 +23,21 @@ const answers: GenerateLegalDocumentsBody['answers'] = {
 };
 
 describe('LegalDocumentsController (unit)', () => {
-  let siteRepository: jest.Mocked<SiteRepositoryPort>;
-  let pageGroupRepository: jest.Mocked<PageGroupRepositoryPort>;
-  let pageTranslationRepository: jest.Mocked<PageTranslationRepositoryPort>;
+  let siteRepository: InMemorySiteRepository;
+  let pageGroupRepository: InMemoryPageGroupRepository;
+  let pageTranslationRepository: InMemoryPageTranslationRepository;
   let tenantContext: TenantContextPort;
   let controller: LegalDocumentsController;
 
   beforeEach(() => {
-    siteRepository = {
-      findByDomain: jest.fn(),
-      listByTenant: jest.fn(),
-      findById: jest.fn(),
-      save: jest.fn(),
-    };
-    pageGroupRepository = {
-      save: jest.fn(),
-      saveWithVersion: jest.fn(),
-      saveNewWithTranslation: jest.fn(),
-      findById: jest.fn(),
-      listBySite: jest.fn(),
-      listBySiteFiltered: jest.fn(),
-      listContentBySite: jest.fn().mockResolvedValue([]),
-      listSiblings: jest.fn().mockResolvedValue([]),
-      delete: jest.fn(),
-    };
-    pageTranslationRepository = {
-      save: jest.fn(),
-      saveWithVersion: jest.fn(),
-      findById: jest.fn(),
-      findByGroupAndLocale: jest.fn(),
-      listByGroup: jest.fn(),
-      listPublishedBySite: jest.fn().mockResolvedValue([]),
-      findByParentGroupAndLocaleSlug: jest.fn().mockResolvedValue(null),
-      findByFormerSlug: jest.fn().mockResolvedValue(null),
-      delete: jest.fn(),
-    };
+    siteRepository = new InMemorySiteRepository();
+    pageTranslationRepository = new InMemoryPageTranslationRepository();
+    pageGroupRepository = new InMemoryPageGroupRepository(
+      undefined,
+      pageTranslationRepository,
+    );
+    jest.spyOn(pageGroupRepository, 'saveWithVersion');
+    jest.spyOn(pageTranslationRepository, 'save');
     tenantContext = {
       getCurrentTenantId: () => 'tenant-1',
       getCurrentUserId: () => 'user-1',
@@ -105,8 +52,6 @@ describe('LegalDocumentsController (unit)', () => {
 
   describe('generate', () => {
     it('propagates SiteNotFoundError, unwrapped', async () => {
-      siteRepository.findById.mockResolvedValue(null);
-
       await expect(
         controller.generate('missing-site', {
           documents: ['privacy-policy'],
@@ -117,7 +62,7 @@ describe('LegalDocumentsController (unit)', () => {
     });
 
     it('creates drafts and returns one entry per document, with a translation per locale', async () => {
-      siteRepository.findById.mockResolvedValue(buildSite());
+      await siteRepository.save(buildSite({ enabledLocales: ['it', 'en'] }));
 
       const result = await controller.generate('site-1', {
         documents: ['privacy-policy', 'cookie-policy'],
