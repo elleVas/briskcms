@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { QueryClientProvider } from '@tanstack/react-query';
 import type { FormField } from '@brisk/shared-types';
 import * as api from '../lib/forms-api-client';
-import { createTestQueryClient } from '../test-query-client';
+import { createTestQueryClient } from '../test/query-client.test-fixture';
 import { FormSubmissionsList } from './form-submissions-list';
 
 vi.mock('../lib/forms-api-client', async (importOriginal) => {

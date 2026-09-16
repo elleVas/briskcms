@@ -14,7 +14,7 @@ import {
   InMemoryReusableSectionRepository,
   InMemoryReusableSectionVersionRepository,
   InMemorySearchPort,
-} from './in-memory-repositories.test-fixture';
+} from '@brisk/testing';
 import { publishReusableSection } from './publish-reusable-section.use-case';
 import { listReusableSectionsWithUsage } from './reusable-section.use-cases';
 import { publishPageTranslation } from './publish-page-translation.use-case';

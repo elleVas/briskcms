@@ -1,11 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { DEFAULT_COOKIE_BANNER_SETTINGS } from '@brisk/shared-types';
-import { Site } from '@brisk/domain-core';
 import { searchPages } from './search-pages.use-case';
 import {
   InMemorySearchPort,
   InMemorySiteRepository,
-} from './in-memory-repositories.test-fixture';
+  buildSite,
+} from '@brisk/testing';
 
 describe('searchPages', () => {
   const tenantId = 'tenant-1';
@@ -18,34 +17,10 @@ describe('searchPages', () => {
 
   function seedSite(siteRepository: InMemorySiteRepository) {
     return siteRepository.save(
-      Site.fromProps({
-        id: 'site-1',
+      buildSite({
         tenantId,
         name: 'Sito di prova',
-        domain: 'example.com',
-        themeName: 'classic',
-        defaultLocale: 'it',
-        enabledLocales: ['it'],
-        untranslatedPageFallback: 'redirect-to-default',
-        businessAddress: null,
-        businessPhone: null,
-        businessEmail: null,
-        businessType: null,
-        openingHours: null,
         searchEngineIndexingEnabled: true,
-        themePrimaryColor: null,
-        themeSecondaryColor: null,
-        themeFontFamily: null,
-        themeCustomCss: null,
-        themeContentWidth: null,
-        themeHeadScript: null,
-        themeBodyScript: null,
-        themeFaviconUrl: null,
-        themeOverridesEnabled: true,
-        themeAllowedTrackerDomains: [],
-        formSubmissionRetentionDays: null,
-        themeTrackerScripts: [],
-        cookieBannerSettings: DEFAULT_COOKIE_BANNER_SETTINGS,
         createdAt: new Date(),
       }),
     );

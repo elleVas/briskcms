@@ -1,7 +1,8 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { describe, expect, it, vi } from 'vitest';
-import { createTestQueryClient } from '../test-query-client';
+import { buildCollectionRecord } from '@brisk/testing/records';
+import { createTestQueryClient } from '../test/query-client.test-fixture';
 import { MoveToCollectionDialog } from './move-to-collection-dialog';
 import * as api from '../lib/collections-api-client';
 
@@ -17,28 +18,13 @@ function renderDialog(
   }> = {},
 ) {
   vi.mocked(api.listCollections).mockResolvedValue([
-    {
-      id: 'news',
-      tenantId: 't1',
-      siteId: 'site-1',
-      name: 'News',
-      icon: 'newspaper',
-      order: 0,
-      defaultTemplateId: null,
-      createdAt: '',
-      updatedAt: '',
-    },
-    {
+    buildCollectionRecord({ id: 'news', name: 'News' }),
+    buildCollectionRecord({
       id: 'events',
-      tenantId: 't1',
-      siteId: 'site-1',
       name: 'Events',
       icon: 'calendar',
       order: 1,
-      defaultTemplateId: null,
-      createdAt: '',
-      updatedAt: '',
-    },
+    }),
   ]);
   const onMove = vi.fn<(id: string | null) => Promise<unknown>>(() =>
     Promise.resolve(),

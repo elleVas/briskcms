@@ -2,13 +2,10 @@ import type { ReactElement } from 'react';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { QueryClientProvider } from '@tanstack/react-query';
-import {
-  DEFAULT_COOKIE_BANNER_SETTINGS,
-  type Block,
-  type SiteRecord,
-} from '@brisk/shared-types';
+import type { Block } from '@brisk/shared-types';
+import { buildSiteRecord } from '@brisk/testing/records';
 import type { BlockDescriptor } from '@brisk/block-registry';
-import { createTestQueryClient } from '../../test-query-client';
+import { createTestQueryClient } from '../../test/query-client.test-fixture';
 import * as siteApi from '../../lib/sites-api-client';
 import * as themeApi from '../../lib/theme-api-client';
 import { PropertiesPanel } from './properties-panel';
@@ -32,41 +29,6 @@ vi.mock('../../lib/theme-api-client', () => ({
     allowStyleOverrides: true,
   }),
 }));
-
-/** Only what `useActiveThemeName` reads — the rest of the record is beside the point here. */
-function buildSiteStub(themeName: string): SiteRecord {
-  return {
-    id: 'site-1',
-    tenantId: 'tenant-1',
-    name: 'Sito',
-    domain: null,
-    themeName,
-    defaultLocale: 'it',
-    enabledLocales: ['it'],
-    untranslatedPageFallback: 'redirect-to-default',
-    businessAddress: null,
-    businessPhone: null,
-    businessEmail: null,
-    businessType: null,
-    openingHours: null,
-    searchEngineIndexingEnabled: false,
-    themePrimaryColor: null,
-    themeSecondaryColor: null,
-    themeFontFamily: null,
-    themeCustomCss: null,
-    themeContentWidth: null,
-    themeHeadScript: null,
-    themeBodyScript: null,
-    themeFaviconUrl: null,
-    themeOverridesEnabled: true,
-    themeAllowedTrackerDomains: [],
-    formSubmissionRetentionDays: null,
-    themeTrackerScripts: [],
-    cookieBannerSettings: DEFAULT_COOKIE_BANNER_SETTINGS,
-    themeTokens: { blockStyles: {} },
-    createdAt: '',
-  };
-}
 
 function renderPanel(ui: ReactElement) {
   return render(
@@ -227,7 +189,7 @@ describe('PropertiesPanel under a theme that refuses styling', () => {
 
   beforeEach(() => {
     vi.mocked(siteApi.getCurrentSite).mockResolvedValue(
-      buildSiteStub('locked-theme'),
+      buildSiteRecord({ themeName: 'locked-theme' }),
     );
     vi.mocked(themeApi.fetchThemeCapabilities).mockResolvedValue({
       allowStyleOverrides: false,

@@ -5,7 +5,8 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { TooltipProvider } from '../components/ui/tooltip';
 import type { ReusableSectionListItemDto } from '../lib/reusable-sections-api-client';
 import * as sectionsApi from '../lib/reusable-sections-api-client';
-import { createTestQueryClient } from '../test-query-client';
+import { createTestQueryClient } from '../test/query-client.test-fixture';
+import { buildReusableSectionListItemDto } from '../test/dtos.test-fixture';
 import { reusableSectionsQueryOptions } from './reusable-sections-queries';
 import { SectionsListView } from './sections-list-view';
 
@@ -29,23 +30,12 @@ vi.mock('../lib/reusable-sections-api-client', async (importOriginal) => {
 function section(
   overrides: Partial<ReusableSectionListItemDto>,
 ): ReusableSectionListItemDto {
-  return {
-    id: 'section-1',
-    tenantId: 'tenant-1',
-    siteId: 'site-1',
+  return buildReusableSectionListItemDto({
     name: 'Newsletter',
-    kind: 'shared',
     status: 'published',
-    content: [],
     publishedContent: [],
-    exposedFields: {},
-    createdBy: null,
-    createdAt: '',
-    updatedAt: '',
-    usedOnPages: 0,
-    usedInTemplates: 0,
     ...overrides,
-  };
+  });
 }
 
 function renderList(sections: ReusableSectionListItemDto[]) {

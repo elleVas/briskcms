@@ -4,7 +4,8 @@ import { QueryClientProvider } from '@tanstack/react-query';
 import { TooltipProvider } from '../components/ui/tooltip';
 import * as api from '../lib/forms-api-client';
 import type { FormDto } from '../lib/forms-api-client';
-import { createTestQueryClient } from '../test-query-client';
+import { createTestQueryClient } from '../test/query-client.test-fixture';
+import { buildFormDto } from '../test/dtos.test-fixture';
 import { formQueryOptions } from './forms-queries';
 import { FormEditorView } from './form-editor-view';
 
@@ -29,10 +30,7 @@ vi.mock('../lib/forms-api-client', async (importOriginal) => {
   return { ...actual, updateForm: vi.fn() };
 });
 
-const sampleForm: FormDto = {
-  id: 'form-1',
-  tenantId: 'tenant-1',
-  siteId: 'site-1',
+const sampleForm = buildFormDto({
   name: 'Candidatura',
   fields: [
     { id: 'nome', label: 'Nome', type: 'text', required: true },
@@ -43,12 +41,7 @@ const sampleForm: FormDto = {
       required: false,
     },
   ],
-  steps: [],
-  notificationEmail: null,
-  createdAt: '',
-  updatedAt: '',
-  submissionCount: 0,
-};
+});
 
 function renderView(form: FormDto = sampleForm) {
   const queryClient = createTestQueryClient();

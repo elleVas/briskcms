@@ -2,8 +2,12 @@ import type { ReactNode } from 'react';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { QueryClientProvider } from '@tanstack/react-query';
+import {
+  buildPageGroupRecord,
+  buildPageGroupVersionRecord,
+} from '@brisk/testing/records';
 import * as api from '../lib/page-groups-api-client';
-import { createTestQueryClient } from '../test-query-client';
+import { createTestQueryClient } from '../test/query-client.test-fixture';
 import { pageGroupQueryOptions } from './page-groups-queries';
 import { usePageGroupVersions } from './use-page-group-versions';
 
@@ -17,27 +21,12 @@ vi.mock('../lib/page-groups-api-client', async (importOriginal) => {
   };
 });
 
-const sampleGroup: api.PageGroupRecord = {
-  id: 'group-1',
-  tenantId: 'tenant-1',
-  siteId: 'site-1',
-  parentId: null,
-  order: 0,
-  collectionId: null,
-  content: [],
-  createdBy: null,
-  createdAt: '',
-  updatedAt: '',
-};
+const sampleGroup = buildPageGroupRecord();
 
-const versionA: api.PageGroupVersionRecord = {
+const versionA = buildPageGroupVersionRecord({
   id: 'v1',
-  tenantId: 'tenant-1',
-  pageGroupId: 'group-1',
   content: [{ type: 'Text', props: { body: 'v1' } }],
-  createdBy: null,
-  createdAt: '2026-01-01T00:00:00.000Z',
-};
+});
 
 function renderWithClient() {
   const queryClient = createTestQueryClient();

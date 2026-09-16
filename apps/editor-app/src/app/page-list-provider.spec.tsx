@@ -4,9 +4,12 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { usePageList } from './page-list-context';
 import type { PickedPage } from '@brisk/shared-types';
+import {
+  buildPageGroupListItemRecord,
+  buildPageGroupListItemTranslation,
+} from '@brisk/testing/records';
 import * as api from '../lib/page-groups-api-client';
-import type { PageGroupListItemRecord } from '../lib/page-groups-api-client';
-import { createTestQueryClient } from '../test-query-client';
+import { createTestQueryClient } from '../test/query-client.test-fixture';
 import { PageListProvider } from './page-list-provider';
 
 vi.mock('../lib/page-groups-api-client', async (importOriginal) => {
@@ -18,37 +21,20 @@ vi.mock('../lib/page-groups-api-client', async (importOriginal) => {
 // One group with both an it and an en translation — exercises the picker's
 // own per-locale translation lookup (group.translations.find), not just
 // display of whatever the mock hands it.
-const bilingualGroup: PageGroupListItemRecord = {
-  id: 'group-1',
-  tenantId: 'tenant-1',
-  siteId: 'site-1',
-  parentId: null,
-  order: 0,
-  collectionId: null,
-  createdByName: null,
-  lastEditedAt: '2026-09-09T10:00:00.000Z',
-  lastEditedByName: 'Grace Hopper',
-  createdAt: '',
-  updatedAt: '',
+const bilingualGroup = buildPageGroupListItemRecord({
   translations: [
-    {
+    buildPageGroupListItemTranslation({
       locale: 'it',
       slug: 'chi-siamo',
       title: 'Chi siamo',
-      status: 'published',
-      isDiverged: false,
-      hasUnpublishedChanges: false,
-    },
-    {
+    }),
+    buildPageGroupListItemTranslation({
       locale: 'en',
       slug: 'about-us',
       title: 'About us',
-      status: 'published',
-      isDiverged: false,
-      hasUnpublishedChanges: false,
-    },
+    }),
   ],
-};
+});
 
 function PickerConsumer() {
   const { pick } = usePageList();

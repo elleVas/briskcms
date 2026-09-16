@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { SiteNotFoundError, Site } from '@brisk/domain-core';
+import { SiteNotFoundError } from '@brisk/domain-core';
 import { DEFAULT_COOKIE_BANNER_SETTINGS } from '@brisk/shared-types';
 import { updateSiteBusinessInfo } from './update-site-business-info.use-case';
 import { updateSiteGeneralSettings } from './update-site-general-settings.use-case';
@@ -8,7 +8,7 @@ import { updateSiteFormSubmissionRetention } from './update-site-form-submission
 import { updateSiteThemeSettings } from './update-site-theme-settings.use-case';
 import { updateSiteCookieBannerSettings } from './update-site-cookie-banner-settings.use-case';
 import { updateSiteLocaleSettings } from './update-site-locale-settings.use-case';
-import { InMemorySiteRepository } from './in-memory-repositories.test-fixture';
+import { InMemorySiteRepository, buildSite } from '@brisk/testing';
 
 describe('updateSiteBusinessInfo', () => {
   const tenantId = 'tenant-1';
@@ -20,34 +20,9 @@ describe('updateSiteBusinessInfo', () => {
   }
 
   async function seedSite(siteRepository: InMemorySiteRepository) {
-    const site = Site.fromProps({
-      id: 'site-1',
+    const site = buildSite({
       tenantId,
       name: 'Il mio ristorante',
-      domain: 'example.com',
-      themeName: 'classic',
-      defaultLocale: 'it',
-      enabledLocales: ['it'],
-      untranslatedPageFallback: 'redirect-to-default',
-      businessAddress: null,
-      businessPhone: null,
-      businessEmail: null,
-      businessType: null,
-      openingHours: null,
-      searchEngineIndexingEnabled: false,
-      themePrimaryColor: null,
-      themeSecondaryColor: null,
-      themeFontFamily: null,
-      themeCustomCss: null,
-      themeContentWidth: null,
-      themeHeadScript: null,
-      themeBodyScript: null,
-      themeFaviconUrl: null,
-      themeOverridesEnabled: true,
-      themeAllowedTrackerDomains: [],
-      formSubmissionRetentionDays: null,
-      themeTrackerScripts: [],
-      cookieBannerSettings: DEFAULT_COOKIE_BANNER_SETTINGS,
       createdAt: new Date(),
     });
     await siteRepository.save(site);
@@ -121,34 +96,10 @@ describe('updateSiteGeneralSettings', () => {
   }
 
   async function seedSite(siteRepository: InMemorySiteRepository) {
-    const site = Site.fromProps({
-      id: 'site-1',
+    const site = buildSite({
       tenantId,
       name: 'Il mio sito',
       domain: 'localhost',
-      themeName: 'classic',
-      defaultLocale: 'it',
-      enabledLocales: ['it'],
-      untranslatedPageFallback: 'redirect-to-default',
-      businessAddress: null,
-      businessPhone: null,
-      businessEmail: null,
-      businessType: null,
-      openingHours: null,
-      searchEngineIndexingEnabled: false,
-      themePrimaryColor: null,
-      themeSecondaryColor: null,
-      themeFontFamily: null,
-      themeCustomCss: null,
-      themeContentWidth: null,
-      themeHeadScript: null,
-      themeBodyScript: null,
-      themeFaviconUrl: null,
-      themeOverridesEnabled: true,
-      themeAllowedTrackerDomains: [],
-      formSubmissionRetentionDays: null,
-      themeTrackerScripts: [],
-      cookieBannerSettings: DEFAULT_COOKIE_BANNER_SETTINGS,
       createdAt: new Date(),
     });
     await siteRepository.save(site);
@@ -208,34 +159,10 @@ describe('updateSiteSeoSettings', () => {
   }
 
   async function seedSite(siteRepository: InMemorySiteRepository) {
-    const site = Site.fromProps({
-      id: 'site-1',
+    const site = buildSite({
       tenantId,
       name: 'Il mio sito',
       domain: 'localhost',
-      themeName: 'classic',
-      defaultLocale: 'it',
-      enabledLocales: ['it'],
-      untranslatedPageFallback: 'redirect-to-default',
-      businessAddress: null,
-      businessPhone: null,
-      businessEmail: null,
-      businessType: null,
-      openingHours: null,
-      searchEngineIndexingEnabled: false,
-      themePrimaryColor: null,
-      themeSecondaryColor: null,
-      themeFontFamily: null,
-      themeCustomCss: null,
-      themeContentWidth: null,
-      themeHeadScript: null,
-      themeBodyScript: null,
-      themeFaviconUrl: null,
-      themeOverridesEnabled: true,
-      themeAllowedTrackerDomains: [],
-      formSubmissionRetentionDays: null,
-      themeTrackerScripts: [],
-      cookieBannerSettings: DEFAULT_COOKIE_BANNER_SETTINGS,
       createdAt: new Date(),
     });
     await siteRepository.save(site);
@@ -291,34 +218,10 @@ describe('updateSiteFormSubmissionRetention', () => {
   }
 
   async function seedSite(siteRepository: InMemorySiteRepository) {
-    const site = Site.fromProps({
-      id: 'site-1',
+    const site = buildSite({
       tenantId,
       name: 'Il mio sito',
       domain: 'localhost',
-      themeName: 'classic',
-      defaultLocale: 'it',
-      enabledLocales: ['it'],
-      untranslatedPageFallback: 'redirect-to-default',
-      businessAddress: null,
-      businessPhone: null,
-      businessEmail: null,
-      businessType: null,
-      openingHours: null,
-      searchEngineIndexingEnabled: false,
-      themePrimaryColor: null,
-      themeSecondaryColor: null,
-      themeFontFamily: null,
-      themeCustomCss: null,
-      themeContentWidth: null,
-      themeHeadScript: null,
-      themeBodyScript: null,
-      themeFaviconUrl: null,
-      themeOverridesEnabled: true,
-      themeAllowedTrackerDomains: [],
-      formSubmissionRetentionDays: null,
-      themeTrackerScripts: [],
-      cookieBannerSettings: DEFAULT_COOKIE_BANNER_SETTINGS,
       createdAt: new Date(),
     });
     await siteRepository.save(site);
@@ -389,34 +292,10 @@ describe('updateSiteThemeSettings', () => {
   }
 
   async function seedSite(siteRepository: InMemorySiteRepository) {
-    const site = Site.fromProps({
-      id: 'site-1',
+    const site = buildSite({
       tenantId,
       name: 'Il mio sito',
       domain: 'localhost',
-      themeName: 'classic',
-      defaultLocale: 'it',
-      enabledLocales: ['it'],
-      untranslatedPageFallback: 'redirect-to-default',
-      businessAddress: null,
-      businessPhone: null,
-      businessEmail: null,
-      businessType: null,
-      openingHours: null,
-      searchEngineIndexingEnabled: false,
-      themePrimaryColor: null,
-      themeSecondaryColor: null,
-      themeFontFamily: null,
-      themeCustomCss: null,
-      themeContentWidth: null,
-      themeHeadScript: null,
-      themeBodyScript: null,
-      themeFaviconUrl: null,
-      themeOverridesEnabled: true,
-      themeAllowedTrackerDomains: [],
-      formSubmissionRetentionDays: null,
-      themeTrackerScripts: [],
-      cookieBannerSettings: DEFAULT_COOKIE_BANNER_SETTINGS,
       createdAt: new Date(),
     });
     await siteRepository.save(site);
@@ -575,34 +454,10 @@ describe('updateSiteCookieBannerSettings', () => {
   }
 
   async function seedSite(siteRepository: InMemorySiteRepository) {
-    const site = Site.fromProps({
-      id: 'site-1',
+    const site = buildSite({
       tenantId,
       name: 'Il mio sito',
       domain: 'localhost',
-      themeName: 'classic',
-      defaultLocale: 'it',
-      enabledLocales: ['it'],
-      untranslatedPageFallback: 'redirect-to-default',
-      businessAddress: null,
-      businessPhone: null,
-      businessEmail: null,
-      businessType: null,
-      openingHours: null,
-      searchEngineIndexingEnabled: false,
-      themePrimaryColor: null,
-      themeSecondaryColor: null,
-      themeFontFamily: null,
-      themeCustomCss: null,
-      themeContentWidth: null,
-      themeHeadScript: null,
-      themeBodyScript: null,
-      themeFaviconUrl: null,
-      themeOverridesEnabled: true,
-      themeAllowedTrackerDomains: [],
-      formSubmissionRetentionDays: null,
-      themeTrackerScripts: [],
-      cookieBannerSettings: DEFAULT_COOKIE_BANNER_SETTINGS,
       createdAt: new Date(),
     });
     await siteRepository.save(site);
@@ -662,34 +517,10 @@ describe('updateSiteLocaleSettings', () => {
   }
 
   async function seedSite(siteRepository: InMemorySiteRepository) {
-    const site = Site.fromProps({
-      id: 'site-1',
+    const site = buildSite({
       tenantId,
       name: 'Il mio sito',
       domain: 'localhost',
-      themeName: 'classic',
-      defaultLocale: 'it',
-      enabledLocales: ['it'],
-      untranslatedPageFallback: 'redirect-to-default',
-      businessAddress: null,
-      businessPhone: null,
-      businessEmail: null,
-      businessType: null,
-      openingHours: null,
-      searchEngineIndexingEnabled: false,
-      themePrimaryColor: null,
-      themeSecondaryColor: null,
-      themeFontFamily: null,
-      themeCustomCss: null,
-      themeContentWidth: null,
-      themeHeadScript: null,
-      themeBodyScript: null,
-      themeFaviconUrl: null,
-      themeOverridesEnabled: true,
-      themeAllowedTrackerDomains: [],
-      formSubmissionRetentionDays: null,
-      themeTrackerScripts: [],
-      cookieBannerSettings: DEFAULT_COOKIE_BANNER_SETTINGS,
       createdAt: new Date(),
     });
     await siteRepository.save(site);

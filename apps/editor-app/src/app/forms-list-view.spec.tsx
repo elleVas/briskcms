@@ -5,7 +5,8 @@ import * as router from '@tanstack/react-router';
 import { TooltipProvider } from '../components/ui/tooltip';
 import * as api from '../lib/forms-api-client';
 import type { FormDto } from '../lib/forms-api-client';
-import { createTestQueryClient } from '../test-query-client';
+import { createTestQueryClient } from '../test/query-client.test-fixture';
+import { buildFormDto } from '../test/dtos.test-fixture';
 import { FormsListView } from './forms-list-view';
 
 vi.mock('@tanstack/react-router', async (importOriginal) => {
@@ -20,18 +21,10 @@ vi.mock('../lib/forms-api-client', async (importOriginal) => {
   return { ...actual, createForm: vi.fn(), deleteForm: vi.fn() };
 });
 
-const formOne: FormDto = {
-  id: 'form-1',
-  tenantId: 'tenant-1',
-  siteId: 'site-1',
+const formOne = buildFormDto({
   name: 'Contact form',
   fields: [{ id: 'field-1', type: 'text', label: 'Nome', required: true }],
-  steps: [],
-  notificationEmail: null,
-  createdAt: '',
-  updatedAt: '2026-01-01T00:00:00.000Z',
-  submissionCount: 0,
-};
+});
 
 function renderView(
   forms: FormDto[],

@@ -1,27 +1,14 @@
 import { randomUUID } from 'node:crypto';
 import { type INestApplication } from '@nestjs/common';
-import { Test } from '@nestjs/testing';
-import { HttpExceptionFilter } from '../http-exception.filter';
-import { requestIdMiddleware } from '../request-id.middleware';
-import cookieParser from 'cookie-parser';
 import request from 'supertest';
-import type { AuthPort } from '@brisk/ports';
 import { DEFAULT_COOKIE_BANNER_SETTINGS } from '@brisk/shared-types';
-import {
-  type BriskDb,
-  deleteIntegrationFixtures,
-  sites,
-  users,
-  withTenant,
-} from '@brisk/postgres-db';
-import { AUTH_PORT } from '../auth/auth.tokens';
-import { DATABASE } from '../database.module';
 import { AccountModule } from '../account/account.module';
 import { CollectionsModule } from '../collections/collections.module';
 import { PagesModule } from '../pages/pages.module';
 import { TaxonomiesModule } from '../taxonomies/taxonomies.module';
 import { SiteLayoutSectionsModule } from '../site-layout-sections/site-layout-sections.module';
 import { PublicPagesModule } from './public-pages.module';
+import { IntegrationApp } from '../../test/integration-app.test-fixture';
 
 /**
  * Runs against a real Postgres — see docs/development.md. Combines
@@ -37,16 +24,15 @@ import { PublicPagesModule } from './public-pages.module';
  * site the dev editor-app displays.
  */
 describe('PublicPagesController (integration)', () => {
+  let integration: IntegrationApp;
   let app: INestApplication;
-  let db: BriskDb;
   let agent: ReturnType<typeof request.agent>;
   let siteId: string;
   let domain: string;
-  let tenantId: string;
   let userId: string;
 
   beforeAll(async () => {
-    const moduleRef = await Test.createTestingModule({
+    integration = await IntegrationApp.start({
       imports: [
         PagesModule,
         SiteLayoutSectionsModule,
@@ -55,58 +41,21 @@ describe('PublicPagesController (integration)', () => {
         CollectionsModule,
         AccountModule,
       ],
-    }).compile();
-
-    app = moduleRef.createNestApplication();
-    app.use(cookieParser());
-    app.useGlobalFilters(new HttpExceptionFilter());
-    app.use(requestIdMiddleware);
-    await app.init();
-    db = app.get<BriskDb>(DATABASE);
-
-    tenantId = process.env.DEFAULT_TENANT_ID as string;
+    });
+    app = integration.app;
     domain = `public-test-${randomUUID()}.example.test`;
-
-    const [site] = await withTenant(db, tenantId, (tx) =>
-      tx
-        .insert(sites)
-        .values({
-          tenantId,
-          name: 'Public Test Site',
-          domain,
-          defaultLocale: 'it',
-          enabledLocales: ['it'],
-        })
-        .returning({ id: sites.id }),
-    );
-    siteId = site.id;
-
-    const authPort = app.get<AuthPort>(AUTH_PORT);
-    const email = `public-integration-${randomUUID()}@example.test`;
-    const password = randomUUID();
-    const passwordHash = await authPort.hashPassword(password);
-    const [user] = await withTenant(db, tenantId, (tx) =>
-      tx
-        .insert(users)
-        .values({ tenantId, email, passwordHash, role: 'admin' })
-        .returning({ id: users.id }),
-    );
+    siteId = await integration.createSite({
+      name: 'Public Test Site',
+      domain,
+      enabledLocales: ['it'],
+    });
+    const user = await integration.createUser();
     userId = user.id;
-
-    agent = request.agent(app.getHttpServer());
-    await agent
-      .post('/auth/login')
-      .send({ email, password, captchaToken: 'test-token' })
-      .expect(200);
+    agent = await integration.login(user);
   });
 
   afterAll(async () => {
-    await deleteIntegrationFixtures(db, tenantId, {
-      siteIds: [siteId],
-      userIds: [userId],
-    });
-    await app.close();
-    await db.$client.end();
+    await integration.close();
   });
 
   /** Creates a group + one 'it' translation, publishes it, returns both ids. */

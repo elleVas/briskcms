@@ -10,7 +10,7 @@ import { rollbackSiteLayoutSectionToVersion } from './rollback-site-layout-secti
 import {
   InMemorySiteLayoutSectionRepository,
   InMemorySiteLayoutSectionVersionRepository,
-} from './in-memory-repositories.test-fixture';
+} from '@brisk/testing';
 
 const tenantId = 'tenant-1';
 

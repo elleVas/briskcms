@@ -3,9 +3,8 @@ import { act, renderHook } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { QueryClientProvider } from '@tanstack/react-query';
 import * as api from '../lib/sites-api-client';
-import type { SiteRecord } from '@brisk/shared-types';
-import { DEFAULT_COOKIE_BANNER_SETTINGS } from '@brisk/shared-types';
-import { createTestQueryClient } from '../test-query-client';
+import { buildSiteRecord } from '@brisk/testing/records';
+import { createTestQueryClient } from '../test/query-client.test-fixture';
 import { useSiteBusinessInfo } from './use-site-business-info';
 
 vi.mock('../lib/sites-api-client', async (importOriginal) => {
@@ -14,37 +13,7 @@ vi.mock('../lib/sites-api-client', async (importOriginal) => {
   return { ...actual, updateBusinessInfo: vi.fn() };
 });
 
-const sampleSite: SiteRecord = {
-  id: 'site-1',
-  tenantId: 'tenant-1',
-  name: 'Il mio sito',
-  domain: 'example.com',
-  themeName: 'classic',
-  defaultLocale: 'it',
-  enabledLocales: ['it'],
-  untranslatedPageFallback: 'redirect-to-default',
-  businessAddress: 'Via Roma 1',
-  businessPhone: null,
-  businessEmail: null,
-  businessType: null,
-  openingHours: null,
-  searchEngineIndexingEnabled: false,
-  themePrimaryColor: null,
-  themeSecondaryColor: null,
-  themeFontFamily: null,
-  themeCustomCss: null,
-  themeContentWidth: null,
-  themeHeadScript: null,
-  themeBodyScript: null,
-  themeFaviconUrl: null,
-  themeOverridesEnabled: true,
-  themeAllowedTrackerDomains: [],
-  formSubmissionRetentionDays: null,
-  themeTrackerScripts: [],
-  cookieBannerSettings: DEFAULT_COOKIE_BANNER_SETTINGS,
-  themeTokens: { blockStyles: {} },
-  createdAt: '',
-};
+const sampleSite = buildSiteRecord({ businessAddress: 'Via Roma 1' });
 
 function wrapper({ children }: { children: ReactNode }) {
   return (

@@ -4,7 +4,8 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { QueryClientProvider } from '@tanstack/react-query';
 import type { Block } from '@brisk/shared-types';
 import * as api from '../lib/site-layout-sections-api-client';
-import { createTestQueryClient } from '../test-query-client';
+import { createTestQueryClient } from '../test/query-client.test-fixture';
+import { buildSiteLayoutSectionDto } from '../test/dtos.test-fixture';
 import { siteLayoutSectionQueryOptions } from './site-layout-sections-queries';
 import { useSiteLayoutSectionEditor } from './use-site-layout-section-editor';
 
@@ -21,19 +22,7 @@ vi.mock('../lib/site-layout-sections-api-client', async (importOriginal) => {
   };
 });
 
-const sampleSection: api.SiteLayoutSectionDto = {
-  id: 'section-1',
-  tenantId: 'tenant-1',
-  siteId: 'site-1',
-  locale: 'it',
-  kind: 'header',
-  status: 'draft',
-  content: [],
-  publishedContent: null,
-  sticky: false,
-  createdAt: '',
-  updatedAt: '',
-};
+const sampleSection = buildSiteLayoutSectionDto();
 
 const sampleContent: Block[] = [{ id: 'nav-1', type: 'Nav', props: {} }];
 

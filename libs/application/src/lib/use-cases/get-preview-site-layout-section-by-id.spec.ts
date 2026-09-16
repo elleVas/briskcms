@@ -5,7 +5,7 @@ import {
   InMemoryPreviewTokenPort,
   InMemoryReusableSectionRepository,
   InMemorySiteLayoutSectionRepository,
-} from './in-memory-repositories.test-fixture';
+} from '@brisk/testing';
 
 describe('getPreviewSiteLayoutSectionById', () => {
   const tenantId = 'tenant-1';

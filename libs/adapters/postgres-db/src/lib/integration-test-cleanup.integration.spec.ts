@@ -1,4 +1,3 @@
-import { randomUUID } from 'node:crypto';
 import { eq } from 'drizzle-orm';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { type BriskDb, createAppDb } from './client';
@@ -6,6 +5,11 @@ import {
   deleteIntegrationFixtures,
   deleteIntegrationTenants,
 } from './integration-test-cleanup';
+import {
+  createIntegrationSite,
+  createIntegrationTenant,
+  createIntegrationUser,
+} from './integration-test-fixtures';
 import { sites, tenants, users } from './schema';
 import { withTenant } from './client';
 
@@ -22,24 +26,15 @@ describe('integration-test-cleanup (integration)', () => {
   });
 
   it('deleteIntegrationTenants cascades away everything under the given tenants', async () => {
-    const [tenant] = await db
-      .insert(tenants)
-      .values({ name: `Cleanup Test Tenant ${randomUUID()}` })
-      .returning({ id: tenants.id });
-    await withTenant(db, tenant.id, (tx) =>
-      tx.insert(sites).values({
-        tenantId: tenant.id,
-        name: 'Throwaway site',
-        defaultLocale: 'it',
-      }),
-    );
+    const tenantId = await createIntegrationTenant(db, 'Cleanup Test Tenant');
+    await createIntegrationSite(db, tenantId);
 
-    await deleteIntegrationTenants(db, [tenant.id]);
+    await deleteIntegrationTenants(db, [tenantId]);
 
     const remaining = await db
       .select()
       .from(tenants)
-      .where(eq(tenants.id, tenant.id));
+      .where(eq(tenants.id, tenantId));
     expect(remaining).toHaveLength(0);
   });
 
@@ -49,39 +44,20 @@ describe('integration-test-cleanup (integration)', () => {
 
   it('deleteIntegrationFixtures deletes only the given site/user ids, scoped to the tenant', async () => {
     const tenantId = process.env.DEFAULT_TENANT_ID as string;
-    const [site] = await withTenant(db, tenantId, (tx) =>
-      tx
-        .insert(sites)
-        .values({
-          tenantId,
-          name: `Cleanup Test Site ${randomUUID()}`,
-          defaultLocale: 'it',
-        })
-        .returning({ id: sites.id }),
-    );
-    const [user] = await withTenant(db, tenantId, (tx) =>
-      tx
-        .insert(users)
-        .values({
-          tenantId,
-          email: `cleanup-test-${randomUUID()}@example.test`,
-          passwordHash: 'irrelevant',
-          role: 'admin',
-        })
-        .returning({ id: users.id }),
-    );
+    const siteId = await createIntegrationSite(db, tenantId);
+    const userId = await createIntegrationUser(db, tenantId);
 
     await deleteIntegrationFixtures(db, tenantId, {
-      siteIds: [site.id],
-      userIds: [user.id],
+      siteIds: [siteId],
+      userIds: [userId],
     });
 
     const [remainingSite, remainingUser] = await Promise.all([
       withTenant(db, tenantId, (tx) =>
-        tx.select().from(sites).where(eq(sites.id, site.id)),
+        tx.select().from(sites).where(eq(sites.id, siteId)),
       ),
       withTenant(db, tenantId, (tx) =>
-        tx.select().from(users).where(eq(users.id, user.id)),
+        tx.select().from(users).where(eq(users.id, userId)),
       ),
     ]);
     expect(remainingSite).toHaveLength(0);

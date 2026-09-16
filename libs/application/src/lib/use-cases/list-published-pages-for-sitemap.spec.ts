@@ -1,5 +1,4 @@
 import { describe, expect, it } from 'vitest';
-import { DEFAULT_COOKIE_BANNER_SETTINGS } from '@brisk/shared-types';
 import { Site, Taxonomy, Term, User } from '@brisk/domain-core';
 import { createPageGroup } from './create-page-group.use-case';
 import { createPageGroupTranslation } from './create-page-group-translation.use-case';
@@ -15,7 +14,8 @@ import {
   InMemorySiteRepository,
   InMemoryTaxonomyRepository,
   InMemoryUserRepository,
-} from './in-memory-repositories.test-fixture';
+  buildSite,
+} from '@brisk/testing';
 
 describe('listPublishedPagesForSitemap', () => {
   const tenantId = 'tenant-1';
@@ -45,34 +45,9 @@ describe('listPublishedPagesForSitemap', () => {
     siteRepository: InMemorySiteRepository,
     overrides: Partial<Parameters<typeof Site.fromProps>[0]> = {},
   ) {
-    const site = Site.fromProps({
-      id: 'site-1',
+    const site = buildSite({
       tenantId,
       name: 'Sito di prova',
-      domain: 'example.com',
-      themeName: 'classic',
-      defaultLocale: 'it',
-      enabledLocales: ['it'],
-      untranslatedPageFallback: 'redirect-to-default',
-      businessAddress: null,
-      businessPhone: null,
-      businessEmail: null,
-      businessType: null,
-      openingHours: null,
-      searchEngineIndexingEnabled: false,
-      themePrimaryColor: null,
-      themeSecondaryColor: null,
-      themeFontFamily: null,
-      themeCustomCss: null,
-      themeContentWidth: null,
-      themeHeadScript: null,
-      themeBodyScript: null,
-      themeFaviconUrl: null,
-      themeOverridesEnabled: true,
-      themeAllowedTrackerDomains: [],
-      formSubmissionRetentionDays: null,
-      themeTrackerScripts: [],
-      cookieBannerSettings: DEFAULT_COOKIE_BANNER_SETTINGS,
       createdAt: new Date(),
       ...overrides,
     });

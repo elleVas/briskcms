@@ -6,22 +6,10 @@ import {
   rollbackToVersion,
   saveDraft,
   updateSticky,
-  type SiteLayoutSectionDto,
 } from './site-layout-sections-api-client';
+import { buildSiteLayoutSectionDto } from '../test/dtos.test-fixture';
 
-const sampleSection: SiteLayoutSectionDto = {
-  id: 'section-1',
-  tenantId: 'tenant-1',
-  siteId: 'site-1',
-  locale: 'it',
-  kind: 'header',
-  status: 'draft',
-  content: [],
-  publishedContent: null,
-  sticky: false,
-  createdAt: '',
-  updatedAt: '',
-};
+const sampleSection = buildSiteLayoutSectionDto();
 
 function jsonResponse(body: unknown) {
   return {

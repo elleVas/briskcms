@@ -1,97 +1,45 @@
 import { randomUUID } from 'node:crypto';
-import { type INestApplication } from '@nestjs/common';
-import { Test } from '@nestjs/testing';
-import { HttpExceptionFilter } from '../http-exception.filter';
-import { requestIdMiddleware } from '../request-id.middleware';
-import cookieParser from 'cookie-parser';
 import request from 'supertest';
-import type { AuthPort } from '@brisk/ports';
 import {
   type BriskDb,
   collections,
-  deleteIntegrationFixtures,
   reusableSections,
-  sites,
-  users,
   withTenant,
 } from '@brisk/postgres-db';
-import { AUTH_PORT } from '../auth/auth.tokens';
 import { CollectionsModule } from '../collections/collections.module';
-import { DATABASE } from '../database.module';
 import { ReusableSectionsModule } from '../reusable-sections/reusable-sections.module';
 import { PagesModule } from './pages.module';
+import { IntegrationApp } from '../../test/integration-app.test-fixture';
 
 /**
  * Runs against a real Postgres, through the real HTTP stack — same setup
  * discipline as pages.controller.integration.spec.ts (see its own doc
  * comment for why a throwaway site is created per run instead of reusing
  * the dev seed). Deleting the site cascades to page_groups ->
- * page_translations -> both version tables (schema.ts), so afterAll's
- * single deleteIntegrationFixtures call is enough cleanup.
+ * page_translations -> both version tables (schema.ts), so the site
+ * IntegrationApp.close() deletes takes everything with it.
  */
 describe('PageGroupsController (integration)', () => {
-  let app: INestApplication;
+  let integration: IntegrationApp;
   let db: BriskDb;
+  let tenantId: string;
   let agent: ReturnType<typeof request.agent>;
   let siteId: string;
-  let tenantId: string;
-  const createdUserIds: string[] = [];
 
   beforeAll(async () => {
-    const moduleRef = await Test.createTestingModule({
+    integration = await IntegrationApp.start({
       // Collections and sections too, for the rule that spans all three:
       // the template a collection preselects must be one a page can start
       // from, and deleting it must take only the suggestion away.
       imports: [PagesModule, CollectionsModule, ReusableSectionsModule],
-    }).compile();
-
-    app = moduleRef.createNestApplication();
-    app.use(cookieParser());
-    app.useGlobalFilters(new HttpExceptionFilter());
-    app.use(requestIdMiddleware);
-    await app.init();
-    db = app.get<BriskDb>(DATABASE);
-
-    tenantId = process.env.DEFAULT_TENANT_ID as string;
-
-    const [site] = await withTenant(db, tenantId, (tx) =>
-      tx
-        .insert(sites)
-        .values({
-          tenantId,
-          name: `Integration Site ${randomUUID()}`,
-          defaultLocale: 'en',
-        })
-        .returning({ id: sites.id }),
-    );
-    siteId = site.id;
-
-    const authPort = app.get<AuthPort>(AUTH_PORT);
-    const email = `integration-${randomUUID()}@example.test`;
-    const password = randomUUID();
-    const passwordHash = await authPort.hashPassword(password);
-    const [user] = await withTenant(db, tenantId, (tx) =>
-      tx
-        .insert(users)
-        .values({ tenantId, email, passwordHash, role: 'admin' })
-        .returning({ id: users.id }),
-    );
-    createdUserIds.push(user.id);
-
-    agent = request.agent(app.getHttpServer());
-    await agent
-      .post('/auth/login')
-      .send({ email, password, captchaToken: 'test-token' })
-      .expect(200);
+    });
+    ({ db, tenantId } = integration);
+    siteId = await integration.createSite({ defaultLocale: 'en' });
+    agent = await integration.login(await integration.createUser());
   });
 
   afterAll(async () => {
-    await deleteIntegrationFixtures(db, tenantId, {
-      siteIds: [siteId],
-      userIds: createdUserIds,
-    });
-    await app.close();
-    await db.$client.end();
+    await integration.close();
   });
 
   it('runs the full create group -> translate -> save -> publish -> diverge cycle over HTTP', async () => {

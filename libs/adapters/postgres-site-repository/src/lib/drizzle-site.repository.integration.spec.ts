@@ -3,11 +3,14 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import {
   type BriskDb,
   createAppDb,
-  deleteIntegrationTenants,
   sites,
-  tenants,
   withTenant,
 } from '@brisk/postgres-db';
+import {
+  createIntegrationSite,
+  createIntegrationTenant,
+  deleteIntegrationTenants,
+} from '@brisk/postgres-db/testing';
 import { DrizzleSiteRepository } from './drizzle-site.repository';
 
 /**
@@ -27,16 +30,8 @@ describe('DrizzleSiteRepository (integration)', () => {
     db = createAppDb();
     siteRepository = new DrizzleSiteRepository(db);
 
-    const [tenantA] = await db
-      .insert(tenants)
-      .values({ name: `Integration Tenant A ${randomUUID()}` })
-      .returning({ id: tenants.id });
-    const [tenantB] = await db
-      .insert(tenants)
-      .values({ name: `Integration Tenant B ${randomUUID()}` })
-      .returning({ id: tenants.id });
-    tenantAId = tenantA.id;
-    tenantBId = tenantB.id;
+    tenantAId = await createIntegrationTenant(db, 'Integration Tenant A');
+    tenantBId = await createIntegrationTenant(db, 'Integration Tenant B');
   });
 
   afterAll(async () => {
@@ -46,14 +41,7 @@ describe('DrizzleSiteRepository (integration)', () => {
 
   it('finds a site by domain, scoped to its tenant', async () => {
     const domain = `site-${randomUUID()}.example.com`;
-    await withTenant(db, tenantAId, (tx) =>
-      tx.insert(sites).values({
-        tenantId: tenantAId,
-        name: 'Site A',
-        domain,
-        defaultLocale: 'it',
-      }),
-    );
+    await createIntegrationSite(db, tenantAId, { name: 'Site A', domain });
 
     const found = await siteRepository.findByDomain(tenantAId, domain);
     expect(found?.name).toBe('Site A');
@@ -73,36 +61,20 @@ describe('DrizzleSiteRepository (integration)', () => {
   });
 
   it('finds a site by id, scoped to its tenant', async () => {
-    const [row] = await withTenant(db, tenantAId, (tx) =>
-      tx
-        .insert(sites)
-        .values({
-          tenantId: tenantAId,
-          name: 'Site by id',
-          defaultLocale: 'it',
-        })
-        .returning({ id: sites.id }),
-    );
+    const siteId = await createIntegrationSite(db, tenantAId, {
+      name: 'Site by id',
+    });
 
-    const found = await siteRepository.findById(tenantAId, row.id);
+    const found = await siteRepository.findById(tenantAId, siteId);
     expect(found?.name).toBe('Site by id');
 
-    expect(await siteRepository.findById(tenantBId, row.id)).toBeNull();
+    expect(await siteRepository.findById(tenantBId, siteId)).toBeNull();
   });
 
   it('save() persists business info and upserts on a second call', async () => {
-    const [row] = await withTenant(db, tenantAId, (tx) =>
-      tx
-        .insert(sites)
-        .values({
-          tenantId: tenantAId,
-          name: 'Site to update',
-          defaultLocale: 'it',
-        })
-        .returning({ id: sites.id }),
-    );
+    const siteId = await createIntegrationSite(db, tenantAId);
 
-    const site = await siteRepository.findById(tenantAId, row.id);
+    const site = await siteRepository.findById(tenantAId, siteId);
     if (!site) throw new Error('expected the just-inserted site to be found');
     site.updateBusinessInfo({
       businessAddress: 'Via Roma 1, Milano',
@@ -118,7 +90,7 @@ describe('DrizzleSiteRepository (integration)', () => {
     });
     await siteRepository.save(site);
 
-    const updated = await siteRepository.findById(tenantAId, row.id);
+    const updated = await siteRepository.findById(tenantAId, siteId);
     expect(updated?.businessAddress).toBe('Via Roma 1, Milano');
     expect(updated?.openingHours).toEqual([
       { dayOfWeek: 'monday', ranges: [{ opens: '12:00', closes: '15:00' }] },
@@ -131,14 +103,7 @@ describe('DrizzleSiteRepository (integration)', () => {
   // tenant shared a domain — nothing prevented that at the DB level.
   it('rejects a second site with the same tenant and domain', async () => {
     const domain = `dup-${randomUUID()}.example.com`;
-    await withTenant(db, tenantAId, (tx) =>
-      tx.insert(sites).values({
-        tenantId: tenantAId,
-        name: 'First',
-        domain,
-        defaultLocale: 'it',
-      }),
-    );
+    await createIntegrationSite(db, tenantAId, { domain });
 
     await expect(
       withTenant(db, tenantAId, (tx) =>

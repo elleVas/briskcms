@@ -1,11 +1,10 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { QueryClientProvider } from '@tanstack/react-query';
-import type { SiteRecord } from '@brisk/shared-types';
-import { DEFAULT_COOKIE_BANNER_SETTINGS } from '@brisk/shared-types';
+import { buildSiteRecord } from '@brisk/testing/records';
 import { TooltipProvider } from '../components/ui/tooltip';
 import * as api from '../lib/sites-api-client';
-import { createTestQueryClient } from '../test-query-client';
+import { createTestQueryClient } from '../test/query-client.test-fixture';
 import { SettingsMenu } from './settings-menu';
 
 vi.mock('../lib/sites-api-client', async (importOriginal) => {
@@ -29,43 +28,8 @@ describe('SettingsMenu', () => {
     vi.clearAllMocks();
   });
 
-  function mockSite(overrides: Partial<SiteRecord> = {}): SiteRecord {
-    return {
-      id: 'site-1',
-      tenantId: 'tenant-1',
-      name: 'Il mio sito',
-      domain: null,
-      themeName: 'classic',
-      defaultLocale: 'it',
-      enabledLocales: ['it'],
-      untranslatedPageFallback: 'redirect-to-default',
-      businessAddress: null,
-      businessPhone: null,
-      businessEmail: null,
-      businessType: null,
-      openingHours: null,
-      searchEngineIndexingEnabled: false,
-      themePrimaryColor: null,
-      themeSecondaryColor: null,
-      themeFontFamily: null,
-      themeCustomCss: null,
-      themeContentWidth: null,
-      themeHeadScript: null,
-      themeBodyScript: null,
-      themeFaviconUrl: null,
-      themeOverridesEnabled: true,
-      themeAllowedTrackerDomains: [],
-      formSubmissionRetentionDays: null,
-      themeTrackerScripts: [],
-      cookieBannerSettings: DEFAULT_COOKIE_BANNER_SETTINGS,
-      themeTokens: { blockStyles: {} },
-      createdAt: '',
-      ...overrides,
-    };
-  }
-
   it('opens the business info dialog from the settings popover', async () => {
-    vi.mocked(api.getCurrentSite).mockResolvedValue(mockSite());
+    vi.mocked(api.getCurrentSite).mockResolvedValue(buildSiteRecord());
 
     renderMenu();
     fireEvent.click(screen.getByRole('button', { name: /^impostazioni$/i }));
@@ -77,7 +41,7 @@ describe('SettingsMenu', () => {
   });
 
   it('opens the general settings dialog from the settings popover', async () => {
-    vi.mocked(api.getCurrentSite).mockResolvedValue(mockSite());
+    vi.mocked(api.getCurrentSite).mockResolvedValue(buildSiteRecord());
 
     renderMenu();
     fireEvent.click(screen.getByRole('button', { name: /^impostazioni$/i }));
@@ -91,7 +55,7 @@ describe('SettingsMenu', () => {
   });
 
   it('opens the SEO settings dialog from the settings popover', async () => {
-    vi.mocked(api.getCurrentSite).mockResolvedValue(mockSite());
+    vi.mocked(api.getCurrentSite).mockResolvedValue(buildSiteRecord());
 
     renderMenu();
     fireEvent.click(screen.getByRole('button', { name: /^impostazioni$/i }));
@@ -103,7 +67,7 @@ describe('SettingsMenu', () => {
   });
 
   it('opens the locale settings dialog from the settings popover', async () => {
-    vi.mocked(api.getCurrentSite).mockResolvedValue(mockSite());
+    vi.mocked(api.getCurrentSite).mockResolvedValue(buildSiteRecord());
 
     renderMenu();
     fireEvent.click(screen.getByRole('button', { name: /^impostazioni$/i }));

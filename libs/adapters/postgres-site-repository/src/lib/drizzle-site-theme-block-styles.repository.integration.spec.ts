@@ -1,14 +1,12 @@
 import { DEFAULT_VARIANT } from '@brisk/shared-types';
 import { randomUUID } from 'node:crypto';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { type BriskDb, createAppDb } from '@brisk/postgres-db';
 import {
-  type BriskDb,
-  createAppDb,
+  createIntegrationSite,
+  createIntegrationTenant,
   deleteIntegrationTenants,
-  sites,
-  tenants,
-  withTenant,
-} from '@brisk/postgres-db';
+} from '@brisk/postgres-db/testing';
 import { DrizzleSiteThemeBlockStylesRepository } from './drizzle-site-theme-block-styles.repository';
 
 /** Runs against a real Postgres — see docs/development.md. */
@@ -22,23 +20,9 @@ describe('DrizzleSiteThemeBlockStylesRepository (integration)', () => {
     db = createAppDb();
     repository = new DrizzleSiteThemeBlockStylesRepository(db);
 
-    const [tenantA] = await db
-      .insert(tenants)
-      .values({ name: `Integration Tenant A ${randomUUID()}` })
-      .returning({ id: tenants.id });
-    tenantAId = tenantA.id;
+    tenantAId = await createIntegrationTenant(db, 'Integration Tenant A');
 
-    const [site] = await withTenant(db, tenantAId, (tx) =>
-      tx
-        .insert(sites)
-        .values({
-          tenantId: tenantAId,
-          name: 'Site for theme block styles',
-          defaultLocale: 'it',
-        })
-        .returning({ id: sites.id }),
-    );
-    siteId = site.id;
+    siteId = await createIntegrationSite(db, tenantAId);
   });
 
   afterAll(async () => {

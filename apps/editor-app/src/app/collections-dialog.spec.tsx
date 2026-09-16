@@ -1,10 +1,12 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { buildCollectionRecord } from '@brisk/testing/records';
 import { TooltipProvider } from '../components/ui/tooltip';
 import * as collectionsApi from '../lib/collections-api-client';
 import * as sectionsApi from '../lib/reusable-sections-api-client';
-import { createTestQueryClient } from '../test-query-client';
+import { createTestQueryClient } from '../test/query-client.test-fixture';
+import { buildReusableSectionListItemDto } from '../test/dtos.test-fixture';
 import { CollectionsDialog } from './collections-dialog';
 
 vi.mock('../lib/reusable-sections-api-client', async (importOriginal) => {
@@ -21,38 +23,22 @@ vi.mock('../lib/collections-api-client', async (importOriginal) => {
   return { ...actual, listCollections: vi.fn(), updateCollection: vi.fn() };
 });
 
-const news: collectionsApi.CollectionRecord = {
+const news = buildCollectionRecord({
   id: 'news',
-  tenantId: 'tenant-1',
-  siteId: 'site-1',
-  name: 'News',
-  icon: 'newspaper',
-  order: 0,
   defaultTemplateId: 'article',
-  createdAt: '',
-  updatedAt: '',
-};
+});
 
 function template(
   id: string,
   name: string,
 ): sectionsApi.ReusableSectionListItemDto {
-  return {
+  return buildReusableSectionListItemDto({
     id,
-    tenantId: 'tenant-1',
-    siteId: 'site-1',
     name,
     kind: 'template',
     status: 'published',
-    content: [],
     publishedContent: [],
-    exposedFields: {},
-    createdBy: null,
-    createdAt: '',
-    updatedAt: '',
-    usedOnPages: 0,
-    usedInTemplates: 0,
-  };
+  });
 }
 
 function renderDialog(

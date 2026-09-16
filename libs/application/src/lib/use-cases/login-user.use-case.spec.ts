@@ -2,26 +2,13 @@ import { describe, expect, it, vi } from 'vitest';
 import {
   InvalidCaptchaError,
   InvalidCredentialsError,
-  User,
   UserNotActiveError,
 } from '@brisk/domain-core';
 import type { AuthPort, Session, UserRepositoryPort } from '@brisk/ports';
-import { FakeCaptchaPort } from './fake-captcha-port.test-fixture';
+import { buildUser, FakeCaptchaPort } from '@brisk/testing';
 import { loginUser } from './login-user.use-case';
 
 const tenantId = 'tenant-1';
-
-function buildUser(overrides: { isActive?: boolean } = {}) {
-  return User.create({
-    id: 'user-1',
-    tenantId,
-    email: 'lele@example.com',
-    displayName: 'Lele',
-    passwordHash: 'hashed',
-    role: 'admin',
-    isActive: overrides.isActive,
-  });
-}
 
 describe('loginUser', () => {
   it('creates a session when the account is active and the password matches', async () => {

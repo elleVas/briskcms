@@ -20,18 +20,21 @@ import * as sectionsApi from '../lib/site-layout-sections-api-client';
 import * as sitesApi from '../lib/sites-api-client';
 import * as usersApi from '../lib/users-api-client';
 import { ApiError } from '../lib/http-client';
-import type { FormDto } from '../lib/forms-api-client';
 import type { SiteLayoutSectionDto } from '../lib/site-layout-sections-api-client';
-import type { UserDto } from '../lib/users-api-client';
-import type {
-  PageGroupListItemRecord,
-  PageGroupRecord,
-  PageTranslationRecord,
-  SiteRecord,
-} from '@brisk/shared-types';
-import { DEFAULT_COOKIE_BANNER_SETTINGS } from '@brisk/shared-types';
+import {
+  buildPageGroupListItemRecord,
+  buildPageGroupListItemTranslation,
+  buildPageGroupRecord,
+  buildPageTranslationRecord,
+  buildSiteRecord,
+} from '@brisk/testing/records';
 import { routeTree } from '../routeTree.gen';
-import { createTestQueryClient } from '../test-query-client';
+import { createTestQueryClient } from '../test/query-client.test-fixture';
+import {
+  buildFormDto,
+  buildSiteLayoutSectionDto,
+  buildUserDto,
+} from '../test/dtos.test-fixture';
 import { ToastProvider } from './toast-provider';
 
 // The login route asks whether this deployment has been set up before it
@@ -155,106 +158,22 @@ vi.mock('../lib/site-layout-sections-api-client', async (importOriginal) => {
   return { ...actual, getOrCreateSiteLayoutSection: vi.fn() };
 });
 
-const sampleSite: SiteRecord = {
-  id: 'site-1',
-  tenantId: 'tenant-1',
-  name: 'Il mio sito',
-  domain: null,
-  themeName: 'classic',
-  defaultLocale: 'it',
-  enabledLocales: ['it'],
-  untranslatedPageFallback: 'redirect-to-default',
-  businessAddress: null,
-  businessPhone: null,
-  businessEmail: null,
-  businessType: null,
-  openingHours: null,
-  searchEngineIndexingEnabled: false,
-  themePrimaryColor: null,
-  themeSecondaryColor: null,
-  themeFontFamily: null,
-  themeCustomCss: null,
-  themeContentWidth: null,
-  themeHeadScript: null,
-  themeBodyScript: null,
-  themeFaviconUrl: null,
-  themeOverridesEnabled: true,
-  themeAllowedTrackerDomains: [],
-  formSubmissionRetentionDays: null,
-  themeTrackerScripts: [],
-  cookieBannerSettings: DEFAULT_COOKIE_BANNER_SETTINGS,
-  themeTokens: { blockStyles: {} },
-  createdAt: '',
-};
+const sampleSite = buildSiteRecord();
 
-const samplePageGroupListItem: PageGroupListItemRecord = {
-  id: 'group-1',
-  tenantId: 'tenant-1',
-  siteId: 'site-1',
-  parentId: null,
-  order: 0,
-  collectionId: null,
-  createdByName: null,
-  lastEditedAt: '2026-09-09T10:00:00.000Z',
-  lastEditedByName: 'Grace Hopper',
-  createdAt: '',
-  updatedAt: '',
+const samplePageGroupListItem = buildPageGroupListItemRecord({
   translations: [
-    {
-      locale: 'it',
-      slug: 'home',
-      title: 'home',
-      status: 'published',
-      isDiverged: false,
-      hasUnpublishedChanges: false,
-    },
+    buildPageGroupListItemTranslation({ title: 'home', status: 'published' }),
   ],
-};
+});
 
-const samplePageGroup: PageGroupRecord = {
-  id: 'group-1',
-  tenantId: 'tenant-1',
-  siteId: 'site-1',
-  parentId: null,
-  order: 0,
-  collectionId: null,
-  content: [],
-  createdBy: null,
-  createdAt: '',
-  updatedAt: '',
-};
+const samplePageGroup = buildPageGroupRecord();
 
-const samplePageGroupTranslation: PageTranslationRecord = {
-  id: 'translation-1',
-  tenantId: 'tenant-1',
-  siteId: 'site-1',
-  pageGroupId: 'group-1',
-  locale: 'it',
-  slug: 'home',
-  seoMeta: { title: 'Home', description: '' },
-  fieldValues: {},
+const samplePageGroupTranslation = buildPageTranslationRecord({
   status: 'published',
   publishedSnapshot: [],
-  isDiverged: false,
-  divergedContent: null,
-  createdBy: null,
-  createdAt: '',
-  updatedAt: '',
-};
+});
 
-const sampleHeaderSection: SiteLayoutSectionDto = {
-  id: 'section-1',
-  tenantId: 'tenant-1',
-  siteId: 'site-1',
-  locale: 'it',
-  kind: 'header',
-  status: 'draft',
-  content: [],
-  publishedContent: null,
-  sticky: false,
-  createdAt: '',
-  updatedAt: '',
-};
+const sampleHeaderSection = buildSiteLayoutSectionDto();
 
 const sampleFooterSection: SiteLayoutSectionDto = {
   ...sampleHeaderSection,
@@ -262,31 +181,14 @@ const sampleFooterSection: SiteLayoutSectionDto = {
   kind: 'footer',
 };
 
-const sampleForm: FormDto = {
-  id: 'form-1',
-  tenantId: 'tenant-1',
-  siteId: 'site-1',
-  name: 'Contact form',
-  fields: [],
-  steps: [],
-  notificationEmail: null,
-  createdAt: '',
-  updatedAt: '',
-  submissionCount: 0,
-};
+const sampleForm = buildFormDto({ name: 'Contact form' });
 
-const sampleUser: UserDto = {
-  id: 'user-1',
-  tenantId: 'tenant-1',
+const sampleUser = buildUserDto({
   email: 'editor@example.com',
   displayName: 'Editor',
-  slug: null,
-  avatarUrl: null,
   role: 'editor',
-  isActive: true,
   emailVerifiedAt: '2026-01-01T00:00:00.000Z',
-  createdAt: '',
-};
+});
 
 function renderApp(initialPath: string) {
   const queryClient = createTestQueryClient();

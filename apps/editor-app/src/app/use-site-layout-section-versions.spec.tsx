@@ -3,7 +3,11 @@ import { act, renderHook, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { QueryClientProvider } from '@tanstack/react-query';
 import * as api from '../lib/site-layout-sections-api-client';
-import { createTestQueryClient } from '../test-query-client';
+import { createTestQueryClient } from '../test/query-client.test-fixture';
+import {
+  buildSiteLayoutSectionDto,
+  buildSiteLayoutSectionVersionDto,
+} from '../test/dtos.test-fixture';
 import { useSiteLayoutSectionVersions } from './use-site-layout-section-versions';
 
 vi.mock('../lib/site-layout-sections-api-client', async (importOriginal) => {
@@ -18,14 +22,7 @@ vi.mock('../lib/site-layout-sections-api-client', async (importOriginal) => {
   };
 });
 
-const sampleVersion: api.SiteLayoutSectionVersionDto = {
-  id: 'version-1',
-  tenantId: 'tenant-1',
-  siteLayoutSectionId: 'section-1',
-  content: [],
-  createdBy: null,
-  createdAt: '2026-01-01T00:00:00.000Z',
-};
+const sampleVersion = buildSiteLayoutSectionVersionDto();
 
 function wrapper({ children }: { children: ReactNode }) {
   return (
@@ -81,19 +78,9 @@ describe('useSiteLayoutSectionVersions', () => {
 
   it('rollback calls the API with the given version id', async () => {
     vi.mocked(api.listVersions).mockResolvedValue([sampleVersion]);
-    vi.mocked(api.rollbackToVersion).mockResolvedValue({
-      id: 'section-1',
-      tenantId: 'tenant-1',
-      siteId: 'site-1',
-      locale: 'it',
-      kind: 'header',
-      status: 'published',
-      content: [],
-      publishedContent: [],
-      sticky: false,
-      createdAt: '',
-      updatedAt: '',
-    });
+    vi.mocked(api.rollbackToVersion).mockResolvedValue(
+      buildSiteLayoutSectionDto({ status: 'published', publishedContent: [] }),
+    );
 
     const { result } = renderHook(
       () =>

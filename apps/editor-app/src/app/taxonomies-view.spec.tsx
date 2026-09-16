@@ -1,11 +1,13 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { QueryClientProvider } from '@tanstack/react-query';
+import { buildSiteRecord } from '@brisk/testing/records';
 import { TooltipProvider } from '../components/ui/tooltip';
 import * as api from '../lib/taxonomies-api-client';
 import * as sitesApi from '../lib/sites-api-client';
 import type { TaxonomyDto } from '../lib/taxonomies-api-client';
-import { createTestQueryClient } from '../test-query-client';
+import { createTestQueryClient } from '../test/query-client.test-fixture';
+import { buildTaxonomyDto } from '../test/dtos.test-fixture';
 import { TaxonomiesView } from './taxonomies-view';
 
 vi.mock('../lib/taxonomies-api-client', async (importOriginal) => {
@@ -27,26 +29,14 @@ vi.mock('../lib/sites-api-client', async (importOriginal) => {
   return { ...actual, getCurrentSite: vi.fn() };
 });
 
-const taxonomy: TaxonomyDto = {
-  id: 'taxonomy-1',
-  tenantId: 'tenant-1',
-  siteId: 'site-1',
-  prefix: 'categoria',
-  name: { it: 'Categoria' },
-  hierarchical: true,
-  order: 0,
-  createdAt: '',
-  updatedAt: '',
-};
+const taxonomy = buildTaxonomyDto();
 
 function renderView(taxonomies: TaxonomyDto[]) {
   vi.mocked(api.listTaxonomies).mockResolvedValue(taxonomies);
   vi.mocked(api.listTerms).mockResolvedValue([]);
-  vi.mocked(sitesApi.getCurrentSite).mockResolvedValue({
-    id: 'site-1',
-    defaultLocale: 'it',
-    enabledLocales: ['it', 'en'],
-  } as Awaited<ReturnType<typeof sitesApi.getCurrentSite>>);
+  vi.mocked(sitesApi.getCurrentSite).mockResolvedValue(
+    buildSiteRecord({ enabledLocales: ['it', 'en'] }),
+  );
   return render(
     <QueryClientProvider client={createTestQueryClient()}>
       <TooltipProvider>

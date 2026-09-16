@@ -2,16 +2,20 @@ import type { ReactNode } from 'react';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { QueryClientProvider } from '@tanstack/react-query';
+import {
+  buildPageGroupListItemRecord,
+  buildPageTranslationRecord,
+} from '@brisk/testing/records';
 import * as sectionsApi from '../lib/site-layout-sections-api-client';
 import type { SiteLayoutSectionDto } from '../lib/site-layout-sections-api-client';
 import * as pageGroupsApi from '../lib/page-groups-api-client';
-import type {
-  PageGroupListItemRecord,
-  PageTranslationRecord,
-} from '../lib/page-groups-api-client';
 import * as previewTokenApi from '../lib/preview-token-api-client';
 import { TooltipProvider } from '../components/ui/tooltip';
-import { createTestQueryClient } from '../test-query-client';
+import { createTestQueryClient } from '../test/query-client.test-fixture';
+import {
+  buildSiteLayoutSectionDto,
+  buildSiteLayoutSectionVersionDto,
+} from '../test/dtos.test-fixture';
 import {
   pageGroupsQueryOptions,
   pageGroupTranslationsQueryOptions,
@@ -72,61 +76,11 @@ vi.mock('../lib/preview-token-api-client', async (importOriginal) => {
   return { ...actual, createTranslationPreviewToken: vi.fn() };
 });
 
-const representativeGroup: PageGroupListItemRecord = {
-  id: 'group-1',
-  tenantId: 'tenant-1',
-  siteId: 'site-1',
-  parentId: null,
-  order: 0,
-  collectionId: null,
-  createdByName: null,
-  lastEditedAt: '2026-09-09T10:00:00.000Z',
-  lastEditedByName: 'Grace Hopper',
-  createdAt: '',
-  updatedAt: '',
-  translations: [
-    {
-      locale: 'it',
-      slug: 'home',
-      title: 'Home',
-      status: 'published',
-      isDiverged: false,
-      hasUnpublishedChanges: false,
-    },
-  ],
-};
+const representativeGroup = buildPageGroupListItemRecord();
 
-const representativeTranslation: PageTranslationRecord = {
-  id: 'translation-1',
-  tenantId: 'tenant-1',
-  siteId: 'site-1',
-  pageGroupId: 'group-1',
-  locale: 'it',
-  slug: 'home',
-  seoMeta: { title: 'Home', description: '' },
-  fieldValues: {},
-  status: 'published',
-  publishedSnapshot: [],
-  isDiverged: false,
-  divergedContent: null,
-  createdBy: null,
-  createdAt: '',
-  updatedAt: '',
-};
+const representativeTranslation = buildPageTranslationRecord();
 
-const sampleSection: SiteLayoutSectionDto = {
-  id: 'section-1',
-  tenantId: 'tenant-1',
-  siteId: 'site-1',
-  locale: 'it',
-  kind: 'header',
-  status: 'draft',
-  content: [],
-  publishedContent: null,
-  sticky: false,
-  createdAt: '',
-  updatedAt: '',
-};
+const sampleSection = buildSiteLayoutSectionDto();
 
 function renderView(
   kind: SiteLayoutSectionDto['kind'] = 'header',
@@ -205,22 +159,14 @@ describe('SiteLayoutSectionEditorView', () => {
 
   it('opens the version history dialog and lists past versions newest-first', async () => {
     vi.mocked(sectionsApi.listVersions).mockResolvedValue([
-      {
+      buildSiteLayoutSectionVersionDto({
         id: 'v1',
-        tenantId: 'tenant-1',
-        siteLayoutSectionId: 'section-1',
-        content: [],
-        createdBy: null,
         createdAt: '2026-01-01T00:00:00.000Z',
-      },
-      {
+      }),
+      buildSiteLayoutSectionVersionDto({
         id: 'v2',
-        tenantId: 'tenant-1',
-        siteLayoutSectionId: 'section-1',
-        content: [],
-        createdBy: null,
         createdAt: '2026-01-02T00:00:00.000Z',
-      },
+      }),
     ]);
 
     renderView();

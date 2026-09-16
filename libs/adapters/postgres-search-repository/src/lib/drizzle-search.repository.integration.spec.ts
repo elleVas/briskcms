@@ -4,13 +4,15 @@ import { PageTranslation } from '@brisk/domain-core';
 import {
   type BriskDb,
   createAppDb,
-  deleteIntegrationTenants,
   pageGroups,
   pageTranslations,
-  sites,
-  tenants,
   withTenant,
 } from '@brisk/postgres-db';
+import {
+  createIntegrationSite,
+  createIntegrationTenant,
+  deleteIntegrationTenants,
+} from '@brisk/postgres-db/testing';
 import { DrizzleSearchRepository } from './drizzle-search.repository';
 
 /**
@@ -30,24 +32,10 @@ describe('DrizzleSearchRepository (integration)', () => {
     db = createAppDb();
     searchRepository = new DrizzleSearchRepository(db);
 
-    const [tenantA] = await db
-      .insert(tenants)
-      .values({ name: `Integration Tenant A ${randomUUID()}` })
-      .returning({ id: tenants.id });
-    const [tenantB] = await db
-      .insert(tenants)
-      .values({ name: `Integration Tenant B ${randomUUID()}` })
-      .returning({ id: tenants.id });
-    tenantAId = tenantA.id;
-    tenantBId = tenantB.id;
+    tenantAId = await createIntegrationTenant(db, 'Integration Tenant A');
+    tenantBId = await createIntegrationTenant(db, 'Integration Tenant B');
 
-    const [siteA] = await withTenant(db, tenantAId, (tx) =>
-      tx
-        .insert(sites)
-        .values({ tenantId: tenantAId, name: 'Site A', defaultLocale: 'it' })
-        .returning({ id: sites.id }),
-    );
-    siteAId = siteA.id;
+    siteAId = await createIntegrationSite(db, tenantAId);
   });
 
   afterAll(async () => {
@@ -181,23 +169,14 @@ describe('DrizzleSearchRepository (integration)', () => {
   });
 
   it('scopes results to the given site', async () => {
-    const [otherSite] = await withTenant(db, tenantAId, (tx) =>
-      tx
-        .insert(sites)
-        .values({
-          tenantId: tenantAId,
-          name: 'Other Site',
-          defaultLocale: 'it',
-        })
-        .returning({ id: sites.id }),
-    );
+    const otherSiteId = await createIntegrationSite(db, tenantAId);
     const translation = await insertTranslation({
       tenantId: tenantAId,
-      siteId: otherSite.id,
+      siteId: otherSiteId,
     });
     await searchRepository.indexPage(
       tenantAId,
-      otherSite.id,
+      otherSiteId,
       translation,
       translation.publishedSnapshot ?? [],
     );
@@ -236,19 +215,14 @@ describe('DrizzleSearchRepository (integration)', () => {
   });
 
   it('never returns a translation from another tenant (RLS)', async () => {
-    const [siteB] = await withTenant(db, tenantBId, (tx) =>
-      tx
-        .insert(sites)
-        .values({ tenantId: tenantBId, name: 'Site B', defaultLocale: 'it' })
-        .returning({ id: sites.id }),
-    );
+    const siteBId = await createIntegrationSite(db, tenantBId);
     const translation = await insertTranslation({
       tenantId: tenantBId,
-      siteId: siteB.id,
+      siteId: siteBId,
     });
     await searchRepository.indexPage(
       tenantBId,
-      siteB.id,
+      siteBId,
       translation,
       translation.publishedSnapshot ?? [],
     );

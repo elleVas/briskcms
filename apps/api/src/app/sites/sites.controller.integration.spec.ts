@@ -1,21 +1,8 @@
 import { randomUUID } from 'node:crypto';
 import { type INestApplication } from '@nestjs/common';
-import { Test } from '@nestjs/testing';
-import { HttpExceptionFilter } from '../http-exception.filter';
-import { requestIdMiddleware } from '../request-id.middleware';
-import cookieParser from 'cookie-parser';
 import request from 'supertest';
-import type { AuthPort } from '@brisk/ports';
-import {
-  type BriskDb,
-  deleteIntegrationFixtures,
-  sites,
-  users,
-  withTenant,
-} from '@brisk/postgres-db';
-import { AUTH_PORT } from '../auth/auth.tokens';
-import { DATABASE } from '../database.module';
 import { SitesModule } from './sites.module';
+import { IntegrationApp } from '../../test/integration-app.test-fixture';
 
 /**
  * Runs against a real Postgres, through the real HTTP stack — same
@@ -24,98 +11,30 @@ import { SitesModule } from './sites.module';
  * shared dev-seed site would accumulate business-info edits across runs.
  */
 describe('SitesController (integration)', () => {
+  let integration: IntegrationApp;
   let app: INestApplication;
-  let db: BriskDb;
   let agent: ReturnType<typeof request.agent>;
-  let editorAgent: ReturnType<typeof request.agent>;
   let siteId: string;
-  let tenantId: string;
-  let userId: string;
-  let editorUserId: string;
+  let editorAgent: ReturnType<typeof request.agent>;
 
   beforeAll(async () => {
-    const moduleRef = await Test.createTestingModule({
-      imports: [SitesModule],
-    }).compile();
-
-    app = moduleRef.createNestApplication();
-    app.use(cookieParser());
-    app.useGlobalFilters(new HttpExceptionFilter());
-    app.use(requestIdMiddleware);
-    await app.init();
-    db = app.get<BriskDb>(DATABASE);
-
-    tenantId = process.env.DEFAULT_TENANT_ID as string;
-
-    const [site] = await withTenant(db, tenantId, (tx) =>
-      tx
-        .insert(sites)
-        .values({
-          tenantId,
-          name: `Integration Site ${randomUUID()}`,
-          defaultLocale: 'it',
-        })
-        .returning({ id: sites.id }),
-    );
-    siteId = site.id;
-
-    const authPort = app.get<AuthPort>(AUTH_PORT);
-    const email = `sites-integration-${randomUUID()}@example.test`;
-    const password = randomUUID();
-    const passwordHash = await authPort.hashPassword(password);
-    const [user] = await withTenant(db, tenantId, (tx) =>
-      tx
-        .insert(users)
-        .values({ tenantId, email, passwordHash, role: 'admin' })
-        .returning({ id: users.id }),
-    );
-    userId = user.id;
-
-    agent = request.agent(app.getHttpServer());
-    await agent
-      .post('/auth/login')
-      .send({ email, password, captchaToken: 'test-token' })
-      .expect(200);
+    integration = await IntegrationApp.start({ imports: [SitesModule] });
+    app = integration.app;
+    siteId = await integration.createSite();
+    agent = await integration.login(await integration.createUser());
 
     // Second user with the lowest role, to prove RolesGuard/@Roles('admin')
     // actually blocks theme-settings for it (security review 2026-08-25 —
     // this endpoint injects headScript/bodyScript/customCss unsanitized
     // into every public visitor's page, so a non-admin writing to it is a
     // site-wide XSS).
-    const editorEmail = `sites-integration-editor-${randomUUID()}@example.test`;
-    const editorPassword = randomUUID();
-    const editorPasswordHash = await authPort.hashPassword(editorPassword);
-    const [editorUser] = await withTenant(db, tenantId, (tx) =>
-      tx
-        .insert(users)
-        .values({
-          tenantId,
-          email: editorEmail,
-          passwordHash: editorPasswordHash,
-          role: 'editor',
-        })
-        .returning({ id: users.id }),
+    editorAgent = await integration.login(
+      await integration.createUser({ role: 'editor' }),
     );
-    editorUserId = editorUser.id;
-
-    editorAgent = request.agent(app.getHttpServer());
-    await editorAgent
-      .post('/auth/login')
-      .send({
-        email: editorEmail,
-        password: editorPassword,
-        captchaToken: 'test-token',
-      })
-      .expect(200);
   });
 
   afterAll(async () => {
-    await deleteIntegrationFixtures(db, tenantId, {
-      siteIds: [siteId],
-      userIds: [userId, editorUserId],
-    });
-    await app.close();
-    await db.$client.end();
+    await integration.close();
   });
 
   it('finds a site by id, with no business info yet', async () => {

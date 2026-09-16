@@ -2,14 +2,16 @@ import { randomUUID } from 'node:crypto';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { Taxonomy, Term } from '@brisk/domain-core';
 import {
-  createAppDb,
-  deleteIntegrationTenants,
-  pageGroups,
-  sites,
-  tenants,
-  withTenant,
   type BriskDb,
+  createAppDb,
+  pageGroups,
+  withTenant,
 } from '@brisk/postgres-db';
+import {
+  createIntegrationSite,
+  createIntegrationTenant,
+  deleteIntegrationTenants,
+} from '@brisk/postgres-db/testing';
 import { DrizzleTaxonomyRepository } from './drizzle-taxonomy.repository';
 
 /**
@@ -29,27 +31,9 @@ describe('DrizzleTaxonomyRepository (integration)', () => {
   beforeAll(async () => {
     db = createAppDb();
     repository = new DrizzleTaxonomyRepository(db);
-    const [tenantA] = await db
-      .insert(tenants)
-      .values({ name: `Taxonomy Tenant A ${randomUUID()}` })
-      .returning({ id: tenants.id });
-    const [tenantB] = await db
-      .insert(tenants)
-      .values({ name: `Taxonomy Tenant B ${randomUUID()}` })
-      .returning({ id: tenants.id });
-    tenantAId = tenantA.id;
-    tenantBId = tenantB.id;
-    const [site] = await withTenant(db, tenantAId, (tx) =>
-      tx
-        .insert(sites)
-        .values({
-          tenantId: tenantAId,
-          name: 'Taxonomy site',
-          defaultLocale: 'it',
-        })
-        .returning({ id: sites.id }),
-    );
-    siteAId = site.id;
+    tenantAId = await createIntegrationTenant(db, 'Taxonomy Tenant A');
+    tenantBId = await createIntegrationTenant(db, 'Taxonomy Tenant B');
+    siteAId = await createIntegrationSite(db, tenantAId);
   });
 
   afterAll(async () => {

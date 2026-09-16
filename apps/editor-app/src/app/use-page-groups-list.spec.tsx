@@ -3,8 +3,9 @@ import { act, renderHook, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { QueryClientProvider } from '@tanstack/react-query';
 import * as router from '@tanstack/react-router';
+import { buildPageGroupRecord } from '@brisk/testing/records';
 import * as api from '../lib/page-groups-api-client';
-import { createTestQueryClient } from '../test-query-client';
+import { createTestQueryClient } from '../test/query-client.test-fixture';
 import { usePageGroupsList } from './use-page-groups-list';
 
 vi.mock('@tanstack/react-router', async (importOriginal) => {
@@ -26,18 +27,7 @@ vi.mock('../lib/page-groups-api-client', async (importOriginal) => {
   };
 });
 
-const sampleGroup: api.PageGroupRecord = {
-  id: 'group-1',
-  tenantId: 'tenant-1',
-  siteId: 'site-1',
-  parentId: null,
-  order: 0,
-  collectionId: null,
-  content: [],
-  createdBy: null,
-  createdAt: '',
-  updatedAt: '',
-};
+const sampleGroup = buildPageGroupRecord();
 
 function wrapper({ children }: { children: ReactNode }) {
   return (

@@ -37,7 +37,7 @@ import {
   InMemoryReusableSectionRepository,
   InMemoryTaxonomyRepository,
   InMemorySearchPort,
-} from './in-memory-repositories.test-fixture';
+} from '@brisk/testing';
 
 describe('page group i18n lifecycle', () => {
   const tenantId = 'tenant-1';

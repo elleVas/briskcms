@@ -29,8 +29,8 @@ import {
   InMemorySearchPort,
   InMemorySiteRepository,
   InMemoryTaxonomyRepository,
-} from './in-memory-repositories.test-fixture';
-import { buildSite } from './site.test-fixture';
+} from '@brisk/testing';
+import { buildSite } from '@brisk/testing';
 
 const tenantId = 'tenant-1';
 const siteId = 'site-1';

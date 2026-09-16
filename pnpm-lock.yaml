@@ -349,6 +349,9 @@ importers:
         specifier: ^4.4.3
         version: 4.4.3
     devDependencies:
+      '@brisk/testing':
+        specifier: workspace:*
+        version: link:../../libs/testing
       '@nestjs/testing':
         specifier: ^11.0.0
         version: 11.2.1(@nestjs/common@11.2.1(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.2.1)(@nestjs/platform-express@11.2.1)
@@ -452,6 +455,9 @@ importers:
         specifier: ^4.4.3
         version: 4.4.3
     devDependencies:
+      '@brisk/testing':
+        specifier: workspace:*
+        version: link:../../libs/testing
       '@tailwindcss/vite':
         specifier: ^4.3.3
         version: 4.3.3(vite@8.2.2(@types/node@26.5.1)(esbuild@0.28.2)(jiti@2.7.0)(less@4.8.1)(sass-embedded@1.103.1)(sass@1.103.1)(terser@5.51.2)(tsx@4.23.12)(yaml@2.9.0))
@@ -953,6 +959,10 @@ importers:
       '@brisk/theme-runtime':
         specifier: workspace:*
         version: link:../theme-runtime
+    devDependencies:
+      '@brisk/testing':
+        specifier: workspace:*
+        version: link:../testing
 
   libs/block-registry:
     dependencies:
@@ -1086,6 +1096,18 @@ importers:
       zod:
         specifier: ^4.4.3
         version: 4.4.3
+
+  libs/testing:
+    dependencies:
+      '@brisk/domain-core':
+        specifier: workspace:*
+        version: link:../domain-core
+      '@brisk/ports':
+        specifier: workspace:*
+        version: link:../ports
+      '@brisk/shared-types':
+        specifier: workspace:*
+        version: link:../shared-types
 
   libs/theme-runtime: {}
 

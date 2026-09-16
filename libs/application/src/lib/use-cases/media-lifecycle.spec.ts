@@ -4,10 +4,7 @@ import { MAX_UPLOAD_BYTES_BY_KIND, uploadMedia } from './upload-media.use-case';
 import { listMedia } from './list-media.use-case';
 import { countMediaByKind } from './count-media-by-kind.use-case';
 import { deleteMedia } from './delete-media.use-case';
-import {
-  InMemoryMediaRepository,
-  InMemoryMediaStorage,
-} from './in-memory-repositories.test-fixture';
+import { InMemoryMediaRepository, InMemoryMediaStorage } from '@brisk/testing';
 
 /**
  * A real PNG signature. `uploadMedia` sniffs the bytes to pick the size

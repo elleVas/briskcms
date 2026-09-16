@@ -24,5 +24,8 @@
     "@brisk/rich-text": "workspace:*",
     "@brisk/shared-types": "workspace:*",
     "@brisk/theme-runtime": "workspace:*"
+  },
+  "devDependencies": {
+    "@brisk/testing": "workspace:*"
   }
 }

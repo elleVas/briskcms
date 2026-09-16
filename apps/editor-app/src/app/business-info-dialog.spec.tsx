@@ -3,9 +3,8 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { TooltipProvider } from '../components/ui/tooltip';
 import * as api from '../lib/sites-api-client';
-import type { SiteRecord } from '@brisk/shared-types';
-import { DEFAULT_COOKIE_BANNER_SETTINGS } from '@brisk/shared-types';
-import { createTestQueryClient } from '../test-query-client';
+import { buildSiteRecord } from '@brisk/testing/records';
+import { createTestQueryClient } from '../test/query-client.test-fixture';
 import { BusinessInfoDialog } from './business-info-dialog';
 
 vi.mock('../lib/sites-api-client', async (importOriginal) => {
@@ -14,37 +13,11 @@ vi.mock('../lib/sites-api-client', async (importOriginal) => {
   return { ...actual, getCurrentSite: vi.fn(), updateBusinessInfo: vi.fn() };
 });
 
-const sampleSite: SiteRecord = {
-  id: 'site-1',
-  tenantId: 'tenant-1',
-  name: 'Il mio sito',
-  domain: 'example.com',
-  themeName: 'classic',
-  defaultLocale: 'it',
-  enabledLocales: ['it'],
-  untranslatedPageFallback: 'redirect-to-default',
+const sampleSite = buildSiteRecord({
   businessAddress: 'Via Roma 1, Milano',
   businessPhone: '+39 02 1234567',
-  businessEmail: null,
   businessType: 'Restaurant',
-  openingHours: null,
-  searchEngineIndexingEnabled: false,
-  themePrimaryColor: null,
-  themeSecondaryColor: null,
-  themeFontFamily: null,
-  themeCustomCss: null,
-  themeContentWidth: null,
-  themeHeadScript: null,
-  themeBodyScript: null,
-  themeFaviconUrl: null,
-  themeOverridesEnabled: true,
-  themeAllowedTrackerDomains: [],
-  formSubmissionRetentionDays: null,
-  themeTrackerScripts: [],
-  cookieBannerSettings: DEFAULT_COOKIE_BANNER_SETTINGS,
-  themeTokens: { blockStyles: {} },
-  createdAt: '',
-};
+});
 
 function renderDialog(open = true, onOpenChange = vi.fn()) {
   return render(

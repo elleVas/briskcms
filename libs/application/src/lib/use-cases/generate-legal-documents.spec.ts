@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { SiteNotFoundError, Site } from '@brisk/domain-core';
-import { DEFAULT_COOKIE_BANNER_SETTINGS } from '@brisk/shared-types';
+import { SiteNotFoundError } from '@brisk/domain-core';
 import { generateLegalDocuments } from './generate-legal-documents.use-case';
 import {
   InMemoryPageGroupRepository,
@@ -9,7 +8,8 @@ import {
   InMemoryPageTranslationVersionRepository,
   InMemorySiteRepository,
   InMemoryTaxonomyRepository,
-} from './in-memory-repositories.test-fixture';
+  buildSite,
+} from '@brisk/testing';
 
 describe('generateLegalDocuments', () => {
   const tenantId = 'tenant-1';
@@ -40,34 +40,13 @@ describe('generateLegalDocuments', () => {
     siteRepository: InMemorySiteRepository,
     overrides: { defaultLocale?: string; enabledLocales?: string[] } = {},
   ) {
-    const site = Site.fromProps({
+    const site = buildSite({
       id: siteId,
       tenantId,
       name: 'Il mio sito',
-      domain: 'example.com',
-      themeName: 'classic',
       defaultLocale: overrides.defaultLocale ?? 'it',
       enabledLocales: overrides.enabledLocales ?? ['it', 'en'],
-      untranslatedPageFallback: 'redirect-to-default',
-      businessAddress: null,
-      businessPhone: null,
-      businessEmail: null,
-      businessType: null,
-      openingHours: null,
-      searchEngineIndexingEnabled: false,
-      themePrimaryColor: null,
-      themeSecondaryColor: null,
-      themeFontFamily: null,
-      themeCustomCss: null,
-      themeContentWidth: null,
-      themeHeadScript: null,
-      themeBodyScript: null,
-      themeFaviconUrl: null,
-      themeOverridesEnabled: true,
-      themeAllowedTrackerDomains: [],
       formSubmissionRetentionDays: 30,
-      themeTrackerScripts: [],
-      cookieBannerSettings: DEFAULT_COOKIE_BANNER_SETTINGS,
       createdAt: new Date(),
     });
     await siteRepository.save(site);

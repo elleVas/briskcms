@@ -116,6 +116,9 @@
     },
     {
       "path": "./libs/adapters/postgres-taxonomy-repository"
+    },
+    {
+      "path": "./libs/testing"
     }
   ],
   "compilerOptions": {}

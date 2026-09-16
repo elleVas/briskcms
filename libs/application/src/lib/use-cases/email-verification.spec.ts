@@ -2,9 +2,9 @@ import { describe, expect, it } from 'vitest';
 import { InvalidOrExpiredTokenError, User } from '@brisk/domain-core';
 import { requestEmailVerification } from './request-email-verification.use-case';
 import { verifyEmail } from './verify-email.use-case';
-import { InMemoryUserRepository } from './in-memory-repositories.test-fixture';
-import { FakeVerificationTokenPort } from './fake-verification-token-port.test-fixture';
-import { FakeEmailPort } from './fake-email-port.test-fixture';
+import { InMemoryUserRepository } from '@brisk/testing';
+import { FakeVerificationTokenPort } from '@brisk/testing';
+import { FakeEmailPort } from '@brisk/testing';
 
 const tenantId = 'tenant-1';
 

@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { DEFAULT_COOKIE_BANNER_SETTINGS } from '@brisk/shared-types';
-import { Site, Term } from '@brisk/domain-core';
+import { Term } from '@brisk/domain-core';
 import { createPageGroup } from './create-page-group.use-case';
 import { createPageGroupTranslation } from './create-page-group-translation.use-case';
 import { publishPageTranslation } from './publish-page-translation.use-case';
@@ -14,7 +13,8 @@ import {
   InMemorySearchPort,
   InMemorySiteRepository,
   InMemoryTaxonomyRepository,
-} from './in-memory-repositories.test-fixture';
+  buildSite,
+} from '@brisk/testing';
 
 const tenantId = 'tenant-1';
 const siteId = 'site-1';
@@ -42,34 +42,12 @@ function setup() {
 
 async function seedSite(deps: ReturnType<typeof setup>) {
   await deps.siteRepository.save(
-    Site.fromProps({
+    buildSite({
       id: siteId,
       tenantId,
       name: 'Sito di prova',
       domain,
-      themeName: 'classic',
-      defaultLocale: 'it',
-      enabledLocales: ['it'],
-      untranslatedPageFallback: 'redirect-to-default',
-      businessAddress: null,
-      businessPhone: null,
-      businessEmail: null,
-      businessType: null,
-      openingHours: null,
       searchEngineIndexingEnabled: true,
-      themePrimaryColor: null,
-      themeSecondaryColor: null,
-      themeFontFamily: null,
-      themeCustomCss: null,
-      themeContentWidth: null,
-      themeHeadScript: null,
-      themeBodyScript: null,
-      themeFaviconUrl: null,
-      themeOverridesEnabled: true,
-      themeAllowedTrackerDomains: [],
-      formSubmissionRetentionDays: null,
-      themeTrackerScripts: [],
-      cookieBannerSettings: DEFAULT_COOKIE_BANNER_SETTINGS,
       createdAt: new Date(),
     }),
   );

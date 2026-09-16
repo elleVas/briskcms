@@ -4,13 +4,10 @@ import { eq, sql } from 'drizzle-orm';
 import { type BriskDb, createAppDb, withTenant } from './client';
 import { deleteIntegrationTenants } from './integration-test-cleanup';
 import {
-  pageGroups,
-  sites,
-  taxonomies,
-  tenants,
-  termSlugs,
-  terms,
-} from './schema';
+  createIntegrationSite,
+  createIntegrationTenant,
+} from './integration-test-fixtures';
+import { pageGroups, taxonomies, termSlugs, terms } from './schema';
 
 /**
  * Runs against a real Postgres — see docs/development.md. The point of
@@ -30,19 +27,9 @@ describe('taxonomy schema (integration)', () => {
 
   beforeAll(async () => {
     db = createAppDb();
-    const [tenant] = await db
-      .insert(tenants)
-      .values({ name: `Taxonomy tenant ${randomUUID()}` })
-      .returning({ id: tenants.id });
-    createdTenantIds.push(tenant.id);
-    tenantId = tenant.id;
-    const [site] = await withTenant(db, tenantId, (tx) =>
-      tx
-        .insert(sites)
-        .values({ tenantId, name: 'Taxonomy site', defaultLocale: 'it' })
-        .returning({ id: sites.id }),
-    );
-    siteId = site.id;
+    tenantId = await createIntegrationTenant(db, 'Taxonomy tenant');
+    createdTenantIds.push(tenantId);
+    siteId = await createIntegrationSite(db, tenantId);
   });
 
   afterAll(async () => {
@@ -214,11 +201,8 @@ describe('taxonomy schema (integration)', () => {
   });
 
   it('keeps one tenant from seeing another tenant terms (RLS)', async () => {
-    const [other] = await db
-      .insert(tenants)
-      .values({ name: `Other tenant ${randomUUID()}` })
-      .returning({ id: tenants.id });
-    createdTenantIds.push(other.id);
+    const otherId = await createIntegrationTenant(db, 'Other tenant');
+    createdTenantIds.push(otherId);
     const taxonomyId = await insertTaxonomy(`c-${randomUUID().slice(0, 8)}`);
     await insertTerm(taxonomyId);
 
@@ -228,7 +212,7 @@ describe('taxonomy schema (integration)', () => {
         .from(terms)
         .where(sql`${terms.taxonomyId} = ${taxonomyId}`),
     );
-    const seenByStranger = await withTenant(db, other.id, (tx) =>
+    const seenByStranger = await withTenant(db, otherId, (tx) =>
       tx
         .select()
         .from(terms)

@@ -11,13 +11,15 @@ import {
 import {
   type BriskDb,
   createAppDb,
-  deleteIntegrationTenants,
   pageGroups,
-  sites,
-  tenants,
-  users,
   withTenant,
 } from '@brisk/postgres-db';
+import {
+  createIntegrationSite,
+  createIntegrationTenant,
+  createIntegrationUser,
+  deleteIntegrationTenants,
+} from '@brisk/postgres-db/testing';
 import { DrizzleCollectionRepository } from './drizzle-collection.repository';
 import { DrizzlePageGroupRepository } from './drizzle-page-group.repository';
 import { DrizzlePageGroupVersionRepository } from './drizzle-page-group-version.repository';
@@ -52,38 +54,14 @@ describe('DrizzlePageGroupRepository / DrizzlePageTranslationRepository (integra
       db,
     );
 
-    const [tenantA] = await db
-      .insert(tenants)
-      .values({ name: `Integration Tenant A ${randomUUID()}` })
-      .returning({ id: tenants.id });
-    const [tenantB] = await db
-      .insert(tenants)
-      .values({ name: `Integration Tenant B ${randomUUID()}` })
-      .returning({ id: tenants.id });
-    tenantAId = tenantA.id;
-    tenantBId = tenantB.id;
+    tenantAId = await createIntegrationTenant(db, 'Integration Tenant A');
+    tenantBId = await createIntegrationTenant(db, 'Integration Tenant B');
 
-    const [siteA] = await withTenant(db, tenantAId, (tx) =>
-      tx
-        .insert(sites)
-        .values({ tenantId: tenantAId, name: 'Site A', defaultLocale: 'it' })
-        .returning({ id: sites.id }),
-    );
-    siteAId = siteA.id;
+    siteAId = await createIntegrationSite(db, tenantAId);
 
-    const [userA] = await withTenant(db, tenantAId, (tx) =>
-      tx
-        .insert(users)
-        .values({
-          tenantId: tenantAId,
-          email: `list-filter-${randomUUID()}@example.test`,
-          displayName: 'Ada Lovelace',
-          passwordHash: 'hash',
-          role: 'admin',
-        })
-        .returning({ id: users.id }),
-    );
-    userAId = userA.id;
+    userAId = await createIntegrationUser(db, tenantAId, {
+      displayName: 'Ada Lovelace',
+    });
   });
 
   afterAll(async () => {

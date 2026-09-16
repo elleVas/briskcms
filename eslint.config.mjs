@@ -37,6 +37,14 @@ export default [
           // to its left — never the other way round, and never one app on
           // another app (none of the three apps imports the others today,
           // verified).
+          //
+          // `testing` (@brisk/testing) sits beside the layers rather than in
+          // them: builders, in-memory repositories and fake ports that the
+          // application, adapter and app specs share. It may only lean on
+          // domain and application, since the fakes implement ports; domain
+          // projects cannot use it at all, because it depends on them. That
+          // only production code never imports it is not something a tag
+          // can say — see the no-restricted-imports block below.
           depConstraints: [
             {
               sourceTag: 'domain',
@@ -44,15 +52,66 @@ export default [
             },
             {
               sourceTag: 'application',
-              onlyDependOnLibsWithTags: ['domain', 'application'],
+              onlyDependOnLibsWithTags: ['domain', 'application', 'testing'],
             },
             {
               sourceTag: 'adapter',
-              onlyDependOnLibsWithTags: ['domain', 'application', 'adapter'],
+              onlyDependOnLibsWithTags: [
+                'domain',
+                'application',
+                'adapter',
+                'testing',
+              ],
             },
             {
               sourceTag: 'app',
-              onlyDependOnLibsWithTags: ['domain', 'application', 'adapter'],
+              onlyDependOnLibsWithTags: [
+                'domain',
+                'application',
+                'adapter',
+                'testing',
+              ],
+            },
+            {
+              sourceTag: 'testing',
+              onlyDependOnLibsWithTags: ['domain', 'application'],
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
+    // The test helpers are allowed everywhere a spec lives and nowhere
+    // else: a builder or an in-memory repository reaching production code
+    // would ship a fake. Module boundaries work per project, so they
+    // cannot tell a spec from the code it tests; this can.
+    files: ['**/*.ts', '**/*.tsx'],
+    ignores: [
+      '**/*.spec.ts',
+      '**/*.spec.tsx',
+      '**/*.test-fixture.ts',
+      '**/*.test-fixture.tsx',
+      '**/test-setup.ts',
+      '**/src/test/**',
+      'libs/testing/**',
+    ],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['@brisk/testing', '@brisk/testing/*'],
+              message:
+                '@brisk/testing is for specs only — see eslint.config.mjs.',
+            },
+            {
+              // The rows integration specs create and delete: shipped
+              // through the index, they ended up in the API's bundle.
+              group: ['@brisk/postgres-db/testing'],
+              message:
+                '@brisk/postgres-db/testing is for specs only — see eslint.config.mjs.',
             },
           ],
         },

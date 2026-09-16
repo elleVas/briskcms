@@ -19,7 +19,7 @@ import {
   InMemoryCollectionRepository,
   InMemoryPageGroupRepository,
   InMemoryReusableSectionRepository,
-} from './in-memory-repositories.test-fixture';
+} from '@brisk/testing';
 
 const tenantId = 'tenant-1';
 const siteId = 'site-1';

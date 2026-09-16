@@ -6,11 +6,11 @@ import {
 } from '@brisk/domain-core';
 import { requestPasswordReset } from './request-password-reset.use-case';
 import { resetPassword } from './reset-password.use-case';
-import { InMemoryUserRepository } from './in-memory-repositories.test-fixture';
-import { FakeVerificationTokenPort } from './fake-verification-token-port.test-fixture';
-import { FakeEmailPort } from './fake-email-port.test-fixture';
-import { FakeAuthPort } from './fake-auth-port.test-fixture';
-import { FakeCaptchaPort } from './fake-captcha-port.test-fixture';
+import { InMemoryUserRepository } from '@brisk/testing';
+import { FakeVerificationTokenPort } from '@brisk/testing';
+import { FakeEmailPort } from '@brisk/testing';
+import { FakeAuthPort } from '@brisk/testing';
+import { FakeCaptchaPort } from '@brisk/testing';
 
 const tenantId = 'tenant-1';
 

@@ -1,14 +1,12 @@
 import { randomUUID } from 'node:crypto';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { SiteLayoutSection } from '@brisk/domain-core';
+import { type BriskDb, createAppDb } from '@brisk/postgres-db';
 import {
-  type BriskDb,
-  createAppDb,
+  createIntegrationSite,
+  createIntegrationTenant,
   deleteIntegrationTenants,
-  sites,
-  tenants,
-  withTenant,
-} from '@brisk/postgres-db';
+} from '@brisk/postgres-db/testing';
 import { DrizzleSiteLayoutSectionRepository } from './drizzle-site-layout-section.repository';
 import { DrizzleSiteLayoutSectionVersionRepository } from './drizzle-site-layout-section-version.repository';
 
@@ -31,24 +29,10 @@ describe('DrizzleSiteLayoutSectionRepository (integration)', () => {
     sectionRepository = new DrizzleSiteLayoutSectionRepository(db);
     versionRepository = new DrizzleSiteLayoutSectionVersionRepository(db);
 
-    const [tenantA] = await db
-      .insert(tenants)
-      .values({ name: `Integration Tenant A ${randomUUID()}` })
-      .returning({ id: tenants.id });
-    const [tenantB] = await db
-      .insert(tenants)
-      .values({ name: `Integration Tenant B ${randomUUID()}` })
-      .returning({ id: tenants.id });
-    tenantAId = tenantA.id;
-    tenantBId = tenantB.id;
+    tenantAId = await createIntegrationTenant(db, 'Integration Tenant A');
+    tenantBId = await createIntegrationTenant(db, 'Integration Tenant B');
 
-    const [siteA] = await withTenant(db, tenantAId, (tx) =>
-      tx
-        .insert(sites)
-        .values({ tenantId: tenantAId, name: 'Site A', defaultLocale: 'it' })
-        .returning({ id: sites.id }),
-    );
-    siteAId = siteA.id;
+    siteAId = await createIntegrationSite(db, tenantAId);
   });
 
   afterAll(async () => {

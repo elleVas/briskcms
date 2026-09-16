@@ -3,7 +3,8 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { QueryClientProvider } from '@tanstack/react-query';
 import * as usersApi from '../lib/users-api-client';
-import { createTestQueryClient } from '../test-query-client';
+import { createTestQueryClient } from '../test/query-client.test-fixture';
+import { buildUserDto } from '../test/dtos.test-fixture';
 import {
   EMPTY_PAGES_LIST_FILTERS,
   PagesListFilterBar,
@@ -22,18 +23,10 @@ function renderBar(
 ) {
   vi.mocked(usersApi.listUsers).mockResolvedValue({
     items: [
-      {
-        id: 'user-1',
-        tenantId: 'tenant-1',
+      buildUserDto({
         email: 'ada@example.test',
         displayName: 'Ada Lovelace',
-        slug: null,
-        avatarUrl: null,
-        role: 'admin',
-        isActive: true,
-        emailVerifiedAt: null,
-        createdAt: '',
-      },
+      }),
     ],
     total: 1,
   });

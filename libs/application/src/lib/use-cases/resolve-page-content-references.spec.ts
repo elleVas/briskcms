@@ -10,7 +10,7 @@ import {
   InMemoryPageTranslationVersionRepository,
   InMemoryReusableSectionRepository,
   InMemoryTaxonomyRepository,
-} from './in-memory-repositories.test-fixture';
+} from '@brisk/testing';
 
 describe('resolvePageContentReferences', () => {
   const tenantId = 'tenant-1';

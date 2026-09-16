@@ -3,7 +3,8 @@ import { act, renderHook } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { QueryClientProvider } from '@tanstack/react-query';
 import * as api from '../lib/media-api-client';
-import { createTestQueryClient } from '../test-query-client';
+import { createTestQueryClient } from '../test/query-client.test-fixture';
+import { buildMediaDto } from '../test/dtos.test-fixture';
 import { useMediaLibrary } from './use-media-library';
 
 vi.mock('../lib/media-api-client', async (importOriginal) => {
@@ -12,20 +13,7 @@ vi.mock('../lib/media-api-client', async (importOriginal) => {
   return { ...actual, uploadMedia: vi.fn(), deleteMedia: vi.fn() };
 });
 
-const sampleMedia: api.MediaDto = {
-  id: 'media-1',
-  tenantId: 'tenant-1',
-  siteId: 'site-1',
-  filename: 'foto.png',
-  storageKey: 'abc.webp',
-  storageProvider: 'local',
-  mimeType: 'image/webp',
-  size: 1234,
-  width: 800,
-  height: 600,
-  createdAt: '',
-  url: 'http://localhost/uploads/abc.webp',
-};
+const sampleMedia = buildMediaDto();
 
 function wrapper({ children }: { children: ReactNode }) {
   return (

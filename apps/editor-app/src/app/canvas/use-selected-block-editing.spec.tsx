@@ -4,7 +4,7 @@ import { QueryClientProvider } from '@tanstack/react-query';
 import { describe, expect, it, vi } from 'vitest';
 import type { Block } from '@brisk/shared-types';
 import type { BlockDescriptor } from '@brisk/block-registry';
-import { createTestQueryClient } from '../../test-query-client';
+import { createTestQueryClient } from '../../test/query-client.test-fixture';
 import { ToastProvider } from '../toast-provider';
 import { useSelectedBlockEditing } from './use-selected-block-editing';
 

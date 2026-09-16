@@ -1,44 +1,11 @@
 import { randomUUID } from 'node:crypto';
 import { type INestApplication } from '@nestjs/common';
-import { Test } from '@nestjs/testing';
-import { HttpExceptionFilter } from '../http-exception.filter';
-import { requestIdMiddleware } from '../request-id.middleware';
-import cookieParser from 'cookie-parser';
 import request from 'supertest';
-import type { AuthPort, CaptchaPort, NewsletterPort } from '@brisk/ports';
-import {
-  type BriskDb,
-  deleteIntegrationFixtures,
-  sites,
-  users,
-  withTenant,
-} from '@brisk/postgres-db';
-import { AUTH_PORT } from '../auth/auth.tokens';
-import { DATABASE } from '../database.module';
+import { FakeCaptchaPort, FakeNewsletterPort } from '@brisk/testing';
 import { FormsModule } from '../forms/forms.module';
 import { PublicFormsModule } from './public-forms.module';
 import { CAPTCHA_PORT, NEWSLETTER_PORT } from './public-forms.tokens';
-
-/** Unlike Postgres/Mailpit (real local infra this repo already runs for
- * every integration test), Cloudflare's siteverify API is a live
- * third-party endpoint — depending on it here would make this suite's
- * pass/fail depend on Cloudflare's uptime and network reachability from
- * CI, not on whether our own code is correct. Overridden below with this
- * in-process fake instead, mirroring FakeCaptchaPort's contract
- * (@brisk/application's unit-test fixture): any non-empty token passes. */
-class FakeCaptchaPort implements CaptchaPort {
-  async verify({ token }: { token: string }): Promise<boolean> {
-    return token.trim() !== '';
-  }
-}
-
-/** Same "no live third party in tests" reasoning as FakeCaptchaPort above — also lets tests assert exactly what got subscribed. */
-class RecordingNewsletterPort implements NewsletterPort {
-  readonly subscribedEmails: string[] = [];
-  async subscribe(email: string): Promise<void> {
-    this.subscribedEmails.push(email);
-  }
-}
+import { IntegrationApp } from '../../test/integration-app.test-fixture';
 
 /**
  * Runs against a real Postgres and a real SMTP relay (Mailpit in dev, see
@@ -48,72 +15,34 @@ class RecordingNewsletterPort implements NewsletterPort {
  * public-pages.controller.integration.spec.ts.
  */
 describe('PublicFormsController (integration)', () => {
+  let integration: IntegrationApp;
   let app: INestApplication;
-  let db: BriskDb;
   let agent: ReturnType<typeof request.agent>;
   let siteId: string;
-  let tenantId: string;
-  let userId: string;
-  let newsletterPort: RecordingNewsletterPort;
+  let newsletterPort: FakeNewsletterPort;
 
   beforeAll(async () => {
-    newsletterPort = new RecordingNewsletterPort();
-    const moduleRef = await Test.createTestingModule({
+    newsletterPort = new FakeNewsletterPort();
+    integration = await IntegrationApp.start({
       imports: [FormsModule, PublicFormsModule],
-    })
-      .overrideProvider(CAPTCHA_PORT)
-      .useClass(FakeCaptchaPort)
-      .overrideProvider(NEWSLETTER_PORT)
-      .useValue(newsletterPort)
-      .compile();
-
-    app = moduleRef.createNestApplication();
-    app.use(cookieParser());
-    app.useGlobalFilters(new HttpExceptionFilter());
-    app.use(requestIdMiddleware);
-    await app.init();
-    db = app.get<BriskDb>(DATABASE);
-
-    tenantId = process.env.DEFAULT_TENANT_ID as string;
-
-    const [site] = await withTenant(db, tenantId, (tx) =>
-      tx
-        .insert(sites)
-        .values({
-          tenantId,
-          name: `Public Forms Integration Site ${randomUUID()}`,
-          defaultLocale: 'it',
-        })
-        .returning({ id: sites.id }),
-    );
-    siteId = site.id;
-
-    const authPort = app.get<AuthPort>(AUTH_PORT);
-    const email = `public-forms-integration-${randomUUID()}@example.test`;
-    const password = randomUUID();
-    const passwordHash = await authPort.hashPassword(password);
-    const [user] = await withTenant(db, tenantId, (tx) =>
-      tx
-        .insert(users)
-        .values({ tenantId, email, passwordHash, role: 'admin' })
-        .returning({ id: users.id }),
-    );
-    userId = user.id;
-
-    agent = request.agent(app.getHttpServer());
-    await agent
-      .post('/auth/login')
-      .send({ email, password, captchaToken: 'test-token' })
-      .expect(200);
+      // Cloudflare's siteverify and the newsletter provider are live third
+      // parties, unlike Postgres and Mailpit: depending on them would make
+      // this suite depend on their uptime. The fake newsletter port also
+      // records what got subscribed, for the assertions below.
+      overrideProviders: (builder) =>
+        builder
+          .overrideProvider(CAPTCHA_PORT)
+          .useClass(FakeCaptchaPort)
+          .overrideProvider(NEWSLETTER_PORT)
+          .useValue(newsletterPort),
+    });
+    app = integration.app;
+    siteId = await integration.createSite();
+    agent = await integration.login(await integration.createUser());
   });
 
   afterAll(async () => {
-    await deleteIntegrationFixtures(db, tenantId, {
-      siteIds: [siteId],
-      userIds: [userId],
-    });
-    await app.close();
-    await db.$client.end();
+    await integration.close();
   });
 
   async function createForm(
