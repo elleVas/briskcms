@@ -17,6 +17,29 @@ packages:
 # depth limit on one).
 overrides:
   vite: 8.2.2
+  # Security advisories in packages we do not depend on directly; each is a
+  # patch within the major its parent already asks for. Drop an entry once
+  # the parent ships a fixed range of its own.
+  # @nestjs/platform-express 11.2.5 still pins multer 2.2.0.
+  multer: ^2.4.0
+  # eslint's @eslint/eslintrc asks for ^4.3.2 already; nothing else does.
+  js-yaml: ^4.3.2
+  # shadcn's @modelcontextprotocol/sdk; shadcn stays because the editor's
+  # stylesheet imports shadcn/tailwind.css at build time.
+  hono: ^4.13.5
+  # nx 23.2.1 pins 1.6.1.
+  smol-toml: ^1.8.0
+  # @nx/node's express dependency.
+  qs: ^6.16.0
+  # sockjs, reached only through @nx/webpack's own webpack-dev-server. No
+  # target in this workspace runs that dev server (the API serves with
+  # @nx/js:node and builds with webpack-cli, the editor uses vite), so this
+  # only quiets the advisory on a package nothing here executes.
+  uuid: ^11.1.1
+  # drizzle-kit still loads the deprecated @esbuild-kit/* pair, which pins
+  # esbuild ~0.18. Verified after the override: drizzle-kit still reads the
+  # schema and generates migrations.
+  esbuild: ^0.25.12
 
 # sharp is astro:assets' default image service (apps/public-site) — its
 # install script wires up the prebuilt native binary for the current
