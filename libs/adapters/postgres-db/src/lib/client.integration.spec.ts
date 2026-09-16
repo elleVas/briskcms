@@ -3,7 +3,8 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { sql } from 'drizzle-orm';
 import { type BriskDb, createAppDb, withTenant } from './client';
 import { deleteIntegrationTenants } from './integration-test-cleanup';
-import { sites, tenants } from './schema';
+import { createIntegrationTenant } from './integration-test-fixtures';
+import { sites } from './schema';
 
 /**
  * Runs against a real Postgres — see docs/development.md ("docker compose up
@@ -45,35 +46,29 @@ describe('withTenant (integration)', () => {
     // tenants itself carries no RLS policy (see drizzle/0000_baseline_schema.sql
     // — it lists tenants, not tenant-owned data), so exercise the policy via
     // `sites`, which does.
-    const [tenantA] = await db
-      .insert(tenants)
-      .values({ name: `Tenant A ${randomUUID()}` })
-      .returning({ id: tenants.id });
-    const [tenantB] = await db
-      .insert(tenants)
-      .values({ name: `Tenant B ${randomUUID()}` })
-      .returning({ id: tenants.id });
-    createdTenantIds.push(tenantA.id, tenantB.id);
+    const tenantAId = await createIntegrationTenant(db, 'Tenant A');
+    const tenantBId = await createIntegrationTenant(db, 'Tenant B');
+    createdTenantIds.push(tenantAId, tenantBId);
 
-    await withTenant(db, tenantA.id, (tx) =>
+    await withTenant(db, tenantAId, (tx) =>
       tx
         .insert(sites)
-        .values({ tenantId: tenantA.id, name: 'Site A', defaultLocale: 'it' }),
+        .values({ tenantId: tenantAId, name: 'Site A', defaultLocale: 'it' }),
     );
 
-    const visibleToA = await withTenant(db, tenantA.id, (tx) =>
+    const visibleToA = await withTenant(db, tenantAId, (tx) =>
       tx
         .select()
         .from(sites)
-        .where(sql`${sites.tenantId} = ${tenantA.id}`),
+        .where(sql`${sites.tenantId} = ${tenantAId}`),
     );
     expect(visibleToA).toHaveLength(1);
 
-    const visibleToB = await withTenant(db, tenantB.id, (tx) =>
+    const visibleToB = await withTenant(db, tenantBId, (tx) =>
       tx
         .select()
         .from(sites)
-        .where(sql`${sites.tenantId} = ${tenantA.id}`),
+        .where(sql`${sites.tenantId} = ${tenantAId}`),
     );
     expect(visibleToB).toHaveLength(0);
   });

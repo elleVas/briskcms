@@ -1,15 +1,16 @@
-import { randomUUID } from 'node:crypto';
 import { eq } from 'drizzle-orm';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import {
   type BriskDb,
   createAppDb,
-  deleteIntegrationTenants,
-  tenants,
-  users,
   verificationTokens,
   withTenant,
 } from '@brisk/postgres-db';
+import {
+  createIntegrationTenant,
+  createIntegrationUser,
+  deleteIntegrationTenants,
+} from '@brisk/postgres-db/testing';
 import { VerificationTokenAdapter } from './verification-token.adapter';
 
 /**
@@ -25,11 +26,7 @@ describe('VerificationTokenAdapter (integration)', () => {
   beforeAll(async () => {
     db = createAppDb();
 
-    const [tenant] = await db
-      .insert(tenants)
-      .values({ name: `Integration Tenant ${randomUUID()}` })
-      .returning({ id: tenants.id });
-    tenantId = tenant.id;
+    tenantId = await createIntegrationTenant(db);
     adapter = new VerificationTokenAdapter(db, async () => tenantId);
   });
 
@@ -38,23 +35,8 @@ describe('VerificationTokenAdapter (integration)', () => {
     await db.$client.end();
   });
 
-  async function createTestUser(): Promise<string> {
-    const [user] = await withTenant(db, tenantId, (tx) =>
-      tx
-        .insert(users)
-        .values({
-          tenantId,
-          email: `user-${randomUUID()}@example.com`,
-          passwordHash: 'irrelevant-for-this-suite',
-          role: 'admin',
-        })
-        .returning({ id: users.id }),
-    );
-    return user.id;
-  }
-
   it('creates a token that consumes back to the same user/tenant/purpose', async () => {
-    const userId = await createTestUser();
+    const userId = await createIntegrationUser(db, tenantId);
     const created = await adapter.createToken(
       userId,
       tenantId,
@@ -73,7 +55,7 @@ describe('VerificationTokenAdapter (integration)', () => {
   });
 
   it('never persists the plaintext token — only its hash is in the DB', async () => {
-    const userId = await createTestUser();
+    const userId = await createIntegrationUser(db, tenantId);
     const created = await adapter.createToken(
       userId,
       tenantId,
@@ -93,7 +75,7 @@ describe('VerificationTokenAdapter (integration)', () => {
   });
 
   it('is single-use: a second consume of the same token fails', async () => {
-    const userId = await createTestUser();
+    const userId = await createIntegrationUser(db, tenantId);
     const created = await adapter.createToken(
       userId,
       tenantId,
@@ -109,7 +91,7 @@ describe('VerificationTokenAdapter (integration)', () => {
   });
 
   it('rejects a token consumed with the wrong purpose', async () => {
-    const userId = await createTestUser();
+    const userId = await createIntegrationUser(db, tenantId);
     const created = await adapter.createToken(
       userId,
       tenantId,
@@ -129,7 +111,7 @@ describe('VerificationTokenAdapter (integration)', () => {
   });
 
   it('rejects an expired token', async () => {
-    const userId = await createTestUser();
+    const userId = await createIntegrationUser(db, tenantId);
     const created = await adapter.createToken(
       userId,
       tenantId,

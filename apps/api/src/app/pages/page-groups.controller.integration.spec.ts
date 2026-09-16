@@ -9,12 +9,12 @@ import type { AuthPort } from '@brisk/ports';
 import {
   type BriskDb,
   collections,
-  deleteIntegrationFixtures,
   reusableSections,
   sites,
   users,
   withTenant,
 } from '@brisk/postgres-db';
+import { deleteIntegrationFixtures } from '@brisk/postgres-db/testing';
 import { AUTH_PORT } from '../auth/auth.tokens';
 import { CollectionsModule } from '../collections/collections.module';
 import { DATABASE } from '../database.module';

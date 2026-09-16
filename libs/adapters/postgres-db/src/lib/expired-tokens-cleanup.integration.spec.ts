@@ -4,7 +4,11 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { type BriskDb, createAppDb, withTenant } from './client';
 import { deleteExpiredTokens } from './expired-tokens-cleanup';
 import { deleteIntegrationTenants } from './integration-test-cleanup';
-import { sessions, tenants, users, verificationTokens } from './schema';
+import {
+  createIntegrationTenant,
+  createIntegrationUser,
+} from './integration-test-fixtures';
+import { sessions, verificationTokens } from './schema';
 
 /**
  * Runs against a real Postgres — see docs/development.md. Own throwaway
@@ -19,24 +23,9 @@ describe('deleteExpiredTokens (integration)', () => {
   beforeAll(async () => {
     db = createAppDb();
 
-    const [tenant] = await db
-      .insert(tenants)
-      .values({ name: `Integration Tenant ${randomUUID()}` })
-      .returning({ id: tenants.id });
-    tenantId = tenant.id;
+    tenantId = await createIntegrationTenant(db);
 
-    const [user] = await withTenant(db, tenantId, (tx) =>
-      tx
-        .insert(users)
-        .values({
-          tenantId,
-          email: `expired-tokens-cleanup-${randomUUID()}@example.test`,
-          passwordHash: 'not-a-real-hash',
-          role: 'admin',
-        })
-        .returning({ id: users.id }),
-    );
-    userId = user.id;
+    userId = await createIntegrationUser(db, tenantId);
   });
 
   afterAll(async () => {

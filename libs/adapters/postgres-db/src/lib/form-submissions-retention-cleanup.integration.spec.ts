@@ -1,10 +1,13 @@
-import { randomUUID } from 'node:crypto';
 import { eq } from 'drizzle-orm';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { type BriskDb, createAppDb, withTenant } from './client';
 import { deleteExpiredFormSubmissions } from './form-submissions-retention-cleanup';
 import { deleteIntegrationTenants } from './integration-test-cleanup';
-import { formSubmissions, sites, tenants } from './schema';
+import {
+  createIntegrationSite,
+  createIntegrationTenant,
+} from './integration-test-fixtures';
+import { formSubmissions } from './schema';
 
 /**
  * Runs against a real Postgres — see docs/development.md. Own throwaway
@@ -18,11 +21,7 @@ describe('deleteExpiredFormSubmissions (integration)', () => {
   beforeAll(async () => {
     db = createAppDb();
 
-    const [tenant] = await db
-      .insert(tenants)
-      .values({ name: `Integration Tenant ${randomUUID()}` })
-      .returning({ id: tenants.id });
-    tenantId = tenant.id;
+    tenantId = await createIntegrationTenant(db);
   });
 
   afterAll(async () => {
@@ -31,18 +30,9 @@ describe('deleteExpiredFormSubmissions (integration)', () => {
   });
 
   async function insertSite(retentionDays: number | null) {
-    const [site] = await withTenant(db, tenantId, (tx) =>
-      tx
-        .insert(sites)
-        .values({
-          tenantId,
-          name: `Retention Test Site ${randomUUID()}`,
-          defaultLocale: 'it',
-          formSubmissionRetentionDays: retentionDays,
-        })
-        .returning({ id: sites.id }),
-    );
-    return site.id;
+    return createIntegrationSite(db, tenantId, {
+      formSubmissionRetentionDays: retentionDays,
+    });
   }
 
   async function insertSubmission(siteId: string, createdAt: Date) {

@@ -7,13 +7,8 @@ import cookieParser from 'cookie-parser';
 import request from 'supertest';
 import type { AuthPort } from '@brisk/ports';
 import { DEFAULT_COOKIE_BANNER_SETTINGS } from '@brisk/shared-types';
-import {
-  type BriskDb,
-  deleteIntegrationFixtures,
-  sites,
-  users,
-  withTenant,
-} from '@brisk/postgres-db';
+import { type BriskDb, sites, users, withTenant } from '@brisk/postgres-db';
+import { deleteIntegrationFixtures } from '@brisk/postgres-db/testing';
 import { AUTH_PORT } from '../auth/auth.tokens';
 import { DATABASE } from '../database.module';
 import { AccountModule } from '../account/account.module';

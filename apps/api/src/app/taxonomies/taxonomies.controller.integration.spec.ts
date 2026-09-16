@@ -4,13 +4,8 @@ import { Test } from '@nestjs/testing';
 import cookieParser from 'cookie-parser';
 import request from 'supertest';
 import type { AuthPort } from '@brisk/ports';
-import {
-  deleteIntegrationFixtures,
-  sites,
-  users,
-  withTenant,
-  type BriskDb,
-} from '@brisk/postgres-db';
+import { sites, users, withTenant, type BriskDb } from '@brisk/postgres-db';
+import { deleteIntegrationFixtures } from '@brisk/postgres-db/testing';
 import { HttpExceptionFilter } from '../http-exception.filter';
 import { requestIdMiddleware } from '../request-id.middleware';
 import { AUTH_PORT } from '../auth/auth.tokens';

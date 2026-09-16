@@ -3,16 +3,18 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import {
   type BriskDb,
   createAppDb,
-  deleteIntegrationTenants,
   formSubmissions,
   forms,
   media,
   pageGroups,
   pageTranslations,
-  sites,
-  tenants,
   withTenant,
 } from '@brisk/postgres-db';
+import {
+  createIntegrationSite,
+  createIntegrationTenant,
+  deleteIntegrationTenants,
+} from '@brisk/postgres-db/testing';
 import { DrizzleDashboardStatsRepository } from './drizzle-dashboard-stats.repository';
 
 /**
@@ -32,24 +34,10 @@ describe('DrizzleDashboardStatsRepository (integration)', () => {
     db = createAppDb();
     repository = new DrizzleDashboardStatsRepository(db);
 
-    const [tenantA] = await db
-      .insert(tenants)
-      .values({ name: `Integration Tenant A ${randomUUID()}` })
-      .returning({ id: tenants.id });
-    const [tenantB] = await db
-      .insert(tenants)
-      .values({ name: `Integration Tenant B ${randomUUID()}` })
-      .returning({ id: tenants.id });
-    tenantAId = tenantA.id;
-    tenantBId = tenantB.id;
+    tenantAId = await createIntegrationTenant(db, 'Integration Tenant A');
+    tenantBId = await createIntegrationTenant(db, 'Integration Tenant B');
 
-    const [siteA] = await withTenant(db, tenantAId, (tx) =>
-      tx
-        .insert(sites)
-        .values({ tenantId: tenantAId, name: 'Site A', defaultLocale: 'it' })
-        .returning({ id: sites.id }),
-    );
-    siteAId = siteA.id;
+    siteAId = await createIntegrationSite(db, tenantAId);
   });
 
   afterAll(async () => {
@@ -156,30 +144,16 @@ describe('DrizzleDashboardStatsRepository (integration)', () => {
   });
 
   it("never counts another tenant's data, RLS-enforced not just query-scoped", async () => {
-    const [freshSiteA] = await withTenant(db, tenantAId, (tx) =>
-      tx
-        .insert(sites)
-        .values({
-          tenantId: tenantAId,
-          name: 'Fresh Site A',
-          defaultLocale: 'it',
-        })
-        .returning({ id: sites.id }),
-    );
-    const [siteB] = await withTenant(db, tenantBId, (tx) =>
-      tx
-        .insert(sites)
-        .values({ tenantId: tenantBId, name: 'Site B', defaultLocale: 'it' })
-        .returning({ id: sites.id }),
-    );
+    const freshSiteAId = await createIntegrationSite(db, tenantAId);
+    const siteBId = await createIntegrationSite(db, tenantBId);
     await insertTranslation({
       tenantId: tenantBId,
-      siteId: siteB.id,
+      siteId: siteBId,
       status: 'published',
     });
-    await insertMedia({ tenantId: tenantBId, siteId: siteB.id, size: 999 });
+    await insertMedia({ tenantId: tenantBId, siteId: siteBId, size: 999 });
 
-    const statsA = await repository.getStats(tenantAId, freshSiteA.id, 5);
+    const statsA = await repository.getStats(tenantAId, freshSiteAId, 5);
 
     expect(statsA.pages).toEqual({ publishedCount: 0, draftCount: 0 });
     expect(statsA.media).toEqual({ count: 0, totalSizeBytes: 0 });
@@ -187,18 +161,9 @@ describe('DrizzleDashboardStatsRepository (integration)', () => {
   });
 
   it('returns zeroed stats for a site with no pages or media yet', async () => {
-    const [emptySite] = await withTenant(db, tenantAId, (tx) =>
-      tx
-        .insert(sites)
-        .values({
-          tenantId: tenantAId,
-          name: 'Empty Site',
-          defaultLocale: 'it',
-        })
-        .returning({ id: sites.id }),
-    );
+    const emptySiteId = await createIntegrationSite(db, tenantAId);
 
-    const stats = await repository.getStats(tenantAId, emptySite.id, 5);
+    const stats = await repository.getStats(tenantAId, emptySiteId, 5);
 
     expect(stats.pages).toEqual({ publishedCount: 0, draftCount: 0 });
     expect(stats.media).toEqual({ count: 0, totalSizeBytes: 0 });
@@ -258,22 +223,17 @@ describe('DrizzleDashboardStatsRepository (integration)', () => {
   it('does not count another tenant submissions', async () => {
     const before = await repository.getStats(tenantAId, siteAId, 5);
 
-    const [otherSite] = await withTenant(db, tenantBId, (tx) =>
-      tx
-        .insert(sites)
-        .values({ tenantId: tenantBId, name: 'Site B', defaultLocale: 'it' })
-        .returning({ id: sites.id }),
-    );
+    const otherSiteId = await createIntegrationSite(db, tenantBId);
     const [otherForm] = await withTenant(db, tenantBId, (tx) =>
       tx
         .insert(forms)
-        .values({ tenantId: tenantBId, siteId: otherSite.id, name: 'Altro' })
+        .values({ tenantId: tenantBId, siteId: otherSiteId, name: 'Altro' })
         .returning({ id: forms.id }),
     );
     await withTenant(db, tenantBId, (tx) =>
       tx.insert(formSubmissions).values({
         tenantId: tenantBId,
-        siteId: otherSite.id,
+        siteId: otherSiteId,
         formId: otherForm.id,
         payload: {},
       }),

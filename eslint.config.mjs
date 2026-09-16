@@ -106,6 +106,13 @@ export default [
               message:
                 '@brisk/testing is for specs only — see eslint.config.mjs.',
             },
+            {
+              // The rows integration specs create and delete: shipped
+              // through the index, they ended up in the API's bundle.
+              group: ['@brisk/postgres-db/testing'],
+              message:
+                '@brisk/postgres-db/testing is for specs only — see eslint.config.mjs.',
+            },
           ],
         },
       ],

@@ -5,12 +5,11 @@ import {
   UserEmailAlreadyExistsError,
   UserSlugAlreadyExistsError,
 } from '@brisk/domain-core';
+import { type BriskDb, createAppDb } from '@brisk/postgres-db';
 import {
-  type BriskDb,
-  createAppDb,
+  createIntegrationTenant,
   deleteIntegrationTenants,
-  tenants,
-} from '@brisk/postgres-db';
+} from '@brisk/postgres-db/testing';
 import { DrizzleUserRepository } from './drizzle-user.repository';
 
 /**
@@ -28,16 +27,8 @@ describe('DrizzleUserRepository (integration)', () => {
     db = createAppDb();
     userRepository = new DrizzleUserRepository(db);
 
-    const [tenantA] = await db
-      .insert(tenants)
-      .values({ name: `Integration Tenant A ${randomUUID()}` })
-      .returning({ id: tenants.id });
-    const [tenantB] = await db
-      .insert(tenants)
-      .values({ name: `Integration Tenant B ${randomUUID()}` })
-      .returning({ id: tenants.id });
-    tenantAId = tenantA.id;
-    tenantBId = tenantB.id;
+    tenantAId = await createIntegrationTenant(db, 'Integration Tenant A');
+    tenantBId = await createIntegrationTenant(db, 'Integration Tenant B');
   });
 
   afterAll(async () => {

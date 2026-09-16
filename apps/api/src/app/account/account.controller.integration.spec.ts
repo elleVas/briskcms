@@ -7,12 +7,8 @@ import cookieParser from 'cookie-parser';
 import request from 'supertest';
 import sharp from 'sharp';
 import type { AuthPort } from '@brisk/ports';
-import {
-  type BriskDb,
-  deleteIntegrationFixtures,
-  users,
-  withTenant,
-} from '@brisk/postgres-db';
+import { type BriskDb, users, withTenant } from '@brisk/postgres-db';
+import { deleteIntegrationFixtures } from '@brisk/postgres-db/testing';
 import { AUTH_PORT } from '../auth/auth.tokens';
 import { DATABASE } from '../database.module';
 import { HttpExceptionFilter } from '../http-exception.filter';

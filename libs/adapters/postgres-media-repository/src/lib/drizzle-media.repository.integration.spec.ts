@@ -2,14 +2,12 @@ import { MEDIA_KINDS, mediaKindOfMime } from '@brisk/shared-types';
 import { randomUUID } from 'node:crypto';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { Media } from '@brisk/domain-core';
+import { type BriskDb, createAppDb } from '@brisk/postgres-db';
 import {
-  type BriskDb,
-  createAppDb,
+  createIntegrationSite,
+  createIntegrationTenant,
   deleteIntegrationTenants,
-  sites,
-  tenants,
-  withTenant,
-} from '@brisk/postgres-db';
+} from '@brisk/postgres-db/testing';
 import { DrizzleMediaRepository } from './drizzle-media.repository';
 
 /**
@@ -28,24 +26,10 @@ describe('DrizzleMediaRepository (integration)', () => {
     db = createAppDb();
     mediaRepository = new DrizzleMediaRepository(db);
 
-    const [tenantA] = await db
-      .insert(tenants)
-      .values({ name: `Integration Tenant A ${randomUUID()}` })
-      .returning({ id: tenants.id });
-    const [tenantB] = await db
-      .insert(tenants)
-      .values({ name: `Integration Tenant B ${randomUUID()}` })
-      .returning({ id: tenants.id });
-    tenantAId = tenantA.id;
-    tenantBId = tenantB.id;
+    tenantAId = await createIntegrationTenant(db, 'Integration Tenant A');
+    tenantBId = await createIntegrationTenant(db, 'Integration Tenant B');
 
-    const [siteA] = await withTenant(db, tenantAId, (tx) =>
-      tx
-        .insert(sites)
-        .values({ tenantId: tenantAId, name: 'Site A', defaultLocale: 'it' })
-        .returning({ id: sites.id }),
-    );
-    siteAId = siteA.id;
+    siteAId = await createIntegrationSite(db, tenantAId);
   });
 
   afterAll(async () => {
@@ -87,22 +71,12 @@ describe('DrizzleMediaRepository (integration)', () => {
   });
 
   it('listBySite paginates, newest first, scoped to tenant and site', async () => {
-    const uniqueSite = randomUUID();
-    const [siteForList] = await withTenant(db, tenantAId, (tx) =>
-      tx
-        .insert(sites)
-        .values({
-          tenantId: tenantAId,
-          name: `Site for list ${uniqueSite}`,
-          defaultLocale: 'it',
-        })
-        .returning({ id: sites.id }),
-    );
+    const siteForListId = await createIntegrationSite(db, tenantAId);
 
     const items = [];
     for (let i = 0; i < 3; i++) {
       const item = buildMedia({
-        siteId: siteForList.id,
+        siteId: siteForListId,
         filename: `foto-${i}.jpg`,
       });
       await mediaRepository.save(item);
@@ -111,7 +85,7 @@ describe('DrizzleMediaRepository (integration)', () => {
 
     const firstPage = await mediaRepository.listBySite(
       tenantAId,
-      siteForList.id,
+      siteForListId,
       {
         page: 1,
         pageSize: 2,
@@ -124,7 +98,7 @@ describe('DrizzleMediaRepository (integration)', () => {
 
     const fromOtherTenant = await mediaRepository.listBySite(
       tenantBId,
-      siteForList.id,
+      siteForListId,
       { page: 1, pageSize: 10 },
     );
     expect(fromOtherTenant.items).toHaveLength(0);
@@ -136,16 +110,7 @@ describe('DrizzleMediaRepository (integration)', () => {
    * say nothing about the rest, which is worse than no search at all.
    */
   it('listBySite narrows by name and by kind, and stays inside the tenant', async () => {
-    const [siteForFilter] = await withTenant(db, tenantAId, (tx) =>
-      tx
-        .insert(sites)
-        .values({
-          tenantId: tenantAId,
-          name: `Site for filter ${randomUUID()}`,
-          defaultLocale: 'it',
-        })
-        .returning({ id: sites.id }),
-    );
+    const siteForFilterId = await createIntegrationSite(db, tenantAId);
 
     for (const [filename, mimeType] of [
       ['Report finale.png', 'image/webp'],
@@ -155,7 +120,7 @@ describe('DrizzleMediaRepository (integration)', () => {
       ['jingle.mp3', 'audio/mpeg'],
     ] as const) {
       await mediaRepository.save(
-        buildMedia({ siteId: siteForFilter.id, filename, mimeType }),
+        buildMedia({ siteId: siteForFilterId, filename, mimeType }),
       );
     }
 
@@ -166,7 +131,7 @@ describe('DrizzleMediaRepository (integration)', () => {
       (
         await mediaRepository.listBySite(
           tenantAId,
-          siteForFilter.id,
+          siteForFilterId,
           page,
           filter,
         )
@@ -194,7 +159,7 @@ describe('DrizzleMediaRepository (integration)', () => {
     // Both at once, and the count reflects the filter rather than the site.
     const narrowed = await mediaRepository.listBySite(
       tenantAId,
-      siteForFilter.id,
+      siteForFilterId,
       page,
       { search: 'report', kind: 'image' },
     );
@@ -203,7 +168,7 @@ describe('DrizzleMediaRepository (integration)', () => {
     // A filter is not a way round RLS.
     const fromOtherTenant = await mediaRepository.listBySite(
       tenantBId,
-      siteForFilter.id,
+      siteForFilterId,
       page,
       { search: 'report' },
     );
@@ -218,16 +183,7 @@ describe('DrizzleMediaRepository (integration)', () => {
    * list of expected names somebody could get wrong the same way twice.
    */
   it('files every stored type under the kind mediaKindOfMime gives it', async () => {
-    const [site] = await withTenant(db, tenantAId, (tx) =>
-      tx
-        .insert(sites)
-        .values({
-          tenantId: tenantAId,
-          name: `Site for kinds ${randomUUID()}`,
-          defaultLocale: 'it',
-        })
-        .returning({ id: sites.id }),
-    );
+    const siteId = await createIntegrationSite(db, tenantAId);
     const fixtures = [
       ['foto.webp', 'image/webp'],
       ['logo.svg', 'image/svg+xml'],
@@ -244,15 +200,13 @@ describe('DrizzleMediaRepository (integration)', () => {
       ['sconosciuto', 'application/octet-stream'],
     ] as const;
     for (const [filename, mimeType] of fixtures) {
-      await mediaRepository.save(
-        buildMedia({ siteId: site.id, filename, mimeType }),
-      );
+      await mediaRepository.save(buildMedia({ siteId, filename, mimeType }));
     }
 
     for (const kind of MEDIA_KINDS) {
       const result = await mediaRepository.listBySite(
         tenantAId,
-        site.id,
+        siteId,
         { page: 1, pageSize: 50 },
         { kind },
       );
@@ -268,7 +222,7 @@ describe('DrizzleMediaRepository (integration)', () => {
 
     // The folder counts come from the same conditions, so each one has to
     // equal the length of the list that folder opens onto.
-    const counts = await mediaRepository.countByKind(tenantAId, site.id);
+    const counts = await mediaRepository.countByKind(tenantAId, siteId);
     for (const kind of MEDIA_KINDS) {
       expect({ kind, count: counts[kind] }).toEqual({
         kind,

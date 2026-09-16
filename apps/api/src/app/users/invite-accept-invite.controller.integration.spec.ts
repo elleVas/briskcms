@@ -6,12 +6,8 @@ import { requestIdMiddleware } from '../request-id.middleware';
 import cookieParser from 'cookie-parser';
 import request from 'supertest';
 import type { AuthPort } from '@brisk/ports';
-import {
-  type BriskDb,
-  deleteIntegrationFixtures,
-  users,
-  withTenant,
-} from '@brisk/postgres-db';
+import { type BriskDb, users, withTenant } from '@brisk/postgres-db';
+import { deleteIntegrationFixtures } from '@brisk/postgres-db/testing';
 import { AUTH_PORT } from '../auth/auth.tokens';
 import { AuthModule } from '../auth/auth.module';
 import { DATABASE } from '../database.module';

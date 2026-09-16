@@ -3,7 +3,8 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { eq } from 'drizzle-orm';
 import { type BriskDb, createAppDb } from './client';
 import { deleteIntegrationTenants } from './integration-test-cleanup';
-import { sites, tenants } from './schema';
+import { createIntegrationTenant } from './integration-test-fixtures';
+import { sites } from './schema';
 import {
   DrizzlePaginatedRepository,
   type Pagination,
@@ -77,12 +78,9 @@ describe('DrizzlePaginatedRepository (integration)', () => {
   });
 
   async function createTenant(label: string): Promise<string> {
-    const [tenant] = await db
-      .insert(tenants)
-      .values({ name: `${label} ${randomUUID()}` })
-      .returning({ id: tenants.id });
-    createdTenantIds.push(tenant.id);
-    return tenant.id;
+    const tenantId = await createIntegrationTenant(db, label);
+    createdTenantIds.push(tenantId);
+    return tenantId;
   }
 
   it('save() inserts a new row, findById() reads it back', async () => {

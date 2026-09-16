@@ -28,7 +28,12 @@ export default defineConfig(() => ({
       // correctness is verified by the generated migration SQL (committed,
       // reviewed) and by the integration specs hitting the real, migrated
       // schema — not by import-time execution.
-      exclude: ['src/**/*.spec.ts', 'src/index.ts', 'src/lib/schema.ts'],
+      exclude: [
+        'src/**/*.spec.ts',
+        'src/index.ts',
+        'src/testing.ts',
+        'src/lib/schema.ts',
+      ],
       thresholds: {
         statements: 60,
         branches: 60,
