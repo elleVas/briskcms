@@ -6,10 +6,7 @@ import {
   User,
   UserSlugAlreadyExistsError,
 } from '@brisk/domain-core';
-import {
-  InMemoryMediaStorage,
-  InMemoryUserRepository,
-} from './in-memory-repositories.test-fixture';
+import { InMemoryMediaStorage, InMemoryUserRepository } from '@brisk/testing';
 import {
   changeAccountAvatar,
   getAccountProfile,
@@ -17,9 +14,9 @@ import {
   updateAccountProfile,
 } from './account-profile.use-cases';
 import { inviteUser } from './invite-user.use-case';
-import { FakeAuthPort } from './fake-auth-port.test-fixture';
-import { FakeEmailPort } from './fake-email-port.test-fixture';
-import { FakeVerificationTokenPort } from './fake-verification-token-port.test-fixture';
+import { FakeAuthPort } from '@brisk/testing';
+import { FakeEmailPort } from '@brisk/testing';
+import { FakeVerificationTokenPort } from '@brisk/testing';
 
 const tenantId = 'tenant-1';
 const PNG = new Uint8Array([

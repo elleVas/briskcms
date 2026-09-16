@@ -14,10 +14,10 @@ import { acceptInvite } from './accept-invite.use-case';
 import { updateUserRole } from './update-user-role.use-case';
 import { setUserActive } from './set-user-active.use-case';
 import { listUsers } from './list-users.use-case';
-import { InMemoryUserRepository } from './in-memory-repositories.test-fixture';
-import { FakeVerificationTokenPort } from './fake-verification-token-port.test-fixture';
-import { FakeEmailPort } from './fake-email-port.test-fixture';
-import { FakeAuthPort } from './fake-auth-port.test-fixture';
+import { InMemoryUserRepository } from '@brisk/testing';
+import { FakeVerificationTokenPort } from '@brisk/testing';
+import { FakeEmailPort } from '@brisk/testing';
+import { FakeAuthPort } from '@brisk/testing';
 
 const tenantId = 'tenant-1';
 

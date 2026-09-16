@@ -1,5 +1,4 @@
 import { describe, expect, it } from 'vitest';
-import { DEFAULT_COOKIE_BANNER_SETTINGS } from '@brisk/shared-types';
 import { Site, SiteLayoutSection } from '@brisk/domain-core';
 import { resolveSiteChrome } from './resolve-site-chrome';
 import {
@@ -9,7 +8,8 @@ import {
   InMemoryReusableSectionRepository,
   InMemorySiteLayoutSectionRepository,
   InMemorySiteThemeBlockStylesRepository,
-} from './in-memory-repositories.test-fixture';
+  buildSite,
+} from '@brisk/testing';
 
 describe('resolveSiteChrome', () => {
   const tenantId = 'tenant-1';
@@ -17,34 +17,10 @@ describe('resolveSiteChrome', () => {
   function seedSite(
     overrides: Partial<Parameters<typeof Site.fromProps>[0]> = {},
   ) {
-    return Site.fromProps({
-      id: 'site-1',
+    return buildSite({
       tenantId,
       name: 'Sito di prova',
-      domain: 'example.com',
-      themeName: 'classic',
-      defaultLocale: 'it',
       enabledLocales: ['it', 'en'],
-      untranslatedPageFallback: 'redirect-to-default',
-      businessAddress: null,
-      businessPhone: null,
-      businessEmail: null,
-      businessType: null,
-      openingHours: null,
-      searchEngineIndexingEnabled: false,
-      themePrimaryColor: null,
-      themeSecondaryColor: null,
-      themeFontFamily: null,
-      themeCustomCss: null,
-      themeContentWidth: null,
-      themeHeadScript: null,
-      themeBodyScript: null,
-      themeFaviconUrl: null,
-      themeOverridesEnabled: true,
-      themeAllowedTrackerDomains: [],
-      formSubmissionRetentionDays: null,
-      themeTrackerScripts: [],
-      cookieBannerSettings: DEFAULT_COOKIE_BANNER_SETTINGS,
       createdAt: new Date(),
       ...overrides,
     });

@@ -1,13 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import {
-  DEFAULT_COOKIE_BANNER_SETTINGS,
-  DEFAULT_VARIANT,
-} from '@brisk/shared-types';
-import { Site, SiteNotFoundError } from '@brisk/domain-core';
+import { DEFAULT_VARIANT } from '@brisk/shared-types';
+import { SiteNotFoundError } from '@brisk/domain-core';
 import {
   InMemorySiteRepository,
   InMemorySiteThemeBlockStylesRepository,
-} from './in-memory-repositories.test-fixture';
+  buildSite,
+} from '@brisk/testing';
 import { updateSiteThemeTokens } from './update-site-theme-tokens.use-case';
 
 describe('updateSiteThemeTokens', () => {
@@ -21,36 +19,7 @@ describe('updateSiteThemeTokens', () => {
   }
 
   async function createSite(deps: ReturnType<typeof setup>) {
-    const site = Site.fromProps({
-      id: 'site-1',
-      tenantId,
-      name: 'Il mio sito',
-      domain: null,
-      themeName: 'classic',
-      defaultLocale: 'it',
-      enabledLocales: ['it'],
-      untranslatedPageFallback: 'redirect-to-default',
-      businessAddress: null,
-      businessPhone: null,
-      businessEmail: null,
-      businessType: null,
-      openingHours: null,
-      searchEngineIndexingEnabled: false,
-      themePrimaryColor: null,
-      themeSecondaryColor: null,
-      themeFontFamily: null,
-      themeCustomCss: null,
-      themeContentWidth: null,
-      themeHeadScript: null,
-      themeBodyScript: null,
-      themeFaviconUrl: null,
-      themeOverridesEnabled: true,
-      themeAllowedTrackerDomains: [],
-      formSubmissionRetentionDays: null,
-      themeTrackerScripts: [],
-      cookieBannerSettings: DEFAULT_COOKIE_BANNER_SETTINGS,
-      createdAt: new Date('2026-01-01T00:00:00Z'),
-    });
+    const site = buildSite({ tenantId, name: 'Il mio sito', domain: null });
     await deps.siteRepository.save(site);
     return site;
   }

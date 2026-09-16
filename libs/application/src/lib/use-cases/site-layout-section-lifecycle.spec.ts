@@ -1,5 +1,4 @@
 import { describe, expect, it } from 'vitest';
-import { DEFAULT_COOKIE_BANNER_SETTINGS } from '@brisk/shared-types';
 import {
   Site,
   SiteLayoutSectionNotFoundError,
@@ -15,7 +14,8 @@ import {
   InMemorySiteLayoutSectionRepository,
   InMemorySiteLayoutSectionVersionRepository,
   InMemorySiteRepository,
-} from './in-memory-repositories.test-fixture';
+  buildSite,
+} from '@brisk/testing';
 
 describe('site layout section lifecycle: get-or-create -> draft -> publish -> rollback', () => {
   const tenantId = 'tenant-1';
@@ -38,34 +38,10 @@ describe('site layout section lifecycle: get-or-create -> draft -> publish -> ro
     siteRepository: InMemorySiteRepository,
     overrides: Partial<Parameters<typeof Site.fromProps>[0]> = {},
   ) {
-    const site = Site.fromProps({
-      id: 'site-1',
+    const site = buildSite({
       tenantId,
       name: 'Sito di prova',
-      domain: 'example.com',
-      themeName: 'classic',
-      defaultLocale: 'it',
       enabledLocales: ['it', 'en'],
-      untranslatedPageFallback: 'redirect-to-default',
-      businessAddress: null,
-      businessPhone: null,
-      businessEmail: null,
-      businessType: null,
-      openingHours: null,
-      searchEngineIndexingEnabled: false,
-      themePrimaryColor: null,
-      themeSecondaryColor: null,
-      themeFontFamily: null,
-      themeCustomCss: null,
-      themeContentWidth: null,
-      themeHeadScript: null,
-      themeBodyScript: null,
-      themeFaviconUrl: null,
-      themeOverridesEnabled: true,
-      themeAllowedTrackerDomains: [],
-      formSubmissionRetentionDays: null,
-      themeTrackerScripts: [],
-      cookieBannerSettings: DEFAULT_COOKIE_BANNER_SETTINGS,
       createdAt: new Date(),
       ...overrides,
     });

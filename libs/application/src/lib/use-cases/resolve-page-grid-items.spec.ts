@@ -5,7 +5,7 @@ import {
   InMemoryPageGroupRepository,
   InMemoryPageTranslationRepository,
   InMemoryTaxonomyRepository,
-} from './in-memory-repositories.test-fixture';
+} from '@brisk/testing';
 import { resolvePageGridItems } from './resolve-page-grid-items';
 
 const tenantId = 'tenant-1';

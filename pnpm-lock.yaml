@@ -953,6 +953,10 @@ importers:
       '@brisk/theme-runtime':
         specifier: workspace:*
         version: link:../theme-runtime
+    devDependencies:
+      '@brisk/testing':
+        specifier: workspace:*
+        version: link:../testing
 
   libs/block-registry:
     dependencies:
@@ -1086,6 +1090,18 @@ importers:
       zod:
         specifier: ^4.4.3
         version: 4.4.3
+
+  libs/testing:
+    dependencies:
+      '@brisk/domain-core':
+        specifier: workspace:*
+        version: link:../domain-core
+      '@brisk/ports':
+        specifier: workspace:*
+        version: link:../ports
+      '@brisk/shared-types':
+        specifier: workspace:*
+        version: link:../shared-types
 
   libs/theme-runtime: {}
 

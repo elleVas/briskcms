@@ -1,5 +1,5 @@
 {
-  "name": "@brisk/application",
+  "name": "@brisk/testing",
   "version": "0.0.1",
   "private": true,
   "type": "module",
@@ -7,7 +7,7 @@
   "types": "./src/index.ts",
   "nx": {
     "tags": [
-      "application"
+      "testing"
     ]
   },
   "exports": {
@@ -21,11 +21,6 @@
   "dependencies": {
     "@brisk/domain-core": "workspace:*",
     "@brisk/ports": "workspace:*",
-    "@brisk/rich-text": "workspace:*",
-    "@brisk/shared-types": "workspace:*",
-    "@brisk/theme-runtime": "workspace:*"
-  },
-  "devDependencies": {
-    "@brisk/testing": "workspace:*"
+    "@brisk/shared-types": "workspace:*"
   }
 }

@@ -1,12 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import {
-  PageGroup,
-  PageTranslation,
-  Site,
-  Taxonomy,
-  Term,
-} from '@brisk/domain-core';
-import { DEFAULT_COOKIE_BANNER_SETTINGS } from '@brisk/shared-types';
+import { PageGroup, PageTranslation, Taxonomy, Term } from '@brisk/domain-core';
 import {
   InMemoryPageGroupRepository,
   InMemoryPageGroupVersionRepository,
@@ -17,7 +10,8 @@ import {
   InMemorySiteRepository,
   InMemorySiteThemeBlockStylesRepository,
   InMemoryTaxonomyRepository,
-} from './in-memory-repositories.test-fixture';
+  buildSite,
+} from '@brisk/testing';
 import { getPublishedTermByPath } from './get-published-term-by-path.use-case';
 
 const tenantId = 'tenant-1';
@@ -49,34 +43,12 @@ describe('getPublishedTermByPath', () => {
 
   beforeEach(async () => {
     deps = setup();
-    const site = Site.fromProps({
-      id: 'site-1',
+    const site = buildSite({
       tenantId,
       name: 'Sito',
       domain,
-      themeName: 'classic',
-      defaultLocale: 'it',
       enabledLocales: ['it', 'en'],
-      untranslatedPageFallback: 'redirect-to-default',
-      businessAddress: null,
-      businessPhone: null,
-      businessEmail: null,
-      businessType: null,
-      openingHours: null,
       searchEngineIndexingEnabled: true,
-      themePrimaryColor: null,
-      themeSecondaryColor: null,
-      themeFontFamily: null,
-      themeCustomCss: null,
-      themeContentWidth: null,
-      themeHeadScript: null,
-      themeBodyScript: null,
-      themeFaviconUrl: null,
-      themeOverridesEnabled: true,
-      themeAllowedTrackerDomains: [],
-      formSubmissionRetentionDays: null,
-      themeTrackerScripts: [],
-      cookieBannerSettings: DEFAULT_COOKIE_BANNER_SETTINGS,
       createdAt: new Date(),
     });
     await deps.siteRepository.save(site);

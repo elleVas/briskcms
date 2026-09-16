@@ -4,7 +4,7 @@ import { createForm } from './create-form.use-case';
 import { updateForm } from './update-form.use-case';
 import { listForms } from './list-forms.use-case';
 import { deleteForm } from './delete-form.use-case';
-import { InMemoryFormRepository } from './in-memory-repositories.test-fixture';
+import { InMemoryFormRepository } from '@brisk/testing';
 
 describe('form lifecycle: create -> update -> list -> delete', () => {
   const tenantId = 'tenant-1';

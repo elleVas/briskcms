@@ -2,9 +2,9 @@ import { describe, expect, it } from 'vitest';
 import { InvalidCredentialsError, User } from '@brisk/domain-core';
 import { loginUser } from './login-user.use-case';
 import { logoutUser } from './logout-user.use-case';
-import { InMemoryUserRepository } from './in-memory-repositories.test-fixture';
-import { FakeAuthPort } from './fake-auth-port.test-fixture';
-import { FakeCaptchaPort } from './fake-captcha-port.test-fixture';
+import { InMemoryUserRepository } from '@brisk/testing';
+import { FakeAuthPort } from '@brisk/testing';
+import { FakeCaptchaPort } from '@brisk/testing';
 
 const tenantId = 'tenant-1';
 

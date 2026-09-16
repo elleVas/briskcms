@@ -1,0 +1,7 @@
+export * from './lib/entities.test-fixture';
+export * from './lib/fake-auth-port.test-fixture';
+export * from './lib/fake-captcha-port.test-fixture';
+export * from './lib/fake-email-port.test-fixture';
+export * from './lib/fake-newsletter-port.test-fixture';
+export * from './lib/fake-verification-token-port.test-fixture';
+export * from './lib/in-memory-repositories.test-fixture';

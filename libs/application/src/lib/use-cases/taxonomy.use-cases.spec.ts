@@ -1,15 +1,14 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import {
   PageTranslation,
-  Site,
   TaxonomyPrefixReservedError,
 } from '@brisk/domain-core';
-import { DEFAULT_COOKIE_BANNER_SETTINGS } from '@brisk/shared-types';
 import {
   InMemoryPageTranslationRepository,
   InMemorySiteRepository,
   InMemoryTaxonomyRepository,
-} from './in-memory-repositories.test-fixture';
+  buildSite,
+} from '@brisk/testing';
 import {
   createTaxonomy,
   createTerm,
@@ -38,34 +37,11 @@ describe('taxonomy use cases', () => {
     pageTranslationRepository = new InMemoryPageTranslationRepository();
     siteRepository = new InMemorySiteRepository();
     await siteRepository.save(
-      Site.fromProps({
+      buildSite({
         id: siteId,
         tenantId,
         name: 'Sito',
-        domain: 'example.com',
-        themeName: 'classic',
-        defaultLocale: 'it',
         enabledLocales: ['it', 'en'],
-        untranslatedPageFallback: 'redirect-to-default',
-        businessAddress: null,
-        businessPhone: null,
-        businessEmail: null,
-        businessType: null,
-        openingHours: null,
-        searchEngineIndexingEnabled: false,
-        themePrimaryColor: null,
-        themeSecondaryColor: null,
-        themeFontFamily: null,
-        themeCustomCss: null,
-        themeContentWidth: null,
-        themeHeadScript: null,
-        themeBodyScript: null,
-        themeFaviconUrl: null,
-        themeOverridesEnabled: true,
-        themeAllowedTrackerDomains: [],
-        formSubmissionRetentionDays: null,
-        themeTrackerScripts: [],
-        cookieBannerSettings: DEFAULT_COOKIE_BANNER_SETTINGS,
         createdAt: new Date(),
       }),
     );

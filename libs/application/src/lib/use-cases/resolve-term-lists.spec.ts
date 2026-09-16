@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { PageContent } from '@brisk/shared-types';
 import { Taxonomy, Term } from '@brisk/domain-core';
 import { resolveTermLists } from './resolve-term-lists';
-import { InMemoryTaxonomyRepository } from './in-memory-repositories.test-fixture';
+import { InMemoryTaxonomyRepository } from '@brisk/testing';
 
 const tenantId = 'tenant-1';
 const siteId = 'site-1';

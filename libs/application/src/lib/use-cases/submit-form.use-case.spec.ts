@@ -11,13 +11,10 @@ import { submitForm } from './submit-form.use-case';
 import {
   InMemoryFormRepository,
   InMemoryFormSubmissionRepository,
-} from './in-memory-repositories.test-fixture';
-import { FakeEmailPort } from './fake-email-port.test-fixture';
-import { FakeCaptchaPort } from './fake-captcha-port.test-fixture';
-import {
-  FailingNewsletterPort,
-  FakeNewsletterPort,
-} from './fake-newsletter-port.test-fixture';
+} from '@brisk/testing';
+import { FakeEmailPort } from '@brisk/testing';
+import { FakeCaptchaPort } from '@brisk/testing';
+import { FailingNewsletterPort, FakeNewsletterPort } from '@brisk/testing';
 
 describe('getPublicForm and submitForm', () => {
   const tenantId = 'tenant-1';
