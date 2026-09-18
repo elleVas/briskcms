@@ -25,6 +25,7 @@ vi.mock('../lib/page-groups-api-client', async (importOriginal) => {
     savePageTranslationFieldValues: vi.fn(),
     publishPageTranslation: vi.fn(),
     divergePageTranslation: vi.fn(),
+    relinkPageTranslation: vi.fn(),
   };
 });
 
@@ -234,5 +235,45 @@ describe('usePageGroupEditor', () => {
     });
 
     expect(api.divergePageTranslation).toHaveBeenCalledWith(itTranslation.id);
+  });
+
+  /*
+   * The last edit to a fork can land after the confirmation dialog
+   * opened. Relinking from the tree that render saw would carry over the
+   * text as it was a moment earlier, and drop the edit without a word.
+   */
+  it('handleRelink carries over the text of the fork the server holds, not the one the render saw', async () => {
+    vi.mocked(api.relinkPageTranslation).mockResolvedValue({
+      ...divergedTranslation,
+      isDiverged: false,
+      divergedContent: null,
+    });
+    const { result, queryClient } = renderPageGroupEditor(
+      [enTranslation, divergedTranslation],
+      'fr',
+    );
+    const relink = result.current.handleRelink;
+
+    queryClient.setQueryData(
+      pageGroupTranslationsQueryOptions(sampleGroup.id).queryKey,
+      [
+        enTranslation,
+        {
+          ...divergedTranslation,
+          divergedContent: [
+            { id: 'hero-1', type: 'Hero', props: { title: 'Bonjour !' } },
+          ],
+        },
+      ],
+    );
+    await act(async () => {
+      await relink((blockType) => (blockType === 'Hero' ? ['title'] : []));
+    });
+
+    expect(api.relinkPageTranslation).toHaveBeenCalledWith(
+      divergedTranslation.id,
+      { 'hero-1': { title: 'Bonjour !' } },
+    );
+    expect(result.current.activeTranslation.isDiverged).toBe(false);
   });
 });

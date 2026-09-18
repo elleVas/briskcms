@@ -1,5 +1,6 @@
 ---
-import type { ListProps } from '@brisk/shared-types';
+import { parseMediaIcon, type ListProps } from '@brisk/shared-types';
+import { siteIconImageUrl } from '../../lib/media-icon-url';
 import EmptyContainerHint from '../EmptyContainerHint.astro';
 
 type Props = ListProps & {
@@ -12,7 +13,7 @@ type Props = ListProps & {
   instanceClass?: string | null;
 };
 
-const { marker, iconSvg, locale, emptyChildLabel, editable, hasChildren, instanceClass } =
+const { marker, icon, iconSvg, locale, emptyChildLabel, editable, hasChildren, instanceClass } =
   Astro.props;
 
 // A numbered list is an <ol>, so a screen reader says "item 2 of 5"; the
@@ -27,11 +28,27 @@ const iconStyle =
   marker === 'icon' && iconSvg
     ? `--brisk-list-icon: url("data:image/svg+xml,${encodeURIComponent(iconSvg)}")`
     : undefined;
+
+// An image from the media library cannot go through that mask: an SVG
+// used as an image never loads what it points at, so the marker would be
+// empty. It is shown as a background instead — as it is, not in the text
+// colour, which is what a picture is. The address is the site's own
+// image endpoint (see media-icon-url.ts), with the media URL encoded
+// into its query: nothing in it can end the CSS string early.
+const mediaIcon = marker === 'icon' && icon ? parseMediaIcon(icon) : null;
+const markerStyle = mediaIcon
+  ? `--brisk-list-icon-image: url("${siteIconImageUrl(mediaIcon.url)}")`
+  : iconStyle;
 ---
 
 <Tag
-  class:list={['brisk-list', `brisk-list--${marker}`, instanceClass]}
-  style={iconStyle}
+  class:list={[
+    'brisk-list',
+    `brisk-list--${marker}`,
+    mediaIcon && 'brisk-list--icon-image',
+    instanceClass,
+  ]}
+  style={markerStyle}
   data-brisk-editable-outline={editable && hasChildren ? '' : undefined}
 >
   <slot />
@@ -92,5 +109,10 @@ const iconStyle =
     align-self: center;
     background: currentColor;
     mask: var(--brisk-list-icon) center / contain no-repeat;
+  }
+
+  .brisk-list--icon-image :global(.brisk-list-item)::before {
+    background: var(--brisk-list-icon-image) center / contain no-repeat;
+    mask: none;
   }
 </style>

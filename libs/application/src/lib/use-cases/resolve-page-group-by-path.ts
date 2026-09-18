@@ -78,10 +78,39 @@ export async function resolvePageGroupByPath(
         parentGroupId,
         segments[i],
       );
-      if (!translation) return null;
-      moved = true;
+      if (translation) {
+        moved = true;
+        currentPath.push(translation.slug);
+      } else {
+        // Still nothing: the page may have kept its name and changed
+        // parent instead (docs/adr/0074). Where it lives now is not this
+        // branch at all, so the path collected so far is not a prefix of
+        // its address — it is rebuilt from the parents it hangs from now.
+        translation = await deps.pageTranslationRepository.findByFormerParent(
+          tenantId,
+          siteId,
+          locale,
+          parentGroupId,
+          segments[i],
+        );
+        if (!translation) return null;
+        const wherePageLivesNow = await currentPathOf(
+          deps,
+          tenantId,
+          locale,
+          translation,
+        );
+        // No address in this language any more (an ancestor lost its
+        // translation): nowhere to send the visitor, so this is a 404
+        // rather than a redirect to a path that does not resolve.
+        if (!wherePageLivesNow) return null;
+        moved = true;
+        currentPath.length = 0;
+        currentPath.push(...wherePageLivesNow);
+      }
+    } else {
+      currentPath.push(translation.slug);
     }
-    currentPath.push(translation.slug);
     if (i < segments.length - 1) {
       ancestors.push({
         slug: translation.slug,
@@ -99,4 +128,49 @@ export async function resolvePageGroupByPath(
   if (!group) return null;
 
   return { group, translation, ancestors, moved, currentPath };
+}
+
+/**
+ * The path this translation answers at right now, root to leaf, or null
+ * when one of the parents it hangs from has no translation in this
+ * language.
+ *
+ * Only needed for a page that MOVED: for a rename the walk already has
+ * the right prefix, because the page is still where the path said it
+ * was. `resolvePageGroupAncestors` is the richer version of this walk
+ * (it also resolves a title, and falls back to the default locale for
+ * one); a redirect needs neither, and falling back would send a visitor
+ * to an address made of two languages.
+ */
+async function currentPathOf(
+  deps: {
+    pageGroupRepository: PageGroupRepositoryPort;
+    pageTranslationRepository: PageTranslationRepositoryPort;
+  },
+  tenantId: string,
+  locale: string,
+  translation: PageTranslation,
+): Promise<string[] | null> {
+  const segments = [translation.slug];
+  let group = await deps.pageGroupRepository.findById(
+    tenantId,
+    translation.pageGroupId,
+  );
+  for (let hops = 0; group?.parentId && hops < MAX_PATH_SEGMENTS; hops += 1) {
+    const parent: PageGroup | null = await deps.pageGroupRepository.findById(
+      tenantId,
+      group.parentId,
+    );
+    if (!parent) return null;
+    const parentTranslation =
+      await deps.pageTranslationRepository.findByGroupAndLocale(
+        tenantId,
+        parent.id,
+        locale,
+      );
+    if (!parentTranslation) return null;
+    segments.unshift(parentTranslation.slug);
+    group = parent;
+  }
+  return segments;
 }

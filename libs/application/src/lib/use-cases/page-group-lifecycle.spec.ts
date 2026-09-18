@@ -9,6 +9,7 @@ import {
   PageTranslationLocaleAlreadyExistsError,
   PageTranslationNotDivergedError,
   PageTranslationNotFoundError,
+  PageTranslationVersionNotFoundError,
   Taxonomy,
   Term,
 } from '@brisk/domain-core';
@@ -21,6 +22,8 @@ import { updatePageTranslationSeoMeta } from './update-page-translation-seo-meta
 import { publishPageTranslation } from './publish-page-translation.use-case';
 import { divergePageTranslation } from './diverge-page-translation.use-case';
 import { saveDivergedPageTranslationContent } from './save-diverged-page-translation-content.use-case';
+import { relinkPageTranslation } from './relink-page-translation.use-case';
+import { rollbackPageTranslationToVersion } from './rollback-page-translation-to-version.use-case';
 import { getPageGroupById } from './get-page-group-by-id.use-case';
 import { deletePageGroup } from './delete-page-group.use-case';
 import { listPageGroupTranslations } from './list-page-group-translations.use-case';
@@ -423,6 +426,25 @@ describe('page group i18n lifecycle', () => {
       );
     });
 
+    it('records a version holding the fork', async () => {
+      const deps = setup();
+      const { translation } = await createGroupWithEnTranslation(deps);
+
+      const diverged = await divergePageTranslation(deps, {
+        tenantId,
+        pageTranslationId: translation.id,
+        actorUserId: 'user-1',
+      });
+
+      const versions = await listPageTranslationVersions(deps, {
+        tenantId,
+        pageTranslationId: translation.id,
+      });
+      expect(versions.at(-1)?.divergedContent).toEqual(
+        diverged.divergedContent,
+      );
+    });
+
     it('throws PageTranslationDivergedError if already diverged', async () => {
       const deps = setup();
       const { translation } = await createGroupWithEnTranslation(deps);
@@ -492,6 +514,39 @@ describe('page group i18n lifecycle', () => {
       ]);
     });
 
+    /*
+     * The fork used to have no history at all: the row was the only copy
+     * of an unlinked language's work, and relinking would have been the
+     * end of it.
+     */
+    it('records every save as a version', async () => {
+      const deps = setup();
+      const { group, translation } = await createGroupWithEnTranslation(deps);
+      await divergePageTranslation(deps, {
+        tenantId,
+        pageTranslationId: translation.id,
+        actorUserId: 'user-1',
+      });
+
+      await saveDivergedPageTranslationContent(deps, {
+        tenantId,
+        pageTranslationId: translation.id,
+        content: [{ type: 'Text', props: { body: 'diverged edit' } }],
+        parentGroupId: group.parentId,
+        actorUserId: 'user-2',
+      });
+
+      const versions = await listPageTranslationVersions(deps, {
+        tenantId,
+        pageTranslationId: translation.id,
+      });
+      expect(versions).toHaveLength(2);
+      expect(versions.at(-1)).toMatchObject({
+        divergedContent: [{ type: 'Text', props: { body: 'diverged edit' } }],
+        createdBy: 'user-2',
+      });
+    });
+
     it('throws PageTranslationNotDivergedError on a translation still linked to the shared structure', async () => {
       const deps = setup();
       const { group, translation } = await createGroupWithEnTranslation(deps);
@@ -517,6 +572,227 @@ describe('page group i18n lifecycle', () => {
           content: [],
           parentGroupId: null,
           actorUserId: null,
+        }),
+      ).rejects.toThrow(PageTranslationNotFoundError);
+    });
+  });
+
+  describe('relinkPageTranslation', () => {
+    async function divergedWithOwnText(deps: ReturnType<typeof setup>) {
+      const { group, translation } = await createGroupWithEnTranslation(deps);
+      await divergePageTranslation(deps, {
+        tenantId,
+        pageTranslationId: translation.id,
+        actorUserId: 'user-1',
+      });
+      await saveDivergedPageTranslationContent(deps, {
+        tenantId,
+        pageTranslationId: translation.id,
+        content: [
+          { id: 'block-1', type: 'Hero', props: { title: 'Ciao' } },
+          { id: 'only-here', type: 'Text', props: { body: 'Solo qui' } },
+        ],
+        parentGroupId: group.parentId,
+        actorUserId: 'user-1',
+      });
+      return { group, translation };
+    }
+
+    it('follows the shared structure again, with the text it is given', async () => {
+      const deps = setup();
+      const { group, translation } = await divergedWithOwnText(deps);
+
+      const relinked = await relinkPageTranslation(deps, {
+        tenantId,
+        pageTranslationId: translation.id,
+        fieldValues: { 'block-1': { title: 'Ciao' } },
+        actorUserId: 'user-2',
+      });
+
+      expect(relinked.isDiverged).toBe(false);
+      expect(relinked.divergedContent).toBeNull();
+      expect(relinked.currentContent(group.content)).toEqual([
+        { id: 'block-1', type: 'Hero', props: { title: 'Ciao' } },
+      ]);
+      const stored = await deps.pageTranslationRepository.findById(
+        tenantId,
+        translation.id,
+      );
+      expect(stored?.isDiverged).toBe(false);
+      expect(stored?.updatedBy).toBe('user-2');
+    });
+
+    it('leaves the fork in the history, so restoring it unlinks the language again', async () => {
+      const deps = setup();
+      const { translation } = await divergedWithOwnText(deps);
+      await relinkPageTranslation(deps, {
+        tenantId,
+        pageTranslationId: translation.id,
+        fieldValues: { 'block-1': { title: 'Ciao' } },
+        actorUserId: 'user-1',
+      });
+      const versions = await listPageTranslationVersions(deps, {
+        tenantId,
+        pageTranslationId: translation.id,
+      });
+      const beforeRelink = versions.at(-2);
+      expect(versions.at(-1)?.divergedContent).toBeNull();
+
+      const restored = await rollbackPageTranslationToVersion(deps, {
+        tenantId,
+        pageTranslationId: translation.id,
+        versionId: beforeRelink?.id ?? '',
+        actorUserId: 'user-1',
+      });
+
+      expect(restored.isDiverged).toBe(true);
+      expect(restored.divergedContent).toEqual([
+        { id: 'block-1', type: 'Hero', props: { title: 'Ciao' } },
+        { id: 'only-here', type: 'Text', props: { body: 'Solo qui' } },
+      ]);
+    });
+
+    it('throws PageTranslationNotDivergedError on a translation still linked', async () => {
+      const deps = setup();
+      const { translation } = await createGroupWithEnTranslation(deps);
+
+      await expect(
+        relinkPageTranslation(deps, {
+          tenantId,
+          pageTranslationId: translation.id,
+          fieldValues: {},
+          actorUserId: null,
+        }),
+      ).rejects.toThrow(PageTranslationNotDivergedError);
+    });
+
+    it('throws PageTranslationNotFoundError for a nonexistent translation', async () => {
+      const deps = setup();
+
+      await expect(
+        relinkPageTranslation(deps, {
+          tenantId,
+          pageTranslationId: 'does-not-exist',
+          fieldValues: {},
+          actorUserId: null,
+        }),
+      ).rejects.toThrow(PageTranslationNotFoundError);
+    });
+  });
+
+  describe('rollbackPageTranslationToVersion', () => {
+    it('restores the text of a previous version and records the restore as a new one', async () => {
+      const deps = setup();
+      const { group, translation } = await createGroupWithEnTranslation(deps);
+      await savePageTranslationFieldValues(deps, {
+        tenantId,
+        pageTranslationId: translation.id,
+        fieldValues: { 'block-1': { title: 'First' } },
+        parentGroupId: group.parentId,
+        actorUserId: 'user-1',
+      });
+      const [first] = await listPageTranslationVersions(deps, {
+        tenantId,
+        pageTranslationId: translation.id,
+      });
+      await savePageTranslationFieldValues(deps, {
+        tenantId,
+        pageTranslationId: translation.id,
+        fieldValues: { 'block-1': { title: 'Second' } },
+        parentGroupId: group.parentId,
+        actorUserId: 'user-1',
+      });
+
+      const restored = await rollbackPageTranslationToVersion(deps, {
+        tenantId,
+        pageTranslationId: translation.id,
+        versionId: first.id,
+        actorUserId: 'user-1',
+      });
+
+      expect(restored.fieldValues).toEqual({ 'block-1': { title: 'First' } });
+      expect(restored.isDiverged).toBe(false);
+      const versions = await listPageTranslationVersions(deps, {
+        tenantId,
+        pageTranslationId: translation.id,
+      });
+      expect(versions).toHaveLength(3);
+    });
+
+    it('keeps the SEO fields as they are now', async () => {
+      const deps = setup();
+      const { group, translation } = await createGroupWithEnTranslation(deps);
+      await savePageTranslationFieldValues(deps, {
+        tenantId,
+        pageTranslationId: translation.id,
+        fieldValues: {},
+        parentGroupId: group.parentId,
+        actorUserId: 'user-1',
+      });
+      const [first] = await listPageTranslationVersions(deps, {
+        tenantId,
+        pageTranslationId: translation.id,
+      });
+      await updatePageTranslationSeoMeta(deps, {
+        tenantId,
+        pageTranslationId: translation.id,
+        seoMeta: { title: 'Renamed', description: '' },
+        parentGroupId: group.parentId,
+        actorUserId: 'user-1',
+      });
+
+      const restored = await rollbackPageTranslationToVersion(deps, {
+        tenantId,
+        pageTranslationId: translation.id,
+        versionId: first.id,
+        actorUserId: 'user-1',
+      });
+
+      expect(restored.seoMeta.title).toBe('Renamed');
+    });
+
+    it("throws PageTranslationVersionNotFoundError for another language's version", async () => {
+      const deps = setup();
+      const { group, translation } = await createGroupWithEnTranslation(deps);
+      const italian = await createPageGroupTranslation(deps, {
+        tenantId,
+        pageGroupId: group.id,
+        locale: 'it',
+        slug: 'home',
+        seoMeta: { title: 'Home', description: '' },
+        createdBy: 'user-1',
+      });
+      await savePageTranslationFieldValues(deps, {
+        tenantId,
+        pageTranslationId: italian.id,
+        fieldValues: {},
+        parentGroupId: group.parentId,
+        actorUserId: 'user-1',
+      });
+      const [italianVersion] = await listPageTranslationVersions(deps, {
+        tenantId,
+        pageTranslationId: italian.id,
+      });
+
+      await expect(
+        rollbackPageTranslationToVersion(deps, {
+          tenantId,
+          pageTranslationId: translation.id,
+          versionId: italianVersion.id,
+          actorUserId: 'user-1',
+        }),
+      ).rejects.toThrow(PageTranslationVersionNotFoundError);
+    });
+
+    it('throws PageTranslationNotFoundError for a nonexistent translation', async () => {
+      const deps = setup();
+
+      await expect(
+        rollbackPageTranslationToVersion(deps, {
+          tenantId,
+          pageTranslationId: 'does-not-exist',
+          versionId: 'irrelevant',
+          actorUserId: 'user-1',
         }),
       ).rejects.toThrow(PageTranslationNotFoundError);
     });

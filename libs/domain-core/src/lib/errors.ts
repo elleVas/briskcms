@@ -22,6 +22,27 @@ export class PageGroupReorderMismatchError extends Error {
   }
 }
 
+/**
+ * A page cannot be moved under itself or under one of its own
+ * descendants: the tree would close into a ring, and every walk of it —
+ * public resolution, the sitemap, the editor's own list — would either
+ * never end or quietly drop the whole branch.
+ */
+export class PageGroupCannotBeItsOwnAncestorError extends Error {
+  constructor(pageGroupId: string) {
+    super(`A page cannot be moved inside itself: ${pageGroupId}`);
+    this.name = 'PageGroupCannotBeItsOwnAncestorError';
+  }
+}
+
+/** The version asked for does not exist, or belongs to another language — restoring one language from another's history would be a silent cross-wiring, not a restore. */
+export class PageTranslationVersionNotFoundError extends Error {
+  constructor(versionId: string) {
+    super(`Page translation version not found: ${versionId}`);
+    this.name = 'PageTranslationVersionNotFoundError';
+  }
+}
+
 export class PageTranslationNotFoundError extends Error {
   constructor(pageTranslationId: string) {
     super(`Page translation not found: ${pageTranslationId}`);

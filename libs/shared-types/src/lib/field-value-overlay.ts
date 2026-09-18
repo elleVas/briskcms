@@ -47,3 +47,68 @@ export function mergeTranslatedContent(
 ): PageContent {
   return groupContent.map((block) => mergeBlock(block, fieldValues));
 }
+
+export interface RelinkedOverlay {
+  /** The fork's text, as this language's overlay on the shared structure. */
+  fieldValues: FieldValueOverlay;
+  /**
+   * Blocks of the fork with no counterpart in the shared structure — no
+   * block there with the same id and the same type. Relinking drops them,
+   * and this is what the editor says before it happens.
+   */
+  lostBlockCount: number;
+}
+
+/**
+ * The way back from `PageTranslation.diverge`: an unlinked language's own
+ * tree turned into text laid over the shared structure again, keeping
+ * every translation that still has somewhere to go.
+ *
+ * The other direction to `mergeTranslatedContent`, and deliberately as
+ * narrow: a block's text survives when the shared structure still has that
+ * block — same id, same type — and only for the fields the block declares
+ * translatable, which the caller knows and this function must not (the
+ * registry lives above this library). A value equal to the shared one is
+ * not recorded, since an absent entry inherits it anyway. Matching is by
+ * id, not by position: `mergeTranslatedContent` applies an overlay the
+ * same way, so a block the fork moved still gets its text back.
+ */
+export function relinkedOverlay(
+  groupContent: PageContent,
+  divergedContent: PageContent,
+  translatableFields: (blockType: string) => readonly string[],
+): RelinkedOverlay {
+  const shared = new Map<string, Block>();
+  const index = (blocks: PageContent) => {
+    for (const block of blocks) {
+      if (block.id) shared.set(block.id, block);
+      if (block.children) index(block.children);
+    }
+  };
+  index(groupContent);
+
+  const fieldValues: FieldValueOverlay = {};
+  let lostBlockCount = 0;
+  const walk = (blocks: PageContent) => {
+    for (const block of blocks) {
+      const counterpart = block.id ? shared.get(block.id) : undefined;
+      if (!block.id || !counterpart || counterpart.type !== block.type) {
+        lostBlockCount += 1;
+      } else {
+        for (const field of translatableFields(block.type)) {
+          const value = block.props[field];
+          if (typeof value === 'string' && value !== counterpart.props[field]) {
+            fieldValues[block.id] = {
+              ...fieldValues[block.id],
+              [field]: value,
+            };
+          }
+        }
+      }
+      if (block.children) walk(block.children);
+    }
+  };
+  walk(divergedContent);
+
+  return { fieldValues, lostBlockCount };
+}

@@ -190,7 +190,8 @@
         "publish": "Pubblica",
         "delete": "Elimina",
         "duplicate": "Duplica pagina",
-        "move": "Sposta in una collezione"
+        "move": "Sposta in una collezione",
+        "moveToParent": "Sposta nell’albero"
       },
       "filters": {
         "search": "Titolo",
@@ -261,7 +262,12 @@
       "description": "Ripristina il contenuto di una versione precedente come bozza. Non pubblica automaticamente.",
       "empty": "Nessuna versione salvata.",
       "current": "Versione attuale",
-      "restore": "Ripristina"
+      "restore": "Ripristina",
+      "sources": {
+        "structure": "Struttura (tutte le lingue)",
+        "language": "Solo {{locale}}"
+      },
+      "unlinkedNote": "Scollegata: ripristinarla scollega di nuovo la lingua"
     },
     "seo": {
       "open": "SEO",
@@ -298,13 +304,21 @@
     },
     "parent": {
       "label": "Pagina genitore",
-      "none": "— Nessuno (livello radice) —"
+      "none": "— Nessuno (livello radice) —",
+      "hint": "La pagina vive sotto quella che scegli, e il suo indirizzo comincia con l’indirizzo di quella."
     },
     "moveToCollection": {
       "title": "Sposta in una collezione",
       "description": "Dove “{{name}}” viene elencata. Mantiene il suo indirizzo, il suo posto nell’albero e tutto quello che ha dentro.",
       "none": "Pagine (nessuna collezione)",
       "confirm": "Sposta",
+      "failed": "Non è stato possibile spostare la pagina."
+    },
+    "moveToParent": {
+      "title": "Sposta nell’albero",
+      "description": "Dove vive “{{name}}”. Cambia il suo indirizzo e quello di tutto ciò che ha sotto: il vecchio indirizzo continua a rispondere, reindirizzando a quello nuovo.",
+      "confirm": "Sposta",
+      "cancel": "Annulla",
       "failed": "Non è stato possibile spostare la pagina."
     },
     "saveAsTemplate": {
@@ -465,7 +479,12 @@
       "empty": "Nessuna icona trovata.",
       "sets": {
         "interface": "Icone",
-        "brand": "Marchi"
+        "brand": "Marchi",
+        "image": "Immagine"
+      },
+      "image": {
+        "hint": "Per un logo che i set non hanno — LinkedIn, per esempio — usa un’immagine della libreria. Si vede com’è: non prende il colore del testo come le altre icone.",
+        "choose": "Scegli dalla libreria…"
       }
     },
     "field": {
@@ -895,8 +914,18 @@
       "diverged": "Scollegata dalla struttura condivisa",
       "divergeAction": "Scollega questa lingua",
       "divergeConfirmTitle": "Scollegare {{locale}} dalla struttura condivisa?",
-      "divergeConfirmBody": "Questa lingua non riceverà più le modifiche strutturali (blocchi aggiunti, rimossi o riordinati) fatte nelle altre lingue. Non si può annullare.",
-      "divergeConfirmAction": "Scollega"
+      "divergeConfirmBody": "Questa lingua non riceverà più le modifiche strutturali (blocchi aggiunti, rimossi o riordinati) fatte nelle altre lingue. Potrai ricollegarla in seguito dal menu della pagina.",
+      "divergeConfirmAction": "Scollega",
+      "relinkAction": "Ricollega questa lingua",
+      "relinkConfirmTitle": "Ricollegare {{locale}} alla struttura condivisa?",
+      "relinkConfirmBody": "Questa lingua tornerà a seguire la struttura condivisa: i blocchi che esistono anche lì mantengono il testo che hanno qui, mentre immagini, impostazioni e disposizione tornano quelle condivise.",
+      "relinkConfirmLost_one": "{{count}} blocco esiste solo in questa lingua e verrà tolto.",
+      "relinkConfirmLost_other": "{{count}} blocchi esistono solo in questa lingua e verranno tolti.",
+      "relinkConfirmHistory": "La versione scollegata resta nella cronologia di questa lingua e si può ripristinare.",
+      "relinkConfirmAction": "Ricollega",
+      "relinked": "{{locale}} segue di nuovo la struttura condivisa.",
+      "relinkUnsaved": "Un salvataggio non è andato a buon fine: la lingua non è stata ricollegata. Riprova quando le modifiche risultano salvate.",
+      "relinkFailed": "Non è stato possibile ricollegare la lingua."
     },
     "style": {
       "editType": "Stile di tutti i blocchi {{type}}",

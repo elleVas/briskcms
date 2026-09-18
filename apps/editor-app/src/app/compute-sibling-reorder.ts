@@ -17,9 +17,9 @@ export interface SiblingReorderResult {
  *
  * A drop is only meaningful within the SAME `parentId` sibling group the
  * backend actually orders (see reorderSiblingPageGroups) — a drop across
- * groups is silently rejected (`null`) rather than reparenting, which has
- * no UI yet (see page-groups-list-view.tsx's own comment on the missing
- * parent picker).
+ * groups is rejected (`null`) rather than reparenting: moving a page to
+ * another parent changes its address, and happens through "Move in the
+ * tree" (docs/adr/0074), where the person sees that before choosing.
  */
 export function computeSiblingReorder<T extends HierarchyItem>(
   items: T[],

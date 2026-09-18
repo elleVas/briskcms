@@ -7,23 +7,24 @@ import {
   deletePageGroup as apiDeletePageGroup,
   duplicatePageGroup as apiDuplicatePageGroup,
   movePageGroupToCollection as apiMovePageGroupToCollection,
+  movePageGroupToParent as apiMovePageGroupToParent,
   reorderPageGroups as apiReorderPageGroups,
 } from '../lib/page-groups-api-client';
 
 export interface NewPageGroupInput {
   name: string;
+  /** The page it hangs under, or `null` for the top level (docs/adr/0074). */
+  parentId: string | null;
   /** Start from a copy of this template's blocks, or `null` to start blank (docs/adr/0072). */
   templateId: string | null;
 }
 
 /**
  * i18n a livello di campo (see the plan) — mirrors use-pages-list.ts's own
- * role for the new PageGroup model. Still narrower than the old model in
- * one way: creates only at ROOT level (no parent picker yet — see
- * page-groups-list-view.tsx's own comment) and only seeds the site's
+ * role for the new PageGroup model. It still seeds only the site's
  * default locale (the language switcher covers the rest once the group
- * exists). Duplicate and drag-reorder ARE wired up now (were the last two
- * tracked follow-ups from Fase 4).
+ * exists); where the page hangs is asked at creation and changeable
+ * afterwards (docs/adr/0074).
  */
 export function usePageGroupsList(
   siteId: string,
@@ -49,10 +50,11 @@ export function usePageGroupsList(
     // One request: the page and its first language are written together
     // (docs/adr/0072). As two, a language refused for its address left a
     // page with no language behind.
-    mutationFn: ({ name, templateId }: NewPageGroupInput) =>
+    mutationFn: ({ name, templateId, parentId }: NewPageGroupInput) =>
       apiCreatePageGroup({
         siteId,
         collectionId,
+        parentId,
         ...(templateId ? { templateId } : {}),
         translation: {
           locale: defaultLocale,
@@ -106,6 +108,25 @@ export function usePageGroupsList(
     onSuccess: invalidateList,
   });
 
+  /**
+   * Moves a page to another place in the site's tree.
+   *
+   * Unlike filing it under a collection, this changes the address the
+   * page answers at and the address of everything under it — the old one
+   * answers with a 301 afterwards (docs/adr/0074), which is why nothing
+   * here has to warn about broken links.
+   */
+  const moveToParentMutation = useMutation({
+    mutationFn: ({
+      groupId,
+      targetParentId,
+    }: {
+      groupId: string;
+      targetParentId: string | null;
+    }) => apiMovePageGroupToParent(groupId, targetParentId),
+    onSuccess: invalidateList,
+  });
+
   const reorderPageGroupsMutation = useMutation({
     mutationFn: ({
       parentId,
@@ -127,6 +148,9 @@ export function usePageGroupsList(
     moveToCollection: (groupId: string, targetCollectionId: string | null) =>
       moveToCollectionMutation.mutateAsync({ groupId, targetCollectionId }),
     isMoving: moveToCollectionMutation.isPending,
+    moveToParent: (groupId: string, targetParentId: string | null) =>
+      moveToParentMutation.mutateAsync({ groupId, targetParentId }),
+    isMovingToParent: moveToParentMutation.isPending,
     reorderPageGroups: (
       parentId: string | null,
       orderedPageGroupIds: string[],

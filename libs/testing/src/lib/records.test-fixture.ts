@@ -6,6 +6,7 @@ import {
   type PageGroupRecord,
   type PageGroupVersionRecord,
   type PageTranslationRecord,
+  type PageTranslationVersionRecord,
   type SiteRecord,
 } from '@brisk/shared-types';
 
@@ -150,6 +151,23 @@ export function buildPageGroupVersionRecord(
     tenantId: 'tenant-1',
     pageGroupId: 'group-1',
     content: [],
+    createdBy: null,
+    createdAt: CREATED_AT,
+    ...overrides,
+  };
+}
+
+/** A version of the default translation's text, taken while it followed the shared structure. */
+export function buildPageTranslationVersionRecord(
+  overrides: Partial<PageTranslationVersionRecord> = {},
+): PageTranslationVersionRecord {
+  return {
+    id: 'translation-version-1',
+    tenantId: 'tenant-1',
+    pageTranslationId: 'translation-1',
+    fieldValues: {},
+    seoMeta: { title: 'Home', description: '' },
+    divergedContent: null,
     createdBy: null,
     createdAt: CREATED_AT,
     ...overrides,

@@ -142,6 +142,34 @@ export class InMemoryPageGroupRepository implements PageGroupRepositoryPort {
     await this.translationRepository.save(translation, group.parentId);
   }
 
+  async moveWithTranslations(
+    group: PageGroup,
+    translations: PageTranslation[],
+  ): Promise<void> {
+    if (!this.translationRepository) {
+      throw new Error(
+        'InMemoryPageGroupRepository needs its translation repository to move a page',
+      );
+    }
+    for (const translation of translations) {
+      const taken =
+        await this.translationRepository.findByParentGroupAndLocaleSlug(
+          group.tenantId,
+          group.siteId,
+          translation.locale,
+          group.parentId,
+          translation.slug,
+        );
+      if (taken && taken.id !== translation.id) {
+        throw new PageSlugAlreadyExistsError(translation.slug);
+      }
+    }
+    await this.save(group);
+    for (const translation of translations) {
+      await this.translationRepository.save(translation, group.parentId);
+    }
+  }
+
   async findById(
     tenantId: string,
     pageGroupId: string,
@@ -431,6 +459,29 @@ export class InMemoryPageTranslationRepository implements PageTranslationReposit
         translation.locale === locale &&
         translation.formerSlugs.includes(slug) &&
         this.parentGroupIds.get(translation.id) === parentGroupId
+      ) {
+        return translation;
+      }
+    }
+    return null;
+  }
+
+  async findByFormerParent(
+    tenantId: string,
+    siteId: string,
+    locale: string,
+    parentGroupId: string | null,
+    slug: string,
+  ): Promise<PageTranslation | null> {
+    for (const translation of this.translations.values()) {
+      if (
+        translation.tenantId === tenantId &&
+        translation.siteId === siteId &&
+        translation.locale === locale &&
+        translation.formerParents.some(
+          (former) =>
+            former.parentGroupId === parentGroupId && former.slug === slug,
+        )
       ) {
         return translation;
       }

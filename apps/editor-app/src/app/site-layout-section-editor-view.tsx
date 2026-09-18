@@ -136,11 +136,17 @@ export function SiteLayoutSectionEditorView({
                 restoredAt={restoredAt}
               >
                 <VersionHistoryDialog
-                  versions={versions}
-                  isLoading={isLoadingVersions}
+                  sources={[
+                    {
+                      key: 'section',
+                      label: t('pages.versionHistory.title'),
+                      versions,
+                      isLoading: isLoadingVersions,
+                      onRollback: handleRollback,
+                    },
+                  ]}
                   open={isHistoryOpen}
                   onOpenChange={setIsHistoryOpen}
-                  onRollback={handleRollback}
                 />
               </CanvasEditorShell>
             )

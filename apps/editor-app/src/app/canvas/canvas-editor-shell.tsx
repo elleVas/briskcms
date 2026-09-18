@@ -454,6 +454,15 @@ export function CanvasEditorShell({
     rootRects,
     iframeGeometry,
     handleReorder,
+    handleReparent,
+    // The same two answers the Layers panel asks for, so one gesture
+    // cannot be allowed in one place and refused in the other.
+    containerRules: {
+      isContainerType: (type) =>
+        Boolean(registry.find((d) => d.type === type)?.isContainer),
+      canContain: (parentType, childType) =>
+        canPlace(registry, parentType, childType),
+    },
   });
 
   const {
@@ -595,13 +604,19 @@ export function CanvasEditorShell({
         </CollapsibleSidePanel>
         <div style={{ flex: 1, minHeight: 0, position: 'relative' }}>
           <CanvasFrame
-            key={canvasNonce}
+            // A restore remounts it too: the iframe draws the draft the
+            // server renders, and a restored version is a new draft there.
+            // Resetting only the local tree left the layers showing the
+            // restored page and the canvas the one before it.
+            key={`${canvasNonce}:${restoredAt}`}
             pageId={pageId}
             editingSection={editingSection}
             sectionPreview={sectionPreview}
             iframeRef={iframeRef}
             bridge={bridge}
             dropIndicatorTop={liveDropTarget?.indicatorTop}
+            dropIndicatorLeft={liveDropTarget?.indicatorLeft}
+            dropIndicatorWidth={liveDropTarget?.indicatorWidth}
             breakpoint={breakpoint}
           />
           {selectedBlock &&

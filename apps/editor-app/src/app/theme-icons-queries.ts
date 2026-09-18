@@ -24,3 +24,35 @@ export function themeIconsQueryOptions(
     staleTime: Infinity,
   });
 }
+
+/** How many logos one search shows — enough to find one, far from the whole set. */
+export const BRAND_SEARCH_LIMIT = 120;
+
+/**
+ * The logos matching a search, fetched per search rather than all at once:
+ * the brand set is 5.2MB, and opening its tab to find one logo used to
+ * download every logo there is (ADR-0053).
+ */
+export function brandIconSearchQueryOptions(themeName: string, search: string) {
+  return queryOptions({
+    queryKey: ['theme-icons', themeName, 'brand', 'search', search] as const,
+    queryFn: () =>
+      fetchThemeIcons(themeName, 'brand', {
+        search,
+        limit: BRAND_SEARCH_LIMIT,
+      }),
+    enabled: themeName !== '',
+    staleTime: Infinity,
+  });
+}
+
+/** One logo by name — the preview of a logo already chosen, without the set it belongs to. */
+export function brandIconQueryOptions(themeName: string, name: string) {
+  return queryOptions({
+    queryKey: ['theme-icons', themeName, 'brand', 'name', name] as const,
+    queryFn: async () =>
+      (await fetchThemeIcons(themeName, 'brand', { names: [name] }))[0] ?? null,
+    enabled: themeName !== '' && name !== '',
+    staleTime: Infinity,
+  });
+}

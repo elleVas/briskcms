@@ -24,9 +24,9 @@ export interface DivergePageTranslationInput {
 
 /**
  * The "scollega" action — forks the current merge (group structure + this
- * locale's fieldValues) into a standalone `divergedContent`. Irreversible
- * in v1 (no re-link, see the plan) — after this, structural edits to
- * PageGroup.content no longer reach this translation.
+ * locale's fieldValues) into a standalone `divergedContent`. After this,
+ * structural edits to PageGroup.content no longer reach this translation,
+ * until relinkPageTranslation brings it back (docs/adr/0075).
  */
 export async function divergePageTranslation(
   deps: DivergePageTranslationDeps,
@@ -56,15 +56,7 @@ export async function divergePageTranslation(
 
   await deps.pageTranslationRepository.saveWithVersion(
     translation,
-    {
-      id: randomUUID(),
-      tenantId: translation.tenantId,
-      pageTranslationId: translation.id,
-      fieldValues: translation.fieldValues,
-      seoMeta: translation.seoMeta,
-      createdBy: input.actorUserId,
-      createdAt: translation.updatedAt,
-    },
+    translation.toVersion(randomUUID()),
     group.parentId,
   );
 

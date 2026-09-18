@@ -7,9 +7,15 @@ import {
 } from '@testing-library/react';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { buildCollectionRecord } from '@brisk/testing/records';
+import type { PageGroupListItemRecord } from '@brisk/shared-types';
+import {
+  buildCollectionRecord,
+  buildPageGroupListItemRecord,
+  buildPageGroupListItemTranslation,
+} from '@brisk/testing/records';
 import * as collectionsApi from '../lib/collections-api-client';
 import { ApiError } from '../lib/http-client';
+import * as pageGroupsApi from '../lib/page-groups-api-client';
 import * as sectionsApi from '../lib/reusable-sections-api-client';
 import { createTestQueryClient } from '../test/query-client.test-fixture';
 import { buildReusableSectionListItemDto } from '../test/dtos.test-fixture';
@@ -22,6 +28,12 @@ vi.mock('../lib/reusable-sections-api-client', async (importOriginal) => {
       typeof import('../lib/reusable-sections-api-client')
     >();
   return { ...actual, listReusableSections: vi.fn() };
+});
+
+vi.mock('../lib/page-groups-api-client', async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import('../lib/page-groups-api-client')>();
+  return { ...actual, listPageGroups: vi.fn() };
 });
 
 vi.mock('../lib/collections-api-client', async (importOriginal) => {
@@ -53,6 +65,7 @@ function renderDialog({
   onCreate = vi.fn<(input: NewPageGroupInput) => Promise<unknown>>(() =>
     Promise.resolve(),
   ),
+  existingPages = [],
 }: {
   /** A promise to hold the answer back, for what the dialog does while it waits. */
   sections?:
@@ -61,6 +74,8 @@ function renderDialog({
   collectionId?: string | null;
   defaultTemplateId?: string | null;
   onCreate?: (input: NewPageGroupInput) => Promise<unknown>;
+  /** What the parent choice offers — empty unless a test is about it. */
+  existingPages?: PageGroupListItemRecord[];
 } = {}) {
   vi.mocked(sectionsApi.listReusableSections).mockReturnValue(
     Promise.resolve(sections),
@@ -68,10 +83,15 @@ function renderDialog({
   vi.mocked(collectionsApi.listCollections).mockResolvedValue([
     buildCollectionRecord({ id: 'news', defaultTemplateId }),
   ]);
+  vi.mocked(pageGroupsApi.listPageGroups).mockResolvedValue({
+    items: existingPages,
+    total: existingPages.length,
+  });
   render(
     <QueryClientProvider client={createTestQueryClient()}>
       <NewPageGroupDialog
         siteId="site-1"
+        defaultLocale="it"
         collectionId={collectionId}
         open
         onOpenChange={vi.fn()}
@@ -93,6 +113,43 @@ describe('NewPageGroupDialog', () => {
     vi.clearAllMocks();
   });
 
+  /*
+   * A page created inside another one starts at its address: until now
+   * every new page landed at the root and the only way down was to move
+   * it afterwards, which did not exist either (docs/adr/0074).
+   */
+  it('creates the page under the page chosen as its parent', async () => {
+    const { onCreate } = renderDialog({
+      sections: [],
+      existingPages: [
+        buildPageGroupListItemRecord({
+          id: 'services',
+          translations: [
+            buildPageGroupListItemTranslation({
+              slug: 'servizi',
+              title: 'Servizi',
+            }),
+          ],
+        }),
+      ],
+    });
+
+    typeName('Idraulica');
+    fireEvent.click(
+      await screen.findByRole('combobox', { name: 'Pagina genitore' }),
+    );
+    fireEvent.click(await screen.findByRole('option', { name: 'Servizi' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Crea' }));
+
+    await waitFor(() =>
+      expect(onCreate).toHaveBeenCalledWith({
+        name: 'Idraulica',
+        templateId: null,
+        parentId: 'services',
+      }),
+    );
+  });
+
   it('asks nothing about templates on a site that has none', async () => {
     const { onCreate } = renderDialog({ sections: [] });
 
@@ -109,6 +166,7 @@ describe('NewPageGroupDialog', () => {
       expect(onCreate).toHaveBeenCalledWith({
         name: 'Chi siamo',
         templateId: null,
+        parentId: null,
       }),
     );
   });
@@ -138,7 +196,9 @@ describe('NewPageGroupDialog', () => {
     });
 
     await waitFor(() => expect(create.hasAttribute('disabled')).toBe(false));
-    expect(screen.getByRole('combobox').textContent).toBe('Articolo blog');
+    expect(screen.getByRole('combobox', { name: 'Parti da' }).textContent).toBe(
+      'Articolo blog',
+    );
   });
 
   it('offers only published templates — never a shared section, never a draft', async () => {
@@ -155,7 +215,7 @@ describe('NewPageGroupDialog', () => {
       ],
     });
 
-    fireEvent.click(await screen.findByRole('combobox'));
+    fireEvent.click(await screen.findByRole('combobox', { name: 'Parti da' }));
 
     const options = screen
       .getAllByRole('option')
@@ -166,7 +226,7 @@ describe('NewPageGroupDialog', () => {
   it('starts blank on the Pages screen, and sends the template picked', async () => {
     const { onCreate } = renderDialog();
 
-    const select = await screen.findByRole('combobox');
+    const select = await screen.findByRole('combobox', { name: 'Parti da' });
     expect(select.textContent).toBe('Pagina vuota');
     fireEvent.click(select);
     fireEvent.click(screen.getByRole('option', { name: 'Scheda servizio' }));
@@ -177,6 +237,7 @@ describe('NewPageGroupDialog', () => {
       expect(onCreate).toHaveBeenCalledWith({
         name: 'Idraulico Milano',
         templateId: 'service',
+        parentId: null,
       }),
     );
   });
@@ -188,9 +249,11 @@ describe('NewPageGroupDialog', () => {
     });
 
     await waitFor(() =>
-      expect(screen.getByRole('combobox').textContent).toBe('Articolo blog'),
+      expect(
+        screen.getByRole('combobox', { name: 'Parti da' }).textContent,
+      ).toBe('Articolo blog'),
     );
-    fireEvent.click(screen.getByRole('combobox'));
+    fireEvent.click(screen.getByRole('combobox', { name: 'Parti da' }));
     fireEvent.click(screen.getByRole('option', { name: 'Pagina vuota' }));
     typeName('Nuovo articolo');
     fireEvent.click(screen.getByRole('button', { name: 'Crea' }));
@@ -199,6 +262,7 @@ describe('NewPageGroupDialog', () => {
       expect(onCreate).toHaveBeenCalledWith({
         name: 'Nuovo articolo',
         templateId: null,
+        parentId: null,
       }),
     );
   });
@@ -209,9 +273,9 @@ describe('NewPageGroupDialog', () => {
     await waitFor(() =>
       expect(collectionsApi.listCollections).toHaveBeenCalled(),
     );
-    expect((await screen.findByRole('combobox')).textContent).toBe(
-      'Pagina vuota',
-    );
+    expect(
+      (await screen.findByRole('combobox', { name: 'Parti da' })).textContent,
+    ).toBe('Pagina vuota');
   });
 
   it('says a name is too long for an address before sending it', async () => {
@@ -243,7 +307,7 @@ describe('NewPageGroupDialog', () => {
         ),
     });
 
-    fireEvent.click(await screen.findByRole('combobox'));
+    fireEvent.click(await screen.findByRole('combobox', { name: 'Parti da' }));
     fireEvent.click(screen.getByRole('option', { name: 'Scheda servizio' }));
     typeName('Idraulico Milano');
     fireEvent.click(screen.getByRole('button', { name: 'Crea' }));
@@ -263,7 +327,7 @@ describe('NewPageGroupDialog', () => {
       onCreate: () => Promise.reject(new ApiError(404, { message: 'gone' })),
     });
 
-    fireEvent.click(await screen.findByRole('combobox'));
+    fireEvent.click(await screen.findByRole('combobox', { name: 'Parti da' }));
     fireEvent.click(screen.getByRole('option', { name: 'Scheda servizio' }));
     typeName('Idraulico Milano');
     fireEvent.click(screen.getByRole('button', { name: 'Crea' }));

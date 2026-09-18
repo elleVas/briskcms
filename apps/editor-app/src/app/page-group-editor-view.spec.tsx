@@ -6,7 +6,7 @@ import {
   waitFor,
   within,
 } from '@testing-library/react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { QueryClientProvider } from '@tanstack/react-query';
 import type { Block } from '@brisk/shared-types';
 import {
@@ -14,6 +14,7 @@ import {
   buildPageGroupRecord,
   buildPageGroupVersionRecord,
   buildPageTranslationRecord,
+  buildPageTranslationVersionRecord,
 } from '@brisk/testing/records';
 import { TooltipProvider } from '../components/ui/tooltip';
 import { ApiError } from '../lib/http-client';
@@ -50,6 +51,9 @@ vi.mock('../lib/page-groups-api-client', async (importOriginal) => {
     updatePageTranslationSeoMeta: vi.fn(),
     listPageGroupVersions: vi.fn(),
     rollbackPageGroupToVersion: vi.fn(),
+    listPageTranslationVersions: vi.fn(),
+    rollbackPageTranslationToVersion: vi.fn(),
+    relinkPageTranslation: vi.fn(),
     createPageGroupTranslation: vi.fn(),
     savePageGroupAsTemplate: vi.fn(),
   };
@@ -94,6 +98,7 @@ function renderView(
   enabledLocales: string[] = ['en', 'it'],
   group: api.PageGroupRecord = sampleGroup,
   collections: CollectionRecord[] = [],
+  initialLocale = 'en',
 ) {
   vi.mocked(previewTokenApi.createTranslationPreviewToken).mockResolvedValue({
     token: 'tok123',
@@ -117,7 +122,7 @@ function renderView(
         <ToastProvider>
           <PageGroupEditorView
             groupId="group-1"
-            initialLocale="en"
+            initialLocale={initialLocale}
             defaultLocale="en"
             enabledLocales={enabledLocales}
           />
@@ -137,6 +142,10 @@ async function openPageMenu() {
 }
 
 describe('PageGroupEditorView', () => {
+  beforeEach(() => {
+    vi.mocked(api.listPageTranslationVersions).mockResolvedValue([]);
+  });
+
   afterEach(() => {
     vi.clearAllMocks();
   });
@@ -329,6 +338,193 @@ describe('PageGroupEditorView', () => {
         await screen.findByText('Esiste già una sezione con questo nome.'),
       ).toBeTruthy();
     });
+  });
+
+  describe('an unlinked language', () => {
+    const fork: Block[] = [
+      { id: 'hero-1', type: 'Hero', props: { title: 'Ciao' } },
+      { id: 'only-here', type: 'Text', props: { body: '<p>Solo qui</p>' } },
+    ];
+    const itUnlinked = buildPageTranslationRecord({
+      id: 'translation-it',
+      locale: 'it',
+      isDiverged: true,
+      divergedContent: fork,
+    });
+
+    function renderUnlinked() {
+      return renderView(
+        [enTranslation, itUnlinked],
+        ['en', 'it'],
+        sampleGroup,
+        [],
+        'it',
+      );
+    }
+
+    /*
+     * Unlinking used to be for good. The way back keeps the text of every
+     * block the shared structure still has, and says first what it drops.
+     */
+    it('relinks it with the text of the blocks the shared structure still has, saying first what it drops', async () => {
+      vi.mocked(api.relinkPageTranslation).mockResolvedValue({
+        ...itUnlinked,
+        isDiverged: false,
+        divergedContent: null,
+        fieldValues: { 'hero-1': { title: 'Ciao' } },
+      });
+      renderUnlinked();
+
+      await openPageMenu();
+      expect(
+        screen.queryByRole('button', { name: 'Scollega questa lingua' }),
+      ).toBeNull();
+      fireEvent.click(
+        await screen.findByRole('button', { name: 'Ricollega questa lingua' }),
+      );
+
+      const dialog = await screen.findByRole('alertdialog');
+      expect(
+        within(dialog).getByText('Ricollegare IT alla struttura condivisa?'),
+      ).toBeTruthy();
+      expect(dialog.textContent).toContain(
+        '1 blocco esiste solo in questa lingua e verrà tolto.',
+      );
+      expect(dialog.textContent).toContain(
+        'resta nella cronologia di questa lingua',
+      );
+      fireEvent.click(
+        within(dialog).getByRole('button', { name: 'Ricollega' }),
+      );
+
+      await waitFor(() =>
+        expect(api.relinkPageTranslation).toHaveBeenCalledWith(
+          'translation-it',
+          { 'hero-1': { title: 'Ciao' } },
+        ),
+      );
+      expect(
+        await screen.findByText('IT segue di nuovo la struttura condivisa.'),
+      ).toBeTruthy();
+    });
+
+    it('does not relink when the last edit never reached the server', async () => {
+      hasFailedSave.mockReturnValueOnce(true);
+      renderUnlinked();
+
+      await openPageMenu();
+      fireEvent.click(
+        await screen.findByRole('button', { name: 'Ricollega questa lingua' }),
+      );
+      fireEvent.click(
+        within(await screen.findByRole('alertdialog')).getByRole('button', {
+          name: 'Ricollega',
+        }),
+      );
+
+      expect(
+        await screen.findByText(/la lingua non è stata ricollegata/),
+      ).toBeTruthy();
+      expect(api.relinkPageTranslation).not.toHaveBeenCalled();
+    });
+
+    it('shows only its own history, and restores the fork from it', async () => {
+      vi.mocked(api.listPageTranslationVersions).mockResolvedValue([
+        buildPageTranslationVersionRecord({
+          id: 'linked-text',
+          pageTranslationId: 'translation-it',
+          createdAt: '2026-01-01T00:00:00.000Z',
+        }),
+        buildPageTranslationVersionRecord({
+          id: 'older-fork',
+          pageTranslationId: 'translation-it',
+          divergedContent: fork.slice(0, 1),
+          createdAt: '2026-01-02T00:00:00.000Z',
+        }),
+        buildPageTranslationVersionRecord({
+          id: 'current-fork',
+          pageTranslationId: 'translation-it',
+          divergedContent: fork,
+          createdAt: '2026-01-03T00:00:00.000Z',
+        }),
+      ]);
+      vi.mocked(api.rollbackPageTranslationToVersion).mockResolvedValue({
+        ...itUnlinked,
+        divergedContent: fork.slice(0, 1),
+      });
+      renderUnlinked();
+
+      await openPageMenu();
+      fireEvent.click(
+        await screen.findByRole('button', { name: 'Cronologia versioni' }),
+      );
+
+      const restoreButtons = await screen.findAllByRole('button', {
+        name: /^ripristina$/i,
+      });
+      expect(restoreButtons).toHaveLength(2);
+      // The structure's history is not offered: it no longer reaches this
+      // language at all.
+      expect(screen.queryByRole('tablist')).toBeNull();
+      expect(api.listPageGroupVersions).not.toHaveBeenCalled();
+      expect(
+        screen.getAllByText(
+          'Scollegata: ripristinarla scollega di nuovo la lingua',
+        ),
+      ).toHaveLength(2);
+
+      fireEvent.click(restoreButtons[0]);
+
+      await waitFor(() =>
+        expect(api.rollbackPageTranslationToVersion).toHaveBeenCalledWith(
+          'translation-it',
+          'older-fork',
+        ),
+      );
+    });
+  });
+
+  it("offers a linked language both the structure's history and its own", async () => {
+    const itLinked = buildPageTranslationRecord({
+      id: 'translation-it',
+      locale: 'it',
+    });
+    vi.mocked(api.listPageGroupVersions).mockResolvedValue([
+      buildPageGroupVersionRecord({ id: 'structure-v1' }),
+    ]);
+    vi.mocked(api.listPageTranslationVersions).mockResolvedValue([
+      buildPageTranslationVersionRecord({
+        id: 'text-v1',
+        pageTranslationId: 'translation-it',
+        createdAt: '2026-01-01T00:00:00.000Z',
+      }),
+      buildPageTranslationVersionRecord({
+        id: 'text-v2',
+        pageTranslationId: 'translation-it',
+        createdAt: '2026-01-02T00:00:00.000Z',
+      }),
+    ]);
+    vi.mocked(api.rollbackPageTranslationToVersion).mockResolvedValue(itLinked);
+    renderView([enTranslation, itLinked], ['en', 'it'], sampleGroup, [], 'it');
+
+    await openPageMenu();
+    fireEvent.click(
+      await screen.findByRole('button', { name: 'Cronologia versioni' }),
+    );
+    fireEvent.click(await screen.findByRole('tab', { name: 'Solo IT' }));
+    fireEvent.click(
+      await screen.findByRole('button', { name: /^ripristina$/i }),
+    );
+
+    await waitFor(() =>
+      expect(api.rollbackPageTranslationToVersion).toHaveBeenCalledWith(
+        'translation-it',
+        'text-v1',
+      ),
+    );
+    expect(
+      screen.queryByRole('tab', { name: 'Struttura (tutte le lingue)' }),
+    ).toBeNull();
   });
 
   /*

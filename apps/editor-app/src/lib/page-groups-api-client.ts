@@ -115,6 +115,17 @@ export function movePageGroupToCollection(
   });
 }
 
+/** Where the page hangs in the site's tree — its address, and the address of everything under it (docs/adr/0074). */
+export function movePageGroupToParent(
+  id: string,
+  parentId: string | null,
+): Promise<PageGroupRecord> {
+  return requestGroup(`/page-groups/${id}/parent`, {
+    method: 'PATCH',
+    body: JSON.stringify({ parentId }),
+  });
+}
+
 export function savePageGroupContent(
   id: string,
   content: Block[],
@@ -269,6 +280,30 @@ export function divergePageTranslation(
   return requestTranslation(
     `/page-groups/translations/${translationId}/diverge`,
     { method: 'POST' },
+  );
+}
+
+/**
+ * Brings an unlinked language back onto the shared structure, with
+ * `fieldValues` as its text — `relinkedOverlay` over its fork.
+ */
+export function relinkPageTranslation(
+  translationId: string,
+  fieldValues: FieldValueOverlay,
+): Promise<PageTranslationRecord> {
+  return requestTranslation(
+    `/page-groups/translations/${translationId}/relink`,
+    { method: 'POST', body: JSON.stringify({ fieldValues }) },
+  );
+}
+
+export function rollbackPageTranslationToVersion(
+  translationId: string,
+  versionId: string,
+): Promise<PageTranslationRecord> {
+  return requestTranslation(
+    `/page-groups/translations/${translationId}/rollback`,
+    { method: 'PATCH', body: JSON.stringify({ versionId }) },
   );
 }
 

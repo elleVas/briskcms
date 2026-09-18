@@ -70,7 +70,15 @@ export class IntegrationApp {
     app.useGlobalFilters(new HttpExceptionFilter());
     app.use(requestIdMiddleware);
     options.beforeInit?.(app);
-    await app.init();
+    /*
+     * `listen(0)` rather than `init()`: supertest, handed a server that is
+     * not listening, opens an ephemeral listener per request and closes it
+     * afterwards, while `request.agent` keeps its connections alive between
+     * requests. A reused connection whose listener has just closed fails the
+     * request with `socket hang up` — roughly one run in five, always a
+     * single test, never the same one twice.
+     */
+    await app.listen(0);
     return new IntegrationApp(app, app.get<BriskDb>(DATABASE), tenantId);
   }
 

@@ -1,10 +1,12 @@
 import {
   mergeTranslatedContent,
   type FieldValueOverlay,
+  type FormerParentLocation,
   type PageContent,
   type SeoMeta,
 } from '@brisk/shared-types';
 import type { EditContext } from './edit-context';
+import type { PageTranslationVersion } from './page-translation-version';
 
 export type PageTranslationStatus = 'draft' | 'published';
 
@@ -19,6 +21,8 @@ export interface PageTranslationProps {
   slug: string;
   /** Every address this translation answered to before its current one, oldest first — see `updateSlug`. */
   formerSlugs: string[];
+  /** Every place in the tree this translation used to hang from, oldest first — see `recordMovedFrom`. A slug remembers a rename; this remembers a move. */
+  formerParents: FormerParentLocation[];
   seoMeta: SeoMeta;
   /** Override di SOLI campi `translatable`, chiavati per blocco — vedi mergeTranslatedContent. Ignorato quando `isDiverged` è true (una traduzione scollegata ha la propria struttura+testo interamente in `divergedContent`). */
   fieldValues: FieldValueOverlay;
@@ -73,6 +77,7 @@ export class PageTranslation {
       locale: input.locale,
       slug: input.slug,
       formerSlugs: [],
+      formerParents: [],
       seoMeta: input.seoMeta,
       fieldValues: input.fieldValues ?? {},
       status: 'draft',
@@ -122,6 +127,10 @@ export class PageTranslation {
 
   get formerSlugs(): readonly string[] {
     return this.props.formerSlugs;
+  }
+
+  get formerParents(): readonly FormerParentLocation[] {
+    return this.props.formerParents;
   }
 
   get seoMeta(): SeoMeta {
@@ -229,6 +238,38 @@ export class PageTranslation {
     this.touch(edit);
   }
 
+  /**
+   * Remembers the address this language answered to before its page was
+   * moved elsewhere in the tree, for the same reason `updateSlug` does:
+   * every link anyone saved points at the old one.
+   *
+   * A rename changes the last segment of the address; a move changes the
+   * ones before it, and leaves nothing behind that public resolution
+   * could follow — the page is simply no longer among that parent's
+   * children. This is what it follows instead.
+   *
+   * Moving back to a parent this page already left drops that entry
+   * rather than leaving it in both places, so an address is never both
+   * the current answer and a redirect to itself.
+   */
+  recordMovedFrom(
+    fromParentGroupId: string | null,
+    toParentGroupId: string | null,
+    edit: EditContext,
+  ): void {
+    if (fromParentGroupId === toParentGroupId) return;
+    const isWhereItNowLives = (former: FormerParentLocation) =>
+      former.parentGroupId === toParentGroupId &&
+      former.slug === this.props.slug;
+    this.props.formerParents = [
+      ...this.props.formerParents.filter(
+        (former) => !isWhereItNowLives(former),
+      ),
+      { parentGroupId: fromParentGroupId, slug: this.props.slug },
+    ];
+    this.touch(edit);
+  }
+
   /** Saves this language's text overlay — NOT valid on an unlinked translation (the use case must check `isDiverged` before calling; the pure entity has no access to the field descriptors and cannot tell on its own). */
   saveFieldValues(fieldValues: FieldValueOverlay, edit: EditContext): void {
     this.props.fieldValues = fieldValues;
@@ -248,8 +289,7 @@ export class PageTranslation {
    * publish()) becomes the new, independent `divergedContent`. After this
    * call, structural changes to PageGroup.content no longer reach this
    * translation — use `saveDivergedContent` for subsequent edits, no longer
-   * `saveFieldValues`. Irreversible in v1 (there is no "relink" — see the
-   * plan, it is ambiguous which changes would win).
+   * `saveFieldValues`. `relink` is the way back (docs/adr/0075).
    */
   diverge(currentMergedContent: PageContent, edit: EditContext): void {
     this.props.isDiverged = true;
@@ -261,6 +301,64 @@ export class PageTranslation {
   saveDivergedContent(content: PageContent, edit: EditContext): void {
     this.props.divergedContent = content;
     this.props.contentUpdatedAt = this.touch(edit);
+  }
+
+  /**
+   * The way back from `diverge`: this language follows the shared
+   * structure again, with `fieldValues` as its text over it.
+   *
+   * The overlay is computed by the use case (`relinkedOverlay`, in
+   * @brisk/shared-types), because only the block registry knows which
+   * fields are translatable and this entity has no access to it — the same
+   * discipline as `saveFieldValues`. The fork is let go here; the use case
+   * keeps it in the version history first, so relinking is never the only
+   * copy of the work done on it.
+   */
+  relink(fieldValues: FieldValueOverlay, edit: EditContext): void {
+    this.props.isDiverged = false;
+    this.props.divergedContent = null;
+    this.props.fieldValues = fieldValues;
+    this.props.contentUpdatedAt = this.touch(edit);
+  }
+
+  /**
+   * Puts this language's content back the way a version holds it — its
+   * text over the shared structure, or its own tree when the version was
+   * taken while it was unlinked, in which case it is unlinked again.
+   *
+   * Content only: the SEO fields a version also records stay as they are
+   * now. They are read live and never published, and a restore that also
+   * rewrote the search title would change something the person did not
+   * look at in the history they chose from.
+   */
+  restoreVersion(
+    version: Pick<PageTranslationVersion, 'fieldValues' | 'divergedContent'>,
+    edit: EditContext,
+  ): void {
+    this.props.fieldValues = version.fieldValues;
+    this.props.isDiverged = version.divergedContent !== null;
+    this.props.divergedContent = version.divergedContent;
+    this.props.contentUpdatedAt = this.touch(edit);
+  }
+
+  /**
+   * This language's content as it stands now, as a version to keep —
+   * taken by every use case that changes it, right after the change, so
+   * the newest version is always what the editor shows. Relinking and
+   * restoring rely on that: the fork they let go of is already in the
+   * history, never only in the row being overwritten.
+   */
+  toVersion(versionId: string): PageTranslationVersion {
+    return {
+      id: versionId,
+      tenantId: this.props.tenantId,
+      pageTranslationId: this.props.id,
+      fieldValues: this.props.fieldValues,
+      seoMeta: this.props.seoMeta,
+      divergedContent: this.props.divergedContent,
+      createdBy: this.props.updatedBy,
+      createdAt: this.props.updatedAt,
+    };
   }
 
   /** Records the author and the moment of a change, and hands back that moment for whoever also needs it. */

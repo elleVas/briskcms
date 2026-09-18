@@ -2,6 +2,7 @@
 import type { GalleryProps } from '@brisk/shared-types';
 import { Translator } from '@brisk/theme-runtime';
 import OptimizedImage from '../OptimizedImage.astro';
+import { GRID_ITEM_SIZES } from '../../lib/image-sizes';
 
 type Props = GalleryProps & {
   locale: string;
@@ -61,6 +62,7 @@ const i18n = new Translator(locale);
                   media={image.media}
                   alt={image.isDecorative ? '' : image.alt}
                   class="gallery-image"
+                  sizes={GRID_ITEM_SIZES}
                 />
               </button>
             ) : (
@@ -68,6 +70,7 @@ const i18n = new Translator(locale);
                 media={image.media}
                 alt={image.isDecorative ? '' : image.alt}
                 class="gallery-image"
+                sizes={GRID_ITEM_SIZES}
               />
             )}
             {image.caption && (

@@ -16,6 +16,7 @@ import {
   MediaNotFoundError,
   NotAPageTemplateError,
   PageGroupNotFoundError,
+  PageGroupCannotBeItsOwnAncestorError,
   PageGroupReorderMismatchError,
   PageGroupVersionNotFoundError,
   PageSlugAlreadyExistsError,
@@ -24,6 +25,7 @@ import {
   PageTranslationLocaleAlreadyExistsError,
   PageTranslationNotDivergedError,
   PageTranslationNotFoundError,
+  PageTranslationVersionNotFoundError,
   ReusableSectionNameAlreadyExistsError,
   ReusableSectionNotFoundError,
   ReusableSectionVersionNotFoundError,
@@ -85,6 +87,7 @@ const DOMAIN_ERROR_MAPPINGS: Array<[Type<Error>, DomainErrorFactory]> = [
   [PageGroupNotFoundError, (m) => new NotFoundException(m)],
   [PageGroupVersionNotFoundError, (m) => new NotFoundException(m)],
   [PageTranslationNotFoundError, (m) => new NotFoundException(m)],
+  [PageTranslationVersionNotFoundError, (m) => new NotFoundException(m)],
   [FormNotFoundError, (m) => new NotFoundException(m)],
   [ReusableSectionNotFoundError, (m) => new NotFoundException(m)],
   [ReusableSectionVersionNotFoundError, (m) => new NotFoundException(m)],
@@ -110,6 +113,9 @@ const DOMAIN_ERROR_MAPPINGS: Array<[Type<Error>, DomainErrorFactory]> = [
   // state.
   [CannotChangeYourOwnAccessError, (m) => new ForbiddenException(m)],
   [PageGroupReorderMismatchError, (m) => new BadRequestException(m)],
+  // A ring in the tree is a request that cannot be satisfied, not a
+  // conflict with someone else's write.
+  [PageGroupCannotBeItsOwnAncestorError, (m) => new BadRequestException(m)],
   [InvalidFormSubmissionError, (m) => new BadRequestException(m)],
   [InvalidCaptchaError, (m) => new BadRequestException(m)],
   [UserSlugAlreadyExistsError, (m) => new ConflictException(m)],

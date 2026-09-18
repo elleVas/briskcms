@@ -55,6 +55,7 @@ describe('PageGroupsController (unit)', () => {
       listBySiteFiltered: jest.fn(),
       listContentBySite: jest.fn().mockResolvedValue([]),
       listSiblings: jest.fn(),
+      moveWithTranslations: jest.fn(),
       delete: jest.fn(),
     };
     pageGroupVersionRepository = {
@@ -71,6 +72,7 @@ describe('PageGroupsController (unit)', () => {
       listPublishedBySite: jest.fn().mockResolvedValue([]),
       findByParentGroupAndLocaleSlug: jest.fn(),
       findByFormerSlug: jest.fn(),
+      findByFormerParent: jest.fn(),
       delete: jest.fn(),
     };
     pageTranslationVersionRepository = {

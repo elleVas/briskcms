@@ -13,6 +13,7 @@ import { publishPageTranslation } from './publish-page-translation.use-case';
 import { savePageGroupContent } from './save-page-group-content.use-case';
 import { getPublishedPageBySlug } from './get-published-page-by-slug.use-case';
 import { renamePageTranslation } from './rename-page-translation.use-case';
+import { movePageGroupToParent } from './move-page-group-to-parent.use-case';
 import {
   InMemoryPageGroupRepository,
   InMemoryPageGroupVersionRepository,
@@ -34,14 +35,18 @@ describe('getPublishedPageBySlug', () => {
     const pageGroupVersionRepository = new InMemoryPageGroupVersionRepository();
     const pageTranslationVersionRepository =
       new InMemoryPageTranslationVersionRepository();
+    const pageTranslationRepository = new InMemoryPageTranslationRepository(
+      pageTranslationVersionRepository,
+    );
     return {
+      // The translation repository is a collaborator here because moving a
+      // page writes the group and its languages together.
       pageGroupRepository: new InMemoryPageGroupRepository(
         pageGroupVersionRepository,
+        pageTranslationRepository,
       ),
       pageGroupVersionRepository,
-      pageTranslationRepository: new InMemoryPageTranslationRepository(
-        pageTranslationVersionRepository,
-      ),
+      pageTranslationRepository,
       taxonomyRepository: new InMemoryTaxonomyRepository(),
       pageTranslationVersionRepository,
       siteRepository: new InMemorySiteRepository(),
@@ -211,6 +216,81 @@ describe('getPublishedPageBySlug', () => {
 
     expect(result.page).toBeNull();
     expect(result.redirectTo).toBe('/it/cosa-facciamo/idraulica');
+  });
+
+  /*
+   * A move changes the address of the page and of everything under it,
+   * and leaves nothing behind in the branch it left: the page is simply
+   * no longer among that parent's children (docs/adr/0074).
+   */
+  it('sends a visitor on when the page changed parent, not name', async () => {
+    const deps = setup();
+    await seedSite(deps.siteRepository);
+    const { group: services } = await createGroupAndPublish(deps, {
+      locale: 'it',
+      slug: 'servizi',
+      title: 'Servizi',
+    });
+    const { group: home } = await createGroupAndPublish(deps, {
+      locale: 'it',
+      slug: 'casa',
+      title: 'Casa',
+    });
+    const { group: plumbing } = await createGroupAndPublish(deps, {
+      locale: 'it',
+      slug: 'idraulica',
+      title: 'Idraulica',
+      parentGroupId: services.id,
+    });
+
+    await movePageGroupToParent(deps, {
+      tenantId,
+      pageGroupId: plumbing.id,
+      parentId: home.id,
+      actorUserId: null,
+    });
+
+    const result = await getPublishedPageBySlug(deps, {
+      tenantId,
+      domain: 'example.com',
+      locale: 'it',
+      segments: ['servizi', 'idraulica'],
+    });
+
+    expect(result.page).toBeNull();
+    expect(result.redirectTo).toBe('/it/casa/idraulica');
+  });
+
+  it('serves the moved page at the address it lives at now', async () => {
+    const deps = setup();
+    await seedSite(deps.siteRepository);
+    const { group: services } = await createGroupAndPublish(deps, {
+      locale: 'it',
+      slug: 'servizi',
+      title: 'Servizi',
+    });
+    const { group: plumbing } = await createGroupAndPublish(deps, {
+      locale: 'it',
+      slug: 'idraulica',
+      title: 'Idraulica',
+    });
+
+    await movePageGroupToParent(deps, {
+      tenantId,
+      pageGroupId: plumbing.id,
+      parentId: services.id,
+      actorUserId: null,
+    });
+
+    const result = await getPublishedPageBySlug(deps, {
+      tenantId,
+      domain: 'example.com',
+      locale: 'it',
+      segments: ['servizi', 'idraulica'],
+    });
+
+    expect(result.redirectTo).toBeNull();
+    expect(result.page).not.toBeNull();
   });
 
   it('serves the page normally at the address it actually lives at', async () => {

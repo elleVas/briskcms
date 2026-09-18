@@ -55,12 +55,14 @@ describe('usePageGroupsList', () => {
       await result.current.createPageGroup({
         name: 'Chi Siamo',
         templateId: null,
+        parentId: null,
       });
     });
 
     expect(api.createPageGroup).toHaveBeenCalledWith({
       siteId: 'site-1',
       collectionId: null,
+      parentId: null,
       translation: {
         locale: 'it',
         slug: 'chi-siamo',
@@ -90,12 +92,14 @@ describe('usePageGroupsList', () => {
       await result.current.createPageGroup({
         name: 'Nuovo articolo',
         templateId: 'template-1',
+        parentId: null,
       });
     });
 
     expect(api.createPageGroup).toHaveBeenCalledWith({
       siteId: 'site-1',
       collectionId: 'collection-news',
+      parentId: null,
       templateId: 'template-1',
       translation: {
         locale: 'it',
