@@ -590,6 +590,11 @@ export const pageTranslationVersions = pgTable(
       .references(() => pageTranslations.id, { onDelete: 'cascade' }),
     fieldValues: jsonb('field_values').notNull().$type<FieldValueOverlay>(),
     seoMeta: jsonb('seo_meta').notNull().$type<SeoMeta>(),
+    // The language's own tree when the version was taken while it was
+    // unlinked, `null` otherwise (docs/adr/0075). Nullable rather than a
+    // separate table: a version is one snapshot of one language, whichever
+    // shape its content had at that moment.
+    divergedContent: jsonb('diverged_content').$type<PageContent>(),
     createdBy: uuid('created_by').references(() => users.id, {
       onDelete: 'set null',
     }),

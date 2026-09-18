@@ -1,6 +1,6 @@
 # 0034 — Page content model: `PageGroup`/`PageTranslation` shared structure, replacing per-locale `Page` rows
 
-**Status**: Accepted — 2026-09-01
+**Status**: Accepted — 2026-09-01. Amended by [0075](0075-an-unlinked-language-can-be-relinked.md): unlinking a language is no longer irreversible.
 
 ## Context
 

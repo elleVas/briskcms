@@ -234,6 +234,75 @@ describe('PageTranslation entity', () => {
     ]);
   });
 
+  describe('relinking and restoring', () => {
+    const fork = [{ id: 'hero-1', type: 'Hero', props: { title: 'Ciao' } }];
+
+    it('relink follows the shared structure again with the text it is given', () => {
+      const translation = PageTranslation.create(baseInput);
+      translation.diverge(fork, EDIT);
+
+      translation.relink({ 'hero-1': { title: 'Ciao' } }, { by: 'user-2' });
+
+      expect(translation.isDiverged).toBe(false);
+      expect(translation.divergedContent).toBeNull();
+      expect(translation.fieldValues).toEqual({ 'hero-1': { title: 'Ciao' } });
+      expect(translation.updatedBy).toBe('user-2');
+      expect(
+        translation.currentContent([
+          { id: 'hero-1', type: 'Hero', props: { title: 'Hello' } },
+        ]),
+      ).toEqual(fork);
+    });
+
+    it('restoring a version taken while unlinked unlinks it again', () => {
+      const translation = PageTranslation.create(baseInput);
+
+      translation.restoreVersion(
+        { fieldValues: {}, divergedContent: fork },
+        EDIT,
+      );
+
+      expect(translation.isDiverged).toBe(true);
+      expect(translation.divergedContent).toEqual(fork);
+    });
+
+    it('restoring a version taken while linked links it again, with that text', () => {
+      const translation = PageTranslation.create(baseInput);
+      translation.diverge(fork, EDIT);
+
+      translation.restoreVersion(
+        {
+          fieldValues: { 'hero-1': { title: 'Prima' } },
+          divergedContent: null,
+        },
+        EDIT,
+      );
+
+      expect(translation.isDiverged).toBe(false);
+      expect(translation.divergedContent).toBeNull();
+      expect(translation.fieldValues).toEqual({
+        'hero-1': { title: 'Prima' },
+      });
+    });
+
+    it('a version is the content as it stands, by whoever changed it last', () => {
+      const translation = PageTranslation.create(baseInput);
+      const now = new Date('2026-09-18T10:00:00Z');
+      translation.diverge(fork, { by: 'user-2', now });
+
+      expect(translation.toVersion('version-1')).toEqual({
+        id: 'version-1',
+        tenantId: 'tenant-1',
+        pageTranslationId: 'translation-1',
+        fieldValues: {},
+        seoMeta: baseInput.seoMeta,
+        divergedContent: fork,
+        createdBy: 'user-2',
+        createdAt: now,
+      });
+    });
+  });
+
   it('updateSeoMeta/updateSlug update independently of publish state', () => {
     const translation = PageTranslation.create(baseInput);
     translation.publish([], EDIT);

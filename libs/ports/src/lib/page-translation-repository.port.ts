@@ -27,7 +27,7 @@ export interface PageTranslationRepositoryPort {
     translation: PageTranslation,
     parentGroupId: string | null,
   ): Promise<void>;
-  /** The same atomic transaction as PageRepositoryPort.saveWithVersion. Not valid for a just-unlinked translation saving `divergedContent`: that goes through PageGroupVersion (the same shape, see PageTranslationVersion's doc comment). */
+  /** The translation and a version of it in one atomic transaction — the version comes from `PageTranslation.toVersion`, linked or unlinked alike. */
   saveWithVersion(
     translation: PageTranslation,
     version: PageTranslationVersion,

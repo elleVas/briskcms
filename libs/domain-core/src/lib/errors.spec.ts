@@ -10,6 +10,7 @@ import {
   PageTranslationDivergedError,
   PageTranslationLocaleAlreadyExistsError,
   PageTranslationNotDivergedError,
+  PageTranslationVersionNotFoundError,
   PageTranslationNotFoundError,
   SiteLayoutSectionNotFoundError,
   SiteLayoutSectionVersionNotFoundError,
@@ -149,6 +150,16 @@ describe('PageTranslationDivergedError', () => {
     expect(error.message).toBe(
       'Page translation translation-1 is diverged from the shared structure',
     );
+  });
+});
+
+describe('PageTranslationVersionNotFoundError', () => {
+  it('carries the version id in its message and is a real Error', () => {
+    const error = new PageTranslationVersionNotFoundError('version-1');
+
+    expect(error).toBeInstanceOf(Error);
+    expect(error.name).toBe('PageTranslationVersionNotFoundError');
+    expect(error.message).toBe('Page translation version not found: version-1');
   });
 });
 

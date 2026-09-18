@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from '@tanstack/react-router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -8,9 +8,11 @@ import {
   History,
   Languages,
   LayoutTemplate,
+  Link2,
   Search,
   Tags,
 } from 'lucide-react';
+import { relinkedOverlay } from '@brisk/shared-types';
 import { ApiError, actionErrorMessage } from '../lib/http-client';
 import {
   savePageGroupAsTemplate,
@@ -35,7 +37,12 @@ import { usePageBlockRegistry } from './use-page-block-registry';
 import { useSaveStatusText } from './save-status-text';
 import { usePageGroupEditor } from './use-page-group-editor';
 import { usePageGroupVersions } from './use-page-group-versions';
-import { VersionHistoryDialog } from './version-history-dialog';
+import { usePageTranslationVersions } from './use-page-translation-versions';
+import { translatableFieldsOf } from './translatable-fields';
+import {
+  VersionHistoryDialog,
+  type VersionSource,
+} from './version-history-dialog';
 
 /**
  * Back to where this page is listed, which is not always Pages.
@@ -101,9 +108,9 @@ export interface PageGroupEditorViewProps {
  * model instead of reused wholesale (see page-group-seo-panel-dialog.tsx/
  * use-page-group-versions.ts/page-group-translations-dialog.tsx's own
  * doc comments for what changed and what didn't carry over). Version
- * history only tracks the shared PageGroup structure, not a diverged
- * translation's own divergedContent — a real, accepted gap, see
- * use-page-group-versions.ts's own comment. Page-picking (Link/NavLink/
+ * history has two sources: the shared structure and the active language's
+ * own content, which is where an unlinked language keeps its tree
+ * (docs/adr/0075). Page-picking (Link/NavLink/
  * Button/Banner/PromoBar/PricingPlan's `page` field) IS wired up, via
  * PageListProvider below.
  */
@@ -130,6 +137,7 @@ export function PageGroupEditorView({
     onSaveFieldValue,
     handlePublish,
     handleDiverge,
+    handleRelink,
   } = usePageGroupEditor(groupId, initialLocale);
   const statusText = useSaveStatusText(status, {
     publishedKey: 'pages.editor.published',
@@ -143,6 +151,7 @@ export function PageGroupEditorView({
         : undefined,
   });
   const [isDivergeConfirmOpen, setIsDivergeConfirmOpen] = useState(false);
+  const [isRelinkConfirmOpen, setIsRelinkConfirmOpen] = useState(false);
   const [isSeoOpen, setIsSeoOpen] = useState(false);
   const [isTermsOpen, setIsTermsOpen] = useState(false);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
@@ -150,15 +159,67 @@ export function PageGroupEditorView({
   const [restoredAt, setRestoredAt] = useState(0);
   const queryClient = useQueryClient();
   const { toast } = useToast();
-  const {
-    versions,
-    isLoading: isLoadingVersions,
-    rollback,
-  } = usePageGroupVersions(groupId, isHistoryOpen);
+  // An unlinked language no longer follows the shared structure, so that
+  // history is not offered there: restoring it would change every other
+  // language and leave the one on screen as it was.
+  const structureHistory = usePageGroupVersions(
+    groupId,
+    isHistoryOpen && !activeTranslation.isDiverged,
+  );
+  const languageHistory = usePageTranslationVersions(
+    groupId,
+    activeTranslation.id,
+    isHistoryOpen,
+  );
+  const translatableFields = useMemo(
+    () => translatableFieldsOf(registry),
+    [registry],
+  );
+
+  // What relinking would drop, for the dialog to say before it happens.
+  // Computed from what is on screen; the relink itself recomputes it from
+  // what the server holds once every pending save has landed.
+  const blocksLostOnRelink = useMemo(
+    () =>
+      activeTranslation.divergedContent
+        ? relinkedOverlay(
+            group.content,
+            activeTranslation.divergedContent,
+            translatableFields,
+          ).lostBlockCount
+        : 0,
+    [group.content, activeTranslation.divergedContent, translatableFields],
+  );
 
   async function confirmDiverge() {
     setIsDivergeConfirmOpen(false);
     await handleDiverge();
+  }
+
+  async function confirmRelink() {
+    setIsRelinkConfirmOpen(false);
+    try {
+      // The same wait as "save as template": relinking from a fork the
+      // server never received would carry over text that is not there.
+      await whenSaved();
+      if (hasFailedSave()) {
+        toast(t('canvas.language.relinkUnsaved'), 'destructive');
+        return;
+      }
+      await handleRelink(translatableFields);
+      setRestoredAt((n) => n + 1);
+      toast(
+        t('canvas.language.relinked', {
+          locale: activeLocale.toUpperCase(),
+        }),
+        'success',
+      );
+    } catch (caught) {
+      toast(
+        actionErrorMessage(caught, t('canvas.language.relinkFailed')),
+        'destructive',
+      );
+    }
   }
 
   /**
@@ -211,10 +272,52 @@ export function PageGroupEditorView({
     }
   }
 
-  async function handleRollback(versionId: string) {
-    await rollback(versionId);
-    setRestoredAt((n) => n + 1);
+  function restoringWith(rollback: (versionId: string) => Promise<unknown>) {
+    return async (versionId: string) => {
+      // A save still on its way would land after the restore and
+      // overwrite it with the page as it was before.
+      await whenSaved();
+      await rollback(versionId);
+      setRestoredAt((n) => n + 1);
+    };
   }
+
+  const languageLabel = activeLocale.toUpperCase();
+  const languageSource: VersionSource = {
+    key: 'language',
+    label: t('pages.versionHistory.sources.language', {
+      locale: languageLabel,
+    }),
+    versions: languageHistory.versions.map((version) => ({
+      id: version.id,
+      createdAt: version.createdAt,
+      // Restoring one of these unlinks the language again — the one thing
+      // a restore does here that it never did before.
+      note: version.divergedContent
+        ? t('pages.versionHistory.unlinkedNote')
+        : undefined,
+    })),
+    isLoading: languageHistory.isLoading,
+    onRollback: restoringWith(languageHistory.rollback),
+  };
+  const historySources: VersionSource[] = activeTranslation.isDiverged
+    ? [languageSource]
+    : [
+        {
+          key: 'structure',
+          label: t('pages.versionHistory.sources.structure'),
+          versions: structureHistory.versions,
+          isLoading: structureHistory.isLoading,
+          onRollback: restoringWith(structureHistory.rollback),
+        },
+        // The site's own language has its text IN the structure, so its
+        // own history is only ever the forks it had — offered once there
+        // is one, rather than as an empty tab next to every page.
+        ...(activeLocale !== defaultLocale ||
+        languageHistory.versions.length > 0
+          ? [languageSource]
+          : []),
+      ];
 
   return (
     // Same provider-nesting reasoning as page-editor-view.tsx, plus
@@ -287,15 +390,17 @@ export function PageGroupEditorView({
                   icon: LayoutTemplate,
                   onSelect: () => void handleSaveAsTemplate(),
                 },
-                ...(activeTranslation.isDiverged
-                  ? []
-                  : [
-                      {
-                        label: t('canvas.language.divergeAction'),
-                        icon: GitFork,
-                        onSelect: () => setIsDivergeConfirmOpen(true),
-                      },
-                    ]),
+                activeTranslation.isDiverged
+                  ? {
+                      label: t('canvas.language.relinkAction'),
+                      icon: Link2,
+                      onSelect: () => setIsRelinkConfirmOpen(true),
+                    }
+                  : {
+                      label: t('canvas.language.divergeAction'),
+                      icon: GitFork,
+                      onSelect: () => setIsDivergeConfirmOpen(true),
+                    },
                 // Same "only once there's something live to see" gate as
                 // before, and still a real link so it can be middle-clicked
                 // or copied.
@@ -319,11 +424,12 @@ export function PageGroupEditorView({
               restoredAt={restoredAt}
             >
               <VersionHistoryDialog
-                versions={versions}
-                isLoading={isLoadingVersions}
+                // Remounted per language, so a tab chosen on one does not
+                // carry over to another where it means something else.
+                key={activeTranslation.id}
+                sources={historySources}
                 open={isHistoryOpen}
                 onOpenChange={setIsHistoryOpen}
-                onRollback={handleRollback}
               />
               <PageGroupSeoPanelDialog
                 groupId={groupId}
@@ -359,6 +465,29 @@ export function PageGroupEditorView({
                 onConfirm={() => void confirmDiverge()}
                 actionLabel={t('canvas.language.divergeConfirmAction')}
                 actionVariant="default"
+              />
+              <ConfirmActionDialog
+                open={isRelinkConfirmOpen}
+                onOpenChange={setIsRelinkConfirmOpen}
+                title={t('canvas.language.relinkConfirmTitle', {
+                  locale: languageLabel,
+                })}
+                description={[
+                  t('canvas.language.relinkConfirmBody'),
+                  blocksLostOnRelink > 0
+                    ? t('canvas.language.relinkConfirmLost', {
+                        count: blocksLostOnRelink,
+                      })
+                    : null,
+                  t('canvas.language.relinkConfirmHistory'),
+                ]
+                  .filter(Boolean)
+                  .join(' ')}
+                onConfirm={() => void confirmRelink()}
+                actionLabel={t('canvas.language.relinkConfirmAction')}
+                actionVariant={
+                  blocksLostOnRelink > 0 ? 'destructive' : 'default'
+                }
               />
             </CanvasEditorShell>
           </PageListProvider>

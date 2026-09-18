@@ -6,10 +6,8 @@ import {
 } from '@brisk/postgres-db';
 
 /**
- * Inserts the per-locale text's version (overlay plus seoMeta). It
- * concerns only a LINKED translation — an unlinked one versions its own
- * `divergedContent` as a PageGroupVersion, see PageTranslationVersion's
- * doc comment. Retention lives in `saveVersionTx`.
+ * Inserts one language's version: its overlay and seoMeta, and its own
+ * tree when it is unlinked. Retention lives in `saveVersionTx`.
  */
 export async function savePageTranslationVersionTx(
   tx: BriskTx,

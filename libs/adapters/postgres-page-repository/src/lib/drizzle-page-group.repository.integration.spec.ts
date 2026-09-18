@@ -941,6 +941,7 @@ describe('DrizzlePageGroupRepository / DrizzlePageTranslationRepository (integra
             pageTranslationId: translation.id,
             fieldValues: translation.fieldValues,
             seoMeta: translation.seoMeta,
+            divergedContent: null,
             createdBy: null,
             createdAt: translation.updatedAt,
           },
@@ -957,6 +958,28 @@ describe('DrizzlePageGroupRepository / DrizzlePageTranslationRepository (integra
           translation.id,
         );
         expect(versions.map((v) => v.id)).toEqual([versionId]);
+      });
+
+      it("keeps an unlinked language's own tree in its version", async () => {
+        const group = buildGroup();
+        await groupRepository.save(group);
+        const translation = buildTranslation(group.id);
+        const fork = [
+          { id: 'hero-1', type: 'Hero', props: { title: 'Solo qui' } },
+        ];
+        translation.diverge(fork, { by: null });
+
+        await translationRepository.saveWithVersion(
+          translation,
+          translation.toVersion(randomUUID()),
+          null,
+        );
+
+        const [version] = await translationVersionRepository.listByTranslation(
+          tenantAId,
+          translation.id,
+        );
+        expect(version.divergedContent).toEqual(fork);
       });
 
       it('prunes to the last 10 versions per translation, oldest first', async () => {
@@ -977,6 +1000,7 @@ describe('DrizzlePageGroupRepository / DrizzlePageTranslationRepository (integra
               pageTranslationId: translation.id,
               fieldValues: { 'hero-1': { title: `v${i}` } },
               seoMeta: translation.seoMeta,
+              divergedContent: null,
               createdBy: null,
               createdAt: new Date(Date.now() - (11 - i) * 1000),
             },

@@ -262,7 +262,12 @@
       "description": "Restore a previous version's content as the draft. This does not publish automatically.",
       "empty": "No saved versions.",
       "current": "Current version",
-      "restore": "Restore"
+      "restore": "Restore",
+      "sources": {
+        "structure": "Structure (all languages)",
+        "language": "{{locale}} only"
+      },
+      "unlinkedNote": "Unlinked: restoring it unlinks the language again"
     },
     "seo": {
       "open": "SEO",
@@ -909,8 +914,18 @@
       "diverged": "Diverged from the shared structure",
       "divergeAction": "Unlink this language",
       "divergeConfirmTitle": "Unlink {{locale}} from the shared structure?",
-      "divergeConfirmBody": "This language will stop receiving structural changes (blocks added, removed, or reordered) made in other languages. This can't be undone.",
-      "divergeConfirmAction": "Unlink"
+      "divergeConfirmBody": "This language will stop receiving structural changes (blocks added, removed, or reordered) made in other languages. You can relink it later from the page menu.",
+      "divergeConfirmAction": "Unlink",
+      "relinkAction": "Relink this language",
+      "relinkConfirmTitle": "Relink {{locale}} to the shared structure?",
+      "relinkConfirmBody": "This language will follow the shared structure again: blocks that also exist there keep the text they have here, while images, settings and layout go back to the shared ones.",
+      "relinkConfirmLost_one": "{{count}} block exists only in this language and will be removed.",
+      "relinkConfirmLost_other": "{{count}} blocks exist only in this language and will be removed.",
+      "relinkConfirmHistory": "The unlinked version stays in this language's history and can be restored.",
+      "relinkConfirmAction": "Relink",
+      "relinked": "{{locale}} follows the shared structure again.",
+      "relinkUnsaved": "A save didn't go through, so the language was not relinked. Try again once your changes show as saved.",
+      "relinkFailed": "The language couldn't be relinked."
     },
     "style": {
       "editType": "Style all {{type}} blocks",

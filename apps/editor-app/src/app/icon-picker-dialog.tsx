@@ -5,6 +5,10 @@ import { ImageIcon } from 'lucide-react';
 import type { IconEntry } from '@brisk/shared-types';
 import { Button } from '../components/ui/button';
 import {
+  SegmentedTabs,
+  type SegmentedTab,
+} from '../components/ui/segmented-tabs';
+import {
   Dialog,
   DialogContent,
   DialogHeader,
@@ -73,7 +77,7 @@ export function IconPickerDialog({
     onOpenChange(next);
   }
 
-  const tabs: { value: IconSource; label: string }[] = [
+  const tabs: SegmentedTab<IconSource>[] = [
     { value: 'interface', label: t('icons.picker.sets.interface') },
     { value: 'brand', label: t('icons.picker.sets.brand') },
     { value: 'image', label: t('icons.picker.sets.image') },
@@ -85,24 +89,7 @@ export function IconPickerDialog({
         <DialogHeader>
           <DialogTitle>{t('icons.picker.title')}</DialogTitle>
         </DialogHeader>
-        <div className="flex gap-1" role="tablist">
-          {tabs.map((tab) => (
-            <button
-              key={tab.value}
-              type="button"
-              role="tab"
-              aria-selected={source === tab.value}
-              onClick={() => setSource(tab.value)}
-              className={
-                source === tab.value
-                  ? 'rounded-md border border-input bg-accent px-3 py-1.5 text-sm font-medium'
-                  : 'rounded-md border border-transparent px-3 py-1.5 text-sm text-muted-foreground'
-              }
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
+        <SegmentedTabs tabs={tabs} value={source} onChange={setSource} />
         {source === 'image' ? (
           <div className="flex flex-col items-start gap-3 py-4">
             <p className="text-sm text-muted-foreground">

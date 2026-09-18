@@ -102,6 +102,18 @@ export type SaveDivergedPageTranslationContentBody = z.infer<
   typeof saveDivergedPageTranslationContentBodySchema
 >;
 
+/**
+ * The fork's text as an overlay, computed by the editor — see
+ * relinkPageTranslation for why the API does not compute it itself. No
+ * `parentGroupId`: the use case reads it from the group, as diverging does.
+ */
+export const relinkPageTranslationBodySchema = z.object({
+  fieldValues: fieldValueOverlaySchema,
+});
+export type RelinkPageTranslationBody = z.infer<
+  typeof relinkPageTranslationBodySchema
+>;
+
 export const updatePageTranslationSeoMetaBodySchema = z.object({
   seoMeta: seoMetaSchema,
   parentGroupId: z.string().uuid().nullable(),
@@ -122,10 +134,11 @@ export type RenamePageTranslationBody = z.infer<
   typeof renamePageTranslationBodySchema
 >;
 
-export const rollbackPageGroupBodySchema = z.object({
+/** Restoring a version, of the shared structure or of one language alike. */
+export const rollbackToVersionBodySchema = z.object({
   versionId: z.string().uuid(),
 });
-export type RollbackPageGroupBody = z.infer<typeof rollbackPageGroupBodySchema>;
+export type RollbackToVersionBody = z.infer<typeof rollbackToVersionBodySchema>;
 
 export const reorderPageGroupsBodySchema = z.object({
   siteId: z.string().uuid(),

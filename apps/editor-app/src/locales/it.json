@@ -262,7 +262,12 @@
       "description": "Ripristina il contenuto di una versione precedente come bozza. Non pubblica automaticamente.",
       "empty": "Nessuna versione salvata.",
       "current": "Versione attuale",
-      "restore": "Ripristina"
+      "restore": "Ripristina",
+      "sources": {
+        "structure": "Struttura (tutte le lingue)",
+        "language": "Solo {{locale}}"
+      },
+      "unlinkedNote": "Scollegata: ripristinarla scollega di nuovo la lingua"
     },
     "seo": {
       "open": "SEO",
@@ -909,8 +914,18 @@
       "diverged": "Scollegata dalla struttura condivisa",
       "divergeAction": "Scollega questa lingua",
       "divergeConfirmTitle": "Scollegare {{locale}} dalla struttura condivisa?",
-      "divergeConfirmBody": "Questa lingua non riceverà più le modifiche strutturali (blocchi aggiunti, rimossi o riordinati) fatte nelle altre lingue. Non si può annullare.",
-      "divergeConfirmAction": "Scollega"
+      "divergeConfirmBody": "Questa lingua non riceverà più le modifiche strutturali (blocchi aggiunti, rimossi o riordinati) fatte nelle altre lingue. Potrai ricollegarla in seguito dal menu della pagina.",
+      "divergeConfirmAction": "Scollega",
+      "relinkAction": "Ricollega questa lingua",
+      "relinkConfirmTitle": "Ricollegare {{locale}} alla struttura condivisa?",
+      "relinkConfirmBody": "Questa lingua tornerà a seguire la struttura condivisa: i blocchi che esistono anche lì mantengono il testo che hanno qui, mentre immagini, impostazioni e disposizione tornano quelle condivise.",
+      "relinkConfirmLost_one": "{{count}} blocco esiste solo in questa lingua e verrà tolto.",
+      "relinkConfirmLost_other": "{{count}} blocchi esistono solo in questa lingua e verranno tolti.",
+      "relinkConfirmHistory": "La versione scollegata resta nella cronologia di questa lingua e si può ripristinare.",
+      "relinkConfirmAction": "Ricollega",
+      "relinked": "{{locale}} segue di nuovo la struttura condivisa.",
+      "relinkUnsaved": "Un salvataggio non è andato a buon fine: la lingua non è stata ricollegata. Riprova quando le modifiche risultano salvate.",
+      "relinkFailed": "Non è stato possibile ricollegare la lingua."
     },
     "style": {
       "editType": "Stile di tutti i blocchi {{type}}",

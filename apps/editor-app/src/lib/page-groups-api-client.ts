@@ -283,6 +283,30 @@ export function divergePageTranslation(
   );
 }
 
+/**
+ * Brings an unlinked language back onto the shared structure, with
+ * `fieldValues` as its text — `relinkedOverlay` over its fork.
+ */
+export function relinkPageTranslation(
+  translationId: string,
+  fieldValues: FieldValueOverlay,
+): Promise<PageTranslationRecord> {
+  return requestTranslation(
+    `/page-groups/translations/${translationId}/relink`,
+    { method: 'POST', body: JSON.stringify({ fieldValues }) },
+  );
+}
+
+export function rollbackPageTranslationToVersion(
+  translationId: string,
+  versionId: string,
+): Promise<PageTranslationRecord> {
+  return requestTranslation(
+    `/page-groups/translations/${translationId}/rollback`,
+    { method: 'PATCH', body: JSON.stringify({ versionId }) },
+  );
+}
+
 export async function listPageTranslationVersions(
   translationId: string,
 ): Promise<PageTranslationVersionRecord[]> {

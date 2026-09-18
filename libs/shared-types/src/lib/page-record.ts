@@ -189,6 +189,8 @@ export const pageTranslationVersionRecordSchema = z.object({
   pageTranslationId: z.string(),
   fieldValues: fieldValueOverlaySchema,
   seoMeta: seoMetaSchema,
+  /** Set when the version was taken while the language was unlinked — see `PageTranslationVersion`. */
+  divergedContent: z.array(blockSchema).nullable(),
   createdBy: z.string().nullable(),
   createdAt: z.string(),
 });

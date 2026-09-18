@@ -159,15 +159,7 @@ export async function generateLegalDocuments(
           translation.saveFieldValues(overlay, { by: input.createdBy });
           await deps.pageTranslationRepository.saveWithVersion(
             translation,
-            {
-              id: randomUUID(),
-              tenantId: translation.tenantId,
-              pageTranslationId: translation.id,
-              fieldValues: translation.fieldValues,
-              seoMeta: translation.seoMeta,
-              createdBy: input.createdBy,
-              createdAt: translation.updatedAt,
-            },
+            translation.toVersion(randomUUID()),
             group.parentId,
           );
         }
