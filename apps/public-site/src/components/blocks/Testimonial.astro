@@ -5,6 +5,7 @@ import {
 } from '@brisk/shared-types';
 import { Translator } from '@brisk/theme-runtime';
 import OptimizedImage from '../OptimizedImage.astro';
+import { fixedSizes } from '../../lib/image-sizes';
 
 type Props = TestimonialProps & { locale?: string; instanceClass?: string | null };
 
@@ -37,7 +38,12 @@ const STAR_POSITIONS = [1, 2, 3, 4, 5];
   <blockquote class="brisk-testimonial__quote brisk-rich-text" data-brisk-field="quote" set:html={quote} />
   <div class="brisk-testimonial__footer">
     {avatar && (
-      <OptimizedImage media={avatar} alt="" class="brisk-testimonial__avatar" />
+      <OptimizedImage
+        media={avatar}
+        alt=""
+        class="brisk-testimonial__avatar"
+        sizes={fixedSizes(40)}
+      />
     )}
     <div>
       <div class="brisk-testimonial__author" data-brisk-field="author">{author}</div>

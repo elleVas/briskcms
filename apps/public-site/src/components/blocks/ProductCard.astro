@@ -3,6 +3,7 @@ import type { ProductCardProps } from '@brisk/shared-types';
 import { richTextToPlainText } from '@brisk/shared-types';
 import { resolveLinkHref, Translator } from '@brisk/theme-runtime';
 import OptimizedImage from '../OptimizedImage.astro';
+import { GRID_ITEM_SIZES } from '../../lib/image-sizes';
 import Price from '../Price.astro';
 import { absoluteSchemaUrl } from '../../lib/schema-org';
 
@@ -87,6 +88,7 @@ const jsonLd =
             media={image}
             alt={alt}
             class="brisk-product-card__image"
+            sizes={GRID_ITEM_SIZES}
           />
           {badge && (
             <span class="brisk-product-card__badge" data-brisk-field="badge">

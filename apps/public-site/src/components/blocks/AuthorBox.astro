@@ -2,6 +2,7 @@
 import type { AuthorBoxProps, PickedMedia } from '@brisk/shared-types';
 import { Translator } from '@brisk/theme-runtime';
 import OptimizedImage from '../OptimizedImage.astro';
+import { fixedSizes } from '../../lib/image-sizes';
 import { absoluteSchemaUrl } from '../../lib/schema-org';
 
 type Props = AuthorBoxProps & {
@@ -104,6 +105,7 @@ const Root = isProfilePage ? 'header' : 'section';
           alt=""
           class="brisk-author-box__avatar"
           loading={isProfilePage ? 'eager' : 'lazy'}
+          sizes={fixedSizes(isProfilePage ? 96 : 64)}
         />
       ) : (
         <span class="brisk-author-box__avatar brisk-author-box__avatar--initial" aria-hidden="true">

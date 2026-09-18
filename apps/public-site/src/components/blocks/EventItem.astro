@@ -3,6 +3,7 @@ import type { EventItemProps } from '@brisk/shared-types';
 import { richTextToPlainText } from '@brisk/shared-types';
 import { resolveLinkHref, Translator } from '@brisk/theme-runtime';
 import OptimizedImage from '../OptimizedImage.astro';
+import { GRID_ITEM_SIZES } from '../../lib/image-sizes';
 import {
   isEventOver,
   readEventDates,
@@ -120,7 +121,12 @@ const jsonLd =
       >
         {image && (
           <div class="brisk-event-item__media">
-            <OptimizedImage media={image} alt="" class="brisk-event-item__image" />
+            <OptimizedImage
+              media={image}
+              alt=""
+              class="brisk-event-item__image"
+              sizes={GRID_ITEM_SIZES}
+            />
           </div>
         )}
         <div class="brisk-event-item__body">
