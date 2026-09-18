@@ -8,6 +8,9 @@ export interface OverlayLayerProps {
   selectedBlockId: string | null;
   /** The Y (iframe-relative, see compute-drop-target.ts) at which to draw the drop line during a direct canvas reorder — `null`/absent when no drag is in progress. */
   dropIndicatorTop?: number | null;
+  /** Set only for a drop inside a container — see toDropIndicatorStyle. */
+  dropIndicatorLeft?: number;
+  dropIndicatorWidth?: number;
 }
 
 export interface IframeGeometry {
@@ -87,12 +90,14 @@ export function toOverlayStyle(
 export function toDropIndicatorStyle(
   geometry: IframeGeometry,
   top: number,
+  /** A drop INSIDE a container draws the line across that container alone, so "in here" and "between these two" never look the same. */
+  span?: { left: number; width: number },
 ): CSSProperties {
   return {
     position: 'fixed',
     top: geometry.top + top - 1,
-    left: geometry.left,
-    width: geometry.width,
+    left: geometry.left + (span?.left ?? 0),
+    width: span?.width ?? geometry.width,
     height: 2,
   };
 }
@@ -260,6 +265,8 @@ export function OverlayLayer({
   hoveredBlockId,
   selectedBlockId,
   dropIndicatorTop,
+  dropIndicatorLeft,
+  dropIndicatorWidth,
 }: OverlayLayerProps) {
   const geometry = useIframeGeometry(iframeRef);
 
@@ -293,7 +300,13 @@ export function OverlayLayer({
         <div
           data-testid="drop-indicator"
           className="absolute rounded-full bg-primary"
-          style={toDropIndicatorStyle(geometry, dropIndicatorTop)}
+          style={toDropIndicatorStyle(
+            geometry,
+            dropIndicatorTop,
+            dropIndicatorLeft != null && dropIndicatorWidth != null
+              ? { left: dropIndicatorLeft, width: dropIndicatorWidth }
+              : undefined,
+          )}
         />
       )}
     </div>

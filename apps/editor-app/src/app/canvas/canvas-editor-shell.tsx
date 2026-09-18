@@ -454,6 +454,15 @@ export function CanvasEditorShell({
     rootRects,
     iframeGeometry,
     handleReorder,
+    handleReparent,
+    // The same two answers the Layers panel asks for, so one gesture
+    // cannot be allowed in one place and refused in the other.
+    containerRules: {
+      isContainerType: (type) =>
+        Boolean(registry.find((d) => d.type === type)?.isContainer),
+      canContain: (parentType, childType) =>
+        canPlace(registry, parentType, childType),
+    },
   });
 
   const {
@@ -602,6 +611,8 @@ export function CanvasEditorShell({
             iframeRef={iframeRef}
             bridge={bridge}
             dropIndicatorTop={liveDropTarget?.indicatorTop}
+            dropIndicatorLeft={liveDropTarget?.indicatorLeft}
+            dropIndicatorWidth={liveDropTarget?.indicatorWidth}
             breakpoint={breakpoint}
           />
           {selectedBlock &&

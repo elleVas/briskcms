@@ -441,8 +441,8 @@ function PageGroupRow({
  * counterpart for the new PageGroup model: one row per group (not per
  * locale), with per-locale availability badges instead of a single locale
  * badge, plus the filter bar. Drag-reorder and duplicate are wired up
- * (Fase 4's last two tracked follow-ups); creation still only offers a
- * title (no parent picker yet, same reasoning as before).
+ * (Fase 4's last two tracked follow-ups); where a page hangs is chosen at
+ * creation and changed with "Move in the tree" (docs/adr/0074).
  */
 export function PageGroupsListView({
   siteId,
