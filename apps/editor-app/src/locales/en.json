@@ -190,7 +190,8 @@
         "publish": "Publish",
         "delete": "Delete",
         "duplicate": "Duplicate page",
-        "move": "Move to a collection"
+        "move": "Move to a collection",
+        "moveToParent": "Move in the tree"
       },
       "filters": {
         "search": "Title",
@@ -298,7 +299,8 @@
     },
     "parent": {
       "label": "Parent page",
-      "none": "— None (root level) —"
+      "none": "— None (root level) —",
+      "hint": "The page lives under the one you choose, and its address starts with that page’s address."
     },
     "moveToCollection": {
       "title": "Move to a collection",
@@ -306,6 +308,13 @@
       "none": "Pages (no collection)",
       "confirm": "Move",
       "failed": "That page could not be moved."
+    },
+    "moveToParent": {
+      "title": "Move in the tree",
+      "description": "Where “{{name}}” lives. This changes its address and the address of everything under it: the old address keeps answering, redirecting to the new one.",
+      "confirm": "Move",
+      "cancel": "Cancel",
+      "failed": "The page could not be moved."
     },
     "saveAsTemplate": {
       "open": "Save as template",

@@ -96,5 +96,19 @@ export interface PageTranslationRepositoryPort {
     parentGroupId: string | null,
     slug: string,
   ): Promise<PageTranslation | null>;
+  /**
+   * The translation that used to hang under `parentGroupId` with `slug`,
+   * for the 301 a MOVE owes to every link somebody already saved (see
+   * `PageTranslation.recordMovedFrom`). Asked after both current-slug and
+   * former-slug lookups have found nothing: a page that left this parent
+   * is not among its children under any name.
+   */
+  findByFormerParent(
+    tenantId: string,
+    siteId: string,
+    locale: string,
+    parentGroupId: string | null,
+    slug: string,
+  ): Promise<PageTranslation | null>;
   delete(tenantId: string, pageTranslationId: string): Promise<void>;
 }

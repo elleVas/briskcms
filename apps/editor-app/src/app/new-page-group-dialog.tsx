@@ -14,12 +14,15 @@ import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { ApiError, actionErrorMessage } from '../lib/http-client';
 import { collectionsQueryOptions } from './collections-queries';
+import { PageParentSelect } from './page-parent-select';
 import { PageTemplateSelect } from './page-template-select';
 import { publishedTemplatesQueryOptions } from './reusable-sections-queries';
 import type { NewPageGroupInput } from './use-page-groups-list';
 
 export interface NewPageGroupDialogProps {
   siteId: string;
+  /** Whose titles the parent choice lists — the site's default language. */
+  defaultLocale: string;
   /** The collection the page is being created in, whose default template is preselected — `null` on the Pages screen. */
   collectionId: string | null;
   open: boolean;
@@ -29,12 +32,11 @@ export interface NewPageGroupDialogProps {
 
 /**
  * i18n a livello di campo (see the plan) — new-page-dialog.tsx's
- * counterpart for the new PageGroup model. Deliberately simpler: no
- * parent picker (every new group starts at root, see
- * use-page-groups-list.ts's own comment on why — a real, tracked
- * follow-up, not silently dropped) and no locale choice (always seeds the
- * site's default locale; the language switcher inside the editor covers
- * every other locale once the group exists).
+ * counterpart for the new PageGroup model. Still no locale choice (it
+ * always seeds the site's default locale; the language switcher inside
+ * the editor covers every other locale once the group exists), but the
+ * page it hangs under is asked here rather than always the root
+ * (docs/adr/0074).
  *
  * "Start from" lists the site's published templates (docs/adr/0072), and
  * only when there is at least one: a choice between "blank" and nothing is
@@ -44,6 +46,7 @@ export interface NewPageGroupDialogProps {
  */
 export function NewPageGroupDialog({
   siteId,
+  defaultLocale,
   collectionId,
   open,
   onOpenChange,
@@ -67,6 +70,7 @@ export function NewPageGroupDialog({
   const [pickedTemplate, setPickedTemplate] = useState<
     string | null | undefined
   >();
+  const [parentId, setParentId] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const slug = slugify(name);
@@ -100,6 +104,7 @@ export function NewPageGroupDialog({
     if (!nextOpen) {
       setName('');
       setPickedTemplate(undefined);
+      setParentId(null);
       setError('');
     }
     onOpenChange(nextOpen);
@@ -110,7 +115,7 @@ export function NewPageGroupDialog({
     setError('');
     setSubmitting(true);
     try {
-      await onCreate({ name, templateId });
+      await onCreate({ name, templateId, parentId });
       handleOpenChange(false);
     } catch (err) {
       setError(createErrorMessage(err));
@@ -155,6 +160,22 @@ export function NewPageGroupDialog({
                 })}
               </p>
             )}
+          </div>
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="new-page-group-parent">
+              {t('pages.parent.label')}
+            </Label>
+            <PageParentSelect
+              id="new-page-group-parent"
+              siteId={siteId}
+              locale={defaultLocale}
+              value={parentId}
+              onChange={setParentId}
+              className="w-full"
+            />
+            <p className="text-xs text-muted-foreground">
+              {t('pages.parent.hint')}
+            </p>
           </div>
           {templates.length > 0 && (
             <div className="flex flex-col gap-2">

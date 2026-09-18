@@ -59,6 +59,59 @@ describe('PageTranslation entity', () => {
     });
   });
 
+  describe('changing place in the tree', () => {
+    it('remembers the parent it hung from, with the slug it had there', () => {
+      const translation = PageTranslation.create(baseInput);
+
+      translation.recordMovedFrom('servizi', 'casa', EDIT);
+
+      expect(translation.formerParents).toEqual([
+        { parentGroupId: 'servizi', slug: 'home' },
+      ]);
+    });
+
+    it('remembers the site root as a place like any other', () => {
+      const translation = PageTranslation.create(baseInput);
+
+      translation.recordMovedFrom(null, 'servizi', EDIT);
+
+      expect(translation.formerParents).toEqual([
+        { parentGroupId: null, slug: 'home' },
+      ]);
+    });
+
+    it('keeps every place it has hung from, oldest first', () => {
+      const translation = PageTranslation.create(baseInput);
+
+      translation.recordMovedFrom(null, 'servizi', EDIT);
+      translation.recordMovedFrom('servizi', 'casa', EDIT);
+
+      expect(translation.formerParents).toEqual([
+        { parentGroupId: null, slug: 'home' },
+        { parentGroupId: 'servizi', slug: 'home' },
+      ]);
+    });
+
+    it('does not record a move that changes nothing', () => {
+      const translation = PageTranslation.create(baseInput);
+
+      translation.recordMovedFrom('servizi', 'servizi', EDIT);
+
+      expect(translation.formerParents).toEqual([]);
+    });
+
+    it('never leaves a place as both where it lives and a redirect to itself', () => {
+      const translation = PageTranslation.create(baseInput);
+
+      translation.recordMovedFrom(null, 'servizi', EDIT);
+      translation.recordMovedFrom('servizi', null, EDIT);
+
+      expect(translation.formerParents).toEqual([
+        { parentGroupId: 'servizi', slug: 'home' },
+      ]);
+    });
+  });
+
   it('starts as a draft, not diverged, with no field-value overrides and no published snapshot', () => {
     const translation = PageTranslation.create(baseInput);
     expect(translation.status).toBe('draft');
@@ -223,6 +276,7 @@ describe('PageTranslation entity', () => {
       fieldValues: { 'hero-1': { title: 'Ciao' } },
       status: 'published' as const,
       formerSlugs: [],
+      formerParents: [],
       publishedSnapshot: [{ type: 'Hero', props: { title: 'Ciao' } }],
       isDiverged: false,
       divergedContent: null,

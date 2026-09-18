@@ -73,6 +73,12 @@ export const moveToCollectionBodySchema = z.object({
 });
 export type MoveToCollectionBody = z.infer<typeof moveToCollectionBodySchema>;
 
+/** `null` moves the page back among the site's top-level pages (docs/adr/0074). */
+export const moveToParentBodySchema = z.object({
+  parentId: z.string().uuid().nullable(),
+});
+export type MoveToParentBody = z.infer<typeof moveToParentBodySchema>;
+
 export const savePageGroupContentBodySchema = z.object({
   content: sanitizedPageContentSchema,
 });

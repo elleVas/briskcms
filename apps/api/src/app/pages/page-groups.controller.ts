@@ -22,6 +22,7 @@ import {
   getPageTranslationById,
   listPageGroups,
   movePageGroupToCollection,
+  movePageGroupToParent,
   listPageGroupTerms,
   listPageGroupTranslations,
   listPageGroupVersions,
@@ -100,8 +101,10 @@ import {
   createPageGroupTranslationBodySchema,
   type ListPageGroupsQuery,
   type MoveToCollectionBody,
+  type MoveToParentBody,
   listPageGroupsQuerySchema,
   moveToCollectionBodySchema,
+  moveToParentBodySchema,
   type ReorderPageGroupsBody,
   reorderPageGroupsBodySchema,
   type RollbackPageGroupBody,
@@ -456,6 +459,33 @@ export class PageGroupsController {
         tenantId: this.tenantContext.getCurrentTenantId(),
         pageGroupId: id,
         collectionId: body.collectionId,
+        actorUserId: this.tenantContext.getCurrentUserId(),
+      },
+    );
+    return this.toGroupDto(group);
+  }
+
+  /*
+   * Where the page hangs in the site's tree — its address, and the
+   * address of everything under it. A different thing from
+   * `:id/collection`, which only decides which screen lists it.
+   */
+  @Patch(':id/parent')
+  async moveToParent(
+    @Param('id') id: string,
+    @Body(new ZodValidationPipe(moveToParentBodySchema))
+    body: MoveToParentBody,
+  ) {
+    const group = await movePageGroupToParent(
+      {
+        pageGroupRepository: this.pageGroupRepository,
+        pageTranslationRepository: this.pageTranslationRepository,
+        taxonomyRepository: this.taxonomyRepository,
+      },
+      {
+        tenantId: this.tenantContext.getCurrentTenantId(),
+        pageGroupId: id,
+        parentId: body.parentId,
         actorUserId: this.tenantContext.getCurrentUserId(),
       },
     );

@@ -26,6 +26,7 @@ function fromRow(row: typeof pageTranslations.$inferSelect): PageTranslation {
     locale: row.locale,
     slug: row.slug,
     formerSlugs: row.formerSlugs,
+    formerParents: row.formerParents,
     seoMeta: row.seoMeta,
     fieldValues: row.fieldValues,
     status: row.status,
@@ -218,6 +219,37 @@ export class DrizzlePageTranslationRepository implements PageTranslationReposito
               ? isNull(pageTranslations.parentGroupId)
               : eq(pageTranslations.parentGroupId, parentGroupId),
             sql`${pageTranslations.formerSlugs} @> ARRAY[${slug}]::text[]`,
+          ),
+        )
+        .limit(1),
+    );
+    return rows[0] ? fromRow(rows[0]) : null;
+  }
+
+  /*
+   * `@>` on jsonb, the same containment test `findByFormerSlug` does on a
+   * text array: "is this pair among the places it used to live?". A move
+   * away from the site root is stored as a JSON null, which is why the
+   * pair is built here rather than interpolated as two comparisons.
+   */
+  async findByFormerParent(
+    tenantId: string,
+    siteId: string,
+    locale: string,
+    parentGroupId: string | null,
+    slug: string,
+  ): Promise<PageTranslation | null> {
+    const pair = JSON.stringify([{ parentGroupId, slug }]);
+    const rows = await withTenant(this.db, tenantId, (tx) =>
+      tx
+        .select()
+        .from(pageTranslations)
+        .where(
+          and(
+            eq(pageTranslations.tenantId, tenantId),
+            eq(pageTranslations.siteId, siteId),
+            eq(pageTranslations.locale, locale),
+            sql`${pageTranslations.formerParents} @> ${pair}::jsonb`,
           ),
         )
         .limit(1),

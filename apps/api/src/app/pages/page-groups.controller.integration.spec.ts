@@ -274,6 +274,57 @@ describe('PageGroupsController (integration)', () => {
       .expect(400);
   });
 
+  /*
+   * The move a page's address depends on: the language rows carry the
+   * parent too, so this is also the check that the group and its
+   * languages end up agreeing about where the page lives.
+   */
+  it('moves a page under another one, and refuses a ring, over the real HTTP endpoint', async () => {
+    const services = await agent
+      .post('/page-groups')
+      .send({ siteId, content: [] })
+      .expect(201);
+    const plumbing = await agent
+      .post('/page-groups')
+      .send({ siteId, content: [] })
+      .expect(201);
+    await agent
+      .post(`/page-groups/${plumbing.body.id}/translations`)
+      .send({
+        locale: 'en',
+        slug: `plumbing-${randomUUID()}`,
+        seoMeta: { title: 'Plumbing', description: '' },
+      })
+      .expect(201);
+
+    await agent
+      .patch(`/page-groups/${plumbing.body.id}/parent`)
+      .send({ parentId: services.body.id })
+      .expect(200);
+
+    const moved = await agent
+      .get(`/page-groups/${plumbing.body.id}`)
+      .expect(200);
+    expect(moved.body.parentId).toBe(services.body.id);
+
+    // Its language went with it: asked for the tree under the new parent,
+    // the page is there — which only works if the translation row's own
+    // parent was rewritten in the same transaction.
+    const tree = await agent
+      .get('/page-groups')
+      .query({ siteId, locale: 'en' })
+      .expect(200);
+    const listed = tree.body.items.find(
+      (item: { id: string }) => item.id === plumbing.body.id,
+    );
+    expect(listed?.parentId).toBe(services.body.id);
+
+    await agent
+      .patch(`/page-groups/${services.body.id}/parent`)
+      .send({ parentId: plumbing.body.id })
+      .expect(400);
+  });
+
   it('duplicates a group with every translation, over the real HTTP endpoint', async () => {
     const groupRes = await agent
       .post('/page-groups')

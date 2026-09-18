@@ -21,6 +21,7 @@ import type {
   CookieBannerSettings,
   ExposedFields,
   FieldValueOverlay,
+  FormerParentLocation,
   FormField,
   FormStep,
   LocalizedSeoMeta,
@@ -459,6 +460,16 @@ export const pageTranslations = pgTable(
       .array()
       .notNull()
       .default(sql`'{}'`),
+    /*
+     * Where this language used to hang from, and under which slug — the
+     * move counterpart of `formerSlugs` (docs/adr/0074). jsonb rather than
+     * two parallel arrays: the pair is the unit public resolution asks
+     * about, and splitting it would let the halves drift apart.
+     */
+    formerParents: jsonb('former_parents')
+      .notNull()
+      .default(sql`'[]'::jsonb`)
+      .$type<FormerParentLocation[]>(),
     seoMeta: jsonb('seo_meta').notNull().default({}).$type<SeoMeta>(),
     // Override di SOLI campi `translatable`, chiavati per blocco — un
     // campo assente eredita il valore condiviso di pageGroups.content.

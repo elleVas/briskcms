@@ -131,6 +131,22 @@ export interface PageGroupRepositoryPort {
     version: PageGroupVersion,
     translation: PageTranslation,
   ): Promise<void>;
+  /**
+   * A page that changed its place in the tree: the group and every one of
+   * its languages, in ONE transaction (docs/adr/0074).
+   *
+   * Both halves or neither. Each language row carries the parent as well —
+   * denormalized for the slug uniqueness constraint and for public
+   * resolution — so a group saved without them would leave the page
+   * hanging in two places at once, findable at its old address and listed
+   * under its new parent. Throws `PageSlugAlreadyExistsError` when the
+   * destination already has a page at that address in some language,
+   * having written nothing.
+   */
+  moveWithTranslations(
+    group: PageGroup,
+    translations: PageTranslation[],
+  ): Promise<void>;
   findById(tenantId: string, pageGroupId: string): Promise<PageGroup | null>;
   listBySite(
     tenantId: string,

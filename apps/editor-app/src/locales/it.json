@@ -190,7 +190,8 @@
         "publish": "Pubblica",
         "delete": "Elimina",
         "duplicate": "Duplica pagina",
-        "move": "Sposta in una collezione"
+        "move": "Sposta in una collezione",
+        "moveToParent": "Sposta nell’albero"
       },
       "filters": {
         "search": "Titolo",
@@ -298,13 +299,21 @@
     },
     "parent": {
       "label": "Pagina genitore",
-      "none": "— Nessuno (livello radice) —"
+      "none": "— Nessuno (livello radice) —",
+      "hint": "La pagina vive sotto quella che scegli, e il suo indirizzo comincia con l’indirizzo di quella."
     },
     "moveToCollection": {
       "title": "Sposta in una collezione",
       "description": "Dove “{{name}}” viene elencata. Mantiene il suo indirizzo, il suo posto nell’albero e tutto quello che ha dentro.",
       "none": "Pagine (nessuna collezione)",
       "confirm": "Sposta",
+      "failed": "Non è stato possibile spostare la pagina."
+    },
+    "moveToParent": {
+      "title": "Sposta nell’albero",
+      "description": "Dove vive “{{name}}”. Cambia il suo indirizzo e quello di tutto ciò che ha sotto: il vecchio indirizzo continua a rispondere, reindirizzando a quello nuovo.",
+      "confirm": "Sposta",
+      "cancel": "Annulla",
       "failed": "Non è stato possibile spostare la pagina."
     },
     "saveAsTemplate": {

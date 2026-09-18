@@ -115,6 +115,17 @@ export function movePageGroupToCollection(
   });
 }
 
+/** Where the page hangs in the site's tree — its address, and the address of everything under it (docs/adr/0074). */
+export function movePageGroupToParent(
+  id: string,
+  parentId: string | null,
+): Promise<PageGroupRecord> {
+  return requestGroup(`/page-groups/${id}/parent`, {
+    method: 'PATCH',
+    body: JSON.stringify({ parentId }),
+  });
+}
+
 export function savePageGroupContent(
   id: string,
   content: Block[],

@@ -22,6 +22,7 @@ import {
   ChevronRight,
   Copy,
   FolderInput,
+  IndentIncrease,
   GripVertical,
   Pencil,
   Trash2,
@@ -35,6 +36,7 @@ import { buildHierarchyTree } from './page-hierarchy';
 import { IconButton } from './icon-button';
 import { MediaPickerProvider } from './media-picker-provider';
 import { MoveToCollectionDialog } from './move-to-collection-dialog';
+import { MoveToParentDialog } from './move-to-parent-dialog';
 import { NewPageGroupDialog } from './new-page-group-dialog';
 import {
   PagesListFilterBar,
@@ -120,7 +122,7 @@ export interface PageGroupsListViewProps {
   onFiltersChange: (next: PagesListFilterValues) => void;
 }
 
-type DialogKind = 'new' | 'delete' | 'move';
+type DialogKind = 'new' | 'delete' | 'move' | 'move-to-parent';
 
 interface PageGroupsListState {
   selectedGroupId: string | null;
@@ -233,6 +235,7 @@ interface PageGroupRowProps {
   onEdit: () => void;
   onDuplicate: () => void;
   onMove: () => void;
+  onMoveToParent: () => void;
   onDelete: () => void;
 }
 
@@ -260,6 +263,7 @@ function PageGroupRow({
   onEdit,
   onDuplicate,
   onMove,
+  onMoveToParent,
   onDelete,
 }: PageGroupRowProps) {
   const { t, i18n } = useTranslation();
@@ -414,6 +418,12 @@ function PageGroupRow({
               <FolderInput />
             </IconButton>
             <IconButton
+              label={t('pages.list.actions.moveToParent')}
+              onClick={onMoveToParent}
+            >
+              <IndentIncrease />
+            </IconButton>
+            <IconButton
               label={t('pages.list.actions.delete')}
               onClick={onDelete}
             >
@@ -456,6 +466,8 @@ export function PageGroupsListView({
     isDuplicating,
     moveToCollection,
     isMoving,
+    moveToParent,
+    isMovingToParent,
     reorderPageGroups,
   } = usePageGroupsList(siteId, defaultLocale, collectionId);
   // A feed has no hierarchy to build: every row sits at depth zero, which
@@ -658,6 +670,12 @@ export function PageGroupsListView({
                         onMove={() =>
                           dispatch({ type: 'OPEN_DIALOG', dialog: 'move' })
                         }
+                        onMoveToParent={() =>
+                          dispatch({
+                            type: 'OPEN_DIALOG',
+                            dialog: 'move-to-parent',
+                          })
+                        }
                         onDelete={() =>
                           dispatch({ type: 'OPEN_DIALOG', dialog: 'delete' })
                         }
@@ -692,6 +710,7 @@ export function PageGroupsListView({
         )}
         <NewPageGroupDialog
           siteId={siteId}
+          defaultLocale={defaultLocale}
           collectionId={collectionId}
           open={openDialog === 'new'}
           onOpenChange={(open) => !open && closeDialog()}
@@ -708,6 +727,21 @@ export function PageGroupsListView({
               moveToCollection(selectedGroup.id, targetCollectionId)
             }
             isMoving={isMoving}
+          />
+        )}
+        {selectedGroup && (
+          <MoveToParentDialog
+            siteId={siteId}
+            defaultLocale={defaultLocale}
+            open={openDialog === 'move-to-parent'}
+            onOpenChange={(open) => !open && closeDialog()}
+            pageTitle={groupDisplayTitle(selectedGroup, defaultLocale)}
+            pageGroupId={selectedGroup.id}
+            currentParentId={selectedGroup.parentId ?? null}
+            onMove={(targetParentId) =>
+              moveToParent(selectedGroup.id, targetParentId)
+            }
+            isMoving={isMovingToParent}
           />
         )}
         {selectedGroup && (

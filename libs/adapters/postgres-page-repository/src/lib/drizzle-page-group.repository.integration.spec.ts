@@ -651,6 +651,92 @@ describe('DrizzlePageGroupRepository / DrizzlePageTranslationRepository (integra
       expect(foundFromOtherTenant).toBeNull();
     });
 
+    /*
+     * The jsonb containment query, against the real column: an in-memory
+     * `.some()` would pass whatever shape it was given, and the pair is
+     * what public resolution asks about (docs/adr/0074).
+     */
+    it('findByFormerParent finds the page that used to hang there, and only that pair', async () => {
+      const oldParent = buildGroup();
+      const newParent = buildGroup();
+      await groupRepository.save(oldParent);
+      await groupRepository.save(newParent);
+      const child = buildGroup({ parentId: oldParent.id });
+      await groupRepository.save(child);
+      const slug = `moved-${randomUUID()}`;
+      const translation = buildTranslation(child.id, { slug });
+      await translationRepository.save(translation, oldParent.id);
+
+      translation.recordMovedFrom(oldParent.id, newParent.id, { by: userAId });
+      child.setParent(newParent.id, { by: userAId });
+      await groupRepository.moveWithTranslations(child, [translation]);
+
+      const found = await translationRepository.findByFormerParent(
+        tenantAId,
+        siteAId,
+        'it',
+        oldParent.id,
+        slug,
+      );
+      expect(found?.id).toBe(translation.id);
+
+      // The same slug under a different parent is a different page.
+      expect(
+        await translationRepository.findByFormerParent(
+          tenantAId,
+          siteAId,
+          'it',
+          newParent.id,
+          slug,
+        ),
+      ).toBeNull();
+      expect(
+        await translationRepository.findByFormerParent(
+          tenantBId,
+          siteAId,
+          'it',
+          oldParent.id,
+          slug,
+        ),
+      ).toBeNull();
+    });
+
+    /*
+     * Both rows or neither: the language row carries the parent as well,
+     * and a group moved without it would leave the page listed under one
+     * parent and findable under another.
+     */
+    it('moveWithTranslations rewrites the group and its languages together', async () => {
+      const oldParent = buildGroup();
+      const newParent = buildGroup();
+      await groupRepository.save(oldParent);
+      await groupRepository.save(newParent);
+      const child = buildGroup({ parentId: oldParent.id });
+      await groupRepository.save(child);
+      const italian = buildTranslation(child.id, { locale: 'it' });
+      const english = buildTranslation(child.id, { locale: 'en' });
+      await translationRepository.save(italian, oldParent.id);
+      await translationRepository.save(english, oldParent.id);
+
+      child.setParent(newParent.id, { by: userAId });
+      await groupRepository.moveWithTranslations(child, [italian, english]);
+
+      expect(
+        (await groupRepository.findById(tenantAId, child.id))?.parentId,
+      ).toBe(newParent.id);
+      for (const translation of [italian, english]) {
+        const foundUnderNewParent =
+          await translationRepository.findByParentGroupAndLocaleSlug(
+            tenantAId,
+            siteAId,
+            translation.locale,
+            newParent.id,
+            translation.slug,
+          );
+        expect(foundUnderNewParent?.id).toBe(translation.id);
+      }
+    });
+
     it('findByGroupAndLocale scopes by tenant, group and locale', async () => {
       const group = buildGroup();
       await groupRepository.save(group);

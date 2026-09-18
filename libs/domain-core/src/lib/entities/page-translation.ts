@@ -1,6 +1,7 @@
 import {
   mergeTranslatedContent,
   type FieldValueOverlay,
+  type FormerParentLocation,
   type PageContent,
   type SeoMeta,
 } from '@brisk/shared-types';
@@ -19,6 +20,8 @@ export interface PageTranslationProps {
   slug: string;
   /** Every address this translation answered to before its current one, oldest first — see `updateSlug`. */
   formerSlugs: string[];
+  /** Every place in the tree this translation used to hang from, oldest first — see `recordMovedFrom`. A slug remembers a rename; this remembers a move. */
+  formerParents: FormerParentLocation[];
   seoMeta: SeoMeta;
   /** Override di SOLI campi `translatable`, chiavati per blocco — vedi mergeTranslatedContent. Ignorato quando `isDiverged` è true (una traduzione scollegata ha la propria struttura+testo interamente in `divergedContent`). */
   fieldValues: FieldValueOverlay;
@@ -73,6 +76,7 @@ export class PageTranslation {
       locale: input.locale,
       slug: input.slug,
       formerSlugs: [],
+      formerParents: [],
       seoMeta: input.seoMeta,
       fieldValues: input.fieldValues ?? {},
       status: 'draft',
@@ -122,6 +126,10 @@ export class PageTranslation {
 
   get formerSlugs(): readonly string[] {
     return this.props.formerSlugs;
+  }
+
+  get formerParents(): readonly FormerParentLocation[] {
+    return this.props.formerParents;
   }
 
   get seoMeta(): SeoMeta {
@@ -226,6 +234,38 @@ export class PageTranslation {
       this.props.slug,
     ];
     this.props.slug = slug;
+    this.touch(edit);
+  }
+
+  /**
+   * Remembers the address this language answered to before its page was
+   * moved elsewhere in the tree, for the same reason `updateSlug` does:
+   * every link anyone saved points at the old one.
+   *
+   * A rename changes the last segment of the address; a move changes the
+   * ones before it, and leaves nothing behind that public resolution
+   * could follow — the page is simply no longer among that parent's
+   * children. This is what it follows instead.
+   *
+   * Moving back to a parent this page already left drops that entry
+   * rather than leaving it in both places, so an address is never both
+   * the current answer and a redirect to itself.
+   */
+  recordMovedFrom(
+    fromParentGroupId: string | null,
+    toParentGroupId: string | null,
+    edit: EditContext,
+  ): void {
+    if (fromParentGroupId === toParentGroupId) return;
+    const isWhereItNowLives = (former: FormerParentLocation) =>
+      former.parentGroupId === toParentGroupId &&
+      former.slug === this.props.slug;
+    this.props.formerParents = [
+      ...this.props.formerParents.filter(
+        (former) => !isWhereItNowLives(former),
+      ),
+      { parentGroupId: fromParentGroupId, slug: this.props.slug },
+    ];
     this.touch(edit);
   }
 
