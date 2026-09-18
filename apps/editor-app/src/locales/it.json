@@ -474,7 +474,12 @@
       "empty": "Nessuna icona trovata.",
       "sets": {
         "interface": "Icone",
-        "brand": "Marchi"
+        "brand": "Marchi",
+        "image": "Immagine"
+      },
+      "image": {
+        "hint": "Per un logo che i set non hanno — LinkedIn, per esempio — usa un’immagine della libreria. Si vede com’è: non prende il colore del testo come le altre icone.",
+        "choose": "Scegli dalla libreria…"
       }
     },
     "field": {

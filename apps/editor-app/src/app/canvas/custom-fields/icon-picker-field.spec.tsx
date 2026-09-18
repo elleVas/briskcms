@@ -1,15 +1,30 @@
 import { fireEvent, render, screen } from '@testing-library/react';
+import { QueryClientProvider } from '@tanstack/react-query';
 import { describe, expect, it, vi } from 'vitest';
 import type { ReactNode } from 'react';
+import * as themeApi from '../../../lib/theme-api-client';
+import { createTestQueryClient } from '../../../test/query-client.test-fixture';
 import { IconListContext, type IconListPort } from '../../icon-list-context';
 import { IconPickerField } from './icon-picker-field';
+
+vi.mock('../../use-active-theme-name', () => ({
+  useActiveThemeName: () => 'classic',
+}));
+
+vi.mock('../../../lib/theme-api-client', async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import('../../../lib/theme-api-client')>();
+  return { ...actual, fetchThemeIcons: vi.fn() };
+});
 
 function wrapperWith(port: IconListPort) {
   return function Wrapper({ children }: { children: ReactNode }) {
     return (
-      <IconListContext.Provider value={port}>
-        {children}
-      </IconListContext.Provider>
+      <QueryClientProvider client={createTestQueryClient()}>
+        <IconListContext.Provider value={port}>
+          {children}
+        </IconListContext.Provider>
+      </QueryClientProvider>
     );
   };
 }
@@ -32,6 +47,27 @@ describe('IconPickerField', () => {
     expect(resolve).toHaveBeenCalledWith('arrow-right');
     expect(screen.getByText('Cambia icona')).toBeTruthy();
     expect(screen.getByTestId('icon-svg')).toBeTruthy();
+  });
+
+  /*
+   * The provider preloads the interface icons only, so a logo chosen
+   * yesterday had no preview today. It is now fetched on its own — that
+   * one logo, not the 5.2MB set it belongs to.
+   */
+  it('previews a logo by fetching that logo alone', async () => {
+    vi.mocked(themeApi.fetchThemeIcons).mockResolvedValue([
+      { name: 'brand:github', svg: '<svg data-testid="brand-svg" />' },
+    ]);
+    const resolve = vi.fn();
+    render(<IconPickerField value="brand:github" onChange={vi.fn()} />, {
+      wrapper: wrapperWith({ pick: vi.fn(), resolve }),
+    });
+
+    expect(await screen.findByTestId('brand-svg')).toBeTruthy();
+    expect(themeApi.fetchThemeIcons).toHaveBeenCalledWith('classic', 'brand', {
+      names: ['brand:github'],
+    });
+    expect(resolve).not.toHaveBeenCalled();
   });
 
   it('calls onChange with the picked icon name when the port resolves one', async () => {

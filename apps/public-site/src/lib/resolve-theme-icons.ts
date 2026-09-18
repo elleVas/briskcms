@@ -1,7 +1,12 @@
 import { readFileSync, readdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
-import type { IconEntry } from '@brisk/shared-types';
+import {
+  mediaIconSvg,
+  parseMediaIcon,
+  type IconEntry,
+} from '@brisk/shared-types';
+import { siteIconImageUrl } from './media-icon-url';
 import { groupByTheme, resolveBundledThemeName } from './theme-registry';
 
 // The same pattern as resolve-theme-block-override.ts and the former
@@ -155,6 +160,10 @@ export function resolveIconSvg(
   themeName: string,
 ): string | null {
   if (!name) return null;
+  // An image from the media library, not an icon of the theme's sets:
+  // wrapped so it draws wherever an icon's markup is drawn.
+  const mediaIcon = parseMediaIcon(name);
+  if (mediaIcon) return mediaIconSvg(siteIconImageUrl(mediaIcon.url));
   const resolvedTheme = resolveBundledThemeName(themeName);
   let iconsByName = iconsByNamePerTheme.get(resolvedTheme);
   if (!iconsByName) {

@@ -474,7 +474,12 @@
       "empty": "No icon found.",
       "sets": {
         "interface": "Icons",
-        "brand": "Brands"
+        "brand": "Brands",
+        "image": "Image"
+      },
+      "image": {
+        "hint": "For a logo the sets do not have — LinkedIn, for instance — use an image from the library. It shows as it is: it does not take the text colour the way the other icons do.",
+        "choose": "Choose from the library…"
       }
     },
     "field": {

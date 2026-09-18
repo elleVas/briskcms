@@ -62,12 +62,23 @@ const themeApiFetcher = new ThemeApiFetcher();
 export async function fetchThemeIcons(
   themeName: string,
   set: 'interface' | 'brand' = 'interface',
+  /**
+   * Only part of the set: what a search box holds (`search`, at most
+   * `limit` of them), or exactly the icons named (`names`, for a preview).
+   * Without it the whole set comes back — fine for the interface icons,
+   * the reason the logos tab was slow for the brand ones.
+   */
+  query: { search?: string; limit?: number; names?: string[] } = {},
 ): Promise<IconEntry[]> {
+  const params: Record<string, string> = { set };
+  if (query.search) params['q'] = query.search;
+  if (query.limit) params['limit'] = String(query.limit);
+  if (query.names?.length) params['names'] = query.names.join(',');
   return themeApiFetcher.fetchAndParse(
     '/api/themes/current/icons',
     themeName,
     iconManifestSchema,
-    { set },
+    params,
   );
 }
 

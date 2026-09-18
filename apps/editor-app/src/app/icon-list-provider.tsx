@@ -1,6 +1,12 @@
 import { useCallback, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import {
+  mediaIconSvg,
+  mediaIconValue,
+  parseMediaIcon,
+} from '@brisk/shared-types';
 import { IconListContext, type IconListPort } from './icon-list-context';
+import { useMediaPicker } from './media-picker-context';
 import { themeIconsQueryOptions } from './theme-icons-queries';
 import { useActiveThemeName } from './use-active-theme-name';
 import { IconPickerDialog } from './icon-picker-dialog';
@@ -29,9 +35,14 @@ export function IconListProvider({ children }: IconListProviderProps) {
     });
   }, []);
 
+  const mediaPicker = useMediaPicker();
+
   const resolve = useCallback(
-    (name: string): string | null =>
-      data?.find((icon) => icon.name === name)?.svg ?? null,
+    (name: string): string | null => {
+      const mediaIcon = parseMediaIcon(name);
+      if (mediaIcon) return mediaIconSvg(mediaIcon.url);
+      return data?.find((icon) => icon.name === name)?.svg ?? null;
+    },
     [data],
   );
 
@@ -39,6 +50,20 @@ export function IconListProvider({ children }: IconListProviderProps) {
     resolveRef.current?.(value);
     resolveRef.current = null;
     setOpen(false);
+  }
+
+  /*
+   * The icon dialog steps aside for the media library rather than stacking
+   * two dialogs: the promise `pick()` handed out stays pending across the
+   * swap, and settles with the image — or with nothing, if the library is
+   * closed without choosing.
+   */
+  async function pickImage() {
+    const pending = resolveRef.current;
+    resolveRef.current = null;
+    setOpen(false);
+    const picked = await mediaPicker.pick({ kind: 'image' });
+    pending?.(picked ? mediaIconValue(picked) : null);
   }
 
   const port = useMemo<IconListPort>(
@@ -54,7 +79,8 @@ export function IconListProvider({ children }: IconListProviderProps) {
         onOpenChange={(next) => {
           if (!next) resolveAndClose(null);
         }}
-        onSelect={(icon) => resolveAndClose(icon.name)}
+        onSelect={(value) => resolveAndClose(value)}
+        onPickImage={() => void pickImage()}
       />
     </IconListContext.Provider>
   );
