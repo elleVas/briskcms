@@ -166,7 +166,32 @@ function renderShell(
     );
   }
 
-  return { ...utils, onChange, onPublish, blocks, switchPage };
+  /** Re-renders the SAME page after a version was restored — what the version history does once the server holds the restored draft. */
+  function restore(restoredBlocks: Block[], restoredAt = 1) {
+    utils.rerender(
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <ToastProvider>
+            <PageListContext.Provider value={pageListPort}>
+              <CanvasEditorShell
+                backLink={<a href="/pages">Pagine</a>}
+                statusText="Bozza salvata"
+                registry={registry}
+                categories={categories}
+                blocks={restoredBlocks}
+                onChange={onChange}
+                onPublish={onPublish}
+                pageId="page-1"
+                restoredAt={restoredAt}
+              />
+            </PageListContext.Provider>
+          </ToastProvider>
+        </TooltipProvider>
+      </QueryClientProvider>,
+    );
+  }
+
+  return { ...utils, onChange, onPublish, blocks, switchPage, restore };
 }
 
 async function getIframe() {
@@ -1458,6 +1483,29 @@ describe('CanvasEditorShell', () => {
     for (const tree of saved) {
       expect(tree[1]?.props?.body).toBe('IT');
     }
+  });
+
+  /*
+   * The canvas draws the draft the server renders. A restore used to reset
+   * only the local tree: the layers showed the restored page, the canvas
+   * the one before it, until the page was reloaded by hand.
+   */
+  it('redraws the canvas from the server after a restore', async () => {
+    const { restore } = renderShell();
+    const before = await getIframe();
+
+    act(() =>
+      restore([
+        {
+          id: 'hero-1',
+          type: 'Hero',
+          props: { title: 'Prima', subtitle: 'S' },
+        },
+      ]),
+    );
+
+    const after = await getIframe();
+    expect(after).not.toBe(before);
   });
 });
 

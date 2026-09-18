@@ -604,7 +604,11 @@ export function CanvasEditorShell({
         </CollapsibleSidePanel>
         <div style={{ flex: 1, minHeight: 0, position: 'relative' }}>
           <CanvasFrame
-            key={canvasNonce}
+            // A restore remounts it too: the iframe draws the draft the
+            // server renders, and a restored version is a new draft there.
+            // Resetting only the local tree left the layers showing the
+            // restored page and the canvas the one before it.
+            key={`${canvasNonce}:${restoredAt}`}
             pageId={pageId}
             editingSection={editingSection}
             sectionPreview={sectionPreview}
