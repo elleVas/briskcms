@@ -6,32 +6,20 @@
     <base href="/" />
 
     <!--
-      A static <meta> tag, not a server header: editor-app is a plain Vite
-      SPA with no per-request middleware layer (unlike public-site, see
-      apps/public-site/src/middleware.ts). `%API_ORIGIN%`/
-      `%VITE_PUBLIC_SITE_URL%` are substituted from the same env vars
-      http-client.ts/public-site-url.ts already require at runtime, so this
-      can't silently drift out of sync with the real backend/preview
-      origins. `%API_ORIGIN%` is VITE_API_URL with its "/api" path
-      stripped (see vite.config.mts's csp-api-origin plugin) — CSP path
-      matching on source expressions is inconsistent enough across browsers
-      that pinning connect-src/img-src to an exact "/api" path silently
-      blocks requests to nested routes like "/api/pages". `connect-src`
-      also needs `%VITE_PUBLIC_SITE_URL%`, not just `frame-src`:
-      theme-api-client.ts (icons/block-style-defaults/foreground-tokens)
-      fetches apps/public-site directly from this top document, not from
-      inside the canvas iframe — only apps/public-site knows the active
-      theme (docs/adr/0021), so it can't go through apps/api. Known
-      meta-tag limitation: `frame-ancestors` isn't honored from a <meta>
-      tag per spec (browsers ignore it there) — not set here since it
-      wouldn't do anything; editor-app itself is never meant to be
-      embedded in an iframe, unlike the pages it renders inside its own
-      canvas.
+      The Content-Security-Policy is NOT here any more (docs/adr/0076). It
+      is sent as a real header: by nginx in the container, built from the
+      same environment the two addresses come from, and by the dev server
+      through vite.config.mts. A `<meta>` tag could only carry what the
+      build knew, which is exactly the thing that had to stop being fixed
+      at build time — and `frame-ancestors`, which the editor wants, is
+      ignored in a meta tag per spec.
+
+      config.js sets `window.__BRISK_CONFIG__` with the API and public-site
+      addresses, and must load BEFORE the bundle: src/lib/runtime-config.ts
+      reads it as the modules load. The container rewrites this file at
+      start; a plain build emits it with the build-time values.
     -->
-    <meta
-      http-equiv="Content-Security-Policy"
-      content="default-src 'self'; script-src 'self' https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: %API_ORIGIN%; font-src 'self' data:; connect-src 'self' %API_ORIGIN% %VITE_PUBLIC_SITE_URL% https://challenges.cloudflare.com; frame-src %VITE_PUBLIC_SITE_URL% https://challenges.cloudflare.com; object-src 'none'; base-uri 'self';"
-    />
+    <script src="/config.js"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="icon" type="image/x-icon" href="/favicon.ico" />
     <link rel="stylesheet" href="/src/styles.css" />

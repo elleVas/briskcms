@@ -143,11 +143,14 @@ services:
       context: .
       dockerfile: apps/editor-app/Dockerfile
       args:
-        # Browser-facing, baked into the static bundle at build time —
-        # changing DOMAIN later means rebuilding this one image (docs/adr/0042).
-        VITE_API_URL: ${API_PUBLIC_URL:-https://api.${DOMAIN:?Set DOMAIN in .env}/api}
-        VITE_PUBLIC_SITE_URL: ${PUBLIC_SITE_URL:-https://${DOMAIN:?Set DOMAIN in .env}}
+        # Only the captcha key is a build input now: it has no runtime
+        # half. The two addresses below are read when the container starts
+        # (docs/adr/0076), so changing DOMAIN is a restart, not a rebuild —
+        # and the published image works unchanged.
         VITE_TURNSTILE_SITE_KEY: ${TURNSTILE_SITE_KEY:-1x00000000000000000000AA}
+    environment:
+      BRISK_API_URL: ${API_PUBLIC_URL:-https://api.${DOMAIN:?Set DOMAIN in .env}/api}
+      BRISK_PUBLIC_SITE_URL: ${PUBLIC_SITE_URL:-https://${DOMAIN:?Set DOMAIN in .env}}
     restart: unless-stopped
 
   caddy:

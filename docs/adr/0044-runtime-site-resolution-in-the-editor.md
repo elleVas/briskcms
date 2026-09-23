@@ -95,7 +95,9 @@ creates them on demand, and a published page renders without them.
   `VITE_PUBLIC_SITE_URL`) still do, so ADR-0042's "changing `DOMAIN` means
   rebuilding `editor-app`" stands — narrowed, not lifted. Moving those to a
   runtime config endpoint is the natural next step, and is deliberately not
-  taken here.
+  taken here. **Taken in
+  [ADR-0076](0076-the-editor-reads-its-addresses-at-start-up.md)**: nothing
+  browser-facing is baked in any more.
 - One extra `await` on four loaders that need the site id to scope another
   query. Not an extra request: every screen shares the one cache entry.
 - Thirteen `import.meta.env[…] as string` casts are gone, since the value

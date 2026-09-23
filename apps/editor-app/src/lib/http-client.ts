@@ -1,9 +1,12 @@
-import { requireViteEnv } from './require-vite-env';
+import { apiBaseUrl } from './runtime-config';
 
 // Exported for the one case that cannot go through `request()`: a file
 // download, where the browser has to do the fetching itself for the save
 // dialog to appear (forms-api-client.ts's CSV export).
-export const API_BASE_URL = requireViteEnv('VITE_API_URL');
+//
+// Read once here, at module load: `/config.js` runs before the bundle, so
+// the container's own address is already in place (docs/adr/0076).
+export const API_BASE_URL = apiBaseUrl();
 
 // Security review 2026-08-24, point 18: without this, a backend that hangs
 // (pool exhausted, a slow query) left the editor tab stuck indefinitely —

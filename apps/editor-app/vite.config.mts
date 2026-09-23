@@ -11,25 +11,82 @@ const ENV_DIR = '../../';
 // needs an absolute path here, not the same relative string used below.
 const ABSOLUTE_ENV_DIR = path.resolve(import.meta.dirname, ENV_DIR);
 
-// Vite's built-in index.html %ENV_VAR% replacement is a plain string
-// substitution, so it can't strip VITE_API_URL's "/api" path down to just
-// an origin. CSP source-expression path matching is inconsistent enough
-// across browsers (MDN recommends avoiding paths in source expressions
-// entirely) that connect-src/img-src should allow the whole API origin
-// rather than trying to pin an exact "/api" path. This plugin derives
-// %API_ORIGIN% (deliberately not VITE_-prefixed, so Vite's own env-var
-// substitution ignores it instead of warning it's undefined) from the same
-// VITE_API_URL so there's still one source of truth, not a second env var
-// to keep in sync by hand.
-function cspApiOriginPlugin(mode: string): Plugin {
+/**
+ * The two addresses the editor talks to, written where the browser can
+ * read them at START-UP rather than compiled into the bundle
+ * (docs/adr/0076). In the container an entrypoint writes this same file
+ * from the environment; here it is generated from the build-time
+ * variables, so `nx build` output served from any static host still
+ * works, and `nx serve` needs no extra step.
+ */
+function runtimeConfigJs(env: Record<string, string>): string {
+  return `window.__BRISK_CONFIG__ = ${JSON.stringify(
+    {
+      apiUrl: env.VITE_API_URL ?? '',
+      publicSiteUrl: env.VITE_PUBLIC_SITE_URL ?? '',
+    },
+    null,
+    2,
+  )};\n`;
+}
+
+function runtimeConfigPlugin(mode: string): Plugin {
   const env = loadEnv(mode, ABSOLUTE_ENV_DIR, '');
-  const origin = new URL(env.VITE_API_URL).origin;
   return {
-    name: 'csp-api-origin',
+    name: 'brisk-runtime-config',
+    configureServer(server) {
+      // Generated per request in dev: editing .env then reloading is
+      // enough, with no restart and no file written into the repo.
+      server.middlewares.use('/config.js', (_request, response) => {
+        response.setHeader('Content-Type', 'application/javascript');
+        response.end(runtimeConfigJs(env));
+      });
+    },
+    generateBundle() {
+      this.emitFile({
+        type: 'asset',
+        fileName: 'config.js',
+        source: runtimeConfigJs(env),
+      });
+    },
+  };
+}
+
+/**
+ * The editor's Content-Security-Policy, in development only.
+ *
+ * In production nginx sends it as a real header built from the same
+ * environment the addresses come from (apps/editor-app/nginx.conf.template),
+ * which a `<meta>` tag cannot be: it would have to be rewritten inside the
+ * built HTML at every start, and `frame-ancestors` is ignored there anyway.
+ * Keeping it here for `nx serve` means a policy violation still shows up
+ * while developing, instead of only once deployed.
+ */
+function devCspPlugin(mode: string): Plugin {
+  const env = loadEnv(mode, ABSOLUTE_ENV_DIR, '');
+  return {
+    name: 'brisk-dev-csp',
+    apply: 'serve',
     transformIndexHtml: {
       order: 'post',
       handler(html) {
-        return html.replaceAll('%API_ORIGIN%', origin);
+        const apiOrigin = new URL(env.VITE_API_URL).origin;
+        const site = env.VITE_PUBLIC_SITE_URL;
+        const policy = [
+          "default-src 'self'",
+          "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://challenges.cloudflare.com",
+          "style-src 'self' 'unsafe-inline'",
+          `img-src 'self' data: ${apiOrigin}`,
+          "font-src 'self' data:",
+          `connect-src 'self' ws: ${apiOrigin} ${site} https://challenges.cloudflare.com`,
+          `frame-src ${site} https://challenges.cloudflare.com`,
+          "object-src 'none'",
+          "base-uri 'self'",
+        ].join('; ');
+        return html.replace(
+          '</title>',
+          `</title>\n    <meta http-equiv="Content-Security-Policy" content="${policy};" />`,
+        );
       },
     },
   };
@@ -57,7 +114,8 @@ export default defineConfig(({ mode }) => ({
     tanstackRouter({ target: 'react', autoCodeSplitting: true }),
     react(),
     tailwindcss(),
-    cspApiOriginPlugin(mode),
+    runtimeConfigPlugin(mode),
+    devCspPlugin(mode),
   ],
   // Uncomment this if you are using workers.
   // worker: {

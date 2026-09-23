@@ -85,7 +85,14 @@ pnpm exec nx run @brisk/editor-app:dev     # http://localhost:4200
 Requires the API's Postgres migrated/seeded first (see
 `docs/development.md`) — login uses the `db:seed` dev user. `VITE_`-prefixed
 env vars (`VITE_API_URL`, `VITE_PUBLIC_SITE_URL`, `VITE_TURNSTILE_SITE_KEY`)
-are read at build time by Vite — see `.env.example` at the repo root.
+are read by Vite — see `.env.example` at the repo root.
+
+The first two are the DEV and fallback half of a pair (ADR-0076): in a
+container the same two addresses arrive at start-up through
+`BRISK_API_URL`/`BRISK_PUBLIC_SITE_URL`, which the entrypoint writes into
+`/config.js` and nginx uses to build the Content-Security-Policy header.
+The build-time value is what the bundle falls back to when that file set
+nothing, so one published image serves any domain.
 
 There is deliberately no `VITE_DEFAULT_SITE_ID` among them: which site this
 editor edits is resolved at runtime from the API, because a value baked into
