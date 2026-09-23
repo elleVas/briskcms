@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { mergeTranslatedContent } from './field-value-overlay';
+import { mergeTranslatedContent, relinkedOverlay } from './field-value-overlay';
 import type { PageContent } from './content-model';
 
 describe('mergeTranslatedContent', () => {
@@ -92,5 +92,77 @@ describe('mergeTranslatedContent', () => {
     });
 
     expect(merged[0].styleOverride).toEqual({ base: { borderRadius: '4px' } });
+  });
+});
+
+describe('relinkedOverlay', () => {
+  const shared: PageContent = [
+    { id: 'hero', type: 'Hero', props: { title: 'Welcome', image: 'a.png' } },
+    {
+      id: 'cols',
+      type: 'Columns',
+      props: {},
+      children: [{ id: 'text', type: 'Text', props: { body: '<p>Hello</p>' } }],
+    },
+  ];
+  const translatable = (type: string) =>
+    type === 'Hero' ? ['title'] : type === 'Text' ? ['body'] : [];
+
+  /*
+   * The whole point of relinking this way: the translation that was done
+   * on the fork is not thrown away where it still has a block to go to.
+   */
+  it('keeps the text of every block the shared structure still has', () => {
+    const fork: PageContent = [
+      {
+        id: 'hero',
+        type: 'Hero',
+        props: { title: 'Benvenuti', image: 'b.png' },
+      },
+      {
+        id: 'cols',
+        type: 'Columns',
+        props: {},
+        children: [
+          { id: 'text', type: 'Text', props: { body: '<p>Ciao</p>' } },
+        ],
+      },
+    ];
+
+    expect(relinkedOverlay(shared, fork, translatable)).toEqual({
+      fieldValues: {
+        hero: { title: 'Benvenuti' },
+        text: { body: '<p>Ciao</p>' },
+      },
+      lostBlockCount: 0,
+    });
+  });
+
+  it('never turns a non-translatable prop into text', () => {
+    const fork: PageContent = [
+      { id: 'hero', type: 'Hero', props: { title: 'Welcome', image: 'b.png' } },
+    ];
+
+    expect(relinkedOverlay(shared, fork, translatable).fieldValues).toEqual({});
+  });
+
+  it('counts what only the fork has — the part relinking gives up', () => {
+    const fork: PageContent = [
+      { id: 'hero', type: 'Hero', props: { title: 'Benvenuti' } },
+      { id: 'extra', type: 'Text', props: { body: '<p>Solo qui</p>' } },
+      { id: 'text', type: 'Heading', props: { text: 'Stesso id, altro tipo' } },
+    ];
+
+    expect(relinkedOverlay(shared, fork, translatable).lostBlockCount).toBe(2);
+  });
+
+  it('finds a block the fork moved, by its id', () => {
+    const fork: PageContent = [
+      { id: 'text', type: 'Text', props: { body: '<p>Spostato</p>' } },
+    ];
+
+    expect(relinkedOverlay(shared, fork, translatable).fieldValues).toEqual({
+      text: { body: '<p>Spostato</p>' },
+    });
   });
 });

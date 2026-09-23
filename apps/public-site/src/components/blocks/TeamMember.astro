@@ -1,6 +1,7 @@
 ---
 import type { TeamMemberProps } from '@brisk/shared-types';
 import OptimizedImage from '../OptimizedImage.astro';
+import { fixedSizes } from '../../lib/image-sizes';
 
 type Props = TeamMemberProps & { instanceClass?: string | null };
 
@@ -10,7 +11,12 @@ const { name, role, bio, photo, instanceClass } = Astro.props;
 <div class:list={['brisk-team-member', instanceClass]}>
   {
     photo ? (
-      <OptimizedImage media={photo} alt="" class="brisk-team-member__photo" />
+      <OptimizedImage
+        media={photo}
+        alt=""
+        class="brisk-team-member__photo"
+        sizes={fixedSizes(96)}
+      />
     ) : (
       <div class="brisk-team-member__photo brisk-team-member__photo--placeholder" />
     )

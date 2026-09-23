@@ -134,8 +134,8 @@ function rowClassName(isSelected: boolean, isHovered: boolean): string {
  * Isolated so it can be tested without simulating a real dnd-kit drag
  * (pointer events plus DOM measurement) in jsdom. `null` = a drop with no
  * effect (no target, the same position, an unknown id, OR a drop between
- * siblings of different parents — reparenting by drag is not supported, the
- * same limit as `computeSiblingReorder`). `locateBlock`/`siblingsAt`
+ * siblings of different parents — that one is a reparent, answered by
+ * `computeReparent` below, never by both). `locateBlock`/`siblingsAt`
  * (already used by move up/down and duplicate for the same problem) find
  * the real parent and the real siblings at any depth, root included
  * (`parentId: null`).

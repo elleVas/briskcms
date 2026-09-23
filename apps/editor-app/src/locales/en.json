@@ -190,7 +190,8 @@
         "publish": "Publish",
         "delete": "Delete",
         "duplicate": "Duplicate page",
-        "move": "Move to a collection"
+        "move": "Move to a collection",
+        "moveToParent": "Move in the tree"
       },
       "filters": {
         "search": "Title",
@@ -261,7 +262,12 @@
       "description": "Restore a previous version's content as the draft. This does not publish automatically.",
       "empty": "No saved versions.",
       "current": "Current version",
-      "restore": "Restore"
+      "restore": "Restore",
+      "sources": {
+        "structure": "Structure (all languages)",
+        "language": "{{locale}} only"
+      },
+      "unlinkedNote": "Unlinked: restoring it unlinks the language again"
     },
     "seo": {
       "open": "SEO",
@@ -298,7 +304,8 @@
     },
     "parent": {
       "label": "Parent page",
-      "none": "— None (root level) —"
+      "none": "— None (root level) —",
+      "hint": "The page lives under the one you choose, and its address starts with that page’s address."
     },
     "moveToCollection": {
       "title": "Move to a collection",
@@ -306,6 +313,13 @@
       "none": "Pages (no collection)",
       "confirm": "Move",
       "failed": "That page could not be moved."
+    },
+    "moveToParent": {
+      "title": "Move in the tree",
+      "description": "Where “{{name}}” lives. This changes its address and the address of everything under it: the old address keeps answering, redirecting to the new one.",
+      "confirm": "Move",
+      "cancel": "Cancel",
+      "failed": "The page could not be moved."
     },
     "saveAsTemplate": {
       "open": "Save as template",
@@ -465,7 +479,12 @@
       "empty": "No icon found.",
       "sets": {
         "interface": "Icons",
-        "brand": "Brands"
+        "brand": "Brands",
+        "image": "Image"
+      },
+      "image": {
+        "hint": "For a logo the sets do not have — LinkedIn, for instance — use an image from the library. It shows as it is: it does not take the text colour the way the other icons do.",
+        "choose": "Choose from the library…"
       }
     },
     "field": {
@@ -895,8 +914,18 @@
       "diverged": "Diverged from the shared structure",
       "divergeAction": "Unlink this language",
       "divergeConfirmTitle": "Unlink {{locale}} from the shared structure?",
-      "divergeConfirmBody": "This language will stop receiving structural changes (blocks added, removed, or reordered) made in other languages. This can't be undone.",
-      "divergeConfirmAction": "Unlink"
+      "divergeConfirmBody": "This language will stop receiving structural changes (blocks added, removed, or reordered) made in other languages. You can relink it later from the page menu.",
+      "divergeConfirmAction": "Unlink",
+      "relinkAction": "Relink this language",
+      "relinkConfirmTitle": "Relink {{locale}} to the shared structure?",
+      "relinkConfirmBody": "This language will follow the shared structure again: blocks that also exist there keep the text they have here, while images, settings and layout go back to the shared ones.",
+      "relinkConfirmLost_one": "{{count}} block exists only in this language and will be removed.",
+      "relinkConfirmLost_other": "{{count}} blocks exist only in this language and will be removed.",
+      "relinkConfirmHistory": "The unlinked version stays in this language's history and can be restored.",
+      "relinkConfirmAction": "Relink",
+      "relinked": "{{locale}} follows the shared structure again.",
+      "relinkUnsaved": "A save didn't go through, so the language was not relinked. Try again once your changes show as saved.",
+      "relinkFailed": "The language couldn't be relinked."
     },
     "style": {
       "editType": "Style all {{type}} blocks",

@@ -27,7 +27,7 @@ export interface PageTranslationRepositoryPort {
     translation: PageTranslation,
     parentGroupId: string | null,
   ): Promise<void>;
-  /** The same atomic transaction as PageRepositoryPort.saveWithVersion. Not valid for a just-unlinked translation saving `divergedContent`: that goes through PageGroupVersion (the same shape, see PageTranslationVersion's doc comment). */
+  /** The translation and a version of it in one atomic transaction — the version comes from `PageTranslation.toVersion`, linked or unlinked alike. */
   saveWithVersion(
     translation: PageTranslation,
     version: PageTranslationVersion,
@@ -90,6 +90,20 @@ export interface PageTranslationRepositoryPort {
    * lookup found nothing.
    */
   findByFormerSlug(
+    tenantId: string,
+    siteId: string,
+    locale: string,
+    parentGroupId: string | null,
+    slug: string,
+  ): Promise<PageTranslation | null>;
+  /**
+   * The translation that used to hang under `parentGroupId` with `slug`,
+   * for the 301 a MOVE owes to every link somebody already saved (see
+   * `PageTranslation.recordMovedFrom`). Asked after both current-slug and
+   * former-slug lookups have found nothing: a page that left this parent
+   * is not among its children under any name.
+   */
+  findByFormerParent(
     tenantId: string,
     siteId: string,
     locale: string,

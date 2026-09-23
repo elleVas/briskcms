@@ -1,6 +1,7 @@
 ---
 import type { CardProps } from '@brisk/shared-types';
 import OptimizedImage from '../OptimizedImage.astro';
+import { GRID_ITEM_SIZES } from '../../lib/image-sizes';
 import EmptyContainerHint from '../EmptyContainerHint.astro';
 
 type Props = CardProps & {
@@ -46,7 +47,12 @@ const resolvedAlt = isDecorative ? '' : alt;
   {
     media && (
       <div class="brisk-card__media">
-        <OptimizedImage media={media} alt={resolvedAlt} class="brisk-card__image" />
+        <OptimizedImage
+          media={media}
+          alt={resolvedAlt}
+          class="brisk-card__image"
+          sizes={GRID_ITEM_SIZES}
+        />
       </div>
     )
   }

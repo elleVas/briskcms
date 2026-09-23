@@ -39,6 +39,9 @@ export interface CanvasFrameProps {
   bridge: PreviewBridgeState;
   /** Computed by the caller (compute-drop-target.ts) during a direct canvas reorder — this component knows nothing about `Block[]`, it merely forwards it to the overlay. */
   dropIndicatorTop?: number | null;
+  /** Set only for a drop inside a container — the line then spans that container (see computeContainerDrop). */
+  dropIndicatorLeft?: number;
+  dropIndicatorWidth?: number;
   /** `undefined`/`'base'` = full width (the long-standing behaviour). The overlay needs to know nothing about this: its geometry is already tracked from the iframe's real box (see `useIframeGeometry`), not from the container around it. */
   breakpoint?: Breakpoint;
 }
@@ -121,6 +124,8 @@ export function CanvasFrame({
   iframeRef,
   bridge,
   dropIndicatorTop,
+  dropIndicatorLeft,
+  dropIndicatorWidth,
   breakpoint = 'base',
 }: CanvasFrameProps) {
   const { t } = useTranslation();
@@ -199,6 +204,8 @@ export function CanvasFrame({
           hoveredBlockId={bridge.hoveredBlockId}
           selectedBlockId={bridge.selectedBlockId}
           dropIndicatorTop={dropIndicatorTop}
+          dropIndicatorLeft={dropIndicatorLeft}
+          dropIndicatorWidth={dropIndicatorWidth}
         />
       </div>
     </div>

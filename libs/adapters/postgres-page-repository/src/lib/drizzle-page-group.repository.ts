@@ -165,6 +165,24 @@ export class DrizzlePageGroupRepository
     );
   }
 
+  async moveWithTranslations(
+    group: PageGroup,
+    translations: PageTranslation[],
+  ): Promise<void> {
+    const groupRow = this.toRow(group);
+    const translationRows = translations.map((translation) =>
+      pageTranslationRow(translation.toProps(), group.parentId),
+    );
+    await withTenant(this.db, groupRow.tenantId, async (tx: BriskTx) => {
+      await this.upsertTx(tx, groupRow);
+      for (const row of translationRows) {
+        await withPageTranslationUniqueViolations(row, () =>
+          upsertPageTranslationTx(tx, row),
+        );
+      }
+    });
+  }
+
   async listBySite(
     tenantId: string,
     siteId: string,

@@ -1,4 +1,5 @@
 export * from './lib/use-cases/move-page-group-to-collection.use-case';
+export * from './lib/use-cases/move-page-group-to-parent.use-case';
 export * from './lib/use-cases/collection.use-cases';
 export * from './lib/use-cases/page-template.use-cases';
 export * from './lib/use-cases/create-page-group.use-case';
@@ -12,6 +13,8 @@ export * from './lib/use-cases/publish-page-translation.use-case';
 export * from './lib/use-cases/rollback-page-group-to-version.use-case';
 export * from './lib/use-cases/diverge-page-translation.use-case';
 export * from './lib/use-cases/save-diverged-page-translation-content.use-case';
+export * from './lib/use-cases/relink-page-translation.use-case';
+export * from './lib/use-cases/rollback-page-translation-to-version.use-case';
 export * from './lib/use-cases/get-page-group-by-id.use-case';
 export * from './lib/use-cases/list-page-groups.use-case';
 export * from './lib/use-cases/delete-page-group.use-case';

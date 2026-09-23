@@ -95,6 +95,7 @@ export async function duplicatePageGroup(
       // history: inheriting it would make the copy answer, and 301, at
       // addresses that belong to the page it was copied from.
       formerSlugs: [],
+      formerParents: [],
       slug,
       seoMeta: sourceTranslation.seoMeta,
       fieldValues: sourceTranslation.fieldValues,

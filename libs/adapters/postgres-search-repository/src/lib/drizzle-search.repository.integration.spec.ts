@@ -99,6 +99,7 @@ describe('DrizzleSearchRepository (integration)', () => {
       locale: row.locale,
       slug: row.slug,
       formerSlugs: row.formerSlugs,
+      formerParents: row.formerParents,
       seoMeta: row.seoMeta,
       fieldValues: row.fieldValues,
       status: row.status as 'draft' | 'published',

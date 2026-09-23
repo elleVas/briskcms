@@ -43,6 +43,7 @@ export function pageTranslationRow(
     locale: props.locale,
     slug: props.slug,
     formerSlugs: props.formerSlugs,
+    formerParents: props.formerParents,
     seoMeta: props.seoMeta,
     fieldValues: props.fieldValues,
     status: props.status,

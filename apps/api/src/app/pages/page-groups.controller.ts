@@ -22,13 +22,16 @@ import {
   getPageTranslationById,
   listPageGroups,
   movePageGroupToCollection,
+  movePageGroupToParent,
   listPageGroupTerms,
   listPageGroupTranslations,
   listPageGroupVersions,
   listPageTranslationVersions,
   publishPageTranslation,
   reorderSiblingPageGroups,
+  relinkPageTranslation,
   rollbackPageGroupToVersion,
+  rollbackPageTranslationToVersion,
   saveDivergedPageTranslationContent,
   savePageGroupAsTemplate,
   savePageGroupContent,
@@ -63,6 +66,7 @@ import {
   pageTranslationRecordSchema,
   pageTranslationVersionRecordSchema,
   paginatedPageGroupsSchema,
+  type FieldValueOverlay,
   type PageGroupRecord,
   type PageTranslationRecord,
 } from '@brisk/shared-types';
@@ -100,12 +104,16 @@ import {
   createPageGroupTranslationBodySchema,
   type ListPageGroupsQuery,
   type MoveToCollectionBody,
+  type MoveToParentBody,
   listPageGroupsQuerySchema,
   moveToCollectionBodySchema,
+  moveToParentBodySchema,
   type ReorderPageGroupsBody,
   reorderPageGroupsBodySchema,
-  type RollbackPageGroupBody,
-  rollbackPageGroupBodySchema,
+  type RelinkPageTranslationBody,
+  relinkPageTranslationBodySchema,
+  type RollbackToVersionBody,
+  rollbackToVersionBodySchema,
   type SaveDivergedPageTranslationContentBody,
   saveDivergedPageTranslationContentBodySchema,
   type SavePageGroupContentBody,
@@ -327,8 +335,8 @@ export class PageGroupsController {
   @Patch(':id/rollback')
   async rollback(
     @Param('id') id: string,
-    @Body(new ZodValidationPipe(rollbackPageGroupBodySchema))
-    body: RollbackPageGroupBody,
+    @Body(new ZodValidationPipe(rollbackToVersionBodySchema))
+    body: RollbackToVersionBody,
   ) {
     const group = await rollbackPageGroupToVersion(
       {
@@ -462,6 +470,33 @@ export class PageGroupsController {
     return this.toGroupDto(group);
   }
 
+  /*
+   * Where the page hangs in the site's tree — its address, and the
+   * address of everything under it. A different thing from
+   * `:id/collection`, which only decides which screen lists it.
+   */
+  @Patch(':id/parent')
+  async moveToParent(
+    @Param('id') id: string,
+    @Body(new ZodValidationPipe(moveToParentBodySchema))
+    body: MoveToParentBody,
+  ) {
+    const group = await movePageGroupToParent(
+      {
+        pageGroupRepository: this.pageGroupRepository,
+        pageTranslationRepository: this.pageTranslationRepository,
+        taxonomyRepository: this.taxonomyRepository,
+      },
+      {
+        tenantId: this.tenantContext.getCurrentTenantId(),
+        pageGroupId: id,
+        parentId: body.parentId,
+        actorUserId: this.tenantContext.getCurrentUserId(),
+      },
+    );
+    return this.toGroupDto(group);
+  }
+
   @Patch('translations/:translationId/field-values')
   async saveFieldValues(
     @Param('translationId') translationId: string,
@@ -469,35 +504,16 @@ export class PageGroupsController {
     body: SavePageTranslationFieldValuesBody,
   ) {
     const tenantId = this.tenantContext.getCurrentTenantId();
-    // The only content entrance a schema cannot guard on its own (see
-    // sanitized-page-content.schema.ts): the overlay records a block ID,
-    // and only the group's own tree says what TYPE that block is — which
-    // is what decides whether a field is rich text at all. Sanitising
-    // every value instead would be destructive, because `Code.code` is
-    // deliberately `translatable` and a snippet would lose everything
-    // after its first `<`.
-    // Via the translation, not `body.parentGroupId` — that one is the
-    // group's parent in the page HIERARCHY, a different thing entirely,
-    // and sanitising against it would mean sanitising against another
-    // page's tree.
-    const translationBeingSaved = await this.pageTranslationRepository.findById(
-      tenantId,
-      translationId,
-    );
-    const group = translationBeingSaved
-      ? await this.pageGroupRepository.findById(
-          tenantId,
-          translationBeingSaved.pageGroupId,
-        )
-      : null;
     const translation = await savePageTranslationFieldValues(
       { pageTranslationRepository: this.pageTranslationRepository },
       {
         tenantId,
         pageTranslationId: translationId,
-        fieldValues: group
-          ? sanitizeFieldValueOverlay(body.fieldValues, group.content)
-          : body.fieldValues,
+        fieldValues: await this.sanitizedOverlay(
+          tenantId,
+          translationId,
+          body.fieldValues,
+        ),
         parentGroupId: body.parentGroupId,
         actorUserId: this.tenantContext.getCurrentUserId(),
       },
@@ -609,6 +625,58 @@ export class PageGroupsController {
     return this.toTranslationDto(translation);
   }
 
+  /**
+   * Brings an unlinked language back onto the shared structure, with the
+   * text the editor carried over from its fork (docs/adr/0075).
+   */
+  @Post('translations/:translationId/relink')
+  async relink(
+    @Param('translationId') translationId: string,
+    @Body(new ZodValidationPipe(relinkPageTranslationBodySchema))
+    body: RelinkPageTranslationBody,
+  ) {
+    const tenantId = this.tenantContext.getCurrentTenantId();
+    const translation = await relinkPageTranslation(
+      {
+        pageGroupRepository: this.pageGroupRepository,
+        pageTranslationRepository: this.pageTranslationRepository,
+      },
+      {
+        tenantId,
+        pageTranslationId: translationId,
+        fieldValues: await this.sanitizedOverlay(
+          tenantId,
+          translationId,
+          body.fieldValues,
+        ),
+        actorUserId: this.tenantContext.getCurrentUserId(),
+      },
+    );
+    return this.toTranslationDto(translation);
+  }
+
+  @Patch('translations/:translationId/rollback')
+  async rollbackTranslation(
+    @Param('translationId') translationId: string,
+    @Body(new ZodValidationPipe(rollbackToVersionBodySchema))
+    body: RollbackToVersionBody,
+  ) {
+    const translation = await rollbackPageTranslationToVersion(
+      {
+        pageGroupRepository: this.pageGroupRepository,
+        pageTranslationRepository: this.pageTranslationRepository,
+        pageTranslationVersionRepository: this.pageTranslationVersionRepository,
+      },
+      {
+        tenantId: this.tenantContext.getCurrentTenantId(),
+        pageTranslationId: translationId,
+        versionId: body.versionId,
+        actorUserId: this.tenantContext.getCurrentUserId(),
+      },
+    );
+    return this.toTranslationDto(translation);
+  }
+
   // Same gate as PagesController.createPreviewToken: every role that can
   // save a draft can also preview it, not just admin/publisher.
   @Post('translations/:translationId/preview-token')
@@ -641,6 +709,41 @@ export class PageGroupsController {
       },
     );
     return versions.map((version) => this.toTranslationVersionDto(version));
+  }
+
+  /**
+   * A language's overlay made safe to render. The only content entrance a
+   * schema cannot guard on its own (see sanitized-page-content.schema.ts):
+   * the overlay records a block ID, and only the group's own tree says
+   * what TYPE that block is — which is what decides whether a field is
+   * rich text at all. Sanitising every value instead would be
+   * destructive, because `Code.code` is deliberately `translatable` and a
+   * snippet would lose everything after its first `<`.
+   *
+   * The group is found through the translation, never through a
+   * `parentGroupId` in the body — that one is the group's parent in the
+   * page HIERARCHY, and sanitising against it would mean sanitising
+   * against another page's tree. An unknown translation is returned as
+   * is: the use case that follows refuses it with the right error.
+   */
+  private async sanitizedOverlay(
+    tenantId: string,
+    translationId: string,
+    fieldValues: FieldValueOverlay,
+  ): Promise<FieldValueOverlay> {
+    const translation = await this.pageTranslationRepository.findById(
+      tenantId,
+      translationId,
+    );
+    const group = translation
+      ? await this.pageGroupRepository.findById(
+          tenantId,
+          translation.pageGroupId,
+        )
+      : null;
+    return group
+      ? sanitizeFieldValueOverlay(fieldValues, group.content)
+      : fieldValues;
   }
 
   /** Same whitelist discipline as PagesController.toDto (security review 2026-08-24) — never the raw entity. */

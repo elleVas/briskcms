@@ -219,6 +219,86 @@ describe('PageGroupsController (integration)', () => {
       .expect(404);
   });
 
+  /*
+   * An unlinked language used to be a one-way door with no history: its
+   * own tree was the only copy of its work. ADR-0075 opens the way back
+   * and keeps every step of the fork in the history.
+   */
+  it('relinks an unlinked language and restores the fork from its history, over HTTP', async () => {
+    const groupRes = await agent
+      .post('/page-groups')
+      .send({
+        siteId,
+        content: [
+          { id: 'hero-1', type: 'Hero', props: { title: 'Hello' } },
+          { id: 'text-1', type: 'Text', props: { body: '<p>Hello</p>' } },
+        ],
+      })
+      .expect(201);
+    const itRes = await agent
+      .post(`/page-groups/${groupRes.body.id}/translations`)
+      .send({
+        locale: 'it',
+        slug: `ricollega-${randomUUID()}`,
+        seoMeta: { title: 'Ricollega', description: '' },
+      })
+      .expect(201);
+    const translationId = itRes.body.id;
+    await agent
+      .post(`/page-groups/translations/${translationId}/diverge`)
+      .expect(201);
+    const fork = [
+      { id: 'hero-1', type: 'Hero', props: { title: 'Ciao' } },
+      { id: 'only-here', type: 'Text', props: { body: '<p>Solo qui</p>' } },
+    ];
+    await agent
+      .patch(`/page-groups/translations/${translationId}/diverged-content`)
+      .send({ content: fork, parentGroupId: null })
+      .expect(200);
+
+    const relinkRes = await agent
+      .post(`/page-groups/translations/${translationId}/relink`)
+      .send({
+        fieldValues: {
+          'hero-1': { title: 'Ciao' },
+          'text-1': { body: '<p>Ciao</p><script>alert(1)</script>' },
+        },
+      })
+      .expect(201);
+    expect(relinkRes.body.isDiverged).toBe(false);
+    expect(relinkRes.body.divergedContent).toBeNull();
+    expect(relinkRes.body.fieldValues['hero-1']).toEqual({ title: 'Ciao' });
+    // The overlay goes through the same sanitiser as any other save of a
+    // language's text: a rich text field keeps its markup, never a script.
+    expect(relinkRes.body.fieldValues['text-1'].body).toBe('<p>Ciao</p>');
+
+    await agent
+      .post(`/page-groups/translations/${translationId}/relink`)
+      .send({ fieldValues: {} })
+      .expect(409);
+
+    const versionsRes = await agent
+      .get(`/page-groups/translations/${translationId}/versions`)
+      .expect(200);
+    // diverge + the save of the fork + the relink.
+    expect(versionsRes.body).toHaveLength(3);
+    const forkVersion = versionsRes.body[1];
+    expect(forkVersion.divergedContent).toEqual(fork);
+    expect(versionsRes.body[2].divergedContent).toBeNull();
+
+    const restoreRes = await agent
+      .patch(`/page-groups/translations/${translationId}/rollback`)
+      .send({ versionId: forkVersion.id })
+      .expect(200);
+    expect(restoreRes.body.isDiverged).toBe(true);
+    expect(restoreRes.body.divergedContent).toEqual(fork);
+
+    await agent
+      .patch(`/page-groups/translations/${translationId}/rollback`)
+      .send({ versionId: randomUUID() })
+      .expect(404);
+  });
+
   it('reorders a sibling group of page groups, over the real HTTP endpoint', async () => {
     // Scoped under a fresh parent (not root) so this test's sibling group
     // is isolated from every other group any other test in this file
@@ -271,6 +351,57 @@ describe('PageGroupsController (integration)', () => {
         parentId,
         orderedPageGroupIds: [childA.body.id],
       })
+      .expect(400);
+  });
+
+  /*
+   * The move a page's address depends on: the language rows carry the
+   * parent too, so this is also the check that the group and its
+   * languages end up agreeing about where the page lives.
+   */
+  it('moves a page under another one, and refuses a ring, over the real HTTP endpoint', async () => {
+    const services = await agent
+      .post('/page-groups')
+      .send({ siteId, content: [] })
+      .expect(201);
+    const plumbing = await agent
+      .post('/page-groups')
+      .send({ siteId, content: [] })
+      .expect(201);
+    await agent
+      .post(`/page-groups/${plumbing.body.id}/translations`)
+      .send({
+        locale: 'en',
+        slug: `plumbing-${randomUUID()}`,
+        seoMeta: { title: 'Plumbing', description: '' },
+      })
+      .expect(201);
+
+    await agent
+      .patch(`/page-groups/${plumbing.body.id}/parent`)
+      .send({ parentId: services.body.id })
+      .expect(200);
+
+    const moved = await agent
+      .get(`/page-groups/${plumbing.body.id}`)
+      .expect(200);
+    expect(moved.body.parentId).toBe(services.body.id);
+
+    // Its language went with it: asked for the tree under the new parent,
+    // the page is there — which only works if the translation row's own
+    // parent was rewritten in the same transaction.
+    const tree = await agent
+      .get('/page-groups')
+      .query({ siteId, locale: 'en' })
+      .expect(200);
+    const listed = tree.body.items.find(
+      (item: { id: string }) => item.id === plumbing.body.id,
+    );
+    expect(listed?.parentId).toBe(services.body.id);
+
+    await agent
+      .patch(`/page-groups/${services.body.id}/parent`)
+      .send({ parentId: plumbing.body.id })
       .expect(400);
   });
 

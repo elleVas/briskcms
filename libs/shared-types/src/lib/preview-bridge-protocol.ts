@@ -98,11 +98,10 @@ export type PreviewTextChangedMessage = PreviewBridgeEnvelope<
  * drag-and-drop does not cross the iframe boundary reliably across
  * browsers, see the visual editor plan): the parent owns the entire drag
  * state, and the iframe merely reports `mousedown`/`mousemove`/`mouseup` as
- * it already does for hover/click. The parent decides whether `blockId` is
- * genuinely reorderable (a top-level block — nested reordering stays a
- * separate TODO, the same choice layers-panel.tsx made) and ignores the
- * event otherwise, the same "an unknown blockId crashes nothing" principle
- * as use-block-tree.ts.
+ * it already does for hover/click. The parent decides where the block
+ * lands — among its siblings at any depth, or inside another container
+ * (`computeContainerDrop`) — and ignores an unknown `blockId`, the same
+ * "an unknown blockId crashes nothing" principle as use-block-tree.ts.
  */
 export type PreviewDragStartMessage = PreviewBridgeEnvelope<
   'preview:drag-start',

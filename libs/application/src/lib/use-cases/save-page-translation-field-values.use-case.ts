@@ -47,15 +47,7 @@ export async function savePageTranslationFieldValues(
   });
   await deps.pageTranslationRepository.saveWithVersion(
     translation,
-    {
-      id: randomUUID(),
-      tenantId: translation.tenantId,
-      pageTranslationId: translation.id,
-      fieldValues: translation.fieldValues,
-      seoMeta: translation.seoMeta,
-      createdBy: input.actorUserId,
-      createdAt: translation.updatedAt,
-    },
+    translation.toVersion(randomUUID()),
     input.parentGroupId,
   );
 

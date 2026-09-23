@@ -1,7 +1,9 @@
 ---
 // Override of apps/public-site/src/components/blocks/Button.astro,
 // resolved via resolveThemeBlockOverride (docs/adr/0021's per-block
-// escalation) — same props/markup as core, the ONE difference is layout:
+// escalation) — same props and markup as core (keep it that way when core's
+// Button changes: this copy once fell behind by four props), the ONE
+// difference is layout:
 // every standalone Button under this theme centers itself in its
 // container, regardless of how/where the editor placed it. Deliberate
 // demonstration that a theme's own CSS can override a layout decision
@@ -17,12 +19,28 @@ import { resolveLinkHref } from '@brisk/theme-runtime';
 // needs. A theme block receives the class that rule targets and puts it on
 // its root element; the override itself never reaches the component.
 type Props = ButtonProps & {
+  /** Resolved by BlockRenderer from the `icon` prop (docs/adr/0023). */
+  iconSvg?: string | null;
   instanceClass?: string | null;
   variantClass?: string | null;
 };
 
-const { label, linkType, page, url, instanceClass, variantClass } =
-  Astro.props;
+// Every prop core's Button reads. This copy used to stop at the link:
+// the icon, the size, the full width and the new tab that core grew in
+// ADR-0056 were accepted by the editor and silently dropped here, so a
+// button with an icon on this theme simply had none.
+const {
+  label,
+  linkType,
+  page,
+  url,
+  size,
+  fullWidth,
+  openInNewTab,
+  iconSvg,
+  instanceClass,
+  variantClass,
+} = Astro.props;
 // The same function core's Button uses (ADR-0063), and the reason a
 // theme gets one at all: this copy resolved a page with `localePath`,
 // which knows nothing about ancestors — so a Button pointing at a
@@ -33,25 +51,69 @@ const href = resolveLinkHref({ linkType, page, url });
 ---
 
 <a
-  class:list={['brisk-button', variantClass, instanceClass]}
+  class:list={[
+    'brisk-button',
+    `brisk-button--${size}`,
+    { 'brisk-button--full': fullWidth },
+    variantClass,
+    instanceClass,
+  ]}
   href={href ?? undefined}
-  data-brisk-field="label"
+  target={openInNewTab ? '_blank' : undefined}
+  rel={openInNewTab ? 'noopener' : undefined}
 >
-  {label}
+  {iconSvg && (
+    <span class="brisk-button__icon" aria-hidden="true" set:html={iconSvg} />
+  )}
+  <span data-brisk-field="label">{label}</span>
 </a>
 
 <style>
+  /* Centred in its container — the one thing this override is for.
+     `flex` rather than core's `inline-flex` because a centred box needs
+     to be a block, and flex still lines an icon up with its label. */
   .brisk-button {
-    display: block;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--brisk-override-gap, 0.5em);
     width: fit-content;
     margin-inline: auto;
-    padding: var(--brisk-override-padding-y, 0.5rem)
-      var(--brisk-override-padding-x, 1.25rem);
+    padding: var(--brisk-override-padding-y, var(--brisk-button-py))
+      var(--brisk-override-padding-x, var(--brisk-button-px));
+    font-size: var(--brisk-button-size, 1rem);
     border-radius: var(--brisk-override-radius, var(--radius));
     background: var(--brisk-override-bg, var(--primary));
     color: var(--brisk-override-text, var(--primary-foreground));
     text-decoration: none;
     border: 1px solid var(--brisk-override-bg, var(--primary));
+    --brisk-button-py: 0.5rem;
+    --brisk-button-px: 1.25rem;
+  }
+  /* The same three sizes as core, so a size chosen in the editor means the
+     same thing on this theme. */
+  .brisk-button--sm {
+    --brisk-button-py: 0.3rem;
+    --brisk-button-px: 0.85rem;
+    --brisk-button-size: 0.875rem;
+  }
+  .brisk-button--lg {
+    --brisk-button-py: 0.75rem;
+    --brisk-button-px: 1.75rem;
+    --brisk-button-size: 1.125rem;
+  }
+  .brisk-button--full {
+    width: 100%;
+  }
+  .brisk-button__icon {
+    display: inline-flex;
+    width: 1em;
+    height: 1em;
+    flex-shrink: 0;
+  }
+  .brisk-button__icon :global(svg) {
+    width: 100%;
+    height: 100%;
   }
   .brisk-button--secondary {
     background: transparent;

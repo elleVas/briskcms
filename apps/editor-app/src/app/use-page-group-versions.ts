@@ -6,11 +6,9 @@ import {
 } from './page-groups-queries';
 
 /**
- * Version history for the shared PageGroup structure only — a diverged
- * translation's own `divergedContent` isn't tracked by any version stream
- * yet (a real, accepted gap, see the Fase 0-3 memory), so the version-
- * history button always shows/restores the group's structure regardless
- * of which locale is active. `enabled` keeps this lazy, same reasoning as
+ * Version history for the shared PageGroup structure — every language
+ * that follows it. A language's own content has its own history, see
+ * usePageTranslationVersions. `enabled` keeps this lazy, same reasoning as
  * the old usePageVersions: only fetched once the dialog is actually open.
  */
 export function usePageGroupVersions(groupId: string, enabled: boolean) {

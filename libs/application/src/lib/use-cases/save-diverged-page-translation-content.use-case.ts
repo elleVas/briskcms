@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import {
   PageTranslationNotDivergedError,
   PageTranslationNotFoundError,
@@ -23,12 +24,11 @@ export interface SaveDivergedPageTranslationContentInput {
  * Saves a diverged translation's own, independent structure — the
  * counterpart to savePageGroupContent for a translation that has forked
  * away from the shared PageGroup.content (see PageTranslation.diverge).
- * Plain save, no version row: unlike savePageGroupContent/
- * savePageTranslationFieldValues, there is no versions table scoped to a
- * translation's own content today (page_group_versions' FK points at
- * PageGroup, not PageTranslation) — diverging is a real but rare escape
- * hatch (see the plan), version history for it is a known, deliberately
- * deferred gap, not an oversight.
+ *
+ * With a version, like every other content save: the fork used to have no
+ * history at all, so the only copy of an unlinked language's work was the
+ * row itself, and relinking would have thrown it away for good
+ * (docs/adr/0075).
  */
 export async function saveDivergedPageTranslationContent(
   deps: SaveDivergedPageTranslationContentDeps,
@@ -48,7 +48,11 @@ export async function saveDivergedPageTranslationContent(
   translation.saveDivergedContent(input.content, {
     by: input.actorUserId,
   });
-  await deps.pageTranslationRepository.save(translation, input.parentGroupId);
+  await deps.pageTranslationRepository.saveWithVersion(
+    translation,
+    translation.toVersion(randomUUID()),
+    input.parentGroupId,
+  );
 
   return translation;
 }

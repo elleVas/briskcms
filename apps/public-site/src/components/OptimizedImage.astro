@@ -1,6 +1,7 @@
 ---
 import { Image } from 'astro:assets';
 import type { PickedMedia } from '@brisk/shared-types';
+import { FULL_WIDTH_SIZES, responsiveWidths } from '../lib/image-sizes';
 
 interface Props {
   media: PickedMedia;
@@ -9,6 +10,13 @@ interface Props {
   /** Defaults to 'lazy' (astro:assets' own default) — pass 'eager' for a block that can be the page's own LCP element. */
   loading?: 'lazy' | 'eager';
   decoding?: 'async' | 'sync' | 'auto';
+  /**
+   * How wide this block draws the image — see lib/image-sizes.ts. The
+   * browser uses it to pick a variant, so an avatar drawn at 40px stops
+   * downloading the same file as a full-width photo. Defaults to the full
+   * width, which is never too small, only sometimes too big.
+   */
+  sizes?: string;
 }
 
 const {
@@ -17,6 +25,7 @@ const {
   class: className,
   loading = 'lazy',
   decoding = 'async',
+  sizes = FULL_WIDTH_SIZES,
 } = Astro.props;
 
 // astro:assets' <Image> requires explicit width/height for a remote src
@@ -38,6 +47,8 @@ function hasKnownDimensions(
       alt={alt}
       width={media.width}
       height={media.height}
+      widths={responsiveWidths(media.width)}
+      sizes={sizes}
       class={className}
       loading={loading}
       decoding={decoding}

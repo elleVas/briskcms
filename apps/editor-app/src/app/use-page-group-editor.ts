@@ -6,12 +6,14 @@ import {
 } from '@tanstack/react-query';
 import {
   mergeTranslatedContent,
+  relinkedOverlay,
   type Block,
   type FieldValueOverlay,
 } from '@brisk/shared-types';
 import {
   divergePageTranslation,
   publishPageTranslation,
+  relinkPageTranslation,
   saveDivergedPageTranslationContent,
   savePageGroupContent,
   savePageTranslationFieldValues,
@@ -262,6 +264,58 @@ export function usePageGroupEditor(groupId: string, initialLocale: string) {
     [lastContentSaveFailed, lastFieldValuesSaveFailed],
   );
 
+  const relinkMutation = useMutation({
+    mutationFn: ({
+      translationId,
+      fieldValues,
+    }: {
+      translationId: string;
+      fieldValues: FieldValueOverlay;
+    }) => relinkPageTranslation(translationId, fieldValues),
+    onSuccess: (updated) => {
+      updateTranslationsCache(updated);
+      setStatus({ kind: 'saved', at: Date.now() });
+    },
+    onError: (error: unknown) =>
+      setStatus({ kind: 'error', message: String(error) }),
+  });
+
+  /**
+   * Brings the active language back onto the shared structure, carrying
+   * over the text of every block the structure still has (docs/adr/0075).
+   *
+   * The caller waits for `whenSaved` first, and refuses on `hasFailedSave`.
+   * The fork is then read from the cache rather than from this render: the
+   * last edit can land after the confirmation dialog opened, and relinking
+   * from the tree as it was a moment earlier would drop that edit without
+   * a word.
+   */
+  const handleRelink = useCallback(
+    async (
+      translatableFields: (blockType: string) => readonly string[],
+    ): Promise<void> => {
+      const latest = queryClient
+        .getQueryData(pageGroupTranslationsQueryOptions(groupId).queryKey)
+        ?.find((translation) => translation.id === activeTranslation.id);
+      if (!latest?.divergedContent) {
+        throw new Error(`Translation ${activeTranslation.id} is not unlinked`);
+      }
+      const latestGroup =
+        queryClient.getQueryData(pageGroupQueryOptions(groupId).queryKey) ??
+        group;
+      const { fieldValues } = relinkedOverlay(
+        latestGroup.content,
+        latest.divergedContent,
+        translatableFields,
+      );
+      await relinkMutation.mutateAsync({
+        translationId: latest.id,
+        fieldValues,
+      });
+    },
+    [queryClient, groupId, activeTranslation.id, group, relinkMutation],
+  );
+
   /**
    * A write is on the wire right now. Derived from the mutations rather
    * than tracked in `status`, so the two can never disagree: `status`
@@ -277,7 +331,8 @@ export function usePageGroupEditor(groupId: string, initialLocale: string) {
   const isSaving =
     saveGroupContentMutation.isPending ||
     saveDivergedContentMutation.isPending ||
-    saveFieldValuesMutation.isPending;
+    saveFieldValuesMutation.isPending ||
+    relinkMutation.isPending;
 
   return {
     group,
@@ -294,5 +349,6 @@ export function usePageGroupEditor(groupId: string, initialLocale: string) {
     onSaveFieldValue,
     handlePublish,
     handleDiverge,
+    handleRelink,
   };
 }

@@ -134,6 +134,20 @@
       "when": 1789371623941,
       "tag": "0018_collection_default_template",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1789685785431,
+      "tag": "0019_page_translation_former_parents",
+      "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1789752526458,
+      "tag": "0020_page_translation_version_diverged_content",
+      "breakpoints": true
     }
   ]
 }

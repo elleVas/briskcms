@@ -1,5 +1,7 @@
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '../components/ui/button';
+import { SegmentedTabs } from '../components/ui/segmented-tabs';
 import {
   Dialog,
   DialogContent,
@@ -15,32 +17,50 @@ import {
 export interface VersionSummary {
   id: string;
   createdAt: string;
+  /** Said beside the date — what restoring this version would do beyond the obvious, e.g. unlink a language again. */
+  note?: string;
 }
 
-export interface VersionHistoryDialogProps {
+/**
+ * One history the dialog can show. A page has two: its shared structure,
+ * and the text of the language being edited — which is where an unlinked
+ * language keeps its own tree, and where a relinked one keeps the fork it
+ * let go of (docs/adr/0075).
+ */
+export interface VersionSource {
+  key: string;
+  /** Shown only when there is more than one source to choose between. */
+  label: string;
   versions: VersionSummary[];
   isLoading: boolean;
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
   onRollback: (versionId: string) => Promise<unknown>;
 }
 
+export interface VersionHistoryDialogProps {
+  sources: VersionSource[];
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}
+
 export function VersionHistoryDialog({
-  versions,
-  isLoading,
+  sources,
   open,
   onOpenChange,
-  onRollback,
 }: VersionHistoryDialogProps) {
   const { t, i18n } = useTranslation();
+  const [selectedKey, setSelectedKey] = useState<string | null>(null);
+  // Falls back to the first one when the selection is gone — switching to
+  // an unlinked language takes the structure's history away.
+  const source =
+    sources.find((candidate) => candidate.key === selectedKey) ?? sources[0];
 
   async function handleRollback(versionId: string) {
-    await onRollback(versionId);
+    await source.onRollback(versionId);
     onOpenChange(false);
   }
 
   // Newest first; the API returns them oldest-first (see listByPage).
-  const sorted = [...versions].reverse();
+  const sorted = [...(source?.versions ?? [])].reverse();
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -51,7 +71,17 @@ export function VersionHistoryDialog({
             {t('pages.versionHistory.description')}
           </DialogDescription>
         </DialogHeader>
-        {isLoading ? (
+        {sources.length > 1 && (
+          <SegmentedTabs
+            tabs={sources.map((candidate) => ({
+              value: candidate.key,
+              label: candidate.label,
+            }))}
+            value={source.key}
+            onChange={setSelectedKey}
+          />
+        )}
+        {!source || source.isLoading ? (
           <p className="text-sm text-muted-foreground">{t('common.loading')}</p>
         ) : sorted.length === 0 ? (
           <p className="text-sm text-muted-foreground">
@@ -62,19 +92,27 @@ export function VersionHistoryDialog({
             {sorted.map((version, index) => (
               <li
                 key={version.id}
-                className="flex items-center justify-between rounded-md px-2 py-1.5 text-sm"
+                className="flex items-center justify-between gap-2 rounded-md px-2 py-1.5 text-sm"
               >
-                <span>
-                  {new Date(version.createdAt).toLocaleString(i18n.language)}
+                <span className="flex min-w-0 flex-col">
+                  <span>
+                    {new Date(version.createdAt).toLocaleString(i18n.language)}
+                  </span>
+                  {version.note && (
+                    <span className="text-xs text-muted-foreground">
+                      {version.note}
+                    </span>
+                  )}
                 </span>
                 {index === 0 ? (
-                  <span className="text-xs text-muted-foreground">
+                  <span className="shrink-0 text-xs text-muted-foreground">
                     {t('pages.versionHistory.current')}
                   </span>
                 ) : (
                   <Button
                     variant="ghost"
                     size="sm"
+                    className="shrink-0"
                     onClick={() => void handleRollback(version.id)}
                   >
                     {t('pages.versionHistory.restore')}
