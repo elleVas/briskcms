@@ -40,6 +40,9 @@ overrides:
   # esbuild ~0.18. Verified after the override: drizzle-kit still reads the
   # schema and generates migrations.
   esbuild: ^0.25.12
+  # @astrojs/react asks for ^5.8.1 and resolves 5.9.0, which the DoS
+  # advisory covers; 5.9.2 is the fix and stays inside that range.
+  devalue: ^5.9.2
 
 # sharp is astro:assets' default image service (apps/public-site) — its
 # install script wires up the prebuilt native binary for the current
