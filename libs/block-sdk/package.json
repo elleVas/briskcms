@@ -20,7 +20,7 @@
   },
   "dependencies": {
     "@brisk/shared-types": "workspace:*",
-    "react": "^19.2.8",
+    "react": "^19.3.0",
     "zod": "^4.4.3"
   }
 }
