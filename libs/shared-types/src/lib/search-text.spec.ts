@@ -382,6 +382,132 @@ describe('the shop, local-business and editorial blocks', () => {
   });
 });
 
+describe('the blocks search used to miss', () => {
+  const index = (blocks: PageContent) =>
+    extractSearchableText({ title: '', description: '' }, blocks);
+
+  it.each<[string, Record<string, unknown>, string[]]>([
+    [
+      'BeforeAfter',
+      { beforeLabel: 'Prima del restauro', afterLabel: 'Dopo il restauro' },
+      ['Prima del restauro', 'Dopo il restauro'],
+    ],
+    [
+      'Code',
+      { code: 'export default defineConfig({ output })', language: 'ts' },
+      ['defineConfig'],
+    ],
+    [
+      'ImageSlider',
+      { images: [{ alt: 'Cucina prima' }, { alt: 'Cucina dopo' }] },
+      ['Cucina prima', 'Cucina dopo'],
+    ],
+    ['Link', { label: 'Scarica il listino' }, ['Scarica il listino']],
+    [
+      'LogoStrip',
+      { logos: [{ alt: 'Comune di Bologna' }, { alt: 'Acme SpA' }] },
+      ['Comune di Bologna', 'Acme SpA'],
+    ],
+    [
+      'MapEmbed',
+      { address: 'Via Rizzoli 4, Bologna' },
+      ['Via Rizzoli 4, Bologna'],
+    ],
+    [
+      'NewsletterSignup',
+      { title: 'Resta aggiornato', buttonLabel: 'Iscriviti' },
+      ['Resta aggiornato', 'Iscriviti'],
+    ],
+    [
+      'PricingPlan',
+      { name: 'Professionale', buttonLabel: 'Attiva ora' },
+      ['Professionale', 'Attiva ora'],
+    ],
+    ['Stat', { label: 'Clienti soddisfatti' }, ['Clienti soddisfatti']],
+    [
+      'TimelineStep',
+      { label: '2019', title: 'Apertura', description: 'Il primo negozio' },
+      ['2019', 'Apertura', 'Il primo negozio'],
+    ],
+    [
+      'VideoEmbed',
+      { caption: 'Il laboratorio', url: 'https://youtu.be/abc' },
+      ['Il laboratorio'],
+    ],
+  ])('indexes %s', (type, props, expected) => {
+    const text = index([{ type, props }]);
+    for (const word of expected) {
+      expect(text).toContain(word);
+    }
+  });
+
+  /*
+   * A number with its unit matches across pages that share nothing: every
+   * plan on the site says "al mese", and "29" is a price, a year and a
+   * street number. The plan's name is what someone types.
+   */
+  it('leaves prices, units and addresses-as-URLs out', () => {
+    const text = index([
+      {
+        type: 'PricingPlan',
+        props: {
+          name: 'Professionale',
+          price: '29',
+          period: 'al mese',
+          buttonLabel: 'Attiva',
+        },
+      },
+      { type: 'Stat', props: { label: 'Clienti', prefix: '+', suffix: '%' } },
+      {
+        type: 'VideoEmbed',
+        props: { url: 'https://youtu.be/abc', caption: '' },
+      },
+    ]);
+
+    expect(text).toContain('Professionale');
+    expect(text).toContain('Clienti');
+    expect(text).not.toContain('al mese');
+    expect(text).not.toContain('29');
+    expect(text).not.toContain('youtu.be');
+  });
+
+  /*
+   * The trail and the search field read the same on every page that draws
+   * them: indexing them would answer "home" with the whole site.
+   */
+  it('leaves the furniture out', () => {
+    const text = index([
+      { type: 'Breadcrumb', props: { homeLabel: 'Home' } },
+      { type: 'SearchBox', props: { placeholder: 'Cerca nel sito' } },
+    ]);
+
+    expect(text.trim()).toBe('');
+  });
+
+  /*
+   * An arrangement's words belong to its children, and the children are
+   * walked already — counting them twice would not make the page any
+   * easier to find, and hides which block actually says them.
+   */
+  it("takes a container's words from its children, not the container", () => {
+    const text = index([
+      {
+        type: 'Timeline',
+        props: { label: 'non indicizzata' },
+        children: [
+          {
+            type: 'TimelineStep',
+            props: { label: '2019', title: 'Apertura', description: '' },
+          },
+        ],
+      },
+    ]);
+
+    expect(text).toContain('Apertura');
+    expect(text).not.toContain('non indicizzata');
+  });
+});
+
 describe('rich text in the index', () => {
   // Without stripping, a search for "strong" would match every emphasised
   // word on the site, and a search for the phrase around a link would

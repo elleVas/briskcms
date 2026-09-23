@@ -78,14 +78,23 @@ function teamMemberProse(props: Record<string, unknown>): string[] {
   ];
 }
 
-/** The alt text of an `images` list — Gallery's shape, which three blocks share. */
-function imageAlts(props: Record<string, unknown>): string[] {
-  const images = Array.isArray(props['images']) ? props['images'] : [];
-  return images.map((image: unknown) =>
-    image && typeof image === 'object' && 'alt' in image
-      ? asString(image.alt)
-      : '',
-  );
+/**
+ * The alt text of a list of pictures — Gallery's `{ media, alt }[]` shape,
+ * which five blocks share under two different key names.
+ *
+ * Alt text is prose here for Image's reason: it is what the picture says
+ * to someone who cannot see it, and on a logo strip it is the only place
+ * a partner's name is written at all.
+ */
+function pictureAlts(key: string): ProseFieldExtractor {
+  return (props) => {
+    const pictures = Array.isArray(props[key]) ? props[key] : [];
+    return pictures.map((picture: unknown) =>
+      picture && typeof picture === 'object' && 'alt' in picture
+        ? asString(picture.alt)
+        : '',
+    );
+  };
 }
 
 const PROSE_FIELD_EXTRACTORS: Partial<Record<string, ProseFieldExtractor>> = {
@@ -119,7 +128,7 @@ const PROSE_FIELD_EXTRACTORS: Partial<Record<string, ProseFieldExtractor>> = {
     Object.entries(props)
       .filter(([key]) => parseSectionOverrideKey(key) !== null)
       .map(([, value]) => asString(value)),
-  Gallery: (props) => imageAlts(props),
+  Gallery: pictureAlts('images'),
   Quote: quoteProse,
   Rating: (props) => [asString(props['label'])],
   Countdown: (props) => [asString(props['label'])],
@@ -157,7 +166,7 @@ const PROSE_FIELD_EXTRACTORS: Partial<Record<string, ProseFieldExtractor>> = {
     asString(props['badge']),
   ],
   // The pictures' alt text, for Gallery's reason.
-  ProductGallery: (props) => imageAlts(props),
+  ProductGallery: pictureAlts('images'),
   DiscountPrice: (props) => [asString(props['note'])],
   BuyButton: (props) => [asString(props['label'])],
   ProductVariants: (props) => [
@@ -210,9 +219,48 @@ const PROSE_FIELD_EXTRACTORS: Partial<Record<string, ProseFieldExtractor>> = {
   PullQuote: quoteProse,
   ImageHotspots: (props) => [asString(props['alt'])],
   Hotspot: (props) => [asString(props['title']), asString(props['text'])],
-  MasonryGallery: (props) => imageAlts(props),
+  MasonryGallery: pictureAlts('images'),
   NavLink: (props) => [asString(props['label'])],
   NavDropdown: (props) => [asString(props['label'])],
+  /*
+   * The blocks whose prose search used to miss entirely — each one a
+   * decision about which of its fields a visitor is actually looking for,
+   * which is why they were left out of the 2026-09-02 batch rather than
+   * wired up in bulk.
+   *
+   * What stays out, and why: an address's URL, a video's URL, a plan's
+   * price and period, a statistic's prefix and suffix. A URL is not prose,
+   * and a number with its unit ("29", "€", "al mese") matches across pages
+   * that have nothing to do with each other — the plan's NAME is what
+   * someone types.
+   */
+  BeforeAfter: (props) => [
+    asString(props['beforeLabel']),
+    asString(props['afterLabel']),
+  ],
+  // The snippet itself: on a documentation site, the name of a function
+  // someone read here is exactly what they come back searching for.
+  Code: (props) => [asString(props['code'])],
+  ImageSlider: pictureAlts('images'),
+  Link: (props) => [asString(props['label'])],
+  LogoStrip: pictureAlts('logos'),
+  // The address as written on the page — the street someone searches for.
+  MapEmbed: (props) => [asString(props['address'])],
+  NewsletterSignup: (props) => [
+    asString(props['title']),
+    asString(props['buttonLabel']),
+  ],
+  PricingPlan: (props) => [
+    asString(props['name']),
+    asString(props['buttonLabel']),
+  ],
+  Stat: (props) => [asString(props['label'])],
+  TimelineStep: (props) => [
+    asString(props['label']),
+    asString(props['title']),
+    asString(props['description']),
+  ],
+  VideoEmbed: (props) => [asString(props['caption'])],
 };
 
 function proseFieldsFor(block: Block): string[] {
@@ -296,29 +344,17 @@ export const BLOCKS_WITHOUT_SEARCHABLE_TEXT = [
   // Business info again, and a third party's booking page.
   'StickyContactBar',
   'BookingEmbed',
-
-  // Real prose, not wired up yet — a genuine backlog item (found during
-  // the 2026-09-02 Extension Manifest planning session, deliberately left
-  // out of that plan's scope: each needs its own per-field design
-  // decision, not a rushed batch). Search simply doesn't find these
-  // blocks' text yet.
-  'BeforeAfter',
-  'Breadcrumb',
-  'Code',
+  // Arrangements whose every word belongs to a child that indexes itself —
+  // the same reason ProductGrid and EventList are above.
   'FeatureGrid',
-  'ImageSlider',
-  'Link',
-  'LogoStrip',
-  'MapEmbed',
-  'NewsletterSignup',
-  'PricingPlan',
   'PricingTable',
-  'SearchBox',
-  'Stat',
   'StatsCounter',
   'Team',
   'Testimonials',
   'Timeline',
-  'TimelineStep',
-  'VideoEmbed',
+  // Furniture, not the page's words: the trail's "Home" and the search
+  // field's placeholder read the same on every page that draws them, so
+  // indexing them would answer "home" or "cerca" with the whole site.
+  'Breadcrumb',
+  'SearchBox',
 ] as const;
