@@ -7,7 +7,7 @@ import * as api from '../lib/taxonomies-api-client';
 import * as sitesApi from '../lib/sites-api-client';
 import type { TaxonomyDto } from '../lib/taxonomies-api-client';
 import { createTestQueryClient } from '../test/query-client.test-fixture';
-import { buildTaxonomyDto } from '../test/dtos.test-fixture';
+import { buildTaxonomyDto, buildTermDto } from '../test/dtos.test-fixture';
 import { TaxonomiesView } from './taxonomies-view';
 
 vi.mock('../lib/taxonomies-api-client', async (importOriginal) => {
@@ -19,6 +19,7 @@ vi.mock('../lib/taxonomies-api-client', async (importOriginal) => {
     listTerms: vi.fn(),
     createTaxonomy: vi.fn(),
     updateTaxonomy: vi.fn(),
+    updateTerm: vi.fn(),
     deleteTaxonomy: vi.fn(),
   };
 });
@@ -31,9 +32,9 @@ vi.mock('../lib/sites-api-client', async (importOriginal) => {
 
 const taxonomy = buildTaxonomyDto();
 
-function renderView(taxonomies: TaxonomyDto[]) {
+function renderView(taxonomies: TaxonomyDto[], terms: api.TermDto[] = []) {
   vi.mocked(api.listTaxonomies).mockResolvedValue(taxonomies);
-  vi.mocked(api.listTerms).mockResolvedValue([]);
+  vi.mocked(api.listTerms).mockResolvedValue(terms);
   vi.mocked(sitesApi.getCurrentSite).mockResolvedValue(
     buildSiteRecord({ enabledLocales: ['it', 'en'] }),
   );
@@ -179,5 +180,34 @@ describe('TaxonomiesView', () => {
         "Un'altra dimensione o una pagina risponde già a quell'indirizzo.",
       ),
     ).toBeTruthy();
+  });
+
+  /*
+   * A term with two pages under it is an address a visitor reaches from a
+   * filter and a thin page for a crawler. Only whoever publishes knows
+   * which, so the screen asks rather than a rule on a count deciding.
+   */
+  it('lets a term be kept out of search engines', async () => {
+    const term = buildTermDto({
+      id: 'term-1',
+      taxonomyId: taxonomy.id,
+      name: { it: 'Espresso' },
+      slugs: { it: 'espresso' },
+    });
+    vi.mocked(api.updateTerm).mockResolvedValue({ ...term, noindex: true });
+    renderView([taxonomy], [term]);
+
+    // The options of a term live behind its own row, as in the screen.
+    fireEvent.click(await screen.findByRole('button', { name: /Espresso/ }));
+
+    const toggle = await screen.findByLabelText(/fuori dai motori di ricerca/i);
+    expect((toggle as HTMLInputElement).checked).toBe(false);
+    fireEvent.click(toggle);
+
+    await waitFor(() =>
+      expect(vi.mocked(api.updateTerm)).toHaveBeenCalledWith('term-1', {
+        noindex: true,
+      }),
+    );
   });
 });

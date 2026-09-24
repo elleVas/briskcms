@@ -97,6 +97,10 @@ export async function listPublishedPagesForSitemap(
 
   const termEntries: SitemapEntry[] = [];
   for (const term of terms) {
+    // A term kept out of search engines is kept out of the map that
+    // invites them in: listing it and then telling the crawler to go
+    // away wastes the crawl and contradicts the page itself.
+    if (term.noindex) continue;
     // Only where the term is actually reachable: a language it has no
     // slug in, or that the site does not publish, has no URL to list.
     for (const locale of site.enabledLocales) {

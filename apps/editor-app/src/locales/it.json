@@ -372,7 +372,9 @@
     "landingPageChange": "Cambia",
     "landingPageClear": "Torna alla disposizione predefinita",
     "emptyExplainer": "Una dimensione è un modo di classificare le pagine — Argomento, Autore, Linea di prodotto. Ogni suo termine ha un URL suo, che elenca le pagine classificate così.",
-    "emptyAction": "Dai un nome alla prima dimensione"
+    "emptyAction": "Dai un nome alla prima dimensione",
+    "termNoindex": "Tieni questo termine fuori dai motori di ricerca",
+    "termNoindexHint": "La pagina continua a funzionare per chi ci arriva, ma chiede ai motori di non indicizzarla e sparisce dalla sitemap. Utile per un termine con pochissimi contenuti."
   },
   "sections": {
     "title": "Sezioni",

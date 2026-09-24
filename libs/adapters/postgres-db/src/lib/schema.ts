@@ -971,6 +971,10 @@ export const terms = pgTable(
       .default({})
       .$type<LocalizedText>(),
     seoMeta: jsonb('seo_meta').notNull().default({}).$type<LocalizedSeoMeta>(),
+    // Kept out of search engines by whoever publishes, one term at a
+    // time — see Term.noindex. Not derived from how many pages carry the
+    // term: a rule on a count hides a page that was growing.
+    noindex: boolean('noindex').notNull().default(false),
     // A page built by hand, rendered ON this term's own URL rather than
     // redirected to (ADR-0064). `set null` is what makes that promise
     // hold: delete the page and the address keeps working, falling back

@@ -301,6 +301,8 @@ export interface UpdateTermInput {
   name?: LocalizedText;
   description?: LocalizedText;
   seoMeta?: LocalizedSeoMeta;
+  /** Kept out of search engines — see Term.noindex. */
+  noindex?: boolean;
   /** Replaces the addresses wholesale: a locale left out of this map loses its address, which is how a term stops being published in a language. */
   slugs?: Record<string, string>;
   landingPageGroupId?: string | null;
@@ -337,6 +339,7 @@ export async function updateTerm(
   if (input.name) term.rename(input.name);
   if (input.description) term.setDescription(input.description);
   if (input.seoMeta) term.setSeoMeta(input.seoMeta);
+  if (input.noindex !== undefined) term.setNoindex(input.noindex);
   if (input.landingPageGroupId !== undefined) {
     term.setLandingPage(input.landingPageGroupId);
   }

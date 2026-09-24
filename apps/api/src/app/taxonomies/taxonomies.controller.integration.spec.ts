@@ -90,6 +90,38 @@ describe('TaxonomiesController (integration)', () => {
     expect(readBack.body.termIds).toHaveLength(2);
   });
 
+  /*
+   * The switch that keeps a thin term out of search engines: it has to
+   * survive the round trip, because the public site reads it from here
+   * to decide what the page says about itself.
+   */
+  it('remembers a term asked to stay out of search engines', async () => {
+    const suffix = randomUUID().slice(0, 8);
+    const taxonomy = await createTaxonomy({
+      name: { en: `Indexing ${suffix}` },
+      prefix: `indexing-${suffix}`,
+    }).expect(201);
+    const term = await agent
+      .post(`/taxonomies/${taxonomy.body.id}/terms`)
+      .send({ name: { en: `Thin ${suffix}` } })
+      .expect(201);
+    expect(term.body.noindex).toBe(false);
+
+    const updated = await agent
+      .patch(`/taxonomies/terms/${term.body.id}`)
+      .send({ noindex: true })
+      .expect(200);
+    expect(updated.body.noindex).toBe(true);
+
+    const listed = await agent
+      .get(`/taxonomies/${taxonomy.body.id}/terms`)
+      .expect(200);
+    expect(
+      listed.body.find((one: { id: string }) => one.id === term.body.id)
+        ?.noindex,
+    ).toBe(true);
+  });
+
   it('answers 409 when a dimension asks for a prefix that is taken', async () => {
     const prefix = `family-${randomUUID().slice(0, 8)}`;
     await createTaxonomy({ name: { en: 'Family' }, prefix }).expect(201);

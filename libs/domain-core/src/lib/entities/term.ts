@@ -9,6 +9,13 @@ export interface TermProps {
   name: LocalizedText;
   description: LocalizedText;
   seoMeta: LocalizedSeoMeta;
+  /**
+   * Kept out of search engines, on purpose. A term with two pages under
+   * it is a real address for a visitor following a filter and a thin one
+   * for a crawler; which of the two it is, is a judgement only whoever
+   * publishes can make, so it is a switch and not a rule on a count.
+   */
+  noindex: boolean;
   landingPageGroupId: string | null;
   order: number;
   /** locale -> the slug this term answers to in that language. */
@@ -51,6 +58,7 @@ export class Term {
       name: input.name,
       description: {},
       seoMeta: {},
+      noindex: false,
       landingPageGroupId: null,
       order: input.order ?? 0,
       slugs: { ...input.slugs },
@@ -99,6 +107,10 @@ export class Term {
     return this.props.seoMeta;
   }
 
+  get noindex(): boolean {
+    return this.props.noindex;
+  }
+
   get landingPageGroupId(): string | null {
     return this.props.landingPageGroupId;
   }
@@ -136,6 +148,11 @@ export class Term {
 
   setSeoMeta(seoMeta: LocalizedSeoMeta, now: Date = new Date()): void {
     this.props.seoMeta = seoMeta;
+    this.props.updatedAt = now;
+  }
+
+  setNoindex(noindex: boolean, now: Date = new Date()): void {
+    this.props.noindex = noindex;
     this.props.updatedAt = now;
   }
 

@@ -372,7 +372,9 @@
     "landingPageChange": "Change",
     "landingPageClear": "Back to the default layout",
     "emptyExplainer": "A dimension is a way of filing pages — Topic, Author, Product range. Each of its terms gets a URL of its own, listing every page filed under it.",
-    "emptyAction": "Name your first dimension"
+    "emptyAction": "Name your first dimension",
+    "termNoindex": "Keep this term out of search engines",
+    "termNoindexHint": "The page still works for anyone who reaches it, but asks search engines not to index it and leaves the sitemap. Useful for a term with very little under it."
   },
   "sections": {
     "title": "Sections",
