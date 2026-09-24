@@ -29,9 +29,15 @@ your `.env` (they are commented out in `.env.prod.example`, and default to
 `https://` on the three subdomains). All three, together: a browser origin
 is scheme+host+port, and three separate things pin the editor's — the API's
 CORS allow-list, `public-site`'s `frame-ancestors` for the canvas iframe,
-and the URLs baked into the editor bundle. If one disagrees, the editor
+and the addresses the editor itself calls. If one disagrees, the editor
 loads normally and every API call fails CORS, with nothing on screen
 explaining it.
+
+Changing any of them afterwards is a restart, not a rebuild: the editor
+reads its two addresses when its container starts (ADR-0076). After
+`docker compose up -d editor-app`, a reload of the browser tab is enough —
+`/config.js` is served with `Cache-Control: no-store` precisely so the new
+address arrives without a hard refresh.
 
 ## First-time setup
 

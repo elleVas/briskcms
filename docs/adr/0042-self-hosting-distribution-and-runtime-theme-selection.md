@@ -165,3 +165,8 @@ from isn't a real safety net.
   image (`docker-compose build editor-app`) — accepted as a documented
   operational step for what should be a rare event, rather than adding
   a runtime-config-injection mechanism for it.
+  **Superseded by [ADR-0076](0076-the-editor-reads-its-addresses-at-start-up.md)**:
+  the two addresses are read at container start, so changing a domain is a
+  restart. What forced the change was this ADR's own premise — published
+  images are the distribution path, and an image built with one domain in
+  it cannot be the image anybody else pulls.
