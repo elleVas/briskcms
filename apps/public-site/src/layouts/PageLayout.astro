@@ -57,6 +57,13 @@ interface Props {
 	footer: Block[] | null;
 	headerSticky: boolean;
 	ancestors: PublishedPageAncestor[];
+	/**
+	 * This one address kept out of search engines, on top of the site-wide
+	 * switch below — a term whoever publishes judged too thin to be worth
+	 * finding (docs/adr/0078). Pages never set it: theirs is the site
+	 * setting.
+	 */
+	noindex?: boolean;
 	// Only the preview route passes it (see the visual editor plan, Day 2)
 	// — it never affects the real published route.
 	editable?: boolean;
@@ -85,6 +92,7 @@ const {
 	headerSticky,
 	ancestors,
 	editable,
+	noindex = false,
 	route = 'page',
 	instanceStyleCss = '',
 } = Astro.props;
@@ -411,7 +419,7 @@ const blockStyleCss =
 			href={`/${locale}/rss.xml`}
 		/>
 		{
-			!site.searchEngineIndexingEnabled && (
+			(!site.searchEngineIndexingEnabled || noindex) && (
 				<meta name="robots" content="noindex, nofollow" />
 			)
 		}

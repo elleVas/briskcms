@@ -50,6 +50,7 @@ export const updateTermBodySchema = z.object({
   name: localizedTextSchema.optional(),
   description: localizedTextSchema.optional(),
   seoMeta: localizedSeoMetaSchema.optional(),
+  noindex: z.boolean().optional(),
   /** Replaces the whole map: a language left out loses its address. */
   slugs: z.record(z.string(), segmentSchema).optional(),
   landingPageGroupId: z.string().uuid().nullish(),

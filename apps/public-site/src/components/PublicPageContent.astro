@@ -1,5 +1,5 @@
 ---
-import type { PublishedPage } from '@brisk/shared-types';
+import type { PublishedPage, PublishedTerm } from '@brisk/shared-types';
 import PageLayout from '../layouts/PageLayout.astro';
 import {
   buildBlockInstanceRulesCss,
@@ -34,6 +34,15 @@ interface Props {
   // bare page — when it is missing, or the fetch fails, the long-standing
   // behaviour remains.
   locale?: string;
+}
+
+/**
+ * Only a term can ask to be kept out of search engines, and only when
+ * whoever publishes said so (docs/adr/0078) — a page's own answer is the
+ * site-wide setting, which `PageLayout` reads for itself.
+ */
+function isTerm(value: PublishedPage): value is PublishedTerm {
+  return 'term' in value;
 }
 
 const { page, editable, locale } = Astro.props;
@@ -103,6 +112,7 @@ const errorPageTranslations =
       ancestors={page.ancestors}
       instanceStyleCss={instanceStyleCss}
       editable={editable}
+      noindex={isTerm(page) && page.term.noindex}
       route="page"
     >
       {

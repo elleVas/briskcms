@@ -119,6 +119,7 @@ describe('listPublishedPagesForSitemap', () => {
       prefix: string | null;
       slugs: Record<string, string>;
       landingPageGroupId?: string;
+      noindex?: boolean;
     },
   ) {
     const taxonomy = Taxonomy.create({
@@ -139,6 +140,9 @@ describe('listPublishedPagesForSitemap', () => {
     });
     if (options.landingPageGroupId) {
       term.setLandingPage(options.landingPageGroupId);
+    }
+    if (options.noindex) {
+      term.setNoindex(true);
     }
     await deps.taxonomyRepository.saveTerm(term);
     return term;
@@ -178,6 +182,30 @@ describe('listPublishedPagesForSitemap', () => {
         updatedAt: expect.any(Date),
       },
     ]);
+  });
+
+  /*
+   * Listing an address in the map that invites crawlers in, and then
+   * telling the crawler to go away once it arrives, wastes the visit and
+   * contradicts the page itself.
+   */
+  it('leaves out a term kept out of search engines', async () => {
+    const deps = setup();
+    await seedSite(deps.siteRepository, { enabledLocales: ['it'] });
+    await seedTerm(deps, {
+      prefix: 'categoria',
+      slugs: { it: 'espresso' },
+      noindex: true,
+    });
+
+    const result = await listPublishedPagesForSitemap(deps, {
+      tenantId,
+      domain: 'example.com',
+    });
+
+    expect(result?.items.filter((item) => item.slug === 'espresso')).toEqual(
+      [],
+    );
   });
 
   it('leaves out a language the term does not answer in', async () => {

@@ -113,6 +113,10 @@ export async function getPublishedTermByPath(
       name: term.name[input.locale] ?? '',
       description: term.description[input.locale] ?? '',
       hasLandingPage: landing !== null,
+      // Carried to the renderer rather than decided there: the page has
+      // to say `noindex` in its own head, and the sitemap has to leave
+      // the same term out (docs/adr/0078).
+      noindex: term.noindex,
     },
   };
 }

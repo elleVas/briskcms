@@ -169,6 +169,7 @@ export function buildTermDto(overrides: Partial<TermDto> = {}): TermDto {
     name: { it: 'Term' },
     description: {},
     seoMeta: {},
+    noindex: false,
     landingPageGroupId: null,
     order: 0,
     slugs: { it: 'term' },
