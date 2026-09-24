@@ -19,6 +19,7 @@ import { DEFAULT_VARIANT } from '@brisk/shared-types';
 import type {
   ResponsiveBlockStyle,
   BusinessAddress,
+  WordPressAnalysis,
   CookieBannerSettings,
   ExposedFields,
   FieldValueOverlay,
@@ -75,6 +76,21 @@ export const reusableSectionStatusEnum = pgEnum('reusable_section_status', [
   'published',
 ]);
 export const storageProviderEnum = pgEnum('storage_provider', ['local', 's3']);
+
+/**
+ * Where an import has got to (docs/adr/0082).
+ *
+ * `analyzing` and `analyzed` exist before anything is written: reading a
+ * 314 MB export takes seconds, which is too long to hold a request open,
+ * and the whole point of the analysis is that somebody reads it and
+ * decides. `failed` is also what a job found `analyzing` at start-up
+ * becomes — the process that was doing the work is gone.
+ */
+export const importJobStatusEnum = pgEnum('import_job_status', [
+  'analyzing',
+  'analyzed',
+  'failed',
+]);
 export const verificationTokenPurposeEnum = pgEnum(
   'verification_token_purpose',
   ['email-verification', 'password-reset', 'user-invite'],
@@ -824,6 +840,53 @@ export const verificationTokens = pgTable(
       .defaultNow(),
   },
   (table) => [index('verification_tokens_user_idx').on(table.userId)],
+);
+
+/**
+ * One attempt at bringing a site in from somewhere else (docs/adr/0082).
+ *
+ * The file itself is not here. It lands on disk, is read once, and the
+ * row keeps what was learnt from it — a report is kilobytes where the
+ * export is hundreds of megabytes, and keeping the file would mean
+ * keeping every export anybody ever tried.
+ */
+export const importJobs = pgTable(
+  'import_jobs',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    tenantId: uuid('tenant_id')
+      .notNull()
+      .references(() => tenants.id, { onDelete: 'cascade' }),
+    siteId: uuid('site_id')
+      .notNull()
+      .references(() => sites.id, { onDelete: 'cascade' }),
+    /** `'wordpress'` today. A second source implements the same port and writes its own name here. */
+    source: text('source').notNull(),
+    /** What the person uploaded, to tell two attempts apart in a list. */
+    fileName: text('file_name').notNull(),
+    fileBytes: integer('file_bytes').notNull(),
+    status: importJobStatusEnum('status').notNull().default('analyzing'),
+    /** Written when `status` is `analyzed` — the shape is `WordPressAnalysis`. */
+    report: jsonb('report').$type<WordPressAnalysis>(),
+    /** Written when `status` is `failed`, and meant to be read by whoever uploaded the file. */
+    failureReason: text('failure_reason'),
+    createdBy: uuid('created_by').references(() => users.id, {
+      onDelete: 'set null',
+    }),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    finishedAt: timestamp('finished_at', { withTimezone: true }),
+  },
+  (table) => [
+    // "What has been tried on this site", newest first, which is the only
+    // way this table is ever read.
+    index('import_jobs_tenant_site_created_idx').on(
+      table.tenantId,
+      table.siteId,
+      table.createdAt,
+    ),
+  ],
 );
 
 export const forms = pgTable(

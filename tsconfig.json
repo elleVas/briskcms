@@ -122,6 +122,9 @@
     },
     {
       "path": "./libs/adapters/wordpress-wxr"
+    },
+    {
+      "path": "./libs/adapters/postgres-import-job-repository"
     }
   ],
   "compilerOptions": {}

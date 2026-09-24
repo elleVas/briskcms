@@ -86,7 +86,8 @@
       "users": "Users",
       "groupContent": "Content",
       "groupSite": "Site",
-      "groupSettings": "Settings"
+      "groupSettings": "Settings",
+      "imports": "Import"
     },
     "settings": {
       "label": "Settings",
@@ -2750,5 +2751,38 @@
   },
   "pageTemplates": {
     "blank": "Blank page"
+  },
+  "imports": {
+    "title": "Import from WordPress",
+    "description": "Upload a WordPress export and see what would really come across, before importing anything. For now this screen only reads: it writes nothing to your site.",
+    "uploadHint": "The .xml file WordPress produces under Tools → Export.",
+    "choose": "Choose a file",
+    "uploading": "Uploading…",
+    "analyzing": "Reading the file…",
+    "failed": "This file could not be read.",
+    "history": "Earlier attempts",
+    "report": {
+      "found": "What's in it",
+      "pages": "pages",
+      "posts": "posts",
+      "attachments": "media",
+      "menuItems": "menu items",
+      "otherTypes": "Custom post types:",
+      "whatArrives": "What would come across",
+      "whole": "pages whole",
+      "partial": "pages in part",
+      "empty": "pages empty",
+      "blocks": "{{native}} of {{total}} blocks convertible ({{percent}}%)",
+      "quarantined": "{{count}} quarantined",
+      "dropped": "{{count}} dropped as empty",
+      "warnings": "Worth knowing before you decide"
+    },
+    "warnings": {
+      "page-builder": "A page builder holds the layout in a format this cannot read: on {{count}} pages the words would come across, the arrangement would not.",
+      "multilingual": "Multilingual site. Translations would arrive as separate pages, to be reunited by hand.",
+      "content-outside-the-post": "{{count}} pages have an empty body in the export: their content lives elsewhere (typically in ACF fields) and they would arrive with their title alone.",
+      "unsupported-post-types": "{{count}} entries are in post types this does not import: they would be left out.",
+      "menus": "{{count}} menu items. Menus are rebuilt by hand in the editor."
+    }
   }
 }

@@ -24,6 +24,9 @@
   ],
   "references": [
     {
+      "path": "../../libs/adapters/wordpress-wxr/tsconfig.lib.json"
+    },
+    {
       "path": "../../libs/adapters/verification-token-adapter/tsconfig.lib.json"
     },
     {
@@ -73,6 +76,9 @@
     },
     {
       "path": "../../libs/adapters/postgres-media-repository/tsconfig.lib.json"
+    },
+    {
+      "path": "../../libs/adapters/postgres-import-job-repository/tsconfig.lib.json"
     },
     {
       "path": "../../libs/adapters/postgres-form-repository/tsconfig.lib.json"

@@ -7,6 +7,7 @@ import { AuthModule } from './auth/auth.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { DeploymentTenantModule } from './deployment-tenant.module';
 import { FormsModule } from './forms/forms.module';
+import { ImportsModule } from './imports/imports.module';
 import { HealthModule } from './health/health.module';
 import { SetupModule } from './setup/setup.module';
 import { LegalDocumentsModule } from './legal-documents/legal-documents.module';
@@ -40,6 +41,7 @@ import { UsersModule } from './users/users.module';
     MediaModule,
     SitesModule,
     FormsModule,
+    ImportsModule,
     PublicFormsModule,
     PublicNewsletterModule,
     ReusableSectionsModule,
