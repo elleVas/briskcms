@@ -28,3 +28,4 @@ export * from './lib/tenant-context.port';
 export * from './lib/theme-catalog.port';
 export * from './lib/user-repository.port';
 export * from './lib/verification-token.port';
+export * from './lib/wordpress-export-reader.port';

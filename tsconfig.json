@@ -119,6 +119,9 @@
     },
     {
       "path": "./libs/testing"
+    },
+    {
+      "path": "./libs/adapters/wordpress-wxr"
     }
   ],
   "compilerOptions": {}
