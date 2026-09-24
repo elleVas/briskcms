@@ -24,6 +24,8 @@ export interface TermDto {
   description: LocalizedText;
   /** Per-locale SEO for the term's own route (docs/adr/0067). */
   seoMeta: LocalizedSeoMeta;
+  /** Kept out of search engines, one term at a time (docs/adr/0078). */
+  noindex: boolean;
   landingPageGroupId: string | null;
   order: number;
   /** locale -> the slug this term answers to in that language. */
@@ -102,6 +104,7 @@ export interface UpdateTermInput {
   name?: LocalizedText;
   description?: LocalizedText;
   seoMeta?: LocalizedSeoMeta;
+  noindex?: boolean;
   /** Replaces the whole map: a language left out loses its address. */
   slugs?: Record<string, string>;
   /** `null` detaches the landing page; the term's URL keeps working on the default layout. */

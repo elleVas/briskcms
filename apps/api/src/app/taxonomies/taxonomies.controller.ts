@@ -181,6 +181,7 @@ export class TaxonomiesController {
       name: body.name,
       description: body.description,
       seoMeta: body.seoMeta,
+      noindex: body.noindex,
       slugs: body.slugs,
       ...(body.landingPageGroupId === undefined
         ? {}

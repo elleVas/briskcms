@@ -244,6 +244,25 @@ export function TermTreeEditor({
                       </Button>
                     </div>
                   ))}
+                  <label className="flex max-w-sm items-start gap-2 text-sm">
+                    <input
+                      type="checkbox"
+                      className="mt-0.5"
+                      checked={term.noindex}
+                      onChange={(event) =>
+                        updateMutation.mutate({
+                          id: term.id,
+                          noindex: event.target.checked,
+                        })
+                      }
+                    />
+                    <span className="flex flex-col gap-0.5">
+                      <span>{t('taxonomies.termNoindex')}</span>
+                      <span className="text-xs text-muted-foreground">
+                        {t('taxonomies.termNoindexHint')}
+                      </span>
+                    </span>
+                  </label>
                   <TermLandingPageField
                     siteId={siteId}
                     locale={defaultLocale}

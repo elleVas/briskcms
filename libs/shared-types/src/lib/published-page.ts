@@ -91,6 +91,8 @@ export const publishedTermSchema = publishedPageSchema.extend({
     description: z.string(),
     /** True when the blocks above came from a page somebody built by hand. */
     hasLandingPage: z.boolean(),
+    /** Kept out of search engines by whoever publishes — the page says so in its own head, and the sitemap leaves it out. */
+    noindex: z.boolean(),
   }),
 });
 export type PublishedTerm = z.infer<typeof publishedTermSchema>;

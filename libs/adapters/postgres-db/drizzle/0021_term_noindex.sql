@@ -1,0 +1,1 @@
+ALTER TABLE "terms" ADD COLUMN "noindex" boolean DEFAULT false NOT NULL;

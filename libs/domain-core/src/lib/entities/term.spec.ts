@@ -104,6 +104,29 @@ describe('Term mutations', () => {
   });
 });
 
+/*
+ * A term with two pages under it is a real address for a visitor and a
+ * thin one for a crawler. Which of the two it is, only whoever publishes
+ * knows — so it is a switch, and it starts off.
+ */
+describe('keeping a term out of search engines', () => {
+  it('is indexable until somebody says otherwise', () => {
+    const term = Term.create({ ...base, slugs: { it: 'espresso' } });
+
+    expect(term.noindex).toBe(false);
+  });
+
+  it('remembers the switch and when it was flipped', () => {
+    const term = Term.create({ ...base, slugs: { it: 'espresso' } });
+    const later = new Date('2026-09-24T10:00:00Z');
+
+    term.setNoindex(true, later);
+
+    expect(term.noindex).toBe(true);
+    expect(term.updatedAt).toEqual(later);
+  });
+});
+
 describe('Term.fromProps / toProps', () => {
   /*
    * The slug map is copied on the way in AND out. Handing out the
