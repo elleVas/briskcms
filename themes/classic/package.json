@@ -20,9 +20,9 @@
     "@brisk/block-sdk": "workspace:*",
     "@brisk/shared-types": "workspace:*",
     "@brisk/theme-runtime": "workspace:*",
-    "zod": "^4.4.3"
+    "zod": "^4.6.5"
   },
   "devDependencies": {
-    "astro": "^7.2.9"
+    "astro": "^7.3.3"
   }
 }

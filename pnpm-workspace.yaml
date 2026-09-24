@@ -16,7 +16,7 @@ packages:
 # the mismatch is between two different vite installs, not an inference
 # depth limit on one).
 overrides:
-  vite: 8.2.2
+  vite: 8.3.0
   # Security advisories in packages we do not depend on directly; each is a
   # patch within the major its parent already asks for. Drop an entry once
   # the parent ships a fixed range of its own.

@@ -47,10 +47,10 @@
     "postgres": "^3.4.9"
   },
   "devDependencies": {
-    "@node-rs/argon2": "^2.1.0",
+    "@node-rs/argon2": "^2.2.1",
     "dotenv": "^17.4.2",
     "dotenv-cli": "^11.0.0",
     "drizzle-kit": "^0.31.10",
-    "tsx": "^4.23.12"
+    "tsx": "^4.23.15"
   }
 }
