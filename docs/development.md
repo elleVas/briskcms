@@ -2,8 +2,8 @@
 
 ## Prerequisites
 
-- Node.js 22+
-- pnpm (`corepack enable` or `npm i -g pnpm`)
+- Node.js 24+ (the line CI, the images and `.nvmrc` all use)
+- pnpm, at the version `package.json`'s `packageManager` pins (`npm i -g pnpm@<version>`; corepack still works on Node 24 but is gone from Node 25)
 - Docker (for local Postgres)
 
 ## Setup

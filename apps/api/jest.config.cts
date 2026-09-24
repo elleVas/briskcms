@@ -17,9 +17,12 @@ module.exports = {
     '^.+\\.[tj]s$': ['@swc/jest', swcJestConfig],
   },
   moduleFileExtensions: ['ts', 'js', 'html'],
-  // node_modules is not transformed by default, and `sanitize-html`
-  // (@brisk/rich-text, ADR-0046) reaches htmlparser2, which ships ESM
-  // only — Jest runs CJS here and chokes on its `import`.
+  // node_modules is not transformed by default, and two dependencies ship
+  // ESM only — Jest runs CJS here and chokes on their `import`:
+  // `sanitize-html` (@brisk/rich-text, ADR-0046) reaches htmlparser2, and
+  // @nestjs/schedule is a native ES module from 12 onwards. Node 24 can
+  // `require` an ES module, but Jest's own module registry still cannot,
+  // so the runtime being able to do it is not enough.
   //
   // The pattern matches the whole PATH rather than the package directory
   // on purpose. Under pnpm the same file is reachable as
@@ -28,7 +31,7 @@ module.exports = {
   // spelling and silently ignores the file after all — which is exactly
   // what happened before this comment existed.
   transformIgnorePatterns: [
-    'node_modules/(?!.*(htmlparser2|entities|domutils|domhandler|domelementtype|dom-serializer))',
+    'node_modules/(?!.*(htmlparser2|entities|domutils|domhandler|domelementtype|dom-serializer|@nestjs/schedule|cron|luxon))',
   ],
   coverageDirectory: 'test-output/jest/coverage',
   // Default (babel/istanbul) coverage attributes phantom branches to every

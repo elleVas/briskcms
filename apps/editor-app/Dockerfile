@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 #
 # docs/adr/0042. A pure static SPA build — no Node runtime needed to serve
-# it, so the runtime stage is nginx, not node:22-alpine (lighter for a
+# it, so the runtime stage is nginx, not node:24-alpine (lighter for a
 # container whose only job is serving static files + an SPA fallback).
 #
 # The two addresses the browser needs — the API's and the public site's —
@@ -16,9 +16,15 @@
 # neither variable set) and for VITE_TURNSTILE_SITE_KEY, which is a build
 # input with no runtime half.
 
-FROM node:22-alpine AS build
+FROM node:24-alpine AS build
 WORKDIR /workspace
-RUN corepack enable
+# pnpm installed from the version package.json pins, not through corepack:
+# corepack is deprecated in Node 24 and simply absent from the Node 25
+# images, where `corepack enable` fails with "not found" and takes the
+# whole build with it. One source of truth, and package.json first so a
+# change to the source does not invalidate this layer.
+COPY package.json ./
+RUN npm install --global "pnpm@$(node -p "require('./package.json').packageManager.split('@')[1]")"
 COPY . .
 RUN pnpm install --frozen-lockfile
 ARG VITE_API_URL=http://localhost:3000/api
