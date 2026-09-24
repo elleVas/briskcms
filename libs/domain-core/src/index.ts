@@ -16,6 +16,7 @@ export * from './lib/entities/user';
 export * from './lib/entities/media';
 export * from './lib/entities/form';
 export * from './lib/entities/form-submission';
+export * from './lib/entities/import-job';
 export * from './lib/errors';
 export * from './lib/verification-token-purpose';
 export * from './lib/preview-content-type';
