@@ -72,6 +72,28 @@ describe('POST /api/forms/[id]/submit', () => {
     });
   });
 
+  it('forwards the page the form was rendered on, and never as an answer', async () => {
+    vi.mocked(fetch).mockResolvedValue(jsonResponse(undefined, 204));
+
+    const request = formDataRequest({
+      _redirectTo: '/contatti',
+      _checkboxFields: '',
+      _honeypot: '',
+      _pageId: 'translation-1',
+      email: 'visitor@example.com',
+    });
+
+    // @ts-expect-error deliberately partial APIContext
+    await POST({ params: { id: 'form-1' }, request, redirect });
+
+    const [, init] = vi.mocked(fetch).mock.calls[0];
+    const body = JSON.parse(init?.body as string);
+    expect(body.pageId).toBe('translation-1');
+    // `_`-prefixed like every other hint field, so it stays out of what
+    // the visitor is recorded as having typed.
+    expect(body.values).not.toHaveProperty('_pageId');
+  });
+
   it("forwards Turnstile's injected cf-turnstile-response as the captcha token", async () => {
     vi.mocked(fetch).mockResolvedValue(jsonResponse(undefined, 204));
 

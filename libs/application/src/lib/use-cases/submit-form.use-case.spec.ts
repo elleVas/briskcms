@@ -3,6 +3,7 @@ import {
   FormNotFoundError,
   InvalidCaptchaError,
   InvalidFormSubmissionError,
+  PageTranslation,
 } from '@brisk/domain-core';
 import { createForm } from './create-form.use-case';
 import { updateForm } from './update-form.use-case';
@@ -11,6 +12,7 @@ import { submitForm } from './submit-form.use-case';
 import {
   InMemoryFormRepository,
   InMemoryFormSubmissionRepository,
+  InMemoryPageTranslationRepository,
 } from '@brisk/testing';
 import { FakeEmailPort } from '@brisk/testing';
 import { FakeCaptchaPort } from '@brisk/testing';
@@ -27,12 +29,14 @@ describe('getPublicForm and submitForm', () => {
     const emailPort = new FakeEmailPort();
     const captchaPort = new FakeCaptchaPort();
     const newsletterPort = new FakeNewsletterPort();
+    const pageTranslationRepository = new InMemoryPageTranslationRepository();
     return {
       formRepository,
       formSubmissionRepository,
       emailPort,
       captchaPort,
       newsletterPort,
+      pageTranslationRepository,
     };
   }
 
@@ -81,6 +85,25 @@ describe('getPublicForm and submitForm', () => {
     });
   }
 
+  async function buildPage(
+    deps: ReturnType<typeof setup>,
+    id: string,
+    onSiteId = siteId,
+  ) {
+    const translation = PageTranslation.create({
+      id,
+      tenantId,
+      siteId: onSiteId,
+      pageGroupId: `group-of-${id}`,
+      locale: 'it',
+      slug: 'contatti',
+      seoMeta: { title: 'Contatti', description: '' },
+      createdBy: null,
+    });
+    await deps.pageTranslationRepository.save(translation, null);
+    return translation;
+  }
+
   it('getPublicForm returns fields but never the notification email', async () => {
     const deps = setup();
     const form = await buildFormWithFields(deps);
@@ -121,6 +144,9 @@ describe('getPublicForm and submitForm', () => {
     expect(deps.emailPort.sentEmails).toHaveLength(1);
     expect(deps.emailPort.sentEmails[0].to).toBe('owner@example.com');
     expect(deps.emailPort.sentEmails[0].html).toContain('visitor@example.com');
+    // 'page-1' is not a page of this site, so no origin is recorded — see
+    // the three tests at the end of this file.
+    expect(deps.formSubmissionRepository.submissions[0].pageId).toBeNull();
   });
 
   it('submitForm formats a file field as its filename and URL in the notification email', async () => {
@@ -353,5 +379,65 @@ describe('getPublicForm and submitForm', () => {
     ).resolves.not.toThrow();
 
     expect(deps.formSubmissionRepository.submissions).toHaveLength(1);
+  });
+
+  it('submitForm records the page the visitor filled the form on', async () => {
+    const deps = setup();
+    const form = await buildFormWithFields(deps);
+    const page = await buildPage(deps, 'translation-1');
+
+    await submitForm(deps, {
+      tenantId,
+      formId: form.id,
+      pageId: page.id,
+      values: { email: 'visitor@example.com', consent: true },
+      honeypot: '',
+      captchaToken,
+    });
+
+    expect(deps.formSubmissionRepository.submissions[0].pageId).toBe(
+      'translation-1',
+    );
+  });
+
+  it('submitForm refuses a page belonging to a different site', async () => {
+    // The endpoint is unauthenticated and the id arrives in the body, so
+    // anyone can name any page. A foreign key would accept this one — it
+    // is a real row — and the submission would be labelled with a page
+    // its owner cannot see.
+    const deps = setup();
+    const form = await buildFormWithFields(deps);
+    const elsewhere = await buildPage(deps, 'translation-2', 'another-site');
+
+    await submitForm(deps, {
+      tenantId,
+      formId: form.id,
+      pageId: elsewhere.id,
+      values: { email: 'visitor@example.com', consent: true },
+      honeypot: '',
+      captchaToken,
+    });
+
+    expect(deps.formSubmissionRepository.submissions[0].pageId).toBeNull();
+  });
+
+  it('submitForm keeps the answers when the page id names nothing', async () => {
+    // An invented id must not cost a real submission: it would be a
+    // foreign-key violation, and the visitor would see a failure over a
+    // field nobody needs.
+    const deps = setup();
+    const form = await buildFormWithFields(deps);
+
+    await submitForm(deps, {
+      tenantId,
+      formId: form.id,
+      pageId: 'not-a-page',
+      values: { email: 'visitor@example.com', consent: true },
+      honeypot: '',
+      captchaToken,
+    });
+
+    expect(deps.formSubmissionRepository.submissions).toHaveLength(1);
+    expect(deps.formSubmissionRepository.submissions[0].pageId).toBeNull();
   });
 });

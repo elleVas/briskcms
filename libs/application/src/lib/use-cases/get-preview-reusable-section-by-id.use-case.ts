@@ -87,6 +87,10 @@ export async function getPreviewReusableSectionById(
   ]);
 
   return {
+    // A section is not a page and has no id of its own to give here. The
+    // canvas is the only consumer of this route, and nothing is submitted
+    // from it.
+    id: null,
     content,
     seoMeta: { title: section.name, description: '' },
     locale: input.locale,

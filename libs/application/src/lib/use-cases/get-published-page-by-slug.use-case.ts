@@ -180,6 +180,7 @@ export async function getPublishedPageBySlug(
   return {
     redirectTo: null,
     page: {
+      id: translation.id,
       content: resolvedContent,
       seoMeta: translation.seoMeta,
       locale: translation.locale,

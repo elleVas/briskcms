@@ -802,6 +802,7 @@
       "count_one": "{{count}} submission",
       "count_other": "{{count}} submissions",
       "exportCsv": "Export CSV",
+      "submittedFrom": "Submitted from",
       "removedField": "no longer in this form",
       "noAnswer": "—",
       "loadError": "Could not load the submissions.",

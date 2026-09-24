@@ -1,3 +1,4 @@
+import type { SubmissionOriginPage } from '@brisk/application';
 import type { Form, FormSubmission } from '@brisk/domain-core';
 
 /**
@@ -48,11 +49,18 @@ function renderValue(value: unknown): string {
  * its raw id. Dropping those would silently lose real answers, which is
  * the failure mode that matters here: the export is what someone reaches
  * for precisely when they need everything.
+ *
+ * Two columns before them: when it arrived, and which page it was filled
+ * on. The page is second rather than last because the spreadsheet is
+ * where "which page converts" is actually counted, and a column nobody
+ * scrolls to is a column nobody groups by.
  */
 export function buildFormSubmissionsCsv(
   form: Form,
   submissions: FormSubmission[],
+  pages: SubmissionOriginPage[],
 ): string {
+  const pagesById = new Map(pages.map((page) => [page.id, page]));
   const fields = form.toProps().fields;
   const knownIds = fields.map((field) => field.id);
   const orphanIds = [
@@ -67,14 +75,21 @@ export function buildFormSubmissionsCsv(
 
   const header = [
     'Submitted at',
+    'Page',
     ...fields.map((field) => field.label),
     ...orphanIds.map((id) => `${id} (removed field)`),
   ];
 
   const rows = submissions.map((submission) => {
     const { payload, createdAt } = submission.toProps();
+    const page = submission.pageId
+      ? pagesById.get(submission.pageId)
+      : undefined;
     return [
       createdAt.toISOString(),
+      // Empty for a submission recorded before the site knew which page
+      // it was rendering, and for one whose page has since been deleted.
+      page ? `${page.title} (${page.locale})` : '',
       ...knownIds.map((id) => renderValue(payload[id])),
       ...orphanIds.map((id) => renderValue(payload[id])),
     ];

@@ -3,6 +3,7 @@ import { type INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { FakeCaptchaPort, FakeNewsletterPort } from '@brisk/testing';
 import { FormsModule } from '../forms/forms.module';
+import { PagesModule } from '../pages/pages.module';
 import { PublicFormsModule } from './public-forms.module';
 import { CAPTCHA_PORT, NEWSLETTER_PORT } from './public-forms.tokens';
 import { IntegrationApp } from '../../test/integration-app.test-fixture';
@@ -24,7 +25,9 @@ describe('PublicFormsController (integration)', () => {
   beforeAll(async () => {
     newsletterPort = new FakeNewsletterPort();
     integration = await IntegrationApp.start({
-      imports: [FormsModule, PublicFormsModule],
+      // PagesModule only to create a real page the normal way, so the
+      // origin recorded below is a row the foreign key actually accepts.
+      imports: [FormsModule, PagesModule, PublicFormsModule],
       // Cloudflare's siteverify and the newsletter provider are live third
       // parties, unlike Postgres and Mailpit: depending on them would make
       // this suite depend on their uptime. The fake newsletter port also
@@ -58,6 +61,23 @@ describe('PublicFormsController (integration)', () => {
       .send({ name: 'Contatti', fields, notificationEmail })
       .expect(200);
     return updateRes.body.id as string;
+  }
+
+  /** A real page, created the authenticated way — returns its translation's id. */
+  async function createPage(title: string): Promise<string> {
+    const groupRes = await agent
+      .post('/page-groups')
+      .send({ siteId, content: [] })
+      .expect(201);
+    const translationRes = await agent
+      .post(`/page-groups/${groupRes.body.id}/translations`)
+      .send({
+        locale: 'it',
+        slug: `contatti-${randomUUID()}`,
+        seoMeta: { title, description: '' },
+      })
+      .expect(201);
+    return translationRes.body.id as string;
   }
 
   it('serves a form definition without the notification email, without a session', async () => {
@@ -99,6 +119,62 @@ describe('PublicFormsController (integration)', () => {
         captchaToken: 'test-token',
       })
       .expect(204);
+  });
+
+  it('records which page the form was filled on, and names it when read back', async () => {
+    // The whole path, not the pieces: the id travels in the request body
+    // of an unauthenticated endpoint, is checked against the form's site,
+    // goes into a foreign-key column that nothing had ever written, and
+    // comes back named on the authenticated read.
+    const formId = await createForm(
+      [{ id: 'email', label: 'Email', type: 'email', required: true }],
+      null,
+    );
+    const pageTranslationId = await createPage('Contatti');
+
+    await request(app.getHttpServer())
+      .post(`/public/forms/${formId}/submissions`)
+      .send({
+        pageId: pageTranslationId,
+        values: { email: 'visitor@example.com' },
+        honeypot: '',
+        captchaToken: 'test-token',
+      })
+      .expect(204);
+
+    const read = await agent.get(`/forms/${formId}/submissions`).expect(200);
+    expect(read.body.items[0].pageId).toBe(pageTranslationId);
+    expect(read.body.pages).toEqual([
+      {
+        id: pageTranslationId,
+        pageGroupId: expect.any(String),
+        locale: 'it',
+        title: 'Contatti',
+      },
+    ]);
+  });
+
+  it('keeps a submission whose page id belongs to nothing', async () => {
+    // A foreign-key violation here would answer 500 and lose the answers
+    // someone typed, over a field that is only ever a note in the margin.
+    const formId = await createForm(
+      [{ id: 'email', label: 'Email', type: 'email', required: true }],
+      null,
+    );
+
+    await request(app.getHttpServer())
+      .post(`/public/forms/${formId}/submissions`)
+      .send({
+        pageId: randomUUID(),
+        values: { email: 'visitor@example.com' },
+        honeypot: '',
+        captchaToken: 'test-token',
+      })
+      .expect(204);
+
+    const read = await agent.get(`/forms/${formId}/submissions`).expect(200);
+    expect(read.body.items[0].pageId).toBeNull();
+    expect(read.body.pages).toEqual([]);
   });
 
   it('400s a submission missing a required field', async () => {

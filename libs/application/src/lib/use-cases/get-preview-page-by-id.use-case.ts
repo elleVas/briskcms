@@ -134,6 +134,7 @@ export async function getPreviewPageById(
   ]);
 
   return {
+    id: translation.id,
     content: resolvedContent,
     seoMeta: translation.seoMeta,
     locale: translation.locale,

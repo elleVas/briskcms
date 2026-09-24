@@ -43,6 +43,19 @@ export type PublishedPageAncestor = z.infer<typeof publishedPageAncestorSchema>;
  * it off the wire) — same reasoning as publishedSiteSchema.
  */
 export const publishedPageSchema = z.object({
+  /**
+   * This page in this language — the identity `form_submissions.page_id`
+   * points at, and the only reason it is on the public shape at all: a
+   * form block is rendered deep inside `content` and has no way to reach
+   * back up to the page it sits on, so the id has to travel down with the
+   * page itself (apps/public-site's `Astro.locals.pageTranslationId`).
+   *
+   * Nullable because a term's own page is a `PublishedPage` without a
+   * page behind it (ADR-0064) whenever the term has no landing page —
+   * there is nothing to name there, and a form on the default layout
+   * simply records no origin.
+   */
+  id: z.string().nullable(),
   content: z.array(blockSchema),
   seoMeta: seoMetaSchema,
   locale: z.string(),

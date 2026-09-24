@@ -27,6 +27,7 @@ import type {
   FormRepositoryPort,
   FormSubmissionRepositoryPort,
   NewsletterPort,
+  PageTranslationRepositoryPort,
 } from '@brisk/ports';
 import { ZodValidationPipe } from '../zod-validation.pipe';
 import {
@@ -40,6 +41,7 @@ import {
   FORM_REPOSITORY,
   FORM_SUBMISSION_REPOSITORY,
   NEWSLETTER_PORT,
+  PAGE_TRANSLATION_REPOSITORY,
 } from './public-forms.tokens';
 
 const MAX_ATTACHMENT_BYTES = 10 * 1024 * 1024; // same cap as MediaController's own upload
@@ -60,6 +62,8 @@ export class PublicFormsController {
     @Inject(EMAIL_PORT) private readonly emailPort: EmailPort,
     @Inject(CAPTCHA_PORT) private readonly captchaPort: CaptchaPort,
     @Inject(NEWSLETTER_PORT) private readonly newsletterPort: NewsletterPort,
+    @Inject(PAGE_TRANSLATION_REPOSITORY)
+    private readonly pageTranslationRepository: PageTranslationRepositoryPort,
     @Inject(ATTACHMENT_STORAGE)
     private readonly attachmentStorage: AttachmentStoragePort,
     @Inject(DEPLOYMENT_TENANT_RESOLVER)
@@ -128,6 +132,7 @@ export class PublicFormsController {
         emailPort: this.emailPort,
         captchaPort: this.captchaPort,
         newsletterPort: this.newsletterPort,
+        pageTranslationRepository: this.pageTranslationRepository,
       },
       {
         tenantId: await this.tenant.require(),

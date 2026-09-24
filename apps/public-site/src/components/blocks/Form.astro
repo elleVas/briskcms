@@ -48,6 +48,16 @@ const checkboxFieldIds = (form?.fields ?? [])
 // wrong here anyway.
 const turnstileSiteKey = process.env['TURNSTILE_SITE_KEY'] ?? '';
 
+// Which page this form is being rendered on, so the submission records
+// where it came from. Ambient (env.d.ts says why), and absent wherever
+// there is no page behind the render — a term with no landing page, a
+// block re-rendered on its own for the canvas.
+//
+// It reaches the API as a hidden input, so it is client-supplied and must
+// be treated as such: submitForm checks the page belongs to the form's
+// own site and stores nothing when it does not.
+const pageId = Astro.locals.pageTranslationId ?? '';
+
 interface StepGroup {
   step: FormStep | null;
   fields: FormField[];
@@ -110,6 +120,7 @@ if (form && form.steps.length > 0) {
           enctype="multipart/form-data"
         >
           <input type="hidden" name="_redirectTo" value={redirectTo} />
+          {pageId && <input type="hidden" name="_pageId" value={pageId} />}
           <input type="hidden" name="_checkboxFields" value={checkboxFieldIds} />
           {/* Honeypot: real visitors never see or fill this (docs/adr/0015).
               `_`-prefixed like the other hint fields above, so the proxy

@@ -861,10 +861,17 @@ export const formSubmissions = pgTable(
     siteId: uuid('site_id')
       .notNull()
       .references(() => sites.id, { onDelete: 'cascade' }),
-    // preserves history even if the page is later removed — i18n a livello
-    // di campo (Fase 5): repointed from the old pages.id to
-    // pageTranslations.id (nothing populates this column yet either way,
-    // see apps/public-site's forms submit proxy).
+    // Which page the visitor filled the form on, in which language — the
+    // translation and not the group, because "which page converts" is a
+    // question about an address, and an address is per-language.
+    //
+    // `set null` keeps the submission when its page goes: the answers
+    // someone typed outlive the page that collected them, and the origin
+    // is the part that can afford to be lost. Written by the public
+    // site's submit proxy from a hidden input, and checked against the
+    // form's own site before it is stored (submitForm's
+    // resolveOriginPage) — the endpoint is unauthenticated, and a foreign
+    // key alone would accept any row that exists, whoever owns it.
     pageId: uuid('page_id').references(() => pageTranslations.id, {
       onDelete: 'set null',
     }),
