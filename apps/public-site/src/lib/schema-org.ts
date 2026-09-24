@@ -1,4 +1,5 @@
 import type {
+  BusinessAddress,
   DayOfWeek,
   OpeningHoursDay,
   PublishedSite,
@@ -62,6 +63,26 @@ function hasBusinessInfo(site: PublishedSite): boolean {
   );
 }
 
+/**
+ * `addressCountry` is the ISO code as stored, not the name: schema.org
+ * specifies the code, and it is the one field here a machine reads rather
+ * than a person.
+ */
+function buildPostalAddress(
+  address: BusinessAddress | null,
+): Record<string, string> | null {
+  if (!address) return null;
+  const node: Record<string, string> = { '@type': 'PostalAddress' };
+  if (address.street.trim()) node['streetAddress'] = address.street.trim();
+  if (address.postalCode.trim()) node['postalCode'] = address.postalCode.trim();
+  if (address.city.trim()) node['addressLocality'] = address.city.trim();
+  if (address.country.trim()) {
+    node['addressCountry'] = address.country.trim().toUpperCase();
+  }
+  // Nothing but the @type means nothing was filled in.
+  return Object.keys(node).length > 1 ? node : null;
+}
+
 function buildLocalBusinessNode(site: PublishedSite): object {
   const business: Record<string, unknown> = {
     // Falls back to the generic schema.org type when the site hasn't set
@@ -72,11 +93,15 @@ function buildLocalBusinessNode(site: PublishedSite): object {
     '@id': '#business',
     name: site.name,
   };
-  // A single free-text field (docs/adr/0014), not a structured
-  // PostalAddress — schema.org accepts a plain string for `address` too,
-  // just with less structure than Google's Rich Results guidelines
-  // recommend. Revisit if that ever becomes a real limitation.
-  if (site.businessAddress) business['address'] = site.businessAddress;
+  // A real PostalAddress since docs/adr/0081, not the free-text line
+  // ADR-0014 started with: schema.org accepts a string, and Google's Rich
+  // Results guidelines ask for the parts, because nothing can tell the
+  // town from the street in "Via Roma 1, 00100 Roma".
+  //
+  // Only the parts that were filled in. A node with empty strings in it
+  // is worse than a shorter one — it asserts that the town is "".
+  const postalAddress = buildPostalAddress(site.businessAddress);
+  if (postalAddress) business['address'] = postalAddress;
   if (site.businessPhone) business['telephone'] = site.businessPhone;
   if (site.businessEmail) business['email'] = site.businessEmail;
   if (site.openingHours) {

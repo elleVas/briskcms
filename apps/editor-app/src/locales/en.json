@@ -718,7 +718,12 @@
     "hoursLabel": "Opening hours",
     "cancel": "Cancel",
     "save": "Save",
-    "saving": "Saving..."
+    "saving": "Saving...",
+    "streetLabel": "Street and number",
+    "postalCodeLabel": "Postcode",
+    "cityLabel": "Town",
+    "countryLabel": "Country",
+    "countryNone": "— None —"
   },
   "forms": {
     "list": {

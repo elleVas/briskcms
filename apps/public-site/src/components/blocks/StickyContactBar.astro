@@ -1,5 +1,6 @@
 ---
 import type { PublishedSite, StickyContactBarProps } from '@brisk/shared-types';
+import { formatBusinessAddress } from '@brisk/shared-types';
 import { Translator } from '@brisk/theme-runtime';
 import {
   mapSearchHref,
@@ -27,7 +28,12 @@ const {
 const i18n = new Translator(locale);
 
 const phone = showCall ? site.businessPhone?.trim() : '';
-const address = showDirections ? site.businessAddress?.trim() : '';
+// One line here, not the envelope's three: it is only ever handed to a map
+// search (docs/adr/0081).
+const address =
+  showDirections && site.businessAddress
+    ? formatBusinessAddress(site.businessAddress, locale)
+    : '';
 const email = showEmail ? site.businessEmail?.trim() : '';
 const whatsapp = whatsAppHref(whatsappNumber);
 

@@ -13,7 +13,14 @@ vi.mock('../lib/sites-api-client', async (importOriginal) => {
   return { ...actual, updateBusinessInfo: vi.fn() };
 });
 
-const sampleSite = buildSiteRecord({ businessAddress: 'Via Roma 1' });
+const sampleSite = buildSiteRecord({
+  businessAddress: {
+    street: 'Via Roma 1',
+    postalCode: '20121',
+    city: 'Milano',
+    country: 'IT',
+  },
+});
 
 function wrapper({ children }: { children: ReactNode }) {
   return (
@@ -37,7 +44,12 @@ describe('useSiteBusinessInfo', () => {
 
     await act(async () => {
       await result.current.updateBusinessInfo({
-        businessAddress: 'Via Roma 1',
+        businessAddress: {
+          street: 'Via Roma 1',
+          postalCode: '20121',
+          city: 'Milano',
+          country: 'IT',
+        },
         businessPhone: null,
         businessEmail: null,
         businessType: null,
@@ -46,7 +58,12 @@ describe('useSiteBusinessInfo', () => {
     });
 
     expect(api.updateBusinessInfo).toHaveBeenCalledWith('site-1', {
-      businessAddress: 'Via Roma 1',
+      businessAddress: {
+        street: 'Via Roma 1',
+        postalCode: '20121',
+        city: 'Milano',
+        country: 'IT',
+      },
       businessPhone: null,
       businessEmail: null,
       businessType: null,

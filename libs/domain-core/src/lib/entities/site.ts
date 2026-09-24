@@ -1,4 +1,5 @@
 import type {
+  BusinessAddress,
   CookieBannerSettings,
   OpeningHoursDay,
   ThemeSettings,
@@ -17,7 +18,7 @@ export interface SiteProps {
   defaultLocale: string;
   enabledLocales: string[];
   untranslatedPageFallback: UntranslatedPageFallback;
-  businessAddress: string | null;
+  businessAddress: BusinessAddress | null;
   businessPhone: string | null;
   businessEmail: string | null;
   businessType: string | null;
@@ -43,7 +44,7 @@ export interface SiteProps {
 }
 
 export interface UpdateBusinessInfoInput {
-  businessAddress: string | null;
+  businessAddress: BusinessAddress | null;
   businessPhone: string | null;
   businessEmail: string | null;
   businessType: string | null;
@@ -122,7 +123,7 @@ export class Site {
     return this.props.untranslatedPageFallback;
   }
 
-  get businessAddress(): string | null {
+  get businessAddress(): BusinessAddress | null {
     return this.props.businessAddress;
   }
 

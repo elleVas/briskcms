@@ -99,7 +99,12 @@ describe('SitesController (unit)', () => {
 
   it('updateBusinessInfo saves the updated site', async () => {
     const result = await controller.updateBusinessInfo('site-1', {
-      businessAddress: 'Via Roma 1',
+      businessAddress: {
+        street: 'Via Roma 1',
+        postalCode: '20121',
+        city: 'Milano',
+        country: 'IT',
+      },
       businessPhone: '+39 02 1234567',
       businessEmail: null,
       businessType: 'Restaurant',
@@ -107,7 +112,12 @@ describe('SitesController (unit)', () => {
     });
 
     expect(siteRepository.save).toHaveBeenCalled();
-    expect(result.businessAddress).toBe('Via Roma 1');
+    expect(result.businessAddress).toEqual({
+      street: 'Via Roma 1',
+      postalCode: '20121',
+      city: 'Milano',
+      country: 'IT',
+    });
   });
 
   it('updateGeneralSettings propagates SiteNotFoundError, unwrapped', async () => {

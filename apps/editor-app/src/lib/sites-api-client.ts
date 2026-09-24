@@ -3,6 +3,7 @@ import {
   siteRecordSchema,
   type AvailableTheme,
   type ResponsiveBlockStyle,
+  type BusinessAddress,
   type CookieBannerSettings,
   type LocaleSettings,
   type OpeningHoursDay,
@@ -29,7 +30,7 @@ export function getCurrentSite(): Promise<SiteRecord> {
 }
 
 export interface UpdateBusinessInfoInput {
-  businessAddress: string | null;
+  businessAddress: BusinessAddress | null;
   businessPhone: string | null;
   businessEmail: string | null;
   businessType: string | null;

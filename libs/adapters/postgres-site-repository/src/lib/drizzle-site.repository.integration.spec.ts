@@ -77,7 +77,12 @@ describe('DrizzleSiteRepository (integration)', () => {
     const site = await siteRepository.findById(tenantAId, siteId);
     if (!site) throw new Error('expected the just-inserted site to be found');
     site.updateBusinessInfo({
-      businessAddress: 'Via Roma 1, Milano',
+      businessAddress: {
+        street: 'Via Roma 1',
+        postalCode: '20121',
+        city: 'Milano',
+        country: 'IT',
+      },
       businessPhone: '+39 02 1234567',
       businessEmail: null,
       businessType: 'Restaurant',
@@ -91,7 +96,13 @@ describe('DrizzleSiteRepository (integration)', () => {
     await siteRepository.save(site);
 
     const updated = await siteRepository.findById(tenantAId, siteId);
-    expect(updated?.businessAddress).toBe('Via Roma 1, Milano');
+    // Round-tripped through jsonb since docs/adr/0081, parts and all.
+    expect(updated?.businessAddress).toEqual({
+      street: 'Via Roma 1',
+      postalCode: '20121',
+      city: 'Milano',
+      country: 'IT',
+    });
     expect(updated?.openingHours).toEqual([
       { dayOfWeek: 'monday', ranges: [{ opens: '12:00', closes: '15:00' }] },
     ]);

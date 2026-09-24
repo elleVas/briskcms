@@ -18,6 +18,7 @@ import { sql } from 'drizzle-orm';
 import { DEFAULT_VARIANT } from '@brisk/shared-types';
 import type {
   ResponsiveBlockStyle,
+  BusinessAddress,
   CookieBannerSettings,
   ExposedFields,
   FieldValueOverlay,
@@ -147,7 +148,9 @@ export const sites = pgTable(
       .default('redirect-to-default'),
     // schema.org LocalBusiness fields (docs/adr/0014) — all nullable, a site
     // with none of them set renders plain WebSite/WebPage instead.
-    businessAddress: text('business_address'),
+    // jsonb since docs/adr/0081 — the parts of an address, not a line of
+    // prose. Nullable still means "no address at all".
+    businessAddress: jsonb('business_address').$type<BusinessAddress>(),
     businessPhone: text('business_phone'),
     businessEmail: text('business_email'),
     businessType: text('business_type'),

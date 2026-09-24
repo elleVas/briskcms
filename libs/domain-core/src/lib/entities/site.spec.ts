@@ -90,14 +90,24 @@ describe('Site entity', () => {
     const site = Site.fromProps(props);
 
     site.updateBusinessInfo({
-      businessAddress: 'Via Roma 1, Milano',
+      businessAddress: {
+        street: 'Via Roma 1',
+        postalCode: '20121',
+        city: 'Milano',
+        country: 'IT',
+      },
       businessPhone: '+39 02 1234567',
       businessEmail: null,
       businessType: 'Restaurant',
       openingHours: [{ dayOfWeek: 'monday', ranges: [] }],
     });
 
-    expect(site.businessAddress).toBe('Via Roma 1, Milano');
+    expect(site.businessAddress).toEqual({
+      street: 'Via Roma 1',
+      postalCode: '20121',
+      city: 'Milano',
+      country: 'IT',
+    });
     expect(site.businessPhone).toBe('+39 02 1234567');
     expect(site.businessType).toBe('Restaurant');
     expect(site.openingHours).toEqual([{ dayOfWeek: 'monday', ranges: [] }]);

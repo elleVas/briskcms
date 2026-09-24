@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Link } from '@tanstack/react-router';
 import { Plus, X } from 'lucide-react';
 import type { SiteRecord } from '@brisk/shared-types';
+import { formatBusinessAddress } from '@brisk/shared-types';
 import {
   LEGAL_DOCUMENT_KINDS,
   type GenerateLegalDocumentsResponse,
@@ -65,7 +66,12 @@ function toDefaultValues(site: SiteRecord): WizardFormValues {
     // The site's own email once Business info has one: the wizard asked
     // for it from scratch every time, the one field it could not prefill.
     contactEmail: site.businessEmail ?? '',
-    address: site.businessAddress ?? '',
+    // One line, because a legal document writes it into prose ("con sede
+    // in …") rather than onto an envelope. Editable afterwards, like
+    // every other prefilled answer here.
+    address: site.businessAddress
+      ? formatBusinessAddress(site.businessAddress, site.defaultLocale)
+      : '',
     phone: site.businessPhone ?? '',
     vatId: '',
     domain: site.domain ?? '',

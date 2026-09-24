@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import {
+  businessAddressSchema,
   cookieBannerSettingsSchema,
   localeSettingsSchema,
   openingHoursSchema,
@@ -9,7 +10,7 @@ import {
 import { domainSchema } from '../public-pages/public-pages.schemas';
 
 export const updateBusinessInfoBodySchema = z.object({
-  businessAddress: z.string().nullable(),
+  businessAddress: businessAddressSchema.nullable(),
   businessPhone: z.string().nullable(),
   // Checked here and not in the shared shape: a stored value has already
   // been through this, and a published page must not fail to render over

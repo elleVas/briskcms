@@ -2,6 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { ArrowDown, ArrowUp, Trash2 } from 'lucide-react';
 import type { FormField, FormFieldType, FormStep } from '@brisk/shared-types';
 import { Input } from '../components/ui/input';
+import { NativeSelect } from '../components/ui/native-select';
 import { Label } from '../components/ui/label';
 import { Switch } from '../components/ui/switch';
 import { IconButton } from './icon-button';
@@ -23,12 +24,6 @@ const FIELD_TYPES: FormFieldType[] = [
   'time',
   'file',
 ];
-
-// Same select styling as Input (components/ui/input.tsx) — no shadcn
-// <Select> primitive installed yet, and a plain <select> covers this one
-// field-type picker without pulling in a new dependency for it.
-const selectClassName =
-  'h-8 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 py-1 text-base outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 md:text-sm dark:bg-input/30';
 
 export interface FormFieldEditorRowProps {
   field: FormField;
@@ -93,9 +88,8 @@ export function FormFieldEditorRow({
           <Label htmlFor={`field-type-${field.id}`}>
             {t('forms.editor.fieldTypeLabel')}
           </Label>
-          <select
+          <NativeSelect
             id={`field-type-${field.id}`}
-            className={selectClassName}
             value={field.type}
             onChange={(event) =>
               handleTypeChange(event.target.value as FormFieldType)
@@ -106,7 +100,7 @@ export function FormFieldEditorRow({
                 {t(`forms.editor.fieldTypes.${type}`)}
               </option>
             ))}
-          </select>
+          </NativeSelect>
         </div>
       </div>
       {steps.length > 0 && (
@@ -114,9 +108,8 @@ export function FormFieldEditorRow({
           <Label htmlFor={`field-step-${field.id}`}>
             {t('forms.editor.fieldStepLabel')}
           </Label>
-          <select
+          <NativeSelect
             id={`field-step-${field.id}`}
-            className={selectClassName}
             value={field.stepId ?? NO_STEP_VALUE}
             onChange={(event) =>
               onChange({
@@ -133,7 +126,7 @@ export function FormFieldEditorRow({
                 {step.title || t('forms.editor.untitledStep')}
               </option>
             ))}
-          </select>
+          </NativeSelect>
         </div>
       )}
       {field.type === 'select' && (
