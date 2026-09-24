@@ -77,6 +77,21 @@ export interface FormSubmissionDto {
   /** Keyed by field id — see FormField.id's own comment for why that is stable. */
   payload: Record<string, unknown>;
   createdAt: string;
+  /**
+   * The page this was filled on, as an id to look up in
+   * `PaginatedFormSubmissions.pages`. `null` for a submission recorded
+   * before the public site knew which page it was rendering, and for one
+   * whose page has since been deleted.
+   */
+  pageId: string | null;
+}
+
+/** One page a batch of submissions came from — named once, not per row. */
+export interface SubmissionOriginPageDto {
+  id: string;
+  pageGroupId: string;
+  locale: string;
+  title: string;
 }
 
 export interface PaginatedFormSubmissions {
@@ -89,6 +104,12 @@ export interface PaginatedFormSubmissions {
    * real answer, and still shown.
    */
   fields: FormField[];
+  /**
+   * The pages this page of submissions came from. Only the ones actually
+   * referenced, so a form on one page sends one entry however many
+   * submissions it has.
+   */
+  pages: SubmissionOriginPageDto[];
 }
 
 export function listFormSubmissions(

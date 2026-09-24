@@ -425,6 +425,57 @@ describe('DrizzlePageGroupRepository / DrizzlePageTranslationRepository (integra
         expect(ids).not.toContain(withoutFrench.id);
       });
 
+      it('excludeSubtreeOf leaves out the page and its descendants at every depth', async () => {
+        // A recursive walk, not a join per level: the parent picker has
+        // to offer every page except the one moving and what hangs under
+        // it, and "under it" has no depth limit.
+        const root = buildGroup();
+        await groupRepository.save(root);
+        const child = buildGroup({ parentId: root.id });
+        await groupRepository.save(child);
+        const grandchild = buildGroup({ parentId: child.id });
+        await groupRepository.save(grandchild);
+        const unrelated = buildGroup();
+        await groupRepository.save(unrelated);
+
+        const result = await groupRepository.listBySiteFiltered(
+          tenantAId,
+          siteAId,
+          { page: 1, pageSize: 100 },
+          { excludeSubtreeOf: root.id },
+        );
+
+        const ids = result.items.map((item) => item.id);
+        expect(ids).toContain(unrelated.id);
+        expect(ids).not.toContain(root.id);
+        expect(ids).not.toContain(child.id);
+        expect(ids).not.toContain(grandchild.id);
+      });
+
+      it('excludeSubtreeOf counts the same pages it lists', async () => {
+        // The total drives the pager. Excluding rows from the page but
+        // not from the count draws a Next button onto an empty page.
+        const root = buildGroup();
+        await groupRepository.save(root);
+        const child = buildGroup({ parentId: root.id });
+        await groupRepository.save(child);
+
+        const all = await groupRepository.listBySiteFiltered(
+          tenantAId,
+          siteAId,
+          { page: 1, pageSize: 100 },
+          {},
+        );
+        const without = await groupRepository.listBySiteFiltered(
+          tenantAId,
+          siteAId,
+          { page: 1, pageSize: 100 },
+          { excludeSubtreeOf: root.id },
+        );
+
+        expect(without.total).toBe(all.total - 2);
+      });
+
       it('filters by createdBy', async () => {
         const byUserA = buildGroup({ createdBy: userAId });
         await groupRepository.save(byUserA);

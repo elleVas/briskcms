@@ -277,6 +277,24 @@ export class DrizzlePageGroupRepository
         ),
       );
     }
+    if (filters.excludeSubtreeOf) {
+      // A recursive walk down `parent_id`, because "everything under this
+      // page" has no depth limit and a join per level would have one.
+      // Inside `withTenant` below, so row-level security scopes it like
+      // every other read here.
+      conditions.push(
+        sql`${pageGroups.id} not in (
+          with recursive subtree as (
+            select ${pageGroups.id} from ${pageGroups}
+            where ${pageGroups.id} = ${filters.excludeSubtreeOf}
+            union all
+            select child.id from ${pageGroups} child
+            join subtree on child.parent_id = subtree.id
+          )
+          select id from subtree
+        )`,
+      );
+    }
     if (filters.locale) {
       conditions.push(
         exists(

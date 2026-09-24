@@ -122,6 +122,9 @@ export async function getPublishedAuthorBySlug(
   return {
     redirectTo: null,
     author: {
+      // An author archive is assembled from a query, not from a page
+      // somebody edits — there is no page behind it to name (ADR-0071).
+      id: null,
       content: resolvedContent,
       seoMeta: seoMetaFor(user, input.locale, deps.mediaStorage),
       locale: input.locale,

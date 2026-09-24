@@ -300,7 +300,9 @@
     },
     "picker": {
       "title": "Choose a page",
-      "empty": "No pages in this language."
+      "empty": "No pages in this language.",
+      "search": "Search pages by title",
+      "searchPlaceholder": "Search by title…"
     },
     "parent": {
       "label": "Parent page",
@@ -804,6 +806,7 @@
       "count_one": "{{count}} submission",
       "count_other": "{{count}} submissions",
       "exportCsv": "Export CSV",
+      "submittedFrom": "Submitted from",
       "removedField": "no longer in this form",
       "noAnswer": "—",
       "loadError": "Could not load the submissions.",

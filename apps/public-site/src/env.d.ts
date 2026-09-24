@@ -13,6 +13,21 @@ declare global {
       // `injectScriptNonce` in lib/content-security-policy.ts for why a
       // nonce has to be applied per-tag rather than inherited.
       cspNonce: string;
+      /**
+       * Which page, in which language, is being rendered — set by
+       * PublicPageContent.astro (the one funnel every real route goes
+       * through) and read by the Form block, which needs it to record
+       * where a submission came from.
+       *
+       * Ambient rather than a BlockRenderer prop on purpose: it would
+       * otherwise have to be threaded through every recursive render and
+       * every block's signature for the benefit of one block — and that
+       * block already reads request-scoped context directly (Astro.url's
+       * query string, the Turnstile site key). `null` wherever there is
+       * no page behind the render: a term with no landing page, a section
+       * preview, a single block re-rendered for the canvas.
+       */
+      pageTranslationId: string | null;
     }
   }
 

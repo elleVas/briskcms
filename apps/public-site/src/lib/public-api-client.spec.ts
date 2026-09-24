@@ -17,6 +17,7 @@ import {
 } from './public-api-client';
 
 const samplePage: PublishedPage = {
+  id: 'translation-1',
   content: [{ type: 'Hero', props: { title: 'Ciao', subtitle: 'Sub' } }],
   seoMeta: { title: 'Chi siamo', description: 'La nostra storia' },
   locale: 'it',

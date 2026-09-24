@@ -6,6 +6,12 @@ import * as api from '../lib/forms-api-client';
 import { createTestQueryClient } from '../test/query-client.test-fixture';
 import { FormSubmissionsList } from './form-submissions-list';
 
+// `Link` needs a router context this component-only render does not have.
+vi.mock('@tanstack/react-router', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@tanstack/react-router')>()),
+  Link: (await import('../test/router-link.test-fixture')).StubLink,
+}));
+
 vi.mock('../lib/forms-api-client', async (importOriginal) => {
   const actual =
     await importOriginal<typeof import('../lib/forms-api-client')>();
@@ -18,13 +24,20 @@ const FIELDS: FormField[] = [
 ];
 
 function renderList(
-  items: { id: string; payload: Record<string, unknown>; createdAt: string }[],
+  items: {
+    id: string;
+    payload: Record<string, unknown>;
+    createdAt: string;
+    pageId?: string | null;
+  }[],
   fields = FIELDS,
+  pages: api.SubmissionOriginPageDto[] = [],
 ) {
   vi.mocked(api.listFormSubmissions).mockResolvedValue({
-    items,
+    items: items.map((item) => ({ pageId: null, ...item })),
     total: items.length,
     fields,
+    pages,
   });
   render(
     <QueryClientProvider client={createTestQueryClient()}>
@@ -85,6 +98,39 @@ describe('FormSubmissionsList', () => {
     const link = screen.getByRole('link', { name: /cv\.pdf/ });
     expect(link.getAttribute('href')).toBe('https://x/cv.pdf');
     expect(screen.queryByText(/\[object Object\]/)).toBeNull();
+  });
+
+  it('says which page a submission was filled on, and links to it', async () => {
+    renderList(
+      [{ id: 's1', payload: { name: 'Mario' }, createdAt: AT, pageId: 'pt-1' }],
+      FIELDS,
+      [
+        {
+          id: 'pt-1',
+          pageGroupId: 'group-1',
+          locale: 'it',
+          title: 'Contatti',
+        },
+      ],
+    );
+
+    fireEvent.click(await screen.findByRole('button', { name: /Mario/ }));
+
+    const link = screen.getByRole('link', { name: 'Contatti' });
+    expect(link.getAttribute('href')).toBe('/page-groups/group-1');
+  });
+
+  it('shows no page for a submission that carries none', async () => {
+    // Every submission recorded before the public site knew which page it
+    // was rendering, and every one whose page has since been deleted.
+    renderList([{ id: 's1', payload: { name: 'Mario' }, createdAt: AT }]);
+
+    fireEvent.click(await screen.findByRole('button', { name: /Mario/ }));
+
+    expect(screen.queryByRole('link', { name: 'Contatti' })).toBeNull();
+    expect(
+      screen.queryByText(/Inviato dalla pagina|Submitted from/i),
+    ).toBeNull();
   });
 
   it('offers the export only when there is something to export', async () => {

@@ -20,6 +20,9 @@ export const listPageGroupsQuerySchema = z.object({
   // screen), an id for one section's own screen. A literal rather than a
   // nullable uuid because a query string has no null to send.
   collection: z.union([z.literal('none'), z.string().uuid()]).optional(),
+  // Leaves out this page and its whole subtree — what the parent picker
+  // asks for, since a page cannot move inside its own child (ADR-0074).
+  excludeSubtreeOf: z.string().uuid().optional(),
 });
 export type ListPageGroupsQuery = z.infer<typeof listPageGroupsQuerySchema>;
 

@@ -12,6 +12,7 @@ import type {
   FormRepositoryPort,
   FormSubmissionRepositoryPort,
   NewsletterPort,
+  PageTranslationRepositoryPort,
 } from '@brisk/ports';
 import { buildFormSubmissionNotificationEmail } from '../emails/form-submission-notification-email.template';
 
@@ -21,11 +22,18 @@ export interface SubmitFormDeps {
   emailPort: EmailPort;
   captchaPort: CaptchaPort;
   newsletterPort: NewsletterPort;
+  /** Only to check `pageId` before it is stored — see `resolveOriginPage`. */
+  pageTranslationRepository: PageTranslationRepositoryPort;
 }
 
 export interface SubmitFormInput {
   tenantId: string;
   formId: string;
+  /**
+   * Which page the visitor filled the form on — a hidden input the public
+   * site renders, and therefore client-supplied. Never trusted as given:
+   * see `resolveOriginPage`.
+   */
   pageId: string | null;
   values: Record<string, unknown>;
   /** CSS-hidden field real visitors never fill (docs/adr/0015). Non-empty means a bot. */
@@ -113,7 +121,12 @@ export async function submitForm(
     id: randomUUID(),
     tenantId: input.tenantId,
     siteId: form.siteId,
-    pageId: input.pageId,
+    pageId: await resolveOriginPage(
+      deps,
+      input.tenantId,
+      form.siteId,
+      input.pageId,
+    ),
     formId: form.id,
     payload: input.values,
   });
@@ -147,4 +160,37 @@ export async function submitForm(
       }
     }
   }
+}
+
+/**
+ * The page a submission says it came from, once it has been checked.
+ *
+ * The value arrives in the request body of an unauthenticated endpoint,
+ * so anyone can put any uuid there. Two things go wrong if it is stored
+ * as given: an id belonging to another site (or to nothing at all) gets
+ * written straight into a foreign-key column, and the insert fails with a
+ * 500 that loses a real submission over a field nobody needs; and a valid
+ * id from a different site would label this submission with a page its
+ * owner cannot even see.
+ *
+ * Postgres will not catch either on its own — a foreign key is checked
+ * without row-level security applied, so it is happy with any row that
+ * exists, whoever it belongs to.
+ *
+ * An unrecognised page is therefore recorded as no page rather than
+ * refused: the answers someone typed matter, the origin is a note in the
+ * margin, and losing the first over the second would be the wrong trade.
+ */
+async function resolveOriginPage(
+  deps: SubmitFormDeps,
+  tenantId: string,
+  siteId: string,
+  pageId: string | null,
+): Promise<string | null> {
+  if (!pageId) return null;
+  const translation = await deps.pageTranslationRepository.findById(
+    tenantId,
+    pageId,
+  );
+  return translation && translation.siteId === siteId ? translation.id : null;
 }

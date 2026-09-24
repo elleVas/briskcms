@@ -6,6 +6,7 @@ import {
   DrizzleFormRepository,
   DrizzleFormSubmissionRepository,
 } from '@brisk/postgres-form-repository';
+import { DrizzlePageTranslationRepository } from '@brisk/postgres-page-repository';
 import { SmtpEmailAdapter } from '@brisk/smtp-email-adapter';
 import { TurnstileCaptchaAdapter } from '@brisk/turnstile-captcha';
 import { DATABASE, DatabaseModule } from '../database.module';
@@ -20,6 +21,7 @@ import {
   FORM_REPOSITORY,
   FORM_SUBMISSION_REPOSITORY,
   NEWSLETTER_PORT,
+  PAGE_TRANSLATION_REPOSITORY,
 } from './public-forms.tokens';
 
 @Module({
@@ -42,6 +44,14 @@ import {
     {
       provide: FORM_SUBMISSION_REPOSITORY,
       useFactory: (db: BriskDb) => new DrizzleFormSubmissionRepository(db),
+      inject: [DATABASE],
+    },
+    {
+      // Read-only here, and for one question: does the page a submission
+      // claims to come from belong to this form's site (submitForm's
+      // resolveOriginPage)?
+      provide: PAGE_TRANSLATION_REPOSITORY,
+      useFactory: (db: BriskDb) => new DrizzlePageTranslationRepository(db),
       inject: [DATABASE],
     },
     {

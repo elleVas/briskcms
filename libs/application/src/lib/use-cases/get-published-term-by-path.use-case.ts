@@ -86,8 +86,12 @@ export async function getPublishedTermByPath(
     return null;
   }
 
-  const landing = await loadLandingContent(deps, input, term);
-  const content: PageContent = landing ?? defaultTermLayout(term, input.locale);
+  // The landing page's own translation, not just its blocks: a form on a
+  // hand-built term landing is on a real page, and it should record which
+  // one. A term with no landing has none to record.
+  const landing = await loadLandingTranslation(deps, input, term);
+  const content: PageContent =
+    landing?.publishedSnapshot ?? defaultTermLayout(term, input.locale);
 
   const [chrome, [resolvedContent]] = await Promise.all([
     resolveSiteChrome(deps, input.tenantId, site, input.locale),
@@ -97,6 +101,7 @@ export async function getPublishedTermByPath(
   ]);
 
   return {
+    id: landing?.id ?? null,
     content: resolvedContent,
     seoMeta: seoMetaFor(term, input.locale),
     locale: input.locale,
@@ -127,11 +132,11 @@ export async function getPublishedTermByPath(
  * fall back to the default layout rather than to a 404, which is the
  * whole point of rendering in place.
  */
-async function loadLandingContent(
+async function loadLandingTranslation(
   deps: GetPublishedTermByPathDeps,
   input: GetPublishedTermByPathInput,
   term: Term,
-): Promise<PageContent | null> {
+): Promise<{ id: string; publishedSnapshot: PageContent } | null> {
   if (!term.landingPageGroupId) return null;
   const translation = await deps.pageTranslationRepository.findByGroupAndLocale(
     input.tenantId,
@@ -139,7 +144,11 @@ async function loadLandingContent(
     input.locale,
   );
   if (!translation || translation.status !== 'published') return null;
-  return translation.publishedSnapshot ?? null;
+  const snapshot = translation.publishedSnapshot;
+  // A published translation with no snapshot has nothing to render, so the
+  // default layout takes over and there is no page to name either.
+  if (!snapshot) return null;
+  return { id: translation.id, publishedSnapshot: snapshot };
 }
 
 /**

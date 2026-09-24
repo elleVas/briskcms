@@ -300,7 +300,9 @@
     },
     "picker": {
       "title": "Scegli una pagina",
-      "empty": "Nessuna pagina in questa lingua."
+      "empty": "Nessuna pagina in questa lingua.",
+      "search": "Cerca una pagina per titolo",
+      "searchPlaceholder": "Cerca per titolo…"
     },
     "parent": {
       "label": "Pagina genitore",
@@ -804,6 +806,7 @@
       "count_one": "{{count}} risposta",
       "count_other": "{{count}} risposte",
       "exportCsv": "Esporta CSV",
+      "submittedFrom": "Inviato dalla pagina",
       "removedField": "non è più nel modulo",
       "noAnswer": "—",
       "loadError": "Non è stato possibile caricare le risposte.",

@@ -24,6 +24,10 @@ export const POST: APIRoute = async ({ params, request, redirect }) => {
   // it into the form's own POST body.
   const captchaToken = String(formData.get('cf-turnstile-response') ?? '');
   const redirectTo = String(formData.get('_redirectTo') ?? '/');
+  // Which page rendered this form (Form.astro's hidden input). Passed on
+  // as-is: the API is the one that decides whether to believe it, since
+  // this proxy has no way to tell a real id from an invented one either.
+  const pageId = String(formData.get('_pageId') ?? '') || null;
   // Native unchecked checkboxes never submit a key at all — the hint tells
   // this proxy which field ids to treat as booleans (present === true,
   // absent === false) instead of leaving them out of `values` entirely,
@@ -60,11 +64,8 @@ export const POST: APIRoute = async ({ params, request, redirect }) => {
     }
   }
 
-  // The public site doesn't track a page's own id yet (see
-  // public-api-client.ts's PublishedPage) — nullable by design for
-  // exactly this case, not a workaround.
   const result = await submitPublicForm(formId, {
-    pageId: null,
+    pageId,
     values,
     honeypot,
     captchaToken,

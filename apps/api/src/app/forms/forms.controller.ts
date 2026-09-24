@@ -26,13 +26,18 @@ import type { Form } from '@brisk/domain-core';
 import type {
   FormRepositoryPort,
   FormSubmissionRepositoryPort,
+  PageTranslationRepositoryPort,
   TenantContextPort,
 } from '@brisk/ports';
 import { SessionAuthGuard } from '../auth/session-auth.guard';
 import { ZodValidationPipe } from '../zod-validation.pipe';
 import { TENANT_CONTEXT } from '../auth/auth.tokens';
 import { buildFormSubmissionsCsv } from './form-submissions-csv';
-import { FORM_REPOSITORY, FORM_SUBMISSION_REPOSITORY } from './forms.tokens';
+import {
+  FORM_REPOSITORY,
+  FORM_SUBMISSION_REPOSITORY,
+  PAGE_TRANSLATION_REPOSITORY,
+} from './forms.tokens';
 import {
   type CreateFormBody,
   createFormBodySchema,
@@ -52,6 +57,8 @@ export class FormsController {
     private readonly formRepository: FormRepositoryPort,
     @Inject(FORM_SUBMISSION_REPOSITORY)
     private readonly formSubmissionRepository: FormSubmissionRepositoryPort,
+    @Inject(PAGE_TRANSLATION_REPOSITORY)
+    private readonly pageTranslationRepository: PageTranslationRepositoryPort,
     @Inject(TENANT_CONTEXT) private readonly tenantContext: TenantContextPort,
   ) {}
 
@@ -115,6 +122,7 @@ export class FormsController {
       {
         formRepository: this.formRepository,
         formSubmissionRepository: this.formSubmissionRepository,
+        pageTranslationRepository: this.pageTranslationRepository,
       },
       {
         tenantId: this.tenantContext.getCurrentTenantId(),
@@ -130,10 +138,14 @@ export class FormsController {
           id: props.id,
           payload: props.payload,
           createdAt: props.createdAt.toISOString(),
+          // The id alone; the page is named once in `pages` below rather
+          // than repeated on every row that shares it.
+          pageId: props.pageId,
         };
       }),
       total: result.total,
       fields: result.form.toProps().fields,
+      pages: result.pages,
     };
   }
 
@@ -148,10 +160,11 @@ export class FormsController {
     @Param('id') id: string,
     @Res({ passthrough: true }) response: Response,
   ): Promise<string> {
-    const { form, submissions } = await exportFormSubmissions(
+    const { form, submissions, pages } = await exportFormSubmissions(
       {
         formRepository: this.formRepository,
         formSubmissionRepository: this.formSubmissionRepository,
+        pageTranslationRepository: this.pageTranslationRepository,
       },
       { tenantId: this.tenantContext.getCurrentTenantId(), formId: id },
     );
@@ -164,7 +177,7 @@ export class FormsController {
       // quote or a newline there is a header-injection bug.
       `attachment; filename="submissions-${id}.csv"`,
     );
-    return buildFormSubmissionsCsv(form, submissions);
+    return buildFormSubmissionsCsv(form, submissions, pages);
   }
 
   @Get(':id')

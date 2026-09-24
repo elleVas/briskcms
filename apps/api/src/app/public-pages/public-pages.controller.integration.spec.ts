@@ -91,6 +91,9 @@ describe('PublicPagesController (integration)', () => {
       .expect(200);
 
     expect(res.body).toEqual({
+      // The page translation's id, on the wire — what a form submitted
+      // from this page sends back as its origin (ADR-0079).
+      id: expect.any(String),
       content: [{ type: 'Hero', props: { title: 'Ciao' } }],
       seoMeta: { title: 'Chi siamo', description: '' },
       locale: 'it',

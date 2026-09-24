@@ -46,6 +46,11 @@ function isTerm(value: PublishedPage): value is PublishedTerm {
 }
 
 const { page, editable, locale } = Astro.props;
+// Set here and not in middleware: middleware runs before the route has
+// resolved which page it is, and this component is the one funnel every
+// route that renders a page goes through. Read by the Form block — see
+// env.d.ts for why it travels as ambient context rather than as a prop.
+Astro.locals.pageTranslationId = page?.id ?? null;
 // Built here, not in PageLayout: the page's own content only exists on
 // this side of the slot, and an instance rule for a block nobody rendered
 // would be dead CSS on every page.

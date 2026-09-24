@@ -4,7 +4,11 @@ import { useQuery } from '@tanstack/react-query';
 import { ChevronDown, ChevronRight, Download } from 'lucide-react';
 import type { FormField } from '@brisk/shared-types';
 import { Button } from '../components/ui/button';
-import type { FormSubmissionDto } from '../lib/forms-api-client';
+import { Link } from '@tanstack/react-router';
+import type {
+  FormSubmissionDto,
+  SubmissionOriginPageDto,
+} from '../lib/forms-api-client';
 import { formSubmissionsCsvUrl } from '../lib/forms-api-client';
 import {
   FORM_SUBMISSIONS_PAGE_SIZE,
@@ -80,9 +84,16 @@ interface SubmissionRowProps {
   submission: FormSubmissionDto;
   fields: FormField[];
   locale: string;
+  /** The page it was filled on, already looked up — `null` when there is none to show. */
+  page: SubmissionOriginPageDto | null;
 }
 
-function SubmissionRow({ submission, fields, locale }: SubmissionRowProps) {
+function SubmissionRow({
+  submission,
+  fields,
+  locale,
+  page,
+}: SubmissionRowProps) {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
 
@@ -122,6 +133,14 @@ function SubmissionRow({ submission, fields, locale }: SubmissionRowProps) {
         <span className="truncate text-sm">
           {preview || t('forms.submissions.noAnswer')}
         </span>
+        {page && (
+          // Plain text here and a link below: this header is itself a
+          // button, and a link inside a button is neither valid markup
+          // nor operable with a keyboard.
+          <span className="text-muted-foreground ml-auto hidden shrink-0 truncate pl-3 text-xs sm:inline">
+            {page.title}
+          </span>
+        )}
         <span className="sr-only">
           {open
             ? t('forms.submissions.collapse')
@@ -131,6 +150,28 @@ function SubmissionRow({ submission, fields, locale }: SubmissionRowProps) {
 
       {open && (
         <dl className="grid gap-x-4 gap-y-2 px-3 pb-4 pl-10 text-sm sm:grid-cols-[12rem_1fr]">
+          {/* Before the answers, and visibly not one of them: where it was
+              filled is a fact about the submission, not something the
+              visitor typed. */}
+          {page && (
+            <div className="contents">
+              <dt className="text-muted-foreground">
+                {t('forms.submissions.submittedFrom')}
+              </dt>
+              <dd>
+                <Link
+                  to="/page-groups/$groupId"
+                  params={{ groupId: page.pageGroupId }}
+                  className="underline"
+                >
+                  {page.title}
+                </Link>{' '}
+                <span className="text-muted-foreground text-xs uppercase">
+                  {page.locale}
+                </span>
+              </dd>
+            </div>
+          )}
           {fields.map((field) => (
             <div key={field.id} className="contents">
               <dt className="text-muted-foreground">{field.label}</dt>
@@ -196,6 +237,7 @@ export function FormSubmissionsList({ formId }: FormSubmissionsListProps) {
     1,
     Math.ceil(data.total / FORM_SUBMISSIONS_PAGE_SIZE),
   );
+  const pagesById = new Map(data.pages.map((page) => [page.id, page]));
 
   return (
     <div className="flex flex-col gap-3">
@@ -232,6 +274,9 @@ export function FormSubmissionsList({ formId }: FormSubmissionsListProps) {
               submission={submission}
               fields={data.fields}
               locale={i18n.language}
+              page={
+                (submission.pageId && pagesById.get(submission.pageId)) || null
+              }
             />
           ))}
         </ul>
