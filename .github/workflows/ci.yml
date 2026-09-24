@@ -99,7 +99,7 @@ jobs:
       - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v7
         with:
-          node-version: 22
+          node-version: 24
           cache: 'pnpm'
       - run: pnpm install --frozen-lockfile
       # --parallel=1: nx.json's `typecheck: { dependsOn: ['^typecheck'] }`
@@ -125,7 +125,7 @@ jobs:
       - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v7
         with:
-          node-version: 22
+          node-version: 24
           cache: 'pnpm'
       - run: pnpm install --frozen-lockfile
       - run: pnpm exec nx format:check --base=origin/main
@@ -143,7 +143,7 @@ jobs:
       - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v7
         with:
-          node-version: 22
+          node-version: 24
           cache: 'pnpm'
       - run: pnpm install --frozen-lockfile
       # --parallel=1: same tsc --build race as typecheck above.
@@ -157,7 +157,7 @@ jobs:
       - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v7
         with:
-          node-version: 22
+          node-version: 24
           cache: 'pnpm'
       - run: pnpm install --frozen-lockfile
 
@@ -283,7 +283,7 @@ jobs:
       - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v7
         with:
-          node-version: 22
+          node-version: 24
           cache: 'pnpm'
       - run: pnpm install --frozen-lockfile
 

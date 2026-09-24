@@ -5,9 +5,15 @@
 # depends on ~20 @brisk/* workspace packages, and Nx's own prune step below
 # needs the real dependency graph, not a pre-trimmed one).
 
-FROM node:22-alpine AS build
+FROM node:24-alpine AS build
 WORKDIR /workspace
-RUN corepack enable
+# pnpm installed from the version package.json pins, not through corepack:
+# corepack is deprecated in Node 24 and absent from the Node 25 images,
+# where `corepack enable` fails with "not found" and takes the whole build
+# with it. One source of truth, and package.json first so a change to the
+# source does not invalidate this layer.
+COPY package.json ./
+RUN npm install --global "pnpm@$(node -p "require('./package.json').packageManager.split('@')[1]")"
 COPY . .
 # Nx evaluates every project's config to build its graph, even to build
 # just this one — apps/editor-app/vite.config.mts reads the root .env at
@@ -41,7 +47,7 @@ RUN mkdir -p /workspace/theme-manifests && \
   fi; \
   done
 
-FROM node:22-alpine AS runtime
+FROM node:24-alpine AS runtime
 WORKDIR /app
 RUN addgroup -S brisk && adduser -S brisk -G brisk
 COPY --from=build /workspace/apps/api/dist/ ./
@@ -65,11 +71,13 @@ COPY --from=build /workspace/theme-manifests/ ./themes/
 # whatever the build stage's own architecture happened to be.
 #
 # The pruned package.json here has no "packageManager" field (only the
-# monorepo root's does, and that file doesn't ship in this stage) — without
-# pinning it explicitly, corepack grabs whatever the latest pnpm is, which
-# doesn't necessarily agree with the lockfile @nx/js:prune-lockfile just
-# produced (hit this for real: a version drift broke --frozen-lockfile).
-RUN corepack enable && corepack prepare pnpm@10.30.3 --activate && pnpm install --prod --frozen-lockfile
+# monorepo root's does, and that file doesn't ship in this stage), so the
+# version is pinned by hand: left to pick for itself, the installer takes
+# whatever pnpm is newest, which doesn't necessarily agree with the
+# lockfile @nx/js:prune-lockfile just produced (hit this for real: a
+# version drift broke --frozen-lockfile). It must stay in step with the
+# root package.json's "packageManager".
+RUN npm install --global pnpm@10.30.3 && pnpm install --prod --frozen-lockfile
 USER brisk
 EXPOSE 3000
 CMD ["node", "main.js"]

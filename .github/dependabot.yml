@@ -39,15 +39,6 @@ updates:
         update-types:
           - 'minor'
           - 'patch'
-    ignore:
-      # @nestjs/schedule 12 is a native ES module, and the API's tests run
-      # on Jest, which cannot `require` one before Node 24.9 — the suite
-      # that loads the module graph fails to run. Production is unaffected
-      # (webpack bundles it), so this is the test runner, not the library.
-      # Drop this entry when the workspace moves to Node 24.
-      - dependency-name: '@nestjs/schedule'
-        update-types:
-          - 'version-update:semver-major'
 
   # The three images are built one level down, so a single '/' entry watched
   # a directory with no Dockerfile in it and node:22-alpine / nginx:alpine
@@ -63,6 +54,15 @@ updates:
       base-images:
         patterns:
           - '*'
+    ignore:
+      # A new Node major is a migration, not a bump: 25 dropped corepack,
+      # which is how these images used to install pnpm, so the proposal
+      # arrived as three red builds. It also has to move together with
+      # ci.yml's own node-version, which Dependabot cannot see. Patches and
+      # minors of the current line still come through.
+      - dependency-name: 'node'
+        update-types:
+          - 'version-update:semver-major'
 
   # The images the compose files pin (postgres, caddy, mailpit) are not
   # Dockerfiles, so the entry above never sees them.
@@ -74,6 +74,16 @@ updates:
       compose-images:
         patterns:
           - '*'
+    ignore:
+      # A Postgres major does not upgrade a database, it stops reading it:
+      # a data directory written by 16 is not one 18 can open, so an
+      # installation that pulled such a bump would find its database
+      # refusing to start. It needs a dump-and-restore procedure, tested
+      # and documented, and the CI service pinned in step. Patches and
+      # minors still come through.
+      - dependency-name: 'postgres'
+        update-types:
+          - 'version-update:semver-major'
 
   - package-ecosystem: 'github-actions'
     directory: '/'
