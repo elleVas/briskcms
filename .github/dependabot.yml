@@ -39,6 +39,15 @@ updates:
         update-types:
           - 'minor'
           - 'patch'
+    ignore:
+      # @nestjs/schedule 12 is a native ES module, and the API's tests run
+      # on Jest, which cannot `require` one before Node 24.9 — the suite
+      # that loads the module graph fails to run. Production is unaffected
+      # (webpack bundles it), so this is the test runner, not the library.
+      # Drop this entry when the workspace moves to Node 24.
+      - dependency-name: '@nestjs/schedule'
+        update-types:
+          - 'version-update:semver-major'
 
   # The three images are built one level down, so a single '/' entry watched
   # a directory with no Dockerfile in it and node:22-alpine / nginx:alpine
