@@ -52,7 +52,12 @@ describe('SitesController (integration)', () => {
     const res = await agent
       .patch(`/sites/${siteId}/business-info`)
       .send({
-        businessAddress: 'Via Roma 1, Milano',
+        businessAddress: {
+          street: 'Via Roma 1',
+          postalCode: '20121',
+          city: 'Milano',
+          country: 'IT',
+        },
         businessPhone: '+39 02 1234567',
         businessEmail: null,
         businessType: 'Restaurant',
@@ -69,7 +74,12 @@ describe('SitesController (integration)', () => {
       })
       .expect(200);
 
-    expect(res.body.businessAddress).toBe('Via Roma 1, Milano');
+    expect(res.body.businessAddress).toEqual({
+      street: 'Via Roma 1',
+      postalCode: '20121',
+      city: 'Milano',
+      country: 'IT',
+    });
     expect(res.body.openingHours).toHaveLength(2);
 
     const getRes = await agent.get(`/sites/${siteId}`).expect(200);

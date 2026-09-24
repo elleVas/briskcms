@@ -1,5 +1,5 @@
 import { SiteNotFoundError, type Site } from '@brisk/domain-core';
-import type { OpeningHoursDay } from '@brisk/shared-types';
+import type { BusinessAddress, OpeningHoursDay } from '@brisk/shared-types';
 import type { SiteRepositoryPort } from '@brisk/ports';
 
 export interface UpdateSiteBusinessInfoDeps {
@@ -9,7 +9,7 @@ export interface UpdateSiteBusinessInfoDeps {
 export interface UpdateSiteBusinessInfoInput {
   tenantId: string;
   siteId: string;
-  businessAddress: string | null;
+  businessAddress: BusinessAddress | null;
   businessPhone: string | null;
   businessEmail: string | null;
   businessType: string | null;

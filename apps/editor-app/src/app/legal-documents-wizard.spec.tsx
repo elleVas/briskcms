@@ -42,7 +42,12 @@ vi.mock('@tanstack/react-router', async (importOriginal) => {
 const site = buildSiteRecord({
   name: 'Il mio sito',
   enabledLocales: ['it', 'en'],
-  businessAddress: 'Via Roma 1',
+  businessAddress: {
+    street: 'Via Roma 1',
+    postalCode: '20121',
+    city: 'Milano',
+    country: 'IT',
+  },
   businessPhone: '+39 02 1234567',
   businessEmail: 'privacy@example.com',
   themeAllowedTrackerDomains: [
@@ -78,7 +83,11 @@ describe('LegalDocumentsWizard', () => {
 
     expect(screen.getByDisplayValue('Il mio sito')).toBeTruthy();
     expect(screen.getByDisplayValue('example.com')).toBeTruthy();
-    expect(screen.getByDisplayValue('Via Roma 1')).toBeTruthy();
+    // On one line, because a legal document writes it into prose rather
+    // than onto an envelope — and in the site's own language.
+    expect(
+      screen.getByDisplayValue('Via Roma 1, 20121 Milano, Italia'),
+    ).toBeTruthy();
     expect(screen.getByDisplayValue('+39 02 1234567')).toBeTruthy();
     // The one identity field it used to ask for from scratch every time.
     expect(screen.getByDisplayValue('privacy@example.com')).toBeTruthy();

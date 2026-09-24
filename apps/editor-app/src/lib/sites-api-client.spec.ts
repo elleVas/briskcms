@@ -43,7 +43,12 @@ describe('sites-api-client', () => {
     vi.mocked(fetch).mockResolvedValue(jsonResponse(sampleSite));
 
     await updateBusinessInfo('site-1', {
-      businessAddress: 'Via Roma 1',
+      businessAddress: {
+        street: 'Via Roma 1',
+        postalCode: '20121',
+        city: 'Milano',
+        country: 'IT',
+      },
       businessPhone: '+39 02 1234567',
       businessEmail: null,
       businessType: 'Restaurant',
@@ -55,7 +60,12 @@ describe('sites-api-client', () => {
       expect.objectContaining({
         method: 'PATCH',
         body: JSON.stringify({
-          businessAddress: 'Via Roma 1',
+          businessAddress: {
+            street: 'Via Roma 1',
+            postalCode: '20121',
+            city: 'Milano',
+            country: 'IT',
+          },
           businessPhone: '+39 02 1234567',
           businessEmail: null,
           businessType: 'Restaurant',

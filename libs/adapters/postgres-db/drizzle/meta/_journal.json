@@ -155,6 +155,13 @@
       "when": 1790258087935,
       "tag": "0021_term_noindex",
       "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1790258087936,
+      "tag": "0022_site_business_address_parts",
+      "breakpoints": true
     }
   ]
 }

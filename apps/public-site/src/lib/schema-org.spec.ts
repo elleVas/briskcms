@@ -97,12 +97,89 @@ describe('buildSchemaOrgGraph', () => {
 
   it('falls back to the generic LocalBusiness type when businessType is not set', () => {
     const graph = buildSchemaOrgGraph({
-      site: { ...baseSite, businessAddress: 'Via Roma 1' },
+      site: {
+        ...baseSite,
+        businessAddress: {
+          street: 'Via Roma 1',
+          postalCode: '20121',
+          city: 'Milano',
+          country: 'IT',
+        },
+      },
       seoMeta,
       pageUrl: 'https://example.com/chi-siamo',
     }) as { '@graph': { '@type': string }[] };
 
     expect(graph['@graph'][2]['@type']).toBe('LocalBusiness');
+  });
+
+  it('writes the address as a PostalAddress, with the country as its ISO code', () => {
+    // The point of docs/adr/0081: Google's Rich Results guidelines want
+    // the parts, and `addressCountry` is specified as the code, not the
+    // name the visitor reads.
+    const graph = buildSchemaOrgGraph({
+      site: {
+        ...baseSite,
+        businessAddress: {
+          street: 'Via Giuseppe Garibaldi 12',
+          postalCode: '20121',
+          city: 'Milano',
+          country: 'IT',
+        },
+      },
+      seoMeta,
+      pageUrl: 'https://example.com/chi-siamo',
+    }) as { '@graph': Record<string, unknown>[] };
+
+    expect(graph['@graph'][2]['address']).toEqual({
+      '@type': 'PostalAddress',
+      streetAddress: 'Via Giuseppe Garibaldi 12',
+      postalCode: '20121',
+      addressLocality: 'Milano',
+      addressCountry: 'IT',
+    });
+  });
+
+  it('leaves out the address parts nobody filled in', () => {
+    // A node asserting `addressLocality: ''` says the town is empty,
+    // which is a different claim from not saying.
+    const graph = buildSchemaOrgGraph({
+      site: {
+        ...baseSite,
+        businessAddress: {
+          street: 'Via Roma 1',
+          postalCode: '',
+          city: '',
+          country: '',
+        },
+      },
+      seoMeta,
+      pageUrl: 'https://example.com/chi-siamo',
+    }) as { '@graph': Record<string, unknown>[] };
+
+    expect(graph['@graph'][2]['address']).toEqual({
+      '@type': 'PostalAddress',
+      streetAddress: 'Via Roma 1',
+    });
+  });
+
+  it('writes no address at all when every part is empty', () => {
+    const graph = buildSchemaOrgGraph({
+      site: {
+        ...baseSite,
+        businessPhone: '+39 02 1234567',
+        businessAddress: {
+          street: '',
+          postalCode: '',
+          city: '',
+          country: '',
+        },
+      },
+      seoMeta,
+      pageUrl: 'https://example.com/chi-siamo',
+    }) as { '@graph': Record<string, unknown>[] };
+
+    expect(graph['@graph'][2]).not.toHaveProperty('address');
   });
 
   it('expands multi-range opening hours into one OpeningHoursSpecification per range', () => {

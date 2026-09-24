@@ -1,5 +1,6 @@
 ---
 import type { ContactDetailsProps, PublishedSite } from '@brisk/shared-types';
+import { formatBusinessAddressLines } from '@brisk/shared-types';
 import { Translator } from '@brisk/theme-runtime';
 import { mapSearchHref, telHref } from '../../lib/contact-links';
 
@@ -23,7 +24,14 @@ const {
   Astro.props;
 const i18n = new Translator(locale ?? '');
 
-const address = showAddress ? site.businessAddress?.trim() : '';
+// The lines you would write on an envelope, in the page's own language —
+// the country comes out of the stored ISO code (docs/adr/0081), so the
+// Italian page says "Italia" and the English one says "Italy".
+const addressLines =
+  showAddress && site.businessAddress
+    ? formatBusinessAddressLines(site.businessAddress, locale ?? '')
+    : [];
+const address = addressLines.join(', ');
 const phone = showPhone ? site.businessPhone?.trim() : '';
 const email = showEmail ? site.businessEmail?.trim() : '';
 const phoneHref = phone ? telHref(phone) : '';
@@ -36,7 +44,14 @@ const mapHref = address ? mapSearchHref(address) : '';
       {address && (
         <p class="brisk-contact-details__row">
           <span class="brisk-contact-details__label">{i18n.t('contactDetails.address')}</span>
-          <span class="brisk-contact-details__value">{address}</span>
+          <span class="brisk-contact-details__value">
+            {addressLines.map((line, index) => (
+              <>
+                {index > 0 && <br />}
+                {line}
+              </>
+            ))}
+          </span>
           {showMapLink && (
             <a class="brisk-contact-details__map" href={mapHref} rel="noopener" target="_blank">
               {i18n.t('contactDetails.openMap')}

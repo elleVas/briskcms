@@ -1,6 +1,7 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { QueryClientProvider } from '@tanstack/react-query';
+import { ISO_COUNTRY_CODES } from '@brisk/shared-types';
 import { TooltipProvider } from '../components/ui/tooltip';
 import * as api from '../lib/sites-api-client';
 import { buildSiteRecord } from '@brisk/testing/records';
@@ -14,7 +15,12 @@ vi.mock('../lib/sites-api-client', async (importOriginal) => {
 });
 
 const sampleSite = buildSiteRecord({
-  businessAddress: 'Via Roma 1, Milano',
+  businessAddress: {
+    street: 'Via Roma 1',
+    postalCode: '20121',
+    city: 'Milano',
+    country: 'IT',
+  },
   businessPhone: '+39 02 1234567',
   businessType: 'Restaurant',
 });
@@ -51,9 +57,30 @@ describe('BusinessInfoDialog', () => {
 
     renderDialog();
 
-    expect(await screen.findByDisplayValue('Via Roma 1, Milano')).toBeTruthy();
+    expect(await screen.findByDisplayValue('Via Roma 1')).toBeTruthy();
+    expect(screen.getByDisplayValue('20121')).toBeTruthy();
+    expect(screen.getByDisplayValue('Milano')).toBeTruthy();
+    // The stored `IT` selects the country, shown under the name the
+    // platform gives it rather than one from a table of ours.
+    expect(screen.getByDisplayValue('Italia')).toBeTruthy();
     expect(screen.getByDisplayValue('+39 02 1234567')).toBeTruthy();
     expect(screen.getByDisplayValue('Restaurant')).toBeTruthy();
+  });
+
+  it("offers the countries named in the editor's own language", async () => {
+    vi.mocked(api.getCurrentSite).mockResolvedValue(sampleSite);
+
+    renderDialog();
+
+    const country = await screen.findByLabelText('Paese');
+    const options = [...country.querySelectorAll('option')];
+    expect(options.length).toBe(ISO_COUNTRY_CODES.length + 1);
+    expect(options.find((option) => option.value === 'IT')?.textContent).toBe(
+      'Italia',
+    );
+    // Sorted by the name as it reads in this language, not by the code.
+    const names = options.slice(1).map((option) => option.textContent ?? '');
+    expect(names).toEqual([...names].sort(new Intl.Collator('it').compare));
   });
 
   it('saves the edited business info', async () => {
@@ -61,14 +88,28 @@ describe('BusinessInfoDialog', () => {
     vi.mocked(api.updateBusinessInfo).mockResolvedValue(sampleSite);
 
     renderDialog();
-    const addressInput = await screen.findByDisplayValue('Via Roma 1, Milano');
-    fireEvent.change(addressInput, { target: { value: 'Via Milano 2' } });
+    fireEvent.change(await screen.findByLabelText('Via e numero'), {
+      target: { value: 'Via Milano 2' },
+    });
+    fireEvent.change(screen.getByLabelText('CAP'), {
+      target: { value: '00184' },
+    });
+    fireEvent.change(screen.getByLabelText('Città'), {
+      target: { value: 'Roma' },
+    });
     fireEvent.click(screen.getByRole('button', { name: /^salva$/i }));
 
     await waitFor(() =>
       expect(api.updateBusinessInfo).toHaveBeenCalledWith(
         'site-1',
-        expect.objectContaining({ businessAddress: 'Via Milano 2' }),
+        expect.objectContaining({
+          businessAddress: {
+            street: 'Via Milano 2',
+            postalCode: '00184',
+            city: 'Roma',
+            country: 'IT',
+          },
+        }),
       ),
     );
   });
@@ -109,7 +150,7 @@ describe('BusinessInfoDialog', () => {
     vi.mocked(api.updateBusinessInfo).mockResolvedValue(sampleSite);
 
     renderDialog();
-    await screen.findByLabelText('Indirizzo');
+    await screen.findByLabelText('Via e numero');
     fireEvent.click(screen.getByRole('button', { name: /^salva$/i }));
 
     await waitFor(() =>

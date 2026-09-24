@@ -3,8 +3,18 @@ import { useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
-import type { OpeningHoursDay, SiteRecord } from '@brisk/shared-types';
+import type {
+  BusinessAddress,
+  OpeningHoursDay,
+  SiteRecord,
+} from '@brisk/shared-types';
+import {
+  EMPTY_BUSINESS_ADDRESS,
+  ISO_COUNTRY_CODES,
+  isBusinessAddressEmpty,
+} from '@brisk/shared-types';
 import { Button } from '../components/ui/button';
+import { NativeSelect } from '../components/ui/native-select';
 import {
   Dialog,
   DialogContent,
@@ -40,7 +50,7 @@ export interface BusinessInfoDialogProps {
 }
 
 interface BusinessInfoFormValues {
-  address: string;
+  address: BusinessAddress;
   phone: string;
   email: string;
   businessType: string;
@@ -49,7 +59,7 @@ interface BusinessInfoFormValues {
 
 function toFormValues(site: SiteRecord): BusinessInfoFormValues {
   return {
-    address: site.businessAddress ?? '',
+    address: site.businessAddress ?? EMPTY_BUSINESS_ADDRESS,
     phone: site.businessPhone ?? '',
     email: site.businessEmail ?? '',
     businessType: site.businessType ?? '',
@@ -62,7 +72,7 @@ export function BusinessInfoDialog({
   open,
   onOpenChange,
 }: BusinessInfoDialogProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   // Gated on `open`: this dialog can be mounted for the app's whole
   // lifetime (rendered from SettingsMenu, present on every authenticated
   // route), so an unconditional query would fetch the site on every page
@@ -83,7 +93,7 @@ export function BusinessInfoDialog({
     formState: { errors },
   } = useForm<BusinessInfoFormValues>({
     defaultValues: {
-      address: '',
+      address: EMPTY_BUSINESS_ADDRESS,
       phone: '',
       email: '',
       businessType: '',
@@ -101,7 +111,9 @@ export function BusinessInfoDialog({
     setError('');
     try {
       await updateBusinessInfo({
-        businessAddress: values.address.trim() || null,
+        businessAddress: isBusinessAddressEmpty(values.address)
+          ? null
+          : trimBusinessAddress(values.address),
         businessPhone: values.phone.trim() || null,
         businessEmail: values.email.trim() || null,
         businessType: values.businessType.trim() || null,
@@ -129,12 +141,63 @@ export function BusinessInfoDialog({
               <p className="text-sm text-muted-foreground">
                 {t('businessInfo.description')}
               </p>
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="business-address">
+              <fieldset className="flex flex-col gap-2">
+                <legend className="mb-2 text-sm font-medium">
                   {t('businessInfo.addressLabel')}
-                </Label>
-                <Input id="business-address" {...register('address')} />
-              </div>
+                </legend>
+                <div className="flex flex-col gap-2">
+                  <Label htmlFor="business-address-street">
+                    {t('businessInfo.streetLabel')}
+                  </Label>
+                  <Input
+                    id="business-address-street"
+                    {...register('address.street')}
+                  />
+                </div>
+                {/* Postcode and town on one row: they are one line of the
+                    address, and giving each a full row of its own made the
+                    dialog read as four unrelated questions. */}
+                <div className="flex gap-2">
+                  <div className="flex w-32 shrink-0 flex-col gap-2">
+                    <Label htmlFor="business-address-postal-code">
+                      {t('businessInfo.postalCodeLabel')}
+                    </Label>
+                    <Input
+                      id="business-address-postal-code"
+                      {...register('address.postalCode')}
+                    />
+                  </div>
+                  <div className="flex min-w-0 flex-1 flex-col gap-2">
+                    <Label htmlFor="business-address-city">
+                      {t('businessInfo.cityLabel')}
+                    </Label>
+                    <Input
+                      id="business-address-city"
+                      {...register('address.city')}
+                    />
+                  </div>
+                </div>
+                <div className="flex flex-col gap-2">
+                  <Label htmlFor="business-address-country">
+                    {t('businessInfo.countryLabel')}
+                  </Label>
+                  {/* Native, so a phone offers its own picker and a
+                      keyboard can type-ahead through 249 entries. The
+                      names are the platform's — no table of countries to
+                      translate or keep up to date, see ISO_COUNTRY_CODES. */}
+                  <NativeSelect
+                    id="business-address-country"
+                    {...register('address.country')}
+                  >
+                    <option value="">{t('businessInfo.countryNone')}</option>
+                    {countryOptions(i18n.language).map((country) => (
+                      <option key={country.code} value={country.code}>
+                        {country.name}
+                      </option>
+                    ))}
+                  </NativeSelect>
+                </div>
+              </fieldset>
               <div className="flex flex-col gap-2">
                 <Label htmlFor="business-phone">
                   {t('businessInfo.phoneLabel')}
@@ -217,4 +280,29 @@ export function BusinessInfoDialog({
       </DialogContent>
     </Dialog>
   );
+}
+
+/**
+ * The countries, named in the editor's own language and sorted the way
+ * that language sorts — which is why the sort happens here and not in the
+ * list of codes: "Österreich" files under O in German and after Z with a
+ * naive comparison.
+ */
+function countryOptions(locale: string): { code: string; name: string }[] {
+  const names = new Intl.DisplayNames([locale], { type: 'region' });
+  const collator = new Intl.Collator(locale);
+  return ISO_COUNTRY_CODES.map((code) => ({
+    code,
+    name: names.of(code) ?? code,
+  })).sort((a, b) => collator.compare(a.name, b.name));
+}
+
+/** Stored without the spaces somebody typed around a part. */
+function trimBusinessAddress(address: BusinessAddress): BusinessAddress {
+  return {
+    street: address.street.trim(),
+    postalCode: address.postalCode.trim(),
+    city: address.city.trim(),
+    country: address.country.trim(),
+  };
 }

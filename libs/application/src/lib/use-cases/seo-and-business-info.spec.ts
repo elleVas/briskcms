@@ -36,7 +36,12 @@ describe('updateSiteBusinessInfo', () => {
     const updated = await updateSiteBusinessInfo(deps, {
       tenantId,
       siteId: 'site-1',
-      businessAddress: 'Via Roma 1, Milano',
+      businessAddress: {
+        street: 'Via Roma 1',
+        postalCode: '20121',
+        city: 'Milano',
+        country: 'IT',
+      },
       businessPhone: '+39 02 1234567',
       businessEmail: null,
       businessType: 'Restaurant',
@@ -48,7 +53,12 @@ describe('updateSiteBusinessInfo', () => {
       ],
     });
 
-    expect(updated.businessAddress).toBe('Via Roma 1, Milano');
+    expect(updated.businessAddress).toEqual({
+      street: 'Via Roma 1',
+      postalCode: '20121',
+      city: 'Milano',
+      country: 'IT',
+    });
     expect(updated.hasBusinessInfo()).toBe(true);
   });
 
@@ -76,7 +86,12 @@ describe('updateSiteBusinessInfo', () => {
       updateSiteBusinessInfo(deps, {
         tenantId: otherTenantId,
         siteId: 'site-1',
-        businessAddress: 'Somewhere else',
+        businessAddress: {
+          street: 'Via Milano 2',
+          postalCode: '00184',
+          city: 'Roma',
+          country: 'IT',
+        },
         businessPhone: null,
         businessEmail: null,
         businessType: null,

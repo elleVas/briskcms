@@ -625,7 +625,12 @@ describe('getPublishedPageBySlug', () => {
   it("includes the site's business info when set, for schema.org LocalBusiness", async () => {
     const deps = setup();
     await seedSite(deps.siteRepository, {
-      businessAddress: 'Via Roma 1, Milano',
+      businessAddress: {
+        street: 'Via Roma 1',
+        postalCode: '20121',
+        city: 'Milano',
+        country: 'IT',
+      },
       businessPhone: '+39 02 1234567',
       businessEmail: null,
       businessType: 'ProfessionalService',
@@ -649,7 +654,12 @@ describe('getPublishedPageBySlug', () => {
     ).page;
 
     expect(result?.site).toMatchObject({
-      businessAddress: 'Via Roma 1, Milano',
+      businessAddress: {
+        street: 'Via Roma 1',
+        postalCode: '20121',
+        city: 'Milano',
+        country: 'IT',
+      },
       businessPhone: '+39 02 1234567',
       businessEmail: null,
       businessType: 'ProfessionalService',

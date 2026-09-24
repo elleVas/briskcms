@@ -718,7 +718,12 @@
     "hoursLabel": "Orari di apertura",
     "cancel": "Annulla",
     "save": "Salva",
-    "saving": "Salvataggio in corso..."
+    "saving": "Salvataggio in corso...",
+    "streetLabel": "Via e numero",
+    "postalCodeLabel": "CAP",
+    "cityLabel": "Città",
+    "countryLabel": "Paese",
+    "countryNone": "— Nessuno —"
   },
   "forms": {
     "list": {

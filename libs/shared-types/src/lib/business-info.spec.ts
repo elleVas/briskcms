@@ -51,7 +51,12 @@ describe('business-info schemas', () => {
 
   it('accepts fully populated business info', () => {
     const result = businessInfoSchema.safeParse({
-      businessAddress: 'Via Roma 1, 20100 Milano, IT',
+      businessAddress: {
+        street: 'Via Roma 1',
+        postalCode: '20121',
+        city: 'Milano',
+        country: 'IT',
+      },
       businessPhone: '+39 02 1234567',
       businessEmail: null,
       businessType: 'Restaurant',
