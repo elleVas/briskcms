@@ -77,6 +77,8 @@ export interface ListPageGroupsFilters {
   locale?: string;
   /** `'none'` asks for the pages that belong to no section — see the Collection entity. */
   collection?: 'none' | string;
+  /** Leaves out this page and everything under it — the parent picker's, since a page cannot move inside its own child. */
+  excludeSubtreeOf?: string;
 }
 
 export async function listPageGroups(
@@ -100,6 +102,9 @@ export async function listPageGroups(
   if (filters.createdBy) params.set('createdBy', filters.createdBy);
   if (filters.locale) params.set('locale', filters.locale);
   if (filters.collection) params.set('collection', filters.collection);
+  if (filters.excludeSubtreeOf) {
+    params.set('excludeSubtreeOf', filters.excludeSubtreeOf);
+  }
   return paginatedPageGroupsSchema.parse(
     await request(`/page-groups?${params.toString()}`),
   );

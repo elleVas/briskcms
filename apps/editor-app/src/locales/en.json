@@ -300,7 +300,9 @@
     },
     "picker": {
       "title": "Choose a page",
-      "empty": "No pages in this language."
+      "empty": "No pages in this language.",
+      "search": "Search pages by title",
+      "searchPlaceholder": "Search by title…"
     },
     "parent": {
       "label": "Parent page",

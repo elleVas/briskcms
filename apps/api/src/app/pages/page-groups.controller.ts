@@ -251,6 +251,7 @@ export class PageGroupsController {
           createdBefore: query.createdBefore,
           createdBy: query.createdBy,
           locale: query.locale,
+          excludeSubtreeOf: query.excludeSubtreeOf,
           ...(query.collection === undefined
             ? {}
             : {

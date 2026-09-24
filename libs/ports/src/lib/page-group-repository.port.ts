@@ -90,6 +90,20 @@ export interface PageGroupListFilters {
    * `null` is a value here and not an omission.
    */
   collectionId?: string | null;
+  /**
+   * Leaves out this page and everything under it, at any depth.
+   *
+   * Answered here and not by the caller because the caller cannot: a
+   * filtered or paginated list holds a handful of pages, and a
+   * descendant three levels down arrives in it without any of its
+   * ancestors, so there is no tree to walk client-side. The database has
+   * the whole tree.
+   *
+   * What it is for: a page cannot move inside its own child (ADR-0074),
+   * and the API refuses a ring anyway — this keeps the choice from being
+   * offered, which is a different thing from catching it afterwards.
+   */
+  excludeSubtreeOf?: string;
 }
 
 /**

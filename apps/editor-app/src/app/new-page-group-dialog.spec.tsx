@@ -136,9 +136,9 @@ describe('NewPageGroupDialog', () => {
 
     typeName('Idraulica');
     fireEvent.click(
-      await screen.findByRole('combobox', { name: 'Pagina genitore' }),
+      await screen.findByRole('button', { name: 'Pagina genitore' }),
     );
-    fireEvent.click(await screen.findByRole('option', { name: 'Servizi' }));
+    fireEvent.click(await screen.findByRole('button', { name: /Servizi/ }));
     fireEvent.click(screen.getByRole('button', { name: 'Crea' }));
 
     await waitFor(() =>

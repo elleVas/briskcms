@@ -223,6 +223,27 @@ export class InMemoryPageGroupRepository implements PageGroupRepositoryPort {
         (group) => group.collectionId === filters.collectionId,
       );
     }
+    if (filters.excludeSubtreeOf) {
+      // The same walk the adapter does with a recursive CTE, over the
+      // whole map rather than the filtered set — a descendant whose
+      // ancestor was already filtered out still has to go.
+      const excluded = new Set([filters.excludeSubtreeOf]);
+      let grew = true;
+      while (grew) {
+        grew = false;
+        for (const group of this.groups.values()) {
+          if (
+            group.parentId &&
+            excluded.has(group.parentId) &&
+            !excluded.has(group.id)
+          ) {
+            excluded.add(group.id);
+            grew = true;
+          }
+        }
+      }
+      matching = matching.filter((group) => !excluded.has(group.id));
+    }
     if (sort === 'newest') {
       matching = [...matching].sort(
         (a, b) => b.createdAt.getTime() - a.createdAt.getTime(),

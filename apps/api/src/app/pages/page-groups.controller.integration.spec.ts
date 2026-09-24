@@ -355,6 +355,37 @@ describe('PageGroupsController (integration)', () => {
   });
 
   /*
+   * What the parent picker asks for, over the real query string: a page
+   * cannot move inside its own child, and the list has to say so by not
+   * offering it (ADR-0074). The picker cannot work this out itself — a
+   * page found by searching arrives without its ancestors.
+   */
+  it('leaves a page and its descendants out of the list when asked to', async () => {
+    const root = await agent
+      .post('/page-groups')
+      .send({ siteId, content: [] })
+      .expect(201);
+    const child = await agent
+      .post('/page-groups')
+      .send({ siteId, content: [], parentId: root.body.id })
+      .expect(201);
+    const other = await agent
+      .post('/page-groups')
+      .send({ siteId, content: [] })
+      .expect(201);
+
+    const listed = await agent
+      .get('/page-groups')
+      .query({ siteId, pageSize: 100, excludeSubtreeOf: root.body.id })
+      .expect(200);
+
+    const ids = listed.body.items.map((item: { id: string }) => item.id);
+    expect(ids).toContain(other.body.id);
+    expect(ids).not.toContain(root.body.id);
+    expect(ids).not.toContain(child.body.id);
+  });
+
+  /*
    * The move a page's address depends on: the language rows carry the
    * parent too, so this is also the check that the group and its
    * languages end up agreeing about where the page lives.
