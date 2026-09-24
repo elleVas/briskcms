@@ -13,7 +13,7 @@
 # Docker builds — too broad a change for what this needs. `--legacy`
 # deploys from the existing lockfile/store without that requirement.
 
-FROM node:22-alpine AS build
+FROM node:25-alpine AS build
 WORKDIR /workspace
 RUN corepack enable
 COPY . .
@@ -40,7 +40,7 @@ RUN pnpm nx run @brisk/public-site:build
 RUN pnpm --filter @brisk/public-site deploy --prod --legacy /workspace/deploy/public-site
 RUN cp -r /workspace/apps/public-site/dist /workspace/deploy/public-site/dist
 
-FROM node:22-alpine AS runtime
+FROM node:25-alpine AS runtime
 WORKDIR /app
 RUN addgroup -S brisk && adduser -S brisk -G brisk
 COPY --from=build /workspace/deploy/public-site/ ./

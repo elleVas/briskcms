@@ -5,7 +5,7 @@
 # depends on ~20 @brisk/* workspace packages, and Nx's own prune step below
 # needs the real dependency graph, not a pre-trimmed one).
 
-FROM node:22-alpine AS build
+FROM node:25-alpine AS build
 WORKDIR /workspace
 RUN corepack enable
 COPY . .
@@ -41,7 +41,7 @@ RUN mkdir -p /workspace/theme-manifests && \
   fi; \
   done
 
-FROM node:22-alpine AS runtime
+FROM node:25-alpine AS runtime
 WORKDIR /app
 RUN addgroup -S brisk && adduser -S brisk -G brisk
 COPY --from=build /workspace/apps/api/dist/ ./

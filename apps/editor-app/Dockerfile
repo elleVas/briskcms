@@ -16,7 +16,7 @@
 # neither variable set) and for VITE_TURNSTILE_SITE_KEY, which is a build
 # input with no runtime half.
 
-FROM node:22-alpine AS build
+FROM node:25-alpine AS build
 WORKDIR /workspace
 RUN corepack enable
 COPY . .
