@@ -947,6 +947,15 @@ importers:
         specifier: ^17.4.2
         version: 17.4.2
 
+  libs/adapters/wordpress-wxr:
+    dependencies:
+      '@brisk/ports':
+        specifier: workspace:*
+        version: link:../../ports
+      htmlparser2:
+        specifier: ^12.0.0
+        version: 12.0.0
+
   libs/application:
     dependencies:
       '@brisk/domain-core':
