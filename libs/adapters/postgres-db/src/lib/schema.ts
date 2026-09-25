@@ -490,9 +490,9 @@ export const pageTranslations = pgTable(
       .default(sql`'[]'::jsonb`)
       .$type<FormerParentLocation[]>(),
     seoMeta: jsonb('seo_meta').notNull().default({}).$type<SeoMeta>(),
-    // Override di SOLI campi `translatable`, chiavati per blocco — un
-    // campo assente eredita il valore condiviso di pageGroups.content.
-    // Ignorato quando isDiverged è true.
+    // Overrides for `translatable` fields ONLY, keyed by block — a field
+    // that is absent inherits the shared value from pageGroups.content.
+    // Ignored while isDiverged is true.
     fieldValues: jsonb('field_values')
       .notNull()
       .default({})

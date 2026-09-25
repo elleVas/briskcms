@@ -15,16 +15,17 @@ below).
 
 - **A visual, block-based page editor.** `apps/editor-app` is a React admin
   SPA where a non-technical editor builds pages by dragging, arranging and
-  editing ~48 block types directly on a live preview of the real page —
-  Hero, Gallery, Form, Testimonials, Countdown, Pricing Table, Accordion,
-  Tabs, Timeline, Nav/Header/Footer sections, and more (full list in
-  `libs/block-registry/src/lib/blocks/`). Simple text fields (titles,
+  editing around a hundred block types directly on a live preview of the
+  real page — Hero, Gallery, Form, Testimonials, Countdown, Pricing Table,
+  Accordion, Tabs, Timeline, Nav/Header/Footer sections, and more (full
+  list in `libs/block-registry/src/lib/blocks/`). Simple text fields (titles,
   labels, body copy) are editable in place with a double-click directly on
   the canvas, not only through a sidebar form — see
   [ADR-0028](docs/adr/0028-canvas-inline-text-editing-via-tiptap-in-preview-iframe.md).
-  Every save keeps a draft (`content`) separate from the last published
-  version (`publishedContent`), with full version history and rollback
-  (`page_versions`, never a destructive overwrite).
+  Every save keeps the editable draft separate from the snapshot the
+  public site serves, with full version history and rollback — a new
+  version row per save, never a destructive overwrite. Publishing is per
+  language: one can go live today and another when it is ready.
 - **A real, from-scratch canvas editor — no third-party page-builder
   library.** The editor doesn't embed a drag-and-drop library; it renders
   the actual page in an iframe (the same Astro output `apps/public-site`

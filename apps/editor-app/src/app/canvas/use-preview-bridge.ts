@@ -315,9 +315,9 @@ export function usePreviewBridge(
         case 'editor:reorder-blocks':
         case 'editor:update-block-style-css':
         case 'editor:scroll-to-block':
-          // Genitore -> iframe: mai attesi in arrivo qui, il genitore è chi
-          // li invia (vedi patchBlock/enterTextEdit/exitTextEdit sotto).
-          // Ignorati difensivamente.
+          // Parent -> iframe: never expected arriving here, since the
+          // parent is what sends them (see patchBlock/enterTextEdit/
+          // exitTextEdit below). Ignored defensively.
           return;
       }
     }

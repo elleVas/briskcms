@@ -11,10 +11,10 @@ export interface GetFormByIdInput {
 }
 
 /**
- * Security review 2026-08-24, backend seconda passata: FormsController
- * chiamava formRepository.findById direttamente dal controller — l'unico
- * bypass del layer applicativo tra gli endpoint di questo controller,
- * create/update/list passano tutti da uno use-case.
+ * Security review 2026-08-24, second backend pass: `FormsController` was
+ * calling `formRepository.findById` straight from the controller — the one
+ * place in it that went around the application layer, while create, update
+ * and list all went through a use case.
  */
 export async function getFormById(
   deps: GetFormByIdDeps,

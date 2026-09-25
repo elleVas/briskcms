@@ -7,6 +7,18 @@ its tenant owns several — the topology this ADR describes — but it is now
 optional and read server-side only, see
 [ADR-0044](0044-runtime-site-resolution-in-the-editor.md).
 
+**And one supersession, which the title above no longer reflects:
+`BRISK_THEME` is not build-time any more.** A site's own `Site.themeName`
+decides which bundled theme renders, resolved per request and changeable
+from the editor without a rebuild — see
+[ADR-0042](0042-self-hosting-distribution-and-runtime-theme-selection.md),
+which found that this ADR's real argument was against **multi-tenancy**
+(one container serving several different sites, each wanting its own
+theme) and never against a single site changing its own theme. The
+deployment-topology decision below still holds; the theming half does
+not. `BRISK_THEME` survives only as an optional allow-list narrowing
+which bundled themes a deployment offers.
+
 ## Context
 
 `BRISK_THEME` (`apps/public-site/astro.config.mjs`) resolves which filesystem theme package a build uses at **build time**, never per-request — Tier 2 of docs/adr/0021's theming model. This was flagged in a security/architecture review as worth double-checking against the actual business model: if a single running container were ever meant to serve several sites under one account, each potentially wanting its own theme, a build-time-only `BRISK_THEME` would silently force all of them onto the same one.
@@ -24,6 +36,8 @@ So the model was already decided twice, just never stated in terms of _deploymen
 **The deployment unit is one container per site.** A client (or an agency's own client) who needs a second site gets a second deployment — its own container, its own `DEFAULT_TENANT_ID`/`DEFAULT_SITE_ID`/`BRISK_THEME`, pointed at either its own database or a shared one scoped by tenant. Nothing about this requires the same database to be off-limits; it's specifically the _serving container_ that stays one-per-site.
 
 `BRISK_THEME` resolved at build time (Tier 2, docs/adr/0021) is correct as-is under this model and needs no change: a container never needs to pick a theme per request because it never serves more than one site's worth of requests to begin with.
+
+> **Superseded — see the amendment at the top of this file.** The paragraph above is kept as written because it is the reasoning ADR-0042 had to work through, not because it still describes the system. Theme selection is per site and per request today.
 
 No code changes follow from this ADR. It exists to close the open question left in the 2026-08-24/25 security/architecture review's "database residual" notes, and to give future-you (or whoever reads `astro.config.mjs`'s `BRISK_THEME` comment) the actual reasoning instead of a re-litigation.
 

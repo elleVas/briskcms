@@ -29,11 +29,12 @@ export function parseEditingSection(search: string): EditingSection | null {
 }
 
 /**
- * Un blocco è selezionabile/hoverabile solo nello scope attualmente in
- * editing: dentro `<header>` quando si edita l'header, dentro `<footer>`
- * quando si edita il footer, altrimenti (si sta editando la pagina) solo
- * fuori da entrambi. Il resto resta visibile per contesto ma inerte — mai
- * un `preview:hover`/`preview:click` per un blocco fuori scope.
+ * A block is selectable and hoverable only inside the scope currently
+ * being edited: inside `<header>` while editing the header, inside
+ * `<footer>` while editing the footer, and otherwise — the page itself
+ * being edited — only outside both. The rest stays visible for context
+ * but inert: never a `preview:hover` or `preview:click` for a block out of
+ * scope.
  */
 export function isBlockInteractive(
   blockEl: Element,

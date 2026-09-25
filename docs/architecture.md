@@ -10,11 +10,14 @@ about infrastructure details, infrastructure lives only in the adapters. See als
 domain-core   (pure entities, zero dependencies)
     ^
     |
-  ports       (interfaces: PageRepositoryPort, MediaStoragePort, AuthPort, ...)
+  ports       (interfaces: PageGroupRepositoryPort, PageTranslationRepositoryPort,
+               MediaStoragePort, AuthPort, ...)
     ^
     |
-application   (use cases: createPage, saveDraft, publishPage, listPageVersions,
-               rollbackToVersion — depends on domain-core + ports)
+application   (use cases: createPageGroup, savePageGroupContent,
+               savePageTranslationFieldValues, publishPageTranslation,
+               listPageGroupVersions, rollbackPageGroupToVersion —
+               depends on domain-core + ports)
     ^
     |
 adapters/*    (concrete Port implementations: Postgres, local/S3 storage, auth)
@@ -64,7 +67,7 @@ Session-based, roll-your-own (Lucia Auth was deprecated in March 2025 — see
 [ADR-0010](adr/0010-session-based-auth-foundations.md) for the full
 rationale, including why `DEFAULT_TENANT_ID` still exists after auth
 landed). `SessionAuthGuard` (`apps/api/src/app/auth/`) validates the
-`brisk_session` cookie on every `PagesController` route and attaches the
+`brisk_session` cookie on every `PageGroupsController` route and attaches the
 resolved tenant/user to the request; `SessionTenantContextAdapter` reads it
 back out as the `TenantContextPort` for that request — replacing the
 temporary `StaticTenantContextAdapter` from
@@ -137,15 +140,41 @@ Puck has since been fully removed, and that independence is exactly why the
 removal cost the content model, the Postgres schema, and
 `apps/public-site`'s renderer nothing — see
 [ADR-0007](adr/0007-nested-block-content-model-independent-of-puck.md) for
-the original decision. Every page always has two copies of the content
-model:
+the original decision.
 
-- `content` — the latest draft, editable.
-- `publishedContent` — the last version actually published, immutable until the
-  next `publish()`.
+**A page is not one row.** What used to be a single `Page` per language is
+now a pair, and knowing which half owns what is most of understanding this
+codebase:
 
-Every save (creation, draft, rollback) creates a row in `page_versions` (never a
-destructive overwrite) — see `Page` in `libs/domain-core` and the use cases in
+- **`PageGroup`** owns everything shared across languages: the canonical
+  block tree (`content`), where the page sits in the site's hierarchy
+  (`parentId`, `order`) and which collection lists it. Adding, removing or
+  reordering a block here applies to every language at once.
+- **`PageTranslation`** is one language of that group: its `slug`, its
+  `seoMeta`, and `fieldValues` — an overlay holding **only** the fields a
+  block descriptor marks `translatable`, keyed by block. Creating a
+  language is cheap precisely because it copies no structure.
+
+That split is the point: the old model duplicated the whole tree per
+language, so the two could drift apart, and the best it could ever do was
+report the drift after the fact. See ADR-0017's supersession and the
+entities' own comments in `libs/domain-core/src/lib/entities/`.
+
+Two consequences worth stating plainly:
+
+- **Publishing stays per language.** One can go live today and another
+  when it is ready. A `PageTranslation` carries its own `status` and its
+  `publishedSnapshot`: the frozen merge of the group's structure with that
+  language's `fieldValues`, as of the last `publish()`. That snapshot is
+  what public rendering reads, and nothing else.
+- **A language can be unlinked.** `isDiverged` marks a translation that
+  has taken its structure out of the shared tree and into its own
+  `divergedContent`, for the page that genuinely has to differ. Its
+  `fieldValues` are then ignored.
+
+Every save creates a version row rather than overwriting — `page_group_versions`
+for the shared structure, `page_translation_versions` for a language's own — so
+history and rollback are per-half too. See the use cases in
 `libs/application/src/lib/use-cases/`.
 
 ## Public rendering
@@ -154,9 +183,9 @@ destructive overwrite) — see `Page` in `libs/domain-core` and the use cases in
 separate, unauthenticated consumer of content — never `apps/editor-app`'s
 authenticated CRUD API, and never Postgres directly. It calls a dedicated
 `PublicPagesController` (`apps/api/src/app/public-pages`, no
-`SessionAuthGuard`, no write routes at all) that only ever returns
-`publishedContent` for a `status: 'published'` page; a draft page and a
-nonexistent slug 404 identically. See
+`SessionAuthGuard`, no write routes at all) that only ever returns a
+translation's `publishedSnapshot` for a `status: 'published'` page; a draft
+page and a nonexistent slug 404 identically. See
 [ADR-0012](adr/0012-public-site-rendering-via-dedicated-api-endpoint.md)
 for the full reasoning, including why this isn't a Postgres-direct read
 the way it might first seem simpler to build.
@@ -164,11 +193,19 @@ the way it might first seem simpler to build.
 The site to render is resolved from the request's `Host` header against
 `sites.domain` (`SiteRepositoryPort`/`postgres-site-repository`, new in
 this decision — previously `siteId` only ever existed as a foreign key,
-never a first-class read model) — never a client-supplied ID. Like the
-bootstrap lookups in [ADR-0010](adr/0010-session-based-auth-foundations.md),
-this has no session to derive a tenant from, so it reuses
-`DEFAULT_TENANT_ID` (single-tenant-per-deployment, same caveat as
-everywhere else that constant appears).
+never a first-class read model) — never a client-supplied ID — `apps/public-site`
+sends its own `Astro.url.hostname` as the `domain` parameter.
+
+A public request has no session to derive a tenant from, so the tenant is
+a property of the deployment rather than of the request:
+`DeploymentTenantResolver` answers it once and caches it, from
+`DEFAULT_TENANT_ID` when that is set, otherwise from the single row in
+`tenants`. **Brisk is single-tenant per deployment**, and that is enforced
+rather than assumed — a second row is a misconfiguration the resolver
+refuses loudly, because picking one arbitrarily would mean serving one
+customer's content to another's visitors. A deployment that has not run
+its first-run wizard yet resolves to nothing at all, which is why
+`require()` exists beside `resolve()`.
 
 Block rendering is Astro-native (`src/components/BlockRenderer.astro`,
 `src/components/blocks/`), walking `Block[]`/`children` directly — the
@@ -201,18 +238,27 @@ apps/
 
 libs/            see docs/libs.md for the full index (every lib's README,
                    grouped by which app actually imports it)
-  domain-core/    pure entities: Page, PageVersion, Site, SiteLayoutSection,
-                   User, Media, Form, FormSubmission
+  domain-core/    pure entities: PageGroup + PageTranslation (and a version
+                   entity for each), Site, SiteLayoutSection, ReusableSection,
+                   Collection, Taxonomy, Term, User, Media, Form,
+                   FormSubmission, ImportJob
   ports/          interfaces implemented by the adapters
   application/    use cases (orchestration, zero infrastructure)
   adapters/       one lib per Port implementation — not exhaustive here, see
                    libs/adapters/ for the full current list. Notably:
     postgres-db/               Drizzle schema, client, tenant-scoping helper —
                                 shared by every Postgres adapter
-    postgres-page-repository/  PageRepositoryPort + PageVersionRepositoryPort
+    postgres-page-repository/  the four page ports: PageGroup/PageTranslation
+                                and their version repositories
     postgres-site-repository/  SiteRepositoryPort — domain lookup for public rendering
     postgres-form-repository/  FormRepositoryPort + form submissions
     postgres-user-repository/  UserRepositoryPort
+    postgres-taxonomy-repository/, postgres-media-repository/,
+    postgres-search-repository/, postgres-site-layout-section-repository/,
+    postgres-reusable-section-repository/, postgres-import-job-repository/,
+    postgres-dashboard-stats-repository/   one port each, same pattern
+    filesystem-theme-catalog/  ThemeCatalogPort — reads themes/ off disk
+    wordpress-wxr/             streaming reader for a WordPress export (ADR-0082)
     session-auth-adapter/      AuthPort — argon2id hashing, DB-backed sessions
     verification-token-adapter/ VerificationTokenPort — single-use email
                                 verification/password-reset tokens
@@ -222,12 +268,24 @@ libs/            see docs/libs.md for the full index (every lib's README,
     local-disk-attachment-storage/, s3-attachment-storage/  form file-upload storage
     turnstile-captcha/         CaptchaPort — Cloudflare Turnstile
     mailchimp-newsletter/, brevo-newsletter/  NewsletterPort implementations
-  block-registry/ editor block definitions (fields, defaults, container
-                   rules) — one file per block type in src/lib/blocks/,
-                   consumed by apps/editor-app's canvas
-  shared-types/   shared content model (Block, PageContent, SeoMeta) and the
+  block-registry/ the block catalog: one descriptor per type in
+                   src/lib/blocks/ (fields, defaults, container and style
+                   rules). Not only the editor's — `apps/public-site` reads
+                   it too, for the rules a renderer needs (allowed children,
+                   style vocabulary); it is not a renderer either way.
+  shared-types/   shared content model (Block, PageContent, SeoMeta), the
                    editor<->preview-iframe postMessage protocol
-                   (preview-bridge-protocol.ts)
+                   (preview-bridge-protocol.ts), and the domain-level lists
+                   about block types that no React package may own
+                   (SEARCHABLE_BLOCK_TYPES, COMMERCE_BLOCK_TYPES)
+  block-sdk/      what a theme built OUTSIDE this monorepo depends on:
+                   defineBlock, the field descriptor types, CORE_BLOCK_TYPES
+                   (ADR-0037 fixed this dependency direction on purpose)
+  theme-runtime/  the runtime half of a theme package
+  rich-text/, rich-text-editor/   the shared rich-text document format and
+                   its Tiptap editor
+  testing/        builders, in-memory repositories and fake ports the specs
+                   share — never imported by production code (ADR-0073)
   env-config/     requireEnv() — fail loudly on a missing required env var,
                    shared by every adapter/app/script that needs one
   opaque-token/   generateOpaqueToken()/hashOpaqueToken() — shared by
@@ -235,8 +293,13 @@ libs/            see docs/libs.md for the full index (every lib's README,
 
 themes/
   <name>/         filesystem theme packages (theme.css design tokens,
-                   optional full-file component overrides) — selected
-                   per-deployment via BRISK_THEME, see ADR-0021
+                   optional full-file component overrides). Every theme in
+                   the image ships together; which one renders is the
+                   site's own `Site.themeName`, resolved per request and
+                   changeable from the editor without a rebuild — see
+                   ADR-0042, which supersedes ADR-0032 on this point.
+                   `BRISK_THEME` survives only as an optional allow-list
+                   narrowing what a deployment offers.
 
 db/
   init/           brisk_app role bootstrap (see docs/development.md);

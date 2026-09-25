@@ -128,10 +128,9 @@ import {
 import { sanitizeFieldValueOverlay } from '../rich-text/sanitize-page-content';
 
 /**
- * i18n a livello di campo (vedi il piano) — struttura condivisa
- * (PageGroup) + testo per-locale (PageTranslation). Fase 5 ha rimosso
- * PagesController (vecchio modello a pagina duplicata) e le sue tabelle:
- * questo è ora l'unico controller di pagine.
+ * Field-level i18n (docs/adr/0034): shared structure (`PageGroup`) plus
+ * per-locale text (`PageTranslation`). The old `PagesController` and its
+ * duplicated-page tables are gone, so this is the only pages controller.
  */
 @Controller('page-groups')
 @UseGuards(SessionAuthGuard)

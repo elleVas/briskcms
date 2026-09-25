@@ -99,7 +99,7 @@ async function findSectionWithLocaleFallback(
  * can get the site's normal chrome without needing a page to anchor to.
  *
  * `preview: true` (used only by getPreviewPageById, gated on that page's own
- * valid preview token — vedi il piano dell'editor visuale, Giorno 1) reads
+ * valid preview token — see docs/adr/0024) reads
  * each section's draft `content` regardless of its own `status`, instead of
  * the published-only collapse below. A section that was never created at
  * all still resolves to `null` either way — there is nothing to preview.

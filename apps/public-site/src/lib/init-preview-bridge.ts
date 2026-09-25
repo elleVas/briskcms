@@ -379,9 +379,9 @@ export function initPreviewBridge(): void {
       }
       event.preventDefault();
       latestDragPointer = { x: event.clientX, y: event.clientY };
-      // Throttled a un frame (stessa cura prestazionale del ResizeObserver
-      // sopra) — un mousemove nativo può sparare molto più spesso di quanto
-      // serva ridisegnare l'indicatore di drop lato genitore.
+      // Throttled to one frame (the same performance care as the
+      // ResizeObserver above) — a native mousemove can fire far more often
+      // than the parent needs to redraw the drop indicator.
       if (dragMoveRaf === null) {
         dragMoveRaf = requestAnimationFrame(() => {
           dragMoveRaf = null;
