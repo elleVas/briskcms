@@ -1,4 +1,4 @@
-import { writeFileSync } from 'node:fs';
+import { readdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { randomUUID } from 'node:crypto';
@@ -112,6 +112,32 @@ ${body}
     expect(finished.status).toBe('analyzed');
     expect(finished.report.found.pages).toBe(0);
     expect(finished.report.blocks.total).toBe(0);
+  });
+
+  it('deletes the upload when it refuses the request', async () => {
+    // Multer writes the file before anything can refuse the request, so
+    // a refusal that walks away leaves it there — and the way to fill a
+    // disk is then to keep uploading to a site you do not own, 512 MB at
+    // a time.
+    const before = readdirSync(tmpdir()).filter((name) =>
+      name.startsWith('brisk-import-'),
+    ).length;
+
+    await agent
+      .post('/imports/wordpress/analysis')
+      .field('siteId', randomUUID())
+      .attach('file', wxrFile(''))
+      .expect(404);
+    await agent
+      .post('/imports/wordpress/analysis')
+      .field('siteId', 'not-a-uuid')
+      .attach('file', wxrFile(''))
+      .expect(400);
+
+    const after = readdirSync(tmpdir()).filter((name) =>
+      name.startsWith('brisk-import-'),
+    ).length;
+    expect(after).toBe(before);
   });
 
   it('refuses an upload with no file', async () => {

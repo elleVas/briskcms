@@ -118,8 +118,13 @@ export class ImportsController {
   )
   async analyzeWordPress(
     @UploadedFile() file: Express.Multer.File | undefined,
-    @Body(new ZodValidationPipe(startWordPressAnalysisBodySchema))
-    body: StartWordPressAnalysisBody,
+    // Validated inside the handler rather than by `ZodValidationPipe`,
+    // which is what every other endpoint here uses. Multer has already
+    // written the upload to disk by the time a pipe runs, so a body this
+    // handler never sees is an upload nobody ever deletes — up to 512 MB
+    // of it, on every attempt. Anything that refuses the request has to
+    // do it from in here, where the file can be cleaned up.
+    @Body() rawBody: unknown,
   ) {
     if (!file) {
       throw new BadRequestException('No file uploaded');
@@ -133,14 +138,25 @@ export class ImportsController {
     const filePath = join(UPLOAD_DIRECTORY, basename(file.filename));
 
     const tenantId = this.tenantContext.getCurrentTenantId();
-    const job = await startWordPressAnalysis(this.deps(), {
-      tenantId,
-      siteId: body.siteId,
-      filePath,
-      fileName: file.originalname,
-      fileBytes: file.size,
-      createdBy: null,
-    });
+    let job: ImportJob;
+    try {
+      const body = this.readBody(rawBody);
+      job = await startWordPressAnalysis(this.deps(), {
+        tenantId,
+        siteId: body.siteId,
+        filePath,
+        fileName: file.originalname,
+        fileBytes: file.size,
+        createdBy: null,
+      });
+    } catch (error) {
+      // Nothing has taken responsibility for the upload, so it goes now.
+      // Without this, every refused request leaves its file behind and
+      // the way to fill a disk is to keep uploading to a site you do not
+      // own.
+      await unlink(filePath).catch(() => undefined);
+      throw error;
+    }
 
     // Detached on purpose (docs/adr/0082): in-process, no queue, the
     // editor polls `GET /imports/:id`. `void` and not `await` is the
@@ -177,6 +193,15 @@ export class ImportsController {
       },
     );
     return { items: jobs.map(toDto) };
+  }
+
+  /** Same shape of refusal `ZodValidationPipe` would have produced, from where the file can still be deleted. */
+  private readBody(rawBody: unknown): StartWordPressAnalysisBody {
+    const parsed = startWordPressAnalysisBodySchema.safeParse(rawBody);
+    if (!parsed.success) {
+      throw new BadRequestException(parsed.error.flatten());
+    }
+    return parsed.data;
   }
 
   private deps() {
