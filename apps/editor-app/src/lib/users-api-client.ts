@@ -1,28 +1,15 @@
-import type { UserRole } from '@brisk/shared-types';
+import {
+  type PaginatedUsers,
+  type UserRecord,
+  type UserRole,
+  paginatedUsersSchema,
+  userRecordSchema,
+} from '@brisk/shared-types';
 import { request } from './http-client';
 
-export type { UserRole };
+export type { PaginatedUsers, UserRecord, UserRole };
 
-export interface UserDto {
-  id: string;
-  tenantId: string;
-  email: string;
-  displayName: string | null;
-  /** Their author page's address — docs/adr/0071. */
-  slug: string | null;
-  avatarUrl: string | null;
-  role: UserRole;
-  isActive: boolean;
-  emailVerifiedAt: string | null;
-  createdAt: string;
-}
-
-export interface PaginatedUsers {
-  items: UserDto[];
-  total: number;
-}
-
-export function listUsers(
+export async function listUsers(
   page: number,
   pageSize: number,
 ): Promise<PaginatedUsers> {
@@ -30,7 +17,9 @@ export function listUsers(
     page: String(page),
     pageSize: String(pageSize),
   });
-  return request(`/users?${params.toString()}`);
+  return paginatedUsersSchema.parse(
+    await request(`/users?${params.toString()}`),
+  );
 }
 
 export interface InviteUserInput {
@@ -39,23 +28,35 @@ export interface InviteUserInput {
   role: UserRole;
 }
 
-export function inviteUser(input: InviteUserInput): Promise<UserDto> {
-  return request('/users/invite', {
-    method: 'POST',
-    body: JSON.stringify(input),
-  });
+export async function inviteUser(input: InviteUserInput): Promise<UserRecord> {
+  return userRecordSchema.parse(
+    await request('/users/invite', {
+      method: 'POST',
+      body: JSON.stringify(input),
+    }),
+  );
 }
 
-export function updateUserRole(id: string, role: UserRole): Promise<UserDto> {
-  return request(`/users/${id}/role`, {
-    method: 'PATCH',
-    body: JSON.stringify({ role }),
-  });
+export async function updateUserRole(
+  id: string,
+  role: UserRole,
+): Promise<UserRecord> {
+  return userRecordSchema.parse(
+    await request(`/users/${id}/role`, {
+      method: 'PATCH',
+      body: JSON.stringify({ role }),
+    }),
+  );
 }
 
-export function setUserActive(id: string, isActive: boolean): Promise<UserDto> {
-  return request(`/users/${id}/active`, {
-    method: 'PATCH',
-    body: JSON.stringify({ isActive }),
-  });
+export async function setUserActive(
+  id: string,
+  isActive: boolean,
+): Promise<UserRecord> {
+  return userRecordSchema.parse(
+    await request(`/users/${id}/active`, {
+      method: 'PATCH',
+      body: JSON.stringify({ isActive }),
+    }),
+  );
 }

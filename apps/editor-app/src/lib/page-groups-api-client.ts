@@ -12,10 +12,11 @@ import {
   type PageTranslationRecord,
   type PageTranslationVersionRecord,
   type PaginatedPageGroups,
+  type ReusableSectionRecord,
   type SeoMeta,
+  reusableSectionRecordSchema,
 } from '@brisk/shared-types';
 import { request } from './http-client';
-import type { ReusableSectionDto } from './reusable-sections-api-client';
 
 export type {
   PageGroupListItemRecord,
@@ -161,14 +162,16 @@ export function reorderPageGroups(
  * language (docs/adr/0072). Answered with the template itself, in the shape
  * the sections list reads.
  */
-export function savePageGroupAsTemplate(
+export async function savePageGroupAsTemplate(
   id: string,
   name: string,
-): Promise<ReusableSectionDto> {
-  return request(`/page-groups/${id}/save-as-template`, {
-    method: 'POST',
-    body: JSON.stringify({ name }),
-  });
+): Promise<ReusableSectionRecord> {
+  return reusableSectionRecordSchema.parse(
+    await request(`/page-groups/${id}/save-as-template`, {
+      method: 'POST',
+      body: JSON.stringify({ name }),
+    }),
+  );
 }
 
 export function duplicatePageGroup(id: string): Promise<PageGroupRecord> {

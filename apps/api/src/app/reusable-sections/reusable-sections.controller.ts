@@ -23,6 +23,12 @@ import {
   saveReusableSectionDraft,
   setReusableSectionExposedFields,
 } from '@brisk/application';
+import {
+  type ReusableSectionListItem,
+  type ReusableSectionVersionRecord,
+  reusableSectionListItemSchema,
+} from '@brisk/shared-types';
+import { ReusableSectionRecords } from './reusable-section-records';
 import type {
   PageGroupRepositoryPort,
   PageTranslationRepositoryPort,
@@ -75,6 +81,7 @@ export class ReusableSectionsController {
     @Inject(TENANT_CONTEXT) private readonly tenantContext: TenantContextPort,
     @Inject(PREVIEW_TOKEN_PORT)
     private readonly previewTokenPort: PreviewTokenPort,
+    private readonly records: ReusableSectionRecords,
   ) {}
 
   private get deps() {
@@ -89,7 +96,9 @@ export class ReusableSectionsController {
   }
 
   @Get()
-  async list(@Query(new ZodValidationPipe(listQuerySchema)) query: ListQuery) {
+  async list(
+    @Query(new ZodValidationPipe(listQuerySchema)) query: ListQuery,
+  ): Promise<ReusableSectionListItem[]> {
     const sections = await listReusableSectionsWithUsage(
       { ...this.deps, pageGroupRepository: this.pageGroupRepository },
       this.tenantId,
@@ -98,11 +107,13 @@ export class ReusableSectionsController {
     // The count travels with the row rather than as a second endpoint: it
     // is one number the list always shows, and a separate call would mean
     // the name and the count could disagree on screen.
-    return sections.map(({ section, usedOnPages, usedInTemplates }) => ({
-      ...section.toProps(),
-      usedOnPages,
-      usedInTemplates,
-    }));
+    return sections.map(({ section, usedOnPages, usedInTemplates }) =>
+      reusableSectionListItemSchema.parse({
+        ...this.records.toRecord(section),
+        usedOnPages,
+        usedInTemplates,
+      }),
+    );
   }
 
   @Post()
@@ -117,13 +128,13 @@ export class ReusableSectionsController {
       content: body.content,
       actorUserId: null,
     });
-    return section.toProps();
+    return this.records.toRecord(section);
   }
 
   @Get(':id')
   async findById(@Param('id') id: string) {
     const section = await getReusableSection(this.deps, this.tenantId, id);
-    return section.toProps();
+    return this.records.toRecord(section);
   }
 
   @Post(':id/preview-token')
@@ -155,7 +166,7 @@ export class ReusableSectionsController {
       content: body.content,
       actorUserId: null,
     });
-    return section.toProps();
+    return this.records.toRecord(section);
   }
 
   @Patch(':id/name')
@@ -168,7 +179,7 @@ export class ReusableSectionsController {
       id,
       name: body.name,
     });
-    return section.toProps();
+    return this.records.toRecord(section);
   }
 
   @Patch(':id/exposed-fields')
@@ -182,7 +193,7 @@ export class ReusableSectionsController {
       id,
       exposedFields: body.exposedFields,
     });
-    return section.toProps();
+    return this.records.toRecord(section);
   }
 
   @Post(':id/publish')
@@ -195,7 +206,7 @@ export class ReusableSectionsController {
       },
       { tenantId: this.tenantId, id },
     );
-    return section.toProps();
+    return this.records.toRecord(section);
   }
 
   @Delete(':id')
@@ -205,8 +216,15 @@ export class ReusableSectionsController {
   }
 
   @Get(':id/versions')
-  async listVersions(@Param('id') id: string) {
-    return listReusableSectionVersions(this.deps, this.tenantId, id);
+  async listVersions(
+    @Param('id') id: string,
+  ): Promise<ReusableSectionVersionRecord[]> {
+    const versions = await listReusableSectionVersions(
+      this.deps,
+      this.tenantId,
+      id,
+    );
+    return versions.map((version) => this.records.toVersionRecord(version));
   }
 
   @Post(':id/rollback')
@@ -220,6 +238,6 @@ export class ReusableSectionsController {
       versionId: body.versionId,
       actorUserId: null,
     });
-    return section.toProps();
+    return this.records.toRecord(section);
   }
 }

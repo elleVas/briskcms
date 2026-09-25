@@ -5,7 +5,7 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
 import { actionErrorMessage } from '../lib/http-client';
-import type { UserDto, UserRole } from '../lib/users-api-client';
+import type { UserRecord, UserRole } from '../lib/users-api-client';
 import { ConfirmActionDialog } from './confirm-action-dialog';
 import { IconButton } from './icon-button';
 import { InviteUserDialog } from './invite-user-dialog';
@@ -15,7 +15,7 @@ import { USERS_PAGE_SIZE } from './users-queries';
 import { useUsers } from './use-users';
 
 export interface UsersListViewProps {
-  items: UserDto[];
+  items: UserRecord[];
   page: number;
   total: number;
 }
@@ -35,7 +35,7 @@ export function UsersListView({ items, page, total }: UsersListViewProps) {
   // click next to a role dropdown, and it was taking effect on the way
   // down.
   const [pendingDeactivation, setPendingDeactivation] =
-    useState<UserDto | null>(null);
+    useState<UserRecord | null>(null);
 
   const totalPages = Math.max(1, Math.ceil(total / USERS_PAGE_SIZE));
 
@@ -52,7 +52,7 @@ export function UsersListView({ items, page, total }: UsersListViewProps) {
     }
   }
 
-  async function handleActiveToggle(user: UserDto) {
+  async function handleActiveToggle(user: UserRecord) {
     if (!user.isActive) {
       await applyActiveChange(user, true);
       return;
@@ -60,7 +60,7 @@ export function UsersListView({ items, page, total }: UsersListViewProps) {
     setPendingDeactivation(user);
   }
 
-  async function applyActiveChange(user: UserDto, isActive: boolean) {
+  async function applyActiveChange(user: UserRecord, isActive: boolean) {
     setActionError('');
     try {
       await setUserActive(user.id, isActive);

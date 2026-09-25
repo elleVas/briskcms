@@ -3,9 +3,9 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { TooltipProvider } from '../components/ui/tooltip';
 import * as api from '../lib/taxonomies-api-client';
-import type { TermDto } from '../lib/taxonomies-api-client';
+import type { TermRecord } from '../lib/taxonomies-api-client';
 import { createTestQueryClient } from '../test/query-client.test-fixture';
-import { buildTaxonomyDto, buildTermDto } from '../test/dtos.test-fixture';
+import { buildTaxonomyRecord, buildTermRecord } from '@brisk/testing/records';
 import { MediaPickerProvider } from './media-picker-provider';
 import { TermTreeEditor } from './term-tree-editor';
 
@@ -22,17 +22,17 @@ vi.mock('../lib/taxonomies-api-client', async (importOriginal) => {
   };
 });
 
-const taxonomy = buildTaxonomyDto();
+const taxonomy = buildTaxonomyRecord();
 
-function term(overrides: Partial<TermDto> & { id: string }): TermDto {
-  return buildTermDto({
+function term(overrides: Partial<TermRecord> & { id: string }): TermRecord {
+  return buildTermRecord({
     name: { it: overrides.id },
     slugs: { it: overrides.id },
     ...overrides,
   });
 }
 
-function renderEditor(terms: TermDto[]) {
+function renderEditor(terms: TermRecord[]) {
   vi.mocked(api.listTerms).mockResolvedValue(terms);
   return render(
     <QueryClientProvider client={createTestQueryClient()}>

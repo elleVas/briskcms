@@ -1,13 +1,16 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { QueryClientProvider } from '@tanstack/react-query';
-import { buildSiteRecord } from '@brisk/testing/records';
+import {
+  buildSiteRecord,
+  buildTaxonomyRecord,
+  buildTermRecord,
+} from '@brisk/testing/records';
 import { TooltipProvider } from '../components/ui/tooltip';
 import * as api from '../lib/taxonomies-api-client';
 import * as sitesApi from '../lib/sites-api-client';
-import type { TaxonomyDto } from '../lib/taxonomies-api-client';
+import type { TaxonomyRecord } from '../lib/taxonomies-api-client';
 import { createTestQueryClient } from '../test/query-client.test-fixture';
-import { buildTaxonomyDto, buildTermDto } from '../test/dtos.test-fixture';
 import { TaxonomiesView } from './taxonomies-view';
 
 vi.mock('../lib/taxonomies-api-client', async (importOriginal) => {
@@ -30,9 +33,12 @@ vi.mock('../lib/sites-api-client', async (importOriginal) => {
   return { ...actual, getCurrentSite: vi.fn() };
 });
 
-const taxonomy = buildTaxonomyDto();
+const taxonomy = buildTaxonomyRecord();
 
-function renderView(taxonomies: TaxonomyDto[], terms: api.TermDto[] = []) {
+function renderView(
+  taxonomies: TaxonomyRecord[],
+  terms: api.TermRecord[] = [],
+) {
   vi.mocked(api.listTaxonomies).mockResolvedValue(taxonomies);
   vi.mocked(api.listTerms).mockResolvedValue(terms);
   vi.mocked(sitesApi.getCurrentSite).mockResolvedValue(
@@ -188,7 +194,7 @@ describe('TaxonomiesView', () => {
    * which, so the screen asks rather than a rule on a count deciding.
    */
   it('lets a term be kept out of search engines', async () => {
-    const term = buildTermDto({
+    const term = buildTermRecord({
       id: 'term-1',
       taxonomyId: taxonomy.id,
       name: { it: 'Espresso' },

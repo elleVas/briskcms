@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { QueryClientProvider } from '@tanstack/react-query';
 import type { WordPressAnalysis } from '@brisk/shared-types';
 import * as api from '../lib/imports-api-client';
-import type { ImportJobDto } from '../lib/imports-api-client';
+import type { ImportJobRecord } from '../lib/imports-api-client';
 import { createTestQueryClient } from '../test/query-client.test-fixture';
 import { ImportView } from './import-view';
 
@@ -51,7 +51,7 @@ const REPORT: WordPressAnalysis = {
   ],
 };
 
-function job(overrides: Partial<ImportJobDto> = {}): ImportJobDto {
+function job(overrides: Partial<ImportJobRecord> = {}): ImportJobRecord {
   return {
     id: 'job-1',
     siteId: 'site-1',
@@ -67,7 +67,7 @@ function job(overrides: Partial<ImportJobDto> = {}): ImportJobDto {
   };
 }
 
-function renderView(items: ImportJobDto[] = []) {
+function renderView(items: ImportJobRecord[] = []) {
   vi.mocked(api.listImportJobs).mockResolvedValue({ items });
   render(
     <QueryClientProvider client={createTestQueryClient()}>

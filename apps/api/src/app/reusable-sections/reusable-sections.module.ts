@@ -13,6 +13,7 @@ import { DrizzleSearchRepository } from '@brisk/postgres-search-repository';
 import { PreviewTokenAdapter } from '@brisk/preview-token-adapter';
 import { AuthModule } from '../auth/auth.module';
 import { DATABASE, DatabaseModule } from '../database.module';
+import { ReusableSectionRecords } from './reusable-section-records';
 import { ReusableSectionsController } from './reusable-sections.controller';
 import {
   PAGE_GROUP_REPOSITORY,
@@ -27,6 +28,7 @@ import {
   imports: [DatabaseModule, AuthModule],
   controllers: [ReusableSectionsController],
   providers: [
+    ReusableSectionRecords,
     {
       provide: REUSABLE_SECTION_REPOSITORY,
       useFactory: (db: BriskDb) => new DrizzleReusableSectionRepository(db),

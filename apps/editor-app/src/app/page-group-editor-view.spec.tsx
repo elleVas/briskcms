@@ -14,6 +14,7 @@ import {
   buildPageGroupVersionRecord,
   buildPageTranslationRecord,
   buildPageTranslationVersionRecord,
+  buildReusableSectionRecord,
 } from '@brisk/testing/records';
 import { TooltipProvider } from '../components/ui/tooltip';
 import { ApiError } from '../lib/http-client';
@@ -21,7 +22,6 @@ import * as api from '../lib/page-groups-api-client';
 import * as previewTokenApi from '../lib/preview-token-api-client';
 import type { CollectionRecord } from '../lib/collections-api-client';
 import { createTestQueryClient } from '../test/query-client.test-fixture';
-import { buildReusableSectionDto } from '../test/dtos.test-fixture';
 import { collectionsQueryOptions } from './collections-queries';
 import { ToastProvider } from './toast-provider';
 import {
@@ -248,7 +248,7 @@ describe('PageGroupEditorView', () => {
       vi.restoreAllMocks();
     });
 
-    const savedTemplate = buildReusableSectionDto({
+    const savedTemplate = buildReusableSectionRecord({
       id: 'template-1',
       name: 'Scheda servizio',
       kind: 'template',

@@ -5,9 +5,9 @@ import { QueryClientProvider } from '@tanstack/react-query';
 import * as api from '../lib/site-layout-sections-api-client';
 import { createTestQueryClient } from '../test/query-client.test-fixture';
 import {
-  buildSiteLayoutSectionDto,
-  buildSiteLayoutSectionVersionDto,
-} from '../test/dtos.test-fixture';
+  buildSiteLayoutSectionRecord,
+  buildSiteLayoutSectionVersionRecord,
+} from '@brisk/testing/records';
 import { useSiteLayoutSectionVersions } from './use-site-layout-section-versions';
 
 vi.mock('../lib/site-layout-sections-api-client', async (importOriginal) => {
@@ -22,7 +22,7 @@ vi.mock('../lib/site-layout-sections-api-client', async (importOriginal) => {
   };
 });
 
-const sampleVersion = buildSiteLayoutSectionVersionDto();
+const sampleVersion = buildSiteLayoutSectionVersionRecord();
 
 function wrapper({ children }: { children: ReactNode }) {
   return (
@@ -79,7 +79,10 @@ describe('useSiteLayoutSectionVersions', () => {
   it('rollback calls the API with the given version id', async () => {
     vi.mocked(api.listVersions).mockResolvedValue([sampleVersion]);
     vi.mocked(api.rollbackToVersion).mockResolvedValue(
-      buildSiteLayoutSectionDto({ status: 'published', publishedContent: [] }),
+      buildSiteLayoutSectionRecord({
+        status: 'published',
+        publishedContent: [],
+      }),
     );
 
     const { result } = renderHook(

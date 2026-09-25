@@ -5,9 +5,9 @@ import * as router from '@tanstack/react-router';
 import { TooltipProvider } from '../components/ui/tooltip';
 import * as auth from '../lib/auth-api-client';
 import * as api from '../lib/users-api-client';
-import type { UserDto } from '../lib/users-api-client';
+import type { UserRecord } from '../lib/users-api-client';
 import { createTestQueryClient } from '../test/query-client.test-fixture';
-import { buildUserDto } from '../test/dtos.test-fixture';
+import { buildUserRecord } from '@brisk/testing/records';
 import { UsersListView } from './users-list-view';
 
 vi.mock('@tanstack/react-router', async (importOriginal) => {
@@ -33,7 +33,7 @@ vi.mock('../lib/users-api-client', async (importOriginal) => {
   };
 });
 
-const userOne = buildUserDto({
+const userOne = buildUserRecord({
   email: 'editor@example.com',
   displayName: 'Editor One',
   role: 'editor',
@@ -41,7 +41,7 @@ const userOne = buildUserDto({
 });
 
 function renderView(
-  items: UserDto[],
+  items: UserRecord[],
   options: { page?: number; total?: number } = {},
 ) {
   return render(

@@ -12,13 +12,13 @@ import {
   buildCollectionRecord,
   buildPageGroupListItemRecord,
   buildPageGroupListItemTranslation,
+  buildReusableSectionListItem,
 } from '@brisk/testing/records';
 import * as collectionsApi from '../lib/collections-api-client';
 import { ApiError } from '../lib/http-client';
 import * as pageGroupsApi from '../lib/page-groups-api-client';
 import * as sectionsApi from '../lib/reusable-sections-api-client';
 import { createTestQueryClient } from '../test/query-client.test-fixture';
-import { buildReusableSectionListItemDto } from '../test/dtos.test-fixture';
 import { NewPageGroupDialog } from './new-page-group-dialog';
 import type { NewPageGroupInput } from './use-page-groups-list';
 
@@ -43,10 +43,10 @@ vi.mock('../lib/collections-api-client', async (importOriginal) => {
 });
 
 function section(
-  overrides: Partial<sectionsApi.ReusableSectionListItemDto>,
-): sectionsApi.ReusableSectionListItemDto {
+  overrides: Partial<sectionsApi.ReusableSectionListItem>,
+): sectionsApi.ReusableSectionListItem {
   const blocks = [{ id: 'hero-1', type: 'Hero', props: { title: 'Hi' } }];
-  return buildReusableSectionListItemDto({
+  return buildReusableSectionListItem({
     kind: 'template',
     status: 'published',
     content: blocks,
@@ -69,8 +69,8 @@ function renderDialog({
 }: {
   /** A promise to hold the answer back, for what the dialog does while it waits. */
   sections?:
-    | sectionsApi.ReusableSectionListItemDto[]
-    | Promise<sectionsApi.ReusableSectionListItemDto[]>;
+    | sectionsApi.ReusableSectionListItem[]
+    | Promise<sectionsApi.ReusableSectionListItem[]>;
   collectionId?: string | null;
   defaultTemplateId?: string | null;
   onCreate?: (input: NewPageGroupInput) => Promise<unknown>;
@@ -177,7 +177,7 @@ describe('NewPageGroupDialog', () => {
    */
   it('keeps Create disabled until the templates and the collection have answered', async () => {
     let answerTemplates: (
-      sections: sectionsApi.ReusableSectionListItemDto[],
+      sections: sectionsApi.ReusableSectionListItem[],
     ) => void = () => undefined;
     renderDialog({
       collectionId: 'news',

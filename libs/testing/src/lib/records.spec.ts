@@ -3,6 +3,13 @@ import {
   collectionRecordSchema,
   formRecordSchema,
   mediaRecordSchema,
+  reusableSectionListItemSchema,
+  reusableSectionRecordSchema,
+  siteLayoutSectionRecordSchema,
+  siteLayoutSectionVersionRecordSchema,
+  taxonomyRecordSchema,
+  termRecordSchema,
+  userRecordSchema,
   pageGroupListItemSchema,
   pageGroupRecordSchema,
   pageGroupVersionRecordSchema,
@@ -13,6 +20,13 @@ import {
   buildCollectionRecord,
   buildFormRecord,
   buildMediaRecord,
+  buildReusableSectionListItem,
+  buildReusableSectionRecord,
+  buildSiteLayoutSectionRecord,
+  buildSiteLayoutSectionVersionRecord,
+  buildTaxonomyRecord,
+  buildTermRecord,
+  buildUserRecord,
   buildPageGroupListItemRecord,
   buildPageGroupRecord,
   buildPageGroupVersionRecord,
@@ -54,6 +68,29 @@ describe('record builders', () => {
     );
     expect(formRecordSchema.parse(buildFormRecord())).toEqual(
       buildFormRecord(),
+    );
+    expect(userRecordSchema.parse(buildUserRecord())).toEqual(
+      buildUserRecord(),
+    );
+    expect(
+      siteLayoutSectionRecordSchema.parse(buildSiteLayoutSectionRecord()),
+    ).toEqual(buildSiteLayoutSectionRecord());
+    expect(
+      siteLayoutSectionVersionRecordSchema.parse(
+        buildSiteLayoutSectionVersionRecord(),
+      ),
+    ).toEqual(buildSiteLayoutSectionVersionRecord());
+    expect(
+      reusableSectionRecordSchema.parse(buildReusableSectionRecord()),
+    ).toEqual(buildReusableSectionRecord());
+    expect(
+      reusableSectionListItemSchema.parse(buildReusableSectionListItem()),
+    ).toEqual(buildReusableSectionListItem());
+    expect(taxonomyRecordSchema.parse(buildTaxonomyRecord())).toEqual(
+      buildTaxonomyRecord(),
+    );
+    expect(termRecordSchema.parse(buildTermRecord())).toEqual(
+      buildTermRecord(),
     );
   });
 

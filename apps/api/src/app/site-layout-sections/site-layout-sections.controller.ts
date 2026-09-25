@@ -18,6 +18,13 @@ import {
   saveSiteLayoutSectionDraft,
   updateSiteLayoutSectionSticky,
 } from '@brisk/application';
+import type { SiteLayoutSection } from '@brisk/domain-core';
+import {
+  type SiteLayoutSectionRecord,
+  type SiteLayoutSectionVersionRecord,
+  siteLayoutSectionRecordSchema,
+  siteLayoutSectionVersionRecordSchema,
+} from '@brisk/shared-types';
 import type {
   PreviewTokenPort,
   SiteLayoutSectionRepositoryPort,
@@ -78,7 +85,7 @@ export class SiteLayoutSectionsController {
         kind: query.kind,
       },
     );
-    return section.toProps();
+    return this.toDto(section);
   }
 
   @Get(':id')
@@ -90,7 +97,7 @@ export class SiteLayoutSectionsController {
     if (!section) {
       throw new NotFoundException(`Site layout section not found: ${id}`);
     }
-    return section.toProps();
+    return this.toDto(section);
   }
 
   @Post(':id/preview-token')
@@ -129,7 +136,7 @@ export class SiteLayoutSectionsController {
         actorUserId: null,
       },
     );
-    return section.toProps();
+    return this.toDto(section);
   }
 
   @Post(':id/publish')
@@ -138,7 +145,7 @@ export class SiteLayoutSectionsController {
       { siteLayoutSectionRepository: this.siteLayoutSectionRepository },
       { tenantId: this.tenantContext.getCurrentTenantId(), id },
     );
-    return section.toProps();
+    return this.toDto(section);
   }
 
   @Patch(':id/sticky')
@@ -154,17 +161,29 @@ export class SiteLayoutSectionsController {
         sticky: body.sticky,
       },
     );
-    return section.toProps();
+    return this.toDto(section);
   }
 
   @Get(':id/versions')
-  async listVersions(@Param('id') id: string) {
-    return listSiteLayoutSectionVersions(
+  async listVersions(
+    @Param('id') id: string,
+  ): Promise<SiteLayoutSectionVersionRecord[]> {
+    const versions = await listSiteLayoutSectionVersions(
       {
         siteLayoutSectionVersionRepository:
           this.siteLayoutSectionVersionRepository,
       },
       { tenantId: this.tenantContext.getCurrentTenantId(), id },
+    );
+    return versions.map((version) =>
+      siteLayoutSectionVersionRecordSchema.parse({
+        id: version.id,
+        tenantId: version.tenantId,
+        siteLayoutSectionId: version.siteLayoutSectionId,
+        content: version.content,
+        createdBy: version.createdBy,
+        createdAt: version.createdAt.toISOString(),
+      }),
     );
   }
 
@@ -186,6 +205,24 @@ export class SiteLayoutSectionsController {
         actorUserId: null,
       },
     );
-    return section.toProps();
+    return this.toDto(section);
+  }
+
+  /** Whitelisted field by field, never the entity's props spread: a field `SiteLayoutSection` gains later does not leave the server until somebody decides it should. */
+  private toDto(section: SiteLayoutSection): SiteLayoutSectionRecord {
+    const props = section.toProps();
+    return siteLayoutSectionRecordSchema.parse({
+      id: props.id,
+      tenantId: props.tenantId,
+      siteId: props.siteId,
+      locale: props.locale,
+      kind: props.kind,
+      status: props.status,
+      content: props.content,
+      publishedContent: props.publishedContent,
+      sticky: props.sticky,
+      createdAt: props.createdAt.toISOString(),
+      updatedAt: props.updatedAt.toISOString(),
+    });
   }
 }

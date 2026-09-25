@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { QueryClientProvider } from '@tanstack/react-query';
 import * as api from '../lib/taxonomies-api-client';
 import { createTestQueryClient } from '../test/query-client.test-fixture';
-import { buildTaxonomyDto, buildTermDto } from '../test/dtos.test-fixture';
+import { buildTaxonomyRecord, buildTermRecord } from '@brisk/testing/records';
 import { PageGroupTermsDialog } from './page-group-terms-dialog';
 
 vi.mock('../lib/taxonomies-api-client', async (importOriginal) => {
@@ -18,9 +18,9 @@ vi.mock('../lib/taxonomies-api-client', async (importOriginal) => {
   };
 });
 
-const taxonomy = buildTaxonomyDto({ name: { it: 'Categoria' } });
+const taxonomy = buildTaxonomyRecord({ name: { it: 'Categoria' } });
 
-const espresso = buildTermDto({
+const espresso = buildTermRecord({
   name: { it: 'Espresso' },
   slugs: { it: 'espresso' },
 });

@@ -18,6 +18,12 @@ import {
   updateUserRole,
 } from '@brisk/application';
 import type { User } from '@brisk/domain-core';
+import {
+  type PaginatedUsers,
+  type UserRecord,
+  paginatedUsersSchema,
+  userRecordSchema,
+} from '@brisk/shared-types';
 import type {
   AuthPort,
   EmailPort,
@@ -75,7 +81,7 @@ export class UsersController {
   @Get()
   async list(
     @Query(new ZodValidationPipe(listUsersQuerySchema)) query: ListUsersQuery,
-  ) {
+  ): Promise<PaginatedUsers> {
     const result = await listUsers(
       { userRepository: this.userRepository },
       {
@@ -84,10 +90,10 @@ export class UsersController {
         pageSize: query.pageSize,
       },
     );
-    return {
+    return paginatedUsersSchema.parse({
       items: result.items.map((user) => this.toDto(user)),
       total: result.total,
-    };
+    });
   }
 
   @Post('invite')
@@ -175,9 +181,9 @@ export class UsersController {
   }
 
   /** Built field-by-field, never a `...rest` of toProps() — unlike Page (no secret fields), a user row has passwordHash, which must never reach the client. */
-  private toDto(user: User) {
+  private toDto(user: User): UserRecord {
     const props = user.toProps();
-    return {
+    return userRecordSchema.parse({
       id: props.id,
       tenantId: props.tenantId,
       email: props.email,
@@ -188,8 +194,8 @@ export class UsersController {
         : null,
       role: props.role,
       isActive: props.isActive,
-      emailVerifiedAt: props.emailVerifiedAt,
-      createdAt: props.createdAt,
-    };
+      emailVerifiedAt: props.emailVerifiedAt?.toISOString() ?? null,
+      createdAt: props.createdAt.toISOString(),
+    });
   }
 }

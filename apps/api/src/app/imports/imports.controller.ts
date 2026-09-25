@@ -24,6 +24,12 @@ import {
   runWordPressAnalysis,
   startWordPressAnalysis,
 } from '@brisk/application';
+import {
+  type ImportJobList,
+  type ImportJobRecord,
+  importJobListSchema,
+  importJobRecordSchema,
+} from '@brisk/shared-types';
 import type { ImportJob } from '@brisk/domain-core';
 import type {
   ImportJobRepositoryPort,
@@ -60,9 +66,9 @@ const MAX_EXPORT_BYTES = 512 * 1024 * 1024;
 /** Where an upload lands until it has been read. Chosen here, so the paths below are this file's own. */
 const UPLOAD_DIRECTORY = tmpdir();
 
-function toDto(job: ImportJob) {
+function toDto(job: ImportJob): ImportJobRecord {
   const props = job.toProps();
-  return {
+  return importJobRecordSchema.parse({
     id: props.id,
     siteId: props.siteId,
     source: props.source,
@@ -73,7 +79,7 @@ function toDto(job: ImportJob) {
     failureReason: props.failureReason,
     createdAt: props.createdAt.toISOString(),
     finishedAt: props.finishedAt?.toISOString() ?? null,
-  };
+  });
 }
 
 @Controller('imports')
@@ -172,7 +178,7 @@ export class ImportsController {
   }
 
   @Get(':id')
-  async findById(@Param('id') id: string) {
+  async findById(@Param('id') id: string): Promise<ImportJobRecord> {
     const job = await getImportJob(
       { importJobRepository: this.importJobRepository },
       { tenantId: this.tenantContext.getCurrentTenantId(), jobId: id },
@@ -184,7 +190,7 @@ export class ImportsController {
   async list(
     @Query(new ZodValidationPipe(listImportJobsQuerySchema))
     query: ListImportJobsQuery,
-  ) {
+  ): Promise<ImportJobList> {
     const jobs = await listImportJobs(
       { importJobRepository: this.importJobRepository },
       {
@@ -192,7 +198,7 @@ export class ImportsController {
         siteId: query.siteId,
       },
     );
-    return { items: jobs.map(toDto) };
+    return importJobListSchema.parse({ items: jobs.map(toDto) });
   }
 
   /** Same shape of refusal `ZodValidationPipe` would have produced, from where the file can still be deleted. */

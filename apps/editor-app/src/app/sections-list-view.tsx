@@ -12,7 +12,7 @@ import {
   createReusableSection,
   deleteReusableSection,
   type ReusableSectionKind,
-  type ReusableSectionListItemDto,
+  type ReusableSectionListItem,
 } from '../lib/reusable-sections-api-client';
 import { collectionsQueryKey } from './collections-queries';
 import { reusableSectionsQueryOptions } from './reusable-sections-queries';
@@ -75,10 +75,7 @@ export function SectionsListView({ siteId }: SectionsListViewProps) {
   });
 
   function usageText(
-    section: Pick<
-      ReusableSectionListItemDto,
-      'usedOnPages' | 'usedInTemplates'
-    >,
+    section: Pick<ReusableSectionListItem, 'usedOnPages' | 'usedInTemplates'>,
   ): string {
     const parts = [
       ...(section.usedOnPages > 0

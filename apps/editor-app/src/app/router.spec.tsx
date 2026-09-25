@@ -20,21 +20,19 @@ import * as sectionsApi from '../lib/site-layout-sections-api-client';
 import * as sitesApi from '../lib/sites-api-client';
 import * as usersApi from '../lib/users-api-client';
 import { ApiError } from '../lib/http-client';
-import type { SiteLayoutSectionDto } from '../lib/site-layout-sections-api-client';
+import type { SiteLayoutSectionRecord } from '../lib/site-layout-sections-api-client';
 import {
   buildFormRecord,
   buildPageGroupListItemRecord,
   buildPageGroupListItemTranslation,
   buildPageGroupRecord,
   buildPageTranslationRecord,
+  buildSiteLayoutSectionRecord,
   buildSiteRecord,
+  buildUserRecord,
 } from '@brisk/testing/records';
 import { routeTree } from '../routeTree.gen';
 import { createTestQueryClient } from '../test/query-client.test-fixture';
-import {
-  buildSiteLayoutSectionDto,
-  buildUserDto,
-} from '../test/dtos.test-fixture';
 import { ToastProvider } from './toast-provider';
 
 // The login route asks whether this deployment has been set up before it
@@ -173,9 +171,9 @@ const samplePageGroupTranslation = buildPageTranslationRecord({
   publishedSnapshot: [],
 });
 
-const sampleHeaderSection = buildSiteLayoutSectionDto();
+const sampleHeaderSection = buildSiteLayoutSectionRecord();
 
-const sampleFooterSection: SiteLayoutSectionDto = {
+const sampleFooterSection: SiteLayoutSectionRecord = {
   ...sampleHeaderSection,
   id: 'section-2',
   kind: 'footer',
@@ -183,7 +181,7 @@ const sampleFooterSection: SiteLayoutSectionDto = {
 
 const sampleForm = buildFormRecord({ name: 'Contact form' });
 
-const sampleUser = buildUserDto({
+const sampleUser = buildUserRecord({
   email: 'editor@example.com',
   displayName: 'Editor',
   role: 'editor',

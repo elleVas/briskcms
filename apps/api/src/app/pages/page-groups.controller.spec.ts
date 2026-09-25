@@ -9,6 +9,7 @@ import {
   PageTranslationNotFoundError,
   ReusableSection,
 } from '@brisk/domain-core';
+import { ReusableSectionRecords } from '../reusable-sections/reusable-section-records';
 import type { ReusableSectionKind } from '@brisk/shared-types';
 import type {
   CollectionRepositoryPort,
@@ -142,6 +143,7 @@ describe('PageGroupsController (unit)', () => {
       siteRepository,
       collectionRepository,
       reusableSectionVersionRepository,
+      new ReusableSectionRecords(),
     );
   });
 
