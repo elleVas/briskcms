@@ -12,7 +12,7 @@ import { BlockStyleRegistry } from '../block-style-registry';
 export const comparisonTableBlock: BlockDescriptor<ComparisonTableProps> = {
   type: 'ComparisonTable',
   label: 'blocks.comparisonTable.label',
-  category: 'shop',
+  category: 'content',
   icon: 'table-properties',
   defaultProps: { columns: '', highlightColumn: 0 },
   fields: [

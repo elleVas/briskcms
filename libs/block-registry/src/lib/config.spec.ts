@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest';
 import {
   BLOCK_STYLE_DEFAULTS,
   BLOCKS_WITHOUT_SEARCHABLE_TEXT,
+  COMMERCE_BLOCK_TYPES,
   SEARCHABLE_BLOCK_TYPES,
 } from '@brisk/shared-types';
 import { pageBlockCategories, pageBlocks } from './config';
@@ -227,4 +228,50 @@ describe('every block a file defines is a block somebody can insert', () => {
       ).toBe(true);
     },
   );
+});
+
+/**
+ * The guard for `COMMERCE_BLOCK_TYPES` (ADR-0084), which is a list of
+ * types the picker is told not to offer — and a list of names is exactly
+ * the kind of thing that goes quietly wrong: rename a block, or misspell
+ * one here, and the list still type-checks while the block it was meant
+ * to hide is back on the shelf.
+ */
+describe('COMMERCE_BLOCK_TYPES', () => {
+  it('names only types this registry actually has', () => {
+    const registered = new Set(pageBlocks.map((block) => block.type));
+    const unknown = COMMERCE_BLOCK_TYPES.filter(
+      (type) => !registered.has(type),
+    );
+
+    expect(
+      unknown,
+      'block-sdk/src/lib/commerce-block-types.ts names types this registry does not register — a rename or a typo, and the block it should hide is being offered',
+    ).toEqual([]);
+  });
+
+  /**
+   * The picker is not the only way a block gets inserted: a "collection"
+   * container adds a child of its single `allowedChildTypes` with no
+   * picker at all. Hiding a parent closes that door only while both ends
+   * are hidden — `ProductGrid`→`ProductCard` and
+   * `ProductReviews`→`ProductReview` are, today. Giving a block that IS
+   * offered a hidden child would quietly reopen it, and nothing else in
+   * the workspace would notice.
+   */
+  it('is never reachable as the child of a block that is still offered', () => {
+    const hidden = new Set(COMMERCE_BLOCK_TYPES);
+    const doors = [...pageBlocks, ...headerFooterBlocks]
+      .filter((block) => !hidden.has(block.type))
+      .flatMap((block) =>
+        (block.allowedChildTypes ?? [])
+          .filter((child) => hidden.has(child))
+          .map((child) => `${block.type} -> ${child}`),
+      );
+
+    expect(
+      doors,
+      'a block the picker still offers accepts a hidden commerce block as a child, so it can be inserted anyway',
+    ).toEqual([]);
+  });
 });

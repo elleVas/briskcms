@@ -5,7 +5,7 @@ import type { BlockDescriptor } from '../field-types';
 export const comparisonRowBlock: BlockDescriptor<ComparisonRowProps> = {
   type: 'ComparisonRow',
   label: 'blocks.comparisonRow.label',
-  category: 'shop',
+  category: 'content',
   icon: 'rows-2',
   defaultProps: { feature: '', values: '' },
   fields: [

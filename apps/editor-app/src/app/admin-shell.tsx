@@ -4,7 +4,6 @@ import { Link } from '@tanstack/react-router';
 import {
   ClipboardList,
   Cookie,
-  DownloadCloud,
   FileText,
   Image,
   LayoutDashboard,
@@ -186,17 +185,18 @@ function SidebarContent() {
             label={t('shell.nav.integrations')}
           />
           <NavItem to="/cookies" icon={Cookie} label={t('shell.nav.cookies')} />
-          {/* Admin-only like Users below, and for the same reason the
-              comment there gives: it reads a whole site's structure out
-              of a file, and offering it to somebody the API will refuse
-              is the sidebar asking a question it knows the answer to. */}
-          {isAdmin && (
-            <NavItem
-              to="/imports"
-              icon={DownloadCloud}
-              label={t('shell.nav.imports')}
-            />
-          )}
+          {/* The WordPress import is deliberately NOT offered here
+              (ADR-0084). It works and it stays: `/imports` is still a
+              route, still admin-only, and still reachable by typing the
+              address — what it is missing is the half that writes, so a
+              report is all it can give back. And a report saying what
+              WOULD arrive is worth reading BEFORE choosing Brisk, which
+              makes it material for the marketing site rather than a
+              screen for somebody who has already signed up.
+
+              To offer it again, put back an admin-only NavItem to
+              "/imports" with the DownloadCloud icon and the
+              `shell.nav.imports` label, beside Users below. */}
           {/* Admin-only, and the sidebar says so instead of the server
                 saying it after the click. Every screen used to be offered
                 to everybody: an Editor saw this, opened it, and got a
