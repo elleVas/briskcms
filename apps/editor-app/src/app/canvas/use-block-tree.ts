@@ -189,9 +189,9 @@ export function insertBlock(
 }
 
 /**
- * Riordino/spostamento — rimuove il blocco (ovunque sia) e lo reinserisce
- * nella nuova posizione, preservando i suoi `children` esistenti. Un
- * `blockId` ignoto lascia l'albero invariato.
+ * Reorder and move: removes the block from wherever it is and reinserts it
+ * at the new position, keeping its existing `children`. An unknown
+ * `blockId` leaves the tree untouched.
  */
 export function moveBlock(
   blocks: Block[],

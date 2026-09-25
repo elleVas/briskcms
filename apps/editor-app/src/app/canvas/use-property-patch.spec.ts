@@ -148,7 +148,7 @@ describe('usePropertyPatch', () => {
     await act(async () => {
       vi.advanceTimersByTime(300);
     });
-    // Deja passare la microtask della Promise risolta dentro il timer.
+    // Let the microtask of the Promise resolved inside the timer run.
     await act(async () => {
       await Promise.resolve();
     });

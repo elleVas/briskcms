@@ -6,12 +6,13 @@ export interface RequestWithId extends Request {
 }
 
 /**
- * Un id per richiesta, propagato nei log (HttpExceptionFilter) e nella
- * risposta (header X-Request-Id) — security review 2026-08-24, punto 14:
- * senza, correlare un errore visto da un cliente con la riga di log giusta
- * (magari in mezzo a migliaia di altre) è impossibile a posteriori. Riusa
- * un X-Request-Id già presente in entrata (proxy/load balancer davanti a
- * questo servizio), altrimenti ne genera uno nuovo.
+ * One id per request, carried into the logs (`HttpExceptionFilter`) and
+ * back out on the response (the `X-Request-Id` header) — security review
+ * 2026-08-24, point 14: without it, matching an error a customer reports
+ * to the right log line, possibly among thousands of others, is
+ * impossible after the fact. It reuses an `X-Request-Id` that arrived with
+ * the request (a proxy or load balancer in front of this service),
+ * generating a new one otherwise.
  */
 export function requestIdMiddleware(
   req: Request,

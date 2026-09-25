@@ -33,10 +33,10 @@ export interface IconPickerDialogProps {
 }
 
 /**
- * Griglia con ricerca, non un semplice elenco: il set di default (docs/adr/
- * 0023) è l'intero set Lucide corrente, ~2000 icone — troppe per scorrere
- * senza un filtro testuale, a differenza di PagePickerDialog/
- * MediaPickerDialog che paginano poche decine di elementi.
+ * A searchable grid rather than a plain list: the default set (docs/adr/0023)
+ * is the whole current Lucide set, around 2000 icons — far too many to
+ * scroll without a text filter, unlike `PagePickerDialog` and
+ * `MediaPickerDialog`, which paginate a few dozen items.
  *
  * The logos are searched on the server rather than downloaded whole: the
  * brand set serialises to 5.2MB, and the first opening of its tab used to

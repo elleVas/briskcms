@@ -6,37 +6,6 @@ export const pageStatusSchema = z.enum(['draft', 'published']);
 export type PageStatus = z.infer<typeof pageStatusSchema>;
 
 /**
- * The editor CRUD shape (`GET/PATCH/POST /pages/*` responses in
- * apps/api's PagesController) — the full block tree (both draft and
- * published), unlike PublishedPage which only ever carries the published
- * one. Shared between PagesController's toDto() (server-side shape) and
- * apps/editor-app's pages-api-client.ts (parses it off the wire).
- */
-export const pageRecordSchema = z.object({
-  id: z.string(),
-  tenantId: z.string(),
-  siteId: z.string(),
-  groupId: z.string(),
-  locale: z.string(),
-  slug: z.string(),
-  parentId: z.string().nullable(),
-  status: pageStatusSchema,
-  content: z.array(blockSchema),
-  publishedContent: z.array(blockSchema).nullable(),
-  seoMeta: seoMetaSchema,
-  // The block-structure signature (see content-structure-signature.ts)
-  // this page's content was last confirmed aligned to — for a translation,
-  // that of its group's default-locale page at the time it was created or
-  // last explicitly marked synced; `null` for a page never tracked under
-  // this mechanism (pre-existing translations, or a group's own
-  // default-locale page, which never drifts from itself).
-  syncedStructureSignature: z.string().nullable(),
-  createdAt: z.string(),
-  updatedAt: z.string(),
-});
-export type PageRecord = z.infer<typeof pageRecordSchema>;
-
-/**
  * The `GET /pages` list-item shape — deliberately without `content`/
  * `publishedContent` (security review 2026-08-24, database section: the
  * list endpoint used to ship the entire Puck block tree just to render a
@@ -70,12 +39,6 @@ export const pageListItemSchema = z.object({
   hasUnpublishedChanges: z.boolean(),
 });
 export type PageListItem = z.infer<typeof pageListItemSchema>;
-
-export const paginatedPagesSchema = z.object({
-  items: z.array(pageListItemSchema),
-  total: z.number(),
-});
-export type PaginatedPages = z.infer<typeof paginatedPagesSchema>;
 
 /** One translation, projected down to what a page-groups list row's locale badge needs — see pageGroupListItemSchema. */
 export const pageGroupListItemTranslationSchema = z.object({
@@ -116,23 +79,14 @@ export const paginatedPageGroupsSchema = z.object({
 });
 export type PaginatedPageGroups = z.infer<typeof paginatedPageGroupsSchema>;
 
-/** `GET /pages/:id/versions` — mirrors the plain `PageVersion` domain interface (libs/domain-core), which has no extra fields to whitelist against. */
-export const pageVersionRecordSchema = z.object({
-  id: z.string(),
-  tenantId: z.string(),
-  pageId: z.string(),
-  content: z.array(blockSchema),
-  createdBy: z.string().nullable(),
-  createdAt: z.string(),
-});
-export type PageVersionRecord = z.infer<typeof pageVersionRecordSchema>;
-
 /**
- * i18n a livello di campo (vedi ADR pendente/il piano) — wire shape del
- * `PageGroup` domain entity (libs/domain-core), non ancora servita da
- * alcun endpoint (Fase 1 del piano). Affianca `pageRecordSchema` sopra
- * (vecchio modello a pagina duplicata) finché la Fase 5 non rimuove
- * quest'ultimo — le due coesistono deliberatamente durante la migrazione.
+ * The wire shape of the `PageGroup` domain entity (`libs/domain-core`):
+ * field-level i18n, where this half carries the structure every language
+ * shares — see docs/adr/0034.
+ *
+ * It was written to sit beside the duplicated-page model's own shape
+ * during the migration away from it; that migration is done, and those
+ * schemas have been deleted.
  */
 export const pageGroupRecordSchema = z.object({
   id: z.string(),

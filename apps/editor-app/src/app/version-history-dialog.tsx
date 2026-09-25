@@ -10,10 +10,11 @@ import {
   DialogTitle,
 } from '../components/ui/dialog';
 
-// Minimal shape shared by PageVersionRecord and SiteLayoutSectionVersionDto —
-// this dialog is presentational only (docs/adr/0018): it doesn't know or
-// care which entity's versions it's showing, that's the caller's own hook
-// (usePageVersions / useSiteLayoutSectionVersions) to fetch and pass in.
+// The minimal shape every version record shares — a page group's, a page
+// translation's, a layout section's. This dialog is presentational only
+// (docs/adr/0018): it doesn't know or care which entity's versions it is
+// showing, that's the caller's own hook (usePageVersions /
+// useSiteLayoutSectionVersions) to fetch and pass in.
 export interface VersionSummary {
   id: string;
   createdAt: string;

@@ -149,10 +149,11 @@ export interface CanvasEditorShellProps {
 }
 
 /**
- * Shell condivisa dall'editor di pagina e dall'editor Header/Footer (vedi
- * il piano dell'editor visuale, Giorno 4) — canvas Astro vero in un iframe,
- * Layers/Inspector/BlockPicker attorno, editing di testo inline via TipTap
- * montato sul posto. Sostituisce block-editor-shell.tsx (Puck).
+ * The shell shared by the page editor and the Header/Footer editor: the
+ * real Astro canvas in an iframe (docs/adr/0028), with Layers, Inspector
+ * and BlockPicker around it and inline text editing mounted in place via
+ * TipTap. It replaced `block-editor-shell.tsx`, the last of Puck
+ * (docs/adr/0033).
  */
 export function CanvasEditorShell({
   backLink,

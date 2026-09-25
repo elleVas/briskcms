@@ -330,7 +330,7 @@ export function usePropertyPatch({
         onSaveDraft(blockId, field, { [field]: text });
       });
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- vedi scheduleChange sopra.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- see scheduleChange above.
     [onSaveDraft, debounceMs],
   );
 
@@ -362,7 +362,7 @@ export function usePropertyPatch({
           });
       });
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- vedi scheduleChange sopra.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- see scheduleChange above.
     [
       pageId,
       fragmentSection,
@@ -401,7 +401,7 @@ export function usePropertyPatch({
           });
       });
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- vedi scheduleChange sopra.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- see scheduleChange above.
     [pageId, fragmentSection, token, onSaveVariant, patchBlock, debounceMs],
   );
 

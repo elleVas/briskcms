@@ -1,8 +1,9 @@
 /**
- * Espone il tenant della richiesta corrente (impostato da un Guard/Interceptor
- * NestJS a valle dell'auth). Gli adapter Postgres lo usano per impostare
- * `app.current_tenant_id` a livello di sessione DB, cosi che le policy RLS
- * (vedi db/init/002_rls.sql) abbiano un valore su cui filtrare.
+ * Exposes the tenant of the current request, set by a NestJS
+ * Guard/Interceptor downstream of auth. The Postgres adapters use it to set
+ * `app.current_tenant_id` on the database session, so the Row Level
+ * Security policies have a value to filter on — the policies live in
+ * `libs/adapters/postgres-db/drizzle/`, alongside the schema they guard.
  */
 export interface TenantContextPort {
   getCurrentTenantId(): string;

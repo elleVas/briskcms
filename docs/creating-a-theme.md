@@ -41,7 +41,7 @@ my-theme/
 ```
 
 Copy `themes/classic/theme.css` and rewrite the values. Every one of
-Brisk's ~50 blocks is built on those tokens, the way shadcn/ui components
+Brisk's hundred-odd blocks is built on those tokens, the way shadcn/ui components
 are — one implementation, restyled through custom properties, never
 duplicated per theme.
 

@@ -403,9 +403,9 @@ export function useBlockTreeMutations({
         bridge.patchBlock(parent.id, html);
       }
     } catch {
-      // Resta nell'albero locale/nella bozza salvata, riappare corretto al
-      // prossimo reload — stesso comportamento del fallimento di rete negli
-      // altri rami sotto.
+      // It stays in the local tree and in the saved draft, and comes back
+      // correct on the next reload — the same behaviour as a network
+      // failure in the other branches below.
     }
   }
 

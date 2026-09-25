@@ -15,8 +15,8 @@ function wirePromoBar(bar: HTMLElement): void {
     try {
       localStorage.setItem('brisk-promo-bar-dismissed', 'true');
     } catch {
-      // Storage non disponibile (anteprima sandboxata) — la chiusura
-      // resta comunque visiva per questo caricamento, vedi sotto.
+      // Storage unavailable (a sandboxed preview) — dismissing still
+      // takes visual effect for this page load, see below.
     }
     bar.style.display = 'none';
   });

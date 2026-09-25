@@ -1223,7 +1223,7 @@ describe('CanvasEditorShell', () => {
       });
     });
 
-    // Aggiornamento ottico immediato, prima del debounce di salvataggio.
+    // Visible immediately, before the save debounce.
     selectBlockWithRect(iframe, 'hero-1', HERO_RECT);
     focusPropertiesPanel();
     expect(screen.getByDisplayValue('Digitato dal vivo')).toBeTruthy();
@@ -1267,8 +1267,8 @@ describe('CanvasEditorShell', () => {
       });
     });
 
-    // Trascina hero-1 (in alto) oltre il punto medio di text-1 (150) — deve
-    // finire dopo di esso.
+    // Drag hero-1 (at the top) past text-1's midpoint (150) — it has to
+    // end up after it.
     act(() => {
       dispatchFromIframe(iframe, 'preview:drag-start', {
         blockId: 'hero-1',

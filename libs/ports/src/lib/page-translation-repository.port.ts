@@ -4,11 +4,12 @@ import type {
 } from '@brisk/domain-core';
 
 /**
- * Possiede il testo per-locale (overlay di campi traducibili, slug,
- * seoMeta, stato di pubblicazione) — prende il posto della parte
- * "per-locale" della vecchia Page (vedi PageGroupRepositoryPort per la
- * parte "struttura condivisa"). Stessa disciplina di scoping esplicito
- * per tenantId di PageRepositoryPort.
+ * Owns the per-locale text: the overlay of translatable fields, the slug,
+ * the SEO metadata and the publication status. It takes the place of the
+ * "per-locale" half of the old `Page` — see `PageGroupRepositoryPort` for
+ * the "shared structure" half — and keeps the same discipline every
+ * repository port here follows: `tenantId` is always an explicit
+ * parameter, never read from ambient state.
  */
 export interface PageTranslationRepositoryPort {
   /**
