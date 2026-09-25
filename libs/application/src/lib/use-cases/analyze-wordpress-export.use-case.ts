@@ -8,6 +8,10 @@ import type {
   WordPressExportItem,
   WordPressExportReaderPort,
 } from '@brisk/ports';
+import {
+  holdsContent,
+  recoverAcfValues,
+} from '../wordpress-import/convert-acf-fields';
 
 export interface AnalyzeWordPressExportDeps {
   exportReader: WordPressExportReaderPort;
@@ -62,6 +66,22 @@ const MULTILINGUAL_META_PREFIXES: { prefix: string; name: string }[] = [
 const BLOCK_OPENING = /<!--\s+wp:([a-z0-9][a-z0-9/-]*)/g;
 
 /**
+ * A block that carries its own attributes, which is where a block built
+ * out of custom fields keeps everything it says. One sample of each kind
+ * is enough to tell whether that kind converts, and keeping one rather
+ * than all of them is what stops this growing with the export: the
+ * largest measured holds 43 597 entries.
+ */
+const BLOCK_WITH_ATTRIBUTES =
+  /<!--\s+wp:([a-z0-9][a-z0-9/-]*)\s+(\{.*?\})\s*\/?-->/gs;
+
+/** Nothing is imported while analysing, so nothing a value points at resolves. */
+const RESOLVES_NOTHING = {
+  resolveMedia: () => null,
+  resolvePage: () => null,
+};
+
+/**
  * What a WordPress export would actually bring across, said out loud
  * before anything is imported.
  *
@@ -82,17 +102,29 @@ export async function analyzeWordPressExport(
 ): Promise<WordPressAnalysis> {
   const byType = new Map<string, number>();
   const quarantined = new Map<string, number>();
+  const blockSamples = new Map<string, Record<string, unknown>>();
   const termsByTaxonomy = new Map<string, number>();
   const pageBuilders = new Map<string, number>();
   const multilingual = new Set<string>();
 
-  let whole = 0;
-  let partial = 0;
-  let empty = 0;
   let totalBlocks = 0;
   let nativeBlocks = 0;
   let droppedBlocks = 0;
   const emptyTitles: string[] = [];
+
+  /**
+   * One line per page, kept until the whole file has been read.
+   *
+   * A block with no Brisk equivalent is not necessarily lost: if the
+   * export describes its fields, its content converts. But the
+   * definitions are entries in the same stream, so whether a page
+   * arrives whole cannot be decided while reading it — only afterwards.
+   *
+   * The file itself is still never held: this is a title and a handful
+   * of counts per page, where the export is hundreds of megabytes of
+   * media rows and postmeta.
+   */
+  const pending: { unmapped: Map<string, number>; empty: boolean }[] = [];
 
   const channel = await deps.exportReader.read(input.filePath, (item) => {
     byType.set(item.postType, (byType.get(item.postType) ?? 0) + 1);
@@ -115,25 +147,85 @@ export async function analyzeWordPressExport(
       );
     }
 
+    rememberBlockAttributes(item.content, blockSamples);
+
     const counted = countBlocks(item.content);
     totalBlocks += counted.total;
     nativeBlocks += counted.native;
     droppedBlocks += counted.dropped;
-    for (const [name, count] of counted.quarantined) {
-      quarantined.set(name, (quarantined.get(name) ?? 0) + count);
-    }
 
-    if (item.content.trim() === '') {
-      empty += 1;
+    const isEmpty = item.content.trim() === '';
+    if (isEmpty && emptyTitles.length < 10) {
       // Named, not just counted: "5 pages arrive empty" is a number,
       // "Home, Contatti… arrive empty" is something to act on.
-      if (emptyTitles.length < 10) emptyTitles.push(item.title || item.slug);
-    } else if (counted.quarantined.size > 0) {
-      partial += 1;
-    } else {
-      whole += 1;
+      emptyTitles.push(item.title || item.slug);
     }
+    pending.push({ unmapped: counted.quarantined, empty: isEmpty });
   });
+
+  // Now that the definitions have been read, the blocks with no Brisk
+  // equivalent split in two: the ones whose fields the export describes,
+  // whose content converts, and the ones it does not.
+  const knownFrom = (blockName: string): 'definitions' | 'values' | null => {
+    // The definitions decide, when the export has any: they are the
+    // site saying what its own block is made of, and a block they
+    // describe as nothing but settings — a "latest news" that draws a
+    // query — holds no content however full one instance looks.
+    //
+    // Asked of the block and not of one instance, so which instance
+    // happened to be sampled cannot change the answer.
+    const fields = channel.acfSchema.forBlock(blockName);
+    if (fields.length > 0) {
+      return holdsContent(fields) ? 'definitions' : null;
+    }
+
+    // With no definitions at all the values are the only evidence, and
+    // their shape has to say enough on its own — the case for a theme
+    // that registers its fields in code rather than in the database.
+    const sample = blockSamples.get(blockName);
+    if (!sample) return null;
+    const recovered = recoverAcfValues(sample, RESOLVES_NOTHING);
+    return recovered.blocks.length + recovered.unconverted.length > 0
+      ? 'values'
+      : null;
+  };
+
+  let whole = 0;
+  let partial = 0;
+  let empty = 0;
+  let fromFields = 0;
+  // Two different facts, both worth saying: which blocks the export does
+  // not describe (they come out plainer, whatever else happens), and
+  // which ones convert and how.
+  const undescribed = new Map<string, number>();
+  const fromFieldsByBlock = new Map<
+    string,
+    { count: number; knownFrom: 'definitions' | 'values' }
+  >();
+
+  for (const page of pending) {
+    let stillQuarantined = 0;
+    for (const [name, count] of page.unmapped) {
+      const source = knownFrom(name);
+      if (source !== 'definitions' && name.includes('/')) {
+        undescribed.set(name, (undescribed.get(name) ?? 0) + count);
+      }
+      if (source !== null) {
+        fromFields += count;
+        const seen = fromFieldsByBlock.get(name);
+        fromFieldsByBlock.set(name, {
+          count: (seen?.count ?? 0) + count,
+          knownFrom: source,
+        });
+        continue;
+      }
+      stillQuarantined += count;
+      quarantined.set(name, (quarantined.get(name) ?? 0) + count);
+    }
+    if (page.empty) empty += 1;
+    else if (stillQuarantined > 0) partial += 1;
+    else whole += 1;
+  }
 
   const otherTypes = [...byType]
     .filter(([type]) => !KNOWN_TYPES.has(type))
@@ -155,6 +247,10 @@ export async function analyzeWordPressExport(
       total: totalBlocks,
       native: nativeBlocks,
       dropped: droppedBlocks,
+      fromFields,
+      fromFieldsByBlock: [...fromFieldsByBlock]
+        .map(([name, entry]) => ({ name, ...entry }))
+        .sort((a, b) => b.count - a.count),
       quarantined: [...quarantined]
         .map(([name, count]) => ({ name, count }))
         .sort((a, b) => b.count - a.count),
@@ -169,6 +265,7 @@ export async function analyzeWordPressExport(
       empty,
       otherTypes,
       menuItems: byType.get('nav_menu_item') ?? 0,
+      undescribed,
     }),
   };
 }
@@ -260,6 +357,7 @@ function buildWarnings(context: {
   empty: number;
   otherTypes: { type: string; count: number }[];
   menuItems: number;
+  undescribed: Map<string, number>;
 }): WordPressAnalysisWarning[] {
   const warnings: WordPressAnalysisWarning[] = [];
 
@@ -296,5 +394,55 @@ function buildWarnings(context: {
   if (context.menuItems > 0) {
     warnings.push({ kind: 'menus', count: context.menuItems, detail: [] });
   }
+  const undescribedTotal = [...context.undescribed.values()].reduce(
+    (sum, count) => sum + count,
+    0,
+  );
+  if (undescribedTotal > 0) {
+    // A theme may register its fields in code instead of in the
+    // database, and then only the values travel — so their content can
+    // be recovered but not what any of it means. Common enough to be
+    // worth saying: on the first client site it was 12 blocks of 58.
+    warnings.push({
+      kind: 'fields-not-described',
+      count: undescribedTotal,
+      detail: [...context.undescribed]
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 6)
+        .map(([name, count]) => `${name} (${count})`),
+    });
+  }
   return warnings;
+}
+
+/**
+ * Keeps one instance of each kind of block that carries attributes.
+ *
+ * One, not all: what the report needs to know is whether a *kind* of
+ * block converts, and holding every instance would grow with the export.
+ */
+function rememberBlockAttributes(
+  content: string,
+  samples: Map<string, Record<string, unknown>>,
+): void {
+  if (!content.includes('<!-- wp:')) return;
+  for (const match of content.matchAll(BLOCK_WITH_ATTRIBUTES)) {
+    const name = qualifyGutenbergBlockName(match[1]);
+    if (samples.has(name)) continue;
+    try {
+      const attributes: unknown = JSON.parse(match[2]);
+      const data =
+        attributes !== null &&
+        typeof attributes === 'object' &&
+        'data' in attributes
+          ? (attributes as { data: unknown }).data
+          : null;
+      if (data !== null && typeof data === 'object') {
+        samples.set(name, data as Record<string, unknown>);
+      }
+    } catch {
+      // Attributes that are not JSON describe nothing; the block is
+      // counted where it always was.
+    }
+  }
 }

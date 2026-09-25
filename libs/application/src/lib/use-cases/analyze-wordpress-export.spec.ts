@@ -41,6 +41,9 @@ function readerOf(
         baseSiteUrl: 'https://esempio.test',
         baseBlogUrl: 'https://esempio.test',
         terms: [],
+        // An export that describes no custom fields — which is what most
+        // of these are about. The ones that care pass their own.
+        acfSchema: { groups: [], forBlock: () => [], forPostType: () => [] },
         ...channel,
       };
     },
@@ -254,6 +257,170 @@ describe('analyzeWordPressExport', () => {
     expect(
       report.warnings.find((w) => w.kind === 'content-outside-the-post'),
     ).toBeUndefined();
+  });
+
+  it('does not call a block quarantine when the export describes its fields', async () => {
+    // The point of reading a site's own field definitions: a block with
+    // no Brisk equivalent is not lost if the export says what is inside
+    // it. On the first client site this moved 46 blocks out of
+    // quarantine and produced 176 real ones from them.
+    const report = await analyze(
+      [item({ content: gutenberg('paragraph', 'acf/hero') })],
+      {
+        acfSchema: {
+          groups: [],
+          forPostType: () => [],
+          forBlock: (name) =>
+            name === 'acf/hero'
+              ? [
+                  {
+                    key: 'field_1',
+                    name: 'title',
+                    label: 'Title',
+                    type: 'text',
+                    children: [],
+                  },
+                ]
+              : [],
+        },
+      },
+    );
+
+    expect(report.blocks.fromFields).toBe(1);
+    expect(report.blocks.quarantined).toEqual([]);
+    // And the page arrives whole, because nothing on it is lost.
+    expect(report.pages).toEqual({ whole: 1, partial: 0, empty: 0 });
+  });
+
+  it('says which blocks keep their fields in the theme code instead', async () => {
+    // Registering fields in PHP rather than in the database is common,
+    // and then only the values travel — worth saying out loud, because
+    // it is why those blocks come out plainer than the rest.
+    const report = await analyze([
+      item({ content: gutenberg('acf/quote', 'acf/quote', 'acf/video') }),
+    ]);
+
+    expect(report.blocks.fromFields).toBe(0);
+    expect(
+      report.warnings.find((w) => w.kind === 'fields-not-described'),
+    ).toEqual({
+      kind: 'fields-not-described',
+      count: 3,
+      detail: ['acf/quote (2)', 'acf/video (1)'],
+    });
+  });
+
+  it('recovers a block from its values when the export describes nothing', async () => {
+    // Four of the first client site's nine block types register their
+    // fields in the theme's PHP — a fifth of every instance. Without
+    // reading the values themselves their words would simply be gone.
+    const report = await analyze([
+      item({
+        content:
+          '<!-- wp:acf/quote {"data":{"quote":"Una frase vera","_quote":"field_1","autore":""}} /-->',
+      }),
+    ]);
+
+    expect(report.blocks.fromFields).toBe(1);
+    expect(report.blocks.fromFieldsByBlock).toEqual([
+      { name: 'acf/quote', count: 1, knownFrom: 'values' },
+    ]);
+    expect(report.blocks.quarantined).toEqual([]);
+  });
+
+  it('still says the export did not describe it, even once recovered', () => {
+    // Two different facts: what converts, and what came out plainer
+    // because nobody could say what any of it meant.
+    return analyze([
+      item({
+        content:
+          '<!-- wp:acf/quote {"data":{"quote":"Una frase","_quote":"field_1"}} /-->',
+      }),
+    ]).then((report) => {
+      expect(
+        report.warnings.find((w) => w.kind === 'fields-not-described'),
+      ).toMatchObject({ count: 1, detail: ['acf/quote (1)'] });
+    });
+  });
+
+  it('leaves a block quarantined when it carries nothing at all', async () => {
+    // No definitions, and values that are only settings: there is
+    // genuinely nothing to bring across, and saying otherwise would be
+    // the lie this whole feature exists to refuse.
+    const report = await analyze([
+      item({
+        content:
+          '<!-- wp:acf/spacer {"data":{"height":"40","_height":"field_1"}} /-->',
+      }),
+    ]);
+
+    expect(report.blocks.fromFields).toBe(0);
+    expect(report.blocks.quarantined).toEqual([
+      { name: 'acf/spacer', count: 1 },
+    ]);
+  });
+
+  it('decides from the definitions, not from whichever instance it sampled', async () => {
+    // A block whose fields are all settings holds no content, however
+    // full the one instance that happened to be read looks.
+    const report = await analyze(
+      [
+        item({
+          content:
+            '<!-- wp:acf/ultime-notizie {"data":{"posts_count":"3","_posts_count":"field_1"}} /-->',
+        }),
+      ],
+      {
+        acfSchema: {
+          groups: [],
+          forPostType: () => [],
+          forBlock: (name) =>
+            name === 'acf/ultime-notizie'
+              ? [
+                  {
+                    key: 'field_1',
+                    name: 'posts_count',
+                    label: 'Quanti',
+                    type: 'number',
+                    children: [],
+                  },
+                ]
+              : [],
+        },
+      },
+    );
+
+    expect(report.blocks.fromFields).toBe(0);
+  });
+
+  it('counts a page as arriving in part only for what stays quarantined', async () => {
+    const report = await analyze(
+      [item({ content: gutenberg('acf/hero', 'acf/quote') })],
+      {
+        acfSchema: {
+          groups: [],
+          forPostType: () => [],
+          forBlock: (name) =>
+            name === 'acf/hero'
+              ? [
+                  {
+                    key: 'field_1',
+                    name: 'title',
+                    label: 'Title',
+                    type: 'text',
+                    children: [],
+                  },
+                ]
+              : [],
+        },
+      },
+    );
+
+    expect(report.blocks).toMatchObject({ fromFields: 1, native: 0 });
+    expect(report.blocks.quarantined).toEqual([
+      { name: 'acf/quote', count: 1 },
+    ]);
+    expect(report.pages).toEqual({ whole: 0, partial: 1, empty: 0 });
   });
 
   it('carries the site name and address out of the file', async () => {

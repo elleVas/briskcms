@@ -17,7 +17,14 @@ const REPORT: WordPressAnalysis = {
     otherTypes: [],
   },
   pages: { whole: 1, partial: 0, empty: 0 },
-  blocks: { total: 1, native: 1, dropped: 0, quarantined: [] },
+  blocks: {
+    total: 1,
+    native: 1,
+    fromFields: 0,
+    fromFieldsByBlock: [],
+    dropped: 0,
+    quarantined: [],
+  },
   terms: [],
   warnings: [],
 };

@@ -2775,14 +2775,17 @@
       "blocks": "{{native}} of {{total}} blocks convertible ({{percent}}%)",
       "quarantined": "{{count}} quarantined",
       "dropped": "{{count}} dropped as empty",
-      "warnings": "Worth knowing before you decide"
+      "warnings": "Worth knowing before you decide",
+      "fromFields": "{{count}} read from the site’s own fields",
+      "fromValues": "from its values alone"
     },
     "warnings": {
       "page-builder": "A page builder holds the layout in a format this cannot read: on {{count}} pages the words would come across, the arrangement would not.",
       "multilingual": "Multilingual site. Translations would arrive as separate pages, to be reunited by hand.",
       "content-outside-the-post": "{{count}} pages have an empty body in the export: their content lives elsewhere (typically in ACF fields) and they would arrive with their title alone.",
       "unsupported-post-types": "{{count}} entries are in post types this does not import: they would be left out.",
-      "menus": "{{count}} menu items. Menus are rebuilt by hand in the editor."
+      "menus": "{{count}} menu items. Menus are rebuilt by hand in the editor.",
+      "fields-not-described": "{{count}} blocks keep their fields in the theme’s code rather than in the database: their content comes across, without knowing what each piece of it is."
     }
   }
 }

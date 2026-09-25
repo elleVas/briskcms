@@ -24,8 +24,12 @@ const REPORT: WordPressAnalysis = {
   blocks: {
     total: 3,
     native: 2,
+    fromFields: 1,
+    fromFieldsByBlock: [
+      { name: 'acf/hero', count: 1, knownFrom: 'definitions' },
+    ],
     dropped: 0,
-    quarantined: [{ name: 'acf/hero', count: 1 }],
+    quarantined: [],
   },
   terms: [],
   warnings: [

@@ -9,7 +9,8 @@ import { z } from 'zod';
  * - `dropped` — it carries no content at all (a separator, a spacer), so
  *   there is nothing to lose. Counted, never silently ignored.
  */
-export type GutenbergBlockSupport = 'native' | 'quarantine' | 'dropped';
+export type GutenbergBlockSupport =
+  'native' | 'fromFields' | 'quarantine' | 'dropped';
 
 /**
  * The mapping table, and the single place that decides it.
@@ -71,6 +72,8 @@ export const wordPressAnalysisWarningSchema = z.object({
     'unsupported-post-types',
     /** The menus, which are rebuilt by hand. */
     'menus',
+    /** Blocks whose fields are registered in the theme's code, so only their values travel. */
+    'fields-not-described',
   ]),
   /** What was found, as a number the reader can weigh — pages, entries, languages. */
   count: z.number(),
@@ -102,8 +105,39 @@ export const wordPressAnalysisSchema = z.object({
   }),
   blocks: z.object({
     total: z.number(),
+    /** Blocks with a Brisk block that means the same thing. */
     native: z.number(),
     dropped: z.number(),
+    /**
+     * Blocks with no Brisk equivalent, but whose **fields** the export
+     * describes — so their content converts even though their layout
+     * does not.
+     *
+     * This is most of a site built on custom fields: on the first client
+     * site measured it turned 46 blocks that would have arrived empty
+     * into 176 real ones, because the words live in the block's
+     * attributes and only the definitions say which of them are content
+     * and which are settings.
+     */
+    fromFields: z.number(),
+    /**
+     * Which blocks those are, biggest first, and how their shape was
+     * learnt.
+     *
+     * `definitions` means the export described the fields. `values`
+     * means it did not — the theme registers them in PHP, which is
+     * ordinary practice — and the shape was read off the values
+     * themselves. On the first client site measured, four of its nine
+     * block types were `values`, a fifth of every instance: without that
+     * second path their words would simply have been gone.
+     */
+    fromFieldsByBlock: z.array(
+      z.object({
+        name: z.string(),
+        count: z.number(),
+        knownFrom: z.enum(['definitions', 'values']),
+      }),
+    ),
     /** The blocks that would land in quarantine, biggest first. */
     quarantined: z.array(z.object({ name: z.string(), count: z.number() })),
   }),
