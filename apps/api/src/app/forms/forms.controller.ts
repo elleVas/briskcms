@@ -23,6 +23,14 @@ import {
 } from '@brisk/application';
 import type { Response } from 'express';
 import type { Form } from '@brisk/domain-core';
+import {
+  type FormRecord,
+  type PaginatedFormSubmissions,
+  type PaginatedForms,
+  formRecordSchema,
+  paginatedFormSubmissionsSchema,
+  paginatedFormsSchema,
+} from '@brisk/shared-types';
 import type {
   FormRepositoryPort,
   FormSubmissionRepositoryPort,
@@ -65,18 +73,20 @@ export class FormsController {
   @Post()
   async create(
     @Body(new ZodValidationPipe(createFormBodySchema)) body: CreateFormBody,
-  ) {
+  ): Promise<FormRecord> {
     const form = await createForm(
       { formRepository: this.formRepository },
       { tenantId: this.tenantContext.getCurrentTenantId(), ...body },
     );
-    return this.toDto(form);
+    // Nothing can have been submitted to a form that did not exist a
+    // moment ago.
+    return this.toDto(form, 0);
   }
 
   @Get()
   async list(
     @Query(new ZodValidationPipe(listFormsQuerySchema)) query: ListFormsQuery,
-  ) {
+  ): Promise<PaginatedForms> {
     const result = await listForms(
       { formRepository: this.formRepository },
       {
@@ -94,13 +104,10 @@ export class FormsController {
       result.items.map((form) => form.id),
     );
 
-    return {
-      items: result.items.map((form) => ({
-        ...this.toDto(form),
-        submissionCount: counts[form.id] ?? 0,
-      })),
+    return paginatedFormsSchema.parse({
+      items: result.items.map((form) => this.toDto(form, counts[form.id] ?? 0)),
       total: result.total,
-    };
+    });
   }
 
   /**
@@ -117,7 +124,7 @@ export class FormsController {
     @Param('id') id: string,
     @Query(new ZodValidationPipe(listFormSubmissionsQuerySchema))
     query: ListFormSubmissionsQuery,
-  ) {
+  ): Promise<PaginatedFormSubmissions> {
     const result = await listFormSubmissions(
       {
         formRepository: this.formRepository,
@@ -131,7 +138,7 @@ export class FormsController {
         pageSize: query.pageSize,
       },
     );
-    return {
+    return paginatedFormSubmissionsSchema.parse({
       items: result.items.map((submission) => {
         const props = submission.toProps();
         return {
@@ -146,7 +153,7 @@ export class FormsController {
       total: result.total,
       fields: result.form.toProps().fields,
       pages: result.pages,
-    };
+    });
   }
 
   /**
@@ -181,19 +188,19 @@ export class FormsController {
   }
 
   @Get(':id')
-  async findById(@Param('id') id: string) {
+  async findById(@Param('id') id: string): Promise<FormRecord> {
     const form = await getFormById(
       { formRepository: this.formRepository },
       { tenantId: this.tenantContext.getCurrentTenantId(), formId: id },
     );
-    return this.toDto(form);
+    return this.toDto(form, await this.submissionCountOf(form));
   }
 
   @Patch(':id')
   async update(
     @Param('id') id: string,
     @Body(new ZodValidationPipe(updateFormBodySchema)) body: UpdateFormBody,
-  ) {
+  ): Promise<FormRecord> {
     const form = await updateForm(
       { formRepository: this.formRepository },
       {
@@ -202,7 +209,7 @@ export class FormsController {
         ...body,
       },
     );
-    return this.toDto(form);
+    return this.toDto(form, await this.submissionCountOf(form));
   }
 
   @Delete(':id')
@@ -215,15 +222,27 @@ export class FormsController {
   }
 
   /**
-   * Security review 2026-08-24, second backend pass: unlike
-   * UsersController/MediaController (which already had an explicit
-   * whitelist), this controller returned a raw form.toProps() — there is no
-   * sensitive field on Form today, but without a whitelist a future field
-   * would be exposed automatically, with nobody here noticing.
+   * The count travels with every form, not only with the list: the form
+   * editor labels its Submissions tab with it, and after a save it keeps
+   * the PATCH response as the form it shows.
    */
-  private toDto(form: Form) {
+  private async submissionCountOf(form: Form): Promise<number> {
+    const counts = await this.formSubmissionRepository.countByForms(
+      this.tenantContext.getCurrentTenantId(),
+      [form.id],
+    );
+    return counts[form.id] ?? 0;
+  }
+
+  /**
+   * Whitelisted field by field, never a raw form.toProps() (security review
+   * 2026-08-24): there is no sensitive field on Form today, but without a
+   * whitelist a future one would be exposed automatically, with nobody
+   * here noticing.
+   */
+  private toDto(form: Form, submissionCount: number): FormRecord {
     const props = form.toProps();
-    return {
+    return formRecordSchema.parse({
       id: props.id,
       tenantId: props.tenantId,
       siteId: props.siteId,
@@ -231,8 +250,9 @@ export class FormsController {
       fields: props.fields,
       steps: props.steps,
       notificationEmail: props.notificationEmail,
-      createdAt: props.createdAt,
-      updatedAt: props.updatedAt,
-    };
+      createdAt: props.createdAt.toISOString(),
+      updatedAt: props.updatedAt.toISOString(),
+      submissionCount,
+    });
   }
 }

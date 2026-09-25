@@ -3,9 +3,9 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { TooltipProvider } from '../components/ui/tooltip';
 import * as api from '../lib/forms-api-client';
-import type { FormDto } from '../lib/forms-api-client';
+import type { FormRecord } from '../lib/forms-api-client';
 import { createTestQueryClient } from '../test/query-client.test-fixture';
-import { buildFormDto } from '../test/dtos.test-fixture';
+import { buildFormRecord } from '@brisk/testing/records';
 import { formQueryOptions } from './forms-queries';
 import { FormEditorView } from './form-editor-view';
 
@@ -14,9 +14,7 @@ vi.mock('@tanstack/react-router', async (importOriginal) => {
     await importOriginal<typeof import('@tanstack/react-router')>();
   return {
     ...actual,
-    Link: ({ children, to }: { children: React.ReactNode; to: string }) => (
-      <a href={to}>{children}</a>
-    ),
+    Link: (await import('../test/router-link.test-fixture')).StubLink,
     // This view is rendered without a router here; the real one needs a
     // history to hold a navigation against. The blocker's own behaviour is
     // covered by the test below that drives it directly.
@@ -30,7 +28,7 @@ vi.mock('../lib/forms-api-client', async (importOriginal) => {
   return { ...actual, updateForm: vi.fn() };
 });
 
-const sampleForm = buildFormDto({
+const sampleForm = buildFormRecord({
   name: 'Candidatura',
   fields: [
     { id: 'nome', label: 'Nome', type: 'text', required: true },
@@ -43,7 +41,7 @@ const sampleForm = buildFormDto({
   ],
 });
 
-function renderView(form: FormDto = sampleForm) {
+function renderView(form: FormRecord = sampleForm) {
   const queryClient = createTestQueryClient();
   queryClient.setQueryData(formQueryOptions(form.id).queryKey, form);
   return render(
@@ -90,7 +88,7 @@ describe('FormEditorView — unsaved work', () => {
     // the save trims it too: `type="email"` makes the browser strip the
     // spaces before React ever sees them. The options textarea has no such
     // help, which is why this is the case worth pinning.
-    const withSelect: FormDto = {
+    const withSelect: FormRecord = {
       ...sampleForm,
       fields: [
         {

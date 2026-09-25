@@ -1,6 +1,7 @@
+import type { UserRole } from '@brisk/shared-types';
 import { request } from './http-client';
 
-export type UserRole = 'admin' | 'publisher' | 'editor';
+export type { UserRole };
 
 export interface UserDto {
   id: string;

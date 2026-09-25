@@ -22,6 +22,7 @@ import * as usersApi from '../lib/users-api-client';
 import { ApiError } from '../lib/http-client';
 import type { SiteLayoutSectionDto } from '../lib/site-layout-sections-api-client';
 import {
+  buildFormRecord,
   buildPageGroupListItemRecord,
   buildPageGroupListItemTranslation,
   buildPageGroupRecord,
@@ -31,7 +32,6 @@ import {
 import { routeTree } from '../routeTree.gen';
 import { createTestQueryClient } from '../test/query-client.test-fixture';
 import {
-  buildFormDto,
   buildSiteLayoutSectionDto,
   buildUserDto,
 } from '../test/dtos.test-fixture';
@@ -181,7 +181,7 @@ const sampleFooterSection: SiteLayoutSectionDto = {
   kind: 'footer',
 };
 
-const sampleForm = buildFormDto({ name: 'Contact form' });
+const sampleForm = buildFormRecord({ name: 'Contact form' });
 
 const sampleUser = buildUserDto({
   email: 'editor@example.com',

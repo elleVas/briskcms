@@ -2,9 +2,10 @@ import type {
   ExposedFields,
   PageContent,
   ReusableSectionKind,
+  ReusableSectionStatus,
 } from '@brisk/shared-types';
 
-export type ReusableSectionStatus = 'draft' | 'published';
+export type { ReusableSectionStatus };
 
 export interface ReusableSectionProps {
   id: string;

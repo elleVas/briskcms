@@ -7,24 +7,7 @@ vi.mock('@tanstack/react-router', async (importOriginal) => {
     await importOriginal<typeof import('@tanstack/react-router')>();
   return {
     ...actual,
-    Link: ({
-      children,
-      to,
-      search,
-      className,
-    }: {
-      children: React.ReactNode;
-      to: string;
-      search?: { locale?: string };
-      className?: string;
-    }) => (
-      <a
-        href={`${to}${search?.locale ? `?locale=${search.locale}` : ''}`}
-        className={className}
-      >
-        {children}
-      </a>
-    ),
+    Link: (await import('../test/router-link.test-fixture')).StubLink,
   };
 });
 

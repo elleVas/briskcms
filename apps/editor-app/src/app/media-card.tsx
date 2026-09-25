@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { File, FileAudio, FileText, FileVideo } from 'lucide-react';
 import { mediaKindOfMime } from '@brisk/shared-types';
-import type { MediaDto } from '../lib/media-api-client';
+import type { MediaRecord } from '../lib/media-api-client';
 
 const BYTE_UNITS = ['B', 'KB', 'MB', 'GB'] as const;
 
@@ -27,7 +27,7 @@ export function formatFileSize(bytes: number): string {
  * and none of that is a format anybody has heard of.
  */
 export function mediaFormatOf(
-  item: Pick<MediaDto, 'filename' | 'mimeType'>,
+  item: Pick<MediaRecord, 'filename' | 'mimeType'>,
 ): string {
   const subtype = (item.mimeType.split('/')[1] ?? item.mimeType).split('+')[0];
   const extension = /\.([a-z0-9]{1,10})$/i.exec(item.filename)?.[1];
@@ -45,7 +45,7 @@ const KIND_GLYPH = {
 } as const;
 
 export interface MediaThumbnailProps {
-  item: MediaDto;
+  item: MediaRecord;
 }
 
 /**
@@ -77,7 +77,7 @@ export function MediaThumbnail({ item }: MediaThumbnailProps) {
 }
 
 export interface MediaMetaProps {
-  item: MediaDto;
+  item: MediaRecord;
 }
 
 /**

@@ -1,7 +1,7 @@
-import type { WordPressAnalysis } from '@brisk/shared-types';
+import type { ImportJobStatus, WordPressAnalysis } from '@brisk/shared-types';
 import { API_BASE_URL, request } from './http-client';
 
-export type ImportJobStatus = 'analyzing' | 'analyzed' | 'failed';
+export type { ImportJobStatus };
 
 export interface ImportJobDto {
   id: string;

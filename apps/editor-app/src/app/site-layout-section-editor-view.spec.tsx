@@ -1,4 +1,3 @@
-import type { ReactNode } from 'react';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { QueryClientProvider } from '@tanstack/react-query';
@@ -29,19 +28,7 @@ vi.mock('@tanstack/react-router', async (importOriginal) => {
     await importOriginal<typeof import('@tanstack/react-router')>();
   return {
     ...actual,
-    Link: ({
-      children,
-      to,
-      className,
-    }: {
-      children: ReactNode;
-      to: string;
-      className?: string;
-    }) => (
-      <a href={to} className={className}>
-        {children}
-      </a>
-    ),
+    Link: (await import('../test/router-link.test-fixture')).StubLink,
   };
 });
 

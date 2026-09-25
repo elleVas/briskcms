@@ -18,7 +18,7 @@ export * from './lib/entities/form';
 export * from './lib/entities/form-submission';
 export * from './lib/entities/import-job';
 export * from './lib/errors';
-export * from './lib/verification-token-purpose';
+export type { VerificationTokenPurpose } from '@brisk/shared-types';
 export * from './lib/preview-content-type';
 export * from './lib/attachment-type-sniffer';
 export * from './lib/media-type-sniffer';

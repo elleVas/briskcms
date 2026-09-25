@@ -1,7 +1,12 @@
-import type { Block, ExposedFields } from '@brisk/shared-types';
+import type {
+  Block,
+  ExposedFields,
+  ReusableSectionKind,
+  ReusableSectionStatus,
+} from '@brisk/shared-types';
 import { request } from './http-client';
 
-export type ReusableSectionKind = 'shared' | 'template';
+export type { ReusableSectionKind };
 
 export interface ReusableSectionDto {
   id: string;
@@ -9,7 +14,7 @@ export interface ReusableSectionDto {
   siteId: string;
   name: string;
   kind: ReusableSectionKind;
-  status: 'draft' | 'published';
+  status: ReusableSectionStatus;
   content: Block[];
   publishedContent: Block[] | null;
   exposedFields: ExposedFields;

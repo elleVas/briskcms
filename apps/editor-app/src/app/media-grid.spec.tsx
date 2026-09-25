@@ -5,7 +5,7 @@ import { QueryClientProvider } from '@tanstack/react-query';
 import { TooltipProvider } from '../components/ui/tooltip';
 import * as api from '../lib/media-api-client';
 import { createTestQueryClient } from '../test/query-client.test-fixture';
-import { buildMediaDto } from '../test/dtos.test-fixture';
+import { buildMediaRecord } from '@brisk/testing/records';
 import { MediaGrid } from './media-grid';
 
 vi.mock('../lib/media-api-client', async (importOriginal) => {
@@ -14,7 +14,7 @@ vi.mock('../lib/media-api-client', async (importOriginal) => {
   return { ...actual, uploadMedia: vi.fn(), deleteMedia: vi.fn() };
 });
 
-const mediaOne = buildMediaDto();
+const mediaOne = buildMediaRecord();
 
 function renderGrid(props: Partial<ComponentProps<typeof MediaGrid>> = {}) {
   return render(

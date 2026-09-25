@@ -1,3 +1,4 @@
+import type { UserRole } from '@brisk/shared-types';
 import { request } from './http-client';
 
 export function login(
@@ -15,7 +16,7 @@ export function login(
 export interface CurrentSession {
   userId: string;
   email: string;
-  role: 'admin' | 'publisher' | 'editor';
+  role: UserRole;
 }
 
 export function currentSession(): Promise<CurrentSession> {

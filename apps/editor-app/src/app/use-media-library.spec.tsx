@@ -4,7 +4,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { QueryClientProvider } from '@tanstack/react-query';
 import * as api from '../lib/media-api-client';
 import { createTestQueryClient } from '../test/query-client.test-fixture';
-import { buildMediaDto } from '../test/dtos.test-fixture';
+import { buildMediaRecord } from '@brisk/testing/records';
 import { useMediaLibrary } from './use-media-library';
 
 vi.mock('../lib/media-api-client', async (importOriginal) => {
@@ -13,7 +13,7 @@ vi.mock('../lib/media-api-client', async (importOriginal) => {
   return { ...actual, uploadMedia: vi.fn(), deleteMedia: vi.fn() };
 });
 
-const sampleMedia = buildMediaDto();
+const sampleMedia = buildMediaRecord();
 
 function wrapper({ children }: { children: ReactNode }) {
   return (

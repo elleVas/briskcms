@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
   collectionRecordSchema,
+  formRecordSchema,
+  mediaRecordSchema,
   pageGroupListItemSchema,
   pageGroupRecordSchema,
   pageGroupVersionRecordSchema,
@@ -9,6 +11,8 @@ import {
 } from '@brisk/shared-types';
 import {
   buildCollectionRecord,
+  buildFormRecord,
+  buildMediaRecord,
   buildPageGroupListItemRecord,
   buildPageGroupRecord,
   buildPageGroupVersionRecord,
@@ -44,6 +48,12 @@ describe('record builders', () => {
     ).toEqual(buildPageGroupVersionRecord());
     expect(collectionRecordSchema.parse(buildCollectionRecord())).toEqual(
       buildCollectionRecord(),
+    );
+    expect(mediaRecordSchema.parse(buildMediaRecord())).toEqual(
+      buildMediaRecord(),
+    );
+    expect(formRecordSchema.parse(buildFormRecord())).toEqual(
+      buildFormRecord(),
     );
   });
 

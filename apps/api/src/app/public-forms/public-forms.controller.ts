@@ -19,6 +19,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { ThrottlerGuard } from '@nestjs/throttler';
 import { memoryStorage } from 'multer';
 import { getPublicForm, submitForm } from '@brisk/application';
+import { type PublicForm, publicFormSchema } from '@brisk/shared-types';
 import { FormNotFoundError, sniffAttachmentType } from '@brisk/domain-core';
 import type {
   AttachmentStoragePort,
@@ -71,10 +72,12 @@ export class PublicFormsController {
   ) {}
 
   @Get(':id')
-  async findById(@Param('id') id: string) {
-    return getPublicForm(
-      { formRepository: this.formRepository },
-      { tenantId: await this.tenant.require(), formId: id },
+  async findById(@Param('id') id: string): Promise<PublicForm> {
+    return publicFormSchema.parse(
+      await getPublicForm(
+        { formRepository: this.formRepository },
+        { tenantId: await this.tenant.require(), formId: id },
+      ),
     );
   }
 

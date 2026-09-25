@@ -1,7 +1,10 @@
-import type { PageContent } from '@brisk/shared-types';
+import type {
+  PageContent,
+  SiteLayoutSectionKind,
+  SiteLayoutSectionStatus,
+} from '@brisk/shared-types';
 
-export type SiteLayoutSectionKind = 'header' | 'footer';
-export type SiteLayoutSectionStatus = 'draft' | 'published';
+export type { SiteLayoutSectionKind, SiteLayoutSectionStatus };
 
 export interface SiteLayoutSectionProps {
   id: string;

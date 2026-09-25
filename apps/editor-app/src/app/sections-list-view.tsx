@@ -6,6 +6,7 @@ import {
   useSuspenseQuery,
 } from '@tanstack/react-query';
 import { Trash2 } from 'lucide-react';
+import { REUSABLE_SECTION_KINDS } from '@brisk/shared-types';
 import { useTranslation } from '../lib/use-translation';
 import {
   createReusableSection,
@@ -24,7 +25,7 @@ export interface SectionsListViewProps {
 }
 
 function isSectionKind(value: string): value is ReusableSectionKind {
-  return value === 'shared' || value === 'template';
+  return REUSABLE_SECTION_KINDS.some((kind) => kind === value);
 }
 
 /**

@@ -8,7 +8,7 @@ import {
   DialogTitle,
 } from '../components/ui/dialog';
 import type { MediaKind } from '@brisk/shared-types';
-import type { MediaDto, MediaFilters } from '../lib/media-api-client';
+import type { MediaRecord, MediaFilters } from '../lib/media-api-client';
 import { MediaGrid } from './media-grid';
 import { mediaQueryOptions } from './media-queries';
 
@@ -16,7 +16,7 @@ export interface MediaPickerDialogProps {
   siteId: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSelect: (media: MediaDto) => void;
+  onSelect: (media: MediaRecord) => void;
   /** See MediaPickOptions.kind: the field has decided, so the reader does not. */
   lockedKind?: MediaKind;
 }

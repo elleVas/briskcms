@@ -1,4 +1,6 @@
-export type StorageProvider = 'local' | 's3';
+import type { StorageProvider } from '@brisk/shared-types';
+
+export type { StorageProvider };
 
 export interface MediaProps {
   id: string;

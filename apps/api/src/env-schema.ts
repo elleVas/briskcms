@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { STORAGE_PROVIDERS } from '@brisk/shared-types';
 
 /**
  * Every env var apps/api needs to boot, validated together in one place
@@ -51,7 +52,7 @@ const apiEnvBaseSchema = z.object({
   // their own variables are only required once the provider is actually
   // selected, enforced in the `superRefine` below, not by making them
   // required here unconditionally.
-  MEDIA_STORAGE_PROVIDER: z.enum(['local', 's3']).default('local'),
+  MEDIA_STORAGE_PROVIDER: z.enum(STORAGE_PROVIDERS).default('local'),
   S3_MEDIA_BUCKET: z.string().optional(),
   S3_MEDIA_REGION: z.string().optional(),
   S3_MEDIA_ACCESS_KEY_ID: z.string().optional(),

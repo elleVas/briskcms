@@ -1,5 +1,6 @@
 import { useEffect, useState, type RefObject } from 'react';
 import { useTranslation } from 'react-i18next';
+import type { SiteLayoutSectionKind } from '@brisk/shared-types';
 import {
   createReusableSectionPreviewToken,
   createTranslationPreviewToken,
@@ -9,7 +10,7 @@ import { BREAKPOINT_WIDTHS, type Breakpoint } from './breakpoint-selector';
 import { OverlayLayer } from './overlay-layer';
 import type { PreviewBridgeState } from './use-preview-bridge';
 
-export type EditingSection = 'header' | 'footer';
+export type EditingSection = SiteLayoutSectionKind;
 
 export interface CanvasFrameProps {
   /**

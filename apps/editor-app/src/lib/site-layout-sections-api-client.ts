@@ -1,7 +1,11 @@
-import type { Block } from '@brisk/shared-types';
+import type {
+  Block,
+  SiteLayoutSectionKind,
+  SiteLayoutSectionStatus,
+} from '@brisk/shared-types';
 import { request } from './http-client';
 
-export type SiteLayoutSectionKind = 'header' | 'footer';
+export type { SiteLayoutSectionKind };
 
 export interface SiteLayoutSectionDto {
   id: string;
@@ -9,7 +13,7 @@ export interface SiteLayoutSectionDto {
   siteId: string;
   locale: string;
   kind: SiteLayoutSectionKind;
-  status: 'draft' | 'published';
+  status: SiteLayoutSectionStatus;
   content: Block[];
   publishedContent: Block[] | null;
   sticky: boolean;

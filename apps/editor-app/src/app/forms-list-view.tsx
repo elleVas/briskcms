@@ -4,7 +4,7 @@ import { useNavigate } from '@tanstack/react-router';
 import { ChevronLeft, ChevronRight, Pencil, Trash2 } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { cn } from '../lib/utils';
-import type { FormDto } from '../lib/forms-api-client';
+import type { FormRecord } from '../lib/forms-api-client';
 import { ConfirmActionDialog } from './confirm-action-dialog';
 import { FORMS_PAGE_SIZE } from './forms-queries';
 import { IconButton } from './icon-button';
@@ -13,7 +13,7 @@ import { useFormsList } from './use-forms-list';
 
 export interface FormsListViewProps {
   siteId: string;
-  forms: FormDto[];
+  forms: FormRecord[];
   page: number;
   total: number;
 }

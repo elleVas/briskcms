@@ -1,5 +1,3 @@
-import type { FormDto } from '../lib/forms-api-client';
-import type { MediaDto } from '../lib/media-api-client';
 import type {
   ReusableSectionDto,
   ReusableSectionListItemDto,
@@ -21,41 +19,6 @@ import type { UserDto } from '../lib/users-api-client';
  */
 
 const CREATED_AT = '2026-01-01T00:00:00.000Z';
-
-/** An uploaded photo, as the API hands it back after re-encoding it to WebP (ADR-0013). */
-export function buildMediaDto(overrides: Partial<MediaDto> = {}): MediaDto {
-  return {
-    id: 'media-1',
-    tenantId: 'tenant-1',
-    siteId: 'site-1',
-    filename: 'foto.png',
-    storageKey: 'abc.webp',
-    storageProvider: 'local',
-    mimeType: 'image/webp',
-    size: 1234,
-    width: 800,
-    height: 600,
-    createdAt: CREATED_AT,
-    url: 'http://localhost/uploads/abc.webp',
-    ...overrides,
-  };
-}
-
-export function buildFormDto(overrides: Partial<FormDto> = {}): FormDto {
-  return {
-    id: 'form-1',
-    tenantId: 'tenant-1',
-    siteId: 'site-1',
-    name: 'Contact form',
-    fields: [],
-    steps: [],
-    notificationEmail: null,
-    createdAt: CREATED_AT,
-    updatedAt: CREATED_AT,
-    submissionCount: 0,
-    ...overrides,
-  };
-}
 
 /** The same person as `buildUser` in `@brisk/testing`, as the users list sends them. */
 export function buildUserDto(overrides: Partial<UserDto> = {}): UserDto {

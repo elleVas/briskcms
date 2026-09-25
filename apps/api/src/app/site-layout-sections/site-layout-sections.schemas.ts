@@ -1,7 +1,8 @@
 import { z } from 'zod';
+import { SITE_LAYOUT_SECTION_KINDS } from '@brisk/shared-types';
 import { sanitizedPageContentSchema } from '../rich-text/sanitized-page-content.schema';
 
-export const siteLayoutSectionKindSchema = z.enum(['header', 'footer']);
+export const siteLayoutSectionKindSchema = z.enum(SITE_LAYOUT_SECTION_KINDS);
 
 export const getOrCreateQuerySchema = z.object({
   siteId: z.string().uuid(),

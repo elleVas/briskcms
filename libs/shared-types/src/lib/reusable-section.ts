@@ -17,8 +17,13 @@ import type { Block, PageContent } from './content-model';
  * template copies is the section's PUBLISHED content, not whatever the
  * agency happens to have half-finished in the draft.
  */
-export const reusableSectionKindSchema = z.enum(['shared', 'template']);
-export type ReusableSectionKind = z.infer<typeof reusableSectionKindSchema>;
+export const REUSABLE_SECTION_KINDS = ['shared', 'template'] as const;
+export const reusableSectionKindSchema = z.enum(REUSABLE_SECTION_KINDS);
+export type ReusableSectionKind = (typeof REUSABLE_SECTION_KINDS)[number];
+
+/** A section's own draft/publish cycle — its own list, not a page's, even while the two hold the same words. */
+export const REUSABLE_SECTION_STATUSES = ['draft', 'published'] as const;
+export type ReusableSectionStatus = (typeof REUSABLE_SECTION_STATUSES)[number];
 
 /**
  * Which fields of which blocks inside the section an author may change on

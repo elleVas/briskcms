@@ -31,7 +31,7 @@ function renderList(
     pageId?: string | null;
   }[],
   fields = FIELDS,
-  pages: api.SubmissionOriginPageDto[] = [],
+  pages: api.SubmissionOriginPageRecord[] = [],
 ) {
   vi.mocked(api.listFormSubmissions).mockResolvedValue({
     items: items.map((item) => ({ pageId: null, ...item })),

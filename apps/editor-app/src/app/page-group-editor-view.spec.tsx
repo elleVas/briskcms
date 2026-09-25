@@ -1,4 +1,3 @@
-import type { ReactNode } from 'react';
 import {
   fireEvent,
   render,
@@ -36,9 +35,7 @@ vi.mock('@tanstack/react-router', async (importOriginal) => {
     await importOriginal<typeof import('@tanstack/react-router')>();
   return {
     ...actual,
-    Link: ({ children, to }: { children: ReactNode; to: string }) => (
-      <a href={to}>{children}</a>
-    ),
+    Link: (await import('../test/router-link.test-fixture')).StubLink,
     useNavigate: () => vi.fn(),
   };
 });
@@ -547,7 +544,7 @@ describe('PageGroupEditorView', () => {
     );
 
     const back = await screen.findByRole('link', { name: /News/ });
-    expect(back.getAttribute('href')).toBe('/collections/$collectionId');
+    expect(back.getAttribute('href')).toBe('/collections/collection-1');
   });
 
   it('goes back to Pages for a page that is in no section', async () => {

@@ -1,6 +1,8 @@
 import {
   DEFAULT_COOKIE_BANNER_SETTINGS,
   type CollectionRecord,
+  type FormRecord,
+  type MediaRecord,
   type PageGroupListItemRecord,
   type PageGroupListItemTranslation,
   type PageGroupRecord,
@@ -187,6 +189,45 @@ export function buildCollectionRecord(
     defaultTemplateId: null,
     createdAt: CREATED_AT,
     updatedAt: CREATED_AT,
+    ...overrides,
+  };
+}
+
+/** An uploaded photo, as the API hands it back after re-encoding it to WebP (ADR-0013). */
+export function buildMediaRecord(
+  overrides: Partial<MediaRecord> = {},
+): MediaRecord {
+  return {
+    id: 'media-1',
+    tenantId: 'tenant-1',
+    siteId: 'site-1',
+    filename: 'foto.png',
+    storageKey: 'abc.webp',
+    storageProvider: 'local',
+    mimeType: 'image/webp',
+    size: 1234,
+    width: 800,
+    height: 600,
+    createdAt: CREATED_AT,
+    url: 'http://localhost/uploads/abc.webp',
+    ...overrides,
+  };
+}
+
+export function buildFormRecord(
+  overrides: Partial<FormRecord> = {},
+): FormRecord {
+  return {
+    id: 'form-1',
+    tenantId: 'tenant-1',
+    siteId: 'site-1',
+    name: 'Contact form',
+    fields: [],
+    steps: [],
+    notificationEmail: null,
+    createdAt: CREATED_AT,
+    updatedAt: CREATED_AT,
+    submissionCount: 0,
     ...overrides,
   };
 }

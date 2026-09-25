@@ -16,7 +16,7 @@ import { VerificationTokenAdapter } from './verification-token.adapter';
 /**
  * Runs against a real Postgres — see docs/development.md. Connects as
  * `brisk_app`, so this also regression-tests RLS isolation for
- * `verification_tokens` (see 0005_verification_tokens_rls.sql).
+ * `verification_tokens` (see drizzle/0000_baseline_schema.sql).
  */
 describe('VerificationTokenAdapter (integration)', () => {
   let db: BriskDb;

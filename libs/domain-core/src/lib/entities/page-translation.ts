@@ -3,12 +3,13 @@ import {
   type FieldValueOverlay,
   type FormerParentLocation,
   type PageContent,
+  type PageStatus,
   type SeoMeta,
 } from '@brisk/shared-types';
 import type { EditContext } from './edit-context';
 import type { PageTranslationVersion } from './page-translation-version';
 
-export type PageTranslationStatus = 'draft' | 'published';
+export type PageTranslationStatus = PageStatus;
 
 export interface PageTranslationProps {
   id: string;

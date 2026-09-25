@@ -2,6 +2,7 @@ import {
   type BlockAlign,
   type BlockRect,
   type RootBlockLayout,
+  type SiteLayoutSectionKind,
 } from '@brisk/shared-types';
 import { getBlockRect } from './get-block-rect';
 import { ROOT_BLOCK_CLASS, rootBlockWrapper } from './root-block-layout';
@@ -16,7 +17,7 @@ import { preferredScrollBehavior } from './scroll-behavior';
  * function takes its own `root`/`blockId`/etc. explicitly.
  */
 
-export type EditingSection = 'header' | 'footer';
+export type EditingSection = SiteLayoutSectionKind;
 
 /**
  * `null` = the page's content is being edited — see the visual editor plan,

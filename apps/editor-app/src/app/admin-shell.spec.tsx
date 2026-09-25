@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import type { UserRole } from '@brisk/shared-types';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { QueryClientProvider } from '@tanstack/react-query';
@@ -91,7 +92,7 @@ vi.mock('@tanstack/react-router', async (importOriginal) => {
   };
 });
 
-function renderShell(role: 'admin' | 'publisher' | 'editor' = 'admin') {
+function renderShell(role: UserRole = 'admin') {
   vi.mocked(auth.currentSession).mockResolvedValue({
     userId: 'user-1',
     email: 'chi@esempio.it',
