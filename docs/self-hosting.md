@@ -173,6 +173,19 @@ this is the actual procedure, not just "run pg_restore":
 
 ## Upgrading
 
+Migrations only go forward: there is no command that undoes one, so the
+way back from an upgrade gone wrong is a backup taken right before it.
+The scheduled one can be a day old; take a fresh one first:
+
+```sh
+docker compose -f docker-compose.prod.yml exec postgres-backup sh -c \
+  'PGPASSWORD="$POSTGRES_PASSWORD" pg_dump -h "$POSTGRES_HOST" -U "$POSTGRES_USER" -d "$POSTGRES_DB" \
+   | gzip > "/backups/brisk-before-upgrade-$(date -u +%Y%m%dT%H%M%SZ).sql.gz"'
+```
+
+It lands next to the scheduled ones and is pruned with them after
+`BACKUP_RETENTION_DAYS`. Then upgrade:
+
 ```sh
 git pull
 docker compose -f docker-compose.prod.yml up -d --build migrate  # runs and exits

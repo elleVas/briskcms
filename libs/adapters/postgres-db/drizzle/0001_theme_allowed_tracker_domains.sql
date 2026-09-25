@@ -1,1 +1,0 @@
-ALTER TABLE "sites" ADD COLUMN "theme_allowed_tracker_domains" jsonb DEFAULT '[]'::jsonb NOT NULL;
