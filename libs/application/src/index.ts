@@ -89,6 +89,8 @@ export * from './lib/use-cases/get-dashboard-stats.use-case';
 export * from './lib/use-cases/update-site-form-submission-retention.use-case';
 export * from './lib/use-cases/update-site-cookie-banner-settings.use-case';
 export * from './lib/use-cases/bootstrap-deployment.use-case';
+export * from './lib/wordpress-import/convert-acf-fields';
+export * from './lib/wordpress-import/convert-acf-fields';
 export * from './lib/use-cases/analyze-wordpress-export.use-case';
 export * from './lib/use-cases/import-job.use-cases';
 export * from './lib/use-cases/list-form-submissions.use-case';

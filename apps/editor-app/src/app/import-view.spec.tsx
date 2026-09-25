@@ -32,8 +32,13 @@ const REPORT: WordPressAnalysis = {
   blocks: {
     total: 92,
     native: 34,
+    fromFields: 46,
+    fromFieldsByBlock: [
+      { name: 'acf/banda-con-immagine', count: 34, knownFrom: 'definitions' },
+      { name: 'acf/quote', count: 12, knownFrom: 'values' },
+    ],
     dropped: 0,
-    quarantined: [{ name: 'acf/stripe-with-image', count: 34 }],
+    quarantined: [{ name: 'core/shortcode', count: 2 }],
   },
   terms: [{ taxonomy: 'category', count: 7 }],
   warnings: [
@@ -99,13 +104,34 @@ describe('ImportView', () => {
 
     expect(await screen.findByText('6')).toBeTruthy();
     expect(screen.getByText('14')).toBeTruthy();
-    expect(screen.getByText(/34 blocchi su 92|34 of 92 blocks/)).toBeTruthy();
+    // Native and field-backed counted together: both arrive with their
+    // content, and the difference between them is how closely the layout
+    // follows.
+    expect(screen.getByText(/80 blocchi su 92|80 of 92 blocks/)).toBeTruthy();
+    expect(screen.getByText(/46 letti dai campi|46 read from/)).toBeTruthy();
+  });
+
+  it('names the blocks that came through their own fields', async () => {
+    renderView([job()]);
+
+    expect(await screen.findByText(/acf\/banda-con-immagine/)).toBeTruthy();
+  });
+
+  it('marks the ones it could only read from their values', async () => {
+    // A block whose shape the export describes and one read from its
+    // values alone both arrive, but the second is less sure about what
+    // each piece of it is — worth saying rather than averaging away.
+    renderView([job()]);
+
+    expect(
+      await screen.findByText(/dai soli valori|from its values alone/),
+    ).toBeTruthy();
   });
 
   it('names the blocks that would land in quarantine', async () => {
     renderView([job()]);
 
-    expect(await screen.findByText('acf/stripe-with-image')).toBeTruthy();
+    expect(await screen.findByText('core/shortcode')).toBeTruthy();
   });
 
   it('spells out each warning in words, not as a code', async () => {
