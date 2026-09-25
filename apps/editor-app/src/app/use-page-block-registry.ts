@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { pageBlockCategories, pageBlocks } from '@brisk/block-registry';
+import { COMMERCE_BLOCK_TYPES } from '@brisk/shared-types';
 import { mergeThemeBlocks, type PageBlockRegistry } from './merge-theme-blocks';
 import { themeBlockVariantsQueryOptions } from './theme-block-variants-queries';
 import { themePageBlocksQueryOptions } from './theme-page-blocks-queries';
@@ -33,13 +34,50 @@ export function usePageBlockRegistry(): PageBlockRegistry {
   );
   return useMemo(
     () =>
-      mergeThemeBlocks(
-        pageBlocks,
-        pageBlockCategories,
-        data ?? [],
-        themeVariants ?? {},
-        themeStyleProperties ?? {},
+      withoutHiddenBlocks(
+        mergeThemeBlocks(
+          pageBlocks,
+          pageBlockCategories,
+          data ?? [],
+          themeVariants ?? {},
+          themeStyleProperties ?? {},
+        ),
       ),
     [data, themeVariants, themeStyleProperties],
   );
+}
+
+/**
+ * Drops the types the free core does not offer (ADR-0084) from the
+ * picker, and only from the picker.
+ *
+ * `registry` is left whole on purpose: it is what draws the inspector and
+ * resolves a block already on a page, so a page saved with one of these
+ * keeps opening, keeps editing and keeps publishing. What goes away is
+ * the shelf it was taken from — the one place a NEW one could be added.
+ *
+ * Applied after the theme has been merged in, so a theme that ships its
+ * own block under one of these categories brings the category back with
+ * it; applied here rather than in `@brisk/block-registry` so that
+ * `pageBlockCategories` stays an honest description of what the registry
+ * holds, guarded by its own spec, instead of quietly becoming a
+ * description of what one product decided to sell.
+ *
+ * Emptying a category is left to empty it: `BlockPicker` already drops a
+ * category with nothing left in it, because searching and `canInsert`
+ * empty categories too, and one rule there beats the same rule written
+ * twice.
+ */
+export function withoutHiddenBlocks(
+  blocks: PageBlockRegistry,
+): PageBlockRegistry {
+  const hidden = new Set<string>(COMMERCE_BLOCK_TYPES);
+
+  return {
+    registry: blocks.registry,
+    categories: blocks.categories.map((category) => ({
+      ...category,
+      types: category.types.filter((type) => !hidden.has(type)),
+    })),
+  };
 }

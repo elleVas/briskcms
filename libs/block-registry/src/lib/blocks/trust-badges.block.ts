@@ -7,7 +7,7 @@ import { BlockStyleRegistry } from '../block-style-registry';
 export const trustBadgesBlock: BlockDescriptor<TrustBadgesProps> = {
   type: 'TrustBadges',
   label: 'blocks.trustBadges.label',
-  category: 'shop',
+  category: 'conversion',
   icon: 'shield-check',
   defaultProps: {
     visa: true,

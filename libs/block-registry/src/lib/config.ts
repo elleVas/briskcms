@@ -391,6 +391,8 @@ export const pageBlockCategories: { title: string; types: string[] }[] = [
       'Glossary',
       'GlossaryTerm',
       'PullQuote',
+      'ComparisonTable',
+      'ComparisonRow',
     ],
   },
   {
@@ -405,9 +407,17 @@ export const pageBlockCategories: { title: string; types: string[] }[] = [
       'SocialLinks',
       'SocialLink',
       'ShareButtons',
+      'TrustBadges',
     ],
   },
   {
+    // Every type in this bucket is in `COMMERCE_BLOCK_TYPES` (ADR-0084),
+    // so the free core filters the whole bucket away and the picker shows
+    // no Shop drawer at all. It stays here, whole, because this list is a
+    // description of what the registry HOLDS — the deciding of what gets
+    // offered happens later, in `usePageBlockRegistry`. A theme that
+    // ships its own shop block still files it here and the drawer comes
+    // back with that block in it, which is the intended behaviour.
     title: 'blocks.categories.shop',
     types: [
       'ProductGrid',
@@ -418,11 +428,8 @@ export const pageBlockCategories: { title: string; types: string[] }[] = [
       'ProductVariants',
       'ProductReviews',
       'ProductReview',
-      'ComparisonTable',
-      'ComparisonRow',
       'PromoCode',
       'ShippingReturns',
-      'TrustBadges',
     ],
   },
   {

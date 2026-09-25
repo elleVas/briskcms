@@ -9,6 +9,7 @@ export * from './lib/media-kind';
 export * from './lib/content-model';
 export * from './lib/content-and-navigation-blocks';
 export * from './lib/commerce-local-content-blocks';
+export * from './lib/commerce-block-types';
 export * from './lib/author';
 export * from './lib/server-filled-blocks';
 export * from './lib/custom-field-control';
