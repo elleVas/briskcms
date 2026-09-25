@@ -32,6 +32,21 @@ RUN pnpm nx run @brisk/api:build
 # runtime stage below can `pnpm install` a self-contained, minimal dist/
 # without the rest of the monorepo present.
 RUN pnpm nx run @brisk/api:prune
+# The prune copies every workspace package the API names, devDependencies
+# included, so @brisk/testing (builders, in-memory repositories, fakes)
+# travelled into the image even though `pnpm install --prod` below never
+# installs it. Dropped here, before the runtime stage copies dist/: a
+# dev-only `file:` dependency is skipped by a --prod install, so the frozen
+# lockfile does not miss the directory.
+RUN node -e " \
+  const { rmSync } = require('node:fs'); \
+  const pkg = require('/workspace/apps/api/dist/package.json'); \
+  const runtime = new Set(Object.keys(pkg.dependencies ?? {})); \
+  for (const [name, spec] of Object.entries(pkg.devDependencies ?? {})) { \
+    if (runtime.has(name) || !spec.startsWith('file:./workspace_modules/')) continue; \
+    rmSync('/workspace/apps/api/dist/' + spec.slice('file:./'.length), { recursive: true }); \
+    console.log('dropped dev-only ' + name); \
+  }"
 # docs/adr/0042 — FilesystemThemeCatalogAdapter (ThemeCatalogPort) needs
 # somewhere to scan for bundled themes, but this image otherwise carries
 # none of themes/'s Astro source (that's public-site's job). Just each
