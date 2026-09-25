@@ -1,4 +1,6 @@
+import { randomUUID } from 'node:crypto';
 import { unlink } from 'node:fs/promises';
+import { basename, join } from 'node:path';
 import {
   BadRequestException,
   Body,
@@ -55,6 +57,9 @@ import {
  */
 const MAX_EXPORT_BYTES = 512 * 1024 * 1024;
 
+/** Where an upload lands until it has been read. Chosen here, so the paths below are this file's own. */
+const UPLOAD_DIRECTORY = tmpdir();
+
 function toDto(job: ImportJob) {
   const props = job.toProps();
   return {
@@ -96,7 +101,18 @@ export class ImportsController {
       // On disk, not in memory: `memoryStorage` would hold the whole
       // export as a Buffer, which is the one thing the streaming reader
       // exists to avoid.
-      storage: diskStorage({ destination: tmpdir() }),
+      //
+      // The name is ours, not the uploader's. Multer happens to generate
+      // a random one when asked for nothing, but that is an undocumented
+      // default of somebody else's library — and what this handler does
+      // with the path is read it and then `unlink` it, so the day that
+      // default changes to keep the original name is the day an upload
+      // called `../../etc/something` deletes it.
+      storage: diskStorage({
+        destination: UPLOAD_DIRECTORY,
+        filename: (_request, _file, done) =>
+          done(null, `brisk-import-${randomUUID()}.xml`),
+      }),
       limits: { fileSize: MAX_EXPORT_BYTES },
     }),
   )
@@ -109,11 +125,18 @@ export class ImportsController {
       throw new BadRequestException('No file uploaded');
     }
 
+    // Built from the directory this controller chose and the bare name
+    // multer wrote, never from `file.path` as handed over: `basename`
+    // drops any directory part, and the join anchors what is left inside
+    // the upload directory. Belt and braces over the `filename` callback
+    // above, and the part a reader can check without leaving this file.
+    const filePath = join(UPLOAD_DIRECTORY, basename(file.filename));
+
     const tenantId = this.tenantContext.getCurrentTenantId();
     const job = await startWordPressAnalysis(this.deps(), {
       tenantId,
       siteId: body.siteId,
-      filePath: file.path,
+      filePath,
       fileName: file.originalname,
       fileBytes: file.size,
       createdBy: null,
@@ -126,8 +149,8 @@ export class ImportsController {
     void runWordPressAnalysis(this.deps(), {
       tenantId,
       jobId: job.id,
-      filePath: file.path,
-    }).finally(() => unlink(file.path).catch(() => undefined));
+      filePath,
+    }).finally(() => unlink(filePath).catch(() => undefined));
 
     return toDto(job);
   }
