@@ -7,9 +7,9 @@ import {
   saveDraft,
   updateSticky,
 } from './site-layout-sections-api-client';
-import { buildSiteLayoutSectionDto } from '../test/dtos.test-fixture';
+import { buildSiteLayoutSectionRecord } from '@brisk/testing/records';
 
-const sampleSection = buildSiteLayoutSectionDto();
+const sampleSection = buildSiteLayoutSectionRecord();
 
 function jsonResponse(body: unknown) {
   return {

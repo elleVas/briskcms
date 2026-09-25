@@ -121,6 +121,37 @@ describe('PublicFormsController (integration)', () => {
       .expect(204);
   });
 
+  it('counts the answers on the form itself, not only in the list', async () => {
+    // The form editor labels its Submissions tab from the form it loaded
+    // and, after a save, from the PATCH response. Only the list used to
+    // carry the count, so that label never appeared.
+    const formId = await createForm(
+      [{ id: 'email', label: 'Email', type: 'email', required: true }],
+      null,
+    );
+    await request(app.getHttpServer())
+      .post(`/public/forms/${formId}/submissions`)
+      .send({
+        values: { email: 'visitor@example.com' },
+        honeypot: '',
+        captchaToken: 'test-token',
+      })
+      .expect(204);
+
+    const read = await agent.get(`/forms/${formId}`).expect(200);
+    expect(read.body.submissionCount).toBe(1);
+
+    const saved = await agent
+      .patch(`/forms/${formId}`)
+      .send({
+        name: 'Contatti',
+        fields: read.body.fields,
+        notificationEmail: null,
+      })
+      .expect(200);
+    expect(saved.body.submissionCount).toBe(1);
+  });
+
   it('records which page the form was filled on, and names it when read back', async () => {
     // The whole path, not the pieces: the id travels in the request body
     // of an unauthenticated endpoint, is checked against the form's site,

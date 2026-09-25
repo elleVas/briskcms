@@ -2,43 +2,13 @@ import { z } from 'zod';
 import { blockSchema, seoMetaSchema } from './content-model';
 import { fieldValueOverlaySchema } from './field-value-overlay';
 
-export const pageStatusSchema = z.enum(['draft', 'published']);
-export type PageStatus = z.infer<typeof pageStatusSchema>;
-
 /**
- * The `GET /pages` list-item shape — deliberately without `content`/
- * `publishedContent` (security review 2026-08-24, database section: the
- * list endpoint used to ship the entire Puck block tree just to render a
- * list of titles). `hasUnpublishedChanges` replaces the client-side
- * content-vs-publishedContent comparison the list view used to do with
- * both full trees already in hand — computed server-side instead (see
- * `PageSummary` in libs/ports, the internal Port-level type this DTO
- * mirrors at the wire boundary; named differently here to keep the two
- * concerns — internal repository contract vs. wire shape — visibly
- * distinct, even though they happen to carry the same fields today).
+ * Where one translation of a page is in its draft/publish cycle — the one
+ * list the domain, the wire and the `page_translation_status` enum read.
  */
-export const pageListItemSchema = z.object({
-  id: z.string(),
-  tenantId: z.string(),
-  siteId: z.string(),
-  groupId: z.string(),
-  locale: z.string(),
-  slug: z.string(),
-  parentId: z.string().nullable(),
-  status: pageStatusSchema,
-  seoMeta: seoMetaSchema,
-  // Sibling-scoped position (drag-to-reorder) — see PageSummary's own doc
-  // comment in libs/ports.
-  order: z.number(),
-  // Resolved server-side (displayName, falling back to email), not a raw
-  // user id — this DTO is display-only, same reasoning as
-  // hasUnpublishedChanges below.
-  createdByName: z.string().nullable(),
-  createdAt: z.string(),
-  updatedAt: z.string(),
-  hasUnpublishedChanges: z.boolean(),
-});
-export type PageListItem = z.infer<typeof pageListItemSchema>;
+export const PAGE_TRANSLATION_STATUSES = ['draft', 'published'] as const;
+export const pageStatusSchema = z.enum(PAGE_TRANSLATION_STATUSES);
+export type PageStatus = (typeof PAGE_TRANSLATION_STATUSES)[number];
 
 /** One translation, projected down to what a page-groups list row's locale badge needs — see pageGroupListItemSchema. */
 export const pageGroupListItemTranslationSchema = z.object({
@@ -54,7 +24,7 @@ export type PageGroupListItemTranslation = z.infer<
   typeof pageGroupListItemTranslationSchema
 >;
 
-/** `GET /page-groups` (Fase 4's pages-list view) — one row per PageGroup, every locale's translation summarized for the row's availability badges. */
+/** `GET /page-groups` (the editor's pages list) — one row per PageGroup, every locale's translation summarized for the row's availability badges. */
 export const pageGroupListItemSchema = z.object({
   id: z.string(),
   tenantId: z.string(),

@@ -7,9 +7,9 @@ import { type BriskDb, pageTranslations, withTenant } from '@brisk/postgres-db';
 /**
  * Postgres-specific SearchPort implementation: `search_text` is a plain
  * column indexPage() writes to, `search_vector` (tsvector) is a generated
- * column Postgres derives from it automatically (see the migration that
- * added it, Fase 5 of the i18n plan — replaces the old pages.search_text)
- * — this class never reads or writes search_vector directly, only
+ * column Postgres derives from it automatically (defined by hand in
+ * drizzle/0000_baseline_schema.sql, since Drizzle cannot model one) — this
+ * class never reads or writes search_vector directly, only
  * search_text and (read-only) search_vector's own GIN index via raw SQL in
  * search().
  */

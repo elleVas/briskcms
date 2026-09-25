@@ -14,7 +14,7 @@ import {
 } from '@brisk/postgres-db';
 
 // Spelled out rather than derived: `isUniqueViolation` compares exactly,
-// and this is the name drizzle/0011_reusable_sections.sql created.
+// and this is the name drizzle-kit gives the table's unique constraint.
 const NAME_UNIQUE_CONSTRAINT =
   'reusable_sections_tenant_id_site_id_name_unique';
 

@@ -1,12 +1,11 @@
-import type { ReactNode } from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { TooltipProvider } from '../components/ui/tooltip';
-import type { ReusableSectionListItemDto } from '../lib/reusable-sections-api-client';
+import type { ReusableSectionListItem } from '../lib/reusable-sections-api-client';
 import * as sectionsApi from '../lib/reusable-sections-api-client';
 import { createTestQueryClient } from '../test/query-client.test-fixture';
-import { buildReusableSectionListItemDto } from '../test/dtos.test-fixture';
+import { buildReusableSectionListItem } from '@brisk/testing/records';
 import { reusableSectionsQueryOptions } from './reusable-sections-queries';
 import { SectionsListView } from './sections-list-view';
 
@@ -15,7 +14,7 @@ vi.mock('@tanstack/react-router', async (importOriginal) => {
     await importOriginal<typeof import('@tanstack/react-router')>();
   return {
     ...actual,
-    Link: ({ children }: { children: ReactNode }) => <a href="#">{children}</a>,
+    Link: (await import('../test/router-link.test-fixture')).StubLink,
   };
 });
 
@@ -28,9 +27,9 @@ vi.mock('../lib/reusable-sections-api-client', async (importOriginal) => {
 });
 
 function section(
-  overrides: Partial<ReusableSectionListItemDto>,
-): ReusableSectionListItemDto {
-  return buildReusableSectionListItemDto({
+  overrides: Partial<ReusableSectionListItem>,
+): ReusableSectionListItem {
+  return buildReusableSectionListItem({
     name: 'Newsletter',
     status: 'published',
     publishedContent: [],
@@ -38,7 +37,7 @@ function section(
   });
 }
 
-function renderList(sections: ReusableSectionListItemDto[]) {
+function renderList(sections: ReusableSectionListItem[]) {
   const queryClient = createTestQueryClient();
   queryClient.setQueryData(
     reusableSectionsQueryOptions('site-1').queryKey,

@@ -1,1 +1,0 @@
-ALTER TABLE "page_translations" ADD COLUMN "former_parents" jsonb DEFAULT '[]'::jsonb NOT NULL;

@@ -6,13 +6,13 @@ import {
 } from '@brisk/shared-types';
 import { currentVisitorIp } from './request-context';
 import {
+  publicFormSchema,
   publishedAuthorSchema,
   publishedPageSchema,
   publishedSiteSchema,
   publishedTermSchema,
   type Block,
-  type FormField,
-  type FormStep,
+  type PublicForm,
   type PublishedAuthor,
   type PublishedPage,
   type PublishedSite,
@@ -427,13 +427,6 @@ export async function searchPublishedPages(
   return body.items;
 }
 
-export interface PublicFormDto {
-  id: string;
-  name: string;
-  fields: FormField[];
-  steps: FormStep[];
-}
-
 /**
  * Called on every render of a Form block (docs/adr/0015 — live-fetched,
  * never snapshotted), so a form's field definitions edited in the admin
@@ -443,7 +436,7 @@ export interface PublicFormDto {
  */
 export async function getPublicForm(
   formId: string,
-): Promise<PublicFormDto | null> {
+): Promise<PublicForm | null> {
   const res = await timedFetcher.fetch(`${apiUrl()}/public/forms/${formId}`);
   if (res.status === 404) {
     return null;
@@ -451,7 +444,7 @@ export async function getPublicForm(
   if (!res.ok) {
     throw new Error(`Public forms API error: ${res.status}`);
   }
-  return res.json();
+  return publicFormSchema.parse(await res.json());
 }
 
 export interface UploadedFormAttachment {

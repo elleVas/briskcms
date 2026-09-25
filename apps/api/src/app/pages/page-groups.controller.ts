@@ -62,17 +62,21 @@ import type {
 } from '@brisk/ports';
 import {
   pageGroupRecordSchema,
+  pageGroupTermsSchema,
   pageGroupVersionRecordSchema,
   pageTranslationRecordSchema,
   pageTranslationVersionRecordSchema,
   paginatedPageGroupsSchema,
   type FieldValueOverlay,
   type PageGroupRecord,
+  type PageGroupTerms,
+  type ReusableSectionRecord,
   type PageTranslationRecord,
 } from '@brisk/shared-types';
 import { Roles } from '../auth/roles.decorator';
 import { RolesGuard } from '../auth/roles.guard';
 import { SessionAuthGuard } from '../auth/session-auth.guard';
+import { ReusableSectionRecords } from '../reusable-sections/reusable-section-records';
 import { ZodValidationPipe } from '../zod-validation.pipe';
 import {
   pageGroupTermsBodySchema,
@@ -158,6 +162,7 @@ export class PageGroupsController {
     private readonly collectionRepository: CollectionRepositoryPort,
     @Inject(REUSABLE_SECTION_VERSION_REPOSITORY)
     private readonly reusableSectionVersionRepository: ReusableSectionVersionRepositoryPort,
+    private readonly sectionRecords: ReusableSectionRecords,
   ) {}
 
   /** What the taxonomy use cases need — the same three everywhere they are called. */
@@ -213,7 +218,7 @@ export class PageGroupsController {
     @Param('id') id: string,
     @Body(new ZodValidationPipe(saveAsTemplateBodySchema))
     body: SaveAsTemplateBody,
-  ) {
+  ): Promise<ReusableSectionRecord> {
     const template = await savePageGroupAsTemplate(
       {
         pageGroupRepository: this.pageGroupRepository,
@@ -229,7 +234,7 @@ export class PageGroupsController {
         actorUserId: this.tenantContext.getCurrentUserId(),
       },
     );
-    return template.toProps();
+    return this.sectionRecords.toRecord(template);
   }
 
   @Get()
@@ -414,18 +419,18 @@ export class PageGroupsController {
    * are the same article.
    */
   @Get(':id/terms')
-  async listTerms(@Param('id') id: string) {
+  async listTerms(@Param('id') id: string): Promise<PageGroupTerms> {
     await getPageGroupById(
       { pageGroupRepository: this.pageGroupRepository },
       { tenantId: this.tenantContext.getCurrentTenantId(), pageGroupId: id },
     );
-    return {
+    return pageGroupTermsSchema.parse({
       termIds: await listPageGroupTerms(
         this.taxonomyDeps,
         this.tenantContext.getCurrentTenantId(),
         id,
       ),
-    };
+    });
   }
 
   /** The whole set, not a diff — the editor knows which boxes are ticked, not which changed. */
@@ -434,18 +439,18 @@ export class PageGroupsController {
     @Param('id') id: string,
     @Body(new ZodValidationPipe(pageGroupTermsBodySchema))
     body: PageGroupTermsBody,
-  ) {
+  ): Promise<PageGroupTerms> {
     await getPageGroupById(
       { pageGroupRepository: this.pageGroupRepository },
       { tenantId: this.tenantContext.getCurrentTenantId(), pageGroupId: id },
     );
-    return {
+    return pageGroupTermsSchema.parse({
       termIds: await setPageGroupTerms(this.taxonomyDeps, {
         tenantId: this.tenantContext.getCurrentTenantId(),
         pageGroupId: id,
         termIds: body.termIds,
       }),
-    };
+    });
   }
 
   /** Which section of the editor lists this page — not where it lives on the site. */

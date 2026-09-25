@@ -4,7 +4,7 @@ import {
   getReusableSection,
   listReusableSections,
   listVersions,
-  type ReusableSectionListItemDto,
+  type ReusableSectionListItem,
 } from '../lib/reusable-sections-api-client';
 
 export const reusableSectionsQueryKey = (siteId: string) =>
@@ -17,12 +17,12 @@ export function reusableSectionsQueryOptions(siteId: string) {
   });
 }
 
-export type PublishedTemplate = ReusableSectionListItemDto & {
+export type PublishedTemplate = ReusableSectionListItem & {
   publishedContent: Block[];
 };
 
 function isPublishedTemplate(
-  section: ReusableSectionListItemDto,
+  section: ReusableSectionListItem,
 ): section is PublishedTemplate {
   return section.kind === 'template' && section.publishedContent !== null;
 }
@@ -37,7 +37,7 @@ function isPublishedTemplate(
 export function publishedTemplatesQueryOptions(siteId: string) {
   return queryOptions({
     ...reusableSectionsQueryOptions(siteId),
-    select: (sections: ReusableSectionListItemDto[]) =>
+    select: (sections: ReusableSectionListItem[]) =>
       sections.filter(isPublishedTemplate),
   });
 }

@@ -344,6 +344,14 @@ describe('public-api-client', () => {
     expect(result).toEqual(form);
   });
 
+  it('refuses a form the API sent in a shape the Form block cannot draw', async () => {
+    vi.mocked(fetch).mockResolvedValue(
+      jsonResponse({ id: 'form-1', name: 'Contatti', fields: 'none' }),
+    );
+
+    await expect(getPublicForm('form-1')).rejects.toThrow();
+  });
+
   it('getPublicForm returns null when the form does not exist', async () => {
     vi.mocked(fetch).mockResolvedValue(
       jsonResponse({ message: 'Not Found' }, 404),

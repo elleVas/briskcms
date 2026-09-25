@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from '@tanstack/react-router';
 import { ChevronRight } from 'lucide-react';
 import type { MediaKind } from '@brisk/shared-types';
-import type { MediaDto, MediaFilters } from '../lib/media-api-client';
+import type { MediaRecord, MediaFilters } from '../lib/media-api-client';
 import { MediaFilterBar } from './media-filter-bar';
 import { MEDIA_KIND_LABEL, MediaFolders } from './media-folders';
 import { MediaGrid } from './media-grid';
@@ -12,7 +12,7 @@ import { useDebouncedValue } from './use-debounced-value';
 
 export interface MediaLibraryViewProps {
   siteId: string;
-  items: MediaDto[];
+  items: MediaRecord[];
   page: number;
   total: number;
   /** In the URL, like the pages list's own: a search worth doing is a search worth reloading into and sending to somebody. */

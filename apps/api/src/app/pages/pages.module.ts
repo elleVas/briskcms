@@ -16,6 +16,7 @@ import {
 import { DrizzleSearchRepository } from '@brisk/postgres-search-repository';
 import { DrizzleSiteRepository } from '@brisk/postgres-site-repository';
 import { DrizzleTaxonomyRepository } from '@brisk/postgres-taxonomy-repository';
+import { ReusableSectionRecords } from '../reusable-sections/reusable-section-records';
 import { AuthModule } from '../auth/auth.module';
 import { DATABASE, DatabaseModule } from '../database.module';
 import { PageGroupsController } from './page-groups.controller';
@@ -39,6 +40,9 @@ import {
   imports: [DatabaseModule, AuthModule],
   controllers: [PageGroupsController],
   providers: [
+    // "Save as template" answers with a section, in the same shape the
+    // sections module does (docs/adr/0072).
+    ReusableSectionRecords,
     {
       // Publishing a page indexes it with its sections expanded — the
       // snapshot holds only the reference (docs/adr/0059) — and a page

@@ -1,31 +1,26 @@
-import type { FormField, FormStep } from '@brisk/shared-types';
+import {
+  type FormField,
+  type FormRecord,
+  type FormStep,
+  type FormSubmissionRecord,
+  type PaginatedFormSubmissions,
+  type PaginatedForms,
+  type SubmissionOriginPageRecord,
+  formRecordSchema,
+  paginatedFormSubmissionsSchema,
+  paginatedFormsSchema,
+} from '@brisk/shared-types';
 import { API_BASE_URL, request } from './http-client';
 
-export interface FormDto {
-  id: string;
-  tenantId: string;
-  siteId: string;
-  name: string;
-  fields: FormField[];
-  steps: FormStep[];
-  notificationEmail: string | null;
-  createdAt: string;
-  updatedAt: string;
-  /**
-   * How many submissions this form has received. Sent with the list rather
-   * than fetched per row: the list is where someone finds out that answers
-   * arrived at all, and without it they would have to open every form to
-   * know.
-   */
-  submissionCount: number;
-}
+export type {
+  FormRecord,
+  FormSubmissionRecord,
+  PaginatedFormSubmissions,
+  PaginatedForms,
+  SubmissionOriginPageRecord,
+};
 
-export interface PaginatedForms {
-  items: FormDto[];
-  total: number;
-}
-
-export function listForms(
+export async function listForms(
   siteId: string,
   page: number,
   pageSize: number,
@@ -35,11 +30,13 @@ export function listForms(
     page: String(page),
     pageSize: String(pageSize),
   });
-  return request(`/forms?${params.toString()}`);
+  return paginatedFormsSchema.parse(
+    await request(`/forms?${params.toString()}`),
+  );
 }
 
-export function getForm(id: string): Promise<FormDto> {
-  return request(`/forms/${id}`);
+export async function getForm(id: string): Promise<FormRecord> {
+  return formRecordSchema.parse(await request(`/forms/${id}`));
 }
 
 export interface CreateFormInput {
@@ -47,8 +44,10 @@ export interface CreateFormInput {
   name: string;
 }
 
-export function createForm(input: CreateFormInput): Promise<FormDto> {
-  return request('/forms', { method: 'POST', body: JSON.stringify(input) });
+export async function createForm(input: CreateFormInput): Promise<FormRecord> {
+  return formRecordSchema.parse(
+    await request('/forms', { method: 'POST', body: JSON.stringify(input) }),
+  );
 }
 
 export interface UpdateFormInput {
@@ -58,61 +57,23 @@ export interface UpdateFormInput {
   notificationEmail: string | null;
 }
 
-export function updateForm(
+export async function updateForm(
   id: string,
   input: UpdateFormInput,
-): Promise<FormDto> {
-  return request(`/forms/${id}`, {
-    method: 'PATCH',
-    body: JSON.stringify(input),
-  });
+): Promise<FormRecord> {
+  return formRecordSchema.parse(
+    await request(`/forms/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(input),
+    }),
+  );
 }
 
 export function deleteForm(id: string): Promise<void> {
   return request(`/forms/${id}`, { method: 'DELETE' });
 }
 
-export interface FormSubmissionDto {
-  id: string;
-  /** Keyed by field id — see FormField.id's own comment for why that is stable. */
-  payload: Record<string, unknown>;
-  createdAt: string;
-  /**
-   * The page this was filled on, as an id to look up in
-   * `PaginatedFormSubmissions.pages`. `null` for a submission recorded
-   * before the public site knew which page it was rendering, and for one
-   * whose page has since been deleted.
-   */
-  pageId: string | null;
-}
-
-/** One page a batch of submissions came from — named once, not per row. */
-export interface SubmissionOriginPageDto {
-  id: string;
-  pageGroupId: string;
-  locale: string;
-  title: string;
-}
-
-export interface PaginatedFormSubmissions {
-  items: FormSubmissionDto[];
-  total: number;
-  /**
-   * The form's fields as they stand now, sent with the page because a
-   * payload keyed by field id cannot be rendered without them. A key not
-   * in here is an answer to a field that has since been removed — still a
-   * real answer, and still shown.
-   */
-  fields: FormField[];
-  /**
-   * The pages this page of submissions came from. Only the ones actually
-   * referenced, so a form on one page sends one entry however many
-   * submissions it has.
-   */
-  pages: SubmissionOriginPageDto[];
-}
-
-export function listFormSubmissions(
+export async function listFormSubmissions(
   formId: string,
   page: number,
   pageSize: number,
@@ -121,8 +82,8 @@ export function listFormSubmissions(
     page: String(page),
     pageSize: String(pageSize),
   });
-  return request<PaginatedFormSubmissions>(
-    `/forms/${formId}/submissions?${params.toString()}`,
+  return paginatedFormSubmissionsSchema.parse(
+    await request(`/forms/${formId}/submissions?${params.toString()}`),
   );
 }
 

@@ -1,6 +1,5 @@
 import { z } from 'zod';
-
-const userRoleSchema = z.enum(['admin', 'publisher', 'editor']);
+import { userRoleSchema } from '@brisk/shared-types';
 
 export const listUsersQuerySchema = z.object({
   page: z.coerce.number().int().min(1).default(1),

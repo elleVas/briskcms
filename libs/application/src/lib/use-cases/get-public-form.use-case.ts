@@ -1,5 +1,5 @@
 import { FormNotFoundError } from '@brisk/domain-core';
-import type { FormField, FormStep } from '@brisk/shared-types';
+import type { PublicForm } from '@brisk/shared-types';
 import type { FormRepositoryPort } from '@brisk/ports';
 
 export interface GetPublicFormDeps {
@@ -9,13 +9,6 @@ export interface GetPublicFormDeps {
 export interface GetPublicFormInput {
   tenantId: string;
   formId: string;
-}
-
-export interface PublicForm {
-  id: string;
-  name: string;
-  fields: FormField[];
-  steps: FormStep[];
 }
 
 /** Fetched live on every public render (docs/adr/0015) — never snapshotted into a page's block props. */

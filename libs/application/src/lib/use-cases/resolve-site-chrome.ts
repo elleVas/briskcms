@@ -1,4 +1,8 @@
-import type { Block, PublishedSite } from '@brisk/shared-types';
+import type {
+  Block,
+  PublishedSite,
+  SiteLayoutSectionKind,
+} from '@brisk/shared-types';
 import type { Site, SiteLayoutSection } from '@brisk/domain-core';
 import type {
   PageGroupRepositoryPort,
@@ -72,7 +76,7 @@ async function findSectionWithLocaleFallback(
   tenantId: string,
   site: Site,
   locale: string,
-  kind: 'header' | 'footer',
+  kind: SiteLayoutSectionKind,
 ): Promise<SiteLayoutSection | null> {
   const section = await repository.findBySiteLocaleKind(
     tenantId,

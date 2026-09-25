@@ -110,11 +110,16 @@ export const authorBoxPropsSchema = z.object({
 });
 export type AuthorBoxProps = z.infer<typeof authorBoxPropsSchema>;
 
+/** What a person may do in the editor — the one list the domain, the wire and the `user_role` enum read. */
+export const USER_ROLES = ['admin', 'publisher', 'editor'] as const;
+export const userRoleSchema = z.enum(USER_ROLES);
+export type UserRole = (typeof USER_ROLES)[number];
+
 /** The signed-in person's own profile, as the editor reads and writes it. */
 export const accountProfileSchema = z.object({
   id: z.string(),
   email: z.string(),
-  role: z.enum(['admin', 'publisher', 'editor']),
+  role: userRoleSchema,
   displayName: z.string().nullable(),
   /** `null` until they have a name: an address made from an email would publish part of it. */
   slug: z.string().nullable(),

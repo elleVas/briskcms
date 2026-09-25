@@ -1,6 +1,9 @@
 import { randomUUID } from 'node:crypto';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { PageTranslation } from '@brisk/domain-core';
+import {
+  PageTranslation,
+  type PageTranslationStatus,
+} from '@brisk/domain-core';
 import {
   type BriskDb,
   createAppDb,
@@ -48,7 +51,7 @@ describe('DrizzleSearchRepository (integration)', () => {
     siteId: string;
     locale?: string;
     slug?: string;
-    status?: 'draft' | 'published';
+    status?: PageTranslationStatus;
   }): Promise<PageTranslation> {
     const slug = overrides.slug ?? `pagina-${randomUUID()}`;
     const seoMeta = {
@@ -102,7 +105,7 @@ describe('DrizzleSearchRepository (integration)', () => {
       formerParents: row.formerParents,
       seoMeta: row.seoMeta,
       fieldValues: row.fieldValues,
-      status: row.status as 'draft' | 'published',
+      status: row.status,
       publishedSnapshot: row.publishedSnapshot,
       isDiverged: row.isDiverged,
       divergedContent: row.divergedContent,

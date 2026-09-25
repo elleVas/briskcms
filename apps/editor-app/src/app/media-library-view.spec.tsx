@@ -3,9 +3,9 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { QueryClientProvider } from '@tanstack/react-query';
 import * as router from '@tanstack/react-router';
 import { TooltipProvider } from '../components/ui/tooltip';
-import type { MediaDto, MediaFilters } from '../lib/media-api-client';
+import type { MediaRecord, MediaFilters } from '../lib/media-api-client';
 import { createTestQueryClient } from '../test/query-client.test-fixture';
-import { buildMediaDto } from '../test/dtos.test-fixture';
+import { buildMediaRecord } from '@brisk/testing/records';
 import { MediaLibraryView } from './media-library-view';
 
 vi.mock('@tanstack/react-router', async (importOriginal) => {
@@ -16,31 +16,16 @@ vi.mock('@tanstack/react-router', async (importOriginal) => {
     useNavigate: vi.fn(),
     // No router in these tests: a folder is a link, and what matters here
     // is where it points.
-    Link: ({
-      children,
-      search,
-      ...rest
-    }: {
-      children: React.ReactNode;
-      search?: Record<string, unknown>;
-      className?: string;
-    }) => (
-      <a
-        href={`/media?${new URLSearchParams(search as Record<string, string>)}`}
-        {...rest}
-      >
-        {children}
-      </a>
-    ),
+    Link: (await import('../test/router-link.test-fixture')).StubLink,
   };
 });
 
-const mediaOne = buildMediaDto();
+const mediaOne = buildMediaRecord();
 
 const counts = { image: 21, video: 0, audio: 2, document: 3, other: 1 };
 
 function renderView(
-  items: MediaDto[],
+  items: MediaRecord[],
   options: { page?: number; total?: number; filters?: MediaFilters } = {},
 ) {
   return render(

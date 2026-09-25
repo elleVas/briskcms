@@ -1,8 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { deleteMedia, listMedia, uploadMedia } from './media-api-client';
-import { buildMediaDto } from '../test/dtos.test-fixture';
+import { buildMediaRecord } from '@brisk/testing/records';
 
-const sampleMedia = buildMediaDto();
+const sampleMedia = buildMediaRecord();
 
 function jsonResponse(body: unknown) {
   return {

@@ -7,13 +7,15 @@ import { z } from 'zod';
  * same page; 'not-available' shows a dedicated "not yet available in this
  * language" state instead of silently switching language on them.
  */
-export const untranslatedPageFallbackSchema = z.enum([
+export const UNTRANSLATED_PAGE_FALLBACKS = [
   'redirect-to-default',
   'not-available',
-]);
-export type UntranslatedPageFallback = z.infer<
-  typeof untranslatedPageFallbackSchema
->;
+] as const;
+export const untranslatedPageFallbackSchema = z.enum(
+  UNTRANSLATED_PAGE_FALLBACKS,
+);
+export type UntranslatedPageFallback =
+  (typeof UNTRANSLATED_PAGE_FALLBACKS)[number];
 
 export const localeSettingsSchema = z
   .object({

@@ -1,9 +1,131 @@
 {
-  "id": "9f1bb40e-c1c7-4d7e-9e69-4b8f4c62057c",
+  "id": "f1351734-744e-47d9-88ea-917579f9130d",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
+    "public.collections": {
+      "name": "collections",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "tenant_id": {
+          "name": "tenant_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "site_id": {
+          "name": "site_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "icon": {
+          "name": "icon",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'newspaper'"
+        },
+        "order": {
+          "name": "order",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "default_template_id": {
+          "name": "default_template_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "collections_tenant_site_idx": {
+          "name": "collections_tenant_site_idx",
+          "columns": [
+            {
+              "expression": "tenant_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "site_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "collections_tenant_id_tenants_id_fk": {
+          "name": "collections_tenant_id_tenants_id_fk",
+          "tableFrom": "collections",
+          "tableTo": "tenants",
+          "columnsFrom": ["tenant_id"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "collections_site_id_sites_id_fk": {
+          "name": "collections_site_id_sites_id_fk",
+          "tableFrom": "collections",
+          "tableTo": "sites",
+          "columnsFrom": ["site_id"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "collections_default_template_id_reusable_sections_id_fk": {
+          "name": "collections_default_template_id_reusable_sections_id_fk",
+          "tableFrom": "collections",
+          "tableTo": "reusable_sections",
+          "columnsFrom": ["default_template_id"],
+          "columnsTo": ["id"],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
     "public.form_submissions": {
       "name": "form_submissions",
       "schema": "",
@@ -95,10 +217,10 @@
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
-        "form_submissions_page_id_pages_id_fk": {
-          "name": "form_submissions_page_id_pages_id_fk",
+        "form_submissions_page_id_page_translations_id_fk": {
+          "name": "form_submissions_page_id_page_translations_id_fk",
           "tableFrom": "form_submissions",
-          "tableTo": "pages",
+          "tableTo": "page_translations",
           "columnsFrom": ["page_id"],
           "columnsTo": ["id"],
           "onDelete": "set null",
@@ -233,6 +355,151 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
+    "public.import_jobs": {
+      "name": "import_jobs",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "tenant_id": {
+          "name": "tenant_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "site_id": {
+          "name": "site_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "source": {
+          "name": "source",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "file_name": {
+          "name": "file_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "file_bytes": {
+          "name": "file_bytes",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "import_job_status",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'analyzing'"
+        },
+        "report": {
+          "name": "report",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "failure_reason": {
+          "name": "failure_reason",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_by": {
+          "name": "created_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "finished_at": {
+          "name": "finished_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "import_jobs_tenant_site_created_idx": {
+          "name": "import_jobs_tenant_site_created_idx",
+          "columns": [
+            {
+              "expression": "tenant_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "site_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "import_jobs_tenant_id_tenants_id_fk": {
+          "name": "import_jobs_tenant_id_tenants_id_fk",
+          "tableFrom": "import_jobs",
+          "tableTo": "tenants",
+          "columnsFrom": ["tenant_id"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "import_jobs_site_id_sites_id_fk": {
+          "name": "import_jobs_site_id_sites_id_fk",
+          "tableFrom": "import_jobs",
+          "tableTo": "sites",
+          "columnsFrom": ["site_id"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "import_jobs_created_by_users_id_fk": {
+          "name": "import_jobs_created_by_users_id_fk",
+          "tableFrom": "import_jobs",
+          "tableTo": "users",
+          "columnsFrom": ["created_by"],
+          "columnsTo": ["id"],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
     "public.media": {
       "name": "media",
       "schema": "",
@@ -356,8 +623,95 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.page_versions": {
-      "name": "page_versions",
+    "public.page_group_terms": {
+      "name": "page_group_terms",
+      "schema": "",
+      "columns": {
+        "tenant_id": {
+          "name": "tenant_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "page_group_id": {
+          "name": "page_group_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "term_id": {
+          "name": "term_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "page_group_terms_term_idx": {
+          "name": "page_group_terms_term_idx",
+          "columns": [
+            {
+              "expression": "term_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "page_group_terms_tenant_id_tenants_id_fk": {
+          "name": "page_group_terms_tenant_id_tenants_id_fk",
+          "tableFrom": "page_group_terms",
+          "tableTo": "tenants",
+          "columnsFrom": ["tenant_id"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "page_group_terms_page_group_id_page_groups_id_fk": {
+          "name": "page_group_terms_page_group_id_page_groups_id_fk",
+          "tableFrom": "page_group_terms",
+          "tableTo": "page_groups",
+          "columnsFrom": ["page_group_id"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "page_group_terms_term_id_terms_id_fk": {
+          "name": "page_group_terms_term_id_terms_id_fk",
+          "tableFrom": "page_group_terms",
+          "tableTo": "terms",
+          "columnsFrom": ["term_id"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "page_group_terms_page_group_id_term_id_pk": {
+          "name": "page_group_terms_page_group_id_term_id_pk",
+          "columns": ["page_group_id", "term_id"]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.page_group_versions": {
+      "name": "page_group_versions",
       "schema": "",
       "columns": {
         "id": {
@@ -373,8 +727,8 @@
           "primaryKey": false,
           "notNull": true
         },
-        "page_id": {
-          "name": "page_id",
+        "page_group_id": {
+          "name": "page_group_id",
           "type": "uuid",
           "primaryKey": false,
           "notNull": true
@@ -400,11 +754,11 @@
         }
       },
       "indexes": {
-        "page_versions_page_created_idx": {
-          "name": "page_versions_page_created_idx",
+        "page_group_versions_group_created_idx": {
+          "name": "page_group_versions_group_created_idx",
           "columns": [
             {
-              "expression": "page_id",
+              "expression": "page_group_id",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -423,27 +777,27 @@
         }
       },
       "foreignKeys": {
-        "page_versions_tenant_id_tenants_id_fk": {
-          "name": "page_versions_tenant_id_tenants_id_fk",
-          "tableFrom": "page_versions",
+        "page_group_versions_tenant_id_tenants_id_fk": {
+          "name": "page_group_versions_tenant_id_tenants_id_fk",
+          "tableFrom": "page_group_versions",
           "tableTo": "tenants",
           "columnsFrom": ["tenant_id"],
           "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
-        "page_versions_page_id_pages_id_fk": {
-          "name": "page_versions_page_id_pages_id_fk",
-          "tableFrom": "page_versions",
-          "tableTo": "pages",
-          "columnsFrom": ["page_id"],
+        "page_group_versions_page_group_id_page_groups_id_fk": {
+          "name": "page_group_versions_page_group_id_page_groups_id_fk",
+          "tableFrom": "page_group_versions",
+          "tableTo": "page_groups",
+          "columnsFrom": ["page_group_id"],
           "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
-        "page_versions_created_by_users_id_fk": {
-          "name": "page_versions_created_by_users_id_fk",
-          "tableFrom": "page_versions",
+        "page_group_versions_created_by_users_id_fk": {
+          "name": "page_group_versions_created_by_users_id_fk",
+          "tableFrom": "page_group_versions",
           "tableTo": "users",
           "columnsFrom": ["created_by"],
           "columnsTo": ["id"],
@@ -457,8 +811,8 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.pages": {
-      "name": "pages",
+    "public.page_groups": {
+      "name": "page_groups",
       "schema": "",
       "columns": {
         "id": {
@@ -480,36 +834,11 @@
           "primaryKey": false,
           "notNull": true
         },
-        "group_id": {
-          "name": "group_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "locale": {
-          "name": "locale",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "slug": {
-          "name": "slug",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
         "parent_id": {
           "name": "parent_id",
           "type": "uuid",
           "primaryKey": false,
           "notNull": false
-        },
-        "status": {
-          "name": "status",
-          "type": "page_status",
-          "typeSchema": "public",
-          "primaryKey": false,
-          "notNull": true
         },
         "content": {
           "name": "content",
@@ -518,22 +847,28 @@
           "notNull": true,
           "default": "'[]'::jsonb"
         },
-        "published_content": {
-          "name": "published_content",
-          "type": "jsonb",
+        "order": {
+          "name": "order",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "collection_id": {
+          "name": "collection_id",
+          "type": "uuid",
           "primaryKey": false,
           "notNull": false
         },
-        "seo_meta": {
-          "name": "seo_meta",
-          "type": "jsonb",
+        "created_by": {
+          "name": "created_by",
+          "type": "uuid",
           "primaryKey": false,
-          "notNull": true,
-          "default": "'{}'::jsonb"
+          "notNull": false
         },
-        "search_text": {
-          "name": "search_text",
-          "type": "text",
+        "updated_by": {
+          "name": "updated_by",
+          "type": "uuid",
           "primaryKey": false,
           "notNull": false
         },
@@ -550,11 +885,363 @@
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
+        },
+        "content_updated_at": {
+          "name": "content_updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
         }
       },
       "indexes": {
-        "pages_root_slug_unique": {
-          "name": "pages_root_slug_unique",
+        "page_groups_tenant_site_idx": {
+          "name": "page_groups_tenant_site_idx",
+          "columns": [
+            {
+              "expression": "tenant_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "site_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "page_groups_tenant_id_tenants_id_fk": {
+          "name": "page_groups_tenant_id_tenants_id_fk",
+          "tableFrom": "page_groups",
+          "tableTo": "tenants",
+          "columnsFrom": ["tenant_id"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "page_groups_site_id_sites_id_fk": {
+          "name": "page_groups_site_id_sites_id_fk",
+          "tableFrom": "page_groups",
+          "tableTo": "sites",
+          "columnsFrom": ["site_id"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "page_groups_parent_id_page_groups_id_fk": {
+          "name": "page_groups_parent_id_page_groups_id_fk",
+          "tableFrom": "page_groups",
+          "tableTo": "page_groups",
+          "columnsFrom": ["parent_id"],
+          "columnsTo": ["id"],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        },
+        "page_groups_collection_id_collections_id_fk": {
+          "name": "page_groups_collection_id_collections_id_fk",
+          "tableFrom": "page_groups",
+          "tableTo": "collections",
+          "columnsFrom": ["collection_id"],
+          "columnsTo": ["id"],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        },
+        "page_groups_created_by_users_id_fk": {
+          "name": "page_groups_created_by_users_id_fk",
+          "tableFrom": "page_groups",
+          "tableTo": "users",
+          "columnsFrom": ["created_by"],
+          "columnsTo": ["id"],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        },
+        "page_groups_updated_by_users_id_fk": {
+          "name": "page_groups_updated_by_users_id_fk",
+          "tableFrom": "page_groups",
+          "tableTo": "users",
+          "columnsFrom": ["updated_by"],
+          "columnsTo": ["id"],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.page_translation_versions": {
+      "name": "page_translation_versions",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "tenant_id": {
+          "name": "tenant_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "page_translation_id": {
+          "name": "page_translation_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "field_values": {
+          "name": "field_values",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "seo_meta": {
+          "name": "seo_meta",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "diverged_content": {
+          "name": "diverged_content",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_by": {
+          "name": "created_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "page_translation_versions_translation_created_idx": {
+          "name": "page_translation_versions_translation_created_idx",
+          "columns": [
+            {
+              "expression": "page_translation_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "page_translation_versions_tenant_id_tenants_id_fk": {
+          "name": "page_translation_versions_tenant_id_tenants_id_fk",
+          "tableFrom": "page_translation_versions",
+          "tableTo": "tenants",
+          "columnsFrom": ["tenant_id"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "page_translation_versions_page_translation_id_page_translations_id_fk": {
+          "name": "page_translation_versions_page_translation_id_page_translations_id_fk",
+          "tableFrom": "page_translation_versions",
+          "tableTo": "page_translations",
+          "columnsFrom": ["page_translation_id"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "page_translation_versions_created_by_users_id_fk": {
+          "name": "page_translation_versions_created_by_users_id_fk",
+          "tableFrom": "page_translation_versions",
+          "tableTo": "users",
+          "columnsFrom": ["created_by"],
+          "columnsTo": ["id"],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.page_translations": {
+      "name": "page_translations",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "tenant_id": {
+          "name": "tenant_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "site_id": {
+          "name": "site_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "page_group_id": {
+          "name": "page_group_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "parent_group_id": {
+          "name": "parent_group_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "locale": {
+          "name": "locale",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "slug": {
+          "name": "slug",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "former_slugs": {
+          "name": "former_slugs",
+          "type": "text[]",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'{}'"
+        },
+        "former_parents": {
+          "name": "former_parents",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'[]'::jsonb"
+        },
+        "seo_meta": {
+          "name": "seo_meta",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'{}'::jsonb"
+        },
+        "field_values": {
+          "name": "field_values",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'{}'::jsonb"
+        },
+        "status": {
+          "name": "status",
+          "type": "page_translation_status",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "published_snapshot": {
+          "name": "published_snapshot",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "is_diverged": {
+          "name": "is_diverged",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "diverged_content": {
+          "name": "diverged_content",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "search_text": {
+          "name": "search_text",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_by": {
+          "name": "created_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "updated_by": {
+          "name": "updated_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "content_updated_at": {
+          "name": "content_updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "published_at": {
+          "name": "published_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "page_translations_root_slug_unique": {
+          "name": "page_translations_root_slug_unique",
           "columns": [
             {
               "expression": "tenant_id",
@@ -582,13 +1269,306 @@
             }
           ],
           "isUnique": true,
-          "where": "\"pages\".\"parent_id\" is null",
+          "where": "\"page_translations\".\"parent_group_id\" is null",
           "concurrently": false,
           "method": "btree",
           "with": {}
         },
-        "pages_tenant_site_idx": {
-          "name": "pages_tenant_site_idx",
+        "page_translations_tenant_group_idx": {
+          "name": "page_translations_tenant_group_idx",
+          "columns": [
+            {
+              "expression": "tenant_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "page_group_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "page_translations_former_slugs_idx": {
+          "name": "page_translations_former_slugs_idx",
+          "columns": [
+            {
+              "expression": "former_slugs",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "gin",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "page_translations_tenant_id_tenants_id_fk": {
+          "name": "page_translations_tenant_id_tenants_id_fk",
+          "tableFrom": "page_translations",
+          "tableTo": "tenants",
+          "columnsFrom": ["tenant_id"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "page_translations_site_id_sites_id_fk": {
+          "name": "page_translations_site_id_sites_id_fk",
+          "tableFrom": "page_translations",
+          "tableTo": "sites",
+          "columnsFrom": ["site_id"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "page_translations_page_group_id_page_groups_id_fk": {
+          "name": "page_translations_page_group_id_page_groups_id_fk",
+          "tableFrom": "page_translations",
+          "tableTo": "page_groups",
+          "columnsFrom": ["page_group_id"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "page_translations_created_by_users_id_fk": {
+          "name": "page_translations_created_by_users_id_fk",
+          "tableFrom": "page_translations",
+          "tableTo": "users",
+          "columnsFrom": ["created_by"],
+          "columnsTo": ["id"],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        },
+        "page_translations_updated_by_users_id_fk": {
+          "name": "page_translations_updated_by_users_id_fk",
+          "tableFrom": "page_translations",
+          "tableTo": "users",
+          "columnsFrom": ["updated_by"],
+          "columnsTo": ["id"],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "page_translations_tenant_id_page_group_id_locale_unique": {
+          "name": "page_translations_tenant_id_page_group_id_locale_unique",
+          "nullsNotDistinct": false,
+          "columns": ["tenant_id", "page_group_id", "locale"]
+        },
+        "page_translations_tenant_id_site_id_locale_parent_group_id_slug_unique": {
+          "name": "page_translations_tenant_id_site_id_locale_parent_group_id_slug_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "tenant_id",
+            "site_id",
+            "locale",
+            "parent_group_id",
+            "slug"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.reusable_section_versions": {
+      "name": "reusable_section_versions",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "tenant_id": {
+          "name": "tenant_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "reusable_section_id": {
+          "name": "reusable_section_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "content": {
+          "name": "content",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_by": {
+          "name": "created_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "reusable_section_versions_section_created_idx": {
+          "name": "reusable_section_versions_section_created_idx",
+          "columns": [
+            {
+              "expression": "reusable_section_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "reusable_section_versions_tenant_id_tenants_id_fk": {
+          "name": "reusable_section_versions_tenant_id_tenants_id_fk",
+          "tableFrom": "reusable_section_versions",
+          "tableTo": "tenants",
+          "columnsFrom": ["tenant_id"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "reusable_section_versions_reusable_section_id_reusable_sections_id_fk": {
+          "name": "reusable_section_versions_reusable_section_id_reusable_sections_id_fk",
+          "tableFrom": "reusable_section_versions",
+          "tableTo": "reusable_sections",
+          "columnsFrom": ["reusable_section_id"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "reusable_section_versions_created_by_users_id_fk": {
+          "name": "reusable_section_versions_created_by_users_id_fk",
+          "tableFrom": "reusable_section_versions",
+          "tableTo": "users",
+          "columnsFrom": ["created_by"],
+          "columnsTo": ["id"],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.reusable_sections": {
+      "name": "reusable_sections",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "tenant_id": {
+          "name": "tenant_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "site_id": {
+          "name": "site_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "kind": {
+          "name": "kind",
+          "type": "reusable_section_kind",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "reusable_section_status",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "content": {
+          "name": "content",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'[]'::jsonb"
+        },
+        "published_content": {
+          "name": "published_content",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "exposed_fields": {
+          "name": "exposed_fields",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'{}'::jsonb"
+        },
+        "created_by": {
+          "name": "created_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "reusable_sections_tenant_site_idx": {
+          "name": "reusable_sections_tenant_site_idx",
           "columns": [
             {
               "expression": "tenant_id",
@@ -610,29 +1590,29 @@
         }
       },
       "foreignKeys": {
-        "pages_tenant_id_tenants_id_fk": {
-          "name": "pages_tenant_id_tenants_id_fk",
-          "tableFrom": "pages",
+        "reusable_sections_tenant_id_tenants_id_fk": {
+          "name": "reusable_sections_tenant_id_tenants_id_fk",
+          "tableFrom": "reusable_sections",
           "tableTo": "tenants",
           "columnsFrom": ["tenant_id"],
           "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
-        "pages_site_id_sites_id_fk": {
-          "name": "pages_site_id_sites_id_fk",
-          "tableFrom": "pages",
+        "reusable_sections_site_id_sites_id_fk": {
+          "name": "reusable_sections_site_id_sites_id_fk",
+          "tableFrom": "reusable_sections",
           "tableTo": "sites",
           "columnsFrom": ["site_id"],
           "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
-        "pages_parent_id_pages_id_fk": {
-          "name": "pages_parent_id_pages_id_fk",
-          "tableFrom": "pages",
-          "tableTo": "pages",
-          "columnsFrom": ["parent_id"],
+        "reusable_sections_created_by_users_id_fk": {
+          "name": "reusable_sections_created_by_users_id_fk",
+          "tableFrom": "reusable_sections",
+          "tableTo": "users",
+          "columnsFrom": ["created_by"],
           "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
@@ -640,15 +1620,10 @@
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
-        "pages_tenant_id_site_id_group_id_locale_unique": {
-          "name": "pages_tenant_id_site_id_group_id_locale_unique",
+        "reusable_sections_tenant_id_site_id_name_unique": {
+          "name": "reusable_sections_tenant_id_site_id_name_unique",
           "nullsNotDistinct": false,
-          "columns": ["tenant_id", "site_id", "group_id", "locale"]
-        },
-        "pages_tenant_id_site_id_locale_parent_id_slug_unique": {
-          "name": "pages_tenant_id_site_id_locale_parent_id_slug_unique",
-          "nullsNotDistinct": false,
-          "columns": ["tenant_id", "site_id", "locale", "parent_id", "slug"]
+          "columns": ["tenant_id", "site_id", "name"]
         }
       },
       "policies": {},
@@ -1003,6 +1978,13 @@
           "primaryKey": false,
           "notNull": true
         },
+        "variant": {
+          "name": "variant",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'default'"
+        },
         "style": {
           "name": "style",
           "type": "jsonb",
@@ -1054,9 +2036,9 @@
         }
       },
       "compositePrimaryKeys": {
-        "site_theme_block_styles_site_id_block_type_pk": {
-          "name": "site_theme_block_styles_site_id_block_type_pk",
-          "columns": ["site_id", "block_type"]
+        "site_theme_block_styles_site_id_block_type_variant_pk": {
+          "name": "site_theme_block_styles_site_id_block_type_variant_pk",
+          "columns": ["site_id", "block_type", "variant"]
         }
       },
       "uniqueConstraints": {},
@@ -1116,12 +2098,18 @@
         },
         "business_address": {
           "name": "business_address",
-          "type": "text",
+          "type": "jsonb",
           "primaryKey": false,
           "notNull": false
         },
         "business_phone": {
           "name": "business_phone",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "business_email": {
+          "name": "business_email",
           "type": "text",
           "primaryKey": false,
           "notNull": false
@@ -1145,6 +2133,13 @@
           "notNull": true,
           "default": false
         },
+        "theme_name": {
+          "name": "theme_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'classic'"
+        },
         "theme_primary_color": {
           "name": "theme_primary_color",
           "type": "text",
@@ -1165,6 +2160,12 @@
         },
         "theme_custom_css": {
           "name": "theme_custom_css",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "theme_content_width": {
+          "name": "theme_content_width",
           "type": "text",
           "primaryKey": false,
           "notNull": false
@@ -1193,6 +2194,33 @@
           "primaryKey": false,
           "notNull": true,
           "default": true
+        },
+        "theme_allowed_tracker_domains": {
+          "name": "theme_allowed_tracker_domains",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'[]'::jsonb"
+        },
+        "form_submission_retention_days": {
+          "name": "form_submission_retention_days",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "theme_tracker_scripts": {
+          "name": "theme_tracker_scripts",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'[]'::jsonb"
+        },
+        "cookie_banner_settings": {
+          "name": "cookie_banner_settings",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'{\"enabled\":false,\"position\":\"bottom-bar\",\"acceptButtonSide\":\"left\",\"showReopenTab\":true,\"reopenPosition\":\"bottom-left\",\"privacyPolicyPageGroupId\":null,\"cookiePolicyPageGroupId\":null,\"copyOverrides\":{}}'::jsonb"
         },
         "created_at": {
           "name": "created_at",
@@ -1226,6 +2254,126 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
+    "public.taxonomies": {
+      "name": "taxonomies",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "tenant_id": {
+          "name": "tenant_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "site_id": {
+          "name": "site_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "slug": {
+          "name": "slug",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "name": {
+          "name": "name",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'{}'::jsonb"
+        },
+        "hierarchical": {
+          "name": "hierarchical",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "order": {
+          "name": "order",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "taxonomies_tenant_site_idx": {
+          "name": "taxonomies_tenant_site_idx",
+          "columns": [
+            {
+              "expression": "tenant_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "site_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "taxonomies_tenant_id_tenants_id_fk": {
+          "name": "taxonomies_tenant_id_tenants_id_fk",
+          "tableFrom": "taxonomies",
+          "tableTo": "tenants",
+          "columnsFrom": ["tenant_id"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "taxonomies_site_id_sites_id_fk": {
+          "name": "taxonomies_site_id_sites_id_fk",
+          "tableFrom": "taxonomies",
+          "tableTo": "sites",
+          "columnsFrom": ["site_id"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "taxonomies_tenant_id_site_id_slug_unique": {
+          "name": "taxonomies_tenant_id_site_id_slug_unique",
+          "nullsNotDistinct": false,
+          "columns": ["tenant_id", "site_id", "slug"]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
     "public.tenants": {
       "name": "tenants",
       "schema": "",
@@ -1253,6 +2401,345 @@
       },
       "indexes": {},
       "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.term_slugs": {
+      "name": "term_slugs",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "tenant_id": {
+          "name": "tenant_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "site_id": {
+          "name": "site_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "term_id": {
+          "name": "term_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "locale": {
+          "name": "locale",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "slug": {
+          "name": "slug",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "route_prefix": {
+          "name": "route_prefix",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "term_slugs_lookup_idx": {
+          "name": "term_slugs_lookup_idx",
+          "columns": [
+            {
+              "expression": "tenant_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "site_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "locale",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "slug",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "term_slugs_tenant_id_tenants_id_fk": {
+          "name": "term_slugs_tenant_id_tenants_id_fk",
+          "tableFrom": "term_slugs",
+          "tableTo": "tenants",
+          "columnsFrom": ["tenant_id"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "term_slugs_site_id_sites_id_fk": {
+          "name": "term_slugs_site_id_sites_id_fk",
+          "tableFrom": "term_slugs",
+          "tableTo": "sites",
+          "columnsFrom": ["site_id"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "term_slugs_term_id_terms_id_fk": {
+          "name": "term_slugs_term_id_terms_id_fk",
+          "tableFrom": "term_slugs",
+          "tableTo": "terms",
+          "columnsFrom": ["term_id"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "term_slugs_tenant_id_term_id_locale_unique": {
+          "name": "term_slugs_tenant_id_term_id_locale_unique",
+          "nullsNotDistinct": false,
+          "columns": ["tenant_id", "term_id", "locale"]
+        },
+        "term_slugs_route_unique": {
+          "name": "term_slugs_route_unique",
+          "nullsNotDistinct": true,
+          "columns": ["tenant_id", "site_id", "locale", "route_prefix", "slug"]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.terms": {
+      "name": "terms",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "tenant_id": {
+          "name": "tenant_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "site_id": {
+          "name": "site_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "taxonomy_id": {
+          "name": "taxonomy_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "parent_id": {
+          "name": "parent_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "name": {
+          "name": "name",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'{}'::jsonb"
+        },
+        "description": {
+          "name": "description",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'{}'::jsonb"
+        },
+        "seo_meta": {
+          "name": "seo_meta",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'{}'::jsonb"
+        },
+        "noindex": {
+          "name": "noindex",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "landing_page_group_id": {
+          "name": "landing_page_group_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "order": {
+          "name": "order",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "terms_tenant_site_idx": {
+          "name": "terms_tenant_site_idx",
+          "columns": [
+            {
+              "expression": "tenant_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "site_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "terms_taxonomy_parent_order_idx": {
+          "name": "terms_taxonomy_parent_order_idx",
+          "columns": [
+            {
+              "expression": "taxonomy_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "parent_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "order",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "terms_landing_page_group_unique": {
+          "name": "terms_landing_page_group_unique",
+          "columns": [
+            {
+              "expression": "landing_page_group_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "where": "\"terms\".\"landing_page_group_id\" is not null",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "terms_tenant_id_tenants_id_fk": {
+          "name": "terms_tenant_id_tenants_id_fk",
+          "tableFrom": "terms",
+          "tableTo": "tenants",
+          "columnsFrom": ["tenant_id"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "terms_site_id_sites_id_fk": {
+          "name": "terms_site_id_sites_id_fk",
+          "tableFrom": "terms",
+          "tableTo": "sites",
+          "columnsFrom": ["site_id"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "terms_taxonomy_id_taxonomies_id_fk": {
+          "name": "terms_taxonomy_id_taxonomies_id_fk",
+          "tableFrom": "terms",
+          "tableTo": "taxonomies",
+          "columnsFrom": ["taxonomy_id"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "terms_parent_id_terms_id_fk": {
+          "name": "terms_parent_id_terms_id_fk",
+          "tableFrom": "terms",
+          "tableTo": "terms",
+          "columnsFrom": ["parent_id"],
+          "columnsTo": ["id"],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        },
+        "terms_landing_page_group_id_page_groups_id_fk": {
+          "name": "terms_landing_page_group_id_page_groups_id_fk",
+          "tableFrom": "terms",
+          "tableTo": "page_groups",
+          "columnsFrom": ["landing_page_group_id"],
+          "columnsTo": ["id"],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        }
+      },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {},
@@ -1320,9 +2807,63 @@
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
+        },
+        "slug": {
+          "name": "slug",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "former_slugs": {
+          "name": "former_slugs",
+          "type": "text[]",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'{}'"
+        },
+        "bio": {
+          "name": "bio",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'{}'::jsonb"
+        },
+        "avatar_storage_key": {
+          "name": "avatar_storage_key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "avatar_width": {
+          "name": "avatar_width",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "avatar_height": {
+          "name": "avatar_height",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
         }
       },
-      "indexes": {},
+      "indexes": {
+        "users_former_slugs_idx": {
+          "name": "users_former_slugs_idx",
+          "columns": [
+            {
+              "expression": "former_slugs",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "gin",
+          "with": {}
+        }
+      },
       "foreignKeys": {
         "users_tenant_id_tenants_id_fk": {
           "name": "users_tenant_id_tenants_id_fk",
@@ -1340,6 +2881,11 @@
           "name": "users_tenant_id_email_unique",
           "nullsNotDistinct": false,
           "columns": ["tenant_id", "email"]
+        },
+        "users_tenant_id_slug_unique": {
+          "name": "users_tenant_id_slug_unique",
+          "nullsNotDistinct": false,
+          "columns": ["tenant_id", "slug"]
         }
       },
       "policies": {},
@@ -1447,8 +2993,23 @@
     }
   },
   "enums": {
-    "public.page_status": {
-      "name": "page_status",
+    "public.import_job_status": {
+      "name": "import_job_status",
+      "schema": "public",
+      "values": ["analyzing", "analyzed", "failed"]
+    },
+    "public.page_translation_status": {
+      "name": "page_translation_status",
+      "schema": "public",
+      "values": ["draft", "published"]
+    },
+    "public.reusable_section_kind": {
+      "name": "reusable_section_kind",
+      "schema": "public",
+      "values": ["shared", "template"]
+    },
+    "public.reusable_section_status": {
+      "name": "reusable_section_status",
       "schema": "public",
       "values": ["draft", "published"]
     },

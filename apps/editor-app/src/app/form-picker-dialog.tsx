@@ -9,7 +9,7 @@ import {
   DialogTitle,
 } from '../components/ui/dialog';
 import { cn } from '../lib/utils';
-import type { FormDto } from '../lib/forms-api-client';
+import type { FormRecord } from '../lib/forms-api-client';
 import { FORMS_PAGE_SIZE, formsQueryOptions } from './forms-queries';
 import { IconButton } from './icon-button';
 
@@ -17,7 +17,7 @@ export interface FormPickerDialogProps {
   siteId: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSelect: (form: FormDto) => void;
+  onSelect: (form: FormRecord) => void;
 }
 
 export function FormPickerDialog({

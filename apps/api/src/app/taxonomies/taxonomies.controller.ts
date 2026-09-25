@@ -23,6 +23,13 @@ import {
   updateTaxonomy,
   updateTerm,
 } from '@brisk/application';
+import type { Taxonomy, Term } from '@brisk/domain-core';
+import {
+  type TaxonomyRecord,
+  type TermRecord,
+  taxonomyRecordSchema,
+  termRecordSchema,
+} from '@brisk/shared-types';
 import type {
   PageTranslationRepositoryPort,
   SiteRepositoryPort,
@@ -90,7 +97,7 @@ export class TaxonomiesController {
       this.tenantId,
       query.siteId,
     );
-    return taxonomies.map((taxonomy) => taxonomy.toProps());
+    return taxonomies.map((taxonomy) => this.toTaxonomyDto(taxonomy));
   }
 
   @Post()
@@ -107,13 +114,13 @@ export class TaxonomiesController {
       ...(body.prefix === undefined ? {} : { prefix: body.prefix }),
       hierarchical: body.hierarchical,
     });
-    return taxonomy.toProps();
+    return this.toTaxonomyDto(taxonomy);
   }
 
   @Get(':id')
   async get(@Param('id') id: string) {
     const taxonomy = await getTaxonomy(this.deps, this.tenantId, id);
-    return taxonomy.toProps();
+    return this.toTaxonomyDto(taxonomy);
   }
 
   @Patch(':id')
@@ -130,7 +137,7 @@ export class TaxonomiesController {
       hierarchical: body.hierarchical,
       order: body.order,
     });
-    return taxonomy.toProps();
+    return this.toTaxonomyDto(taxonomy);
   }
 
   @Delete(':id')
@@ -146,7 +153,7 @@ export class TaxonomiesController {
     // list is an answer about a dimension, and there is none.
     await getTaxonomy(this.deps, this.tenantId, id);
     const terms = await listTerms(this.deps, this.tenantId, id);
-    return terms.map((term) => term.toProps());
+    return terms.map((term) => this.toTermDto(term));
   }
 
   @Post(':id/terms')
@@ -161,13 +168,13 @@ export class TaxonomiesController {
       slugs: body.slugs,
       parentId: body.parentId ?? null,
     });
-    return term.toProps();
+    return this.toTermDto(term);
   }
 
   @Get('terms/:termId')
   async getTerm(@Param('termId') termId: string) {
     const term = await getTerm(this.deps, this.tenantId, termId);
-    return term.toProps();
+    return this.toTermDto(term);
   }
 
   @Patch('terms/:termId')
@@ -188,7 +195,7 @@ export class TaxonomiesController {
         : { landingPageGroupId: body.landingPageGroupId }),
       order: body.order,
     });
-    return term.toProps();
+    return this.toTermDto(term);
   }
 
   @Patch('terms/:termId/parent')
@@ -201,12 +208,48 @@ export class TaxonomiesController {
       id: termId,
       parentId: body.parentId,
     });
-    return term.toProps();
+    return this.toTermDto(term);
   }
 
   @Delete('terms/:termId')
   async removeTerm(@Param('termId') termId: string) {
     await deleteTerm(this.deps, this.tenantId, termId);
     return { ok: true };
+  }
+
+  /** Whitelisted field by field, never the entity's props spread — same reasoning as every other controller here. */
+  private toTaxonomyDto(taxonomy: Taxonomy): TaxonomyRecord {
+    const props = taxonomy.toProps();
+    return taxonomyRecordSchema.parse({
+      id: props.id,
+      tenantId: props.tenantId,
+      siteId: props.siteId,
+      prefix: props.prefix,
+      name: props.name,
+      hierarchical: props.hierarchical,
+      order: props.order,
+      createdAt: props.createdAt.toISOString(),
+      updatedAt: props.updatedAt.toISOString(),
+    });
+  }
+
+  private toTermDto(term: Term): TermRecord {
+    const props = term.toProps();
+    return termRecordSchema.parse({
+      id: props.id,
+      tenantId: props.tenantId,
+      siteId: props.siteId,
+      taxonomyId: props.taxonomyId,
+      parentId: props.parentId,
+      name: props.name,
+      description: props.description,
+      seoMeta: props.seoMeta,
+      noindex: props.noindex,
+      landingPageGroupId: props.landingPageGroupId,
+      order: props.order,
+      slugs: props.slugs,
+      createdAt: props.createdAt.toISOString(),
+      updatedAt: props.updatedAt.toISOString(),
+    });
   }
 }

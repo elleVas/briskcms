@@ -1,3 +1,4 @@
+import type { PageStatus } from '@brisk/shared-types';
 import { request } from './http-client';
 
 export interface DashboardStatsDto {
@@ -15,7 +16,7 @@ export interface DashboardStatsDto {
     locale: string;
     title: string;
     slug: string;
-    status: 'draft' | 'published';
+    status: PageStatus;
     updatedAt: string;
   }[];
 }

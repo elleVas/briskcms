@@ -1,21 +1,18 @@
-import type { ReactNode } from 'react';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { QueryClientProvider } from '@tanstack/react-query';
 import {
   buildPageGroupListItemRecord,
   buildPageTranslationRecord,
+  buildSiteLayoutSectionRecord,
+  buildSiteLayoutSectionVersionRecord,
 } from '@brisk/testing/records';
 import * as sectionsApi from '../lib/site-layout-sections-api-client';
-import type { SiteLayoutSectionDto } from '../lib/site-layout-sections-api-client';
+import type { SiteLayoutSectionRecord } from '../lib/site-layout-sections-api-client';
 import * as pageGroupsApi from '../lib/page-groups-api-client';
 import * as previewTokenApi from '../lib/preview-token-api-client';
 import { TooltipProvider } from '../components/ui/tooltip';
 import { createTestQueryClient } from '../test/query-client.test-fixture';
-import {
-  buildSiteLayoutSectionDto,
-  buildSiteLayoutSectionVersionDto,
-} from '../test/dtos.test-fixture';
 import {
   pageGroupsQueryOptions,
   pageGroupTranslationsQueryOptions,
@@ -29,19 +26,7 @@ vi.mock('@tanstack/react-router', async (importOriginal) => {
     await importOriginal<typeof import('@tanstack/react-router')>();
   return {
     ...actual,
-    Link: ({
-      children,
-      to,
-      className,
-    }: {
-      children: ReactNode;
-      to: string;
-      className?: string;
-    }) => (
-      <a href={to} className={className}>
-        {children}
-      </a>
-    ),
+    Link: (await import('../test/router-link.test-fixture')).StubLink,
   };
 });
 
@@ -80,10 +65,10 @@ const representativeGroup = buildPageGroupListItemRecord();
 
 const representativeTranslation = buildPageTranslationRecord();
 
-const sampleSection = buildSiteLayoutSectionDto();
+const sampleSection = buildSiteLayoutSectionRecord();
 
 function renderView(
-  kind: SiteLayoutSectionDto['kind'] = 'header',
+  kind: SiteLayoutSectionRecord['kind'] = 'header',
   hasRepresentativePage = true,
 ) {
   const queryClient = createTestQueryClient();
@@ -159,11 +144,11 @@ describe('SiteLayoutSectionEditorView', () => {
 
   it('opens the version history dialog and lists past versions newest-first', async () => {
     vi.mocked(sectionsApi.listVersions).mockResolvedValue([
-      buildSiteLayoutSectionVersionDto({
+      buildSiteLayoutSectionVersionRecord({
         id: 'v1',
         createdAt: '2026-01-01T00:00:00.000Z',
       }),
-      buildSiteLayoutSectionVersionDto({
+      buildSiteLayoutSectionVersionRecord({
         id: 'v2',
         createdAt: '2026-01-02T00:00:00.000Z',
       }),

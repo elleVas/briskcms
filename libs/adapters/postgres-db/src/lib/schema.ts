@@ -15,7 +15,19 @@ import {
   type AnyPgColumn,
 } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
-import { DEFAULT_VARIANT } from '@brisk/shared-types';
+import {
+  DEFAULT_VARIANT,
+  IMPORT_JOB_STATUSES,
+  PAGE_TRANSLATION_STATUSES,
+  REUSABLE_SECTION_KINDS,
+  REUSABLE_SECTION_STATUSES,
+  SITE_LAYOUT_SECTION_KINDS,
+  SITE_LAYOUT_SECTION_STATUSES,
+  STORAGE_PROVIDERS,
+  UNTRANSLATED_PAGE_FALLBACKS,
+  USER_ROLES,
+  VERIFICATION_TOKEN_PURPOSES,
+} from '@brisk/shared-types';
 import type {
   ResponsiveBlockStyle,
   BusinessAddress,
@@ -36,46 +48,44 @@ import type {
 } from '@brisk/shared-types';
 import { DEFAULT_COOKIE_BANNER_SETTINGS } from '@brisk/shared-types';
 
-// One native Postgres enum type per domain string-union, matching the
-// literal values of the corresponding domain-core/shared-types type
-// exactly — kept separate even where two enums share the same value set
-// (pageTranslationStatusEnum/siteLayoutSectionStatusEnum both
-// 'draft'|'published') because their domain types are deliberately
-// distinct (PageTranslation vs. SiteLayoutSection), see
-// db-schema-cleanup-deferred-2026-08-28 memory.
-export const userRoleEnum = pgEnum('user_role', [
-  'admin',
-  'publisher',
-  'editor',
-]);
+// One native Postgres enum type per domain string-union, reading its values
+// from the same tuple the domain type and the wire schema are built from
+// (@brisk/shared-types), so the three cannot drift apart. Kept separate
+// even where two enums share the same value set (the three draft/published
+// ones) because their domain types are deliberately distinct: publishing a
+// header has nothing to do with publishing a page.
+export const userRoleEnum = pgEnum('user_role', USER_ROLES);
 export const untranslatedPageFallbackEnum = pgEnum(
   'untranslated_page_fallback',
-  ['redirect-to-default', 'not-available'],
+  UNTRANSLATED_PAGE_FALLBACKS,
 );
-export const pageTranslationStatusEnum = pgEnum('page_translation_status', [
-  'draft',
-  'published',
-]);
-export const siteLayoutSectionKindEnum = pgEnum('site_layout_section_kind', [
-  'header',
-  'footer',
-]);
+export const pageTranslationStatusEnum = pgEnum(
+  'page_translation_status',
+  PAGE_TRANSLATION_STATUSES,
+);
+export const siteLayoutSectionKindEnum = pgEnum(
+  'site_layout_section_kind',
+  SITE_LAYOUT_SECTION_KINDS,
+);
 export const siteLayoutSectionStatusEnum = pgEnum(
   'site_layout_section_status',
-  ['draft', 'published'],
+  SITE_LAYOUT_SECTION_STATUSES,
 );
 // A reusable section is either a live reference or a copy taken once
 // (docs/adr/0059) — the kind decides what INSERTING one does, so it is a
 // property of the section itself and not of the insert action.
-export const reusableSectionKindEnum = pgEnum('reusable_section_kind', [
-  'shared',
-  'template',
-]);
-export const reusableSectionStatusEnum = pgEnum('reusable_section_status', [
-  'draft',
-  'published',
-]);
-export const storageProviderEnum = pgEnum('storage_provider', ['local', 's3']);
+export const reusableSectionKindEnum = pgEnum(
+  'reusable_section_kind',
+  REUSABLE_SECTION_KINDS,
+);
+export const reusableSectionStatusEnum = pgEnum(
+  'reusable_section_status',
+  REUSABLE_SECTION_STATUSES,
+);
+export const storageProviderEnum = pgEnum(
+  'storage_provider',
+  STORAGE_PROVIDERS,
+);
 
 /**
  * Where an import has got to (docs/adr/0082).
@@ -86,14 +96,13 @@ export const storageProviderEnum = pgEnum('storage_provider', ['local', 's3']);
  * decides. `failed` is also what a job found `analyzing` at start-up
  * becomes — the process that was doing the work is gone.
  */
-export const importJobStatusEnum = pgEnum('import_job_status', [
-  'analyzing',
-  'analyzed',
-  'failed',
-]);
+export const importJobStatusEnum = pgEnum(
+  'import_job_status',
+  IMPORT_JOB_STATUSES,
+);
 export const verificationTokenPurposeEnum = pgEnum(
   'verification_token_purpose',
-  ['email-verification', 'password-reset', 'user-invite'],
+  VERIFICATION_TOKEN_PURPOSES,
 );
 
 export const tenants = pgTable('tenants', {

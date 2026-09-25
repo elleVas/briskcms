@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import type { DashboardRecentActivityItem } from '@brisk/ports';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import {
   type BriskDb,
@@ -48,7 +49,7 @@ describe('DrizzleDashboardStatsRepository (integration)', () => {
   async function insertTranslation(overrides: {
     tenantId: string;
     siteId: string;
-    status: 'draft' | 'published';
+    status: DashboardRecentActivityItem['status'];
     title?: string;
   }) {
     const [group] = await withTenant(db, overrides.tenantId, (tx) =>

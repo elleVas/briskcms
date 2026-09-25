@@ -1,3 +1,5 @@
+import type { PageTranslationStatus } from '@brisk/domain-core';
+
 export interface DashboardPageStats {
   publishedCount: number;
   draftCount: number;
@@ -14,7 +16,7 @@ export interface DashboardRecentActivityItem {
   locale: string;
   title: string;
   slug: string;
-  status: 'draft' | 'published';
+  status: PageTranslationStatus;
   updatedAt: Date;
 }
 

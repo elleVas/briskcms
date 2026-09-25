@@ -13,14 +13,14 @@ import { Label } from '../components/ui/label';
 import { ApiError } from '../lib/http-client';
 import type {
   InviteUserInput,
-  UserDto,
+  UserRecord,
   UserRole,
 } from '../lib/users-api-client';
 
 export interface InviteUserDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onInvite: (input: InviteUserInput) => Promise<UserDto>;
+  onInvite: (input: InviteUserInput) => Promise<UserRecord>;
 }
 
 export function InviteUserDialog({

@@ -62,7 +62,7 @@ interface FieldRowProps {
 export const nativeFieldClass =
   'h-8 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 py-1 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50';
 
-/** One input per kind — a panel driven by the field descriptor, replacing Puck's Fields<T> sidebar (docs/adr/0007, see the visual editor plan, Day 3). */
+/** One input per field `kind` — which control a field gets is the descriptor's to say, never the block's. */
 function FieldRow({ field, value, onChange, blockId }: FieldRowProps) {
   const { tLabel } = useTranslation();
   switch (field.kind) {
@@ -221,13 +221,6 @@ function isRequiredFieldEmpty(
   return typeof value !== 'string' || value.trim().length === 0;
 }
 
-/**
- * Replaces Puck's Fields<T> panel (docs/adr/0007) — one input per field,
- * driven by the selected block's `BlockDescriptor`. `inlineEditable` has no
- * effect here yet (mounting TipTap on the canvas is Day 4): for now every
- * field, textual or not, is editable only from here, which the plan already
- * guarantees as the real fallback.
- */
 /** Content first, then the look, then what most people never touch (ADR-0062). */
 const GROUP_ORDER: readonly FieldGroup[] = ['content', 'style', 'advanced'];
 
@@ -260,6 +253,12 @@ function FieldSection({ group, children }: FieldSectionProps) {
   );
 }
 
+/**
+ * The selected block's fields, one input each, driven by its
+ * `BlockDescriptor`. A text field the descriptor marks `inlineEditable` can
+ * also be edited on the canvas with a double click (use-text-edit.ts);
+ * this panel stays the one place that reaches every field.
+ */
 export function InspectorPanel({
   block,
   descriptor,

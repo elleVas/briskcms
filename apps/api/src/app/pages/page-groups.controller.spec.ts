@@ -9,6 +9,8 @@ import {
   PageTranslationNotFoundError,
   ReusableSection,
 } from '@brisk/domain-core';
+import { ReusableSectionRecords } from '../reusable-sections/reusable-section-records';
+import type { ReusableSectionKind } from '@brisk/shared-types';
 import type {
   CollectionRepositoryPort,
   PageGroupRepositoryPort,
@@ -141,6 +143,7 @@ describe('PageGroupsController (unit)', () => {
       siteRepository,
       collectionRepository,
       reusableSectionVersionRepository,
+      new ReusableSectionRecords(),
     );
   });
 
@@ -573,7 +576,7 @@ describe('PageGroupsController (unit)', () => {
   });
 
   describe('templates', () => {
-    function buildTemplate(kind: 'shared' | 'template') {
+    function buildTemplate(kind: ReusableSectionKind) {
       const section = ReusableSection.create({
         id: 'template-1',
         tenantId: 'tenant-1',

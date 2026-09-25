@@ -16,7 +16,7 @@ import { SessionAuthAdapter } from './session-auth.adapter';
 /**
  * Runs against a real Postgres — see docs/development.md. Connects as
  * `brisk_app`, same as production code, so this also regression-tests RLS
- * isolation for `sessions` (see 0003_sessions_rls.sql).
+ * isolation for `sessions` (see drizzle/0000_baseline_schema.sql).
  */
 describe('SessionAuthAdapter (integration)', () => {
   let db: BriskDb;

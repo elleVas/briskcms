@@ -1,4 +1,3 @@
-import type { ReactNode } from 'react';
 import {
   fireEvent,
   render,
@@ -15,6 +14,7 @@ import {
   buildPageGroupVersionRecord,
   buildPageTranslationRecord,
   buildPageTranslationVersionRecord,
+  buildReusableSectionRecord,
 } from '@brisk/testing/records';
 import { TooltipProvider } from '../components/ui/tooltip';
 import { ApiError } from '../lib/http-client';
@@ -22,7 +22,6 @@ import * as api from '../lib/page-groups-api-client';
 import * as previewTokenApi from '../lib/preview-token-api-client';
 import type { CollectionRecord } from '../lib/collections-api-client';
 import { createTestQueryClient } from '../test/query-client.test-fixture';
-import { buildReusableSectionDto } from '../test/dtos.test-fixture';
 import { collectionsQueryOptions } from './collections-queries';
 import { ToastProvider } from './toast-provider';
 import {
@@ -36,9 +35,7 @@ vi.mock('@tanstack/react-router', async (importOriginal) => {
     await importOriginal<typeof import('@tanstack/react-router')>();
   return {
     ...actual,
-    Link: ({ children, to }: { children: ReactNode; to: string }) => (
-      <a href={to}>{children}</a>
-    ),
+    Link: (await import('../test/router-link.test-fixture')).StubLink,
     useNavigate: () => vi.fn(),
   };
 });
@@ -251,7 +248,7 @@ describe('PageGroupEditorView', () => {
       vi.restoreAllMocks();
     });
 
-    const savedTemplate = buildReusableSectionDto({
+    const savedTemplate = buildReusableSectionRecord({
       id: 'template-1',
       name: 'Scheda servizio',
       kind: 'template',
@@ -547,7 +544,7 @@ describe('PageGroupEditorView', () => {
     );
 
     const back = await screen.findByRole('link', { name: /News/ });
-    expect(back.getAttribute('href')).toBe('/collections/$collectionId');
+    expect(back.getAttribute('href')).toBe('/collections/collection-1');
   });
 
   it('goes back to Pages for a page that is in no section', async () => {

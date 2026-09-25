@@ -63,6 +63,48 @@ custom migration needs the same treatment):
 pnpm --filter @brisk/postgres-db run db:generate
 ```
 
+A migration you need to write yourself (a data rewrite, a `USING` cast, an
+RLS policy) still goes through drizzle-kit: change `schema.ts`, generate,
+then edit the SQL file it wrote — or, when `schema.ts` does not change at
+all, start from an empty one with
+`pnpm --filter @brisk/postgres-db exec dotenv -e ../../../.env -- drizzle-kit generate --custom --name <what-it-does>`.
+Writing the `.sql` by hand and adding it to `meta/_journal.json` skips the
+snapshot in `drizzle/meta/`, and the next `db:generate` then emits a
+migration that recreates what already exists. CI runs `db:generate` on
+every PR and fails if it writes anything. A new tenant-scoped table also
+needs its RLS policy in its migration, in the guarded form at the end of
+`0000_baseline_schema.sql`.
+
+Migrations only go forward. drizzle-kit has no down migrations, so there
+is no command that undoes one: the way back from a migration gone wrong is
+the backup taken before it ([self-hosting.md](self-hosting.md#upgrading)).
+CI proves that route on every run, by dumping the migrated and seeded
+database and restoring it into a fresh one.
+
+### The 2026-09-25 squash
+
+The 24 migrations up to `0023_import_jobs` were compacted into one
+`0000_baseline_schema.sql`, checked against a database built from the 24:
+the two schema dumps are identical apart from column order. A fresh
+database needs nothing. A database created before that day is already in
+that shape, but drizzle-kit does not know it: it decides what to run by
+comparing each migration's `when` in `meta/_journal.json` with the newest
+`created_at` in `drizzle.__drizzle_migrations`, and would try to run the
+baseline on top of it. Tell it once, as the admin user, after a backup:
+
+```sql
+-- Only on a database that already had every migration up to 0023.
+insert into drizzle.__drizzle_migrations (hash, created_at)
+select 'squashed-2026-09-25', 1790258087937
+where not exists (
+  select 1 from drizzle.__drizzle_migrations where created_at >= 1790258087937
+);
+```
+
+`1790258087937` is the baseline's `when`, the same as 0023's was. The
+hash is only recorded, never compared. `db:migrate` then runs nothing,
+and every migration after the baseline applies as usual.
+
 Every self-hosted instance runs as one fixed tenant/site (see
 [ADR-0006](adr/0006-temporary-fixed-tenant-resolution-pre-auth.md)). Auth
 now exists (see [ADR-0010](adr/0010-session-based-auth-foundations.md)) —

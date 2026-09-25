@@ -18,10 +18,8 @@ function groupByParent<T extends HierarchyItem>(items: T[]): Map<string, T[]> {
  * Every descendant of `rootId` within `items` (not including `rootId`
  * itself) — used to keep a parent picker from offering an obviously
  * cyclic choice. The backend (setPageParent) remains the real authority.
- * Generic over `{id, parentId}` — the old per-locale `PageListItem` and
- * the new `PageGroupListItem` both have this exact shape (the hierarchy
- * itself is locale-independent in the new model, see docs/adr on
- * PageGroup, but the walk is the same either way).
+ * Generic over `{id, parentId}`, the shape `PageGroupListItem` has: the
+ * hierarchy is one tree per site, not one per language (docs/adr/0034).
  */
 export function collectDescendantIds<T extends HierarchyItem>(
   items: T[],

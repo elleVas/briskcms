@@ -2,6 +2,7 @@ import type {
   PageGroup,
   PageGroupVersion,
   PageTranslation,
+  PageTranslationStatus,
 } from '@brisk/domain-core';
 import type { PageContent } from '@brisk/shared-types';
 import type { Pagination, PaginatedResult } from './pagination';
@@ -33,7 +34,7 @@ export interface PageGroupListItemTranslation {
   slug: string;
   /** seoMeta.title — the row's own display title comes from whichever translation matches the site's default locale (see PageGroupsListView's groupDisplayTitle). */
   title: string;
-  status: 'draft' | 'published';
+  status: PageTranslationStatus;
   isDiverged: boolean;
   /** Published, but the draft has moved on since — see hasUnpublishedChanges in @brisk/domain-core, which is where the rule lives. */
   hasUnpublishedChanges: boolean;

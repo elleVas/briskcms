@@ -7,8 +7,8 @@ import {
   deleteTerm,
   moveTerm,
   updateTerm,
-  type TaxonomyDto,
-  type TermDto,
+  type TaxonomyRecord,
+  type TermRecord,
   type UpdateTermInput,
 } from '../lib/taxonomies-api-client';
 import { termsQueryOptions } from './taxonomies-queries';
@@ -22,17 +22,17 @@ import { firstNamed } from './taxonomies-view';
 
 export interface TermTreeEditorProps {
   siteId: string;
-  taxonomy: TaxonomyDto;
+  taxonomy: TaxonomyRecord;
   locales: string[];
   defaultLocale: string;
 }
 
 /** Root first, then each term's children under it — the order the tree reads in. */
 function inTreeOrder(
-  terms: TermDto[],
+  terms: TermRecord[],
   parentId: string | null = null,
   depth = 0,
-): { term: TermDto; depth: number }[] {
+): { term: TermRecord; depth: number }[] {
   return terms
     .filter((term) => term.parentId === parentId)
     .flatMap((term) => [
@@ -67,7 +67,7 @@ export function TermTreeEditor({
   // Which (term, locale) has its SEO dialog open — one dialog's worth of
   // state for the whole tree, not one per row.
   const [seoFor, setSeoFor] = useState<{
-    term: TermDto;
+    term: TermRecord;
     locale: string;
   } | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -376,11 +376,11 @@ export function TermTreeEditor({
 
 /** Whether `candidate` sits anywhere under `ancestorId` — the branch a term cannot be moved into. */
 function isDescendantOf(
-  terms: TermDto[],
-  candidate: TermDto,
+  terms: TermRecord[],
+  candidate: TermRecord,
   ancestorId: string,
 ): boolean {
-  let current: TermDto | undefined = candidate;
+  let current: TermRecord | undefined = candidate;
   const seen = new Set<string>();
   while (current?.parentId && !seen.has(current.id)) {
     if (current.parentId === ancestorId) return true;

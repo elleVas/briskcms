@@ -1,4 +1,6 @@
-export type UserRole = 'admin' | 'publisher' | 'editor';
+import type { UserRole } from '@brisk/shared-types';
+
+export type { UserRole };
 
 /**
  * A profile picture, stored like an uploaded image (re-encoded, ADR-0013)

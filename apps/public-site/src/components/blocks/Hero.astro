@@ -44,25 +44,14 @@ const { title, eyebrow, subtitle, instanceClass, hasChildren } = Astro.props;
 </section>
 
 <style>
-	/* The audit's worst block: `{title, subtitle}`, centred, fixed markup,
-	   and no way to put a photograph behind it. The vocabulary of
-	   ADR-0047 is what an ordinary hero needs — a background image, a
-	   wash over it so the words stay readable, a minimum height, and
-	   somewhere to put the content inside that height.
-
-	   Alignment is NOT offered here yet, deliberately. This element is a
-	   block, not a flex container, so `align-items` would do nothing
-	   until it becomes one — and making it flex changes the layout of
-	   every hero that exists. It belongs with the Fase 4 rework that
-	   turns Hero into a real container; offering a control that silently
-	   does nothing would be worse than not offering it.
+	/* The vocabulary of ADR-0047 is what an ordinary hero needs — a
+	   background image, a wash over it so the words stay readable, a
+	   minimum height, and somewhere to put the content inside that height.
 
 	   Every fallback below is what this block already looked like, so a
 	   hero with nothing overridden renders exactly as before. */
 	.brisk-hero {
-		/* Flex, so `contentAlign` has something to align — the comment
-		   this replaces said alignment could not be offered until the
-		   block became a container, and this is that change. `stretch`
+		/* Flex, so `contentAlign` has something to align. `stretch`
 		   is the flex default AND what block flow did, so a hero that
 		   sets nothing lays out exactly as before: children fill the
 		   width and `text-center` still centres the text inside them. */

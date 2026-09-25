@@ -1,12 +1,14 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { buildCollectionRecord } from '@brisk/testing/records';
+import {
+  buildCollectionRecord,
+  buildReusableSectionListItem,
+} from '@brisk/testing/records';
 import { TooltipProvider } from '../components/ui/tooltip';
 import * as collectionsApi from '../lib/collections-api-client';
 import * as sectionsApi from '../lib/reusable-sections-api-client';
 import { createTestQueryClient } from '../test/query-client.test-fixture';
-import { buildReusableSectionListItemDto } from '../test/dtos.test-fixture';
 import { CollectionsDialog } from './collections-dialog';
 
 vi.mock('../lib/reusable-sections-api-client', async (importOriginal) => {
@@ -31,8 +33,8 @@ const news = buildCollectionRecord({
 function template(
   id: string,
   name: string,
-): sectionsApi.ReusableSectionListItemDto {
-  return buildReusableSectionListItemDto({
+): sectionsApi.ReusableSectionListItem {
+  return buildReusableSectionListItem({
     id,
     name,
     kind: 'template',
@@ -42,7 +44,7 @@ function template(
 }
 
 function renderDialog(
-  sections: sectionsApi.ReusableSectionListItemDto[] = [
+  sections: sectionsApi.ReusableSectionListItem[] = [
     template('article', 'Articolo blog'),
     template('event', 'Evento'),
   ],

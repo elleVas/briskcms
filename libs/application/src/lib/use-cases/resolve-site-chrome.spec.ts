@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { Site, SiteLayoutSection } from '@brisk/domain-core';
+import type { SiteLayoutSectionKind } from '@brisk/shared-types';
 import { resolveSiteChrome } from './resolve-site-chrome';
 import {
   InMemoryTaxonomyRepository,
@@ -30,7 +31,7 @@ describe('resolveSiteChrome', () => {
     repository: InMemorySiteLayoutSectionRepository,
     input: {
       locale: string;
-      kind: 'header' | 'footer';
+      kind: SiteLayoutSectionKind;
       content: unknown[];
     },
   ) {

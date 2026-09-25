@@ -1,46 +1,31 @@
-import type { LocalizedSeoMeta, LocalizedText } from '@brisk/shared-types';
+import { z } from 'zod';
+import {
+  type LocalizedSeoMeta,
+  type LocalizedText,
+  type PageGroupTerms,
+  type TaxonomyRecord,
+  type TermRecord,
+  pageGroupTermsSchema,
+  taxonomyRecordSchema,
+  termRecordSchema,
+} from '@brisk/shared-types';
 import { request } from './http-client';
 
-export interface TaxonomyDto {
-  id: string;
-  tenantId: string;
-  siteId: string;
-  /** The URL prefix its terms answer under, or `null` for the site root (ADR-0064). */
-  prefix: string | null;
-  name: LocalizedText;
-  hierarchical: boolean;
-  order: number;
-  createdAt: string;
-  updatedAt: string;
-}
+export type { TaxonomyRecord, TermRecord };
 
-export interface TermDto {
-  id: string;
-  tenantId: string;
-  siteId: string;
-  taxonomyId: string;
-  parentId: string | null;
-  name: LocalizedText;
-  description: LocalizedText;
-  /** Per-locale SEO for the term's own route (docs/adr/0067). */
-  seoMeta: LocalizedSeoMeta;
-  /** Kept out of search engines, one term at a time (docs/adr/0078). */
-  noindex: boolean;
-  landingPageGroupId: string | null;
-  order: number;
-  /** locale -> the slug this term answers to in that language. */
-  slugs: Record<string, string>;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export function listTaxonomies(siteId: string): Promise<TaxonomyDto[]> {
+export async function listTaxonomies(
+  siteId: string,
+): Promise<TaxonomyRecord[]> {
   const params = new URLSearchParams({ siteId });
-  return request(`/taxonomies?${params.toString()}`);
+  return z
+    .array(taxonomyRecordSchema)
+    .parse(await request(`/taxonomies?${params.toString()}`));
 }
 
-export function listTerms(taxonomyId: string): Promise<TermDto[]> {
-  return request(`/taxonomies/${taxonomyId}/terms`);
+export async function listTerms(taxonomyId: string): Promise<TermRecord[]> {
+  return z
+    .array(termRecordSchema)
+    .parse(await request(`/taxonomies/${taxonomyId}/terms`));
 }
 
 export interface CreateTaxonomyInput {
@@ -55,13 +40,15 @@ export interface CreateTaxonomyInput {
   hierarchical?: boolean;
 }
 
-export function createTaxonomy(
+export async function createTaxonomy(
   input: CreateTaxonomyInput,
-): Promise<TaxonomyDto> {
-  return request('/taxonomies', {
-    method: 'POST',
-    body: JSON.stringify(input),
-  });
+): Promise<TaxonomyRecord> {
+  return taxonomyRecordSchema.parse(
+    await request('/taxonomies', {
+      method: 'POST',
+      body: JSON.stringify(input),
+    }),
+  );
 }
 
 export interface UpdateTaxonomyInput {
@@ -70,14 +57,16 @@ export interface UpdateTaxonomyInput {
   hierarchical?: boolean;
 }
 
-export function updateTaxonomy(
+export async function updateTaxonomy(
   id: string,
   input: UpdateTaxonomyInput,
-): Promise<TaxonomyDto> {
-  return request(`/taxonomies/${id}`, {
-    method: 'PATCH',
-    body: JSON.stringify(input),
-  });
+): Promise<TaxonomyRecord> {
+  return taxonomyRecordSchema.parse(
+    await request(`/taxonomies/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(input),
+    }),
+  );
 }
 
 export function deleteTaxonomy(id: string): Promise<{ ok: true }> {
@@ -90,14 +79,16 @@ export interface CreateTermInput {
   parentId?: string | null;
 }
 
-export function createTerm(
+export async function createTerm(
   taxonomyId: string,
   input: CreateTermInput,
-): Promise<TermDto> {
-  return request(`/taxonomies/${taxonomyId}/terms`, {
-    method: 'POST',
-    body: JSON.stringify(input),
-  });
+): Promise<TermRecord> {
+  return termRecordSchema.parse(
+    await request(`/taxonomies/${taxonomyId}/terms`, {
+      method: 'POST',
+      body: JSON.stringify(input),
+    }),
+  );
 }
 
 export interface UpdateTermInput {
@@ -111,24 +102,28 @@ export interface UpdateTermInput {
   landingPageGroupId?: string | null;
 }
 
-export function updateTerm(
+export async function updateTerm(
   termId: string,
   input: UpdateTermInput,
-): Promise<TermDto> {
-  return request(`/taxonomies/terms/${termId}`, {
-    method: 'PATCH',
-    body: JSON.stringify(input),
-  });
+): Promise<TermRecord> {
+  return termRecordSchema.parse(
+    await request(`/taxonomies/terms/${termId}`, {
+      method: 'PATCH',
+      body: JSON.stringify(input),
+    }),
+  );
 }
 
-export function moveTerm(
+export async function moveTerm(
   termId: string,
   parentId: string | null,
-): Promise<TermDto> {
-  return request(`/taxonomies/terms/${termId}/parent`, {
-    method: 'PATCH',
-    body: JSON.stringify({ parentId }),
-  });
+): Promise<TermRecord> {
+  return termRecordSchema.parse(
+    await request(`/taxonomies/terms/${termId}/parent`, {
+      method: 'PATCH',
+      body: JSON.stringify({ parentId }),
+    }),
+  );
 }
 
 export function deleteTerm(termId: string): Promise<{ ok: true }> {
@@ -136,18 +131,22 @@ export function deleteTerm(termId: string): Promise<{ ok: true }> {
 }
 
 /** Which terms a page carries — on the page GROUP, so it is the same set in every language (ADR-0064). */
-export function getPageGroupTerms(
+export async function getPageGroupTerms(
   pageGroupId: string,
-): Promise<{ termIds: string[] }> {
-  return request(`/page-groups/${pageGroupId}/terms`);
+): Promise<PageGroupTerms> {
+  return pageGroupTermsSchema.parse(
+    await request(`/page-groups/${pageGroupId}/terms`),
+  );
 }
 
-export function setPageGroupTerms(
+export async function setPageGroupTerms(
   pageGroupId: string,
   termIds: string[],
-): Promise<{ termIds: string[] }> {
-  return request(`/page-groups/${pageGroupId}/terms`, {
-    method: 'PATCH',
-    body: JSON.stringify({ termIds }),
-  });
+): Promise<PageGroupTerms> {
+  return pageGroupTermsSchema.parse(
+    await request(`/page-groups/${pageGroupId}/terms`, {
+      method: 'PATCH',
+      body: JSON.stringify({ termIds }),
+    }),
+  );
 }

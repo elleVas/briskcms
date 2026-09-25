@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ChevronLeft, ChevronRight, Trash2 } from 'lucide-react';
 import type { MediaKind } from '@brisk/shared-types';
-import type { MediaDto, MediaFilters } from '../lib/media-api-client';
+import type { MediaRecord, MediaFilters } from '../lib/media-api-client';
 import { ConfirmActionDialog } from './confirm-action-dialog';
 import { IconButton } from './icon-button';
 import { MediaFilterBar } from './media-filter-bar';
@@ -13,7 +13,7 @@ import { useMediaLibrary } from './use-media-library';
 
 export interface MediaGridProps {
   siteId: string;
-  items: MediaDto[];
+  items: MediaRecord[];
   page: number;
   total: number;
   onPageChange: (page: number) => void;
@@ -22,7 +22,7 @@ export interface MediaGridProps {
   onFiltersChange: (next: MediaFilters) => void;
   // Present only in the in-editor picker dialog — the library page (no
   // onSelect) shows files purely for browsing/deleting, not picking.
-  onSelect?: (media: MediaDto) => void;
+  onSelect?: (media: MediaRecord) => void;
   // Present only on the library page — the picker dialog doesn't offer
   // deletion, to keep "pick an image for this block" and "manage the
   // library" as separate actions instead of tangling one dialog's state
@@ -50,7 +50,7 @@ export function MediaGrid({
   const { t } = useTranslation();
   const { deleteMedia } = useMediaLibrary(siteId);
   const [actionError, setActionError] = useState('');
-  const [mediaToDelete, setMediaToDelete] = useState<MediaDto | null>(null);
+  const [mediaToDelete, setMediaToDelete] = useState<MediaRecord | null>(null);
 
   const totalPages = Math.max(1, Math.ceil(total / MEDIA_PAGE_SIZE));
   const hasFilters = Boolean(filters.search?.trim() || filters.kind);

@@ -6,8 +6,8 @@ import type { FormField } from '@brisk/shared-types';
 import { Button } from '../components/ui/button';
 import { Link } from '@tanstack/react-router';
 import type {
-  FormSubmissionDto,
-  SubmissionOriginPageDto,
+  FormSubmissionRecord,
+  SubmissionOriginPageRecord,
 } from '../lib/forms-api-client';
 import { formSubmissionsCsvUrl } from '../lib/forms-api-client';
 import {
@@ -81,11 +81,11 @@ function AnswerValue({ value }: { value: unknown }) {
 }
 
 interface SubmissionRowProps {
-  submission: FormSubmissionDto;
+  submission: FormSubmissionRecord;
   fields: FormField[];
   locale: string;
   /** The page it was filled on, already looked up — `null` when there is none to show. */
-  page: SubmissionOriginPageDto | null;
+  page: SubmissionOriginPageRecord | null;
 }
 
 function SubmissionRow({

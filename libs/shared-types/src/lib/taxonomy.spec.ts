@@ -2,9 +2,15 @@ import { describe, expect, it } from 'vitest';
 import {
   localizedSeoMetaSchema,
   localizedTextSchema,
-  taxonomySchema,
-  termSchema,
+  taxonomyRecordSchema,
+  termRecordSchema,
 } from './taxonomy';
+
+const STAMPS = {
+  tenantId: 'tenant-1',
+  createdAt: '2026-01-01T00:00:00.000Z',
+  updatedAt: '2026-01-01T00:00:00.000Z',
+};
 
 describe('localized values', () => {
   it('accepts any locale a site happens to have', () => {
@@ -35,28 +41,30 @@ describe('localized values', () => {
   });
 });
 
-describe('taxonomySchema', () => {
+describe('taxonomyRecordSchema', () => {
   /*
    * The prefix is nullable and that is the feature, not an oversight:
    * `null` mounts the dimension's terms at the site root
    * (`/it/espresso`) instead of behind `/it/categoria/`.
    */
   it('accepts a dimension with no URL prefix', () => {
-    const parsed = taxonomySchema.parse({
+    const parsed = taxonomyRecordSchema.parse({
+      ...STAMPS,
       id: 't1',
       siteId: 's1',
-      slug: null,
+      prefix: null,
       name: { it: 'Categoria' },
       hierarchical: true,
       order: 0,
     });
 
-    expect(parsed.slug).toBeNull();
+    expect(parsed.prefix).toBeNull();
   });
 
   it('refuses a missing prefix — absent is not the same as deliberately none', () => {
     expect(() =>
-      taxonomySchema.parse({
+      taxonomyRecordSchema.parse({
+        ...STAMPS,
         id: 't1',
         siteId: 's1',
         name: {},
@@ -67,9 +75,10 @@ describe('taxonomySchema', () => {
   });
 });
 
-describe('termSchema', () => {
+describe('termRecordSchema', () => {
   it('carries a slug per language and nothing forcing them to agree', () => {
-    const parsed = termSchema.parse({
+    const parsed = termRecordSchema.parse({
+      ...STAMPS,
       id: 'x1',
       siteId: 's1',
       taxonomyId: 't1',
@@ -77,6 +86,7 @@ describe('termSchema', () => {
       name: { it: 'Macchine', en: 'Machines' },
       description: {},
       seoMeta: {},
+      noindex: false,
       landingPageGroupId: null,
       order: 0,
       slugs: { it: 'macchine', en: 'machines' },
@@ -86,7 +96,8 @@ describe('termSchema', () => {
   });
 
   it('accepts a term with a hand-built landing page', () => {
-    const parsed = termSchema.parse({
+    const parsed = termRecordSchema.parse({
+      ...STAMPS,
       id: 'x1',
       siteId: 's1',
       taxonomyId: 't1',
@@ -94,6 +105,7 @@ describe('termSchema', () => {
       name: {},
       description: {},
       seoMeta: {},
+      noindex: true,
       landingPageGroupId: 'g1',
       order: 3,
       slugs: {},

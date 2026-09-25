@@ -23,6 +23,14 @@ import {
   uploadMedia,
 } from '@brisk/application';
 import { type Media } from '@brisk/domain-core';
+import {
+  type MediaKindCounts,
+  type MediaRecord,
+  type PaginatedMedia,
+  mediaKindCountsSchema,
+  mediaRecordSchema,
+  paginatedMediaSchema,
+} from '@brisk/shared-types';
 import type {
   MediaRepositoryPort,
   MediaStoragePort,
@@ -61,7 +69,7 @@ export class MediaController {
   @Get()
   async list(
     @Query(new ZodValidationPipe(listMediaQuerySchema)) query: ListMediaQuery,
-  ) {
+  ): Promise<PaginatedMedia> {
     const result = await listMedia(
       { mediaRepository: this.mediaRepository },
       {
@@ -72,10 +80,10 @@ export class MediaController {
         filter: { search: query.search, kind: query.kind },
       },
     );
-    return {
+    return paginatedMediaSchema.parse({
       items: result.items.map((item) => this.toDto(item)),
       total: result.total,
-    };
+    });
   }
 
   /**
@@ -83,16 +91,18 @@ export class MediaController {
    * literal segment, so it is never mistaken for a media id.
    */
   @Get('kinds')
-  countByKind(
+  async countByKind(
     @Query(new ZodValidationPipe(countMediaByKindQuerySchema))
     query: CountMediaByKindQuery,
-  ) {
-    return countMediaByKind(
-      { mediaRepository: this.mediaRepository },
-      {
-        tenantId: this.tenantContext.getCurrentTenantId(),
-        siteId: query.siteId,
-      },
+  ): Promise<MediaKindCounts> {
+    return mediaKindCountsSchema.parse(
+      await countMediaByKind(
+        { mediaRepository: this.mediaRepository },
+        {
+          tenantId: this.tenantContext.getCurrentTenantId(),
+          siteId: query.siteId,
+        },
+      ),
     );
   }
 
@@ -107,7 +117,7 @@ export class MediaController {
   async upload(
     @UploadedFile() file: Express.Multer.File | undefined,
     @Body(new ZodValidationPipe(uploadMediaBodySchema)) body: UploadMediaBody,
-  ) {
+  ): Promise<MediaRecord> {
     if (!file) {
       throw new BadRequestException('No file uploaded');
     }
@@ -139,10 +149,26 @@ export class MediaController {
     );
   }
 
-  private toDto(media: Media) {
-    return {
-      ...media.toProps(),
-      url: this.mediaStorage.getUrl(media.storageKey),
-    };
+  /**
+   * Whitelisted field by field, never the entity spread: a spread ships
+   * whatever field `Media` gains next without anybody deciding it should
+   * leave the server.
+   */
+  private toDto(media: Media): MediaRecord {
+    const props = media.toProps();
+    return mediaRecordSchema.parse({
+      id: props.id,
+      tenantId: props.tenantId,
+      siteId: props.siteId,
+      filename: props.filename,
+      storageKey: props.storageKey,
+      storageProvider: props.storageProvider,
+      mimeType: props.mimeType,
+      size: props.size,
+      width: props.width,
+      height: props.height,
+      createdAt: props.createdAt.toISOString(),
+      url: this.mediaStorage.getUrl(props.storageKey),
+    });
   }
 }

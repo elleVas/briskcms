@@ -6,21 +6,22 @@ Postgres full-text search for published pages — implements
 
 ## Why its own Port
 
-`SearchPort` is deliberately separate from `PageRepositoryPort` even though
-both operate on the `pages` table: search is a distinct capability with its
+`SearchPort` is deliberately separate from `PageTranslationRepositoryPort`
+even though both operate on the `page_translations` table: search is a distinct capability with its
 own storage/query shape (this adapter uses Postgres `tsvector` + a GIN
 index; a different engine — MariaDB FULLTEXT, SQLite FTS5, MongoDB `$text`
-— would need none of `PageRepositoryPort`'s CRUD surface to implement the
+— would need none of the page repositories' CRUD surface to implement the
 same Port). Keeping them separate means a future non-Postgres deployment
 could swap only the search adapter without touching page persistence.
 
 ## How indexing works
 
-`indexPage(tenantId, siteId, page)` extracts plain searchable text from
-`page.seoMeta` and `page.publishedContent` via
-`extractSearchableText` (`@brisk/shared-types`) and writes it to the plain
-`pages.search_text` column. `pages.search_vector` — a `tsvector` **generated
-column** derived from `search_text` — is defined at the SQL level (see
+`indexPage(tenantId, siteId, translation, content)` extracts plain
+searchable text from the translation's `seoMeta` and the published
+`content` via `extractSearchableText` (`@brisk/shared-types`) and writes it
+to the plain `page_translations.search_text` column.
+`page_translations.search_vector` — a `tsvector` **generated column**
+derived from `search_text` — is defined at the SQL level (see
 `drizzle/0000_baseline_schema.sql`; Drizzle's schema builder has no
 first-class generated-column DSL) and is never read or written directly by
 this class, only queried through its GIN index in `search()`. Indexing is

@@ -1,22 +1,13 @@
-import type { WordPressAnalysis } from '@brisk/shared-types';
+import {
+  type ImportJobList,
+  type ImportJobRecord,
+  type ImportJobStatus,
+  importJobListSchema,
+  importJobRecordSchema,
+} from '@brisk/shared-types';
 import { API_BASE_URL, request } from './http-client';
 
-export type ImportJobStatus = 'analyzing' | 'analyzed' | 'failed';
-
-export interface ImportJobDto {
-  id: string;
-  siteId: string;
-  source: string;
-  fileName: string;
-  fileBytes: number;
-  status: ImportJobStatus;
-  /** Present once the reading has finished. */
-  report: WordPressAnalysis | null;
-  /** Present when it failed, and written to be read by whoever uploaded the file. */
-  failureReason: string | null;
-  createdAt: string;
-  finishedAt: string | null;
-}
+export type { ImportJobList, ImportJobRecord, ImportJobStatus };
 
 /**
  * Sends the export and gets back the job that will read it.
@@ -28,7 +19,7 @@ export interface ImportJobDto {
 export async function startWordPressAnalysis(
   siteId: string,
   file: File,
-): Promise<ImportJobDto> {
+): Promise<ImportJobRecord> {
   const body = new FormData();
   body.append('siteId', siteId);
   body.append('file', file);
@@ -41,17 +32,15 @@ export async function startWordPressAnalysis(
   if (!res.ok) {
     throw new Error(`Import API error: ${res.status}`);
   }
-  return res.json();
+  return importJobRecordSchema.parse(await res.json());
 }
 
-export function getImportJob(id: string): Promise<ImportJobDto> {
-  return request<ImportJobDto>(`/imports/${id}`);
+export async function getImportJob(id: string): Promise<ImportJobRecord> {
+  return importJobRecordSchema.parse(await request(`/imports/${id}`));
 }
 
-export function listImportJobs(
-  siteId: string,
-): Promise<{ items: ImportJobDto[] }> {
-  return request<{ items: ImportJobDto[] }>(
-    `/imports?siteId=${encodeURIComponent(siteId)}`,
+export async function listImportJobs(siteId: string): Promise<ImportJobList> {
+  return importJobListSchema.parse(
+    await request(`/imports?siteId=${encodeURIComponent(siteId)}`),
   );
 }

@@ -1,70 +1,77 @@
-import type { Block, ExposedFields } from '@brisk/shared-types';
+import { z } from 'zod';
+import {
+  type Block,
+  type ExposedFields,
+  type ReusableSectionKind,
+  type ReusableSectionListItem,
+  type ReusableSectionRecord,
+  type ReusableSectionVersionRecord,
+  reusableSectionListItemSchema,
+  reusableSectionRecordSchema,
+  reusableSectionVersionRecordSchema,
+} from '@brisk/shared-types';
 import { request } from './http-client';
 
-export type ReusableSectionKind = 'shared' | 'template';
+export type {
+  ReusableSectionKind,
+  ReusableSectionListItem,
+  ReusableSectionRecord,
+  ReusableSectionVersionRecord,
+};
 
-export interface ReusableSectionDto {
-  id: string;
-  tenantId: string;
-  siteId: string;
-  name: string;
-  kind: ReusableSectionKind;
-  status: 'draft' | 'published';
-  content: Block[];
-  publishedContent: Block[] | null;
-  exposedFields: ExposedFields;
-  createdBy: string | null;
-  createdAt: string;
-  updatedAt: string;
-}
-
-/** The list row: a section plus how many pages place it (docs/adr/0059) and how many templates hold it (docs/adr/0072). */
-export interface ReusableSectionListItemDto extends ReusableSectionDto {
-  usedOnPages: number;
-  usedInTemplates: number;
-}
-
-export function listReusableSections(
+export async function listReusableSections(
   siteId: string,
-): Promise<ReusableSectionListItemDto[]> {
+): Promise<ReusableSectionListItem[]> {
   const params = new URLSearchParams({ siteId });
-  return request(`/reusable-sections?${params.toString()}`);
+  return z
+    .array(reusableSectionListItemSchema)
+    .parse(await request(`/reusable-sections?${params.toString()}`));
 }
 
-export function getReusableSection(id: string): Promise<ReusableSectionDto> {
-  return request(`/reusable-sections/${id}`);
+export async function getReusableSection(
+  id: string,
+): Promise<ReusableSectionRecord> {
+  return reusableSectionRecordSchema.parse(
+    await request(`/reusable-sections/${id}`),
+  );
 }
 
-export function createReusableSection(input: {
+export async function createReusableSection(input: {
   siteId: string;
   name: string;
   kind: ReusableSectionKind;
   content?: Block[];
-}): Promise<ReusableSectionDto> {
-  return request('/reusable-sections', {
-    method: 'POST',
-    body: JSON.stringify(input),
-  });
+}): Promise<ReusableSectionRecord> {
+  return reusableSectionRecordSchema.parse(
+    await request('/reusable-sections', {
+      method: 'POST',
+      body: JSON.stringify(input),
+    }),
+  );
 }
 
-export function saveDraft(
+export async function saveDraft(
   id: string,
   content: Block[],
-): Promise<ReusableSectionDto> {
-  return request(`/reusable-sections/${id}/draft`, {
-    method: 'PATCH',
-    body: JSON.stringify({ content }),
-  });
+): Promise<ReusableSectionRecord> {
+  return reusableSectionRecordSchema.parse(
+    await request(`/reusable-sections/${id}/draft`, {
+      method: 'PATCH',
+      body: JSON.stringify({ content }),
+    }),
+  );
 }
 
-export function renameReusableSection(
+export async function renameReusableSection(
   id: string,
   name: string,
-): Promise<ReusableSectionDto> {
-  return request(`/reusable-sections/${id}/name`, {
-    method: 'PATCH',
-    body: JSON.stringify({ name }),
-  });
+): Promise<ReusableSectionRecord> {
+  return reusableSectionRecordSchema.parse(
+    await request(`/reusable-sections/${id}/name`, {
+      method: 'PATCH',
+      body: JSON.stringify({ name }),
+    }),
+  );
 }
 
 /**
@@ -73,45 +80,46 @@ export function renameReusableSection(
  * effect without republishing — the same separation `sticky` has on a
  * header (docs/adr/0018 follow-up).
  */
-export function setExposedFields(
+export async function setExposedFields(
   id: string,
   exposedFields: ExposedFields,
-): Promise<ReusableSectionDto> {
-  return request(`/reusable-sections/${id}/exposed-fields`, {
-    method: 'PATCH',
-    body: JSON.stringify({ exposedFields }),
-  });
+): Promise<ReusableSectionRecord> {
+  return reusableSectionRecordSchema.parse(
+    await request(`/reusable-sections/${id}/exposed-fields`, {
+      method: 'PATCH',
+      body: JSON.stringify({ exposedFields }),
+    }),
+  );
 }
 
-export function publishReusableSection(
+export async function publishReusableSection(
   id: string,
-): Promise<ReusableSectionDto> {
-  return request(`/reusable-sections/${id}/publish`, { method: 'POST' });
+): Promise<ReusableSectionRecord> {
+  return reusableSectionRecordSchema.parse(
+    await request(`/reusable-sections/${id}/publish`, { method: 'POST' }),
+  );
 }
 
 export function deleteReusableSection(id: string): Promise<{ deleted: true }> {
   return request(`/reusable-sections/${id}`, { method: 'DELETE' });
 }
 
-export interface ReusableSectionVersionDto {
-  id: string;
-  tenantId: string;
-  reusableSectionId: string;
-  content: Block[];
-  createdBy: string | null;
-  createdAt: string;
+export async function listVersions(
+  id: string,
+): Promise<ReusableSectionVersionRecord[]> {
+  return z
+    .array(reusableSectionVersionRecordSchema)
+    .parse(await request(`/reusable-sections/${id}/versions`));
 }
 
-export function listVersions(id: string): Promise<ReusableSectionVersionDto[]> {
-  return request(`/reusable-sections/${id}/versions`);
-}
-
-export function rollbackToVersion(
+export async function rollbackToVersion(
   id: string,
   versionId: string,
-): Promise<ReusableSectionDto> {
-  return request(`/reusable-sections/${id}/rollback`, {
-    method: 'POST',
-    body: JSON.stringify({ versionId }),
-  });
+): Promise<ReusableSectionRecord> {
+  return reusableSectionRecordSchema.parse(
+    await request(`/reusable-sections/${id}/rollback`, {
+      method: 'POST',
+      body: JSON.stringify({ versionId }),
+    }),
+  );
 }

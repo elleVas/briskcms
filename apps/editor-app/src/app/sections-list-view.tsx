@@ -6,12 +6,13 @@ import {
   useSuspenseQuery,
 } from '@tanstack/react-query';
 import { Trash2 } from 'lucide-react';
+import { REUSABLE_SECTION_KINDS } from '@brisk/shared-types';
 import { useTranslation } from '../lib/use-translation';
 import {
   createReusableSection,
   deleteReusableSection,
   type ReusableSectionKind,
-  type ReusableSectionListItemDto,
+  type ReusableSectionListItem,
 } from '../lib/reusable-sections-api-client';
 import { collectionsQueryKey } from './collections-queries';
 import { reusableSectionsQueryOptions } from './reusable-sections-queries';
@@ -24,7 +25,7 @@ export interface SectionsListViewProps {
 }
 
 function isSectionKind(value: string): value is ReusableSectionKind {
-  return value === 'shared' || value === 'template';
+  return REUSABLE_SECTION_KINDS.some((kind) => kind === value);
 }
 
 /**
@@ -74,10 +75,7 @@ export function SectionsListView({ siteId }: SectionsListViewProps) {
   });
 
   function usageText(
-    section: Pick<
-      ReusableSectionListItemDto,
-      'usedOnPages' | 'usedInTemplates'
-    >,
+    section: Pick<ReusableSectionListItem, 'usedOnPages' | 'usedInTemplates'>,
   ): string {
     const parts = [
       ...(section.usedOnPages > 0

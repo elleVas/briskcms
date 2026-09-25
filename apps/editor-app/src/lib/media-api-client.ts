@@ -1,25 +1,15 @@
-import type { MediaKind } from '@brisk/shared-types';
+import {
+  type MediaKind,
+  type MediaKindCounts,
+  type MediaRecord,
+  type PaginatedMedia,
+  mediaKindCountsSchema,
+  mediaRecordSchema,
+  paginatedMediaSchema,
+} from '@brisk/shared-types';
 import { request } from './http-client';
 
-export interface MediaDto {
-  id: string;
-  tenantId: string;
-  siteId: string;
-  filename: string;
-  storageKey: string;
-  storageProvider: 'local' | 's3';
-  mimeType: string;
-  size: number;
-  width: number | null;
-  height: number | null;
-  createdAt: string;
-  url: string;
-}
-
-export interface PaginatedMedia {
-  items: MediaDto[];
-  total: number;
-}
+export type { MediaKindCounts, MediaRecord, PaginatedMedia };
 
 /** What the library is narrowed to — see the same type on the server side for why the database answers it rather than the client. */
 export interface MediaFilters {
@@ -29,16 +19,16 @@ export interface MediaFilters {
 }
 
 /** How many files each of the library's folders holds. */
-export function countMediaByKind(
+export async function countMediaByKind(
   siteId: string,
-): Promise<Record<MediaKind, number>> {
+): Promise<MediaKindCounts> {
   const params = new URLSearchParams({ siteId });
-  return request<Record<MediaKind, number>>(
-    `/media/kinds?${params.toString()}`,
+  return mediaKindCountsSchema.parse(
+    await request(`/media/kinds?${params.toString()}`),
   );
 }
 
-export function listMedia(
+export async function listMedia(
   siteId: string,
   page: number,
   pageSize: number,
@@ -57,14 +47,21 @@ export function listMedia(
   if (filters.kind) {
     params.set('kind', filters.kind);
   }
-  return request(`/media?${params.toString()}`);
+  return paginatedMediaSchema.parse(
+    await request(`/media?${params.toString()}`),
+  );
 }
 
-export function uploadMedia(siteId: string, file: File): Promise<MediaDto> {
+export async function uploadMedia(
+  siteId: string,
+  file: File,
+): Promise<MediaRecord> {
   const body = new FormData();
   body.append('siteId', siteId);
   body.append('file', file);
-  return request('/media', { method: 'POST', body });
+  return mediaRecordSchema.parse(
+    await request('/media', { method: 'POST', body }),
+  );
 }
 
 export function deleteMedia(id: string): Promise<void> {
