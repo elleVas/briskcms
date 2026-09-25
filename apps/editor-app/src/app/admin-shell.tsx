@@ -4,6 +4,7 @@ import { Link } from '@tanstack/react-router';
 import {
   ClipboardList,
   Cookie,
+  DownloadCloud,
   FileText,
   Image,
   LayoutDashboard,
@@ -185,6 +186,17 @@ function SidebarContent() {
             label={t('shell.nav.integrations')}
           />
           <NavItem to="/cookies" icon={Cookie} label={t('shell.nav.cookies')} />
+          {/* Admin-only like Users below, and for the same reason the
+              comment there gives: it reads a whole site's structure out
+              of a file, and offering it to somebody the API will refuse
+              is the sidebar asking a question it knows the answer to. */}
+          {isAdmin && (
+            <NavItem
+              to="/imports"
+              icon={DownloadCloud}
+              label={t('shell.nav.imports')}
+            />
+          )}
           {/* Admin-only, and the sidebar says so instead of the server
                 saying it after the click. Every screen used to be offered
                 to everybody: an Editor saw this, opened it, and got a

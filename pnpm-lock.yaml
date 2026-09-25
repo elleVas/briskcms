@@ -257,6 +257,9 @@ importers:
       '@brisk/postgres-form-repository':
         specifier: workspace:*
         version: link:../../libs/adapters/postgres-form-repository
+      '@brisk/postgres-import-job-repository':
+        specifier: workspace:*
+        version: link:../../libs/adapters/postgres-import-job-repository
       '@brisk/postgres-media-repository':
         specifier: workspace:*
         version: link:../../libs/adapters/postgres-media-repository
@@ -308,6 +311,9 @@ importers:
       '@brisk/verification-token-adapter':
         specifier: workspace:*
         version: link:../../libs/adapters/verification-token-adapter
+      '@brisk/wordpress-wxr':
+        specifier: workspace:*
+        version: link:../../libs/adapters/wordpress-wxr
       '@nestjs/common':
         specifier: ^11.0.0
         version: 11.2.1(reflect-metadata@0.2.2)(rxjs@7.8.2)
@@ -681,6 +687,24 @@ importers:
         specifier: ^17.4.2
         version: 17.4.2
 
+  libs/adapters/postgres-import-job-repository:
+    dependencies:
+      '@brisk/domain-core':
+        specifier: workspace:*
+        version: link:../../domain-core
+      '@brisk/ports':
+        specifier: workspace:*
+        version: link:../../ports
+      '@brisk/postgres-db':
+        specifier: workspace:*
+        version: link:../postgres-db
+      '@brisk/shared-types':
+        specifier: workspace:*
+        version: link:../../shared-types
+      drizzle-orm:
+        specifier: ^0.45.2
+        version: 0.45.2(postgres@3.4.9)
+
   libs/adapters/postgres-media-repository:
     dependencies:
       '@brisk/domain-core':
@@ -946,6 +970,15 @@ importers:
       dotenv:
         specifier: ^17.4.2
         version: 17.4.2
+
+  libs/adapters/wordpress-wxr:
+    dependencies:
+      '@brisk/ports':
+        specifier: workspace:*
+        version: link:../../ports
+      htmlparser2:
+        specifier: ^12.0.0
+        version: 12.0.0
 
   libs/application:
     dependencies:
@@ -21751,7 +21784,7 @@ snapshots:
 
   minimist@1.2.8: {}
 
-  minimizer-webpack-plugin@5.11.0(@swc/core@1.16.2(@swc/helpers@0.5.23))(esbuild@0.25.12)(postcss@8.5.26)(webpack@5.111.1):
+  minimizer-webpack-plugin@5.11.0(@swc/core@1.16.2(@swc/helpers@0.5.23))(esbuild@0.25.12)(postcss@8.5.26)(webpack@5.111.1(@swc/core@1.16.2(@swc/helpers@0.5.23))(esbuild@0.25.12)(postcss@8.5.26)(webpack-cli@7.2.3)):
     dependencies:
       '@jridgewell/trace-mapping': 0.3.31
       jest-worker: 27.5.1
@@ -24707,7 +24740,7 @@ snapshots:
       events: 3.3.0
       graceful-fs: 4.2.11
       mime-db: 1.54.0
-      minimizer-webpack-plugin: 5.11.0(@swc/core@1.16.2(@swc/helpers@0.5.23))(esbuild@0.25.12)(postcss@8.5.26)(webpack@5.111.1)
+      minimizer-webpack-plugin: 5.11.0(@swc/core@1.16.2(@swc/helpers@0.5.23))(esbuild@0.25.12)(postcss@8.5.26)(webpack@5.111.1(@swc/core@1.16.2(@swc/helpers@0.5.23))(esbuild@0.25.12)(postcss@8.5.26)(webpack-cli@7.2.3))
       schema-utils: 4.5.0
       tapable: 2.3.3
       watchpack: 2.5.2
