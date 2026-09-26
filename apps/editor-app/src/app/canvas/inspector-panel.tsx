@@ -1,5 +1,10 @@
-import type { ReactNode } from 'react';
-import type { Block, BlockAlign, PickedSection } from '@brisk/shared-types';
+import { useId, type ReactNode } from 'react';
+import {
+  blockAlignSchema,
+  type Block,
+  type BlockAlign,
+  type PickedSection,
+} from '@brisk/shared-types';
 import { OptionsSelect } from '../../components/ui/select';
 import { CUSTOM_FIELD_CONTROLS } from './custom-fields/custom-field-controls';
 import { SectionInstanceFields } from './section-instance-fields';
@@ -270,6 +275,7 @@ export function InspectorPanel({
   instanceStyleFields,
 }: InspectorPanelProps) {
   const { t, tLabel } = useTranslation();
+  const alignHintId = useId();
   const variants = descriptor.variants ?? [];
   // A section instance's inputs cannot come from the descriptor — see
   // SectionInstanceFields for why — so this one type is special-cased
@@ -362,53 +368,53 @@ export function InspectorPanel({
     style: !hasStyleExtras ? null : (
       <>
         {variants.length > 0 && (
-          <label className="flex flex-col gap-1.5">
+          <div className="flex flex-col gap-1.5">
             <span className="text-xs font-medium text-muted-foreground">
               {t('canvas.variant.fieldLabel')}
             </span>
-            <select
-              className={nativeFieldClass}
+            <OptionsSelect
+              aria-label={t('canvas.variant.fieldLabel')}
               value={block.variant ?? ''}
-              onChange={(event) =>
-                onChangeVariant(event.target.value || undefined)
-              }
-            >
-              {/* The type's own look has no variant of its own, so the
-                  empty value means "none" rather than naming one. */}
-              <option value="">{t('canvas.variant.default')}</option>
-              {variants.map((variant) => (
-                <option key={variant.value} value={variant.value}>
-                  {tLabel(variant.label)}
-                </option>
-              ))}
-            </select>
-          </label>
+              onValueChange={(next) => onChangeVariant(next || undefined)}
+              options={[
+                // The type's own look has no variant of its own, so the
+                // empty value means "none" rather than naming one.
+                { value: '', label: t('canvas.variant.default') },
+                ...variants.map((variant) => ({
+                  value: variant.value,
+                  label: tLabel(variant.label),
+                })),
+              ]}
+            />
+          </div>
         )}
         {onChangeAlign && (
-          <label className="flex flex-col gap-1.5">
+          <div className="flex flex-col gap-1.5">
             <span className="text-xs font-medium text-muted-foreground">
               {t('canvas.align.fieldLabel')}
             </span>
-            <select
-              className={nativeFieldClass}
+            <OptionsSelect
+              aria-label={t('canvas.align.fieldLabel')}
+              aria-describedby={alignHintId}
               value={block.align ?? 'content'}
-              onChange={(event) => {
-                const value = event.target.value as BlockAlign;
+              onValueChange={(next) => {
+                const align = blockAlignSchema.safeParse(next);
+                if (!align.success) return;
                 // `content` is the default and is stored as its absence, so
                 // the block does not carry a field saying "behave normally".
-                onChangeAlign(value === 'content' ? undefined : value);
+                onChangeAlign(
+                  align.data === 'content' ? undefined : align.data,
+                );
               }}
-            >
-              {ALIGN_OPTIONS.map((option) => (
-                <option key={option} value={option}>
-                  {t(`canvas.align.${option}`)}
-                </option>
-              ))}
-            </select>
-            <span className="text-xs text-muted-foreground">
+              options={ALIGN_OPTIONS.map((option) => ({
+                value: option,
+                label: t(`canvas.align.${option}`),
+              }))}
+            />
+            <span id={alignHintId} className="text-xs text-muted-foreground">
               {t('canvas.align.hint')}
             </span>
-          </label>
+          </div>
         )}
         {instanceStyleFields}
       </>
