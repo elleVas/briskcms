@@ -1,12 +1,16 @@
 import { fireEvent, render, screen } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeAll, describe, expect, it, vi } from 'vitest';
 import {
+  CALENDAR_LOAD_TIMEOUT_MS,
   dayButton,
   openCalendar,
+  preloadCalendar,
 } from '../../../test/date-picker.test-fixture';
 import { DateField, TimeField } from './date-time-fields';
 
 describe('DateField', () => {
+  beforeAll(preloadCalendar, CALENDAR_LOAD_TIMEOUT_MS);
+
   it('shows a stored date and writes back the ISO day that was picked', async () => {
     const onChange = vi.fn();
     render(<DateField label="Data" value="2026-09-13" onChange={onChange} />);
