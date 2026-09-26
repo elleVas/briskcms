@@ -1,10 +1,14 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { cn } from '../lib/utils';
 import { FormSubmissionsList } from './form-submissions-list';
 import { Link } from '@tanstack/react-router';
 import { Plus, Trash2 } from 'lucide-react';
-import type { FormField, FormStep } from '@brisk/shared-types';
+import {
+  formConditionProblems,
+  type FormField,
+  type FormStep,
+} from '@brisk/shared-types';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
@@ -21,7 +25,9 @@ export interface FormEditorViewProps {
   formId: string;
 }
 
-/** Everything the Save button would send, as one comparable string. */
+/** Mirrors MAX_NOTIFICATION_EMAILS in @brisk/domain-core, which the API enforces; the editor stops offering more at the same point. */
+const MAX_NOTIFICATION_EMAILS = 10;
+
 /** A select's options as they are stored: trimmed, and without the empty one a trailing newline in the textarea leaves behind. */
 function sanitizeOptions(field: FormField): FormField {
   if (field.type !== 'select') return field;
@@ -48,13 +54,17 @@ function draftOf(
   name: string,
   fields: FormField[],
   steps: FormStep[],
-  notificationEmail: string,
+  notificationEmails: string[],
 ) {
   return {
     name,
     fields: fields.map(sanitizeOptions),
     steps,
-    notificationEmail: notificationEmail.trim() || null,
+    // The inputs keep blank rows while someone is adding an address; what
+    // is saved is the addresses themselves.
+    notificationEmails: notificationEmails
+      .map((address) => address.trim())
+      .filter((address) => address !== ''),
   };
 }
 
@@ -79,8 +89,10 @@ export function FormEditorView({ formId }: FormEditorViewProps) {
   const [name, setName] = useState(form.name);
   const [fields, setFields] = useState<FormField[]>(form.fields);
   const [steps, setSteps] = useState<FormStep[]>(form.steps);
-  const [notificationEmail, setNotificationEmail] = useState(
-    form.notificationEmail ?? '',
+  // At least one row, empty if the form emails nobody yet: an address is
+  // typed straight in rather than behind an "Add" click.
+  const [notificationEmails, setNotificationEmails] = useState<string[]>(
+    form.notificationEmails.length > 0 ? form.notificationEmails : [''],
   );
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState('');
@@ -99,10 +111,16 @@ export function FormEditorView({ formId }: FormEditorViewProps) {
    */
   const [baseline, setBaseline] = useState(() =>
     serializeDraft(
-      draftOf(form.name, form.fields, form.steps, form.notificationEmail ?? ''),
+      draftOf(form.name, form.fields, form.steps, form.notificationEmails),
     ),
   );
-  const draft = draftOf(name, fields, steps, notificationEmail);
+  const draft = draftOf(name, fields, steps, notificationEmails);
+  // Refused by the API too; checked here so the problem is named next to
+  // the field that has it, and Save says why it will not work.
+  const conditionProblems = useMemo(
+    () => formConditionProblems(draft.fields),
+    [draft.fields],
+  );
   const isDirty = serializeDraft(draft) !== baseline;
   useUnsavedChangesGuard({ hasUnsavedChanges: isDirty });
   // And a question in front of an in-app link too, which the canvas does
@@ -114,8 +132,33 @@ export function FormEditorView({ formId }: FormEditorViewProps) {
     setFields((current) => current.map((f, i) => (i === index ? next : f)));
   }
 
+  // Also drops any condition that named the removed field, the way
+  // removeStep clears stepId: a condition on a field that no longer exists
+  // would hide its own field for good.
   function removeField(index: number) {
-    setFields((current) => current.filter((_, i) => i !== index));
+    const removedId = fields[index].id;
+    setFields((current) =>
+      current
+        .filter((_, i) => i !== index)
+        .map((field) =>
+          field.showWhen?.fieldId === removedId
+            ? { ...field, showWhen: null }
+            : field,
+        ),
+    );
+  }
+
+  function updateNotificationEmail(index: number, address: string) {
+    setNotificationEmails((current) =>
+      current.map((existing, i) => (i === index ? address : existing)),
+    );
+  }
+
+  function removeNotificationEmail(index: number) {
+    setNotificationEmails((current) => {
+      const next = current.filter((_, i) => i !== index);
+      return next.length > 0 ? next : [''];
+    });
   }
 
   function addField() {
@@ -181,7 +224,7 @@ export function FormEditorView({ formId }: FormEditorViewProps) {
             saved?.name ?? draft.name,
             saved?.fields ?? draft.fields,
             saved?.steps ?? draft.steps,
-            saved?.notificationEmail ?? draft.notificationEmail ?? '',
+            saved?.notificationEmails ?? draft.notificationEmails,
           ),
         ),
       );
@@ -208,7 +251,15 @@ export function FormEditorView({ formId }: FormEditorViewProps) {
               {t('forms.editor.unsaved')}
             </span>
           )}
-          <Button disabled={isSaving} onClick={() => void handleSave()}>
+          {conditionProblems.size > 0 && (
+            <span className="text-xs text-destructive">
+              {t('forms.editor.conditionBlocksSave')}
+            </span>
+          )}
+          <Button
+            disabled={isSaving || conditionProblems.size > 0}
+            onClick={() => void handleSave()}
+          >
             {isSaving ? t('forms.editor.saving') : t('forms.editor.save')}
           </Button>
         </div>
@@ -265,18 +316,50 @@ export function FormEditorView({ formId }: FormEditorViewProps) {
               onChange={(event) => setName(event.target.value)}
             />
           </div>
-          <div className="flex max-w-md flex-col gap-2">
-            <Label htmlFor="form-notification-email">
-              {t('forms.editor.notificationEmailLabel')}
-            </Label>
-            <Input
-              id="form-notification-email"
-              type="email"
-              value={notificationEmail}
-              onChange={(event) => setNotificationEmail(event.target.value)}
-              placeholder={t('forms.editor.notificationEmailPlaceholder')}
-            />
-          </div>
+          <fieldset className="flex max-w-md flex-col gap-2">
+            <legend className="mb-2 text-sm leading-none font-medium">
+              {t('forms.editor.notificationEmailsLabel')}
+            </legend>
+            <p className="text-sm text-muted-foreground">
+              {t('forms.editor.notificationEmailsHint')}
+            </p>
+            {notificationEmails.map((address, index) => (
+              <div key={index} className="flex items-center gap-2">
+                <Input
+                  type="email"
+                  aria-label={t('forms.editor.notificationEmailAddress', {
+                    number: index + 1,
+                  })}
+                  value={address}
+                  onChange={(event) =>
+                    updateNotificationEmail(index, event.target.value)
+                  }
+                  placeholder={t('forms.editor.notificationEmailPlaceholder')}
+                />
+                <IconButton
+                  label={t('forms.editor.removeNotificationEmail')}
+                  disabled={notificationEmails.length === 1 && address === ''}
+                  onClick={() => removeNotificationEmail(index)}
+                >
+                  <Trash2 />
+                </IconButton>
+              </div>
+            ))}
+            {notificationEmails.length < MAX_NOTIFICATION_EMAILS && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="self-start"
+                onClick={() =>
+                  setNotificationEmails((current) => [...current, ''])
+                }
+              >
+                <Plus className="size-3.5" />
+                {t('forms.editor.addNotificationEmail')}
+              </Button>
+            )}
+          </fieldset>
           <div className="flex flex-col gap-3">
             <div className="flex items-center justify-between">
               <Label>{t('forms.editor.stepsLabel')}</Label>
@@ -344,6 +427,8 @@ export function FormEditorView({ formId }: FormEditorViewProps) {
                   canMoveUp={index > 0}
                   canMoveDown={index < fields.length - 1}
                   steps={steps}
+                  earlierFields={fields.slice(0, index)}
+                  conditionProblem={conditionProblems.get(field.id)}
                 />
               ))
             )}

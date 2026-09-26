@@ -1,3 +1,7 @@
+import {
+  type ConditionalFormField,
+  visibleFormFieldIds,
+} from '@brisk/shared-types/form-conditions';
 import type { BlockBehavior } from './types';
 
 // Idempotency guard: re-running this would attach a second set of
@@ -93,6 +97,105 @@ function wireMultiStepForm(form: HTMLElement): void {
   render();
 }
 
+const CONDITIONS_INITIALIZED_ATTR = 'data-brisk-form-conditions-initialized';
+
+/** The answers as the submission would carry them: a box is true or false, anything else its value, a chosen file just "there". */
+function currentAnswers(form: HTMLFormElement): Record<string, unknown> {
+  const answers: Record<string, unknown> = {};
+  for (const control of Array.from(form.elements)) {
+    if (
+      !(
+        control instanceof HTMLInputElement ||
+        control instanceof HTMLSelectElement ||
+        control instanceof HTMLTextAreaElement
+      ) ||
+      control.name === '' ||
+      control.name.startsWith('_')
+    ) {
+      continue;
+    }
+    if (control instanceof HTMLInputElement && control.type === 'checkbox') {
+      answers[control.name] = control.checked;
+    } else if (control instanceof HTMLInputElement && control.type === 'file') {
+      answers[control.name] = control.files?.length ? {} : undefined;
+    } else {
+      answers[control.name] = control.value;
+    }
+  }
+  return answers;
+}
+
+function isConditionalField(value: unknown): value is ConditionalFormField {
+  if (typeof value !== 'object' || value === null) return false;
+  if (!('id' in value) || typeof value.id !== 'string') return false;
+  if (!('showWhen' in value)) return false;
+  const condition = value.showWhen;
+  if (condition === null) return true;
+  return (
+    typeof condition === 'object' &&
+    'fieldId' in condition &&
+    typeof condition.fieldId === 'string' &&
+    'equals' in condition &&
+    (condition.equals === null || typeof condition.equals === 'string')
+  );
+}
+
+/**
+ * Shows each field whose condition is met and hides the rest, on every
+ * answer — the same rule the server applies to the submission
+ * (visibleFormFieldIds), so the two cannot disagree about what was asked.
+ *
+ * A hidden field is disabled as well as hidden: the browser neither
+ * validates nor submits a disabled control, so a required field the
+ * visitor cannot see never blocks the form, and an answer given before the
+ * condition changed is not sent.
+ */
+function wireConditionalFields(element: HTMLElement): void {
+  if (
+    !(element instanceof HTMLFormElement) ||
+    element.hasAttribute(CONDITIONS_INITIALIZED_ATTR)
+  ) {
+    return;
+  }
+  const form = element;
+  const raw = form.dataset.briskFormConditions;
+  if (!raw) return;
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    return;
+  }
+  if (!Array.isArray(parsed)) return;
+  const fields = parsed.filter(isConditionalField);
+  form.setAttribute(CONDITIONS_INITIALIZED_ATTR, '');
+
+  function apply() {
+    const visible = visibleFormFieldIds(fields, currentAnswers(form));
+    for (const field of fields) {
+      if (!field.showWhen) continue;
+      const wrapper = form.querySelector<HTMLElement>(
+        `[data-brisk-form-field="${CSS.escape(field.id)}"]`,
+      );
+      if (!wrapper) continue;
+      const shown = visible.has(field.id);
+      wrapper.hidden = !shown;
+      for (const control of Array.from(
+        wrapper.querySelectorAll<
+          HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+        >('input, select, textarea'),
+      )) {
+        control.disabled = !shown;
+      }
+    }
+  }
+
+  form.addEventListener('input', apply);
+  form.addEventListener('change', apply);
+  apply();
+}
+
 export const formBehaviors: BlockBehavior[] = [
   { selector: '.brisk-form form', wire: wireMultiStepForm },
+  { selector: '.brisk-form form', wire: wireConditionalFields },
 ];

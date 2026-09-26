@@ -179,7 +179,100 @@ function SelectScrollDownButton({
   );
 }
 
+export interface SelectOption {
+  value: string;
+  label: React.ReactNode;
+  disabled?: boolean;
+}
+
+export interface SelectOptionGroup {
+  label: React.ReactNode;
+  options: SelectOption[];
+}
+
+/**
+ * Radix refuses an item whose value is the empty string (it is how Radix
+ * spells "nothing selected"), and every "None" choice in this editor is
+ * one. This value stands in for it inside the menu and never leaves it.
+ */
+const EMPTY_VALUE = '__brisk-empty__';
+
+const toItemValue = (value: string) => (value === '' ? EMPTY_VALUE : value);
+const fromItemValue = (value: string) => (value === EMPTY_VALUE ? '' : value);
+
+/**
+ * A select built from a list of options — what almost every select in the
+ * editor is, drawn with the same menu instead of the operating system's
+ * own. An option whose value is `''` works (the "None" choices), and so do
+ * groups, for a list that reads better under headings.
+ */
+function OptionsSelect({
+  id,
+  value,
+  onValueChange,
+  options = [],
+  groups = [],
+  placeholder,
+  size = 'default',
+  className,
+  disabled,
+  title,
+  'aria-label': ariaLabel,
+  'aria-describedby': ariaDescribedBy,
+}: {
+  id?: string;
+  value: string;
+  onValueChange: (value: string) => void;
+  options?: SelectOption[];
+  groups?: SelectOptionGroup[];
+  placeholder?: React.ReactNode;
+  size?: 'sm' | 'default';
+  className?: string;
+  disabled?: boolean;
+  title?: string;
+  'aria-label'?: string;
+  'aria-describedby'?: string;
+}) {
+  const item = (option: SelectOption) => (
+    <SelectItem
+      key={option.value}
+      value={toItemValue(option.value)}
+      disabled={option.disabled}
+    >
+      {option.label}
+    </SelectItem>
+  );
+  return (
+    <Select
+      value={toItemValue(value)}
+      onValueChange={(next) => onValueChange(fromItemValue(next))}
+      disabled={disabled}
+    >
+      <SelectTrigger
+        id={id}
+        size={size}
+        aria-label={ariaLabel}
+        aria-describedby={ariaDescribedBy}
+        title={title}
+        className={cn('w-full min-w-0', className)}
+      >
+        <SelectValue placeholder={placeholder} />
+      </SelectTrigger>
+      <SelectContent>
+        {options.map(item)}
+        {groups.map((group, index) => (
+          <SelectGroup key={index}>
+            <SelectLabel>{group.label}</SelectLabel>
+            {group.options.map(item)}
+          </SelectGroup>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+}
+
 export {
+  OptionsSelect,
   Select,
   SelectContent,
   SelectGroup,

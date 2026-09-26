@@ -17,7 +17,8 @@ export const formRecordSchema = z.object({
   name: z.string(),
   fields: z.array(formFieldSchema),
   steps: z.array(formStepSchema),
-  notificationEmail: z.string().nullable(),
+  /** Who is emailed each submission; empty means nobody (docs/adr/0086). */
+  notificationEmails: z.array(z.string()),
   createdAt: z.string(),
   updatedAt: z.string(),
   submissionCount: z.number().int().nonnegative(),
@@ -80,7 +81,7 @@ export type PaginatedFormSubmissions = z.infer<
 
 /**
  * `GET /public/forms/:id` — what the public site needs to draw a form.
- * `notificationEmail` is left out on purpose: it is the owner's private
+ * `notificationEmails` is left out on purpose: it is the owner's private
  * configuration, and this response reaches every visitor's page.
  */
 export const publicFormSchema = z.object({

@@ -54,7 +54,7 @@ export interface UpdateFormInput {
   name: string;
   fields: FormField[];
   steps: FormStep[];
-  notificationEmail: string | null;
+  notificationEmails: string[];
 }
 
 export async function updateForm(

@@ -48,17 +48,14 @@ describe('PublicFormsController (integration)', () => {
     await integration.close();
   });
 
-  async function createForm(
-    fields: unknown[],
-    notificationEmail: string | null,
-  ) {
+  async function createForm(fields: unknown[], notificationEmails: string[]) {
     const createRes = await agent
       .post('/forms')
       .send({ siteId, name: 'Contatti' })
       .expect(201);
     const updateRes = await agent
       .patch(`/forms/${createRes.body.id}`)
-      .send({ name: 'Contatti', fields, notificationEmail })
+      .send({ name: 'Contatti', fields, notificationEmails })
       .expect(200);
     return updateRes.body.id as string;
   }
@@ -83,7 +80,7 @@ describe('PublicFormsController (integration)', () => {
   it('serves a form definition without the notification email, without a session', async () => {
     const formId = await createForm(
       [{ id: 'email', label: 'Email', type: 'email', required: true }],
-      'owner@example.com',
+      ['owner@example.com'],
     );
 
     const res = await request(app.getHttpServer())
@@ -96,7 +93,7 @@ describe('PublicFormsController (integration)', () => {
       fields: [{ id: 'email', label: 'Email', type: 'email', required: true }],
       steps: [],
     });
-    expect(res.body).not.toHaveProperty('notificationEmail');
+    expect(res.body).not.toHaveProperty('notificationEmails');
   });
 
   it('404s reading a form that does not exist', async () => {
@@ -108,7 +105,7 @@ describe('PublicFormsController (integration)', () => {
   it('accepts a valid submission without a session', async () => {
     const formId = await createForm(
       [{ id: 'email', label: 'Email', type: 'email', required: true }],
-      'owner@example.com',
+      ['owner@example.com'],
     );
 
     await request(app.getHttpServer())
@@ -127,7 +124,7 @@ describe('PublicFormsController (integration)', () => {
     // carry the count, so that label never appeared.
     const formId = await createForm(
       [{ id: 'email', label: 'Email', type: 'email', required: true }],
-      null,
+      [],
     );
     await request(app.getHttpServer())
       .post(`/public/forms/${formId}/submissions`)
@@ -146,7 +143,7 @@ describe('PublicFormsController (integration)', () => {
       .send({
         name: 'Contatti',
         fields: read.body.fields,
-        notificationEmail: null,
+        notificationEmails: [],
       })
       .expect(200);
     expect(saved.body.submissionCount).toBe(1);
@@ -159,7 +156,7 @@ describe('PublicFormsController (integration)', () => {
     // comes back named on the authenticated read.
     const formId = await createForm(
       [{ id: 'email', label: 'Email', type: 'email', required: true }],
-      null,
+      [],
     );
     const pageTranslationId = await createPage('Contatti');
 
@@ -190,7 +187,7 @@ describe('PublicFormsController (integration)', () => {
     // someone typed, over a field that is only ever a note in the margin.
     const formId = await createForm(
       [{ id: 'email', label: 'Email', type: 'email', required: true }],
-      null,
+      [],
     );
 
     await request(app.getHttpServer())
@@ -211,7 +208,7 @@ describe('PublicFormsController (integration)', () => {
   it('400s a submission missing a required field', async () => {
     const formId = await createForm(
       [{ id: 'email', label: 'Email', type: 'email', required: true }],
-      'owner@example.com',
+      ['owner@example.com'],
     );
 
     await request(app.getHttpServer())
@@ -223,7 +220,7 @@ describe('PublicFormsController (integration)', () => {
   it('400s a submission with a missing or invalid CAPTCHA token', async () => {
     const formId = await createForm(
       [{ id: 'email', label: 'Email', type: 'email', required: true }],
-      'owner@example.com',
+      ['owner@example.com'],
     );
 
     await request(app.getHttpServer())
@@ -235,7 +232,7 @@ describe('PublicFormsController (integration)', () => {
   it('silently accepts a honeypot-filled submission (204, not a distinguishing rejection)', async () => {
     const formId = await createForm(
       [{ id: 'email', label: 'Email', type: 'email', required: true }],
-      'owner@example.com',
+      ['owner@example.com'],
     );
 
     await request(app.getHttpServer())
@@ -255,7 +252,7 @@ describe('PublicFormsController (integration)', () => {
           required: false,
         },
       ],
-      null,
+      [],
     );
 
     await request(app.getHttpServer())
@@ -282,7 +279,7 @@ describe('PublicFormsController (integration)', () => {
   it('uploads an attachment and returns its public URL and original filename', async () => {
     const formId = await createForm(
       [{ id: 'cv', label: 'Curriculum', type: 'file', required: false }],
-      null,
+      [],
     );
 
     const res = await request(app.getHttpServer())
@@ -297,7 +294,7 @@ describe('PublicFormsController (integration)', () => {
   it('400s an attachment upload with no file', async () => {
     const formId = await createForm(
       [{ id: 'cv', label: 'Curriculum', type: 'file', required: false }],
-      null,
+      [],
     );
 
     await request(app.getHttpServer())

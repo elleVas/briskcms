@@ -24,7 +24,7 @@ describe('form lifecycle: create -> update -> list -> delete', () => {
     expect(form.name).toBe('Contatti');
     expect(form.fields).toEqual([]);
     expect(form.steps).toEqual([]);
-    expect(form.notificationEmail).toBeNull();
+    expect(form.notificationEmails).toEqual([]);
   });
 
   it('updates a form with fields and a notification email', async () => {
@@ -37,12 +37,12 @@ describe('form lifecycle: create -> update -> list -> delete', () => {
       name: 'Richiedi preventivo',
       fields: [{ id: 'email', label: 'Email', type: 'email', required: true }],
       steps: [],
-      notificationEmail: 'owner@example.com',
+      notificationEmails: ['owner@example.com'],
     });
 
     expect(updated.name).toBe('Richiedi preventivo');
     expect(updated.fields).toHaveLength(1);
-    expect(updated.notificationEmail).toBe('owner@example.com');
+    expect(updated.notificationEmails).toEqual(['owner@example.com']);
   });
 
   it('updates a form with steps and per-field stepId assignments', async () => {
@@ -77,7 +77,7 @@ describe('form lifecycle: create -> update -> list -> delete', () => {
         { id: 'dati-personali', title: 'Dati personali' },
         { id: 'dettagli', title: 'Dettagli' },
       ],
-      notificationEmail: null,
+      notificationEmails: [],
     });
 
     expect(updated.steps).toEqual([
@@ -98,7 +98,7 @@ describe('form lifecycle: create -> update -> list -> delete', () => {
         name: 'x',
         fields: [],
         steps: [],
-        notificationEmail: null,
+        notificationEmails: [],
       }),
     ).rejects.toThrow(FormNotFoundError);
   });
@@ -114,7 +114,7 @@ describe('form lifecycle: create -> update -> list -> delete', () => {
         name: 'hijacked',
         fields: [],
         steps: [],
-        notificationEmail: null,
+        notificationEmails: [],
       }),
     ).rejects.toThrow(FormNotFoundError);
   });

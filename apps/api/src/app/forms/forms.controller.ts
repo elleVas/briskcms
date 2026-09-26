@@ -249,7 +249,7 @@ export class FormsController {
       name: props.name,
       fields: props.fields,
       steps: props.steps,
-      notificationEmail: props.notificationEmail,
+      notificationEmails: props.notificationEmails,
       createdAt: props.createdAt.toISOString(),
       updatedAt: props.updatedAt.toISOString(),
       submissionCount,

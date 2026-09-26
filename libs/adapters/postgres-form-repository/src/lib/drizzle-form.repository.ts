@@ -19,7 +19,7 @@ function toRow(props: FormProps) {
     name: props.name,
     fields: props.fields,
     steps: props.steps,
-    notificationEmail: props.notificationEmail,
+    notificationEmails: props.notificationEmails,
     createdAt: props.createdAt,
     updatedAt: props.updatedAt,
   };

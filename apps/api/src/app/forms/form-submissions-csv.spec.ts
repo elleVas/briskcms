@@ -14,7 +14,7 @@ function form(fields: { id: string; label: string }[]): Form {
       label: f.label,
       required: false,
     })),
-    notificationEmail: null,
+    notificationEmails: [],
     newsletterProvider: null,
     successMessage: '',
     createdAt: new Date('2026-01-01'),

@@ -59,7 +59,7 @@ describe('getPublicForm and submitForm', () => {
         },
       ],
       steps: [],
-      notificationEmail: 'owner@example.com',
+      notificationEmails: ['owner@example.com'],
     });
   }
 
@@ -81,7 +81,7 @@ describe('getPublicForm and submitForm', () => {
         },
       ],
       steps: [],
-      notificationEmail: null,
+      notificationEmails: [],
     });
   }
 
@@ -112,7 +112,7 @@ describe('getPublicForm and submitForm', () => {
 
     expect(publicForm.name).toBe('Contatti');
     expect(publicForm.fields).toHaveLength(3);
-    expect(publicForm).not.toHaveProperty('notificationEmail');
+    expect(publicForm).not.toHaveProperty('notificationEmails');
   });
 
   it('getPublicForm throws FormNotFoundError for a nonexistent id', async () => {
@@ -165,7 +165,7 @@ describe('getPublicForm and submitForm', () => {
         { id: 'cv', label: 'Curriculum', type: 'file', required: false },
       ],
       steps: [],
-      notificationEmail: 'hr@example.com',
+      notificationEmails: ['hr@example.com'],
     });
 
     await submitForm(deps, {
@@ -205,7 +205,7 @@ describe('getPublicForm and submitForm', () => {
         { id: 'cv', label: 'Curriculum', type: 'file', required: false },
       ],
       steps: [],
-      notificationEmail: 'hr@example.com',
+      notificationEmails: ['hr@example.com'],
     });
 
     await submitForm(deps, {
@@ -439,5 +439,161 @@ describe('getPublicForm and submitForm', () => {
 
     expect(deps.formSubmissionRepository.submissions).toHaveLength(1);
     expect(deps.formSubmissionRepository.submissions[0].pageId).toBeNull();
+  });
+
+  describe('conditional fields (one condition per field)', () => {
+    async function buildConditionalForm(deps: ReturnType<typeof setup>) {
+      const form = await createForm(deps, {
+        tenantId,
+        siteId,
+        name: 'Contatti',
+      });
+      return updateForm(deps, {
+        tenantId,
+        formId: form.id,
+        name: 'Contatti',
+        fields: [
+          {
+            id: 'reason',
+            label: 'Motivo',
+            type: 'select',
+            required: true,
+            options: ['Preventivo', 'Altro'],
+          },
+          {
+            id: 'details',
+            label: 'Specifica',
+            type: 'text',
+            required: true,
+            showWhen: { fieldId: 'reason', equals: 'Altro' },
+          },
+        ],
+        steps: [],
+        notificationEmails: ['owner@example.com'],
+      });
+    }
+
+    it('does not require a field the visitor was never shown', async () => {
+      const deps = setup();
+      const form = await buildConditionalForm(deps);
+
+      await submitForm(deps, {
+        tenantId,
+        formId: form.id,
+        pageId: null,
+        values: { reason: 'Preventivo' },
+        honeypot: '',
+        captchaToken,
+      });
+
+      expect(deps.formSubmissionRepository.submissions).toHaveLength(1);
+    });
+
+    it('still requires it once it is shown', async () => {
+      const deps = setup();
+      const form = await buildConditionalForm(deps);
+
+      await expect(
+        submitForm(deps, {
+          tenantId,
+          formId: form.id,
+          pageId: null,
+          values: { reason: 'Altro' },
+          honeypot: '',
+          captchaToken,
+        }),
+      ).rejects.toThrow(InvalidFormSubmissionError);
+    });
+
+    it('keeps neither the answer to a hidden field nor a key that names no field', async () => {
+      const deps = setup();
+      const form = await buildConditionalForm(deps);
+
+      await submitForm(deps, {
+        tenantId,
+        formId: form.id,
+        pageId: null,
+        values: {
+          reason: 'Preventivo',
+          details: 'typed before switching the reason',
+          injected: 'not a field of this form',
+        },
+        honeypot: '',
+        captchaToken,
+      });
+
+      expect(deps.formSubmissionRepository.submissions[0].payload).toEqual({
+        reason: 'Preventivo',
+      });
+      expect(deps.emailPort.sentEmails[0].html).not.toContain(
+        'typed before switching the reason',
+      );
+    });
+  });
+
+  describe('several notification addresses', () => {
+    it('emails each address on its own, so nobody sees who else is on the list', async () => {
+      const deps = setup();
+      const created = await buildFormWithFields(deps);
+      const form = await updateForm(deps, {
+        tenantId,
+        formId: created.id,
+        name: 'Contatti',
+        fields: created.fields,
+        steps: [],
+        notificationEmails: ['owner@example.com', 'sales@example.com'],
+      });
+
+      await submitForm(deps, {
+        tenantId,
+        formId: form.id,
+        pageId: null,
+        values: { email: 'visitor@example.com', consent: true },
+        honeypot: '',
+        captchaToken,
+      });
+
+      expect(deps.emailPort.sentEmails.map((email) => email.to)).toEqual([
+        'owner@example.com',
+        'sales@example.com',
+      ]);
+    });
+
+    it('still tries every address when one fails, and reports the failure', async () => {
+      const deps = setup();
+      const delivered: string[] = [];
+      const emailPort = {
+        async sendEmail({ to }: { to: string }) {
+          if (to === 'broken@example.com') throw new Error('SMTP refused');
+          delivered.push(to);
+        },
+      };
+      const created = await buildFormWithFields(deps);
+      await updateForm(deps, {
+        tenantId,
+        formId: created.id,
+        name: 'Contatti',
+        fields: created.fields,
+        steps: [],
+        notificationEmails: ['broken@example.com', 'sales@example.com'],
+      });
+
+      await expect(
+        submitForm(
+          { ...deps, emailPort },
+          {
+            tenantId,
+            formId: created.id,
+            pageId: null,
+            values: { email: 'visitor@example.com', consent: true },
+            honeypot: '',
+            captchaToken,
+          },
+        ),
+      ).rejects.toThrow('SMTP refused');
+      expect(delivered).toEqual(['sales@example.com']);
+      // The answers are saved before anyone is emailed.
+      expect(deps.formSubmissionRepository.submissions).toHaveLength(1);
+    });
   });
 });

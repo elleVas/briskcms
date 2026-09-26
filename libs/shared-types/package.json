@@ -16,6 +16,11 @@
       "import": "./src/index.ts",
       "default": "./src/index.ts"
     },
+    "./form-conditions": {
+      "types": "./src/form-conditions.ts",
+      "import": "./src/form-conditions.ts",
+      "default": "./src/form-conditions.ts"
+    },
     "./package.json": "./package.json"
   },
   "dependencies": {

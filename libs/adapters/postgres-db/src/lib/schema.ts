@@ -915,7 +915,12 @@ export const forms = pgTable(
     // Empty by default — a plain single-step form, same shape every form
     // had before this column existed (docs/adr/0015's multi-step follow-up).
     steps: jsonb('steps').notNull().default([]).$type<FormStep[]>(),
-    notificationEmail: text('notification_email'),
+    // Who is emailed each submission — empty means nobody. A list since
+    // docs/adr/0086; the single address it replaced became its first entry.
+    notificationEmails: text('notification_emails')
+      .array()
+      .notNull()
+      .default([]),
     createdAt: timestamp('created_at', { withTimezone: true })
       .notNull()
       .defaultNow(),
