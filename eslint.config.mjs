@@ -76,6 +76,13 @@ export default [
               sourceTag: 'testing',
               onlyDependOnLibsWithTags: ['domain', 'application'],
             },
+            // The browser suite (apps/e2e) drives the apps from outside,
+            // over HTTP; it borrows the env reader, never an app's or an
+            // adapter's code.
+            {
+              sourceTag: 'e2e',
+              onlyDependOnLibsWithTags: ['domain'],
+            },
           ],
         },
       ],

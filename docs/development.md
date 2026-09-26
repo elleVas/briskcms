@@ -142,6 +142,50 @@ test` can be green while the push is refused. Running this first is the
 difference between finding that out now and finding it out at the end of
 a long session.
 
+### End-to-end tests
+
+`apps/e2e` drives the real editor, API and public site in Chromium with
+Playwright ([ADR-0088](adr/0088-the-editor-is-tested-in-a-browser.md)).
+Four groups: the main path (log in, new page, block, text edited in the
+canvas, publish, the page on the site), a form end to end (conditional
+field, submission, notification emails in Mailpit), the canvas (Layers
+drag by mouse and keyboard, restoring a header version), and the
+accessibility gate (axe on every editor screen, both themes, 1440 and
+390px wide, plus any API error a screen runs into).
+
+Locally it uses whatever is already running on the addresses in `.env`:
+the API on :3000, the editor on :4200 and the **built** public site on
+:4322 (`nx run @brisk/public-site:build`, then `node
+--env-file=../../.env server.mjs` from `apps/public-site`), with Postgres
+and Mailpit up. Then:
+
+```sh
+pnpm --filter @brisk/e2e exec playwright install chromium   # once
+pnpm exec nx run @brisk/e2e:e2e
+pnpm exec nx run @brisk/e2e:e2e -- canvas                   # one file
+pnpm --filter @brisk/e2e exec playwright show-report test-output/report
+```
+
+It runs against your own database. Every page, form and email address a
+test makes is named `e2e-…` and deleted when the test ends, pass or
+fail. The one thing it borrows is the header of the site's default
+language: the header test puts its draft back as it found it (the
+published header is never touched), but the versions it saved stay in
+the header's history. Two runs of that test at once would share the one
+header, so it refuses to start while the draft holds `e2e-` blocks; if a
+run was cut short and left them there, restore the published version
+from the header's history in the editor.
+
+The admin logs in once, through the API, and the session is kept in
+`apps/e2e/test-output/.auth/` and reused while it is valid — login allows
+five attempts per account every fifteen minutes, and the main-path test
+spends one of them on the login form itself.
+
+In CI the `e2e` job builds the three apps, and Playwright starts them
+from the build (`playwright.config.ts`, `webServer`). A failed run
+uploads the report, with a trace of each failed test, as the `e2e-report`
+artifact.
+
 ### Adding a library
 
 ```sh
