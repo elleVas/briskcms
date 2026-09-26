@@ -34,7 +34,10 @@ const { value, prefix, suffix, label, instanceClass } = Astro.props;
     border-radius: var(--brisk-override-radius, 0);
     padding: var(--brisk-override-padding-y, 0) var(--brisk-override-padding-x, 0);
   }
+  /* A figure set large is display text: the theme's heading face. */
   .brisk-stat__value {
+    font-family: var(--brisk-heading-font);
+    letter-spacing: var(--brisk-heading-tracking);
     font-size: 2rem;
     font-weight: 700;
     color: var(--brisk-override-text, inherit);

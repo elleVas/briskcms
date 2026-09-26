@@ -29,6 +29,6 @@ export const columnBlock: BlockDescriptor<ColumnProps> = {
   ],
   isContainer: true,
   allowedParentTypes: ['Columns'],
-  stylableProperties: BlockStyleRegistry.STANDARD,
+  stylableProperties: [...BlockStyleRegistry.STANDARD, 'gap'],
   defaultStyle: BLOCK_STYLE_DEFAULTS.Column,
 };

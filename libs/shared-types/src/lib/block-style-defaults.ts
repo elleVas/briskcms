@@ -494,6 +494,7 @@ export const BLOCK_STYLE_DEFAULTS: Record<string, BlockStyleDefaults> = {
     borderRadius: '0',
     paddingX: '0',
     paddingY: '0',
+    gap: '1rem',
   },
   Columns: {
     backgroundColor: 'transparent',

@@ -47,7 +47,13 @@ const { editable, hasChildren, instanceClass, locale, emptyChildLabel} = Astro.p
      let content inside a Column break out of the parent Columns grid
      regardless of the grid's own 1fr track sizing. min-width: 0 lets this
      column actually shrink to its track width. */
+  /* Its blocks stacked with room between them, as in a Container: an
+     image and the heading under it used to touch. The gap is the Style
+     panel's, like the Container's. */
   .brisk-column {
+    display: flex;
+    flex-direction: column;
+    gap: var(--brisk-override-gap, 1rem);
     min-width: 0;
     background: var(--brisk-override-bg, transparent);
     color: var(--brisk-override-text, inherit);
