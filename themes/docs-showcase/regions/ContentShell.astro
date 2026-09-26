@@ -2,6 +2,8 @@
 import type { PageTreeNodeDto } from '@brisk/theme-runtime';
 import { localePathFromAncestors } from '@brisk/theme-runtime';
 import type { ThemeContentShellProps } from '@brisk/theme-runtime';
+import { DictionaryTranslator } from '@brisk/theme-runtime';
+import themeLocales from '../locales.json';
 
 /**
  * This theme's docs sidebar and prev/next pager. It replaces the wholesale
@@ -15,7 +17,12 @@ import type { ThemeContentShellProps } from '@brisk/theme-runtime';
  */
 type Props = ThemeContentShellProps;
 
-const { locale, currentPath, i18n, pageTree, route } = Astro.props;
+const { locale, currentPath, pageTree, route } = Astro.props;
+
+// This theme's own UI copy (../locales.json): core's dictionary is not the
+// place for a theme's words, and a theme outside this repository could not
+// reach it anyway (docs/adr/0089).
+const strings = new DictionaryTranslator(locale, themeLocales);
 
 // --- Sidebar: a docs section is a 2-level hierarchy (root → category →
 // doc page), all categories shown simultaneously (like inertiajs.com's own
@@ -104,7 +111,7 @@ const nextDoc =
 {
 	hasSidebar ? (
 		<div class="brisk-docs-shell">
-			<nav class="brisk-docs-sidebar" aria-label={i18n.t('docs.sidebarLabel')}>
+			<nav class="brisk-docs-sidebar" aria-label={strings.t('sidebarLabel')}>
 				{sidebarGroups.map((group) => (
 					<div class="brisk-docs-sidebar__group">
 						<div class="brisk-docs-sidebar__title">{group.title}</div>
@@ -125,10 +132,10 @@ const nextDoc =
 			</nav>
 			<div class="brisk-docs-shell__content">
 				<slot />
-				<nav class="brisk-docs-pagination" aria-label={i18n.t('docsPagination.navLabel')}>
+				<nav class="brisk-docs-pagination" aria-label={strings.t('paginationLabel')}>
 					{prevDoc ? (
 						<a class="brisk-docs-pagination__link brisk-docs-pagination__link--prev" href={prevDoc.href}>
-							<span class="brisk-docs-pagination__label">{i18n.t('docsPagination.prev')}</span>
+							<span class="brisk-docs-pagination__label">{strings.t('previous')}</span>
 							<span class="brisk-docs-pagination__title">{prevDoc.title}</span>
 						</a>
 					) : (
@@ -136,7 +143,7 @@ const nextDoc =
 					)}
 					{nextDoc && (
 						<a class="brisk-docs-pagination__link brisk-docs-pagination__link--next" href={nextDoc.href}>
-							<span class="brisk-docs-pagination__label">{i18n.t('docsPagination.next')}</span>
+							<span class="brisk-docs-pagination__label">{strings.t('next')}</span>
 							<span class="brisk-docs-pagination__title">{nextDoc.title}</span>
 						</a>
 					)}
