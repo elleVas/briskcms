@@ -71,6 +71,13 @@
      `!important`, so they win. */
   --brisk-heading-weight: 650;
   --brisk-heading-leading: 1.2;
+  /* A display face for headings, and the tracking it usually wants — by
+     default the body's own font, spaced as it is. `--brisk-h1-weight` is
+     separate because a display face is often at its best lighter than
+     the bold a sans-serif h1 needs. */
+  --brisk-heading-font: inherit;
+  --brisk-heading-tracking: normal;
+  --brisk-h1-weight: 700;
   --brisk-h1-size: clamp(1.875rem, 1.5rem + 1.8vw, 2.75rem);
   --brisk-h2-size: clamp(1.5rem, 1.3rem + 1vw, 2rem);
   --brisk-h3-size: clamp(1.25rem, 1.15rem + 0.5vw, 1.5rem);
@@ -113,13 +120,15 @@
   h4,
   h5,
   h6 {
+    font-family: var(--brisk-heading-font);
     font-weight: var(--brisk-heading-weight);
     line-height: var(--brisk-heading-leading);
+    letter-spacing: var(--brisk-heading-tracking);
     text-wrap: balance;
   }
   h1 {
     font-size: var(--brisk-h1-size);
-    font-weight: 700;
+    font-weight: var(--brisk-h1-weight);
   }
   h2 {
     font-size: var(--brisk-h2-size);

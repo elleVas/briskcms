@@ -91,6 +91,19 @@ example):
   `apps/public-site/src/layouts/PageLayout.astro`'s own comments for the
   full story on why every Tier 1 override is `!important`.
 
+Optional, with core's defaults in `apps/public-site/src/styles/global.css`:
+
+- **Headings** — `--brisk-heading-font` (a display face; `inherit`, the
+  body font, by default), `--brisk-heading-tracking`,
+  `--brisk-heading-weight`, `--brisk-h1-weight`, `--brisk-heading-leading`
+  and the sizes `--brisk-h1-size`…`--brisk-h6-size`. Only `:root` custom
+  properties reach the page from `theme.css`, so these tokens are the way to
+  change headings — a rule like `h1 { font-family: … }` in `theme.css` is
+  ignored.
+- **Layout** — `--brisk-content-width`, `--brisk-content-width-wide`,
+  `--brisk-content-gutter` (ADR-0049), `--radius`, the `--shadow-*` scale
+  and `--link`/`--link-hover`.
+
 ## `theme.json` — the manifest
 
 ```json
