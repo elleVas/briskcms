@@ -66,8 +66,11 @@ const Quote = resolveThemeBlockOverride('Quote', QuoteCore, themeName);
     color: var(--primary);
   }
 
+  /* Display text, like a heading: it follows the theme's heading face. */
   .brisk-pull-quote :global(blockquote) {
     margin: 0;
+    font-family: var(--brisk-heading-font);
+    letter-spacing: var(--brisk-heading-tracking);
     font-size: clamp(1.25rem, 1rem + 1.25vw, 1.75rem);
     font-weight: 600;
     line-height: 1.35;
