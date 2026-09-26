@@ -491,17 +491,13 @@ export function CanvasEditorShell({
   });
 
   /**
-   * Firing any still-pending debounced save NOW (instead of waiting out its
-   * timer) narrows, but doesn't fully close, the gap between "last
-   * keystroke" and "what gets published": the old Page model's onPublish
-   * re-sent the whole current tree directly (bypassing the debounce
-   * entirely), which the new i18n split model can't safely replicate — a
-   * translatable field's value can't be reconstructed as either
-   * PageGroup.content or a fieldValues overlay from the merged, currently-
-   * displayed tree alone (see the plan / usePageGroupEditor's own comment).
-   * A residual, narrow race remains: publishing in the same tick as a
-   * keystroke could still race the just-flushed save's own network
-   * round-trip.
+   * Fires any still-pending debounced save NOW instead of waiting out its
+   * timer, so the last keystroke is in the save queue before publishing
+   * starts. Each editor's `onPublish` then waits for that queue to drain
+   * before it publishes (publishWhenSaved in the page editor,
+   * useDraftEditor for headers, footers and sections): the tree cannot be
+   * re-sent directly, because a translatable field's value cannot be told
+   * apart from the shared structure in the merged tree shown here.
    */
   function handlePublish(): void {
     flushAll();

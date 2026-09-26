@@ -670,7 +670,10 @@
     },
     "save": "Save",
     "saving": "Saving...",
-    "saved": "Saved"
+    "saved": "Saved",
+    "trackerScriptCategoryFor": "Consent category for {{name}}",
+    "trackerScriptCategory": "Consent category",
+    "trackerScriptPlacement": "Where the script goes"
   },
   "globalStyles": {
     "variantGroup": "Look being styled",
@@ -767,7 +770,6 @@
       "saving": "Saving...",
       "saved": "Form saved",
       "nameLabel": "Form name",
-      "notificationEmailLabel": "Notification email",
       "notificationEmailPlaceholder": "No notification if left empty",
       "stepsLabel": "Steps (optional)",
       "stepsHint": "Split the form across multiple pages. With no steps, the form stays single-page.",
@@ -804,7 +806,29 @@
       "unsaved": "Unsaved changes",
       "leaveTitle": "Leave without saving?",
       "leaveBody": "This form saves only when you press Save. What you have changed since then will be lost.",
-      "leaveAction": "Leave"
+      "leaveAction": "Leave",
+      "notificationEmailsLabel": "Notification emails",
+      "notificationEmailsHint": "Every address gets its own email for each answer. Leave empty to email nobody.",
+      "notificationEmailAddress": "Notification email {{number}}",
+      "addNotificationEmail": "Add address",
+      "removeNotificationEmail": "Remove address",
+      "conditionLabel": "Show",
+      "conditionAlways": "Always",
+      "conditionWhen": "Only when \"{{field}}\"",
+      "conditionAnswerLabel": "Answer that shows this field",
+      "conditionAnyAnswer": "has any answer",
+      "conditionIs": "is \"{{option}}\"",
+      "conditionIsTicked": "is ticked",
+      "conditionIsFilled": "is filled in",
+      "untitledField": "Untitled field",
+      "conditionBlocksSave": "Fix the conditions marked below to save.",
+      "conditionProblems": {
+        "self": "A field cannot depend on itself.",
+        "unknown-field": "The field this depended on no longer exists.",
+        "not-earlier": "The field this depends on has to come before it. Move it up, or choose another.",
+        "equals-needs-select": "Only a choice field can be matched against an answer.",
+        "unknown-option": "That answer is no longer one of the field's options."
+      }
     },
     "submissions": {
       "title": "Submissions",
@@ -1160,7 +1184,8 @@
     },
     "status": {
       "saving": "Saving…",
-      "draftSavedAt": "Draft saved at {{time}}"
+      "draftSavedAt": "Draft saved at {{time}}",
+      "publishUnsaved": "The draft could not be saved, so it was not published. Try again."
     },
     "resizeSidebar": "Resize the block panel",
     "resizeLayersPanel": "Resize the right panel",
@@ -1190,7 +1215,8 @@
       "delete": "Delete the selection",
       "moveUp": "Move the block up",
       "moveDown": "Move the block down"
-    }
+    },
+    "dragLayer": "Drag \"{{name}}\""
   },
   "toast": {
     "dismiss": "Dismiss notification"
@@ -2787,5 +2813,9 @@
       "menus": "{{count}} menu items. Menus are rebuilt by hand in the editor.",
       "fields-not-described": "{{count}} blocks keep their fields in the theme’s code rather than in the database: their content comes across, without knowing what each piece of it is."
     }
+  },
+  "datePicker": {
+    "empty": "No date",
+    "clear": "Clear date"
   }
 }

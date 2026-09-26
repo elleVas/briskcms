@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback } from 'react';
 import {
   useMutation,
   useQueryClient,
@@ -12,11 +12,11 @@ import {
   type SiteLayoutSectionKind,
 } from '../lib/site-layout-sections-api-client';
 import { siteLayoutSectionQueryOptions } from './site-layout-sections-queries';
-import type { SaveStatus } from './save-status';
+import { useDraftEditor } from './use-draft-editor';
 
-// No debounce here (unlike the old Puck-backed version) — same reasoning
-// as usePageEditor.ts: canvas-editor-shell.tsx already debounces
-// property/text changes on its own.
+// No debounce here — same reasoning as usePageGroupEditor:
+// canvas-editor-shell.tsx already debounces property/text changes on its
+// own. The draft/publish lifecycle itself lives in useDraftEditor.
 export function useSiteLayoutSectionEditor(
   siteId: string,
   locale: string,
@@ -25,45 +25,22 @@ export function useSiteLayoutSectionEditor(
   const queryOptions = siteLayoutSectionQueryOptions(siteId, locale, kind);
   const { data: section } = useSuspenseQuery(queryOptions);
   const queryClient = useQueryClient();
-  const [status, setStatus] = useState<SaveStatus>({ kind: 'idle' });
 
-  const saveDraftMutation = useMutation({
-    mutationFn: (content: Block[]) => saveDraft(section.id, content),
-    onSuccess: (updated) => {
-      queryClient.setQueryData(queryOptions.queryKey, updated);
-      setStatus({ kind: 'saved', at: Date.now() });
-    },
-    onError: (error: unknown) =>
-      setStatus({ kind: 'error', message: String(error) }),
+  const draft = useDraftEditor({
+    queryKey: queryOptions.queryKey,
+    save: useCallback(
+      (content: Block[]) => saveDraft(section.id, content),
+      [section.id],
+    ),
+    publish: useCallback(
+      () => publishSiteLayoutSection(section.id),
+      [section.id],
+    ),
   });
+  const { setStatus } = draft;
 
-  const publishMutation = useMutation({
-    mutationFn: async (content: Block[]) => {
-      await saveDraft(section.id, content);
-      return publishSiteLayoutSection(section.id);
-    },
-    onSuccess: (updated) => {
-      queryClient.setQueryData(queryOptions.queryKey, updated);
-      setStatus({ kind: 'published' });
-    },
-    onError: (error: unknown) =>
-      setStatus({ kind: 'error', message: String(error) }),
-  });
-
-  const handleChange = useCallback(
-    (content: Block[]) => {
-      saveDraftMutation.mutate(content);
-    },
-    [saveDraftMutation],
-  );
-
-  const handlePublish = useCallback(
-    (content: Block[]) => publishMutation.mutateAsync(content),
-    [publishMutation],
-  );
-
-  // Not part of saveDraftMutation on purpose (docs/adr/0018 follow-up):
-  // sticky takes effect immediately, it isn't "content" the canvas debounces
+  // Not part of the draft on purpose (docs/adr/0018 follow-up): sticky
+  // takes effect immediately, it isn't "content" the canvas debounces
   // alongside its own property/text changes.
   const stickyMutation = useMutation({
     mutationFn: (sticky: boolean) => updateSticky(section.id, sticky),
@@ -79,16 +56,13 @@ export function useSiteLayoutSectionEditor(
     [stickyMutation],
   );
 
-  // See usePageGroupEditor: derived from the mutation rather than recorded,
-  // so "what is happening" and "what last happened" cannot disagree.
-  const isSaving = saveDraftMutation.isPending;
-
   return {
     section,
-    status: isSaving ? ({ kind: 'saving' } as const) : status,
-    isSaving,
-    handleChange,
-    handlePublish,
+    status: draft.status,
+    isSaving: draft.isSaving,
+    handleChange: draft.handleChange,
+    handlePublish: draft.handlePublish,
+    whenSaved: draft.whenSaved,
     handleStickyChange,
   };
 }

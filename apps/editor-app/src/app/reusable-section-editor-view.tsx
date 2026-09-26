@@ -37,6 +37,7 @@ export function ReusableSectionEditorView({
     handleChange,
     handlePublish,
     toggleExposedField,
+    whenSaved,
   } = useReusableSectionEditor(sectionId);
   const statusText = useSaveStatusText(status, {
     publishedKey: 'sections.published',
@@ -47,6 +48,7 @@ export function ReusableSectionEditorView({
       <PageListProvider siteId={siteId} locale={locale}>
         <IconListProvider>
           <CanvasEditorShell
+            whenSaved={whenSaved}
             backLink={
               <Link to="/sections" className="hover:underline">
                 {t('sections.backToList')}
