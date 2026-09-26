@@ -67,6 +67,12 @@ describe('FormsController (integration)', () => {
     await agent.get(`/forms/${randomUUID()}`).expect(404);
   });
 
+  // A malformed id is the caller's mistake, said where the request is read:
+  // it used to reach a uuid column and come back as a 500 from Postgres.
+  it('400s an id that is not a uuid', async () => {
+    await agent.get('/forms/not-a-uuid').expect(400);
+  });
+
   it('persists steps and per-field stepId assignments across the real HTTP+DB stack', async () => {
     const createRes = await agent
       .post('/forms')

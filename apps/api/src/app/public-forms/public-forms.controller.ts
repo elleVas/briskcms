@@ -4,7 +4,6 @@ import {
   Get,
   HttpCode,
   Inject,
-  Param,
   Post,
   Body,
   UploadedFile,
@@ -44,6 +43,7 @@ import {
   NEWSLETTER_PORT,
   PAGE_TRANSLATION_REPOSITORY,
 } from './public-forms.tokens';
+import { UuidParam } from '../uuid-param.decorator';
 
 const MAX_ATTACHMENT_BYTES = 10 * 1024 * 1024; // same cap as MediaController's own upload
 
@@ -72,7 +72,7 @@ export class PublicFormsController {
   ) {}
 
   @Get(':id')
-  async findById(@Param('id') id: string): Promise<PublicForm> {
+  async findById(@UuidParam('id') id: string): Promise<PublicForm> {
     return publicFormSchema.parse(
       await getPublicForm(
         { formRepository: this.formRepository },
@@ -97,7 +97,7 @@ export class PublicFormsController {
     }),
   )
   async uploadAttachment(
-    @Param('id') id: string,
+    @UuidParam('id') id: string,
     @UploadedFile() file: Express.Multer.File | undefined,
   ) {
     if (!file) {
@@ -125,7 +125,7 @@ export class PublicFormsController {
   @Post(':id/submissions')
   @HttpCode(204)
   async submit(
-    @Param('id') id: string,
+    @UuidParam('id') id: string,
     @Body(new ZodValidationPipe(submitFormBodySchema)) body: SubmitFormBody,
   ): Promise<void> {
     await submitForm(

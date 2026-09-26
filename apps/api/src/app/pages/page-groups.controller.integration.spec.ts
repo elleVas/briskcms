@@ -219,6 +219,15 @@ describe('PageGroupsController (integration)', () => {
       .expect(404);
   });
 
+  // Every id in a path is checked before the database sees it; a malformed
+  // one used to come back as a 500 from Postgres.
+  it('400s ids that are not uuids, the page and the translation alike', async () => {
+    await agent.get('/page-groups/not-a-uuid').expect(400);
+    await agent
+      .post('/page-groups/translations/not-a-uuid/publish')
+      .expect(400);
+  });
+
   /*
    * An unlinked language used to be a one-way door with no history: its
    * own tree was the only copy of its work. ADR-0075 opens the way back

@@ -6,7 +6,6 @@ import {
   Get,
   HttpCode,
   Inject,
-  Param,
   Post,
   Query,
   UploadedFile,
@@ -48,6 +47,7 @@ import {
 } from './media.schemas';
 import { TENANT_CONTEXT } from '../auth/auth.tokens';
 import { MEDIA_REPOSITORY, MEDIA_STORAGE } from './media.tokens';
+import { UuidParam } from '../uuid-param.decorator';
 
 // The ceiling multer enforces before anything has been read — it cannot
 // know what the file is yet, so it is the LARGEST any kind may be
@@ -139,7 +139,7 @@ export class MediaController {
 
   @Delete(':id')
   @HttpCode(204)
-  async delete(@Param('id') id: string): Promise<void> {
+  async delete(@UuidParam('id') id: string): Promise<void> {
     await deleteMedia(
       {
         mediaRepository: this.mediaRepository,

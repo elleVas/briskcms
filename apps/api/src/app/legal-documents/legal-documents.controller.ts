@@ -1,11 +1,4 @@
-import {
-  Body,
-  Controller,
-  Inject,
-  Param,
-  Post,
-  UseGuards,
-} from '@nestjs/common';
+import { Body, Controller, Inject, Post, UseGuards } from '@nestjs/common';
 import {
   generateLegalDocuments,
   LEGAL_DOCUMENT_TEMPLATES,
@@ -31,6 +24,7 @@ import {
   previewLegalDocumentsResponseSchema,
   type GenerateLegalDocumentsBody,
 } from './legal-documents.schemas';
+import { UuidParam } from '../uuid-param.decorator';
 
 /**
  * Generates draft Privacy Policy / Cookie Policy / Terms & Conditions
@@ -53,7 +47,7 @@ export class LegalDocumentsController {
 
   @Post()
   async generate(
-    @Param('siteId') siteId: string,
+    @UuidParam('siteId') siteId: string,
     @Body(new ZodValidationPipe(generateLegalDocumentsBodySchema))
     body: GenerateLegalDocumentsBody,
   ) {

@@ -4,7 +4,6 @@ import {
   Get,
   Inject,
   NotFoundException,
-  Param,
   Patch,
   UseGuards,
 } from '@nestjs/common';
@@ -65,6 +64,7 @@ import {
   SITE_THEME_BLOCK_STYLES_REPOSITORY,
   THEME_CATALOG,
 } from './sites.tokens';
+import { UuidParam } from '../uuid-param.decorator';
 
 @Controller('sites')
 @UseGuards(SessionAuthGuard)
@@ -107,7 +107,7 @@ export class SitesController {
   }
 
   @Get(':id')
-  async findById(@Param('id') id: string) {
+  async findById(@UuidParam('id') id: string) {
     const site = await this.siteRepository.findById(
       this.tenantContext.getCurrentTenantId(),
       id,
@@ -120,7 +120,7 @@ export class SitesController {
 
   @Patch(':id/business-info')
   async updateBusinessInfo(
-    @Param('id') id: string,
+    @UuidParam('id') id: string,
     @Body(new ZodValidationPipe(updateBusinessInfoBodySchema))
     body: UpdateBusinessInfoBody,
   ) {
@@ -137,7 +137,7 @@ export class SitesController {
 
   @Patch(':id/general-settings')
   async updateGeneralSettings(
-    @Param('id') id: string,
+    @UuidParam('id') id: string,
     @Body(new ZodValidationPipe(updateGeneralSettingsBodySchema))
     body: UpdateGeneralSettingsBody,
   ) {
@@ -154,7 +154,7 @@ export class SitesController {
 
   @Patch(':id/seo-settings')
   async updateSeoSettings(
-    @Param('id') id: string,
+    @UuidParam('id') id: string,
     @Body(new ZodValidationPipe(updateSeoSettingsBodySchema))
     body: UpdateSeoSettingsBody,
   ) {
@@ -171,7 +171,7 @@ export class SitesController {
 
   @Patch(':id/form-submission-retention')
   async updateFormSubmissionRetention(
-    @Param('id') id: string,
+    @UuidParam('id') id: string,
     @Body(new ZodValidationPipe(updateFormSubmissionRetentionBodySchema))
     body: UpdateFormSubmissionRetentionBody,
   ) {
@@ -188,7 +188,7 @@ export class SitesController {
 
   @Patch(':id/locale-settings')
   async updateLocaleSettings(
-    @Param('id') id: string,
+    @UuidParam('id') id: string,
     @Body(new ZodValidationPipe(updateLocaleSettingsBodySchema))
     body: UpdateLocaleSettingsBody,
   ) {
@@ -212,7 +212,7 @@ export class SitesController {
   @UseGuards(RolesGuard)
   @Roles('admin')
   async updateThemeSettings(
-    @Param('id') id: string,
+    @UuidParam('id') id: string,
     @Body(new ZodValidationPipe(updateThemeSettingsBodySchema))
     body: UpdateThemeSettingsBody,
   ) {
@@ -234,7 +234,7 @@ export class SitesController {
   @UseGuards(RolesGuard)
   @Roles('admin')
   async updateThemePackage(
-    @Param('id') id: string,
+    @UuidParam('id') id: string,
     @Body(new ZodValidationPipe(updateThemePackageBodySchema))
     body: UpdateThemePackageBody,
   ) {
@@ -251,7 +251,7 @@ export class SitesController {
 
   @Patch(':id/cookie-banner-settings')
   async updateCookieBannerSettings(
-    @Param('id') id: string,
+    @UuidParam('id') id: string,
     @Body(new ZodValidationPipe(updateCookieBannerSettingsBodySchema))
     body: UpdateCookieBannerSettingsBody,
   ) {
@@ -268,7 +268,7 @@ export class SitesController {
 
   @Patch(':id/theme-tokens')
   async updateThemeTokens(
-    @Param('id') id: string,
+    @UuidParam('id') id: string,
     @Body(new ZodValidationPipe(updateThemeTokensBodySchema))
     body: UpdateThemeTokensBody,
   ) {

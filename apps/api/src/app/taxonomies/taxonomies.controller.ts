@@ -4,7 +4,6 @@ import {
   Delete,
   Get,
   Inject,
-  Param,
   Patch,
   Post,
   Query,
@@ -58,6 +57,7 @@ import {
   SITE_REPOSITORY,
   TAXONOMY_REPOSITORY,
 } from './taxonomies.tokens';
+import { UuidParam } from '../uuid-param.decorator';
 
 /**
  * Dimensions and their terms (docs/adr/0064). Terms are nested under
@@ -118,14 +118,14 @@ export class TaxonomiesController {
   }
 
   @Get(':id')
-  async get(@Param('id') id: string) {
+  async get(@UuidParam('id') id: string) {
     const taxonomy = await getTaxonomy(this.deps, this.tenantId, id);
     return this.toTaxonomyDto(taxonomy);
   }
 
   @Patch(':id')
   async update(
-    @Param('id') id: string,
+    @UuidParam('id') id: string,
     @Body(new ZodValidationPipe(updateTaxonomyBodySchema))
     body: UpdateTaxonomyBody,
   ) {
@@ -141,13 +141,13 @@ export class TaxonomiesController {
   }
 
   @Delete(':id')
-  async remove(@Param('id') id: string) {
+  async remove(@UuidParam('id') id: string) {
     await deleteTaxonomy(this.deps, this.tenantId, id);
     return { ok: true };
   }
 
   @Get(':id/terms')
-  async listTerms(@Param('id') id: string) {
+  async listTerms(@UuidParam('id') id: string) {
     // Through the taxonomy, so a request for the terms of a dimension
     // that does not exist is a 404 rather than an empty list — an empty
     // list is an answer about a dimension, and there is none.
@@ -158,7 +158,7 @@ export class TaxonomiesController {
 
   @Post(':id/terms')
   async createTerm(
-    @Param('id') id: string,
+    @UuidParam('id') id: string,
     @Body(new ZodValidationPipe(createTermBodySchema)) body: CreateTermBody,
   ) {
     const term = await createTerm(this.deps, {
@@ -172,14 +172,14 @@ export class TaxonomiesController {
   }
 
   @Get('terms/:termId')
-  async getTerm(@Param('termId') termId: string) {
+  async getTerm(@UuidParam('termId') termId: string) {
     const term = await getTerm(this.deps, this.tenantId, termId);
     return this.toTermDto(term);
   }
 
   @Patch('terms/:termId')
   async updateTerm(
-    @Param('termId') termId: string,
+    @UuidParam('termId') termId: string,
     @Body(new ZodValidationPipe(updateTermBodySchema)) body: UpdateTermBody,
   ) {
     const term = await updateTerm(this.deps, {
@@ -200,7 +200,7 @@ export class TaxonomiesController {
 
   @Patch('terms/:termId/parent')
   async moveTerm(
-    @Param('termId') termId: string,
+    @UuidParam('termId') termId: string,
     @Body(new ZodValidationPipe(moveTermBodySchema)) body: MoveTermBody,
   ) {
     const term = await moveTerm(this.deps, {
@@ -212,7 +212,7 @@ export class TaxonomiesController {
   }
 
   @Delete('terms/:termId')
-  async removeTerm(@Param('termId') termId: string) {
+  async removeTerm(@UuidParam('termId') termId: string) {
     await deleteTerm(this.deps, this.tenantId, termId);
     return { ok: true };
   }

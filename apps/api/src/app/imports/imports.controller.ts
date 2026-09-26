@@ -8,7 +8,6 @@ import {
   Get,
   HttpCode,
   Inject,
-  Param,
   Post,
   Query,
   UploadedFile,
@@ -51,6 +50,7 @@ import {
   type StartWordPressAnalysisBody,
   startWordPressAnalysisBodySchema,
 } from './imports.schemas';
+import { UuidParam } from '../uuid-param.decorator';
 
 /**
  * 512 MB.
@@ -178,7 +178,7 @@ export class ImportsController {
   }
 
   @Get(':id')
-  async findById(@Param('id') id: string): Promise<ImportJobRecord> {
+  async findById(@UuidParam('id') id: string): Promise<ImportJobRecord> {
     const job = await getImportJob(
       { importJobRepository: this.importJobRepository },
       { tenantId: this.tenantContext.getCurrentTenantId(), jobId: id },

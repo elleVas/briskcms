@@ -5,7 +5,6 @@ import {
   Get,
   HttpCode,
   Inject,
-  Param,
   Patch,
   Post,
   Query,
@@ -39,6 +38,7 @@ import {
   COLLECTION_REPOSITORY,
   REUSABLE_SECTION_REPOSITORY,
 } from './collections.tokens';
+import { UuidParam } from '../uuid-param.decorator';
 
 /**
  * The editor's own sections — News, Events, Case studies.
@@ -98,7 +98,7 @@ export class CollectionsController {
 
   @Patch(':id')
   async update(
-    @Param('id') id: string,
+    @UuidParam('id') id: string,
     @Body(new ZodValidationPipe(updateCollectionBodySchema))
     body: UpdateCollectionBody,
   ) {
@@ -114,7 +114,7 @@ export class CollectionsController {
 
   @Delete(':id')
   @HttpCode(204)
-  async remove(@Param('id') id: string) {
+  async remove(@UuidParam('id') id: string) {
     await deleteCollection(this.deps, this.tenantId, id);
   }
 
