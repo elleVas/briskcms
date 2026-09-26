@@ -21,7 +21,7 @@ export async function getPublicForm(
     throw new FormNotFoundError(input.formId);
   }
 
-  // notificationEmail is deliberately omitted: private operational config,
+  // notificationEmails is deliberately omitted: private operational config,
   // never exposed to the public renderer or the browser.
   return {
     id: form.id,

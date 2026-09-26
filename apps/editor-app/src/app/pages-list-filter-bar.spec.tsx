@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { dayButton, openCalendar } from '../test/date-picker.test-fixture';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { QueryClientProvider } from '@tanstack/react-query';
@@ -72,20 +73,22 @@ describe('PagesListFilterBar', () => {
     });
   });
 
-  it('calls onChange with the updated date range', () => {
+  it('calls onChange with the updated date range', async () => {
     const { onChange } = renderBar();
 
     // The four secondary filters sit behind a button now: they were always
     // on screen and took two full rows at 1024px, above a list that had not
     // started yet.
     fireEvent.click(screen.getByRole('button', { name: /^filtri/i }));
-    fireEvent.change(screen.getByLabelText('Da'), {
-      target: { value: '2026-01-01' },
-    });
+    // The calendar opens on the current month when nothing is chosen yet.
+    await openCalendar(screen.getByLabelText('Da'));
+    fireEvent.click(dayButton('1'));
 
+    const today = new Date();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
     expect(onChange).toHaveBeenCalledWith({
       ...EMPTY_PAGES_LIST_FILTERS,
-      createdAfter: '2026-01-01',
+      createdAfter: `${today.getFullYear()}-${month}-01`,
     });
   });
 

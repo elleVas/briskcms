@@ -5,7 +5,7 @@ import {
   useSuspenseQuery,
 } from '@tanstack/react-query';
 import { Trash2 } from 'lucide-react';
-import type { LocalizedText } from '@brisk/shared-types';
+import { firstNamed, type LocalizedText } from '@brisk/shared-types';
 import { useTranslation } from '../lib/use-translation';
 import {
   createTaxonomy,
@@ -22,11 +22,6 @@ import { TermTreeEditor } from './term-tree-editor';
 
 export interface TaxonomiesViewProps {
   siteId: string;
-}
-
-/** A term is named in every language the site publishes; the first one that has a name is what a list shows. */
-export function firstNamed(name: LocalizedText): string {
-  return Object.values(name).find((value) => value.trim() !== '') ?? '';
 }
 
 /**

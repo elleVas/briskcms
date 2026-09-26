@@ -61,7 +61,7 @@ describe('DrizzleFormRepository (integration)', () => {
     expect(found?.name).toBe('Contatti');
     expect(found?.fields).toEqual([]);
     expect(found?.steps).toEqual([]);
-    expect(found?.notificationEmail).toBeNull();
+    expect(found?.notificationEmails).toEqual([]);
 
     const foundFromOtherTenant = await formRepository.findById(
       tenantBId,
@@ -132,7 +132,7 @@ describe('DrizzleFormRepository (integration)', () => {
           },
         ],
         steps: [{ id: 'step-1', title: 'Contatti' }],
-        notificationEmail: 'owner@example.com',
+        notificationEmails: ['owner@example.com'],
       },
       new Date(),
     );
@@ -150,7 +150,7 @@ describe('DrizzleFormRepository (integration)', () => {
       },
     ]);
     expect(found?.steps).toEqual([{ id: 'step-1', title: 'Contatti' }]);
-    expect(found?.notificationEmail).toBe('owner@example.com');
+    expect(found?.notificationEmails).toEqual(['owner@example.com']);
   });
 
   it('deletes a form scoped to its tenant', async () => {

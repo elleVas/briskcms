@@ -111,4 +111,93 @@ describe('formBehaviors', () => {
       'Passo 2 di 2',
     );
   });
+
+  describe('show-when conditions', () => {
+    function renderConditionalForm(): HTMLFormElement {
+      const conditions = JSON.stringify([
+        { id: 'reason', showWhen: null },
+        { id: 'details', showWhen: { fieldId: 'reason', equals: 'Other' } },
+        { id: 'news', showWhen: null },
+        { id: 'topics', showWhen: { fieldId: 'news', equals: null } },
+      ]);
+      document.body.innerHTML = `
+        <div class="brisk-form">
+          <form data-brisk-form-conditions='${conditions}'>
+            <div data-brisk-form-field="reason">
+              <select name="reason"><option value=""></option><option>Quote</option><option>Other</option></select>
+            </div>
+            <div data-brisk-form-field="details" hidden>
+              <input name="details" required disabled />
+            </div>
+            <div data-brisk-form-field="news">
+              <input type="checkbox" name="news" />
+            </div>
+            <div data-brisk-form-field="topics" hidden>
+              <input name="topics" disabled />
+            </div>
+          </form>
+        </div>
+      `;
+      return document.querySelector<HTMLFormElement>('.brisk-form form')!;
+    }
+
+    function field(id: string): HTMLElement {
+      return document.querySelector<HTMLElement>(
+        `[data-brisk-form-field="${id}"]`,
+      )!;
+    }
+
+    it('shows a field once the select it depends on has its answer, and enables it', () => {
+      const form = renderConditionalForm();
+      runBlockBehaviors(document, formBehaviors);
+      const reason = form.querySelector<HTMLSelectElement>('select')!;
+
+      reason.value = 'Other';
+      reason.dispatchEvent(new Event('change', { bubbles: true }));
+
+      expect(field('details').hidden).toBe(false);
+      expect(field('details').querySelector('input')!.disabled).toBe(false);
+    });
+
+    /*
+     * Disabled, not only hidden: the browser neither validates nor
+     * submits a disabled control, so a required field the visitor cannot
+     * see never blocks the form, and an answer given before the condition
+     * changed is not sent.
+     */
+    it('hides and disables it again when the answer changes back', () => {
+      const form = renderConditionalForm();
+      runBlockBehaviors(document, formBehaviors);
+      const reason = form.querySelector<HTMLSelectElement>('select')!;
+
+      reason.value = 'Other';
+      reason.dispatchEvent(new Event('change', { bubbles: true }));
+      reason.value = 'Quote';
+      reason.dispatchEvent(new Event('change', { bubbles: true }));
+
+      expect(field('details').hidden).toBe(true);
+      expect(field('details').querySelector('input')!.disabled).toBe(true);
+      expect(form.checkValidity()).toBe(true);
+    });
+
+    it('reads a ticked box as "any answer"', () => {
+      const form = renderConditionalForm();
+      runBlockBehaviors(document, formBehaviors);
+      const news = form.querySelector<HTMLInputElement>('input[name="news"]')!;
+
+      news.checked = true;
+      news.dispatchEvent(new Event('change', { bubbles: true }));
+
+      expect(field('topics').hidden).toBe(false);
+    });
+
+    it('leaves a form with no conditions alone', () => {
+      document.body.innerHTML = `
+        <div class="brisk-form"><form><div data-brisk-form-field="a" hidden><input name="a" disabled /></div></form></div>
+      `;
+      runBlockBehaviors(document, formBehaviors);
+
+      expect(field('a').hidden).toBe(true);
+    });
+  });
 });

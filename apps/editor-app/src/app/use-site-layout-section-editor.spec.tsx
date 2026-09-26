@@ -137,4 +137,106 @@ describe('useSiteLayoutSectionEditor', () => {
       message: expect.stringContaining('sticky failed'),
     });
   });
+
+  /*
+   * The queue these editors now share with the page editor
+   * (useDraftEditor). Before it, every change fired its own request, so an
+   * older save could land after a newer one and publishing did not wait
+   * for the saves already on their way.
+   */
+  describe('the save queue', () => {
+    function deferred<T>() {
+      let resolve!: (value: T) => void;
+      let reject!: (reason: unknown) => void;
+      const promise = new Promise<T>((res, rej) => {
+        resolve = res;
+        reject = rej;
+      });
+      return { promise, resolve, reject };
+    }
+
+    const newer: Block[] = [{ id: 'nav-2', type: 'Nav', props: {} }];
+
+    it('never sends a second save while the first is still on its way', async () => {
+      const first = deferred<typeof sampleSection>();
+      vi.mocked(api.saveDraft)
+        .mockReturnValueOnce(first.promise)
+        .mockResolvedValue(sampleSection);
+      const { result } = renderEditor();
+
+      await act(async () => {
+        result.current.handleChange(sampleContent);
+        result.current.handleChange(newer);
+      });
+      expect(api.saveDraft).toHaveBeenCalledTimes(1);
+
+      await act(async () => {
+        first.resolve(sampleSection);
+        await result.current.whenSaved();
+      });
+      expect(api.saveDraft).toHaveBeenCalledTimes(2);
+      expect(api.saveDraft).toHaveBeenLastCalledWith(sampleSection.id, newer);
+    });
+
+    it('publishes only after the save already on its way has landed', async () => {
+      const inFlight = deferred<typeof sampleSection>();
+      vi.mocked(api.saveDraft)
+        .mockReturnValueOnce(inFlight.promise)
+        .mockResolvedValue(sampleSection);
+      vi.mocked(api.publishSiteLayoutSection).mockResolvedValue({
+        ...sampleSection,
+        status: 'published',
+      });
+      const { result } = renderEditor();
+
+      let publishing!: Promise<unknown>;
+      await act(async () => {
+        result.current.handleChange(sampleContent);
+        publishing = result.current.handlePublish(newer);
+      });
+      expect(api.publishSiteLayoutSection).not.toHaveBeenCalled();
+
+      await act(async () => {
+        inFlight.resolve(sampleSection);
+        await publishing;
+      });
+      expect(api.saveDraft).toHaveBeenLastCalledWith(sampleSection.id, newer);
+      expect(api.publishSiteLayoutSection).toHaveBeenCalledTimes(1);
+      expect(result.current.status).toEqual({ kind: 'published' });
+    });
+
+    it('does not publish a draft that failed to save', async () => {
+      vi.mocked(api.saveDraft).mockRejectedValue(new Error('save failed'));
+      const { result } = renderEditor();
+
+      await act(async () => {
+        await expect(
+          result.current.handlePublish(sampleContent),
+        ).rejects.toThrow();
+      });
+
+      expect(api.publishSiteLayoutSection).not.toHaveBeenCalled();
+      expect(result.current.status).toMatchObject({ kind: 'error' });
+    });
+
+    it('whenSaved waits for the queue to drain', async () => {
+      const inFlight = deferred<typeof sampleSection>();
+      vi.mocked(api.saveDraft).mockReturnValueOnce(inFlight.promise);
+      const { result } = renderEditor();
+      let settled = false;
+
+      await act(async () => {
+        result.current.handleChange(sampleContent);
+        void result.current.whenSaved().then(() => {
+          settled = true;
+        });
+      });
+      expect(settled).toBe(false);
+
+      await act(async () => {
+        inFlight.resolve(sampleSection);
+      });
+      expect(settled).toBe(true);
+    });
+  });
 });

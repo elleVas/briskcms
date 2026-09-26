@@ -34,9 +34,22 @@ export interface SidePanelState {
  * Both values are remembered between sessions — see side-panel-preferences.ts
  * for why, and for what happens when the browser refuses to remember.
  */
+/**
+ * Below Tailwind's `md`, a panel that nobody has opened or closed yet starts
+ * closed: at a phone's width the two panels and the canvas cannot sit side by
+ * side, and the page scrolled sideways instead. Once somebody opens it, that
+ * is remembered like any other choice.
+ */
+function isNarrowWindow(): boolean {
+  return (
+    typeof window !== 'undefined' &&
+    window.matchMedia?.('(max-width: 767px)').matches === true
+  );
+}
+
 export function useSidePanel(storageKey: string): SidePanelState {
-  const [isCollapsed, setIsCollapsed] = useState(() =>
-    readPanelCollapsed(storageKey),
+  const [isCollapsed, setIsCollapsed] = useState(
+    () => readPanelCollapsed(storageKey) ?? isNarrowWindow(),
   );
   const [width, setWidthState] = useState(() => readPanelWidth(storageKey));
 

@@ -7,9 +7,19 @@ interface Props {
 }
 
 const { formId, field } = Astro.props;
+// A field with a condition starts hidden and disabled: nothing has been
+// answered yet, so its condition cannot be met. The form's script shows it
+// once it is (block-behaviors/form.ts); a disabled control is neither
+// validated nor submitted, which is what keeps a hidden required field
+// from blocking the form.
+const conditional = Boolean(field.showWhen);
 ---
 
-<div class="brisk-form__field">
+<div
+  class="brisk-form__field"
+  data-brisk-form-field={field.id}
+  hidden={conditional}
+>
   <label for={`${formId}-${field.id}`}>
     {field.label}
     {field.required && ' *'}
@@ -20,9 +30,15 @@ const { formId, field } = Astro.props;
         id={`${formId}-${field.id}`}
         name={field.id}
         required={field.required}
+        disabled={conditional}
       />
     ) : field.type === 'select' ? (
-      <select id={`${formId}-${field.id}`} name={field.id} required={field.required}>
+      <select
+        id={`${formId}-${field.id}`}
+        name={field.id}
+        required={field.required}
+        disabled={conditional}
+      >
         <option value="" />
         {(field.options ?? []).map((option) => (
           <option value={option}>{option}</option>
@@ -34,6 +50,7 @@ const { formId, field } = Astro.props;
         id={`${formId}-${field.id}`}
         name={field.id}
         required={field.required}
+        disabled={conditional}
       />
     ) : (
       <input
@@ -41,6 +58,7 @@ const { formId, field } = Astro.props;
         id={`${formId}-${field.id}`}
         name={field.id}
         required={field.required}
+        disabled={conditional}
       />
     )
   }
@@ -55,6 +73,11 @@ const { formId, field } = Astro.props;
     display: flex;
     flex-direction: column;
     gap: 0.375rem;
+  }
+  /* `display: flex` above outranks the browser's own rule for `hidden`,
+     so a field waiting on its condition would still show without this. */
+  .brisk-form__field[hidden] {
+    display: none;
   }
   .brisk-form__field:has(input[type='checkbox']) {
     flex-direction: row-reverse;

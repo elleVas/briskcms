@@ -14,6 +14,7 @@ import {
   CardTitle,
 } from '../components/ui/card';
 import { Input } from '../components/ui/input';
+import { OptionsSelect } from '../components/ui/select';
 import { Label } from '../components/ui/label';
 
 /** Mirrors the server's own minimum (setup.schemas.ts) so the field can say so before submitting. */
@@ -141,18 +142,15 @@ export function SetupWizardForm({ onSubmit }: SetupWizardFormProps) {
 
             <div className="flex flex-col gap-2">
               <Label htmlFor="setup-locale">{t('setup.localeLabel')}</Label>
-              <select
+              <OptionsSelect
                 id="setup-locale"
-                className="border-input bg-background h-9 rounded-md border px-3 text-sm"
                 value={defaultLocale}
-                onChange={(e) => setDefaultLocale(e.target.value)}
-              >
-                {CURATED_LOCALE_CODES.map((code) => (
-                  <option key={code} value={code}>
-                    {getLocaleDisplayName(code)}
-                  </option>
-                ))}
-              </select>
+                onValueChange={setDefaultLocale}
+                options={CURATED_LOCALE_CODES.map((code) => ({
+                  value: code,
+                  label: getLocaleDisplayName(code),
+                }))}
+              />
               <p className="text-muted-foreground text-xs">
                 {t('setup.localeHint')}
               </p>

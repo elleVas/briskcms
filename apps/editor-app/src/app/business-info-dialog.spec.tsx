@@ -1,4 +1,5 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { optionNames } from '../test/select.test-fixture';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { ISO_COUNTRY_CODES } from '@brisk/shared-types';
@@ -62,7 +63,7 @@ describe('BusinessInfoDialog', () => {
     expect(screen.getByDisplayValue('Milano')).toBeTruthy();
     // The stored `IT` selects the country, shown under the name the
     // platform gives it rather than one from a table of ours.
-    expect(screen.getByDisplayValue('Italia')).toBeTruthy();
+    expect(screen.getByLabelText('Paese').textContent).toContain('Italia');
     expect(screen.getByDisplayValue('+39 02 1234567')).toBeTruthy();
     expect(screen.getByDisplayValue('Restaurant')).toBeTruthy();
   });
@@ -73,13 +74,11 @@ describe('BusinessInfoDialog', () => {
     renderDialog();
 
     const country = await screen.findByLabelText('Paese');
-    const options = [...country.querySelectorAll('option')];
-    expect(options.length).toBe(ISO_COUNTRY_CODES.length + 1);
-    expect(options.find((option) => option.value === 'IT')?.textContent).toBe(
-      'Italia',
-    );
+    const [none, ...names] = optionNames(country);
+    expect(none).toBe('— Nessuno —');
+    expect(names).toHaveLength(ISO_COUNTRY_CODES.length);
+    expect(names).toContain('Italia');
     // Sorted by the name as it reads in this language, not by the code.
-    const names = options.slice(1).map((option) => option.textContent ?? '');
     expect(names).toEqual([...names].sort(new Intl.Collator('it').compare));
   });
 

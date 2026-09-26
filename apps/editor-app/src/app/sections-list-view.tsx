@@ -6,6 +6,7 @@ import {
   useSuspenseQuery,
 } from '@tanstack/react-query';
 import { Trash2 } from 'lucide-react';
+import { OptionsSelect } from '../components/ui/select';
 import { REUSABLE_SECTION_KINDS } from '@brisk/shared-types';
 import { useTranslation } from '../lib/use-translation';
 import {
@@ -118,16 +119,17 @@ export function SectionsListView({ siteId }: SectionsListViewProps) {
           <span className="text-xs font-medium text-muted-foreground">
             {t('sections.kindLabel')}
           </span>
-          <select
-            className="h-9 rounded-lg border border-input bg-transparent px-2.5 text-sm"
+          <OptionsSelect
+            aria-label={t('sections.kindLabel')}
             value={kind}
-            onChange={(e) => {
-              if (isSectionKind(e.target.value)) setKind(e.target.value);
+            onValueChange={(value) => {
+              if (isSectionKind(value)) setKind(value);
             }}
-          >
-            <option value="shared">{t('sections.kind.shared')}</option>
-            <option value="template">{t('sections.kind.template')}</option>
-          </select>
+            options={REUSABLE_SECTION_KINDS.map((candidate) => ({
+              value: candidate,
+              label: t(`sections.kind.${candidate}`),
+            }))}
+          />
         </label>
         <Button type="submit" disabled={!name.trim()}>
           {t('sections.create')}

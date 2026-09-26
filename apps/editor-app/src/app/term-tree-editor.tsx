@@ -13,12 +13,13 @@ import {
 } from '../lib/taxonomies-api-client';
 import { termsQueryOptions } from './taxonomies-queries';
 import { Button } from '../components/ui/button';
+import { OptionsSelect } from '../components/ui/select';
 import { Input } from '../components/ui/input';
 import { Textarea } from '../components/ui/textarea';
 import { IconButton } from './icon-button';
 import { SeoMetaDialog } from './seo-meta-dialog';
 import { TermLandingPageField } from './term-landing-page-field';
-import { firstNamed } from './taxonomies-view';
+import { firstNamed } from '@brisk/shared-types';
 
 export interface TermTreeEditorProps {
   siteId: string;
@@ -279,33 +280,34 @@ export function TermTreeEditor({
                       <span className="text-xs text-muted-foreground">
                         {t('taxonomies.parent')}
                       </span>
-                      <select
-                        className="h-9 rounded-lg border border-input bg-transparent px-2.5 text-sm"
+                      <OptionsSelect
+                        aria-label={t('taxonomies.parent')}
                         value={term.parentId ?? ''}
-                        onChange={(event) =>
+                        onValueChange={(parentId) =>
                           moveMutation.mutate({
                             id: term.id,
-                            parentId: event.target.value || null,
+                            parentId: parentId || null,
                           })
                         }
-                      >
-                        <option value="">{t('taxonomies.noParent')}</option>
-                        {terms
-                          // Itself is not a parent, and neither is
-                          // anything under it — the API refuses both,
-                          // and offering them would be offering an error.
-                          .filter(
-                            (candidate) =>
-                              candidate.id !== term.id &&
-                              !isDescendantOf(terms, candidate, term.id),
-                          )
-                          .map((candidate) => (
-                            <option key={candidate.id} value={candidate.id}>
-                              {firstNamed(candidate.name) ||
-                                t('taxonomies.unnamed')}
-                            </option>
-                          ))}
-                      </select>
+                        options={[
+                          { value: '', label: t('taxonomies.noParent') },
+                          ...terms
+                            // Itself is not a parent, and neither is
+                            // anything under it — the API refuses both,
+                            // and offering them would be offering an error.
+                            .filter(
+                              (candidate) =>
+                                candidate.id !== term.id &&
+                                !isDescendantOf(terms, candidate, term.id),
+                            )
+                            .map((candidate) => ({
+                              value: candidate.id,
+                              label:
+                                firstNamed(candidate.name) ||
+                                t('taxonomies.unnamed'),
+                            })),
+                        ]}
+                      />
                     </label>
                   )}
                 </div>
@@ -329,19 +331,19 @@ export function TermTreeEditor({
           <Input value={name} onChange={(e) => setName(e.target.value)} />
         </label>
         {taxonomy.hierarchical && ordered.length > 0 && (
-          <select
-            className="h-9 rounded-lg border border-input bg-transparent px-2.5 text-sm"
+          <OptionsSelect
             aria-label={t('taxonomies.newTermParent')}
+            className="w-auto min-w-40"
             value={parentId}
-            onChange={(e) => setParentId(e.target.value)}
-          >
-            <option value="">{t('taxonomies.noParent')}</option>
-            {terms.map((candidate) => (
-              <option key={candidate.id} value={candidate.id}>
-                {firstNamed(candidate.name) || t('taxonomies.unnamed')}
-              </option>
-            ))}
-          </select>
+            onValueChange={setParentId}
+            options={[
+              { value: '', label: t('taxonomies.noParent') },
+              ...terms.map((candidate) => ({
+                value: candidate.id,
+                label: firstNamed(candidate.name) || t('taxonomies.unnamed'),
+              })),
+            ]}
+          />
         )}
         <Button type="submit" variant="outline" disabled={!name.trim()}>
           {t('taxonomies.addTerm')}

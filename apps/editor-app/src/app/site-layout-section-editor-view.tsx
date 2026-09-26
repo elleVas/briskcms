@@ -51,6 +51,7 @@ export function SiteLayoutSectionEditorView({
     handleChange,
     handlePublish,
     handleStickyChange,
+    whenSaved,
   } = useSiteLayoutSectionEditor(siteId, locale, kind);
   const statusText = useSaveStatusText(status, {
     publishedKey: 'layout.editor.published',
@@ -76,6 +77,9 @@ export function SiteLayoutSectionEditorView({
     useRepresentativePage(siteId, locale);
 
   async function handleRollback(versionId: string) {
+    // A save still on its way would land after the restore and overwrite
+    // it with the header as it was before — the page editor's own wait.
+    await whenSaved();
     await rollback(versionId);
     setRestoredAt((n) => n + 1);
   }
@@ -94,6 +98,7 @@ export function SiteLayoutSectionEditorView({
           ) : (
             representativePage && (
               <CanvasEditorShell
+                whenSaved={whenSaved}
                 backLink={
                   <Link to="/layout" className="hover:underline">
                     ← {t('layout.editor.backToList')}

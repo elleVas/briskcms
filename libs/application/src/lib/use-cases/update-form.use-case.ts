@@ -12,7 +12,7 @@ export interface UpdateFormInput {
   name: string;
   fields: FormField[];
   steps: FormStep[];
-  notificationEmail: string | null;
+  notificationEmails: string[];
 }
 
 export async function updateForm(
@@ -28,7 +28,7 @@ export async function updateForm(
     name: input.name,
     fields: input.fields,
     steps: input.steps,
-    notificationEmail: input.notificationEmail,
+    notificationEmails: input.notificationEmails,
   });
   await deps.formRepository.save(form);
 

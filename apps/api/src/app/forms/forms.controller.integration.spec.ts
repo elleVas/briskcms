@@ -46,12 +46,12 @@ describe('FormsController (integration)', () => {
         fields: [
           { id: 'email', label: 'Email', type: 'email', required: true },
         ],
-        notificationEmail: 'owner@example.com',
+        notificationEmails: ['owner@example.com'],
       })
       .expect(200);
     expect(updateRes.body.name).toBe('Richiedi preventivo');
     expect(updateRes.body.fields).toHaveLength(1);
-    expect(updateRes.body.notificationEmail).toBe('owner@example.com');
+    expect(updateRes.body.notificationEmails).toEqual(['owner@example.com']);
 
     const listRes = await agent.get('/forms').query({ siteId }).expect(200);
     expect(listRes.body.total).toBeGreaterThanOrEqual(1);
@@ -88,7 +88,7 @@ describe('FormsController (integration)', () => {
           },
         ],
         steps: [{ id: 'dati-personali', title: 'Dati personali' }],
-        notificationEmail: null,
+        notificationEmails: [],
       })
       .expect(200);
 
@@ -108,7 +108,7 @@ describe('FormsController (integration)', () => {
   it('404s updating a form that does not exist', async () => {
     await agent
       .patch(`/forms/${randomUUID()}`)
-      .send({ name: 'x', fields: [], notificationEmail: null })
+      .send({ name: 'x', fields: [], notificationEmails: [] })
       .expect(404);
   });
 

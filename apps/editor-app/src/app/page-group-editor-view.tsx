@@ -272,6 +272,21 @@ export function PageGroupEditorView({
     }
   }
 
+  /**
+   * The canvas sends any change still waiting out its debounce before it
+   * calls this; the translation is then published as the server holds it,
+   * so publishing has to wait for that save to land. Before, a keystroke
+   * made just before Publish could miss the published version.
+   */
+  async function publishWhenSaved() {
+    await whenSaved();
+    if (hasFailedSave()) {
+      toast(t('canvas.status.publishUnsaved'), 'destructive');
+      return;
+    }
+    await handlePublish();
+  }
+
   function restoringWith(rollback: (versionId: string) => Promise<unknown>) {
     return async (versionId: string) => {
       // A save still on its way would land after the restore and
@@ -419,7 +434,7 @@ export function PageGroupEditorView({
               blocks={displayedBlocks}
               onChange={onChange}
               whenSaved={whenSaved}
-              onPublish={handlePublish}
+              onPublish={publishWhenSaved}
               pageId={activeTranslation.id}
               restoredAt={restoredAt}
             >

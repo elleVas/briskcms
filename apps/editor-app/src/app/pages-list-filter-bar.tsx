@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { SlidersHorizontal } from 'lucide-react';
 import { getLocaleDisplayName } from '@brisk/shared-types';
 import { Button } from '../components/ui/button';
+import { DatePicker } from '../components/ui/date-picker';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import {
@@ -26,7 +27,7 @@ const SECONDARY_FILTER_KEYS = [
 
 export interface PagesListFilterValues {
   search: string;
-  /** yyyy-mm-dd (native `<input type="date">` format), '' = unset. */
+  /** yyyy-mm-dd, as DatePicker writes it; '' = unset. */
   createdAfter: string;
   createdBefore: string;
   createdBy: string;
@@ -55,16 +56,11 @@ const ANY_SENTINEL = '__any__';
 /**
  * Fase 4's pages-list filter bar (see the plan). No existing filter-bar
  * pattern anywhere in editor-app to copy (confirmed: neither media-grid,
- * users-list, nor forms-list has one today) — first of its kind. Date
- * range is two native `<input
- * type="date">` fields, not a calendar-popover widget: no date-picker
- * library exists in this workspace yet, and this project has deliberately
- * avoided adding UI-library dependencies for a "input + client-side
- * filter" need it can already meet natively (same reasoning
- * locale-list-editor.tsx's own doc comment gives for not using a
- * Combobox/cmdk). Creator/locale are plain Selects, not searchable
- * popovers, for the same reason — both lists are small at this product's
- * "5-15 users/pages" scale.
+ * users-list, nor forms-list has one today) — first of its kind. The
+ * date range is two calendar pickers (DatePicker), which keep the
+ * `YYYY-MM-DD` value the filter compares. Creator/locale are plain
+ * Selects, not searchable popovers: both lists are small at this
+ * product's "5-15 users/pages" scale.
  */
 export function PagesListFilterBar({
   value,
@@ -137,24 +133,22 @@ export function PagesListFilterBar({
             <Label htmlFor="pages-filter-created-after">
               {t('pages.list.filters.createdAfter')}
             </Label>
-            <Input
+            <DatePicker
               id="pages-filter-created-after"
-              type="date"
-              className="w-36"
+              className="w-40"
               value={value.createdAfter}
-              onChange={(event) => set('createdAfter', event.target.value)}
+              onChange={(next) => set('createdAfter', next)}
             />
           </div>
           <div className="flex flex-col gap-1">
             <Label htmlFor="pages-filter-created-before">
               {t('pages.list.filters.createdBefore')}
             </Label>
-            <Input
+            <DatePicker
               id="pages-filter-created-before"
-              type="date"
-              className="w-36"
+              className="w-40"
               value={value.createdBefore}
-              onChange={(event) => set('createdBefore', event.target.value)}
+              onChange={(next) => set('createdBefore', next)}
             />
           </div>
           <div className="flex flex-col gap-1">

@@ -21,6 +21,8 @@ import { TermPickerField } from './term-picker-field';
 type ControlComponent = ComponentType<{
   value: unknown;
   onChange: (value: unknown) => void;
+  /** The field's own label, for a control that is a button rather than an input — a label element around a button would lend it the button's text as well. */
+  label?: string;
 }>;
 
 /**

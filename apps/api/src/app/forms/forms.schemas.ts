@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { MAX_NOTIFICATION_EMAILS } from '@brisk/domain-core';
 import { formFieldsSchema, formStepsSchema } from '@brisk/shared-types';
 
 export const createFormBodySchema = z.object({
@@ -18,7 +19,10 @@ export const updateFormBodySchema = z.object({
   name: z.string().min(1),
   fields: formFieldsSchema,
   steps: formStepsSchema.default([]),
-  notificationEmail: z.string().email().nullable(),
+  notificationEmails: z
+    .array(z.string().trim().email())
+    .max(MAX_NOTIFICATION_EMAILS)
+    .default([]),
 });
 export type UpdateFormBody = z.infer<typeof updateFormBodySchema>;
 

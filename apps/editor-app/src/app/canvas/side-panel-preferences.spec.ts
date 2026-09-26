@@ -51,10 +51,12 @@ describe('side panel preferences', () => {
     expect(clampPanelWidth(Number.NaN)).toBe(DEFAULT_PANEL_WIDTH);
   });
 
-  it('remembers a collapsed panel', () => {
-    expect(readPanelCollapsed('inserter')).toBe(false);
+  it('remembers a collapsed panel, and tells "never chosen" apart from "open"', () => {
+    expect(readPanelCollapsed('inserter')).toBeNull();
     writePanelCollapsed('inserter', true);
     expect(readPanelCollapsed('inserter')).toBe(true);
+    writePanelCollapsed('inserter', false);
+    expect(readPanelCollapsed('inserter')).toBe(false);
   });
 
   /*
@@ -71,7 +73,7 @@ describe('side panel preferences', () => {
     });
 
     expect(readPanelWidth('inspector')).toBe(DEFAULT_PANEL_WIDTH);
-    expect(readPanelCollapsed('inspector')).toBe(false);
+    expect(readPanelCollapsed('inspector')).toBeNull();
     expect(() => writePanelWidth('inspector', 320)).not.toThrow();
     expect(() => writePanelCollapsed('inspector', true)).not.toThrow();
   });

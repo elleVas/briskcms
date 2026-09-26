@@ -6,6 +6,7 @@ import type {
   ThemeStyleProperty,
 } from '@brisk/shared-types';
 import { Input } from '../../components/ui/input';
+import { OptionsSelect } from '../../components/ui/select';
 import { Label } from '../../components/ui/label';
 import { useTranslation } from '../../lib/use-translation';
 
@@ -248,40 +249,33 @@ export function BlockStyleFields({
               <Label htmlFor={`block-style-${property}`}>
                 {tLabel(`canvas.blockStyle.selects.${property}.fieldLabel`)}
               </Label>
-              <select
+              <OptionsSelect
                 id={`block-style-${property}`}
-                className="border-input bg-background h-9 rounded-md border px-2 text-sm"
                 value={read(property) ?? ''}
-                onChange={(event) =>
-                  setField(
-                    property,
-                    event.target.value === ''
-                      ? null
-                      : (event.target.value as never),
-                  )
-                }
-              >
-                {/* Leaving it selected is how you say "do not set this".
-                    For most properties that means the theme's own value —
-                    but a few have no theme-level value to fall back to
-                    (see NO_THEME_DEFAULT), and telling somebody they are
-                    getting a theme default that does not exist is worse
-                    than saying nothing. */}
-                <option value="">
-                  {tLabel(
-                    NO_THEME_DEFAULT.has(property)
-                      ? 'canvas.blockStyle.selects.none'
-                      : 'canvas.blockStyle.selects.inherit',
-                  )}
-                </option>
-                {options.map((option) => (
-                  <option key={option} value={option}>
-                    {tLabel(
+                onValueChange={(next) => setField(property, next || null)}
+                options={[
+                  // Leaving it selected is how you say "do not set this".
+                  // For most properties that means the theme's own value —
+                  // but a few have no theme-level value to fall back to
+                  // (see NO_THEME_DEFAULT), and telling somebody they are
+                  // getting a theme default that does not exist is worse
+                  // than saying nothing.
+                  {
+                    value: '',
+                    label: tLabel(
+                      NO_THEME_DEFAULT.has(property)
+                        ? 'canvas.blockStyle.selects.none'
+                        : 'canvas.blockStyle.selects.inherit',
+                    ),
+                  },
+                  ...options.map((option) => ({
+                    value: option,
+                    label: tLabel(
                       `canvas.blockStyle.selects.${property}.options.${option}`,
-                    )}
-                  </option>
-                ))}
-              </select>
+                    ),
+                  })),
+                ]}
+              />
             </div>
           );
         }
@@ -309,23 +303,21 @@ export function BlockStyleFields({
             return (
               <div key={property} className="flex flex-col gap-1.5">
                 <Label htmlFor={`block-style-${property}`}>{label}</Label>
-                <select
+                <OptionsSelect
                   id={`block-style-${property}`}
-                  className="border-input bg-background h-9 rounded-md border px-2 text-sm"
                   value={read(property) ?? ''}
-                  onChange={(event) =>
-                    setField(property, event.target.value || null)
-                  }
-                >
-                  <option value="">
-                    {tLabel('canvas.blockStyle.selects.inherit')}
-                  </option>
-                  {(themeProperty.options ?? []).map((option) => (
-                    <option key={option} value={option}>
-                      {option}
-                    </option>
-                  ))}
-                </select>
+                  onValueChange={(next) => setField(property, next || null)}
+                  options={[
+                    {
+                      value: '',
+                      label: tLabel('canvas.blockStyle.selects.inherit'),
+                    },
+                    ...(themeProperty.options ?? []).map((option) => ({
+                      value: option,
+                      label: option,
+                    })),
+                  ]}
+                />
               </div>
             );
           }

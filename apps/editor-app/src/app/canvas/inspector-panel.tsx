@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import type { Block, BlockAlign, PickedSection } from '@brisk/shared-types';
+import { OptionsSelect } from '../../components/ui/select';
 import { CUSTOM_FIELD_CONTROLS } from './custom-fields/custom-field-controls';
 import { SectionInstanceFields } from './section-instance-fields';
 import { RichTextField } from './custom-fields/rich-text-field';
@@ -165,23 +166,23 @@ function FieldRow({ field, value, onChange, blockId }: FieldRowProps) {
       );
     case 'select':
       return (
-        <select
-          className={nativeFieldClass}
+        <OptionsSelect
+          aria-label={tLabel(field.label)}
           value={typeof value === 'string' ? value : ''}
-          onChange={(event) => onChange(event.target.value)}
-        >
-          {field.options.map((option) => (
-            <option key={option.value} value={option.value}>
-              {tLabel(option.label)}
-            </option>
-          ))}
-        </select>
+          onValueChange={onChange}
+          options={field.options.map((option) => ({
+            value: option.value,
+            label: tLabel(option.label),
+          }))}
+        />
       );
     case 'custom': {
       // The descriptor names a control; the map is what knows how to draw
       // it. See custom-field-controls.tsx for why that indirection exists.
       const Custom = CUSTOM_FIELD_CONTROLS[field.control];
-      return <Custom value={value} onChange={onChange} />;
+      return (
+        <Custom value={value} onChange={onChange} label={tLabel(field.label)} />
+      );
     }
   }
 }

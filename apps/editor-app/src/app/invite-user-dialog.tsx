@@ -8,6 +8,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from '../components/ui/dialog';
+import { USER_ROLES } from '@brisk/shared-types';
+import { OptionsSelect } from '../components/ui/select';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { ApiError } from '../lib/http-client';
@@ -103,16 +105,20 @@ export function InviteUserDialog({
             <Label htmlFor="invite-role">
               {t('users.inviteDialog.roleLabel')}
             </Label>
-            <select
+            <OptionsSelect
               id="invite-role"
               value={role}
-              onChange={(event) => setRole(event.target.value as UserRole)}
-              className="h-8 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 py-1 text-base outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 md:text-sm dark:bg-input/30"
-            >
-              <option value="admin">{t('users.role.admin')}</option>
-              <option value="publisher">{t('users.role.publisher')}</option>
-              <option value="editor">{t('users.role.editor')}</option>
-            </select>
+              onValueChange={(value) => {
+                const next = USER_ROLES.find(
+                  (candidate) => candidate === value,
+                );
+                if (next) setRole(next);
+              }}
+              options={USER_ROLES.map((candidate) => ({
+                value: candidate,
+                label: t(`users.role.${candidate}`),
+              }))}
+            />
           </div>
           {error && (
             <p role="alert" className="text-sm text-destructive">

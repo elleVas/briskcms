@@ -1,12 +1,15 @@
 import { useQuery } from '@tanstack/react-query';
+import { firstNamed } from '@brisk/shared-types';
 import { useTranslation } from '../../../lib/use-translation';
 import { siteQueryOptions } from '../../site-queries';
 import { taxonomiesQueryOptions } from '../../taxonomies-queries';
-import { nativeFieldClass } from '../inspector-panel';
+import { OptionsSelect } from '../../../components/ui/select';
 
 export interface TaxonomyPickerFieldProps {
   value: string | null;
   onChange: (value: string | null) => void;
+  /** The field's label — see ControlComponent in custom-field-controls.tsx. */
+  label?: string;
 }
 
 /**
@@ -20,6 +23,7 @@ export interface TaxonomyPickerFieldProps {
 export function TaxonomyPickerField({
   value,
   onChange,
+  label,
 }: TaxonomyPickerFieldProps) {
   const { t } = useTranslation();
   const { data: site } = useQuery(siteQueryOptions());
@@ -29,22 +33,18 @@ export function TaxonomyPickerField({
   });
 
   return (
-    <select
-      className={nativeFieldClass}
+    <OptionsSelect
+      aria-label={label}
       value={value ?? ''}
-      onChange={(event) => onChange(event.target.value || null)}
-    >
-      <option value="">{t('blocks.termList.picker.none')}</option>
-      {(taxonomies ?? []).map((taxonomy) => (
-        <option key={taxonomy.id} value={taxonomy.id}>
-          {firstNamed(taxonomy.name) || t('blocks.termList.picker.unnamed')}
-        </option>
-      ))}
-    </select>
+      onValueChange={(next) => onChange(next || null)}
+      options={[
+        { value: '', label: t('blocks.termList.picker.none') },
+        ...(taxonomies ?? []).map((taxonomy) => ({
+          value: taxonomy.id,
+          label:
+            firstNamed(taxonomy.name) || t('blocks.termList.picker.unnamed'),
+        })),
+      ]}
+    />
   );
-}
-
-/** A dimension exists before it is named everywhere; any language it does have beats its id. */
-function firstNamed(name: Record<string, string>): string {
-  return Object.values(name).find((value) => value.trim() !== '') ?? '';
 }

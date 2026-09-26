@@ -9,7 +9,8 @@ export interface FormProps {
   // Empty by default — a plain single-step form, the shape every form had
   // before this field existed (docs/adr/0015's multi-step follow-up).
   steps: FormStep[];
-  notificationEmail: string | null;
+  /** Who is emailed each submission — none, one, or a team (at most MAX_NOTIFICATION_EMAILS). */
+  notificationEmails: string[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -20,6 +21,23 @@ export interface CreateFormProps {
   siteId: string;
   name: string;
   now?: Date;
+}
+
+/** Enough for a team inbox and its deputies; a longer list is a mailing list, and belongs in one. */
+export const MAX_NOTIFICATION_EMAILS = 10;
+
+/** The same inbox typed twice, or once in capitals, is still one inbox — and one email. */
+function uniqueAddresses(addresses: string[]): string[] {
+  const seen = new Set<string>();
+  const unique: string[] = [];
+  for (const raw of addresses) {
+    const address = raw.trim();
+    const key = address.toLowerCase();
+    if (address === '' || seen.has(key)) continue;
+    seen.add(key);
+    unique.push(address);
+  }
+  return unique;
 }
 
 /**
@@ -40,7 +58,7 @@ export class Form {
       name: input.name,
       fields: [],
       steps: [],
-      notificationEmail: null,
+      notificationEmails: [],
       createdAt: now,
       updatedAt: now,
     });
@@ -78,8 +96,8 @@ export class Form {
     return this.props.steps;
   }
 
-  get notificationEmail(): string | null {
-    return this.props.notificationEmail;
+  get notificationEmails(): string[] {
+    return this.props.notificationEmails;
   }
 
   get createdAt(): Date {
@@ -95,14 +113,14 @@ export class Form {
       name: string;
       fields: FormField[];
       steps: FormStep[];
-      notificationEmail: string | null;
+      notificationEmails: string[];
     },
     now: Date = new Date(),
   ): void {
     this.props.name = input.name;
     this.props.fields = input.fields;
     this.props.steps = input.steps;
-    this.props.notificationEmail = input.notificationEmail;
+    this.props.notificationEmails = uniqueAddresses(input.notificationEmails);
     this.props.updatedAt = now;
   }
 }

@@ -16,9 +16,9 @@ function Figure({
       <span
         className={
           tone === 'good'
-            ? 'text-2xl font-semibold tabular-nums text-emerald-500'
+            ? 'text-2xl font-semibold tabular-nums text-success'
             : tone === 'warn'
-              ? 'text-2xl font-semibold tabular-nums text-amber-500'
+              ? 'text-2xl font-semibold tabular-nums text-warning'
               : 'text-2xl font-semibold tabular-nums'
         }
       >

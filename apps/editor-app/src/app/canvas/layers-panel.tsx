@@ -16,7 +16,7 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { ChevronDown, ChevronRight } from 'lucide-react';
+import { ChevronDown, ChevronRight, GripVertical } from 'lucide-react';
 import { headerFooterBlocks, pageBlocks } from '@brisk/block-registry';
 import { BlockIcon } from './block-icons';
 import { TreeGuides } from '../tree-guides';
@@ -32,7 +32,12 @@ import {
 
 /** One indent step, and the row height the elbow has to meet in the middle of. */
 const INDENT = 14;
-const ROW_HEIGHT = 22;
+/** Measured in a browser: a row is 28px tall (the row button's line plus its padding). Said 22 before, which put every elbow 3px above the row it joined. */
+const ROW_HEIGHT = 28;
+/** The collapse toggle's box — WCAG 2.5.8's 24px minimum target. */
+const TOGGLE_SIZE = 24;
+/** Moves each guide from the middle of its indent to the middle of the toggle above it, which is what the line is joining. */
+const GUIDE_OFFSET = TOGGLE_SIZE / 2 - INDENT / 2;
 
 /**
  * A block's descriptor by type — for the icon and the name a person
@@ -320,8 +325,32 @@ function LayerRow({
 
   const descriptor = DESCRIPTOR_BY_TYPE.get(block.type);
 
+  const label = descriptor ? tLabel(descriptor.label) : block.type;
+  // The list item is what moves, and the pointer picks it up anywhere on
+  // the row; the keyboard picks it up from the handle, which carries the
+  // button role, the tab stop and the drag instructions. Before, all of
+  // that sat on a wrapper around the item: the list held "buttons" instead
+  // of items, and those held the row's own buttons inside them. A block
+  // with no id has nothing to sort by, so its row stays put.
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    setActivatorNodeRef,
+    transform,
+    transition,
+  } = useSortable({ id: blockId ?? '', disabled: !blockId });
+
   return (
-    <li className="relative">
+    <li
+      ref={setNodeRef}
+      style={{
+        transform: CSS.Transform.toString(transform),
+        transition: transition ?? undefined,
+      }}
+      className="relative"
+      {...(blockId ? listeners : {})}
+    >
       {/* One guide per level the row sits under, plus the elbow that joins
           this row to its parent. Indentation alone stopped being readable
           at the third level: `Columns > Column > Code` was three rows at
@@ -333,9 +362,13 @@ function LayerRow({
         ancestorIsLast={ancestorIsLast}
         indent={INDENT}
         rowHeight={ROW_HEIGHT}
+        offset={GUIDE_OFFSET}
       />
+      {/* The hover group is this row, not the list item: an item holds
+          its children, so hovering a nested row hovered every ancestor
+          too and lit a handle on each of them. */}
       <div
-        className="flex items-center"
+        className="group/row flex items-center"
         style={{ paddingLeft: depth * INDENT }}
       >
         {hasChildren ? (
@@ -346,7 +379,9 @@ function LayerRow({
                 ? t('canvas.expandChildren')
                 : t('canvas.collapseChildren')
             }
-            className="flex h-5 w-5 shrink-0 items-center justify-center text-muted-foreground hover:text-foreground"
+            // TOGGLE_SIZE: WCAG 2.5.8's minimum target, with the tree
+            // guides offset to its centre (GUIDE_OFFSET).
+            className="flex h-6 w-6 shrink-0 items-center justify-center text-muted-foreground hover:text-foreground"
             onClick={() => blockId && onToggleCollapsed(blockId)}
           >
             {isCollapsed ? (
@@ -356,7 +391,7 @@ function LayerRow({
             )}
           </button>
         ) : (
-          <span className="w-5 shrink-0" />
+          <span className="w-6 shrink-0" />
         )}
         <button
           type="button"
@@ -389,10 +424,22 @@ function LayerRow({
               tree used to read `FeatureGrid` and `EmbedHtml`, which are
               our words for it. Every block already had a translated
               label — the panel simply was not asking for it. */}
-          <span className="truncate">
-            {descriptor ? tLabel(descriptor.label) : block.type}
-          </span>
+          <span className="truncate">{label}</span>
         </button>
+        {blockId && (
+          <button
+            type="button"
+            ref={setActivatorNodeRef}
+            {...attributes}
+            aria-label={t('canvas.dragLayer', { name: label })}
+            // Out of sight until the row is pointed at or the handle is
+            // reached with Tab: a grip on every row of a long tree is
+            // noise to anyone using a mouse, who drags the row itself.
+            className="flex h-6 w-6 shrink-0 cursor-grab items-center justify-center text-muted-foreground opacity-0 group-hover/row:opacity-100 hover:text-foreground focus-visible:opacity-100"
+          >
+            <GripVertical size={14} aria-hidden />
+          </button>
+        )}
       </div>
       {hasChildren && !isCollapsed && (
         <ul>
@@ -420,43 +467,14 @@ function LayerRow({
   );
 }
 
-interface SortableLayerRowProps extends LayerRowProps {
-  id: string;
-}
-
-function SortableLayerRow({ id, ...rowProps }: SortableLayerRowProps) {
-  const { attributes, listeners, setNodeRef, transform, transition } =
-    useSortable({ id });
-
-  return (
-    <div
-      ref={setNodeRef}
-      style={{
-        transform: CSS.Transform.toString(transform),
-        transition: transition ?? undefined,
-      }}
-      {...attributes}
-      {...listeners}
-    >
-      <LayerRow {...rowProps} />
-    </div>
-  );
-}
-
 /**
- * Picks between a draggable row and a plain one based on whether an id is
- * present — shared by the root level (`LayersPanel`) and every nested level
- * (`LayerRow`'s own call), so every depth of the tree becomes draggable the
- * same way, not just the root. `fallbackKey` is the index in the sibling
- * list, used only when the block has no id (the same fallback as before
- * nested reordering existed).
+ * One row, shared by the root level (`LayersPanel`) and every nested level
+ * (`LayerRow`'s own call), so every depth of the tree is draggable the same
+ * way. `fallbackKey` is the index in the sibling list, the React key only
+ * when the block has no id (and so nothing to drag it by).
  */
 function renderRow(props: LayerRowProps, fallbackKey: number): ReactNode {
-  return props.block.id ? (
-    <SortableLayerRow key={props.block.id} id={props.block.id} {...props} />
-  ) : (
-    <LayerRow key={fallbackKey} {...props} />
-  );
+  return <LayerRow key={props.block.id ?? fallbackKey} {...props} />;
 }
 
 /**

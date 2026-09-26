@@ -108,6 +108,44 @@ describe('LayersPanel', () => {
    * panel meant for somebody arranging a page. Every block already had a
    * translated label; the panel simply was not asking for it.
    */
+  /*
+   * The keyboard drag used to live on a wrapper around each list item:
+   * the list held "buttons" instead of items, and those buttons held the
+   * row's own buttons inside them (axe: list, listitem,
+   * nested-interactive). The item moves now, and a handle carries the
+   * keyboard drag.
+   */
+  it('keeps the tree a list of items, with a named handle to drag each by keyboard', () => {
+    const blocks: Block[] = [
+      {
+        id: 'columns-1',
+        type: 'Columns',
+        props: {},
+        children: [{ id: 'text-1', type: 'Text', props: {} }],
+      },
+    ];
+    const { container } = render(
+      <LayersPanel
+        blocks={blocks}
+        hoveredBlockId={null}
+        selectedBlockId={null}
+        onSelect={vi.fn()}
+      />,
+    );
+
+    for (const list of container.querySelectorAll('ul')) {
+      for (const child of list.children) {
+        expect(child.tagName).toBe('LI');
+      }
+    }
+    expect(container.querySelector('li[role="button"]')).toBeNull();
+    expect(
+      screen
+        .getByRole('button', { name: 'Trascina "Testo"' })
+        .getAttribute('aria-roledescription'),
+    ).toBe('sortable');
+  });
+
   it('renders one row per top-level block, named the way a person picked it', () => {
     const blocks: Block[] = [
       { id: 'hero-1', type: 'Hero', props: {} },

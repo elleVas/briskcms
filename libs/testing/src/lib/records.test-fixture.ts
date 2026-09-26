@@ -231,7 +231,7 @@ export function buildFormRecord(
     name: 'Contact form',
     fields: [],
     steps: [],
-    notificationEmail: null,
+    notificationEmails: [],
     createdAt: CREATED_AT,
     updatedAt: CREATED_AT,
     submissionCount: 0,

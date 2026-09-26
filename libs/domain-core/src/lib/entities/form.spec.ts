@@ -13,7 +13,7 @@ describe('Form entity', () => {
     expect(form.name).toBe('Contattaci');
     expect(form.fields).toEqual([]);
     expect(form.steps).toEqual([]);
-    expect(form.notificationEmail).toBeNull();
+    expect(form.notificationEmails).toEqual([]);
   });
 
   it('fromProps/toProps round-trip without loss', () => {
@@ -32,7 +32,7 @@ describe('Form entity', () => {
         },
       ],
       steps: [{ id: 'step-1', title: 'Dati personali' }],
-      notificationEmail: 'info@example.com',
+      notificationEmails: ['info@example.com'],
       createdAt: new Date('2026-01-01T00:00:00Z'),
       updatedAt: new Date('2026-01-01T00:00:00Z'),
     };
@@ -55,7 +55,7 @@ describe('Form entity', () => {
         name: 'Richiedi preventivo',
         fields: [{ id: 'f1', label: 'Email', type: 'email', required: true }],
         steps: [{ id: 'step-1', title: 'Contatti' }],
-        notificationEmail: 'preventivi@example.com',
+        notificationEmails: ['preventivi@example.com'],
       },
       new Date('2026-01-02T00:00:00Z'),
     );
@@ -65,7 +65,33 @@ describe('Form entity', () => {
       { id: 'f1', label: 'Email', type: 'email', required: true },
     ]);
     expect(form.steps).toEqual([{ id: 'step-1', title: 'Contatti' }]);
-    expect(form.notificationEmail).toBe('preventivi@example.com');
+    expect(form.notificationEmails).toEqual(['preventivi@example.com']);
     expect(form.updatedAt).toEqual(new Date('2026-01-02T00:00:00Z'));
+  });
+
+  it('keeps one of each notification address, trimmed, whatever its capitals', () => {
+    const form = Form.create({
+      id: 'form-1',
+      tenantId: 'tenant-1',
+      siteId: 'site-1',
+      name: 'Contatti',
+    });
+
+    form.update({
+      name: 'Contatti',
+      fields: [],
+      steps: [],
+      notificationEmails: [
+        ' Owner@example.com',
+        'owner@example.com',
+        '',
+        'sales@example.com',
+      ],
+    });
+
+    expect(form.notificationEmails).toEqual([
+      'Owner@example.com',
+      'sales@example.com',
+    ]);
   });
 });

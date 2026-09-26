@@ -1,12 +1,14 @@
 import { z } from 'zod';
+import { formConditionProblems } from './form-conditions';
 
 /**
  * A form's field definitions — shared between the admin form builder
  * (editor-app), the public-facing renderer (apps/public-site, which
  * fetches a form's fields live at render time, see docs/adr/0015) and
  * submission validation (the payload must match these field ids/types).
- * Curated set for v1 — no conditional logic or multi-page forms (Gravity
- * Forms has those; this deliberately doesn't yet).
+ * Curated on purpose: steps (multi-page forms) and one show-when
+ * condition per field (see form-conditions.ts) are the only logic a form
+ * carries.
  */
 export const formFieldTypeSchema = z.enum([
   'text',
@@ -45,6 +47,17 @@ export const formFieldFileValueSchema = z.object({
 });
 export type FormFieldFileValue = z.infer<typeof formFieldFileValueSchema>;
 
+/**
+ * "Show this field only when that one has this answer" — one condition per
+ * field. `equals` is a select's option; `null` means any answer at all (a
+ * ticked box, a non-empty value). See form-conditions.ts for the rule.
+ */
+export const formFieldConditionSchema = z.object({
+  fieldId: z.string(),
+  equals: z.string().nullable(),
+});
+export type FormFieldCondition = z.infer<typeof formFieldConditionSchema>;
+
 export const formFieldSchema = z.object({
   // Stable per-field id, independent of display order — this is the key
   // a submission's payload is keyed by, so reordering fields in the
@@ -64,10 +77,23 @@ export const formFieldSchema = z.object({
   // `form.steps.length === 0` first) — see docs/adr/0015's own multi-step
   // follow-up note.
   stepId: z.string().nullable().optional(),
+  /** Absent or `null`: always shown — every field that existed before conditions. */
+  showWhen: formFieldConditionSchema.nullable().optional(),
 });
 export type FormField = z.infer<typeof formFieldSchema>;
 
-export const formFieldsSchema = z.array(formFieldSchema);
+/** A form's fields as it may be saved: every condition names an earlier field, and an option that exists. */
+export const formFieldsSchema = z
+  .array(formFieldSchema)
+  .superRefine((fields, context) => {
+    for (const [fieldId, problem] of formConditionProblems(fields)) {
+      context.addIssue({
+        code: 'custom',
+        path: [fields.findIndex((field) => field.id === fieldId), 'showWhen'],
+        message: `Invalid condition on field ${fieldId}: ${problem}`,
+      });
+    }
+  });
 
 /**
  * One step of a multi-step form — just an id (matched against

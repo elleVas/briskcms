@@ -6,6 +6,7 @@ import * as api from '../lib/taxonomies-api-client';
 import type { TermRecord } from '../lib/taxonomies-api-client';
 import { createTestQueryClient } from '../test/query-client.test-fixture';
 import { buildTaxonomyRecord, buildTermRecord } from '@brisk/testing/records';
+import { chooseOption, optionNames } from '../test/select.test-fixture';
 import { MediaPickerProvider } from './media-picker-provider';
 import { TermTreeEditor } from './term-tree-editor';
 
@@ -210,10 +211,10 @@ describe('TermTreeEditor', () => {
     ]);
     fireEvent.click(await screen.findByRole('button', { name: /Parent/ }));
 
-    const options = [
-      ...screen.getByLabelText('Dentro').querySelectorAll('option'),
-    ].map((option) => option.textContent);
-    expect(options).toEqual(['Primo livello', 'Other']);
+    expect(optionNames(screen.getByLabelText('Dentro'))).toEqual([
+      'Primo livello',
+      'Other',
+    ]);
   });
 
   it('creates a term under the parent that was chosen', async () => {
@@ -223,9 +224,10 @@ describe('TermTreeEditor', () => {
     fireEvent.change(screen.getByLabelText('Nuovo termine'), {
       target: { value: 'Espresso' },
     });
-    fireEvent.change(screen.getByLabelText('Dentro (per il nuovo termine)'), {
-      target: { value: 'parent' },
-    });
+    chooseOption(
+      screen.getByLabelText('Dentro (per il nuovo termine)'),
+      'Parent',
+    );
     fireEvent.click(screen.getByRole('button', { name: 'Aggiungi termine' }));
 
     await waitFor(() =>

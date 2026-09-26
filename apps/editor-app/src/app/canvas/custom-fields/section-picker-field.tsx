@@ -3,11 +3,13 @@ import type { PickedSection } from '@brisk/shared-types';
 import { useTranslation } from '../../../lib/use-translation';
 import { siteQueryOptions } from '../../site-queries';
 import { reusableSectionsQueryOptions } from '../../reusable-sections-queries';
-import { nativeFieldClass } from '../inspector-panel';
+import { OptionsSelect } from '../../../components/ui/select';
 
 export interface SectionPickerFieldProps {
   value: PickedSection | null;
   onChange: (value: PickedSection | null) => void;
+  /** The field's label — see ControlComponent in custom-field-controls.tsx. */
+  label?: string;
 }
 
 /**
@@ -21,6 +23,7 @@ export interface SectionPickerFieldProps {
 export function SectionPickerField({
   value,
   onChange,
+  label,
 }: SectionPickerFieldProps) {
   const { t } = useTranslation();
   const { data: site } = useQuery(siteQueryOptions());
@@ -33,27 +36,25 @@ export function SectionPickerField({
   );
 
   return (
-    <select
-      className={nativeFieldClass}
+    <OptionsSelect
+      aria-label={label}
       value={value?.sectionId ?? ''}
-      onChange={(event) => {
-        const picked = shared.find(
-          (section) => section.id === event.target.value,
-        );
+      onValueChange={(sectionId) => {
+        const picked = shared.find((section) => section.id === sectionId);
         onChange(
           picked ? { sectionId: picked.id, sectionName: picked.name } : null,
         );
       }}
-    >
-      <option value="">{t('blocks.section.picker.none')}</option>
-      {shared.map((section) => (
-        <option key={section.id} value={section.id}>
-          {section.name}
-          {section.status === 'draft'
-            ? ` — ${t('blocks.section.picker.unpublished')}`
-            : ''}
-        </option>
-      ))}
-    </select>
+      options={[
+        { value: '', label: t('blocks.section.picker.none') },
+        ...shared.map((section) => ({
+          value: section.id,
+          label:
+            section.status === 'draft'
+              ? `${section.name} — ${t('blocks.section.picker.unpublished')}`
+              : section.name,
+        })),
+      ]}
+    />
   );
 }

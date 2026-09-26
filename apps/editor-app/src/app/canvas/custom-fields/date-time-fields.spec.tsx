@@ -1,37 +1,38 @@
-import { fireEvent, render } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
+import {
+  dayButton,
+  openCalendar,
+} from '../../../test/date-picker.test-fixture';
 import { DateField, TimeField } from './date-time-fields';
 
 describe('DateField', () => {
-  it('shows a stored date and writes back the ISO day the browser gives', () => {
+  it('shows a stored date and writes back the ISO day that was picked', async () => {
     const onChange = vi.fn();
-    const { container } = render(
-      <DateField value="2026-09-13" onChange={onChange} />,
-    );
-    const input = container.querySelector('input');
-    if (!input) throw new Error('DateField rendered no input');
+    render(<DateField label="Data" value="2026-09-13" onChange={onChange} />);
+    const field = screen.getByRole('button', { name: 'Data' });
 
-    expect(input.type).toBe('date');
-    expect(input.value).toBe('2026-09-13');
+    expect(field.textContent).toContain('13 set 2026');
 
-    fireEvent.change(input, { target: { value: '2026-10-01' } });
-    expect(onChange).toHaveBeenCalledWith('2026-10-01');
+    await openCalendar(field);
+    fireEvent.click(dayButton('1'));
+    expect(onChange).toHaveBeenCalledWith('2026-09-01');
   });
 
   it('treats anything that is not a string as no date, rather than crashing on it', () => {
-    const { container } = render(<DateField value={null} onChange={vi.fn()} />);
-    expect(container.querySelector('input')?.value).toBe('');
+    render(<DateField label="Data" value={null} onChange={vi.fn()} />);
+
+    expect(screen.getByRole('button', { name: 'Data' }).textContent).toContain(
+      'Nessuna data',
+    );
   });
 
   it('writes the empty string when cleared', () => {
     const onChange = vi.fn();
-    const { container } = render(
-      <DateField value="2026-09-13" onChange={onChange} />,
-    );
-    const input = container.querySelector('input');
-    if (!input) throw new Error('DateField rendered no input');
+    render(<DateField label="Data" value="2026-09-13" onChange={onChange} />);
 
-    fireEvent.change(input, { target: { value: '' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Data' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Cancella data' }));
     expect(onChange).toHaveBeenCalledWith('');
   });
 });

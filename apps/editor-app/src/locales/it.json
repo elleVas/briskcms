@@ -670,7 +670,10 @@
     },
     "save": "Salva",
     "saving": "Salvataggio in corso...",
-    "saved": "Salvato"
+    "saved": "Salvato",
+    "trackerScriptCategoryFor": "Categoria di consenso per {{name}}",
+    "trackerScriptCategory": "Categoria di consenso",
+    "trackerScriptPlacement": "Dove va lo script"
   },
   "globalStyles": {
     "variantGroup": "Aspetto che stai modificando",
@@ -767,7 +770,6 @@
       "saving": "Salvataggio in corso...",
       "saved": "Modulo salvato",
       "nameLabel": "Nome modulo",
-      "notificationEmailLabel": "Email di notifica",
       "notificationEmailPlaceholder": "Nessuna notifica se lasciato vuoto",
       "stepsLabel": "Step (facoltativi)",
       "stepsHint": "Suddividi il modulo in più pagine. Senza step, il modulo resta a pagina singola.",
@@ -804,7 +806,29 @@
       "unsaved": "Modifiche non salvate",
       "leaveTitle": "Uscire senza salvare?",
       "leaveBody": "Questo modulo si salva solo quando premi Salva. Quello che hai cambiato da allora andrà perso.",
-      "leaveAction": "Esci"
+      "leaveAction": "Esci",
+      "notificationEmailsLabel": "Email di notifica",
+      "notificationEmailsHint": "Ogni indirizzo riceve una sua email per ogni risposta. Lascia vuoto per non avvisare nessuno.",
+      "notificationEmailAddress": "Email di notifica {{number}}",
+      "addNotificationEmail": "Aggiungi indirizzo",
+      "removeNotificationEmail": "Rimuovi indirizzo",
+      "conditionLabel": "Mostra",
+      "conditionAlways": "Sempre",
+      "conditionWhen": "Solo se \"{{field}}\"",
+      "conditionAnswerLabel": "Risposta che mostra questo campo",
+      "conditionAnyAnswer": "ha una risposta qualsiasi",
+      "conditionIs": "è \"{{option}}\"",
+      "conditionIsTicked": "è spuntata",
+      "conditionIsFilled": "è compilato",
+      "untitledField": "Campo senza nome",
+      "conditionBlocksSave": "Correggi le condizioni segnate qui sotto per salvare.",
+      "conditionProblems": {
+        "self": "Un campo non può dipendere da sé stesso.",
+        "unknown-field": "Il campo da cui dipendeva non esiste più.",
+        "not-earlier": "Il campo da cui dipende deve venire prima. Spostalo in alto o scegline un altro.",
+        "equals-needs-select": "Solo un campo a scelta può essere confrontato con una risposta.",
+        "unknown-option": "Quella risposta non è più fra le opzioni del campo."
+      }
     },
     "submissions": {
       "title": "Iscrizioni ricevute",
@@ -1160,7 +1184,8 @@
     },
     "status": {
       "saving": "Salvataggio…",
-      "draftSavedAt": "Bozza salvata alle {{time}}"
+      "draftSavedAt": "Bozza salvata alle {{time}}",
+      "publishUnsaved": "Non è stato possibile salvare la bozza, quindi non è stata pubblicata. Riprova."
     },
     "resizeSidebar": "Ridimensiona il pannello dei blocchi",
     "resizeLayersPanel": "Ridimensiona il pannello di destra",
@@ -1190,7 +1215,8 @@
       "delete": "Elimina la selezione",
       "moveUp": "Sposta il blocco su",
       "moveDown": "Sposta il blocco giù"
-    }
+    },
+    "dragLayer": "Trascina \"{{name}}\""
   },
   "toast": {
     "dismiss": "Chiudi notifica"
@@ -2787,5 +2813,9 @@
       "menus": "{{count}} voci di menu. I menu si ricostruiscono a mano nell’editor.",
       "fields-not-described": "{{count}} blocchi tengono i propri campi nel codice del tema, non nella base dati: arriva il loro contenuto, ma senza sapere che cosa sia ciascun pezzo."
     }
+  },
+  "datePicker": {
+    "empty": "Nessuna data",
+    "clear": "Cancella data"
   }
 }

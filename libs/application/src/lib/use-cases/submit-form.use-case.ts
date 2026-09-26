@@ -5,7 +5,11 @@ import {
   InvalidCaptchaError,
   InvalidFormSubmissionError,
 } from '@brisk/domain-core';
-import { formFieldFileValueSchema, type FormField } from '@brisk/shared-types';
+import {
+  formFieldFileValueSchema,
+  visibleFormFieldIds,
+  type FormField,
+} from '@brisk/shared-types';
 import type {
   CaptchaPort,
   EmailPort,
@@ -115,7 +119,18 @@ export async function submitForm(
     throw new InvalidCaptchaError();
   }
 
-  validateValues(form.fields, input.values);
+  // Only what the visitor was shown counts: a field hidden by its
+  // condition is neither required nor kept, and a key that names no field
+  // at all is not kept either — the payload is the form's answers, not
+  // whatever the request body happened to carry.
+  const visible = visibleFormFieldIds(form.fields, input.values);
+  const shownFields = form.fields.filter((field) => visible.has(field.id));
+  validateValues(shownFields, input.values);
+  const payload = Object.fromEntries(
+    shownFields
+      .filter((field) => field.id in input.values)
+      .map((field) => [field.id, input.values[field.id]]),
+  );
 
   const submission = FormSubmission.create({
     id: randomUUID(),
@@ -128,27 +143,38 @@ export async function submitForm(
       input.pageId,
     ),
     formId: form.id,
-    payload: input.values,
+    payload,
   });
   await deps.formSubmissionRepository.save(submission);
 
-  if (form.notificationEmail) {
-    const entries = form.fields.map((field) => ({
+  if (form.notificationEmails.length > 0) {
+    const entries = shownFields.map((field) => ({
       label: field.label,
-      value: formatValue(field, input.values[field.id]),
+      value: formatValue(field, payload[field.id]),
     }));
-    await deps.emailPort.sendEmail({
-      to: form.notificationEmail,
-      ...buildFormSubmissionNotificationEmail(form.name, entries),
-    });
+    const message = buildFormSubmissionNotificationEmail(form.name, entries);
+    // One email per address rather than one to all of them: nobody on the
+    // list learns who else is on it. Every address is tried even when one
+    // fails, and the first failure is still reported, as it was with one.
+    const results = await Promise.allSettled(
+      form.notificationEmails.map((to) =>
+        deps.emailPort.sendEmail({ to, ...message }),
+      ),
+    );
+    const failure = results.find(
+      (result): result is PromiseRejectedResult => result.status === 'rejected',
+    );
+    if (failure) {
+      throw failure.reason;
+    }
   }
 
   const newsletterField = form.fields.find(
     (field) => field.type === 'newsletter-consent',
   );
-  if (newsletterField && input.values[newsletterField.id] === true) {
-    const emailField = form.fields.find((field) => field.type === 'email');
-    const email = emailField ? input.values[emailField.id] : undefined;
+  if (newsletterField && payload[newsletterField.id] === true) {
+    const emailField = shownFields.find((field) => field.type === 'email');
+    const email = emailField ? payload[emailField.id] : undefined;
     if (typeof email === 'string' && email.trim() !== '') {
       try {
         await deps.newsletterPort.subscribe(email);

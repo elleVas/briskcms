@@ -6,17 +6,12 @@ import {
   type ConsentCategory,
   type TrackerScriptEntry,
   type TrackerScriptPlacement,
+  trackerScriptPlacementSchema,
 } from '@brisk/shared-types';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Textarea } from '../components/ui/textarea';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '../components/ui/select';
+import { OptionsSelect } from '../components/ui/select';
 import { IconButton } from './icon-button';
 
 export interface TrackerScriptListEditorProps {
@@ -39,11 +34,20 @@ const MAX_ENTRIES = 20;
  * tracker-signature-detector), but can also be added or recategorized by
  * hand for a vendor the detector doesn't recognize.
  */
+/** The category a select answered, if it is one — read from the list itself, so nothing is asserted. */
+function asConsentCategory(value: string): ConsentCategory | undefined {
+  return CONSENT_CATEGORIES.find((category) => category === value);
+}
+
 export function TrackerScriptListEditor({
   entries,
   onChange,
 }: TrackerScriptListEditorProps) {
   const { t } = useTranslation();
+  const categoryOptions = CONSENT_CATEGORIES.map((category) => ({
+    value: category,
+    label: t(`cookieConsent.category.${category}`),
+  }));
   const [newLabel, setNewLabel] = useState('');
   const [newCategory, setNewCategory] =
     useState<ConsentCategory>('measurement');
@@ -99,23 +103,18 @@ export function TrackerScriptListEditor({
               </span>
             </div>
             <div className="flex items-center gap-2">
-              <Select
+              <OptionsSelect
+                aria-label={t('integrations.trackerScriptCategoryFor', {
+                  name: entry.label,
+                })}
+                className="w-40"
                 value={entry.category}
-                onValueChange={(value) =>
-                  updateCategory(entry.id, value as ConsentCategory)
-                }
-              >
-                <SelectTrigger className="w-40">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {CONSENT_CATEGORIES.map((category) => (
-                    <SelectItem key={category} value={category}>
-                      {t(`cookieConsent.category.${category}`)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                onValueChange={(value) => {
+                  const category = asConsentCategory(value);
+                  if (category) updateCategory(entry.id, category);
+                }}
+                options={categoryOptions}
+              />
               <IconButton
                 label={t('integrations.removeTrackerScript')}
                 onClick={() => removeEntry(entry.id)}
@@ -135,39 +134,31 @@ export function TrackerScriptListEditor({
             className="flex-1"
             disabled={atCap}
           />
-          <Select
+          <OptionsSelect
+            aria-label={t('integrations.trackerScriptCategory')}
+            className="w-40"
             value={newCategory}
-            onValueChange={(value) => setNewCategory(value as ConsentCategory)}
-          >
-            <SelectTrigger className="w-40">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {CONSENT_CATEGORIES.map((category) => (
-                <SelectItem key={category} value={category}>
-                  {t(`cookieConsent.category.${category}`)}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select
+            onValueChange={(value) => {
+              const category = asConsentCategory(value);
+              if (category) setNewCategory(category);
+            }}
+            options={categoryOptions}
+          />
+          <OptionsSelect
+            aria-label={t('integrations.trackerScriptPlacement')}
+            className="w-28"
             value={newPlacement}
-            onValueChange={(value) =>
-              setNewPlacement(value as TrackerScriptPlacement)
-            }
-          >
-            <SelectTrigger className="w-28">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="head">
-                {t('integrations.placement.head')}
-              </SelectItem>
-              <SelectItem value="body">
-                {t('integrations.placement.body')}
-              </SelectItem>
-            </SelectContent>
-          </Select>
+            onValueChange={(value) => {
+              const placement = trackerScriptPlacementSchema.options.find(
+                (candidate) => candidate === value,
+              );
+              if (placement) setNewPlacement(placement);
+            }}
+            options={trackerScriptPlacementSchema.options.map((placement) => ({
+              value: placement,
+              label: t(`integrations.placement.${placement}`),
+            }))}
+          />
         </div>
         <Textarea
           value={newHtml}
