@@ -3,7 +3,6 @@ import {
   Get,
   Inject,
   NotFoundException,
-  Param,
   Query,
   UseGuards,
 } from '@nestjs/common';
@@ -74,6 +73,7 @@ import {
   SITE_THEME_BLOCK_STYLES_REPOSITORY,
   TAXONOMY_REPOSITORY,
 } from './public-pages.tokens';
+import { UuidParam } from '../uuid-param.decorator';
 
 // No SessionAuthGuard on this controller — it's the public, unauthenticated
 // read path apps/public-site's SSR calls. Deliberately read-only: there is
@@ -260,7 +260,7 @@ export class PublicPagesController {
 
   @Get(':id/preview')
   async preview(
-    @Param('id') id: string,
+    @UuidParam('id') id: string,
     @Query(new ZodValidationPipe(publicPagePreviewQuerySchema))
     query: PublicPagePreviewQuery,
   ) {
@@ -299,7 +299,7 @@ export class PublicPagesController {
    */
   @Get('sections/:id/preview')
   async previewSection(
-    @Param('id') id: string,
+    @UuidParam('id') id: string,
     @Query(new ZodValidationPipe(publicSectionPreviewQuerySchema))
     query: PublicSectionPreviewQuery,
   ) {

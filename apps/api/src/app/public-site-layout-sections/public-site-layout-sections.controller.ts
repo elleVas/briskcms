@@ -3,7 +3,6 @@ import {
   Get,
   Inject,
   NotFoundException,
-  Param,
   Query,
   UseGuards,
 } from '@nestjs/common';
@@ -26,6 +25,7 @@ import {
   PREVIEW_TOKEN_PORT,
   SITE_LAYOUT_SECTION_REPOSITORY,
 } from './public-site-layout-sections.tokens';
+import { UuidParam } from '../uuid-param.decorator';
 
 // No SessionAuthGuard on this controller — same public, unauthenticated
 // read path as PublicPagesController, gated entirely by the preview token
@@ -44,7 +44,7 @@ export class PublicSiteLayoutSectionsController {
 
   @Get(':id/preview')
   async preview(
-    @Param('id') id: string,
+    @UuidParam('id') id: string,
     @Query(new ZodValidationPipe(publicSiteLayoutSectionPreviewQuerySchema))
     query: PublicSiteLayoutSectionPreviewQuery,
   ) {

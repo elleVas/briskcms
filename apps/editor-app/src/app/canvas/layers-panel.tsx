@@ -20,6 +20,7 @@ import { ChevronDown, ChevronRight, GripVertical } from 'lucide-react';
 import { headerFooterBlocks, pageBlocks } from '@brisk/block-registry';
 import { BlockIcon } from './block-icons';
 import { TreeGuides } from '../tree-guides';
+import { useDragAnnouncements } from '../use-drag-announcements';
 
 import type { Block } from '@brisk/shared-types';
 import { useTranslation } from '../../lib/use-translation';
@@ -47,6 +48,12 @@ const GUIDE_OFFSET = TOGGLE_SIZE / 2 - INDENT / 2;
 const DESCRIPTOR_BY_TYPE = new Map(
   [...pageBlocks, ...headerFooterBlocks].map((block) => [block.type, block]),
 );
+
+/** What a block's row says: the name it was picked by, translated, or its type for one the registry does not know. */
+function blockName(block: Block, tLabel: (key: string) => string): string {
+  const descriptor = DESCRIPTOR_BY_TYPE.get(block.type);
+  return descriptor ? tLabel(descriptor.label) : block.type;
+}
 
 export interface LayersPanelProps {
   blocks: Block[];
@@ -325,7 +332,7 @@ function LayerRow({
 
   const descriptor = DESCRIPTOR_BY_TYPE.get(block.type);
 
-  const label = descriptor ? tLabel(descriptor.label) : block.type;
+  const label = blockName(block, tLabel);
   // The list item is what moves, and the pointer picks it up anywhere on
   // the row; the keyboard picks it up from the handle, which carries the
   // button role, the tab stop and the drag instructions. Before, all of
@@ -503,6 +510,11 @@ export function LayersPanel({
   // asked for from live use: with many nested blocks the list got too long
   // to scroll through to find one.
   const [collapsedIds, setCollapsedIds] = useState<Set<string>>(new Set());
+  const { tLabel } = useTranslation();
+  const accessibility = useDragAnnouncements((id) => {
+    const block = findBlockInTree(blocks, String(id));
+    return block ? blockName(block, tLabel) : String(id);
+  });
 
   function toggleCollapsed(blockId: string): void {
     setCollapsedIds((prev) => {
@@ -570,6 +582,7 @@ export function LayersPanel({
       sensors={sensors}
       collisionDetection={closestCenter}
       onDragEnd={handleDragEnd}
+      accessibility={accessibility}
     >
       <SortableContext
         items={collectSortableIds(blocks, collapsedIds)}

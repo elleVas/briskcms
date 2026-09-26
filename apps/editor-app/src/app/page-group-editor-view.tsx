@@ -290,7 +290,9 @@ export function PageGroupEditorView({
   function restoringWith(rollback: (versionId: string) => Promise<unknown>) {
     return async (versionId: string) => {
       // A save still on its way would land after the restore and
-      // overwrite it with the page as it was before.
+      // overwrite it with the page as it was before. A change still in
+      // the canvas's debounce has been sent already: the history opens
+      // from the page menu, and the shell flushes before any of its items.
       await whenSaved();
       await rollback(versionId);
       setRestoredAt((n) => n + 1);

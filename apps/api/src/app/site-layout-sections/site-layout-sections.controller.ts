@@ -4,7 +4,6 @@ import {
   Get,
   NotFoundException,
   Inject,
-  Param,
   Patch,
   Post,
   Query,
@@ -52,6 +51,7 @@ import {
   SITE_LAYOUT_SECTION_VERSION_REPOSITORY,
   SITE_REPOSITORY,
 } from './site-layout-sections.tokens';
+import { UuidParam } from '../uuid-param.decorator';
 
 @Controller('site-layout-sections')
 @UseGuards(SessionAuthGuard)
@@ -89,7 +89,7 @@ export class SiteLayoutSectionsController {
   }
 
   @Get(':id')
-  async findById(@Param('id') id: string) {
+  async findById(@UuidParam('id') id: string) {
     const section = await this.siteLayoutSectionRepository.findById(
       this.tenantContext.getCurrentTenantId(),
       id,
@@ -101,7 +101,7 @@ export class SiteLayoutSectionsController {
   }
 
   @Post(':id/preview-token')
-  async createPreviewToken(@Param('id') id: string) {
+  async createPreviewToken(@UuidParam('id') id: string) {
     const section = await this.siteLayoutSectionRepository.findById(
       this.tenantContext.getCurrentTenantId(),
       id,
@@ -120,7 +120,7 @@ export class SiteLayoutSectionsController {
 
   @Patch(':id/draft')
   async saveDraft(
-    @Param('id') id: string,
+    @UuidParam('id') id: string,
     @Body(new ZodValidationPipe(saveDraftBodySchema)) body: SaveDraftBody,
   ) {
     const section = await saveSiteLayoutSectionDraft(
@@ -140,7 +140,7 @@ export class SiteLayoutSectionsController {
   }
 
   @Post(':id/publish')
-  async publish(@Param('id') id: string) {
+  async publish(@UuidParam('id') id: string) {
     const section = await publishSiteLayoutSection(
       { siteLayoutSectionRepository: this.siteLayoutSectionRepository },
       { tenantId: this.tenantContext.getCurrentTenantId(), id },
@@ -150,7 +150,7 @@ export class SiteLayoutSectionsController {
 
   @Patch(':id/sticky')
   async updateSticky(
-    @Param('id') id: string,
+    @UuidParam('id') id: string,
     @Body(new ZodValidationPipe(stickyBodySchema)) body: StickyBody,
   ) {
     const section = await updateSiteLayoutSectionSticky(
@@ -166,7 +166,7 @@ export class SiteLayoutSectionsController {
 
   @Get(':id/versions')
   async listVersions(
-    @Param('id') id: string,
+    @UuidParam('id') id: string,
   ): Promise<SiteLayoutSectionVersionRecord[]> {
     const versions = await listSiteLayoutSectionVersions(
       {
@@ -189,7 +189,7 @@ export class SiteLayoutSectionsController {
 
   @Post(':id/rollback')
   async rollback(
-    @Param('id') id: string,
+    @UuidParam('id') id: string,
     @Body(new ZodValidationPipe(rollbackBodySchema)) body: RollbackBody,
   ) {
     const section = await rollbackSiteLayoutSectionToVersion(

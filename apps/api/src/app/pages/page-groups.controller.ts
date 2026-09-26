@@ -5,7 +5,6 @@ import {
   Get,
   HttpCode,
   Inject,
-  Param,
   Post,
   Patch,
   Query,
@@ -130,6 +129,7 @@ import {
   updatePageTranslationSeoMetaBodySchema,
 } from './page-groups.schemas';
 import { sanitizeFieldValueOverlay } from '../rich-text/sanitize-page-content';
+import { UuidParam } from '../uuid-param.decorator';
 
 /**
  * Field-level i18n (docs/adr/0034): shared structure (`PageGroup`) plus
@@ -215,7 +215,7 @@ export class PageGroupsController {
    */
   @Post(':id/save-as-template')
   async saveAsTemplate(
-    @Param('id') id: string,
+    @UuidParam('id') id: string,
     @Body(new ZodValidationPipe(saveAsTemplateBodySchema))
     body: SaveAsTemplateBody,
   ): Promise<ReusableSectionRecord> {
@@ -295,7 +295,7 @@ export class PageGroupsController {
   }
 
   @Post(':id/duplicate')
-  async duplicate(@Param('id') id: string) {
+  async duplicate(@UuidParam('id') id: string) {
     const result = await duplicatePageGroup(
       {
         pageGroupRepository: this.pageGroupRepository,
@@ -311,7 +311,7 @@ export class PageGroupsController {
   }
 
   @Get(':id')
-  async findById(@Param('id') id: string) {
+  async findById(@UuidParam('id') id: string) {
     const group = await getPageGroupById(
       { pageGroupRepository: this.pageGroupRepository },
       { tenantId: this.tenantContext.getCurrentTenantId(), pageGroupId: id },
@@ -321,7 +321,7 @@ export class PageGroupsController {
 
   @Patch(':id/content')
   async saveContent(
-    @Param('id') id: string,
+    @UuidParam('id') id: string,
     @Body(new ZodValidationPipe(savePageGroupContentBodySchema))
     body: SavePageGroupContentBody,
   ) {
@@ -339,7 +339,7 @@ export class PageGroupsController {
 
   @Patch(':id/rollback')
   async rollback(
-    @Param('id') id: string,
+    @UuidParam('id') id: string,
     @Body(new ZodValidationPipe(rollbackToVersionBodySchema))
     body: RollbackToVersionBody,
   ) {
@@ -360,7 +360,7 @@ export class PageGroupsController {
 
   @Delete(':id')
   @HttpCode(204)
-  async delete(@Param('id') id: string): Promise<void> {
+  async delete(@UuidParam('id') id: string): Promise<void> {
     await deletePageGroup(
       { pageGroupRepository: this.pageGroupRepository },
       { tenantId: this.tenantContext.getCurrentTenantId(), pageGroupId: id },
@@ -368,7 +368,7 @@ export class PageGroupsController {
   }
 
   @Get(':id/versions')
-  async listVersions(@Param('id') id: string) {
+  async listVersions(@UuidParam('id') id: string) {
     const versions = await listPageGroupVersions(
       { pageGroupVersionRepository: this.pageGroupVersionRepository },
       { tenantId: this.tenantContext.getCurrentTenantId(), pageGroupId: id },
@@ -377,7 +377,7 @@ export class PageGroupsController {
   }
 
   @Get(':id/translations')
-  async listTranslations(@Param('id') id: string) {
+  async listTranslations(@UuidParam('id') id: string) {
     const translations = await listPageGroupTranslations(
       {
         pageGroupRepository: this.pageGroupRepository,
@@ -392,7 +392,7 @@ export class PageGroupsController {
 
   @Post(':id/translations')
   async createTranslation(
-    @Param('id') id: string,
+    @UuidParam('id') id: string,
     @Body(new ZodValidationPipe(createPageGroupTranslationBodySchema))
     body: CreatePageGroupTranslationBody,
   ) {
@@ -419,7 +419,7 @@ export class PageGroupsController {
    * are the same article.
    */
   @Get(':id/terms')
-  async listTerms(@Param('id') id: string): Promise<PageGroupTerms> {
+  async listTerms(@UuidParam('id') id: string): Promise<PageGroupTerms> {
     await getPageGroupById(
       { pageGroupRepository: this.pageGroupRepository },
       { tenantId: this.tenantContext.getCurrentTenantId(), pageGroupId: id },
@@ -436,7 +436,7 @@ export class PageGroupsController {
   /** The whole set, not a diff — the editor knows which boxes are ticked, not which changed. */
   @Patch(':id/terms')
   async setTerms(
-    @Param('id') id: string,
+    @UuidParam('id') id: string,
     @Body(new ZodValidationPipe(pageGroupTermsBodySchema))
     body: PageGroupTermsBody,
   ): Promise<PageGroupTerms> {
@@ -456,7 +456,7 @@ export class PageGroupsController {
   /** Which section of the editor lists this page — not where it lives on the site. */
   @Patch(':id/collection')
   async moveToCollection(
-    @Param('id') id: string,
+    @UuidParam('id') id: string,
     @Body(new ZodValidationPipe(moveToCollectionBodySchema))
     body: MoveToCollectionBody,
   ) {
@@ -482,7 +482,7 @@ export class PageGroupsController {
    */
   @Patch(':id/parent')
   async moveToParent(
-    @Param('id') id: string,
+    @UuidParam('id') id: string,
     @Body(new ZodValidationPipe(moveToParentBodySchema))
     body: MoveToParentBody,
   ) {
@@ -504,7 +504,7 @@ export class PageGroupsController {
 
   @Patch('translations/:translationId/field-values')
   async saveFieldValues(
-    @Param('translationId') translationId: string,
+    @UuidParam('translationId') translationId: string,
     @Body(new ZodValidationPipe(savePageTranslationFieldValuesBodySchema))
     body: SavePageTranslationFieldValuesBody,
   ) {
@@ -528,7 +528,7 @@ export class PageGroupsController {
 
   @Patch('translations/:translationId/diverged-content')
   async saveDivergedContent(
-    @Param('translationId') translationId: string,
+    @UuidParam('translationId') translationId: string,
     @Body(new ZodValidationPipe(saveDivergedPageTranslationContentBodySchema))
     body: SaveDivergedPageTranslationContentBody,
   ) {
@@ -547,7 +547,7 @@ export class PageGroupsController {
 
   @Patch('translations/:translationId/seo')
   async updateSeo(
-    @Param('translationId') translationId: string,
+    @UuidParam('translationId') translationId: string,
     @Body(new ZodValidationPipe(updatePageTranslationSeoMetaBodySchema))
     body: UpdatePageTranslationSeoMetaBody,
   ) {
@@ -575,7 +575,7 @@ export class PageGroupsController {
    */
   @Patch('translations/:translationId/slug')
   async rename(
-    @Param('translationId') translationId: string,
+    @UuidParam('translationId') translationId: string,
     @Body(new ZodValidationPipe(renamePageTranslationBodySchema))
     body: RenamePageTranslationBody,
   ) {
@@ -597,7 +597,7 @@ export class PageGroupsController {
   @Post('translations/:translationId/publish')
   @UseGuards(RolesGuard)
   @Roles('admin', 'publisher')
-  async publish(@Param('translationId') translationId: string) {
+  async publish(@UuidParam('translationId') translationId: string) {
     const translation = await publishPageTranslation(
       {
         pageGroupRepository: this.pageGroupRepository,
@@ -615,7 +615,7 @@ export class PageGroupsController {
   }
 
   @Post('translations/:translationId/diverge')
-  async diverge(@Param('translationId') translationId: string) {
+  async diverge(@UuidParam('translationId') translationId: string) {
     const translation = await divergePageTranslation(
       {
         pageGroupRepository: this.pageGroupRepository,
@@ -636,7 +636,7 @@ export class PageGroupsController {
    */
   @Post('translations/:translationId/relink')
   async relink(
-    @Param('translationId') translationId: string,
+    @UuidParam('translationId') translationId: string,
     @Body(new ZodValidationPipe(relinkPageTranslationBodySchema))
     body: RelinkPageTranslationBody,
   ) {
@@ -662,7 +662,7 @@ export class PageGroupsController {
 
   @Patch('translations/:translationId/rollback')
   async rollbackTranslation(
-    @Param('translationId') translationId: string,
+    @UuidParam('translationId') translationId: string,
     @Body(new ZodValidationPipe(rollbackToVersionBodySchema))
     body: RollbackToVersionBody,
   ) {
@@ -685,7 +685,7 @@ export class PageGroupsController {
   // Same gate as PagesController.createPreviewToken: every role that can
   // save a draft can also preview it, not just admin/publisher.
   @Post('translations/:translationId/preview-token')
-  async createPreviewToken(@Param('translationId') translationId: string) {
+  async createPreviewToken(@UuidParam('translationId') translationId: string) {
     await getPageTranslationById(
       { pageTranslationRepository: this.pageTranslationRepository },
       {
@@ -703,7 +703,9 @@ export class PageGroupsController {
   }
 
   @Get('translations/:translationId/versions')
-  async listTranslationVersions(@Param('translationId') translationId: string) {
+  async listTranslationVersions(
+    @UuidParam('translationId') translationId: string,
+  ) {
     const versions = await listPageTranslationVersions(
       {
         pageTranslationVersionRepository: this.pageTranslationVersionRepository,

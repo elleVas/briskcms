@@ -7,6 +7,7 @@ import {
   act,
 } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import type { MutableRefObject } from 'react';
 import { QueryClientProvider } from '@tanstack/react-query';
 import * as router from '@tanstack/react-router';
 import type { Block } from '@brisk/shared-types';
@@ -17,9 +18,14 @@ import {
 import type { BlockDescriptor } from '@brisk/block-registry';
 import { TooltipProvider } from '../../components/ui/tooltip';
 import { createTestQueryClient } from '../../test/query-client.test-fixture';
+import {
+  dispatchFromIframe,
+  findCanvasIframe,
+  markCanvasReady,
+  selectBlockWithRect,
+} from '../../test/preview-bridge.test-fixture';
 import * as blockFragmentApi from '../../lib/block-fragment-api-client';
 import * as previewTokenApi from '../../lib/preview-token-api-client';
-import { PUBLIC_SITE_URL } from '../../lib/public-site-url';
 import { ToastProvider } from '../toast-provider';
 import { LayoutTemplate } from 'lucide-react';
 import { CanvasEditorShell } from './canvas-editor-shell';
@@ -101,6 +107,7 @@ function renderShell(
     onChange?: (blocks: Block[]) => void;
     onPublish?: (blocks: Block[]) => unknown;
     pageMenu?: CanvasPageMenuItem[];
+    flushRef?: MutableRefObject<(() => void) | null>;
   } = {},
 ) {
   vi.mocked(router.useNavigate).mockReturnValue(vi.fn());
@@ -135,6 +142,7 @@ function renderShell(
               onPublish={onPublish}
               pageId="page-1"
               pageMenu={overrides.pageMenu}
+              flushRef={overrides.flushRef}
             />
           </PageListContext.Provider>
         </ToastProvider>
@@ -194,47 +202,6 @@ function renderShell(
   return { ...utils, onChange, onPublish, blocks, switchPage, restore };
 }
 
-async function getIframe() {
-  return waitFor(
-    () => screen.getByTitle('Anteprima pagina') as HTMLIFrameElement,
-  );
-}
-
-function dispatchFromIframe(
-  iframe: HTMLIFrameElement,
-  type: string,
-  payload: unknown,
-) {
-  const event = new MessageEvent('message', {
-    data: {
-      source: PREVIEW_BRIDGE_SOURCE,
-      v: PREVIEW_BRIDGE_VERSION,
-      type,
-      payload,
-    },
-    origin: PUBLIC_SITE_URL,
-  });
-  Object.defineProperty(event, 'source', { value: iframe.contentWindow });
-  window.dispatchEvent(event);
-}
-
-/** The contextual toolbar only appears for a block whose rect the bridge already knows — selecting one in a test requires a `preview:ready`/`preview:block-rects` carrying that rect first, not just the click. */
-function selectBlockWithRect(
-  iframe: HTMLIFrameElement,
-  blockId: string,
-  rect: { top: number; left: number; width: number; height: number },
-) {
-  act(() => {
-    dispatchFromIframe(iframe, 'preview:ready', {
-      blockRects: [{ id: blockId, ...rect }],
-      scrollHeight: rect.top + rect.height,
-    });
-  });
-  act(() => {
-    dispatchFromIframe(iframe, 'preview:click', { blockId });
-  });
-}
-
 const HERO_RECT = { top: 0, left: 0, width: 800, height: 100 };
 
 /**
@@ -263,7 +230,7 @@ describe('CanvasEditorShell', () => {
 
   it('renders the top bar (back link, status, publish) and no toolbar when nothing is selected', async () => {
     renderShell();
-    await getIframe();
+    await findCanvasIframe();
 
     expect(screen.getByRole('link', { name: 'Pagine' })).toBeTruthy();
     expect(screen.getByText('Bozza salvata')).toBeTruthy();
@@ -274,7 +241,7 @@ describe('CanvasEditorShell', () => {
 
   it('collapsing the left sidebar hides only the block picker, not the Layers panel', async () => {
     renderShell();
-    await getIframe();
+    await findCanvasIframe();
 
     expect(screen.getByText('Livelli')).toBeTruthy();
     expect(screen.getByText('Inserisci blocco')).toBeTruthy();
@@ -294,7 +261,7 @@ describe('CanvasEditorShell', () => {
 
   it('collapsing the right Layers panel hides only Livelli, not the block picker', async () => {
     renderShell();
-    await getIframe();
+    await findCanvasIframe();
 
     fireEvent.click(
       screen.getByRole('button', {
@@ -315,7 +282,7 @@ describe('CanvasEditorShell', () => {
 
   it('selecting a block on the canvas shows the contextual toolbar', async () => {
     renderShell();
-    const iframe = await getIframe();
+    const iframe = await findCanvasIframe();
 
     selectBlockWithRect(iframe, 'hero-1', HERO_RECT);
 
@@ -328,7 +295,7 @@ describe('CanvasEditorShell', () => {
 
   it('clicking a block in the Layers panel selects it and asks the iframe to scroll it into view', async () => {
     renderShell();
-    const iframe = await getIframe();
+    const iframe = await findCanvasIframe();
     if (!iframe.contentWindow) {
       throw new Error('Test fixture iframe has no contentWindow');
     }
@@ -368,7 +335,7 @@ describe('CanvasEditorShell', () => {
    */
   it('selecting a block on the canvas brings up its properties in the right panel, with no popover', async () => {
     renderShell();
-    const iframe = await getIframe();
+    const iframe = await findCanvasIframe();
 
     expect(
       screen
@@ -395,7 +362,7 @@ describe('CanvasEditorShell', () => {
    */
   it('the properties button opens the right panel when it is collapsed', async () => {
     renderShell();
-    const iframe = await getIframe();
+    const iframe = await findCanvasIframe();
 
     fireEvent.click(
       screen.getByRole('button', {
@@ -421,7 +388,7 @@ describe('CanvasEditorShell', () => {
    */
   it('moves between the two tabs with the arrow keys', async () => {
     renderShell();
-    await getIframe();
+    await findCanvasIframe();
 
     const layers = screen.getByRole('tab', { name: 'Livelli' });
     expect(layers.getAttribute('aria-controls')).toBe(
@@ -452,7 +419,7 @@ describe('CanvasEditorShell', () => {
    */
   it('remembers a collapsed panel across a remount', async () => {
     const first = renderShell();
-    await getIframe();
+    await findCanvasIframe();
 
     fireEvent.click(
       screen.getByRole('button', {
@@ -462,7 +429,7 @@ describe('CanvasEditorShell', () => {
     first.unmount();
 
     renderShell();
-    await getIframe();
+    await findCanvasIframe();
 
     expect(
       screen.getByRole('button', {
@@ -483,7 +450,7 @@ describe('CanvasEditorShell', () => {
       '<div>patched</div>',
     );
     const { onChange, unmount } = renderShell();
-    const iframe = await getIframe();
+    const iframe = await findCanvasIframe();
 
     selectBlockWithRect(iframe, 'hero-1', HERO_RECT);
     fireEvent.change(screen.getByDisplayValue('Titolo'), {
@@ -528,7 +495,7 @@ describe('CanvasEditorShell', () => {
         { label: 'Salva come template', icon: LayoutTemplate, onSelect },
       ],
     });
-    const iframe = await getIframe();
+    const iframe = await findCanvasIframe();
 
     selectBlockWithRect(iframe, 'hero-1', HERO_RECT);
     fireEvent.change(screen.getByDisplayValue('Titolo'), {
@@ -551,12 +518,43 @@ describe('CanvasEditorShell', () => {
     ]);
   });
 
+  /*
+   * A view's own history dialog lives outside the shell. A restore there
+   * waits for the saves already queued; a change still in the debounce is
+   * not queued yet, and would land after the restore and undo it — so the
+   * shell hands the view its flush.
+   */
+  it('hands the view a flush that writes a change still inside the debounce', async () => {
+    vi.mocked(blockFragmentApi.renderBlockFragment).mockResolvedValue(
+      '<div>patched</div>',
+    );
+    const flushRef: MutableRefObject<(() => void) | null> = { current: null };
+    const { onChange } = renderShell({ flushRef });
+    const iframe = await findCanvasIframe();
+
+    selectBlockWithRect(iframe, 'hero-1', HERO_RECT);
+    fireEvent.change(screen.getByDisplayValue('Titolo'), {
+      target: { value: 'Ultima modifica' },
+    });
+    expect(onChange).not.toHaveBeenCalled();
+
+    flushRef.current?.();
+
+    expect(onChange).toHaveBeenCalledWith([
+      {
+        id: 'hero-1',
+        type: 'Hero',
+        props: { title: 'Ultima modifica', subtitle: 'Sottotitolo' },
+      },
+    ]);
+  });
+
   it('changing a property in the Inspector updates onChange after the debounce, and patches the fragment', async () => {
     vi.mocked(blockFragmentApi.renderBlockFragment).mockResolvedValue(
       '<div>patched</div>',
     );
     const { onChange } = renderShell();
-    const iframe = await getIframe();
+    const iframe = await findCanvasIframe();
     const postMessageSpy = vi.spyOn(
       iframe.contentWindow as Window,
       'postMessage',
@@ -596,7 +594,7 @@ describe('CanvasEditorShell', () => {
 
   it('removing the selected block calls onChange with it gone, and patches the canvas to actually remove it', async () => {
     const { onChange } = renderShell();
-    const iframe = await getIframe();
+    const iframe = await findCanvasIframe();
     const postMessageSpy = vi.spyOn(
       iframe.contentWindow as Window,
       'postMessage',
@@ -631,7 +629,7 @@ describe('CanvasEditorShell', () => {
         },
       ],
     });
-    const iframe = await getIframe();
+    const iframe = await findCanvasIframe();
     const postMessageSpy = vi.spyOn(
       iframe.contentWindow as Window,
       'postMessage',
@@ -675,9 +673,35 @@ describe('CanvasEditorShell', () => {
     );
   });
 
+  /*
+   * A block inserted before the page in the iframe listens was saved but
+   * never drawn, until a reload: the message telling the canvas about it
+   * was lost. So the palette waits, and the canvas says it is loading.
+   */
+  it('keeps the palette off, and says the page is loading, until the canvas is ready', async () => {
+    const { onChange } = renderShell({ blocks: [] });
+    const iframe = await findCanvasIframe();
+    const testoButton = within(
+      screen.getByRole('complementary', { name: 'Inserisci blocco' }),
+    ).getByRole('button', { name: 'Testo' });
+
+    expect(testoButton.matches(':disabled')).toBe(true);
+    expect(
+      screen.getByText('Caricamento della pagina…').getAttribute('role'),
+    ).toBe('status');
+    fireEvent.pointerDown(testoButton, { pointerId: 1 });
+    fireEvent.pointerUp(testoButton, { pointerId: 1 });
+    expect(onChange).not.toHaveBeenCalled();
+
+    markCanvasReady(iframe);
+
+    expect(testoButton.matches(':disabled')).toBe(false);
+    expect(screen.queryByText('Caricamento della pagina…')).toBeNull();
+  });
+
   it('inserting a block from the picker appends it at the root', async () => {
     const { onChange } = renderShell({ blocks: [] });
-    await getIframe();
+    markCanvasReady(await findCanvasIframe());
 
     // The block button is draggable (block-picker.tsx) — it uses Pointer
     // Events rather than a plain click: a down+up with no movement in
@@ -703,7 +727,8 @@ describe('CanvasEditorShell', () => {
       '<div data-brisk-block-id="new-text">Corpo</div>',
     );
     renderShell({ blocks: [] });
-    const iframe = await getIframe();
+    const iframe = await findCanvasIframe();
+    markCanvasReady(iframe);
     const postMessageSpy = vi.spyOn(
       iframe.contentWindow as Window,
       'postMessage',
@@ -747,7 +772,7 @@ describe('CanvasEditorShell', () => {
       '<div data-brisk-block-id="hero-copy">Titolo</div>',
     );
     renderShell();
-    const iframe = await getIframe();
+    const iframe = await findCanvasIframe();
     const postMessageSpy = vi.spyOn(
       iframe.contentWindow as Window,
       'postMessage',
@@ -784,7 +809,7 @@ describe('CanvasEditorShell', () => {
         { id: 'text-1', type: 'Text', props: { body: 'Corpo' } },
       ],
     });
-    const iframe = await getIframe();
+    const iframe = await findCanvasIframe();
     const postMessageSpy = vi.spyOn(
       iframe.contentWindow as Window,
       'postMessage',
@@ -859,7 +884,7 @@ describe('CanvasEditorShell', () => {
     const { onChange } = renderShell({
       blocks: [{ id: 'columns-1', type: 'Columns', props: {}, children: [] }],
     });
-    const iframe = await getIframe();
+    const iframe = await findCanvasIframe();
     const postMessageSpy = vi.spyOn(
       iframe.contentWindow as Window,
       'postMessage',
@@ -948,7 +973,7 @@ describe('CanvasEditorShell', () => {
         },
       ],
     });
-    const iframe = await getIframe();
+    const iframe = await findCanvasIframe();
     const postMessageSpy = vi.spyOn(
       iframe.contentWindow as Window,
       'postMessage',
@@ -1001,7 +1026,7 @@ describe('CanvasEditorShell', () => {
     renderShell({
       blocks: [{ id: 'hero-1', type: 'Hero', props: { title: 'Titolo' } }],
     });
-    const iframe = await getIframe();
+    const iframe = await findCanvasIframe();
 
     selectBlockWithRect(iframe, 'hero-1', HERO_RECT);
 
@@ -1012,7 +1037,7 @@ describe('CanvasEditorShell', () => {
 
   it('dragging a block from the picker but releasing outside the canvas cancels the insert', async () => {
     const { onChange } = renderShell({ blocks: [] });
-    await getIframe();
+    await findCanvasIframe();
 
     // Scoped to the inserter: since the layers tree started naming blocks
     // the way a person picked them, a Text block on the canvas is also
@@ -1053,7 +1078,7 @@ describe('CanvasEditorShell', () => {
         { id: 'text-1', type: 'Text', props: { body: 'Corpo' } },
       ],
     });
-    const iframe = await getIframe();
+    const iframe = await findCanvasIframe();
     const postMessageSpy = vi.spyOn(
       iframe.contentWindow as Window,
       'postMessage',
@@ -1098,7 +1123,7 @@ describe('CanvasEditorShell', () => {
         },
       ],
     });
-    const iframe = await getIframe();
+    const iframe = await findCanvasIframe();
     const postMessageSpy = vi.spyOn(
       iframe.contentWindow as Window,
       'postMessage',
@@ -1150,7 +1175,7 @@ describe('CanvasEditorShell', () => {
 
   it('publish sends the current local block tree', async () => {
     const { onPublish, blocks } = renderShell();
-    await getIframe();
+    await findCanvasIframe();
 
     fireEvent.click(screen.getByRole('button', { name: 'Pubblica' }));
 
@@ -1159,7 +1184,7 @@ describe('CanvasEditorShell', () => {
 
   it('double-clicking an inlineEditable field enters text edit on the iframe', async () => {
     renderShell();
-    const iframe = await getIframe();
+    const iframe = await findCanvasIframe();
     const postMessageSpy = vi.spyOn(
       iframe.contentWindow as Window,
       'postMessage',
@@ -1192,7 +1217,7 @@ describe('CanvasEditorShell', () => {
 
   it('double-clicking a field that is not inlineEditable does nothing', async () => {
     renderShell();
-    const iframe = await getIframe();
+    const iframe = await findCanvasIframe();
     const postMessageSpy = vi.spyOn(
       iframe.contentWindow as Window,
       'postMessage',
@@ -1213,7 +1238,7 @@ describe('CanvasEditorShell', () => {
 
   it('typing live in TipTap updates the tree optically and saves after its own debounce', async () => {
     const { onChange } = renderShell();
-    const iframe = await getIframe();
+    const iframe = await findCanvasIframe();
 
     act(() => {
       dispatchFromIframe(iframe, 'preview:text-changed', {
@@ -1251,7 +1276,7 @@ describe('CanvasEditorShell', () => {
         { id: 'text-1', type: 'Text', props: { body: 'Corpo' } },
       ],
     });
-    const iframe = await getIframe();
+    const iframe = await findCanvasIframe();
     const postMessageSpy = vi.spyOn(
       iframe.contentWindow as Window,
       'postMessage',
@@ -1319,7 +1344,7 @@ describe('CanvasEditorShell', () => {
         { id: 'text-1', type: 'Text', props: { body: 'Corpo' } },
       ],
     });
-    const iframe = await getIframe();
+    const iframe = await findCanvasIframe();
 
     act(() => {
       dispatchFromIframe(iframe, 'preview:ready', {
@@ -1346,7 +1371,7 @@ describe('CanvasEditorShell', () => {
 
   it('pressing Escape exits text edit on the iframe', async () => {
     renderShell();
-    const iframe = await getIframe();
+    const iframe = await findCanvasIframe();
     const postMessageSpy = vi.spyOn(
       iframe.contentWindow as Window,
       'postMessage',
@@ -1367,7 +1392,7 @@ describe('CanvasEditorShell', () => {
 
   it('the undo/redo buttons start disabled, and undo becomes enabled after a change', async () => {
     const { onChange } = renderShell();
-    const iframe = await getIframe();
+    const iframe = await findCanvasIframe();
     selectBlockWithRect(iframe, 'hero-1', HERO_RECT);
 
     expect(
@@ -1387,7 +1412,7 @@ describe('CanvasEditorShell', () => {
 
   it('clicking Annulla restores the block removed by the previous action', async () => {
     const { onChange } = renderShell();
-    const iframe = await getIframe();
+    const iframe = await findCanvasIframe();
     selectBlockWithRect(iframe, 'hero-1', HERO_RECT);
     fireEvent.click(screen.getByRole('button', { name: 'Rimuovi blocco' }));
     vi.mocked(onChange).mockClear();
@@ -1405,7 +1430,7 @@ describe('CanvasEditorShell', () => {
 
   it('Ctrl+Z triggers undo', async () => {
     const { onChange } = renderShell();
-    const iframe = await getIframe();
+    const iframe = await findCanvasIframe();
     selectBlockWithRect(iframe, 'hero-1', HERO_RECT);
     fireEvent.click(screen.getByRole('button', { name: 'Rimuovi blocco' }));
     vi.mocked(onChange).mockClear();
@@ -1423,7 +1448,7 @@ describe('CanvasEditorShell', () => {
 
   it('Ctrl+Z is ignored while typing in a text input, leaving the browser its own native undo', async () => {
     renderShell();
-    const iframe = await getIframe();
+    const iframe = await findCanvasIframe();
     selectBlockWithRect(iframe, 'hero-1', HERO_RECT);
     fireEvent.click(screen.getByRole('button', { name: 'Rimuovi blocco' }));
     const input = document.createElement('input');
@@ -1459,7 +1484,7 @@ describe('CanvasEditorShell', () => {
     );
     const onChange = vi.fn();
     const { switchPage } = renderShell({ blocks: italian, onChange });
-    const iframe = await getIframe();
+    const iframe = await findCanvasIframe();
 
     selectBlockWithRect(iframe, 'hero-1', HERO_RECT);
     focusPropertiesPanel();
@@ -1492,7 +1517,7 @@ describe('CanvasEditorShell', () => {
    */
   it('redraws the canvas from the server after a restore', async () => {
     const { restore } = renderShell();
-    const before = await getIframe();
+    const before = await findCanvasIframe();
 
     act(() =>
       restore([
@@ -1504,7 +1529,7 @@ describe('CanvasEditorShell', () => {
       ]),
     );
 
-    const after = await getIframe();
+    const after = await findCanvasIframe();
     expect(after).not.toBe(before);
   });
 });
@@ -1531,7 +1556,7 @@ describe('CanvasEditorShell keyboard shortcuts', () => {
   it('deletes the selected block with Delete', async () => {
     const onChange = vi.fn();
     renderShell({ onChange });
-    const iframe = await getIframe();
+    const iframe = await findCanvasIframe();
     selectBlockWithRect(iframe, 'hero-1', HERO_RECT);
 
     fireEvent.keyDown(window, { key: 'Delete' });
@@ -1542,7 +1567,7 @@ describe('CanvasEditorShell keyboard shortcuts', () => {
   it('duplicates the selected block with Cmd+D', async () => {
     const onChange = vi.fn();
     renderShell({ onChange });
-    const iframe = await getIframe();
+    const iframe = await findCanvasIframe();
     selectBlockWithRect(iframe, 'hero-1', HERO_RECT);
 
     fireEvent.keyDown(window, { key: 'd', metaKey: true });
@@ -1563,7 +1588,7 @@ describe('CanvasEditorShell keyboard shortcuts', () => {
   it('copies and pastes a block with Cmd+C then Cmd+V', async () => {
     const onChange = vi.fn();
     renderShell({ onChange });
-    const iframe = await getIframe();
+    const iframe = await findCanvasIframe();
     selectBlockWithRect(iframe, 'hero-1', HERO_RECT);
 
     fireEvent.keyDown(window, { key: 'c', metaKey: true });
@@ -1579,7 +1604,7 @@ describe('CanvasEditorShell keyboard shortcuts', () => {
   it('pastes nothing when nothing was copied', async () => {
     const onChange = vi.fn();
     renderShell({ onChange });
-    const iframe = await getIframe();
+    const iframe = await findCanvasIframe();
     selectBlockWithRect(iframe, 'hero-1', HERO_RECT);
 
     fireEvent.keyDown(window, { key: 'v', metaKey: true });
@@ -1600,7 +1625,7 @@ describe('CanvasEditorShell keyboard shortcuts', () => {
         { id: 'hero-2', type: 'Hero', props: { title: 'B', subtitle: '' } },
       ],
     });
-    const iframe = await getIframe();
+    const iframe = await findCanvasIframe();
     selectBlockWithRect(iframe, 'hero-2', HERO_RECT);
 
     fireEvent.keyDown(window, { key: 'ArrowUp', altKey: true });
@@ -1616,7 +1641,7 @@ describe('CanvasEditorShell keyboard shortcuts', () => {
   it('leaves the editor’s own inputs alone', async () => {
     const onChange = vi.fn();
     renderShell({ onChange });
-    const iframe = await getIframe();
+    const iframe = await findCanvasIframe();
     selectBlockWithRect(iframe, 'hero-1', HERO_RECT);
 
     const input = document.createElement('input');
@@ -1665,7 +1690,7 @@ describe('CanvasEditorShell nested canvas drag', () => {
   it('reorders a nested block among its own siblings, not at the root', async () => {
     const onChange = vi.fn();
     renderShell({ onChange, blocks: nested });
-    const iframe = await getIframe();
+    const iframe = await findCanvasIframe();
 
     // Rects for both columns, then a drag of the first past the second's
     // midpoint. The block ids are the tree's, so the shell resolves the
@@ -1758,7 +1783,7 @@ describe('CanvasEditorShell multi-select', () => {
   it('deletes every selected block in one go', async () => {
     const onChange = vi.fn();
     renderShell({ onChange, blocks: three });
-    const iframe = await getIframe();
+    const iframe = await findCanvasIframe();
     selectMany(iframe, ['a', 'b']);
 
     fireEvent.keyDown(window, { key: 'Delete' });
@@ -1770,7 +1795,7 @@ describe('CanvasEditorShell multi-select', () => {
   it('undoes a multi-delete in one step, not one per block', async () => {
     const onChange = vi.fn();
     renderShell({ onChange, blocks: three });
-    const iframe = await getIframe();
+    const iframe = await findCanvasIframe();
     selectMany(iframe, ['a', 'b']);
 
     fireEvent.keyDown(window, { key: 'Delete' });
@@ -1785,7 +1810,7 @@ describe('CanvasEditorShell multi-select', () => {
   it('duplicates every selected block, each after itself', async () => {
     const onChange = vi.fn();
     renderShell({ onChange, blocks: three });
-    const iframe = await getIframe();
+    const iframe = await findCanvasIframe();
     selectMany(iframe, ['a', 'c']);
 
     fireEvent.keyDown(window, { key: 'd', metaKey: true });
@@ -1801,7 +1826,7 @@ describe('CanvasEditorShell multi-select', () => {
   it('copies and pastes a whole selection, in the order it was copied', async () => {
     const onChange = vi.fn();
     renderShell({ onChange, blocks: three });
-    const iframe = await getIframe();
+    const iframe = await findCanvasIframe();
     selectMany(iframe, ['a', 'b']);
 
     fireEvent.keyDown(window, { key: 'c', metaKey: true });
@@ -1823,7 +1848,7 @@ describe('CanvasEditorShell multi-select', () => {
   it('toggles a block out of the selection when it is picked again', async () => {
     const onChange = vi.fn();
     renderShell({ onChange, blocks: three });
-    const iframe = await getIframe();
+    const iframe = await findCanvasIframe();
     selectMany(iframe, ['a', 'b']);
     act(() => {
       dispatchFromIframe(iframe, 'preview:click', {
@@ -1841,7 +1866,7 @@ describe('CanvasEditorShell multi-select', () => {
   it('a plain click replaces the selection instead of adding to it', async () => {
     const onChange = vi.fn();
     renderShell({ onChange, blocks: three });
-    const iframe = await getIframe();
+    const iframe = await findCanvasIframe();
     selectMany(iframe, ['a', 'b']);
     act(() => {
       dispatchFromIframe(iframe, 'preview:click', { blockId: 'c' });

@@ -1,9 +1,16 @@
 import { fireEvent, render, screen } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
-import { dayButton, openCalendar } from '../../test/date-picker.test-fixture';
+import { beforeAll, describe, expect, it, vi } from 'vitest';
+import {
+  CALENDAR_LOAD_TIMEOUT_MS,
+  dayButton,
+  openCalendar,
+  preloadCalendar,
+} from '../../test/date-picker.test-fixture';
 import { DatePicker } from './date-picker';
 
 describe('DatePicker', () => {
+  beforeAll(preloadCalendar, CALENDAR_LOAD_TIMEOUT_MS);
+
   it('shows the stored day in the editor language, not the stored spelling', () => {
     render(
       <DatePicker aria-label="Data" value="2026-09-13" onChange={vi.fn()} />,

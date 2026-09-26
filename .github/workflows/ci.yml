@@ -12,9 +12,10 @@ permissions:
 # Shared by every job below via `env:` — GitHub Actions has no clean way to
 # share an env block across jobs without a reusable workflow (overkill
 # here), so it's duplicated per job rather than factored out. Only the
-# `test` job's Postgres-dependent values (POSTGRES_HOST/POSTGRES_PASSWORD/
-# POSTGRES_APP_PASSWORD) are set separately there, since they don't exist
-# until that job starts its own Postgres container.
+# Postgres-dependent values (POSTGRES_HOST/POSTGRES_PASSWORD/
+# POSTGRES_APP_PASSWORD) are set separately, by the `test` and `e2e` jobs,
+# since they don't exist until the job starts its own Postgres container
+# (.github/actions/start-services).
 env:
   POSTGRES_USER: brisk
   POSTGRES_DB: brisk
@@ -51,8 +52,8 @@ env:
   # import.meta.env.
   API_URL: http://localhost:3000/api
   # The editor's fallback when no /config.js was served (docs/adr/0076):
-  # runtime-config.ts requires it, and its spec reads it back. Never
-  # followed in CI (no browser/e2e step).
+  # runtime-config.ts requires it, and its spec reads it back. The `e2e`
+  # job, the one place a browser follows it, sets its own.
   VITE_PUBLIC_SITE_URL: http://localhost:4321
   # Needed for login-form.spec.tsx/forgot-password-form.spec.tsx to render
   # the Turnstile widget (security review 2026-08-24, point 13) —
@@ -161,64 +162,7 @@ jobs:
           cache: 'pnpm'
       - run: pnpm install --frozen-lockfile
 
-      # GitHub Actions doesn't expose repository secrets to workflows
-      # triggered by Dependabot (by design, to stop a malicious dependency
-      # bump from exfiltrating them) — so a services:-block password
-      # sourced from secrets.* silently comes through empty on every
-      # Dependabot PR. Instead, generate a random password here, in-job,
-      # for every run regardless of trigger: never a literal value
-      # anywhere, never dependent on secrets access at all.
-      - name: Start Postgres
-        run: |
-          admin_password=$(openssl rand -hex 24)
-          app_password=$(openssl rand -hex 24)
-          echo "::add-mask::$admin_password"
-          echo "::add-mask::$app_password"
-          echo "POSTGRES_PASSWORD=$admin_password" >> "$GITHUB_ENV"
-          echo "POSTGRES_APP_PASSWORD=$app_password" >> "$GITHUB_ENV"
-
-          docker run -d --name postgres \
-            -e POSTGRES_USER="$POSTGRES_USER" \
-            -e POSTGRES_PASSWORD="$admin_password" \
-            -e POSTGRES_DB="$POSTGRES_DB" \
-            -p 5432:5432 \
-            postgres:16-alpine
-
-          # The official image starts Postgres twice: once internally to run
-          # initdb, then for real. pg_isready can report ready during that
-          # first, transient instance, right before it shuts down to
-          # restart — a bare "until pg_isready" loop can catch that window
-          # and then get "server closed the connection unexpectedly" on the
-          # very next command. Wait for the *second* "ready to accept
-          # connections" in the logs, which only appears once the real
-          # server is up.
-          until [ "$(docker logs postgres 2>&1 | grep -c 'database system is ready to accept connections')" -ge 2 ]; do
-            sleep 1
-          done
-
-      # No auth required (matches .env.example) — smtp-email-adapter's
-      # integration test sends a real email through this and checks
-      # Mailpit's HTTP API for it, see docs/adr/0011.
-      - name: Start Mailpit
-        run: |
-          docker run -d --name mailpit -p 1025:1025 -p 8025:8025 axllent/mailpit
-          until curl -sf http://localhost:8025/api/v1/info > /dev/null; do
-            sleep 1
-          done
-
-      - name: Bootstrap brisk_app role
-        env:
-          PGHOST: localhost
-          PGPASSWORD: ${{ env.POSTGRES_PASSWORD }}
-        run: bash db/init/000_roles.sh
-
-      - run: pnpm --filter @brisk/postgres-db run db:migrate
-        env:
-          POSTGRES_HOST: localhost
-
-      - run: pnpm --filter @brisk/postgres-db run db:seed
-        env:
-          POSTGRES_HOST: localhost
+      - uses: ./.github/actions/start-services
 
       # A migration written by hand leaves drizzle-kit's snapshot behind the
       # schema, and nothing notices until the next person runs db:generate
@@ -292,6 +236,70 @@ jobs:
       - run: pnpm exec nx run-many -t test --coverage --parallel=1
         env:
           POSTGRES_HOST: localhost
+
+  # The browser suite (apps/e2e, see docs/development.md "End-to-end
+  # tests"): the API, the editor and the public site built and started for
+  # real against a fresh database and Mailpit, then driven by Playwright.
+  # Not a required check yet: it proves itself stable on PRs first.
+  e2e:
+    needs: [typecheck, lint]
+    runs-on: ubuntu-latest
+    env:
+      # Where the suite and the editor's canvas find the public site, and
+      # where playwright.config.ts starts it — the same port as locally
+      # (docs/development.md).
+      VITE_PUBLIC_SITE_URL: http://localhost:4322
+      # The public site's half of the captcha: without it forms render no
+      # widget and cannot be sent. Cloudflare's "always passes" test key,
+      # the pair of the TURNSTILE_SECRET_KEY above.
+      TURNSTILE_SITE_KEY: 1x00000000000000000000AA
+      POSTGRES_HOST: localhost
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: 'pnpm'
+      - run: pnpm install --frozen-lockfile
+
+      - uses: ./.github/actions/start-services
+
+      # The editor's build writes config.js from VITE_PUBLIC_SITE_URL above,
+      # so it has to be built here, with this job's addresses.
+      - run: pnpm exec nx run-many -t build -p @brisk/api @brisk/editor-app @brisk/public-site --parallel=1
+
+      # The browser is ~100 MB; cached per Playwright version. Its system
+      # libraries are not in the cache and are installed either way.
+      - name: Read the Playwright version
+        id: playwright
+        run: echo "version=$(pnpm --filter @brisk/e2e exec playwright --version | awk '{print $2}')" >> "$GITHUB_OUTPUT"
+      - uses: actions/cache@v6
+        id: browser-cache
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-chromium-${{ runner.os }}-${{ steps.playwright.outputs.version }}
+      - if: steps.browser-cache.outputs.cache-hit != 'true'
+        run: pnpm --filter @brisk/e2e exec playwright install --with-deps chromium
+      - if: steps.browser-cache.outputs.cache-hit == 'true'
+        run: pnpm --filter @brisk/e2e exec playwright install-deps chromium
+
+      - run: pnpm exec nx run @brisk/e2e:e2e
+
+      # The report, with a trace of every failed test: open it with
+      # `pnpm --filter @brisk/e2e exec playwright show-report <folder>`.
+      # The traces record requests with their headers, the admin's session
+      # cookie included. It opens this job's own database, which is gone
+      # when the job ends, and its password is the public dev default
+      # above — so it is left in rather than traded for traces that cannot
+      # show what failed. (The saved session file itself, in the hidden
+      # .auth/ folder, is left out by upload-artifact's default.)
+      - if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: e2e-report
+          path: apps/e2e/test-output/
+          retention-days: 14
 
   audit:
     runs-on: ubuntu-latest

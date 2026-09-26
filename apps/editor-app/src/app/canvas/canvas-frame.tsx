@@ -1,11 +1,13 @@
 import { useEffect, useState, type RefObject } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Loader2 } from 'lucide-react';
 import type { SiteLayoutSectionKind } from '@brisk/shared-types';
 import {
   createReusableSectionPreviewToken,
   createTranslationPreviewToken,
 } from '../../lib/preview-token-api-client';
 import { PUBLIC_SITE_URL } from '../../lib/public-site-url';
+import { Button } from '../../components/ui/button';
 import { BREAKPOINT_WIDTHS, type Breakpoint } from './breakpoint-selector';
 import { OverlayLayer } from './overlay-layer';
 import type { PreviewBridgeState } from './use-preview-bridge';
@@ -118,6 +120,17 @@ export function buildSectionPreviewUrl(
  * public-site's production build" in docs/development.md for the full
  * explanation and the workaround for testing locally.
  */
+/**
+ * How long the page in the canvas may take to say it listens before the
+ * canvas says it did not load: from the moment its address is set, for a
+ * server that never answers, and — much shorter — once its document has
+ * loaded, for a page that loaded with nothing listening in it (the preview
+ * of a page deleted meanwhile, an expired token). The page speaks as its
+ * scripts run, which is before `load`.
+ */
+export const READY_TIMEOUT_MS = 30_000;
+export const READY_AFTER_LOAD_MS = 5_000;
+
 export function CanvasFrame({
   pageId,
   editingSection,
@@ -131,43 +144,77 @@ export function CanvasFrame({
 }: CanvasFrameProps) {
   const { t } = useTranslation();
   const [src, setSrc] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [tokenFailed, setTokenFailed] = useState(false);
+  // The document whose `load` has fired, and the one that was given its
+  // time and never said it listens.
+  const [loadedSrc, setLoadedSrc] = useState<string | null>(null);
+  const [silentSrc, setSilentSrc] = useState<string | null>(null);
+  // Bumped by "Retry": a fresh token, and the page loaded again.
+  const [attempt, setAttempt] = useState(0);
+  // Values, not the object: the section editor builds `sectionPreview`
+  // afresh on every render, and depending on the object minted a new
+  // token, and reloaded the page in the canvas, on every save.
+  const sectionId = sectionPreview?.sectionId;
+  const sectionLocale = sectionPreview?.locale;
+  const { markLoading, isReady } = bridge;
 
   useEffect(() => {
     let cancelled = false;
-    const minted = sectionPreview
-      ? createReusableSectionPreviewToken(sectionPreview.sectionId).then(
-          (preview) =>
+    // Not ready from this moment, not from when the token comes back: the
+    // page on screen is already the wrong one, and a change sent to it
+    // would be lost with it.
+    markLoading();
+    const minted =
+      sectionId !== undefined && sectionLocale !== undefined
+        ? createReusableSectionPreviewToken(sectionId).then((preview) =>
             buildSectionPreviewUrl(
-              sectionPreview.sectionId,
+              sectionId,
               preview.token,
-              sectionPreview.locale,
+              sectionLocale,
               true,
             ),
-        )
-      : createTranslationPreviewToken(pageId).then((preview) =>
-          buildPreviewUrl(pageId, preview.token, editingSection, true),
-        );
+          )
+        : createTranslationPreviewToken(pageId).then((preview) =>
+            buildPreviewUrl(pageId, preview.token, editingSection, true),
+          );
     minted
       .then((url) => {
         if (!cancelled) {
           setSrc(url);
-          setError(null);
+          setTokenFailed(false);
         }
       })
       .catch(() => {
         if (!cancelled) {
           setSrc(null);
-          setError(t('canvas.previewTokenError'));
+          setTokenFailed(true);
         }
       });
     return () => {
       cancelled = true;
     };
-  }, [pageId, editingSection, sectionPreview, t]);
+  }, [pageId, editingSection, sectionId, sectionLocale, attempt, markLoading]);
 
-  if (error) {
-    return <div className="p-6 text-sm text-destructive">{error}</div>;
+  useEffect(() => {
+    if (!src || isReady) {
+      return;
+    }
+    const timer = setTimeout(
+      () => setSilentSrc(src),
+      loadedSrc === src ? READY_AFTER_LOAD_MS : READY_TIMEOUT_MS,
+    );
+    return () => clearTimeout(timer);
+  }, [src, loadedSrc, isReady]);
+
+  const failed = tokenFailed || (src !== null && silentSrc === src);
+
+  function retry(): void {
+    // Emptied first, so the page loads again even at an address it had.
+    setSrc(null);
+    setLoadedSrc(null);
+    setSilentSrc(null);
+    setTokenFailed(false);
+    setAttempt((n) => n + 1);
   }
 
   const width = BREAKPOINT_WIDTHS[breakpoint];
@@ -197,8 +244,35 @@ export function CanvasFrame({
             title={t('canvas.previewFrameTitle')}
             className="h-full w-full border-0"
             sandbox="allow-scripts allow-forms"
+            onLoad={() => setLoadedSrc(src)}
           />
         )}
+        {/* Over the page until it answers: what is drawn before then is
+            not yet a page that can be edited, and the editor takes no
+            change meanwhile (canvas-editor-shell.tsx). */}
+        {!isReady &&
+          (failed ? (
+            <div
+              role="alert"
+              className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-background/90 p-6 text-center text-sm"
+            >
+              <p className="text-destructive">{t('canvas.previewError')}</p>
+              <Button type="button" variant="outline" size="sm" onClick={retry}>
+                {t('common.retry')}
+              </Button>
+            </div>
+          ) : (
+            <div
+              role="status"
+              className="absolute inset-0 z-10 flex items-center justify-center gap-2 bg-background/70 text-sm text-muted-foreground"
+            >
+              <Loader2
+                className="size-4 motion-safe:animate-spin"
+                aria-hidden
+              />
+              {t('canvas.loadingPage')}
+            </div>
+          ))}
         <OverlayLayer
           iframeRef={iframeRef}
           blockRects={bridge.blockRects}

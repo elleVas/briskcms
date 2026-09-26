@@ -1,7 +1,12 @@
 import type { ReactNode } from 'react';
-import { dayButton, openCalendar } from '../test/date-picker.test-fixture';
+import {
+  CALENDAR_LOAD_TIMEOUT_MS,
+  dayButton,
+  openCalendar,
+  preloadCalendar,
+} from '../test/date-picker.test-fixture';
 import { fireEvent, render, screen } from '@testing-library/react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { QueryClientProvider } from '@tanstack/react-query';
 import * as usersApi from '../lib/users-api-client';
 import { createTestQueryClient } from '../test/query-client.test-fixture';
@@ -52,6 +57,8 @@ function renderBar(
 }
 
 describe('PagesListFilterBar', () => {
+  beforeAll(preloadCalendar, CALENDAR_LOAD_TIMEOUT_MS);
+
   afterEach(() => {
     vi.clearAllMocks();
   });

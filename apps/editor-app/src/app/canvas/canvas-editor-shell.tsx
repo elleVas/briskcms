@@ -1,4 +1,5 @@
 import {
+  type MutableRefObject,
   type ReactNode,
   useCallback,
   useEffect,
@@ -145,6 +146,15 @@ export interface CanvasEditorShellProps {
   };
   /** Bumped only on an explicit rollback — the same mechanism block-editor-shell.tsx (Puck) used to reset local state. */
   restoredAt?: number;
+  /**
+   * Filled with the shell's own flush: it sends at once any change still
+   * waiting out the debounce. For the actions a view draws outside the
+   * shell (its history dialog) that must not be overtaken by one — a
+   * restore waits for the saves already queued, and a change still in
+   * the debounce is not queued yet: it would land after the restore and
+   * undo it. The page menu's items are flushed by the shell itself.
+   */
+  flushRef?: MutableRefObject<(() => void) | null>;
   children?: ReactNode;
 }
 
@@ -177,6 +187,7 @@ export function CanvasEditorShell({
   sectionPreview,
   sectionEditing,
   restoredAt = 0,
+  flushRef,
   children,
 }: CanvasEditorShellProps) {
   const { t, tLabel } = useTranslation();
@@ -258,6 +269,14 @@ export function CanvasEditorShell({
     hasUnsavedChanges: hasPendingWrites || isSaving,
     onBeforeUnload: flushAll,
   });
+
+  useEffect(() => {
+    if (!flushRef) return;
+    flushRef.current = flushAll;
+    return () => {
+      flushRef.current = null;
+    };
+  }, [flushRef, flushAll]);
 
   useTextEdit({
     bridge,
@@ -405,6 +424,7 @@ export function CanvasEditorShell({
     onPlacementRefused: notifyPlacementRefused,
     selectedBlock,
     selectedDescriptor,
+    canvasReady: bridge.isReady,
   });
   const handleMakeReusable = useMakeReusableSection({
     siteId,
@@ -580,6 +600,10 @@ export function CanvasEditorShell({
           collapseLabel={t('canvas.collapseSidebar')}
           resizeLabel={t('canvas.resizeSidebar')}
         >
+          {/* Off until the canvas has loaded: a block inserted before the
+              page listens is saved but never drawn, until a reload. The
+              canvas says why meanwhile (canvas-frame.tsx), and the
+              changes themselves wait too (useBlockTreeMutations). */}
           <BlockPicker
             categories={categories}
             registry={registry}
@@ -590,13 +614,18 @@ export function CanvasEditorShell({
               onDragMove: handleSidebarDragMove,
               onDragEnd: handleSidebarDragEnd,
             }}
+            disabled={!bridge.isReady}
           />
           {/* Not inside the section editor: a template dropped into a
               section would be a copy inside a thing that already IS
               the shared original, which is a muddle rather than a
               feature. */}
           {siteId && !sectionPreview && (
-            <TemplatePicker siteId={siteId} onInsert={handleInsertBlocks} />
+            <TemplatePicker
+              siteId={siteId}
+              onInsert={handleInsertBlocks}
+              disabled={!bridge.isReady}
+            />
           )}
         </CollapsibleSidePanel>
         <div style={{ flex: 1, minHeight: 0, position: 'relative' }}>
@@ -684,13 +713,21 @@ export function CanvasEditorShell({
           {/* The panel the tab strip above controls, and where the
               toolbar's pencil puts the keyboard. `tabIndex={-1}` so it can
               take focus without joining the tab order. */}
+          {/* Inert while the canvas loads, like the palette: a property
+              changed now would be drawn by a message to a page that is
+              not listening yet. */}
           <div
             ref={propertiesPanelRef}
             role="tabpanel"
             id={rightPanelId(rightPanelTab)}
             aria-labelledby={rightPanelTabId(rightPanelTab)}
             tabIndex={-1}
-            className="flex min-h-0 flex-1 flex-col outline-none"
+            inert={!bridge.isReady}
+            className={
+              bridge.isReady
+                ? 'flex min-h-0 flex-1 flex-col outline-none'
+                : 'flex min-h-0 flex-1 flex-col opacity-60 outline-none'
+            }
           >
             {rightPanelTab === 'properties' ? (
               <PropertiesPanel

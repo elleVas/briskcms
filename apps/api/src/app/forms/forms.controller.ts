@@ -4,7 +4,6 @@ import {
   Get,
   HttpCode,
   Inject,
-  Param,
   Patch,
   Post,
   Query,
@@ -56,6 +55,7 @@ import {
   type UpdateFormBody,
   updateFormBodySchema,
 } from './forms.schemas';
+import { UuidParam } from '../uuid-param.decorator';
 
 @Controller('forms')
 @UseGuards(SessionAuthGuard)
@@ -121,7 +121,7 @@ export class FormsController {
    */
   @Get(':id/submissions')
   async listSubmissions(
-    @Param('id') id: string,
+    @UuidParam('id') id: string,
     @Query(new ZodValidationPipe(listFormSubmissionsQuerySchema))
     query: ListFormSubmissionsQuery,
   ): Promise<PaginatedFormSubmissions> {
@@ -164,7 +164,7 @@ export class FormsController {
    */
   @Get(':id/submissions.csv')
   async exportSubmissions(
-    @Param('id') id: string,
+    @UuidParam('id') id: string,
     @Res({ passthrough: true }) response: Response,
   ): Promise<string> {
     const { form, submissions, pages } = await exportFormSubmissions(
@@ -188,7 +188,7 @@ export class FormsController {
   }
 
   @Get(':id')
-  async findById(@Param('id') id: string): Promise<FormRecord> {
+  async findById(@UuidParam('id') id: string): Promise<FormRecord> {
     const form = await getFormById(
       { formRepository: this.formRepository },
       { tenantId: this.tenantContext.getCurrentTenantId(), formId: id },
@@ -198,7 +198,7 @@ export class FormsController {
 
   @Patch(':id')
   async update(
-    @Param('id') id: string,
+    @UuidParam('id') id: string,
     @Body(new ZodValidationPipe(updateFormBodySchema)) body: UpdateFormBody,
   ): Promise<FormRecord> {
     const form = await updateForm(
@@ -214,7 +214,7 @@ export class FormsController {
 
   @Delete(':id')
   @HttpCode(204)
-  async delete(@Param('id') id: string): Promise<void> {
+  async delete(@UuidParam('id') id: string): Promise<void> {
     await deleteForm(
       { formRepository: this.formRepository },
       { tenantId: this.tenantContext.getCurrentTenantId(), formId: id },

@@ -10,6 +10,9 @@
       "path": "./apps/editor-app"
     },
     {
+      "path": "./apps/e2e"
+    },
+    {
       "path": "./libs/domain-core"
     },
     {

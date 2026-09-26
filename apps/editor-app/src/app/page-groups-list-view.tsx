@@ -31,6 +31,7 @@ import type { PageGroupListItemRecord } from '@brisk/shared-types';
 import { Button } from '../components/ui/button';
 import { cn } from '../lib/utils';
 import { computeSiblingReorder } from './compute-sibling-reorder';
+import { useDragAnnouncements } from './use-drag-announcements';
 import { ConfirmActionDialog } from './confirm-action-dialog';
 import { buildHierarchyTree } from './page-hierarchy';
 import { IconButton } from './icon-button';
@@ -510,6 +511,11 @@ export function PageGroupsListView({
     }),
   );
 
+  const dragAccessibility = useDragAnnouncements((id) => {
+    const group = groups.find((candidate) => candidate.id === id);
+    return group ? groupDisplayTitle(group, defaultLocale) : String(id);
+  });
+
   function toggleSelected(groupId: string) {
     dispatch({ type: 'TOGGLE_SELECTED', groupId });
   }
@@ -602,6 +608,7 @@ export function PageGroupsListView({
             sensors={dragSensors}
             collisionDetection={closestCenter}
             onDragEnd={handleDragEnd}
+            accessibility={dragAccessibility}
           >
             <SortableContext
               items={tree.map(({ item }) => item.id)}

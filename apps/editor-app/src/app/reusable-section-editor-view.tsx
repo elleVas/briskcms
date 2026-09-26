@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { Link } from '@tanstack/react-router';
 import { pageBlockCategories, pageBlocks } from '@brisk/block-registry';
 import { useTranslation } from '../lib/use-translation';
@@ -42,6 +43,13 @@ export function ReusableSectionEditorView({
   const statusText = useSaveStatusText(status, {
     publishedKey: 'sections.published',
   });
+  // One object per section, not per render: the canvas mints its preview
+  // token, and loads the page, when this changes — built inline, it
+  // changed on every save.
+  const sectionPreview = useMemo(
+    () => ({ sectionId: section.id, locale }),
+    [section.id, locale],
+  );
 
   return (
     <MediaPickerProvider siteId={siteId}>
@@ -67,7 +75,7 @@ export function ReusableSectionEditorView({
             // section's id stands in for `pageId`, which nothing reads
             // while `sectionPreview` is set.
             pageId={section.id}
-            sectionPreview={{ sectionId: section.id, locale }}
+            sectionPreview={sectionPreview}
             sectionEditing={{
               exposedFields: section.exposedFields,
               onToggleField: toggleExposedField,

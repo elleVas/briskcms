@@ -5,7 +5,6 @@ import {
   Get,
   Inject,
   NotFoundException,
-  Param,
   Patch,
   Post,
   Query,
@@ -64,6 +63,7 @@ import {
   REUSABLE_SECTION_VERSION_REPOSITORY,
   SEARCH_PORT,
 } from './reusable-sections.tokens';
+import { UuidParam } from '../uuid-param.decorator';
 
 @Controller('reusable-sections')
 @UseGuards(SessionAuthGuard)
@@ -132,13 +132,13 @@ export class ReusableSectionsController {
   }
 
   @Get(':id')
-  async findById(@Param('id') id: string) {
+  async findById(@UuidParam('id') id: string) {
     const section = await getReusableSection(this.deps, this.tenantId, id);
     return this.records.toRecord(section);
   }
 
   @Post(':id/preview-token')
-  async createPreviewToken(@Param('id') id: string) {
+  async createPreviewToken(@UuidParam('id') id: string) {
     const section = await this.reusableSectionRepository.findById(
       this.tenantId,
       id,
@@ -157,7 +157,7 @@ export class ReusableSectionsController {
 
   @Patch(':id/draft')
   async saveDraft(
-    @Param('id') id: string,
+    @UuidParam('id') id: string,
     @Body(new ZodValidationPipe(saveDraftBodySchema)) body: SaveDraftBody,
   ) {
     const section = await saveReusableSectionDraft(this.deps, {
@@ -171,7 +171,7 @@ export class ReusableSectionsController {
 
   @Patch(':id/name')
   async rename(
-    @Param('id') id: string,
+    @UuidParam('id') id: string,
     @Body(new ZodValidationPipe(renameBodySchema)) body: RenameBody,
   ) {
     const section = await renameReusableSection(this.deps, {
@@ -184,7 +184,7 @@ export class ReusableSectionsController {
 
   @Patch(':id/exposed-fields')
   async setExposedFields(
-    @Param('id') id: string,
+    @UuidParam('id') id: string,
     @Body(new ZodValidationPipe(exposedFieldsBodySchema))
     body: ExposedFieldsBody,
   ) {
@@ -197,7 +197,7 @@ export class ReusableSectionsController {
   }
 
   @Post(':id/publish')
-  async publish(@Param('id') id: string) {
+  async publish(@UuidParam('id') id: string) {
     const section = await publishReusableSection(
       {
         reusableSectionRepository: this.reusableSectionRepository,
@@ -210,14 +210,14 @@ export class ReusableSectionsController {
   }
 
   @Delete(':id')
-  async remove(@Param('id') id: string) {
+  async remove(@UuidParam('id') id: string) {
     await deleteReusableSection(this.deps, this.tenantId, id);
     return { deleted: true };
   }
 
   @Get(':id/versions')
   async listVersions(
-    @Param('id') id: string,
+    @UuidParam('id') id: string,
   ): Promise<ReusableSectionVersionRecord[]> {
     const versions = await listReusableSectionVersions(
       this.deps,
@@ -229,7 +229,7 @@ export class ReusableSectionsController {
 
   @Post(':id/rollback')
   async rollback(
-    @Param('id') id: string,
+    @UuidParam('id') id: string,
     @Body(new ZodValidationPipe(rollbackBodySchema)) body: RollbackBody,
   ) {
     const section = await rollbackReusableSectionToVersion(this.deps, {

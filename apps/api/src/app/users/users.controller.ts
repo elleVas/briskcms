@@ -4,7 +4,6 @@ import {
   Get,
   HttpCode,
   Inject,
-  Param,
   Patch,
   Post,
   Query,
@@ -55,6 +54,7 @@ import {
   updateUserRoleBodySchema,
 } from './users.schemas';
 import { USERS_MEDIA_STORAGE } from './users.tokens';
+import { UuidParam } from '../uuid-param.decorator';
 
 // Every endpoint here is admin-only (Fase 5c: "Admin: tutto, incluse
 // gestione utenti") — gated at the controller level, not per-method,
@@ -128,7 +128,7 @@ export class UsersController {
    */
   @Post(':id/resend-invite')
   @HttpCode(200)
-  async resend(@Param('id') id: string) {
+  async resend(@UuidParam('id') id: string) {
     await resendInvite(
       {
         userRepository: this.userRepository,
@@ -146,7 +146,7 @@ export class UsersController {
 
   @Patch(':id/role')
   async updateRole(
-    @Param('id') id: string,
+    @UuidParam('id') id: string,
     @Body(new ZodValidationPipe(updateUserRoleBodySchema))
     body: UpdateUserRoleBody,
   ) {
@@ -164,7 +164,7 @@ export class UsersController {
 
   @Patch(':id/active')
   async setActive(
-    @Param('id') id: string,
+    @UuidParam('id') id: string,
     @Body(new ZodValidationPipe(setUserActiveBodySchema))
     body: SetUserActiveBody,
   ) {

@@ -16,7 +16,11 @@ export function usersQueryOptions(page: number) {
 // everyone and lets the caller filter client-side — same "at the 5-15
 // scale this product assumes" reasoning as page-list-provider.tsx's own
 // locale filter.
-const ALL_USERS_PAGE_SIZE = 200;
+//
+// The API's own ceiling (listUsersQuerySchema in apps/api's
+// users.schemas.ts): this was 200, which the API refuses, so the filter
+// never had anyone to offer.
+const ALL_USERS_PAGE_SIZE = 100;
 
 export function allUsersQueryOptions() {
   return queryOptions({

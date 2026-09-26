@@ -1,0 +1,26 @@
+{
+  "name": "@brisk/e2e",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "nx": {
+    "tags": [
+      "e2e"
+    ],
+    "targets": {
+      "e2e": {
+        "executor": "nx:run-commands",
+        "options": {
+          "command": "playwright test",
+          "cwd": "apps/e2e"
+        }
+      }
+    }
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4.13.0",
+    "@brisk/env-config": "workspace:*",
+    "@playwright/test": "^1.63.0",
+    "zod": "^4.6.5"
+  }
+}

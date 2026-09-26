@@ -1,5 +1,5 @@
 import { fireEvent, render, screen } from '@testing-library/react';
-import { chooseOption } from '../../test/select.test-fixture';
+import { chooseOption, optionNames } from '../../test/select.test-fixture';
 import { describe, expect, it, vi } from 'vitest';
 import type { Block } from '@brisk/shared-types';
 import type { BlockDescriptor } from '@brisk/block-registry';
@@ -340,10 +340,9 @@ describe('InspectorPanel variant picker', () => {
       />,
     );
 
-    const options = [...screen.getAllByRole('option')].map(
-      (o) => o.textContent,
-    );
-    expect(options).toEqual(['Predefinito', 'Secondario']);
+    expect(
+      optionNames(screen.getByRole('combobox', { name: 'Aspetto' })),
+    ).toEqual(['Predefinito', 'Secondario']);
   });
 
   it('shows the variant the block is already wearing', () => {
@@ -361,7 +360,9 @@ describe('InspectorPanel variant picker', () => {
       />,
     );
 
-    expect(screen.getByRole('combobox')).toHaveProperty('value', 'secondary');
+    expect(screen.getByRole('combobox', { name: 'Aspetto' }).textContent).toBe(
+      'Secondario',
+    );
   });
 
   it('reports a chosen variant', () => {
@@ -375,9 +376,10 @@ describe('InspectorPanel variant picker', () => {
       />,
     );
 
-    fireEvent.change(screen.getByRole('combobox'), {
-      target: { value: 'secondary' },
-    });
+    chooseOption(
+      screen.getByRole('combobox', { name: 'Aspetto' }),
+      'Secondario',
+    );
 
     expect(onChangeVariant).toHaveBeenCalledWith('secondary');
   });
@@ -403,7 +405,10 @@ describe('InspectorPanel variant picker', () => {
       />,
     );
 
-    fireEvent.change(screen.getByRole('combobox'), { target: { value: '' } });
+    chooseOption(
+      screen.getByRole('combobox', { name: 'Aspetto' }),
+      'Predefinito',
+    );
 
     expect(onChangeVariant).toHaveBeenCalledWith(undefined);
   });
@@ -730,5 +735,53 @@ describe('InspectorPanel required fields beyond text', () => {
     renderButton({ linkType: 'page', page: null });
 
     expect(screen.getByText('*')).toBeTruthy();
+  });
+});
+
+describe('InspectorPanel width', () => {
+  const headingDescriptor: BlockDescriptor = {
+    type: 'Heading',
+    label: 'Titolo',
+    category: 'content',
+    defaultProps: { text: '' },
+    fields: [{ kind: 'text', key: 'text', label: 'Testo' }],
+  };
+
+  function renderWidth(align?: 'wide' | 'full') {
+    const onChangeAlign = vi.fn();
+    render(
+      <InspectorPanel
+        block={{ id: 'b1', type: 'Heading', props: { text: '' }, align }}
+        descriptor={headingDescriptor}
+        onChangeProp={vi.fn()}
+        onChangeVariant={vi.fn()}
+        onChangeAlign={onChangeAlign}
+      />,
+    );
+    return {
+      onChangeAlign,
+      field: screen.getByRole('combobox', { name: 'Larghezza' }),
+    };
+  }
+
+  it("shows the block's width, and the content column when it has none", () => {
+    expect(renderWidth().field.textContent).toBe('Contenuto');
+  });
+
+  it('reports a chosen width', () => {
+    const { onChangeAlign, field } = renderWidth();
+
+    chooseOption(field, 'Tutta la larghezza');
+
+    expect(onChangeAlign).toHaveBeenCalledWith('full');
+  });
+
+  // The content column is the default, stored as the field's absence.
+  it('clears the width when the content column is chosen again', () => {
+    const { onChangeAlign, field } = renderWidth('wide');
+
+    chooseOption(field, 'Contenuto');
+
+    expect(onChangeAlign).toHaveBeenCalledWith(undefined);
   });
 });
