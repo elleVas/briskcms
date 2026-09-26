@@ -2818,5 +2818,17 @@
   "datePicker": {
     "empty": "Nessuna data",
     "clear": "Cancella data"
+  },
+  "dragAnnouncements": {
+    "instructions": "Per prendere un elemento premi Spazio o Invio. Spostalo con le frecce, poi premi Spazio o Invio per lasciarlo, oppure Esc per annullare.",
+    "pickedUp": "Hai preso {{name}}, posizione {{position}} di {{total}}.",
+    "pickedUpPlain": "Hai preso {{name}}.",
+    "moved": "{{name}} ora è in posizione {{position}} di {{total}}.",
+    "movedPlain": "Hai spostato {{name}}.",
+    "outside": "{{name}} è fuori dall'elenco.",
+    "dropped": "Hai lasciato {{name}} in posizione {{position}} di {{total}}.",
+    "droppedPlain": "Hai lasciato {{name}}.",
+    "droppedOutside": "Hai lasciato {{name}} fuori dall'elenco: resta dov'era.",
+    "cancelled": "Spostamento di {{name}} annullato: resta dov'era."
   }
 }

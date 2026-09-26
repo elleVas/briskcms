@@ -2818,5 +2818,17 @@
   "datePicker": {
     "empty": "No date",
     "clear": "Clear date"
+  },
+  "dragAnnouncements": {
+    "instructions": "To pick up an item, press Space or Enter. Move it with the arrow keys, then press Space or Enter to drop it, or Escape to cancel.",
+    "pickedUp": "Picked up {{name}}, position {{position}} of {{total}}.",
+    "pickedUpPlain": "Picked up {{name}}.",
+    "moved": "{{name}} moved to position {{position}} of {{total}}.",
+    "movedPlain": "{{name}} moved.",
+    "outside": "{{name}} is outside the list.",
+    "dropped": "{{name}} dropped at position {{position}} of {{total}}.",
+    "droppedPlain": "{{name}} dropped.",
+    "droppedOutside": "{{name}} dropped outside the list; it stays where it was.",
+    "cancelled": "Moving {{name}} was cancelled; it stays where it was."
   }
 }

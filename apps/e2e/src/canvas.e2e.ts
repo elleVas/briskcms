@@ -16,10 +16,9 @@ function layerRow(page: Page, blockId: string) {
 }
 
 /**
- * What dnd-kit tells a screen reader during a keyboard drag. Its own
- * words (the editor does not translate them yet), and the one sure sign
- * that a key press has been taken: the rows are still animating when it
- * is, and a press that lands before is dropped.
+ * What a screen reader is told during a keyboard drag (the editor's own
+ * words, use-drag-announcements.ts), and the one sure sign that a key
+ * press has been taken: the rows are still animating when it is.
  */
 function dragAnnouncement(page: Page) {
   return page.locator('[id^="DndLiveRegion"]');
@@ -68,15 +67,12 @@ test('layers reorder by keyboard and by mouse, and the page saves the new order'
     .getByRole('button', { name: /^Drag / });
   await handle.focus();
   await page.keyboard.press('Space');
-  // Picked up: at once over its own place, which is what it announces.
-  await expect(dragAnnouncement(page)).toContainText(
-    `moved over droppable area ${c}`,
-  );
+  await expect(dragAnnouncement(page)).toContainText('position 3 of 3');
   await afterMeasuring(page);
-  for (const passing of [b, a]) {
+  for (const position of [2, 1]) {
     await page.keyboard.press('ArrowUp');
     await expect(dragAnnouncement(page)).toContainText(
-      `moved over droppable area ${passing}`,
+      `Heading moved to position ${position} of 3`,
     );
     await afterMeasuring(page);
   }
