@@ -2,23 +2,20 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from '@tanstack/react-router';
 import { FileText, X } from 'lucide-react';
-import type {
-  CookieBannerCopy,
-  CookieBannerPosition,
-  CookieBannerReopenPosition,
-  SiteRecord,
+import {
+  cookieBannerPositionSchema,
+  cookieBannerReopenPositionSchema,
+  cookieBannerSettingsSchema,
+  type CookieBannerCopy,
+  type CookieBannerPosition,
+  type CookieBannerReopenPosition,
+  type SiteRecord,
 } from '@brisk/shared-types';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Switch } from '../components/ui/switch';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '../components/ui/select';
+import { OptionsSelect } from '../components/ui/select';
 import {
   Accordion,
   AccordionContent,
@@ -158,52 +155,57 @@ export function CookieBannerView({ siteId, site }: CookieBannerViewProps) {
         <>
           <div className="grid grid-cols-2 gap-4">
             <div className="flex flex-col gap-2">
-              <Label>{t('cookieBanner.positionLabel')}</Label>
-              <Select
+              <Label htmlFor="cookie-banner-position">
+                {t('cookieBanner.positionLabel')}
+              </Label>
+              <OptionsSelect
+                id="cookie-banner-position"
                 value={position}
-                onValueChange={(value) =>
-                  setPosition(value as CookieBannerPosition)
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="bottom-bar">
-                    {t('cookieBanner.position.bottomBar')}
-                  </SelectItem>
-                  <SelectItem value="bottom-left">
-                    {t('cookieBanner.position.bottomLeft')}
-                  </SelectItem>
-                  <SelectItem value="bottom-right">
-                    {t('cookieBanner.position.bottomRight')}
-                  </SelectItem>
-                  <SelectItem value="center-modal">
-                    {t('cookieBanner.position.centerModal')}
-                  </SelectItem>
-                </SelectContent>
-              </Select>
+                onValueChange={(value) => {
+                  const next = cookieBannerPositionSchema.options.find(
+                    (candidate) => candidate === value,
+                  );
+                  if (next) setPosition(next);
+                }}
+                options={[
+                  {
+                    value: 'bottom-bar',
+                    label: t('cookieBanner.position.bottomBar'),
+                  },
+                  {
+                    value: 'bottom-left',
+                    label: t('cookieBanner.position.bottomLeft'),
+                  },
+                  {
+                    value: 'bottom-right',
+                    label: t('cookieBanner.position.bottomRight'),
+                  },
+                  {
+                    value: 'center-modal',
+                    label: t('cookieBanner.position.centerModal'),
+                  },
+                ]}
+              />
             </div>
             <div className="flex flex-col gap-2">
-              <Label>{t('cookieBanner.acceptButtonSideLabel')}</Label>
-              <Select
+              <Label htmlFor="cookie-banner-accept-side">
+                {t('cookieBanner.acceptButtonSideLabel')}
+              </Label>
+              <OptionsSelect
+                id="cookie-banner-accept-side"
                 value={acceptButtonSide}
-                onValueChange={(value) =>
-                  setAcceptButtonSide(value as 'left' | 'right')
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="left">
-                    {t('cookieBanner.side.left')}
-                  </SelectItem>
-                  <SelectItem value="right">
-                    {t('cookieBanner.side.right')}
-                  </SelectItem>
-                </SelectContent>
-              </Select>
+                onValueChange={(value) => {
+                  const next =
+                    cookieBannerSettingsSchema.shape.acceptButtonSide.options.find(
+                      (candidate) => candidate === value,
+                    );
+                  if (next) setAcceptButtonSide(next);
+                }}
+                options={[
+                  { value: 'left', label: t('cookieBanner.side.left') },
+                  { value: 'right', label: t('cookieBanner.side.right') },
+                ]}
+              />
             </div>
           </div>
 
@@ -219,25 +221,30 @@ export function CookieBannerView({ siteId, site }: CookieBannerViewProps) {
           </div>
           {showReopenTab && (
             <div className="flex flex-col gap-2">
-              <Label>{t('cookieBanner.reopenPositionLabel')}</Label>
-              <Select
+              <Label htmlFor="cookie-banner-reopen-position">
+                {t('cookieBanner.reopenPositionLabel')}
+              </Label>
+              <OptionsSelect
+                id="cookie-banner-reopen-position"
+                className="w-48"
                 value={reopenPosition}
-                onValueChange={(value) =>
-                  setReopenPosition(value as CookieBannerReopenPosition)
-                }
-              >
-                <SelectTrigger className="w-48">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="bottom-left">
-                    {t('cookieBanner.position.bottomLeft')}
-                  </SelectItem>
-                  <SelectItem value="bottom-right">
-                    {t('cookieBanner.position.bottomRight')}
-                  </SelectItem>
-                </SelectContent>
-              </Select>
+                onValueChange={(value) => {
+                  const next = cookieBannerReopenPositionSchema.options.find(
+                    (candidate) => candidate === value,
+                  );
+                  if (next) setReopenPosition(next);
+                }}
+                options={[
+                  {
+                    value: 'bottom-left',
+                    label: t('cookieBanner.position.bottomLeft'),
+                  },
+                  {
+                    value: 'bottom-right',
+                    label: t('cookieBanner.position.bottomRight'),
+                  },
+                ]}
+              />
             </div>
           )}
 

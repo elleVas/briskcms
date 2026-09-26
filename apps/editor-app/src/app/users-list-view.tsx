@@ -2,7 +2,9 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from '@tanstack/react-router';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { USER_ROLES } from '@brisk/shared-types';
 import { Badge } from '../components/ui/badge';
+import { OptionsSelect } from '../components/ui/select';
 import { Button } from '../components/ui/button';
 import { actionErrorMessage } from '../lib/http-client';
 import type { UserRecord, UserRole } from '../lib/users-api-client';
@@ -19,8 +21,6 @@ export interface UsersListViewProps {
   page: number;
   total: number;
 }
-
-const ROLES: UserRole[] = ['admin', 'publisher', 'editor'];
 
 export function UsersListView({ items, page, total }: UsersListViewProps) {
   const { t } = useTranslation();
@@ -108,10 +108,11 @@ export function UsersListView({ items, page, total }: UsersListViewProps) {
                   </span>
                 )}
               </div>
-              <select
+              <OptionsSelect
                 aria-label={t('users.list.roleLabel', {
                   name: user.displayName || user.email,
                 })}
+                className="w-auto"
                 value={user.role}
                 disabled={user.id === session?.userId}
                 title={
@@ -119,17 +120,17 @@ export function UsersListView({ items, page, total }: UsersListViewProps) {
                     ? t('users.list.notOnYourself')
                     : undefined
                 }
-                onChange={(event) =>
-                  void handleRoleChange(user.id, event.target.value as UserRole)
-                }
-                className="h-8 rounded-lg border border-input bg-transparent px-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-input/30"
-              >
-                {ROLES.map((role) => (
-                  <option key={role} value={role}>
-                    {t(`users.role.${role}`)}
-                  </option>
-                ))}
-              </select>
+                onValueChange={(value) => {
+                  const role = USER_ROLES.find(
+                    (candidate) => candidate === value,
+                  );
+                  if (role) void handleRoleChange(user.id, role);
+                }}
+                options={USER_ROLES.map((role) => ({
+                  value: role,
+                  label: t(`users.role.${role}`),
+                }))}
+              />
               <Badge variant={user.isActive ? 'default' : 'outline'}>
                 {user.isActive
                   ? t('users.list.statusActive')

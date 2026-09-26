@@ -70,11 +70,16 @@ export function ImportView({ siteId }: ImportViewProps) {
 
       <div className="border-border flex flex-col items-start gap-3 rounded-md border border-dashed p-6">
         <p className="text-sm">{t('imports.uploadHint')}</p>
+        {/* Driven by the button below, which is the one control anyone
+            reaches: left in the tab order and in the accessibility tree,
+            this was a second, unlabelled stop for the same action. */}
         <input
           ref={fileInput}
           type="file"
           accept=".xml,text/xml,application/xml"
           className="sr-only"
+          tabIndex={-1}
+          aria-hidden="true"
           onChange={(event) => choose(event.target.files?.[0])}
         />
         <Button

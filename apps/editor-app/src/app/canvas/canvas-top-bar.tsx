@@ -162,8 +162,13 @@ export function CanvasTopBar({
   return (
     <>
       {/* 44px rather than the 45 it measured: the chrome sits on a
-          four-pixel grid now, like everything else the shell draws. */}
-      <div className="grid h-11 shrink-0 grid-cols-[1fr_auto_1fr] items-center gap-3 border-b px-3 text-xs text-muted-foreground">
+          four-pixel grid now, like everything else the shell draws.
+
+          On a phone the three columns cannot fit — the page's controls
+          and the editor's actions came to 434px in 366 — and the grid
+          drew them on top of one another. There the bar becomes two rows:
+          where you are, then what you can do. */}
+      <div className="grid h-11 shrink-0 grid-cols-[1fr_auto_1fr] items-center gap-3 border-b px-3 text-xs text-muted-foreground max-sm:flex max-sm:h-auto max-sm:flex-wrap max-sm:gap-y-1.5 max-sm:py-1.5">
         <div className="flex min-w-0 items-center gap-2">
           {backLink}
           {pageSwitcher}
@@ -180,7 +185,7 @@ export function CanvasTopBar({
           a block inside a Column inside a Columns is otherwise unreachable
           except by hunting for a pixel its children do not already cover.
         */}
-        <div className="flex min-w-0 items-center justify-center gap-1">
+        <div className="flex min-w-0 items-center justify-center gap-1 max-sm:hidden">
           {title && (
             <span className="truncate font-medium text-foreground">
               {title}
@@ -210,7 +215,7 @@ export function CanvasTopBar({
             </span>
           ))}
         </div>
-        <div className="flex items-center justify-end gap-1">
+        <div className="flex items-center justify-end gap-1 max-sm:ml-auto">
           <IconButton
             label={t('canvas.undo')}
             shortcut={formatShortcut(['mod', 'Z'])}
@@ -227,10 +232,15 @@ export function CanvasTopBar({
           >
             <Redo2 />
           </IconButton>
-          <BreakpointSelector
-            value={breakpoint}
-            onChange={onBreakpointChange}
-          />
+          {/* Not on a phone: the window is already a phone's width, so
+              there is nothing narrower to preview, and the bar had no room
+              left for Publish. */}
+          <div className="contents max-sm:hidden">
+            <BreakpointSelector
+              value={breakpoint}
+              onChange={onBreakpointChange}
+            />
+          </div>
           {globalStyles && (
             <IconButton
               label={t('globalStyles.open')}
@@ -239,12 +249,15 @@ export function CanvasTopBar({
               <Palette />
             </IconButton>
           )}
-          <IconButton
-            label={t('canvas.shortcuts.open')}
-            onClick={() => setIsShortcutsOpen(true)}
-          >
-            <Keyboard />
-          </IconButton>
+          {/* Keyboard shortcuts, where there is a keyboard. */}
+          <div className="contents max-sm:hidden">
+            <IconButton
+              label={t('canvas.shortcuts.open')}
+              onClick={() => setIsShortcutsOpen(true)}
+            >
+              <Keyboard />
+            </IconButton>
+          </div>
           {/* The two most important buttons in the app were the smallest in
               the app: `size="sm"`, 28px tall with 12.8px text. */}
           <Button variant="outline" onClick={onOpenPreview}>

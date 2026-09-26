@@ -126,11 +126,15 @@ function SidebarContent() {
     <>
       <BriskMark />
       <div className="flex flex-1 flex-col gap-4">
-        <NavItem
-          to="/"
-          icon={LayoutDashboard}
-          label={t('shell.nav.dashboard')}
-        />
+        {/* A list of one, so the item is in a list: a list item on its own
+            is announced as nothing at all. */}
+        <ul className="contents">
+          <NavItem
+            to="/"
+            icon={LayoutDashboard}
+            label={t('shell.nav.dashboard')}
+          />
+        </ul>
         {/*
             Twelve flat entries, and a Settings menu holding six more, with
             no readable criterion between them: Style, Integrations and
@@ -205,7 +209,12 @@ function SidebarContent() {
           {isAdmin && (
             <NavItem to="/users" icon={Users} label={t('shell.nav.users')} />
           )}
-          <SettingsMenu />
+          {/* Its own item, like every entry here: a list can only hold
+              items, and a bare button inside it breaks the count a screen
+              reader announces for the group. */}
+          <li className="contents">
+            <SettingsMenu />
+          </li>
         </NavGroup>
       </div>
       <AccountMenu />

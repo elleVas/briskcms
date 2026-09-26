@@ -1,5 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
+import { chooseOption } from '../../test/select.test-fixture';
 import { BlockStyleFields } from './block-style-fields';
 
 describe('BlockStyleFields', () => {
@@ -215,5 +216,31 @@ describe('BlockStyleFields with a theme’s own style property', () => {
     );
 
     expect(container.querySelector('input')).toBeNull();
+  });
+
+  it('sets a choice from its menu, and "theme value" clears it back to null', () => {
+    const onChange = vi.fn();
+    const { rerender } = render(
+      <BlockStyleFields
+        blockType="Button"
+        properties={['borderStyle']}
+        value={{}}
+        onChange={onChange}
+      />,
+    );
+
+    chooseOption(screen.getByLabelText('Stile del bordo'), 'Tratteggiato');
+    expect(onChange).toHaveBeenLastCalledWith({ borderStyle: 'dashed' });
+
+    rerender(
+      <BlockStyleFields
+        blockType="Button"
+        properties={['borderStyle']}
+        value={{ borderStyle: 'dashed' }}
+        onChange={onChange}
+      />,
+    );
+    chooseOption(screen.getByLabelText('Stile del bordo'), 'Valore del tema');
+    expect(onChange).toHaveBeenLastCalledWith({ borderStyle: null });
   });
 });

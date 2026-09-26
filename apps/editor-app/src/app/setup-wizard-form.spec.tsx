@@ -1,6 +1,9 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import { CURATED_LOCALE_CODES } from '@brisk/shared-types';
+import {
+  CURATED_LOCALE_CODES,
+  getLocaleDisplayName,
+} from '@brisk/shared-types';
 import { ApiError } from '../lib/http-client';
 import { DEFAULT_SETUP_LOCALE, SetupWizardForm } from './setup-wizard-form';
 
@@ -76,9 +79,8 @@ describe('SetupWizardForm', () => {
   it('shows that same locale as the selected option', () => {
     render(<SetupWizardForm onSubmit={vi.fn()} />);
 
-    expect(screen.getByLabelText(/lingua predefinita/i)).toHaveProperty(
-      'value',
-      DEFAULT_SETUP_LOCALE,
+    expect(screen.getByLabelText(/lingua predefinita/i).textContent).toBe(
+      getLocaleDisplayName(DEFAULT_SETUP_LOCALE),
     );
   });
 

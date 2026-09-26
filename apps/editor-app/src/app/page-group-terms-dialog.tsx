@@ -17,7 +17,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '../components/ui/dialog';
-import { firstNamed } from './taxonomies-view';
+import { firstNamed } from '@brisk/shared-types';
 
 export interface PageGroupTermsDialogProps {
   groupId: string;

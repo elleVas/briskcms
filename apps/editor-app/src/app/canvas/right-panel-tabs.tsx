@@ -86,7 +86,7 @@ export function RightPanelTabs({ value, onChange }: RightPanelTabsProps) {
             tabIndex={isSelected ? 0 : -1}
             onClick={() => onChange(tab)}
             className={cn(
-              'flex-1 rounded-md px-2 py-1 text-xs font-medium text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+              'flex-1 rounded-md px-2 py-1 text-xs font-medium text-foreground/70 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
               isSelected && 'bg-background text-foreground',
             )}
           >

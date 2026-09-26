@@ -1,4 +1,5 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { chooseOption } from '../test/select.test-fixture';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { QueryClientProvider } from '@tanstack/react-query';
 import * as router from '@tanstack/react-router';
@@ -84,9 +85,9 @@ describe('UsersListView', () => {
     });
 
     renderView([userOne]);
-    fireEvent.change(
+    chooseOption(
       screen.getByRole('combobox', { name: /ruolo di editor one/i }),
-      { target: { value: 'admin' } },
+      'Admin',
     );
 
     await waitFor(() =>

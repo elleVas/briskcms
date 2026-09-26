@@ -59,11 +59,13 @@ export function writePanelWidth(key: string, width: number): void {
   }
 }
 
-export function readPanelCollapsed(key: string): boolean {
+/** `null` when nothing was ever remembered — which is not the same as "open": see useSidePanel. */
+export function readPanelCollapsed(key: string): boolean | null {
   try {
-    return localStorage.getItem(`${COLLAPSED_PREFIX}${key}`) === 'true';
+    const stored = localStorage.getItem(`${COLLAPSED_PREFIX}${key}`);
+    return stored === null ? null : stored === 'true';
   } catch {
-    return false;
+    return null;
   }
 }
 

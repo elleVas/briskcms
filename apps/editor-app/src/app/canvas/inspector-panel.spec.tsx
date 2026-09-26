@@ -1,4 +1,5 @@
 import { fireEvent, render, screen } from '@testing-library/react';
+import { chooseOption } from '../../test/select.test-fixture';
 import { describe, expect, it, vi } from 'vitest';
 import type { Block } from '@brisk/shared-types';
 import type { BlockDescriptor } from '@brisk/block-registry';
@@ -177,9 +178,10 @@ describe('InspectorPanel', () => {
       />,
     );
 
-    const select = screen.getByDisplayValue('2 uguali');
+    const select = screen.getByRole('combobox', { name: 'Layout' });
+    expect(select.textContent).toContain('2 uguali');
     expect(screen.queryByRole('radiogroup')).toBeNull();
-    fireEvent.change(select, { target: { value: 'three-equal' } });
+    chooseOption(select, '3 uguali');
 
     expect(onChangeProp).toHaveBeenCalledWith('layout', 'three-equal');
   });

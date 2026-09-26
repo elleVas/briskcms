@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { useState } from 'react';
-import { useForm, useWatch } from 'react-hook-form';
+import { Controller, useForm, useWatch } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import type {
@@ -14,7 +14,7 @@ import {
   isBusinessAddressEmpty,
 } from '@brisk/shared-types';
 import { Button } from '../components/ui/button';
-import { NativeSelect } from '../components/ui/native-select';
+import { OptionsSelect } from '../components/ui/select';
 import {
   Dialog,
   DialogContent,
@@ -181,21 +181,28 @@ export function BusinessInfoDialog({
                   <Label htmlFor="business-address-country">
                     {t('businessInfo.countryLabel')}
                   </Label>
-                  {/* Native, so a phone offers its own picker and a
-                      keyboard can type-ahead through 249 entries. The
-                      names are the platform's — no table of countries to
-                      translate or keep up to date, see ISO_COUNTRY_CODES. */}
-                  <NativeSelect
-                    id="business-address-country"
-                    {...register('address.country')}
-                  >
-                    <option value="">{t('businessInfo.countryNone')}</option>
-                    {countryOptions(i18n.language).map((country) => (
-                      <option key={country.code} value={country.code}>
-                        {country.name}
-                      </option>
-                    ))}
-                  </NativeSelect>
+                  {/* The names are the platform's — no table of countries
+                      to translate or keep up to date, see
+                      ISO_COUNTRY_CODES. Typing a letter jumps through the
+                      249 entries, as it did in the native control. */}
+                  <Controller
+                    control={control}
+                    name="address.country"
+                    render={({ field }) => (
+                      <OptionsSelect
+                        id="business-address-country"
+                        value={field.value}
+                        onValueChange={field.onChange}
+                        options={[
+                          { value: '', label: t('businessInfo.countryNone') },
+                          ...countryOptions(i18n.language).map((country) => ({
+                            value: country.code,
+                            label: country.name,
+                          })),
+                        ]}
+                      />
+                    )}
+                  />
                 </div>
               </fieldset>
               <div className="flex flex-col gap-2">

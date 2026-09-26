@@ -1,15 +1,18 @@
 import { useQueries, useQuery } from '@tanstack/react-query';
+import { firstNamed } from '@brisk/shared-types';
 import { useTranslation } from '../../../lib/use-translation';
 import { siteQueryOptions } from '../../site-queries';
 import {
   taxonomiesQueryOptions,
   termsQueryOptions,
 } from '../../taxonomies-queries';
-import { nativeFieldClass } from '../inspector-panel';
+import { OptionsSelect } from '../../../components/ui/select';
 
 export interface TermPickerFieldProps {
   value: string | null;
   onChange: (value: string | null) => void;
+  /** The field's label — see ControlComponent in custom-field-controls.tsx. */
+  label?: string;
 }
 
 /**
@@ -23,7 +26,11 @@ export interface TermPickerFieldProps {
  * is the agency's tool and the block stores an id, so a term named only
  * in Italian is still pickable while editing the English page.
  */
-export function TermPickerField({ value, onChange }: TermPickerFieldProps) {
+export function TermPickerField({
+  value,
+  onChange,
+  label,
+}: TermPickerFieldProps) {
   const { t } = useTranslation();
   const { data: site } = useQuery(siteQueryOptions());
   const { data: taxonomies } = useQuery({
@@ -37,31 +44,18 @@ export function TermPickerField({ value, onChange }: TermPickerFieldProps) {
   });
 
   return (
-    <select
-      className={nativeFieldClass}
+    <OptionsSelect
+      aria-label={label}
       value={value ?? ''}
-      onChange={(event) => onChange(event.target.value || null)}
-    >
-      <option value="">{t('blocks.pageGrid.picker.none')}</option>
-      {(taxonomies ?? []).map((taxonomy, index) => (
-        <optgroup
-          key={taxonomy.id}
-          label={
-            firstNamed(taxonomy.name) || t('blocks.pageGrid.picker.unnamed')
-          }
-        >
-          {(termQueries[index]?.data ?? []).map((term) => (
-            <option key={term.id} value={term.id}>
-              {firstNamed(term.name) || t('blocks.pageGrid.picker.unnamed')}
-            </option>
-          ))}
-        </optgroup>
-      ))}
-    </select>
+      onValueChange={(next) => onChange(next || null)}
+      options={[{ value: '', label: t('blocks.pageGrid.picker.none') }]}
+      groups={(taxonomies ?? []).map((taxonomy, index) => ({
+        label: firstNamed(taxonomy.name) || t('blocks.pageGrid.picker.unnamed'),
+        options: (termQueries[index]?.data ?? []).map((term) => ({
+          value: term.id,
+          label: firstNamed(term.name) || t('blocks.pageGrid.picker.unnamed'),
+        })),
+      }))}
+    />
   );
-}
-
-/** A term exists before it is named everywhere; any language it does have is a better label than its id. */
-function firstNamed(name: Record<string, string>): string {
-  return Object.values(name).find((value) => value.trim() !== '') ?? '';
 }
