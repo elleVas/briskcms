@@ -37,6 +37,13 @@ jobs:
             dockerfile: apps/public-site/Dockerfile
           - image: editor-app
             dockerfile: apps/editor-app/Dockerfile
+          # The public site's workspace, installed and unbuilt, for a theme
+          # kept in its own repository (docs/adr/0089). Always published
+          # with the same tags as brisk-public-site: a theme is built on
+          # one and runs on the other, and the two must match.
+          - image: public-site-builder
+            dockerfile: apps/public-site/Dockerfile
+            target: builder
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -64,6 +71,7 @@ jobs:
         with:
           context: .
           file: ${{ matrix.dockerfile }}
+          target: ${{ matrix.target }}
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
