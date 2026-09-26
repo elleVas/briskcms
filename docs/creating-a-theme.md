@@ -57,43 +57,64 @@ Two tokens are easy to get wrong:
 
 ## Developing it outside this repo
 
-Symlink your directory in and restart the dev server once:
+Keep the theme in its own repository and copy it into a Brisk checkout while
+you work on it — copy, not symlink, so the build sees it the way the
+builder image will:
 
 ```sh
-ln -s /path/to/my-theme themes/my-theme
-pnpm nx run @brisk/public-site:build && node apps/public-site/server.mjs
+rsync -a --delete --exclude node_modules /path/to/my-theme/ themes/my-theme/
+node tools/build-public-site-with-theme.mjs my-theme
+node --env-file=.env apps/public-site/server.mjs
 ```
 
-Then pick it in the editor's Style dialog ("Tema"), which writes
-`Site.themeName`. Switching between themes after that needs nothing but a
-page reload.
+The script checks the theme, links the public site's own packages where the
+theme's imports look for them, and builds. Then pick the theme in the
+editor's Style dialog ("Tema"), which writes `Site.themeName`. Switching
+between themes after that needs nothing but a page reload.
 
-The restart matters: a brand-new directory under `themes/` is only picked
-up when the eager globs re-evaluate at process start, not on a file save.
-Edits to files inside an already-known theme hot-reload normally.
+A new theme is only picked up by a build: the site reads `themes/*` once,
+when it is built, not on a file save.
 
 ## Adding a webfont
 
-Take the font as a real dependency and import it from a `fonts.css`:
+Bring the font as files of the theme and declare it in a `fonts.css`:
+
+```
+my-theme/
+  fonts.css
+  fonts/
+    sora-latin-wght-normal.woff2
+    OFL.txt
+```
 
 ```css
 /* my-theme/fonts.css */
-@import '@fontsource-variable/sora';
+@font-face {
+  font-family: 'Sora Variable';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 100 800;
+  src: url(./fonts/sora-latin-wght-normal.woff2) format('woff2-variations');
+}
 ```
 
-Then point `--font-sans-value` at it — **using the family name the package's
-own `@font-face` declares, exactly**. `@fontsource-variable/sora` declares
-`Sora Variable`, not `Sora`; a near-miss fails silently, falling through to
-the next entry in your stack while the font you bundled never loads. Check
-the built stylesheet's `@font-face` rule against your token.
+Files, not an npm package: a theme cannot install packages of its own (see
+"What you import"). A package such as `@fontsource-variable/sora` is only a
+way to download those same files — copy its `.woff2` and `@font-face` rules
+out of it. `themes/docs-showcase/fonts.css` is a worked example.
+
+Then point `--font-sans-value` at it — **using the family name the
+`@font-face` declares, exactly**. A near-miss (`Sora` for `Sora Variable`)
+fails silently, falling through to the next entry in your stack while the
+font you bundled never loads.
 
 **Never `<link>` to Google Fonts or any CDN.** It sends every visitor's IP
 address to a third party — a German court ruled on exactly that in 2022 —
 which is untenable for a product that sells "your data stays on your own
 machine" and generates the customer's privacy policy for them; it also
-breaks intranet deployments outright. Check you have redistribution rights
-for the font: Google Fonts are OFL/Apache, a commercial licence usually is
-not.
+breaks intranet deployments outright. Keep the font's licence file next to
+it, and check you have redistribution rights: Google Fonts are OFL/Apache,
+a commercial licence usually is not.
 
 ## Changing the page's furniture
 
@@ -124,12 +145,40 @@ blank.
 
 ## What you import
 
-Everything comes from packages, never from a relative path into
-`apps/public-site`:
+Everything comes from Brisk's packages, never from a relative path into
+`apps/public-site`, and **nothing else**: a theme is built with the
+packages the public site itself ships, so it cannot import one the running
+site would not have. The build refuses a theme whose `package.json` lists
+anything more.
 
-- `@brisk/theme-runtime` — the region props, `localePath`, the `Translator`
+- `@brisk/theme-runtime` — the region props, `localePath`, the
+  `DictionaryTranslator` for your own strings
 - `@brisk/shared-types` — every block's props type
-- `@brisk/block-sdk` — `defineBlock`, field types, `CORE_BLOCK_TYPES`
+- `@brisk/block-sdk` — `defineBlock`, field types, `CORE_BLOCK_TYPES`, and
+  `z` for a block schema of your own (core's zod — never add zod yourself)
+
+Words your theme puts on the page (a sidebar's label, a pager's "Next")
+go in a `locales.json` next to `theme.json`, one object per language:
+
+```json
+{
+  "en": { "next": "Next", "previous": "Previous" },
+  "it": { "next": "Successiva", "previous": "Precedente" }
+}
+```
+
+```astro
+---
+import { DictionaryTranslator } from '@brisk/theme-runtime';
+import strings from '../locales.json';
+const t = new DictionaryTranslator(Astro.props.locale, strings);
+---
+<a rel="next">{t.t('next')}</a>
+```
+
+A language the file does not have falls back to Italian, then English.
+Core's own dictionary (the `i18n` a region receives) is for core's words;
+a theme's never go there.
 
 Your `env.d.ts` needs exactly two lines:
 
@@ -146,19 +195,53 @@ call that — core already resolved it and hands it to your override as
 
 ## Shipping it
 
-Your theme directory has to be present at `themes/<name>/` when the image
-is built. **A symlink is not enough for a deployment** — Docker's `COPY`
-preserves a symlink as a symlink, so the link dangles inside the image and
-the theme is silently unreadable. Copy it, clone it, or add it as a git
-submodule before `docker build`. Both images then pick it up on their own:
-`apps/public-site` bundles the whole theme, and `apps/api` copies its
-`theme.json` so it appears in the editor's theme picker.
+A theme is shipped as images built on Brisk's
+`brisk-public-site-builder`: the public site's workspace, installed and not
+yet built. Put this `Dockerfile` in the theme's repository, next to
+`theme.json`:
 
-If your theme lives in this repo, give it the Nx scaffolding too (copy
-`themes/classic`'s `package.json`/`tsconfig*.json`/`eslint.config.mjs`/
-`vitest.config.mts`, renaming the package) — that is what gives it real
-`typecheck`/`lint`/`test` targets in CI. A theme in its own repository runs
-its own.
+```dockerfile
+# syntax=docker/dockerfile:1
+# One tag for all three images: a theme is built on one and runs on the
+# others, and they have to be the same Brisk.
+ARG BRISK=ghcr.io/ellevas
+ARG BRISK_TAG=main
+
+FROM ${BRISK}/brisk-public-site-builder:${BRISK_TAG} AS build
+COPY . themes/my-theme
+RUN node tools/build-public-site-with-theme.mjs my-theme
+
+FROM ${BRISK}/brisk-public-site:${BRISK_TAG} AS public-site
+USER root
+RUN rm -rf /app/dist
+COPY --from=build /workspace/apps/public-site/dist /app/dist
+USER brisk
+
+# The API only needs the manifest, to offer the theme in the editor.
+FROM ${BRISK}/brisk-api:${BRISK_TAG} AS api
+COPY theme.json themes/my-theme/theme.json
+```
+
+and a `.dockerignore` with `node_modules`. Then:
+
+```sh
+docker build --target public-site -t my-agency/brisk-public-site .
+docker build --target api -t my-agency/brisk-api .
+```
+
+Use those two images in place of Brisk's in `docker-compose.prod.yml`
+([self-hosting.md](self-hosting.md)); the editor image is Brisk's own,
+unchanged. The site still offers Brisk's own themes too; set `BRISK_THEME`
+to your theme's name on both to offer only yours.
+
+The theme's name is its directory under `themes/`, and it cannot be one of
+Brisk's own (`classic`, `docs-showcase`): the build refuses rather than
+replace a theme every other site may be using.
+
+If your theme lives in this repo instead, give it the Nx scaffolding
+(copy `themes/classic`'s `package.json`/`tsconfig*.json`/
+`eslint.config.mjs`/`vitest.config.mts`, renaming the package) — that is
+what gives it `typecheck`/`lint`/`test` targets in CI.
 
 ## Before you call it done
 

@@ -13,7 +13,13 @@
 # Docker builds — too broad a change for what this needs. `--legacy`
 # deploys from the existing lockfile/store without that requirement.
 
-FROM node:24-alpine AS build
+# The `builder` stage is published on its own, as
+# ghcr.io/<owner>/brisk-public-site-builder (docs/adr/0089): the whole
+# workspace with its dependencies installed, and nothing built yet. A theme
+# kept in its own repository is copied into it under themes/<name>/ and
+# built with tools/build-public-site-with-theme.mjs — see
+# docs/creating-a-theme.md, "Shipping it".
+FROM node:24-alpine AS builder
 WORKDIR /workspace
 # pnpm installed from the version package.json pins, not through corepack:
 # corepack is deprecated in Node 24 and absent from the Node 25 images,
@@ -30,6 +36,11 @@ COPY . .
 # .env.example only exists to satisfy that graph parse.
 RUN cp .env.example .env
 RUN pnpm install --frozen-lockfile
+# The themes Brisk ships. The theme build refuses one of these names, so a
+# theme copied in cannot silently replace one of them for every site.
+RUN find themes -mindepth 2 -maxdepth 2 -name theme.json | cut -d/ -f2 | sort > .brisk-core-themes
+
+FROM builder AS build
 # docs/adr/0042 — every theme under themes/* bundles into this image,
 # unconditionally; which one a site renders with is `Site.themeName`,
 # resolved per request (theme-registry.ts). `BRISK_THEME` is not a build

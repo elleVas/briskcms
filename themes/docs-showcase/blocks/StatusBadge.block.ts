@@ -1,5 +1,4 @@
-import { z } from 'zod';
-import { defineBlock } from '@brisk/block-sdk';
+import { defineBlock, z } from '@brisk/block-sdk';
 
 /**
  * Docs/adr/0041's own dogfooding proof — a small status pill ("Beta",

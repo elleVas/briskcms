@@ -43,6 +43,8 @@ themes/<name>/
   env.d.ts            # required — two /// reference lines, see below
   theme.json          # required — manifest
   fonts.css           # optional — self-hosted webfont, see below
+  fonts/              # optional — the font files fonts.css points at, and their licence
+  locales.json        # optional — the theme's own UI words, per language (docs/adr/0089)
   icons/*.svg         # optional — icon set (docs/adr/0023)
   regions/
     Header.astro      # optional — the element wrapping the header's blocks
@@ -380,20 +382,27 @@ a different theme.
 
 ## `fonts.css` — a self-hosted webfont
 
-Optional, and the only supported way to ship a font. Take the font as a real
-dependency in your theme's `package.json` and import it:
+Optional, and the only supported way to ship a font: the font's files in
+the theme (`fonts/`), declared with `@font-face` in `fonts.css`, the way
+`themes/docs-showcase/fonts.css` does it. Not an npm package — a theme
+cannot install packages of its own (docs/adr/0089); a package like
+`@fontsource-variable/sora` is only where you copy the `.woff2` files and
+their `@font-face` rules from. Keep the font's licence next to the files.
 
 ```css
 /* themes/<name>/fonts.css */
-@import '@fontsource-variable/sora';
+@font-face {
+  font-family: 'Sora Variable';
+  font-display: swap;
+  font-weight: 100 800;
+  src: url(./fonts/sora-latin-wght-normal.woff2) format('woff2-variations');
+}
 ```
 
 Then point `--font-sans-value` at it in `theme.css` — using the family name
-the package's own `@font-face` declares, **exactly**. `@fontsource-variable/sora`
-declares `Sora Variable`, not `Sora`, and a near-miss fails silently: the
-browser falls through to the next entry in the stack and the font you
-bundled simply never loads. Check the built stylesheet's `@font-face` rule
-against your token rather than trusting the package name. Vite rewrites the
+the `@font-face` declares, **exactly**. A near-miss (`Sora` for `Sora
+Variable`) fails silently: the browser falls through to the next entry in
+the stack and the font you bundled simply never loads. Vite rewrites the
 `url()`s and bundles the font files, which a hand-written `@font-face` in
 `theme.css` could never get (core only extracts that file's `:root` custom
 properties, and the `url()` would never pass through the bundler).
@@ -460,11 +469,11 @@ path into `apps/public-site` — that coupling is what used to make a theme
 impossible to develop outside this monorepo, and there is now none of it
 left in either core theme:
 
-| Package                | What you get                                                                                                         |
-| ---------------------- | -------------------------------------------------------------------------------------------------------------------- |
-| `@brisk/theme-runtime` | `localePath`/`localePathFromAncestors`/`localeDirection`, the `Translator`, the `regions/` props, `PageTreeNodeDto`. |
-| `@brisk/shared-types`  | Every block's props type and the published-site/page shapes.                                                         |
-| `@brisk/block-sdk`     | `defineBlock`, the field types, and `CORE_BLOCK_TYPES` for your own collision check.                                 |
+| Package                | What you get                                                                                                                                      |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `@brisk/theme-runtime` | `localePath`/`localePathFromAncestors`/`localeDirection`, the `DictionaryTranslator` for `locales.json`, the `regions/` props, `PageTreeNodeDto`. |
+| `@brisk/shared-types`  | Every block's props type and the published-site/page shapes.                                                                                      |
+| `@brisk/block-sdk`     | `defineBlock`, the field types, `CORE_BLOCK_TYPES` for your own collision check, and `z` for a block's schema.                                    |
 
 Your `env.d.ts` needs exactly two lines — the second is what types
 `Astro.locals` for you:
