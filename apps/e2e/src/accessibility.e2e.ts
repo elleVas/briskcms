@@ -1,6 +1,7 @@
 import AxeBuilder from '@axe-core/playwright';
 import { BriskApi } from './support/brisk-api';
 import { CanvasEditor } from './support/canvas-editor';
+import { Cleanup } from './support/cleanup';
 import { environment } from './support/environment';
 import { expect, test } from './support/test';
 
@@ -28,20 +29,17 @@ const WIDTHS = [
 const CANVAS_SCREEN = /^(page-groups\/|layout\/(header|footer))/;
 
 // One page and one form of the suite's own, so the screens that edit one
-// have something to open.
-let subjects: {
-  api: BriskApi;
-  dispose: () => Promise<void>;
-  pageGroupId: string;
-  formId: string;
-  locale: string;
-};
+// have something to open. Each is handed to `cleanup` the moment it
+// exists: a setup that fails halfway still removes what it made.
+let subjects: { pageGroupId: string; formId: string; locale: string };
+const cleanup = new Cleanup();
 
 test.beforeAll(async ({ playwright }) => {
   const request = await playwright.request.newContext({
     baseURL: environment.apiUrl,
     storageState: environment.storageStatePath,
   });
+  cleanup.add(() => request.dispose());
   const api = new BriskApi(request);
   const site = await api.currentSite();
   const name = `e2e-a11y-${test.info().workerIndex}-${Date.now()}`;
@@ -52,22 +50,17 @@ test.beforeAll(async ({ playwright }) => {
     title: name,
     content: [{ type: 'Heading', props: { text: name, level: 'h2' } }],
   });
+  cleanup.add(() => api.deletePage(group.id));
   const form = await api.createForm(site.id, name);
+  cleanup.add(() => api.deleteForm(form.id));
   subjects = {
-    api,
-    dispose: () => request.dispose(),
     pageGroupId: group.id,
     formId: form.id,
     locale: site.defaultLocale,
   };
 });
 
-test.afterAll(async () => {
-  if (!subjects) return;
-  await subjects.api.deletePage(subjects.pageGroupId);
-  await subjects.api.deleteForm(subjects.formId);
-  await subjects.dispose();
-});
+test.afterAll(() => cleanup.run());
 
 function screens(): string[] {
   return [

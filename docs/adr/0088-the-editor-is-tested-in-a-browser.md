@@ -42,13 +42,28 @@ version right after an edit is overwritten by that edit.
 - **Logged in once**, through the API, and the session reused while it
   is valid: login allows five attempts per account in fifteen minutes.
   One test logs in through the form, so that path stays covered.
-- **What it found is fixed here.** The users list asks for the API's
-  own ceiling, 100. The canvas says "Loading the page…" and keeps the
-  block palette off until the page in the iframe answers `preview:ready`,
-  and every new document in the iframe (a restore, a page change) starts
-  not ready again. The shell hands the views its flush (`flushRef`), and
-  a restore sends any change still in the debounce before it waits for
-  the save queue, as Publish already did.
+- **What it found is fixed here.**
+  - The users list asks for the API's own ceiling, 100.
+  - While the page in the canvas loads, the editor takes no change: the
+    canvas says "Loading the page…", the palette's blocks and templates
+    are off (its search is not), the right panel is inert, and every tree
+    change — shortcuts and paste, the Layers menu, undo and redo — is
+    refused at the one place they all go through
+    (`useBlockTreeMutations`). "Loading" starts the moment the page
+    changes, not when its new token comes back.
+  - A page that never says it listens (an expired token, a page deleted
+    meanwhile, a public site that is down) is given 30 seconds, or 5 once
+    its document has loaded; then the canvas says it could not load it,
+    with a Retry.
+  - The section editor built its preview object afresh on every render,
+    so the canvas minted a new token and reloaded the page on every save;
+    it is now built once per section, and the canvas depends on its
+    values, not on the object.
+  - The shell hands the header and footer editor its flush (`flushRef`):
+    a restore from that editor's own history button sends a change still
+    in the debounce before it waits for the save queue, as Publish
+    already did. The page editor's history opens from the page menu,
+    which the shell flushes already.
 - **In CI, a job of its own** (`e2e`), beside `test`, sharing its Postgres
   and Mailpit through `.github/actions/start-services`. It builds the
   three apps and Playwright starts them from the build. It is not a

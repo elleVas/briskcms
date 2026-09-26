@@ -1,4 +1,9 @@
-import { expect, type FrameLocator, type Page } from '@playwright/test';
+import {
+  expect,
+  type FrameLocator,
+  type Locator,
+  type Page,
+} from '@playwright/test';
 
 /**
  * The canvas editor as a person sees it: the page drawn in an iframe
@@ -17,7 +22,11 @@ export class CanvasEditor {
    * taking its "Loading the page…" away and turning the palette on.
    */
   async waitUntilLoaded(): Promise<void> {
-    await expect(this.page.getByTitle('Page preview')).toBeVisible();
+    // The editor itself, a preview token and the page: more than a
+    // locator's default five seconds on a cold dev server.
+    await expect(this.page.getByTitle('Page preview')).toBeVisible({
+      timeout: 15_000,
+    });
     await expect(this.page.getByText('Loading the page…')).toBeHidden({
       timeout: 15_000,
     });
@@ -28,8 +37,15 @@ export class CanvasEditor {
     await expect(this.page.getByText(/saved at/)).toBeVisible();
   }
 
+  /** A block's tile in the palette — not its row in Layers, which bears the same name. */
+  paletteBlock(label: string): Locator {
+    return this.page
+      .getByRole('complementary', { name: 'Insert block' })
+      .getByRole('button', { name: label, exact: true });
+  }
+
   async insertBlock(label: string): Promise<void> {
-    await this.page.getByRole('button', { name: label, exact: true }).click();
+    await this.paletteBlock(label).click();
   }
 
   /** Double-clicks a text in the canvas, replaces it, and leaves it the way the editor commits it: Escape. */

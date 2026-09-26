@@ -89,11 +89,9 @@ test('a form shows a field only when an earlier answer calls for it, saves the a
   await page.locator('.brisk-form button[type="submit"]').click();
   await expect(page.getByRole('status')).toBeVisible();
 
-  const [submission] = await api.formSubmissions(form.id);
-  expect(submission.payload).toMatchObject({
-    reason: 'Other',
-    details: 'Three rooms, second floor',
-  });
+  await expect
+    .poll(async () => (await api.formSubmissions(form.id))[0]?.payload)
+    .toMatchObject({ reason: 'Other', details: 'Three rooms, second floor' });
   for (const address of recipients) {
     await expect
       .poll(async () => (await mailpit.messagesTo(address)).length)

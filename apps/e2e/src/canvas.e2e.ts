@@ -15,9 +15,28 @@ function layerRow(page: Page, blockId: string) {
   return page.locator(`[data-testid="layer-row"][data-block-id="${blockId}"]`);
 }
 
-/** Where a row is drawn right now, mid-drag included. */
-async function top(page: Page, blockId: string): Promise<number> {
-  return (await layerRow(page, blockId).boundingBox())?.y ?? Number.NaN;
+/**
+ * What dnd-kit tells a screen reader during a keyboard drag. Its own
+ * words (the editor does not translate them yet), and the one sure sign
+ * that a key press has been taken: the rows are still animating when it
+ * is, and a press that lands before is dropped.
+ */
+function dragAnnouncement(page: Page) {
+  return page.locator('[id^="DndLiveRegion"]');
+}
+
+/**
+ * dnd-kit measures where every row is a frame or two after a drag starts
+ * or moves; an arrow pressed before then has nowhere to go and is dropped.
+ * No person presses that fast — a test does, so it waits them out.
+ */
+async function afterMeasuring(page: Page): Promise<void> {
+  await page.evaluate(
+    () =>
+      new Promise<void>((resolve) =>
+        requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
+      ),
+  );
 }
 
 test('layers reorder by keyboard and by mouse, and the page saves the new order', async ({
@@ -49,14 +68,17 @@ test('layers reorder by keyboard and by mouse, and the page saves the new order'
     .getByRole('button', { name: /^Drag / });
   await handle.focus();
   await page.keyboard.press('Space');
-  await expect(handle).toHaveAttribute('aria-pressed', 'true');
-  // One row per press, each waited for: a press that lands while the
-  // previous move is still animating is dropped, as it would be for a
-  // person pressing that fast.
+  // Picked up: at once over its own place, which is what it announces.
+  await expect(dragAnnouncement(page)).toContainText(
+    `moved over droppable area ${c}`,
+  );
+  await afterMeasuring(page);
   for (const passing of [b, a]) {
-    const target = await top(page, passing);
     await page.keyboard.press('ArrowUp');
-    await expect.poll(() => top(page, c)).toBeLessThanOrEqual(target);
+    await expect(dragAnnouncement(page)).toContainText(
+      `moved over droppable area ${passing}`,
+    );
+    await afterMeasuring(page);
   }
   await page.keyboard.press('Space');
   await expect.poll(savedOrder).toEqual([c, a, b]);
@@ -123,9 +145,11 @@ test('restoring a header version right after an edit keeps the restored version'
   await page.goto(`layout/header?locale=${site.defaultLocale}`);
   const editor = new CanvasEditor(page);
   await editor.waitUntilLoaded();
-  // Restored straight after typing, the way a person undoes a slip: the
-  // edit is still waiting to be saved when the restore is asked for, and
-  // must not land on top of it afterwards.
+  // Restored straight after typing, the way a person undoes a slip. Only
+  // sometimes quick enough to catch the edit still in its 300ms debounce
+  // (the dialog takes a moment to open): the case is made certain in
+  // site-layout-section-editor-view.spec.tsx. What this proves is the end
+  // to end: the restored version is what the canvas and the server hold.
   await editor.replaceText(current, `Edited ${uniqueName}`);
   await page.getByRole('button', { name: 'Version history' }).click();
   // Newest first: "Current version", then the one saved before it.
@@ -147,4 +171,48 @@ test('restoring a header version right after an edit keeps the restored version'
   expect(section.content.map((block) => block.props.body)).toEqual([
     `<p>${restored}</p>`,
   ]);
+});
+
+test('a canvas whose page does not answer says so, and Retry loads it', async ({
+  page,
+  api,
+  cleanup,
+  uniqueName,
+}) => {
+  const site = await api.currentSite();
+  const { group } = await api.createPage({
+    siteId: site.id,
+    locale: site.defaultLocale,
+    slug: uniqueName,
+    title: uniqueName,
+    content: [heading(`${uniqueName}-h`, 'One')],
+  });
+  cleanup.add(() => api.deletePage(group.id));
+
+  // A preview that loads with nothing listening in it — what an expired
+  // token or a page deleted meanwhile gets.
+  await page.route('**/preview/**', (route) =>
+    route.fulfill({
+      status: 404,
+      contentType: 'text/html',
+      body: '<!doctype html><title>Not found</title><p>Not found</p>',
+    }),
+  );
+  await page.goto(`page-groups/${group.id}`);
+  const editor = new CanvasEditor(page);
+
+  const failure = page
+    .getByRole('alert')
+    .filter({ hasText: 'The page could not be loaded in the canvas.' });
+  await expect(failure).toBeVisible({ timeout: 15_000 });
+  await expect(editor.paletteBlock('Heading')).toBeDisabled();
+
+  await page.unroute('**/preview/**');
+  await failure.getByRole('button', { name: 'Retry' }).click();
+
+  await editor.waitUntilLoaded();
+  await expect(
+    editor.canvas.getByRole('heading', { name: 'One' }),
+  ).toBeVisible();
+  await expect(editor.paletteBlock('Heading')).toBeEnabled();
 });

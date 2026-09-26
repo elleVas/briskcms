@@ -149,7 +149,8 @@ Playwright ([ADR-0088](adr/0088-the-editor-is-tested-in-a-browser.md)).
 Four groups: the main path (log in, new page, block, text edited in the
 canvas, publish, the page on the site), a form end to end (conditional
 field, submission, notification emails in Mailpit), the canvas (Layers
-drag by mouse and keyboard, restoring a header version), and the
+drag by mouse and keyboard, restoring a header version, a page that does
+not answer and Retry), and the
 accessibility gate (axe on every editor screen, both themes, 1440 and
 390px wide, plus any API error a screen runs into).
 

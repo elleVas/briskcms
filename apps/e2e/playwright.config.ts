@@ -26,7 +26,11 @@ const webServer = [
     name: 'public site',
     command: 'node server.mjs',
     cwd: '../public-site',
-    url: environment.publicSiteUrl,
+    // Not `/`: Playwright follows its redirect to the default language's
+    // home page, which a freshly seeded site does not have — a 404, and a
+    // server Playwright waits on until it gives up. robots.txt answers as
+    // soon as the site can reach the API, whatever the site holds.
+    url: `${environment.publicSiteUrl}robots.txt`,
     env: { PUBLIC_SITE_PORT: new URL(environment.publicSiteUrl).port },
   },
 ].map((server) => ({
