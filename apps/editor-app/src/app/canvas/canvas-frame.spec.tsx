@@ -1,16 +1,32 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from '@testing-library/react';
 import { createRef } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import * as previewTokenApi from '../../lib/preview-token-api-client';
 import { PUBLIC_SITE_URL } from '../../lib/public-site-url';
 import { BREAKPOINT_WIDTHS } from './breakpoint-selector';
-import { buildPreviewUrl, CanvasFrame } from './canvas-frame';
+import { findCanvasIframe } from '../../test/preview-bridge.test-fixture';
+import {
+  buildPreviewUrl,
+  CanvasFrame,
+  READY_AFTER_LOAD_MS,
+  READY_TIMEOUT_MS,
+} from './canvas-frame';
 import type { PreviewBridgeState } from './use-preview-bridge';
 
 vi.mock('../../lib/preview-token-api-client', async (importOriginal) => {
   const actual =
     await importOriginal<typeof import('../../lib/preview-token-api-client')>();
-  return { ...actual, createTranslationPreviewToken: vi.fn() };
+  return {
+    ...actual,
+    createTranslationPreviewToken: vi.fn(),
+    createReusableSectionPreviewToken: vi.fn(),
+  };
 });
 
 const emptyBridge: PreviewBridgeState = {
@@ -64,20 +80,40 @@ describe('buildPreviewUrl', () => {
 
 describe('CanvasFrame', () => {
   afterEach(() => {
+    vi.useRealTimers();
     vi.clearAllMocks();
   });
 
-  function renderFrame(props: Partial<Parameters<typeof CanvasFrame>[0]> = {}) {
+  type FrameProps = Partial<Parameters<typeof CanvasFrame>[0]>;
+
+  /** One frame, re-rendered with other props the way its caller would — same iframe ref throughout. */
+  function renderFrame(props: FrameProps = {}) {
     const iframeRef = createRef<HTMLIFrameElement>();
-    return render(
+    const element = (next: FrameProps) => (
       <CanvasFrame
         pageId="page-1"
         iframeRef={iframeRef}
         bridge={emptyBridge}
-        {...props}
-      />,
+        {...next}
+      />
     );
+    const utils = render(element(props));
+    return {
+      ...utils,
+      rerenderWith: (next: FrameProps) => utils.rerender(element(next)),
+    };
   }
+
+  function mockPageTokens(...tokens: string[]) {
+    for (const token of tokens) {
+      vi.mocked(
+        previewTokenApi.createTranslationPreviewToken,
+      ).mockResolvedValueOnce({ token, expiresAt: new Date().toISOString() });
+    }
+  }
+
+  const LOADING = 'Caricamento della pagina…';
+  const NOT_LOADED = 'Non è stato possibile caricare la pagina nel canvas.';
 
   it('creates a preview token and loads the iframe at the resulting URL', async () => {
     vi.mocked(previewTokenApi.createTranslationPreviewToken).mockResolvedValue({
@@ -97,29 +133,97 @@ describe('CanvasFrame', () => {
     );
   });
 
-  it('says the page is loading until the bridge is ready, and marks every new document as loading', async () => {
-    vi.mocked(previewTokenApi.createTranslationPreviewToken).mockResolvedValue({
-      token: 'tok123',
-      expiresAt: new Date().toISOString(),
+  it('says the page is loading until it answers, and is not ready again from the moment the page changes', async () => {
+    mockPageTokens('tok1', 'tok2');
+
+    const { rerenderWith } = renderFrame();
+
+    expect(screen.getByText(LOADING).getAttribute('role')).toBe('status');
+    await findCanvasIframe();
+    expect(emptyBridge.markLoading).toHaveBeenCalledTimes(1);
+
+    rerenderWith({ bridge: { ...emptyBridge, isReady: true } });
+    expect(screen.queryByText(LOADING)).toBeNull();
+
+    // Another language: the page on screen is the wrong one already,
+    // before the new token has come back.
+    rerenderWith({
+      pageId: 'page-2',
+      bridge: { ...emptyBridge, isReady: true },
+    });
+    expect(emptyBridge.markLoading).toHaveBeenCalledTimes(2);
+  });
+
+  /*
+   * The section editor builds its `sectionPreview` afresh on every render.
+   * Depending on the object minted a new token on every save, and so
+   * reloaded the page in the canvas every time.
+   */
+  it('mints one token for a section however often its editor re-renders', async () => {
+    vi.mocked(
+      previewTokenApi.createReusableSectionPreviewToken,
+    ).mockResolvedValue({ token: 'sec', expiresAt: new Date().toISOString() });
+
+    const { rerenderWith } = renderFrame({
+      sectionPreview: { sectionId: 'section-1', locale: 'it' },
+    });
+    await findCanvasIframe();
+    rerenderWith({ sectionPreview: { sectionId: 'section-1', locale: 'it' } });
+    rerenderWith({ sectionPreview: { sectionId: 'section-1', locale: 'it' } });
+    await act(async () => {
+      await Promise.resolve();
     });
 
-    const { rerender } = renderFrame();
-
     expect(
-      screen.getByText('Caricamento della pagina…').getAttribute('role'),
-    ).toBe('status');
-    await waitFor(() => screen.getByTitle('Anteprima pagina'));
-    // Once on mount, once for the document the token pointed it at.
-    expect(emptyBridge.markLoading).toHaveBeenCalledTimes(2);
+      previewTokenApi.createReusableSectionPreviewToken,
+    ).toHaveBeenCalledTimes(1);
+    expect(emptyBridge.markLoading).toHaveBeenCalledTimes(1);
+  });
 
-    rerender(
-      <CanvasFrame
-        pageId="page-1"
-        iframeRef={createRef<HTMLIFrameElement>()}
-        bridge={{ ...emptyBridge, isReady: true }}
-      />,
+  it('says the page did not load when it loaded with nothing answering, and loads it again on Retry', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    mockPageTokens('tok1', 'tok2');
+
+    renderFrame();
+    fireEvent.load(await findCanvasIframe());
+    await act(() => vi.advanceTimersByTimeAsync(READY_AFTER_LOAD_MS - 100));
+    expect(screen.queryByRole('alert')).toBeNull();
+    await act(() => vi.advanceTimersByTimeAsync(200));
+
+    expect(screen.getByRole('alert').textContent).toContain(NOT_LOADED);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Riprova' }));
+
+    expect(screen.getByText(LOADING)).toBeTruthy();
+    await waitFor(() =>
+      expect(
+        screen.getByTitle('Anteprima pagina').getAttribute('src') ?? '',
+      ).toContain('token=tok2'),
     );
-    expect(screen.queryByText('Caricamento della pagina…')).toBeNull();
+    expect(screen.queryByRole('alert')).toBeNull();
+  });
+
+  it('says the page did not load when it never finished loading', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    mockPageTokens('tok1');
+
+    renderFrame();
+    await findCanvasIframe();
+    await act(() => vi.advanceTimersByTimeAsync(READY_TIMEOUT_MS));
+
+    expect(screen.getByRole('alert').textContent).toContain(NOT_LOADED);
+  });
+
+  it('raises no alarm for a page that answers in time', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    mockPageTokens('tok1');
+
+    const { rerenderWith } = renderFrame();
+    fireEvent.load(await findCanvasIframe());
+    rerenderWith({ bridge: { ...emptyBridge, isReady: true } });
+    await act(() => vi.advanceTimersByTimeAsync(READY_TIMEOUT_MS));
+
+    expect(screen.queryByRole('alert')).toBeNull();
   });
 
   it('sandboxes the iframe without allow-same-origin — the preview can render untrusted user-authored blocks, and allow-same-origin combined with allow-scripts would neutralize the sandbox', async () => {
@@ -152,19 +256,25 @@ describe('CanvasFrame', () => {
     );
   });
 
-  it('shows an error instead of a stuck blank iframe when the token request fails', async () => {
-    vi.mocked(previewTokenApi.createTranslationPreviewToken).mockRejectedValue(
-      new Error('boom'),
-    );
+  it('says the page did not load when its token is refused, and asks again on Retry', async () => {
+    vi.mocked(
+      previewTokenApi.createTranslationPreviewToken,
+    ).mockRejectedValueOnce(new Error('boom'));
+    mockPageTokens('tok2');
 
     renderFrame();
 
-    await waitFor(() =>
-      expect(
-        screen.getByText("Impossibile caricare l'anteprima. Riprova."),
-      ).not.toBeNull(),
+    expect((await screen.findByRole('alert')).textContent).toContain(
+      NOT_LOADED,
     );
     expect(screen.queryByTitle('Anteprima pagina')).toBeNull();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Riprova' }));
+
+    await findCanvasIframe();
+    expect(previewTokenApi.createTranslationPreviewToken).toHaveBeenCalledTimes(
+      2,
+    );
   });
 
   it('defaults to full width when no breakpoint is given', async () => {

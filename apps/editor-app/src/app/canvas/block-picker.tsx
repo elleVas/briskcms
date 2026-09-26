@@ -27,6 +27,8 @@ export interface BlockPickerProps {
   canInsert?: (descriptor: BlockDescriptor) => boolean;
   /** When present, every button also becomes draggable onto the canvas — see canvas-editor-shell.tsx for the release-point computation. A plain click (no movement past the threshold) stays `onInsert` as today. */
   drag?: BlockDragHandlers;
+  /** The blocks are offered but cannot be taken yet — while the canvas loads its page. The search still works. */
+  disabled?: boolean;
 }
 
 /** The same threshold and heuristic as preview-bridge-client.ts's reorder drag — a mousedown+mouseup without moving far enough is an ordinary click, not a drag. */
@@ -36,10 +38,12 @@ function DraggableBlockButton({
   descriptor,
   onInsert,
   drag,
+  disabled,
 }: {
   descriptor: BlockDescriptor;
   onInsert: (descriptor: BlockDescriptor) => void;
   drag?: BlockDragHandlers;
+  disabled?: boolean;
 }) {
   const { tLabel } = useTranslation();
   const pendingRef = useRef<{ startX: number; startY: number } | null>(null);
@@ -49,6 +53,7 @@ function DraggableBlockButton({
     return (
       <button
         type="button"
+        disabled={disabled}
         onClick={() => onInsert(descriptor)}
         className="w-full rounded-md px-2 py-1.5 text-left text-sm hover:bg-muted hover:text-foreground disabled:pointer-events-none disabled:opacity-50"
       >
@@ -100,6 +105,7 @@ function DraggableBlockButton({
   return (
     <button
       type="button"
+      disabled={disabled}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
@@ -148,6 +154,7 @@ export function BlockPicker({
   onInsert,
   canInsert,
   drag,
+  disabled,
 }: BlockPickerProps) {
   const { t, tLabel } = useTranslation();
   const [query, setQuery] = useState('');
@@ -217,6 +224,7 @@ export function BlockPicker({
                   descriptor={descriptor}
                   onInsert={onInsert}
                   drag={drag}
+                  disabled={disabled}
                 />
               </li>
             ))}

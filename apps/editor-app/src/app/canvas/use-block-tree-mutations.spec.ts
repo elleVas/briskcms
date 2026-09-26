@@ -22,7 +22,20 @@ const heroDescriptor: BlockDescriptor = {
   fields: [],
 };
 
+interface HookProps {
+  localBlocks: Block[];
+  selectedBlock: Block | null;
+  pageId?: string;
+  /** Ready unless a test says otherwise. */
+  canvasReady?: boolean;
+}
+
 function setup(localBlocks: Block[]) {
+  const initialProps: HookProps = {
+    localBlocks,
+    selectedBlock: null,
+    pageId: 'page-1',
+  };
   const onChange = vi.fn();
   const setLocalBlocks = vi.fn();
   const bridge = {
@@ -35,11 +48,7 @@ function setup(localBlocks: Block[]) {
     setRootLayout: vi.fn(),
   };
   const { result, rerender } = renderHook(
-    (props: {
-      localBlocks: Block[];
-      selectedBlock: Block | null;
-      pageId?: string;
-    }) =>
+    (props: HookProps) =>
       useBlockTreeMutations({
         localBlocks: props.localBlocks,
         setLocalBlocks,
@@ -50,13 +59,10 @@ function setup(localBlocks: Block[]) {
         pageId: props.pageId ?? 'page-1',
         selectedBlock: props.selectedBlock,
         selectedDescriptor: props.selectedBlock ? heroDescriptor : undefined,
+        canvasReady: props.canvasReady ?? true,
       }),
     {
-      initialProps: {
-        localBlocks,
-        selectedBlock: null as Block | null,
-        pageId: 'page-1',
-      },
+      initialProps,
     },
   );
   return { result, rerender, onChange, setLocalBlocks, bridge };
@@ -101,6 +107,43 @@ describe('useBlockTreeMutations undo/redo', () => {
     expect(bridge.removeBlock).toHaveBeenCalled();
     expect(result.current.canUndo).toBe(false);
     expect(result.current.canRedo).toBe(true);
+  });
+
+  /*
+   * A change sent while the canvas loads its page is lost on the way: saved,
+   * but not drawn until a reload. The clipboard outlives a change of page,
+   * so a paste right after switching language is the realistic case.
+   */
+  it('takes no change while the canvas loads its page, and offers no undo meanwhile', async () => {
+    vi.mocked(blockFragmentApi.renderBlockFragment).mockResolvedValue(
+      '<div>hero</div>',
+    );
+    const { result, rerender, onChange, bridge } = setup([]);
+    act(() => {
+      result.current.handleInsert(heroDescriptor);
+    });
+    await flush();
+    onChange.mockClear();
+    bridge.insertBlock.mockClear();
+
+    rerender({ localBlocks: [], selectedBlock: null, canvasReady: false });
+
+    expect(result.current.canUndo).toBe(false);
+    act(() => {
+      result.current.undo();
+      result.current.handlePasteMany([
+        { type: 'Hero', props: { title: 'Copia' } },
+      ]);
+      result.current.handleInsert(heroDescriptor);
+    });
+    await flush();
+    expect(onChange).not.toHaveBeenCalled();
+    expect(bridge.insertBlock).not.toHaveBeenCalled();
+    expect(bridge.removeBlock).not.toHaveBeenCalled();
+
+    rerender({ localBlocks: [], selectedBlock: null, canvasReady: true });
+
+    expect(result.current.canUndo).toBe(true);
   });
 
   it('redo after undoing an insert re-inserts the exact same block into the canvas', async () => {
@@ -570,6 +613,7 @@ describe('useBlockTreeMutations respects what a container may hold', () => {
         selectedDescriptor: selectedBlock
           ? descriptors.find((d) => d.type === selectedBlock.type)
           : undefined,
+        canvasReady: true,
       }),
     );
     return { result, onChange };
@@ -791,6 +835,7 @@ describe('useBlockTreeMutations keeps the canvas in step without reloading', () 
           refreshStyleSheet,
           selectedBlock: selected,
           selectedDescriptor: selected ? heading : undefined,
+          canvasReady: true,
         }),
       options.strict ? { wrapper: StrictMode } : undefined,
     );
@@ -1378,6 +1423,7 @@ describe('useBlockTreeMutations places a block only where it belongs', () => {
         onPlacementRefused,
         selectedBlock: selected,
         selectedDescriptor: undefined,
+        canvasReady: true,
       }),
     );
     return { result, onChange, onPlacementRefused };

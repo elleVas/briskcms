@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from '@tanstack/react-router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -157,7 +157,6 @@ export function PageGroupEditorView({
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [isTranslationsOpen, setIsTranslationsOpen] = useState(false);
   const [restoredAt, setRestoredAt] = useState(0);
-  const flushCanvasRef = useRef<(() => void) | null>(null);
   const queryClient = useQueryClient();
   const { toast } = useToast();
   // An unlinked language no longer follows the shared structure, so that
@@ -291,10 +290,9 @@ export function PageGroupEditorView({
   function restoringWith(rollback: (versionId: string) => Promise<unknown>) {
     return async (versionId: string) => {
       // A save still on its way would land after the restore and
-      // overwrite it with the page as it was before. Opening the history
-      // from the page menu has already sent a change still in the
-      // debounce; this does not rely on how the dialog was opened.
-      flushCanvasRef.current?.();
+      // overwrite it with the page as it was before. A change still in
+      // the canvas's debounce has been sent already: the history opens
+      // from the page menu, and the shell flushes before any of its items.
       await whenSaved();
       await rollback(versionId);
       setRestoredAt((n) => n + 1);
@@ -441,7 +439,6 @@ export function PageGroupEditorView({
               onPublish={publishWhenSaved}
               pageId={activeTranslation.id}
               restoredAt={restoredAt}
-              flushRef={flushCanvasRef}
             >
               <VersionHistoryDialog
                 // Remounted per language, so a tab chosen on one does not

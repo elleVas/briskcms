@@ -424,6 +424,7 @@ export function CanvasEditorShell({
     onPlacementRefused: notifyPlacementRefused,
     selectedBlock,
     selectedDescriptor,
+    canvasReady: bridge.isReady,
   });
   const handleMakeReusable = useMakeReusableSection({
     siteId,
@@ -601,37 +602,31 @@ export function CanvasEditorShell({
         >
           {/* Off until the canvas has loaded: a block inserted before the
               page listens is saved but never drawn, until a reload. The
-              canvas shows why meanwhile (canvas-frame.tsx). The fieldset
-              disables the buttons; the handlers check as well, since a
-              tile inserts on pointer-up, not on click. */}
-          <fieldset
+              canvas says why meanwhile (canvas-frame.tsx), and the
+              changes themselves wait too (useBlockTreeMutations). */}
+          <BlockPicker
+            categories={categories}
+            registry={registry}
+            onInsert={handleInsert}
+            canInsert={(descriptor) => canInsertType(descriptor.type)}
+            drag={{
+              onDragStart: handleSidebarDragStart,
+              onDragMove: handleSidebarDragMove,
+              onDragEnd: handleSidebarDragEnd,
+            }}
             disabled={!bridge.isReady}
-            aria-busy={!bridge.isReady}
-            className="contents"
-          >
-            <BlockPicker
-              categories={categories}
-              registry={registry}
-              onInsert={(descriptor) => {
-                if (bridge.isReady) handleInsert(descriptor);
-              }}
-              canInsert={(descriptor) => canInsertType(descriptor.type)}
-              drag={{
-                onDragStart: (descriptor) => {
-                  if (bridge.isReady) handleSidebarDragStart(descriptor);
-                },
-                onDragMove: handleSidebarDragMove,
-                onDragEnd: handleSidebarDragEnd,
-              }}
+          />
+          {/* Not inside the section editor: a template dropped into a
+              section would be a copy inside a thing that already IS
+              the shared original, which is a muddle rather than a
+              feature. */}
+          {siteId && !sectionPreview && (
+            <TemplatePicker
+              siteId={siteId}
+              onInsert={handleInsertBlocks}
+              disabled={!bridge.isReady}
             />
-            {/* Not inside the section editor: a template dropped into a
-                section would be a copy inside a thing that already IS
-                the shared original, which is a muddle rather than a
-                feature. */}
-            {siteId && !sectionPreview && (
-              <TemplatePicker siteId={siteId} onInsert={handleInsertBlocks} />
-            )}
-          </fieldset>
+          )}
         </CollapsibleSidePanel>
         <div style={{ flex: 1, minHeight: 0, position: 'relative' }}>
           <CanvasFrame
@@ -718,13 +713,21 @@ export function CanvasEditorShell({
           {/* The panel the tab strip above controls, and where the
               toolbar's pencil puts the keyboard. `tabIndex={-1}` so it can
               take focus without joining the tab order. */}
+          {/* Inert while the canvas loads, like the palette: a property
+              changed now would be drawn by a message to a page that is
+              not listening yet. */}
           <div
             ref={propertiesPanelRef}
             role="tabpanel"
             id={rightPanelId(rightPanelTab)}
             aria-labelledby={rightPanelTabId(rightPanelTab)}
             tabIndex={-1}
-            className="flex min-h-0 flex-1 flex-col outline-none"
+            inert={!bridge.isReady}
+            className={
+              bridge.isReady
+                ? 'flex min-h-0 flex-1 flex-col outline-none'
+                : 'flex min-h-0 flex-1 flex-col opacity-60 outline-none'
+            }
           >
             {rightPanelTab === 'properties' ? (
               <PropertiesPanel

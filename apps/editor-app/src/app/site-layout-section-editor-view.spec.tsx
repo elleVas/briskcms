@@ -12,7 +12,13 @@ import type { SiteLayoutSectionRecord } from '../lib/site-layout-sections-api-cl
 import * as pageGroupsApi from '../lib/page-groups-api-client';
 import * as previewTokenApi from '../lib/preview-token-api-client';
 import { TooltipProvider } from '../components/ui/tooltip';
+import type { Block } from '@brisk/shared-types';
 import { createTestQueryClient } from '../test/query-client.test-fixture';
+import {
+  findCanvasIframe,
+  selectBlockWithRect,
+} from '../test/preview-bridge.test-fixture';
+import * as blockFragmentApi from '../lib/block-fragment-api-client';
 import {
   pageGroupsQueryOptions,
   pageGroupTranslationsQueryOptions,
@@ -40,7 +46,14 @@ vi.mock('../lib/site-layout-sections-api-client', async (importOriginal) => {
     listVersions: vi.fn(),
     rollbackToVersion: vi.fn(),
     updateSticky: vi.fn(),
+    saveDraft: vi.fn(),
   };
+});
+
+vi.mock('../lib/block-fragment-api-client', async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import('../lib/block-fragment-api-client')>();
+  return { ...actual, renderBlockFragment: vi.fn() };
 });
 
 vi.mock('../lib/page-groups-api-client', async (importOriginal) => {
@@ -70,11 +83,12 @@ const sampleSection = buildSiteLayoutSectionRecord();
 function renderView(
   kind: SiteLayoutSectionRecord['kind'] = 'header',
   hasRepresentativePage = true,
+  content: Block[] = [],
 ) {
   const queryClient = createTestQueryClient();
   queryClient.setQueryData(
     siteLayoutSectionQueryOptions('site-1', 'it', kind).queryKey,
-    { ...sampleSection, kind },
+    { ...sampleSection, kind, content },
   );
   // Pre-seeded, same reasoning as siteLayoutSectionQueryOptions above — lets
   // these tests assert synchronously instead of awaiting the representative-
@@ -168,6 +182,73 @@ describe('SiteLayoutSectionEditorView', () => {
     expect(restoreButtons).toHaveLength(1);
     expect(screen.getByText(/versione attuale/i)).toBeTruthy();
   });
+
+  /*
+   * A restore waits for the saves already queued, and a change still in the
+   * canvas's debounce is not queued yet: sent after the rollback, it put
+   * back the header the restore had just replaced. The history is opened
+   * before the edit here, so that nothing — not even the dialog loading
+   * its versions — stands between the keystroke and the restore.
+   *
+   * The whole view, its canvas and a dialog take more than the default
+   * five seconds on a busy machine; the order it checks does not depend
+   * on time.
+   */
+  it('sends a change still inside the debounce before it restores a version', async () => {
+    const order: string[] = [];
+    vi.mocked(sectionsApi.saveDraft).mockImplementation(
+      async (_id, content) => {
+        order.push('save');
+        return { ...sampleSection, content };
+      },
+    );
+    vi.mocked(sectionsApi.rollbackToVersion).mockImplementation(async () => {
+      order.push('rollback');
+      return sampleSection;
+    });
+    vi.mocked(sectionsApi.listVersions).mockResolvedValue([
+      buildSiteLayoutSectionVersionRecord({
+        id: 'v1',
+        createdAt: '2026-01-01T00:00:00.000Z',
+      }),
+      buildSiteLayoutSectionVersionRecord({
+        id: 'v2',
+        createdAt: '2026-01-02T00:00:00.000Z',
+      }),
+    ]);
+    vi.mocked(blockFragmentApi.renderBlockFragment).mockResolvedValue(
+      '<a>Contatti</a>',
+    );
+
+    renderView('header', true, [
+      { id: 'link-1', type: 'NavLink', props: { label: 'Chi siamo' } },
+    ]);
+    selectBlockWithRect(await findCanvasIframe(), 'link-1', {
+      top: 0,
+      left: 0,
+      width: 200,
+      height: 40,
+    });
+    fireEvent.click(
+      screen.getByRole('button', { name: /cronologia versioni/i }),
+    );
+    const [restore] = await screen.findAllByRole('button', {
+      name: /^ripristina$/i,
+    });
+
+    fireEvent.change(screen.getByDisplayValue('Chi siamo'), {
+      target: { value: 'Contatti' },
+    });
+    fireEvent.click(restore);
+
+    await waitFor(() => expect(order).toEqual(['save', 'rollback']));
+    expect(sectionsApi.saveDraft).toHaveBeenCalledWith('section-1', [
+      expect.objectContaining({
+        id: 'link-1',
+        props: expect.objectContaining({ label: 'Contatti' }),
+      }),
+    ]);
+  }, 15_000);
 
   it('shows the sticky toggle for a header and calls updateSticky when flipped', async () => {
     vi.mocked(sectionsApi.updateSticky).mockResolvedValue({

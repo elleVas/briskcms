@@ -134,6 +134,13 @@ export interface UseBlockTreeMutationsParams {
   refreshStyleSheet?: (blocks: Block[]) => void;
   selectedBlock: Block | null;
   selectedDescriptor: BlockDescriptor | undefined;
+  /**
+   * Whether the page in the canvas listens (the bridge's `isReady`). Every
+   * change here reaches the canvas as a message, and one sent before the
+   * page listens is lost: the change is saved, but not drawn until a
+   * reload. So none is taken until then.
+   */
+  canvasReady: boolean;
 }
 
 export interface UseBlockTreeMutationsResult {
@@ -221,6 +228,7 @@ export function useBlockTreeMutations({
   onPlacementRefused,
   selectedBlock,
   selectedDescriptor,
+  canvasReady,
 }: UseBlockTreeMutationsParams): UseBlockTreeMutationsResult {
   /**
    * The stacks themselves live in a ref; the state below only mirrors their
@@ -1155,28 +1163,76 @@ export function useBlockTreeMutations({
     performInsert(createBlockFromDescriptor(descriptor, registry), target);
   }
 
+  /*
+   * A change asked for while the canvas loads is not taken, whichever way
+   * it was asked for: the palette, a shortcut (a paste — the clipboard
+   * outlives a change of page), the Layers menu, undo. The palette and the
+   * panels say so on screen; this is the one place every path goes
+   * through.
+   *
+   * Closures written out here rather than a helper that wraps each
+   * handler: the React Compiler's lint reads a handler passed to a
+   * function during render as one that may run during render, and these
+   * read refs.
+   */
   return {
     recordEdit,
     canInsertType,
-    handleInsert,
-    handleInsertBlocks,
-    handlePaste,
-    handleReparent,
-    handlePasteMany,
-    handleRemoveMany,
-    handleDuplicateMany,
-    handleReplaceSelected,
-    handleReorder,
-    handleRemoveSelected,
-    handleMoveSelected,
-    handleAlignSelected,
-    handleDuplicateSelected,
-    handleAddChild,
-    handleInsertAtRoot,
-    insertNewBlockAt,
-    undo,
-    redo,
-    canUndo: historySize.past > 0,
-    canRedo: historySize.future > 0,
+    handleInsert: (...args) => {
+      if (canvasReady) handleInsert(...args);
+    },
+    handleInsertBlocks: (...args) => {
+      if (canvasReady) handleInsertBlocks(...args);
+    },
+    handlePaste: (...args) => {
+      if (canvasReady) handlePaste(...args);
+    },
+    handleReparent: (...args) => {
+      if (canvasReady) handleReparent(...args);
+    },
+    handlePasteMany: (...args) => {
+      if (canvasReady) handlePasteMany(...args);
+    },
+    handleRemoveMany: (...args) => {
+      if (canvasReady) handleRemoveMany(...args);
+    },
+    handleDuplicateMany: (...args) => {
+      if (canvasReady) handleDuplicateMany(...args);
+    },
+    handleReplaceSelected: (...args) => {
+      if (canvasReady) handleReplaceSelected(...args);
+    },
+    handleReorder: (...args) => {
+      if (canvasReady) handleReorder(...args);
+    },
+    handleRemoveSelected: (...args) => {
+      if (canvasReady) handleRemoveSelected(...args);
+    },
+    handleMoveSelected: (...args) => {
+      if (canvasReady) handleMoveSelected(...args);
+    },
+    handleAlignSelected: (...args) => {
+      if (canvasReady) handleAlignSelected(...args);
+    },
+    handleDuplicateSelected: (...args) => {
+      if (canvasReady) handleDuplicateSelected(...args);
+    },
+    handleAddChild: (...args) => {
+      if (canvasReady) handleAddChild(...args);
+    },
+    handleInsertAtRoot: (...args) => {
+      if (canvasReady) handleInsertAtRoot(...args);
+    },
+    insertNewBlockAt: (...args) => {
+      if (canvasReady) insertNewBlockAt(...args);
+    },
+    undo: (...args) => {
+      if (canvasReady) undo(...args);
+    },
+    redo: (...args) => {
+      if (canvasReady) redo(...args);
+    },
+    canUndo: canvasReady && historySize.past > 0,
+    canRedo: canvasReady && historySize.future > 0,
   };
 }
