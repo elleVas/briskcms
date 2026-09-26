@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from '@tanstack/react-router';
 import { History } from 'lucide-react';
@@ -76,9 +76,14 @@ export function SiteLayoutSectionEditorView({
   const { page: representativePage, isLoading: isLoadingRepresentativePage } =
     useRepresentativePage(siteId, locale);
 
+  const flushCanvasRef = useRef<(() => void) | null>(null);
+
   async function handleRollback(versionId: string) {
     // A save still on its way would land after the restore and overwrite
     // it with the header as it was before — the page editor's own wait.
+    // A change still in the canvas's debounce is not on its way yet, so
+    // it is sent first, or it would land after the restore and undo it.
+    flushCanvasRef.current?.();
     await whenSaved();
     await rollback(versionId);
     setRestoredAt((n) => n + 1);
@@ -139,6 +144,7 @@ export function SiteLayoutSectionEditorView({
                 pageId={representativePage.id}
                 editingSection={kind}
                 restoredAt={restoredAt}
+                flushRef={flushCanvasRef}
               >
                 <VersionHistoryDialog
                   sources={[

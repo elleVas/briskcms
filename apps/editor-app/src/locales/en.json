@@ -904,6 +904,7 @@
   "canvas": {
     "requiredField": "Required field",
     "previewFrameTitle": "Page preview",
+    "loadingPage": "Loading the page…",
     "previewTokenError": "Couldn't load the preview. Try again.",
     "layersTitle": "Layers",
     "insertBlock": "Insert block",

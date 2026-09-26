@@ -904,6 +904,7 @@
   "canvas": {
     "requiredField": "Campo obbligatorio",
     "previewFrameTitle": "Anteprima pagina",
+    "loadingPage": "Caricamento della pagina…",
     "previewTokenError": "Impossibile caricare l'anteprima. Riprova.",
     "layersTitle": "Livelli",
     "insertBlock": "Inserisci blocco",

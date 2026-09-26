@@ -58,6 +58,7 @@ describe('usePreviewBridge', () => {
       updateBlockStyleCss: expect.any(Function),
       setRootLayout: expect.any(Function),
       scrollToBlock: expect.any(Function),
+      markLoading: expect.any(Function),
     });
   });
 
@@ -81,6 +82,31 @@ describe('usePreviewBridge', () => {
     expect(result.current.blockRects).toEqual([
       { id: 'a', top: 1, left: 2, width: 3, height: 4 },
     ]);
+  });
+
+  it('is not ready again once a new document starts loading, until that one says so', () => {
+    const { ref, contentWindow } = buildIframeRef();
+    const { result } = renderHook(() => usePreviewBridge(ref, EXPECTED_ORIGIN));
+    const ready = () =>
+      act(() => {
+        dispatchBridgeMessage(contentWindow, EXPECTED_ORIGIN, {
+          source: PREVIEW_BRIDGE_SOURCE,
+          v: PREVIEW_BRIDGE_VERSION,
+          type: 'preview:ready',
+          payload: {
+            blockRects: [{ id: 'a', top: 1, left: 2, width: 3, height: 4 }],
+            scrollHeight: 900,
+          },
+        });
+      });
+    ready();
+
+    act(() => result.current.markLoading());
+
+    expect(result.current.isReady).toBe(false);
+    expect(result.current.blockRects).toEqual([]);
+    ready();
+    expect(result.current.isReady).toBe(true);
   });
 
   it('updates blockRects on preview:block-rects without resetting isReady', () => {
@@ -251,6 +277,7 @@ describe('usePreviewBridge', () => {
       updateBlockStyleCss: expect.any(Function),
       setRootLayout: expect.any(Function),
       scrollToBlock: expect.any(Function),
+      markLoading: expect.any(Function),
     });
   });
 

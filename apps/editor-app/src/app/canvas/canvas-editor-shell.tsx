@@ -1,4 +1,5 @@
 import {
+  type MutableRefObject,
   type ReactNode,
   useCallback,
   useEffect,
@@ -145,6 +146,15 @@ export interface CanvasEditorShellProps {
   };
   /** Bumped only on an explicit rollback — the same mechanism block-editor-shell.tsx (Puck) used to reset local state. */
   restoredAt?: number;
+  /**
+   * Filled with the shell's own flush: it sends at once any change still
+   * waiting out the debounce. For the actions a view draws outside the
+   * shell (its history dialog) that must not be overtaken by one — a
+   * restore waits for the saves already queued, and a change still in
+   * the debounce is not queued yet: it would land after the restore and
+   * undo it. The page menu's items are flushed by the shell itself.
+   */
+  flushRef?: MutableRefObject<(() => void) | null>;
   children?: ReactNode;
 }
 
@@ -177,6 +187,7 @@ export function CanvasEditorShell({
   sectionPreview,
   sectionEditing,
   restoredAt = 0,
+  flushRef,
   children,
 }: CanvasEditorShellProps) {
   const { t, tLabel } = useTranslation();
@@ -258,6 +269,14 @@ export function CanvasEditorShell({
     hasUnsavedChanges: hasPendingWrites || isSaving,
     onBeforeUnload: flushAll,
   });
+
+  useEffect(() => {
+    if (!flushRef) return;
+    flushRef.current = flushAll;
+    return () => {
+      flushRef.current = null;
+    };
+  }, [flushRef, flushAll]);
 
   useTextEdit({
     bridge,
@@ -580,24 +599,39 @@ export function CanvasEditorShell({
           collapseLabel={t('canvas.collapseSidebar')}
           resizeLabel={t('canvas.resizeSidebar')}
         >
-          <BlockPicker
-            categories={categories}
-            registry={registry}
-            onInsert={handleInsert}
-            canInsert={(descriptor) => canInsertType(descriptor.type)}
-            drag={{
-              onDragStart: handleSidebarDragStart,
-              onDragMove: handleSidebarDragMove,
-              onDragEnd: handleSidebarDragEnd,
-            }}
-          />
-          {/* Not inside the section editor: a template dropped into a
-              section would be a copy inside a thing that already IS
-              the shared original, which is a muddle rather than a
-              feature. */}
-          {siteId && !sectionPreview && (
-            <TemplatePicker siteId={siteId} onInsert={handleInsertBlocks} />
-          )}
+          {/* Off until the canvas has loaded: a block inserted before the
+              page listens is saved but never drawn, until a reload. The
+              canvas shows why meanwhile (canvas-frame.tsx). The fieldset
+              disables the buttons; the handlers check as well, since a
+              tile inserts on pointer-up, not on click. */}
+          <fieldset
+            disabled={!bridge.isReady}
+            aria-busy={!bridge.isReady}
+            className="contents"
+          >
+            <BlockPicker
+              categories={categories}
+              registry={registry}
+              onInsert={(descriptor) => {
+                if (bridge.isReady) handleInsert(descriptor);
+              }}
+              canInsert={(descriptor) => canInsertType(descriptor.type)}
+              drag={{
+                onDragStart: (descriptor) => {
+                  if (bridge.isReady) handleSidebarDragStart(descriptor);
+                },
+                onDragMove: handleSidebarDragMove,
+                onDragEnd: handleSidebarDragEnd,
+              }}
+            />
+            {/* Not inside the section editor: a template dropped into a
+                section would be a copy inside a thing that already IS
+                the shared original, which is a muddle rather than a
+                feature. */}
+            {siteId && !sectionPreview && (
+              <TemplatePicker siteId={siteId} onInsert={handleInsertBlocks} />
+            )}
+          </fieldset>
         </CollapsibleSidePanel>
         <div style={{ flex: 1, minHeight: 0, position: 'relative' }}>
           <CanvasFrame

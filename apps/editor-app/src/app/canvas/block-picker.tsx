@@ -50,7 +50,7 @@ function DraggableBlockButton({
       <button
         type="button"
         onClick={() => onInsert(descriptor)}
-        className="w-full rounded-md px-2 py-1.5 text-left text-sm hover:bg-muted hover:text-foreground"
+        className="w-full rounded-md px-2 py-1.5 text-left text-sm hover:bg-muted hover:text-foreground disabled:pointer-events-none disabled:opacity-50"
       >
         {tLabel(descriptor.label)}
       </button>
@@ -104,7 +104,7 @@ function DraggableBlockButton({
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
       title={tLabel(descriptor.label)}
-      className="group flex w-full touch-none flex-col items-center gap-1.5 rounded-md border border-transparent px-1 py-2 text-center text-xs leading-tight text-muted-foreground hover:border-border hover:bg-muted hover:text-foreground"
+      className="group flex w-full touch-none flex-col items-center gap-1.5 rounded-md border border-transparent px-1 py-2 text-center text-xs leading-tight text-muted-foreground hover:border-border hover:bg-muted hover:text-foreground disabled:pointer-events-none disabled:opacity-50"
     >
       <BlockIcon
         name={descriptor.icon}

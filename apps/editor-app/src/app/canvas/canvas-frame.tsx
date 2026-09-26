@@ -1,5 +1,6 @@
 import { useEffect, useState, type RefObject } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Loader2 } from 'lucide-react';
 import type { SiteLayoutSectionKind } from '@brisk/shared-types';
 import {
   createReusableSectionPreviewToken,
@@ -166,6 +167,13 @@ export function CanvasFrame({
     };
   }, [pageId, editingSection, sectionPreview, t]);
 
+  // Every new document starts not ready: after a restore or a page change
+  // the iframe loads again, and a change sent before it listens is lost.
+  const { markLoading } = bridge;
+  useEffect(() => {
+    markLoading();
+  }, [src, markLoading]);
+
   if (error) {
     return <div className="p-6 text-sm text-destructive">{error}</div>;
   }
@@ -198,6 +206,18 @@ export function CanvasFrame({
             className="h-full w-full border-0"
             sandbox="allow-scripts allow-forms"
           />
+        )}
+        {!bridge.isReady && (
+          // Over the page until it answers: what is drawn before then is
+          // not yet the page that can be edited, and the palette is off
+          // (canvas-editor-shell.tsx) for the same reason.
+          <div
+            role="status"
+            className="absolute inset-0 z-10 flex items-center justify-center gap-2 bg-background/70 text-sm text-muted-foreground"
+          >
+            <Loader2 className="size-4 motion-safe:animate-spin" aria-hidden />
+            {t('canvas.loadingPage')}
+          </div>
         )}
         <OverlayLayer
           iframeRef={iframeRef}

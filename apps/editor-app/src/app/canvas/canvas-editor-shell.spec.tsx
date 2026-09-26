@@ -7,6 +7,7 @@ import {
   act,
 } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import type { MutableRefObject } from 'react';
 import { QueryClientProvider } from '@tanstack/react-query';
 import * as router from '@tanstack/react-router';
 import type { Block } from '@brisk/shared-types';
@@ -101,6 +102,7 @@ function renderShell(
     onChange?: (blocks: Block[]) => void;
     onPublish?: (blocks: Block[]) => unknown;
     pageMenu?: CanvasPageMenuItem[];
+    flushRef?: MutableRefObject<(() => void) | null>;
   } = {},
 ) {
   vi.mocked(router.useNavigate).mockReturnValue(vi.fn());
@@ -135,6 +137,7 @@ function renderShell(
               onPublish={onPublish}
               pageId="page-1"
               pageMenu={overrides.pageMenu}
+              flushRef={overrides.flushRef}
             />
           </PageListContext.Provider>
         </ToastProvider>
@@ -232,6 +235,16 @@ function selectBlockWithRect(
   });
   act(() => {
     dispatchFromIframe(iframe, 'preview:click', { blockId });
+  });
+}
+
+/** The page in the iframe has loaded and listens — until then the palette is off (see the palette test below). */
+function markCanvasReady(iframe: HTMLIFrameElement) {
+  act(() => {
+    dispatchFromIframe(iframe, 'preview:ready', {
+      blockRects: [],
+      scrollHeight: 0,
+    });
   });
 }
 
@@ -551,6 +564,37 @@ describe('CanvasEditorShell', () => {
     ]);
   });
 
+  /*
+   * A view's own history dialog lives outside the shell. A restore there
+   * waits for the saves already queued; a change still in the debounce is
+   * not queued yet, and would land after the restore and undo it — so the
+   * shell hands the view its flush.
+   */
+  it('hands the view a flush that writes a change still inside the debounce', async () => {
+    vi.mocked(blockFragmentApi.renderBlockFragment).mockResolvedValue(
+      '<div>patched</div>',
+    );
+    const flushRef: MutableRefObject<(() => void) | null> = { current: null };
+    const { onChange } = renderShell({ flushRef });
+    const iframe = await getIframe();
+
+    selectBlockWithRect(iframe, 'hero-1', HERO_RECT);
+    fireEvent.change(screen.getByDisplayValue('Titolo'), {
+      target: { value: 'Ultima modifica' },
+    });
+    expect(onChange).not.toHaveBeenCalled();
+
+    flushRef.current?.();
+
+    expect(onChange).toHaveBeenCalledWith([
+      {
+        id: 'hero-1',
+        type: 'Hero',
+        props: { title: 'Ultima modifica', subtitle: 'Sottotitolo' },
+      },
+    ]);
+  });
+
   it('changing a property in the Inspector updates onChange after the debounce, and patches the fragment', async () => {
     vi.mocked(blockFragmentApi.renderBlockFragment).mockResolvedValue(
       '<div>patched</div>',
@@ -675,9 +719,35 @@ describe('CanvasEditorShell', () => {
     );
   });
 
+  /*
+   * A block inserted before the page in the iframe listens was saved but
+   * never drawn, until a reload: the message telling the canvas about it
+   * was lost. So the palette waits, and the canvas says it is loading.
+   */
+  it('keeps the palette off, and says the page is loading, until the canvas is ready', async () => {
+    const { onChange } = renderShell({ blocks: [] });
+    const iframe = await getIframe();
+    const testoButton = within(
+      screen.getByRole('complementary', { name: 'Inserisci blocco' }),
+    ).getByRole('button', { name: 'Testo' });
+
+    expect(testoButton.matches(':disabled')).toBe(true);
+    expect(
+      screen.getByText('Caricamento della pagina…').getAttribute('role'),
+    ).toBe('status');
+    fireEvent.pointerDown(testoButton, { pointerId: 1 });
+    fireEvent.pointerUp(testoButton, { pointerId: 1 });
+    expect(onChange).not.toHaveBeenCalled();
+
+    markCanvasReady(iframe);
+
+    expect(testoButton.matches(':disabled')).toBe(false);
+    expect(screen.queryByText('Caricamento della pagina…')).toBeNull();
+  });
+
   it('inserting a block from the picker appends it at the root', async () => {
     const { onChange } = renderShell({ blocks: [] });
-    await getIframe();
+    markCanvasReady(await getIframe());
 
     // The block button is draggable (block-picker.tsx) — it uses Pointer
     // Events rather than a plain click: a down+up with no movement in
@@ -704,6 +774,7 @@ describe('CanvasEditorShell', () => {
     );
     renderShell({ blocks: [] });
     const iframe = await getIframe();
+    markCanvasReady(iframe);
     const postMessageSpy = vi.spyOn(
       iframe.contentWindow as Window,
       'postMessage',

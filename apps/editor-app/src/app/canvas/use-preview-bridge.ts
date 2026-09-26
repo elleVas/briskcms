@@ -43,6 +43,11 @@ function withSelection<
 export interface PreviewBridgeState {
   /** Empty until `preview:ready` arrives for the first time. */
   blockRects: BlockRect[];
+  /**
+   * Whether the document now in the iframe has said `preview:ready`.
+   * Anything posted before then is lost — the page is not listening yet —
+   * so nothing that changes the page may be offered until it is true.
+   */
   isReady: boolean;
   hoveredBlockId: string | null;
   /**
@@ -152,6 +157,12 @@ export interface PreviewBridgeState {
   ) => void;
   /** Brings block `blockId` into view in the iframe's document (the Layers panel) — see EditorScrollToBlockMessage. */
   scrollToBlock: (blockId: string) => void;
+  /**
+   * A new document is on its way into the iframe (a first load, a page
+   * change, a remount after a restore): not ready again until it says so,
+   * and the old document's block positions no longer apply.
+   */
+  markLoading: () => void;
 }
 
 type PreviewBridgeMessageState = Omit<
@@ -167,6 +178,7 @@ type PreviewBridgeMessageState = Omit<
   | 'updateBlockStyleCss'
   | 'setRootLayout'
   | 'scrollToBlock'
+  | 'markLoading'
 >;
 
 const initialState: PreviewBridgeMessageState = {
@@ -502,8 +514,15 @@ export function usePreviewBridge(
     [iframeRef],
   );
 
+  const markLoading = useCallback(() => {
+    setState((prev) =>
+      prev.isReady ? { ...prev, isReady: false, blockRects: [] } : prev,
+    );
+  }, []);
+
   return {
     ...state,
+    markLoading,
     patchBlock,
     insertBlock,
     removeBlock,

@@ -40,7 +40,7 @@ export function TemplatePicker({ siteId, onInsert }: TemplatePickerProps) {
         <button
           key={template.id}
           type="button"
-          className="rounded-md border px-2 py-1.5 text-left text-sm hover:bg-muted"
+          className="rounded-md border px-2 py-1.5 text-left text-sm hover:bg-muted disabled:pointer-events-none disabled:opacity-50"
           onClick={() =>
             onInsert(
               // New ids on every copy: two copies of one template on one

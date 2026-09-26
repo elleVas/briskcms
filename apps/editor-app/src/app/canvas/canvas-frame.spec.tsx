@@ -35,6 +35,7 @@ const emptyBridge: PreviewBridgeState = {
   setRootLayout: vi.fn(),
   scrollToBlock: vi.fn(),
   applyPageLink: vi.fn(),
+  markLoading: vi.fn(),
 };
 
 describe('buildPreviewUrl', () => {
@@ -94,6 +95,31 @@ describe('CanvasFrame', () => {
     expect(previewTokenApi.createTranslationPreviewToken).toHaveBeenCalledWith(
       'page-1',
     );
+  });
+
+  it('says the page is loading until the bridge is ready, and marks every new document as loading', async () => {
+    vi.mocked(previewTokenApi.createTranslationPreviewToken).mockResolvedValue({
+      token: 'tok123',
+      expiresAt: new Date().toISOString(),
+    });
+
+    const { rerender } = renderFrame();
+
+    expect(
+      screen.getByText('Caricamento della pagina…').getAttribute('role'),
+    ).toBe('status');
+    await waitFor(() => screen.getByTitle('Anteprima pagina'));
+    // Once on mount, once for the document the token pointed it at.
+    expect(emptyBridge.markLoading).toHaveBeenCalledTimes(2);
+
+    rerender(
+      <CanvasFrame
+        pageId="page-1"
+        iframeRef={createRef<HTMLIFrameElement>()}
+        bridge={{ ...emptyBridge, isReady: true }}
+      />,
+    );
+    expect(screen.queryByText('Caricamento della pagina…')).toBeNull();
   });
 
   it('sandboxes the iframe without allow-same-origin — the preview can render untrusted user-authored blocks, and allow-same-origin combined with allow-scripts would neutralize the sandbox', async () => {
